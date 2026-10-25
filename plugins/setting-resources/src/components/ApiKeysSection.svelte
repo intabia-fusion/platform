@@ -15,8 +15,9 @@
 <script lang="ts">
   import type { ApiKeyInfo } from '@hcengineering/account-client'
   import type { Ref, Space } from '@hcengineering/core'
-  import { Icon, IconAdd, Label, Loading } from '@hcengineering/ui'
+  import ui, { Icon, Label, Loading } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
+
   import settingsRes from '../plugin'
   import ApiKeyTable from './ApiKeyTable.svelte'
 
@@ -44,7 +45,7 @@
   <div class="flex-row-center flex-gap-1">
     <IconButton
       kind="primary"
-      icon={IconAdd}
+      icon={ui.icon.Plus}
       size="small"
       data-id={personal ? 'btnAddPersonalKey' : 'btnAddIntegrationKey'}
       disabled={atLimit}

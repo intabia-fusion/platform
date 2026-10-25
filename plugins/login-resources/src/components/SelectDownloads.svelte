@@ -17,14 +17,14 @@
 <script lang="ts">
   // Flat grid of download buttons; clicking opens the resolved URL in a new tab.
   // Labels come from `friendlyLabel`; rendered at `login/downloads` from LoginApp.
-
   import { onMount } from 'svelte'
   import { getEmbeddedLabel, getMetadata } from '@hcengineering/platform'
   import type { IntlString } from '@hcengineering/platform'
   import login from '@hcengineering/login'
-  import { goTo } from '../utils'
-  import { Scroller, Spinner, IconBack, deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
+  import ui, { Scroller, Spinner, deviceOptionsStore as deviceInfo, Icon } from '@hcengineering/ui'
   import { themeStore, AccentColor } from '@hcengineering/theme'
+
+  import { goTo } from '../utils'
   import FormButton from './internal/FormButton.svelte'
   import Label from './internal/Label.svelte'
   import PlatformIcon from './internal/PlatformIcon.svelte'
@@ -370,7 +370,7 @@
   <div class="header">
     <div class="title-row">
       <FormButton type="button" kind="ghost" shape="round" size="small" on:click={handleBack}>
-        <IconBack size="small" />
+        <Icon icon={ui.icon.ChevronLeftLarge} size="small" />
       </FormButton>
       <div class="title">
         <Label label={login.string.Downloads} variant="heading" />

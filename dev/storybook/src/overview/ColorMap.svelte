@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IconAdd, IconSearch } from '@hcengineering/ui'
+  import ui from '@hcengineering/ui'
   import {
     Button,
     Checkbox,
@@ -270,8 +270,13 @@
         <div class="color-map__examples">
           {#if buttonKind(group.key) !== undefined}
             <Button kind={buttonKind(group.key)} label={label('Button')} size="small" />
-            <Button kind={buttonKind(group.key)} icon={IconAdd} label={label('Add')} size="small" />
-            <Button kind={buttonKind(group.key)} icon={IconSearch} size="small" tooltip={{ label: label('Search') }} />
+            <Button kind={buttonKind(group.key)} icon={ui.icon.Plus} label={label('Add')} size="small" />
+            <Button
+              kind={buttonKind(group.key)}
+              icon={ui.icon.Search}
+              size="small"
+              tooltip={{ label: label('Search') }}
+            />
             <Button kind={buttonKind(group.key)} label={label('Disabled')} size="small" disabled />
             {#if group.key === 'button-positive' || group.key === 'button-negative' || group.key === 'button-primary'}
               <Checkbox
@@ -318,7 +323,7 @@
             <Radio value={2} group={1} label={label('Other')} />
           {:else if group.key === 'button-selected'}
             <Button kind="secondary" label={label('Selected')} size="small" selected />
-            <Button kind="ghost" icon={IconSearch} size="small" selected tooltip={{ label: label('Search') }} />
+            <Button kind="ghost" icon={ui.icon.Search} size="small" selected tooltip={{ label: label('Search') }} />
             <SegmentedControl items={segments} selected="board" />
           {:else if group.key === 'button-disabled'}
             <Button kind="secondary" label={label('Disabled')} size="small" disabled />
@@ -331,8 +336,8 @@
             <Toggle checked label={label('Toggle')} />
             <Chip label={label('Solid')} kind="solid" />
           {:else if group.key === 'button-subtle'}
-            <Button kind="secondary" icon={IconSearch} label={label('Subtle label')} size="small" />
-            <Button kind="tertiary" icon={IconAdd} label={label('Tertiary')} size="small" />
+            <Button kind="secondary" icon={ui.icon.Search} label={label('Subtle label')} size="small" />
+            <Button kind="tertiary" icon={ui.icon.Plus} label={label('Tertiary')} size="small" />
           {/if}
         </div>
       </header>

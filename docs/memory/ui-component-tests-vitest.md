@@ -75,10 +75,10 @@ Two source bugs the suites turned up:
 `pin()` takes a popup **id** and stores that popup's `options.refId` under `dock-popup`, not the refId
 it is handed - easy to get backwards when writing a test.
 
-## Small components: Section, Status, Loading, Fold, ModeSelector, Like (2026-09-14)
+## Small components: Section, Status, Loading, ModeSelector (2026-09-14)
 
-`Section.test.ts` (5), `Status.test.ts` (5), `Loading.test.ts` (5), `Fold.test.ts` (5),
-`ModeSelector.test.ts` (5), `Like.test.ts` (5) - all pass, no source bugs found.
+`Section.test.ts` (5), `Status.test.ts` (5), `Loading.test.ts` (5), `ModeSelector.test.ts` (5) - all pass, no
+source bugs found.
 
 - `Loading.svelte` dispatches `progress` from a 50ms `setTimeout` in `onMount` - use
   `vi.useFakeTimers()` / `vi.advanceTimersByTime(50)` rather than a real wait.
@@ -86,8 +86,6 @@ it is handed - easy to get backwards when writing a test.
   `params`, `notLocalizedParams`), not a plain object - construct with `new Status(...)`.
 - `ModeSelector.svelte` wraps `Switcher`/`SwitcherBase`: selection is a radio (`input.switcher`),
   so drive it with a `change` event on the input, not a click.
-- `Like.svelte`'s `vote()` flips `voted` unconditionally and always increments `value` - a second
-  click un-votes but still increments. Pinned as current behaviour, not obviously desired.
 
 ## Kanban (packages/kanban, 2026-10-16)
 

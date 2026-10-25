@@ -18,11 +18,11 @@
   import { MessageBox } from '@hcengineering/presentation'
   import type { Question, Survey } from '@hcengineering/survey'
   import { QuestionKind } from '@hcengineering/survey'
-  import { createFocusManager, EditBox, FocusHandler, showPopup, Section } from '@hcengineering/ui'
+  import ui, { createFocusManager, EditBox, FocusHandler, showPopup, Section } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+
   import survey from '../plugin'
   import EditQuestion from './EditQuestion.svelte'
-  import IconQuestion from './icons/Question.svelte'
 
   const dispatch = createEventDispatcher()
   const manager = createFocusManager()
@@ -145,7 +145,7 @@
       }}
     />
   </div>
-  <Section label={survey.string.Questions} icon={IconQuestion} spaceBeforeContent>
+  <Section label={survey.string.Questions} icon={ui.icon.QuestionCircle} spaceBeforeContent>
     <svelte:fragment slot="content">
       {#each questionList as question, index (index)}
         {@const isNewQuestion = index === questionList.length - 1}

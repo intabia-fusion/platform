@@ -15,13 +15,9 @@
 
 <script lang="ts">
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { Button, IconClose, Label, ProgressCircle, Scroller, tooltip } from '@hcengineering/ui'
+  import ui, { Icon, Button, Label, ProgressCircle, Scroller, tooltip } from '@hcengineering/ui'
   import { ObjectPresenter } from '@hcengineering/view-resources'
   import { createEventDispatcher, onMount } from 'svelte'
-
-  import IconCompleted from './icons/Completed.svelte'
-  import IconError from './icons/Error.svelte'
-  import IconRetry from './icons/Retry.svelte'
 
   import uploader from '../plugin'
   import { uploads, type Upload, type FileUpload } from '../store'
@@ -73,7 +69,7 @@
     {#if upload?.error}
       <Button
         kind="icon"
-        icon={IconClose}
+        icon={ui.icon.Cross}
         iconProps={{ size: 'small' }}
         showTooltip={{ label: uploader.string.Cancel }}
         on:click={() => {
@@ -89,9 +85,9 @@
           <div class="upload-file-row flex-row-center justify-start flex-gap-4">
             <div class="upload-file-row__status w-4">
               {#if file.error}
-                <IconError size="small" fill="var(--negative-button-default)" />
+                <Icon icon={ui.icon.CrossCircle} size="small" fill="var(--negative-button-default)" />
               {:else if file.finished}
-                <IconCompleted size="small" fill="var(--positive-button-default)" />
+                <Icon icon={ui.icon.CheckCircle} size="small" fill="var(--positive-button-default)" />
               {:else}
                 <ProgressCircle value={file.progress} size="small" primary />
               {/if}
@@ -120,7 +116,7 @@
               {#if file.error}
                 <Button
                   kind="icon"
-                  icon={IconRetry}
+                  icon={ui.icon.ArrowClockwise}
                   iconProps={{ size: 'small' }}
                   showTooltip={{ label: uploader.string.Retry }}
                   on:click={() => {
@@ -131,7 +127,7 @@
               {#if !file.finished}
                 <Button
                   kind="icon"
-                  icon={IconClose}
+                  icon={ui.icon.Cross}
                   iconProps={{ size: 'small' }}
                   showTooltip={{ label: uploader.string.Cancel }}
                   on:click={() => {

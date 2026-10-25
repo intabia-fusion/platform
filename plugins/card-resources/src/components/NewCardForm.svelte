@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { DraftController, draftsStore, getClient, SpaceSelector } from '@hcengineering/presentation'
-  import { IconMinimize, IconSend, ModernEditbox } from '@hcengineering/ui'
+  import ui, { ModernEditbox } from '@hcengineering/ui'
   import { Button, IconButton } from '@hcengineering/ui/kit'
   import { createEventDispatcher } from 'svelte'
   import { AttachmentStyledBox } from '@hcengineering/attachment-resources'
@@ -25,15 +25,13 @@
   import { getResource } from '@hcengineering/platform'
   import { EmptyMarkup, isEmptyMarkup, markupToText } from '@hcengineering/text'
   import textEditor, { type RefAction } from '@hcengineering/text-editor'
-  import { AttachIcon } from '@hcengineering/text-editor-resources'
+  import { permissionsStore } from '@hcengineering/contact-resources'
+  import { canCreateObject } from '@hcengineering/view-resources'
 
   import { type CardDraft, getCardDraftKey, getEmptyCardDraft } from '../draft'
   import { TypeSelector } from '../index'
   import card from '../plugin'
   import { createCard, isBaseTypeWithSubtypes } from '../utils'
-
-  import { permissionsStore } from '@hcengineering/contact-resources'
-  import { canCreateObject } from '@hcengineering/view-resources'
   import EditorActions from './EditorActions.svelte'
 
   const dispatch = createEventDispatcher()
@@ -148,7 +146,7 @@
 
   const attachAction: RefAction = {
     label: textEditor.string.Attach,
-    icon: AttachIcon,
+    icon: ui.icon.Paperclip,
     action: () => {
       dispatch('focus')
       descriptionBox.handleAttach()
@@ -161,7 +159,7 @@
   {#if isExpanded}
     <div class="corner-container">
       <IconButton
-        icon={IconMinimize}
+        icon={ui.icon.ArrowsIn}
         size="extra-small"
         on:click={() => (isExpanded = false)}
         kind="tertiary"
@@ -221,7 +219,7 @@
             </div>
             <Button
               label={card.string.Post}
-              icon={IconSend}
+              icon={ui.icon.PaperPlane}
               iconSize="small"
               size="small"
               kind="primary"

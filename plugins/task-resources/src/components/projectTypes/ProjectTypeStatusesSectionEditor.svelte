@@ -29,23 +29,19 @@
     getStatusCategoryOrder,
     resolveStatusReuse
   } from '@hcengineering/task'
-  import {
+  import ui, {
     type Action,
     type PopupAlignment,
     Button,
     eventToHTMLElement,
     getEventPositionElement,
-    IconAdd,
-    IconDelete,
-    IconEdit,
-    IconError,
-    IconOpenedArrow,
     Label,
     Menu,
     showPopup
   } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import { FixedColumn, statusStore } from '@hcengineering/view-resources'
+
   import { taskTypeStore, typeStore } from '../..'
   import plugin from '../../plugin'
   import { deleteProjectTypeStatus } from '../../statusDelete'
@@ -151,7 +147,7 @@
     const actions: Action[] = [
       {
         label: plugin.string.StatusOpen,
-        icon: IconEdit,
+        icon: ui.icon.PencilLine,
         action: async () => {
           edit(status)
         }
@@ -160,7 +156,7 @@
     if (!disabled && sameCategoryStatuses(status).length > 1) {
       actions.push({
         label: plugin.string.MergeStatusesRowAction,
-        icon: IconOpenedArrow,
+        icon: ui.icon.ChevronRightSmall,
         action: async () => {
           mergeInto(anchor, status)
         }
@@ -169,7 +165,7 @@
     if (!disabled) {
       actions.push({
         label: plugin.string.Delete,
-        icon: IconDelete,
+        icon: ui.icon.Trash,
         action: async () => {
           remove(status)
         }
@@ -305,7 +301,7 @@
     <span><Label label={plugin.string.Statuses} /></span>
     <IconButton
       kind="primary"
-      icon={IconAdd}
+      icon={ui.icon.Plus}
       size="small"
       data-id="btnAddProjectTypeStatus"
       tooltip={{ label: presentation.string.Add }}
@@ -354,7 +350,8 @@
         <IconButton
           kind="tertiary"
           size="extra-small"
-          icon={IconError}
+          icon={ui.icon.ExclamationCircle}
+          iconProps={{ fill: 'var(--theme-error-color)' }}
           {disabled}
           tooltip={{
             label: duplicate.sameCategory

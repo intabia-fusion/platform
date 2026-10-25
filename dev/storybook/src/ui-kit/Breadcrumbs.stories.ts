@@ -14,7 +14,7 @@
 //
 
 import { getEmbeddedLabel } from '@hcengineering/platform'
-import { IconFolder, IconSettings, IconThread } from '@hcengineering/ui'
+import ui from '@hcengineering/ui'
 import { Breadcrumb, Breadcrumbs } from '@hcengineering/ui/kit'
 import type { Meta, StoryObj } from '@storybook/svelte'
 
@@ -23,13 +23,13 @@ import BreadcrumbsNarrow from './breadcrumbs/BreadcrumbsNarrow.svelte'
 import BreadcrumbsWithBadge from './breadcrumbs/BreadcrumbsWithBadge.svelte'
 import StoryAvatar from './breadcrumbs/StoryAvatar.svelte'
 
-const settings = { icon: IconSettings, label: getEmbeddedLabel('API and webhooks') }
+const settings = { icon: ui.icon.Sliders, label: getEmbeddedLabel('API and webhooks') }
 const endpoint = { label: getEmbeddedLabel('Outgoing endpoint') }
 const example = { label: getEmbeddedLabel('Outgoing example') }
-const channel = { icon: IconThread, label: getEmbeddedLabel('general') }
+const channel = { icon: ui.icon.Bubble, label: getEmbeddedLabel('general') }
 const person = { icon: StoryAvatar, iconBox: false, label: getEmbeddedLabel('Anna Kovaleva') }
 const thread = { label: getEmbeddedLabel('Thread') }
-const project = { icon: IconFolder, label: getEmbeddedLabel('Product roadmap for the next quarter') }
+const project = { icon: ui.icon.Folder, label: getEmbeddedLabel('Product roadmap for the next quarter') }
 
 const meta = {
   title: 'Navigation/Breadcrumbs',

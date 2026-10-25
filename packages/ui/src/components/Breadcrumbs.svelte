@@ -15,9 +15,11 @@
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
   import { createEventDispatcher } from 'svelte'
+
+  import ui from '../plugin'
+  import Icon from './Icon.svelte'
   import type { BreadcrumbItem } from '../types'
   import Breadcrumb from './Breadcrumb.svelte'
-  import ChevronRight from './icons/ChevronRight.svelte'
   import Label from './Label.svelte'
 
   export let items: BreadcrumbItem[]
@@ -32,7 +34,7 @@
 
 <div class="hulyBreadcrumbs-container {size}">
   {#each items as item, i}
-    {#if i !== 0}<ChevronRight size="small" />{/if}
+    {#if i !== 0}<Icon icon={ui.icon.ChevronRight} size="small" />{/if}
     <Breadcrumb
       {...item}
       {size}

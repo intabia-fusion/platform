@@ -16,7 +16,8 @@ import { loadMetadata } from '@hcengineering/platform'
 import billingPlugin from '@hcengineering/billing'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(billingPlugin.icon, {
-  Billing: `${icons}#billing`,
-  Subscriptions: `${icons}#subscriptions`
+  Billing: `${uiIcons}#receipt`,
+  Subscriptions: `${icons}#credit-card`
 })

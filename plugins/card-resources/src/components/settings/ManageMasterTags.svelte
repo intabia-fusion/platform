@@ -18,17 +18,11 @@
   import { IconWithEmoji, createQuery, getClient } from '@hcengineering/presentation'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
   import type { Location } from '@hcengineering/ui'
-  import {
-    Icon,
-    IconOpenedArrow,
-    Label,
-    getCurrentResolvedLocation,
-    navigate,
-    resolvedLocationStore
-  } from '@hcengineering/ui'
+  import ui, { Icon, Label, getCurrentResolvedLocation, navigate, resolvedLocationStore } from '@hcengineering/ui'
   import { onDestroy } from 'svelte'
-  import card from '../../plugin'
   import view from '@hcengineering/view'
+
+  import card from '../../plugin'
 
   export let categoryName: string
 
@@ -87,7 +81,7 @@
     </div>
     {#if tag._id === selectedTagId}
       <div class="hulyTaskNavLink-icon right">
-        <IconOpenedArrow size="small" />
+        <Icon icon={ui.icon.ChevronRightSmall} size="small" />
       </div>
     {/if}
   </button>

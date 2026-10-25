@@ -5,8 +5,9 @@
   import type { IntlString } from '@hcengineering/platform'
   import type { ObjectCreate } from '@hcengineering/presentation'
   import { getClient } from '@hcengineering/presentation'
-  import { Button, IconAdd, Label, Scroller, Section, showPopup } from '@hcengineering/ui'
+  import ui, { Button, Label, Scroller, Section, showPopup } from '@hcengineering/ui'
   import type { Viewlet, ViewletPreference } from '@hcengineering/view'
+
   import { showMenu } from '../actions'
   import view from '../plugin'
   import DocTable from './DocTable.svelte'
@@ -148,7 +149,7 @@
       {/if}
       <ViewletsSettingButton viewletQuery={{ attachTo: baseClass }} kind="tertiary" bind:viewlet bind:preference />
       {#if !readonly && allowToCreate}
-        <Button id={core.string.AddRelation} icon={IconAdd} kind="ghost" on:click={add} />
+        <Button id={core.string.AddRelation} icon={ui.icon.Plus} kind="ghost" on:click={add} />
       {/if}
     </div>
   </svelte:fragment>

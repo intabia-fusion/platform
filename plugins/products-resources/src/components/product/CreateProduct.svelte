@@ -19,7 +19,6 @@
 <script lang="ts">
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher } from 'svelte'
-
   import type { DocumentSpaceType } from '@hcengineering/controlled-documents'
   import { type Product, ProductVersionState } from '@hcengineering/products'
   import type { Attachment } from '@hcengineering/attachment'
@@ -29,12 +28,11 @@
   import core, { SortingOrder, generateId, getCurrentAccount, notEmpty } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { Card, MessageBox, IconWithEmoji, createQuery, getClient } from '@hcengineering/presentation'
-  import {
+  import ui, {
     Button,
     DropdownLabelsIntl,
     EditBox,
     FocusHandler,
-    IconAttachment,
     createFocusManager,
     getPaletteColorDef,
     showPopup,
@@ -365,7 +363,7 @@
   <svelte:fragment slot="footer">
     <Button
       focusIndex={20}
-      icon={IconAttachment}
+      icon={ui.icon.Paperclip}
       iconProps={{ fill: 'var(--theme-dark-color)' }}
       size="large"
       kind="ghost"

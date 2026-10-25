@@ -14,7 +14,7 @@
 //
 
 import { getEmbeddedLabel } from '@hcengineering/platform'
-import { IconAdd, IconCopy, IconDelete, IconEdit, IconOptions, IconSettings, IconShare } from '@hcengineering/ui'
+import ui from '@hcengineering/ui'
 import { MenuButton } from '@hcengineering/ui/kit'
 import type { Meta, StoryObj } from '@storybook/svelte'
 import type { ComponentProps } from 'svelte'
@@ -32,10 +32,10 @@ const views = [
   { id: 'table', label: getEmbeddedLabel('Table') }
 ]
 const actions = [
-  { id: 'edit', label: getEmbeddedLabel('Edit'), icon: IconEdit },
-  { id: 'copy', label: getEmbeddedLabel('Copy link'), icon: IconCopy },
-  { id: 'share', label: getEmbeddedLabel('Share'), icon: IconShare },
-  { id: 'delete', label: getEmbeddedLabel('Delete'), icon: IconDelete }
+  { id: 'edit', label: getEmbeddedLabel('Edit'), icon: ui.icon.PencilLine },
+  { id: 'copy', label: getEmbeddedLabel('Copy link'), icon: ui.icon.Copy },
+  { id: 'share', label: getEmbeddedLabel('Share'), icon: ui.icon.BoxArrowUp },
+  { id: 'delete', label: getEmbeddedLabel('Delete'), icon: ui.icon.Trash }
 ]
 
 // Single and multiple choice in one story: `selected` takes both shapes.
@@ -43,15 +43,15 @@ type Props = Omit<ComponentProps<MenuButton>, 'selected'> & { selected?: string 
 
 // Ready-made setups switched by the `example` control.
 const examples = {
-  'select view': { items: views, selected: 'list', label: view, icon: IconOptions },
-  'actions with icons': { items: actions, noSelection: true, icon: IconSettings, tooltip: settings },
+  'select view': { items: views, selected: 'list', label: view, icon: ui.icon.ArrowUpLines },
+  'actions with icons': { items: actions, noSelection: true, icon: ui.icon.Sliders, tooltip: settings },
   'text only': { items: views, selected: 'list', label: view, kind: 'tertiary' },
-  'single item, auto select': { items: [views[0]], label: view, icon: IconOptions, autoSelectSingle: true },
+  'single item, auto select': { items: [views[0]], label: view, icon: ui.icon.ArrowUpLines, autoSelectSingle: true },
   'add, multiselect': {
     items: views,
     selected: ['list'],
     multiselect: true,
-    icon: IconAdd,
+    icon: ui.icon.Plus,
     tooltip: { label: getEmbeddedLabel('Add view') }
   }
 } satisfies Record<string, Props>
@@ -115,14 +115,14 @@ export const Variants: Story = {
             'size',
             sizes.filter((size) => size !== 'min')
           ),
-          props: { items: views, label: view, icon: IconOptions }
+          props: { items: views, label: view, icon: ui.icon.ArrowUpLines }
         },
         {
           title: 'Icon only',
           component: MenuButton,
           rows: axis('kind', kinds),
           columns: axis('size', sizes),
-          props: { items: actions, icon: IconSettings, tooltip: settings }
+          props: { items: actions, icon: ui.icon.Sliders, tooltip: settings }
         },
         {
           title: 'States',
@@ -133,7 +133,7 @@ export const Variants: Story = {
             { title: 'loading', props: { loading: true } },
             { title: 'disabled', props: { disabled: true } }
           ],
-          props: { items: views, label: view, icon: IconOptions }
+          props: { items: views, label: view, icon: ui.icon.ArrowUpLines }
         }
       ]
     }

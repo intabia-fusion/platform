@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IconError, Label } from '@hcengineering/ui'
+  import ui, { Label, Icon } from '@hcengineering/ui'
   import type { ImportWarning } from '@hcengineering/workflow'
 
   import plugin from '../../../plugin'
@@ -24,7 +24,7 @@
 {#if warnings.length > 0}
   <div class="warnings flex-col flex-gap-2">
     <div class="warnings-banner flex-row-center flex-gap-2">
-      <IconError size="small" />
+      <Icon icon={ui.icon.ExclamationCircle} size="small" fill="var(--theme-error-color)" />
       <div class="flex-col">
         <span class="font-medium-14"><Label label={plugin.string.ImportWarningsTitle} /></span>
         <span class="font-regular-12 secondary mt-0-5">

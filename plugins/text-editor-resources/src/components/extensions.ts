@@ -14,7 +14,7 @@
 //
 
 import textEditor from '@hcengineering/text-editor'
-import { IconScribble } from '@hcengineering/ui'
+import ui from '@hcengineering/ui'
 import view from '@hcengineering/view'
 import { type Editor, type Range } from '@tiptap/core'
 
@@ -111,7 +111,7 @@ export function inlineCommandsConfig (
           { id: 'code-block', label: textEditor.string.CodeBlock, icon: view.icon.CodeBlock },
           { id: 'separator-line', label: textEditor.string.SeparatorLine, icon: view.icon.SeparatorLine },
           { id: 'todo-list', label: textEditor.string.TodoItem, icon: view.icon.TodoList },
-          { id: 'drawing-board', label: textEditor.string.DrawingBoard, icon: IconScribble as any },
+          { id: 'drawing-board', label: textEditor.string.DrawingBoard, icon: ui.icon.Scribble },
           { id: 'mermaid', label: textEditor.string.MermaidDiargram, icon: view.icon.Model }
         ].filter(({ id }) => !excludedCommands.includes(id as InlineCommandId))
       },

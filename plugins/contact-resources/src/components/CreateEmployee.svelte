@@ -21,14 +21,15 @@
   import login from '@hcengineering/login'
   import platform, { getResource, PlatformError } from '@hcengineering/platform'
   import { Card, getClient } from '@hcengineering/presentation'
-  import { createFocusManager, EditBox, FocusHandler, IconInfo, Label } from '@hcengineering/ui'
+  import ui, { createFocusManager, EditBox, FocusHandler, Label, Icon } from '@hcengineering/ui'
   import { planLimits, checkWorkspaceLimits, seatCount, seatLimitReached } from '@hcengineering/billing-resources'
   import { createEventDispatcher } from 'svelte'
+  import { Analytics } from '@hcengineering/analytics'
+
   import { ChannelsDropdown } from '..'
   import contact from '../plugin'
   import { employeeBySocialKeyStore, getAccountClient } from '../utils'
   import EditableAvatar from './EditableAvatar.svelte'
-  import { Analytics } from '@hcengineering/analytics'
 
   export let canSave: boolean = true
   export let onCreate: ((id: Ref<Employee>) => Promise<void>) | undefined = undefined
@@ -201,21 +202,21 @@
   <svelte:fragment slot="error">
     {#if exists && !saving}
       <div class="flex-row-center error-color">
-        <IconInfo size="small" />
+        <Icon icon={ui.icon.InfoCircle} size="small" />
         <span class="text-sm overflow-label ml-2">
           <Label label={contact.string.PersonAlreadyExists} />
         </span>
       </div>
     {:else if inviteRejected && !saving}
       <div class="flex-row-center error-color" data-id="seatLimitError">
-        <IconInfo size="small" />
+        <Icon icon={ui.icon.InfoCircle} size="small" />
         <span class="text-sm overflow-label ml-2">
           <Label label={contact.string.SeatLimitReached} params={{ limit: $planLimits?.usersLimit ?? 0 }} />
         </span>
       </div>
     {:else if $seatLimitReached && !saving}
       <div class="flex-row-center error-color" data-id="seatLimitError">
-        <IconInfo size="small" />
+        <Icon icon={ui.icon.InfoCircle} size="small" />
         <span class="text-sm overflow-label ml-2">
           <Label label={contact.string.SeatLimitReached} params={{ limit: $planLimits?.usersLimit ?? 0 }} />
         </span>

@@ -1,6 +1,6 @@
 # packages/ui - каталог компонентов
 
-Справочник публично экспортируемых компонентов `@hcengineering/ui` (`packages/ui/src/components`, по `packages/ui/src/index.ts`). Иконки (`icons/`, `calendar/icons/`, `internal/icons/`, ~90 штук `IconXxx`) в таблицы не включены.
+Справочник публично экспортируемых компонентов `@hcengineering/ui` (`packages/ui/src/components`, по `packages/ui/src/index.ts`). Иконки - символы спрайта кита `ui.icon.*` (раздел «Иконки» в [ui-kit.md](ui-kit.md)), Svelte-компонентов иконок в пакете нет.
 
 Актуальные базовые компоненты - в ките `@hcengineering/ui/kit` ([ui-kit.md](ui-kit.md)); компонент, у которого есть замена в ките, в новом коде не используется.
 
@@ -19,7 +19,6 @@
 | StatusBarButton | Кнопка-иконка для статус-бара | `icon`, `iconProps`, `pressed`, `id`, `element` |
 | FilterButton | Кнопка попапа фильтров, показывает активные фильтры | `categories`, `activeFilters`, `disabled`, `size`, `kind` |
 | Chevron | Иконка-шеврон expand/collapse, индикатор направления | `size`, `fill`, `expanded`, `direction`, `outline` |
-| Like | Виджет лайка (иконка+счетчик) с состоянием voted | `value`, `voted` |
 
 ## Inputs & editors
 
@@ -97,7 +96,6 @@
 | ScrollBox | Overflow-бокс без скроллбара, легче Scroller | `vertical`, `stretch`, `bothScroll`, `autoscrollable` |
 | ScrollerBar | Полоса прокрутки для внешнего scroller-элемента | `scroller`, `gap`, `padding` |
 | Separator | Разделитель панелей, размер хранится в localStorage | `name`, `index`, `separatorSize`, `float`, `short` |
-| Fold | Иконка-стрелка раскрытия, не контейнер | `isOpen`, `empty`, `level` |
 | ExpandCollapse | Обертка show/hide по флагу, без UI-триггера | `isExpanded` |
 | Expandable | Блок заголовок+шеврон+ExpandCollapse-содержимое | `icon`, `label`, `expanded`, `bordered`, `expandable` |
 | AccordionItem | Элемент аккордеона с counter/duration, вложенность | `id`, `label`, `size`, `isOpen`, `kind` |
@@ -213,4 +211,4 @@
 - **Popup vs Modal vs Dialog vs ModernDialog**: Popup - хост-фреймворк `showPopup()` (не импортируется напрямую); Dialog - самый старый контейнер, без футера; Modal - контейнер с ok/cancel футером старого дизайна; ModernDialog - текущий стандарт для форм-модалок (submit/cancel, back, loader).
 - **Toggle vs MiniToggle vs ModernToggle vs Switcher**: Toggle - простой on/off старого стиля без текста; MiniToggle - уменьшенная версия Toggle; ModernToggle - новый дизайн (size/label/background); Switcher - не boolean-переключатель, а группа сегментов/вкладок.
 - **CheckBox vs ModernCheckbox**: CheckBox - старый стиль (цветовые kind, вариант circle); ModernCheckbox - новый дизайн с indeterminate/error и обязательным label.
-- **Section vs AccordionItem vs Expandable vs Fold vs ExpandCollapse vs ShowMore**: Fold - только иконка-стрелка (не контейнер); ExpandCollapse - голая обертка show/hide без UI-триггера; Expandable - готовый блок заголовок+шеврон+контент; AccordionItem - полноценный элемент аккордеона (counter/duration/nested) для списков; Section - секция страницы с заголовком, крупнее прочих, для настроек; ShowMore - обрезка длинного текста по высоте, не про открытие/закрытие блока.
+- **Section vs AccordionItem vs Expandable vs ExpandCollapse vs ShowMore**: ExpandCollapse - голая обертка show/hide без UI-триггера; Expandable - готовый блок заголовок+шеврон+контент; AccordionItem - полноценный элемент аккордеона (counter/duration/nested) для списков; Section - секция страницы с заголовком, крупнее прочих, для настроек; ShowMore - обрезка длинного текста по высоте, не про открытие/закрытие блока.

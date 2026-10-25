@@ -16,7 +16,7 @@
   import type { Card } from '@hcengineering/card'
   import type { WithLookup } from '@hcengineering/core'
   import { getClient, Image, remToPx } from '@hcengineering/presentation'
-  import { Button, IconMoreH } from '@hcengineering/ui'
+  import ui, { Button } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { openDoc, PersonIdPresenter, showMenu, TimestampPresenter } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
@@ -89,7 +89,7 @@
         </div>
         <div class="tools">
           <Button
-            icon={IconMoreH}
+            icon={ui.icon.DotsHorizontal}
             kind="ghost"
             size="medium"
             showTooltip={{ label: view.string.MoreActions, direction: 'bottom' }}

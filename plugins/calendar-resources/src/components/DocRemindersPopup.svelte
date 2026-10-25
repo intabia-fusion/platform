@@ -17,7 +17,8 @@
   import { getCurrentEmployee } from '@hcengineering/contact'
   import type { Class, Doc, Ref } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import { Button, deviceOptionsStore as deviceInfo, IconAdd, Label, Scroller, showPopup } from '@hcengineering/ui'
+  import ui, { Button, deviceOptionsStore as deviceInfo, Label, Scroller, showPopup } from '@hcengineering/ui'
+
   import calendar from '../plugin'
   import CreateReminder from './CreateReminder.svelte'
   import ReminderPresenter from './ReminderPresenter.svelte'
@@ -51,7 +52,7 @@
   <div class="header flex-between">
     <span class="fs-title overflow-label"><Label label={calendar.string.Reminders} /></span>
     <Button
-      icon={IconAdd}
+      icon={ui.icon.Plus}
       size="medium"
       kind="ghost"
       on:click={(e) => {

@@ -25,15 +25,13 @@
   import { createQuery, getClient, uploadFile } from '@hcengineering/presentation'
   import textEditor, { type RefAction, type TextEditorHandler } from '@hcengineering/text-editor'
   import {
-    AttachIcon,
     CollaborativeAttributeBox,
-    TableIcon,
     addTableHandler,
     defaultRefActions,
     getModelRefActions
   } from '@hcengineering/text-editor-resources'
   import type { AnySvelteComponent } from '@hcengineering/ui'
-  import { getEventPositionElement, getPopupPositionElement } from '@hcengineering/ui'
+  import ui, { getEventPositionElement, getPopupPositionElement } from '@hcengineering/ui'
   import type { UploadHandlerDefinition } from '@hcengineering/uploader'
   import { getUploadHandlers, uploadFiles, type FileUploadCallbackParams } from '@hcengineering/uploader'
   import { getCollaborationUser, getObjectId } from '@hcengineering/view-resources'
@@ -70,13 +68,13 @@
     extraActions = [
       {
         label: textEditor.string.Attach,
-        icon: AttachIcon,
+        icon: ui.icon.Paperclip,
         action: handleAttach,
         order: 1001
       },
       {
         label: textEditor.string.Table,
-        icon: TableIcon,
+        icon: ui.icon.TableCells,
         action: handleTable,
         order: 1500
       }

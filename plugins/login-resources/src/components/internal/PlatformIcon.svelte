@@ -1,4 +1,7 @@
 <script lang="ts">
+  import { getMetadata } from '@hcengineering/platform'
+  import ui from '@hcengineering/ui'
+
   /**
    * Small themeable SVG platform icons for SelectDownloads. Uses `currentColor` to
    * inherit the label color. Props: platform, size (default 20), className.
@@ -68,17 +71,9 @@
       />
     </svg>
   {:else}
-    <!-- Generic platform/download glyph -->
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path fill="currentColor" d="M12 2a3 3 0 00-3 3v6H6l6 6 6-6h-3V5a3 3 0 00-3-3z" />
+    <!-- Generic platform: the kit download icon, sized like the logos above -->
+    <svg width={size} height={size} fill="currentColor" aria-hidden="true" focusable="false">
+      <use href={getMetadata(ui.icon.Download)} />
     </svg>
   {/if}
 </span>

@@ -14,8 +14,8 @@
 //
 
 import presentation, { downloadFile } from '@hcengineering/presentation'
-import { getEventPositionElement, Menu, showPopup, type Action } from '@hcengineering/ui'
-import { IconFileDownload, openLink } from '@hcengineering/ui/kit'
+import ui, { getEventPositionElement, Menu, showPopup, type Action } from '@hcengineering/ui'
+import { openLink } from '@hcengineering/ui/kit'
 import view from '@hcengineering/view'
 
 import chunter from '../plugin'
@@ -54,7 +54,7 @@ export function showItemMenu (e: MouseEvent, item: ItemMenu): void {
   if (download !== undefined) {
     actions.push({
       label: presentation.string.Download,
-      icon: IconFileDownload,
+      icon: ui.icon.Download,
       action: async () => {
         downloadFile(download.file, download.name)
       }

@@ -16,13 +16,10 @@
 <script lang="ts">
   import { onDestroy } from 'svelte'
   import type { AnyComponent, AnySvelteComponent } from '@hcengineering/ui'
-  import {
+  import ui, {
     Button,
     Breadcrumb,
     Component,
-    IconAdd,
-    IconMenuOpen,
-    IconMenuClose,
     Header,
     Separator,
     showPopup,
@@ -135,7 +132,7 @@
           <svelte:fragment slot="actions">
             {#if createComponent}
               <Button
-                icon={IconAdd}
+                icon={ui.icon.Plus}
                 kind="icon"
                 showTooltip={navigationComponentProps?.createLabel !== undefined
                   ? { label: navigationComponentProps.createLabel }
@@ -171,7 +168,7 @@
     <Header adaptive="disabled">
       <svelte:fragment slot="beforeTitle">
         <IconButton
-          icon={visibleNavigator ? IconMenuClose : IconMenuOpen}
+          icon={visibleNavigator ? ui.icon.TextOutdent : ui.icon.TextIndent}
           kind="tertiary"
           size="small"
           pressed={!visibleNavigator}

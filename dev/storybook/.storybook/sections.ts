@@ -31,6 +31,7 @@ const sections: Array<{ id: SectionId, label: string }> = [
 const rootSections: Record<string, SectionId | null> = {
   Introduction: null,
   Attachments: 'plugins',
+  Icons: 'plugins',
   'Kit (pen.dev)': 'screens'
 }
 

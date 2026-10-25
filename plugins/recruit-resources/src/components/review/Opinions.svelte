@@ -14,10 +14,10 @@
 -->
 <script lang="ts">
   import type { Doc, Ref } from '@hcengineering/core'
-  import { Button, IconAdd, Label, showPopup } from '@hcengineering/ui'
+  import ui, { Button, Label, showPopup } from '@hcengineering/ui'
   import { Table } from '@hcengineering/view-resources'
+
   import recruit from '../../plugin'
-  import FileDuo from '../icons/FileDuo.svelte'
   import SectionEmpty from '../SectionEmpty.svelte'
   import CreateOpinion from './CreateOpinion.svelte'
 
@@ -35,7 +35,7 @@
     <span class="antiSection-header__title">
       <Label label={recruit.string.Opinions} />
     </span>
-    <Button icon={IconAdd} kind="ghost" on:click={createApp} />
+    <Button icon={ui.icon.Plus} kind="ghost" on:click={createApp} />
   </div>
   {#if opinions > 0}
     <Table
@@ -45,7 +45,7 @@
       loadingProps={{ length: opinions }}
     />
   {:else}
-    <SectionEmpty icon={FileDuo} label={recruit.string.NoReviewForCandidate}>
+    <SectionEmpty icon={ui.icon.Document} label={recruit.string.NoReviewForCandidate}>
       <!-- svelte-ignore a11y-click-events-have-key-events -->
       <!-- svelte-ignore a11y-no-static-element-interactions -->
       <span class="text-sm content-color over-underline" on:click={createApp}>

@@ -13,9 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import Icon from '../Icon.svelte'
   import Label from '../Label.svelte'
+  import ui from '../../plugin'
   import type { IWizardStep } from '../../types'
-  import Checkmark from '../icons/Checkmark.svelte'
 
   export let steps: ReadonlyArray<IWizardStep>
   export let selectedStep: string
@@ -40,7 +41,7 @@
       style:grid-row={3 * idx + 1}
     >
       {#if isPast}
-        <div class="checkmark flex-center"><Checkmark size="tiny" /></div>
+        <div class="checkmark flex-center"><Icon icon={ui.icon.CheckSmall} size="tiny" /></div>
       {/if}
     </div>
     <div class="label" class:highlighted={isCurrent || isPast} style:grid-column="2" style:grid-row={3 * idx + 1}>

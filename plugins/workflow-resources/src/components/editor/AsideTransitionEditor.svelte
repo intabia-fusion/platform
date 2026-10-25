@@ -21,7 +21,7 @@
   import { StatePresenter } from '@hcengineering/task-resources'
   import type { DropdownIntlItem, DropdownTextItem } from '@hcengineering/ui'
   import ui, {
-    IconError,
+    Icon,
     Label,
     languageStore,
     Modal,
@@ -299,7 +299,7 @@
       {@const st = statuses.find((it) => it._id === toStatusItem.id)}
       <div class="error-row">
         <div class="error-icon">
-          <IconError size="small" />
+          <Icon icon={ui.icon.ExclamationCircle} size="small" fill="var(--theme-error-color)" />
         </div>
         <span class="error-text">
           <Label
@@ -315,7 +315,7 @@
       {@const fromStatus = statuses.find((it) => it._id === conflictInfo?.status)}
       <div class="error-row">
         <div class="error-icon">
-          <IconError size="small" />
+          <Icon icon={ui.icon.ExclamationCircle} size="small" fill="var(--theme-error-color)" />
         </div>
         <span class="error-text">
           <Label

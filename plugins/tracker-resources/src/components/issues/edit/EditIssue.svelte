@@ -28,11 +28,10 @@
   import type { Issue } from '@hcengineering/tracker'
   import { TrackerEvents } from '@hcengineering/tracker'
   import type { Action, AnyComponent, Location } from '@hcengineering/ui'
-  import {
+  import ui, {
     Component,
     EditBox,
     FocusHandler,
-    IconMoreH,
     Label,
     createFocusManager,
     getCurrentResolvedLocation,
@@ -49,11 +48,11 @@
     RelationsEditor,
     openDocInSidebar
   } from '@hcengineering/view-resources'
-  import ProjectPresenter from '../../projects/ProjectPresenter.svelte'
   import { NotificationClientImpl } from '@hcengineering/notification-resources'
   import { Analytics } from '@hcengineering/analytics'
-
   import { createEventDispatcher, onDestroy } from 'svelte'
+
+  import ProjectPresenter from '../../projects/ProjectPresenter.svelte'
   import { generateIssueShortLink, getIssueIdByIdentifier } from '../../../issues'
   import tracker from '../../../plugin'
   import IssueStatusActivity from '../IssueStatusActivity.svelte'
@@ -364,7 +363,7 @@
         <IconButton
           size="small"
           tooltip={{ label: view.string.MoreActions }}
-          icon={IconMoreH}
+          icon={ui.icon.DotsHorizontal}
           iconSize="medium"
           kind="ghost"
           data-id="btnMoreActions"

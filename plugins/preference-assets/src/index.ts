@@ -16,7 +16,7 @@
 import { loadMetadata } from '@hcengineering/platform'
 import preference from '@hcengineering/preference'
 
-const icons = require('../assets/icons.svg') as string // eslint-disable-line
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(preference.icon, {
-  Star: `${icons}#star`
+  Star: `${uiIcons}#star`
 })

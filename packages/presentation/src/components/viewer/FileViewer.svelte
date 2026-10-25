@@ -17,23 +17,19 @@
   import type { Blob, BlobMetadata, Ref } from '@hcengineering/core'
   import { SortingOrder } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
-  import {
+  import ui, {
     Blurhash,
     Hotkey,
-    IconChevronLeft,
-    IconChevronRight,
-    IconClose,
-    IconHistory,
-    IconScribble,
     Loading,
     popupstore,
     showPopup,
     themeStore,
     tooltip,
     type AnySvelteComponent,
-    type IconComponent
+    type IconComponent,
+    Icon
   } from '@hcengineering/ui'
-  import { FileNoPreview, IconButton, IconSaveFile, IconZoomIn, IconZoomOut } from '@hcengineering/ui/kit'
+  import { FileNoPreview, IconButton } from '@hcengineering/ui/kit'
   import { createEventDispatcher, onMount } from 'svelte'
   import { get } from 'svelte/store'
 
@@ -314,7 +310,7 @@
       {#if props.drawingAvailable === true}
         {#if props.drawings !== undefined && props.drawings.length > 0}
           <IconButton
-            icon={IconHistory}
+            icon={ui.icon.ClockCounterClockwise}
             kind="ghost"
             size="small"
             iconSize="medium"
@@ -324,7 +320,7 @@
           />
         {/if}
         <IconButton
-          icon={IconScribble}
+          icon={ui.icon.Scribble}
           kind="ghost"
           size="small"
           iconSize="medium"
@@ -337,7 +333,7 @@
         />
       {/if}
       <IconButton
-        icon={IconSaveFile}
+        icon={ui.icon.Download}
         kind="ghost"
         size="small"
         iconSize="medium"
@@ -365,7 +361,7 @@
       <span class="divider" />
       <span class="key" aria-hidden="true"><Hotkey key="Esc" /></span>
       <IconButton
-        icon={IconClose}
+        icon={ui.icon.Cross}
         kind="ghost"
         size="small"
         iconSize="medium"
@@ -448,19 +444,19 @@
         use:tooltip={{ label: presentation.string.Previous }}
         on:click={() => navigation?.prev?.()}
       >
-        <IconChevronLeft size="medium" />
+        <Icon icon={ui.icon.ChevronLeft} size="medium" />
       </button>
     {/if}
     {#if navigation?.next !== undefined}
       <button class="nav next" use:tooltip={{ label: presentation.string.Next }} on:click={() => navigation?.next?.()}>
-        <IconChevronRight size="medium" />
+        <Icon icon={ui.icon.ChevronRight} size="medium" />
       </button>
     {/if}
 
     {#if picture}
       <div class="zoom">
         <IconButton
-          icon={IconZoomOut}
+          icon={ui.icon.Minus}
           kind="ghost"
           size="small"
           shape="round"
@@ -474,7 +470,7 @@
           {Math.round(scale * 100)}%
         </button>
         <IconButton
-          icon={IconZoomIn}
+          icon={ui.icon.Plus}
           kind="ghost"
           size="small"
           shape="round"

@@ -1,8 +1,9 @@
 <script lang="ts">
   import type { Doc } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { Button, IconDownOutline, IconUpOutline, navigate } from '@hcengineering/ui'
+  import ui, { Button, navigate } from '@hcengineering/ui'
   import { tick } from 'svelte'
+
   import { select } from '../actionImpl'
   import view from '../plugin'
   import { focusStore } from '../selection'
@@ -36,7 +37,7 @@
 {#if $focusStore.focus !== undefined && $focusStore.provider !== undefined}
   <Button
     focusIndex={10005}
-    icon={IconDownOutline}
+    icon={ui.icon.ChevronDownSmall}
     kind="regular"
     size="medium"
     on:click={async (evt) => {
@@ -45,7 +46,7 @@
   />
   <Button
     focusIndex={10006}
-    icon={IconUpOutline}
+    icon={ui.icon.ChevronUpSmall}
     kind="regular"
     size="medium"
     on:click={async (evt) => {

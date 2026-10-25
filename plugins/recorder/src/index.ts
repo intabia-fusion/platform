@@ -26,7 +26,10 @@ export const recorderId = 'recorder' as Plugin
  */
 const recordPlugin = plugin(recorderId, {
   icon: {
-    Record: '' as Asset
+    Record: '' as Asset,
+    Recording: '' as Asset,
+    Stop: '' as Asset,
+    Pause: '' as Asset
   },
   metadata: {
     StreamUrl: '' as Metadata<string>

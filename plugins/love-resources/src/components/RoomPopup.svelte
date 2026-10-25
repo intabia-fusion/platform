@@ -16,17 +16,16 @@
   import type { Person } from '@hcengineering/contact'
   import { UserInfo, getPersonByPersonRef } from '@hcengineering/contact-resources'
   import type { Class, Doc, Ref } from '@hcengineering/core'
-
   import type { Location } from '@hcengineering/ui'
-  import { IconArrowLeft, Scroller, location, navigate, panelstore } from '@hcengineering/ui'
+  import ui, { Scroller, location, navigate, panelstore } from '@hcengineering/ui'
   import { Button } from '@hcengineering/ui/kit'
-
   import type { MeetingMinutes, ParticipantInfo, Room } from '@hcengineering/love'
   import { loveId } from '@hcengineering/love'
   import { getClient } from '@hcengineering/presentation'
   import view from '@hcengineering/view'
   import { getObjectLinkFragment } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
+
   import love from '../plugin'
   import { currentMeetingMinutes, infos, myInfo, meetings } from '../stores'
   import { lkSessionConnected } from '../liveKitClient'
@@ -127,7 +126,7 @@
     <div style="width: auto" />
     {#if canGoBack(joined, $location, meetingId)}
       <Button
-        icon={IconArrowLeft}
+        icon={ui.icon.ArrowLeft}
         label={love.string.MeetingMinutes}
         kind="primary"
         size="medium"

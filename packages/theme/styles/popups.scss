@@ -325,9 +325,12 @@
       background-color: var(--theme-popup-color);
       
       &:not(.default-cursor) { cursor: pointer; }
+      // The kit caret is centred in its 16px icon, which overflows this narrow box evenly.
       .icon {
+        display: flex;
+        justify-content: center;
         width: .25rem;
-        transform-origin: 40% 50%;
+        transform-origin: center;
         transform: rotate(0deg);
         transition: transform .15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       }

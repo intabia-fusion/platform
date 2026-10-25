@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import ui from '@hcengineering/ui'
   import type { Doc, Ref, Space } from '@hcengineering/core'
   import core from '@hcengineering/core'
   import { getResource } from '@hcengineering/platform'
   import preference from '@hcengineering/preference'
   import { getClient } from '@hcengineering/presentation'
   import type { Action } from '@hcengineering/ui'
-  import { IconEdit } from '@hcengineering/ui'
   import {
     NavLink,
     TreeItem,
@@ -28,6 +28,7 @@
     classIcon
   } from '@hcengineering/view-resources'
   import type { SpacesNavModel } from '@hcengineering/workbench'
+
   import { getSpaceName } from '../../utils'
 
   export let space: Space
@@ -58,7 +59,7 @@
     const extraActions = await getContributedActions(client, space, core.class.Space)
     for (const act of extraActions) {
       result.push({
-        icon: act.icon ?? IconEdit,
+        icon: act.icon ?? ui.icon.PencilLine,
         label: act.label,
         action: async (ctx: any, evt: Event) => {
           const impl = await getResource(act.action)

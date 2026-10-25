@@ -19,12 +19,10 @@
   import type { Asset, IntlString } from '@hcengineering/platform'
   import presentation, { createQuery } from '@hcengineering/presentation'
   import type { AnySvelteComponent } from '@hcengineering/ui'
-  import {
+  import ui, {
     EditWithIcon,
     FocusHandler,
     Icon,
-    IconCheck,
-    IconSearch,
     Label,
     ListView,
     Spinner,
@@ -34,6 +32,7 @@
     tooltip
   } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+
   import type { AssigneeCategory } from '../assignee'
   import contact from '../plugin'
   import { addRecentlyUsedAssignee, getRecentlyUsedAssignees } from '../recentAssignees'
@@ -194,7 +193,7 @@
 >
   <div class="header">
     <EditWithIcon
-      icon={IconSearch}
+      icon={ui.icon.Search}
       size="large"
       width="100%"
       autoFocus={!$deviceOptionsStore.isMobile}
@@ -243,7 +242,7 @@
                 <div class="check">
                   {#if obj._id === selected}
                     <div use:tooltip={{ label: titleDeselect ?? presentation.string.Deselect }}>
-                      <Icon icon={IconCheck} size="small" />
+                      <Icon icon={ui.icon.Check} size="small" />
                     </div>
                   {/if}
                 </div>

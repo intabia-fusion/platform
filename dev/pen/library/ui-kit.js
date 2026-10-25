@@ -5,15 +5,15 @@
 host.page = []
 const def = (name, shape, o) => kit.component(name, shape, o)
 const avatar = ['AJ', 'Blueberry']
-const widgets = ['calendar/calendar', 'chunter/chunter', 'love/office', 'rating/rating', 'view/ai-star']
+const widgets = ['kit/Calendar', 'kit/Bubble', 'kit/Building', 'kit/Star', 'kit/Sparkle']
 const nav = [
-  { item: 'My issues', icon: 'tracker/myissues' },
-  { item: 'All issues', icon: 'tracker/issues' },
+  { item: 'My issues', icon: 'kit/Crosshair' },
+  { item: 'All issues', icon: 'kit/CheckSquare' },
   { divider: true },
   { group: 'Your projects', add: true },
-  { space: 'Mobile app', icon: 'tracker/home', color: 'Porpoise' },
-  { item: 'Issues', icon: 'tracker/issues', selected: true, indent: true },
-  { item: 'Components', icon: 'tracker/components', indent: true }
+  { space: 'Mobile app', icon: 'kit/HouseFill', color: 'Porpoise' },
+  { item: 'Issues', icon: 'kit/CheckSquare', selected: true, indent: true },
+  { item: 'Components', icon: 'kit/Diamond', indent: true }
 ]
 const card = {
   id: 'APP-12', cat: 'active', title: 'Fix the board layout when a column has no limit', priority: 'high', parent: 'Mobile app redesign',
@@ -23,18 +23,18 @@ const card = {
 // ---- Actions ----
 for (const kind of ['primary', 'secondary', 'tertiary', 'ghost', 'negative', 'brand']) {
   for (const size of ['large', 'medium', 'small', 'extra-small']) {
-    def(`Actions/Button/${kind}/${size}`, kit.Button({ kind, size, label: 'Button', icon: 'ui/Add', menu: true }), { hide: ['2'] })
+    def(`Actions/Button/${kind}/${size}`, kit.Button({ kind, size, label: 'Button', icon: 'kit/Plus', menu: true }), { hide: ['2'] })
     def(`Actions/Button/${kind}/${size}/icon`, kit.Button({ kind, size, icon: 'gear' }))
   }
 }
 def('Actions/Switcher', kit.Switcher(['All', 'Active', 'Backlog'], 'Active'), { slots: ['$root'] })
-def('Actions/Switcher/icons', kit.Switcher(['tracker/list', 'task/kanban'], 'task/kanban'), { slots: ['$root'] })
+def('Actions/Switcher/icons', kit.Switcher(['kit/BulletList', 'kit/Kanban'], 'kit/Kanban'), { slots: ['$root'] })
 def('Actions/Menu', kit.Menu([{ header: 'Boards' }, { label: 'Main board', icon: 'board', selected: true }, { label: 'Releases', icon: 'milestone', hint: '3' }, '-', { label: 'New board', icon: 'plus', accent: true }], { w: 260 }), { slots: ['$root'] })
 
 for (const kind of ['regular', 'primary', 'dangerous', 'ghost', 'icon']) {
   for (const size of ['small', 'medium', 'large']) {
-    def(`Actions/ClassicButton/${kind}/${size}`, kit.ClassicButton({ kind, size, label: 'Button', icon: 'ui/Add', menu: true }), { hide: ['2'] })
-    def(`Actions/ClassicButton/${kind}/${size}/icon`, kit.ClassicButton({ kind, size, icon: 'ui/Edit' }))
+    def(`Actions/ClassicButton/${kind}/${size}`, kit.ClassicButton({ kind, size, label: 'Button', icon: 'kit/Plus', menu: true }), { hide: ['2'] })
+    def(`Actions/ClassicButton/${kind}/${size}/icon`, kit.ClassicButton({ kind, size, icon: 'kit/PencilLine' }))
   }
 }
 // A button with nodes of its own (status, avatar and name): the instance supplies its children
@@ -42,7 +42,7 @@ for (const kind of ['regular', 'ghost']) def(`Actions/ClassicButton/${kind}/larg
 def('Actions/Modal', kit.Modal('Edit project', { w: 600 }).modal, { slots: ['body'] })
 
 // ---- Forms ----
-def('Forms/Input', kit.Input({ w: 240, label: 'Label', icon: 'contact/Person', value: 'Value', menu: true }), { hide: ['0', '1/0', '1/2', '1/3'] })
+def('Forms/Input', kit.Input({ w: 240, label: 'Label', icon: 'kit/PersonCircle', value: 'Value', menu: true }), { hide: ['0', '1/0', '1/2', '1/3'] })
 def('Forms/Input/multiline', kit.Input({ w: 240, h: 64, label: 'Label', value: 'Long value that wraps to the next line' }), { hide: ['0'] })
 def('Forms/Checkbox', kit.Checkbox(true, 'Label'))
 def('Forms/Checkbox/empty', kit.Checkbox(false, 'Label'))
@@ -55,7 +55,7 @@ for (const kind of ['ghost-large', 'large-style', 'editbox']) def(`Forms/EditBox
 // ---- People: avatars are drawn by kit/90-pen.js, the library holds the 20px look ----
 def('People/Avatar', kit.add(kit.box('Avatar', { w: 20, h: 20, dir: 'row', align: 'center', justify: 'center', radius: 4, fill: '#666ECC' }),
   kit.text('AJ', { name: 'initials', size: 8, weight: 500, color: '#FFFFFF' })))
-def('People/Avatar/empty', kit.add(kit.box('Avatar/empty', { w: 20, h: 20, dir: 'row', align: 'center', justify: 'center', radius: 4, fill: T('theme-button-default') }), kit.icon('contact/Person', T('theme-dark-color'), 12)))
+def('People/Avatar/empty', kit.add(kit.box('Avatar/empty', { w: 20, h: 20, dir: 'row', align: 'center', justify: 'center', radius: 4, fill: T('theme-button-default') }), kit.icon('kit/PersonCircle', T('theme-dark-color'), 12)))
 
 // ---- Status ----
 for (const cat of Object.keys(kit.CATEGORY)) def('Status/StatusIcon/' + cat, kit.StatusIcon(cat, 14, undefined, true))
@@ -107,26 +107,26 @@ def('Workbench/TopBar', kit.TopBar(1920, { tab: 'Tracker' }))
 def('Workbench/AppRail', kit.AppRail(1044, {}))
 def('Workbench/Sidebar', kit.Sidebar(1044, { widgets }), { hide: ['4'] })
 def('Workbench/Navigator', kit.Navigator(1044, { title: 'Tracker', newLabel: 'New issue', nav }), { slots: ['items'] })
-def('Workbench/Navigator/tools', kit.Navigator(1044, { title: 'Chat', newLabel: null, tools: ['ui/Search', 'ui/Edit'], nav }), { slots: ['items'] })
-def('Workbench/NavItem', kit.NavItem('Issues', { icon: 'tracker/issues', count: 3, w: 255 }), { hide: ['2', '3'] })
-def('Workbench/NavItem/selected', kit.NavItem('Issues', { icon: 'tracker/issues', count: 3, selected: true, w: 255 }), { hide: ['2', '3'] })
-def('Workbench/NavItem/object', kit.NavItem('general', { icon: 'chunter/hashtag', object: true, w: 255 }))
-def('Workbench/NavItem/object/selected', kit.NavItem('general', { icon: 'chunter/hashtag', object: true, selected: true, w: 255 }))
+def('Workbench/Navigator/tools', kit.Navigator(1044, { title: 'Chat', newLabel: null, tools: ['kit/Search', 'kit/PencilLine'], nav }), { slots: ['items'] })
+def('Workbench/NavItem', kit.NavItem('Issues', { icon: 'kit/CheckSquare', count: 3, w: 255 }), { hide: ['2', '3'] })
+def('Workbench/NavItem/selected', kit.NavItem('Issues', { icon: 'kit/CheckSquare', count: 3, selected: true, w: 255 }), { hide: ['2', '3'] })
+def('Workbench/NavItem/object', kit.NavItem('general', { icon: 'kit/Hash', object: true, w: 255 }))
+def('Workbench/NavItem/object/selected', kit.NavItem('general', { icon: 'kit/Hash', object: true, selected: true, w: 255 }))
 def('Workbench/NavCaption', kit.NavCaption('Channels', false, { menu: true }), { hide: ['1'] })
 def('Workbench/NavCaption/highlighted', kit.NavCaption('Channels', true, { menu: true }), { hide: ['1'] })
 def('Workbench/NavGroup', kit.NavGroupHeader('Your projects', { add: true }))
-def('Workbench/NavSpace', kit.NavSpaceHeader('Mobile app', { icon: 'tracker/home', color: 'Porpoise' }))
+def('Workbench/NavSpace', kit.NavSpaceHeader('Mobile app', { icon: 'kit/HouseFill', color: 'Porpoise' }))
 {
   const main = kit.box('Main panel', { w: 1560, h: 700 })
-  kit.SpaceHeader(main, { view: 'list', title: 'Issues', titleIcon: 'tracker/issues' })
+  kit.SpaceHeader(main, { view: 'list', title: 'Issues', titleIcon: 'kit/CheckSquare' })
   def('Workbench/SpaceHeader', main.children[0], { slots: ['left', 'right', 'filters'] })
 }
 {
   const main = kit.box('Main panel', { w: 1200, h: 700 })
-  kit.PanelHeader(main, { title: 'Members', icon: 'setting/owners', actions: [kit.ClassicButton({ kind: 'icon', icon: 'ui/Search' })] })
+  kit.PanelHeader(main, { title: 'Members', icon: 'kit/People', actions: [kit.ClassicButton({ kind: 'icon', icon: 'kit/Search' })] })
   def('Workbench/PanelHeader', main.children[0], { slots: ['actions'] })
   const divided = kit.box('Main panel', { w: 1200, h: 700 })
-  kit.PanelHeader(divided, { title: 'Members', icon: 'setting/owners', divided: true, actions: [kit.ClassicButton({ kind: 'icon', icon: 'ui/Search' })] })
+  kit.PanelHeader(divided, { title: 'Members', icon: 'kit/People', divided: true, actions: [kit.ClassicButton({ kind: 'icon', icon: 'kit/Search' })] })
   def('Workbench/PanelHeader/divided', divided.children[0], { slots: ['actions'] })
 }
 
@@ -138,7 +138,7 @@ def('Chat/Message/system', kit.Message({ author: 'System', time: '5:47 PM', text
 def('Chat/MessageInput', kit.MessageInput({ w: 1481 }))
 
 def('Workbench/Workbench', kit.Workbench('Workbench', 0, 0, { tab: 'Tracker', nav }).frame, { slots: ['Main panel'] })
-def('Workbench/Workbench/with side panel', kit.Workbench('Workbench', 0, 0, { tab: 'Tracker', nav, panel: { w: 400 }, selected: 'chunter/chunter', widgets }).frame, { slots: ['Main panel', 'Side panel'] })
+def('Workbench/Workbench/with side panel', kit.Workbench('Workbench', 0, 0, { tab: 'Tracker', nav, panel: { w: 400 }, selected: 'kit/Bubble', widgets }).frame, { slots: ['Main panel', 'Side panel'] })
 
 {
   const shell = kit.Workbench('Workbench', 0, 0, { tab: 'Tracker', nav }).frame

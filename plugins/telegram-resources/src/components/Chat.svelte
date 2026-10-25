@@ -15,6 +15,7 @@
 -->
 <script lang="ts">
   /* eslint-disable @typescript-eslint/no-unused-vars */
+
   import attachment from '@hcengineering/attachment'
   import { AttachmentRefInput } from '@hcengineering/attachment-resources'
   import type { Channel, Contact } from '@hcengineering/contact'
@@ -31,18 +32,9 @@
   import type { TemplateDataProvider } from '@hcengineering/templates'
   import templates from '@hcengineering/templates'
   import { jsonToHTML, markupToJSON } from '@hcengineering/text'
-  import {
-    Button,
-    Icon,
-    IconShare,
-    Label,
-    Dialog,
-    Scroller,
-    eventToHTMLElement,
-    showPopup,
-    tooltip
-  } from '@hcengineering/ui'
+  import ui, { Button, Icon, Label, Dialog, Scroller, eventToHTMLElement, showPopup, tooltip } from '@hcengineering/ui'
   import { createEventDispatcher, onDestroy } from 'svelte'
+
   import telegram from '../plugin'
   import Connect from './Connect.svelte'
   import Reconnect from './Reconnect.svelte'
@@ -239,7 +231,7 @@
         />
       {/if}
       <Button
-        icon={IconShare}
+        icon={ui.icon.BoxArrowUp}
         kind="ghost"
         size="medium"
         showTooltip={{ label: telegram.string.Share }}

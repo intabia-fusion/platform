@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import presentation from '@hcengineering/presentation'
-  import { Icon, IconEdit, IconClose, tooltip, Button, IconCircles } from '@hcengineering/ui'
+  import ui, { Icon, tooltip, Button } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   export let style = ''
@@ -38,7 +38,9 @@
   on:dblclick|preventDefault={isEditable && !isEditing ? () => dispatch('edit') : undefined}
 >
   <div class="flex-center ml-2">
-    <div class="flex-no-shrink circles-mark" class:isDraggable><IconCircles size="small" /></div>
+    <div class="flex-no-shrink circles-mark" class:isDraggable>
+      <Icon icon={ui.icon.GripVertical} size="small" fill="var(--theme-caption-color)" />
+    </div>
   </div>
 
   <div class="root flex flex-between items-center w-full p-2">
@@ -64,7 +66,7 @@
               use:tooltip={{ label: presentation.string.Edit }}
               on:click|preventDefault={() => dispatch('edit')}
             >
-              <Icon icon={IconEdit} size="small" />
+              <Icon icon={ui.icon.PencilLine} size="small" />
             </button>
           {/if}
           {#if isDeletable}
@@ -73,7 +75,7 @@
               use:tooltip={{ label: presentation.string.Remove }}
               on:click|preventDefault={() => dispatch('delete')}
             >
-              <Icon icon={IconClose} size="small" />
+              <Icon icon={ui.icon.Cross} size="small" />
             </button>
           {/if}
         {/if}

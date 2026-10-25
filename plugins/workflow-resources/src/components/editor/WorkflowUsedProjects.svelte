@@ -14,7 +14,7 @@
 <script lang="ts">
   import { IconWithEmoji } from '@hcengineering/presentation'
   import task from '@hcengineering/task'
-  import { Icon, IconOpenedArrow, Label } from '@hcengineering/ui'
+  import ui, { Icon, Label } from '@hcengineering/ui'
   import type { IconProps } from '@hcengineering/view'
   import view from '@hcengineering/view'
   import type { ProjectWorkflow } from '@hcengineering/workflow'
@@ -54,7 +54,7 @@
           </span>
           <span class="workflow-used-projects--name">{project.name}</span>
           <span class="workflow-used-projects--arrow">
-            <Icon icon={IconOpenedArrow} size="x-small" />
+            <Icon icon={ui.icon.ChevronRightSmall} size="x-small" />
           </span>
         </button>
       {/each}

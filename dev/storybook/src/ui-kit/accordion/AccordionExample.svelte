@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import ui from '@hcengineering/ui'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { IconMoreH } from '@hcengineering/ui'
   import { AccordionItem, IconButton, type AccordionItemProps } from '@hcengineering/ui/kit'
 
   export let props: Partial<AccordionItemProps> = {}
@@ -32,7 +32,12 @@
     >
     <svelte:fragment slot="actions">
       {#if withActions}
-        <IconButton icon={IconMoreH} kind="ghost" size="small" tooltip={{ label: getEmbeddedLabel('More actions') }} />
+        <IconButton
+          icon={ui.icon.DotsHorizontal}
+          kind="ghost"
+          size="small"
+          tooltip={{ label: getEmbeddedLabel('More actions') }}
+        />
       {/if}
     </svelte:fragment>
     <ul class="accordion-example__list">

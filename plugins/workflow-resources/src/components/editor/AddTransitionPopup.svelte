@@ -17,12 +17,12 @@
   import presentation, { getClient } from '@hcengineering/presentation'
   import { StatePresenter } from '@hcengineering/task-resources'
   import type { DropdownIntlItem, LabelAndProps } from '@hcengineering/ui'
-  import ui, { IconError, Label, Modal, ModernDropdown, ModernEditbox } from '@hcengineering/ui'
+  import ui, { Icon, Label, Modal, ModernDropdown, ModernEditbox } from '@hcengineering/ui'
   import type { ConflictInfo, Workflow, WorkflowTransition } from '@hcengineering/workflow'
   import { addTransition, getTransitionConflict } from '@hcengineering/workflow'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
 
   import plugin from '../../plugin'
-  import { getEmbeddedLabel } from '@hcengineering/platform'
 
   export let workflow: Workflow
   export let statuses: Status[] = []
@@ -184,7 +184,7 @@
       {@const toStatus = statuses.find((s) => s._id === to)}
       <div class="error-row">
         <div class="error-icon">
-          <IconError size="small" />
+          <Icon icon={ui.icon.ExclamationCircle} size="small" fill="var(--theme-error-color)" />
         </div>
         <span class="error-text">
           <Label
@@ -200,7 +200,7 @@
       {@const fromStatus = statuses.find((s) => s._id === conflictInfo?.status)}
       <div class="error-row">
         <div class="error-icon">
-          <IconError size="small" />
+          <Icon icon={ui.icon.ExclamationCircle} size="small" fill="var(--theme-error-color)" />
         </div>
         <span class="error-text">
           <Label

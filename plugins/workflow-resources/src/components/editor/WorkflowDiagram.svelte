@@ -17,18 +17,17 @@
   import core from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import task from '@hcengineering/task'
-  import {
+  import ui, {
     Button,
     getColorNumberByText,
     getPlatformColorDef,
-    IconError,
-    IconSquareExpand,
     Label,
     languageStore,
     Loading,
     showPopup,
     themeStore,
-    resolvePaletteColor
+    resolvePaletteColor,
+    Icon
   } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import type { Workflow, WorkflowTransition } from '@hcengineering/workflow'
@@ -388,7 +387,7 @@
   {#if embedded && imageUrl}
     <div class="mermaid-controls">
       <IconButton
-        icon={IconSquareExpand}
+        icon={ui.icon.ArrowSquareOut}
         tooltip={{ label: plugin.string.Transitions, direction: 'bottom' }}
         size="small"
         kind="secondary"
@@ -402,7 +401,7 @@
     {:else if errorMsg}
       <div class="diagram-error-state">
         <div class="diagram-error-icon">
-          <IconError size="large" />
+          <Icon icon={ui.icon.ExclamationCircle} size="large" fill="var(--theme-error-color)" />
         </div>
         <div class="diagram-error-title">
           <Label label={plugin.string.FailedToRenderDiagram ?? 'Не удалось отобразить схему воркфлоу'} />

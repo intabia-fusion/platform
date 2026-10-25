@@ -185,7 +185,7 @@ kit.add = (parent, ...kids) => {
 // Absolute placement inside a parent board without layout (coordinates are relative to the parent)
 kit.at = (parent, s, x, y) => { kit.add(parent, s); s.x = x; s.y = y; return s }
 
-// Repo icon by name "<ns>/<id>" or a short hand-drawn one: an instance of the library component `icon/<name>`
+// Repo icon by name "kit/<Key>", "<ns>/<id>" or a short hand-drawn one: an instance of the library component `icon/<name>`
 // (the geometry lives there once), the color and size are overrides
 kit.icon = (name, color, size = 16) => {
   const i = ICONS[name]

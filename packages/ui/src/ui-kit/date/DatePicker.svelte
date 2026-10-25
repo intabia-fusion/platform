@@ -19,7 +19,6 @@
   import { createEventDispatcher, onMount } from 'svelte'
 
   import Label from '../../components/Label.svelte'
-  import IconClose from '../../components/icons/Close.svelte'
   import { deviceOptionsStore as deviceInfo } from '../../index'
   import ui from '../../plugin'
   import { DAY, HOUR, MINUTE } from '../../types'
@@ -211,7 +210,7 @@
         <IconButton
           kind="ghost"
           size="extra-small"
-          icon={IconClose}
+          icon={ui.icon.Cross}
           tooltip={{ label: ui.string.Close }}
           on:click={() => {
             close(null)

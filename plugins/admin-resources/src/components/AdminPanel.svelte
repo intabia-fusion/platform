@@ -13,10 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import {
+  import ui, {
     Button,
     getCurrentLocation,
-    IconRedo,
     Label,
     location,
     navigate,
@@ -95,7 +94,7 @@
     <div class="flex-row-center mb-4">
       <TabList items={tabItems} selected={selectedTab} on:select={onTabSelect} />
       <div class="flex-row-center ml-4">
-        <Button icon={IconRedo} label={adminRes.string.Refresh} on:click={refresh} />
+        <Button icon={ui.icon.ArrowUturnRight} label={adminRes.string.Refresh} on:click={refresh} />
         <span class="ml-2 mr-1"><Label label={adminRes.string.AutoRefresh} />:</span>
         <MenuButton
           selected={autoRefresh}

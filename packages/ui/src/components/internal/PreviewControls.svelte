@@ -4,6 +4,7 @@
   // Shows several controls (buttons, checkboxes, list) to help choose an accent.
   import type { Asset } from '@hcengineering/platform'
   import { getEmbeddedLabel, type IntlString } from '@hcengineering/platform'
+
   import Button from '../../ui-kit/button/Button.svelte'
   import IconButton from '../../ui-kit/button/IconButton.svelte'
   import MenuButton from '../../ui-kit/button/MenuButton.svelte'
@@ -15,16 +16,10 @@
     ListView,
     Label,
     Separator,
-    Spinner,
-    IconCheckmark,
-    IconActivity,
-    IconAttachment,
-    IconClose,
-    IconDown,
-    IconColStar,
-    IconDropdown
+    Spinner
   } from '../..'
   import Loading from '../Loading.svelte'
+  import ui from '../../plugin'
   import ModernToggle from '../ModernToggle.svelte'
   import ButtonGroup from '../ButtonGroup.svelte'
   import Toggle from '../Toggle.svelte'
@@ -164,37 +159,47 @@
       {dropdownItems}
       label={LABEL_PRIMARY}
       hasDropdown={true}
-      icon={IconColStar}
-      dropdownIcon={IconDropdown}
+      icon={ui.icon.Star}
+      dropdownIcon={ui.icon.ChevronDown}
     />
   </div>
 
   <div class="flex flex-row-center p-1 gap-2">
-    <SplitButton kind="primary" label={getEmbeddedLabel('Split Primary')} secondIcon={IconDown} />
-    <SplitButton kind="secondary" label={getEmbeddedLabel('Split Secondary')} secondIcon={IconDown} />
-    <SplitButton kind="regular" label={getEmbeddedLabel('Split Regular')} secondIcon={IconDown} />
+    <SplitButton kind="primary" label={getEmbeddedLabel('Split Primary')} secondIcon={ui.icon.CaretDownFill} />
+    <SplitButton kind="secondary" label={getEmbeddedLabel('Split Secondary')} secondIcon={ui.icon.CaretDownFill} />
+    <SplitButton kind="regular" label={getEmbeddedLabel('Split Regular')} secondIcon={ui.icon.CaretDownFill} />
   </div>
 
   <div class="flex flex-row-center p-1 gap-2">
-    <IconButton kind="primary" icon={IconCheckmark} size="small" tooltip={{ label: getEmbeddedLabel('Checkmark') }} />
+    <IconButton
+      kind="primary"
+      icon={ui.icon.CheckSmall}
+      size="small"
+      tooltip={{ label: getEmbeddedLabel('Checkmark') }}
+    />
     <IconButton
       kind="primary"
       pressed
-      icon={IconCheckmark}
+      icon={ui.icon.CheckSmall}
       size="small"
       tooltip={{ label: getEmbeddedLabel('Checkmark') }}
     />\
-    <IconButton kind="secondary" icon={IconCheckmark} size="small" tooltip={{ label: getEmbeddedLabel('Checkmark') }} />
+    <IconButton
+      kind="secondary"
+      icon={ui.icon.CheckSmall}
+      size="small"
+      tooltip={{ label: getEmbeddedLabel('Checkmark') }}
+    />
     <IconButton
       kind="secondary"
       pressed
-      icon={IconCheckmark}
+      icon={ui.icon.CheckSmall}
       size="small"
       tooltip={{ label: getEmbeddedLabel('Checkmark') }}
     />
     <IconButton
       kind="tertiary"
-      icon={IconCheckmark}
+      icon={ui.icon.CheckSmall}
       size="small"
       tooltip={{ label: getEmbeddedLabel('Checkmark') }}
       noPrint
@@ -202,27 +207,32 @@
     <IconButton
       kind="tertiary"
       pressed
-      icon={IconCheckmark}
+      icon={ui.icon.CheckSmall}
       size="small"
       tooltip={{ label: getEmbeddedLabel('Checkmark') }}
     />
-    <IconButton kind="negative" icon={IconCheckmark} size="small" tooltip={{ label: getEmbeddedLabel('Checkmark') }} />
+    <IconButton
+      kind="negative"
+      icon={ui.icon.CheckSmall}
+      size="small"
+      tooltip={{ label: getEmbeddedLabel('Checkmark') }}
+    />
     <IconButton
       kind="negative"
       pressed
-      icon={IconCheckmark}
+      icon={ui.icon.CheckSmall}
       size="small"
       tooltip={{ label: getEmbeddedLabel('Checkmark') }}
     />
     <ButtonGroup
       items={[
-        { id: 'b1', icon: IconActivity },
-        { id: 'b2', icon: IconAttachment }
+        { id: 'b1', icon: ui.icon.ChartSquare },
+        { id: 'b2', icon: ui.icon.Paperclip }
       ]}
     />
   </div>
   <div class="flex flex-row-center p-1 gap-2">
-    <IconButton kind="primary" icon={IconClose} size="min" tooltip={{ label: getEmbeddedLabel('Close') }} />
+    <IconButton kind="primary" icon={ui.icon.Cross} size="min" tooltip={{ label: getEmbeddedLabel('Close') }} />
   </div>
 
   <div class="flex flex-row-center p-1 gap-2">

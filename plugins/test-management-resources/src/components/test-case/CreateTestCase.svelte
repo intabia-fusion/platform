@@ -24,7 +24,7 @@
   import { ObjectBox } from '@hcengineering/view-resources'
   import { Card, SpaceSelector, createMarkup, getClient } from '@hcengineering/presentation'
   import { EmptyMarkup, isEmptyMarkup } from '@hcengineering/text'
-  import { Button, createFocusManager, EditBox, FocusHandler, IconAttachment, getLocation } from '@hcengineering/ui'
+  import ui, { Button, createFocusManager, EditBox, FocusHandler, getLocation } from '@hcengineering/ui'
 
   import StatusEditor from './StatusEditor.svelte'
   import ProjectPresenter from '../project/ProjectPresenter.svelte'
@@ -189,7 +189,7 @@
 
   <svelte:fragment slot="footer">
     <Button
-      icon={IconAttachment}
+      icon={ui.icon.Paperclip}
       size="large"
       on:click={() => {
         descriptionBox.handleAttach()

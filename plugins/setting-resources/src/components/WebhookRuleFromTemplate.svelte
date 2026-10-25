@@ -20,10 +20,9 @@
   import presentation, { copyTextToClipboard, getClient } from '@hcengineering/presentation'
   import { makeRank } from '@hcengineering/rank'
   import setting, { type WebhookRuleTarget } from '@hcengineering/setting'
-  import {
+  import ui, {
     Button,
     DropdownLabels,
-    IconCopy,
     Label,
     Modal,
     eventToHTMLElement,
@@ -32,6 +31,7 @@
   } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
+
   import settingsRes from '../plugin'
   import type { WebhookRuleTemplate } from '../webhookRuleTemplates'
   import { targetKind } from '../webhookTargetKind'
@@ -195,7 +195,7 @@
         <Button
           kind="ghost"
           size="small"
-          icon={IconCopy}
+          icon={ui.icon.Copy}
           showTooltip={{ label: view.string.CopyToClipboard }}
           on:click={() => {
             void copyText(endpoint)

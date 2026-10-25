@@ -19,7 +19,6 @@
   import ui, {
     Button,
     Chip,
-    IconAdd,
     Label,
     Modal,
     ModernEditbox,
@@ -34,6 +33,7 @@
   import { IconButton } from '@hcengineering/ui/kit'
   import { getCurrentLanguage } from '@hcengineering/theme'
   import { createEventDispatcher } from 'svelte'
+
   import settingsRes from '../plugin'
   import { formatApiKeyError, getAccountClient, isApiKeyPickableSpace } from '../utils'
   import ApiKeyOperationsPopup from './ApiKeyOperationsPopup.svelte'
@@ -184,7 +184,7 @@
             <IconButton
               kind="tertiary"
               size="small"
-              icon={IconAdd}
+              icon={ui.icon.Plus}
               tooltip={{ label: presentation.string.Add }}
               on:click={pickOps}
             />
@@ -221,7 +221,7 @@
           <IconButton
             kind="tertiary"
             size="small"
-            icon={IconAdd}
+            icon={ui.icon.Plus}
             tooltip={{ label: presentation.string.Add }}
             on:click={pickSpaces}
           />

@@ -17,13 +17,13 @@
   import { createEventDispatcher } from 'svelte'
   import { deepEqual } from 'fast-equals'
 
+  import Icon from './Icon.svelte'
   import type { AnySvelteComponent, TooltipAlignment, ButtonKind, ButtonSize, DropdownIntlItem } from '../types'
   import { showPopup, closePopup } from '../popups'
   import Button from './Button.svelte'
   import DropdownLabelsPopupIntl from './DropdownLabelsPopupIntl.svelte'
   import Label from './Label.svelte'
   import ui from '../plugin'
-  import DropdownIcon from './icons/Dropdown.svelte'
 
   export let icon: Asset | AnySvelteComponent | undefined = undefined
   export let iconProps: Record<string, any> = {}
@@ -129,7 +129,8 @@
       {/if}
     </span>
     <svelte:fragment slot="iconRight">
-      <DropdownIcon
+      <Icon
+        icon={ui.icon.ChevronDown}
         size="small"
         fill={kind === 'primary' && !disabled ? 'var(--primary-button-content-color)' : 'var(--theme-dark-color)'}
       />

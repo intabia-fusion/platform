@@ -14,7 +14,7 @@
 //
 
 import { getEmbeddedLabel } from '@hcengineering/platform'
-import { IconActivity, IconAttachment, IconSettings } from '@hcengineering/ui'
+import ui from '@hcengineering/ui'
 import { Tabs } from '@hcengineering/ui/kit'
 import type { Meta, StoryObj } from '@storybook/svelte'
 
@@ -30,9 +30,9 @@ const labels = [
   { id: 'statistics', label: getEmbeddedLabel('Statistics') }
 ]
 const icons = [
-  { id: 'activity', icon: IconActivity, label: getEmbeddedLabel('Activity') },
-  { id: 'attachments', icon: IconAttachment, label: getEmbeddedLabel('Attachments') },
-  { id: 'settings', icon: IconSettings, label: getEmbeddedLabel('Settings') }
+  { id: 'activity', icon: ui.icon.ChartSquare, label: getEmbeddedLabel('Activity') },
+  { id: 'attachments', icon: ui.icon.Paperclip, label: getEmbeddedLabel('Attachments') },
+  { id: 'settings', icon: ui.icon.Sliders, label: getEmbeddedLabel('Settings') }
 ]
 
 const meta = {

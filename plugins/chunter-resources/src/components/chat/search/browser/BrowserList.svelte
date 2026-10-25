@@ -17,8 +17,6 @@
   import ui, {
     BlankView,
     Button,
-    IconOptions,
-    IconSearch,
     Label,
     Loading,
     ModernDropdown,
@@ -158,7 +156,7 @@
       <ModernDropdown
         items={sortItems}
         selected={state.sort}
-        icon={IconOptions}
+        icon={ui.icon.ArrowUpLines}
         iconSize="small"
         kind="secondary"
         size="small"
@@ -194,7 +192,7 @@
         <BlankView icon={tabConfig[tab].icon} header={tabConfig[tab].empty} label={chunter.string.BrowserEmptyHint} />
       {:else}
         <BlankView
-          icon={IconSearch}
+          icon={ui.icon.Search}
           header={chunter.string.SearchNoResultsTitle}
           label={chunter.string.SearchNoResultsHint}
         />

@@ -44,7 +44,7 @@ kit.MessageInput = (o = {}) => {
   const group = kit.row('group', 6)
   const tool = (icon) => kit.ClassicButton({ kind: 'ghost', size: 'medium', icon, iconSize: 20 })
   const div = () => kit.box('divider', { w: 1, h: 24, fill: T('theme-refinput-divider') })
-  kit.add(group, tool('text-editor/Attach'), tool('media/CamOn'), div(), tool('chunter/IconMic'), div(), tool('text-editor/RIMention'), tool('emoji/emoji'), div(), tool('templates/template'))
+  kit.add(group, tool('kit/Paperclip'), tool('kit/Camera'), div(), tool('kit/Mic'), div(), tool('kit/At'), tool('kit/Smiley'), div(), tool('kit/BubblePlus'))
   kit.add(panel, group, kit.ClassicButton({ kind: 'ghost', size: 'medium', icon: 'text-editor/Send', iconSize: 20, disabled: true }))
   return kit.add(box, field, panel)
 }

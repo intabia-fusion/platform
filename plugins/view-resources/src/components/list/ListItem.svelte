@@ -17,9 +17,10 @@
   import { getObjectValue } from '@hcengineering/core'
   import notification from '@hcengineering/notification'
   import { getClient, updateAttribute } from '@hcengineering/presentation'
-  import { CheckBox, Component, IconCircles, tooltip, deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
+  import ui, { CheckBox, Component, tooltip, deviceOptionsStore as deviceInfo, Icon } from '@hcengineering/ui'
   import type { AttributeModel } from '@hcengineering/view'
   import { createEventDispatcher, onMount } from 'svelte'
+
   import view from '../../plugin'
   import GrowPresenter from './GrowPresenter.svelte'
   import ListPresenter from './ListPresenter.svelte'
@@ -104,7 +105,7 @@
 >
   <div class="draggable-container">
     <div class="draggable-mark">
-      <IconCircles size="small" />
+      <Icon icon={ui.icon.GripVertical} size="small" fill="var(--theme-caption-color)" />
     </div>
   </div>
   <div class="flex-center relative mr-1" use:tooltip={{ label: view.string.Select, direction: 'bottom' }}>
@@ -188,7 +189,7 @@
   {/each}
   {#if compactMode && needCompact}
     <div class="panel-trigger" tabindex="-1">
-      <IconCircles size="small" />
+      <Icon icon={ui.icon.GripVertical} size="small" fill="var(--theme-caption-color)" />
     </div>
     <div class="hidden-panel" tabindex="-1">
       <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -198,7 +199,7 @@
           ev.currentTarget.blur()
         }}
       >
-        <IconCircles size="small" />
+        <Icon icon={ui.icon.GripVertical} size="small" fill="var(--theme-caption-color)" />
       </div>
       <div class="scroll-box gap-1">
         {#if mobile}

@@ -18,7 +18,7 @@
   import type { Asset, IntlString } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import type { AnyComponent, AnySvelteComponent } from '@hcengineering/ui'
-  import { Breadcrumb, Button, Component, Header, IconAdd, Loading, SearchInput, showPopup } from '@hcengineering/ui'
+  import ui, { Breadcrumb, Button, Component, Header, Loading, SearchInput, showPopup } from '@hcengineering/ui'
   import type { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
   import {
     FilterBar,
@@ -127,7 +127,7 @@
   <svelte:fragment slot="actions">
     {#if createLabel && createComponent}
       <Button
-        icon={IconAdd}
+        icon={ui.icon.Plus}
         label={createLabel}
         kind="primary"
         on:click={() => {

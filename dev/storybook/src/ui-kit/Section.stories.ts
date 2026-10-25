@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 import { getEmbeddedLabel } from '@hcengineering/platform'
-import { IconActivity, IconFolder } from '@hcengineering/ui'
+import ui from '@hcengineering/ui'
 import { Section } from '@hcengineering/ui/kit'
 import type { Meta, StoryObj } from '@storybook/svelte'
 
@@ -23,7 +23,7 @@ import SectionExample from './section/SectionExample.svelte'
 const meta = {
   title: 'Menus and lists/Section',
   component: Section,
-  args: { label: getEmbeddedLabel('Members'), icon: IconFolder },
+  args: { label: getEmbeddedLabel('Members'), icon: ui.icon.Folder },
   parameters: {
     docs: {
       description: {
@@ -50,7 +50,7 @@ export const Variants: Story = {
           title: 'Header',
           component: SectionExample,
           rows: [
-            { title: 'icon', props: { props: { icon: IconFolder } } },
+            { title: 'icon', props: { props: { icon: ui.icon.Folder } } },
             { title: 'no icon', props: {} }
           ],
           columns: [
@@ -62,7 +62,7 @@ export const Variants: Story = {
         {
           title: 'Long title',
           component: SectionExample,
-          rows: [{ title: 'activity', props: { props: { icon: IconActivity } } }],
+          rows: [{ title: 'activity', props: { props: { icon: ui.icon.ChartSquare } } }],
           columns: [{ title: 'ellipsis', props: { width: '16rem' } }],
           props: { label: getEmbeddedLabel('Activity and comments of the whole team') }
         }

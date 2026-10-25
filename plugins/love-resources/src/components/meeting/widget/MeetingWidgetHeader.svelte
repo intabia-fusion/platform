@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import type { BreadcrumbItem, PopupResult } from '@hcengineering/ui'
-  import ui, { Breadcrumbs, Header, IconMaximize, showPopup, ticker1 } from '@hcengineering/ui'
+  import ui, { Breadcrumbs, Header, showPopup, ticker1 } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import type { MeetingMinutes, Room } from '@hcengineering/love'
   import { onDestroy } from 'svelte'
@@ -59,7 +59,7 @@
       <TranscriptionButton kind="tertiary" size="small" />
       <MeetingOptionsButton {room} meetingMinutes={doc} kind="tertiary" size="small" />
       <IconButton
-        icon={IconMaximize}
+        icon={ui.icon.ArrowsOut}
         kind="tertiary"
         size="small"
         noPrint

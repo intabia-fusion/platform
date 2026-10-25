@@ -19,9 +19,10 @@
   import { getClient } from '@hcengineering/presentation'
   import type { Process, SelectedContext } from '@hcengineering/process'
   import { createContext, parseContext } from '@hcengineering/process'
-  import { Button, Component, eventToHTMLElement, IconAdd, IconClose, showPopup } from '@hcengineering/ui'
+  import ui, { Button, Component, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import view from '@hcengineering/view-resources/src/plugin'
   import { createEventDispatcher } from 'svelte'
+
   import { getContext } from '../../utils'
   import ContextSelectorPopup from '../attributeEditors/ContextSelectorPopup.svelte'
   import ContextValue from '../attributeEditors/ContextValue.svelte'
@@ -98,14 +99,14 @@
   {/if}
   <div class="button flex-row-center">
     <Button
-      icon={IconAdd}
+      icon={ui.icon.Plus}
       kind="ghost"
       on:click={(e) => {
         selectContext(e)
       }}
     />
     <Button
-      icon={IconClose}
+      icon={ui.icon.Cross}
       kind="ghost"
       on:click={() => {
         dispatch('delete')

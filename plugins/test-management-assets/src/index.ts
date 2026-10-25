@@ -17,31 +17,33 @@ import testManagement from '@hcengineering/test-management'
 import { loadMetadata } from '@hcengineering/platform'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
+// Icons the kit has: the ids stay, stored documents keep pointing at them.
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(testManagement.icon, {
-  TestCase: `${icons}#testCase`,
-  TestManagementApplication: `${icons}#testManagementApplication`,
-  TestManagement: `${icons}#testCase`,
-  TestManagementVersion: `${icons}#testCase`,
-  TestCases: `${icons}#testCase`,
-  Home: `${icons}#home`,
-  Estimation: `${icons}#testCase`,
-  TestSuite: `${icons}#testSuite`,
-  TestProject: `${icons}#project`,
-  TestSuites: `${icons}#testSuite`,
-  TestRuns: `${icons}#testRun`,
+  TestCase: `${uiIcons}#document`,
+  TestManagementApplication: `${uiIcons}#hierarchy`,
+  TestManagement: `${uiIcons}#document`,
+  TestManagementVersion: `${uiIcons}#document`,
+  TestCases: `${uiIcons}#document`,
+  Home: `${uiIcons}#house-fill`,
+  Estimation: `${uiIcons}#document`,
+  TestSuite: `${uiIcons}#folder-tab`,
+  TestProject: `${uiIcons}#briefcase`,
+  TestSuites: `${uiIcons}#folder-tab`,
+  TestRuns: `${uiIcons}#briefcase-play`,
   RedCircle: `${icons}#red-circle`,
-  Document: `${icons}#document`,
+  Document: `${uiIcons}#document`,
   StatusDraft: `${icons}#status-draft`,
   StatusReview: `${icons}#status-review`,
   StatusReviewComments: `${icons}#status-review-comments`,
   StatusApproved: `${icons}#status-approved`,
   StatusRejected: `${icons}#status-canceled`,
-  TestLibrary: `${icons}#test-library`,
-  TestResult: `${icons}#testResult`,
+  TestLibrary: `${uiIcons}#books`,
+  TestResult: `${uiIcons}#list-check`,
   StatusNonTested: `${icons}#status-untested`,
   StatusBlocked: `${icons}#status-blocked`,
-  StatusPassed: `${icons}#status-passed`,
-  StatusFailed: `${icons}#status-failed`,
-  Run: `${icons}#run`,
-  TestPlans: `${icons}#testPlan`
+  StatusPassed: `${uiIcons}#check-circle-fill`,
+  StatusFailed: `${uiIcons}#cross-circle-fill`,
+  Run: `${uiIcons}#play-fill`,
+  TestPlans: `${uiIcons}#clipboard`
 })

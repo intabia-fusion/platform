@@ -20,9 +20,8 @@
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { FilePreview, getClient, MessageBox, SpaceSelector } from '@hcengineering/presentation'
   import type { PopupResult } from '@hcengineering/ui'
-  import {
+  import ui, {
     EditBox,
-    IconUpOutline,
     Label,
     Modal,
     SelectPopup,
@@ -34,6 +33,7 @@
   import { Button, IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
+  import { openDocFromRef } from '@hcengineering/view-resources'
 
   import plugin from '../plugin'
   import { canvasWidth, canvasHeight, canvasStream } from '../stores/composer'
@@ -61,19 +61,8 @@
     loading as loadingStore
   } from '../recording'
   import { formatElapsedTime, formatRecordingName } from '../utils'
-
-  import IconCamOn from './icons/CamOn.svelte'
-  import IconCamOff from './icons/CamOff.svelte'
-  import IconMicOn from './icons/MicOn.svelte'
-  import IconMicOff from './icons/MicOff.svelte'
-  import IconPause from './icons/Pause.svelte'
-  import IconPlay from './icons/Play.svelte'
-  import IconSettings from './icons/Settings.svelte'
-  import IconShare from './icons/Share.svelte'
-  import IconStop from './icons/Stop.svelte'
   import ShareSettingsPopup from './ShareSettingsPopup.svelte'
   import SettingsPopup from './SettingsPopup.svelte'
-  import { openDocFromRef } from '@hcengineering/view-resources'
 
   const dispatch = createEventDispatcher()
 
@@ -358,7 +347,7 @@
           iconSize="medium"
           size="small"
           kind="secondary"
-          icon={IconSettings}
+          icon={ui.icon.Gear}
           iconProps={{ size: 'small' }}
           tooltip={{ label: plugin.string.Settings }}
           on:click={handleSettingsClick}
@@ -366,12 +355,12 @@
 
         <SplitButton
           size="small"
-          icon={IconShare}
+          icon={ui.icon.ScreenShare}
           iconProps={{
             size: 'small'
           }}
           label={screenShareEnabled ? plugin.string.StopSharing : plugin.string.ShareScreen}
-          secondIcon={IconUpOutline}
+          secondIcon={ui.icon.ChevronUpSmall}
           secondIconProps={{ size: 'small' }}
           secondAction={handleShareSettings}
           action={screenShareEnabled ? stopScreenShare : startScreenShare}
@@ -383,7 +372,7 @@
 
         <SplitButton
           size="small"
-          icon={$micEnabled ? IconMicOn : IconMicOff}
+          icon={$micEnabled ? ui.icon.Mic : ui.icon.MicOff}
           iconProps={{
             size: 'small',
             fill: hasMicAccess
@@ -392,7 +381,7 @@
                 : 'var(--theme-state-negative-color)'
               : 'currentColor'
           }}
-          secondIcon={IconUpOutline}
+          secondIcon={ui.icon.ChevronUpSmall}
           secondIconProps={{ size: 'small' }}
           secondAction={handleMicSetting}
           action={toggleMic}
@@ -403,7 +392,7 @@
 
         <SplitButton
           size="small"
-          icon={$camEnabled ? IconCamOn : IconCamOff}
+          icon={$camEnabled ? ui.icon.Camera : ui.icon.CameraOff}
           iconProps={{
             size: 'small',
             fill: hasCamAccess
@@ -412,7 +401,7 @@
                 : 'var(--theme-state-negative-color)'
               : 'currentColor'
           }}
-          secondIcon={IconUpOutline}
+          secondIcon={ui.icon.ChevronUpSmall}
           secondIconProps={{ size: 'small' }}
           secondAction={handleCamSetting}
           action={toggleCam}
@@ -452,7 +441,7 @@
           <Button
             size="small"
             kind="negative"
-            icon={IconStop}
+            icon={plugin.icon.Stop}
             iconProps={{ size: 'small' }}
             label={plugin.string.Stop}
             disabled
@@ -464,7 +453,7 @@
           <Button
             size="small"
             kind="negative"
-            icon={IconStop}
+            icon={plugin.icon.Stop}
             iconProps={{ size: 'small' }}
             label={plugin.string.Stop}
             on:click={stopRecording}
@@ -476,7 +465,7 @@
           <Button
             size="small"
             kind="secondary"
-            icon={IconPause}
+            icon={plugin.icon.Pause}
             iconProps={{ size: 'small' }}
             label={plugin.string.Pause}
             on:click={pauseRecording}
@@ -485,7 +474,7 @@
           <Button
             size="small"
             kind="secondary"
-            icon={IconPlay}
+            icon={ui.icon.PlayFill}
             iconProps={{ size: 'small' }}
             label={plugin.string.Resume}
             on:click={resumeRecording}

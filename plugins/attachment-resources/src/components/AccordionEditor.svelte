@@ -16,7 +16,7 @@
   import type { Class, Doc, Ref, Space } from '@hcengineering/core'
   import textEditorPlugin from '@hcengineering/text-editor'
   import { TextEditor } from '@hcengineering/text-editor-resources'
-  import { Button, IconDownOutline, Label, tooltip } from '@hcengineering/ui'
+  import ui, { Button, Label, tooltip, Icon } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   import type { AccordionItem } from '..'
@@ -127,7 +127,7 @@
         >
           <svelte:fragment slot="icon">
             <div class="rotated-icon {item.state}">
-              <IconDownOutline size="medium" />
+              <Icon icon={ui.icon.ChevronDown} size="medium" />
             </div>
           </svelte:fragment>
         </Button>

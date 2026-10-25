@@ -18,37 +18,37 @@ import { loadMetadata } from '@hcengineering/platform'
 import contact from '@hcengineering/contact'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
+// Icons the kit has: the ids stay, stored documents keep pointing at them.
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(contact.icon, {
-  ContactApplication: `${icons}#contactapplication`,
+  ContactApplication: `${uiIcons}#person-circle`,
   Phone: `${icons}#phone`,
   Huly: `${icons}#huly`,
-  Email: `${icons}#email`,
-  Discord: `${icons}#discord`,
+  Email: `${uiIcons}#envelope-fill`,
+  EmailLine: `${uiIcons}#envelope`,
   Facebook: `${icons}#facebook`,
-  Instagram: `${icons}#instagram`,
   LinkedIn: `${icons}#linkedin`,
   Telegram: `${icons}#telegram`,
   Google: `${icons}#google`,
   Twitter: `${icons}#twitter`,
-  VK: `${icons}#vk`,
   Viber: `${icons}#viber`,
   WhatsApp: `${icons}#whatsapp`,
-  Youtube: `${icons}#youtube`,
   GitHub: `${icons}#github`,
-  Edit: `${icons}#edit`,
-  Person: `${icons}#person`,
-  Persona: `${icons}#persona`,
-  Company: `${icons}#company`,
-  SocialEdit: `${icons}#social-edit`,
-  Homepage: `${icons}#homepage`,
+  Edit: `${uiIcons}#pencil-fill`,
+  Person: `${uiIcons}#person-circle`,
+  Persona: `${uiIcons}#person`,
+  Company: `${uiIcons}#building`,
+  SocialEdit: `${uiIcons}#note-pencil`,
+  Homepage: `${uiIcons}#globe`,
   Whatsapp: `${icons}#whatsapp`,
-  Profile: `${icons}#profile`,
-  KickUser: `${icons}#kickUser`,
-  ComponentMembers: `${icons}#componentMembers`,
-  Contacts: `${icons}#contacts`,
-  Clock: `${icons}#clock`,
-  Chat: `${icons}#chat`,
-  User: `${icons}#user`
+  Profile: `${uiIcons}#person-circle`,
+  KickUser: `${uiIcons}#person-cross`,
+  ComponentMembers: `${icons}#person-squares`,
+  Contacts: `${uiIcons}#people`,
+  Clock: `${uiIcons}#clock`,
+  Chat: `${uiIcons}#bubble-dots`,
+  User: `${uiIcons}#person`,
+  AddPerson: `${icons}#person-circle-plus`
 })
 
 const ProfileBackground = require('../assets/profile-background.png') as string // eslint-disable-line

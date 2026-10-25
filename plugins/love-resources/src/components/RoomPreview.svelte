@@ -395,7 +395,7 @@
             />
           {/if}
           {#if room.type === RoomType.Video}
-            <Icon icon={love.icon.CamEnabled} size="small" />
+            <Icon icon={love.icon.CamEnabled} size="small" fill="var(--bg-positive-default)" />
           {/if}
         </div>
       {/if}

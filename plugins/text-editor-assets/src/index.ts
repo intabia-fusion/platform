@@ -17,6 +17,8 @@ import { loadMetadata } from '@hcengineering/platform'
 import textEditor from '@hcengineering/text-editor'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
+// Icons the kit has: the ids stay, stored documents keep pointing at them.
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(textEditor.icon, {
   Header1: `${icons}#header1`,
   Header2: `${icons}#header2`,
@@ -25,31 +27,31 @@ loadMetadata(textEditor.icon, {
   Strikethrough: `${icons}#strikethrough`,
   Bold: `${icons}#bold`,
   Italic: `${icons}#italic`,
-  Link: `${icons}#link`,
+  Link: `${uiIcons}#link`,
   ListNumber: `${icons}#listNumber`,
-  ListBullet: `${icons}#listBullet`,
+  ListBullet: `${uiIcons}#bullet-list`,
   ListTodo: `${icons}#listTodo`,
   Quote: `${icons}#quote`,
-  Code: `${icons}#code`,
+  Code: `${uiIcons}#code`,
   CodeBlock: `${icons}#codeBlock`,
   TableProps: `${icons}#tableProps`,
   AlignLeft: `${icons}#alignLeft`,
   AlignCenter: `${icons}#alignCenter`,
   AlignRight: `${icons}#alignRight`,
-  MoreH: `${icons}#moreH`,
-  Expand: `${icons}#expand`,
-  ScaleOut: `${icons}#scaleOut`,
-  Download: `${icons}#download`,
+  MoreH: `${uiIcons}#dots-horizontal`,
+  Expand: `${uiIcons}#open-file`,
+  ScaleOut: `${uiIcons}#arrows-out`,
+  Download: `${uiIcons}#download`,
   Note: `${icons}#note`,
-  Comment: `${icons}#comment`,
-  SelectTable: `${icons}#move`,
+  Comment: `${uiIcons}#bubbles`,
+  SelectTable: `${uiIcons}#arrows-move`,
   MergeCells: `${icons}#union`,
   SplitCells: `${icons}#divide`,
   Brush: `${icons}#brush`,
   TextStyle: `${icons}#textStyle`,
-  LinkPreview: `${icons}#link`,
-  Refresh: `${icons}#refresh`,
+  LinkPreview: `${uiIcons}#link`,
+  Refresh: `${uiIcons}#arrows-clockwise`,
   ShowDiff: `${icons}#showDiff`,
-  SeeOriginalData: `${icons}#seeOriginal`,
+  SeeOriginalData: `${uiIcons}#eye`,
   EmbedPreview: `${icons}#linkEmbed`
 })

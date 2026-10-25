@@ -15,7 +15,7 @@
   import type { IntlString } from '@hcengineering/platform'
   import type { TaskType } from '@hcengineering/task'
   import presentation from '@hcengineering/presentation'
-  import { IconClose, Label } from '@hcengineering/ui'
+  import ui, { Label } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import { createEventDispatcher } from 'svelte'
 
@@ -49,7 +49,7 @@
     <IconButton
       kind="tertiary"
       size="min"
-      icon={IconClose}
+      icon={ui.icon.Cross}
       inheritColor
       tooltip={{ label: presentation.string.Remove }}
       on:click={() => dispatch('remove')}

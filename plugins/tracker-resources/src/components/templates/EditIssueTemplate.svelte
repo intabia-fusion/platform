@@ -22,12 +22,12 @@
   import setting, { settingId } from '@hcengineering/setting'
   import tags, { type TagElement, type TagReference } from '@hcengineering/tags'
   import type { IssueTemplate, IssueTemplateChild, Project } from '@hcengineering/tracker'
-  import { Button, EditBox, IconMoreH, Label, getCurrentResolvedLocation, navigate } from '@hcengineering/ui'
+  import ui, { Button, EditBox, Label, getCurrentResolvedLocation, navigate } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { showMenu } from '@hcengineering/view-resources'
   import { createEventDispatcher, onDestroy, onMount } from 'svelte'
-  import tracker from '../../plugin'
 
+  import tracker from '../../plugin'
   import SubIssueTemplates from '../subtasks/SubtaskSection.svelte'
   import TemplateControlPanel from './TemplateControlPanel.svelte'
 
@@ -192,7 +192,7 @@
     </svelte:fragment>
     <svelte:fragment slot="utils">
       <Button
-        icon={IconMoreH}
+        icon={ui.icon.DotsHorizontal}
         iconProps={{ size: 'medium' }}
         kind="icon"
         dataId="btnMoreActions"

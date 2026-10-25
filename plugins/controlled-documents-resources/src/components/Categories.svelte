@@ -17,7 +17,7 @@
   import documents from '@hcengineering/controlled-documents'
   import type { Class, DocumentQuery, Ref, TypedSpace } from '@hcengineering/core'
   import { ActionContext } from '@hcengineering/presentation'
-  import { Button, IconAdd, Loading, showPopup } from '@hcengineering/ui'
+  import ui, { Button, Loading, showPopup } from '@hcengineering/ui'
   import type { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
   import view from '@hcengineering/view'
   import { TableBrowser, ViewletPanelHeader } from '@hcengineering/view-resources'
@@ -69,7 +69,7 @@
   <svelte:fragment slot="actions">
     {#if canCreate}
       <Button
-        icon={IconAdd}
+        icon={ui.icon.Plus}
         label={document.string.DocumentCategoryCreateLabel}
         size="small"
         kind="primary"

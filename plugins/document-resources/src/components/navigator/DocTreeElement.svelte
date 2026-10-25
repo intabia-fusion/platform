@@ -17,10 +17,11 @@
   import type { Document } from '@hcengineering/document'
   import type { Asset, IntlString } from '@hcengineering/platform'
   import type { Action, AnySvelteComponent } from '@hcengineering/ui'
-  import { IconMoreH, Menu, navigate, showPopup, NavItem } from '@hcengineering/ui'
+  import ui, { Menu, navigate, showPopup, NavItem } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
-  import { getDocumentLink } from '../../utils'
   import view from '@hcengineering/view'
+
+  import { getDocumentLink } from '../../utils'
 
   export let doc: Document
   export let icon: Asset | AnySvelteComponent | undefined = undefined
@@ -91,7 +92,7 @@
       {/if}
     {/each}
     <IconButton
-      icon={IconMoreH}
+      icon={ui.icon.DotsHorizontal}
       kind="tertiary"
       size="extra-small"
       pressed={hovered}

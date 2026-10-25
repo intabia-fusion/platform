@@ -14,8 +14,7 @@
 -->
 <script lang="ts">
   // Dialog card of popups (presentation Card): header with close, content, attribute pool and footer
-  import { Button, IconClose, Scroller } from '@hcengineering/ui'
-  import Forward from '../../../../../../packages/presentation/src/components/icons/Forward.svelte'
+  import ui, { Button, Icon, Scroller } from '@hcengineering/ui'
 
   export let title: string = ''
   export let width: 'large' | 'medium' | 'small' | 'x-small' = 'large'
@@ -30,7 +29,7 @@
         <slot name="header" />
         <div class="antiCard-header__title-group">
           {#if $$slots.header}
-            <span class="antiCard-header__divider"><Forward size="small" /></span>
+            <span class="antiCard-header__divider"><Icon icon={ui.icon.ChevronRight} size="small" /></span>
           {/if}
           <div class="antiCard-header__title">
             <slot name="title">{title}</slot>
@@ -43,7 +42,7 @@
       {#if !hideClose}
         <div class="ml-2 buttons-group small-gap content-dark-color">
           <Button
-            icon={IconClose}
+            icon={ui.icon.Cross}
             iconProps={{ size: 'medium', fill: 'var(--theme-dark-color)' }}
             kind="ghost"
             size="small"

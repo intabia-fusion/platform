@@ -1,12 +1,13 @@
 <script lang="ts">
-  import { eventToHTMLElement, IconUpOutline, showPopup, SplitButton } from '@hcengineering/ui'
-  import CamSettingPopup from '../CamSettingPopup.svelte'
+  import ui, { eventToHTMLElement, showPopup, SplitButton } from '@hcengineering/ui'
   import { RoomType } from '@hcengineering/love'
-  import { currentRoom } from '../../../stores'
-  import love from '../../../plugin'
   import { state, toggleCamState } from '@hcengineering/media-resources'
   import view from '@hcengineering/view'
   import { getClient } from '@hcengineering/presentation'
+
+  import CamSettingPopup from '../CamSettingPopup.svelte'
+  import { currentRoom } from '../../../stores'
+  import love from '../../../plugin'
 
   export let size: 'large' | 'medium' | 'small' | 'extra-small' | 'min' = 'large'
   export let checkActions: boolean = true
@@ -27,12 +28,13 @@
   <SplitButton
     {size}
     icon={isCamEnabled ? love.icon.CamEnabled : love.icon.CamDisabled}
+    iconProps={{ fill: isCamEnabled ? 'var(--theme-state-positive-color)' : 'var(--theme-error-color)' }}
     showTooltip={{
       label: isCamEnabled ? love.string.StopVideo : love.string.StartVideo,
       keys: camKeys
     }}
     action={toggleCamState}
-    secondIcon={IconUpOutline}
+    secondIcon={ui.icon.ChevronUpSmall}
     secondAction={camSettings}
     separate
   />

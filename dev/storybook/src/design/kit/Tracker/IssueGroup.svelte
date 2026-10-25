@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IconCollapseArrow } from '@hcengineering/ui'
-  import { themeStore } from '@hcengineering/ui'
+  import ui, { Icon as UiIcon, themeStore } from '@hcengineering/ui'
+
   import { categoryColor, paletteDef } from '../palette'
   import StatusIcon from '../Status/StatusIcon.svelte'
   import type { Issue, Status } from '../types'
@@ -42,7 +42,7 @@
   >
     <div class="flex-row-center flex-grow" style:color={def.title}>
       <div class="chevron" class:empty>
-        {#if !empty}<IconCollapseArrow size="small" />{/if}
+        {#if !empty}<UiIcon icon={ui.icon.CaretRightFill} size="small" />{/if}
       </div>
       <div class="flex-presenter"><StatusIcon {status} /><span class="name ml-2">{name}</span></div>
       <span class="antiSection-header__counter ml-2">{issues.length}</span>

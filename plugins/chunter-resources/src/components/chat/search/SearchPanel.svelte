@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import type { Doc, Ref, SearchSortOrder, Space } from '@hcengineering/core'
-  import { IconOptions, Label, ModernDropdown, type DropdownIntlItem } from '@hcengineering/ui'
+  import ui, { Label, ModernDropdown, type DropdownIntlItem } from '@hcengineering/ui'
   import { createEventDispatcher, onDestroy, onMount, tick } from 'svelte'
   import { get } from 'svelte/store'
 
@@ -163,7 +163,7 @@
           <ModernDropdown
             items={sortItems}
             selected={$store.sort}
-            icon={IconOptions}
+            icon={ui.icon.ArrowUpLines}
             iconSize="small"
             kind="secondary"
             size="small"

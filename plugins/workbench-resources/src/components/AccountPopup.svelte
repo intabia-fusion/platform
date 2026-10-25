@@ -23,13 +23,12 @@
     getCurrentWorkspaceUrl,
     hasResource,
     isDisabled,
-    IconDownload,
     canLeaveWorkspace
   } from '@hcengineering/presentation'
   import type { SettingsCategory } from '@hcengineering/setting'
   import setting, { settingId } from '@hcengineering/setting'
   import type { Action } from '@hcengineering/ui'
-  import {
+  import ui, {
     closePopup,
     Component,
     deviceOptionsStore as deviceInfo,
@@ -40,13 +39,13 @@
     showPopup
   } from '@hcengineering/ui'
   import view from '@hcengineering/view'
-  import workbench from '../plugin'
-  import { logOut } from '../utils'
-  import HelpAndSupport from './HelpAndSupport.svelte'
-
   import { Analytics } from '@hcengineering/analytics'
   import { allowGuestSignUpStore } from '@hcengineering/view-resources'
   import { getMetadata } from '@hcengineering/platform'
+
+  import workbench from '../plugin'
+  import { logOut } from '../utils'
+  import HelpAndSupport from './HelpAndSupport.svelte'
 
   let items: SettingsCategory[] = []
 
@@ -177,7 +176,7 @@
     // Hide downloads action on mobile phones (small viewport + mobile detection)
     if (!($deviceInfo.isMobile && $deviceInfo.minWidth)) {
       actions.push({
-        icon: IconDownload,
+        icon: ui.icon.CloudDownload,
         label: presentation.string.Download,
         action: async () => {
           // Navigate to the dedicated downloads page instead of showing an inline popup

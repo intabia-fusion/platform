@@ -13,14 +13,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import ui, { Icon, Label, IconEdit } from '@hcengineering/ui'
+  import ui, { Icon, Label } from '@hcengineering/ui'
   import type { AttributeModel } from '@hcengineering/view'
   import type { DocAttributeUpdates, DocUpdateMessageViewlet } from '@hcengineering/activity'
   import activity from '@hcengineering/activity'
+  import type { Ref, Space } from '@hcengineering/core'
 
   import ChangeAttributesTemplate from './ChangeAttributesTemplate.svelte'
   import { getIsTextType } from '../../../utils'
-  import type { Ref, Space } from '@hcengineering/core'
 
   export let viewlet: DocUpdateMessageViewlet | undefined
   export let attributeModel: AttributeModel
@@ -30,7 +30,7 @@
   export let space: Ref<Space> | undefined = undefined
 
   $: attrViewletConfig = viewlet?.config?.[attributeModel.key]
-  $: attributeIcon = attrViewletConfig?.icon ?? attributeModel.icon ?? IconEdit
+  $: attributeIcon = attrViewletConfig?.icon ?? attributeModel.icon ?? ui.icon.PencilLine
   $: isUnset = values.length > 0 && !values.some((value) => value != null && value !== '')
 
   $: isTextType = getIsTextType(attributeModel)

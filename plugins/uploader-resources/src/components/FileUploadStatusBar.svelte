@@ -14,11 +14,9 @@
 -->
 <script lang="ts">
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { ProgressCircle, showPopup, tooltip } from '@hcengineering/ui'
+  import ui, { Icon, ProgressCircle, showPopup, tooltip } from '@hcengineering/ui'
 
   import type { Upload } from '../store'
-
-  import IconError from './icons/Error.svelte'
   import FileUploadStatusPopup from './FileUploadStatusPopup.svelte'
 
   export let upload: Upload
@@ -37,7 +35,7 @@
   use:tooltip={upload.error !== undefined ? { label: getEmbeddedLabel(upload.error) } : undefined}
 >
   {#if upload.error}
-    <IconError size="small" fill="var(--negative-button-default)" />
+    <Icon icon={ui.icon.CrossCircle} size="small" fill="var(--negative-button-default)" />
   {:else}
     <ProgressCircle value={upload.progress / Math.max(upload.files.size, 1)} size="small" primary />
   {/if}

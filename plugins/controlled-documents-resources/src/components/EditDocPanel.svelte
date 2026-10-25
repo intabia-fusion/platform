@@ -22,12 +22,11 @@
   import { getClient } from '@hcengineering/presentation'
   import { Collaboration } from '@hcengineering/text-editor-resources'
   import type { Tab } from '@hcengineering/ui'
-  import {
+  import ui, {
     Button,
     Chevron,
     DropdownLabelsIntl,
     eventToHTMLElement,
-    IconMoreV,
     navigate,
     resolvedLocationStore,
     showPopup,
@@ -430,7 +429,7 @@
     <svelte:fragment slot="post-utils">
       <div class="no-print ml-1">
         <Button
-          icon={IconMoreV}
+          icon={ui.icon.DotsVertical}
           iconProps={{ size: 'medium' }}
           kind="icon"
           size="medium"

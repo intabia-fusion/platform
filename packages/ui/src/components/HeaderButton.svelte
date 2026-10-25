@@ -13,10 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { HeaderButtonAction, SelectPopupValueType } from '../types'
   import type { Client, TxOperations } from '@hcengineering/core'
   import { checkPermission, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
-  import { ButtonWithDropdown, Button, Loading, IconAdd, IconDropdown } from '../index'
+
+  import type { HeaderButtonAction, SelectPopupValueType } from '../types'
+  import { ButtonWithDropdown, Button, Loading } from '../index'
+  import ui from '../plugin'
 
   export let mainActionId: number | string | null = null
   export let loading = false
@@ -69,7 +71,7 @@
     <div class="antiNav-subheader">
       {#if items.length === 1}
         <Button
-          icon={IconAdd}
+          icon={ui.icon.Plus}
           justify="left"
           kind="primary"
           label={mainAction.label}
@@ -83,12 +85,12 @@
         />
       {:else}
         <ButtonWithDropdown
-          icon={IconAdd}
+          icon={ui.icon.Plus}
           justify="left"
           kind="primary"
           label={mainAction.label}
           dropdownItems={items}
-          dropdownIcon={IconDropdown}
+          dropdownIcon={ui.icon.ChevronDown}
           on:dropdown-selected={(ev) => {
             items.find((a) => a.id === ev.detail)?.callback()
           }}

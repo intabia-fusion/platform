@@ -20,9 +20,6 @@
 <script lang="ts">
   import { afterUpdate, createEventDispatcher, onDestroy } from 'svelte'
 
-  import IconClose from '../../components/icons/Close.svelte'
-  import IconMaximize from '../../components/icons/Maximize.svelte'
-  import IconMinimize from '../../components/icons/Minimize.svelte'
   import { deviceOptionsStore as deviceInfo } from '../../index'
   import ui from '../../plugin'
   import { popupstore } from '../../popups'
@@ -164,7 +161,7 @@
     {#if navigatorToggle}
       <span class="panel-header__group no-print">
         <IconButton
-          icon={$deviceInfo.navigator.visible ? IconMaximize : IconMinimize}
+          icon={$deviceInfo.navigator.visible ? ui.icon.ArrowsOut : ui.icon.ArrowsIn}
           kind="ghost"
           size="small"
           tooltip={{ label: $deviceInfo.navigator.visible ? ui.string.HideNavigator : ui.string.ShowNavigator }}
@@ -225,7 +222,7 @@
       <span class="panel-header__group no-print">
         <IconButton
           id="btnHeaderClose"
-          icon={IconClose}
+          icon={ui.icon.Cross}
           kind="ghost"
           size="small"
           tooltip={{ label: ui.string.Close }}

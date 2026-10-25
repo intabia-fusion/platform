@@ -16,8 +16,9 @@
   import type { IntlString } from '@hcengineering/platform'
   import { translateCB } from '@hcengineering/platform'
   import { copyTextToClipboard } from '@hcengineering/presentation'
-  import { Button, IconArrowRight, IconBlueCheck, IconClose, IconCopy, Label, themeStore } from '@hcengineering/ui'
+  import ui, { Button, Label, themeStore } from '@hcengineering/ui'
   import { createEventDispatcher, onMount } from 'svelte'
+
   import view from '../plugin'
 
   export let value: string | undefined = ''
@@ -69,7 +70,7 @@
       focusIndex={2}
       kind="ghost"
       size="small"
-      icon={IconClose}
+      icon={ui.icon.Cross}
       disabled={value === ''}
       on:click={() => {
         if (input) {
@@ -83,7 +84,8 @@
       focusIndex={3}
       kind="ghost"
       size="small"
-      icon={IconBlueCheck}
+      icon={ui.icon.CheckCircleFill}
+      iconProps={{ fill: 'var(--button-primary-BackgroundColor)' }}
       on:click={() => {
         dispatch('close', value)
       }}
@@ -93,7 +95,7 @@
     focusIndex={4}
     kind="ghost"
     size="small"
-    icon={IconCopy}
+    icon={ui.icon.Copy}
     disabled={value === undefined || value === ''}
     showTooltip={{ label: view.string.CopyToClipboard }}
     on:click={() => {
@@ -104,7 +106,7 @@
     focusIndex={5}
     kind="ghost"
     size="small"
-    icon={IconArrowRight}
+    icon={ui.icon.ArrowRight}
     disabled={value === undefined || value === ''}
     showTooltip={{ label: view.string.Open }}
     on:click={() => {

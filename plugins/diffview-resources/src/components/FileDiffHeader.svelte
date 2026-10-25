@@ -15,7 +15,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
   import { copyTextToClipboard } from '@hcengineering/presentation'
-  import { Button, Chevron, IconCheck, IconCopy } from '@hcengineering/ui'
+  import ui, { Button, Chevron, Icon } from '@hcengineering/ui'
   import type { DiffFile } from '@hcengineering/diffview'
   import diffview from '@hcengineering/diffview'
 
@@ -63,7 +63,7 @@
 
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <div class="hover-trans" on:click={() => copyFileNameToClipboard()}>
-      <IconCopy size="small" />
+      <Icon icon={ui.icon.Copy} size="small" />
     </div>
   </div>
 
@@ -84,7 +84,7 @@
     {#if showViewed}
       <div class="mr-2">
         <Button
-          icon={IconCheck}
+          icon={ui.icon.Check}
           kind="ghost"
           showTooltip={{ label: diffview.string.Viewed }}
           highlight={viewed}

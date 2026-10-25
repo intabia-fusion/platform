@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import type { Ref } from '@hcengineering/core'
-  import { Button, Grid, IconArrowRight, eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  import ui, { Button, Grid, eventToHTMLElement, showPopup, Icon } from '@hcengineering/ui'
   import type { Component, Issue, Project } from '@hcengineering/tracker'
 
   import type { IssueToUpdate } from '../../../utils'
@@ -34,7 +34,7 @@
   <Grid rowGap={0.25} topGap>
     <div class="flex-between min-h-11">
       <ComponentPresenter value={current} disabled />
-      <IconArrowRight size="small" fill="var(--theme-halfcontent-color)" />
+      <Icon icon={ui.icon.ArrowRight} size="small" fill="var(--theme-halfcontent-color)" />
     </div>
     <div class="flex-row-center min-h-11">
       <Button

@@ -16,16 +16,15 @@
   import type { Asset } from '@hcengineering/platform'
   import { IconWithEmoji } from '@hcengineering/presentation'
   import type { AnySvelteComponent, IconSize } from '@hcengineering/ui'
-  import { Icon, IconFolder, getPaletteColorDef, themeStore } from '@hcengineering/ui'
+  import ui, { Icon, getPaletteColorDef, themeStore } from '@hcengineering/ui'
   import type { IconProps } from '@hcengineering/view'
   import view from '@hcengineering/view'
-
   import type { ComponentType } from 'svelte'
 
   export let value: IconProps
   export let size: IconSize
   export let iconWithEmoji: AnySvelteComponent | Asset | ComponentType | undefined = view.ids.IconWithEmoji
-  export let defaultIcon: AnySvelteComponent | Asset | ComponentType = IconFolder
+  export let defaultIcon: AnySvelteComponent | Asset | ComponentType = ui.icon.Folder
 </script>
 
 <Icon

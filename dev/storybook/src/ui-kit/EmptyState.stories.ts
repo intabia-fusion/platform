@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 import { getEmbeddedLabel } from '@hcengineering/platform'
-import { IconFile, IconFolder } from '@hcengineering/ui'
+import ui from '@hcengineering/ui'
 import { EmptyState } from '@hcengineering/ui/kit'
 import type { Meta, StoryObj } from '@storybook/svelte'
 
@@ -26,7 +26,7 @@ const description = getEmbeddedLabel('Issues of the project will appear here')
 const meta = {
   title: 'Feedback/EmptyState',
   component: EmptyState,
-  args: { label: getEmbeddedLabel('No issues yet'), description, icon: IconFolder, size: 'large' },
+  args: { label: getEmbeddedLabel('No issues yet'), description, icon: ui.icon.Folder, size: 'large' },
   parameters: {
     docs: {
       description: {
@@ -55,9 +55,9 @@ export const Variants: Story = {
           rows: axis('kind', ['brand', 'plate']),
           props: { size: 'large' },
           columns: [
-            { title: 'icon + description', props: { icon: IconFolder, description } },
-            { title: 'with action', props: { icon: IconFolder, description, actions: 'button' } },
-            { title: 'label only', props: { icon: IconFolder } }
+            { title: 'icon + description', props: { icon: ui.icon.Folder, description } },
+            { title: 'with action', props: { icon: ui.icon.Folder, description, actions: 'button' } },
+            { title: 'label only', props: { icon: ui.icon.Folder } }
           ]
         },
         {
@@ -66,7 +66,7 @@ export const Variants: Story = {
           rows: axis('size', ['small']),
           columns: [
             { title: 'add plate (action)', props: { action: getEmbeddedLabel('Create an application') } },
-            { title: 'readonly', props: { icon: IconFile } }
+            { title: 'readonly', props: { icon: ui.icon.File } }
           ],
           props: { label: getEmbeddedLabel('No applications for this talent yet'), width: '22rem' }
         }

@@ -12,7 +12,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { EditWithIcon, IconSearch, Modal, deviceOptionsStore, Label } from '@hcengineering/ui'
+  import ui, { EditWithIcon, Modal, deviceOptionsStore, Label } from '@hcengineering/ui'
   import activity from '@hcengineering/activity'
   import presentation, { getClient } from '@hcengineering/presentation'
   import type { Doc, Markup, WithLookup } from '@hcengineering/core'
@@ -119,7 +119,7 @@
     </div>
     <div class="forward-modal__search">
       <EditWithIcon
-        icon={IconSearch}
+        icon={ui.icon.Search}
         size="large"
         width="100%"
         autoFocus={!$deviceOptionsStore.isMobile}

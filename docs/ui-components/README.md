@@ -6,7 +6,8 @@
 | Документ | Что внутри |
 |---|---|
 | [ui-kit.md](ui-kit.md) | `@hcengineering/ui/kit` - актуальные базовые компоненты, которые заменяют старые из `packages/ui` и самописные в плагинах. Новый базовый компонент - только сюда |
-| [packages-ui.md](packages-ui.md) | `@hcengineering/ui` - 151 публичный компонент: кнопки, поля, дропдауны, попапы, layout, навигация, статусы, даты. Плюс раздел "Выбор между похожими" (Button vs кнопки кита, EditBox vs ModernEditbox, Popup vs Modal vs Dialog и т.д.) |
+| [icons-migration.md](icons-migration.md) | Иконки платформы: что в ките, как id плагинов ведут на кит, что осталось не по стандарту (viewBox 32, линия 2), инструменты в Storybook. Стандарт - раздел «Иконки» в `ui-kit.md` |
+| [packages-ui.md](packages-ui.md) | `@hcengineering/ui` - 149 публичных компонентов: кнопки, поля, дропдауны, попапы, layout, навигация, статусы, даты. Плюс раздел "Выбор между похожими" (Button vs кнопки кита, EditBox vs ModernEditbox, Popup vs Modal vs Dialog и т.д.) |
 | [packages-presentation.md](packages-presentation.md) | `@hcengineering/presentation` - работа с клиентом и данными (`getClient`, `createQuery`, `LiveQuery`), просмотр контента (`MessageViewer`, `FilePreview`), выбор объектов и пространств, карточки, атрибуты, файлы |
 | [view-resources.md](view-resources.md) | `plugins/view-resources` - презентеры и редакторы атрибутов, таблицы, вьюлеты, фильтры, панели. Плюс реестр `view.component.*` |
 

@@ -17,12 +17,12 @@
   import contact from '@hcengineering/contact'
   import type { Class, DocumentQuery, Ref } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
-  import { showPopup } from '@hcengineering/ui'
+  import { showPopup, Icon } from '@hcengineering/ui'
   import type { IconSize } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+
   import { employeeByIdStore } from '../utils'
   import CombineAvatars from './CombineAvatars.svelte'
-  import AddAvatar from './icons/AddAvatar.svelte'
   import UsersPopup from './UsersPopup.svelte'
 
   export let items: Ref<Employee>[] = []
@@ -78,6 +78,6 @@
   {#if persons.length > 0}
     <CombineAvatars {_class} bind:items {size} {limit} {hideLimit} />
   {:else}
-    <AddAvatar {size} />
+    <Icon icon={contact.icon.AddPerson} {size} fill="var(--theme-trans-color)" />
   {/if}
 </div>

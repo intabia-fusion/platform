@@ -17,11 +17,9 @@
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import presentation, { getClient, MessageBox } from '@hcengineering/presentation'
   import type { DropdownIntlItem } from '@hcengineering/ui'
-  import {
+  import ui, {
     EditBox,
     Icon,
-    IconDelete,
-    IconMoreV2,
     Label,
     languageStore,
     ModernCheckbox,
@@ -193,7 +191,7 @@
     <div class="buttons-group">
       {#if !readonly && canDelete}
         <IconButton
-          icon={IconDelete}
+          icon={ui.icon.Trash}
           kind="tertiary"
           size="small"
           tooltip={{ label: presentation.string.Delete }}
@@ -214,7 +212,7 @@
           <div class="hulyTableAttr-content__row w-full flex-between flex-row-center">
             <div class="flex-row-center flex-gap-2 min-w-0 flex-grow">
               <div class="hulyTableAttr-content__row-dragMenu">
-                <IconMoreV2 size="small" />
+                <Icon icon={ui.icon.GripVertical} size="small" />
               </div>
               {#if displayAttr?.icon}
                 <div class="hulyTableAttr-content__row-icon">
@@ -243,7 +241,7 @@
               {#if !readonly}
                 <div class="delete-btn">
                   <IconButton
-                    icon={IconDelete}
+                    icon={ui.icon.Trash}
                     kind="tertiary"
                     size="small"
                     tooltip={{ label: presentation.string.Delete }}

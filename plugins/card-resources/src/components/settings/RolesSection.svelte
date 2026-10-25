@@ -18,8 +18,9 @@
   import core from '@hcengineering/core'
   import presentation, { createQuery, getClient } from '@hcengineering/presentation'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
-  import { getCurrentResolvedLocation, Icon, IconAdd, Label, navigate, showPopup } from '@hcengineering/ui'
+  import ui, { getCurrentResolvedLocation, Icon, Label, navigate, showPopup } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
+
   import card from '../../plugin'
   import RolesPopup from './RolesPopup.svelte'
 
@@ -76,7 +77,7 @@
   <span><Label label={core.string.Roles} /></span>
   <IconButton
     kind="primary"
-    icon={IconAdd}
+    icon={ui.icon.Plus}
     size="small"
     data-id="btnAdd"
     tooltip={{ label: presentation.string.Add }}

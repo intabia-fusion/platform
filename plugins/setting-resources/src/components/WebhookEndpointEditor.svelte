@@ -27,9 +27,6 @@
     Button,
     Chip,
     Icon,
-    IconAdd,
-    IconCopy,
-    IconSend,
     Label,
     ModernEditbox,
     Scroller,
@@ -41,10 +38,10 @@
   import { getCurrentLanguage } from '@hcengineering/theme'
   import { createEventDispatcher } from 'svelte'
   import view from '@hcengineering/view'
+
   import settingsRes from '../plugin'
   import { isApiKeyPickableSpace } from '../utils'
   import { webhookEventNames, type WebhookEventType } from '../webhookEvents'
-
   import ApiKeySpacesPopup from './ApiKeySpacesPopup.svelte'
   import WebhookEventsPopup from './WebhookEventsPopup.svelte'
 
@@ -302,7 +299,7 @@
               <IconButton
                 tooltip={{ label: settingsRes.string.Add }}
                 kind="primary"
-                icon={IconAdd}
+                icon={ui.icon.Plus}
                 size="small"
                 data-id="btnPickWebhookEvents"
                 disabled={readonly}
@@ -344,7 +341,7 @@
               <IconButton
                 tooltip={{ label: settingsRes.string.Add }}
                 kind="primary"
-                icon={IconAdd}
+                icon={ui.icon.Plus}
                 size="small"
                 data-id="btnPickWebhookSpaces"
                 disabled={readonly}
@@ -386,7 +383,7 @@
               <IconButton
                 tooltip={{ label: settingsRes.string.WebhookSecretAdd }}
                 kind="primary"
-                icon={IconAdd}
+                icon={ui.icon.Plus}
                 size="small"
                 data-id="btnAddWebhookSecret"
                 disabled={readonly || endpoint.secrets.length >= 2}
@@ -422,7 +419,7 @@
                     <Button
                       kind="ghost"
                       size="small"
-                      icon={IconCopy}
+                      icon={ui.icon.Copy}
                       showTooltip={{ label: view.string.CopyToClipboard }}
                       on:click={() => {
                         void copySecret(secret.secret)
@@ -459,7 +456,7 @@
               <span><Label label={settingsRes.string.WebhookDeliveries} /></span>
               <Button
                 label={settingsRes.string.WebhookSendTest}
-                icon={IconSend}
+                icon={ui.icon.PaperPlane}
                 kind="regular"
                 size="small"
                 loading={testing}

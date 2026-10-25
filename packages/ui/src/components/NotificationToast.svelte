@@ -16,27 +16,27 @@
 -->
 
 <script lang="ts">
-  import type { ComponentType } from 'svelte'
+  import type { Asset } from '@hcengineering/platform'
   import { fade } from 'svelte/transition'
+
+  import ui from '../plugin'
   import Button from './Button.svelte'
   import Icon from './Icon.svelte'
-  import CheckCircle from './icons/CheckCircle.svelte'
-  import Close from './icons/Close.svelte'
-  import Info from './icons/Info.svelte'
   import { NotificationSeverity } from './notifications/NotificationSeverity'
 
   export let onClose: (() => void) | undefined = undefined
   export let severity: NotificationSeverity | undefined = undefined
   export let title: string
 
-  const getIcon = (): ComponentType | undefined => {
+  const getIcon = (): Asset | undefined => {
     switch (severity) {
       case NotificationSeverity.Success:
-        return CheckCircle
-      case NotificationSeverity.Error:
+        return ui.icon.CheckCircleFill
       case NotificationSeverity.Info:
+        return ui.icon.InfoCircle
+      case NotificationSeverity.Error:
       case NotificationSeverity.Warning:
-        return Info
+        return ui.icon.ExclamationCircle
     }
   }
 
@@ -60,7 +60,7 @@
       <span class="overflow-label fs-bold text-base caption-color"><slot name="title">{title}</slot></span>
     </div>
     {#if onClose !== undefined}
-      <Button icon={Close} kind="ghost" size="small" dataId="btnNotifyClose" on:click={onClose} />
+      <Button icon={ui.icon.Cross} kind="ghost" size="small" dataId="btnNotifyClose" on:click={onClose} />
     {/if}
   </div>
 

@@ -17,7 +17,6 @@
 
   import Label from '../../components/Label.svelte'
   import ui from '../../plugin'
-  import IconFileDownload from '../_icons/IconFileDownload.svelte'
   import Button from '../button/Button.svelte'
   import FileCover from './FileCover.svelte'
   import type { FileBadgeData } from './types'
@@ -43,7 +42,7 @@
     <div class="action">
       <Button
         label={ui.string.Download}
-        icon={IconFileDownload}
+        icon={ui.icon.Download}
         kind="secondary"
         size="medium"
         on:click={() => {

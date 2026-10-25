@@ -17,10 +17,9 @@
   import type { Document } from '@hcengineering/controlled-documents'
   import type { WithLookup } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { tooltip } from '@hcengineering/ui'
+  import ui, { tooltip, Icon } from '@hcengineering/ui'
   import { DocNavLink } from '@hcengineering/view-resources'
 
-  import DocumentIcon from '../../icons/DocumentIcon.svelte'
   import documents from '../../../plugin'
 
   export let value: WithLookup<Document> | undefined
@@ -61,7 +60,7 @@
     <div class="flex-presenter" use:tooltip={{ label: getEmbeddedLabel(title) }}>
       {#if withIcon}
         <div class="icon">
-          <DocumentIcon size="small" />
+          <Icon icon={ui.icon.Document} size="small" />
         </div>
       {/if}
       <span class="label nowrap" class:fs-bold={!isRegular} class:no-underline={noUnderline} class:label-gray={isGray}

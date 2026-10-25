@@ -7,12 +7,13 @@
   import { createEventDispatcher } from 'svelte'
   import type { ExtendedEmoji, Emoji } from '@hcengineering/emoji'
   import emojiPlugin from '@hcengineering/emoji'
+  import ui, { Label, closeTooltip, Icon } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
+
   import { getEmojiByHexcode, getEmojiSkins } from '../utils'
   import EmojiButton from './EmojiButton.svelte'
   import EmojiGlyph from './EmojiGlyph.svelte'
   import { getSkinTone, unicodeEmojiStore } from '../store'
-  import { Label, IconDelete, closeTooltip } from '@hcengineering/ui'
-  import { IconButton } from '@hcengineering/ui/kit'
   import SkinToneTooltip from './SkinToneTooltip.svelte'
 
   export let emoji: ExtendedEmoji
@@ -107,7 +108,7 @@
     {#if haveSkins}<div class="hulyPopup-divider" />{/if}
     <div class="hulyPopup-group">
       <button class="hulyPopup-row" on:click={clickRemove}>
-        <div class="hulyPopup-row__icon red-color"><IconDelete size="small" /></div>
+        <div class="hulyPopup-row__icon red-color"><Icon icon={ui.icon.Trash} size="small" /></div>
         <span class="hulyPopup-row__label red-color"><Label label={emojiPlugin.string.Remove} /></span>
       </button>
     </div>

@@ -13,11 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IconMoreH, StatusBarButton, showPopup } from '@hcengineering/ui'
+  import ui, { StatusBarButton, showPopup, Icon } from '@hcengineering/ui'
 
   import { sessions } from '../stores'
-
-  import IconCamOn from './icons/CamOn.svelte'
   import MediaPopup from './MediaPopup.svelte'
 
   export let disabled = false
@@ -37,10 +35,10 @@
 
 {#if active}
   <button class="options-button" class:pressed {disabled} on:click={openPopup}>
-    <IconMoreH size="small" />
+    <Icon icon={ui.icon.DotsHorizontal} size="small" />
   </button>
 {:else}
-  <StatusBarButton icon={IconCamOn} {pressed} on:click={openPopup} />
+  <StatusBarButton icon={ui.icon.Camera} {pressed} on:click={openPopup} />
 {/if}
 
 <style lang="scss">

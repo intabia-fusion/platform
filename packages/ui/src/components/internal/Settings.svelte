@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import ui from '../../plugin'
   import { showPopup } from '../..'
   import StatusBarButton from '../StatusBarButton.svelte'
   import SettingsPopup from './SettingsPopup.svelte'
-  import Settings from './icons/Settings.svelte'
 
   let pressed: boolean = false
   let element: HTMLElement
@@ -29,4 +29,4 @@
   }
 </script>
 
-<StatusBarButton bind:element icon={Settings} {pressed} on:click={showSettings} />
+<StatusBarButton bind:element icon={ui.icon.Gear} {pressed} on:click={showSettings} />

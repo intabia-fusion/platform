@@ -17,18 +17,7 @@
   import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
   import type { TaskType } from '@hcengineering/task'
   import { StatusPresenter } from '@hcengineering/tracker-resources'
-  import {
-    closePanel,
-    closePopup,
-    Icon,
-    IconAdd,
-    IconArrowRight,
-    IconMoreV2,
-    IconOpenedArrow,
-    Label,
-    showPopup,
-    tooltip
-  } from '@hcengineering/ui'
+  import ui, { closePanel, closePopup, Icon, Label, showPopup, tooltip } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import { SortableDocListStatic } from '@hcengineering/view-resources'
   import type { Workflow, WorkflowTransition } from '@hcengineering/workflow'
@@ -89,7 +78,7 @@
     <span><Label label={plugin.string.Transitions} /></span>
     <IconButton
       kind="primary"
-      icon={IconAdd}
+      icon={ui.icon.Plus}
       size="small"
       data-id="btnAddTransition"
       tooltip={{ label: presentation.string.Add }}
@@ -115,7 +104,7 @@
           }}
         >
           <button type="button" class="hulyTableAttr-content__row-dragMenu" on:click|stopPropagation={() => {}}>
-            <IconMoreV2 size="small" />
+            <Icon icon={ui.icon.GripVertical} size="small" />
           </button>
           <span class="hulyTableAttr-content__title center flex-row-center flex-gap-1">
             {#if rulesPresent}
@@ -149,7 +138,7 @@
               </div>
             {/if}
             <div class="transition-arrow">
-              <Icon icon={IconArrowRight} size="small" />
+              <Icon icon={ui.icon.ArrowRight} size="small" />
             </div>
             <span class="hulyTableAttr-content__row flex-no-grow noPadding">
               <StatusPresenter
@@ -162,7 +151,7 @@
             </span>
           </span>
           <span class="hulyTableAttr-content__row-arrow">
-            <IconOpenedArrow size="small" />
+            <Icon icon={ui.icon.ChevronRightSmall} size="small" />
           </span>
         </button>
       </div>

@@ -15,10 +15,10 @@
 
 import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { IntlString } from '@hcengineering/platform'
+import { setMetadata, type IntlString } from '@hcengineering/platform'
 import type { ComponentProps } from 'svelte'
 import DropdownLabelsPopupIntl from '../components/DropdownLabelsPopupIntl.svelte'
-import IconCheck from '../components/icons/Check.svelte'
+import ui from '../plugin'
 import type { DropdownIntlItem } from '../types'
 
 let target: HTMLElement
@@ -105,8 +105,9 @@ describe('DropdownLabelsPopupIntl', () => {
   })
 
   it('renders the item icon only when the item has one', () => {
+    setMetadata(ui.icon.Check, '#check')
     const items: DropdownIntlItem[] = [
-      { id: 'a', label: 'ui:string:Alpha' as IntlString, icon: IconCheck as any },
+      { id: 'a', label: 'ui:string:Alpha' as IntlString, icon: ui.icon.Check },
       { id: 'b', label: 'ui:string:Bravo' as IntlString }
     ]
     const { host } = mount({ items })

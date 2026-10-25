@@ -17,12 +17,11 @@
   import task, { type TaskType } from '@hcengineering/task'
   import type { TaskStatusesProps, WorkflowValidatorConfig } from '@hcengineering/workflow'
   import { getClient, IconWithEmoji } from '@hcengineering/presentation'
-  import { Icon, Label } from '@hcengineering/ui'
+  import ui, { Icon, Label } from '@hcengineering/ui'
   import { StatePresenter, StatusCategoryIcon, taskTypeStore } from '@hcengineering/task-resources'
   import view from '@hcengineering/view'
 
   import plugin from '../../../plugin'
-  import AnyStatusIcon from '../../icon/AnyStatus.svelte'
 
   export let config: WorkflowValidatorConfig<TaskStatusesProps>
 
@@ -113,7 +112,7 @@
       <div class="task-statuses-presenter--status-list">
         {#if row.isAny}
           <span class="task-statuses-presenter--item">
-            <AnyStatusIcon />
+            <Icon icon={ui.icon.CirclesThree} size="small" />
             <Label label={plugin.string.AnyStatus} />
           </span>
         {:else if row.statuses.length > 0 || row.categories.length > 0}

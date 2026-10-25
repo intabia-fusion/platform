@@ -67,7 +67,7 @@
     ProjectTargetPreference
   } from '@hcengineering/tracker'
   import { IssuePriority, TrackerEvents } from '@hcengineering/tracker'
-  import {
+  import ui, {
     addNotification,
     Button,
     ButtonWithDropdown,
@@ -76,8 +76,6 @@
     DatePresenter,
     EditBox,
     FocusHandler,
-    IconAttachment,
-    IconDropdown,
     Label,
     navigate,
     showPopup,
@@ -1193,7 +1191,7 @@
   <svelte:fragment slot="footer">
     <Button
       focusIndex={12}
-      icon={IconAttachment}
+      icon={ui.icon.Paperclip}
       iconProps={{ fill: 'var(--theme-dark-color)' }}
       size="large"
       kind="ghost"
@@ -1216,7 +1214,7 @@
       kind="primary"
       size="large"
       justify="center"
-      dropdownIcon={IconDropdown}
+      dropdownIcon={ui.icon.ChevronDown}
       dropdownItems={createActions}
       mainButtonId="issue-create-button"
       on:click={handleOkClick}

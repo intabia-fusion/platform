@@ -14,17 +14,15 @@
 -->
 <script lang="ts">
   import type { Asset } from '@hcengineering/platform'
-  import {
+  import ui, {
     Button,
     CheckBox,
     getPlatformColorDef,
     Icon as UiIcon,
-    IconCircles,
-    IconDPCalendar,
-    IconDPCalendarOver,
     ProgressCircle,
     themeStore
   } from '@hcengineering/ui'
+
   import Icon from '../Icon.svelte'
   import FixedColumn from './FixedColumn.svelte'
   import { fixedColumns } from './fixedColumns'
@@ -55,7 +53,9 @@
       class:mListGridSelected={selected}
     >
       <div class="draggable-container">
-        <div class="draggable-mark"><IconCircles size="small" /></div>
+        <div class="draggable-mark">
+          <UiIcon icon={ui.icon.GripVertical} size="small" fill="var(--theme-caption-color)" />
+        </div>
       </div>
       <div class="flex-center relative mr-1">
         <div class="antiList-cells__notifyCell">
@@ -107,7 +107,7 @@
             <svelte:fragment slot="content">
               <!-- Live DatePresenter: calendar icon (red when overdue), the date keeps the chip color -->
               <div class="due-icon" class:overdue={issue.overdue}>
-                <UiIcon icon={issue.overdue === true ? IconDPCalendarOver : IconDPCalendar} size="full" />
+                <UiIcon icon={issue.overdue === true ? ui.icon.CalendarX : ui.icon.Calendar} size="full" />
               </div>
               <span class="label">{issue.due}</span>
             </svelte:fragment>

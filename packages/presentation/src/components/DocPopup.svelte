@@ -17,14 +17,11 @@
   import core, { getObjectValue, type Class, type Doc, type Ref } from '@hcengineering/core'
   import { getResource, type IntlString } from '@hcengineering/platform'
   import type { AnySvelteComponent } from '@hcengineering/ui'
-  import {
+  import ui, {
     Button,
     EditWithIcon,
     FocusHandler,
     Icon,
-    IconAdd,
-    IconCheck,
-    IconSearch,
     ListView,
     Spinner,
     Submenu,
@@ -36,10 +33,11 @@
   } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
+  import { Analytics } from '@hcengineering/analytics'
+
   import presentation, { DocPopup } from '..'
   import type { ObjectCreate } from '../types'
   import { getClient } from '../utils'
-  import { Analytics } from '@hcengineering/analytics'
   import ObjectPopup from './ObjectPopup.svelte'
 
   export let _class: Ref<Class<Doc>>
@@ -239,7 +237,7 @@
   {#if !noSearchField}
     <div class="header flex-between">
       <EditWithIcon
-        icon={IconSearch}
+        icon={ui.icon.Search}
         size="large"
         width="100%"
         autoFocus={!$deviceOptionsStore.isMobile}
@@ -254,7 +252,7 @@
             focusIndex={2}
             kind="ghost"
             {size}
-            icon={IconAdd}
+            icon={ui.icon.Plus}
             showTooltip={{ label: create.label }}
             dataId="btnAdd"
             on:click={onCreate}
@@ -328,7 +326,7 @@
                         <Spinner size="small" />
                       {:else}
                         <div use:tooltip={{ label: titleDeselect ?? presentation.string.Deselect }}>
-                          <Icon icon={IconCheck} size="small" />
+                          <Icon icon={ui.icon.Check} size="small" />
                         </div>
                       {/if}
                     {/if}
@@ -362,7 +360,7 @@
                       <Spinner size="small" />
                     {:else}
                       <div use:tooltip={{ label: titleDeselect ?? presentation.string.Deselect }}>
-                        <Icon icon={IconCheck} size="small" />
+                        <Icon icon={ui.icon.Check} size="small" />
                       </div>
                     {/if}
                   {/if}

@@ -14,7 +14,8 @@
 -->
 <script lang="ts">
   import type { State } from '@hcengineering/process'
-  import { Button, IconAdd, showPopup } from '@hcengineering/ui'
+  import ui, { Button, showPopup } from '@hcengineering/ui'
+
   import plugin from '../../plugin'
   import AddTransitionPopup from './AddTransitionPopup.svelte'
 
@@ -26,4 +27,4 @@
   }
 </script>
 
-<Button label={plugin.string.AddTransition} icon={IconAdd} kind="ghost" width="100%" on:click={add} />
+<Button label={plugin.string.AddTransition} icon={ui.icon.Plus} kind="ghost" width="100%" on:click={add} />

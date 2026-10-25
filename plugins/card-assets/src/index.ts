@@ -14,22 +14,23 @@
 import { loadMetadata } from '@hcengineering/platform'
 import card from '@hcengineering/card'
 
-const icons = require('../assets/icons.svg') as string // eslint-disable-line
+// Icons the kit has: the ids stay, stored documents keep pointing at them.
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(card.icon, {
-  MasterTags: `${icons}#masterTags`,
-  MasterTag: `${icons}#masterTag`,
-  Tags: `${icons}#tags`,
-  Tag: `${icons}#tag`,
-  Card: `${icons}#card`,
-  File: `${icons}#file`,
-  View: `${icons}#view`,
-  Document: `${icons}#document`,
-  Home: `${icons}#home`,
-  Space: `${icons}#space`,
-  Expand: `${icons}#expand`,
-  Feed: `${icons}#feed`,
-  All: `${icons}#all`,
-  Duplicate: `${icons}#duplicate`,
-  Lock: `${icons}#lock`,
-  Grid: `${icons}#grid`
+  MasterTags: `${uiIcons}#bullet-list`,
+  MasterTag: `${uiIcons}#hash`,
+  Tags: `${uiIcons}#bullet-list`,
+  Tag: `${uiIcons}#check-circle`,
+  Card: `${uiIcons}#panel-right`,
+  File: `${uiIcons}#file`,
+  View: `${uiIcons}#table`,
+  Document: `${uiIcons}#document`,
+  Home: `${uiIcons}#house`,
+  Space: `${uiIcons}#folder`,
+  Expand: `${uiIcons}#open-file`,
+  Feed: `${uiIcons}#text-align-left`,
+  All: `${uiIcons}#layers`,
+  Duplicate: `${uiIcons}#copy`,
+  Lock: `${uiIcons}#lock-fill`,
+  Grid: `${uiIcons}#grid`
 })

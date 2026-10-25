@@ -17,13 +17,12 @@
   import { translateCB } from '@hcengineering/platform'
   import { themeStore } from '@hcengineering/theme'
   import { afterUpdate, createEventDispatcher, onMount } from 'svelte'
+
   import { registerFocus } from '../focus'
   import plugin from '../plugin'
   import { resizeObserver } from '../resize'
   import { floorFractionDigits } from '../utils'
   import Button from './Button.svelte'
-  import DownOutline from './icons/DownOutline.svelte'
-  import UpOutline from './icons/UpOutline.svelte'
 
   export let maxWidth: string | undefined = undefined
   export let value: number | undefined
@@ -164,7 +163,7 @@
     />
     <div class="flex-col-center py-0-5">
       <Button
-        icon={UpOutline}
+        icon={plugin.icon.ChevronUpSmall}
         kind="stepper"
         padding="0"
         {disabled}
@@ -174,7 +173,7 @@
         }}
       />
       <Button
-        icon={DownOutline}
+        icon={plugin.icon.ChevronDownSmall}
         kind="stepper"
         padding="0"
         {disabled}

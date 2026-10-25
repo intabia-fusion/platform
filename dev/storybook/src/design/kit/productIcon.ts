@@ -14,8 +14,10 @@
 //
 
 // Only the plugins whose icons the kit uses are globbed: other icon folders pull in heavy dependencies
-// Icon of the product components by kit icon name: a sprite fragment ('setting/settings') or a ui Svelte icon ('ui/Edit')
+// Icon of the product components by kit icon name: a sprite fragment ('tracker/parent-issue'), a ui Svelte icon ('ui/Mixin')
+// or a kit sprite icon ('kit/Camera')
 import type { Asset } from '@hcengineering/platform'
+import ui from '@hcengineering/ui'
 import type { ComponentType } from 'svelte'
 import { spriteAssets } from '../setup'
 import type { IconName } from './types'
@@ -32,6 +34,7 @@ const pluginIcons = import.meta.glob<ComponentType>(
 export function productIcon (name: IconName | undefined): Asset | ComponentType | undefined {
   if (name === undefined) return undefined
   const [ns, id] = name.split('/')
+  if (ns === 'kit') return (ui.icon as Record<string, Asset>)[id]
   if (ns === 'ui') return uiIcons[`../../../../../packages/ui/src/components/icons/${id}.svelte`]
   return (
     spriteAssets.get(name.toLowerCase()) ??

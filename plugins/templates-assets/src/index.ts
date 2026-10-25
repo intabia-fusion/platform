@@ -18,8 +18,9 @@ import { loadMetadata } from '@hcengineering/platform'
 import templates from '@hcengineering/templates'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(templates.icon, {
-  Templates: `${icons}#templates`,
-  Template: `${icons}#template`,
-  Copy: `${icons}#copy`
+  Templates: `${uiIcons}#bubble-plus`,
+  Template: `${uiIcons}#bubble-plus`,
+  Copy: `${icons}#clipboard-document`
 })

@@ -9,20 +9,20 @@ const people = new Map(DEMO.en.people.map((p) => [p.name, p]))
 const { frame, main } = kit.Workbench(view.frame ?? 'Issues list', 0, 0, {
   tab: 'Tracker',
   nav: [
-    { item: 'My issues', icon: 'tracker/myissues', selected: view.myIssues === true },
-    { item: 'All issues', icon: 'tracker/issues' },
+    { item: 'My issues', icon: 'kit/Crosshair', selected: view.myIssues === true },
+    { item: 'All issues', icon: 'kit/CheckSquare' },
     { divider: true },
-    { item: 'All projects', icon: 'tracker/list' },
-    { item: 'Labels', icon: 'tracker/labels' },
+    { item: 'All projects', icon: 'kit/BulletList' },
+    { item: 'Labels', icon: 'kit/Tags' },
     { group: 'Your projects', add: true },
-    { space: project.name, icon: 'tracker/home', color: 'Porpoise' },
-    { item: 'Issues', icon: 'tracker/issues', selected: view.myIssues !== true, indent: true },
-    { item: 'Components', icon: 'tracker/components', indent: true },
-    { item: 'Milestones', icon: 'tracker/milestone', indent: true },
-    { item: 'Templates', icon: 'tracker/issuetemplates', indent: true }
+    { space: project.name, icon: 'kit/HouseFill', color: 'Porpoise' },
+    { item: 'Issues', icon: 'kit/CheckSquare', selected: view.myIssues !== true, indent: true },
+    { item: 'Components', icon: 'kit/Diamond', indent: true },
+    { item: 'Milestones', icon: 'kit/Signpost', indent: true },
+    { item: 'Templates', icon: 'kit/Layout', indent: true }
   ]
 })
-const top = kit.SpaceHeader(main, { view: 'list', title: view.title ?? 'Issues', titleIcon: view.titleIcon ?? 'tracker/issues', tabs: view.tabs, tab: view.tab })
+const top = kit.SpaceHeader(main, { view: 'list', title: view.title ?? 'Issues', titleIcon: view.titleIcon ?? 'kit/CheckSquare', tabs: view.tabs, tab: view.tab })
 const CREATED = ['2 days ago', '3 days ago', 'yesterday', '5 days ago', '2 weeks ago']
 const MODIFIED = ['Oct 21', 'Oct 18', 'Oct 22', 'Oct 15', 'Oct 9']
 let n = 0

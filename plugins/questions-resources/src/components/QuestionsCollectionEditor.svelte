@@ -4,12 +4,10 @@
 
 <script lang="ts">
   import type { Question } from '@hcengineering/questions'
-  import questions from '../plugin'
-  import {
+  import ui, {
     Button,
     DropdownLabelsPopupIntl,
     getEventPopupPositionElement,
-    IconAdd,
     Label,
     showPopup,
     themeStore
@@ -17,6 +15,8 @@
   import { createQuery, getClient } from '@hcengineering/presentation'
   import type { Class, Ref } from '@hcengineering/core'
   import { type Doc, SortingOrder } from '@hcengineering/core'
+
+  import questions from '../plugin'
   import { createQuestion, getQuestionClasses, initQuestion } from '../utils'
   import QuestionsItemEditor from './QuestionsItemEditor.svelte'
 
@@ -103,7 +103,13 @@
       <div class="divider">
         {#if !readonly}
           <div class="divider--button">
-            <Button icon={IconAdd} shape="circle" kind="regular" size="small" on:click={(e) => onClickAdd(e, null)} />
+            <Button
+              icon={ui.icon.Plus}
+              shape="circle"
+              kind="regular"
+              size="small"
+              on:click={(e) => onClickAdd(e, null)}
+            />
           </div>
         {/if}
       </div>
@@ -114,7 +120,13 @@
     <div class="divider">
       {#if !readonly}
         <div class="divider--button">
-          <Button icon={IconAdd} shape="circle" kind="regular" size="small" on:click={(e) => onClickAdd(e, index)} />
+          <Button
+            icon={ui.icon.Plus}
+            shape="circle"
+            kind="regular"
+            size="small"
+            on:click={(e) => onClickAdd(e, index)}
+          />
         </div>
       {/if}
     </div>
@@ -122,7 +134,7 @@
     <div class="antiSection-empty">
       {#if !readonly}
         <Button
-          icon={IconAdd}
+          icon={ui.icon.Plus}
           shape="circle"
           size="small"
           on:click={(e) => {

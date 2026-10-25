@@ -16,7 +16,7 @@
   import type { AttachmentFormat } from '@hcengineering/attachment'
   import { formatLabels } from '@hcengineering/attachment-resources'
   import { translate } from '@hcengineering/platform'
-  import { IconFile, ModernDropdownLabels, themeStore, type DropdownTextItem } from '@hcengineering/ui'
+  import ui, { ModernDropdownLabels, themeStore, type DropdownTextItem } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   import chunter from '../../../../plugin'
@@ -50,7 +50,7 @@
       id: ALL,
       label: await translate(chunter.string.SearchFilterAllFileTypes, {}, lang),
       // Its own icon: the sliders already mark the place filter next to it.
-      icon: IconFile,
+      icon: ui.icon.File,
       exclusive: true
     }
     const options = await Promise.all(

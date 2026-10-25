@@ -29,14 +29,11 @@
     type WebhookRuleTarget
   } from '@hcengineering/setting'
   import { themeStore } from '@hcengineering/theme'
-  import {
+  import ui, {
     Button,
     DropdownLabels,
     DropdownLabelsIntl,
     DropdownLabelsPopup,
-    IconAdd,
-    IconCopy,
-    IconDelete,
     Label,
     Modal,
     ModernEditbox,
@@ -48,6 +45,9 @@
   import { IconButton } from '@hcengineering/ui/kit'
   import { jsonToMarkup } from '@hcengineering/text'
   import { markdownToMarkup } from '@hcengineering/text-markdown'
+  import view from '@hcengineering/view'
+  import { createEventDispatcher } from 'svelte'
+
   import settingsRes from '../plugin'
   import { listWebhookPaths, type WebhookSamplePath } from '../webhookSamplePaths'
   import { webhookRuleTemplates, type WebhookRuleTemplate, type WebhookRuleTemplateRule } from '../webhookRuleTemplates'
@@ -58,9 +58,7 @@
     webhookSnippetTools,
     type WebhookSnippetTool
   } from '../webhookSnippets'
-  import view from '@hcengineering/view'
   import WebhookTargetPicker from './WebhookTargetPicker.svelte'
-  import { createEventDispatcher } from 'svelte'
 
   export let apiKey: ApiKeyInfo
   export let existing: WebhookIncomingRule | undefined = undefined
@@ -502,7 +500,7 @@
             <Button
               kind="ghost"
               size="small"
-              icon={IconCopy}
+              icon={ui.icon.Copy}
               showTooltip={{ label: view.string.CopyToClipboard }}
               on:click={() => {
                 void copyText(sendSnippet)
@@ -550,7 +548,7 @@
             tooltip={{ label: settingsRes.string.Add }}
             kind="tertiary"
             size="small"
-            icon={IconAdd}
+            icon={ui.icon.Plus}
             disabled={samplePaths.length === 0}
             on:click={addCondition}
           />
@@ -584,7 +582,7 @@
               tooltip={{ label: settingsRes.string.Delete }}
               kind="tertiary"
               size="small"
-              icon={IconDelete}
+              icon={ui.icon.Trash}
               on:click={() => {
                 removeCondition(i)
               }}
@@ -621,7 +619,7 @@
               tooltip={{ label: settingsRes.string.Add }}
               kind="tertiary"
               size="small"
-              icon={IconAdd}
+              icon={ui.icon.Plus}
               disabled={whereSamplePaths.length === 0}
               on:click={addWhereCondition}
             />
@@ -655,7 +653,7 @@
                 tooltip={{ label: settingsRes.string.Delete }}
                 kind="tertiary"
                 size="small"
-                icon={IconDelete}
+                icon={ui.icon.Trash}
                 on:click={() => {
                   removeWhereCondition(i)
                 }}
@@ -699,7 +697,7 @@
                 tooltip={{ label: settingsRes.string.Delete }}
                 kind="tertiary"
                 size="small"
-                icon={IconDelete}
+                icon={ui.icon.Trash}
                 on:click={() => {
                   removeField(i)
                 }}

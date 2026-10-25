@@ -14,20 +14,9 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
+
   import type { TimeZone } from '..'
-  import ui, {
-    deviceOptionsStore,
-    IconSearch,
-    IconAdd,
-    Button,
-    Label,
-    resizeObserver,
-    EditWithIcon,
-    IconClose,
-    IconChevronDown,
-    ActionIcon,
-    IconUndo
-  } from '..'
+  import ui, { deviceOptionsStore, Button, Label, resizeObserver, EditWithIcon, ActionIcon, Icon } from '..'
 
   interface TimeZoneGroup {
     continent: string
@@ -79,7 +68,7 @@
 >
   <div class="header">
     <EditWithIcon
-      icon={IconSearch}
+      icon={ui.icon.Search}
       size="large"
       autoFocus={!$deviceOptionsStore.isMobile}
       bind:value={search}
@@ -94,7 +83,7 @@
         </span>
         {#if reset !== null}
           <ActionIcon
-            icon={IconUndo}
+            icon={ui.icon.ArrowUturnLeft}
             size="x-small"
             action={async () => {
               if (reset !== null) selected = reset
@@ -105,7 +94,7 @@
         {/if}
         {#if count > 1}
           <ActionIcon
-            icon={IconClose}
+            icon={ui.icon.Cross}
             size="x-small"
             action={async () => {
               dispatch('close', 'delete')
@@ -134,7 +123,7 @@
               >
                 <div class="flex-row-center">
                   <div class="chevron">
-                    <IconChevronDown size="small" filled />
+                    <Icon icon={ui.icon.CaretDownFill} size="small" />
                   </div>
                   <span class="ml-2">{cont.continent}</span>
                 </div>
@@ -146,7 +135,7 @@
                     {#if withAdd}
                       <div class="tool ml-2">
                         <Button
-                          icon={IconAdd}
+                          icon={ui.icon.Plus}
                           size="small"
                           kind="ghost"
                           disabled={count > 4}

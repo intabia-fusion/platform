@@ -13,15 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Icon } from '@hcengineering/ui'
-
-  import IconFolder from './icons/Folder.svelte'
+  import ui, { Icon } from '@hcengineering/ui'
 
   export let size: 'small' | 'large' = 'small'
 </script>
 
 <span class="folder-glyph" class:large={size === 'large'}
-  ><Icon icon={IconFolder} size="full" fill="currentColor" /></span
+  ><Icon icon={ui.icon.Folder} size="full" fill="currentColor" /></span
 >
 
 <style lang="scss">

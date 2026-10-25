@@ -10,7 +10,6 @@
   import tracker, { createStatesData } from '@hcengineering/tracker'
   import ui, {
     Button,
-    IconChevronDown,
     PaletteColorIndexes,
     getEventPopupPositionElement,
     showPopup,
@@ -18,6 +17,7 @@
   } from '@hcengineering/ui'
   import type { GithubIntegration, GithubIntegrationRepository } from '@hcengineering/github'
   import { githubPullRequestStates, type GithubProject } from '@hcengineering/github'
+
   import github from '../plugin'
 
   export let integration: WithLookup<GithubIntegration>
@@ -161,5 +161,5 @@
   label={github.string.LinkToProject}
   labelParams={{ title: getMetadata(ui.metadata.PlatformTitle) }}
   on:click={selectProject}
-  iconRight={IconChevronDown}
+  iconRight={ui.icon.ChevronDown}
 />

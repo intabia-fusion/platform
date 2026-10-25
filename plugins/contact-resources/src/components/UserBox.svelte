@@ -22,7 +22,7 @@
   import type { ObjectCreate } from '@hcengineering/presentation'
   import presentation, { getClient } from '@hcengineering/presentation'
   import type { AnySvelteComponent, ButtonKind, ButtonSize, IconSize, LabelAndProps } from '@hcengineering/ui'
-  import {
+  import ui, {
     ActionIcon,
     Button,
     Icon,
@@ -35,9 +35,9 @@
   import view from '@hcengineering/view'
   import { openDoc } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
+
   import UserInfo from './UserInfo.svelte'
   import UsersPopup from './UsersPopup.svelte'
-  import IconPerson from './icons/Person.svelte'
 
   export let _class: Ref<Class<Contact>>
   export let _previewClass: Ref<Class<Contact>> = contact.class.Contact
@@ -45,7 +45,7 @@
   export let options: FindOptions<Contact> | undefined = undefined
   export let docQuery: DocumentQuery<Contact> | undefined = undefined
   export let label: IntlString
-  export let icon: Asset | AnySvelteComponent | undefined = IconPerson
+  export let icon: Asset | AnySvelteComponent | undefined = ui.icon.PersonCircle
   export let placeholder: IntlString = presentation.string.Search
   export let value: Ref<Contact> | null | undefined
   export let allowDeselect = false

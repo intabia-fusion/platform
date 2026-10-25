@@ -27,9 +27,8 @@
   import type { Doc, Ref, Space } from '@hcengineering/core'
   import { getResource } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import {
+  import ui, {
     type Action,
-    IconEdit,
     Label,
     closeTooltip,
     getPlatformColorForTextDef,
@@ -54,9 +53,7 @@
   } from '../../utils'
   import ProjectSelector from '../project/ProjectSelector.svelte'
   import DocHierarchyLevel from './DocHierarchyLevel.svelte'
-
   import documents from '../../plugin'
-
   import DropArea from './DropArea.svelte'
   import DropMarker from './DropMarker.svelte'
 
@@ -174,7 +171,7 @@
     const extraActions = await getContributedActions(client, obj)
     for (const act of extraActions) {
       result.push({
-        icon: act.icon ?? IconEdit,
+        icon: act.icon ?? ui.icon.PencilLine,
         label: act.label,
         group: act.context.group,
         action: async (ctx: any, evt: Event) => {

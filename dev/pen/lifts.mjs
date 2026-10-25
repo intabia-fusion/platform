@@ -483,8 +483,8 @@ registerLifts({
   },
 
   TopBar (call, view, def, env) {
-    const icon = nestedCall(view, def, findAddr(def, (n) => n.type === 'ref' && n.name === 'icon/tracker/tracker'), env)
-    if (icon?.fn === 'icon' && icon.args[0] !== 'tracker/tracker') (call.args[1] ?? (call.args[1] = {})).tabIcon = icon.args[0]
+    const icon = nestedCall(view, def, findAddr(def, (n) => n.type === 'ref' && n.name === 'icon/kit/CheckSquare'), env)
+    if (icon?.fn === 'icon' && icon.args[0] !== 'kit/CheckSquare') (call.args[1] ?? (call.args[1] = {})).tabIcon = icon.args[0]
   },
 
   AppRail (call, view, def, env) {
@@ -604,7 +604,7 @@ registerLifts({
     for (const k of ['view', 'title', 'titleIcon', 'titleNode', 'actions', 'filters', 'tabs', 'tab']) delete o[k]
     const left = slotKids(view, def, 'left')
     const sw = left.length > 0 ? nodeCall(left[0], env) : null
-    if (sw?.fn === 'Switcher') o.view = sw.args[1] === 'tracker/list' ? 'list' : 'board'
+    if (sw?.fn === 'Switcher') o.view = sw.args[1] === 'kit/BulletList' ? 'list' : 'board'
     const title = left.at(-1)
     if (title?.name === 'Breadcrumb') {
       o.title = firstText(title)

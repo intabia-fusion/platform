@@ -14,7 +14,7 @@
 //
 
 import { getEmbeddedLabel } from '@hcengineering/platform'
-import { IconFolder } from '@hcengineering/ui'
+import ui from '@hcengineering/ui'
 import { NavGroup } from '@hcengineering/ui/kit'
 import type { Meta, StoryObj } from '@storybook/svelte'
 
@@ -58,7 +58,7 @@ export const Variants: Story = {
           rows: [
             { title: 'section', props: { kind: 'section' } },
             { title: 'section, no divider', props: { kind: 'section', divider: false } },
-            { title: 'nested', props: { kind: 'nested', icon: IconFolder } }
+            { title: 'nested', props: { kind: 'nested', icon: ui.icon.Folder } }
           ],
           columns: [
             { title: 'heading', props: {} },
@@ -74,7 +74,7 @@ export const Variants: Story = {
           component: NavGroupExample,
           rows: [
             { title: 'section', props: { kind: 'section' } },
-            { title: 'nested', props: { kind: 'nested', icon: IconFolder } }
+            { title: 'nested', props: { kind: 'nested', icon: ui.icon.Folder } }
           ],
           columns: [
             { title: 'not selected', props: { selected: false } },

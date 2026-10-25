@@ -1,9 +1,10 @@
 <script lang="ts">
-  import { adminFetch } from '../../utils'
   import { FixedColumn } from '@hcengineering/view-resources'
   import { getEmbeddedLabel, getMetadata } from '@hcengineering/platform'
   import presentation, { type OverviewStatistics } from '@hcengineering/presentation'
-  import { Button, DropdownLabels, Expandable, IconArrowRight, ticker } from '@hcengineering/ui'
+  import ui, { Button, DropdownLabels, Expandable, ticker } from '@hcengineering/ui'
+
+  import { adminFetch } from '../../utils'
   import MetricsStats from './MetricsStats.svelte'
   import TopProblems from './TopProblems.svelte'
   import { fetchStatsJson } from './statsFetch'
@@ -46,7 +47,7 @@
     <div class="flex-row-center p-1">
       <div class="p-3">1.</div>
       <Button
-        icon={IconArrowRight}
+        icon={ui.icon.ArrowRight}
         label={getEmbeddedLabel('Wipe statistics')}
         on:click={() => {
           void adminFetch(endpoint + '/api/v1/manage?operation=wipe-statistics', {

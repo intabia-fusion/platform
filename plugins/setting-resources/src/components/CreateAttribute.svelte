@@ -19,22 +19,13 @@
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import presentation, { getClient } from '@hcengineering/presentation'
   import type { AnyComponent } from '@hcengineering/ui'
-  import {
-    Component,
-    DropdownLabelsIntl,
-    IconCopy,
-    IconDelete,
-    Label,
-    Modal,
-    ModernEditbox,
-    showPopup,
-    Toggle
-  } from '@hcengineering/ui'
+  import ui, { Component, DropdownLabelsIntl, Label, Modal, ModernEditbox, showPopup, Toggle } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import viewRes from '@hcengineering/view-resources/src/plugin'
   import type { DropdownIntlItem } from '@hcengineering/ui/src/types'
   import view from '@hcengineering/view'
   import { IconPicker } from '@hcengineering/view-resources'
+
   import setting from '../plugin'
   import { clearSettingsStore } from '../store'
 
@@ -141,8 +132,8 @@
   }}
 >
   <svelte:fragment slot="actions">
-    <IconButton icon={IconDelete} size="small" kind="tertiary" tooltip={{ label: setting.string.DeleteAttribute }} />
-    <IconButton icon={IconCopy} size="small" kind="tertiary" tooltip={{ label: presentation.string.Copy }} />
+    <IconButton icon={ui.icon.Trash} size="small" kind="tertiary" tooltip={{ label: setting.string.DeleteAttribute }} />
+    <IconButton icon={ui.icon.Copy} size="small" kind="tertiary" tooltip={{ label: presentation.string.Copy }} />
   </svelte:fragment>
   <div class="hulyModal-content__titleGroup">
     <div class="hulyChip-item font-medium-12">

@@ -47,27 +47,25 @@
   import { recognizeDocument } from '@hcengineering/rekoni'
   import type { TagElement, TagReference } from '@hcengineering/tags'
   import tags, { findTagCategory } from '@hcengineering/tags'
-  import {
+  import ui, {
     Button,
     Component,
     createFocusManager,
     EditBox,
-    IconFile as FileIcon,
     FocusHandler,
     getColorNumberByText,
-    IconAttachment,
-    IconInfo,
     Label,
     MiniToggle,
     showPopup,
     Spinner,
-    ActionIcon
+    ActionIcon,
+    Icon
   } from '@hcengineering/ui'
   import { createEventDispatcher, onDestroy } from 'svelte'
+
   import recruit from '../plugin'
   import { getCandidateIdentifier } from '../utils'
   import YesNo from './YesNo.svelte'
-  import IconShuffle from './icons/Shuffle.svelte'
 
   export let shouldSaveDraft: boolean = true
 
@@ -650,7 +648,7 @@
         name={combineName(object?.firstName?.trim() ?? '', object?.lastName?.trim() ?? '')}
       />
       <ActionIcon
-        icon={IconShuffle}
+        icon={ui.icon.Shuffle}
         label={recruit.string.SwapFirstAndLastNames}
         size="medium"
         action={() => {
@@ -774,7 +772,7 @@
         {#if loading}
           <Button label={recruit.string.Uploading} icon={Spinner} disabled />
         {:else if object.resumeUuid}
-          <Button disabled={loading} focusIndex={103} icon={FileIcon} on:click={openResume}>
+          <Button disabled={loading} focusIndex={103} icon={ui.icon.File} on:click={openResume}>
             <svelte:fragment slot="content">
               <span class="overflow-label disabled">{object.resumeName}</span>
             </svelte:fragment>
@@ -783,7 +781,7 @@
           <Button
             focusIndex={103}
             label={recruit.string.AddDropHere}
-            icon={IconAttachment}
+            icon={ui.icon.Paperclip}
             notSelected
             on:click={() => {
               inputFile.click()
@@ -799,7 +797,7 @@
     {#if matches.length > 0}
       <div class="flex-col-stretch flex-grow error-color">
         <div class="flex mb-1">
-          <IconInfo size="medium" />
+          <Icon icon={ui.icon.InfoCircle} size="medium" />
           <span class="text-sm overflow-label ml-2">
             <Label label={contact.string.PersonAlreadyExists} />
           </span>

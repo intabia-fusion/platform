@@ -14,12 +14,9 @@
 -->
 <script lang="ts">
   import type { MicState } from '@hcengineering/media'
-  import { Icon, tooltip } from '@hcengineering/ui'
+  import ui, { Icon, tooltip } from '@hcengineering/ui'
 
   import media from '../plugin'
-
-  import IconMicOn from './icons/MicOn.svelte'
-  import IconMicOff from './icons/MicOff.svelte'
   import { toggleMicState } from '../utils'
 
   export let state: MicState | undefined
@@ -31,6 +28,6 @@
     use:tooltip={{ label: state.enabled ? media.string.TurnOffMic : media.string.TurnOnMic, direction: 'bottom' }}
     on:click={toggleMicState}
   >
-    <Icon icon={state.enabled ? IconMicOn : IconMicOff} size="small" />
+    <Icon icon={state.enabled ? ui.icon.Mic : ui.icon.MicOff} size="small" />
   </button>
 {/if}

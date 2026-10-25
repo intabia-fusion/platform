@@ -1,8 +1,8 @@
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
   import { createEventDispatcher } from 'svelte'
+
   import ui from '../plugin'
-  import IconClose from './icons/Close.svelte'
   import ActionIcon from './ActionIcon.svelte'
   import Button from './Button.svelte'
   import TextArea from './TextArea.svelte'
@@ -71,7 +71,7 @@
       <!-- svelte-ignore a11y-click-events-have-key-events -->
       <!-- svelte-ignore a11y-no-static-element-interactions -->
       <div class="ml-2" on:click={cancel}>
-        <ActionIcon icon={IconClose} size="medium" action={cancel} />
+        <ActionIcon icon={ui.icon.Cross} size="medium" action={cancel} />
       </div>
     </div>
   {/if}

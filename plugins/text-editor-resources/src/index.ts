@@ -53,8 +53,6 @@ export { default as CollaborativeTextEditor } from './components/CollaborativeTe
 export { default as CollaboratorEditor } from './components/CollaboratorEditor.svelte'
 export * from './components/editor/actions'
 export { default as FullDescriptionBox } from './components/FullDescriptionBox.svelte'
-export { default as AttachIcon } from './components/icons/Attach.svelte'
-export { default as TableIcon } from './components/icons/Table.svelte'
 export { default as MarkupDiffViewer } from './components/MarkupDiffViewer.svelte'
 export { getRegisteredEditor, registeredEditor, registerEditor, unregisterEditor } from './editorRegistry'
 export * from './components/node-view'

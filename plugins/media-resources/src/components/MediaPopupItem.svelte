@@ -15,7 +15,7 @@
 <script lang="ts">
   import type { Asset, IntlString } from '@hcengineering/platform'
   import type { AnySvelteComponent } from '@hcengineering/ui'
-  import { Icon, IconCheck, IconChevronRight, Label, tooltip } from '@hcengineering/ui'
+  import ui, { Icon, Label, tooltip } from '@hcengineering/ui'
   import type { ComponentType } from 'svelte'
   import { createEventDispatcher } from 'svelte'
 
@@ -68,14 +68,14 @@
     {#if selectable}
       <div class="mediaPopupItem-header__check">
         {#if selected}
-          <IconCheck size="small" />
+          <Icon icon={ui.icon.Check} size="small" />
         {/if}
       </div>
     {/if}
 
     {#if expandable && !disabled}
       <div class="mediaPopupItem-header__chevron">
-        <Icon icon={IconChevronRight} size="small" />
+        <Icon icon={ui.icon.ChevronRight} size="small" />
       </div>
     {/if}
   </button>

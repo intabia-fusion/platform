@@ -15,8 +15,9 @@
 <script lang="ts">
   import type { Ref } from '@hcengineering/core'
   import type { Customer } from '@hcengineering/lead'
-  import { Button, IconAdd, Label, showPopup, resizeObserver, Scroller } from '@hcengineering/ui'
+  import ui, { Button, Label, showPopup, resizeObserver, Scroller } from '@hcengineering/ui'
   import { Table } from '@hcengineering/view-resources'
+
   import lead from '../plugin'
   import CreateLead from './CreateLead.svelte'
 
@@ -35,7 +36,7 @@
     <span class="antiSection-header__title">
       <Label label={lead.string.Leads} />
     </span>
-    <Button icon={IconAdd} kind="ghost" on:click={createLead} />
+    <Button icon={ui.icon.Plus} kind="ghost" on:click={createLead} />
   </div>
   {#if leads !== undefined && leads > 0}
     {#if wSection < 640}

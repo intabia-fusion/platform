@@ -19,16 +19,7 @@
   import task, { type TaskType } from '@hcengineering/task'
   import { taskTypeStore, TaskTypeIcon } from '@hcengineering/task-resources'
   import type { Issue, IssueStatus, Project } from '@hcengineering/tracker'
-  import ui, {
-    type DropdownIntlItem,
-    Icon,
-    IconForward,
-    IconInfo,
-    Label,
-    Modal,
-    ModernDropdown,
-    tooltip
-  } from '@hcengineering/ui'
+  import ui, { type DropdownIntlItem, Icon, Label, Modal, ModernDropdown, tooltip } from '@hcengineering/ui'
   import { getAttributePresenter, statusStore } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
 
@@ -140,7 +131,7 @@
       {#if preselected}
         <div class="transition">
           <span class="transition__from"><TaskTypePresenter value={currentType} /></span>
-          <span class="transition__arrow"><Icon icon={IconForward} size="small" /></span>
+          <span class="transition__arrow"><Icon icon={ui.icon.ChevronRightLarge} size="small" /></span>
           <span class="transition__to"><TaskTypePresenter value={targetType} /></span>
         </div>
       {:else}
@@ -173,7 +164,7 @@
     {#if lost.length > 0}
       <div class="lost">
         <div class="lost__note">
-          <Icon icon={IconInfo} size="small" />
+          <Icon icon={ui.icon.InfoCircle} size="small" />
           <span>
             <Label label={tracker.string.LostAttributesHint} params={{ name: targetType?.name ?? '' }} />
           </span>

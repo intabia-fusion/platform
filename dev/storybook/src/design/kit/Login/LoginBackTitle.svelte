@@ -21,7 +21,7 @@
 </script>
 
 <div class="login-back-title" style:width="{width}px">
-  <span class="back"><Icon name="ui/Back" size={16} color="#201240" /></span>
+  <span class="back"><Icon name="kit/ArrowUturnLeft" size={16} color="#201240" /></span>
   <span class="title">{title}</span>
 </div>
 

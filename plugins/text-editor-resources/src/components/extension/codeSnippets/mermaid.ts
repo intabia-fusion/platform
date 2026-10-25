@@ -14,9 +14,10 @@
 // limitations under the License.
 //
 
+import { getMetadata } from '@hcengineering/platform'
 import { codeBlockOptions } from '@hcengineering/text'
 import { getCurrentTheme, isThemeDark, themeStore } from '@hcengineering/theme'
-import { showPopup } from '@hcengineering/ui'
+import ui, { showPopup } from '@hcengineering/ui'
 import { mergeAttributes } from '@tiptap/core'
 import { CodeBlockLowlight, type CodeBlockLowlightOptions } from '@tiptap/extension-code-block-lowlight'
 import { type Node as ProseMirrorNode } from '@tiptap/pm/model'
@@ -271,13 +272,13 @@ export const MermaidExtension = CodeBlockLowlight.extend<MermaidOptions>({
           containerNode.classList.add('folded')
           contentNode.style.display = 'none'
           languageLabelNode.style.display = 'none'
-          toggleButtonIconNode.innerHTML = editIconSvg
+          toggleButtonIconNode.innerHTML = editIconSvg()
           toggleButtonNode.className = 'antiButton primary medium sh-no-shape bs-none only-icon'
         } else {
           containerNode.classList.remove('folded')
           contentNode.style.display = ''
           languageLabelNode.style.display = ''
-          toggleButtonIconNode.innerHTML = foldIconSvg
+          toggleButtonIconNode.innerHTML = foldIconSvg()
           toggleButtonNode.className = 'antiButton link-bordered medium sh-no-shape bs-none only-icon'
         }
 
@@ -907,10 +908,9 @@ function mermaidHLJS (hljs: any): any {
   }
 }
 
-const editIconSvg = `<svg class="svg-medium" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
-  <path d="M14,13.1H9.2c-0.3,0-0.5,0.2-0.5,0.5s0.2,0.5,0.5,0.5H14c0.3,0,0.5-0.2,0.5-0.5S14.3,13.1,14,13.1z"></path><path d="M11.4,7.1C11.4,7.1,11.4,7.1,11.4,7.1c1.2-1.6,1.3-1.6,1.3-1.6C12.9,5,13,4.5,12.9,4c-0.1-0.5-0.4-0.9-0.8-1.2 c0,0-1.1-0.9-1.1-0.9c-0.8-0.7-2.1-0.6-2.8,0.3c0,0,0,0,0,0l-6.3,7.9c-0.3,0.4-0.4,0.9-0.3,1.4l0.5,2.3c0.1,0.2,0.3,0.4,0.5,0.4 c0,0,0,0,0,0l2.4,0c0.5,0,1-0.2,1.3-0.6C8.9,10.2,10.5,8.2,11.4,7.1C11.4,7.1,11.4,7.1,11.4,7.1z M8.9,2.8c0.3-0.4,1-0.5,1.4-0.1 c0,0,1.2,0.9,1.2,0.9c0.2,0.1,0.4,0.3,0.4,0.6c0.1,0.2,0,0.5-0.1,0.7c0,0-0.4,0.5-0.9,1.2L8.1,3.9L8.9,2.8z M5.5,12.9 C5.4,13,5.2,13.1,5,13.1l-2,0l-0.5-1.9c0-0.2,0-0.4,0.1-0.5l4.8-6l2.8,2.2C8.9,8.6,6.8,11.2,5.5,12.9z"></path>
-</svg>`
+// Built at insert time: sprite metadata is not registered when the module loads.
+const editIconSvg = (): string =>
+  `<svg class="svg-medium" fill="currentColor"><use href="${getMetadata(ui.icon.PencilLine) ?? ''}" /></svg>`
 
-const foldIconSvg = `<svg class="svg-medium" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M14.1464 1.14645C14.3417 0.951184 14.6583 0.951184 14.8535 1.14645C15.0477 1.34063 15.0488 1.6548 14.8567 1.85031L10.707 5.99999H14V6.99999H8.99996V1.99999H9.99996V5.29299L14.1464 1.14645Z"></path>
-  <path d="M1.99996 8.99999V9.99999H5.29296L1.14645 14.1464C0.951184 14.3417 0.951184 14.6583 1.14645 14.8535C1.34171 15.0488 1.65829 15.0488 1.85355 14.8535L5.99996 10.707V14H6.99996V8.99999H1.99996Z"></path>
-</svg>`
+const foldIconSvg = (): string =>
+  `<svg class="svg-medium" fill="currentColor"><use href="${getMetadata(ui.icon.ArrowsIn) ?? ''}" /></svg>`

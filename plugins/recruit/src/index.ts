@@ -97,7 +97,8 @@ const recruit = plugin(recruitId, {
     Skills: '' as Asset,
     Issue: '' as Asset,
     Schedule: '' as Asset,
-    Talents: '' as Asset
+    Talents: '' as Asset,
+    Applications: '' as Asset
   },
   resolver: {
     Location: '' as Resource<(loc: Location) => Promise<ResolvedLocation | undefined>>

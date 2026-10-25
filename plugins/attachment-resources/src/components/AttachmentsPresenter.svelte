@@ -16,8 +16,9 @@
 <script lang="ts">
   import type { Doc } from '@hcengineering/core'
   import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
-  import { Button, IconAttachment, tooltip } from '@hcengineering/ui'
+  import ui, { Button, tooltip, Icon } from '@hcengineering/ui'
   import { DocNavLink } from '@hcengineering/view-resources'
+
   import AttachmentPopup from './AttachmentPopup.svelte'
 
   export let value: number | undefined
@@ -44,7 +45,7 @@
           props: popupProps
         }}
       >
-        <div slot="icon"><IconAttachment {size} /></div>
+        <div slot="icon"><Icon icon={ui.icon.Paperclip} {size} /></div>
         <div slot="content" style:margin-left={showCounter && !compactMode ? '.375rem' : '0'}>
           {#if showCounter && !compactMode}{value ?? 0}{/if}
         </div>
@@ -57,7 +58,7 @@
         }}
         class="sm-tool-icon"
       >
-        <span class="icon"><IconAttachment {size} /></span>
+        <span class="icon"><Icon icon={ui.icon.Paperclip} {size} /></span>
         {#if showCounter}
           {value}
         {/if}

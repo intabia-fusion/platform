@@ -17,8 +17,9 @@
   import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
   import type { Floor, Room } from '@hcengineering/love'
   import love from '@hcengineering/love'
-  import { Breadcrumbs, eventToHTMLElement, Header, IconAdd, Scroller, showPopup } from '@hcengineering/ui'
+  import ui, { Breadcrumbs, eventToHTMLElement, Header, Scroller, showPopup } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
+
   import lovePlg from '../plugin'
   import { ensureOfficeDetailsLoaded, floors, rooms, selectedFloor } from '../stores'
   import FloorPreview from './FloorPreview.svelte'
@@ -61,7 +62,7 @@
   <svelte:fragment slot="extra">
     {#if editable}
       <IconButton
-        icon={IconAdd}
+        icon={ui.icon.Plus}
         kind="primary"
         size="small"
         tooltip={{ label: lovePlg.string.AddAFloor }}

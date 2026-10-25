@@ -177,7 +177,7 @@ kit.IssueGroup = (g, w = 1481, o = {}) => {
   const title = PT(pal)
   const chev = kit.box('chevron', { w: 28, h: 16, dir: 'row', pad: [0, 12, 0, 0] })
   // Rows present: the collapse arrow; no issues: a 4px dot instead
-  if (g.issues.length > 0) kit.add(chev, kit.icon('ui/Down', T('theme-caption-color'), 16))
+  if (g.issues.length > 0) kit.add(chev, kit.icon('kit/CaretDownFill', T('theme-caption-color'), 16))
   else kit.add(chev, kit.add(kit.box('dot', { w: 16, h: 16, dir: 'row', align: 'center', justify: 'center' }), kit.box('dot', { w: 4, h: 4, radius: 2, fill: T('theme-dark-color') })))
   kit.add(l, chev, kit.StatusIcon(g.cat, 16, g.color))
   kit.add(l, kit.spacer(8, 1), kit.text(g.name, { size: 14, weight: 500, color: title }), kit.spacer(8, 1), kit.text(String(g.issues.length), { size: 14, color: T('theme-dark-color') }))
@@ -205,54 +205,54 @@ kit.IssuePage = (d, w = 1515, h = 967) => {
   const ibtn = (name, o = {}) => kit.add(kit.box('button ' + name, { w: 32, h: 32, dir: 'row', align: 'center', justify: 'center', radius: 6, fill: o.on ? T('theme-button-default') : null }), kit.icon(name, o.color || sec, 20))
   const txt = (s, size, color, o = {}) => kit.text(s, { size, color, ...o })
   // Header
-  put(ibtn('ui/Close'), 17, 12)
+  put(ibtn('kit/Cross'), 17, 12)
   put(kit.box('divider', { w: 1, h: 32, fill: T('theme-divider-color') }), 61, 12)
-  put(kit.add(kit.row('project', 8), kit.icon('tracker/home', dark, 16), txt(d.project || 'Default', 14, T('theme-caption-color'))), 78, 19)
+  put(kit.add(kit.row('project', 8), kit.icon('kit/HouseFill', dark, 16), txt(d.project || 'Default', 14, T('theme-caption-color'))), 78, 19)
   put(txt('›', 14, T('theme-caption-color')), 158, 19)
   put(txt(d.id, 14, T('theme-caption-color')), 174, 19)
   let hx = 1245
-  put(ibtn('view/ai-star'), hx, 12)
-  put(kit.add(kit.box('reactions', { w: 36, h: 32, dir: 'row', align: 'center', justify: 'center' }), kit.icon('view/star', sec, 20)), hx + 40, 12)
-  put(ibtn('ui/Link'), 1329, 12)
-  put(ibtn('view/sidebar'), 1369, 12)
-  put(ibtn('ui/MoreH'), 1409, 12)
+  put(ibtn('kit/Sparkle'), hx, 12)
+  put(kit.add(kit.box('reactions', { w: 36, h: 32, dir: 'row', align: 'center', justify: 'center' }), kit.icon('kit/Star', sec, 20)), hx + 40, 12)
+  put(ibtn('kit/Link'), 1329, 12)
+  put(ibtn('kit/ArrowInSquare'), 1369, 12)
+  put(ibtn('kit/DotsHorizontal'), 1409, 12)
   put(kit.box('aside divider', { w: 1, h: 20, fill: T('global-ui-BorderColor') }), 1453, 18)
-  put(ibtn('view/sidebar', { on: true, color: T('primary-button-default') }), 1466, 12)
+  put(ibtn('kit/ArrowInSquare', { on: true, color: T('primary-button-default') }), 1466, 12)
   put(kit.box('header border', { w: w - 2, h: 1, fill: T('theme-divider-color') }), 1, 56)
   put(kit.box('separator', { w: 1, h: h - 58, fill: T('theme-divider-color') }), 1113, 57)
   // Main column: x 61.., 992 wide, y from 57
-  put(ibtn('ui/MaxWidth'), 1067, 89)
+  put(ibtn('kit/ArrowsOutLineHorizontal'), 1067, 89)
   put(txt(d.title, 20, T('theme-caption-color'), { name: 'title' }), 61, 89)
   put(txt(d.description || 'Add description...', 14, d.description ? T('theme-content-color') : dark, { name: 'description', w: 992 }), 61, 155)
-  const tools = [['text-editor/Attach', 61], ['recorder/record', 99], ['|', 137], ['text-editor/Table', 144], ['|', 182], ['text-editor/RIMention', 189], ['emoji/emoji', 227], ['|', 265], ['templates/template', 272]]
+  const tools = [['kit/Paperclip', 61], ['kit/Camera', 99], ['|', 137], ['kit/TableCells', 144], ['|', 182], ['kit/At', 189], ['kit/Smiley', 227], ['|', 265], ['kit/BubblePlus', 272]]
   for (const [n, x] of tools) put(n === '|' ? kit.box('divider', { w: 1, h: 24, fill: T('theme-list-divider-color') }) : ibtn(n), x, n === '|' ? 195 : 191)
   let y = 250
   const subCols = kit.IssueColumns(d.subIssues || [])
   for (const s of (d.subIssues || [])) { put(kit.IssueRow(s, 992, { last: false, cols: subCols }), 61, y); y += 44 }
   y += 24
-  const add = kit.add(kit.box('Add sub-issue', { w: 157, h: 32, dir: 'row', gap: 8, pad: [0, 12, 0, 12], align: 'center' }), kit.icon('ui/Add', T('theme-content-color'), 16), txt('Add sub-issue', 13, T('theme-content-color')), kit.icon('ui/Dropdown', T('theme-content-color'), 16))
+  const add = kit.add(kit.box('Add sub-issue', { w: 157, h: 32, dir: 'row', gap: 8, pad: [0, 12, 0, 12], align: 'center' }), kit.icon('kit/Plus', T('theme-content-color'), 16), txt('Add sub-issue', 13, T('theme-content-color')), kit.icon('kit/ChevronDown', T('theme-content-color'), 16))
   put(add, 61, y)
   y += 60
   // Activity
-  put(kit.icon('activity/activity', T('theme-content-color'), 16), 61, y + 12)
+  put(kit.icon('kit/ChartSquare', T('theme-content-color'), 16), 61, y + 12)
   put(txt('Activity', 16, T('theme-caption-color')), 85, y + 9)
-  put(kit.icon('view/configure', T('theme-content-color'), 16), 1017, y + 12)
+  put(kit.icon('kit/SlidersHorizontal', T('theme-content-color'), 16), 1017, y + 12)
   put(kit.box('activity divider', { w: 992, h: 1, fill: T('theme-divider-color') }), 61, y + 40)
   y += 39
   const who = d.creator || ['AJ', 'Blueberry', 'Appleseed John']
   put(kit.Avatar(who[0], who[1], 40), 82, y + 13)
   put(kit.add(kit.row('author', 4), txt(who[2], 14, sec, { weight: 500 }), txt(d.created || '', 12, sec)), 138, y + 10)
   // The title is a link: primary color
-  put(kit.add(kit.row('new issue', 8), kit.icon('tracker/issue', T('theme-caption-color'), 16), kit.add(kit.row('text', 0), txt('New issue: ', 14, T('theme-caption-color')), txt(d.title, 14, T('primary-button-default')))), 138, y + 33)
+  put(kit.add(kit.row('new issue', 8), kit.icon('kit/CheckSquare', T('theme-caption-color'), 16), kit.add(kit.row('text', 0), txt('New issue: ', 14, T('theme-caption-color')), txt(d.title, 14, T('primary-button-default')))), 138, y + 33)
   y += 62
   for (const a of (d.activity || [])) {
     put(txt(a.time, 12, T('theme-caption-color')), 98, y + 11)
-    put(kit.add(kit.row('update', 8), kit.icon('ui/Edit', T('theme-caption-color'), 16), kit.add(kit.row('text', 4), txt(a.text, 14, T('theme-caption-color')), a.strong ? txt(a.strong, 14, T('theme-caption-color'), { weight: 500 }) : [])), 138, y + 9)
+    put(kit.add(kit.row('update', 8), kit.icon('kit/PencilLine', T('theme-caption-color'), 16), kit.add(kit.row('text', 4), txt(a.text, 14, T('theme-caption-color')), a.strong ? txt(a.strong, 14, T('theme-caption-color'), { weight: 500 }) : [])), 138, y + 9)
     y += 37
   }
   y += 2
   put(kit.add(kit.box('comment box', { w: 992, h: 88, dir: 'column', stroke: T('theme-button-border'), radius: 6 }), kit.add(kit.box('input', { w: 990, h: 44, dir: 'row', pad: [10, 12, 0, 12] }), txt('Start typing...', 14, dark))), 61, y)
-  const ctools = ['text-editor/Attach', 'recorder/record', '|', 'chunter/IconMic', '|', 'text-editor/RIMention', 'emoji/emoji', '|', 'templates/template']
+  const ctools = ['kit/Paperclip', 'kit/Camera', '|', 'kit/Mic', '|', 'kit/At', 'kit/Smiley', '|', 'kit/BubblePlus']
   let cx = 73
   for (const n of ctools) { if (n === '|') { put(kit.box('divider', { w: 1, h: 24, fill: T('theme-list-divider-color') }), cx, y + 53); cx += 7 } else { put(ibtn(n), cx, y + 49); cx += 38 } }
   put(ibtn('text-editor/Send', { color: T('theme-halfcontent-color') }), 1007, y + 49)
@@ -265,21 +265,21 @@ kit.IssuePage = (d, w = 1515, h = 967) => {
   row(73, 'Status', val([kit.StatusIcon(d.cat, 16, d.color), txt(d.statusName || '', 13, T('theme-content-color'))]))
   row(109, 'Priority', val([kit.PriorityIcon(d.priority || 'none'), txt(prio, 13, T('theme-content-color'))]))
   row(145, 'Created by', val([kit.Avatar(who[0], who[1], 20), txt(who[2], 13, dark)]))
-  row(181, 'Assignee', val(d.assignee ? [kit.Avatar(d.assignee[0], d.assignee[1], 20), txt(d.assignee[2] || '', 13, T('theme-content-color'))] : [kit.icon('contact/Person', dark, 16), txt('Assignee', 13, dark)]))
-  row(217, 'Labels', kit.add(kit.box('Add label', { w: 100, h: 32, dir: 'row', gap: 4, pad: [0, 10, 0, 8], align: 'center', radius: 16 }), kit.icon('tags/tags', T('theme-content-color'), 16), txt('Add label', 14, T('theme-content-color'))))
+  row(181, 'Assignee', val(d.assignee ? [kit.Avatar(d.assignee[0], d.assignee[1], 20), txt(d.assignee[2] || '', 13, T('theme-content-color'))] : [kit.icon('kit/PersonCircle', dark, 16), txt('Assignee', 13, dark)]))
+  row(217, 'Labels', kit.add(kit.box('Add label', { w: 100, h: 32, dir: 'row', gap: 4, pad: [0, 10, 0, 8], align: 'center', radius: 16 }), kit.icon('kit/Tag', T('theme-content-color'), 16), txt('Add label', 14, T('theme-content-color'))))
   line(268)
-  row(289, 'Task type', val([kit.icon('tracker/issue', dark, 16), txt('Issue', 13, dark)]))
-  row(325, 'Component', val([kit.icon('tracker/component', T('theme-content-color'), 16), txt(d.component || 'Component', 13, d.component ? T('theme-content-color') : dark)]))
-  row(361, 'Milestone', val([kit.icon('tracker/milestone', d.milestone ? T('theme-content-color') : T('theme-halfcontent-color'), 16), txt(d.milestone || 'Milestone', 13, d.milestone ? T('theme-content-color') : dark)]))
+  row(289, 'Task type', val([kit.icon('kit/CheckSquare', dark, 16), txt('Issue', 13, dark)]))
+  row(325, 'Component', val([kit.icon('kit/Diamond', T('theme-content-color'), 16), txt(d.component || 'Component', 13, d.component ? T('theme-content-color') : dark)]))
+  row(361, 'Milestone', val([kit.icon('kit/Signpost', d.milestone ? T('theme-content-color') : T('theme-halfcontent-color'), 16), txt(d.milestone || 'Milestone', 13, d.milestone ? T('theme-content-color') : dark)]))
   line(412)
   row(435, 'Estimation', val(txt((d.est || '0h'), 13, T('theme-content-color')), 28), 28)
-  row(469, 'Spent time', val([txt((d.rep || 0) + 'h', 13, T('theme-content-color')), kit.icon('ui/Add', dark, 16)], 36), 36)
+  row(469, 'Spent time', val([txt((d.rep || 0) + 'h', 13, T('theme-content-color')), kit.icon('kit/Plus', dark, 16)], 36), 36)
   line(524)
   row(552, 'Remaining time', val(txt((parseFloat(d.est) || 0) - (d.rep || 0) + 'h', 14, T('theme-caption-color')), 18), 18)
   line(596)
   row(617, 'Collaborators', val([kit.Avatar(who[0], who[1], 20), txt(who[2], 13, T('theme-content-color'))], 36), 36)
   line(672)
-  row(693, 'Repository', val([txt('Repository', 13, T('theme-content-color')), kit.icon('ui/Dropdown', T('theme-halfcontent-color'), 12)]))
+  row(693, 'Repository', val([txt('Repository', 13, T('theme-content-color')), kit.icon('kit/ChevronDown', T('theme-halfcontent-color'), 12)]))
   line(744)
   put(txt('State History:', 14, T('theme-caption-color')), ax + 32, 771)
   put(kit.add(kit.row('state', 8), kit.StatusIcon(d.cat, 16, d.color), txt(d.statusName || '', 14, T('theme-caption-color'))), ax + 32, 807)
@@ -298,13 +298,13 @@ kit.NewIssuePopup = (o = {}) => {
   const btn = (name, w, h, r, kids, o2 = {}) => kit.add(kit.box(name, { w, h, dir: 'row', gap: 6, pad: [0, 12, 0, 12], align: 'center', radius: r, fill: o2.fill === undefined ? T('theme-button-default') : o2.fill, stroke: o2.noBorder ? null : T('theme-button-border') }), kids)
   const label = (s, color) => kit.text(s, { size: 13, color: color || content })
   // Header
-  put(btn('project', 90.4, 28, 6, [kit.icon('tracker/home', content, 16), label(o.project || 'Default')]), 24, 24)
+  put(btn('project', 90.4, 28, 6, [kit.icon('kit/HouseFill', content, 16), label(o.project || 'Default')]), 24, 24)
   put(btn('template', 98.2, 28, 6, [label('No template', dark)]), 122.4, 24)
-  put(kit.icon('ui/Forward', dark, 16), 228.6, 30)
+  put(kit.icon('kit/ChevronRightLarge', dark, 16), 228.6, 30)
   put(kit.text('New issue', { size: 14, color: T('global-primary-TextColor') }), 252.6, 27.5)
-  put(btn('type', 160, 28, 6, [kit.icon('tracker/issue', content, 16), label('Issue'), kit.spacer(60, 1), kit.icon('ui/Dropdown', content, 16)]), 324.9, 24)
-  put(kit.add(kit.box('ai', { w: 32, h: 32, dir: 'row', align: 'center', justify: 'center', radius: 6 }), kit.icon('view/ai-star', T('primary-button-default'), 20)), 620, 22)
-  put(kit.add(kit.box('close', { w: 28, h: 28, dir: 'row', align: 'center', justify: 'center', radius: 6 }), kit.icon('ui/Close', dark, 20)), 668, 24)
+  put(btn('type', 160, 28, 6, [kit.icon('kit/CheckSquare', content, 16), label('Issue'), kit.spacer(60, 1), kit.icon('kit/ChevronDown', content, 16)]), 324.9, 24)
+  put(kit.add(kit.box('ai', { w: 32, h: 32, dir: 'row', align: 'center', justify: 'center', radius: 6 }), kit.icon('kit/Sparkle', T('primary-button-default'), 20)), 620, 22)
+  put(kit.add(kit.box('close', { w: 28, h: 28, dir: 'row', align: 'center', justify: 'center', radius: 6 }), kit.icon('kit/Cross', dark, 20)), 668, 24)
   // Content
   put(kit.text('Issue title', { size: 20, color: T('theme-trans-color'), name: 'title' }), 36, 96)
   put(kit.text('Add description...', { size: 14, color: dark, name: 'description' }), 36, 155)
@@ -313,17 +313,17 @@ kit.NewIssuePopup = (o = {}) => {
   const half = T('theme-halfcontent-color')
   pool(24, 219, 93.5, 'status', [kit.StatusIcon(o.cat || 'backlog', 13, o.color), label(o.statusName || 'Backlog')])
   pool(125.5, 219, 109.5, 'priority', [kit.PriorityIcon('none'), label('No priority')])
-  pool(243, 219, 100.7, 'assignee', [kit.icon('contact/Person', dark, 16), label('Assignee', dark)])
-  pool(351.7, 219, 86, 'labels', [kit.icon('tags/tags', half, 16), label('Labels', dark)])
-  pool(445.6, 219, 133.9, 'component', [kit.icon('tracker/component', half, 16), label('No component', dark)])
-  pool(24, 263, 63.2, 'estimation', [kit.icon('tracker/estimation', half, 16), label('0h', dark)])
-  pool(95.2, 263, 105, 'milestone', [kit.icon('tracker/milestone', half, 16), label('Milestone', dark)])
-  pool(208.2, 263, 104.4, 'due date', [kit.icon('ui/Calendar', dark, 16), label('Due date', dark)])
+  pool(243, 219, 100.7, 'assignee', [kit.icon('kit/PersonCircle', dark, 16), label('Assignee', dark)])
+  pool(351.7, 219, 86, 'labels', [kit.icon('kit/Tag', half, 16), label('Labels', dark)])
+  pool(445.6, 219, 133.9, 'component', [kit.icon('kit/Diamond', half, 16), label('No component', dark)])
+  pool(24, 263, 63.2, 'estimation', [kit.icon('kit/CircleHalfFill', half, 16), label('0h', dark)])
+  pool(95.2, 263, 105, 'milestone', [kit.icon('kit/Signpost', half, 16), label('Milestone', dark)])
+  pool(208.2, 263, 104.4, 'due date', [kit.icon('kit/Calendar', dark, 16), label('Due date', dark)])
   pool(320.7, 263, 152.2, 'parent', [kit.icon('tracker/parent-issue', half, 16), label('Set parent issue…', dark)])
   // Footer
   put(kit.box('footer border', { w: 720, h: 1, fill: T('theme-button-border') }), 0, 323)
-  put(kit.add(kit.box('attach', { w: 36, h: 36, dir: 'row', align: 'center', justify: 'center', radius: 6 }), kit.icon('ui/Attachment', content, 16)), 24, 339.5)
+  put(kit.add(kit.box('attach', { w: 36, h: 36, dir: 'row', align: 'center', justify: 'center', radius: 6 }), kit.icon('kit/Paperclip', content, 16)), 24, 339.5)
   put(kit.add(kit.box('Create issue', { w: 95.9, h: 36, dir: 'row', pad: [0, 12, 0, 12], align: 'center', fill: T('primary-button-default') + '1F' }), kit.text('Create issue', { size: 13, color: content })), 572.1, 339.5)
-  put(kit.add(kit.box('Create menu', { w: 28, h: 36, dir: 'row', align: 'center', justify: 'center', fill: T('primary-button-default') + '1F' }), kit.icon('ui/Dropdown', content, 16)), 668, 339.5)
+  put(kit.add(kit.box('Create menu', { w: 28, h: 36, dir: 'row', align: 'center', justify: 'center', fill: T('primary-button-default') + '1F' }), kit.icon('kit/ChevronDown', content, 16)), 668, 339.5)
   return card
 }

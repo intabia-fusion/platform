@@ -19,8 +19,9 @@
   import type { Method, Process, Transition } from '@hcengineering/process'
   import type { Step } from '@hcengineering/process'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
-  import { IconDelete, Label, Modal } from '@hcengineering/ui'
+  import ui, { Label, Modal } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
+
   import plugin from '../../plugin'
   import StepEditor from './StepEditor.svelte'
   import ContextFooter from './ContextFooter.svelte'
@@ -78,7 +79,7 @@
   <svelte:fragment slot="actions">
     {#if !readonly}
       <IconButton
-        icon={IconDelete}
+        icon={ui.icon.Trash}
         size="small"
         kind="tertiary"
         tooltip={{ label: presentation.string.Delete }}

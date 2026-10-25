@@ -14,9 +14,10 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
+
+  import ui from '../plugin'
+  import Icon from './Icon.svelte'
   import type { FilterCategory, FilterOption, ActiveFilter } from '../types'
-  import IconChevronLeft from './icons/ChevronLeft.svelte'
-  import IconCheck from './icons/Check.svelte'
   import Label from './Label.svelte'
 
   export let categories: FilterCategory[]
@@ -105,7 +106,7 @@
     <!-- Options View -->
     <div class="popup-header">
       <button class="back-button" on:click={goBackToCategories}>
-        <IconChevronLeft size="small" />
+        <Icon icon={ui.icon.ChevronLeft} size="small" />
       </button>
       <span class="popup-title"><Label label={selectedCategory.label} /></span>
     </div>
@@ -120,7 +121,7 @@
         >
           <span class="option-label"><Label label={option.label} /></span>
           {#if isOptionSelected(option.id)}
-            <IconCheck size="small" />
+            <Icon icon={ui.icon.Check} size="small" />
           {/if}
         </button>
       {/each}

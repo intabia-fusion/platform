@@ -16,8 +16,7 @@
   import type { Asset } from '@hcengineering/platform'
   import { themeStore } from '@hcengineering/theme'
   import type { AnySvelteComponent, ColorDefinition, IconSize } from '@hcengineering/ui'
-  import { Icon, resizeObserver } from '@hcengineering/ui'
-  import AvatarIcon from './icons/Avatar.svelte'
+  import ui, { Icon, resizeObserver } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   const dispatch = createEventDispatcher()
@@ -129,7 +128,7 @@
     {:else}
       <div class="hulyAvatarSize-{size} icon">
         <Icon
-          icon={icon ?? AvatarIcon}
+          icon={icon ?? ui.icon.Person}
           fill={color ? 'var(--primary-button-color)' : 'var(--theme-caption-color)'}
           size="full"
         />

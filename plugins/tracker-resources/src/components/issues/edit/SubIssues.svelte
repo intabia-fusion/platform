@@ -16,10 +16,8 @@
   import type { Issue } from '@hcengineering/tracker'
   import { trackerId } from '@hcengineering/tracker'
   import type { SelectPopupValueType } from '@hcengineering/ui'
-  import {
+  import ui, {
     Button,
-    IconAdd,
-    IconScaleFull,
     Label,
     SelectPopup,
     closeTooltip,
@@ -28,6 +26,7 @@
     showPopup
   } from '@hcengineering/ui'
   import { createFilter, restrictionStore, setFilters } from '@hcengineering/view-resources'
+
   import tracker from '../../../plugin'
   import AddSubIssuePopup from './AddSubIssuePopup.svelte'
   import QueryIssuesList from './QueryIssuesList.svelte'
@@ -40,7 +39,7 @@
   let size = issue.subIssues
 
   const dropdownItems: SelectPopupValueType[] = [
-    { id: 'create', icon: IconAdd, label: tracker.string.CreateSubIssue },
+    { id: 'create', icon: ui.icon.Plus, label: tracker.string.CreateSubIssue },
     { id: 'existing', icon: tracker.icon.Subissue, label: tracker.string.AddExistingSubIssue }
   ]
 
@@ -89,7 +88,7 @@
     {#if !$restrictionStore.disableNavigation}
       <div class="w-1 flex-no-shrink" />
       <Button
-        icon={IconScaleFull}
+        icon={ui.icon.ArrowSquareOut}
         kind="ghost"
         showTooltip={{ label: tracker.string.OpenSubIssues, direction: 'bottom' }}
         on:click={() => {

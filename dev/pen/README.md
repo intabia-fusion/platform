@@ -2,7 +2,8 @@
 
 Builds `.pen` files with the pen.dev CLI (headless `pen interactive`) from the same screen scripts as `dev/design`:
 the scripts that `dev/design/design.json` lists for a file, in its order.
-Tokens and demo data are read from `dev/design/kit/*.generated.js`; icons come from the repository sources.
+Tokens and demo data are read from `dev/design/kit/*.generated.js`; icons come from the repository sources: `kit/<Key>` is a
+`ui.icon` key (the symbol of `packages/ui/assets/icons.svg`, as in Storybook), `<ns>/<id>` a plugin sprite symbol or Svelte icon.
 
 - Install: `cd dev/pen && npm install` (outside the pnpm workspace). Sign in once with `node_modules/.bin/pen login`, check with `pen status`.
 - Build: `node dev/pen/build.mjs` (about 11 s). `lib` or `screens` as an argument builds one file; `--file <part of the name in design.json>` picks the screen file (default: the first one; `--file screens` builds "Intabia Screens" into `current.pen`). The library always gets the tokens and icons of all screen files; use the full build after a new color token or icon appears.

@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { IconFile, IconMoreH } from '@hcengineering/ui'
+  import ui from '@hcengineering/ui'
   import { IconButton, NavItem, type NavItemProps } from '@hcengineering/ui/kit'
 
   // Storybook adds event_* args for the actions panel: they are not component props.
@@ -32,7 +32,7 @@
     <svelte:fragment slot="actions">
       {#if withActions}
         <IconButton
-          icon={IconMoreH}
+          icon={ui.icon.DotsHorizontal}
           kind="ghost"
           size="extra-small"
           tooltip={{ label: getEmbeddedLabel('More actions') }}
@@ -46,7 +46,7 @@
       {#each Array.from({ length: children }, (_, i) => i + 1) as child}
         <NavItem
           label={getEmbeddedLabel(`Page ${child}`)}
-          icon={IconFile}
+          icon={ui.icon.File}
           level={($$restProps.level ?? props.level ?? 0) + 1}
           expandable
           empty

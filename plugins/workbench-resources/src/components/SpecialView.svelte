@@ -19,12 +19,11 @@
   import { getResource } from '@hcengineering/platform'
   import { getClient, ComponentExtensions } from '@hcengineering/presentation'
   import type { AnyComponent, AnySvelteComponent, IModeSelector } from '@hcengineering/ui'
-  import {
+  import ui, {
     Breadcrumb,
     Button,
     Component,
     Header,
-    IconAdd,
     Loading,
     ModeSelector,
     SearchInput,
@@ -42,9 +41,10 @@
     ViewletSettingButton
   } from '@hcengineering/view-resources'
   import workbench, { type ParentsNavigationModel } from '@hcengineering/workbench'
-  import ComponentNavigator from './ComponentNavigator.svelte'
   import { deepEqual } from 'fast-equals'
   import type { ComponentType } from 'svelte'
+
+  import ComponentNavigator from './ComponentNavigator.svelte'
 
   export let _class: Ref<Class<Doc>>
   export let space: Ref<Space> | undefined = undefined
@@ -181,7 +181,7 @@
     {/if}
     {#if createLabel && createComponent}
       <Button
-        icon={IconAdd}
+        icon={ui.icon.Plus}
         label={createLabel}
         kind="primary"
         disabled={isCreationDisabled}

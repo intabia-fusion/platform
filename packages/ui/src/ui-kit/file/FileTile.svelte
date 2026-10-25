@@ -17,11 +17,9 @@
   import { themeStore } from '@hcengineering/theme'
   import { createEventDispatcher } from 'svelte'
 
+  import Icon from '../../components/Icon.svelte'
   import Label from '../../components/Label.svelte'
-  import IconClose from '../../components/icons/Close.svelte'
   import ui from '../../plugin'
-  import IconPauseFill from '../_icons/IconPauseFill.svelte'
-  import IconPlayFill from '../_icons/IconPlayFill.svelte'
   import { idlePlayer, playbackOf, sharedPlayback } from '../audio/playback'
   import IconButton from '../button/IconButton.svelte'
   import { describeLink, openLink } from '../link/utils'
@@ -139,12 +137,12 @@
         on:error={() => (broken = picture)}
       />
       {#if kind === 'video'}
-        <span class="video"><IconPlayFill size="x-small" /></span>
+        <span class="video"><Icon icon={ui.icon.PlayFill} size="x-small" /></span>
       {/if}
     </span>
   {:else if audio}
     <IconButton
-      icon={playing ? IconPauseFill : IconPlayFill}
+      icon={playing ? ui.icon.PauseFill : ui.icon.PlayFill}
       kind="secondary"
       size="medium"
       shape="round"
@@ -213,7 +211,7 @@
   {#if removable}
     <span class="remove">
       <IconButton
-        icon={IconClose}
+        icon={ui.icon.Cross}
         kind="ghost"
         size="extra-small"
         iconSize="x-small"

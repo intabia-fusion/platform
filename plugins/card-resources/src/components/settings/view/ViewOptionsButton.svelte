@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { getClient } from '@hcengineering/presentation'
-  import { showPopup, closeTooltip, IconOptions } from '@hcengineering/ui'
+  import ui, { showPopup, closeTooltip } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import type { OrderOption, ViewOptionsModel, Viewlet } from '@hcengineering/view'
   import view from '@hcengineering/view'
@@ -107,7 +107,7 @@
 </script>
 
 <IconButton
-  icon={IconOptions}
+  icon={ui.icon.ArrowUpLines}
   disabled={viewlet === undefined}
   {kind}
   size="small"

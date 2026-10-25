@@ -27,7 +27,7 @@
   import type { TypedSpace } from '@hcengineering/core'
   import type { Doc, Ref, Space } from '@hcengineering/core'
   import presentation, { getClient, SpaceSelector } from '@hcengineering/presentation'
-  import { Button, Label } from '@hcengineering/ui'
+  import ui, { Button, Label, Icon } from '@hcengineering/ui'
   import { checkMyPermission, permissionsStore } from '@hcengineering/contact-resources'
   import { createEventDispatcher } from 'svelte'
 
@@ -35,8 +35,6 @@
   import { getLatestProjectId } from '../../../utils'
   import DocumentParentSelector from '../../hierarchy/DocumentParentSelector.svelte'
   import ProjectSelector from '../../project/ProjectSelector.svelte'
-
-  import Info from '../../icons/Info.svelte'
 
   export let sourceDocumentIds: Ref<DocumentMeta>[] = []
   export let sourceSpaceId: Ref<DocumentSpace> | undefined
@@ -214,7 +212,7 @@
   <div class="flex items-center flex-between pr-6 pl-6 pt-4 pb-4">
     <div class="flex flex-gap-2 items-center max-w-120 p-1 text-xs pr-4">
       <div class="warning-sign">
-        <Info size="small" />
+        <Icon icon={ui.icon.InfoCircle} size="small" />
       </div>
       <Label label={documents.string.TransferWarning} />
     </div>

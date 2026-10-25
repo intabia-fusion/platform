@@ -17,7 +17,8 @@
   import { translate } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import type { MethodParams, Process, Step } from '@hcengineering/process'
-  import { Component, Icon, IconError, Label, tooltip } from '@hcengineering/ui'
+  import ui, { Component, Icon, Label, tooltip } from '@hcengineering/ui'
+
   import plugin from '../../plugin'
 
   export let action: Step<Doc>
@@ -59,7 +60,7 @@
 {#if method !== undefined}
   {#if errorProps !== undefined}
     <div class="mr-2" use:tooltip={{ label: plugin.string.MissingRequiredFields, props: errorProps }}>
-      <Icon icon={IconError} size="medium" />
+      <Icon icon={ui.icon.ExclamationCircle} size="medium" fill="var(--theme-error-color)" />
     </div>
   {/if}
   {#if method.presenter !== undefined}

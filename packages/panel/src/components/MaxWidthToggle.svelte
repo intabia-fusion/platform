@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import ui, { IconMaxWidth, IconMinWidth } from '@hcengineering/ui'
+  import ui from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
 
   // true lifts the column's width limit
@@ -23,7 +23,7 @@
 <!-- Always visible in the right gutter, so it stays put when the column changes width -->
 <div class="max-width-toggle">
   <IconButton
-    icon={value === true ? IconMinWidth : IconMaxWidth}
+    icon={value === true ? ui.icon.ArrowsInLineHorizontal : ui.icon.ArrowsOutLineHorizontal}
     kind="ghost"
     size="small"
     iconSize="medium"

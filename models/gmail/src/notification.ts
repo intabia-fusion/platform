@@ -59,7 +59,7 @@ export function defineNotifications (builder: Builder): void {
     notification.class.NotificationProvider,
     core.space.Model,
     {
-      icon: contact.icon.Email,
+      icon: contact.icon.EmailLine,
       label: gmail.string.Email,
       description: gmail.string.EmailNotificationsDescription,
       defaultEnabled: true,

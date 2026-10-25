@@ -14,20 +14,9 @@
 -->
 <script lang="ts">
   // Issue page of the tracker (EditIssue in a popup Panel): header, title, description, sub-issues, activity and the properties aside
-  import {
-    Button,
-    Icon as UiIcon,
-    IconAdd,
-    IconDropdown,
-    IconMaxWidth,
-    IconMoreH,
-    Panel,
-    Scroller
-  } from '@hcengineering/ui'
+  import ui, { Button, Icon as UiIcon, Panel, Scroller } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
-  import { setMetadata, type Asset, type Metadata } from '@hcengineering/platform'
-  import recordSprite from '../../../../../../plugins/recorder-assets/assets/icon.svg?url'
-  import { spriteAssets } from '../../setup'
+
   import Icon from '../Icon.svelte'
   import Avatar from '../People/Avatar.svelte'
   import { productIcon } from '../productIcon'
@@ -48,10 +37,6 @@
 
   // Sub-issue rows share their column widths
   fixedColumns()
-  // The recorder assets ship one icon.svg instead of the icons.svg sprite that setup.ts reads
-  setMetadata('recorder:icon:Record' as unknown as Metadata<string>, `${recordSprite}#record`)
-  spriteAssets.set('recorder/record', 'recorder:icon:Record' as Asset)
-  const sprite = (name: string): Asset => spriteAssets.get(name) as Asset
   const ic = (name: string): any => productIcon(name)
   const priorityLabel: Record<string, string> = {
     none: 'No priority',
@@ -70,7 +55,7 @@
       <div class="issue-title">
         <div class="issue-title__content">
           <div class="flex-presenter cursor-default project">
-            <Icon name="tracker/home" /><span class="project-name">{project}</span>
+            <Icon name="kit/HouseFill" /><span class="project-name">{project}</span>
           </div>
           <span class="breadcrumb-separator">›</span>
           <div class="title overflow-label">{issue.id}</div>
@@ -78,7 +63,7 @@
       </div>
     </svelte:fragment>
     <svelte:fragment slot="pre-utils">
-      <IconButton size="small" icon={sprite('view/ai-star')} iconSize="medium" kind="ghost" aria-label="AI" />
+      <IconButton size="small" icon={ic('kit/Sparkle')} iconSize="medium" kind="ghost" aria-label="AI" />
       <button class="reactions-summary" type="button">
         <svg class="star-mark" viewBox="0 0 24 24" aria-hidden="true">
           <path d="M12 2.8l2.75 5.8 6.35.78-4.68 4.38 1.2 6.29L12 16.97l-5.62 3.08 1.2-6.29L2.9 9.38l6.35-.78z" />
@@ -86,21 +71,27 @@
       </button>
     </svelte:fragment>
     <svelte:fragment slot="utils">
-      <IconButton size="small" icon={ic('ui/Link')} iconSize="medium" kind="ghost" aria-label="Copy link" />
+      <IconButton size="small" icon={ic('kit/Link')} iconSize="medium" kind="ghost" aria-label="Copy link" />
       <IconButton
         size="small"
-        icon={sprite('view/sidebar')}
+        icon={ic('kit/ArrowInSquare')}
         iconSize="medium"
         kind="ghost"
         aria-label="Open in sidebar"
       />
-      <IconButton size="small" icon={IconMoreH} iconSize="medium" kind="ghost" aria-label="More actions" />
+      <IconButton size="small" icon={ui.icon.DotsHorizontal} iconSize="medium" kind="ghost" aria-label="More actions" />
     </svelte:fragment>
 
     <div class="main">
       <Scroller>
         <div class="max-width-toggle">
-          <IconButton icon={IconMaxWidth} kind="ghost" size="small" iconSize="medium" aria-label="Full width" />
+          <IconButton
+            icon={ui.icon.ArrowsOutLineHorizontal}
+            kind="ghost"
+            size="small"
+            iconSize="medium"
+            aria-label="Full width"
+          />
         </div>
         <div class="popupPanel-body__main-content py-8 max">
           <div class="antiEditBox">
@@ -110,15 +101,15 @@
             <div class="description" class:empty={description === undefined}>{description ?? 'Add description...'}</div>
             <div class="toolbar">
               <div class="buttons-group">
-                <Button kind="ghost" size="medium" icon={ic('text-editor/Attach')} iconProps={{ size: 'medium' }} />
-                <Button kind="ghost" size="medium" icon={sprite('recorder/record')} iconProps={{ size: 'medium' }} />
+                <Button kind="ghost" size="medium" icon={ic('kit/Paperclip')} iconProps={{ size: 'medium' }} />
+                <Button kind="ghost" size="medium" icon={ui.icon.Camera} iconProps={{ size: 'medium' }} />
                 <span class="buttons-divider" />
-                <Button kind="ghost" size="medium" icon={ic('text-editor/Table')} iconProps={{ size: 'medium' }} />
+                <Button kind="ghost" size="medium" icon={ic('kit/TableCells')} iconProps={{ size: 'medium' }} />
                 <span class="buttons-divider" />
-                <Button kind="ghost" size="medium" icon={ic('text-editor/RIMention')} iconProps={{ size: 'medium' }} />
-                <Button kind="ghost" size="medium" icon={sprite('emoji/emoji')} iconProps={{ size: 'medium' }} />
+                <Button kind="ghost" size="medium" icon={ic('kit/At')} iconProps={{ size: 'medium' }} />
+                <Button kind="ghost" size="medium" icon={ic('kit/Smiley')} iconProps={{ size: 'medium' }} />
                 <span class="buttons-divider" />
-                <Button kind="ghost" size="medium" icon={sprite('templates/template')} iconProps={{ size: 'medium' }} />
+                <Button kind="ghost" size="medium" icon={ic('kit/BubblePlus')} iconProps={{ size: 'medium' }} />
               </div>
             </div>
           </div>
@@ -132,7 +123,7 @@
           <div class="mt-6">
             <div class="flex-between mb-1">
               <div class="flex-row-center">
-                <Button kind="ghost" size="medium" icon={IconAdd} shape="rectangle-right" borderStyle="none">
+                <Button kind="ghost" size="medium" icon={ui.icon.Plus} shape="rectangle-right" borderStyle="none">
                   <svelte:fragment slot="content">
                     <div class="flex-row-center w-full flex-between relative">
                       <span class="overflow-label">Add sub-issue</span>
@@ -143,7 +134,7 @@
                 <Button
                   kind="ghost"
                   size="medium"
-                  icon={IconDropdown}
+                  icon={ui.icon.ChevronDown}
                   shape="rectangle-left"
                   borderStyle="none"
                   width="1.75rem"
@@ -153,10 +144,10 @@
           </div>
           <div class="antiSection mt-6">
             <div class="antiSection-header">
-              <div class="antiSection-header__icon"><Icon name="activity/activity" /></div>
+              <div class="antiSection-header__icon"><Icon name="kit/ChartSquare" /></div>
               <span class="antiSection-header__title flex-row-center">Activity</span>
               <div class="buttons-group small-gap pr-2 relative">
-                <Button kind="ghost" size="small" icon={sprite('view/configure')} />
+                <Button kind="ghost" size="small" icon={ic('kit/SlidersHorizontal')} />
               </div>
             </div>
             <div class="p-activity select-text forward">
@@ -169,7 +160,7 @@
                       <span class="text-sm timestamp">{created}</span>
                     </div>
                     <div class="clear-mins new-issue">
-                      <Icon name="tracker/issue" /><span>New issue: <span class="link">{issue.title}</span></span>
+                      <Icon name="kit/CheckSquare" /><span>New issue: <span class="link">{issue.title}</span></span>
                     </div>
                   </div>
                 </div>
@@ -178,7 +169,7 @@
                     <span class="text-sm lower time"><span>{item.time}</span></span>
                     <div class="flex-col w-full clear-mins message-content">
                       <div class="content overflow-label">
-                        <span class="mr-1"><Icon name="ui/Edit" /></span>
+                        <span class="mr-1"><Icon name="kit/PencilLine" /></span>
                         <span>{item.text}</span>
                         {#if item.strong !== undefined}<span class="strong">{item.strong}</span>{/if}
                       </div>
@@ -192,30 +183,15 @@
                 <div class="text-input"><div class="select-text placeholder">Start typing...</div></div>
                 <div class="buttons-panel flex-between clear-mins">
                   <div class="buttons-group xsmall-gap">
-                    <Button kind="ghost" size="medium" icon={ic('text-editor/Attach')} iconProps={{ size: 'medium' }} />
-                    <Button
-                      kind="ghost"
-                      size="medium"
-                      icon={sprite('recorder/record')}
-                      iconProps={{ size: 'medium' }}
-                    />
+                    <Button kind="ghost" size="medium" icon={ic('kit/Paperclip')} iconProps={{ size: 'medium' }} />
+                    <Button kind="ghost" size="medium" icon={ui.icon.Camera} iconProps={{ size: 'medium' }} />
                     <span class="buttons-divider" />
-                    <Button kind="ghost" size="medium" icon={ic('chunter/IconMic')} iconProps={{ size: 'medium' }} />
+                    <Button kind="ghost" size="medium" icon={ic('kit/Mic')} iconProps={{ size: 'medium' }} />
                     <span class="buttons-divider" />
-                    <Button
-                      kind="ghost"
-                      size="medium"
-                      icon={ic('text-editor/RIMention')}
-                      iconProps={{ size: 'medium' }}
-                    />
-                    <Button kind="ghost" size="medium" icon={sprite('emoji/emoji')} iconProps={{ size: 'medium' }} />
+                    <Button kind="ghost" size="medium" icon={ic('kit/At')} iconProps={{ size: 'medium' }} />
+                    <Button kind="ghost" size="medium" icon={ic('kit/Smiley')} iconProps={{ size: 'medium' }} />
                     <span class="buttons-divider" />
-                    <Button
-                      kind="ghost"
-                      size="medium"
-                      icon={sprite('templates/template')}
-                      iconProps={{ size: 'medium' }}
-                    />
+                    <Button kind="ghost" size="medium" icon={ic('kit/BubblePlus')} iconProps={{ size: 'medium' }} />
                   </div>
                   <Button kind="ghost" size="medium" icon={ic('text-editor/Send')} iconProps={{ size: 'medium' }} />
                 </div>
@@ -260,20 +236,20 @@
                 </div>
               {:else}
                 <div class="person not-selected">
-                  <UiIcon icon={ic('contact/Person')} size="small" /><span class="ml-2">Assignee</span>
+                  <UiIcon icon={ic('kit/PersonCircle')} size="small" /><span class="ml-2">Assignee</span>
                 </div>
               {/if}
             </svelte:fragment>
           </Button>
           <span class="labelTop">Labels</span>
           <button class="tag-button" type="button"
-            ><Icon name="tags/tags" /><span class="overflow-label label ml-1">Add label</span></button
+            ><Icon name="kit/Tag" /><span class="overflow-label label ml-1">Add label</span></button
           >
           <div class="divider" />
           <span class="labelOnPanel">Task type</span>
           <Button kind="link" size="medium" justify="left" width="100%">
             <svelte:fragment slot="content"
-              ><Icon name="tracker/issue" /><span class="ml-1-5">Issue</span></svelte:fragment
+              ><Icon name="kit/CheckSquare" /><span class="ml-1-5">Issue</span></svelte:fragment
             >
           </Button>
           <span class="labelOnPanel">Component</span>
@@ -282,7 +258,7 @@
             size="medium"
             justify="left"
             width="100%"
-            icon={sprite('tracker/component')}
+            icon={ic('kit/Diamond')}
             notSelected={issue.component === undefined}
           >
             <svelte:fragment slot="content"><span class="label">{issue.component ?? 'Component'}</span></svelte:fragment
@@ -294,7 +270,7 @@
             size="medium"
             justify="left"
             width="100%"
-            icon={sprite('tracker/milestone')}
+            icon={ic('kit/Signpost')}
             notSelected={issue.milestone === undefined}
           >
             <svelte:fragment slot="content"><span class="label">{issue.milestone ?? 'Milestone'}</span></svelte:fragment
@@ -304,7 +280,7 @@
           <span class="labelOnPanel">Estimation</span>
           <div class="time-value"><span>{issue.estimation ?? 0}h</span></div>
           <span class="labelOnPanel">Spent time</span>
-          <div class="time-value large"><span>{issue.reported ?? 0}h</span><Icon name="ui/Add" size={16} /></div>
+          <div class="time-value large"><span>{issue.reported ?? 0}h</span><Icon name="kit/Plus" size={16} /></div>
           <div class="divider" />
           <span class="labelOnPanel">Remaining time</span>
           <div class="remaining"><span>{(issue.estimation ?? 0) - (issue.reported ?? 0)}h</span></div>
@@ -318,7 +294,7 @@
           <div class="divider" />
           <span class="labelOnPanel">Repository</span>
           <div class="flex">
-            <Button kind="link" size="medium" justify="left" iconRight={IconDropdown}>
+            <Button kind="link" size="medium" justify="left" iconRight={ui.icon.ChevronDown}>
               <svelte:fragment slot="content"><span class="overflow-label label">Repository</span></svelte:fragment>
             </Button>
           </div>

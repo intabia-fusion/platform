@@ -20,11 +20,8 @@
   import { MessageBox, copyTextToClipboard, createQuery, getClient } from '@hcengineering/presentation'
   import { makeRank } from '@hcengineering/rank'
   import setting, { type WebhookIncomingRule } from '@hcengineering/setting'
-  import {
+  import ui, {
     Button,
-    IconAdd,
-    IconCopy,
-    IconDelete,
     Label,
     Modal,
     SelectPopup,
@@ -37,6 +34,7 @@
   import view from '@hcengineering/view'
   import { SortableDocList } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
+
   import settingsRes from '../plugin'
   import { webhookRuleTemplates } from '../webhookRuleTemplates'
   import { PLACEHOLDER_KEY } from '../webhookTargetKind'
@@ -132,7 +130,7 @@
         <Button
           kind="ghost"
           size="small"
-          icon={IconCopy}
+          icon={ui.icon.Copy}
           showTooltip={{ label: view.string.CopyToClipboard }}
           on:click={() => {
             void copyText(line.text)
@@ -142,7 +140,7 @@
     {/each}
   </div>
   <div class="toolbar">
-    <Button kind="regular" icon={IconAdd} label={settingsRes.string.CreateWebhookRule} on:click={openCreate} />
+    <Button kind="regular" icon={ui.icon.Plus} label={settingsRes.string.CreateWebhookRule} on:click={openCreate} />
     <Button kind="regular" label={settingsRes.string.WebhookRuleFromTemplate} on:click={openFromTemplate} />
   </div>
   <div class="hulyTableAttr-container">
@@ -175,7 +173,7 @@
             tooltip={{ label: settingsRes.string.Delete }}
             kind="tertiary"
             size="small"
-            icon={IconDelete}
+            icon={ui.icon.Trash}
             on:click={() => {
               remove(rule)
             }}

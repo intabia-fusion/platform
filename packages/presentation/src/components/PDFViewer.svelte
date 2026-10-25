@@ -14,11 +14,11 @@
 -->
 <script lang="ts">
   import type { Blob, Ref } from '@hcengineering/core'
-  import { Button, Dialog, EmbeddedPDF, Label, Spinner } from '@hcengineering/ui'
+  import ui, { Button, Dialog, EmbeddedPDF, Label, Spinner } from '@hcengineering/ui'
   import { createEventDispatcher, onMount } from 'svelte'
+
   import presentation, { getFileUrl } from '..'
   import ActionContext from './ActionContext.svelte'
-  import Download from './icons/Download.svelte'
 
   export let file: Ref<Blob> | undefined
   export let name: string
@@ -72,7 +72,7 @@
     {#if !isLoading && src !== ''}
       <a class="no-line" href={src} download={name} bind:this={download}>
         <Button
-          icon={Download}
+          icon={ui.icon.CloudDownload}
           kind="ghost"
           on:click={() => {
             download.click()

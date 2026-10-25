@@ -17,9 +17,9 @@
   import type { Attachment } from '@hcengineering/attachment'
   import type { BlobType, WithLookup } from '@hcengineering/core'
   import { Image } from '@hcengineering/presentation'
-  import { Blurhash, devicePixelRatioStore } from '@hcengineering/ui'
+  import { Blurhash, devicePixelRatioStore, Icon } from '@hcengineering/ui'
 
-  import BrokenImage from './icons/BrokenImage.svelte'
+  import attachment from '../plugin'
   import { calculateAttachmentDimensions } from '../utils'
   import type { AttachmentImageSize } from '../types'
 
@@ -78,7 +78,7 @@
       <Blurhash blurhash={value.metadata.thumbnail.blurhash} />
     {/if}
     <div class="image-overlay">
-      <BrokenImage size="large" />
+      <Icon icon={attachment.icon.BrokenImage} size="large" />
     </div>
   {:else}
     <!-- Freed off screen, but far enough that scrolling back finds it loaded; a phone scrolls in longer flings. -->

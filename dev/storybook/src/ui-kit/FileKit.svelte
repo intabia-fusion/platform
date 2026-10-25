@@ -20,13 +20,12 @@
     FileNoPreview,
     FileTile,
     IconButton,
-    IconFileDownload,
     MediaToolbar,
     PageThumb,
     type FileBadgeData,
     type ImageSource
   } from '@hcengineering/ui/kit'
-  import ui, { IconOpen } from '@hcengineering/ui'
+  import ui from '@hcengineering/ui'
   import { onDestroy } from 'svelte'
 
   import { hanging, page, pdf, photo, speech } from '../attachments/fixtures'
@@ -221,7 +220,7 @@
         <div class="media">
           <img {src} alt="" />
           <MediaToolbar visible>
-            <IconButton icon={IconFileDownload} kind="ghost" size="small" iconSize="small" aria-label="Download" />
+            <IconButton icon={ui.icon.Download} kind="ghost" size="small" iconSize="small" aria-label="Download" />
           </MediaToolbar>
         </div>
       </Specimen>
@@ -230,8 +229,8 @@
       <div class="media">
         <img src={media} alt="" />
         <MediaToolbar visible>
-          <IconButton icon={IconOpen} kind="ghost" size="small" iconSize="small" aria-label="Open" />
-          <IconButton icon={IconFileDownload} kind="ghost" size="small" iconSize="small" aria-label="Download" />
+          <IconButton icon={ui.icon.PencilLine} kind="ghost" size="small" iconSize="small" aria-label="Open" />
+          <IconButton icon={ui.icon.Download} kind="ghost" size="small" iconSize="small" aria-label="Download" />
         </MediaToolbar>
       </div>
     </Specimen>

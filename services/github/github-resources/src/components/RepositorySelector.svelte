@@ -6,9 +6,10 @@
   import type { Ref } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import type { ButtonKind, ButtonShape, ButtonSize, LabelAndProps, SelectPopupValueType } from '@hcengineering/ui'
-  import { ButtonWithDropdown, Icon, IconDropdown, SelectPopup, eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  import type { ButtonKind, ButtonSize, LabelAndProps, SelectPopupValueType } from '@hcengineering/ui'
+  import ui, { ButtonWithDropdown, Icon, SelectPopup, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import type { GithubIntegrationRepository, GithubProject } from '@hcengineering/github'
+
   import github from '../plugin'
   import { integrationRepositories } from './utils'
 
@@ -92,7 +93,7 @@
   dropdownItems={components}
   disabled={!isEditable}
   label={github.string.NoRepository}
-  dropdownIcon={IconDropdown}
+  dropdownIcon={ui.icon.ChevronDown}
   on:click={handleRepositoryEditorOpened}
   on:dropdown-selected={(ev) => {
     if (ev.detail != null) {

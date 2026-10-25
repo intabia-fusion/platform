@@ -16,19 +16,16 @@
   import type { AggregateValue, Doc, PrimitiveType, Ref, Space } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import type { AnyComponent, AnySvelteComponent, ColorDefinition } from '@hcengineering/ui'
-  import {
+  import ui, {
     Button,
     Component,
-    IconAdd,
-    IconBack,
-    IconCheck,
-    IconCollapseArrow,
     Label,
     Loading,
     defaultBackground,
     eventToHTMLElement,
     showPopup,
-    themeStore
+    themeStore,
+    Icon
   } from '@hcengineering/ui'
   import type { AttributeModel, ViewOptions } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
@@ -134,7 +131,7 @@
       <!-- {#if level === 0} -->
       <div class="chevron" class:empty={itemsProj.length === 0}>
         {#if itemsProj.length > 0}
-          <IconCollapseArrow size={level === 0 ? 'small' : 'tiny'} />
+          <Icon icon={ui.icon.CaretRightFill} size={level === 0 ? 'small' : 'tiny'} />
         {/if}
       </div>
       <!-- {/if} -->
@@ -206,9 +203,9 @@
     </div>
     {#if createItemDialog !== undefined && createItemLabel !== undefined}
       <div class:on-hover={!mouseOver} class="flex-row-center">
-        <Button icon={IconAdd} kind="ghost" showTooltip={{ label: createItemLabel }} on:click={handleCreateItem} />
+        <Button icon={ui.icon.Plus} kind="ghost" showTooltip={{ label: createItemLabel }} on:click={handleCreateItem} />
         <Button
-          icon={selected.length > 0 ? IconBack : IconCheck}
+          icon={selected.length > 0 ? ui.icon.ChevronLeftLarge : ui.icon.Check}
           kind="ghost"
           showTooltip={{ label: view.string.Select }}
           on:click={() => {

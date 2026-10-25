@@ -14,8 +14,9 @@
 -->
 <script lang="ts">
   import { onMount } from 'svelte'
-  import FontSize from './icons/FontSize.svelte'
-  import CheckCircled from './icons/CheckCircled.svelte'
+
+  import ui from '../../plugin'
+  import Icon from '../Icon.svelte'
 
   export let theme: string
   export let focused: string
@@ -35,21 +36,22 @@
 >
   {#if theme === 'theme-light' || theme === 'theme-system'}
     <div class="light-container">
-      <div class="paper"><FontSize size="small" /></div>
+      <div class="paper"><Icon icon={ui.icon.TextAa} size="small" /></div>
     </div>
   {/if}
   {#if theme === 'theme-dark' || theme === 'theme-system'}
     <div class="dark-container">
-      <div class="paper"><FontSize size="small" /></div>
+      <div class="paper"><Icon icon={ui.icon.TextAa} size="small" /></div>
     </div>
   {/if}
   {#if focused === theme}
-    <CheckCircled />
+    <span class="check"><Icon icon={ui.icon.CheckCircleFill} size="small" fill="var(--primary-button-default)" /></span>
   {/if}
 </button>
 
 <style lang="scss">
-  :global(.statusPopupThemeButton svg.check) {
+  .check {
+    display: flex;
     position: absolute;
     bottom: 3px;
     right: 3px;
@@ -94,6 +96,12 @@
         width: 100%;
         height: 100%;
         border-radius: 4px 0px 5.5px 0px;
+
+        // The sample letters fill the paper and get cropped, like a page preview.
+        :global(svg) {
+          width: 100%;
+          height: auto;
+        }
       }
     }
     &.both {

@@ -17,7 +17,7 @@
   import { permissionsStore } from '@hcengineering/contact-resources'
   import drive, { type Drive, type Folder } from '@hcengineering/drive'
   import { createQuery } from '@hcengineering/presentation'
-  import { BlankView, Scroller, SearchInput, Panel, Button, IconMoreH } from '@hcengineering/ui'
+  import ui, { BlankView, Scroller, SearchInput, Panel, Button } from '@hcengineering/ui'
   import type { Viewlet, ViewOptions } from '@hcengineering/view'
   import view from '@hcengineering/view'
   import {
@@ -36,8 +36,6 @@
   import DrivePresenter from './DrivePresenter.svelte'
   import FolderHeader from './FolderHeader.svelte'
   import FileDropArea from './FileDropArea.svelte'
-  import IconUpload from './icons/FileUpload.svelte'
-  import IconFolder from './icons/Folder.svelte'
 
   export let space: Ref<Drive>
   export let parent: Ref<Folder>
@@ -117,7 +115,7 @@
     </svelte:fragment>
     <svelte:fragment slot="utils">
       <Button
-        icon={IconMoreH}
+        icon={ui.icon.DotsHorizontal}
         iconProps={{ size: 'medium' }}
         kind="icon"
         showTooltip={{ label: view.string.MoreActions, direction: 'bottom' }}
@@ -143,7 +141,7 @@
               <!-- Asking whether the folder is empty. -->
             {:else if blank && !readonly && canUpload}
               <BlankView
-                icon={IconUpload}
+                icon={ui.icon.CloudUpload}
                 header={drivePlugin.string.DropFilesHere}
                 label={drivePlugin.string.DropFilesHint}
                 active={dragover}
@@ -152,7 +150,7 @@
                 }}
               />
             {:else if blank}
-              <BlankView icon={IconFolder} header={drivePlugin.string.EmptyFolder} />
+              <BlankView icon={ui.icon.Folder} header={drivePlugin.string.EmptyFolder} />
             {:else}
               <Scroller horizontal={true}>
                 <ViewletContentView {_class} {viewlet} query={resultQuery} {space} {viewOptions} />

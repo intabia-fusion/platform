@@ -16,12 +16,12 @@
   import type { Class, Doc, Ref } from '@hcengineering/core'
   import type { TagReference } from '@hcengineering/tags'
   import type { ButtonKind } from '@hcengineering/ui'
-  import { Button, Icon, Label, getEventPopupPositionElement, showPopup } from '@hcengineering/ui'
+  import ui, { Button, Icon, Label, getEventPopupPositionElement, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+
   import tagsPlugin from '../plugin'
   import DraftTagsPopup from './DraftTagsPopup.svelte'
   import TagReferencePresenter from './TagReferencePresenter.svelte'
-  import TagIcon from './icons/TagIcon.svelte'
 
   export let tags: TagReference[] = []
   export let targetClass: Ref<Class<Doc>>
@@ -56,7 +56,7 @@
 <div>
   <Button {kind} padding="0rem;" on:click={click}>
     <div slot="content" class="flex-row-center flex-gap-1">
-      <Icon icon={TagIcon} size="medium" />
+      <Icon icon={ui.icon.Tag} size="medium" />
       <span class="overflow-label label"><Label label={tagsPlugin.string.AddLabel} /></span>
     </div>
   </Button>

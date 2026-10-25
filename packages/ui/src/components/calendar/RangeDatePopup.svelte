@@ -15,11 +15,11 @@
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
   import { createEventDispatcher } from 'svelte'
+
   import ui from '../../plugin'
   import ActionIcon from '../ActionIcon.svelte'
   import Button from '../Button.svelte'
   import Label from '../Label.svelte'
-  import IconClose from '../icons/Close.svelte'
   import DateInputBox from './DateInputBox.svelte'
   import MonthSquare from './MonthSquare.svelte'
 
@@ -123,7 +123,7 @@
   <div class="header">
     <span class="fs-title overflow-label"><Label {label} /></span>
     <ActionIcon
-      icon={IconClose}
+      icon={ui.icon.Cross}
       size="small"
       action={() => {
         dispatch('close', {})

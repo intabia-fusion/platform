@@ -19,13 +19,9 @@
   import { translateCB } from '@hcengineering/platform'
   import { copyTextToClipboard, isDisabled } from '@hcengineering/presentation'
   import type { PopupOptions } from '@hcengineering/ui'
-  import {
+  import ui, {
     Button,
     FocusHandler,
-    IconArrowRight,
-    IconBlueCheck,
-    IconClose,
-    IconMoreV,
     createFocusManager,
     getEventPopupPositionElement,
     registerFocus,
@@ -35,8 +31,9 @@
   import view from '@hcengineering/view'
   import { ContextMenu } from '@hcengineering/view-resources'
   import { afterUpdate, createEventDispatcher, onMount } from 'svelte'
+
   import plugin from '../plugin'
-  import IconCopy from './icons/Copy.svelte'
+
   export let value: string = ''
   export let placeholder: IntlString
   export let editable: boolean | undefined = undefined
@@ -120,7 +117,7 @@
       focusIndex={2}
       kind="ghost"
       size="small"
-      icon={IconClose}
+      icon={ui.icon.Cross}
       disabled={value === ''}
       on:click={() => {
         if (input) {
@@ -134,7 +131,8 @@
       focusIndex={3}
       kind="ghost"
       size="small"
-      icon={IconBlueCheck}
+      icon={ui.icon.CheckCircleFill}
+      iconProps={{ fill: 'var(--button-primary-BackgroundColor)' }}
       on:click={() => {
         dispatch('close', value)
       }}
@@ -144,7 +142,7 @@
         focusIndex={4}
         kind="ghost"
         size="small"
-        icon={IconArrowRight}
+        icon={ui.icon.ArrowRight}
         on:click={() => {
           dispatch('update', value)
           dispatch('close', 'open')
@@ -155,7 +153,7 @@
       <Button
         kind="ghost"
         size="small"
-        icon={IconMoreV}
+        icon={ui.icon.DotsVertical}
         on:click={(evt) => {
           showPopup(
             ContextMenu,
@@ -194,7 +192,7 @@
       focusIndex={3}
       kind="ghost"
       size="small"
-      icon={IconCopy}
+      icon={ui.icon.Copy}
       on:mousemove={() => {
         show = true
       }}
@@ -216,7 +214,7 @@
         focusIndex={5}
         kind="ghost"
         size="small"
-        icon={IconArrowRight}
+        icon={ui.icon.ArrowRight}
         on:click={() => {
           dispatch('update', 'open')
         }}

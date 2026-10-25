@@ -4,19 +4,19 @@
   import type { IntlString } from '@hcengineering/platform'
   import { translate } from '@hcengineering/platform'
   import { createQuery, getClient, MessageBox } from '@hcengineering/presentation'
-  import {
+  import ui, {
     Breadcrumb,
     Button,
     defineSeparators,
     Header,
-    IconDelete,
     Separator,
     showPopup,
     twoPanelsSeparators
   } from '@hcengineering/ui'
   import view from '@hcengineering/view-resources/src/plugin'
-  import settings from '../plugin'
   import card from '@hcengineering/card'
+
+  import settings from '../plugin'
   import AssociationEditor from './AssociationEditor.svelte'
 
   export let _classes: Ref<Class<Doc>>[] = [core.class.Doc]
@@ -116,7 +116,7 @@
 
     <svelte:fragment slot="actions">
       {#if isAssociation(selected)}
-        <Button icon={IconDelete} label={view.string.Delete} kind="dangerous" on:click={() => remove(selected)} />
+        <Button icon={ui.icon.Trash} label={view.string.Delete} kind="dangerous" on:click={() => remove(selected)} />
       {/if}
     </svelte:fragment>
   </Header>

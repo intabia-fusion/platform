@@ -15,7 +15,8 @@
 <script lang="ts">
   import type { Person } from '@hcengineering/contact'
   import type { Ref } from '@hcengineering/core'
-  import { Button, Icon, Label, IconMoreV, Scroller } from '@hcengineering/ui'
+  import ui, { Button, Icon, Label, Scroller } from '@hcengineering/ui'
+
   import calendar from '../plugin'
   import AddParticipant from './AddParticipant.svelte'
   import EventParticipantItem from './EventParticipantItem.svelte'
@@ -128,7 +129,7 @@
       <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
       <div class="antiOption step-tb25" tabindex={focusIndex + shortListLength - 2}>
         <Button
-          icon={IconMoreV}
+          icon={ui.icon.DotsVertical}
           kind="ghost"
           size="x-small"
           padding="0 .5rem"

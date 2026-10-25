@@ -6,16 +6,17 @@ import { loadMetadata } from '@hcengineering/platform'
 import questions from '@hcengineering/questions'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
+// Icons the kit has: the ids stay, stored documents keep pointing at them.
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(questions.icon, {
-  ArrowDown: `${icons}#arrow-down`,
-  ArrowUp: `${icons}#arrow-up`,
-  Assessment: `${icons}#assessment`,
-  Checkbox: `${icons}#checkbox`,
-  Drag: `${icons}#drag`,
-  Duplicate: `${icons}#duplicate`,
-  Failed: `${icons}#failed`,
-  MiniDrag: `${icons}#mini-drag`,
-  Passed: `${icons}#passed`,
-  Question: `${icons}#question`,
-  RadioButton: `${icons}#radio-button`
+  ArrowDown: `${uiIcons}#arrow-down`,
+  ArrowUp: `${uiIcons}#arrow-up`,
+  Assessment: `${uiIcons}#check-circle`,
+  Drag: `${uiIcons}#grip-vertical`,
+  Duplicate: `${uiIcons}#copy`,
+  Failed: `${uiIcons}#cross-circle-fill`,
+  MiniDrag: `${uiIcons}#dots-six-vertical`,
+  Passed: `${uiIcons}#check-circle-fill`,
+  Question: `${uiIcons}#question-circle`,
+  RadioButton: `${icons}#dot`
 })

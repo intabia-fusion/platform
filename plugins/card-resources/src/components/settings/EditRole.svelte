@@ -25,11 +25,8 @@
   } from '@hcengineering/core'
   import core, { notEmpty } from '@hcengineering/core'
   import presentation, { AttributeEditor, MessageBox, createQuery, getClient } from '@hcengineering/presentation'
-  import {
+  import ui, {
     Icon,
-    IconDelete,
-    IconEdit,
-    IconSettings,
     Label,
     Scroller,
     getCurrentLocation,
@@ -39,13 +36,13 @@
   } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import { ObjectBoxPopup } from '@hcengineering/view-resources'
-
   import type { MasterTag, Role } from '@hcengineering/card'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
   import settingRes from '@hcengineering/setting-resources/src/plugin'
   import { createEventDispatcher } from 'svelte'
-  import cardPlugin from '../../plugin'
   import type { IntlString } from '@hcengineering/platform'
+
+  import cardPlugin from '../../plugin'
 
   export let _id: Ref<Role>
   export let readonly: boolean = false
@@ -215,7 +212,7 @@
           <div class="hulyComponent-content__column-group mt-4">
             <div class="hulyComponent-content__header mb-6 gap-2">
               <IconButton
-                icon={IconDelete}
+                icon={ui.icon.Trash}
                 size="large"
                 kind="secondary"
                 disabled={readonly || !role.types.includes(masterTag)}
@@ -243,11 +240,11 @@
 
             <div class="hulyTableAttr-container">
               <div class="hulyTableAttr-header font-medium-12">
-                <IconSettings size="small" />
+                <Icon icon={ui.icon.Sliders} size="small" />
                 <span><Label label={settingRes.string.Permissions} /></span>
                 <IconButton
                   kind="primary"
-                  icon={IconEdit}
+                  icon={ui.icon.PencilLine}
                   size="small"
                   tooltip={{ label: presentation.string.Edit }}
                   on:click={handleEditPermissions}

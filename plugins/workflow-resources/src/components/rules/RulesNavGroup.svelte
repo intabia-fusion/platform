@@ -17,7 +17,7 @@
   import presentation, { getClient } from '@hcengineering/presentation'
   import type { TaskType } from '@hcengineering/task'
   import type { DropdownIntlItem } from '@hcengineering/ui'
-  import { Icon, IconAdd, IconClose, IconEdit, IconMoreV, Label, NavGroup, showPopup } from '@hcengineering/ui'
+  import ui, { Icon, Label, NavGroup, showPopup } from '@hcengineering/ui'
   import { MenuButton } from '@hcengineering/ui/kit'
   import type { Workflow, WorkflowRule, WorkflowRuleConfig, WorkflowTransition } from '@hcengineering/workflow'
   import { removeRuleConfig } from '@hcengineering/workflow'
@@ -43,12 +43,12 @@
     {
       id: 'edit',
       label: presentation.string.Edit,
-      icon: IconEdit
+      icon: ui.icon.PencilLine
     },
     {
       id: 'delete',
       label: presentation.string.Delete,
-      icon: IconClose
+      icon: ui.icon.Cross
     }
   ]
 
@@ -124,7 +124,7 @@
         data-testid={`action-add-${category}`}
         on:click|preventDefault|stopPropagation={handleAdd}
       >
-        <Icon icon={IconAdd} size="small" />
+        <Icon icon={ui.icon.Plus} size="small" />
       </button>
     </svelte:fragment>
 
@@ -146,7 +146,7 @@
             <div class="rule-card--actions">
               <MenuButton
                 items={actionItems}
-                icon={IconMoreV}
+                icon={ui.icon.DotsVertical}
                 kind="tertiary"
                 size="extra-small"
                 noSelection={true}

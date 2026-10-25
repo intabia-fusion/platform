@@ -23,7 +23,6 @@
   import type { AnySvelteComponent } from '../types'
   import Button from './Button.svelte'
   import Icon from './Icon.svelte'
-  import IconClose from './icons/Close.svelte'
   import Spinner from './Spinner.svelte'
 
   export let icon: Asset | AnySvelteComponent | ComponentType
@@ -69,7 +68,7 @@
     {#if value}
       <div class="ml-2 flex-no-shrink">
         <Button
-          icon={IconClose}
+          icon={plugin.icon.Cross}
           kind="ghost"
           size="small"
           noFocus

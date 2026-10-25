@@ -36,22 +36,13 @@
   import { selectedTypeStore, typeStore } from '@hcengineering/task-resources'
   import type { Issue, IssueStatus, IssueTemplate, IssueTemplateData, Project } from '@hcengineering/tracker'
   import tracker from '@hcengineering/tracker'
-  import {
-    Button,
-    Component,
-    EditBox,
-    FocusHandler,
-    IconAttachment,
-    createFocusManager,
-    showPopup
-  } from '@hcengineering/ui'
+  import ui, { Button, Component, EditBox, FocusHandler, createFocusManager, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
-  import recruit from '../plugin'
-  import Company from './icons/Company.svelte'
-  import VacancyIcon from './icons/Vacancy.svelte'
   import { Analytics } from '@hcengineering/analytics'
-  import { getSequenceId } from '../utils'
   import { isEmptyMarkup } from '@hcengineering/text'
+
+  import recruit from '../plugin'
+  import { getSequenceId } from '../utils'
 
   const dispatch = createEventDispatcher()
 
@@ -333,7 +324,7 @@
   <span>{typeType?.name}</span>
   <div class="flex-row-center clear-mins">
     <div class="mr-3">
-      <Button focusIndex={1} icon={VacancyIcon} size="medium" kind="link-bordered" noFocus />
+      <Button focusIndex={1} icon={ui.icon.Briefcase} size="medium" kind="link-bordered" noFocus />
     </div>
     <EditBox
       focusIndex={2}
@@ -370,7 +361,7 @@
       titleDeselect={recruit.string.UnAssignCompany}
       kind="regular"
       size="large"
-      icon={Company}
+      icon={ui.icon.Building}
       readonly={preserveCompany}
       showNavigate={false}
       create={{ component: contact.component.CreateOrganization, label: contact.string.CreateOrganization }}
@@ -423,7 +414,7 @@
   </svelte:fragment>
   <svelte:fragment slot="footer">
     <Button
-      icon={IconAttachment}
+      icon={ui.icon.Paperclip}
       size="large"
       on:click={() => {
         descriptionBox.handleAttach()

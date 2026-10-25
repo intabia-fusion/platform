@@ -18,9 +18,9 @@
   import { getResource } from '@hcengineering/platform'
   import presentation from '@hcengineering/presentation'
   import setting from '@hcengineering/setting'
-  import { Breadcrumb, Button, EditBox, Header, Icon, Label } from '@hcengineering/ui'
+  import ui, { Breadcrumb, Button, EditBox, Header, Icon, Label } from '@hcengineering/ui'
+
   import plugin from '../plugin'
-  import Error from './icons/Error.svelte'
 
   let oldPassword: string = ''
   let password: string = ''
@@ -63,7 +63,7 @@
     <div class="flex-grow flex-col">
       {#if error}
         <div class="flex-row-center gap-2">
-          <Icon icon={Error} size="medium" />
+          <Icon icon={ui.icon.ExclamationCircle} size="medium" fill="var(--theme-error-color)" />
           <Label label={plugin.string.FailedToSave} />
         </div>
       {/if}

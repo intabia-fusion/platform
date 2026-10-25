@@ -18,9 +18,10 @@
   import type { Ref, WithLookup } from '@hcengineering/core'
   import type { Department, Staff } from '@hcengineering/hr'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Button, IconAdd, Label, Scroller, Section, eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  import ui, { Button, Label, Scroller, Section, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import type { Viewlet, ViewletPreference } from '@hcengineering/view'
   import { Table, ViewletSelector, ViewletSettingButton } from '@hcengineering/view-resources'
+
   import hr from '../plugin'
   import { addMember } from '../utils'
 
@@ -80,7 +81,7 @@
         viewletQuery={{ _id: hr.viewlet.TableMember }}
       />
       <ViewletSettingButton kind="ghost" bind:viewlet />
-      <Button id={hr.string.AddEmployee} icon={IconAdd} kind="ghost" on:click={add} />
+      <Button id={hr.string.AddEmployee} icon={ui.icon.Plus} kind="ghost" on:click={add} />
     </div>
   </svelte:fragment>
 

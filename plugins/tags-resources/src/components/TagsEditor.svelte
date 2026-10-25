@@ -26,17 +26,9 @@
   import type { KeyedAttribute } from '@hcengineering/presentation'
   import { createQuery } from '@hcengineering/presentation'
   import type { TagElement, TagReference } from '@hcengineering/tags'
-  import {
-    Button,
-    getEventPopupPositionElement,
-    IconAdd,
-    IconClose,
-    Label,
-    ShowMore,
-    showPopup,
-    themeStore
-  } from '@hcengineering/ui'
+  import ui, { Button, getEventPopupPositionElement, Label, ShowMore, showPopup, themeStore } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+
   import tags from '../plugin'
   import TagItem from './TagItem.svelte'
   import TagsPopup from './TagsPopup.svelte'
@@ -117,7 +109,7 @@
       <div class="buttons-group x-small">
         {#if !readonly}
           <Button
-            icon={IconAdd}
+            icon={ui.icon.Plus}
             kind="ghost"
             showTooltip={{ label: tags.string.AddTagTooltip, props: { word: keyLabel } }}
             id="add-tag"
@@ -155,7 +147,7 @@
                 {tag}
                 element={elements.get(tag.tag)}
                 {schema}
-                action={IconClose}
+                action={ui.icon.Cross}
                 on:action={() => {
                   void removeTag(tag._id)
                 }}

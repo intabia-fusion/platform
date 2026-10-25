@@ -21,12 +21,11 @@
   import type { Ref, Space } from '@hcengineering/core'
   import core, { notEmpty } from '@hcengineering/core'
   import presentation, { createQuery, getClient } from '@hcengineering/presentation'
-  import { Button, Icon, Label } from '@hcengineering/ui'
+  import ui, { Button, Icon, Label } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
 
   import { canChangeDocumentOwner, isDocOwner } from '../../../utils'
-  import Info from '../../icons/Info.svelte'
   import DocumentVersionPresenter from '../presenters/DocumentVersionPresenter.svelte'
   import StatePresenter from '../presenters/StatePresenter.svelte'
 
@@ -104,7 +103,7 @@
       <div class="flex flex-gap-2 items-center max-w-60 p-1 text-xs pr-4">
         {#if isOwner}
           <div class="warning-sign">
-            <Info size="small" />
+            <Icon icon={ui.icon.InfoCircle} size="small" />
           </div>
           <Label label={documents.string.ChangeOwnerWarning} />
         {/if}

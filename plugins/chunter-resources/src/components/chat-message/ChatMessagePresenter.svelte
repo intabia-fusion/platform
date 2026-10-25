@@ -30,14 +30,13 @@
   import { getClient, MessageViewer, pendingCreatedDocs } from '@hcengineering/presentation'
   import { EmptyMarkup } from '@hcengineering/text'
   import type { Action } from '@hcengineering/ui'
-  import { Button, IconEdit, languageStore, deviceOptionsStore } from '@hcengineering/ui'
+  import ui, { Button, languageStore, deviceOptionsStore } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { getDocLinkTitle } from '@hcengineering/view-resources'
   import { NotificationClientImpl } from '@hcengineering/notification-resources'
 
   import { shownTranslatedMessagesStore, translatedMessagesStore, translatingMessagesStore } from '../../stores'
   import ChatMessageInput from './ChatMessageInput.svelte'
-  import DoubleCheck from '../icons/DoubleCheck.svelte'
   import MessageReadMarker from './MessageReadMarker.svelte'
   import MessageChannelLabel from './MessageChannelLabel.svelte'
   import MessageReadPopup from './MessageReadPopup.svelte'
@@ -181,7 +180,7 @@
       ? [
           {
             label: activity.string.Edit,
-            icon: IconEdit,
+            icon: ui.icon.PencilLine,
             group: 'edit',
             action: handleEditAction,
             order: 1
@@ -193,7 +192,7 @@
       ? [
           {
             label: chunter.string.Seen,
-            icon: DoubleCheck,
+            icon: ui.icon.CheckDouble,
             group: 'tools',
             component: MessageReadPopup,
             inlineComponent: CombineAvatars,

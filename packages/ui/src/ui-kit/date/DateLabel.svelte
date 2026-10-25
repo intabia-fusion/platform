@@ -16,8 +16,6 @@
   import { DateRangeMode } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
 
-  import DPCalendar from '../../components/calendar/icons/DPCalendar.svelte'
-  import DPCalendarOver from '../../components/calendar/icons/DPCalendarOver.svelte'
   import Icon from '../../components/Icon.svelte'
   import Label from '../../components/Label.svelte'
   import ui from '../../plugin'
@@ -50,7 +48,7 @@
 >
   {#if showIcon}
     <span class="date-label__icon" aria-hidden="true">
-      <Icon icon={icon ?? (shownTone === 'overdue' ? DPCalendarOver : DPCalendar)} size="small" />
+      <Icon icon={icon ?? (shownTone === 'overdue' ? ui.icon.CalendarX : ui.icon.Calendar)} size="small" />
     </span>
   {/if}
   <span class="date-label__text">

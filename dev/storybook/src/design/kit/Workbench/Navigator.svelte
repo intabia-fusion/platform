@@ -15,7 +15,8 @@
 <script lang="ts">
   // Navigator panel: title, primary create button and a flat list of entries (items, dividers, groups, spaces)
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { ButtonWithDropdown, IconAdd, IconDown, IconDropdown, Scroller } from '@hcengineering/ui'
+  import ui, { ButtonWithDropdown, Scroller, Icon } from '@hcengineering/ui'
+
   import Button from '../Actions/Button.svelte'
   import type { IconName, NavEntry } from '../types'
   import NavGroup from './NavGroup.svelte'
@@ -69,12 +70,12 @@
 {#if newLabel !== undefined}
   <div class="antiNav-subheader">
     <ButtonWithDropdown
-      icon={IconAdd}
+      icon={ui.icon.Plus}
       justify="left"
       kind="primary"
       label={getEmbeddedLabel(newLabel)}
       dropdownItems={[]}
-      dropdownIcon={IconDropdown}
+      dropdownIcon={ui.icon.ChevronDown}
     />
   </div>
 {/if}
@@ -87,10 +88,12 @@
             class="hulyNavGroup-header isOpen"
             class:highlighted={entry.items.some((it) => 'selected' in it && it.selected === true)}
           >
-            {#if entry.chevron === true}<div class="hulyNavGroup-header__chevron"><IconDown size="small" /></div>{/if}
+            {#if entry.chevron === true}<div class="hulyNavGroup-header__chevron">
+                <Icon icon={ui.icon.CaretDownFill} size="small" />
+              </div>{/if}
             <div class="hulyNavGroup-header__label font-medium-12">
               <span class="overflow-label">{entry.caption}</span>
-              {#if entry.menu === true}<IconDown size="small" />{/if}
+              {#if entry.menu === true}<Icon icon={ui.icon.CaretDownFill} size="small" />{/if}
             </div>
             <div class="flex-grow" />
           </div>

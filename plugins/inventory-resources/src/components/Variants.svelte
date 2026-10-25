@@ -14,8 +14,9 @@
 -->
 <script lang="ts">
   import type { Doc, Ref } from '@hcengineering/core'
-  import { Button, eventToHTMLElement, Icon, IconAdd, Label, showPopup } from '@hcengineering/ui'
+  import ui, { Button, eventToHTMLElement, Icon, Label, showPopup } from '@hcengineering/ui'
   import { Table } from '@hcengineering/view-resources'
+
   import inventory from '../plugin'
   import CreateVariant from './CreateVariant.svelte'
 
@@ -33,7 +34,7 @@
     <span class="antiSection-header__title">
       <Label label={inventory.string.Variants} />
     </span>
-    <Button icon={IconAdd} kind="ghost" on:click={create} />
+    <Button icon={ui.icon.Plus} kind="ghost" on:click={create} />
   </div>
   {#if variants > 0}
     <Table

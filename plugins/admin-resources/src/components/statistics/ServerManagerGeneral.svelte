@@ -18,7 +18,7 @@
   import login from '@hcengineering/login'
   import { getEmbeddedLabel, getMetadata } from '@hcengineering/platform'
   import presentation from '@hcengineering/presentation'
-  import { Button, DropdownLabels, EditBox, IconArrowLeft, IconArrowRight, ticker } from '@hcengineering/ui'
+  import ui, { Button, DropdownLabels, EditBox, ticker } from '@hcengineering/ui'
 
   import { adminFetch, getAccountClient, requestAdminOtpCode } from '../../utils'
 
@@ -100,7 +100,7 @@
         <EditBox bind:value={maintenanceMessage}></EditBox>
       </div>
       <Button
-        icon={IconArrowRight}
+        icon={ui.icon.ArrowRight}
         label={getEmbeddedLabel('Set maintenance warning')}
         on:click={() => {
           void setMaintenance(warningTimeout, maintenanceMessage)
@@ -113,7 +113,7 @@
       </div>
     </div>
     <Button
-      icon={IconArrowLeft}
+      icon={ui.icon.ArrowLeft}
       label={getEmbeddedLabel('Clear warning')}
       on:click={() => {
         void setMaintenance(-1, undefined)

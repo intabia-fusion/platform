@@ -17,15 +17,15 @@ import { loadMetadata } from '@hcengineering/platform'
 import drive from '@hcengineering/drive'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
+// Icons the kit has: the ids stay, stored documents keep pointing at them.
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(drive.icon, {
-  DriveApplication: `${icons}#driveapplication`,
-  Drive: `${icons}#drive`,
-  Drives: `${icons}#drives`,
-  Grid: `${icons}#grid`,
-  File: `${icons}#file`,
-  Folder: `${icons}#folder`,
-  FolderOpen: `${icons}#folder-open`,
-  FolderClosed: `${icons}#folder-closed`,
-  Download: `${icons}#download`,
-  Restore: `${icons}#restore`
+  DriveApplication: `${uiIcons}#cloud-tree`,
+  Drive: `${uiIcons}#hard-drive`,
+  Drives: `${icons}#hard-drives`,
+  Grid: `${uiIcons}#grid`,
+  File: `${uiIcons}#file`,
+  Folder: `${uiIcons}#folder`,
+  Download: `${uiIcons}#cloud-download`,
+  Restore: `${uiIcons}#arrow-uturn-right`
 })

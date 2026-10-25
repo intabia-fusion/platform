@@ -16,12 +16,11 @@
 <script lang="ts">
   import type { Organization } from '@hcengineering/contact'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { tooltip } from '@hcengineering/ui'
+  import ui, { tooltip, Icon } from '@hcengineering/ui'
   import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
   import type { ObjectPresenterType } from '@hcengineering/view'
 
   import contact from '../plugin'
-  import Company from './icons/Company.svelte'
 
   export let value: Organization
   export let inline: boolean = false
@@ -39,7 +38,7 @@
     <DocNavLink {disabled} object={value} {accent} {noUnderline} component={contact.component.EditOrganizationPanel}>
       <div class="flex-presenter" style:max-width={maxWidth} use:tooltip={{ label: getEmbeddedLabel(value.name) }}>
         <div class="icon circle">
-          <Company size="small" />
+          <Icon icon={ui.icon.Building} size="small" />
         </div>
         <span class="overflow-label label" class:no-underline={noUnderline || disabled} class:fs-bold={accent}>
           {value.name}

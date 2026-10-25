@@ -14,11 +14,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { IconAdd, showPopup } from '@hcengineering/ui'
+  import ui, { showPopup } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
+  import { isOwnerOrMaintainer } from '@hcengineering/core'
+
   import setting from '../../plugin'
   import CreateSpaceType from './CreateSpaceType.svelte'
-  import { isOwnerOrMaintainer } from '@hcengineering/core'
 
   function handleAdd (): void {
     showPopup(CreateSpaceType, {}, 'top')
@@ -28,7 +29,7 @@
 {#if isOwnerOrMaintainer()}
   <IconButton
     id="new-space-type"
-    icon={IconAdd}
+    icon={ui.icon.Plus}
     kind="tertiary"
     size="extra-small"
     on:click={handleAdd}

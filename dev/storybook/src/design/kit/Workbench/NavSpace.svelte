@@ -26,7 +26,7 @@
 
 <div class="group space">
   <span class="space-icon">
-    <Icon name={icon ?? 'tracker/home'} color={paletteDef(color ?? 'Porpoise', $themeStore.dark).color} />
+    <Icon name={icon ?? 'kit/HouseFill'} color={paletteDef(color ?? 'Porpoise', $themeStore.dark).color} />
   </span>
   <span class="caption">{label}</span>
 </div>

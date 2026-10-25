@@ -18,14 +18,12 @@
   import type { IntlString } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import tracker, { type Issue, type Project } from '@hcengineering/tracker'
-  import {
+  import ui, {
     createFocusManager,
     deviceOptionsStore,
     EditWithIcon,
     FocusHandler,
     Icon,
-    IconCheck,
-    IconSearch,
     Label,
     ListView,
     resizeObserver,
@@ -35,6 +33,7 @@
   } from '@hcengineering/ui'
   import { openDoc, openDocFromRef, statusStore } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
+
   import { subIssueListProvider, type IssueRef } from '../../../utils'
   import RelatedIssuePresenter from './RelatedIssuePresenter.svelte'
 
@@ -174,7 +173,7 @@
   {#if searchable}
     <div class="header">
       <EditWithIcon
-        icon={IconSearch}
+        icon={ui.icon.Search}
         size="large"
         width="100%"
         autoFocus={!$deviceOptionsStore.isMobile}
@@ -206,7 +205,7 @@
               {#if hasSelected}
                 <div class="check">
                   {#if item.isSelected}
-                    <Icon icon={IconCheck} size="small" />
+                    <Icon icon={ui.icon.Check} size="small" />
                   {/if}
                 </div>
               {/if}

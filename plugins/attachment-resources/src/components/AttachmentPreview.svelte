@@ -18,8 +18,8 @@
   import { AttachmentKind, getAttachmentCategory, type Attachment } from '@hcengineering/attachment'
   import type { BlobType, WithLookup } from '@hcengineering/core'
   import presentation, { downloadFile, getClient } from '@hcengineering/presentation'
-  import { Component, Label } from '@hcengineering/ui'
-  import { IconButton, IconFileDownload, MediaToolbar } from '@hcengineering/ui/kit'
+  import ui, { Component, Label } from '@hcengineering/ui'
+  import { IconButton, MediaToolbar } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
 
   import type { AttachmentImageSize } from '../types'
@@ -91,7 +91,7 @@
           on:click={open}
         />
         <IconButton
-          icon={IconFileDownload}
+          icon={ui.icon.Download}
           kind="ghost"
           size="small"
           iconSize="small"
@@ -120,7 +120,7 @@
       <!-- A tap opens the viewer, whose header has the download. -->
       <MediaToolbar visible={hovered}>
         <IconButton
-          icon={IconFileDownload}
+          icon={ui.icon.Download}
           kind="ghost"
           size="small"
           iconSize="small"

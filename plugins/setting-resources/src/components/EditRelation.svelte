@@ -19,8 +19,9 @@
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import presentation, { getClient, MessageBox } from '@hcengineering/presentation'
   import type { DropdownIntlItem } from '@hcengineering/ui'
-  import { Button, EditBox, IconDelete, Label, Modal, showPopup, Toggle } from '@hcengineering/ui'
+  import ui, { Button, EditBox, Label, Modal, showPopup, Toggle } from '@hcengineering/ui'
   import view from '@hcengineering/view'
+
   import setting from '../plugin'
   import { clearSettingsStore } from '../store'
 
@@ -84,7 +85,7 @@
   onCancel={clearSettingsStore}
 >
   <svelte:fragment slot="actions">
-    <Button icon={IconDelete} kind="dangerous" on:click={remove} />
+    <Button icon={ui.icon.Trash} kind="dangerous" on:click={remove} />
   </svelte:fragment>
   <div class="hulyModal-content__settingsSet">
     <div class="flex flex-gap-4">

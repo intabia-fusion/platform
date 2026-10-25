@@ -15,16 +15,16 @@
 <script lang="ts">
   import type { Space } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
-  import { Section } from '@hcengineering/ui'
+  import ui, { Section } from '@hcengineering/ui'
+
   import plugin from '../plugin'
-  import IconMembersOutline from './icons/MembersOutline.svelte'
   import SpaceMembers from './SpaceMembers.svelte'
 
   export let label: IntlString = plugin.string.Members
   export let space: Space
 </script>
 
-<Section {label} icon={IconMembersOutline}>
+<Section {label} icon={ui.icon.PeopleGroup}>
   <svelte:fragment slot="content">
     <SpaceMembers {space} />
   </svelte:fragment>

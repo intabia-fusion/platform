@@ -17,13 +17,13 @@
   import type { Space } from '@hcengineering/core'
   import type { Asset } from '@hcengineering/platform'
   import type { AnySvelteComponent, IconSize } from '@hcengineering/ui'
-  import { Icon, IconFolder, Label, getPaletteColorDef, themeStore } from '@hcengineering/ui'
-  import IconWithEmoji from './IconWithEmoji.svelte'
+  import ui, { Icon, Label, getPaletteColorDef, themeStore } from '@hcengineering/ui'
   import type { IconProps } from '@hcengineering/view'
   import view from '@hcengineering/view'
-
-  import presentation from '..'
   import type { ComponentType } from 'svelte'
+
+  import IconWithEmoji from './IconWithEmoji.svelte'
+  import presentation from '..'
 
   export let value: Space & IconProps
   export let subtitle: string | undefined = undefined
@@ -36,7 +36,9 @@
   <div class="icon medium-gap">
     <Icon
       {size}
-      icon={value.icon === iconWithEmoji && iconWithEmoji ? IconWithEmoji : (value.icon ?? defaultIcon ?? IconFolder)}
+      icon={value.icon === iconWithEmoji && iconWithEmoji
+        ? IconWithEmoji
+        : (value.icon ?? defaultIcon ?? ui.icon.Folder)}
       iconProps={value.icon === iconWithEmoji && iconWithEmoji
         ? { icon: value.color }
         : {

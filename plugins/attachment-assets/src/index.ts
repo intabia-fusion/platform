@@ -17,7 +17,9 @@ import attachment from '@hcengineering/attachment'
 import { loadMetadata } from '@hcengineering/platform'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(attachment.icon, {
-  Attachment: `${icons}#attachment`,
-  FileBrowser: `${icons}#fileBrowser`
+  Attachment: `${uiIcons}#paperclip`,
+  FileBrowser: `${uiIcons}#layers-stack`,
+  BrokenImage: `${icons}#image-broken`
 })

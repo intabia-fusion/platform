@@ -16,14 +16,13 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
   import type { IntlString } from '@hcengineering/platform'
+
   import Button from '../Button.svelte'
   import Scroller from '../Scroller.svelte'
   import WizardBar from './ModernWizardBar.svelte'
   import ModernDialog from '../ModernDialog.svelte'
   import type { IWizardStep } from '../../types'
   import ui from '../../plugin'
-  import ArrowLeft from '../icons/ArrowLeft.svelte'
-  import ArrowRight from '../icons/ArrowRight.svelte'
 
   export let loading: boolean = false
   export let label: IntlString
@@ -99,7 +98,14 @@
 
   <div slot="footerExtra" class="footerExtra">
     {#if hasBack}
-      <Button kind="regular" size="large" label={ui.string.Back} icon={ArrowLeft} on:click={handleBack} {loading} />
+      <Button
+        kind="regular"
+        size="large"
+        label={ui.string.Back}
+        icon={ui.icon.ArrowLeft}
+        on:click={handleBack}
+        {loading}
+      />
     {/if}
     <slot name="footerMessage" />
   </div>
@@ -120,7 +126,7 @@
         kind="primary"
         size="large"
         label={ui.string.NextStep}
-        iconRight={ArrowRight}
+        iconRight={ui.icon.ArrowRight}
         iconRightProps={{ size: 'small' }}
         {loading}
         disabled={!canProceed}

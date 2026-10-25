@@ -18,22 +18,11 @@
   import { AttributeEditor, MessageBox, createQuery, getClient } from '@hcengineering/presentation'
   import type { Permission, Ref, Role, SpaceType, SpaceTypeDescriptor } from '@hcengineering/core'
   import core from '@hcengineering/core'
-  import {
-    Icon,
-    IconDelete,
-    IconEdit,
-    IconSettings,
-    Label,
-    Scroller,
-    getCurrentResolvedLocation,
-    navigate,
-    showPopup
-  } from '@hcengineering/ui'
+  import ui, { Icon, Label, Scroller, getCurrentResolvedLocation, navigate, showPopup } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import { ObjectBoxPopup } from '@hcengineering/view-resources'
   import { deleteSpaceTypeRole } from '@hcengineering/setting'
 
-  import PersonIcon from '../icons/Person.svelte'
   import settingRes from '../../plugin'
   import { clearSettingsStore } from '../../store'
 
@@ -146,7 +135,7 @@
             <div class="hulyComponent-content__header mb-6 gap-2">
               <IconButton
                 tooltip={{ label: settingRes.string.DeleteRole }}
-                icon={IconDelete}
+                icon={ui.icon.Trash}
                 size="large"
                 kind="secondary"
                 disabled={readonly}
@@ -154,7 +143,7 @@
               />
               <IconButton
                 tooltip={{ label: settingRes.string.Role }}
-                icon={PersonIcon}
+                icon={ui.icon.PersonCircle}
                 size="large"
                 iconProps={{ size: 'small' }}
                 kind="secondary"
@@ -173,13 +162,13 @@
 
             <div class="hulyTableAttr-container">
               <div class="hulyTableAttr-header font-medium-12">
-                <IconSettings size="small" />
+                <Icon icon={ui.icon.Sliders} size="small" />
                 <span><Label label={settingRes.string.Permissions} /></span>
                 <IconButton
                   id="btnEditPermissions"
                   tooltip={{ label: settingRes.string.Permissions }}
                   kind="primary"
-                  icon={IconEdit}
+                  icon={ui.icon.PencilLine}
                   size="small"
                   on:click={handleEditPermissions}
                   disabled={readonly}

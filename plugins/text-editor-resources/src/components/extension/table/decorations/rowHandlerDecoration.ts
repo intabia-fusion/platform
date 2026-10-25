@@ -16,6 +16,7 @@
 import textEditor from '@hcengineering/text-editor'
 import { type Editor } from '@tiptap/core'
 import { CellSelection, TableMap } from '@tiptap/pm/tables'
+import ui from '@hcengineering/ui'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
 
 import { type TableNodeLocation } from '../types'
@@ -23,7 +24,6 @@ import { findTable, getSelectedRows, haveTableRelatedChanges, isRowSelected, sel
 
 import { Plugin, PluginKey } from '@tiptap/pm/state'
 import DeleteRow from '../../../icons/table/DeleteRow.svelte'
-import Duplicate from '../../../icons/table/Duplicate.svelte'
 import { duplicateRows, moveSelectedRows } from './actions'
 import { createCellsHandle, type OptionItem } from './cellsHandle'
 import {
@@ -219,7 +219,7 @@ const createOptionItems = (editor: Editor): OptionItem[] => [
   },
   {
     id: 'duplicate',
-    icon: Duplicate,
+    icon: ui.icon.Copy,
     label: textEditor.string.Duplicate,
     action: () => {
       const table = findTable(editor.state.selection)

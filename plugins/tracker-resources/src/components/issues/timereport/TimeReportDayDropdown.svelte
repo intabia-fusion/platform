@@ -16,8 +16,8 @@
   import { TimeReportDayType } from '@hcengineering/tracker'
   import { DropdownLabelsIntl } from '@hcengineering/ui'
   import type { ButtonKind, ButtonSize, DropdownIntlItem } from '@hcengineering/ui'
+
   import tracker from '../../../plugin'
-  import TimeReportDayIcon from './TimeReportDayIcon.svelte'
 
   export let label = tracker.string.TimeReportDayTypeLabel
   export let selected: TimeReportDayType | undefined
@@ -39,7 +39,7 @@
 <DropdownLabelsIntl
   {kind}
   {size}
-  icon={TimeReportDayIcon}
+  icon={tracker.icon.TimeReportDay}
   shouldUpdateUndefined={false}
   {label}
   items={workDaysDropdownItems}

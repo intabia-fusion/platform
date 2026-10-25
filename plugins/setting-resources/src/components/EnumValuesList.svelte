@@ -13,19 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import {
-    ModernPopup,
-    IconDelete,
-    IconMoreV,
-    IconMoreV2,
-    showPopup,
-    eventToHTMLElement,
-    ModernEditbox
-  } from '@hcengineering/ui'
+  import ui, { ModernPopup, showPopup, eventToHTMLElement, ModernEditbox, Icon } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import type { DropdownIntlItem } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+
   import setting from '../plugin'
 
   export let values: string[]
@@ -67,7 +60,7 @@
   const items: (DropdownIntlItem & { action: () => void })[] = [
     {
       id: 'delete',
-      icon: IconDelete,
+      icon: ui.icon.Trash,
       label: setting.string.Delete,
       action: () => {
         if (opened !== undefined) {
@@ -128,7 +121,7 @@
     }}
   >
     <button class="hulyTableAttr-content__row-dragMenu" class:drag={!disableMouseOver}>
-      <IconMoreV2 size="small" />
+      <Icon icon={ui.icon.GripVertical} size="small" />
     </button>
     <div class="hulyTableAttr-content__row-label font-regular-14 accent">
       <ModernEditbox
@@ -148,7 +141,7 @@
       <IconButton
         tooltip={{ label: view.string.MoreActions }}
         kind="tertiary"
-        icon={IconMoreV}
+        icon={ui.icon.DotsVertical}
         iconProps={{ fill: 'var(--global-tertiary-TextColor)' }}
         size="small"
         pressed={opened === i}

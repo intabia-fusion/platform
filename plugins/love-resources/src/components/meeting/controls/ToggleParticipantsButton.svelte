@@ -12,8 +12,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import ui from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
-  import IconMembers from '@hcengineering/contact-resources/src/components/icons/Members.svelte'
+
   import love from '../../../plugin'
   import { showParticipantsInModal } from '../../../stores'
   import { screenSharingState, ScreenSharingState } from '../../../liveKitClient'
@@ -23,7 +24,7 @@
 
 <IconButton
   iconSize="medium"
-  icon={IconMembers}
+  icon={ui.icon.PeopleFill}
   tooltip={{
     label: $showParticipantsInModal ? love.string.HideParticipants : love.string.ShowParticipants,
     direction: 'top'

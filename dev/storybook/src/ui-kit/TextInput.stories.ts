@@ -14,7 +14,7 @@
 //
 
 import { getEmbeddedLabel } from '@hcengineering/platform'
-import { IconSearch } from '@hcengineering/ui'
+import ui from '@hcengineering/ui'
 import { TextInput } from '@hcengineering/ui/kit'
 import type { Meta, StoryObj } from '@storybook/svelte'
 
@@ -80,7 +80,7 @@ export const Variants: Story = {
             { title: 'empty', props: {} },
             { title: 'value', props: { value: 'Design review' } },
             { title: 'clearable', props: { value: 'Design review', clearable: true } },
-            { title: 'icon', props: { icon: IconSearch, value: 'Design review' } },
+            { title: 'icon', props: { icon: ui.icon.Search, value: 'Design review' } },
             { title: 'readonly', props: { value: 'Design review', readonly: true } },
             { title: 'disabled', props: { value: 'Design review', disabled: true } },
             { title: 'disabled, empty', props: { disabled: true } },

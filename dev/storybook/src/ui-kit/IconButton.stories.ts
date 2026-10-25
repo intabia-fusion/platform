@@ -14,7 +14,7 @@
 //
 
 import { getEmbeddedLabel } from '@hcengineering/platform'
-import { IconSettings } from '@hcengineering/ui'
+import ui from '@hcengineering/ui'
 import { IconButton } from '@hcengineering/ui/kit'
 import type { Meta, StoryObj } from '@storybook/svelte'
 
@@ -40,7 +40,7 @@ const tooltip = { label: getEmbeddedLabel('Settings') }
 const meta = {
   title: 'Buttons/IconButton',
   component: IconButton,
-  args: { icon: IconSettings, tooltip, kind: 'secondary', size: 'large' },
+  args: { icon: ui.icon.Sliders, tooltip, kind: 'secondary', size: 'large' },
   parameters: {
     docs: {
       description: {
@@ -67,7 +67,7 @@ export const Variants: Story = {
           component: IconButton,
           rows: axis('kind', kinds),
           columns: axis('size', sizes),
-          props: { icon: IconSettings, tooltip }
+          props: { icon: ui.icon.Sliders, tooltip }
         },
         {
           title: 'Round',
@@ -77,7 +77,7 @@ export const Variants: Story = {
             'size',
             sizes.filter((size) => size !== 'min')
           ),
-          props: { icon: IconSettings, tooltip, shape: 'round' }
+          props: { icon: ui.icon.Sliders, tooltip, shape: 'round' }
         },
         {
           title: 'States',
@@ -90,7 +90,7 @@ export const Variants: Story = {
             { title: 'loading', props: { loading: true } },
             { title: 'disabled', props: { disabled: true } }
           ],
-          props: { icon: IconSettings, tooltip }
+          props: { icon: ui.icon.Sliders, tooltip }
         }
       ]
     }

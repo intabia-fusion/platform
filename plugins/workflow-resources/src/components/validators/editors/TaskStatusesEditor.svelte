@@ -18,15 +18,13 @@
   import task, { type TaskType } from '@hcengineering/task'
   import { translate } from '@hcengineering/platform'
   import type { DropdownTextItem } from '@hcengineering/ui'
-  import { Icon, Label, languageStore, ModernDropdownLabels } from '@hcengineering/ui'
+  import ui, { Icon, Label, languageStore, ModernDropdownLabels } from '@hcengineering/ui'
   import { StatePresenter, StatusCategoryIcon } from '@hcengineering/task-resources'
   import type { TaskStatusesProps, WorkflowValidatorConfig } from '@hcengineering/workflow'
   import { getClient, IconWithEmoji, reduceCalls } from '@hcengineering/presentation'
   import view from '@hcengineering/view'
 
   import plugin from '../../../plugin'
-  import AnyStatusIcon from '../../icon/AnyStatus.svelte'
-  import SameAsAllIcon from '../../icon/SameAsAll.svelte'
   import SelectedStatuses from './SelectedStatuses.svelte'
 
   type ItemId = DropdownTextItem['id']
@@ -76,13 +74,13 @@
     const anyStatus: DropdownTextItem = {
       id: anyStatusId,
       label: await translate(plugin.string.AnyStatus, {}, lang),
-      icon: AnyStatusIcon,
+      icon: ui.icon.CirclesThree,
       exclusive: true
     }
     const inherit: DropdownTextItem = {
       id: inheritId,
       label: await translate(plugin.string.SameAsAllTaskTypes, {}, lang),
-      icon: SameAsAllIcon,
+      icon: ui.icon.ArrowElbowLeftUp,
       exclusive: true
     }
     const categoryLabels = new Map<Ref<StatusCategory>, string>()
@@ -165,7 +163,7 @@
   }
 
   function inheritPrefix (label: string): DropdownTextItem {
-    return { id: inheritId, label: `${label}:`, icon: SameAsAllIcon }
+    return { id: inheritId, label: `${label}:`, icon: ui.icon.ArrowElbowLeftUp }
   }
 </script>
 

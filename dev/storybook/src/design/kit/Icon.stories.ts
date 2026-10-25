@@ -34,13 +34,13 @@ const names = [
   'search',
   'gear',
   'tick',
-  'tracker/issues',
-  'tracker/home',
-  'task/kanban',
-  'time/calendar',
-  'ui/Add',
-  'ui/Search',
-  'ui/MoreH'
+  'tracker/parent-issue',
+  'kit/HouseFill',
+  'kit/Kanban',
+  'kit/Calendar',
+  'kit/Plus',
+  'kit/Search',
+  'kit/DotsHorizontal'
 ]
 
 export const IconStates: Story = {

@@ -14,7 +14,7 @@
 //
 
 import { getEmbeddedLabel } from '@hcengineering/platform'
-import { IconFile } from '@hcengineering/ui'
+import ui from '@hcengineering/ui'
 import { WorkbenchTab } from '@hcengineering/ui/kit'
 import type { Meta, StoryObj } from '@storybook/svelte'
 
@@ -31,7 +31,7 @@ const meta = {
   component: WorkbenchTab,
   args: {
     label,
-    icon: IconFile,
+    icon: ui.icon.File,
     selected: false,
     closable: true,
     preview: false,
@@ -71,7 +71,7 @@ export const Variants: Story = {
             { title: 'preview', props: { preview: true, closable: true } },
             { title: 'no icon', props: { icon: undefined } }
           ],
-          props: { label, icon: IconFile }
+          props: { label, icon: ui.icon.File }
         },
         {
           title: 'Vertical',
@@ -83,7 +83,7 @@ export const Variants: Story = {
             { title: 'closable', props: { closable: true } },
             { title: 'preview', props: { preview: true, closable: true } }
           ],
-          props: { label, icon: IconFile, orientation: 'vertical' }
+          props: { label, icon: ui.icon.File, orientation: 'vertical' }
         }
       ]
     }

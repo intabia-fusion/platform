@@ -16,12 +16,12 @@
   import type { Member } from '@hcengineering/contact'
   import type { Class, Doc, Ref, Space } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Button, IconAdd, Label, Section, showPopup, Scroller } from '@hcengineering/ui'
+  import ui, { Button, Label, Section, showPopup, Scroller } from '@hcengineering/ui'
   import type { Viewlet, ViewletPreference } from '@hcengineering/view'
   import { Table, ViewletSelector, ViewletSettingButton } from '@hcengineering/view-resources'
+
   import contact from '../plugin'
   import UsersPopup from './UsersPopup.svelte'
-  import IconMembersOutline from './icons/MembersOutline.svelte'
 
   export let objectId: Ref<Doc>
   export let space: Ref<Space>
@@ -68,7 +68,7 @@
   let preference: ViewletPreference | undefined
 </script>
 
-<Section id="members" label={contact.string.Members} icon={IconMembersOutline}>
+<Section id="members" label={contact.string.Members} icon={ui.icon.PeopleGroup}>
   <svelte:fragment slot="header">
     <div class="buttons-group xsmall-gap">
       <ViewletSelector
@@ -80,7 +80,7 @@
       />
       <ViewletSettingButton kind="tertiary" bind:viewlet />
       {#if !readonly}
-        <Button id={contact.string.AddMember} icon={IconAdd} kind="ghost" on:click={createApp} />
+        <Button id={contact.string.AddMember} icon={ui.icon.Plus} kind="ghost" on:click={createApp} />
       {/if}
     </div>
   </svelte:fragment>

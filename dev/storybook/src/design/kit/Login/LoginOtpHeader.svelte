@@ -23,7 +23,7 @@
 
 <div class="login-otp-header">
   <div class="title-row">
-    <span class="back"><Icon name="ui/Back" size={16} color="#201240" /></span>
+    <span class="back"><Icon name="kit/ArrowUturnLeft" size={16} color="#201240" /></span>
     <span class="title">{title}</span>
   </div>
   <div class="description"><span class="sent">{sent}</span><span class="email">{email}</span></div>

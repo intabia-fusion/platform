@@ -17,17 +17,8 @@
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
   import { createEventDispatcher } from 'svelte'
-  import {
-    Button,
-    Label,
-    IconClose,
-    IconMaximize,
-    IconMinimize,
-    resizeObserver,
-    tooltip,
-    deviceOptionsStore as deviceInfo,
-    checkAdaptiveMatching
-  } from '..'
+
+  import { Button, Label, resizeObserver, tooltip, deviceOptionsStore as deviceInfo, checkAdaptiveMatching } from '..'
   import ui from '../plugin'
 
   export let label: IntlString | undefined = undefined
@@ -59,7 +50,7 @@
 >
   <div class="flex-between header">
     <div class="flex-row-center gap-1-5">
-      <Button icon={IconClose} kind="ghost" size="medium" on:click={() => dispatch('close')} />
+      <Button icon={ui.icon.Cross} kind="ghost" size="medium" on:click={() => dispatch('close')} />
       {#if label}
         <span class="title" use:tooltip={{ label }}><Label {label} /></span>
       {/if}
@@ -75,7 +66,7 @@
       {#if isFullSize && !needFullSize}
         <Button
           focusIndex={100010}
-          icon={fullSize ? IconMinimize : IconMaximize}
+          icon={fullSize ? ui.icon.ArrowsIn : ui.icon.ArrowsOut}
           kind="ghost"
           size="medium"
           selected={fullSize}

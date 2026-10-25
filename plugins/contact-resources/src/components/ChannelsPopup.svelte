@@ -16,8 +16,7 @@
 <script lang="ts">
   import type { Asset, IntlString } from '@hcengineering/platform'
   import { copyTextToClipboard } from '@hcengineering/presentation'
-  import { CircleButton, closeTooltip, Label } from '@hcengineering/ui'
-  import IconCopy from './icons/Copy.svelte'
+  import ui, { CircleButton, closeTooltip, Label, Icon } from '@hcengineering/ui'
 
   interface Item {
     label: IntlString
@@ -42,7 +41,7 @@
   <!-- svelte-ignore a11y-click-events-have-key-events -->
   <!-- svelte-ignore a11y-no-static-element-interactions -->
   <div class="button" on:click|preventDefault={copyLink}>
-    <IconCopy size="small" />
+    <Icon icon={ui.icon.Copy} size="small" />
   </div>
 </div>
 

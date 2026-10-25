@@ -17,7 +17,6 @@
   import { createEventDispatcher, onMount } from 'svelte'
   import { fade } from 'svelte/transition'
 
-  import IconClose from '../../components/icons/Close.svelte'
   import Label from '../../components/Label.svelte'
   import ui from '../../plugin'
   import IconButton from '../button/IconButton.svelte'
@@ -66,7 +65,7 @@
       <span class="toast__title"><slot name="title"><Label label={title} params={titleParams} /></slot></span>
       {#if closable}
         <IconButton
-          icon={IconClose}
+          icon={ui.icon.Cross}
           kind="ghost"
           size="small"
           tooltip={{ label: ui.string.Close }}

@@ -17,7 +17,7 @@
   import { type AccountUuid, reduceCalls } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { copyTextToClipboard, isAdminUser, isBillingAdminUser, MessageBox } from '@hcengineering/presentation'
-  import { Button, CheckBox, IconCopy, IconDetails, IconStop, Label, SearchEdit, showPopup } from '@hcengineering/ui'
+  import ui, { Button, CheckBox, Label, SearchEdit, showPopup } from '@hcengineering/ui'
   import { MenuButton } from '@hcengineering/ui/kit'
 
   import adminRes from '../../plugin'
@@ -378,7 +378,7 @@
               <div class="content-dark-color flex-row-center">
                 {account.uuid}
                 <Button
-                  icon={IconCopy}
+                  icon={ui.icon.Copy}
                   size="small"
                   kind="ghost"
                   on:click={() => copyTextToClipboard(account.uuid)}
@@ -394,7 +394,7 @@
             <td>
               <div class="flex-row-center">
                 <Button
-                  icon={IconDetails}
+                  icon={ui.icon.PanelRightLine}
                   size="small"
                   kind="ghost"
                   label={adminRes.string.Details}
@@ -407,7 +407,7 @@
                 />
                 {#if !readOnly && accountSuperAdminMode}
                   <Button
-                    icon={IconStop}
+                    icon={ui.icon.SquareFill}
                     size="small"
                     kind="dangerous"
                     label={adminRes.string.Delete}

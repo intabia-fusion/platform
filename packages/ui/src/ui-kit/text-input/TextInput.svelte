@@ -23,7 +23,6 @@
   import { createEventDispatcher, onMount } from 'svelte'
 
   import Icon from '../../components/Icon.svelte'
-  import IconClose from '../../components/icons/Close.svelte'
   import { registerFocus } from '../../focus'
   import ui from '../../plugin'
   import type { IconComponent } from '../../types'
@@ -232,7 +231,7 @@
         <IconButton
           kind="ghost"
           size={clearSizes[resolvedSize]}
-          icon={IconClose}
+          icon={ui.icon.Cross}
           tooltip={{ label: ui.string.Clear }}
           on:click={clear}
         />

@@ -18,10 +18,11 @@
   import { TaskKindSelector } from '@hcengineering/task-resources'
   import type { Component, IssueDraft, Milestone, Project } from '@hcengineering/tracker'
   import tracker from '@hcengineering/tracker'
-  import { IconCircles, eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  import ui, { eventToHTMLElement, showPopup, Icon } from '@hcengineering/ui'
   import { FixedColumn } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import { flip } from 'svelte/animate'
+
   import AssigneeEditor from '../issues/AssigneeEditor.svelte'
   import PriorityEditor from '../issues/PriorityEditor.svelte'
   import StatusEditor from '../issues/StatusEditor.svelte'
@@ -132,7 +133,7 @@
     on:dragend={resetDrag}
   >
     <div class="draggable-container">
-      <IconCircles size="small" />
+      <Icon icon={ui.icon.GripVertical} size="small" fill="var(--theme-caption-color)" />
     </div>
     <div class="flex-row-center ml-6 clear-mins gap-2">
       <StatusEditor

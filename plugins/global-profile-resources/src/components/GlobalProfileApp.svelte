@@ -14,13 +14,11 @@
 -->
 <script lang="ts">
   import { onMount } from 'svelte'
-
-  import {
+  import ui, {
     Button,
     Popup,
     showPopup,
     themeStore,
-    IconEdit,
     Icon,
     tooltip,
     Label,
@@ -169,7 +167,13 @@
             >
               <Icon icon={profile.isPublic ? globalProfile.icon.Globe : view.icon.EyeCrossed} size="medium" />
             </div>
-            <Button icon={IconEdit} kind="ghost" size="medium" iconProps={{ size: 'medium' }} on:click={handleEdit} />
+            <Button
+              icon={ui.icon.PencilLine}
+              kind="ghost"
+              size="medium"
+              iconProps={{ size: 'medium' }}
+              on:click={handleEdit}
+            />
           </div>
         {/if}
       </div>

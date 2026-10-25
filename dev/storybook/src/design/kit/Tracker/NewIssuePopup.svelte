@@ -14,10 +14,9 @@
 -->
 <script lang="ts">
   // Create issue dialog (CreateIssue in a presentation Card): project and template selectors, title, description, attribute pool and footer
-  import type { Asset } from '@hcengineering/platform'
-  import { Button, Icon as UiIcon, IconAttachment, IconDropdown } from '@hcengineering/ui'
+  import ui, { Button, Icon as UiIcon } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
-  import { spriteAssets } from '../../setup'
+
   import Card from '../Actions/Card.svelte'
   import Icon from '../Icon.svelte'
   import { productIcon } from '../productIcon'
@@ -27,13 +26,12 @@
   export let project: string = 'Default'
   export let status: Status = { name: 'Backlog', category: 'backlog' }
 
-  const sprite = (name: string): Asset => spriteAssets.get(name) as Asset
   const ic = (name: string): any => productIcon(name)
 </script>
 
 <Card title="New issue" headerNoPadding>
   <svelte:fragment slot="header">
-    <Button kind="regular" size="small" icon={sprite('tracker/home')}>
+    <Button kind="regular" size="small" icon={ic('kit/HouseFill')}>
       <svelte:fragment slot="content"><span class="overflow-label disabled text">{project}</span></svelte:fragment>
     </Button>
     <div class="min-w-0">
@@ -52,16 +50,16 @@
       <div class="min-w-0 ml-2">
         <Button kind="regular" size="small" width="10rem">
           <svelte:fragment slot="content">
-            <div class="btn-icon pointer-events-none"><Icon name="tracker/issue" /></div>
+            <div class="btn-icon pointer-events-none"><Icon name="kit/CheckSquare" /></div>
             <span class="overflow-label disabled flex-grow text-left mr-2">Issue</span>
-            <UiIcon icon={IconDropdown} size="small" />
+            <UiIcon icon={ui.icon.ChevronDown} size="small" />
           </svelte:fragment>
         </Button>
       </div>
     </div>
   </svelte:fragment>
   <svelte:fragment slot="header-actions">
-    <IconButton kind="tertiary" size="small" icon={sprite('view/ai-star')} iconSize="medium" aria-label="AI" />
+    <IconButton kind="tertiary" size="small" icon={ic('kit/Sparkle')} iconSize="medium" aria-label="AI" />
   </svelte:fragment>
 
   <div class="m-3 clear-mins">
@@ -86,7 +84,7 @@
       </Button>
     </div>
     <div class="pool-item">
-      <Button kind="regular" size="large" icon={sprite('tracker/priority-nopriority')}>
+      <Button kind="regular" size="large" icon={ic('tracker/priority-nopriority')}>
         <svelte:fragment slot="content"
           ><span class="overflow-label label disabled pointer-events-none">No priority</span></svelte:fragment
         >
@@ -96,44 +94,44 @@
       <Button kind="regular" size="large" justify="left" notSelected>
         <svelte:fragment slot="content"
           ><span class="dark-color flex-center"
-            ><UiIcon icon={ic('contact/Person')} size="small" /><span class="ml-1-5">Assignee</span></span
+            ><UiIcon icon={ic('kit/PersonCircle')} size="small" /><span class="ml-1-5">Assignee</span></span
           ></svelte:fragment
         >
       </Button>
     </div>
     <div class="pool-item">
-      <Button kind="regular" size="large" icon={sprite('tags/tags')} notSelected>
+      <Button kind="regular" size="large" icon={ic('kit/Tag')} notSelected>
         <svelte:fragment slot="content"
           ><span class="overflow-label label disabled pointer-events-none">Labels</span></svelte:fragment
         >
       </Button>
     </div>
     <div class="pool-item">
-      <Button kind="regular" size="large" icon={sprite('tracker/component')} notSelected>
+      <Button kind="regular" size="large" icon={ic('kit/Diamond')} notSelected>
         <svelte:fragment slot="content"
           ><span class="label text-md overflow-label pointer-events-none">No component</span></svelte:fragment
         >
       </Button>
     </div>
     <div class="pool-item new-line">
-      <Button kind="regular" size="large" justify="left" icon={sprite('tracker/estimation')} notSelected>
+      <Button kind="regular" size="large" justify="left" icon={ic('kit/CircleHalfFill')} notSelected>
         <svelte:fragment slot="content"><span>0h</span></svelte:fragment>
       </Button>
     </div>
     <div class="pool-item new-line">
-      <Button kind="regular" size="large" icon={sprite('tracker/milestone')} notSelected>
+      <Button kind="regular" size="large" icon={ic('kit/Signpost')} notSelected>
         <svelte:fragment slot="content"
           ><span class="label text-md overflow-label pointer-events-none">Milestone</span></svelte:fragment
         >
       </Button>
     </div>
     <div class="pool-item new-line">
-      <Button kind="regular" size="large" icon={ic('ui/Calendar')} notSelected padding="0 1rem 0 0.75rem">
+      <Button kind="regular" size="large" icon={ic('kit/Calendar')} notSelected padding="0 1rem 0 0.75rem">
         <svelte:fragment slot="content"><span class="not-selected">Due date</span></svelte:fragment>
       </Button>
     </div>
     <div class="pool-item new-line">
-      <Button kind="regular" size="large" icon={sprite('tracker/parent-issue')} notSelected>
+      <Button kind="regular" size="large" icon={ic('tracker/parent-issue')} notSelected>
         <svelte:fragment slot="content"
           ><span class="overflow-label label disabled pointer-events-none">Set parent issue…</span></svelte:fragment
         >
@@ -154,7 +152,7 @@
       <Button
         kind="primary"
         size="large"
-        icon={IconDropdown}
+        icon={ui.icon.ChevronDown}
         shape="rectangle-left"
         borderStyle="none"
         width="1.75rem"
@@ -163,7 +161,7 @@
     </div>
   </svelte:fragment>
   <svelte:fragment slot="footer">
-    <Button kind="ghost" size="large" icon={IconAttachment} />
+    <Button kind="ghost" size="large" icon={ui.icon.Paperclip} />
   </svelte:fragment>
 </Card>
 

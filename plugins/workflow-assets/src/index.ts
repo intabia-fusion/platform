@@ -17,15 +17,16 @@ import { loadMetadata } from '@hcengineering/platform'
 import workflow from '@hcengineering/workflow'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(workflow.icon, {
-  Workflows: `${icons}#workflows`,
-  Workflow: `${icons}#workflow`,
-  Transition: `${icons}#transition`,
-  Check: `${icons}#check`,
-  Screens: `${icons}#screens`,
-  Screen: `${icons}#screen`,
-  ScreenTab: `${icons}#screen-tab`,
-  Action: `${icons}#action`,
-  Editor: `${icons}#editor`,
-  Chart: `${icons}#chart`
+  Workflows: `${icons}#tree-structure`,
+  Workflow: `${uiIcons}#tree-nodes`,
+  Transition: `${uiIcons}#path`,
+  Check: `${uiIcons}#check`,
+  Screens: `${uiIcons}#windows`,
+  Screen: `${uiIcons}#window-text`,
+  ScreenTab: `${uiIcons}#folder-line`,
+  Action: `${uiIcons}#lightning`,
+  Editor: `${uiIcons}#text-lines-square`,
+  Chart: `${uiIcons}#graph`
 })

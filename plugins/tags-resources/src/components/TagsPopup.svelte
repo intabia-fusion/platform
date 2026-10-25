@@ -18,13 +18,10 @@
   import presentation, { createQuery, getClient } from '@hcengineering/presentation'
   import type { TagCategory, TagElement } from '@hcengineering/tags'
   import { findTagCategory } from '@hcengineering/tags'
-  import {
+  import ui, {
     Button,
     EditWithIcon,
     Icon,
-    IconAdd,
-    IconCheck,
-    IconSearch,
     Label,
     deviceOptionsStore,
     getPlatformColorDef,
@@ -34,11 +31,10 @@
     tooltip
   } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+
   import tags from '../plugin'
   import { createTagElement } from '../utils'
   import CreateTagElement from './CreateTagElement.svelte'
-  import IconView from './icons/View.svelte'
-  import IconViewHide from './icons/ViewHide.svelte'
 
   export let newElements: TagElement[] = []
   export let targetClass: Ref<Class<Doc>>
@@ -140,7 +136,7 @@
 <div class="selectPopup maxHeight" use:resizeObserver={() => dispatch('changeContent')}>
   <div class="header flex-row-center gap-2">
     <EditWithIcon
-      icon={IconSearch}
+      icon={ui.icon.Search}
       size="large"
       width="100%"
       autoFocus={!$deviceOptionsStore.isMobile}
@@ -154,7 +150,7 @@
       <Button
         kind="ghost"
         size="large"
-        icon={show ? IconView : IconViewHide}
+        icon={show ? ui.icon.Eye : ui.icon.EyeSlash}
         dataId={`btn${show ? 'Collapse' : 'Expand'}`}
         on:click={() => {
           show = !show
@@ -162,7 +158,7 @@
       />
     {/if}
     {#if !hideAdd}
-      <Button kind="ghost" size="large" icon={IconAdd} dataId="btnAdd" on:click={createTagElementPopup} />
+      <Button kind="ghost" size="large" icon={ui.icon.Plus} dataId="btnAdd" on:click={createTagElementPopup} />
     {/if}
   </div>
   <div class="scroll">
@@ -181,9 +177,7 @@
               <div class="flex-row-center">
                 <span class="mr-1-5">{cat.label}</span>
                 <div class="icon">
-                  <svg fill="var(--theme-content-color)" viewBox="0 0 6 6" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M0,0L6,3L0,6Z" />
-                  </svg>
+                  <Icon icon={ui.icon.CaretRightFill} size="small" fill="var(--theme-content-color)" />
                 </div>
               </div>
               <div class="flex-row-center text-xs">
@@ -231,7 +225,7 @@
                   </span>
                   <div class="check ml-3">
                     {#if isSelected(selected, element)}
-                      <Icon icon={IconCheck} size="small" />
+                      <Icon icon={ui.icon.Check} size="small" />
                     {/if}
                   </div>
                 </button>

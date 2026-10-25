@@ -15,15 +15,13 @@
   import type { Card } from '@hcengineering/card'
   import type { WithLookup } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { Button, IconDetailsFilled, IconMoreH, tooltip } from '@hcengineering/ui'
+  import ui, { Button, tooltip } from '@hcengineering/ui'
   import { DocNavLink, showMenu } from '@hcengineering/view-resources'
 
   import CardPathPresenter from './CardPathPresenter.svelte'
   import CardTagsColored from './CardTagsColored.svelte'
   import CardTimestamp from './CardTimestamp.svelte'
-
   import { openCardInSidebar } from '../utils'
-
   import ColoredCardIcon from './ColoredCardIcon.svelte'
   import ContentPreview from './ContentPreview.svelte'
   import TagDivider from './TagDivider.svelte'
@@ -67,7 +65,7 @@
         {/if}
         <div class="card__actions flex-row flex-row-center" class:opened={isActionsOpened}>
           <Button
-            icon={IconDetailsFilled}
+            icon={ui.icon.PanelRightFill}
             iconProps={{ size: 'medium' }}
             kind="icon"
             on:click={() => {
@@ -76,7 +74,7 @@
           />
           {#if !isCompact}
             <Button
-              icon={IconMoreH}
+              icon={ui.icon.DotsHorizontal}
               iconProps={{ size: 'medium' }}
               kind="icon"
               dataId="btnMoreActions"

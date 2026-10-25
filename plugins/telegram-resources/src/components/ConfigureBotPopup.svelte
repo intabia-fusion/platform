@@ -14,7 +14,7 @@
 -->
 
 <script lang="ts">
-  import { CodeForm, Icon, IconCheckmark, Label, Loading, Modal } from '@hcengineering/ui'
+  import ui, { CodeForm, Icon, Label, Loading, Modal } from '@hcengineering/ui'
   import { Button } from '@hcengineering/ui/kit'
   import presentation from '@hcengineering/presentation'
   import type { IntlString } from '@hcengineering/platform'
@@ -151,7 +151,7 @@
             {#if isConnectionEstablished}
               <span class="flex-row-center flex-gap-1 label-connected">
                 <Label label={telegram.string.Connected} />
-                <Icon icon={IconCheckmark} size="medium" />
+                <Icon icon={ui.icon.CheckSmall} size="medium" />
               </span>
             {/if}
           </div>
@@ -175,7 +175,7 @@
         {:else if isCodeValid}
           <span class="flex-row-center flex-gap-1 mt-2 label-connected">
             <Label label={telegram.string.Connected} />
-            <Icon icon={IconCheckmark} size="medium" />
+            <Icon icon={ui.icon.CheckSmall} size="medium" />
           </span>
         {/if}
       </div>

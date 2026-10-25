@@ -74,7 +74,7 @@ kit.Avatar = (initials, paletteName = 'Blueberry', size = 20, round = false) => 
 // No assignee: hulyAvatar roundedRect with a person icon on the accent tint (measured on the stand)
 kit.AvatarEmpty = (size = 20) => {
   const b = kit.box('Avatar/empty', { w: size, h: size, dir: 'row', align: 'center', justify: 'center', radius: Math.round(size * 0.2), fill: T('theme-button-default') })
-  return kit.add(b, kit.icon('contact/Person', T('theme-dark-color'), Math.round(size * 0.6)))
+  return kit.add(b, kit.icon('kit/PersonCircle', T('theme-dark-color'), Math.round(size * 0.6)))
 }
 
 // Attribute editor button on cards: antiButton kind="link-bordered" size="small" (measured on the stand)

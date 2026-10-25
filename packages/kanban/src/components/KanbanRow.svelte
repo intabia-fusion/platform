@@ -14,8 +14,9 @@
 -->
 <script lang="ts">
   import type { CategoryType, Doc, IdMap, Ref } from '@hcengineering/core'
-  import ui, { Button, IconMoreH, Lazy, mouseAttractor } from '@hcengineering/ui'
+  import ui, { Button, Lazy, mouseAttractor } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+
   import type { CardDragEvent, DocWithRank, Item } from '../types'
 
   export let stateObjects: Item[]
@@ -121,7 +122,7 @@
       <span class="caption-color">{visibleObjects.length}</span> <span>/</span><span>{stateObjects.length}</span>
       <Button
         size="small"
-        icon={IconMoreH}
+        icon={ui.icon.DotsHorizontal}
         label={ui.string.ShowMore}
         dataId="btn-kanban-show-more"
         on:click={onShowMore}

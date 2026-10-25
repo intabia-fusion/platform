@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { IconCalendar, IconOpen, ModernPopup, showPopup } from '@hcengineering/ui'
+  import ui, { ModernPopup, showPopup } from '@hcengineering/ui'
   import { IconButton, SelectButton, type SelectButtonChevron } from '@hcengineering/ui/kit'
 
   import ExampleAvatar from './ExampleAvatar.svelte'
@@ -63,7 +63,7 @@
       <SelectButton {...icon('tag')} placeholder={t('Labels')} />
       <SelectButton {...icon('component')} placeholder={t('No component')} />
       <SelectButton {...icon('milestone')} placeholder={t('Milestone')} />
-      <SelectButton icon={IconCalendar} placeholder={t('Due date')} />
+      <SelectButton icon={ui.icon.Calendar} placeholder={t('Due date')} />
     </div>
     <div class="caption">medium - вариант A</div>
     <div class="row">
@@ -115,9 +115,11 @@
   <section>
     <h3>Поле формы: secondary, растянуто, со стрелкой</h3>
     <div class="columns">
-      <div class="field"><SelectButton size="medium" chevron icon={IconCalendar} label={t('Europe/Tbilisi')} /></div>
+      <div class="field">
+        <SelectButton size="medium" chevron icon={ui.icon.Calendar} label={t('Europe/Tbilisi')} />
+      </div>
       <div class="field"><SelectButton size="medium" chevron placeholder={t('Select type')} /></div>
-      <div class="field"><SelectButton chevron icon={IconCalendar} label={t('Europe/Tbilisi')} /></div>
+      <div class="field"><SelectButton chevron icon={ui.icon.Calendar} label={t('Europe/Tbilisi')} /></div>
       <div class="field"><SelectButton chevron placeholder={t('Select type')} /></div>
     </div>
   </section>
@@ -135,7 +137,7 @@
     <div class="row">
       <SelectButton size="extra-small" {...icon('high')} label={t('High')} />
       <SelectButton size="extra-small" {...icon('component')} label={t('Frontend')} />
-      <SelectButton size="extra-small" icon={IconCalendar} label={t('Oct 24')} />
+      <SelectButton size="extra-small" icon={ui.icon.Calendar} label={t('Oct 24')} />
     </div>
   </section>
 
@@ -158,7 +160,7 @@
       <div class="with-action">
         <SelectButton empty={false}><ExampleAvatar initials="AS" />Sobolev Andrey</SelectButton>
         <span class="action">
-          <IconButton icon={IconOpen} kind="ghost" size="small" tooltip={{ label: t('Open') }} />
+          <IconButton icon={ui.icon.PencilLine} kind="ghost" size="small" tooltip={{ label: t('Open') }} />
         </span>
       </div>
     </div>

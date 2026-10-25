@@ -24,7 +24,7 @@
   import { Panel } from '@hcengineering/panel'
   import { getResource } from '@hcengineering/platform'
   import { ActionContext, MessageViewer, createQuery, getClient } from '@hcengineering/presentation'
-  import { Button, IconMixin, IconMoreH } from '@hcengineering/ui'
+  import ui, { Button } from '@hcengineering/ui'
   import { DocAttributeBar, getDocMixins, showMenu } from '@hcengineering/view-resources'
   import type { ProductVersion } from '@hcengineering/products'
   import { createEventDispatcher, onDestroy, onMount } from 'svelte'
@@ -136,7 +136,7 @@
 
     <svelte:fragment slot="utils">
       <Button
-        icon={IconMoreH}
+        icon={ui.icon.DotsHorizontal}
         kind="ghost"
         size="medium"
         on:click={(e) => {
@@ -144,7 +144,7 @@
         }}
       />
       <Button
-        icon={IconMixin}
+        icon={ui.icon.LayoutSplit}
         kind="icon"
         iconProps={{ size: 'medium' }}
         selected={showAllMixins}

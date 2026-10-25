@@ -16,7 +16,7 @@
   import type { Ref, WithLookup } from '@hcengineering/core'
   import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
   import type { Floor, Room } from '@hcengineering/love'
-  import { Component, DropdownLabels, Header, IconEdit } from '@hcengineering/ui'
+  import ui, { Component, DropdownLabels, Header } from '@hcengineering/ui'
   import { Button } from '@hcengineering/ui/kit'
   import type { Viewlet, ViewletPreference } from '@hcengineering/view'
   import { ViewletSelector } from '@hcengineering/view-resources'
@@ -74,7 +74,12 @@
     </svelte:fragment>
     <svelte:fragment slot="actions">
       {#if editable}
-        <Button icon={IconEdit} label={lovePlg.string.EditOffice} size="small" on:click={() => dispatch('configure')} />
+        <Button
+          icon={ui.icon.PencilLine}
+          label={lovePlg.string.EditOffice}
+          size="small"
+          on:click={() => dispatch('configure')}
+        />
       {/if}
     </svelte:fragment>
   </Header>

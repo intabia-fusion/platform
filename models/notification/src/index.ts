@@ -664,7 +664,7 @@ export function createModel (builder: Builder): void {
 
   builder.createDoc(notification.class.NotificationPreferencesGroup, core.space.Model, {
     label: notification.string.Webpushes,
-    icon: view.icon.Card,
+    icon: notification.icon.Webpushes,
     presenter: notification.component.WebpushesPreferencesPresenter
   })
 

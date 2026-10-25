@@ -17,10 +17,11 @@
   import { SortingOrder } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import tags from '@hcengineering/tags'
-  import { Component, IconMoreV2, Spinner, showPanel, Icon } from '@hcengineering/ui'
+  import ui, { Component, Spinner, showPanel, Icon } from '@hcengineering/ui'
   import { showMenu } from '@hcengineering/view-resources'
   import type { ToDo, WorkSlot } from '@hcengineering/time'
   import time, { ToDoPriority } from '@hcengineering/time'
+
   import plugin from '../plugin'
   import ToDoDuration from './ToDoDuration.svelte'
   import WorkItemPresenter from './WorkItemPresenter.svelte'
@@ -84,7 +85,7 @@
         <Spinner size="small" />
       {:else}
         <button class="hulyToDoLine-dragbox" on:contextmenu={onMenuClick}>
-          <Icon icon={IconMoreV2} size="small" />
+          <Icon icon={ui.icon.GripVertical} size="small" />
         </button>
         <ToDoPriorityPresenter value={todo.priority} muted={isDone} />
       {/if}

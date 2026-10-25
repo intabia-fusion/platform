@@ -15,7 +15,7 @@
 <script lang="ts">
   import { getClient } from '@hcengineering/presentation'
   import type { State } from '@hcengineering/process'
-  import { EditBox, IconDelete } from '@hcengineering/ui'
+  import ui, { EditBox } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
 
@@ -35,7 +35,7 @@
   <EditBox bind:value={value.title} on:change={saveTitle} />
   <div class="tool">
     <IconButton
-      icon={IconDelete}
+      icon={ui.icon.Trash}
       tooltip={{ label: view.string.Delete, direction: 'bottom' }}
       size="extra-small"
       kind="tertiary"

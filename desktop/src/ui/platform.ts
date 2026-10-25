@@ -175,6 +175,7 @@ import '@hcengineering/github-assets'
 import presentationStrings from '@hcengineering/presentation/src/lang'
 import textEditorStrings from '@hcengineering/text-editor-assets/lang'
 import uiStrings from '@hcengineering/ui/src/lang'
+import uiIcons from '@hcengineering/ui/src/icons'
 import mediaStrings from '@hcengineering/media-assets/lang'
 import uploaderStrings from '@hcengineering/uploader-assets/lang'
 import recorderStrings from '@hcengineering/recorder-assets/lang'
@@ -269,6 +270,7 @@ function configureI18n (): void {
   presentationStrings()
   textEditorStrings()
   uiStrings()
+  uiIcons()
   mediaStrings()
   uploaderStrings()
   recorderStrings()

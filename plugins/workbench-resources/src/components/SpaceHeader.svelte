@@ -18,7 +18,7 @@
   import type { IntlString, Asset } from '@hcengineering/platform'
   import presentation, { createQuery, getClient } from '@hcengineering/presentation'
   import type { AnyComponent } from '@hcengineering/ui'
-  import { Button, IconAdd, SearchInput, showPopup, Header, LinkWrapper, Breadcrumbs } from '@hcengineering/ui'
+  import ui, { Button, SearchInput, showPopup, Header, LinkWrapper, Breadcrumbs } from '@hcengineering/ui'
   import type { ViewOptions, Viewlet } from '@hcengineering/view'
   import view from '@hcengineering/view'
   import {
@@ -29,6 +29,7 @@
     classIcon
   } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
+
   import plugin from '../plugin'
 
   export let spaceId: Ref<Space> | undefined
@@ -107,7 +108,7 @@
     <svelte:fragment slot="actions">
       {#if createItemDialog}
         <Button
-          icon={IconAdd}
+          icon={ui.icon.Plus}
           label={createItemLabel}
           kind="primary"
           on:click={(ev) => {

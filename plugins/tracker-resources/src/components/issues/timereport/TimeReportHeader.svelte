@@ -16,15 +16,7 @@
   import type { Timestamp } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import ui, {
-    Label,
-    areDatesEqual,
-    ticker,
-    Header,
-    IconChevronLeft,
-    IconChevronRight,
-    getFormattedDate
-  } from '@hcengineering/ui'
+  import ui, { Label, areDatesEqual, ticker, Header, getFormattedDate } from '@hcengineering/ui'
   import { Button, IconButton } from '@hcengineering/ui/kit'
 
   export let currentDate: Date = new Date()
@@ -68,7 +60,7 @@
   <svelte:fragment slot="actions" let:doubleRow>
     <slot />
     <IconButton
-      icon={IconChevronLeft}
+      icon={ui.icon.ChevronLeft}
       kind="secondary"
       size="small"
       data-id="btnPrev"
@@ -91,7 +83,7 @@
       }}
     />
     <IconButton
-      icon={IconChevronRight}
+      icon={ui.icon.ChevronRight}
       kind="secondary"
       size="small"
       data-id="btnNext"

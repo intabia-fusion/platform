@@ -17,7 +17,6 @@
   import { createEventDispatcher, onMount } from 'svelte'
 
   import Icon from '../../components/Icon.svelte'
-  import IconClose from '../../components/icons/Close.svelte'
   import Label from '../../components/Label.svelte'
   import ui from '../../plugin'
   import { tooltip } from '../../tooltips'
@@ -130,7 +129,7 @@
     <span class="tab__close">
       <!-- Out of the Tab order: Delete closes the focused tab. -->
       <IconButton
-        icon={IconClose}
+        icon={ui.icon.Cross}
         kind="ghost"
         size="min"
         iconSize="x-small"

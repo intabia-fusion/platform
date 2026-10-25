@@ -49,7 +49,10 @@ export const defaultTestRunStatuses = [
 ]
 
 /** @public */
-export const testRunStatusAssets: Record<TestRunStatus, { icon: Asset, label: IntlString }> = {
+export const testRunStatusAssets: Record<
+  TestRunStatus,
+  { icon: Asset, label: IntlString, iconProps?: { fill: string } }
+> = {
   [TestRunStatus.Untested]: {
     icon: testManagement.icon.StatusNonTested,
     label: testManagement.string.StatusNonTested
@@ -60,10 +63,12 @@ export const testRunStatusAssets: Record<TestRunStatus, { icon: Asset, label: In
   },
   [TestRunStatus.Passed]: {
     icon: testManagement.icon.StatusPassed,
-    label: testManagement.string.StatusPassed
+    label: testManagement.string.StatusPassed,
+    iconProps: { fill: 'var(--theme-won-color)' }
   },
   [TestRunStatus.Failed]: {
     icon: testManagement.icon.StatusFailed,
-    label: testManagement.string.StatusFailed
+    label: testManagement.string.StatusFailed,
+    iconProps: { fill: 'var(--theme-error-color)' }
   }
 }

@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Button, IconClose, IconMoreH, TimeShiftPresenter } from '@hcengineering/ui'
+  import ui, { Button, TimeShiftPresenter } from '@hcengineering/ui'
 
   export let reminder: number
   export let disabled: boolean = false
@@ -28,7 +28,7 @@
   {#if !disabled}
     <div class="tools flex-row-center flex-no-shrink gap-1">
       <Button
-        icon={IconMoreH}
+        icon={ui.icon.DotsHorizontal}
         kind="ghost"
         size="x-small"
         padding="0 .5rem"
@@ -37,7 +37,7 @@
         on:click={(e) => dispatch('edit', e)}
       />
       <Button
-        icon={IconClose}
+        icon={ui.icon.Cross}
         kind="ghost"
         size="x-small"
         padding="0 .5rem"

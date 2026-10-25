@@ -16,13 +16,11 @@
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { humanReadableFileSize, Label, ProgressCircle, Scroller, tooltip } from '@hcengineering/ui'
-
-  import IconCompleted from './icons/Completed.svelte'
+  import ui, { Icon, humanReadableFileSize, Label, ProgressCircle, Scroller, tooltip } from '@hcengineering/ui'
+  import type { DownloadItemState } from '@hcengineering/desktop-downloads'
 
   import plugin from '../plugin'
   import { downloads } from '../store'
-  import type { DownloadItemState } from '@hcengineering/desktop-downloads'
 
   const labels: Record<DownloadItemState, IntlString> = {
     completed: plugin.string.Completed,
@@ -47,7 +45,7 @@
         <div class="upload-file-row flex-row-center justify-start flex-gap-4">
           <div class="upload-file-row__status w-4">
             {#if item.state === 'completed'}
-              <IconCompleted size="small" fill="var(--positive-button-default)" />
+              <Icon icon={ui.icon.CheckCircle} size="small" fill="var(--positive-button-default)" />
             {:else}
               <ProgressCircle value={progress} size="small" primary />
             {/if}

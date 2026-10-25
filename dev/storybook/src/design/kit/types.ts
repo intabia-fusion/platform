@@ -21,7 +21,7 @@ export type StatusCategory = 'backlog' | 'todo' | 'active' | 'won' | 'lost'
 export type Density = 'detailed' | 'normal' | 'compact' | 'dense'
 export type Priority = 'none' | 'urgent' | 'high' | 'medium' | 'low'
 
-// Icon by name: a hand-drawn kit icon ('gear'), a sprite id ('tracker/issues') or a ui icon ('ui/Add')
+// Icon by name: a hand-drawn kit icon ('gear'), a sprite id ('tracker/parent-issue'), a ui kit sprite icon ('kit/Plus') or a ui icon ('ui/Mixin')
 export type IconName = string
 
 export interface Status {

@@ -15,7 +15,7 @@
 
 <script lang="ts">
   import { tick } from 'svelte'
-  import { DropdownLabels, EditBox, Label, RadioGroup } from '@hcengineering/ui'
+  import ui, { DropdownLabels, EditBox, Label, RadioGroup, Icon, FlamingoColor } from '@hcengineering/ui'
   import core, { type AttachedData, type Data } from '@hcengineering/core'
   import { translate } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
@@ -29,7 +29,6 @@
     TEMPLATE_PREFIX
   } from '@hcengineering/controlled-documents'
 
-  import IconWarning from '../../icons/IconWarning.svelte'
   import { $infoStep as infoStep, infoStepUpdated } from '../../../stores/wizards/create-document'
   import documents from '../../../plugin'
 
@@ -238,7 +237,7 @@
       />
       {#if codeNotUnique}
         <div class="error">
-          <IconWarning size="small" />
+          <Icon icon={ui.icon.ExclamationCircle} size="small" fill={FlamingoColor} />
           <Label label={documents.string.CodeInUse} />
           <span class="name">{docCodes[docObject.code]}</span>
         </div>
@@ -282,7 +281,7 @@
         />
         {#if prefixNotUnique && docObject.docPrefix !== undefined}
           <div class="error">
-            <IconWarning size="small" />
+            <Icon icon={ui.icon.ExclamationCircle} size="small" fill={FlamingoColor} />
             <Label label={documents.string.PrefixInUse} />
             <span class="name">{templateDocPrefixes[docObject.docPrefix]}</span>
           </div>

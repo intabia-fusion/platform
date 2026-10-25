@@ -30,7 +30,6 @@
     TooltipAlignment
   } from '../types'
   import Icon from './Icon.svelte'
-  import DropdownIcon from './icons/Dropdown.svelte'
   import Label from './Label.svelte'
   import ModernPopupLabels from './ModernPopupLabels.svelte'
 
@@ -177,7 +176,8 @@
         </span>
         {#if showDropdownIcon}
           <div class="dropdown-arrow-icon ml-2 flex-row-center">
-            <DropdownIcon
+            <Icon
+              icon={ui.icon.ChevronDown}
               size="small"
               fill={kind === 'primary' && !disabled ? 'var(--primary-button-content-color)' : 'var(--theme-dark-color)'}
             />

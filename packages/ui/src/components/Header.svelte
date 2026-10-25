@@ -14,17 +14,11 @@
 -->
 <script lang="ts">
   import { createEventDispatcher, onMount, onDestroy, afterUpdate } from 'svelte'
+
   import IconButton from '../ui-kit/button/IconButton.svelte'
   import ui from '../plugin'
   import type { HeaderAdaptive } from '..'
-  import {
-    IconMaximize,
-    IconMinimize,
-    IconClose,
-    deviceOptionsStore as deviceInfo,
-    resizeObserver,
-    popupstore
-  } from '..'
+  import { deviceOptionsStore as deviceInfo, resizeObserver, popupstore } from '..'
 
   export let type: 'type-aside' | 'type-popup' | 'type-component' | 'type-panel' = 'type-component'
   export let allowFullsize: boolean = false
@@ -104,7 +98,7 @@
     <div class="hulyHeader-row">
       {#if allowFullsize}
         <IconButton
-          icon={$deviceInfo.navigator.visible ? IconMaximize : IconMinimize}
+          icon={$deviceInfo.navigator.visible ? ui.icon.ArrowsOut : ui.icon.ArrowsIn}
           kind="tertiary"
           size="small"
           noPrint
@@ -161,7 +155,7 @@
         {/if}
         <IconButton
           id="btnHeaderClose"
-          icon={IconClose}
+          icon={ui.icon.Cross}
           kind="tertiary"
           size="small"
           noPrint
@@ -203,7 +197,7 @@
   {:else}
     {#if allowFullsize}
       <IconButton
-        icon={$deviceInfo.navigator.visible ? IconMaximize : IconMinimize}
+        icon={$deviceInfo.navigator.visible ? ui.icon.ArrowsOut : ui.icon.ArrowsIn}
         kind="tertiary"
         size="small"
         noPrint
@@ -285,7 +279,7 @@
       {/if}
       <IconButton
         id="btnHeaderClose"
-        icon={IconClose}
+        icon={ui.icon.Cross}
         kind="tertiary"
         size="small"
         noPrint

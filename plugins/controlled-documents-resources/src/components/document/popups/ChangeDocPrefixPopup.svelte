@@ -19,9 +19,8 @@
   import type { DocumentTemplate } from '@hcengineering/controlled-documents'
   import documents, { TEMPLATE_PREFIX } from '@hcengineering/controlled-documents'
   import presentation, { createQuery, getClient } from '@hcengineering/presentation'
-  import { Button, EditBox, Label } from '@hcengineering/ui'
+  import ui, { Button, EditBox, Label, Icon, FlamingoColor } from '@hcengineering/ui'
 
-  import IconWarning from '../../icons/IconWarning.svelte'
   import documentsRes from '../../../plugin'
 
   export let object: DocumentTemplate
@@ -89,7 +88,7 @@
         />
         {#if !isUnique}
           <div class="error">
-            <IconWarning size="small" />
+            <Icon icon={ui.icon.ExclamationCircle} size="small" fill={FlamingoColor} />
             <Label label={documentsRes.string.CodeInUse} />
             <span class="name">{templateDocPrefixes[prefix]}</span>
           </div>

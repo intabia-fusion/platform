@@ -18,7 +18,7 @@
   import { createFileVersion, type File as DriveFile, type FileVersion } from '@hcengineering/drive'
   import { Panel } from '@hcengineering/panel'
   import { createQuery, getClient, getFileUrl } from '@hcengineering/presentation'
-  import { Button, IconMoreH } from '@hcengineering/ui'
+  import ui, { Button } from '@hcengineering/ui'
   import type { FileUploadCallbackParams } from '@hcengineering/uploader'
   import { showFilesUploadPopup } from '@hcengineering/uploader'
   import view from '@hcengineering/view'
@@ -27,9 +27,6 @@
   import EditFile from './EditFile.svelte'
   import FileAside from './FileAside.svelte'
   import FileHeader from './FileHeader.svelte'
-  import IconDownload from './icons/FileDownload.svelte'
-  import IconUpload from './icons/FileUpload.svelte'
-
   import drive from '../plugin'
 
   export let _id: Ref<DriveFile>
@@ -119,7 +116,7 @@
     <svelte:fragment slot="utils">
       <a class="no-line" href={getFileUrl(version.file, object.title)} download={object.title} bind:this={download}>
         <Button
-          icon={IconDownload}
+          icon={ui.icon.CloudDownload}
           iconProps={{ size: 'medium' }}
           kind="icon"
           showTooltip={{ label: drive.string.Download }}
@@ -128,7 +125,7 @@
       </a>
       {#if canUploadVersion}
         <Button
-          icon={IconUpload}
+          icon={ui.icon.CloudUpload}
           iconProps={{ size: 'medium' }}
           kind="icon"
           showTooltip={{ label: drive.string.Upload }}
@@ -136,7 +133,7 @@
         />
       {/if}
       <Button
-        icon={IconMoreH}
+        icon={ui.icon.DotsHorizontal}
         iconProps={{ size: 'medium' }}
         kind="icon"
         showTooltip={{ label: view.string.MoreActions }}

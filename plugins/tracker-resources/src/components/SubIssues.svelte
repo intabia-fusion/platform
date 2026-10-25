@@ -22,15 +22,14 @@
   import tags from '@hcengineering/tags'
   import { isEmptyMarkup } from '@hcengineering/text'
   import type { Component, Issue, IssueDraft, IssueParentInfo, Milestone, Project } from '@hcengineering/tracker'
-  import { Button, ExpandCollapse, Scroller } from '@hcengineering/ui'
+  import ui, { Button, ExpandCollapse, Scroller } from '@hcengineering/ui'
   import { onDestroy } from 'svelte'
-  import tracker from '../plugin'
-  import Collapsed from './icons/Collapsed.svelte'
-  import Expanded from './icons/Expanded.svelte'
-  import DraftIssueChildList from './templates/DraftIssueChildList.svelte'
   import { taskTypeStore } from '@hcengineering/task-resources'
   import { getTaskTypeStates } from '@hcengineering/task'
   import { statusStore } from '@hcengineering/view-resources'
+
+  import tracker from '../plugin'
+  import DraftIssueChildList from './templates/DraftIssueChildList.svelte'
 
   export let projectId: Ref<Project>
   export let project: Project | undefined
@@ -171,7 +170,7 @@
   <div class="flex-between clear-mins">
     <Button
       width="min-content"
-      icon={isCollapsed ? Collapsed : Expanded}
+      icon={isCollapsed ? ui.icon.ChevronRight : ui.icon.ChevronDown}
       size="small"
       kind="ghost"
       label={tracker.string.SubIssuesList}

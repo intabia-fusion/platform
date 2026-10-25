@@ -19,11 +19,11 @@
   import { createEventDispatcher } from 'svelte'
   import type { Card } from '@hcengineering/card'
   import type { Ref } from '@hcengineering/core'
-  import { Button, EditBox, Header, IconClose, IconMoreH } from '@hcengineering/ui'
+  import ui, { Button, EditBox, Header } from '@hcengineering/ui'
+  import { showMenu } from '@hcengineering/view-resources'
 
   import card from '../plugin'
   import EditCardNewContent from './EditCardNewContent.svelte'
-  import { showMenu } from '@hcengineering/view-resources'
   import TagsEditor from './TagsEditor.svelte'
   import ParentNamesPresenter from './ParentNamesPresenter.svelte'
 
@@ -90,7 +90,7 @@
         <Button
           id="btnPClose"
           focusIndex={10001}
-          icon={IconClose}
+          icon={ui.icon.Cross}
           iconProps={{ size: 'medium' }}
           kind="icon"
           noPrint
@@ -103,7 +103,7 @@
 
       <svelte:fragment slot="actions">
         <Button
-          icon={IconMoreH}
+          icon={ui.icon.DotsHorizontal}
           iconProps={{ size: 'medium' }}
           kind="icon"
           dataId="btnMoreActions"

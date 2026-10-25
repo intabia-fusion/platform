@@ -70,12 +70,12 @@ const sized = (
 })
 
 const entries: NavEntry[] = [
-  { item: 'My issues', icon: 'tracker/myissues' },
-  { item: 'All issues', icon: 'tracker/issues', count: 12 },
+  { item: 'My issues', icon: 'kit/Crosshair' },
+  { item: 'All issues', icon: 'kit/CheckSquare', count: 12 },
   { divider: true },
   { group: 'Your projects', add: true },
-  { space: 'Mobile app', icon: 'tracker/home', color: 'Porpoise' },
-  { item: 'Issues', icon: 'tracker/issues', selected: true, indent: true }
+  { space: 'Mobile app', icon: 'kit/HouseFill', color: 'Porpoise' },
+  { item: 'Issues', icon: 'kit/CheckSquare', selected: true, indent: true }
 ]
 
 export const TopBarStates: Story = sections([
@@ -83,8 +83,8 @@ export const TopBarStates: Story = sections([
     title: 'TopBar',
     component: SizedDemo,
     rows: [
-      { title: 'tracker', props: sized(TopBar, 640, 36, { tab: { label: 'Tracker', icon: 'tracker/tracker' } }) },
-      { title: 'calendar', props: sized(TopBar, 640, 36, { tab: { label: 'Calendar', icon: 'time/calendar' } }) }
+      { title: 'tracker', props: sized(TopBar, 640, 36, { tab: { label: 'Tracker', icon: 'kit/CheckSquare' } }) },
+      { title: 'calendar', props: sized(TopBar, 640, 36, { tab: { label: 'Calendar', icon: 'kit/Calendar' } }) }
     ],
     columns: one
   }
@@ -118,7 +118,7 @@ export const SidebarStates: Story = sections([
         title: 'selected widget',
         props: sized(Sidebar, 56, 240, { widgets: sidebarWidgets.map((icon, i) => ({ icon, selected: i === 1 })) })
       },
-      { title: 'single widget', props: sized(Sidebar, 56, 240, { widgets: [{ icon: 'calendar/calendar' }] }) }
+      { title: 'single widget', props: sized(Sidebar, 56, 240, { widgets: [{ icon: 'kit/Calendar' }] }) }
     ],
     columns: one
   }
@@ -144,13 +144,13 @@ export const NavItemStates: Story = sections([
     title: 'NavItem',
     component: SizedDemo,
     rows: [
-      { title: 'plain', props: sized(NavItem, 240, 40, { label: 'All issues', icon: 'tracker/issues' }) },
+      { title: 'plain', props: sized(NavItem, 240, 40, { label: 'All issues', icon: 'kit/CheckSquare' }) },
       {
         title: 'selected',
-        props: sized(NavItem, 240, 40, { label: 'All issues', icon: 'tracker/issues', selected: true })
+        props: sized(NavItem, 240, 40, { label: 'All issues', icon: 'kit/CheckSquare', selected: true })
       },
-      { title: 'indent', props: sized(NavItem, 240, 40, { label: 'Issues', icon: 'tracker/issues', indent: true }) },
-      { title: 'count', props: sized(NavItem, 240, 40, { label: 'All issues', icon: 'tracker/issues', count: 12 }) }
+      { title: 'indent', props: sized(NavItem, 240, 40, { label: 'Issues', icon: 'kit/CheckSquare', indent: true }) },
+      { title: 'count', props: sized(NavItem, 240, 40, { label: 'All issues', icon: 'kit/CheckSquare', count: 12 }) }
     ],
     columns: one
   }
@@ -176,7 +176,7 @@ export const NavSpaceStates: Story = sections([
       { title: 'default icon', props: sized(NavSpace, 240, 40, { label: 'Mobile app' }) },
       {
         title: 'own icon and color',
-        props: sized(NavSpace, 240, 40, { label: 'Web', icon: 'tracker/issues', color: 'Orange' })
+        props: sized(NavSpace, 240, 40, { label: 'Web', icon: 'kit/CheckSquare', color: 'Orange' })
       }
     ],
     columns: one
@@ -190,11 +190,11 @@ export const SpaceHeaderStates: Story = sections([
     rows: [
       {
         title: 'list',
-        props: sized(SpaceHeader, 720, 110, { view: 'list', title: 'Issues', titleIcon: 'tracker/issues' })
+        props: sized(SpaceHeader, 720, 110, { view: 'list', title: 'Issues', titleIcon: 'kit/CheckSquare' })
       },
       {
         title: 'board',
-        props: sized(SpaceHeader, 720, 110, { view: 'board', title: 'Issues', titleIcon: 'tracker/issues' })
+        props: sized(SpaceHeader, 720, 110, { view: 'board', title: 'Issues', titleIcon: 'kit/CheckSquare' })
       },
       {
         title: 'custom tabs',
@@ -212,9 +212,9 @@ export const PanelHeaderStates: Story = sections([
     rows: [
       {
         title: 'title with icon',
-        props: sized(PanelHeader, 640, 60, { title: 'Workspace settings', icon: 'setting/settings' })
+        props: sized(PanelHeader, 640, 60, { title: 'Workspace settings', icon: 'kit/Gear' })
       },
-      { title: 'chat channel', props: sized(PanelHeader, 640, 60, { title: 'general', icon: 'chunter/hashtag' }) }
+      { title: 'chat channel', props: sized(PanelHeader, 640, 60, { title: 'general', icon: 'kit/Hash' }) }
     ],
     columns: one
   }

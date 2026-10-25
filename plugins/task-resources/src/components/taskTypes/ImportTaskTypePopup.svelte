@@ -19,7 +19,7 @@
   import { Severity, Status, getEmbeddedLabel, setPlatformStatus, translateCB } from '@hcengineering/platform'
   import type { ProjectType, TaskType, TaskTypeConfigEntry, TaskTypeExportConfig } from '@hcengineering/task'
   import task, { findIncompatibleAttributes, importTaskTypeConfig } from '@hcengineering/task'
-  import { Icon, IconError, type IWizardStep, Label, ModernWizardDialog, themeStore, tooltip } from '@hcengineering/ui'
+  import ui, { Icon, type IWizardStep, Label, ModernWizardDialog, themeStore, tooltip } from '@hcengineering/ui'
 
   import plugin from '../../plugin'
   import TaskTypeIcon from './TaskTypeIcon.svelte'
@@ -369,7 +369,7 @@
         <div class="json-input-footer flex-row-center justify-between flex-wrap">
           {#if parseError != null}
             <div class="error-banner flex-row-center flex-gap-1-5">
-              <IconError size="small" />
+              <Icon icon={ui.icon.ExclamationCircle} size="small" fill="var(--theme-error-color)" />
               <span class="font-regular-12 error-text">
                 {#if parseError === 'InvalidFileType'}
                   <Label label={plugin.string.InvalidFileType} />
@@ -403,7 +403,7 @@
       {#if incompatibleAttrs.length > 0}
         <div class="warning-banner flex-col">
           <div class="warning-header flex-row-center flex-gap-2">
-            <IconError size="small" />
+            <Icon icon={ui.icon.ExclamationCircle} size="small" fill="var(--theme-error-color)" />
             <span class="font-medium-12">
               <Label label={plugin.string.IncompatibleAttributesWarning} />
             </span>
@@ -431,7 +431,7 @@
             </span>
             {#if existingTypeNames.has(mainEntry.name.trim().toLowerCase())}
               <div class="collision-warning flex-center" use:tooltip={{ label: plugin.string.TaskTypeAlreadyExists }}>
-                <IconError size="small" />
+                <Icon icon={ui.icon.ExclamationCircle} size="small" fill="var(--theme-error-color)" />
               </div>
             {/if}
           </div>

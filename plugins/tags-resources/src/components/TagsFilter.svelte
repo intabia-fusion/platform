@@ -16,12 +16,10 @@
   import type { Class, Doc, FindResult, Ref } from '@hcengineering/core'
   import presentation, { getClient } from '@hcengineering/presentation'
   import type { TagCategory, TagElement } from '@hcengineering/tags'
-  import {
+  import ui, {
     Button,
     EditWithIcon,
     Icon,
-    IconCheck,
-    IconSearch,
     Label,
     Loading,
     deviceOptionsStore,
@@ -34,6 +32,7 @@
   import type { Filter } from '@hcengineering/view'
   import { FILTER_DEBOUNCE_MS, FilterQuery, sortFilterValues } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
+
   import tags from '../plugin'
   import { tagLevel } from '../utils'
   import WeightPopup from './WeightPopup.svelte'
@@ -147,7 +146,7 @@
 <div class="selectPopup" use:resizeObserver={() => dispatch('changeContent')}>
   <div class="header">
     <EditWithIcon
-      icon={IconSearch}
+      icon={ui.icon.Search}
       size="large"
       width="100%"
       autoFocus={!$deviceOptionsStore.isMobile}
@@ -195,9 +194,7 @@
                   <div class="flex-row-center">
                     <span class="mr-1-5">{cat.label}</span>
                     <div class="icon">
-                      <svg fill="var(--content-color)" viewBox="0 0 6 6" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M0,0L6,3L0,6Z" />
-                      </svg>
+                      <Icon icon={ui.icon.CaretRightFill} size="small" fill="var(--content-color)" />
                     </div>
                   </div>
                   <div class="flex-row-center text-xs">
@@ -219,7 +216,7 @@
                     <span class="overflow-label label flex-grow">{element.title}</span>
                     <div class="check pointer-events-none">
                       {#if isSelected(element)}
-                        <Icon icon={IconCheck} size="small" />
+                        <Icon icon={ui.icon.Check} size="small" />
                       {/if}
                     </div>
                   </button>

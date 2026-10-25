@@ -16,11 +16,10 @@
   import type { Class, Doc, Ref } from '@hcengineering/core'
   import { copyTextToClipboard } from '@hcengineering/presentation'
   import { webhookEventSamples } from '@hcengineering/setting'
-  import {
+  import ui, {
     Button,
     DropdownLabels,
     Icon,
-    IconCopy,
     Label,
     Scroller,
     eventToHTMLElement,
@@ -28,6 +27,7 @@
     type DropdownTextItem
   } from '@hcengineering/ui'
   import view from '@hcengineering/view'
+
   import settingsRes from '../plugin'
   import { webhookEventLabels, webhookEventTypes, type WebhookEventType } from '../webhookEvents'
   import WebhookTargetPicker from './WebhookTargetPicker.svelte'
@@ -152,7 +152,7 @@
                 <Button
                   kind="ghost"
                   size="small"
-                  icon={IconCopy}
+                  icon={ui.icon.Copy}
                   showTooltip={{ label: view.string.CopyToClipboard }}
                   on:click={() => {
                     void copyText(JSON.stringify(sample, null, 2))

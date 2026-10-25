@@ -21,6 +21,8 @@ import { fileURLToPath } from 'node:url'
 import { readFileSync, statSync } from 'node:fs'
 import { defineConfig, transformWithEsbuild, type Plugin, type Rollup } from 'vite'
 
+import { platformIcons } from './scripts/platform-icons.mjs'
+
 const emojibaseShim = fileURLToPath(new URL('./src/shims/emojibase.ts', import.meta.url))
 const emojibaseReal = join(
   dirname(createRequire(new URL('../../plugins/emoji/package.json', import.meta.url)).resolve('emojibase/package.json')),
@@ -123,7 +125,8 @@ export default defineConfig({
     workspaceSources(),
     svelte(),
     typeOnlyImports(),
-    hangingRequests()
+    hangingRequests(),
+    platformIcons(fileURLToPath(new URL('../..', import.meta.url)))
   ],
   // Without the browser condition svelte resolves to its SSR runtime, where onMount never fires.
   resolve: { conditions: ['browser'] }

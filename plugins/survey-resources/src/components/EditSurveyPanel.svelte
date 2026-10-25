@@ -19,19 +19,11 @@
   import { Panel } from '@hcengineering/panel'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import type { Survey } from '@hcengineering/survey'
-  import {
-    Breadcrumb,
-    Button,
-    DebouncedCaller,
-    Icon,
-    IconMoreH,
-    Label,
-    ThrottledCaller,
-    tooltip
-  } from '@hcengineering/ui'
+  import ui, { Breadcrumb, Button, DebouncedCaller, Icon, Label, ThrottledCaller, tooltip } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { showMenu } from '@hcengineering/view-resources'
   import { createEventDispatcher, onDestroy } from 'svelte'
+
   import survey from '../plugin'
   import { makePollData } from '../utils'
   import EditPoll from './EditPoll.svelte'
@@ -123,7 +115,7 @@
         {#if preview}
           {#if canSubmit}
             <div use:tooltip={{ label: survey.string.ValidateOk }}>
-              <Icon size="x-large" icon={survey.icon.ValidateOk} fill="var(--positive-button-default)" />
+              <Icon size="x-large" icon={ui.icon.CheckCircle} fill="var(--positive-button-default)" />
             </div>
           {:else}
             <div use:tooltip={{ label: survey.string.ValidateFail }}>
@@ -139,7 +131,7 @@
           }}
         />
         <Button
-          icon={IconMoreH}
+          icon={ui.icon.DotsHorizontal}
           iconProps={{ size: 'medium' }}
           kind="icon"
           on:click={(e) => {

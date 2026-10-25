@@ -15,8 +15,9 @@
 <script lang="ts">
   import { themeStore } from '@hcengineering/theme'
 
+  import ui from '../../plugin'
+  import Icon from '../../components/Icon.svelte'
   import { getPlatformColorByName } from '../../colors'
-  import IconFile from '../../components/icons/File.svelte'
 
   export let label: string = ''
   export let color: string | undefined = undefined
@@ -48,7 +49,7 @@
     {#if text !== ''}
       <span class="text" class:long={text.length > 4}>{text}</span>
     {:else}
-      <IconFile size={glyph} />
+      <Icon icon={ui.icon.File} size={glyph} />
     {/if}
   {/if}
 </div>

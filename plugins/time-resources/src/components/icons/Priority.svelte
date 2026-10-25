@@ -13,8 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { IconSize } from '@hcengineering/ui'
+  import { getMetadata } from '@hcengineering/platform'
+  import ui, { type IconSize } from '@hcengineering/ui'
   import { ToDoPriority } from '@hcengineering/time'
+
   import { todoPriorities } from '../../utils'
 
   export let size: IconSize = 'small'
@@ -34,11 +36,7 @@
   viewBox="0 0 16 16"
 >
   {#if value === ToDoPriority.Urgent}
-    <path
-      fill-rule="evenodd"
-      clip-rule="evenodd"
-      d="M2 4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2zm7 7a1 1 0 1 1-2 0 1 1 0 0 1 2 0m-.026-6.475a.5.5 0 0 0-.5-.525h-.948a.5.5 0 0 0-.5.525l.187 3.726a.788.788 0 0 0 1.574 0z"
-    />
+    <use href={getMetadata(ui.icon.ExclamationSquareFill)} width="16" height="16" />
   {:else}
     <path class="item" d="M3 10.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5z" />
     <path class="item" d="M7 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5z" />

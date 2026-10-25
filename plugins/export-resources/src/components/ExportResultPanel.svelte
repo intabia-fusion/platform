@@ -19,7 +19,7 @@
   import { Panel } from '@hcengineering/panel'
   import { getResource } from '@hcengineering/platform'
   import { createQuery } from '@hcengineering/presentation'
-  import { Button, IconMoreH, Label } from '@hcengineering/ui'
+  import ui, { Button, Label } from '@hcengineering/ui'
   import { DocNavLink, ObjectPresenter, showMenu } from '@hcengineering/view-resources'
   import view from '@hcengineering/view'
   import { createEventDispatcher, onDestroy } from 'svelte'
@@ -92,7 +92,7 @@
 
     <svelte:fragment slot="utils">
       <Button
-        icon={IconMoreH}
+        icon={ui.icon.DotsHorizontal}
         iconProps={{ size: 'medium' }}
         kind="icon"
         dataId="btnMoreActions"

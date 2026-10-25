@@ -16,10 +16,10 @@
   import { DateRangeMode, convertToDay } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import { createEventDispatcher } from 'svelte'
+
   import {
     ActionIcon,
     Button,
-    IconClose,
     Label,
     Scroller,
     checkAdaptiveMatching,
@@ -99,7 +99,7 @@
   <div class="header">
     <span class="fs-title overflow-label"><Label {label} /></span>
     <ActionIcon
-      icon={IconClose}
+      icon={ui.icon.Cross}
       size="small"
       action={() => {
         dispatch('close')

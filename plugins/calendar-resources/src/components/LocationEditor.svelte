@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { Button, EditBox, Icon, IconArrowRight, parseURL, desktopPlatform } from '@hcengineering/ui'
+  import ui, { Button, EditBox, Icon, parseURL, desktopPlatform } from '@hcengineering/ui'
+
   import calendar from '../plugin'
 
   export let value: string | undefined
@@ -35,7 +36,7 @@
     />
     {#if isLink(value)}
       <div class="tool">
-        <Button focusIndex={4} kind="ghost" size="small" icon={IconArrowRight} on:click={open} />
+        <Button focusIndex={4} kind="ghost" size="small" icon={ui.icon.ArrowRight} on:click={open} />
       </div>
     {/if}
   </div>

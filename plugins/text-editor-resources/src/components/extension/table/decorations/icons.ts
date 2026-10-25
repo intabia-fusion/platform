@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 
-export const addSvg = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path
-  d="M8.5 7.49988V3.49988C8.5 3.22374 8.27614 2.99988 8 2.99988C7.72386 2.99988 7.5 3.22374 7.5 3.49988L7.5 7.49988L3.5 7.49988C3.22386 7.49988 3 7.72374 3 7.99988C3 8.27602 3.22386 8.49988 3.5 8.49988H7.5L7.5 12.4999C7.5 12.776 7.72386 12.9999 8 12.9999C8.27614 12.9999 8.5 12.776 8.5 12.4999L8.5 8.49988L12.5 8.49988C12.7761 8.49988 13 8.27602 13 7.99988C13 7.72374 12.7761 7.49988 12.5 7.49988L8.5 7.49988Z"
-  fill="currentColor"
-/>
-</svg>`
+import { getMetadata } from '@hcengineering/platform'
+import ui from '@hcengineering/ui'
+
+// Plain DOM here, so the kit icon goes in as a sprite reference.
+export const addSvg = (): string =>
+  `<svg width="16" height="16" fill="currentColor"><use href="${getMetadata(ui.icon.Plus) ?? ''}" /></svg>`
 
 export const handleSvg = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
   <path d="M10.0001 9C9.44784 9 9.00012 9.44772 9.00012 10C9.00012 10.5523 9.44784 11 10.0001 11C10.5524 11 11.0001 10.5523 11.0001 10C11.0001 9.44772 10.5524 9 10.0001 9Z" fill="currentColor"/>

@@ -69,7 +69,7 @@ export const workbenchPlugin = plugin(workbenchId, {
     WorkspaceIsMigrating: '' as IntlString
   },
   icon: {
-    Search: '' as Asset
+    Shortcuts: '' as Asset
   },
   event: {
     NotifyConnection: '' as Metadata<string>,

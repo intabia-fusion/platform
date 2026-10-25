@@ -23,7 +23,8 @@
     isDisabled
   } from '@hcengineering/presentation'
   import ratingPlugin, { getRaiting, type PersonRating } from '@hcengineering/rating'
-  import { Breadcrumb, Button, Header, Icon, IconInfo, Label, Scroller } from '@hcengineering/ui'
+  import ui, { Breadcrumb, Button, Header, Icon, Label, Scroller } from '@hcengineering/ui'
+
   import setting from '../plugin'
 
   const client = getClient()
@@ -64,7 +65,7 @@
             <div class="cardBox flex-col clear-mins" class:enabled={config.enabled ?? true}>
               <div class="flex-row-center">
                 <span class="mr-2">
-                  <Icon icon={config.icon ?? IconInfo} size="medium" />
+                  <Icon icon={config.icon ?? ui.icon.InfoCircle} size="medium" />
                 </span>
                 <span class="fs-title">
                   <Label label={config.label} />

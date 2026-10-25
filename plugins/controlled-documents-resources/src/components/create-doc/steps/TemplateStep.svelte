@@ -16,7 +16,7 @@
 <script lang="ts">
   import { slide } from 'svelte/transition'
   import type { Data, Ref, WithLookup } from '@hcengineering/core'
-  import { IconCollapseArrow, RadioButton } from '@hcengineering/ui'
+  import ui, { RadioButton, Icon } from '@hcengineering/ui'
   import { getClient } from '@hcengineering/presentation'
   import documents, {
     type ControlledDocument,
@@ -139,7 +139,7 @@
           }}
         >
           <div class="expander" class:expanded>
-            <IconCollapseArrow size="small" />
+            <Icon icon={ui.icon.CaretRightFill} size="small" />
           </div>
           <span>{categoriesById[catId]?.title}</span>
         </div>

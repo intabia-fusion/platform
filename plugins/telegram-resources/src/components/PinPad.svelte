@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { onMount, createEventDispatcher } from 'svelte'
-  import { IconInfo } from '@hcengineering/ui'
+  import ui, { Icon } from '@hcengineering/ui'
 
   export let length: number = 6
   export let value: string = ''
@@ -98,7 +98,7 @@
 </div>
 {#if error}
   <div class="error-message flex-row-center">
-    <IconInfo size="small" />
+    <Icon icon={ui.icon.InfoCircle} size="small" />
     <div>{error}</div>
   </div>
 {/if}

@@ -16,7 +16,7 @@
   import core, { type Class, type Doc, type Ref } from '@hcengineering/core'
   import presentation, { getClient } from '@hcengineering/presentation'
   import type { DropdownIntlItem, DropdownTextItem } from '@hcengineering/ui'
-  import ui, { Button, IconClose, Label, ModernDropdown, ModernDropdownLabels } from '@hcengineering/ui'
+  import ui, { Button, Label, ModernDropdown, ModernDropdownLabels } from '@hcengineering/ui'
   import type { CollectionOperation, WorkflowFieldValue, WorkflowTransformCall } from '@hcengineering/workflow'
 
   import plugin from '../../../../plugin'
@@ -112,7 +112,7 @@
 
       <div class="update-field-row__remove" class:hidden={!canRemove}>
         <Button
-          icon={IconClose}
+          icon={ui.icon.Cross}
           kind="ghost"
           disabled={!canRemove}
           on:click={() => {
@@ -178,7 +178,7 @@
 
       <div class="update-field-row__remove" class:hidden={!canRemove}>
         <Button
-          icon={IconClose}
+          icon={ui.icon.Cross}
           kind="ghost"
           disabled={!canRemove}
           on:click={() => {

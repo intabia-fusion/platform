@@ -20,19 +20,18 @@
   import type { RefAction, TextEditorHandler } from '@hcengineering/text-editor'
   import textEditor from '@hcengineering/text-editor'
   import type { AnySvelteComponent, ButtonKind } from '@hcengineering/ui'
-  import {
+  import ui, {
     Button,
     checkAdaptiveMatching,
     deviceOptionsStore as deviceInfo,
     handler,
-    IconClose,
     registerFocus
   } from '@hcengineering/ui'
   import type { FocusPosition } from '@tiptap/core'
   import type { EditorView } from '@tiptap/pm/view'
   import { createEventDispatcher } from 'svelte'
-
   import view from '@hcengineering/view'
+
   import TextEditor from './TextEditor.svelte'
   import { defaultRefActions, getModelRefActions } from './editor/actions'
   import Send from './icons/Send.svelte'
@@ -243,7 +242,7 @@
         <div class="buttons-group {shrinkButtons ? 'xxsmall-gap' : 'xsmall-gap'}">
           <Button
             {loading}
-            icon={IconClose}
+            icon={ui.icon.Cross}
             iconProps={{ size: buttonSize }}
             kind={kindCancel}
             size={buttonSize}

@@ -33,22 +33,22 @@
     type OtpConfirmProps,
     reduceCalls
   } from '@hcengineering/presentation'
-  import {
+  import ui, {
     Button,
-    IconBack,
     Scroller,
     SearchEdit,
     Spinner,
     deviceOptionsStore as deviceInfo,
     showPopup,
-    ticker
+    ticker,
+    Icon
   } from '@hcengineering/ui'
-  import Label from './internal/Label.svelte'
-  import FormButton from './internal/FormButton.svelte'
   import { themeStore } from '@hcengineering/theme'
   import { logOut } from '@hcengineering/workbench'
   import { onMount } from 'svelte'
 
+  import Label from './internal/Label.svelte'
+  import FormButton from './internal/FormButton.svelte'
   import login from '../plugin'
   import {
     getAccount,
@@ -290,7 +290,7 @@
         goTo('login')
       }}
     >
-      <IconBack size="small" />
+      <Icon icon={ui.icon.ChevronLeftLarge} size="small" />
     </FormButton>
     <div class="title">
       <Label label={login.string.SelectWorkspace} variant="heading" />

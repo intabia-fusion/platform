@@ -16,17 +16,17 @@
 import { loadMetadata } from '@hcengineering/platform'
 import process from '@hcengineering/process'
 
-const icons = require('../assets/icons.svg') as string // eslint-disable-line
+// Icons the kit has: the ids stay, stored documents keep pointing at them.
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(process.icon, {
-  Process: `${icons}#process`,
-  States: `${icons}#trigger`,
-  Steps: `${icons}#steps`,
-  ToDo: `${icons}#todo`,
-  ToDoRemove: `${icons}#todo-remove`,
-  WaitSubprocesses: `${icons}#subprocesses`,
-  Start: `${icons}#start`,
-  WhenCardMatches: `${icons}#card-matches`,
-  WhenFieldChanges: `${icons}#field-change`,
-  Time: `${icons}#time`,
-  OnEvent: `${icons}#start`
+  Process: `${uiIcons}#lightning`,
+  States: `${uiIcons}#chart-square`,
+  ToDo: `${uiIcons}#check-circle`,
+  ToDoRemove: `${uiIcons}#cross-circle`,
+  WaitSubprocesses: `${uiIcons}#layers`,
+  Start: `${uiIcons}#paper-plane`,
+  WhenCardMatches: `${uiIcons}#circle-gap-dot`,
+  WhenFieldChanges: `${uiIcons}#pencil-fill`,
+  Time: `${uiIcons}#clock`,
+  OnEvent: `${uiIcons}#paper-plane`
 })

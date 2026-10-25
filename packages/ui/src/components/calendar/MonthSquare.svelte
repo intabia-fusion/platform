@@ -14,10 +14,10 @@
 -->
 <script lang="ts">
   import { afterUpdate, createEventDispatcher } from 'svelte'
+
+  import ui from '../../plugin'
   import { capitalizeFirstLetter } from '../../utils'
   import Button from '../Button.svelte'
-  import IconArrowLeft from '../icons/ArrowLeft.svelte'
-  import IconArrowRight from '../icons/ArrowRight.svelte'
   import {
     areDatesEqual,
     day,
@@ -109,7 +109,7 @@
           <Button
             kind="ghost"
             size="medium"
-            icon={IconArrowLeft}
+            icon={ui.icon.ArrowLeft}
             on:click={() => {
               if (viewUpdate) {
                 viewDate.setDate(1)
@@ -123,7 +123,7 @@
           <Button
             kind="ghost"
             size="medium"
-            icon={IconArrowRight}
+            icon={ui.icon.ArrowRight}
             on:click={() => {
               if (viewUpdate) {
                 viewDate.setDate(1)

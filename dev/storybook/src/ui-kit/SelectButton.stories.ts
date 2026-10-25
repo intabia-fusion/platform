@@ -14,7 +14,7 @@
 //
 
 import { getEmbeddedLabel } from '@hcengineering/platform'
-import { IconCalendar } from '@hcengineering/ui'
+import ui from '@hcengineering/ui'
 import { SelectButton } from '@hcengineering/ui/kit'
 import type { Meta, StoryObj } from '@storybook/svelte'
 import type { ComponentProps } from 'svelte'
@@ -39,7 +39,7 @@ const examples = {
     iconProps: { glyph: 'component' },
     label: getEmbeddedLabel('Very long component name that keeps going')
   },
-  'form field': { icon: IconCalendar, label: getEmbeddedLabel('Oct 24, 2026'), size: 'medium', chevron: true }
+  'form field': { icon: ui.icon.Calendar, label: getEmbeddedLabel('Oct 24, 2026'), size: 'medium', chevron: true }
 } satisfies Record<string, ComponentProps<SelectButton>>
 
 type Args = Partial<ComponentProps<SelectButton>> & { example: keyof typeof examples }

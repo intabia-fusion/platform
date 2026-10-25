@@ -17,9 +17,10 @@
   import type { IntlString } from '@hcengineering/platform'
   import { isCreateAllowed } from '@hcengineering/presentation'
   import type { Component } from '@hcengineering/tracker'
-  import { Button, IconAdd, Breadcrumbs, SearchInput, showPopup, Header } from '@hcengineering/ui'
+  import ui, { Button, Breadcrumbs, SearchInput, showPopup, Header } from '@hcengineering/ui'
   import type { ViewOptions, Viewlet } from '@hcengineering/view'
   import { FilterBar, FilterButton, ViewletSelector, ViewletSettingButton } from '@hcengineering/view-resources'
+
   import tracker from '../../plugin'
   import type { ComponentsFilterMode } from '../../utils'
   import { activeProjects, componentsTitleMap } from '../../utils'
@@ -69,7 +70,7 @@
   </svelte:fragment>
   <svelte:fragment slot="actions">
     {#if project !== undefined && isCreateAllowed(tracker.class.Component, project)}
-      <Button icon={IconAdd} label={tracker.string.Component} kind="primary" on:click={showCreateDialog} />
+      <Button icon={ui.icon.Plus} label={tracker.string.Component} kind="primary" on:click={showCreateDialog} />
     {/if}
   </svelte:fragment>
 </Header>

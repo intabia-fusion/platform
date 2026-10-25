@@ -5,16 +5,16 @@ const RAIL_W = 68
 const NAV_W = 280
 const SIDE_W = 57
 
-// Apps of the rail in stand order; a divider follows "love/office"
+// Apps of the rail in stand order; a divider follows "kit/Building"
 kit.RAIL_APPS = [
-  { icon: 'notification/notifications', marker: true }, { icon: 'chunter/chunter', marker: true, app: 'chunter' },
-  { icon: 'time/calendar' }, { icon: 'love/office', divider: true },
-  { icon: 'card/card' }, { icon: 'contact/contactapplication' }, { icon: 'recruit/recruitment' },
-  { icon: 'lead/leadapplication' }, { icon: 'inventory/inventory' }, { icon: 'hr/hr' },
-  { icon: 'tracker/tracker', app: 'tracker' }, { icon: 'document/documentapplication' }, { icon: 'process/process' },
-  { icon: 'drive/driveapplication' }, { icon: 'controlled-documents/documentapplication' },
-  { icon: 'training/training-application' }, { icon: 'products/productsApplication' },
-  { icon: 'test-management/testManagementApplication' }, { icon: 'survey/application' }
+  { icon: 'kit/Bell', marker: true }, { icon: 'kit/Bubble', marker: true, app: 'chunter' },
+  { icon: 'kit/Calendar' }, { icon: 'kit/Building', divider: true },
+  { icon: 'kit/PanelRight' }, { icon: 'kit/PersonCircle' }, { icon: 'kit/PersonSearch' },
+  { icon: 'kit/Funnel' }, { icon: 'kit/Archive' }, { icon: 'kit/PersonRefresh' },
+  { icon: 'kit/CheckSquare', app: 'tracker' }, { icon: 'kit/Document' }, { icon: 'kit/Lightning' },
+  { icon: 'kit/CloudTree' }, { icon: 'kit/Clipboard' },
+  { icon: 'kit/GraduationCap' }, { icon: 'kit/Cube' },
+  { icon: 'kit/Hierarchy' }, { icon: 'kit/PencilLine' }
 ]
 
 const dot = (size, color, border) => {
@@ -40,22 +40,22 @@ kit.TopBar = (w, o = {}) => {
   // tab: null is the bare bar of the login page: only the clock and the status icons
   if (o.tab !== null) {
     const tab = kit.box('tab', { w: 83, h: 28, dir: 'row', gap: 8, pad: [0, 8, 0, 8], align: 'center', hs: 'auto', radius: 4, fill: T('highlight-select'), stroke: T('highlight-select-border') })
-    kit.add(tab, kit.icon(o.tabIcon || 'tracker/tracker', T('theme-content-color'), 12), kit.text(o.tab || 'Tracker', { size: 12, weight: 500, lh: 1.5, color: T('theme-content-color') }))
+    kit.add(tab, kit.icon(o.tabIcon || 'kit/CheckSquare', T('theme-content-color'), 12), kit.text(o.tab || 'Tracker', { size: 12, weight: 500, lh: 1.5, color: T('theme-content-color') }))
     kit.at(bar, tab, 8, 4)
-    kit.at(bar, kit.add(kit.box('new tab', { w: 24, h: 24, dir: 'row', align: 'center', justify: 'center', radius: 4 }), kit.icon('ui/Add', T('button-tertiary-IconColor'))), 99, 6)
+    kit.at(bar, kit.add(kit.box('new tab', { w: 24, h: 24, dir: 'row', align: 'center', justify: 'center', radius: 4 }), kit.icon('kit/Plus', T('button-tertiary-IconColor'))), 99, 6)
     const limits = kit.box('limits', { w: 28, h: 18, radius: 4, stroke: T('theme-trans-color') })
     kit.at(limits, kit.box('bar', { w: 20, h: 4, radius: 2, fill: T('trans-content-10') }), 4, 4)
     kit.at(limits, kit.box('bar', { w: 20, h: 4, radius: 2, fill: T('trans-content-10') }), 4, 10)
     kit.at(bar, limits, R(1585), 9)
-    kit.at(bar, kit.icon('ui/Search', T('theme-dark-color')), R(1629), 10)
-    kit.at(bar, kit.icon('media/CamOn', T('theme-dark-color')), R(1659), 10)
-    kit.at(bar, kit.icon('recorder/RecordOn', T('theme-content-color')), R(1687), 10)
+    kit.at(bar, kit.icon('kit/Search', T('theme-dark-color')), R(1629), 10)
+    kit.at(bar, kit.icon('kit/Camera', T('theme-dark-color')), R(1659), 10)
+    kit.at(bar, kit.icon('recorder/dot', T('theme-content-color')), R(1687), 10)
     kit.at(bar, kit.icon('recorder/Rec', T('theme-content-color'), 22), R(1703), 13)
   }
   kit.at(bar, kit.text(o.city || 'Novosibirsk', { size: 13, color: T('theme-content-color') }), R(1743), 9)
   kit.at(bar, kit.text(o.time || '16:56', { size: 13, color: T('theme-content-color') }), R(1817), 9)
-  kit.at(bar, kit.icon('love/BadConnection', T('global-online-color')), R(1868), 10)
-  kit.at(bar, kit.icon('ui-internal/Settings', T('theme-dark-color')), R(1898), 10)
+  kit.at(bar, kit.icon('kit/Wifi', T('global-online-color')), R(1868), 10)
+  kit.at(bar, kit.icon('kit/Gear', T('theme-dark-color')), R(1898), 10)
   return bar
 }
 
@@ -67,7 +67,7 @@ kit.AppRail = (h, o = {}) => {
   const logo = kit.box('workspace', { w: 32, h: 32, dir: 'row', align: 'center', justify: 'center', radius: 4, fill: o.logoColor || '#F6694D' })
   kit.at(rail, kit.add(logo, kit.text(o.workspace || 'S', { size: 14, weight: 500, color: '#FFFFFF' })), 18, 20)
   kit.at(rail, dot(8, T('bg-negative-default')), 48, 12)
-  kit.at(rail, kit.add(kit.box('menu', { w: 32, h: 32, dir: 'row', align: 'center', justify: 'center', radius: 4 }), kit.icon('workbench/TopMenu', T('theme-navpanel-icons-color'), 20)), 18, 56)
+  kit.at(rail, kit.add(kit.box('menu', { w: 32, h: 32, dir: 'row', align: 'center', justify: 'center', radius: 4 }), kit.icon('kit/Equals', T('theme-navpanel-icons-color'), 20)), 18, 56)
   let y = 104
   // Measured on the stand: the first app sits 44 below the next, the divider is 8 under the group, the next group 21 below it
   let first = true
@@ -108,10 +108,10 @@ kit.NavItem = (label, o = {}) => {
 // Group header of the navigator (hulyNavGroup): chevron, label pill, optional "+" button
 kit.NavGroupHeader = (label, o = {}) => {
   const h = kit.box('NavGroup ' + label, { w: 279, h: 42, pad: [0, 0, 0, 0] })
-  kit.at(h, kit.add(kit.box('chevron', { w: 20, h: 20, dir: 'row', align: 'center', justify: 'center', radius: 4 }), kit.icon('ui/Down', T('global-tertiary-TextColor'))), 18, 11)
+  kit.at(h, kit.add(kit.box('chevron', { w: 20, h: 20, dir: 'row', align: 'center', justify: 'center', radius: 4 }), kit.icon('kit/CaretDownFill', T('global-tertiary-TextColor'))), 18, 11)
   const pill = kit.box('label', { w: 10, h: 20, dir: 'row', pad: [0, 4, 0, 4], align: 'center', hs: 'auto', radius: 4, fill: T('global-ui-BackgroundColor') })
   kit.at(h, kit.add(pill, kit.text(label, { size: 12, weight: 500, lh: 1.33, upper: true, color: T('global-secondary-TextColor') })), 40, 11)
-  if (o.add) kit.at(h, kit.add(kit.box('add', { w: 24, h: 24, dir: 'row', align: 'center', justify: 'center', radius: 4 }), kit.icon('ui/Add', T('button-tertiary-IconColor'))), 237, 9)
+  if (o.add) kit.at(h, kit.add(kit.box('add', { w: 24, h: 24, dir: 'row', align: 'center', justify: 'center', radius: 4 }), kit.icon('kit/Plus', T('button-tertiary-IconColor'))), 237, 9)
   return h
 }
 
@@ -120,9 +120,9 @@ kit.NavSpaceHeader = (name, o = {}) => {
   const h = kit.box('NavSpace ' + name, { w: 279, h: 32 })
   const pill = kit.box('label', { w: 10, h: 24, dir: 'row', gap: 6, pad: [0, 6, 0, 0], align: 'center', hs: 'auto', radius: 4, fill: T('global-ui-BackgroundColor') })
   const ib = kit.box('icon', { w: 24, h: 24, dir: 'row', align: 'center', justify: 'center', radius: 4, fill: T('theme-button-focused'), stroke: T('global-ui-BackgroundColor') })
-  kit.add(ib, kit.icon(o.icon || 'tracker/home', P(o.color || 'Porpoise')))
+  kit.add(ib, kit.icon(o.icon || 'kit/HouseFill', P(o.color || 'Porpoise')))
   kit.at(h, kit.add(pill, ib, kit.text(name, { size: 12, weight: 500, lh: 1.33, upper: true, color: T('global-secondary-TextColor') })), 16, 4)
-  kit.at(h, kit.add(kit.box('more', { w: 24, h: 24, dir: 'row', align: 'center', justify: 'center', radius: 4 }), kit.icon('ui/MoreH', T('button-tertiary-IconColor'))), 237, 4)
+  kit.at(h, kit.add(kit.box('more', { w: 24, h: 24, dir: 'row', align: 'center', justify: 'center', radius: 4 }), kit.icon('kit/DotsHorizontal', T('button-tertiary-IconColor'))), 237, 4)
   return h
 }
 
@@ -131,7 +131,7 @@ kit.NavCaption = (label, highlighted, o = {}) => {
   const pill = kit.box('NavCaption ' + label, { w: 10, h: 20, dir: 'row', gap: 4, pad: [0, 4, 0, 4], align: 'center', hs: 'auto', radius: 4, fill: highlighted ? T('global-ui-BackgroundColor') : null })
   const c = highlighted ? T('global-secondary-TextColor') : T('global-tertiary-TextColor')
   kit.add(pill, kit.text(label, { size: 12, weight: 500, lh: 1.33, upper: true, color: c }))
-  if (o.menu) kit.add(pill, kit.icon('ui/Down', c, 14))
+  if (o.menu) kit.add(pill, kit.icon('kit/CaretDownFill', c, 14))
   return pill
 }
 
@@ -149,12 +149,12 @@ kit.Navigator = (h, o = {}) => {
     const main = kit.box('New', { w: 227, h: 32, dir: 'row', gap: 6, pad: [0, 12, 0, 12], align: 'center', fill: T('primary-button-default') })
     main.borderRadiusTopLeft = 4
     main.borderRadiusBottomLeft = 4
-    kit.add(main, kit.icon('ui/Add', '#FFFFFF'), kit.text(o.newLabel || 'New issue', { size: 13, color: '#FFFFFF' }))
+    kit.add(main, kit.icon('kit/Plus', '#FFFFFF'), kit.text(o.newLabel || 'New issue', { size: 13, color: '#FFFFFF' }))
     kit.at(nav, main, 13, 68)
     const drop = kit.box('New menu', { w: 28, h: 32, dir: 'row', align: 'center', justify: 'center', fill: T('primary-button-default') })
     drop.borderRadiusTopRight = 4
     drop.borderRadiusBottomRight = 4
-    kit.at(nav, kit.add(drop, kit.icon('ui/Dropdown', '#FFFFFF')), 240, 68)
+    kit.at(nav, kit.add(drop, kit.icon('kit/ChevronDown', '#FFFFFF')), 240, 68)
     kit.at(nav, kit.box('divider', { w: 1, h: 20, fill: '#FFFFFF' }), 239, 74)
   }
   let y = o.tools ? 56 : o.newLabel === null ? 68 : 112
@@ -170,7 +170,7 @@ kit.Navigator = (h, o = {}) => {
       // The caption is highlighted when one of its items is selected
       const own = list.slice(i + 1).findIndex((it) => !it.item)
       const hl = list.slice(i + 1, own < 0 ? undefined : i + 1 + own).some((it) => it.selected)
-      if (n.chevron) kit.at(nav, kit.add(kit.box('chevron', { w: 20, h: 20, dir: 'row', align: 'center', justify: 'center', radius: 4 }), kit.icon('ui/Down', T('global-tertiary-TextColor'))), 18, y + (n.noDivider ? 10 : 11))
+      if (n.chevron) kit.at(nav, kit.add(kit.box('chevron', { w: 20, h: 20, dir: 'row', align: 'center', justify: 'center', radius: 4 }), kit.icon('kit/CaretDownFill', T('global-tertiary-TextColor'))), 18, y + (n.noDivider ? 10 : 11))
       kit.at(nav, kit.NavCaption(n.caption, hl, n), n.chevron ? 40 : 16, y + (n.noDivider ? 10 : 11))
       y += n.noDivider ? 40 : 41
       compact = !!n.compact && !!list[i + 1] && !!list[i + 1].item
@@ -205,7 +205,7 @@ kit.Sidebar = (h, o = {}) => {
   side.borderRadiusTopRight = 8
   side.borderRadiusBottomRight = 8
   let y = 16
-  for (const i of (o.widgets || ['calendar/calendar', 'love/office', 'rating/rating', 'view/ai-star'])) {
+  for (const i of (o.widgets || ['kit/Calendar', 'kit/Building', 'kit/Star', 'kit/Sparkle'])) {
     const on = i === o.selected
     kit.at(side, kit.add(kit.box('widget ' + i, { w: 28, h: 28, dir: 'row', align: 'center', justify: 'center', radius: 4, fill: on ? T('theme-button-pressed') : null }), kit.icon(i, on ? T('theme-caption-color') : T('theme-navpanel-icons-color'))), 14, y)
     y += 44
@@ -279,25 +279,25 @@ kit.SpaceHeader = (main, o = {}) => {
   const secondary = (icon) => kit.add(kit.box('button ' + icon, { w: 32, h: 32, dir: 'row', align: 'center', justify: 'center', radius: 6, fill: T('button-secondary-BackgroundColor'), stroke: T('button-secondary-BorderColor') }), kit.icon(icon, T('theme-caption-color')))
   const row = kit.box('Header row', { w: w - 34, h: 32, dir: 'row', gap: 4, align: 'center', justify: 'space-between' })
   const l = kit.row('left', 4)
-  kit.add(l, kit.Switcher(['tracker/list', 'task/kanban', 'tracker/estimation'], o.view === 'list' ? 'tracker/list' : 'task/kanban', { name: 'ViewletSelector' }), secondary('ui/Options'), secondary('view/configure'))
+  kit.add(l, kit.Switcher(['kit/BulletList', 'kit/Kanban', 'kit/CircleHalfFill'], o.view === 'list' ? 'kit/BulletList' : 'kit/Kanban', { name: 'ViewletSelector' }), secondary('kit/ArrowUpLines'), secondary('kit/SlidersHorizontal'))
   if (o.titleNode) kit.add(l, kit.spacer(12, 1), o.titleNode)
   else {
     const crumb = kit.row('Breadcrumb', 6)
     const av = kit.box('avatar', { w: 24, h: 24, dir: 'row', align: 'center', justify: 'center', radius: 4, fill: T('global-ui-BackgroundColor') })
-    kit.add(crumb, kit.add(av, kit.icon(o.titleIcon || 'tracker/issues', T('global-secondary-TextColor'))), kit.text(o.title || '', { size: 16, weight: 700, color: T('global-secondary-TextColor') }))
+    kit.add(crumb, kit.add(av, kit.icon(o.titleIcon || 'kit/CheckSquare', T('global-secondary-TextColor'))), kit.text(o.title || '', { size: 16, weight: 700, color: T('global-secondary-TextColor') }))
     kit.add(l, kit.spacer(12, 1), crumb)
   }
   const r = kit.row('right', 8)
-  kit.add(r, o.actions || [], secondary('ui/MoreH'))
+  kit.add(r, o.actions || [], secondary('kit/DotsHorizontal'))
   kit.add(row, l, r)
   kit.at(main, row, 17, 12)
   kit.at(main, kit.box('divider', { w: w - 34, h: 1, fill: T('theme-divider-color') }), 17, 56)
   const row2 = kit.box('Filter row', { w: w - 34, h: 32, dir: 'row', gap: 8, align: 'center', justify: 'space-between' })
   const l2 = kit.row('left', 8)
   const filter = kit.box('Filter', { w: 78, h: 32, dir: 'row', gap: 6, pad: [0, 12, 0, 12], align: 'center', hs: 'auto', radius: 6, fill: T('theme-button-default'), stroke: T('theme-button-border') })
-  kit.add(filter, kit.icon('ui/Filter', T('theme-content-color')), kit.text('Filter', { size: 13, color: T('theme-content-color') }))
+  kit.add(filter, kit.icon('kit/Funnel', T('theme-content-color')), kit.text('Filter', { size: 13, color: T('theme-content-color') }))
   const search = kit.box('Search', { w: 32, h: 32, dir: 'row', align: 'center', justify: 'center', radius: 6, fill: T('theme-button-default'), stroke: T('theme-button-border') })
-  kit.add(l2, filter, kit.add(search, kit.icon('ui/Search', T('global-primary-TextColor'))), o.filters || [])
+  kit.add(l2, filter, kit.add(search, kit.icon('kit/Search', T('global-primary-TextColor'))), o.filters || [])
   // tabs: [] drops the mode switcher
   kit.add(row2, l2, (o.tabs || ['All', 'Active', 'Backlog']).length > 0 ? kit.Switcher(o.tabs || ['All', 'Active', 'Backlog'], o.tab || 'All', { name: 'Mode tabs' }) : [])
   kit.at(main, row2, 17, 68)

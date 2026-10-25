@@ -16,11 +16,11 @@
   import presentation, { getClient, MessageBox } from '@hcengineering/presentation'
   import setting from '@hcengineering/setting'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
-  import { Button, IconDelete, Label, Modal, ModernEditbox, showPopup } from '@hcengineering/ui'
+  import ui, { Button, Label, Modal, ModernEditbox, showPopup } from '@hcengineering/ui'
   import type { Viewlet } from '@hcengineering/view'
   import view from '@hcengineering/view'
-
   import type { AttributeConfig, Config } from '@hcengineering/view-resources'
+
   import card from '../../../plugin'
   import DescriptorBox from './DescriptorBox.svelte'
   import { updateViewletConfig } from './utils'
@@ -70,7 +70,7 @@
   onCancel={clearSettingsStore}
 >
   <svelte:fragment slot="actions">
-    <Button icon={IconDelete} kind="dangerous" on:click={remove} />
+    <Button icon={ui.icon.Trash} kind="dangerous" on:click={remove} />
   </svelte:fragment>
   <div class="hulyModal-content__titleGroup">
     <ModernEditbox bind:value={title} label={view.string.Title} size="large" kind="ghost" />

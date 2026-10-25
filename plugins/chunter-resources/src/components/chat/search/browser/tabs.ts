@@ -15,12 +15,10 @@
 
 import attachment from '@hcengineering/attachment'
 import type { IntlString } from '@hcengineering/platform'
-import { IconLink, type IconComponent } from '@hcengineering/ui'
+import ui, { type IconComponent } from '@hcengineering/ui'
 
 import { BrowserTab, type ContentTab } from '../../../../search/attachments'
 import chunter from '../../../../plugin'
-import IconMedia from '../../../icons/IconMedia.svelte'
-import IconMic from '../../../icons/IconMic.svelte'
 
 export interface TabConfig {
   icon: IconComponent
@@ -40,7 +38,7 @@ export const tabConfig: Record<BrowserTab.Messages, TabConfig> & Record<ContentT
     placeholder: chunter.string.SearchPlaceholder
   },
   [BrowserTab.Media]: {
-    icon: IconMedia,
+    icon: ui.icon.Image,
     label: chunter.string.BrowserMedia,
     placeholder: chunter.string.SearchMediaPlaceholder,
     count: chunter.string.MediaCount,
@@ -54,14 +52,14 @@ export const tabConfig: Record<BrowserTab.Messages, TabConfig> & Record<ContentT
     empty: chunter.string.NoFilesTitle
   },
   [BrowserTab.Links]: {
-    icon: IconLink,
+    icon: ui.icon.Link,
     label: chunter.string.BrowserLinks,
     placeholder: chunter.string.SearchLinksPlaceholder,
     count: chunter.string.LinksCount,
     empty: chunter.string.NoLinksTitle
   },
   [BrowserTab.Audio]: {
-    icon: IconMic,
+    icon: ui.icon.Mic,
     label: chunter.string.BrowserAudio,
     placeholder: chunter.string.SearchAudioPlaceholder,
     count: chunter.string.AudioCount,

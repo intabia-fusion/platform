@@ -19,13 +19,8 @@
   import type { IntlString } from '@hcengineering/platform'
   import platform, { getMetadata } from '@hcengineering/platform'
   import presentation, { getClient } from '@hcengineering/presentation'
-  import {
+  import ui, {
     AccordionItem,
-    IconDelete,
-    IconEdit,
-    IconMoreH,
-    IconSearch,
-    IconSettings,
     Label,
     SelectPopup,
     eventToHTMLElement,
@@ -37,13 +32,14 @@
   import love, { isOffice, Office } from '@hcengineering/love'
   import { createEventDispatcher, onMount } from 'svelte'
   import view from '@hcengineering/view'
+  import { loadUsersStatus } from '@hcengineering/contact-resources'
+
   import plugin from '../plugin'
   import { infos } from '../stores'
   import { calculateFloorSize } from '../utils'
   import EditFloorPopup from './EditFloorPopup.svelte'
   import FloorGrid from './FloorGrid.svelte'
   import RoomPreview from './RoomPreview.svelte'
-  import { loadUsersStatus } from '@hcengineering/contact-resources'
 
   export let floor: Floor
   export let configurable: boolean = false
@@ -94,12 +90,12 @@
   const clickMore = (e: MouseEvent): void => {
     pressed = true
     const value: SelectPopupValueType[] = [
-      { id: 'rename', icon: IconEdit, label: plugin.string.RenameAFloor },
+      { id: 'rename', icon: ui.icon.PencilLine, label: plugin.string.RenameAFloor },
       ...(getMetadata(platform.metadata.DevModel) === true
         ? [
-            { id: 'debug', icon: IconSettings, label: 'Debug Offices' as IntlString },
-            { id: 'clearAiBot', icon: IconDelete, label: 'Clear AI Bot Offices' as IntlString },
-            { id: 'searchAccounts', icon: IconSearch, label: 'Search Accounts' as IntlString }
+            { id: 'debug', icon: ui.icon.Sliders, label: 'Debug Offices' as IntlString },
+            { id: 'clearAiBot', icon: ui.icon.Trash, label: 'Clear AI Bot Offices' as IntlString },
+            { id: 'searchAccounts', icon: ui.icon.Search, label: 'Search Accounts' as IntlString }
           ]
         : [])
     ]
@@ -313,7 +309,7 @@
       {#if rooms.length === 0}
         <div class="mr-2">
           <IconButton
-            icon={IconDelete}
+            icon={ui.icon.Trash}
             kind="negative"
             size="small"
             tooltip={{ label: presentation.string.Delete }}
@@ -322,7 +318,7 @@
         </div>
       {/if}
       <IconButton
-        icon={IconMoreH}
+        icon={ui.icon.DotsHorizontal}
         kind="tertiary"
         size="small"
         {pressed}

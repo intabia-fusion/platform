@@ -3,7 +3,8 @@
   import { getCurrentEmployee } from '@hcengineering/contact'
   import { PersonPresenter } from '@hcengineering/contact-resources'
   import { DateRangeMode } from '@hcengineering/core'
-  import { Chevron, DatePresenter, Icon, IconArrowRight, Label } from '@hcengineering/ui'
+  import ui, { Chevron, DatePresenter, Icon, Label } from '@hcengineering/ui'
+
   import type { EventPersonMapping } from '../../../types'
   import TimePresenter from '../../presenters/TimePresenter.svelte'
   import { isVisibleMe } from '../utils'
@@ -62,7 +63,7 @@
         <div class="flex-row-center ml-4 mt-2">
           <DatePresenter mode={DateRangeMode.TIMEONLY} value={slot.date} />
           <div class="p-1">
-            <Icon icon={IconArrowRight} size="small" />
+            <Icon icon={ui.icon.ArrowRight} size="small" />
           </div>
           <DatePresenter mode={DateRangeMode.TIMEONLY} value={slot.dueDate} />
         </div>
@@ -87,7 +88,7 @@
             <div class="flex-row-center">
               <DatePresenter mode={DateRangeMode.TIMEONLY} value={slot.date} />
               <div class="p-1">
-                <Icon icon={IconArrowRight} size="small" />
+                <Icon icon={ui.icon.ArrowRight} size="small" />
               </div>
               <DatePresenter mode={DateRangeMode.TIMEONLY} value={slot.dueDate} />
             </div>

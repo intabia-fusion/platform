@@ -15,7 +15,7 @@
 <script lang="ts">
   import type { Ref } from '@hcengineering/core'
   import type { Component, Issue, Project } from '@hcengineering/tracker'
-  import { Button, Grid, IconArrowRight, Label, eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  import ui, { Button, Grid, Label, eventToHTMLElement, showPopup, Icon } from '@hcengineering/ui'
 
   import tracker from '../../../plugin'
   import type { ComponentToUpdate } from '../../../utils'
@@ -78,7 +78,7 @@
       {@const componentRef = componentToUpdate[component._id]?.ref}
       <div class="flex-between min-h-11">
         <ComponentPresenter value={component} disabled />
-        <IconArrowRight size="small" fill="var(--theme-halfcontent-color)" />
+        <Icon icon={ui.icon.ArrowRight} size="small" fill="var(--theme-halfcontent-color)" />
       </div>
       <div class="flex-row-center min-h-11">
         <Button

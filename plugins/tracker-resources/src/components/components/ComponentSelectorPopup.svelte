@@ -17,8 +17,9 @@
   import type { IntlString } from '@hcengineering/platform'
   import type { Project } from '@hcengineering/tracker'
   import type { SelectPopupValueType } from '@hcengineering/ui'
-  import { Button, IconAdd, SelectPopup, showPopup } from '@hcengineering/ui'
+  import ui, { Button, SelectPopup, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+
   import tracker from '../../plugin'
   import NewComponent from './NewComponent.svelte'
 
@@ -36,7 +37,7 @@
         <Button
           kind="ghost"
           size="large"
-          icon={IconAdd}
+          icon={ui.icon.Plus}
           dataId="btnAdd"
           on:click={() => {
             showPopup(NewComponent, { space }, 'top')

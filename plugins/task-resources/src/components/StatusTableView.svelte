@@ -19,12 +19,11 @@
   import type { Project, Task } from '@hcengineering/task'
   import { getStates } from '@hcengineering/task'
   import type { TabItem } from '@hcengineering/ui'
-  import { ScrollerBar, TabList, Switcher } from '@hcengineering/ui'
+  import ui, { ScrollerBar, TabList, Switcher } from '@hcengineering/ui'
   import { TableBrowser, statusStore } from '@hcengineering/view-resources'
+
   import { typeStore } from '..'
   import task from '../plugin'
-  import Lost from './icons/Lost.svelte'
-  import Won from './icons/Won.svelte'
   import StatesBar from './state/StatesBar.svelte'
 
   export let _class: Ref<Class<Task>>
@@ -52,7 +51,7 @@
       return {
         id: s._id,
         label: s.name,
-        icon: s.category === task.statusCategory.Won ? Won : Lost,
+        icon: s.category === task.statusCategory.Won ? ui.icon.CheckSmall : ui.icon.Cross,
         color: s.category === task.statusCategory.Won ? 'var(--theme-won-color)' : 'var(--theme-lost-color)'
       }
     })

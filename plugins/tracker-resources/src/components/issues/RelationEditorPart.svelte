@@ -5,7 +5,7 @@
   import { getResource } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import type { Issue } from '@hcengineering/tracker'
-  import { Component, Icon, IconClose, navigate } from '@hcengineering/ui'
+  import ui, { Component, Icon, navigate } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import activity from '@hcengineering/activity'
 
@@ -93,7 +93,7 @@
       </div>
       {#if !readonly}
         <button class="btn-close" on:click|stopPropagation={() => handleClick(issue)}>
-          <Icon icon={IconClose} size="x-small" />
+          <Icon icon={ui.icon.Cross} size="x-small" />
         </button>
       {/if}
     </div>
@@ -105,7 +105,7 @@
       />
       {#if !readonly}
         <button class="btn-close" on:click|stopPropagation={() => handleClick(doc)}>
-          <Icon icon={IconClose} size="x-small" />
+          <Icon icon={ui.icon.Cross} size="x-small" />
         </button>
       {/if}
     </div>

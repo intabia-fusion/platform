@@ -17,7 +17,7 @@
   import type { ChatMessage } from '@hcengineering/chunter'
   import chunter, { chunterId } from '@hcengineering/chunter'
   import type { Location } from '@hcengineering/ui'
-  import { IconClose, Label, location, navigate } from '@hcengineering/ui'
+  import ui, { Label, location, navigate } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import type { WithLookup, Ref } from '@hcengineering/core'
   import type { Attachment } from '@hcengineering/attachment'
@@ -30,8 +30,9 @@
   import { AttachmentMiniPreview, isVoiceAttachment } from '@hcengineering/attachment-resources'
   import { isEmptyMarkup } from '@hcengineering/text'
   import type { IntlString } from '@hcengineering/platform'
-  import { encodeChatURI } from '../navigation'
   import { setFilters } from '@hcengineering/view-resources'
+
+  import { encodeChatURI } from '../navigation'
 
   export let replyTo: WithLookup<ChatMessage>
   export let labelIntl: IntlString = activity.string.ReplyTo
@@ -179,7 +180,7 @@
 
   {#if canClose}
     <IconButton
-      icon={IconClose}
+      icon={ui.icon.Cross}
       kind="tertiary"
       size="small"
       tooltip={{ label: presentation.string.Close }}

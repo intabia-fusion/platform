@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { BlankView, IconSearch, Loading, Scroller } from '@hcengineering/ui'
+  import ui, { BlankView, Loading, Scroller } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   import chunter from '../../../plugin'
@@ -47,10 +47,10 @@
 {:else if state.failure != null && state.results.length === 0}
   <SearchFailureState failure={state.failure} on:retry={() => dispatch('retry')} />
 {:else if state.results.length === 0 && state.search.trim() === ''}
-  <BlankView icon={IconSearch} header={chunter.string.SearchHintTitle} label={chunter.string.SearchHintTyping} />
+  <BlankView icon={ui.icon.Search} header={chunter.string.SearchHintTitle} label={chunter.string.SearchHintTyping} />
 {:else if state.results.length === 0}
   <BlankView
-    icon={IconSearch}
+    icon={ui.icon.Search}
     header={chunter.string.SearchNoResultsTitle}
     label={chunter.string.SearchNoResultsHint}
   />

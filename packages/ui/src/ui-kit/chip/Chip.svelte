@@ -19,7 +19,6 @@
   import { createEventDispatcher } from 'svelte'
 
   import Icon from '../../components/Icon.svelte'
-  import IconClose from '../../components/icons/Close.svelte'
   import Label from '../../components/Label.svelte'
   import ui from '../../plugin'
   import { tooltip as tooltipAction } from '../../tooltips'
@@ -97,7 +96,7 @@
       bind:this={removeButton}
       kind="ghost"
       size="min"
-      icon={IconClose}
+      icon={ui.icon.Cross}
       iconSize={size === 'extra-small' ? 'x-small' : 'smaller'}
       inheritColor
       tooltip={removeTooltip}

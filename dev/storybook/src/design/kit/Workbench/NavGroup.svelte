@@ -23,10 +23,10 @@
 
 <div class="group">
   <span class="head">
-    <span class="chevron"><Icon name="ui/Down" size={16} color="var(--global-tertiary-TextColor)" /></span>
+    <span class="chevron"><Icon name="kit/CaretDownFill" size={16} color="var(--global-tertiary-TextColor)" /></span>
     <span class="caption">{label}</span>
   </span>
-  {#if add === true}<Button kind="tertiary" size="extra-small" icon="ui/Add" />{/if}
+  {#if add === true}<Button kind="tertiary" size="extra-small" icon="kit/Plus" />{/if}
 </div>
 
 <style lang="scss">

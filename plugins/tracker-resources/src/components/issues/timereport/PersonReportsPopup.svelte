@@ -18,11 +18,12 @@
   import { SortingOrder } from '@hcengineering/core'
   import presentation, { Card } from '@hcengineering/presentation'
   import type { Issue, TimeSpendReport } from '@hcengineering/tracker'
-  import { Button, IconAdd, Scroller, showPopup, tableSP } from '@hcengineering/ui'
+  import ui, { Button, Scroller, showPopup, tableSP } from '@hcengineering/ui'
   import { TableBrowser } from '@hcengineering/view-resources'
+  import PersonPresenter from '@hcengineering/contact-resources/src/components/PersonPresenter.svelte'
+
   import tracker from '../../../plugin'
   import ParentNamesPresenter from '../ParentNamesPresenter.svelte'
-  import PersonPresenter from '@hcengineering/contact-resources/src/components/PersonPresenter.svelte'
   import TimeSpendReportPopup from './TimeSpendReportPopup.svelte'
   import IssueSelectPopup from '../../IssueSelectPopup.svelte'
 
@@ -93,6 +94,6 @@
     </Scroller>
   </div>
   <svelte:fragment slot="buttons">
-    <Button id="PersonReportsPopupAddButton" icon={IconAdd} size="large" on:click={addReport} />
+    <Button id="PersonReportsPopupAddButton" icon={ui.icon.Plus} size="large" on:click={addReport} />
   </svelte:fragment>
 </Card>

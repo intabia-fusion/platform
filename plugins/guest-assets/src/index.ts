@@ -17,7 +17,8 @@
 import { loadMetadata } from '@hcengineering/platform'
 import guest from '@hcengineering/guest'
 
-const icons = require('../assets/icons.svg') as string // eslint-disable-line
+// Icons the kit has: the ids stay, stored documents keep pointing at them.
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(guest.icon, {
-  Link: `${icons}#link`
+  Link: `${uiIcons}#link`
 })

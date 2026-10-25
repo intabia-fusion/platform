@@ -14,7 +14,8 @@
 -->
 <script lang="ts">
   import type { Blob, Ref } from '@hcengineering/core'
-  import { lazyObserver } from '@hcengineering/ui'
+  import { getMetadata } from '@hcengineering/platform'
+  import ui, { lazyObserver } from '@hcengineering/ui'
   import { FileCover, formatMediaDuration, type FileBadgeData, type ImageSource } from '@hcengineering/ui/kit'
 
   import { videoDuration } from '../video'
@@ -53,7 +54,7 @@
   <!-- A play sign, not a button: the card opens the video, it does not play in the grid. -->
   {#if picture != null || length != null}
     <span class="mark" aria-hidden="true">
-      <svg viewBox="0 0 16 16"><path d="M5 3.5v9l7.5-4.5z" fill="currentColor" /></svg>
+      <svg fill="currentColor"><use href={getMetadata(ui.icon.PlayFill)} /></svg>
       {#if length != null}<span>{length}</span>{/if}
     </span>
   {/if}

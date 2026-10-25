@@ -79,7 +79,6 @@ export default plugin(questionsId, {
     ArrowDown: '' as Asset,
     ArrowUp: '' as Asset,
     Assessment: '' as Asset,
-    Checkbox: '' as Asset,
     Drag: '' as Asset,
     Duplicate: '' as Asset,
     Failed: '' as Asset,

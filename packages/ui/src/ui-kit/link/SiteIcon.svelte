@@ -20,7 +20,8 @@
 <script lang="ts">
   import { themeStore } from '@hcengineering/theme'
 
-  import IconGlobe from '../_icons/IconGlobe.svelte'
+  import Icon from '../../components/Icon.svelte'
+  import ui from '../../plugin'
   import { nonEmpty } from './utils'
 
   export let src: string | undefined = undefined
@@ -55,7 +56,7 @@
     />
   </span>
 {:else}
-  <IconGlobe {size} />
+  <Icon icon={ui.icon.Globe} {size} />
 {/if}
 
 <style lang="scss">

@@ -18,7 +18,7 @@
   import type { FindOptions } from '@hcengineering/core'
   import presentation, { Card } from '@hcengineering/presentation'
   import type { Issue, Project, TimeSpendReport } from '@hcengineering/tracker'
-  import { Button, eventToHTMLElement, IconAdd, IconDelete, Scroller, showPopup, tableSP } from '@hcengineering/ui'
+  import ui, { Button, eventToHTMLElement, Scroller, showPopup, tableSP } from '@hcengineering/ui'
   import { TableBrowser } from '@hcengineering/view-resources'
 
   import tracker from '../../../plugin'
@@ -106,12 +106,12 @@
     {#if isDraftMode && selectedReports.length > 0}
       <Button
         id="ReportsPopupDeleteSelectedButton"
-        icon={IconDelete}
+        icon={ui.icon.Trash}
         size="large"
         showTooltip={{ label: presentation.string.Delete }}
         on:click={() => draftTable?.deleteSelected()}
       />
     {/if}
-    <Button id="ReportsPopupAddButton" icon={IconAdd} size="large" on:click={addReport} />
+    <Button id="ReportsPopupAddButton" icon={ui.icon.Plus} size="large" on:click={addReport} />
   </svelte:fragment>
 </Card>

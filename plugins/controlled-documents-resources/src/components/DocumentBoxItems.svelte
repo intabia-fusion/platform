@@ -16,7 +16,7 @@
   import { createEventDispatcher } from 'svelte'
   import type { Class, DocumentQuery, Ref } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
-  import { Label, showPopup, ActionIcon, IconClose, IconAdd, Icon } from '@hcengineering/ui'
+  import ui, { Label, showPopup, ActionIcon, Icon } from '@hcengineering/ui'
   import type { IconSize } from '@hcengineering/ui'
   import { ObjectPresenter } from '@hcengineering/view-resources'
   import documents, { type Document } from '@hcengineering/controlled-documents'
@@ -89,7 +89,7 @@
           props={{ withIcon: true, withTitle: true, isRegular: true }}
         />
         <ActionIcon
-          icon={IconClose}
+          icon={ui.icon.Cross}
           size={size === 'inline' ? 'x-small' : 'small'}
           action={() => {
             removeDocument(doc)
@@ -107,7 +107,7 @@
       on:click={addPerson}
     >
       <span><Label label={actionLabel} /></span>
-      <Icon icon={IconAdd} size={size === 'inline' ? 'x-small' : 'small'} fill="var(--theme-dark-color)" />
+      <Icon icon={ui.icon.Plus} size={size === 'inline' ? 'x-small' : 'small'} fill="var(--theme-dark-color)" />
     </div>
   {/if}
 </div>

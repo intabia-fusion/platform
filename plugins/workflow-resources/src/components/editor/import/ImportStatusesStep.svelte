@@ -16,15 +16,7 @@
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import type { ProjectType, TaskType } from '@hcengineering/task'
   import { StatePresenter, taskTypeStore } from '@hcengineering/task-resources'
-  import ui, {
-    type DropdownIntlItem,
-    IconCheck,
-    IconChevronDown,
-    IconError,
-    Label,
-    ModernCheckbox,
-    ModernDropdown
-  } from '@hcengineering/ui'
+  import ui, { type DropdownIntlItem, Label, ModernCheckbox, ModernDropdown, Icon } from '@hcengineering/ui'
   import { statusStore } from '@hcengineering/view-resources'
   import type { WorkflowCompatibilityReport } from '@hcengineering/workflow'
 
@@ -91,13 +83,13 @@
 <div class="form-section">
   {#if duplicateTargetStatuses}
     <div class="error-banner flex-row-center flex-gap-2 mb-3">
-      <IconError size="small" />
+      <Icon icon={ui.icon.ExclamationCircle} size="small" fill="var(--theme-error-color)" />
       <span><Label label={plugin.string.DuplicateStatusMappingWarning} /></span>
     </div>
   {:else if report?.statuses.every((s) => statusMap[s.sourceStatusId] !== undefined)}
     <div class="success-banner flex-row-center flex-gap-2 mb-3">
       <div class="success-icon-badge flex-center">
-        <IconCheck size="small" />
+        <Icon icon={ui.icon.Check} size="small" />
       </div>
       <span class="font-medium-12">
         <Label label={plugin.string.AllStatusesMatch} />
@@ -106,7 +98,7 @@
   {:else if createMissingStatuses}
     <div class="success-banner flex-row-center flex-gap-2 mb-3">
       <div class="success-icon-badge flex-center">
-        <IconCheck size="small" />
+        <Icon icon={ui.icon.Check} size="small" />
       </div>
       <span class="font-medium-12">
         <Label label={plugin.string.MissingStatusesWillBeCreated} />
@@ -116,7 +108,7 @@
     <div class="warning-banner flex-col flex-gap-2 mb-3">
       <div class="flex-between flex-row-center flex-gap-2">
         <div class="flex-row-center flex-gap-2">
-          <IconError size="small" />
+          <Icon icon={ui.icon.ExclamationCircle} size="small" fill="var(--theme-error-color)" />
           <span class="font-medium-12">
             <Label label={plugin.string.UnmappedStatusesWarning} />
           </span>
@@ -137,7 +129,7 @@
               {/if}
             </span>
             <div class="chevron-icon-wrapper flex-center" class:rotated={showAffectedTransitions}>
-              <IconChevronDown size="small" />
+              <Icon icon={ui.icon.ChevronDown} size="small" />
             </div>
           </button>
         {/if}

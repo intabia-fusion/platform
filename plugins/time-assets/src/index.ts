@@ -17,13 +17,15 @@ import { loadMetadata } from '@hcengineering/platform'
 import time from '@hcengineering/time'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
+// Icons the kit has: the ids stay, stored documents keep pointing at them.
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(time.icon, {
-  Team: `${icons}#team`,
-  Hashtag: `${icons}#hashtag`,
-  Inbox: `${icons}#inbox`,
-  Calendar: `${icons}#calendar`,
+  Team: `${uiIcons}#sun`,
+  Hashtag: `${uiIcons}#hash`,
+  Inbox: `${uiIcons}#tray`,
+  Calendar: `${uiIcons}#calendar`,
   Flag: `${icons}#flag`,
-  FilledFlag: `${icons}#filledFlag`,
-  Planned: `${icons}#planned`,
-  All: `${icons}#all`
+  FilledFlag: `${icons}#flag-fill`,
+  Planned: `${uiIcons}#check-circle`,
+  All: `${uiIcons}#layers`
 })

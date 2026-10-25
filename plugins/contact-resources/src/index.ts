@@ -53,6 +53,7 @@ import {
   type TooltipAlignment
 } from '@hcengineering/ui'
 import { AggregationManager } from '@hcengineering/view-resources'
+
 import PersonIdArrayEditor from './components/PersonIdArrayEditor.svelte'
 import AccountArrayEditor from './components/AccountArrayEditor.svelte'
 import AccountBox from './components/AccountBox.svelte'
@@ -123,9 +124,6 @@ import UserInfo from './components/UserInfo.svelte'
 import UsersList from './components/UsersList.svelte'
 import UsersPopup from './components/UsersPopup.svelte'
 import ActivityChannelPresenter from './components/activity/ActivityChannelPresenter.svelte'
-import IconAddMember from './components/icons/AddMember.svelte'
-import ExpandRightDouble from './components/icons/ExpandRightDouble.svelte'
-import IconMembers from './components/icons/Members.svelte'
 import ContactNamePresenter from './components/ContactNamePresenter.svelte'
 import PersonPreviewProvider from './components/person/PersonPreviewProvider.svelte'
 import TranslationSettings from './components/TranslationSettings.svelte'
@@ -133,6 +131,7 @@ import CollaboratorEditor from './components/collaborator/CollaboratorEditor.sve
 import CollaboratorPresenter from './components/collaborator/CollaboratorPresenter.svelte'
 
 import { get } from 'svelte/store'
+
 import { canMergePersons, canResendInvitation } from './visibilityTester'
 import { personIdSort } from './personIdSort'
 import contact from './plugin'
@@ -191,9 +190,6 @@ export {
   EmployeeEditor,
   EmployeePresenter,
   EmployeeRefPresenter,
-  ExpandRightDouble,
-  IconAddMember,
-  IconMembers,
   MemberPresenter,
   Members,
   MembersBox,

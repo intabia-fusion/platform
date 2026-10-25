@@ -18,9 +18,6 @@
 
   import Label from '../../components/Label.svelte'
   import Scroller from '../../components/Scroller.svelte'
-  import IconClose from '../../components/icons/Close.svelte'
-  import IconMaximize from '../../components/icons/Maximize.svelte'
-  import IconMinimize from '../../components/icons/Minimize.svelte'
   import ui from '../../plugin'
   import type { LabelAndProps } from '../../types'
   import Button from '../button/Button.svelte'
@@ -197,7 +194,7 @@
           <span class="dialog__actions"><slot name="actions" /></span>
           {#if allowFullSize}
             <IconButton
-              icon={fullSize ? IconMinimize : IconMaximize}
+              icon={fullSize ? ui.icon.ArrowsIn : ui.icon.ArrowsOut}
               kind="ghost"
               size="small"
               tooltip={{ label: fullSize ? ui.string.NormalSize : ui.string.FullSize }}
@@ -210,7 +207,7 @@
             {/if}
             {#if modal || closeOnEscape}<span class="dialog__hotkey"><Kbd keys={['Esc']} /></span>{/if}
             <IconButton
-              icon={IconClose}
+              icon={ui.icon.Cross}
               kind="ghost"
               size="small"
               tooltip={{ label: ui.string.Close }}

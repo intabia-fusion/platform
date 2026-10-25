@@ -16,14 +16,9 @@
   import type { Card } from '@hcengineering/card'
   import card from '@hcengineering/card'
   import type { BlobType } from '@hcengineering/core'
-  import presentation, {
-    deleteFile,
-    FilePreview,
-    getClient,
-    getFileUrl,
-    IconDownload
-  } from '@hcengineering/presentation'
-  import { getEventPositionElement, IconDelete, Menu, showPopup, type Action } from '@hcengineering/ui'
+  import presentation, { deleteFile, FilePreview, getClient, getFileUrl } from '@hcengineering/presentation'
+  import ui, { getEventPositionElement, Menu, showPopup, type Action } from '@hcengineering/ui'
+
   import Description from './Description.svelte'
   import FilePlaceholder from './FilePlaceholder.svelte'
 
@@ -43,7 +38,7 @@
     const actions: Action[] = [
       {
         label: presentation.string.Download,
-        icon: IconDownload,
+        icon: ui.icon.CloudDownload,
         action: async () => {
           const url = getFileUrl(blob.file, blob.name)
           const a = document.createElement('a')
@@ -58,7 +53,7 @@
     if (!readonly) {
       actions.push({
         label: presentation.string.Delete,
-        icon: IconDelete,
+        icon: ui.icon.Trash,
         action: async () => {
           const blobs = { ...doc.blobs }
           const key = Object.keys(blobs).find((k) => blobs[k] === blob)

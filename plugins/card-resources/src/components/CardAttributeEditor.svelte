@@ -17,8 +17,9 @@
   import type { Card, MasterTag } from '@hcengineering/card'
   import type { Doc, Mixin } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { Button, Grid, IconDownOutline, IconUpOutline, Switcher, resizeObserver } from '@hcengineering/ui'
+  import ui, { Button, Grid, Switcher, resizeObserver } from '@hcengineering/ui'
   import { onMount, onDestroy } from 'svelte'
+
   import card from '../plugin'
   import MasterTagAttributes from './MasterTagAttributes.svelte'
   import TagAttributes from './TagAttributes.svelte'
@@ -69,8 +70,8 @@
 <div use:resizeObserver={(element) => (width = element.clientWidth)}>
   {#if mixins.length > 0}
     <div class="flex btn flex-gap-2">
-      <Button label={card.string.MinimizeAll} kind="ghost" iconRight={IconUpOutline} on:click={collapseAll} />
-      <Button label={card.string.ExpandAll} kind="ghost" iconRight={IconDownOutline} on:click={expandAll} />
+      <Button label={card.string.MinimizeAll} kind="ghost" iconRight={ui.icon.ChevronUpSmall} on:click={collapseAll} />
+      <Button label={card.string.ExpandAll} kind="ghost" iconRight={ui.icon.ChevronDownSmall} on:click={expandAll} />
     </div>
     <div class="divider" />
   {/if}

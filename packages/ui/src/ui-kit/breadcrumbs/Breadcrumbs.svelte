@@ -17,8 +17,8 @@
   import { languageStore } from '@hcengineering/theme'
   import { createEventDispatcher } from 'svelte'
 
+  import Icon from '../../components/Icon.svelte'
   import ui from '../../plugin'
-  import ChevronRight from '../../components/icons/ChevronRight.svelte'
   import Breadcrumb from './Breadcrumb.svelte'
   import type { BreadcrumbsEvents, BreadcrumbsItem, BreadcrumbsProps } from './types'
 
@@ -56,7 +56,9 @@
     {#each items as item, i}
       <li class="breadcrumbs__item">
         {#if i !== 0}
-          <span class="breadcrumbs__separator" aria-hidden="true"><ChevronRight size="small" /></span>
+          <span class="breadcrumbs__separator" aria-hidden="true"
+            ><Icon icon={ui.icon.ChevronRight} size="small" /></span
+          >
         {/if}
         <Breadcrumb
           label={item.label}

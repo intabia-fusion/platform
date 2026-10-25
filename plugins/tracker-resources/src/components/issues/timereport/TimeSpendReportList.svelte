@@ -18,15 +18,11 @@
   import { toIdMap } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import type { Issue, TimeSpendReport } from '@hcengineering/tracker'
-  import tracker from '../../../plugin'
-  import PersonCalendar from './PersonCalendar.svelte'
   import type { Person } from '@hcengineering/contact'
-  import {
+  import ui, {
     Button,
     DropdownLabelsIntl,
     Icon,
-    IconAdd,
-    IconCircleAdd,
     Label,
     ModernToggle,
     daysInMonth,
@@ -34,12 +30,15 @@
     showPopup
   } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
+  import { getPersonRefsByPersonIdsCb } from '@hcengineering/contact-resources'
+
+  import tracker from '../../../plugin'
+  import PersonCalendar from './PersonCalendar.svelte'
   import TimePresenter from './TimePresenter.svelte'
   import TimeReportHeader from './TimeReportHeader.svelte'
   import IssuePresenter from '../IssuePresenter.svelte'
   import EstimationPopup from './EstimationPopup.svelte'
   import PersonReportsPopup from './PersonReportsPopup.svelte'
-  import { getPersonRefsByPersonIdsCb } from '@hcengineering/contact-resources'
   import IssueStatusPresenter from '../IssueStatusPresenter.svelte'
 
   export let query: DocumentQuery<Issue> = {}
@@ -260,7 +259,7 @@
         {:else}
           <div class="dayCellAdd">
             <IconButton
-              icon={IconAdd}
+              icon={ui.icon.Plus}
               size="extra-small"
               kind="tertiary"
               tooltip={{ label: tracker.string.TimeSpendReportAdd }}
@@ -276,7 +275,7 @@
         {#if dayReports.length === 0 && dayIssues.length === 0}
           <div class="dayCellAdd dayCellAdd--center">
             <IconButton
-              icon={IconAdd}
+              icon={ui.icon.Plus}
               size="extra-small"
               kind="tertiary"
               tooltip={{ label: tracker.string.TimeSpendReportAdd }}
@@ -295,7 +294,7 @@
             <div class="flex flex-row-center gap-2 flex-wrap mb-1">
               <div class="flex flex-row-center gap-2">
                 {#if createdByMe}
-                  <Icon icon={IconCircleAdd} size="small" />
+                  <Icon icon={ui.icon.PlusCircle} size="small" />
                 {/if}
                 {#if closedByMe || dayReports.length > 0}
                   <IssueStatusPresenter value={issue} />

@@ -16,7 +16,8 @@
   import type { Asset, IntlString } from '@hcengineering/platform'
   import { getResource } from '@hcengineering/platform'
   import type { AnySvelteComponent, HeaderAdaptive } from '@hcengineering/ui'
-  import { Breadcrumbs, Button, Icon, Label, SearchInput, Header, IconSettings, IconToDetails } from '@hcengineering/ui'
+  import ui, { Breadcrumbs, Icon, Label, SearchInput, Header } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import { createEventDispatcher } from 'svelte'
   import view from '@hcengineering/view'
   import { openDoc } from '@hcengineering/view-resources'
@@ -163,12 +164,13 @@
   <svelte:fragment slot="actions" let:doubleRow>
     <slot name="actions" {doubleRow} />
     {#if canOpenInSidebar}
-      <Button
-        icon={IconToDetails}
-        iconProps={{ size: 'small' }}
-        kind="icon"
-        showTooltip={{ label: workbench.string.OpenInSidebar }}
-        dataId="open-in-sidebar"
+      <IconButton
+        size="small"
+        icon={ui.icon.ArrowInSquare}
+        iconSize="medium"
+        kind="ghost"
+        data-id="open-in-sidebar"
+        tooltip={{ label: workbench.string.OpenInSidebar }}
         on:click={() => {
           if (object !== undefined) {
             void openChannelInSidebar(object._id, object._class, object)
@@ -177,11 +179,12 @@
       />
     {/if}
     {#if canOpen && object}
-      <Button
+      <IconButton
+        size="small"
         icon={view.icon.Open}
-        iconProps={{ size: 'small' }}
-        kind="icon"
-        showTooltip={{ label: view.string.Open }}
+        iconSize="medium"
+        kind="ghost"
+        tooltip={{ label: view.string.Open }}
         on:click={() => {
           if (object !== undefined) {
             void openDoc(client.getHierarchy(), object)
@@ -190,12 +193,13 @@
       />
     {/if}
     {#if withAside}
-      <Button
-        icon={IconSettings}
-        iconProps={{ size: 'medium' }}
-        kind="icon"
-        dataId="aside-toggle"
-        showTooltip={{ label: chunter.string.Settings }}
+      <IconButton
+        size="small"
+        icon={ui.icon.Sliders}
+        iconSize="medium"
+        kind="ghost"
+        data-id="aside-toggle"
+        tooltip={{ label: chunter.string.Settings }}
         selected={isAsideShown}
         on:click={() => dispatch('aside-toggled')}
       />

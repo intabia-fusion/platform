@@ -9,12 +9,11 @@
     getMetadata
   } from '@hcengineering/platform'
   import { onDestroy, onMount } from 'svelte'
+  import { Theme, themeStore } from '@hcengineering/theme'
+
   import type { AnyComponent, WidthType } from '../../types'
   import { deviceSizes, deviceWidths } from '../../types'
-  import { Theme, themeStore } from '@hcengineering/theme'
   import {
-    IconArrowLeft,
-    IconArrowRight,
     checkMobile,
     deviceOptionsStore as deviceInfo,
     checkAdaptiveMatching,
@@ -24,6 +23,7 @@
   import { desktopPlatform, getCurrentLocation, location, locationStorageKeyId, navigate } from '../../location'
   import uiPlugin from '../../plugin'
   import Component from '../Component.svelte'
+  import Icon from '../Icon.svelte'
   import Label from '../Label.svelte'
   import StatusComponent from '../Status.svelte'
   import Clock from './Clock.svelte'
@@ -263,7 +263,7 @@
                 history.back()
               }}
             >
-              <IconArrowLeft size="small" />
+              <Icon icon={uiPlugin.icon.ArrowLeft} size="small" />
             </button>
             <button
               id="statusbar-forward"
@@ -273,7 +273,7 @@
                 history.forward()
               }}
             >
-              <IconArrowRight size="small" />
+              <Icon icon={uiPlugin.icon.ArrowRight} size="small" />
             </button>
           </div>
         {/if}

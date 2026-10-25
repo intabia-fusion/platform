@@ -22,7 +22,6 @@
   import type { DropdownIntlItem } from '@hcengineering/ui'
   import ui, {
     EditBox,
-    IconDelete,
     languageStore,
     Loading,
     ModernDropdown,
@@ -324,7 +323,7 @@
                 {/if}
                 {#if !readonly}
                   <IconButton
-                    icon={IconDelete}
+                    icon={ui.icon.Trash}
                     tooltip={{ label: view.string.Delete, direction: 'bottom' }}
                     size="small"
                     kind="secondary"

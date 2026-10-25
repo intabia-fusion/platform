@@ -17,12 +17,11 @@
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { createQuery } from '@hcengineering/presentation'
   import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
-  import { Button, Label, showPopup } from '@hcengineering/ui'
+  import ui, { Button, Icon, Label, showPopup } from '@hcengineering/ui'
   import type { Project } from '@hcengineering/controlled-documents'
   import { createEventDispatcher } from 'svelte'
 
   import ProjectSelectorPopup from './ProjectSelectorPopup.svelte'
-
   import documents from '../../plugin'
 
   export let value: Ref<Project> | undefined
@@ -85,9 +84,7 @@
     <svelte:fragment slot="iconRight">
       {#if showDropdownIcon}
         <div class="w-4 h-4 ml-1 flex-no-shrink">
-          <svg fill="var(--theme-dark-color)" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-            <path d="M11 6.625L8 10.375L5 6.625L11 6.625Z" />
-          </svg>
+          <Icon icon={ui.icon.CaretDownFill} size="small" fill="var(--theme-dark-color)" />
         </div>
       {/if}
     </svelte:fragment>

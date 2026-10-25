@@ -18,7 +18,7 @@
   import type { TaskType } from '@hcengineering/task'
   import { taskTypeStore } from '@hcengineering/task-resources'
   import tracker from '@hcengineering/tracker'
-  import { Icon, IconInfo, Label, languageStore, tooltip } from '@hcengineering/ui'
+  import ui, { Icon, Label, languageStore, tooltip } from '@hcengineering/ui'
   import type {
     ScreenConfig,
     ScreenResolutionConfig,
@@ -133,7 +133,7 @@
                     props: { transitions: usedTransitions.join(', ') }
                   }}
                 >
-                  <IconInfo size="small" />
+                  <Icon icon={ui.icon.InfoCircle} size="small" />
                 </div>
               {/if}
 

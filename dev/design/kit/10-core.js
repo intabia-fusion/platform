@@ -130,7 +130,7 @@ kit.svg = (markup, name) => {
   return g
 }
 
-// Icon by repository name "<ns>/<id>" (sprites and Svelte icons, see penpot.mjs buildIcons);
+// Icon by repository name "kit/<Key>" or "<ns>/<id>" (kit sprite, sprites and Svelte icons, see penpot.mjs buildIcons);
 // short names are the hand-drawn stroke icons in kit.I
 kit.icon = (name, color, size = 16) => {
   const c = String(color || T('theme-dark-color'))

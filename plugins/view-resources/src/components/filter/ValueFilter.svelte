@@ -17,19 +17,10 @@
   import type { Class, Doc, FindResult, Ref, Space } from '@hcengineering/core'
   import core, { getObjectValue, SortingOrder, type WithLookup } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import ui, {
-    Button,
-    deviceOptionsStore,
-    EditWithIcon,
-    Icon,
-    IconCheck,
-    IconSearch,
-    Label,
-    Loading,
-    resizeObserver
-  } from '@hcengineering/ui'
+  import ui, { Button, deviceOptionsStore, EditWithIcon, Icon, Label, Loading, resizeObserver } from '@hcengineering/ui'
   import type { Filter, ViewOptions } from '@hcengineering/view'
   import { createEventDispatcher, onDestroy } from 'svelte'
+
   import { FILTER_DEBOUNCE_MS, sortFilterValues } from '../../filter'
   import view from '../../plugin'
   import { getPresenter } from '../../utils'
@@ -247,7 +238,7 @@
   {#if isSearchable}
     <div class="header">
       <EditWithIcon
-        icon={IconSearch}
+        icon={ui.icon.Search}
         size="large"
         width="100%"
         autoFocus={!$deviceOptionsStore.isMobile}
@@ -290,7 +281,7 @@
               {/if}
               <div class="check pointer-events-none">
                 {#if isSelected(value, selectedValues)}
-                  <Icon icon={IconCheck} size="small" />
+                  <Icon icon={ui.icon.Check} size="small" />
                 {/if}
               </div>
             </button>

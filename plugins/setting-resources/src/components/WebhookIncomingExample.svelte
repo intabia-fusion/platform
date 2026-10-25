@@ -18,11 +18,10 @@
   import { getMetadata } from '@hcengineering/platform'
   import { copyTextToClipboard } from '@hcengineering/presentation'
   import setting from '@hcengineering/setting'
-  import {
+  import ui, {
     Button,
     DropdownLabels,
     Icon,
-    IconCopy,
     Label,
     Scroller,
     eventToHTMLElement,
@@ -30,6 +29,7 @@
     type DropdownTextItem
   } from '@hcengineering/ui'
   import view from '@hcengineering/view'
+
   import settingsRes from '../plugin'
   import { buildWebhookExamples, PLACEHOLDER_KEY, targetKind } from '../webhookTargetKind'
   import {
@@ -118,7 +118,7 @@
                 <Button
                   kind="ghost"
                   size="small"
-                  icon={IconCopy}
+                  icon={ui.icon.Copy}
                   showTooltip={{ label: view.string.CopyToClipboard }}
                   on:click={() => {
                     void copyText(actionUrl)
@@ -130,7 +130,7 @@
                 <Button
                   kind="ghost"
                   size="small"
-                  icon={IconCopy}
+                  icon={ui.icon.Copy}
                   showTooltip={{ label: view.string.CopyToClipboard }}
                   on:click={() => {
                     void copyText(authHeader)
@@ -145,7 +145,7 @@
                 <Button
                   kind="ghost"
                   size="small"
-                  icon={IconCopy}
+                  icon={ui.icon.Copy}
                   showTooltip={{ label: view.string.CopyToClipboard }}
                   on:click={() => {
                     void copyText(pathEndpoint)
@@ -160,7 +160,7 @@
                 <Button
                   kind="ghost"
                   size="small"
-                  icon={IconCopy}
+                  icon={ui.icon.Copy}
                   showTooltip={{ label: view.string.CopyToClipboard }}
                   on:click={() => {
                     void copyText(rulesEndpoint)
@@ -219,7 +219,7 @@
                   <Button
                     kind="ghost"
                     size="small"
-                    icon={IconCopy}
+                    icon={ui.icon.Copy}
                     showTooltip={{ label: view.string.CopyToClipboard }}
                     on:click={() => {
                       void copyText(renderWebhookSnippet(tool, actionUrl, PLACEHOLDER_KEY, example.json))

@@ -17,9 +17,10 @@
   import type { IntlString } from '@hcengineering/platform'
   import type { Milestone } from '@hcengineering/tracker'
   import type { TabItem } from '@hcengineering/ui'
-  import { Button, IconAdd, SearchInput, Switcher, showPopup, Header, Breadcrumbs } from '@hcengineering/ui'
+  import ui, { Button, SearchInput, Switcher, showPopup, Header, Breadcrumbs } from '@hcengineering/ui'
   import type { ViewOptions, Viewlet } from '@hcengineering/view'
   import { FilterBar, FilterButton, ViewletSelector, ViewletSettingButton } from '@hcengineering/view-resources'
+
   import tracker from '../../plugin'
   import type { MilestoneViewMode } from '../../utils'
   import { getIncludedMilestoneStatuses, milestoneTitleMap } from '../../utils'
@@ -114,7 +115,7 @@
     <FilterButton _class={tracker.class.Milestone} {space} />
   </svelte:fragment>
   <svelte:fragment slot="actions">
-    <Button icon={IconAdd} label={tracker.string.Milestone} kind="primary" on:click={showCreateDialog} />
+    <Button icon={ui.icon.Plus} label={tracker.string.Milestone} kind="primary" on:click={showCreateDialog} />
   </svelte:fragment>
   <svelte:fragment slot="extra">
     <Switcher

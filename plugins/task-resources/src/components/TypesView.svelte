@@ -20,7 +20,7 @@
   import { createQuery } from '@hcengineering/presentation'
   import type { Project, ProjectTypeDescriptor } from '@hcengineering/task'
   import type { AnyComponent } from '@hcengineering/ui'
-  import { Button, Component, IconAdd, Loading, SearchInput, showPopup, Header } from '@hcengineering/ui'
+  import ui, { Button, Component, Loading, SearchInput, showPopup, Header } from '@hcengineering/ui'
   import type { Viewlet, ViewletDescriptor, ViewletPreference, ViewOptions } from '@hcengineering/view'
   import {
     FilterBar,
@@ -29,6 +29,7 @@
     ViewletSelector,
     ViewletSettingButton
   } from '@hcengineering/view-resources'
+
   import { selectedTaskTypeStore, selectedTypeStore, taskTypeStore } from '..'
   import task from '../plugin'
   import TypeSelector from './TypeSelector.svelte'
@@ -119,7 +120,7 @@
   <svelte:fragment slot="actions">
     {#if createLabel !== undefined && createComponent}
       <Button
-        icon={IconAdd}
+        icon={ui.icon.Plus}
         label={createLabel}
         kind="primary"
         disabled={isCreationDisabled}

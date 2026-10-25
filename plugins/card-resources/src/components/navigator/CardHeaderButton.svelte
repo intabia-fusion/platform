@@ -17,10 +17,10 @@
   import type { Ref } from '@hcengineering/core'
   import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { getCurrentLocation, IconAdd, location, Menu, navigate, showPopup } from '@hcengineering/ui'
+  import ui, { getCurrentLocation, location, Menu, navigate, showPopup } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
-
   import type { MasterTag } from '@hcengineering/card'
+
   import card from '../../plugin'
   import CreateSpace from './CreateSpace.svelte'
   import CreateCardPopup from '../CreateCardPopup.svelte'
@@ -69,19 +69,19 @@
     ? [
         {
           label: card.string.CreateCard,
-          icon: IconAdd,
+          icon: ui.icon.Plus,
           action: handleCreateCard
         },
         {
           label: card.string.CreateSpace,
-          icon: IconAdd,
+          icon: ui.icon.Plus,
           action: newTeamspace
         }
       ]
     : [
         {
           label: card.string.CreateCard,
-          icon: IconAdd,
+          icon: ui.icon.Plus,
           action: handleCreateCard
         }
       ]
@@ -95,7 +95,7 @@
 </script>
 
 <IconButton
-  icon={IconAdd}
+  icon={ui.icon.Plus}
   hasMenu
   {pressed}
   kind="primary"

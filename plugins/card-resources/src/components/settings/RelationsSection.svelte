@@ -21,11 +21,12 @@
   import presentation, { createQuery, getClient } from '@hcengineering/presentation'
   import setting from '@hcengineering/setting'
   import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
-  import { Icon, IconAdd, Label, showPopup } from '@hcengineering/ui'
+  import ui, { Icon, Label, showPopup } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import { onDestroy } from 'svelte'
-  import CreateRelation from './CreateRelation.svelte'
   import { Analytics } from '@hcengineering/analytics'
+
+  import CreateRelation from './CreateRelation.svelte'
 
   export let masterTag: MasterTag
 
@@ -81,7 +82,7 @@
   <span><Label label={core.string.Relations} /></span>
   <IconButton
     kind="primary"
-    icon={IconAdd}
+    icon={ui.icon.Plus}
     size="small"
     data-id="btnAdd"
     tooltip={{ label: presentation.string.Add }}

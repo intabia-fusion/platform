@@ -14,11 +14,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import InlineCommentPresenter from './InlineCommentPresenter.svelte'
   import textEditor from '@hcengineering/text-editor'
   import { ReferenceInput } from '@hcengineering/text-editor-resources'
   import type { Action } from '@hcengineering/ui'
-  import { Scroller, IconCheck } from '@hcengineering/ui'
+  import ui, { Scroller } from '@hcengineering/ui'
+
+  import InlineCommentPresenter from './InlineCommentPresenter.svelte'
   import chunter from '../../plugin'
 
   export let thread: any
@@ -37,7 +38,7 @@
       ? [
           {
             label: chunter.string.ResolveThread,
-            icon: IconCheck,
+            icon: ui.icon.Check,
             group: 'inline-comment',
             inline: true,
             action: async () => {

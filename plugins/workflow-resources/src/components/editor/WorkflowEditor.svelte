@@ -29,20 +29,7 @@
   import task from '@hcengineering/task'
   import { taskTypeStore } from '@hcengineering/task-resources'
   import type { TabItem } from '@hcengineering/ui'
-  import {
-    type DropdownIntlItem,
-    EditBox,
-    IconCopy,
-    IconDelete,
-    IconEdit,
-    IconShare,
-    IconTableOfContents,
-    Loading,
-    Modal,
-    Scroller,
-    showPopup,
-    Switcher
-  } from '@hcengineering/ui'
+  import ui, { type DropdownIntlItem, EditBox, Loading, Modal, Scroller, showPopup, Switcher } from '@hcengineering/ui'
   import { IconButton, MenuButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import { exportWorkflow, removeWorkflow, type Workflow, type WorkflowTransition } from '@hcengineering/workflow'
@@ -92,7 +79,7 @@
   const viewModeItems: TabItem[] = [
     { id: 'editor', icon: plugin.icon.Editor },
     { id: 'diagram', icon: plugin.icon.Chart },
-    { id: 'split', icon: IconTableOfContents }
+    { id: 'split', icon: ui.icon.PanelRight }
   ]
 
   const workflowQuery = createQuery()
@@ -193,7 +180,7 @@
     {
       id: 'clipboard',
       label: plugin.string.CopyToClipboard,
-      icon: IconCopy
+      icon: ui.icon.Copy
     }
   ]
 
@@ -293,7 +280,7 @@
                 on:selected={handleExportAction}
               />
               <IconButton
-                icon={IconDelete}
+                icon={ui.icon.Trash}
                 data-id="btnDeleteWorkflow"
                 tooltip={{ label: view.string.Delete, direction: 'bottom' }}
                 size="small"

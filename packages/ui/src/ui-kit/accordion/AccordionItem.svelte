@@ -17,8 +17,8 @@
   import { languageStore } from '@hcengineering/theme'
   import { createEventDispatcher } from 'svelte'
 
+  import ui from '../../plugin'
   import Icon from '../../components/Icon.svelte'
-  import ChevronRight from '../../components/icons/ChevronRight.svelte'
   import Label from '../../components/Label.svelte'
   import type { IconComponent } from '../../types'
   import { formatDuration } from '../../utils'
@@ -102,7 +102,7 @@
         aria-labelledby={titleId}
         on:click={toggle}
       >
-        <ChevronRight size="small" />
+        <Icon icon={ui.icon.ChevronRight} size="small" />
       </button>
       <button
         id={titleId}
@@ -134,7 +134,7 @@
       >
         {#if withChevron}
           <span class="accordion-item__chevron" class:accordion-item__chevron--spacer={chevronSpacer} aria-hidden="true"
-            ><ChevronRight size="small" /></span
+            ><Icon icon={ui.icon.ChevronRight} size="small" /></span
           >
         {/if}
         <span class="accordion-item__title" class:accordion-item__title--with-icon={icon !== undefined}>

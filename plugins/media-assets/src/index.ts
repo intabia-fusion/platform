@@ -17,10 +17,13 @@ import media from '@hcengineering/media'
 import { loadMetadata } from '@hcengineering/platform'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
+// Icons the kit has: the ids stay, stored documents keep pointing at them.
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 
 loadMetadata(media.icon, {
-  Mic: `${icons}#mic`,
-  Cam: `${icons}#cam`,
-  MicOff: `${icons}#micoff`,
-  CamOff: `${icons}#camoff`
+  Mic: `${uiIcons}#mic`,
+  Cam: `${uiIcons}#camera`,
+  MicOff: `${uiIcons}#mic-off`,
+  CamOff: `${uiIcons}#camera-off`,
+  Speaker: `${icons}#speaker-high`
 })

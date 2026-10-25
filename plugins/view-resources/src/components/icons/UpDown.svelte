@@ -20,7 +20,8 @@
   const fill: string = 'currentColor'
 </script>
 
-<svg class="svg-{size}" {fill} viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-  <polygon style:opacity={descending ? 1 : 0.4} points="8,3.4 4.7,6.7 11.3,6.7" />
-  <polygon style:opacity={descending ? 0.4 : 1} points="8,12.6 11.3,9.3 4.7,9.3" />
+<!-- Up and down carets: the bright one shows the sort direction. -->
+<svg class="svg-{size}" {fill} viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <path style:opacity={descending ? 1 : 0.4} d="M16 6.8l-6.6 6.6h13.2z" />
+  <path style:opacity={descending ? 0.4 : 1} d="M16 25.2l6.6-6.6H9.4z" />
 </svg>

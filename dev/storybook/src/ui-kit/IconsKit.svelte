@@ -13,44 +13,78 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { ComponentType } from 'svelte'
+  import type { Asset } from '@hcengineering/platform'
+  import ui, { Icon } from '@hcengineering/ui'
 
   import Group from '../attachments/Group.svelte'
-  import Specimen from '../attachments/Specimen.svelte'
   import Board from './Board.svelte'
+  import { iconGroups } from './iconGroups'
 
-  // Every file of the folder: a new icon shows up here without touching the story.
-  const modules = import.meta.glob<{ default: ComponentType }>('../../../../packages/ui/src/ui-kit/_icons/*.svelte', {
-    eager: true
-  })
-  const icons = Object.entries(modules)
-    .map(([path, module]) => ({ name: path.split('/').pop()?.replace('.svelte', '') ?? path, icon: module.default }))
-    .sort((a, b) => a.name.localeCompare(b.name))
-  const sizes = ['small', 'medium', 'large'] as const
+  const all: Record<string, Asset> = ui.icon
+  const grouped = new Set(iconGroups.flatMap((group) => group.keys))
+  // A new icon of the sprite shows up under Other until it gets a group.
+  const other = Object.keys(all)
+    .filter((key) => !grouped.has(key))
+    .sort((a, b) => a.localeCompare(b))
+  const groups = [...iconGroups, ...(other.length > 0 ? [{ title: 'Other', keys: other }] : [])].map(
+    ({ title, keys }) => ({
+      title,
+      icons: keys.filter((key) => all[key] != null).map((name) => ({ name, icon: all[name] }))
+    })
+  )
+
+  // Long names wrap between their words, not inside them.
+  function words (name: string): string[] {
+    return name.split(/(?=[A-Z])/)
+  }
 </script>
 
 <Board>
-  <Group title="Icons" note="ui-kit/_icons: drawn in currentColor, in the sizes of the platform's icons.">
-    {#each icons as { name, icon }}
-      <Specimen label={name}>
-        <span class="sizes">
-          {#each sizes as size}
-            <svelte:component this={icon} {size} />
-          {/each}
-        </span>
-      </Specimen>
-    {/each}
-  </Group>
+  {#each groups as { title, icons } (title)}
+    <Group title="{title} · {icons.length}">
+      <div class="grid">
+        {#each icons as { name, icon } (name)}
+          <figure>
+            <span class="tile"><Icon {icon} size="large" /></span>
+            <figcaption>
+              {#each words(name) as word, i}{#if i > 0}<wbr />{/if}{word}{/each}
+            </figcaption>
+          </figure>
+        {/each}
+      </div>
+    </Group>
+  {/each}
 </Board>
 
 <style lang="scss">
-  .sizes {
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 5.5rem);
+    gap: 0.75rem 0.25rem;
+    width: 100%;
+  }
+
+  .tile {
     display: flex;
-    align-items: flex-end;
-    gap: 0.75rem;
     padding: 0.75rem;
     border-radius: var(--small-BorderRadius);
     color: var(--theme-caption-color);
     background-color: color-mix(in srgb, var(--theme-caption-color) 4%, transparent);
+  }
+
+  figure {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.375rem;
+    margin: 0;
+  }
+
+  figcaption {
+    font-size: 0.6875rem;
+    text-align: center;
+    line-height: 0.875rem;
+    overflow-wrap: anywhere;
+    color: var(--theme-dark-color);
   }
 </style>

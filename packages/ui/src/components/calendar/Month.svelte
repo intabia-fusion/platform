@@ -14,11 +14,10 @@
 -->
 <script lang="ts">
   import { afterUpdate, createEventDispatcher } from 'svelte'
+
   import IconButton from '../../ui-kit/button/IconButton.svelte'
   import ui from '../../plugin'
   import { capitalizeFirstLetter } from '../../utils'
-  import IconChevronLeft from '../icons/ChevronLeft.svelte'
-  import IconChevronRight from '../icons/ChevronRight.svelte'
   import { deviceOptionsStore as deviceInfo, languageStore } from '../..'
   import type { ICell, TCellStyle } from './internal/DateUtils'
   import {
@@ -90,7 +89,7 @@
       {#if !hideNavigator}
         <div class="flex-row-center flex-no-shrink gap-2 tertiary-textColor">
           <IconButton
-            icon={IconChevronLeft}
+            icon={ui.icon.ChevronLeft}
             kind="tertiary"
             size="extra-small"
             inheritColor
@@ -101,7 +100,7 @@
             }}
           />
           <IconButton
-            icon={IconChevronRight}
+            icon={ui.icon.ChevronRight}
             kind="tertiary"
             size="extra-small"
             inheritColor

@@ -15,14 +15,12 @@
 -->
 <script lang="ts">
   import type { Ref, RelatedDocument, DocumentQuery } from '@hcengineering/core'
-
   import type { IntlString } from '@hcengineering/platform'
   import { getResource } from '@hcengineering/platform'
   import ui, {
     createFocusManager,
     deviceOptionsStore,
     FocusHandler,
-    IconSearch,
     Label,
     ListView,
     resizeObserver,
@@ -31,6 +29,7 @@
     EditWithIcon
   } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+
   import presentation from '../plugin'
   import type { ObjectSearchCategory, ObjectSearchResult } from '../types'
   import { getClient } from '../utils'
@@ -189,7 +188,7 @@
   </div>
   <div class="pt-2 pb-1 pl-2 pr-2">
     <EditWithIcon
-      icon={IconSearch}
+      icon={ui.icon.Search}
       size="large"
       width="100%"
       autoFocus={!$deviceOptionsStore.isMobile}

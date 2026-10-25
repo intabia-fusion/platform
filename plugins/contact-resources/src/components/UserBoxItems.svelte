@@ -18,7 +18,7 @@
   import contact from '@hcengineering/contact'
   import type { Class, Doc, DocumentQuery, IdMap, Ref } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
-  import { Label, showPopup, ActionIcon, IconClose, IconAdd, Icon } from '@hcengineering/ui'
+  import ui, { Label, showPopup, ActionIcon, Icon } from '@hcengineering/ui'
   import type { IconSize } from '@hcengineering/ui'
   import { getClient } from '@hcengineering/presentation'
 
@@ -97,7 +97,7 @@
       <div class="usertag-container gap-1-5">
         <UserInfo value={person} {size} />
         <ActionIcon
-          icon={IconClose}
+          icon={ui.icon.Cross}
           size={size === 'inline' ? 'x-small' : 'small'}
           action={() => {
             removePerson(person)
@@ -115,7 +115,7 @@
       on:click={addPerson}
     >
       <span><Label label={actionLabel} /></span>
-      <Icon icon={IconAdd} size={size === 'inline' ? 'x-small' : 'small'} fill="var(--theme-dark-color)" />
+      <Icon icon={ui.icon.Plus} size={size === 'inline' ? 'x-small' : 'small'} fill="var(--theme-dark-color)" />
     </div>
   {/if}
 </div>

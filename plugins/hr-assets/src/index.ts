@@ -17,16 +17,17 @@ import hr from '@hcengineering/hr'
 import { loadMetadata } from '@hcengineering/platform'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(hr.icon, {
-  HR: `${icons}#hr`,
-  Department: `${icons}#department`,
-  Structure: `${icons}#structure`,
-  Members: `${icons}#members`,
-  Vacation: `${icons}#vacation`,
-  Sick: `${icons}#sick`,
-  PTO: `${icons}#pto`,
-  PTO2: `${icons}#pto2`,
-  Overtime: `${icons}#overtime`,
-  Overtime2: `${icons}#overtime2`,
-  Remote: `${icons}#remote`
+  HR: `${uiIcons}#person-refresh`,
+  Department: `${uiIcons}#hierarchy`,
+  Structure: `${uiIcons}#hierarchy`,
+  Members: `${uiIcons}#people-group`,
+  Vacation: `${icons}#palm`,
+  Sick: `${icons}#pill`,
+  PTO: `${icons}#sun-fill`,
+  PTO2: `${icons}#sun-half`,
+  Overtime: `${icons}#clock-fill-ring`,
+  Overtime2: `${icons}#clock-fill`,
+  Remote: `${icons}#person-tie`
 })

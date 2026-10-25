@@ -14,12 +14,13 @@
 -->
 <script lang="ts">
   import { getMetadata, translate } from '@hcengineering/platform'
-  import { Button, Html, IconClose, Label, themeStore } from '@hcengineering/ui'
+  import ui, { Button, Html, Label, themeStore, Icon } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
-  import calendar from '../plugin'
   import { concatLink } from '@hcengineering/core'
   import presentation from '@hcengineering/presentation'
   import { calendarId } from '@hcengineering/calendar'
+
+  import calendar from '../plugin'
 
   const dispatch = createEventDispatcher()
 
@@ -68,7 +69,7 @@
         dispatch('close')
       }}
     >
-      <IconClose size="small" />
+      <Icon icon={ui.icon.Cross} size="small" />
     </div>
   </div>
   <div class="content">

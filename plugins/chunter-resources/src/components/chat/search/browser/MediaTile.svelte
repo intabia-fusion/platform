@@ -14,10 +14,11 @@
 -->
 <script lang="ts">
   import { AttachmentFormat } from '@hcengineering/attachment'
+  import { getMetadata } from '@hcengineering/platform'
   import { getClient, Image } from '@hcengineering/presentation'
   import { formatName } from '@hcengineering/contact'
   import { Avatar } from '@hcengineering/contact-resources'
-  import { Blurhash, Icon, themeStore } from '@hcengineering/ui'
+  import ui, { Blurhash, Icon, themeStore } from '@hcengineering/ui'
   import { formatMediaDuration as formatDuration } from '@hcengineering/ui/kit'
   import { createEventDispatcher } from 'svelte'
 
@@ -76,7 +77,7 @@
     {#if video && (blob == null || failed)}
       <div class="video-backdrop">
         <span class="play-circle" aria-hidden="true">
-          <svg viewBox="0 0 16 16"><path d="M5.5 3.5v9l7-4.5z" fill="currentColor" /></svg>
+          <svg fill="currentColor"><use href={getMetadata(ui.icon.PlayFill)} /></svg>
         </span>
       </div>
     {:else if blob != null && !failed}
@@ -100,7 +101,7 @@
 
   {#if video && (duration != null || (blob != null && !failed))}
     <span class="badge corner" aria-hidden="true">
-      <svg viewBox="0 0 16 16"><path d="M5 3.5v9l7.5-4.5z" fill="currentColor" /></svg>
+      <svg fill="currentColor"><use href={getMetadata(ui.icon.PlayFill)} /></svg>
       {#if duration != null}<span>{duration}</span>{/if}
     </span>
   {:else if row.format === AttachmentFormat.Gif}

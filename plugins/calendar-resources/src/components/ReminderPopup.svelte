@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { DAY, HOUR, MINUTE, TimeShiftPresenter, IconCheck } from '@hcengineering/ui'
+  import ui, { DAY, HOUR, MINUTE, TimeShiftPresenter, Icon } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   export let value: number
@@ -47,7 +47,7 @@
       </span>
       <div class="ap-check">
         {#if value === val}
-          <IconCheck size="small" />
+          <Icon icon={ui.icon.Check} size="small" />
         {/if}
       </div>
     </div>

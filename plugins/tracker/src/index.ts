@@ -574,15 +574,12 @@ const pluginState = plugin(trackerId, {
     Component: '' as Asset,
     Issue: '' as Asset,
     Subissue: '' as Asset,
-    Project: '' as Asset,
     Relations: '' as Asset,
-    Inbox: '' as Asset,
     MyIssues: '' as Asset,
     Views: '' as Asset,
     Issues: '' as Asset,
     Components: '' as Asset,
     NewIssue: '' as Asset,
-    Magnifier: '' as Asset,
     Labels: '' as Asset,
     DueDate: '' as Asset,
     Parent: '' as Asset,
@@ -593,8 +590,6 @@ const pluginState = plugin(trackerId, {
     Stop: '' as Asset,
 
     CategoryBacklog: '' as Asset,
-    CategoryUnstarted: '' as Asset,
-    CategoryStarted: '' as Asset,
     CategoryCompleted: '' as Asset,
     CategoryCanceled: '' as Asset,
 
@@ -604,11 +599,8 @@ const pluginState = plugin(trackerId, {
     PriorityMedium: '' as Asset,
     PriorityLow: '' as Asset,
 
-    ComponentsList: '' as Asset,
-
     MilestoneStatusPlanned: '' as Asset,
     MilestoneStatusInProgress: '' as Asset,
-    MilestoneStatusPaused: '' as Asset,
     MilestoneStatusCompleted: '' as Asset,
     MilestoneStatusCanceled: '' as Asset,
 
@@ -624,7 +616,8 @@ const pluginState = plugin(trackerId, {
 
     Priority: '' as Asset,
     Export: '' as Asset,
-    More: '' as Asset
+    More: '' as Asset,
+    TimeReportDay: '' as Asset
   },
   category: {
     Other: '' as Ref<TagCategory>,

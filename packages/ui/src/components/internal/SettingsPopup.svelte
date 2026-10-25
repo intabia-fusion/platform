@@ -16,9 +16,7 @@
   import platform, { type IntlString, getMetadata } from '@hcengineering/platform'
   import { getContext } from 'svelte'
   import type { Readable } from 'svelte/store'
-
-  import FontSize from './icons/FontSize.svelte'
-  import Language from './icons/Language.svelte'
+  import { isForceAccentColor } from '@hcengineering/theme'
 
   import ThemeButton from './ThemeButton.svelte'
   import AccentPreview from './AccentPreview.svelte'
@@ -32,8 +30,6 @@
     modalStore,
     eventToHTMLElement
   } from '../..'
-  import EmojiStyle from './icons/EmojiStyle.svelte'
-  import { isForceAccentColor } from '@hcengineering/theme'
 
   const { currentFontSize, setFontSize } = getContext<{
     currentFontSize: Readable<string>
@@ -287,9 +283,10 @@
           const items = fontsizes.map((p) => {
             return {
               ...p,
-              icon: FontSize,
+              icon: ui.icon.TextAa,
+              // The sample shows the option's font size.
               iconProps: {
-                size: p.size
+                style: `width: ${p.size}px; height: ${p.size}px;`
               }
             }
           })
@@ -302,7 +299,7 @@
       >
         <div class="flex-between flex-grow">
           <div class="flex-row-center">
-            <div class="icon mr-2"><FontSize size="16px" /></div>
+            <div class="icon mr-2"><Icon icon={ui.icon.TextAa} size="small" /></div>
             <span class="label font-medium"><Label label={ui.string.FontSize} /></span>
           </div>
           <div class="flex-row-center pr-4">
@@ -330,7 +327,7 @@
       >
         <div class="flex-between flex-grow">
           <div class="flex-row-center">
-            <div class="icon mr-2"><EmojiStyle size="16px" /></div>
+            <div class="icon mr-2"><Icon icon={ui.icon.Smiley} size="small" /></div>
             <span class="label font-medium"><Label label={ui.string.EmojiStyle} /></span>
           </div>
           <div class="flex-row-center pr-4">
@@ -362,7 +359,7 @@
       >
         <div class="flex-between flex-grow">
           <div class="flex-row-center">
-            <div class="icon mr-2"><Icon icon={Language} size="small" /></div>
+            <div class="icon mr-2"><Icon icon={ui.icon.GlobeStand} size="small" /></div>
             <span class="label font-medium"><Label label={ui.string.Language} /></span>
           </div>
           <div class="flex-row-center pr-4">

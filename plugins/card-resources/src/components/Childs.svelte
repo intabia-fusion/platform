@@ -16,13 +16,14 @@
   import type { Card } from '@hcengineering/card'
   import type { Doc, WithLookup } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import { IconAdd, Label, resizeObserver, Section } from '@hcengineering/ui'
+  import ui, { Label, resizeObserver, Section } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import type { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
   import view from '@hcengineering/view'
   import type { SelectDirection } from '@hcengineering/view-resources'
   import { List, ListSelectionProvider, restrictionStore, ViewletsSettingButton } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
+
   import card from '../plugin'
   import { createChildCard } from '../utils'
 
@@ -106,7 +107,7 @@
       {#if !$restrictionStore.readonly && !readonly}
         <IconButton
           id="add-child-card"
-          icon={IconAdd}
+          icon={ui.icon.Plus}
           size="small"
           kind="tertiary"
           tooltip={{ label: card.string.CreateChild, direction: 'bottom' }}

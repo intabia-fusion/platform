@@ -19,7 +19,7 @@
   import { getProjectTypeStates, type TaskType } from '@hcengineering/task'
   import { taskTypeStore, typeStore } from '@hcengineering/task-resources'
   import type { DropdownTextItem } from '@hcengineering/ui'
-  import ui, { IconClose, IconMaximize, IconMinimize, Modal, ModernDropdownLabels } from '@hcengineering/ui'
+  import ui, { Modal, ModernDropdownLabels } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import { statusStore } from '@hcengineering/view-resources'
   import tracker, { type Project } from '@hcengineering/tracker'
@@ -175,7 +175,7 @@
 <Modal type="type-component" scrollableContent={false} on:fullsize on:close>
   <svelte:fragment slot="beforeTitle">
     <IconButton
-      icon={IconClose}
+      icon={ui.icon.Cross}
       kind="tertiary"
       size="small"
       noPrint
@@ -184,7 +184,7 @@
     />
     <div class="hulyHeader-divider short no-line no-print" />
     <IconButton
-      icon={!fullSize ? IconMaximize : IconMinimize}
+      icon={!fullSize ? ui.icon.ArrowsOut : ui.icon.ArrowsIn}
       kind="tertiary"
       size="small"
       noPrint

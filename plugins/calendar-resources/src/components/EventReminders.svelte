@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Button, eventToHTMLElement, Icon, Scroller, IconMoreV, showPopup, Label } from '@hcengineering/ui'
+  import ui, { Button, eventToHTMLElement, Icon, Scroller, showPopup, Label } from '@hcengineering/ui'
+
   import calendar from '../plugin'
   import ReminderPopup from './ReminderPopup.svelte'
   import EventReminderItem from './EventReminderItem.svelte'
@@ -84,7 +85,7 @@
       <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
       <div class="antiOption cursor-pointer step-tb25" tabindex={0}>
         <Button
-          icon={IconMoreV}
+          icon={ui.icon.DotsVertical}
           kind="ghost"
           size="x-small"
           padding="0 .5rem"

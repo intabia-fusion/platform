@@ -12,11 +12,11 @@ await kit.page('Task boards')
       { item: 'Тестирование', indent: true },
       { item: 'Мой спринт', indent: true },
       { group: 'Your projects', add: true },
-      { space: 'Мобильное приложение', icon: 'tracker/home', color: 'Porpoise' },
+      { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
       { item: 'Milestones', icon: 'milestone', indent: true },
-      { space: 'Маркетинг', icon: 'tracker/home', color: 'Porpoise' },
+      { space: 'Маркетинг', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
       { item: 'Milestones', icon: 'milestone', indent: true }
@@ -395,11 +395,11 @@ await kit.page('Task boards')
       { item: 'Без оценки', indent: true },
       { item: 'Созданные мной за неделю', indent: true },
       { group: 'Your projects', add: true },
-      { space: 'Мобильное приложение', icon: 'tracker/home', color: 'Porpoise' },
+      { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
       { item: 'Milestones', icon: 'milestone', indent: true },
-      { space: 'Маркетинг', icon: 'tracker/home', color: 'Porpoise' },
+      { space: 'Маркетинг', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
       { item: 'Milestones', icon: 'milestone', indent: true }
@@ -762,13 +762,13 @@ await kit.page('Task boards')
     [
       { header: 'Мобильное приложение · APP' },
       { label: 'Релиз 1.0', icon: 'board', hint: 'Веха' },
-      { label: 'Тестирование', icon: 'view/pin', hint: 'в навигаторе' },
+      { label: 'Тестирование', icon: 'kit/PushPin', hint: 'в навигаторе' },
       '-',
       { header: 'Несколько проектов' },
       { label: 'Основная доска', icon: 'board', hint: 'APP · MKT', selected: true },
       '-',
       { header: 'Мои доски' },
-      { label: 'Мой спринт', icon: 'view/pin', hint: 'в навигаторе' },
+      { label: 'Мой спринт', icon: 'kit/PushPin', hint: 'в навигаторе' },
       '-',
       { label: 'Создать доску', icon: 'plus', accent: true },
       { label: 'Настройки доски', icon: 'gear' }
@@ -786,11 +786,11 @@ await kit.page('Task boards')
       { item: 'Тестирование', indent: true },
       { item: 'Мой спринт', indent: true },
       { group: 'Your projects', add: true },
-      { space: 'Мобильное приложение', icon: 'tracker/home', color: 'Porpoise' },
+      { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
       { item: 'Milestones', icon: 'milestone', indent: true },
-      { space: 'Маркетинг', icon: 'tracker/home', color: 'Porpoise' },
+      { space: 'Маркетинг', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
       { item: 'Milestones', icon: 'milestone', indent: true }
@@ -1167,11 +1167,11 @@ await kit.page('Task boards')
       { item: 'Тестирование', indent: true },
       { item: 'Мой спринт', indent: true },
       { group: 'Your projects', add: true },
-      { space: 'Мобильное приложение', icon: 'tracker/home', color: 'Porpoise' },
+      { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
       { item: 'Milestones', icon: 'milestone', indent: true },
-      { space: 'Маркетинг', icon: 'tracker/home', color: 'Porpoise' },
+      { space: 'Маркетинг', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
       { item: 'Milestones', icon: 'milestone', indent: true }
@@ -1579,11 +1579,11 @@ await kit.page('Task boards')
       { item: 'Тестирование', indent: true },
       { item: 'Мой спринт', indent: true },
       { group: 'Your projects', add: true },
-      { space: 'Мобильное приложение', icon: 'tracker/home', color: 'Porpoise' },
+      { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
       { item: 'Milestones', icon: 'milestone', indent: true },
-      { space: 'Маркетинг', icon: 'tracker/home', color: 'Porpoise' },
+      { space: 'Маркетинг', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
       { item: 'Milestones', icon: 'milestone', indent: true }
@@ -2001,25 +2001,25 @@ await kit.page('Task boards')
   const { main } = kit.Workbench('Стало - канбан', 2020, 2400, {
     tab: 'Tracker',
     nav: [
-      { item: 'My issues', icon: 'tracker/myissues' },
-      { item: 'All issues', icon: 'tracker/issues', selected: true },
+      { item: 'My issues', icon: 'kit/Crosshair' },
+      { item: 'All issues', icon: 'kit/CheckSquare', selected: true },
       { divider: true },
-      { item: 'All projects', icon: 'tracker/list' },
-      { item: 'Labels', icon: 'tracker/labels' },
+      { item: 'All projects', icon: 'kit/BulletList' },
+      { item: 'Labels', icon: 'kit/Tags' },
       { group: 'Your projects', add: true },
-      { space: 'Мобильное приложение', icon: 'tracker/home', color: 'Porpoise' },
-      { item: 'Issues', icon: 'tracker/issues', indent: true },
-      { item: 'Components', icon: 'tracker/components', indent: true },
-      { item: 'Milestones', icon: 'tracker/milestone', indent: true },
-      { item: 'Templates', icon: 'tracker/issuetemplates', indent: true },
-      { space: 'Маркетинг', icon: 'tracker/home', color: 'Porpoise' },
-      { item: 'Issues', icon: 'tracker/issues', indent: true },
-      { item: 'Components', icon: 'tracker/components', indent: true },
-      { item: 'Milestones', icon: 'tracker/milestone', indent: true },
-      { item: 'Templates', icon: 'tracker/issuetemplates', indent: true }
+      { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
+      { item: 'Issues', icon: 'kit/CheckSquare', indent: true },
+      { item: 'Components', icon: 'kit/Diamond', indent: true },
+      { item: 'Milestones', icon: 'kit/Signpost', indent: true },
+      { item: 'Templates', icon: 'kit/Layout', indent: true },
+      { space: 'Маркетинг', icon: 'kit/HouseFill', color: 'Porpoise' },
+      { item: 'Issues', icon: 'kit/CheckSquare', indent: true },
+      { item: 'Components', icon: 'kit/Diamond', indent: true },
+      { item: 'Milestones', icon: 'kit/Signpost', indent: true },
+      { item: 'Templates', icon: 'kit/Layout', indent: true }
     ]
   })
-  kit.SpaceHeader(main, { view: 'board', title: 'All issues', titleIcon: 'tracker/issues' })
+  kit.SpaceHeader(main, { view: 'board', title: 'All issues', titleIcon: 'kit/CheckSquare' })
   kit.at(main, kit.add(
     kit.box('Kanban', { w: 2264, h: 930, dir: 'row', pad: [24, 0, 0, 24] }),
     kit.KanbanColumn(
@@ -2201,25 +2201,25 @@ await kit.page('Task boards')
   const { main } = kit.Workbench('Стало - канбан с дорожками', 0, 3600, {
     tab: 'Tracker',
     nav: [
-      { item: 'My issues', icon: 'tracker/myissues' },
-      { item: 'All issues', icon: 'tracker/issues', selected: true },
+      { item: 'My issues', icon: 'kit/Crosshair' },
+      { item: 'All issues', icon: 'kit/CheckSquare', selected: true },
       { divider: true },
-      { item: 'All projects', icon: 'tracker/list' },
-      { item: 'Labels', icon: 'tracker/labels' },
+      { item: 'All projects', icon: 'kit/BulletList' },
+      { item: 'Labels', icon: 'kit/Tags' },
       { group: 'Your projects', add: true },
-      { space: 'Мобильное приложение', icon: 'tracker/home', color: 'Porpoise' },
-      { item: 'Issues', icon: 'tracker/issues', indent: true },
-      { item: 'Components', icon: 'tracker/components', indent: true },
-      { item: 'Milestones', icon: 'tracker/milestone', indent: true },
-      { item: 'Templates', icon: 'tracker/issuetemplates', indent: true },
-      { space: 'Маркетинг', icon: 'tracker/home', color: 'Porpoise' },
-      { item: 'Issues', icon: 'tracker/issues', indent: true },
-      { item: 'Components', icon: 'tracker/components', indent: true },
-      { item: 'Milestones', icon: 'tracker/milestone', indent: true },
-      { item: 'Templates', icon: 'tracker/issuetemplates', indent: true }
+      { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
+      { item: 'Issues', icon: 'kit/CheckSquare', indent: true },
+      { item: 'Components', icon: 'kit/Diamond', indent: true },
+      { item: 'Milestones', icon: 'kit/Signpost', indent: true },
+      { item: 'Templates', icon: 'kit/Layout', indent: true },
+      { space: 'Маркетинг', icon: 'kit/HouseFill', color: 'Porpoise' },
+      { item: 'Issues', icon: 'kit/CheckSquare', indent: true },
+      { item: 'Components', icon: 'kit/Diamond', indent: true },
+      { item: 'Milestones', icon: 'kit/Signpost', indent: true },
+      { item: 'Templates', icon: 'kit/Layout', indent: true }
     ]
   })
-  kit.SpaceHeader(main, { view: 'board', title: 'All issues', titleIcon: 'tracker/issues' })
+  kit.SpaceHeader(main, { view: 'board', title: 'All issues', titleIcon: 'kit/CheckSquare' })
   kit.at(main, kit.add(
     kit.box('Kanban', { w: 2264, h: 930, dir: 'column', gap: 8, pad: [24, 24, 0, 24] }),
     kit.add(

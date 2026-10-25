@@ -19,10 +19,10 @@
   import type { WithLookup } from '@hcengineering/core'
   import { setPlatformStatus, unknownError } from '@hcengineering/platform'
   import { createQuery, getBlobRef, getClient, uploadFile } from '@hcengineering/presentation'
-  import { Button, IconAdd, Label, Spinner } from '@hcengineering/ui'
+  import ui, { Button, Label, Spinner, Icon } from '@hcengineering/ui'
+
   import attachment from '../plugin'
   import { showAttachmentPreviewPopup } from '../utils'
-  import UploadDuo from './icons/UploadDuo.svelte'
 
   export let objectId: Ref<Doc>
   export let space: Ref<Space>
@@ -109,7 +109,7 @@
       <Spinner />
     {:else}
       <Button
-        icon={IconAdd}
+        icon={ui.icon.Plus}
         kind="ghost"
         on:click={() => {
           inputFile.click()
@@ -156,7 +156,7 @@
     {/each}
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <div class="flex-center item new-item" on:click={click}>
-      <UploadDuo size="large" />
+      <Icon icon={ui.icon.CloudUpload} size="large" />
     </div>
   </div>
 </div>

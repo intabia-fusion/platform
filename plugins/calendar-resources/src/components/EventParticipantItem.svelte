@@ -17,7 +17,8 @@
   import type { Person } from '@hcengineering/contact'
   import { ContactRefPresenter } from '@hcengineering/contact-resources'
   import type { Ref } from '@hcengineering/core'
-  import { Button, Icon, IconCheck, IconClose, IconError, tooltip } from '@hcengineering/ui'
+  import ui, { Button, Icon, tooltip } from '@hcengineering/ui'
+
   import calendar from '../plugin'
 
   export let participant: Ref<Person> | undefined = undefined
@@ -36,13 +37,17 @@
     <ContactRefPresenter disabled value={participant} />
     {#if busy !== undefined}
       <div class="busy-mark" class:busy use:tooltip={busy ? { label: calendar.string.Busy } : undefined}>
-        <Icon icon={busy ? IconError : IconCheck} size="small" />
+        <Icon
+          icon={busy ? ui.icon.ExclamationCircle : ui.icon.Check}
+          size="small"
+          fill={busy ? 'var(--theme-error-color)' : 'currentColor'}
+        />
       </div>
     {/if}
     {#if !disabled}
       <div class="tools">
         <Button
-          icon={IconClose}
+          icon={ui.icon.Cross}
           kind="ghost"
           size="x-small"
           padding="0 .5rem"
@@ -63,7 +68,7 @@
     {#if !disabled}
       <div class="tools">
         <Button
-          icon={IconClose}
+          icon={ui.icon.Cross}
           kind="ghost"
           size="x-small"
           padding="0 .5rem"

@@ -17,10 +17,10 @@
 import inventory from '@hcengineering/inventory'
 import { loadMetadata } from '@hcengineering/platform'
 
-const icons = require('../assets/icons.svg') as string // eslint-disable-line
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(inventory.icon, {
-  InventoryApplication: `${icons}#inventory`,
-  Categories: `${icons}#categories`,
-  Variant: `${icons}#variant`,
-  Products: `${icons}#products`
+  InventoryApplication: `${uiIcons}#archive`,
+  Categories: `${uiIcons}#folder-tab`,
+  Variant: `${uiIcons}#branch`,
+  Products: `${uiIcons}#tag`
 })

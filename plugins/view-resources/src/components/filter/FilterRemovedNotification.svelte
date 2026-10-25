@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Notification } from '@hcengineering/ui'
-  import { Button, IconClose } from '@hcengineering/ui'
+  import ui, { Button } from '@hcengineering/ui'
   import { fade } from 'svelte/transition'
 
   export let onRemove: () => void
@@ -19,7 +19,7 @@
     </div>
   </div>
   <div class="close-button">
-    <Button icon={IconClose} kind="ghost" size="small" on:click={onRemove} />
+    <Button icon={ui.icon.Cross} kind="ghost" size="small" on:click={onRemove} />
   </div>
 </div>
 

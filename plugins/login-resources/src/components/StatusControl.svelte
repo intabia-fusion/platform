@@ -15,7 +15,7 @@
 <script lang="ts">
   import type { Status } from '@hcengineering/platform'
   import { Severity } from '@hcengineering/platform'
-  import { IconInfo, Label } from '@hcengineering/ui'
+  import ui, { Label, Icon } from '@hcengineering/ui'
 
   export let status: Status
   // Validation messages wrap onto several lines instead of being ellipsised.
@@ -25,7 +25,7 @@
 {#if status.severity !== Severity.OK}
   <div class="flex-row-center container {status.severity}" class:error={status.severity === Severity.ERROR}>
     <!-- <StatusControl {status} overflow={false} /> -->
-    <IconInfo size="small" />
+    <Icon icon={ui.icon.InfoCircle} size="small" />
     <span class="text-sm ml-2 message" class:overflow-label={overflow}>
       <Label label={status.code} params={status.params} />
     </span>

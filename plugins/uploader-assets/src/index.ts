@@ -16,9 +16,10 @@
 import uploader from '@hcengineering/uploader'
 import { loadMetadata } from '@hcengineering/platform'
 
-const icons = require('../assets/icons.svg') as string // eslint-disable-line
+// Icons the kit has: the ids stay, stored documents keep pointing at them.
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 
 loadMetadata(uploader.icon, {
-  UploadFilesIcon: `${icons}#file`,
-  UploadFoldersIcon: `${icons}#folder`
+  UploadFilesIcon: `${uiIcons}#file`,
+  UploadFoldersIcon: `${uiIcons}#folder`
 })

@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
-  import ui, { deviceOptionsStore, IconClose, IconSearch, ModernEditbox } from '@hcengineering/ui'
+  import ui, { deviceOptionsStore, ModernEditbox, Icon } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import { createEventDispatcher } from 'svelte'
 
@@ -43,13 +43,13 @@
     autoFocus={autoFocus && !$deviceOptionsStore.isMobile}
     on:keydown
   >
-    <div class="search-icon"><IconSearch size="small" /></div>
+    <div class="search-icon"><Icon icon={ui.icon.Search} size="small" /></div>
     <svelte:fragment slot="after">
       <slot name="filter" />
       {#if value !== ''}
         <IconButton
           iconSize="medium"
-          icon={IconClose}
+          icon={ui.icon.Cross}
           kind="tertiary"
           size="small"
           shape="round"

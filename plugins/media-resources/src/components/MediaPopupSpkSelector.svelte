@@ -19,10 +19,7 @@
   import media from '../plugin'
   import { micAccess, sessions } from '../stores'
   import { getDeviceLabel } from '../utils'
-
   import MediaPopupItem from './MediaPopupItem.svelte'
-  import IconSpkOn from './icons/Speaker.svelte'
-  import IconSpkOff from './icons/Speaker.svelte'
 
   export let mediaInfo: MediaInfo
   export let expanded: boolean = false
@@ -45,7 +42,7 @@
 
 <MediaPopupItem
   label={mediaInfo.activeSpeaker === undefined ? media.string.DefaultSpeaker : getDeviceLabel(mediaInfo.activeSpeaker)}
-  icon={mediaInfo.activeSpeaker !== undefined ? IconSpkOn : IconSpkOff}
+  icon={media.icon.Speaker}
   disabled={access === 'denied'}
   expandable={true}
   {expanded}
@@ -63,7 +60,7 @@
         />
       {/each}
     {:else}
-      <MediaPopupItem label={media.string.DefaultSpeaker} icon={IconSpkOff} disabled />
+      <MediaPopupItem label={media.string.DefaultSpeaker} icon={media.icon.Speaker} disabled />
     {/if}
   </div>
 </MediaPopupItem>

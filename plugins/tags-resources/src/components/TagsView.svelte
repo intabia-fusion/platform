@@ -19,8 +19,9 @@
   import { createQuery } from '@hcengineering/presentation'
   import type { TagCategory, TagElement } from '@hcengineering/tags'
   import type { AnySvelteComponent } from '@hcengineering/ui'
-  import { Breadcrumb, Button, Header, IconAdd, SearchInput, showPopup, themeStore } from '@hcengineering/ui'
+  import ui, { Breadcrumb, Button, Header, SearchInput, showPopup, themeStore } from '@hcengineering/ui'
   import { TableBrowser } from '@hcengineering/view-resources'
+
   import tags from '../plugin'
   import CategoryBar from './CategoryBar.svelte'
   import CreateTagElement from './CreateTagElement.svelte'
@@ -103,7 +104,7 @@
   </svelte:fragment>
   <svelte:fragment slot="actions">
     <slot />
-    <Button icon={IconAdd} label={createItemLabel} kind="primary" on:click={showCreateDialog} />
+    <Button icon={ui.icon.Plus} label={createItemLabel} kind="primary" on:click={showCreateDialog} />
   </svelte:fragment>
 </Header>
 <CategoryBar

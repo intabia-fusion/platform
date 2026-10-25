@@ -14,15 +14,15 @@
 -->
 
 <script lang="ts">
-  import { deviceOptionsStore as deviceInfo, TimeLeft, IconBack, setMetadataLocalStorage } from '@hcengineering/ui'
-  import FormButton from './internal/FormButton.svelte'
+  import ui, { deviceOptionsStore as deviceInfo, TimeLeft, setMetadataLocalStorage, Icon } from '@hcengineering/ui'
   import { OK, Severity, Status } from '@hcengineering/platform'
-  import Label from './internal/Label.svelte'
-  import LoginCodeInput from './internal/LoginCodeInput.svelte'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import type { Timestamp } from '@hcengineering/core'
   import type { LoginInfo } from '@hcengineering/account-client'
 
+  import FormButton from './internal/FormButton.svelte'
+  import Label from './internal/Label.svelte'
+  import LoginCodeInput from './internal/LoginCodeInput.svelte'
   import type { BottomAction } from '../index'
   import { doLoginNavigate, doValidateOtp, OtpLoginSteps, loginOtp, signUpOtp } from '../index'
   import login from '../plugin'
@@ -260,7 +260,7 @@
           dispatch('step', OtpLoginSteps.Email)
         }}
       >
-        <IconBack size="small" />
+        <Icon icon={ui.icon.ChevronLeftLarge} size="small" />
       </FormButton>
       <div class="title"><Label label={login.string.EnterCode} variant="heading" /></div>
     </div>

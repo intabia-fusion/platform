@@ -14,8 +14,9 @@
 -->
 <script lang="ts">
   import type { Issue } from '@hcengineering/tracker'
-  import { Button, IconClose } from '@hcengineering/ui'
+  import ui, { Button } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+
   import tracker from '../../plugin'
   import PriorityRefPresenter from './PriorityRefPresenter.svelte'
 
@@ -31,7 +32,7 @@
   <span class="overflow-label flex-no-shrink content-dark-color">{issue.identifier}</span>
   <span class="overflow-label issue-title">{issue.title}</span>
   <Button
-    icon={IconClose}
+    icon={ui.icon.Cross}
     showTooltip={{ label: tracker.string.RemoveParent, direction: 'bottom' }}
     kind="ghost"
     size="small"

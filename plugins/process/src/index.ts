@@ -341,7 +341,6 @@ export default plugin(processId, {
   },
   icon: {
     Process: '' as Asset,
-    Steps: '' as Asset,
     States: '' as Asset,
     ToDo: '' as Asset,
     WhenCardMatches: '' as Asset,

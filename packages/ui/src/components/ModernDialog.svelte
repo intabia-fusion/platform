@@ -15,15 +15,14 @@
 <script lang="ts">
   // Note: migrated from QMS. Should be unified with the platform solutions eventually.
   import { createEventDispatcher } from 'svelte'
-  import type { IntlString } from '@hcengineering/platform'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+
   import type { AnySvelteComponent, ButtonKind } from '../types'
   import Button from './Button.svelte'
   import Label from './Label.svelte'
   import Scroller from './Scroller.svelte'
   import { resizeObserver } from '../resize'
   import ui from '../plugin'
-  import Close from './icons/Close.svelte'
-  import Left from './icons/Left.svelte'
 
   export let label: IntlString
   export let labelProps: any | undefined = undefined
@@ -43,7 +42,7 @@
   export let noContentPadding = false
   export let scrollableContent = true
   export let withoutFooter = false
-  export let closeIcon: AnySvelteComponent = Close
+  export let closeIcon: Asset | AnySvelteComponent = ui.icon.Cross
   export let shadow: boolean = false
   export let className: string = ''
 
@@ -84,7 +83,7 @@
           {#if hasBack}
             <div class="back">
               <Button
-                icon={Left}
+                icon={ui.icon.ArrowLeft}
                 iconProps={{ size: 'small' }}
                 size="small"
                 kind="ghost"

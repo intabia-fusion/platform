@@ -17,14 +17,12 @@
   import { DateRangeMode } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import { afterUpdate, createEventDispatcher } from 'svelte'
+
   import ui from '../../plugin'
   import { showPopup } from '../../popups'
   import Icon from '../Icon.svelte'
   import Label from '../Label.svelte'
-  import IconClose from '../icons/Close.svelte'
   import DatePopup from './DatePopup.svelte'
-  import DPCalendar from './icons/DPCalendar.svelte'
-  import DPCalendarOver from './icons/DPCalendarOver.svelte'
   import { daysInMonth, formatDate } from './internal/DateUtils'
 
   export let value: number | string | Date | null | undefined = null
@@ -327,7 +325,10 @@
   <span class:fs-bold={accent}>
     {#if shouldShowAvatar}
       <div class="btn-icon {iconModifier}">
-        <Icon icon={iconModifier === 'overdue' && !shouldIgnoreOverdue ? DPCalendarOver : DPCalendar} size="full" />
+        <Icon
+          icon={iconModifier === 'overdue' && !shouldIgnoreOverdue ? ui.icon.CalendarX : ui.icon.Calendar}
+          size="full"
+        />
       </div>
     {/if}
     {#if value !== undefined && value !== null && value.toString() !== ''}
@@ -492,13 +493,16 @@
             unfocus(ev, closeBtn)
           }}
         >
-          <Icon icon={IconClose} size="x-small" />
+          <Icon icon={ui.icon.Cross} size="x-small" />
         </div>
       {/if}
     {:else}
       {#if shouldShowAvatar}
         <div class="btn-icon {iconModifier}">
-          <Icon icon={iconModifier === 'overdue' && !shouldIgnoreOverdue ? DPCalendarOver : DPCalendar} size="full" />
+          <Icon
+            icon={iconModifier === 'overdue' && !shouldIgnoreOverdue ? ui.icon.CalendarX : ui.icon.Calendar}
+            size="full"
+          />
         </div>
       {/if}
       {#if value !== undefined && value !== null && value.toString() !== ''}

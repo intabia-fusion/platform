@@ -15,27 +15,24 @@
 <script lang="ts">
   import type { Ref } from '@hcengineering/core'
   import { SortingOrder } from '@hcengineering/core'
-  import { createQuery, getClient, MessageBox, IconDownload } from '@hcengineering/presentation'
+  import { createQuery, getClient, MessageBox } from '@hcengineering/presentation'
   import type { Process, State, Transition } from '@hcengineering/process'
   import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
   import type { DropdownIntlItem } from '@hcengineering/ui'
-  import {
+  import ui, {
     defineSeparators,
     EditBox,
     getCurrentLocation,
-    IconDelete,
-    IconDetails,
-    IconSettings,
     navigate,
     Scroller,
     secondNavSeparators,
-    showPopup,
-    IconLink
+    showPopup
   } from '@hcengineering/ui'
   import { IconButton, MenuButton } from '@hcengineering/ui/kit'
-  import { exportProcess } from '../../exporter'
   import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
+
+  import { exportProcess } from '../../exporter'
   import process from '../../plugin'
   import ContextEditor from './ContextEditor.svelte'
   import BindingsEditor from './BindingsEditor.svelte'
@@ -204,7 +201,7 @@
             <div class="flex-row-center flex-gap-2">
               {#if value.requiredSlots && Object.keys(value.requiredSlots).length > 0}
                 <IconButton
-                  icon={IconLink}
+                  icon={ui.icon.Link}
                   tooltip={{ label: process.string.Bindings, direction: 'bottom' }}
                   size="small"
                   kind="secondary"
@@ -212,14 +209,14 @@
                 />
               {/if}
               <IconButton
-                icon={IconSettings}
+                icon={ui.icon.Sliders}
                 size="small"
                 kind="secondary"
                 tooltip={{ label: process.string.Settings, direction: 'bottom' }}
                 on:click={handleSettings}
               />
               <MenuButton
-                icon={IconDownload}
+                icon={ui.icon.CloudDownload}
                 tooltip={{ label: process.string.Export, direction: 'bottom' }}
                 size="small"
                 kind="secondary"
@@ -228,14 +225,14 @@
                 on:selected={onExportSelected}
               />
               <IconButton
-                icon={IconDetails}
+                icon={ui.icon.PanelRightLine}
                 tooltip={{ label: process.string.Data, direction: 'bottom' }}
                 size="small"
                 kind="secondary"
                 on:click={handleContext}
               />
               <IconButton
-                icon={IconDelete}
+                icon={ui.icon.Trash}
                 tooltip={{ label: view.string.Delete, direction: 'bottom' }}
                 size="small"
                 kind="secondary"

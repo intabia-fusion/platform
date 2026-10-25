@@ -15,26 +15,13 @@
 <script lang="ts">
   import type { Enum } from '@hcengineering/core'
   import presentation, { getClient, MessageBox } from '@hcengineering/presentation'
-  import {
-    ModernEditbox,
-    IconAdd,
-    IconAttachment,
-    IconDelete,
-    showPopup,
-    Label,
-    IconMoreV,
-    IconMoreV2,
-    ModernPopup,
-    eventToHTMLElement
-  } from '@hcengineering/ui'
+  import ui, { ModernEditbox, showPopup, Label, ModernPopup, eventToHTMLElement, Icon } from '@hcengineering/ui'
   import { Button, IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import type { DropdownIntlItem } from '@hcengineering/ui'
+
   import setting from '../plugin'
   import EnumValuesList from './EnumValuesList.svelte'
-  import IconCrossedArrows from './icons/CrossedArrows.svelte'
-  import IconBulletList from './icons/BulletList.svelte'
-  import Report from './icons/Report.svelte'
 
   export let value: Enum
 
@@ -118,7 +105,7 @@
   const items: (DropdownIntlItem & { action: () => void })[] = [
     {
       id: 'import',
-      icon: IconAttachment,
+      icon: ui.icon.Paperclip,
       label: setting.string.ImportEnum,
       action: () => {
         inputFile.click()
@@ -126,7 +113,7 @@
     },
     {
       id: 'paste',
-      icon: Report,
+      icon: ui.icon.Clipboard,
       label: setting.string.ImportEnumCopy,
       action: () => {
         void handleClipboard()
@@ -154,7 +141,7 @@
     on:change={() => update(value)}
   />
   <Button
-    icon={IconCrossedArrows}
+    icon={ui.icon.Shuffle}
     label={setting.string.ProjectTypesCount}
     labelParams={{ count: 0 }}
     disabled
@@ -176,13 +163,13 @@
 
 <div class="hulyTableAttr-container mt-6">
   <div class="hulyTableAttr-header font-medium-12">
-    <IconBulletList size="small" />
+    <Icon icon={ui.icon.BulletList} size="small" />
     <span><Label label={setting.string.Options} /></span>
     <div class="buttons-group tertiary-textColor">
       <IconButton
         tooltip={{ label: view.string.MoreActions }}
         kind="tertiary"
-        icon={IconMoreV}
+        icon={ui.icon.DotsVertical}
         size="small"
         pressed={opened}
         inheritColor
@@ -193,7 +180,7 @@
       />
       <IconButton
         kind="primary"
-        icon={IconAdd}
+        icon={ui.icon.Plus}
         size="small"
         tooltip={{ label: setting.string.Add }}
         on:click={() => {
@@ -213,7 +200,7 @@
       {#if newItem}
         <div class="hulyTableAttr-content__row hovered">
           <div class="hulyTableAttr-content__row-dragMenu">
-            <IconMoreV2 size="small" />
+            <Icon icon={ui.icon.GripVertical} size="small" />
           </div>
           <div class="hulyTableAttr-content__row-label font-regular-14 accent grow">
             <ModernEditbox
@@ -238,7 +225,7 @@
           <IconButton
             tooltip={{ label: setting.string.Delete }}
             kind="tertiary"
-            icon={IconDelete}
+            icon={ui.icon.Trash}
             size="small"
             on:click={() => {
               newValue = ''

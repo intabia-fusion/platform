@@ -19,9 +19,10 @@
   import type { Class, DocumentQuery, FindOptions, Ref } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import presentation from '@hcengineering/presentation'
+  import ui from '@hcengineering/ui'
   import type { ButtonKind, ButtonSize, IconSize, LabelAndProps } from '@hcengineering/ui'
+
   import UserBox from './UserBox.svelte'
-  import IconPerson from './icons/Person.svelte'
 
   export let _class: Ref<Class<Employee>> = contact.mixin.Employee
   export let options: FindOptions<Employee> | undefined = undefined
@@ -49,7 +50,7 @@
   {options}
   {docQuery}
   {label}
-  icon={IconPerson}
+  icon={ui.icon.PersonCircle}
   {placeholder}
   bind:value
   {allowDeselect}

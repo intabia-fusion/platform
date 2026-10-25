@@ -14,21 +14,21 @@
 -->
 <script lang="ts">
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { Icon, IconActivity, IconDetails, IconFile, IconThread } from '@hcengineering/ui'
+  import ui, { Icon } from '@hcengineering/ui'
   import { WorkbenchTab } from '@hcengineering/ui/kit'
 
   let docs = [
-    { id: 'a', name: 'Release plan', icon: IconFile, pinned: true },
-    { id: 'b', name: 'TSK-1204 Rework notifications', icon: IconDetails, pinned: false },
-    { id: 'c', name: 'General', icon: IconThread, pinned: false },
-    { id: 'd', name: 'A very long document title that does not fit', icon: IconFile, pinned: false }
+    { id: 'a', name: 'Release plan', icon: ui.icon.File, pinned: true },
+    { id: 'b', name: 'TSK-1204 Rework notifications', icon: ui.icon.PanelRightLine, pinned: false },
+    { id: 'c', name: 'General', icon: ui.icon.Bubble, pinned: false },
+    { id: 'd', name: 'A very long document title that does not fit', icon: ui.icon.File, pinned: false }
   ]
   let current = 'b'
 
   const widgets = [
-    { id: 'w1', name: 'Thread: design review', icon: IconThread, pinned: true, preview: false },
-    { id: 'w2', name: 'Activity', icon: IconActivity, pinned: false, preview: false },
-    { id: 'w3', name: 'Opened from search', icon: IconFile, pinned: false, preview: true }
+    { id: 'w1', name: 'Thread: design review', icon: ui.icon.Bubble, pinned: true, preview: false },
+    { id: 'w2', name: 'Activity', icon: ui.icon.ChartSquare, pinned: false, preview: false },
+    { id: 'w3', name: 'Opened from search', icon: ui.icon.File, pinned: false, preview: true }
   ]
   let widget = 'w2'
   let lastMenu = ''
@@ -59,7 +59,7 @@
           }}
         >
           <svelte:fragment slot="suffix">
-            {#if doc.pinned}<Icon icon={IconDetails} size="x-small" />{/if}
+            {#if doc.pinned}<Icon icon={ui.icon.PanelRightLine} size="x-small" />{/if}
           </svelte:fragment>
         </WorkbenchTab>
       </div>

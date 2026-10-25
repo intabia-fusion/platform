@@ -1,14 +1,15 @@
 <script lang="ts">
   import type { Issue } from '@hcengineering/tracker'
-  import { Button, IconAdd, Label, showPopup } from '@hcengineering/ui'
+  import ui, { Button, Label, showPopup } from '@hcengineering/ui'
   import type { Class, Doc, Ref, RelatedDocument } from '@hcengineering/core'
-  import tracker from '../../../plugin'
-  import QueryIssuesList from './QueryIssuesList.svelte'
   import type { ObjectSearchResult } from '@hcengineering/presentation'
   import { ObjectSearchPopup, createQuery, getClient } from '@hcengineering/presentation'
   import { onDestroy } from 'svelte'
   import type { Viewlet } from '@hcengineering/view'
   import { restrictionStore } from '@hcengineering/view-resources'
+
+  import tracker from '../../../plugin'
+  import QueryIssuesList from './QueryIssuesList.svelte'
   import { updateIssueRelation } from '../../../issues'
 
   export let issue: Issue
@@ -130,7 +131,7 @@
       <svelte:fragment slot="buttons">
         {#if !$restrictionStore.readonly}
           <Button
-            icon={IconAdd}
+            icon={ui.icon.Plus}
             kind="ghost"
             showTooltip={{ label: tracker.string.AddRelatedIssue, direction: 'bottom' }}
             on:click={addRelatedIssue}

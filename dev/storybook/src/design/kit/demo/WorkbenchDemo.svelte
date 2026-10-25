@@ -24,26 +24,26 @@
   export let panel: boolean = false
 
   const entries: NavEntry[] = [
-    { item: 'My issues', icon: 'tracker/myissues' },
-    { item: 'All issues', icon: 'tracker/issues' },
+    { item: 'My issues', icon: 'kit/Crosshair' },
+    { item: 'All issues', icon: 'kit/CheckSquare' },
     { divider: true },
     { group: 'Your projects', add: true },
-    { space: 'Mobile app', icon: 'tracker/home', color: 'Porpoise' },
-    { item: 'Issues', icon: 'tracker/issues', selected: true, indent: true }
+    { space: 'Mobile app', icon: 'kit/HouseFill', color: 'Porpoise' },
+    { item: 'Issues', icon: 'kit/CheckSquare', selected: true, indent: true }
   ]
 </script>
 
 <Frame title={panel ? 'Workbench with side panel' : 'Workbench'} width={1440} height={810}>
   <Workbench
     workspace="demo"
-    tab={{ label: 'Tracker', icon: 'tracker/tracker' }}
+    tab={{ label: 'Tracker', icon: 'kit/CheckSquare' }}
     apps={railApps.map((app) => ({ ...app, selected: app.app === 'tracker' }))}
     widgets={sidebarWidgets.map((icon) => ({ icon }))}
     account={person}
     {panel}
   >
     <svelte:fragment slot="navigator"><Navigator title="Tracker" newLabel="New issue" {entries} /></svelte:fragment>
-    <SpaceHeader view="board" title="Issues" titleIcon="tracker/issues" />
+    <SpaceHeader view="board" title="Issues" titleIcon="kit/CheckSquare" />
     <svelte:fragment slot="panel"><div style="padding: 1rem">Side panel</div></svelte:fragment>
   </Workbench>
 </Frame>

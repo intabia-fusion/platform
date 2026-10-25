@@ -18,7 +18,7 @@
   import type { AccountUuid } from '@hcengineering/core'
   import core, { reduceCalls, type SpaceType, type SpaceTypeDescriptor } from '@hcengineering/core'
   import { createQuery, getClient, MessageBox } from '@hcengineering/presentation'
-  import { IconDelete, IconSquareExpand, Label, ModernEditbox, showPopup, TextArea, Toggle } from '@hcengineering/ui'
+  import ui, { Label, ModernEditbox, showPopup, TextArea, Toggle } from '@hcengineering/ui'
   import { Button, IconButton } from '@hcengineering/ui/kit'
   import viewRes from '@hcengineering/view-resources/src/plugin'
   import { deleteObjects } from '@hcengineering/view-resources'
@@ -134,7 +134,7 @@
       </div>
       <div class="flex-row">
         <Button
-          icon={IconSquareExpand}
+          icon={ui.icon.ArrowSquareOut}
           label={settingRes.string.CountSpaces}
           labelParams={{ count: spacesCount }}
           disabled={spacesCount === 0}
@@ -144,7 +144,7 @@
         />
         {#if canDelete}
           <IconButton
-            icon={IconDelete}
+            icon={ui.icon.Trash}
             size="small"
             kind="secondary"
             {disabled}

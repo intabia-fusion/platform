@@ -16,7 +16,7 @@
   import type { Product } from '@hcengineering/products'
   import type { Ref } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import { Button, IconAdd, Label, Scroller, Section, showPopup } from '@hcengineering/ui'
+  import ui, { Button, Label, Scroller, Section, showPopup } from '@hcengineering/ui'
   import { Table, openDocFromRef } from '@hcengineering/view-resources'
 
   import products from '../../plugin'
@@ -55,7 +55,12 @@
   <svelte:fragment slot="header">
     {#if !readonly}
       <div class="buttons-group xsmall-gap">
-        <Button id={products.string.CreateProductVersion} icon={IconAdd} kind="ghost" on:click={createProductVersion} />
+        <Button
+          id={products.string.CreateProductVersion}
+          icon={ui.icon.Plus}
+          kind="ghost"
+          on:click={createProductVersion}
+        />
       </div>
     {/if}
   </svelte:fragment>

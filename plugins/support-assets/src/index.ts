@@ -16,7 +16,7 @@
 import { loadMetadata } from '@hcengineering/platform'
 import support from '@hcengineering/support'
 
-const icons = require('../assets/icons.svg') as string // eslint-disable-line
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(support.icon, {
-  Support: `${icons}#support`
+  Support: `${uiIcons}#question-circle`
 })

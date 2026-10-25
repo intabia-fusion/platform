@@ -16,7 +16,7 @@
 <script lang="ts">
   import view from '@hcengineering/view'
   import type { Action } from '@hcengineering/ui'
-  import { IconAdd, NavGroup, NavItem, showPopup, languageStore } from '@hcengineering/ui'
+  import ui, { NavGroup, NavItem, showPopup, languageStore } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import type { Ref } from '@hcengineering/core'
   import { createEventDispatcher } from 'svelte'
@@ -65,7 +65,7 @@
       result.push({
         id: 'create-card',
         label: getEmbeddedLabel(`${createString} ${typeString}`),
-        icon: IconAdd,
+        icon: ui.icon.Plus,
         action: async (): Promise<void> => {
           activeAction = 'create-card'
           await handleCreateCard()

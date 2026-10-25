@@ -14,11 +14,11 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-
   import type { Component } from '@hcengineering/tracker'
-  import tracker from '../../../plugin'
   import type { Ref } from '@hcengineering/core'
-  import { Icon, IconCheck, Label, Scroller } from '@hcengineering/ui'
+  import ui, { Icon, Label, Scroller } from '@hcengineering/ui'
+
+  import tracker from '../../../plugin'
   import ComponentPresenter from '../../components/ComponentPresenter.svelte'
 
   export let components: Component[] | undefined
@@ -51,7 +51,7 @@
                 </div>
                 <div class="pointer-events-none">
                   {#if selected === component._id}
-                    <Icon icon={IconCheck} size="small" />
+                    <Icon icon={ui.icon.Check} size="small" />
                   {/if}
                 </div>
               </div>
@@ -81,7 +81,7 @@
                 </div>
                 <div class="pointer-events-none">
                   {#if selected === original._id}
-                    <Icon icon={IconCheck} size="small" />
+                    <Icon icon={ui.icon.Check} size="small" />
                   {/if}
                 </div>
               </div>

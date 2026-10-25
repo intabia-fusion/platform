@@ -17,7 +17,7 @@
   import type { ActivityMessage, ActivityReference } from '@hcengineering/activity'
   import activity from '@hcengineering/activity'
   import { ActivityMessagePresenter, sortActivityMessages } from '@hcengineering/activity-resources'
-  import { ActionIcon, IconClose, Loading } from '@hcengineering/ui'
+  import ui, { ActionIcon, Loading } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import type { ThreadMessage } from '@hcengineering/chunter'
   import type { Class, Doc, Ref, Space } from '@hcengineering/core'
@@ -109,7 +109,7 @@
       <div class="actions">
         <ActionIcon
           size="small"
-          icon={IconClose}
+          icon={ui.icon.Cross}
           action={() => {
             void unpinMessage(message)
           }}

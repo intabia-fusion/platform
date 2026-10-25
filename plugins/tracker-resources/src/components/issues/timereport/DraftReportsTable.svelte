@@ -15,12 +15,11 @@
   import { SortingOrder } from '@hcengineering/core'
   import presentation, { createQuery } from '@hcengineering/presentation'
   import type { Issue, TimeSpendReport } from '@hcengineering/tracker'
-  import {
+  import ui, {
     ActionIcon,
     CheckBox,
     DatePresenter,
     eventToHTMLElement,
-    IconDelete,
     Label,
     Menu,
     Scroller,
@@ -137,7 +136,7 @@
         actions: [
           {
             label: presentation.string.Delete,
-            icon: IconDelete,
+            icon: ui.icon.Trash,
             action: async () => {
               for (const r of targets) {
                 await deleteReport(r)
@@ -238,7 +237,7 @@
               <td class="action-col">
                 <div class="action-btn">
                   <ActionIcon
-                    icon={IconDelete}
+                    icon={ui.icon.Trash}
                     size="small"
                     action={(ev) => {
                       ev.stopPropagation()

@@ -23,15 +23,15 @@
   <div class="field">{placeholder}</div>
   <div class="panel">
     <div class="group">
-      <ClassicButton kind="ghost" iconSize={20} icon="text-editor/Attach" />
-      <ClassicButton kind="ghost" iconSize={20} icon="media/CamOn" />
+      <ClassicButton kind="ghost" iconSize={20} icon="kit/Paperclip" />
+      <ClassicButton kind="ghost" iconSize={20} icon="kit/Camera" />
       <div class="divider" />
-      <ClassicButton kind="ghost" iconSize={20} icon="chunter/IconMic" />
+      <ClassicButton kind="ghost" iconSize={20} icon="kit/Mic" />
       <div class="divider" />
-      <ClassicButton kind="ghost" iconSize={20} icon="text-editor/RIMention" />
-      <ClassicButton kind="ghost" iconSize={20} icon="emoji/emoji" />
+      <ClassicButton kind="ghost" iconSize={20} icon="kit/At" />
+      <ClassicButton kind="ghost" iconSize={20} icon="kit/Smiley" />
       <div class="divider" />
-      <ClassicButton kind="ghost" iconSize={20} icon="templates/template" />
+      <ClassicButton kind="ghost" iconSize={20} icon="kit/BubblePlus" />
     </div>
     <ClassicButton kind="ghost" iconSize={20} icon="text-editor/Send" disabled />
   </div>

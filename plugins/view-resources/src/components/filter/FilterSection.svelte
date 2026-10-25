@@ -18,9 +18,10 @@
   import { translate } from '@hcengineering/platform'
   import { getAttributePresenterClass, getClient } from '@hcengineering/presentation'
   import type { AnyComponent } from '@hcengineering/ui'
-  import { Component, eventToHTMLElement, Icon, IconClose, Label, showPopup, themeStore } from '@hcengineering/ui'
+  import ui, { Component, eventToHTMLElement, Icon, Label, showPopup, themeStore } from '@hcengineering/ui'
   import type { Filter, FilterMode } from '@hcengineering/view'
   import { createEventDispatcher, onDestroy, tick } from 'svelte'
+
   import view from '../../plugin'
   import ModeSelector from './ModeSelector.svelte'
 
@@ -204,7 +205,7 @@
       dispatch('remove')
     }}
   >
-    <div class="btn-icon"><Icon icon={IconClose} size="small" /></div>
+    <div class="btn-icon"><Icon icon={ui.icon.Cross} size="small" /></div>
   </button>
 </div>
 

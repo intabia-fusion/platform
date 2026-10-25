@@ -21,15 +21,16 @@
   import tags from '@hcengineering/tags'
   import task from '@hcengineering/task'
   import { StyledTextBox } from '@hcengineering/text-editor-resources'
-  import { ModernEditbox, CheckBox, Component, IconClose, Label, Modal, Spinner } from '@hcengineering/ui'
+  import ui, { ModernEditbox, CheckBox, Component, Label, Modal, Spinner } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import type { ToDo, ToDoPriority } from '@hcengineering/time'
   import { createEventDispatcher } from 'svelte'
+  import { VisibilityEditor } from '@hcengineering/calendar-resources'
+
   import time from '../plugin'
   import DueDateEditor from './DueDateEditor.svelte'
   import PriorityEditor from './PriorityEditor.svelte'
   import TodoWorkslots from './TodoWorkslots.svelte'
-  import { VisibilityEditor } from '@hcengineering/calendar-resources'
 
   // export let object: ToDo
   export let _id: Ref<ToDo>
@@ -144,7 +145,7 @@
   </svelte:fragment>
   <svelte:fragment slot="actions">
     <IconButton
-      icon={IconClose}
+      icon={ui.icon.Cross}
       kind="tertiary"
       size="small"
       tooltip={{ label: presentation.string.Close }}

@@ -6,7 +6,7 @@
   import { Panel } from '@hcengineering/panel'
   import { getResource } from '@hcengineering/platform'
   import presentation, { createQuery, getClient, type KeyedAttribute } from '@hcengineering/presentation'
-  import { type AnyComponent, Button, Component, IconMixin, IconMoreH, Label } from '@hcengineering/ui'
+  import ui, { type AnyComponent, Button, Component, Label } from '@hcengineering/ui'
   import type { AttributeCategory } from '@hcengineering/view'
   import view from '@hcengineering/view'
   import {
@@ -123,7 +123,7 @@
     <svelte:fragment slot="utils">
       {#if !readonly}
         <Button
-          icon={IconMoreH}
+          icon={ui.icon.DotsHorizontal}
           iconProps={{ size: 'medium' }}
           kind="icon"
           dataId="btnMoreActions"
@@ -133,7 +133,7 @@
         />
       {/if}
       <Button
-        icon={IconMixin}
+        icon={ui.icon.LayoutSplit}
         kind="icon"
         iconProps={{ size: 'medium' }}
         selected={showAllMixins}

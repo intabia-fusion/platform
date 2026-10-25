@@ -19,8 +19,7 @@
   import type { ObjectPresenterType } from '@hcengineering/view'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
-  import { tooltip, Icon } from '@hcengineering/ui'
-  import Lock from './icons/Lock.svelte'
+  import ui, { tooltip, Icon } from '@hcengineering/ui'
 
   export let value: WithLookup<MeetingMinutes>
   export let inline: boolean = false
@@ -46,7 +45,7 @@
           <span>{value.name}</span>
           {#if value.private}
             <span class="lock-icon" use:tooltip={{ label: getEmbeddedLabel('Private') }}>
-              <Lock size="small" />
+              <Icon icon={ui.icon.LockFill} size="small" />
             </span>
           {/if}
         </div>
@@ -57,7 +56,7 @@
       <span>{value.name}</span>
       {#if value.private}
         <span class="lock-icon" use:tooltip={{ label: getEmbeddedLabel('Private') }}>
-          <Lock size="small" />
+          <Icon icon={ui.icon.LockFill} size="small" />
         </span>
       {/if}
     </span>

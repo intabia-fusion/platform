@@ -19,9 +19,6 @@
 
   import { getPlatformColorDef } from '../../colors'
   import Icon from '../../components/Icon.svelte'
-  import IconArrowUpRight from '../../components/icons/ArrowUpRight.svelte'
-  import IconCheck from '../../components/icons/Check.svelte'
-  import IconChevronRight from '../../components/icons/ChevronRight.svelte'
   import Label from '../../components/Label.svelte'
   import ui from '../../plugin'
   import { closePopup, showPopup, type PopupResult } from '../../popups'
@@ -647,16 +644,16 @@
                 {#if busy}
                   <Spinner size="small" />
                 {:else if checked}
-                  <IconCheck size="small" />
+                  <Icon icon={ui.icon.Check} size="small" />
                 {/if}
               </span>
             {/if}
             {#if withArrows}
               <span class="menu__icon menu__icon--secondary">
                 {#if hasSubmenu(item)}
-                  <IconChevronRight size="small" />
+                  <Icon icon={ui.icon.ChevronRight} size="small" />
                 {:else if opensPage(item)}
-                  <IconArrowUpRight size="small" />
+                  <Icon icon={ui.icon.ArrowUpRight} size="small" />
                 {/if}
               </span>
             {/if}

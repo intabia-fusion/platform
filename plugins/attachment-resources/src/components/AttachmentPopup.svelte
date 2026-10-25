@@ -17,12 +17,11 @@
 <script lang="ts">
   import type { Attachment } from '@hcengineering/attachment'
   import { createQuery, getClient, uploadFile } from '@hcengineering/presentation'
-  import { ActionIcon, IconAdd, Label, Loading } from '@hcengineering/ui'
-
+  import ui, { ActionIcon, Label, Loading } from '@hcengineering/ui'
   import type { Doc, Ref, Space, WithLookup } from '@hcengineering/core'
   import core from '@hcengineering/core'
-
   import { setPlatformStatus, unknownError } from '@hcengineering/platform'
+
   import AttachmentTile from './file/AttachmentTile.svelte'
   import attachment from '../plugin'
 
@@ -120,7 +119,7 @@
         {#if progress}
           <Loading />
         {:else}
-          <ActionIcon size="medium" icon={IconAdd} action={add} />
+          <ActionIcon size="medium" icon={ui.icon.Plus} action={add} />
         {/if}
       </div>
     {/if}

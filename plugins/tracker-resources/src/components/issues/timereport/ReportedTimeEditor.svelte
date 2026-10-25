@@ -19,15 +19,7 @@
   import { createQuery, getClient } from '@hcengineering/presentation'
   import type { Issue, Project, TimeSpendReport } from '@hcengineering/tracker'
   import { reduceChildInfoTree, splitReportedTime } from '@hcengineering/tracker'
-  import {
-    ActionIcon,
-    IconAdd,
-    Label,
-    eventToHTMLElement,
-    floorFractionDigits,
-    showPopup,
-    tooltip
-  } from '@hcengineering/ui'
+  import ui, { ActionIcon, Label, eventToHTMLElement, floorFractionDigits, showPopup, tooltip } from '@hcengineering/ui'
 
   import trackerPlugin from '../../../plugin'
   import { activeProjects } from '../../../utils'
@@ -160,7 +152,7 @@
     {/if}
     {#if !readonly}
       <div class="add-action">
-        <ActionIcon icon={IconAdd} size="small" action={addTimeReport} />
+        <ActionIcon icon={ui.icon.Plus} size="small" action={addTimeReport} />
       </div>
     {/if}
   </div>

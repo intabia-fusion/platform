@@ -1,14 +1,15 @@
 <script lang="ts">
+  import ui from '@hcengineering/ui'
   import type { DropdownIntlItem } from '@hcengineering/ui'
-  import { IconMoreV } from '@hcengineering/ui'
   import { MenuButton } from '@hcengineering/ui/kit'
   import type { Action } from '@hcengineering/view'
   import { getResource } from '@hcengineering/platform'
-  import { lkSessionConnected } from '../../../liveKitClient'
   import { getActions } from '@hcengineering/view-resources'
-  import love from '../../../plugin'
   import type { MeetingMinutes, Room } from '@hcengineering/love'
   import { getClient } from '@hcengineering/presentation'
+
+  import { lkSessionConnected } from '../../../liveKitClient'
+  import love from '../../../plugin'
 
   export let room: Room
   export let meetingMinutes: MeetingMinutes | undefined = undefined
@@ -58,7 +59,7 @@
 {#if $lkSessionConnected && moreItems.length > 0}
   <MenuButton
     items={moreItems}
-    icon={IconMoreV}
+    icon={ui.icon.DotsVertical}
     tooltip={{ label: love.string.MoreOptions, direction: 'top' }}
     {kind}
     {size}

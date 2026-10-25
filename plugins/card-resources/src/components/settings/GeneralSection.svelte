@@ -17,15 +17,13 @@
   import core from '@hcengineering/core'
   import { TypeNumber } from '@hcengineering/model'
   import { getEmbeddedLabel, translateCB } from '@hcengineering/platform'
-  import presentation, { getClient, IconDownload, IconWithEmoji, MessageBox } from '@hcengineering/presentation'
+  import presentation, { getClient, IconWithEmoji, MessageBox } from '@hcengineering/presentation'
   import setting from '@hcengineering/setting'
-  import {
+  import ui, {
     type ColorDefinition,
     eventToHTMLElement,
     getCurrentLocation,
     getPlatformColorDef,
-    IconDelete,
-    IconInfo,
     Label,
     ModernEditbox,
     navigate,
@@ -37,6 +35,7 @@
   import { IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import { ColorsPopup, IconPicker } from '@hcengineering/view-resources'
+
   import { exportModule } from '../../exporter'
   import card from '../../plugin'
   import { deleteMasterTag } from '../../utils'
@@ -201,7 +200,7 @@
       />
     </div>
     <IconButton
-      icon={IconDownload}
+      icon={ui.icon.CloudDownload}
       size="large"
       tooltip={{ label: card.string.Export }}
       kind="tertiary"
@@ -209,7 +208,7 @@
     />
     {#if isEditable}
       <IconButton
-        icon={IconDelete}
+        icon={ui.icon.Trash}
         size="large"
         kind="tertiary"
         tooltip={{ label: presentation.string.Delete }}
@@ -244,7 +243,7 @@
         <div class="flex items-center gap-1 caption">
           <Label label={card.string.BaseType} />
           <IconButton
-            icon={IconInfo}
+            icon={ui.icon.InfoCircle}
             size="extra-small"
             kind="tertiary"
             tooltip={{ label: card.string.BaseTypeDescription }}

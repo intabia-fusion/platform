@@ -3,8 +3,9 @@
   import core from '@hcengineering/core'
   import { SpaceSelector, createQuery, getClient } from '@hcengineering/presentation'
   import type { RelatedIssueTarget } from '@hcengineering/tracker'
-  import { Button, Icon, IconArrowRight, IconDelete, Label } from '@hcengineering/ui'
+  import ui, { Button, Icon, Label } from '@hcengineering/ui'
   import { FixedColumn } from '@hcengineering/view-resources'
+
   import tracker from '../plugin'
 
   export let value: Space | undefined
@@ -57,7 +58,7 @@
             />
           {/if}
         </FixedColumn>
-        <span class="p-1 mr-2"> <Icon icon={IconArrowRight} size="medium" /> </span>
+        <span class="p-1 mr-2"> <Icon icon={ui.icon.ArrowRight} size="medium" /> </span>
 
         <FixedColumn key="space-value">
           <SpaceSelector
@@ -75,7 +76,7 @@
         {#if target.rule.kind === 'spaceRule'}
           <div class="flex-grow flex flex-reverse">
             <Button
-              icon={IconDelete}
+              icon={ui.icon.Trash}
               on:click={() => {
                 void client.remove(target)
               }}

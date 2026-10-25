@@ -16,11 +16,12 @@
   import { DateRangeMode } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import { createEventDispatcher, onMount } from 'svelte'
+
+  import ui from '../plugin'
+  import Icon from './Icon.svelte'
   import { showPopup } from '../popups'
   import type { DateOrShift } from '../types'
   import DateRangePresenter from './calendar/DateRangePresenter.svelte'
-  import Calendar from './icons/Calendar.svelte'
-  import Close from './icons/Close.svelte'
   import Label from './Label.svelte'
   import TimeShiftPopup from './TimeShiftPopup.svelte'
   import TimeShiftPresenter from './TimeShiftPresenter.svelte'
@@ -69,7 +70,11 @@
 >
   <button bind:this={btn} class="button round-2" class:selected={value?.shift}>
     <div class="icon">
-      {#if show}<Close size="small" />{:else}<Calendar size="medium" />{/if}
+      {#if show}<Icon icon={ui.icon.Cross} size="small" />{:else}<Icon
+          icon={ui.icon.Calendar}
+          size="medium"
+          fill="var(--caption-color)"
+        />{/if}
     </div>
   </button>
 

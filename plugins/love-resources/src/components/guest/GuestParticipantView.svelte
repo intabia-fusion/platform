@@ -15,16 +15,10 @@
   // GuestParticipantView.svelte
   // Guest-specific participant view that relies ONLY on LiveKit Participant data.
   // Does not query contact caches or person lookups. Falls back to participant.name / identity.
-
   import { onDestroy, onMount } from 'svelte'
   import { Avatar } from '@hcengineering/contact-resources'
-  import { Loading } from '@hcengineering/ui'
-  import MicDisabled from '../icons/MicDisabled.svelte'
-  import BadConnection from '../icons/BadConnection.svelte'
-  import Reaction from '../meeting/Reaction.svelte'
-
+  import ui, { Loading, Icon } from '@hcengineering/ui'
   import { ConnectionQuality, ParticipantEvent, RoomEvent, Track } from 'livekit-client'
-
   import type {
     ChatMessage,
     LocalParticipant,
@@ -35,9 +29,10 @@
     RemoteTrackPublication,
     TrackPublication
   } from 'livekit-client'
-
-  import { lk, liveKitClient } from '../../utils'
   import { formatName } from '@hcengineering/contact'
+
+  import Reaction from '../meeting/Reaction.svelte'
+  import { lk, liveKitClient } from '../../utils'
 
   export let _id: string
   export let participant: Participant | undefined = undefined
@@ -252,10 +247,10 @@
       <Loading size="small" shrink />
     {/if}
     {#if isBadConnection}
-      <BadConnection fill="var(--bg-negative-default)" size="small" />
+      <Icon icon={ui.icon.Wifi} fill="var(--bg-negative-default)" size="small" />
     {/if}
     {#if microphoneMuted}
-      <MicDisabled fill="var(--bg-negative-default)" size="small" />
+      <Icon icon={ui.icon.MicOff} fill="var(--bg-negative-default)" size="small" />
     {/if}
     <span class="overflow-label">{formatName(userName)}</span>
   </div>

@@ -17,12 +17,12 @@
 import { loadMetadata } from '@hcengineering/platform'
 import globalProfile from '@hcengineering/global-profile'
 
-const icons = require('../assets/icons.svg') as string // eslint-disable-line
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 const ProfileBackground = require('../assets/hero-dark.png') as string // eslint-disable-line
 const ProfileBackgroundLight = require('../assets/hero-light.jpg') as string // eslint-disable-line
 
 loadMetadata(globalProfile.icon, {
-  Globe: `${icons}#globe`
+  Globe: `${uiIcons}#globe`
 })
 
 loadMetadata(globalProfile.image, {

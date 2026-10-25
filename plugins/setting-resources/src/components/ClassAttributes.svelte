@@ -20,12 +20,8 @@
   import type { IntlString } from '@hcengineering/platform'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import type { AnySvelteComponent, LabelAndProps } from '@hcengineering/ui'
-  import {
+  import ui, {
     ActionIcon,
-    IconAdd,
-    IconDelete,
-    IconEdit,
-    IconSettings,
     Label,
     deviceWidths,
     getColorNumberByText,
@@ -33,11 +29,13 @@
     getPlatformColor,
     resizeObserver,
     showPopup,
-    themeStore
+    themeStore,
+    Icon
   } from '@hcengineering/ui'
   import { Button, IconButton } from '@hcengineering/ui/kit'
   import { ObjectPresenter } from '@hcengineering/view-resources'
   import { onDestroy } from 'svelte'
+
   import settings from '../plugin'
   import { clearSettingsStore, settingsStore } from '../store'
   import ClassAttributesList from './ClassAttributesList.svelte'
@@ -195,11 +193,17 @@
       </div>
       {#if hierarchy.hasMixin(clazz, settings.mixin.UserMixin)}
         <div class="ml-2">
-          <ActionIcon icon={IconEdit} size="small" action={editLabel} {disabled} />
+          <ActionIcon icon={ui.icon.PencilLine} size="small" action={editLabel} {disabled} />
         </div>
         {#if onDelete !== undefined}
           <div class="ml-2">
-            <ActionIcon icon={IconDelete} size="small" dataId="btnDeleteMixin" action={() => onDelete?.()} {disabled} />
+            <ActionIcon
+              icon={ui.icon.Trash}
+              size="small"
+              dataId="btnDeleteMixin"
+              action={() => onDelete?.()}
+              {disabled}
+            />
           </div>
         {/if}
       {/if}
@@ -217,7 +221,7 @@
   <div class="hulyTableAttr-header font-medium-12" class:withButton={showHierarchy || mixinHeader}>
     {#if showHeader}
       {#if showHierarchy}
-        <Button icon={IconSettings} kind="secondary" size="small" {disabled} hasMenu>
+        <Button icon={ui.icon.Sliders} kind="secondary" size="small" {disabled} hasMenu>
           <Label label={settings.string.ClassColon} />
           {#if mixinBase !== undefined}
             <ObjectPresenter _class={mixinBase._class} objectId={mixinBase._id} value={mixinBase} />
@@ -231,15 +235,15 @@
         </Button>
       {:else if mixinHeader && clazz !== undefined}
         <div class="flex-row-center flex-gap-2">
-          <Button icon={IconSettings} kind="secondary" size="small" {disabled} hasMenu>
+          <Button icon={ui.icon.Sliders} kind="secondary" size="small" {disabled} hasMenu>
             <Label label={settings.string.MixinColon} />
             <ObjectPresenter _class={clazz._class} objectId={clazz._id} value={clazz ?? clazzHierarchy} />
           </Button>
           {#if hierarchy.hasMixin(clazz, settings.mixin.UserMixin)}
-            <ActionIcon icon={IconEdit} size="small" action={editLabel} {disabled} />
+            <ActionIcon icon={ui.icon.PencilLine} size="small" action={editLabel} {disabled} />
             {#if onDelete !== undefined}
               <ActionIcon
-                icon={IconDelete}
+                icon={ui.icon.Trash}
                 size="small"
                 dataId="btnDeleteMixin"
                 action={() => onDelete?.()}
@@ -249,7 +253,7 @@
           {/if}
         </div>
       {:else}
-        <IconSettings size="small" />
+        <Icon icon={ui.icon.Sliders} size="small" />
         <span><Label label={settings.string.ClassProperties} /></span>
       {/if}
     {:else if $$slots.header}
@@ -259,7 +263,7 @@
     {/if}
     <IconButton
       kind="primary"
-      icon={IconAdd}
+      icon={ui.icon.Plus}
       size="small"
       data-id="btnAdd"
       {disabled}
@@ -284,7 +288,7 @@
     </div>
     {#if classes.length > 0}
       <div class="hulyTableAttr-header font-medium-12 sectionHeader">
-        <IconSettings size="small" />
+        <Icon icon={ui.icon.Sliders} size="small" />
         <span class="ml-2"><Label label={settings.string.BaseClasses} /></span>
       </div>
       {#each classes as clazz2}
@@ -293,13 +297,13 @@
           class="hulyTableAttr-header font-medium-12 withButton subHeader"
           style:border-left={`3px solid ${barColor}`}
         >
-          <Button icon={IconSettings} kind="secondary" size="small" disabled hasMenu>
+          <Button icon={ui.icon.Sliders} kind="secondary" size="small" disabled hasMenu>
             <Label label={settings.string.ClassColon} />
             <ObjectPresenter _class={clazz2._class} objectId={clazz2._id} value={clazz2} />
           </Button>
           <IconButton
             kind="primary"
-            icon={IconAdd}
+            icon={ui.icon.Plus}
             size="small"
             {disabled}
             tooltip={disabled

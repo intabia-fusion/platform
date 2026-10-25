@@ -23,8 +23,6 @@
     fromTzToCurrent,
     getCurrentLocale
   } from '../../components/calendar/internal/DateUtils'
-  import IconChevronLeft from '../../components/icons/ChevronLeft.svelte'
-  import IconChevronRight from '../../components/icons/ChevronRight.svelte'
   import { deviceOptionsStore as deviceInfo } from '../../index'
   import ui from '../../plugin'
   import { tooltip as tooltipAction } from '../../tooltips'
@@ -229,7 +227,7 @@
           <IconButton
             kind="ghost"
             size="extra-small"
-            icon={IconChevronLeft}
+            icon={ui.icon.ChevronLeft}
             tooltip={{ label: ui.string.PreviousMonth }}
             on:click={() => {
               navigate(-1)
@@ -240,7 +238,7 @@
           <IconButton
             kind="ghost"
             size="extra-small"
-            icon={IconChevronRight}
+            icon={ui.icon.ChevronRight}
             tooltip={{ label: ui.string.NextMonth }}
             on:click={() => {
               navigate(1)

@@ -13,7 +13,10 @@
 // limitations under the License.
 //
 
+import { getMetadata } from '@hcengineering/platform'
 import { type ThemeVariantType } from '@hcengineering/theme'
+import ui from '@hcengineering/ui'
+
 import {
   type CanvasPoint,
   easeInOutCubic,
@@ -84,9 +87,9 @@ export type DrawingTool = 'pen' | 'erase' | 'pan' | 'text' | 'shape-rectangle' |
 
 const maxTextLength = 500
 
-const crossSvg = `<svg height="8" width="8" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-  <path d="m1.29 2.71 5.3 5.29-5.3 5.29c-.92.92.49 2.34 1.41 1.41l5.3-5.29 5.29 5.3c.92.92 2.34-.49 1.41-1.41l-5.29-5.3 5.3-5.29c.92-.93-.49-2.34-1.42-1.42l-5.29 5.3-5.29-5.3c-.93-.92-2.34.49-1.42 1.42z"/>
-</svg>`
+// Plain DOM here, so the kit icon goes in as a sprite reference.
+const crossSvg = (): string =>
+  `<svg height="8" width="8" fill="currentColor"><use href="${getMetadata(ui.icon.Cross) ?? ''}" /></svg>`
 
 type PointStatus = 'last-point' | 'intermediate-point'
 
@@ -901,7 +904,7 @@ export function drawing (
     const deleteButton = makeHandle()
     deleteButton.style.right = `-${handleSize / 2}px`
     deleteButton.style.cursor = 'pointer'
-    deleteButton.innerHTML = crossSvg
+    deleteButton.innerHTML = crossSvg()
     deleteButton.addEventListener('click', () => {
       node.removeChild(box)
       if (liveTextBox?.cmdId !== undefined) {

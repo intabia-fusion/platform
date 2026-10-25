@@ -17,9 +17,10 @@
   import type { Class, DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
   import type { IntlString, Asset } from '@hcengineering/platform'
   import type { AnyComponent } from '@hcengineering/ui'
-  import { Button, Component, IconAdd, Label, Loading, showPopup, Header, Breadcrumb } from '@hcengineering/ui'
+  import ui, { Button, Component, Label, Loading, showPopup, Header, Breadcrumb } from '@hcengineering/ui'
   import type { Viewlet, ViewletPreference } from '@hcengineering/view'
   import { ViewletSelector, getViewOptions, viewOptionStore } from '@hcengineering/view-resources'
+
   import calendar from '../plugin'
 
   export let _class: Ref<Class<Event>> = calendar.class.Event
@@ -66,7 +67,7 @@
   <Breadcrumb icon={viewIcon} label={viewLabel} size="large" isCurrent />
 
   <svelte:fragment slot="actions">
-    <Button icon={IconAdd} label={createLabel} kind="primary" on:click={showCreateDialog} />
+    <Button icon={ui.icon.Plus} label={createLabel} kind="primary" on:click={showCreateDialog} />
   </svelte:fragment>
 </Header>
 

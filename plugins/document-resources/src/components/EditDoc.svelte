@@ -37,15 +37,10 @@
   import type { MarkupNode } from '@hcengineering/text'
   import type { Heading } from '@hcengineering/text-editor'
   import { TableOfContents } from '@hcengineering/text-editor-resources'
-  import TeamspacePresenter from './teamspace/TeamspacePresenter.svelte'
-
   import type { ButtonItem } from '@hcengineering/ui'
-  import {
+  import ui, {
     Component,
     FocusHandler,
-    IconCheck,
-    IconLink,
-    IconMoreH,
     Label,
     TimeSince,
     createFocusManager,
@@ -66,6 +61,7 @@
   } from '@hcengineering/view-resources'
   import { createEventDispatcher, onDestroy, onMount } from 'svelte'
 
+  import TeamspacePresenter from './teamspace/TeamspacePresenter.svelte'
   import { unlockContent } from '..'
   import document from '../plugin'
   import { getDocumentUrl } from '../utils'
@@ -367,7 +363,7 @@
         <span class="copy-button" class:copied={isCopied}>
           <IconButton
             size="small"
-            icon={isCopied ? IconCheck : IconLink}
+            icon={isCopied ? ui.icon.Check : ui.icon.Link}
             iconSize="medium"
             kind="ghost"
             data-id="btnCopyDocumentUrl"
@@ -395,7 +391,7 @@
         <IconButton
           size="small"
           id="btn-doc-title-open-more"
-          icon={IconMoreH}
+          icon={ui.icon.DotsHorizontal}
           iconSize="medium"
           kind="ghost"
           tooltip={{ label: view.string.MoreActions, direction: 'bottom' }}

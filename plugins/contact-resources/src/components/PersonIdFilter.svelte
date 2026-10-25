@@ -18,15 +18,7 @@
   import type { FindResult, PersonId, Ref, Space, WithLookup } from '@hcengineering/core'
   import core, { getObjectValue, includesAny } from '@hcengineering/core'
   import presentation, { getClient } from '@hcengineering/presentation'
-  import ui, {
-    deviceOptionsStore,
-    EditWithIcon,
-    Icon,
-    IconCheck,
-    IconSearch,
-    Loading,
-    resizeObserver
-  } from '@hcengineering/ui'
+  import ui, { deviceOptionsStore, EditWithIcon, Icon, Loading, resizeObserver } from '@hcengineering/ui'
   import type { Filter } from '@hcengineering/view'
   import view from '@hcengineering/view'
   import { FILTER_DEBOUNCE_MS, sortFilterValues } from '@hcengineering/view-resources'
@@ -160,7 +152,7 @@
 <div class="selectPopup" use:resizeObserver={() => dispatch('changeContent')}>
   <div class="header">
     <EditWithIcon
-      icon={IconSearch}
+      icon={ui.icon.Search}
       size="large"
       width="100%"
       autoFocus={!$deviceOptionsStore.isMobile}
@@ -191,7 +183,7 @@
             </div>
             <div class="check pointer-events-none">
               {#if isPersonSelected(person, filter.value)}
-                <Icon icon={IconCheck} size="small" />
+                <Icon icon={ui.icon.Check} size="small" />
               {/if}
             </div>
           </button>

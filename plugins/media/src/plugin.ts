@@ -34,7 +34,8 @@ export const mediaPlugin = plugin(mediaId, {
     Mic: '' as Asset,
     Cam: '' as Asset,
     MicOff: '' as Asset,
-    CamOff: '' as Asset
+    CamOff: '' as Asset,
+    Speaker: '' as Asset
   },
   string: {
     TurnOnCam: '' as IntlString,

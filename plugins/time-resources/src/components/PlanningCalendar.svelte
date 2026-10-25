@@ -12,8 +12,6 @@
   import { createQuery, getClient, reduceCalls } from '@hcengineering/presentation'
   import type { AnyComponent } from '@hcengineering/ui'
   import ui, {
-    IconChevronLeft,
-    IconChevronRight,
     Label,
     areDatesEqual,
     showPopup,
@@ -27,11 +25,11 @@
   } from '@hcengineering/ui'
   import { Button, IconButton } from '@hcengineering/ui/kit'
   import type { ToDo, WorkSlot } from '@hcengineering/time'
+
   import type { PlannerCalendarMode } from '..'
   import time from '../plugin'
   import PlannerViewSwitch from './PlannerViewSwitch.svelte'
   import { eventWindowQueries, getWorkSlotSpace } from '../utils'
-  import IconSun from './icons/Sun.svelte'
 
   export let dragItem: ToDo | null = null
   export let currentDate: Date = new Date()
@@ -360,7 +358,7 @@
         }}
       />
       <IconButton
-        icon={IconChevronLeft}
+        icon={ui.icon.ChevronLeft}
         kind="secondary"
         size="small"
         data-id="btnPrev"
@@ -371,7 +369,7 @@
       />
       {#key lang}
         <Button
-          icon={IconSun}
+          icon={ui.icon.Sun}
           label={showLabel ? ui.string.TodayDate : undefined}
           labelParams={{ date: getFormattedDate(todayDate.getTime(), { weekday: 'short', day: 'numeric' }) }}
           tooltip={!showLabel ? { label: time.string.Today } : undefined}
@@ -386,7 +384,7 @@
         />
       {/key}
       <IconButton
-        icon={IconChevronRight}
+        icon={ui.icon.ChevronRight}
         kind="secondary"
         size="small"
         data-id="btnNext"

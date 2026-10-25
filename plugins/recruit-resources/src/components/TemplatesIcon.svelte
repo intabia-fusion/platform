@@ -1,11 +1,12 @@
 <script lang="ts">
+  import ui, { Icon } from '@hcengineering/ui'
   import type { IconSize } from '@hcengineering/ui'
-  import VacancyIcon from './icons/Vacancy.svelte'
+
   export let size: IconSize = 'small'
 </script>
 
 <div class="flex-center template-icon">
-  <VacancyIcon {size} />
+  <Icon icon={ui.icon.Briefcase} {size} />
 </div>
 
 <style lang="scss">

@@ -16,7 +16,7 @@
 <script lang="ts">
   import { onDestroy } from 'svelte'
   import { SortingOrder } from '@hcengineering/core'
-  import { IconAdd, IconCopy, Label, showPopup, type DropdownIntlItem } from '@hcengineering/ui'
+  import ui, { Label, showPopup, type DropdownIntlItem, Icon } from '@hcengineering/ui'
   import { IconButton, MenuButton } from '@hcengineering/ui/kit'
   import { Severity, Status, setPlatformStatus } from '@hcengineering/platform'
   import presentation, { createQuery } from '@hcengineering/presentation'
@@ -25,7 +25,6 @@
   import type { TaskTypeExportConfig } from '@hcengineering/task'
   import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
 
-  import IconLayers from '../icons/Layers.svelte'
   import TaskTypeIcon from '../taskTypes/TaskTypeIcon.svelte'
   import CreateTaskType from '../taskTypes/CreateTaskType.svelte'
   import TaskTypeDiagramPopup from '../taskTypes/TaskTypeDiagramPopup.svelte'
@@ -60,7 +59,7 @@
     {
       id: 'clipboard',
       label: task.string.ImportFromClipboard,
-      icon: IconCopy
+      icon: ui.icon.Copy
     }
   ]
 
@@ -182,7 +181,7 @@
 {#if descriptor !== undefined}
   <input type="file" accept=".json" bind:this={fileInput} style="display: none;" on:change={handleFileInputChange} />
   <div class="hulyTableAttr-header font-medium-12">
-    <IconLayers size="small" />
+    <Icon icon={ui.icon.Layers} size="small" />
     <span><Label label={task.string.TaskTypes} /></span>
     <div class="flex-row-center flex-gap-2">
       <IconButton
@@ -212,7 +211,7 @@
       />
       <IconButton
         kind="primary"
-        icon={IconAdd}
+        icon={ui.icon.Plus}
         size="small"
         data-id="btnAdd"
         {disabled}

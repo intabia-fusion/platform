@@ -13,8 +13,6 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import DPCalendar from './icons/DPCalendar.svelte'
-  import DPCalendarOver from './icons/DPCalendarOver.svelte'
   import ui from '../../plugin'
   import Icon from '../Icon.svelte'
   import Label from '../Label.svelte'
@@ -33,7 +31,7 @@
       class:mIconContainerWarning={iconModifier === 'warning'}
       class:mIconContainerCritical={iconModifier === 'critical' || iconModifier === 'overdue'}
     >
-      <Icon icon={isOverdue && !shouldIgnoreOverdue ? DPCalendarOver : DPCalendar} size="small" />
+      <Icon icon={isOverdue && !shouldIgnoreOverdue ? ui.icon.CalendarX : ui.icon.Calendar} size="small" />
     </div>
     <div class="messageContainer">
       <div class="title">

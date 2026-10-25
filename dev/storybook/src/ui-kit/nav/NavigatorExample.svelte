@@ -14,16 +14,7 @@
 -->
 <script lang="ts">
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import {
-    IconActivity,
-    IconAdd,
-    IconColStar,
-    IconFile,
-    IconFolder,
-    IconMoreH,
-    IconSettings,
-    IconThread
-  } from '@hcengineering/ui'
+  import ui from '@hcengineering/ui'
   import { IconButton, NavGroup, NavItem } from '@hcengineering/ui/kit'
 
   const t = getEmbeddedLabel
@@ -43,30 +34,40 @@
   <div class="navigator-example__items">
     <NavItem
       label={t('Inbox')}
-      icon={IconActivity}
+      icon={ui.icon.ChartSquare}
       count={12}
       selected={selected === 'inbox'}
       on:click={pick('inbox')}
     />
-    <NavItem label={t('Threads')} icon={IconThread} selected={selected === 'threads'} on:click={pick('threads')} />
-    <NavItem label={t('Settings')} icon={IconSettings} disabled />
+    <NavItem label={t('Threads')} icon={ui.icon.Bubble} selected={selected === 'threads'} on:click={pick('threads')} />
+    <NavItem label={t('Settings')} icon={ui.icon.Sliders} disabled />
   </div>
 
   <NavGroup label={t('Starred')} expandable highlighted={selected.startsWith('star')}>
     <svelte:fragment slot="tools">
-      <IconButton icon={IconMoreH} kind="ghost" size="extra-small" tooltip={{ label: t('More actions') }} />
+      <IconButton
+        icon={ui.icon.DotsHorizontal}
+        kind="ghost"
+        size="extra-small"
+        tooltip={{ label: t('More actions') }}
+      />
     </svelte:fragment>
     <div class="navigator-example__items">
       <NavItem
         label={t('general')}
         count={42}
-        icon={IconColStar}
+        icon={ui.icon.Star}
         kind="object"
         selected={selected === 'star-general'}
         on:click={pick('star-general')}
       >
         <svelte:fragment slot="actions">
-          <IconButton icon={IconMoreH} kind="ghost" size="extra-small" tooltip={{ label: t('More actions') }} />
+          <IconButton
+            icon={ui.icon.DotsHorizontal}
+            kind="ghost"
+            size="extra-small"
+            tooltip={{ label: t('More actions') }}
+          />
         </svelte:fragment>
       </NavItem>
       <NavItem label={t('Urgent')} color="#F96E50" selected={selected === 'star-tag'} on:click={pick('star-tag')} />
@@ -75,13 +76,13 @@
 
   <NavGroup label={t('Teamspaces')} expandable highlighted={selected.startsWith('doc')}>
     <svelte:fragment slot="tools">
-      <IconButton icon={IconAdd} kind="ghost" size="extra-small" tooltip={{ label: t('New teamspace') }} />
+      <IconButton icon={ui.icon.Plus} kind="ghost" size="extra-small" tooltip={{ label: t('New teamspace') }} />
     </svelte:fragment>
-    <NavGroup label={t('Product')} kind="nested" icon={IconFolder} expandable>
+    <NavGroup label={t('Product')} kind="nested" icon={ui.icon.Folder} expandable>
       <div class="navigator-example__items">
         <NavItem
           label={t('Specification')}
-          icon={IconFile}
+          icon={ui.icon.File}
           expandable
           bind:open={openSpec}
           selected={selected === 'doc-spec'}
@@ -90,7 +91,7 @@
           <svelte:fragment slot="children">
             <NavItem
               label={t('Requirements with a long title that is cut')}
-              icon={IconFile}
+              icon={ui.icon.File}
               level={1}
               expandable
               empty
@@ -99,31 +100,31 @@
             />
             <NavItem
               label={t('Design')}
-              icon={IconFile}
+              icon={ui.icon.File}
               level={1}
               expandable
               bind:open={openDocs}
               on:click={pick('doc-design')}
             >
               <svelte:fragment slot="children">
-                <NavItem label={t('Mockups')} icon={IconFile} level={2} expandable empty />
+                <NavItem label={t('Mockups')} icon={ui.icon.File} level={2} expandable empty />
               </svelte:fragment>
             </NavItem>
           </svelte:fragment>
         </NavItem>
-        <NavItem label={t('Roadmap')} icon={IconFile} expandable empty on:click={pick('doc-roadmap')} />
+        <NavItem label={t('Roadmap')} icon={ui.icon.File} expandable empty on:click={pick('doc-roadmap')} />
       </div>
     </NavGroup>
     <NavGroup
       label={t('Drive')}
       kind="nested"
-      icon={IconFolder}
+      icon={ui.icon.Folder}
       expandable
       selected={selected === 'drive'}
       on:select={pick('drive')}
     >
       <div class="navigator-example__items">
-        <NavItem label={t('Contracts')} icon={IconFolder} expandable empty />
+        <NavItem label={t('Contracts')} icon={ui.icon.Folder} expandable empty />
       </div>
     </NavGroup>
   </NavGroup>

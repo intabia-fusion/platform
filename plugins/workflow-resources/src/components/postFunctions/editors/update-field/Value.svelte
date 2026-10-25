@@ -13,7 +13,7 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Button, IconClose, Label, tooltip } from '@hcengineering/ui'
+  import ui, { Button, Label, tooltip } from '@hcengineering/ui'
   import type { WorkflowFieldValue } from '@hcengineering/workflow'
   import type { Class, Doc, Mixin, Ref } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
@@ -103,7 +103,7 @@
   {/if}
 
   <Button
-    icon={IconClose}
+    icon={ui.icon.Cross}
     kind="ghost"
     size="inline"
     on:click={() => {

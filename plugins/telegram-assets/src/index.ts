@@ -17,11 +17,11 @@
 import { loadMetadata } from '@hcengineering/platform'
 import telegram from '@hcengineering/telegram'
 
-const icons = require('../assets/icons.svg') as string // eslint-disable-line
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(telegram.icon, {
-  Shared: `${icons}#shared`,
-  Locked: `${icons}#locked`,
-  User: `${icons}#user`,
-  Channel: `${icons}#channel`,
-  Group: `${icons}#group`
+  Shared: `${uiIcons}#people`,
+  Locked: `${uiIcons}#lock-fill`,
+  User: `${uiIcons}#person`,
+  Channel: `${uiIcons}#hash`,
+  Group: `${uiIcons}#people`
 })

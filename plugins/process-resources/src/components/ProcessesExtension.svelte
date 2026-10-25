@@ -20,10 +20,9 @@
   import core, { SortingOrder } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import type { Execution, Process } from '@hcengineering/process'
-  import {
+  import ui, {
     Button,
     eventToHTMLElement,
-    IconAdd,
     Label,
     registerFocus,
     resizeObserver,
@@ -35,6 +34,7 @@
   import type { SelectDirection } from '@hcengineering/view-resources'
   import { List, ListSelectionProvider, noCategory, ViewletsSettingButton } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
+
   import process from '../plugin'
   import RunProcessPopup from './RunProcessPopup.svelte'
 
@@ -132,7 +132,7 @@
     <div class="buttons-group xsmall-gap">
       <ViewletsSettingButton bind:viewOptions viewletQuery={{ _id: viewletId }} kind="tertiary" bind:viewlet />
       {#if !readonly && !checkForbiddenPermission($permissionsStore)}
-        <Button id={process.string.RunProcess} icon={IconAdd} kind="ghost" on:click={add} />
+        <Button id={process.string.RunProcess} icon={ui.icon.Plus} kind="ghost" on:click={add} />
       {/if}
     </div>
   </svelte:fragment>

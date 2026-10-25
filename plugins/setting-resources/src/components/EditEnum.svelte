@@ -16,28 +16,15 @@
   import type { Enum } from '@hcengineering/core'
   import core from '@hcengineering/core'
   import presentation, { getClient, MessageBox } from '@hcengineering/presentation'
-  import {
-    IconAdd,
-    IconAttachment,
-    IconDelete,
-    showPopup,
-    Modal,
-    ModernEditbox,
-    Label,
-    IconMoreV,
-    IconMoreV2,
-    eventToHTMLElement,
-    ModernPopup
-  } from '@hcengineering/ui'
+  import ui, { showPopup, Modal, ModernEditbox, Label, eventToHTMLElement, ModernPopup, Icon } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import type { DropdownIntlItem } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+  import type { IntlString } from '@hcengineering/platform'
+
   import setting from '../plugin'
   import EnumValuesList from './EnumValuesList.svelte'
-  import IconBulletList from './icons/BulletList.svelte'
-  import Report from './icons/Report.svelte'
-  import type { IntlString } from '@hcengineering/platform'
 
   export let value: Enum | undefined
   export let name: string = value?.name ?? ''
@@ -154,7 +141,7 @@
   const items: (DropdownIntlItem & { action: () => void })[] = [
     {
       id: 'import',
-      icon: IconAttachment,
+      icon: ui.icon.Paperclip,
       label: setting.string.ImportEnum,
       action: () => {
         inputFile.click()
@@ -162,7 +149,7 @@
     },
     {
       id: 'paste',
-      icon: Report,
+      icon: ui.icon.Clipboard,
       label: setting.string.ImportEnumCopy,
       action: () => {
         void handleClipboard()
@@ -239,13 +226,13 @@
       on:drop|preventDefault|stopPropagation={fileDrop}
     >
       <div class="hulyTableAttr-header font-medium-12">
-        <IconBulletList size="small" />
+        <Icon icon={ui.icon.BulletList} size="small" />
         <span><Label label={setting.string.Options} /></span>
         <div class="buttons-group tertiary-textColor">
           <IconButton
             tooltip={{ label: view.string.MoreActions }}
             kind="tertiary"
-            icon={IconMoreV}
+            icon={ui.icon.DotsVertical}
             size="small"
             pressed={opened}
             inheritColor
@@ -256,7 +243,7 @@
           />
           <IconButton
             kind="primary"
-            icon={IconAdd}
+            icon={ui.icon.Plus}
             size="small"
             tooltip={{ label: setting.string.Add }}
             on:click={() => {
@@ -283,7 +270,7 @@
           {#if newItem}
             <div class="hulyTableAttr-content__row hovered">
               <div class="hulyTableAttr-content__row-dragMenu">
-                <IconMoreV2 size="small" />
+                <Icon icon={ui.icon.GripVertical} size="small" />
               </div>
               <div class="hulyTableAttr-content__row-label font-regular-14 accent grow">
                 <ModernEditbox
@@ -310,7 +297,7 @@
               <IconButton
                 tooltip={{ label: setting.string.Delete }}
                 kind="tertiary"
-                icon={IconDelete}
+                icon={ui.icon.Trash}
                 size="small"
                 on:click={() => {
                   newValue = ''

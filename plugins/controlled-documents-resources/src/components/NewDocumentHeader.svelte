@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import type { SelectPopupValueType } from '@hcengineering/ui'
-  import { Button, ButtonWithDropdown, IconAdd, IconDropdown, showPopup } from '@hcengineering/ui'
+  import ui, { Button, ButtonWithDropdown, showPopup } from '@hcengineering/ui'
   import { checkMyPermission, permissionsStore } from '@hcengineering/contact-resources'
 
   import documents from '../plugin'
@@ -66,11 +66,11 @@
 <div class="antiNav-subheader">
   {#if dropdownItems.length > 0}
     <ButtonWithDropdown
-      icon={IconAdd}
+      icon={ui.icon.Plus}
       justify="left"
       kind="primary"
       label={documents.string.NewDocument}
-      dropdownIcon={IconDropdown}
+      dropdownIcon={ui.icon.ChevronDown}
       {dropdownItems}
       on:click={newDocument}
       on:dropdown-selected={(ev) => {
@@ -79,7 +79,7 @@
     />
   {:else}
     <Button
-      icon={IconAdd}
+      icon={ui.icon.Plus}
       justify="left"
       kind="primary"
       label={documents.string.NewDocument}

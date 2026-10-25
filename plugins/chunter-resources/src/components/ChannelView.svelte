@@ -15,11 +15,9 @@
 <script lang="ts">
   import type { Doc, Ref, Space } from '@hcengineering/core'
   import core, { getCurrentAccount } from '@hcengineering/core'
-  import {
-    Button as LegacyButton,
+  import ui, {
     defineSeparators,
     getCurrentLocation,
-    IconSearch,
     Label,
     location as locationStore,
     deviceOptionsStore as deviceInfo,
@@ -27,7 +25,7 @@
     panelSeparators,
     Separator
   } from '@hcengineering/ui'
-  import { Button } from '@hcengineering/ui/kit'
+  import { Button, IconButton } from '@hcengineering/ui/kit'
   import type { ActivityMessage } from '@hcengineering/activity'
   import { getClient } from '@hcengineering/presentation'
   import type { Channel, ObjectChatPanel } from '@hcengineering/chunter'
@@ -251,13 +249,14 @@
       </svelte:fragment>
       <svelte:fragment slot="actions">
         {#if searchAvailable}
-          <LegacyButton
-            icon={IconSearch}
-            iconProps={{ size: 'small' }}
-            kind="icon"
-            dataId="channel-search"
+          <IconButton
+            size="small"
+            icon={ui.icon.Search}
+            iconSize="medium"
+            kind="ghost"
+            data-id="channel-search"
             selected={searchOpened}
-            showTooltip={{ label: searchOpened ? chunter.string.SearchClose : chunter.string.SearchInChannel }}
+            tooltip={{ label: searchOpened ? chunter.string.SearchClose : chunter.string.SearchInChannel }}
             on:click={toggleSearch}
           />
         {/if}

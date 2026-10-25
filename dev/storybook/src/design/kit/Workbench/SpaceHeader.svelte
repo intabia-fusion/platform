@@ -14,7 +14,8 @@
 -->
 <script lang="ts">
   // Header of a space view (ui Header, doubleRow): view switcher, title or custom title, actions, filter row with extra controls and mode tabs
-  import { Button as UiButton, IconFilter, SearchInput } from '@hcengineering/ui'
+  import ui, { Button as UiButton, SearchInput } from '@hcengineering/ui'
+
   import Button from '../Actions/Button.svelte'
   import Switcher from '../Actions/Switcher.svelte'
   import Icon from '../Icon.svelte'
@@ -22,7 +23,7 @@
 
   export let view: 'list' | 'board' = 'list'
   export let title: string = ''
-  export let titleIcon: IconName = 'tracker/issues'
+  export let titleIcon: IconName = 'kit/CheckSquare'
   export let tabs: string[] = ['All', 'Active', 'Backlog']
   export let tab: string = tabs[0]
   // The slot replaces the title and icon
@@ -33,11 +34,11 @@
   <div class="row top">
     <div class="before">
       <Switcher
-        items={['tracker/list', 'task/kanban', 'tracker/estimation']}
-        selected={view === 'list' ? 'tracker/list' : 'task/kanban'}
+        items={['kit/BulletList', 'kit/Kanban', 'kit/CircleHalfFill']}
+        selected={view === 'list' ? 'kit/BulletList' : 'kit/Kanban'}
       />
-      <Button size="small" icon="ui/Options" />
-      <Button size="small" icon="view/configure" />
+      <Button size="small" icon="kit/ArrowUpLines" />
+      <Button size="small" icon="kit/SlidersHorizontal" />
     </div>
     <div class="title">
       {#if customTitle}
@@ -51,12 +52,12 @@
     </div>
     <div class="actions">
       <slot name="actions" />
-      <Button size="small" icon="ui/MoreH" />
+      <Button size="small" icon="kit/DotsHorizontal" />
     </div>
   </div>
   <div class="row bottom">
     <div class="search">
-      <UiButton kind="regular" size="medium" icon={IconFilter}>
+      <UiButton kind="regular" size="medium" icon={ui.icon.Funnel}>
         <svelte:fragment slot="content"
           ><span class="overflow-label label disabled pointer-events-none">Filter</span></svelte:fragment
         >

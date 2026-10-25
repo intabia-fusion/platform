@@ -15,13 +15,13 @@
 <script lang="ts">
   import type { Class, Doc, Ref, Space } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { Button, IconFilter, eventToHTMLElement, resolvedLocationStore, showPopup } from '@hcengineering/ui'
+  import ui, { Button, eventToHTMLElement, resolvedLocationStore, showPopup } from '@hcengineering/ui'
   import type { Filter, ViewOptions } from '@hcengineering/view'
+  import { onDestroy } from 'svelte'
+
   import { filterStore, getFilterKey, selectedFilterStore, setFilters } from '../../filter'
   import view from '../../plugin'
   import FilterTypePopup from './FilterTypePopup.svelte'
-  import IconClose from '../icons/Close.svelte'
-  import { onDestroy } from 'svelte'
 
   export let _class: Ref<Class<Doc>> | undefined
   export let space: Ref<Space> | undefined = undefined
@@ -92,7 +92,7 @@
 
 {#if visible}
   <Button
-    icon={$filterStore.length === 0 ? IconFilter : IconClose}
+    icon={$filterStore.length === 0 ? ui.icon.Funnel : ui.icon.Cross}
     label={adaptive ? undefined : $filterStore.length === 0 ? view.string.Filter : view.string.ClearFilters}
     kind="regular"
     size="medium"

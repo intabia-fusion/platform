@@ -16,7 +16,7 @@
   import type { IntlString } from '@hcengineering/platform'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import type { ColorDefinition } from '@hcengineering/ui'
-  import { getPlatformColorDef, themeStore, tooltip, Label, IconClose } from '@hcengineering/ui'
+  import ui, { getPlatformColorDef, themeStore, tooltip, Label } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import { createEventDispatcher } from 'svelte'
 
@@ -57,7 +57,7 @@
 
   {#if removable}
     <IconButton
-      icon={IconClose}
+      icon={ui.icon.Cross}
       size="min"
       iconSize="x-small"
       kind="tertiary"

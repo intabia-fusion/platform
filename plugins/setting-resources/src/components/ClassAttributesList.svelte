@@ -21,14 +21,15 @@
   import { getResource } from '@hcengineering/platform'
   import presentation, { createQuery, getClient } from '@hcengineering/presentation'
   import type { Action, AnySvelteComponent } from '@hcengineering/ui'
-  import { IconCopy, IconDelete, IconEdit, Menu, getEventPositionElement, showPopup } from '@hcengineering/ui'
+  import ui, { Menu, getEventPositionElement, showPopup } from '@hcengineering/ui'
   import { getContextActions, SortableList } from '@hcengineering/view-resources'
+  import { makeRank, toRank } from '@hcengineering/rank'
+  import { TypeIdentifier } from '@hcengineering/model'
+
   import settings from '../plugin'
   import ClassAttributeRow from './ClassAttributeRow.svelte'
-  import { makeRank, toRank } from '@hcengineering/rank'
   import EditAttribute from './EditAttribute.svelte'
   import { showDeleteAttributePopup } from '../utils'
-  import { TypeIdentifier } from '@hcengineering/model'
 
   export let _class: Ref<Class<Doc>>
   export let ofClass: Ref<Class<Doc>> | undefined = undefined
@@ -111,7 +112,7 @@
     const actions: Action[] = [
       {
         label: presentation.string.Edit,
-        icon: IconEdit,
+        icon: ui.icon.PencilLine,
         action: async () => {
           dispatch('select', attribute)
         }
@@ -121,7 +122,7 @@
       if (attribute.attributeOf !== _class && attribute.type._class === core.class.TypeIdentifier) {
         actions.push({
           label: settings.string.OverrideAttribute,
-          icon: IconCopy,
+          icon: ui.icon.Copy,
           action: async () => {
             await overrideAttribute(attribute)
           }
@@ -129,7 +130,7 @@
       }
       actions.push({
         label: presentation.string.Remove,
-        icon: IconDelete,
+        icon: ui.icon.Trash,
         action: async () => {
           await removeAttribute(attribute, exist)
         }

@@ -263,6 +263,7 @@ const configs: Record<string, string> = {
 import presentationStrings from '@hcengineering/presentation/src/lang'
 import textEditorStrings from '@hcengineering/text-editor-assets/lang'
 import uiStrings from '@hcengineering/ui/src/lang'
+import uiIcons from '@hcengineering/ui/src/icons'
 import uploaderStrings from '@hcengineering/uploader-assets/lang'
 import recorderStrings from '@hcengineering/recorder-assets/lang'
 import mediaStrings from '@hcengineering/media-assets/lang'
@@ -356,6 +357,7 @@ function configureI18n(): void {
   presentationStrings()
   textEditorStrings()
   uiStrings()
+  uiIcons()
   uploaderStrings()
   recorderStrings()
   mediaStrings()

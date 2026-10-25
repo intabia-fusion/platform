@@ -22,10 +22,11 @@
   import type { ToDo, WorkSlot } from '@hcengineering/time'
   import { getResource } from '@hcengineering/platform'
   import presentation from '@hcengineering/presentation'
-  import { IconClose, Label } from '@hcengineering/ui'
+  import ui, { Label } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import type { Widget } from '@hcengineering/workbench'
   import workbench from '@hcengineering/workbench'
+
   import time from '../../plugin'
   import DayPlan from './agenda/DayPlan.svelte'
   import WithTeamData from './WithTeamData.svelte'
@@ -65,7 +66,7 @@
       <PersonPresenter value={person} shouldShowAvatar shouldShowName />
       {#if widget !== undefined}
         <IconButton
-          icon={IconClose}
+          icon={ui.icon.Cross}
           size="small"
           kind="tertiary"
           tooltip={{ label: presentation.string.Close }}

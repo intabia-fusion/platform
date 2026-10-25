@@ -18,12 +18,11 @@
   import type { DocumentUpdate, Ref } from '@hcengineering/core'
   import presentation, { ComponentExtensions, getClient } from '@hcengineering/presentation'
   import { StyledTextBox } from '@hcengineering/text-editor-resources'
-  import {
+  import ui, {
     Button,
     EditBox,
     FocusHandler,
     Icon,
-    IconClose,
     createFocusManager,
     getUserTimezone,
     showPopup,
@@ -31,6 +30,7 @@
   } from '@hcengineering/ui'
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher } from 'svelte'
+
   import calendar from '../plugin'
   import { isReadOnly, saveUTC, updateReccuringInstance } from '../utils'
   import CalendarSelector from './CalendarSelector.svelte'
@@ -179,7 +179,7 @@
       <Button
         id="card-close"
         focusIndex={10003}
-        icon={IconClose}
+        icon={ui.icon.Cross}
         kind="ghost"
         size="small"
         on:click={() => {

@@ -13,7 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import IconDownOutline from './icons/DownOutline.svelte'
+  import ui from '../plugin'
+  import Icon from './Icon.svelte'
 
   export let size: 'small' | 'medium' = 'medium'
   export let fill = 'var(--dark-color)'
@@ -34,11 +35,9 @@
   style:margin
 >
   {#if outline}
-    <IconDownOutline {size} {fill} />
+    <Icon icon={ui.icon.ChevronDown} {size} {fill} />
   {:else}
-    <svg {fill} viewBox="0 0 6 6" xmlns="http://www.w3.org/2000/svg">
-      <path d="M0,0L6,3L0,6Z" />
-    </svg>
+    <Icon icon={ui.icon.CaretRightFill} size="small" {fill} />
   {/if}
 </div>
 
@@ -59,8 +58,12 @@
         transform: rotate(0deg);
       }
     }
+    // The kit caret is centred in a 16px icon: the box keeps the old size, the icon overflows it evenly.
     &:not(.outline) {
-      transform-origin: 35% center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform-origin: center;
       transform: rotate(0deg);
 
       &.small {

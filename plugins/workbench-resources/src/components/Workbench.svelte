@@ -36,7 +36,7 @@
     PopupResult,
     ResolvedLocation
   } from '@hcengineering/ui'
-  import {
+  import ui, {
     areLocationsEqual,
     Button,
     closePanel,
@@ -48,7 +48,6 @@
     Dock,
     getCurrentLocation,
     getLocation,
-    IconSettings,
     isSameSegments,
     Label,
     languageStore,
@@ -103,7 +102,6 @@
   import Navigator from './Navigator.svelte'
   import SelectWorkspaceMenu from './SelectWorkspaceMenu.svelte'
   import SpaceView from './SpaceView.svelte'
-  import TopMenu from './icons/TopMenu.svelte'
   import WidgetsBar from './sidebar/Sidebar.svelte'
   import { sidebarStore, SidebarVariant, syncSidebarState } from '../sidebar'
   import {
@@ -839,7 +837,7 @@
         </div>
         <div class="topmenu-container clear-mins flex-no-shrink" class:mini={appsMini}>
           <AppItem
-            icon={TopMenu}
+            icon={ui.icon.Equals}
             label={$deviceInfo.navigator.visible ? workbench.string.HideMenu : workbench.string.ShowMenu}
             selected={!$deviceInfo.navigator.visible}
             size={appsMini ? 'small' : 'medium'}

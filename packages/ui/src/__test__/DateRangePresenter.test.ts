@@ -14,14 +14,17 @@
 //
 
 import { DateRangeMode } from '@hcengineering/core'
+import { setMetadata } from '@hcengineering/platform'
 import { tick } from 'svelte'
 import { get } from 'svelte/store'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ComponentProps } from 'svelte'
+
 import DateRangePresenter from '../components/calendar/DateRangePresenter.svelte'
 import { formatDate } from '../components/calendar/internal/DateUtils'
 import { modalStore } from '../modals'
 import { popupstore } from '../popups'
+import ui from '../plugin'
 
 let target: HTMLElement
 
@@ -38,9 +41,14 @@ function mount (props: Partial<ComponentProps<DateRangePresenter>> = {}): Mounte
 }
 
 const norm = (s: string | null): string => (s ?? '').replace(/\s+/g, ' ').trim()
+// Kit icons render as <use>: the sprite fragment tells the normal calendar from the overdue one.
+const iconHref = (host: HTMLElement): string | null =>
+  host.querySelector('.btn-icon svg use')?.getAttribute('href') ?? null
 
 describe('DateRangePresenter', () => {
   beforeEach(() => {
+    setMetadata(ui.icon.Calendar, '#calendar')
+    setMetadata(ui.icon.CalendarX, '#calendar-x')
     target = document.createElement('div')
     document.body.appendChild(target)
     modalStore.set([])
@@ -57,8 +65,7 @@ describe('DateRangePresenter', () => {
   it('inline: shows the NoDate placeholder and default icon when value is empty', () => {
     const { host } = mount({ inline: true })
     expect(host.querySelector('.overflow-label')).not.toBeNull()
-    // DPCalendar (normal) has exactly one <path>, DPCalendarOver (overdue) has two
-    expect(host.querySelectorAll('.btn-icon svg path').length).toBe(1)
+    expect(iconHref(host)).toBe('#calendar')
   })
 
   it('inline: omits the year when it matches the current year, shows it otherwise', () => {
@@ -87,12 +94,12 @@ describe('DateRangePresenter', () => {
     expect(host.querySelector('.btn-icon')).toBeNull()
   })
 
-  it('inline: overdue icon modifier swaps to DPCalendarOver unless shouldIgnoreOverdue', () => {
+  it('inline: overdue icon modifier swaps to CalendarX unless shouldIgnoreOverdue', () => {
     const overdue = mount({ inline: true, iconModifier: 'overdue' })
-    expect(overdue.host.querySelectorAll('.btn-icon svg path').length).toBe(2)
+    expect(iconHref(overdue.host)).toBe('#calendar-x')
 
     const ignored = mount({ inline: true, iconModifier: 'overdue', shouldIgnoreOverdue: true })
-    expect(ignored.host.querySelectorAll('.btn-icon svg path').length).toBe(1)
+    expect(iconHref(ignored.host)).toBe('#calendar')
   })
 
   it('inline: applies fs-bold when accent is set', () => {

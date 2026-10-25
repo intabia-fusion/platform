@@ -20,7 +20,7 @@
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import presentation, { getClient, reduceCalls } from '@hcengineering/presentation'
   import type { ButtonKind, ButtonSize, IconSize, LabelAndProps } from '@hcengineering/ui'
-  import {
+  import ui, {
     ActionIcon,
     Button,
     Icon,
@@ -33,13 +33,13 @@
   import view from '@hcengineering/view'
   import { openDoc } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
+
   import type { PersonLabelTooltip } from '..'
   import { getPersonByPersonRefStore } from '..'
   import type { AssigneeCategory } from '../assignee'
   import AssigneePopup from './AssigneePopup.svelte'
   import EmployeePresenter from './EmployeePresenter.svelte'
   import UserInfo from './UserInfo.svelte'
-  import IconPerson from './icons/Person.svelte'
 
   export let _class: Ref<Class<Employee>> = contact.mixin.Employee
   export let excluded: Ref<Contact>[] | undefined = undefined
@@ -69,7 +69,7 @@
   export let short: boolean = false
   export let showStatus = false
 
-  const icon = IconPerson
+  const icon = ui.icon.PersonCircle
 
   const dispatch = createEventDispatcher()
 

@@ -16,7 +16,11 @@
 import recorder from '@hcengineering/recorder'
 import { loadMetadata } from '@hcengineering/platform'
 
-const recordIcon = require('../assets/icon.svg') as string // eslint-disable-line
+const icons = require('../assets/icons.svg') as string // eslint-disable-line
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(recorder.icon, {
-  Record: `${recordIcon}#record`
+  Record: `${uiIcons}#camera`,
+  Recording: `${icons}#dot`,
+  Stop: `${icons}#square-round-fill`,
+  Pause: `${icons}#pause-thin`
 })

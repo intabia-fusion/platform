@@ -17,9 +17,9 @@
   import contact from '@hcengineering/contact'
   import type { Ref } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import { Scroller } from '@hcengineering/ui'
+  import ui, { Icon, Scroller } from '@hcengineering/ui'
   import { createEventDispatcher, onMount } from 'svelte'
-  import ExpandRightDouble from './icons/ExpandRightDouble.svelte'
+
   import OrganizationCard from './OrganizationCard.svelte'
   import PersonCard from './PersonCard.svelte'
 
@@ -56,7 +56,7 @@
   <Scroller horizontal>
     <div class="flex-between min-w-min">
       <div class="card"><PersonCard object={refContact} on:click /></div>
-      <div class="arrows"><ExpandRightDouble /></div>
+      <div class="arrows"><Icon icon={ui.icon.ChevronDoubleRight} size="x-large" fill="var(--dark-color)" /></div>
       <div class="card"><OrganizationCard {organization} /></div>
     </div>
   </Scroller>

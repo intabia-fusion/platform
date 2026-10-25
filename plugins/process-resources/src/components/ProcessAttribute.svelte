@@ -18,9 +18,10 @@
   import type { Context, Process, SelectedContext } from '@hcengineering/process'
   import { createContext, parseContext } from '@hcengineering/process'
   import type { AnySvelteComponent } from '@hcengineering/ui'
-  import { Button, eventToHTMLElement, IconAdd, IconClose, Label, showPopup, tooltip } from '@hcengineering/ui'
+  import ui, { Button, eventToHTMLElement, Label, showPopup, tooltip } from '@hcengineering/ui'
   import type { AttributeCategory } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
+
   import ContextSelectorPopup from './attributeEditors/ContextSelectorPopup.svelte'
   import ContextValue from './attributeEditors/ContextValue.svelte'
 
@@ -116,7 +117,7 @@
   {/if}
   <div class="button flex-row-center">
     <Button
-      icon={IconAdd}
+      icon={ui.icon.Plus}
       kind="ghost"
       on:click={(e) => {
         selectContext(e)
@@ -124,7 +125,7 @@
     />
     {#if allowRemove}
       <Button
-        icon={IconClose}
+        icon={ui.icon.Cross}
         kind="ghost"
         on:click={() => {
           dispatch('remove', { key: attribute.name })

@@ -22,10 +22,9 @@
   import type { Ref, Space } from '@hcengineering/core'
   import { generateId } from '@hcengineering/core'
   import { Card, getClient } from '@hcengineering/presentation'
-  import { Button, EditBox, IconAttachment, tooltip } from '@hcengineering/ui'
+  import ui, { Button, EditBox, tooltip, Icon, FlamingoColor } from '@hcengineering/ui'
   import type { DocumentCategory } from '@hcengineering/controlled-documents'
 
-  import IconWarning from './icons/IconWarning.svelte'
   import documents from '../plugin'
 
   export let space: Ref<Space> = documents.space.QualityDocuments
@@ -115,7 +114,7 @@
           <div
             use:tooltip={{ label: documents.string.DocumentCategoryAlreadyExists, props: { title }, direction: 'left' }}
           >
-            <IconWarning size="small" />
+            <Icon icon={ui.icon.ExclamationCircle} size="small" fill={FlamingoColor} />
           </div>
         {/if}
       </div>
@@ -141,7 +140,7 @@
               direction: 'left'
             }}
           >
-            <IconWarning size="small" />
+            <Icon icon={ui.icon.ExclamationCircle} size="small" fill={FlamingoColor} />
           </div>
         {/if}
       </div>
@@ -186,7 +185,7 @@
   <svelte:fragment slot="footer">
     <Button
       focusIndex={10}
-      icon={IconAttachment}
+      icon={ui.icon.Paperclip}
       iconProps={{ fill: 'var(--theme-dark-color)' }}
       size="large"
       kind="ghost"

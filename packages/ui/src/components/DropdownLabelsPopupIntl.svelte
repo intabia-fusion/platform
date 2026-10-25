@@ -18,9 +18,8 @@
   import { translate } from '@hcengineering/platform'
 
   import type { DropdownIntlItem } from '../types'
-  import IconCheck from './icons/Check.svelte'
   import Label from './Label.svelte'
-  import { deviceOptionsStore, EditWithIcon, Icon, IconSearch, languageStore, resizeObserver } from '..'
+  import { deviceOptionsStore, EditWithIcon, Icon, languageStore, resizeObserver } from '..'
   import ui from '../plugin'
 
   export let items: DropdownIntlItem[]
@@ -85,7 +84,7 @@
   {#if withSearch}
     <div class="search">
       <EditWithIcon
-        icon={IconSearch}
+        icon={ui.icon.Search}
         size="large"
         width="100%"
         autoFocus={!$deviceOptionsStore.isMobile}
@@ -134,7 +133,7 @@
             <Label label={item.label} params={item.params ?? params} />
           </div>
           <div class="check">
-            {#if isSelected(selected, item)}<IconCheck size="small" />{/if}
+            {#if isSelected(selected, item)}<Icon icon={ui.icon.Check} size="small" />{/if}
           </div>
         </button>
       {/each}

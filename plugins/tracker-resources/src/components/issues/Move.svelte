@@ -17,9 +17,10 @@
   import type { Ref } from '@hcengineering/core'
   import { Card, SpaceSelector, createQuery, getClient } from '@hcengineering/presentation'
   import type { Component, Issue, Milestone, Project } from '@hcengineering/tracker'
-  import ui, { Button, IconForward, Label, Spinner, Toggle, tooltip } from '@hcengineering/ui'
+  import ui, { Button, Label, Spinner, Toggle, tooltip } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
+
   import { componentStore } from '../../component'
   import tracker from '../../plugin'
   import type { ComponentToUpdate, IssueToUpdate } from '../../utils'
@@ -274,7 +275,7 @@
         />
         <Button
           label={tracker.string.ManageAttributes}
-          iconRight={IconForward}
+          iconRight={ui.icon.ChevronRightLarge}
           kind="ghost"
           size="small"
           padding="0 1rem"
