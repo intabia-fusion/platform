@@ -27,7 +27,7 @@ import workbench from '@hcengineering/model-workbench'
 import converter from '@hcengineering/converter'
 import notification, { type MessageNotificationType } from '@hcengineering/notification'
 import setting from '@hcengineering/setting'
-import pluginState, { trackerId } from '@hcengineering/tracker'
+import pluginState, { projectSettingsId, trackerId } from '@hcengineering/tracker'
 
 import type { TaskStatusFactory } from '@hcengineering/task'
 import { PaletteColorIndexes } from '@hcengineering/ui/src/colors'
@@ -433,6 +433,12 @@ function defineApplication (
                 label: tracker.string.IssueTemplates,
                 icon: tracker.icon.IssueTemplates,
                 component: tracker.component.IssueTemplates
+              },
+              {
+                id: projectSettingsId,
+                label: tracker.string.ProjectSettings,
+                icon: view.icon.Setting,
+                component: tracker.component.ProjectSettings
               }
             ]
           }

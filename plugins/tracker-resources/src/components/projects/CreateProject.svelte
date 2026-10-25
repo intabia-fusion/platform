@@ -16,291 +16,187 @@
   import { createEventDispatcher } from 'svelte'
   import { Analytics } from '@hcengineering/analytics'
   import type { Employee } from '@hcengineering/contact'
-  import { AccountArrayEditor, AssigneeBox, employeeRefByAccountUuidStore } from '@hcengineering/contact-resources'
-  import type { AccountUuid, Data, DocumentUpdate, Ref, Role, RolesAssignment, SpaceType } from '@hcengineering/core'
+  import type { AccountUuid, Data, Ref, Role, RolesAssignment } from '@hcengineering/core'
   import core, { generateId, getCurrentAccount, notEmpty, SortingOrder } from '@hcengineering/core'
-  import type { Asset } from '@hcengineering/platform'
-  import presentation, { createQuery, getClient, IconWithEmoji } from '@hcengineering/presentation'
+  import { EmployeePresenter, employeeRefByAccountUuidStore } from '@hcengineering/contact-resources'
+  import { getEmbeddedLabel, type Asset } from '@hcengineering/platform'
+  import presentation, { createQuery, getClient } from '@hcengineering/presentation'
   import type { Project as TaskProject, ProjectType, TaskType } from '@hcengineering/task'
   import task from '@hcengineering/task'
   import { taskTypeStore, typeStore } from '@hcengineering/task-resources'
   import type { IssueStatus, Project } from '@hcengineering/tracker'
   import { TimeReportDayType, TrackerEvents } from '@hcengineering/tracker'
-  import {
-    Button,
-    Component,
-    EditBox,
+  import ui, {
     getColorNumberByText,
-    getPaletteColorDef,
-    getPlatformColorForTextDef,
     Label,
-    Modal,
+    ModernPopupLabels,
+    Scroller,
     showPopup,
-    themeStore,
-    Toggle
+    type DropdownTextItem
   } from '@hcengineering/ui'
-  import { IconButton } from '@hcengineering/ui/kit'
-  import view from '@hcengineering/view'
-  import { IconPicker } from '@hcengineering/view-resources'
+  import {
+    Callout,
+    SelectButton,
+    SettingRow,
+    TextArea,
+    TextInput,
+    Toggle,
+    WizardDialog
+  } from '@hcengineering/ui/kit'
+  import { IconPicker, statusStore } from '@hcengineering/view-resources'
   import type { ProjectWorkflow, Workflow } from '@hcengineering/workflow'
   import workflow from '@hcengineering/workflow'
-  import { deepEqual } from 'fast-equals'
 
   import tracker from '../../plugin'
-  import StatusSelector from '../issues/StatusSelector.svelte'
-  import ConfigureProjectWorkflowsModal from './ConfigureProjectWorkflowsModal.svelte'
+  import { applyRoles, isAccessValid, mergeOwners, removeFromRoles } from '../../projectSettingsLogic'
+  import ProjectAssigneeSelect from './settings/ProjectAssigneeSelect.svelte'
+  import ProjectIconTile from './settings/ProjectIconTile.svelte'
+  import ProjectMembersTable from './settings/ProjectMembersTable.svelte'
+  import ProjectStatusSelect from './settings/ProjectStatusSelect.svelte'
+  import ProjectWorkflowSelect from './settings/ProjectWorkflowSelect.svelte'
 
-  export let project: Project | undefined = undefined
   export let namePlaceholder: string = ''
   export let descriptionPlaceholder: string = ''
 
+  type Step = 'general' | 'members' | 'issues' | 'workflow' | 'summary'
+  const steps = [
+    { id: 'general' as const, label: tracker.string.ProjectSettingsGeneral },
+    { id: 'members' as const, label: tracker.string.ProjectSettingsAccess },
+    { id: 'issues' as const, label: tracker.string.ProjectSettingsIssues },
+    { id: 'workflow' as const, label: tracker.string.ProjectSettingsWorkflow },
+    { id: 'summary' as const, label: tracker.string.ProjectWizardSummary }
+  ]
+  let step: Step = 'general'
+
   const client = getClient()
-  const hierarchy = client.getHierarchy()
-  const projectsQuery = createQuery()
-
-  let name: string = project?.name ?? namePlaceholder
-  let description: string = project?.description ?? descriptionPlaceholder
-  let isPrivate: boolean = project?.private ?? false
-  let icon: Asset | undefined = project?.icon ?? tracker.icon.Home
-  let color = project?.color ?? getColorNumberByText(name)
-  let isColorSelected = false
-  let defaultAssignee: Ref<Employee> | null | undefined = project?.defaultAssignee ?? null
-  let members: AccountUuid[] =
-    project?.members !== undefined ? hierarchy.clone(project.members) : [getCurrentAccount().uuid]
-  let owners: AccountUuid[] =
-    project?.owners !== undefined ? hierarchy.clone(project.owners) : [getCurrentAccount().uuid]
-  let projectsIdentifiers = new Set<string>()
-  let isSaving = false
-  let defaultStatus: Ref<IssueStatus> | undefined = project?.defaultIssueStatus
-  let rolesAssignment: RolesAssignment | undefined
-
-  let typeId: Ref<ProjectType> | undefined = project?.type
-  $: typeType = typeId !== undefined ? $typeStore.get(typeId) : undefined
-  $: membersPersons = members.map((m) => $employeeRefByAccountUuidStore.get(m)).filter(notEmpty)
-  let autoJoin = project?.autoJoin ?? typeType?.autoJoin ?? false
-
+  // The creator stays a member and the owner of the project: the wizard locks their row
+  const me = getCurrentAccount().uuid
   const dispatch = createEventDispatcher()
 
-  $: isNew = project == null
+  let name: string = namePlaceholder
+  let description: string = descriptionPlaceholder
+  let identifier: string = 'TSK'
+  let isPrivate: boolean = false
+  let icon: Asset = tracker.icon.Home
+  let color = getColorNumberByText(name)
+  let isColorSelected = false
+  let defaultAssignee: Ref<Employee> | undefined = undefined
+  let defaultStatusId: Ref<IssueStatus> | undefined = undefined
+  let members: AccountUuid[] = [me]
+  let owners: AccountUuid[] = [me]
+  let membersChanged: boolean = false
+  let rolesAssignment: RolesAssignment = {}
+  let workflowsMapping: Record<Ref<TaskType>, Ref<Workflow>> = {}
+  let projectsIdentifiers = new Set<string>()
+  let isSaving = false
+  // Bumped on a rejected role change to rebuild the role fields
+  let resetKey = 0
 
-  async function handleSave (): Promise<void> {
-    if (isNew) {
-      await createProject()
-    } else {
-      await updateProject()
-    }
-  }
+  let types: ProjectType[] = []
+  let typeId: Ref<ProjectType> | undefined
+  $: typeType = typeId !== undefined ? $typeStore.get(typeId) : undefined
 
-  let identifier: string = project?.identifier ?? 'TSK'
+  const projectsQuery = createQuery()
+  const typesQuery = createQuery()
+  const rolesQuery = createQuery()
+  const workflowsQuery = createQuery()
 
-  function getProjectData (): Omit<Data<Project>, 'type'> {
-    return {
-      name,
-      description,
-      private: isPrivate,
-      members,
-      owners,
-      archived: false,
-      autoJoin,
-      identifier: identifier.toUpperCase(),
-      sequence: 0,
-      defaultAssignee: defaultAssignee ?? undefined,
-      icon,
-      color,
-      defaultIssueStatus: defaultStatus ?? ('' as Ref<IssueStatus>),
-      defaultTimeReportDay: project?.defaultTimeReportDay ?? TimeReportDayType.PreviousWorkDay
-    }
-  }
+  $: projectsQuery.query(tracker.class.Project, {}, (res) => {
+    projectsIdentifiers = new Set(res.map(({ identifier }) => identifier))
+  })
 
-  function getProjectWorkflowsMapping (): Record<Ref<TaskType>, Ref<Workflow>> {
-    if (project === undefined || !hierarchy.hasMixin(project, workflow.mixin.ProjectWorkflow)) {
-      return {}
-    }
-    const projectWorkflow = hierarchy.as<TaskProject, ProjectWorkflow>(project, workflow.mixin.ProjectWorkflow)
-    return projectWorkflow?.workflows != null ? hierarchy.clone(projectWorkflow.workflows) : {}
-  }
+  // The first type is taken until one is chosen, as the type selector did
+  $: typesQuery.query(task.class.ProjectType, { descriptor: tracker.descriptors.ProjectType }, (res) => {
+    types = res
+    if (typeId === undefined && res.length > 0) typeId = res[0]._id
+  })
 
-  let workflowsMapping: Record<Ref<TaskType>, Ref<Workflow>> = getProjectWorkflowsMapping()
+  $: setTypeDefaults(typeType)
 
-  function getRolesAssignment (): RolesAssignment {
-    if (project === undefined || typeType?.targetClass === undefined || roles === undefined) {
-      return {}
-    }
-
-    const asMixin = hierarchy.as(project, typeType?.targetClass)
-
-    return roles.reduce<RolesAssignment>((prev, { _id }) => {
-      prev[_id] = (asMixin as any)[_id] ?? []
-
-      return prev
-    }, {})
-  }
-
-  async function updateProject (): Promise<void> {
-    if (!project || typeType?.targetClass === undefined) {
-      return
-    }
-
-    const { sequence, ...projectData } = getProjectData()
-    const update: DocumentUpdate<Project> = {}
-    if (projectData.name !== project?.name) {
-      update.name = projectData.name
-    }
-    if (projectData.description !== project?.description) {
-      update.description = projectData.description
-    }
-    if (projectData.private !== project?.private) {
-      update.private = projectData.private
-    }
-    if (projectData.defaultAssignee !== project?.defaultAssignee) {
-      update.defaultAssignee = projectData.defaultAssignee
-    }
-    if (projectData.defaultIssueStatus !== project?.defaultIssueStatus) {
-      update.defaultIssueStatus = projectData.defaultIssueStatus
-    }
-    if (projectData.icon !== project?.icon) {
-      update.icon = projectData.icon
-    }
-    if (projectData.color !== project?.color) {
-      update.color = projectData.color
-    }
-    if (projectData.defaultTimeReportDay !== project?.defaultTimeReportDay) {
-      update.defaultTimeReportDay = projectData.defaultTimeReportDay
-    }
-    if (projectData.autoJoin !== project?.autoJoin) {
-      update.autoJoin = projectData.autoJoin
-    }
-    if (projectData.members.length !== project?.members.length) {
-      update.members = projectData.members
-    } else {
-      for (const member of projectData.members) {
-        if (project.members.findIndex((p) => p === member) === -1) {
-          update.members = projectData.members
-          break
-        }
-      }
-    }
-    if (projectData.owners?.length !== project?.owners?.length) {
-      update.owners = projectData.owners
-    } else {
-      for (const owner of projectData.owners || []) {
-        if (project.owners?.findIndex((p) => p === owner) === -1) {
-          update.owners = projectData.owners
-          break
-        }
-      }
-    }
-
-    if (Object.keys(update).length > 0) {
-      isSaving = true
-      await client.update(project, update)
-      isSaving = false
-    }
-
-    if (rolesAssignment && !deepEqual(rolesAssignment, getRolesAssignment())) {
-      await client.updateMixin(
-        project._id,
-        tracker.class.Project,
-        core.space.Space,
-        typeType.targetClass,
-        rolesAssignment
-      )
-    }
-
-    const initialWorkflowsMapping = getProjectWorkflowsMapping()
-    if (!deepEqual(workflowsMapping, initialWorkflowsMapping)) {
-      if (!hierarchy.hasMixin(project, workflow.mixin.ProjectWorkflow)) {
-        if (Object.keys(workflowsMapping).length > 0) {
-          await client.createMixin<TaskProject, ProjectWorkflow>(
-            project._id,
-            tracker.class.Project,
-            core.space.Space,
-            workflow.mixin.ProjectWorkflow,
-            { workflows: workflowsMapping }
-          )
-        }
-      } else {
-        await client.updateMixin<TaskProject, ProjectWorkflow>(
-          project._id,
-          tracker.class.Project,
-          core.space.Space,
-          workflow.mixin.ProjectWorkflow,
-          { workflows: workflowsMapping }
-        )
-      }
-    }
-
-    close()
-  }
-
-  $: setDefaultMembers(typeType)
-
-  function setDefaultMembers (typeType: ProjectType | undefined): void {
-    if (typeType === undefined) return
-    if (membersChanged) return
-    if (project !== undefined) return
-    autoJoin = typeType.autoJoin ?? false
+  function setTypeDefaults (typeType: ProjectType | undefined): void {
+    if (typeType === undefined || membersChanged) return
     if (typeType.members === undefined || typeType.members.length === 0) return
     members = typeType.members
   }
 
-  function findTaskTypes (typeId: Ref<SpaceType>): TaskType[] {
-    return Array.from($taskTypeStore.values()).filter(
-      (it) => it.parent === typeId && it.ofClass === tracker.class.Issue
+  let roles: Role[] = []
+  $: if (typeType !== undefined) {
+    rolesQuery.query(core.class.Role, { attachedTo: typeType._id }, (res) => {
+      roles = res
+    }, {
+      sort: { name: SortingOrder.Ascending }
+    })
+  } else {
+    rolesQuery.unsubscribe()
+    roles = []
+  }
+
+  let workflows: Workflow[] = []
+  $: if (typeId !== undefined) {
+    workflowsQuery.query(workflow.class.Workflow, { projectType: typeId }, (res) => {
+      workflows = res
+    }, {
+      sort: { name: SortingOrder.Ascending }
+    })
+  } else {
+    workflowsQuery.unsubscribe()
+    workflows = []
+  }
+
+  $: taskTypes = Array.from($taskTypeStore.values()).filter(
+    (it) => it.parent === typeId && it.ofClass === tracker.class.Issue
+  )
+
+  // As in the settings: the first task type's statuses, narrowed to its workflow's initial ones
+  $: firstTaskType = taskTypes[0]
+  $: initialStatuses =
+    firstTaskType !== undefined
+      ? (workflows.find((it) => it._id === workflowsMapping[firstTaskType._id])?.initialStatuses ?? [])
+      : []
+  $: statuses = (firstTaskType?.statuses ?? [])
+    .map((id) => $statusStore.byId.get(id) as IssueStatus | undefined)
+    .filter(notEmpty)
+    .filter((it) => initialStatuses.length === 0 || initialStatuses.includes(it._id))
+  $: defaultStatus = statuses.find((it) => it._id === defaultStatusId) ?? statuses[0]
+
+  $: identifier = identifier.toLocaleUpperCase().replaceAll('-', '_').replaceAll(' ', '_').substring(0, 5)
+  $: identifierExists = !isSaving && projectsIdentifiers.has(identifier.toUpperCase())
+
+  $: generalValid =
+    typeId !== undefined && name.trim().length > 0 && identifier.trim().length > 0 && !identifierExists
+  $: accessValid = isAccessValid(isPrivate, mergeOwners(members, owners), owners)
+  $: canSave = generalValid && accessValid
+  $: canProceed = step === 'general' ? generalValid : step === 'members' ? accessValid : true
+
+  let typeOpened = false
+
+  function chooseType (e: MouseEvent): void {
+    typeOpened = true
+    const items: DropdownTextItem[] = types.map((it) => ({ id: it._id, label: it.name }))
+    showPopup(
+      ModernPopupLabels,
+      { placeholder: ui.string.SearchDots, items, selected: typeId },
+      e.currentTarget as HTMLElement,
+      (result: DropdownTextItem['id'] | DropdownTextItem['id'][] | null | undefined) => {
+        typeOpened = false
+        const id = Array.isArray(result) ? result[0] : result
+        if (id == null || id === typeId) return
+        typeId = String(id) as Ref<ProjectType>
+        // Roles, statuses and workflows belong to the type: a new type starts them over
+        defaultStatusId = undefined
+        workflowsMapping = {}
+        rolesAssignment = {}
+      }
     )
   }
 
-  $: taskTypes = typeId !== undefined ? findTaskTypes(typeId) : []
-
-  $: if (defaultStatus === undefined && typeId !== undefined) {
-    const sts = findTaskTypes(typeId)?.[0]?.statuses
-    defaultStatus = sts?.[0]
+  function changeName (): void {
+    identifier = name.toLocaleUpperCase().replaceAll('-', '_').replaceAll(' ', '_').substring(0, 5)
+    color = isColorSelected ? color : getColorNumberByText(name)
   }
 
-  async function createProject (): Promise<void> {
-    const projectId = generateId<Project>()
-    const projectData = getProjectData()
-    if (typeId !== undefined && typeType !== undefined) {
-      const ops = client
-        .apply('create-project')
-        .notMatch(tracker.class.Project, { identifier: projectData.identifier.toUpperCase() })
-
-      isSaving = true
-      await ops.createDoc(tracker.class.Project, core.space.Space, { ...projectData, type: typeId }, projectId)
-      const succeeded = await ops.commit()
-      Analytics.handleEvent(TrackerEvents.ProjectCreated, {
-        ok: succeeded.result,
-        id: projectData.identifier
-      })
-      if (succeeded.result) {
-        // Add space type's mixin with roles assignments
-        await client.createMixin(
-          projectId,
-          tracker.class.Project,
-          core.space.Space,
-          typeType.targetClass,
-          rolesAssignment ?? {}
-        )
-
-        if (Object.keys(workflowsMapping).length > 0) {
-          await client.createMixin<TaskProject, ProjectWorkflow>(
-            projectId,
-            tracker.class.Project,
-            core.space.Space,
-            workflow.mixin.ProjectWorkflow,
-            { workflows: workflowsMapping }
-          )
-        }
-
-        close(projectId)
-      } else {
-        isSaving = false
-      }
-    }
-  }
-
-  function chooseIcon (ev: MouseEvent): void {
-    const update = (result: any) => {
+  function chooseIcon (): void {
+    const update = (result: any): void => {
       if (result !== undefined && result !== null) {
         icon = result.icon
         color = result.color
@@ -310,345 +206,424 @@
     showPopup(IconPicker, { icon, color }, 'top', update, update)
   }
 
+  function addMember (account: AccountUuid): void {
+    if (members.includes(account)) return
+    membersChanged = true
+    members = [...members, account]
+  }
+
+  function removeMember (account: AccountUuid): void {
+    if (account === me) return
+    membersChanged = true
+    members = members.filter((it) => it !== account)
+    owners = owners.filter((it) => it !== account)
+    rolesAssignment = removeFromRoles(rolesAssignment, [account])
+  }
+
+  function changeRoles (account: AccountUuid, selected: string[]): void {
+    if (account === me) {
+      resetKey++
+      return
+    }
+    const next = applyRoles(account, selected, owners, rolesAssignment)
+    // A project needs an owner: the change that leaves none is rejected
+    if (next.owners.length === 0) {
+      resetKey++
+      return
+    }
+    owners = next.owners
+    members = mergeOwners(members, next.owners)
+    rolesAssignment = next.assignment
+  }
+
+  function setWorkflow (taskType: Ref<TaskType>, id: Ref<Workflow> | undefined): void {
+    const next = { ...workflowsMapping }
+    if (id !== undefined) next[taskType] = id
+    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+    else delete next[taskType]
+    workflowsMapping = next
+  }
+
+  function getProjectData (): Omit<Data<Project>, 'type'> {
+    return {
+      name,
+      description,
+      private: isPrivate,
+      members: mergeOwners(members, owners),
+      owners,
+      archived: false,
+      // Auto-join is a chat channel feature: projects are joined explicitly
+      autoJoin: false,
+      identifier: identifier.toUpperCase(),
+      sequence: 0,
+      defaultAssignee,
+      icon,
+      color,
+      defaultIssueStatus: defaultStatus?._id ?? ('' as Ref<IssueStatus>),
+      defaultTimeReportDay: TimeReportDayType.PreviousWorkDay
+    }
+  }
+
+  async function createProject (): Promise<void> {
+    if (!canSave || typeId === undefined || typeType === undefined) return
+    const projectId = generateId<Project>()
+    const projectData = getProjectData()
+    const ops = client
+      .apply('create-project')
+      .notMatch(tracker.class.Project, { identifier: projectData.identifier.toUpperCase() })
+
+    isSaving = true
+    await ops.createDoc(tracker.class.Project, core.space.Space, { ...projectData, type: typeId }, projectId)
+    const succeeded = await ops.commit()
+    Analytics.handleEvent(TrackerEvents.ProjectCreated, {
+      ok: succeeded.result,
+      id: projectData.identifier
+    })
+    if (!succeeded.result) {
+      isSaving = false
+      return
+    }
+    // Add space type's mixin with roles assignments
+    await client.createMixin(projectId, tracker.class.Project, core.space.Space, typeType.targetClass, rolesAssignment)
+
+    if (Object.keys(workflowsMapping).length > 0) {
+      await client.createMixin<TaskProject, ProjectWorkflow>(
+        projectId,
+        tracker.class.Project,
+        core.space.Space,
+        workflow.mixin.ProjectWorkflow,
+        { workflows: workflowsMapping }
+      )
+    }
+    close(projectId)
+  }
+
+  // Summary: owners and the other members, as they will be stored
+  $: summaryLists = [
+    { id: 'owners', label: tracker.string.ProjectWizardOwnersCount, accounts: owners },
+    {
+      id: 'members',
+      label: tracker.string.ProjectWizardMembersCount,
+      accounts: mergeOwners(members, owners).filter((it) => !owners.includes(it))
+    }
+  ]
+
   function close (id?: Ref<Project>): void {
     dispatch('close', id)
   }
-
-  let membersChanged: boolean = false
-
-  $: projectsQuery.query(tracker.class.Project, { _id: { $nin: project ? [project._id] : [] } }, (res) => {
-    projectsIdentifiers = new Set(res.map(({ identifier }) => identifier))
-  })
-
-  function handleTypeChange (evt: CustomEvent<Ref<ProjectType>>): void {
-    typeId = evt.detail
-    defaultStatus = undefined
-    workflowsMapping = {}
-  }
-
-  let isWorkflowConfigure = false
-  function openConfigureWorkflows (): void {
-    if (typeId == null) return
-    isWorkflowConfigure = true
-    showPopup(
-      ConfigureProjectWorkflowsModal,
-      {
-        taskTypes,
-        projectType: typeId,
-        workflowsMapping
-      },
-      'top',
-      (res) => {
-        if (res != null) {
-          workflowsMapping = { ...res }
-        }
-        isWorkflowConfigure = false
-      }
-    )
-  }
-
-  $: identifier = identifier.toLocaleUpperCase().replaceAll('-', '_').replaceAll(' ', '_').substring(0, 5)
-
-  let roles: Role[] = []
-  const rolesQuery = createQuery()
-  $: if (typeType !== undefined) {
-    rolesQuery.query(
-      core.class.Role,
-      { attachedTo: typeType._id },
-      (res) => {
-        roles = res
-
-        if (rolesAssignment === undefined && typeType !== undefined) {
-          rolesAssignment = getRolesAssignment()
-        }
-      },
-      {
-        sort: {
-          name: SortingOrder.Ascending
-        }
-      }
-    )
-  } else {
-    rolesQuery.unsubscribe()
-  }
-
-  function handleOwnersChanged (newOwners: AccountUuid[]): void {
-    owners = newOwners
-
-    const newMembersSet = new Set([...members, ...newOwners])
-    members = Array.from(newMembersSet)
-  }
-
-  function handleMembersChanged (newMembers: AccountUuid[]): void {
-    membersChanged = true
-    // If a member was removed we need to remove it from any roles assignments as well
-    const newMembersSet = new Set(newMembers)
-    const removedMembersSet = new Set(members.filter((m) => !newMembersSet.has(m)))
-
-    if (removedMembersSet.size > 0 && rolesAssignment !== undefined) {
-      for (const [key, value] of Object.entries(rolesAssignment)) {
-        rolesAssignment[key as Ref<Role>] = value != null ? value.filter((m) => !removedMembersSet.has(m)) : undefined
-      }
-    }
-
-    members = newMembers
-  }
-
-  function handleRoleAssignmentChanged (roleId: Ref<Role>, newMembers: AccountUuid[]): void {
-    if (rolesAssignment === undefined) {
-      rolesAssignment = {}
-    }
-
-    rolesAssignment[roleId] = newMembers
-  }
-
-  $: canSave =
-    name.trim().length > 0 &&
-    identifier.trim().length > 0 &&
-    !projectsIdentifiers.has(identifier.toUpperCase()) &&
-    !(members.length === 0 && isPrivate) &&
-    owners.length > 0 &&
-    (!isPrivate || owners.some((o) => members.includes(o)))
 </script>
 
-<Modal
-  type="type-popup"
-  label={isNew ? tracker.string.NewProject : tracker.string.EditProject}
-  okLabel={isNew ? presentation.string.Create : presentation.string.Save}
-  okAction={handleSave}
-  {canSave}
-  hidden={isWorkflowConfigure}
-  width="medium"
-  onCancel={close}
-  on:changeContent
+<WizardDialog
+  label={tracker.string.CreateProject}
+  {steps}
+  bind:selected={step}
+  {canProceed}
+  canSubmit={canSave}
+  submitLabel={presentation.string.Create}
+  earlySubmit
+  loading={isSaving}
+  data-id="project-create-wizard"
+  on:submit={createProject}
+  on:close={() => {
+    close()
+  }}
 >
-  <div class="antiGrid">
-    <div class="antiGrid-row">
-      <div class="antiGrid-row__header">
-        <Label label={task.string.ProjectType} />
-      </div>
+  <div class="step-frame">
+    <Scroller padding="var(--_ring)">
+      <div class="step" data-id={`project-create-step-${step}`}>
+        {#if step === 'general'}
+          <SettingRow kind="column" label={task.string.ProjectType} hint={tracker.string.ProjectTypeHint} fullWidth>
+            <SelectButton
+              data-id="project-type"
+              label={typeType !== undefined ? getEmbeddedLabel(typeType.name) : undefined}
+              placeholder={task.string.ProjectType}
+              field
+              fullWidth
+              chevron
+              pressed={typeOpened}
+              on:click={chooseType}
+            />
+          </SettingRow>
 
-      <Component
-        is={task.component.ProjectTypeSelector}
-        disabled={!isNew}
-        props={{
-          descriptors: [tracker.descriptors.ProjectType],
-          type: typeId,
-          focusIndex: 4,
-          kind: 'regular',
-          size: 'large'
-        }}
-        on:change={handleTypeChange}
-      />
-    </div>
-    <div class="antiGrid-row">
-      <div class="antiGrid-row__header">
-        <Label label={tracker.string.ProjectTitle} />
-      </div>
-      <div class="padding">
-        <EditBox
-          id="project-title"
-          bind:value={name}
-          placeholder={tracker.string.ProjectTitlePlaceholder}
-          kind="large-style"
-          autoFocus
-          on:input={() => {
-            if (isNew) {
-              identifier = name.toLocaleUpperCase().replaceAll('-', '_').replaceAll(' ', '_').substring(0, 5)
-              color = isColorSelected ? color : getColorNumberByText(name)
-            }
-          }}
-        />
-      </div>
-    </div>
+          <SettingRow kind="column" label={tracker.string.ProjectSettingsName} fullWidth let:labelId>
+            <TextInput
+              id="project-title"
+              bind:value={name}
+              placeholder={tracker.string.ProjectTitlePlaceholder}
+              aria-labelledby={labelId}
+              fullWidth
+              autofocus
+              on:input={changeName}
+            />
+          </SettingRow>
 
-    <div class="antiGrid-row">
-      <div class="antiGrid-row__header withDesciption">
-        <Label label={tracker.string.Identifier} />
-        <span><Label label={tracker.string.UsedInIssueIDs} /></span>
-      </div>
-      <div class="padding flex-row-center relative">
-        <EditBox
-          id="project-identifier"
-          bind:value={identifier}
-          disabled={!isNew}
-          placeholder={tracker.string.ProjectIdentifierPlaceholder}
-          kind="large-style"
-          uppercase
-        />
-        {#if !isSaving && projectsIdentifiers.has(identifier.toUpperCase())}
-          <div class="absolute overflow-label duplicated-identifier">
-            <Label label={tracker.string.IdentifierExists} />
-          </div>
-        {/if}
-      </div>
-    </div>
+          <SettingRow
+            kind="column"
+            label={tracker.string.Identifier}
+            hint={tracker.string.IdentifierHint}
+            hintParams={{ example: `${identifier}-1` }}
+            fullWidth
+            let:labelId
+          >
+            <div class="field-with-error">
+              <TextInput
+                id="project-identifier"
+                bind:value={identifier}
+                placeholder={tracker.string.ProjectIdentifierPlaceholder}
+                aria-labelledby={labelId}
+                error={identifierExists}
+                fullWidth
+              />
+              {#if identifierExists}
+                <span class="field-error" data-id="project-identifier-exists">
+                  <Label label={tracker.string.IdentifierExists} />
+                </span>
+              {/if}
+            </div>
+          </SettingRow>
 
-    <div class="antiGrid-row">
-      <div class="antiGrid-row__header topAlign">
-        <Label label={tracker.string.Description} />
-      </div>
-      <div class="padding clear-mins">
-        <EditBox
-          id="project-description"
-          bind:value={description}
-          placeholder={tracker.string.IssueDescriptionPlaceholder}
-        />
-      </div>
-    </div>
-  </div>
+          <SettingRow kind="column" label={tracker.string.Description} fullWidth let:labelId>
+            <div class="field-fill">
+              <TextArea
+                id="project-description"
+                bind:value={description}
+                rows={2}
+                placeholder={tracker.string.IssueDescriptionPlaceholder}
+                aria-labelledby={labelId}
+              />
+            </div>
+          </SettingRow>
 
-  <div class="antiGrid">
-    <div class="antiGrid-row">
-      <div class="antiGrid-row__header">
-        <Label label={tracker.string.ChooseIcon} />
-      </div>
-      <Button
-        icon={icon === view.ids.IconWithEmoji ? IconWithEmoji : (icon ?? tracker.icon.Home)}
-        iconProps={icon === view.ids.IconWithEmoji
-          ? { icon: color, size: 'medium' }
-          : {
-              fill:
-                getPaletteColorDef(color, $themeStore.dark)?.icon ??
-                getPlatformColorForTextDef(name, $themeStore.dark).icon
-            }}
-        size="large"
-        on:click={chooseIcon}
-      />
-    </div>
+          <SettingRow kind="column" label={tracker.string.ProjectSettingsIcon}>
+            <ProjectIconTile id="project-icon" {icon} {color} {name} on:click={chooseIcon} />
+          </SettingRow>
+        {:else if step === 'members'}
+          <SettingRow
+            kind="column"
+            label={tracker.string.ProjectSettingsPrivate}
+            hint={tracker.string.ProjectSettingsPrivateHint}
+            let:labelId
+          >
+            <Toggle
+              id="project-private"
+              bind:checked={isPrivate}
+              disabled={!isPrivate && members.length === 0}
+              aria-labelledby={labelId}
+            />
+          </SettingRow>
 
-    <div class="antiGrid-row">
-      <div class="antiGrid-row__header">
-        <Label label={tracker.string.DefaultAssignee} />
-      </div>
-      <AssigneeBox
-        label={tracker.string.Assignee}
-        placeholder={tracker.string.Assignee}
-        kind="regular"
-        size="large"
-        avatarSize="card"
-        bind:value={defaultAssignee}
-        titleDeselect={tracker.string.Unassigned}
-        showNavigate={false}
-        showTooltip={{ label: tracker.string.DefaultAssignee }}
-      />
-    </div>
-    <div class="antiGrid-row">
-      <div class="antiGrid-row__header">
-        <Label label={tracker.string.DefaultIssueStatus} />
-      </div>
-      {#if typeId !== undefined}
-        <StatusSelector
-          taskType={findTaskTypes(typeId)[0]?._id}
-          bind:value={defaultStatus}
-          type={typeId}
-          workflowId={taskTypes[0]?._id ? workflowsMapping[taskTypes[0]._id] : undefined}
-          kind="regular"
-          size="large"
-        />
-      {/if}
-    </div>
 
-    <div class="antiGrid-row">
-      <div class="antiGrid-row__header">
-        <Label label={core.string.Owners} />
-      </div>
-      <AccountArrayEditor
-        value={owners}
-        label={core.string.Owners}
-        allowGuests
-        onChange={handleOwnersChanged}
-        kind="regular"
-        size="large"
-      />
-    </div>
+          <div class="divider" />
 
-    <div class="antiGrid-row">
-      <div class="antiGrid-row__header withDesciption">
-        <Label label={presentation.string.MakePrivate} />
-        <span><Label label={presentation.string.MakePrivateDescription} /></span>
-      </div>
-      <Toggle id="project-private" bind:on={isPrivate} disabled={!isPrivate && members.length === 0} />
-    </div>
-
-    <div class="antiGrid-row">
-      <div class="antiGrid-row__header">
-        <Label label={tracker.string.Members} />
-      </div>
-      <AccountArrayEditor
-        value={members}
-        label={tracker.string.Members}
-        onChange={handleMembersChanged}
-        kind="regular"
-        size="large"
-        allowGuests
-      />
-    </div>
-
-    <div class="antiGrid-row">
-      <div class="antiGrid-row__header withDesciption">
-        <Label label={core.string.AutoJoin} />
-        <span><Label label={core.string.AutoJoinDescr} /></span>
-      </div>
-      <Toggle bind:on={autoJoin} />
-    </div>
-
-    {#each roles as role}
-      <div class="antiGrid-row">
-        <div class="antiGrid-row__header">
-          <Label label={view.string.RoleLabel} params={{ role: role.name }} />
-        </div>
-        <AccountArrayEditor
-          value={rolesAssignment?.[role._id] ?? []}
-          label={tracker.string.Members}
-          includeItems={membersPersons}
-          readonly={membersPersons.length === 0}
-          onChange={(refs) => {
-            handleRoleAssignmentChanged(role._id, refs)
-          }}
-          kind="regular"
-          size="large"
-        />
-      </div>
-    {/each}
-
-    {#if typeId !== undefined && taskTypes.length > 0}
-      {@const hasConfiguredWorkflows = Object.keys(workflowsMapping ?? {}).length > 0}
-      <div class="antiGrid-row">
-        <div class="antiGrid-row__header withDesciption">
-          <Label label={workflow.string.Workflows} />
-          <span><Label label={workflow.string.WorkflowMapping} /></span>
-        </div>
-        <div class="flex-row-center gap-2">
-          <IconButton
-            icon={view.icon.Setting}
-            kind="secondary"
-            size="large"
-            data-id="btnConfigureWorkflows"
-            tooltip={{ label: workflow.string.Workflows }}
-            on:click={openConfigureWorkflows}
+          <ProjectMembersTable
+            {members}
+            {owners}
+            assignment={rolesAssignment}
+            {roles}
+            {resetKey}
+            lockedAccount={me}
+            onAdd={addMember}
+            onRemove={removeMember}
+            onRolesChange={changeRoles}
           />
-          {#if hasConfiguredWorkflows}
-            <span class="workflows-status-label lower">
-              (<Label label={tracker.string.Configured} />)
+
+          {#if !accessValid}
+            <span class="error-color" data-id="project-create-access-error">
+              <Label label={tracker.string.ProjectAccessInvalid} />
             </span>
           {/if}
-        </div>
+        {:else if step === 'issues'}
+          <SettingRow kind="column" label={tracker.string.ProjectSettingsDefaultAssignee}>
+            <div class="field">
+              <ProjectAssigneeSelect
+                value={defaultAssignee}
+                onChange={(value) => {
+                  defaultAssignee = value
+                }}
+              />
+            </div>
+          </SettingRow>
+
+          <SettingRow kind="column" label={tracker.string.DefaultIssueStatus}>
+            <div class="field">
+              {#if typeId !== undefined}
+                <ProjectStatusSelect
+                  {statuses}
+                  value={defaultStatus}
+                  taskType={firstTaskType?._id}
+                  projectType={typeId}
+                  onChange={(value) => {
+                    defaultStatusId = value
+                  }}
+                />
+              {/if}
+            </div>
+          </SettingRow>
+        {:else if step === 'workflow'}
+          {#if workflows.length > 0}
+            <span class="intro"><Label label={tracker.string.ProjectWizardWorkflowIntro} /></span>
+            <div class="mapping-table" data-id="project-create-workflows">
+              <div class="mapping-row head">
+                <div class="cell type"><Label label={workflow.string.TaskType} /></div>
+                <div class="cell"><Label label={tracker.string.ProjectSettingsWorkflow} /></div>
+              </div>
+              {#each taskTypes as taskType (taskType._id)}
+                <div class="mapping-row">
+                  <div class="cell type overflow-label">{taskType.name}</div>
+                  <div class="cell">
+                    <div class="field">
+                      <ProjectWorkflowSelect
+                        {taskType}
+                        {workflows}
+                        value={workflowsMapping[taskType._id]}
+                        onChange={(id) => {
+                          setWorkflow(taskType._id, id)
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              {/each}
+            </div>
+            <span class="intro" data-id="project-create-workflows-hint">
+              <Label label={tracker.string.ProjectWizardWorkflowsInType} />
+            </span>
+          {:else}
+            <Callout
+              tone="info"
+              label={tracker.string.ProjectWizardNoWorkflows}
+              labelParams={{ type: typeType?.name ?? '' }}
+            />
+          {/if}
+        {:else}
+          <div class="summary-head" data-id="project-create-summary-general">
+            <ProjectIconTile {icon} {color} {name} readonly />
+            <div class="summary-title">
+              <span class="summary-name">{name}</span>
+              <span class="summary-identifier">{identifier}</span>
+            </div>
+          </div>
+          {#each summaryLists as list (list.id)}
+            <div class="summary-list" data-id={`project-create-summary-${list.id}`}>
+              <span class="summary-list-title">
+                <Label label={list.label} params={{ count: list.accounts.length }} />
+              </span>
+              {#each list.accounts as account (account)}
+                <EmployeePresenter
+                  value={$employeeRefByAccountUuidStore.get(account)}
+                  avatarSize="small"
+                  showPopup={false}
+                />
+              {/each}
+            </div>
+          {/each}
+        {/if}
       </div>
-    {/if}
+    </Scroller>
   </div>
-</Modal>
+</WizardDialog>
 
 <style lang="scss">
-  .duplicated-identifier {
-    left: 0;
-    bottom: -0.25rem;
+  // Every step has the same height, so the dialog does not jump; a longer one (Summary) scrolls inside.
+  // The scroller clips: it is padded by the 4px focus ring of the fields (outline 2px + offset 2px)
+  // and pulled out by as much, so the fields stay in line with the dialog padding.
+  .step-frame {
+    --_ring: 0.25rem;
+
+    display: flex;
+    flex-direction: column;
+    height: calc(28rem + 2 * var(--_ring));
+    margin: calc(-1 * var(--_ring));
+  }
+  .step {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+  }
+  .field {
+    width: 15rem;
+  }
+  .field-fill,
+  .field-with-error {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-0_5);
+    width: 100%;
+    min-width: 0;
+  }
+  .field-error {
+    font-size: 0.75rem;
     color: var(--theme-warning-color);
   }
-
-  .workflows-status-label {
-    font-size: 0.8125rem;
+  .divider {
+    height: 1px;
+    background-color: var(--theme-divider-color);
+  }
+  .summary-head {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-1_5);
+  }
+  .summary-title {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .summary-name {
+    font-size: 1rem;
     font-weight: 500;
-    color: var(--theme-content-secondary-color);
+    color: var(--theme-caption-color);
+  }
+  .summary-identifier {
+    font-size: 0.75rem;
+    color: var(--theme-darker-color);
+  }
+  .summary-list {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-1);
+  }
+  .summary-list-title {
+    font-weight: 600;
+    color: var(--theme-caption-color);
+  }
+  .intro {
+    font-size: 0.8125rem;
+    color: var(--theme-dark-color);
+  }
+  .mapping-table {
+    border: 1px solid var(--theme-divider-color);
+    border-radius: 0.5rem;
+  }
+  .mapping-row {
+    display: flex;
+    align-items: center;
+    border-top: 1px solid var(--theme-divider-color);
+
+    &:first-child {
+      border-top: none;
+    }
+    &.head {
+      height: 2.25rem;
+      background-color: var(--theme-list-row-color);
+      border-radius: 0.5rem 0.5rem 0 0;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--theme-dark-color);
+    }
+  }
+  .cell {
+    box-sizing: border-box;
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0.375rem 0.75rem;
+
+    &.type {
+      color: var(--theme-caption-color);
+    }
+  }
+  .head .cell.type {
+    color: inherit;
   }
 </style>

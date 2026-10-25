@@ -492,6 +492,10 @@ export interface Component extends Doc {
  * @public
  */
 export const trackerId = 'tracker' as Plugin
+
+/** @public */
+export const projectSettingsId = 'project-settings'
+
 export * from './analytics'
 
 /** Input of the shared issue-creation helper (tracker.function.CreateIssue). */
@@ -563,6 +567,7 @@ const pluginState = plugin(trackerId, {
     ProjectPresenter: '' as AnyComponent,
     CreateIssueTemplate: '' as AnyComponent,
     CreateProject: '' as AnyComponent,
+    ProjectSettings: '' as AnyComponent,
     IssueStatusPresenter: '' as AnyComponent,
     LabelsView: '' as AnyComponent
   },

@@ -15,7 +15,7 @@
 <script lang="ts">
   import type { Ref, Space } from '@hcengineering/core'
   import { getResource } from '@hcengineering/platform'
-  import type { Project } from '@hcengineering/tracker'
+  import { projectSettingsId, type Project } from '@hcengineering/tracker'
   import { IconWithEmoji } from '@hcengineering/presentation'
   import { getPaletteColorDef, getPlatformColorForTextDef, themeStore, type Action } from '@hcengineering/ui'
   import view from '@hcengineering/view'
@@ -76,7 +76,7 @@
     actions={() => getActions(space)}
     {forciblyСollapsed}
   >
-    {#each specials as special}
+    {#each specials.filter((it) => it.id !== projectSettingsId) as special}
       <NavLink space={space._id} special={special.id}>
         <SpecialElement
           indent

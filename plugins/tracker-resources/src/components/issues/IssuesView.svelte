@@ -22,7 +22,7 @@
   import type { IModeSelector } from '@hcengineering/ui'
   import ui, { BlankView, type DropdownIntlItem, showPopup, themeStore } from '@hcengineering/ui'
   import { columnControlStore } from '@hcengineering/kanban'
-  import { MenuButton } from '@hcengineering/ui/kit'
+  import { IconButton, MenuButton } from '@hcengineering/ui/kit'
   import type { ViewOptions, Viewlet } from '@hcengineering/view'
   import view from '@hcengineering/view'
   import {
@@ -32,7 +32,8 @@
     setViewOptions,
     SpaceHeader,
     ViewletContentView,
-    ViewletSettingButton
+    ViewletSettingButton,
+    canEditSpace
   } from '@hcengineering/view-resources'
   import task, { type Project as TaskProject } from '@hcengineering/task'
   import { ProjectTypeSettingsLink, TaskTypeDiagramPopup, taskTypeStore } from '@hcengineering/task-resources'
@@ -41,6 +42,7 @@
 
   import tracker from '../../plugin'
   import CreateIssue from '../CreateIssue.svelte'
+  import { openProjectSettings } from '../../projectSettings'
   import { activeProjects, exportIssuesToCSV } from '../../utils'
   import IssueStatistics from '../milestones/IssueStatistics.svelte'
 
@@ -83,6 +85,15 @@
     : []
   $: hasTaskTypes = currentTaskTypes.length > 0
   $: noTaskTypes = currentProject !== undefined && $taskTypeStore.size > 0 && !hasTaskTypes
+
+  $: projectRef = space as Ref<Project> | undefined
+  let canEditProject = false
+  // Depends on the project itself: on a reload the space is known before the project is loaded
+  async function checkCanEditProject (project: ProjectWorkflow | undefined): Promise<void> {
+    const can = project !== undefined && (await canEditSpace(project))
+    if (project === currentProject) canEditProject = can
+  }
+  $: void checkCanEditProject(currentProject)
 
   // Same check as the project type editor in settings
   const canConfigureTypes = isOwnerOrMaintainer()
@@ -233,6 +244,18 @@
         tooltip={{ label: view.string.MoreActions }}
         items={menuItems}
         on:selected={handleMenuSelected}
+      />
+    {/if}
+    {#if canEditProject && space !== undefined}
+      <IconButton
+        data-id="btnProjectSettings"
+        icon={view.icon.Setting}
+        kind="secondary"
+        size="small"
+        tooltip={{ label: tracker.string.ProjectSettings }}
+        on:click={() => {
+          if (projectRef !== undefined) openProjectSettings(projectRef)
+        }}
       />
     {/if}
     <ComponentExtensions
