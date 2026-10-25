@@ -26,6 +26,8 @@
   export let id: string | undefined = undefined
   // Shown, not chosen: no picker on click
   export let readonly: boolean = false
+  // Only the icon, without the tile: a project inline in text
+  export let plain: boolean = false
 
   $: emoji = icon === view.ids.IconWithEmoji
   $: iconProps = emoji
@@ -36,7 +38,9 @@
       }
 </script>
 
-{#if readonly}
+{#if plain}
+  <Icon icon={emoji ? IconWithEmoji : icon} {iconProps} size="small" />
+{:else if readonly}
   <div {id} class="icon-tile readonly">
     <Icon icon={emoji ? IconWithEmoji : icon} {iconProps} size="small" />
   </div>

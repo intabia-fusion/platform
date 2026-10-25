@@ -2,10 +2,13 @@ import { expect, type Locator } from '@playwright/test'
 import { CommonTrackerPage } from './common-tracker-page'
 import { NewProject } from './types'
 
-export type NewProjectStep = 'general' | 'members' | 'issues' | 'workflow' | 'summary'
-const STEPS: NewProjectStep[] = ['general', 'members', 'issues', 'workflow', 'summary']
+export type NewProjectStep = 'general' | 'copy' | 'members' | 'issues' | 'workflow' | 'summary'
+const STEPS: NewProjectStep[] = ['general', 'copy', 'members', 'issues', 'workflow', 'summary']
 
-/** Create project wizard of five steps: Back and Next on the left, Create on the right on every step. */
+/**
+ * Create project wizard: five steps, six for a project based on another one (the "copy" step).
+ * Back and Next on the left, Create on the right on every step.
+ */
 export class NewProjectPage extends CommonTrackerPage {
   root = (): Locator => this.page.locator('form[data-id="project-create-wizard"]')
   popupHeader = (): Locator => this.root().locator('.dialog__header', { hasText: 'Create project' })
@@ -37,6 +40,23 @@ export class NewProjectPage extends CommonTrackerPage {
   summaryHead = (): Locator => this.root().locator('[data-id="project-create-summary-general"]')
   summaryOwners = (): Locator => this.root().locator('[data-id="project-create-summary-owners"]')
   summaryMembers = (): Locator => this.root().locator('[data-id="project-create-summary-members"]')
+  summaryBase = (): Locator => this.root().locator('[data-id="project-create-summary-base"]')
+
+  stepItems = (): Locator => this.root().locator('ol.steps > li')
+  modeSegment = (mode: 'empty' | 'base'): Locator => this.root().locator(`[data-id="tab-${mode}"]`)
+  baseButton = (): Locator => this.root().locator('button[data-id="project-base"]')
+  basePopup = (): Locator => this.page.locator('[data-id="project-base-popup"]')
+  basePopupRow = (name: string): Locator => this.basePopup().locator('.menu__row', { hasText: name })
+  baseShowArchived = (): Locator => this.basePopup().locator('input#project-base-show-archived')
+  copyBase = (): Locator => this.root().locator('[data-id="project-create-copy-base"]')
+  copyCheckbox = (
+    group: 'members' | 'privacy' | 'defaults' | 'workflows' | 'templates' | 'components' | 'milestones'
+  ): Locator => this.root().locator(`[data-id="project-copy-${group}"] input[type="checkbox"]`)
+
+  copyTemplate = (title: string): Locator =>
+    this.root().locator('[data-id="project-copy-template"]', { hasText: title }).locator('input[type="checkbox"]')
+
+  membersFromBase = (): Locator => this.step('members').locator('.callout', { hasText: 'are taken from project' })
 
   projectTypeButton = (): Locator => this.root().locator('button[data-id="project-type"]')
   defaultAssigneeButton = (): Locator => this.root().locator('button[data-id="project-default-assignee"]')
@@ -49,17 +69,37 @@ export class NewProjectPage extends CommonTrackerPage {
     await expect(this.projectTypeButton()).toContainText(type)
   }
 
+  /** Steps the wizard shows now: the copy step only in the "based on a project" mode. */
+  async steps (): Promise<NewProjectStep[]> {
+    const count = await this.stepItems().count()
+    return count === STEPS.length ? STEPS : STEPS.filter((it) => it !== 'copy')
+  }
+
   /** Goes from the current step with Next or Back; the steps passed forward must be valid. */
   async goToStep (id: NewProjectStep): Promise<void> {
-    const target = STEPS.indexOf(id)
+    const steps = await this.steps()
+    const target = steps.indexOf(id)
+    if (target < 0) throw new Error(`The wizard has no step ${id}`)
     let current = 0
-    while (current < STEPS.length - 1 && !(await this.step(STEPS[current]).isVisible())) current++
+    while (current < steps.length - 1 && !(await this.step(steps[current]).isVisible())) current++
     while (current !== target) {
       const forward = current < target
       await (forward ? this.buttonNext() : this.buttonBack()).click()
       current += forward ? 1 : -1
-      await expect(this.step(STEPS[current])).toBeVisible()
+      await expect(this.step(steps[current])).toBeVisible()
     }
+  }
+
+  /** Switches the first step to "based on a project" and picks the base; archived ones need the toggle. */
+  async chooseBase (name: string, archived: boolean = false): Promise<void> {
+    await this.modeSegment('base').click()
+    await this.baseButton().click()
+    await expect(this.basePopup()).toBeVisible()
+    if (archived && !(await this.baseShowArchived().isChecked())) await this.baseShowArchived().click()
+    await this.basePopupRow(name).click()
+    await expect(this.basePopup()).toBeHidden()
+    await expect(this.baseButton()).toContainText(name)
+    await expect(this.stepItems()).toHaveCount(STEPS.length)
   }
 
   async createNewProject (data: NewProject): Promise<void> {

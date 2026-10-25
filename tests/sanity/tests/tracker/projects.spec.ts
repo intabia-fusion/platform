@@ -6,6 +6,9 @@ import { NewProject } from '../model/tracker/types'
 import { ProjectSettingsPage } from '../model/tracker/project-settings-page'
 import { AllProjectsPage } from '../model/tracker/all-projects-page'
 import { generateProjectId } from './tracker.utils'
+import { TemplatePage } from '../model/tracker/templates-page'
+import { connectTracker, findProjectByName } from '../API/TrackerApi'
+import tracker, { IssuePriority } from '@hcengineering/tracker'
 
 test.use({
   storageState: PlatformSetting
@@ -104,6 +107,158 @@ test.describe('Tracker Projects tests', () => {
       await expect(newProjectPage.step('workflow')).toBeVisible()
       await newProjectPage.buttonClose().click()
       await expect(newProjectPage.root()).toBeHidden()
+    })
+  })
+
+  test('User can create a project based on another one', async ({ page }) => {
+    const baseId = generateProjectId()
+    const base: NewProject = { title: `BaseProject-${baseId}`, identifier: baseId }
+    const copyId = generateProjectId()
+    const copy: NewProject = { title: `CopyProject-${copyId}`, identifier: copyId }
+    const member = 'Chen Rosamund'
+    const templates = ['Bug report', 'New page', 'Weekly report'].map((it) => `${it}-${baseId}`)
+    const templatePage = new TemplatePage(page)
+
+    await test.step('Prepare the base: a member and three templates', async () => {
+      await trackerNavigationMenuPage.pressCreateProjectButton()
+      await newProjectPage.createNewProject(base)
+      await trackerNavigationMenuPage.openIssuesForProject(base.title)
+      await projectSettingsPage.openFromProject()
+      await projectSettingsPage.addMember(member)
+      await projectSettingsPage.buttonClose().click()
+
+      const { client } = await connectTracker()
+      const project = await findProjectByName(client, base.title)
+      if (project === undefined) throw new Error(`Project "${base.title}" not found`)
+      for (const title of templates) {
+        await client.createDoc(tracker.class.IssueTemplate, project._id, {
+          title,
+          description: '',
+          priority: IssuePriority.NoPriority,
+          assignee: null,
+          component: null,
+          milestone: null,
+          estimation: 0,
+          children: [],
+          comments: 0,
+          attachments: 0,
+          relations: []
+        })
+      }
+    })
+
+    await test.step('Choose the base and take two templates of three', async () => {
+      await trackerNavigationMenuPage.pressCreateProjectButton()
+      await expect(newProjectPage.popupHeader()).toBeVisible()
+      await newProjectPage.chooseBase(base.title)
+      await newProjectPage.inputTitle().fill(copy.title)
+      await newProjectPage.inputIdentifier().fill(copy.identifier)
+      await newProjectPage.goToStep('copy')
+      await expect(newProjectPage.copyBase()).toContainText(base.title)
+      await expect(newProjectPage.copyCheckbox('members')).toBeChecked()
+      for (const title of templates) await expect(newProjectPage.copyTemplate(title)).toBeChecked()
+      await newProjectPage.copyTemplate(templates[2]).uncheck()
+      await expect(newProjectPage.copyCheckbox('templates')).not.toBeChecked()
+    })
+
+    await test.step('Members come from the base and the summary tells what is copied', async () => {
+      await newProjectPage.goToStep('members')
+      await expect(newProjectPage.membersFromBase()).toBeVisible()
+      await expect(newProjectPage.memberRow(member)).toBeVisible()
+      await newProjectPage.goToStep('summary')
+      await expect(newProjectPage.summaryBase()).toContainText(base.title)
+      await expect(newProjectPage.summaryBase()).toContainText('2 of 3')
+      await expect(newProjectPage.summaryMembers()).toContainText(member)
+      await newProjectPage.buttonCreateProject().click()
+      await expect(newProjectPage.root()).toBeHidden()
+    })
+
+    await test.step('The new project has the chosen templates and the members', async () => {
+      await trackerNavigationMenuPage.checkProjectExist(copy.title)
+      await trackerNavigationMenuPage.openTemplateForProject(copy.title)
+      await expect(templatePage.directTemplateLocator(templates[0])).toBeVisible()
+      await expect(templatePage.directTemplateLocator(templates[1])).toBeVisible()
+      await expect(templatePage.directTemplateLocator(templates[2])).toBeHidden()
+      await trackerNavigationMenuPage.openIssuesForProject(copy.title)
+      await projectSettingsPage.openFromProject()
+      await projectSettingsPage.openSection('members')
+      await expect(projectSettingsPage.memberRow(member)).toBeVisible()
+    })
+  })
+
+  test('User can create a project based on an archived one with its components', async ({ page }) => {
+    const baseId = generateProjectId()
+    const base: NewProject = { title: `ArchivedBase-${baseId}`, identifier: baseId }
+    const copyId = generateProjectId()
+    const copy: NewProject = { title: `ArchivedCopy-${copyId}`, identifier: copyId }
+    const componentLabel = `Component-${baseId}`
+    const templateTitle = `Template-${baseId}`
+    const { client } = await connectTracker()
+
+    await test.step('Prepare an archived base with a template that refers to its component', async () => {
+      await trackerNavigationMenuPage.pressCreateProjectButton()
+      await newProjectPage.createNewProject(base)
+      await trackerNavigationMenuPage.checkProjectExist(base.title)
+      const project = await findProjectByName(client, base.title)
+      if (project === undefined) throw new Error(`Project "${base.title}" not found`)
+      const component = await client.createDoc(tracker.class.Component, project._id, {
+        label: componentLabel,
+        description: '',
+        lead: null,
+        comments: 0,
+        attachments: 0
+      })
+      await client.createDoc(tracker.class.IssueTemplate, project._id, {
+        title: templateTitle,
+        description: '',
+        priority: IssuePriority.NoPriority,
+        assignee: null,
+        component,
+        milestone: null,
+        estimation: 0,
+        children: [],
+        comments: 0,
+        attachments: 0,
+        relations: []
+      })
+      await client.updateDoc(tracker.class.Project, project.space, project._id, { archived: true })
+    })
+
+    await test.step('The archived identifier is taken and the base shows only with the toggle', async () => {
+      await trackerNavigationMenuPage.pressCreateProjectButton()
+      await expect(newProjectPage.popupHeader()).toBeVisible()
+      await newProjectPage.inputIdentifier().fill(base.identifier)
+      await expect(newProjectPage.identifierExists()).toBeVisible()
+      await newProjectPage.modeSegment('base').click()
+      await newProjectPage.baseButton().click()
+      await expect(newProjectPage.basePopup()).toBeVisible()
+      await expect(newProjectPage.basePopupRow(base.title)).toBeHidden()
+      await newProjectPage.baseShowArchived().click()
+      await newProjectPage.basePopupRow(base.title).click()
+      await expect(newProjectPage.baseButton()).toContainText(base.title)
+    })
+
+    await test.step('Take the components with the template and create', async () => {
+      await newProjectPage.inputTitle().fill(copy.title)
+      await newProjectPage.inputIdentifier().fill(copy.identifier)
+      await newProjectPage.goToStep('copy')
+      await expect(newProjectPage.copyTemplate(templateTitle)).toBeChecked()
+      await newProjectPage.copyCheckbox('components').check()
+      await newProjectPage.goToStep('summary')
+      await newProjectPage.buttonCreateProject().click()
+      await expect(newProjectPage.root()).toBeHidden()
+      await trackerNavigationMenuPage.checkProjectExist(copy.title)
+    })
+
+    await test.step('The template copy refers to the component copy of the new project', async () => {
+      const project = await findProjectByName(client, copy.title)
+      if (project === undefined) throw new Error(`Project "${copy.title}" not found`)
+      await expect(async () => {
+        const component = await client.findOne(tracker.class.Component, { space: project._id, label: componentLabel })
+        const template = await client.findOne(tracker.class.IssueTemplate, { space: project._id, title: templateTitle })
+        expect(component).toBeDefined()
+        expect(template?.component).toBe(component?._id)
+      }).toPass()
     })
   })
 

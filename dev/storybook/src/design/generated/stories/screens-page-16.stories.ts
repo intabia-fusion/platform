@@ -48,3 +48,21 @@ export const Frame6: Story = {
   args: { group, page, frame: 5 }
 }
 export const Frame7: Story = { name: 'Создание проекта - Шаг 5. Сводка', args: { group, page, frame: 6 } }
+export const Frame8: Story = { name: 'Создание проекта на основе - Шаг 1. Основное', args: { group, page, frame: 7 } }
+export const Frame9: Story = {
+  name: 'Создание проекта на основе - Шаг 1. Выбор проекта-основы',
+  args: { group, page, frame: 8 }
+}
+export const Frame10: Story = {
+  name: 'Создание проекта на основе - Шаг 2. Что взять из основы',
+  args: { group, page, frame: 9 }
+}
+export const Frame11: Story = {
+  name: 'Создание проекта на основе - Шаг 2. У основы нет шаблонов и workflow',
+  args: { group, page, frame: 10 }
+}
+export const Frame12: Story = {
+  name: 'Создание проекта на основе - Шаг 3. Участники из основы',
+  args: { group, page, frame: 11 }
+}
+export const Frame13: Story = { name: 'Создание проекта на основе - Шаг 6. Сводка', args: { group, page, frame: 12 } }

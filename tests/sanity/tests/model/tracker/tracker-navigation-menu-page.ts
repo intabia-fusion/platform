@@ -15,8 +15,11 @@ export class TrackerNavigationMenuPage extends CommonPage {
 
   buttonCreateProject = (): Locator => this.page.locator(this.yoursProjectsMenuSelector).locator('xpath=../button[1]')
   buttonProjectsParent = (): Locator => this.page.locator('button.hulyNavGroup-header span')
+  // The href carries the project id, not its name: only the Default project id contains its name
   templateLinkForProject = (projectName: string): Locator =>
-    this.page.locator(`a[href$="templates"][href*="${projectName}"]`)
+    this.page
+      .getByRole('button', { name: projectName, exact: true })
+      .locator('xpath=following-sibling::div[1]/a[contains(@href, "templates")]')
 
   starredProjectsInMenu = (): Locator => this.page.locator(`${this.starredProjectsMenuSelector} span`)
 

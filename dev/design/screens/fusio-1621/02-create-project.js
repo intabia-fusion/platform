@@ -66,7 +66,7 @@ await kit.page(typeof PAGE_NAME === 'string' ? PAGE_NAME : '2. Создание 
   const wizard = (name, x, y, step, kids, o = {}) => {
     const frame = backdrop(name, x, y)
     const content = kit.add(kit.box('step', { w: bodyW, h: stepH, dir: 'column', gap: D('spacing-2'), clip: false }), kids)
-    const dialog = kit.KitWizardDialog('Создать проект', steps, step, [content], {
+    const dialog = kit.KitWizardDialog('Создать проект', o.steps ?? steps, step, [content], {
       w: dialogW,
       submitLabel: 'Создать',
       earlySubmit: true,
@@ -74,6 +74,7 @@ await kit.page(typeof PAGE_NAME === 'string' ? PAGE_NAME : '2. Создание 
     })
     // The dialog is 618 high: the body of 448 + 48, the header 57, the footer 65 and the border
     kit.at(frame, dialog, (1920 - dialogW) / 2, 1080 * 0.15)
+    return frame
   }
 
   const iconTile = () => kit.add(
@@ -186,5 +187,171 @@ await kit.page(typeof PAGE_NAME === 'string' ? PAGE_NAME : '2. Создание 
   )
   const summary = [head, list('Владельцы (1)', ['Анна Смирнова']), list('Участники (2)', ['Мария Козлова', 'Иван Петров'])]
   wizard('Создание проекта - Шаг 5. Сводка', 0, 3600, 4, summary)
+
+  // ---- Based on a project: the mode on step 1, a "what to take" step, the steps after it filled from the base ----
+  const based = ['Основное', 'Что взять из основы', 'Участники и доступ', 'Задачи', 'Workflow', 'Сводка']
+  const sub = (text, o = {}) => kit.text(text, { size: 13, color: T('global-secondary-TextColor'), ...o })
+  const archiveChip = () => kit.KitChip('Архив', { kind: 'neutral', size: 'extra-small' })
+  // The base field: the project in the value, its archive mark after the name
+  const baseField = (name, archived) => {
+    const b = kit.box('base field', { w: fieldW, h: 32 })
+    kit.at(b, select(name, { icon: 'tracker/home' }), 0, 0)
+    if (archived) kit.at(b, archiveChip(), 106, 4)
+    return b
+  }
+  const basedBasics = () => [
+    row('Способ создания', kit.SegmentedControl(['Пустой проект', 'На основе проекта'], 'На основе проекта')),
+    row('Проект-основа', baseField('Сайт 2025', true), { hint: 'Активный или архивный проект', fill: true }),
+    row('Тип проекта', select('Default', { disabled: true, chevron: false }), { hint: 'Берётся из проекта-основы, изменить нельзя', fill: true }),
+    row('Название', kit.TextInput({ value: 'Сайт 2026', w: fieldW }), { fill: true }),
+    row('Идентификатор', kit.TextInput({ value: 'WEB26', w: fieldW }), { hint: 'Префикс номеров задач: WEB26-1', fill: true }),
+    row(
+      'Описание',
+      kit.TextArea({ value: 'Корпоративный сайт компании: каталог услуг, блог и форма обратной связи.', rows: 2, w: fieldW }),
+      { hint: 'Подставлено из проекта-основы', fill: true }
+    ),
+    row('Иконка', iconTile(), { hint: 'Подставлена из проекта-основы' })
+  ]
+  wizard('Создание проекта на основе - Шаг 1. Основное', 0, 4800, 0, basedBasics(), { steps: based })
+
+  // The base picker: search, active and archived groups, the archive toggle under the list
+  {
+    const frame = wizard('Создание проекта на основе - Шаг 1. Выбор проекта-основы', 2020, 4800, 0, basedBasics(), { steps: based })
+    const popup = kit.box('base popup', { w: fieldW, h: 10, dir: 'column', vs: 'auto', radius: D('small-BorderRadius'), fill: T('theme-popup-color'), stroke: T('theme-popup-divider') })
+    popup.shadows = [{ style: 'drop-shadow', offsetX: 0, offsetY: 8, blur: 12, spread: 0, color: { color: '#0E131E', opacity: 0.12 } }]
+    kit.add(
+      popup,
+      kit.add(kit.box('search', { w: fieldW, h: 10, dir: 'row', pad: [12, 12, 12, 12], vs: 'auto' }), kit.SearchInput({ placeholder: 'Поиск проекта', w: fieldW - 24 })),
+      kit.Menu([
+        { header: 'Активные' },
+        { label: 'Маркетинг', icon: 'tracker/home', hint: 'MKT' },
+        { label: 'Мобильное приложение', icon: 'tracker/home', hint: 'APP' },
+        { label: 'Поддержка', icon: 'tracker/home', hint: 'SUP' },
+        { header: 'Архивные' },
+        { label: 'Сайт 2025', icon: 'tracker/home', hint: 'Архив · WEB', selected: true },
+        { label: 'Лендинг 2024', icon: 'tracker/home', hint: 'Архив · LND' }
+      ], { w: fieldW - 2 }),
+      kit.add(kit.box('footer', { w: fieldW, h: 10, dir: 'row', pad: [8, 12, 8, 12], vs: 'auto' }), kit.Toggle(true, 'Показывать архивные', { size: 'small' }))
+    )
+    // Under the base field: the body starts at 494 + 224 + 24, the field 236 further; the row is the second one
+    kit.at(frame, popup, 978, 331)
+  }
+
+  // "What to take from the base": settings groups and content with counters on the right
+  const baseHead = (name, id, archived) => kit.add(
+    kit.row('base head', D('spacing-1')),
+    sub('Из проекта'),
+    kit.icon('tracker/home', P('Porpoise')),
+    kit.text(name, { size: 14, weight: 600, color: T('theme-caption-color') }),
+    archived ? archiveChip() : null,
+    sub(id + ' · тип Default')
+  )
+  const copyRow = (label, value, o = {}) => kit.add(
+    kit.box('copy row ' + label, { w: o.w ?? bodyW, h: 24, dir: 'row', align: 'center', justify: 'space-between' }),
+    kit.Checkbox(o.checked ?? true, label, { kind: 'brand', indeterminate: o.indeterminate, disabled: o.disabled, size: o.size }),
+    typeof value === 'string' ? sub(value) : value
+  )
+  const groupTitle = (text) => kit.text(text, { size: 13, weight: 600, color: T('theme-caption-color') })
+  const group = (title, rows) => kit.add(kit.col('group ' + title, D('spacing-1')), groupTitle(title), rows)
+  const templatesValue = kit.add(
+    kit.row('templates value', D('spacing-0_5')),
+    kit.KitChip('выбрано 3 из 5', { kind: 'neutral', size: 'extra-small' }),
+    kit.IconButton('ui/Up', { kind: 'ghost', size: 'extra-small' })
+  )
+  const template = (title, type, checked) => copyRow(title, type, { checked, size: 'small', w: bodyW - 24 })
+  const templateList = kit.add(
+    kit.col('templates', D('spacing-0_5'), { pad: [0, 0, 0, 24] }),
+    template('Баг-репорт', 'Ошибка', true),
+    template('Новая страница сайта', 'Задача', true),
+    template('Публикация статьи в блог', 'Задача', false),
+    template('Релиз', 'Задача', true),
+    template('Еженедельный отчёт', 'Задача', false)
+  )
+  const footnote = kit.text('Метки общие для всего пространства - их копировать не нужно. Задачи, комментарии и история не копируются.', { size: 12, color: T('global-secondary-TextColor'), w: bodyW })
+  wizard('Создание проекта на основе - Шаг 2. Что взять из основы', 0, 6000, 1, [
+    baseHead('Сайт 2025', 'WEB', true),
+    group('Настройки проекта', [
+      copyRow('Участники и роли', '1 владелец, 2 участника'),
+      copyRow('Приватность', 'Приватный'),
+      copyRow('Исполнитель и статус по умолчанию', 'Не назначен · Todo'),
+      copyRow('Workflow для типов задач', '2 из 3 типов задач')
+    ]),
+    group('Содержимое', [
+      copyRow('Шаблоны задач', templatesValue, { checked: false, indeterminate: true }),
+      templateList,
+      copyRow('Компоненты', '4', { checked: false }),
+      copyRow('Этапы (milestones)', '2', { checked: false })
+    ]),
+    footnote
+  ], { steps: based })
+
+  wizard('Создание проекта на основе - Шаг 2. У основы нет шаблонов и workflow', 2020, 6000, 1, [
+    baseHead('Поддержка', 'SUP', false),
+    kit.Callout('В проекте «Поддержка» нет шаблонов задач, а его типам задач не назначен workflow. Эти пункты недоступны; workflow можно выбрать на шаге Workflow.', { tone: 'warning', w: bodyW }),
+    group('Настройки проекта', [
+      copyRow('Участники и роли', '1 владелец, 4 участника'),
+      copyRow('Приватность', 'Открытый'),
+      copyRow('Исполнитель и статус по умолчанию', 'Не назначен · Backlog'),
+      copyRow('Workflow для типов задач', 'Нет workflow', { checked: false, disabled: true })
+    ]),
+    group('Содержимое', [
+      copyRow('Шаблоны задач', 'Нет шаблонов', { checked: false, disabled: true }),
+      copyRow('Компоненты', '3'),
+      copyRow('Этапы (milestones)', 'Нет этапов', { checked: false, disabled: true })
+    ]),
+    footnote
+  ], { steps: based })
+
+  // Members step filled from the base: the callout names the source, the creator's row stays locked
+  wizard('Создание проекта на основе - Шаг 3. Участники из основы', 0, 7200, 2, [
+    kit.Callout('Участники, роли и настройки доступа взяты из проекта «Сайт 2025». Изменения здесь не затрагивают исходный проект.', { w: bodyW }),
+    row('Приватный проект', kit.Toggle(true), { hint: 'Видят только участники' }),
+    kit.box('divider', { w: bodyW, h: 1, fill: T('theme-divider-color') }),
+    kit.add(
+      kit.box('members head', { w: bodyW, h: 32, dir: 'row', align: 'center', justify: 'space-between' }),
+      kit.text('Участники · 3', { size: 14, weight: 600, color: T('theme-caption-color') }),
+      kit.Button({ kind: 'secondary', size: 'small', label: 'Добавить участника', icon: 'plus' })
+    ),
+    kit.Table(
+      [{ title: 'Сотрудник', w: bodyW - 200 - 56 }, { title: 'Роль', w: 200 }, { title: '', w: 56 }],
+      [
+        [person('Анна Смирнова'), roleLocked('Владелец'), more()],
+        [person('Мария Козлова'), roleCell('Участник'), more()],
+        [person('Иван Петров'), roleCell('Участник'), more()]
+      ],
+      { name: 'Members table' }
+    )
+  ], { steps: based })
+
+  // Summary: the base block (source, archive mark, what is copied) over the owners and members
+  const kv = (key, value) => kit.add(
+    kit.box('row ' + key, { w: bodyW - 26, h: 10, dir: 'row', gap: D('spacing-1'), align: 'start', vs: 'auto' }),
+    kit.text(key, { size: 13, color: T('global-secondary-TextColor'), w: 152 }),
+    typeof value === 'string' ? kit.text(value, { size: 14, color: T('theme-caption-color'), w: bodyW - 26 - 152 - 8 }) : value
+  )
+  const baseBlock = kit.add(
+    kit.box('summary base', { w: bodyW, h: 10, dir: 'column', gap: D('spacing-1'), pad: [12, 12, 12, 12], vs: 'auto', radius: D('medium-BorderRadius'), stroke: T('theme-divider-color') }),
+    kit.text('На основе проекта', { size: 14, weight: 600, lh: 1.3, color: T('theme-caption-color') }),
+    kv('Основа', kit.add(kit.row('base', D('spacing-1')), kit.icon('tracker/home', P('Porpoise')), kit.text('Сайт 2025 (WEB)', { size: 14, color: T('theme-caption-color') }), archiveChip())),
+    kv('Шаблоны задач', '3 из 5'),
+    kv('Workflow', '2 из 3 типов задач'),
+    kv('Настройки', 'Участники и роли, Приватность, Исполнитель и статус по умолчанию'),
+    kv('Не копируется', 'Компоненты, Этапы (milestones)')
+  )
+  const basedHead = kit.add(
+    kit.row('summary head', D('spacing-1_5')),
+    iconTile(),
+    kit.add(
+      kit.col('title', 0),
+      kit.text('Сайт 2026', { size: 16, weight: 500, color: T('theme-caption-color') }),
+      kit.text('WEB26', { size: 12, color: T('theme-darker-color') })
+    )
+  )
+  wizard('Создание проекта на основе - Шаг 6. Сводка', 2020, 7200, 5, [
+    basedHead,
+    baseBlock,
+    list('Владельцы (1)', ['Анна Смирнова']),
+    list('Участники (2)', ['Мария Козлова', 'Иван Петров'])
+  ], { steps: based })
 }
 await kit.settle()

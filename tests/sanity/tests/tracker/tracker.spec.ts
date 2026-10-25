@@ -38,19 +38,17 @@ test.describe('Tracker tests', () => {
   })
 
   test('save-view-options-board', async ({ page }) => {
-    const panels = ['Issues', 'Active', 'Backlog']
     const commonTrackerPage = new CommonTrackerPage(page)
     await navigate(page)
 
-    await doSaveViewTest(panels, commonTrackerPage, ViewletSelectors.Board)
+    await doSaveViewTest(commonTrackerPage, ViewletSelectors.Board)
   })
 
   test('save-view-options-table', async ({ page }) => {
-    const panels = ['Issues', 'Active', 'Backlog']
     const commonTrackerPage = new CommonTrackerPage(page)
     await navigate(page)
 
-    await doSaveViewTest(panels, commonTrackerPage, ViewletSelectors.Table)
+    await doSaveViewTest(commonTrackerPage, ViewletSelectors.Table)
   })
 
   test('my-issues', async ({ page }) => {
@@ -233,11 +231,14 @@ test.describe('Tracker tests', () => {
     })
   })
 })
-async function doSaveViewTest (
-  panels: string[],
-  commonTrackerPage: CommonTrackerPage,
-  viewletSelector: ViewletSelectors
-): Promise<void> {
+async function doSaveViewTest (commonTrackerPage: CommonTrackerPage, viewletSelector: ViewletSelectors): Promise<void> {
+  const { page } = commonTrackerPage
+  // Projects of other tests may sort above Default, so its Issues link is taken by the project name
+  const panels = [
+    new TrackerNavigationMenuPage(page).issuesLinkForProject('Default'),
+    page.locator('text="Active"'),
+    page.locator('text="Backlog"')
+  ]
   for (const panel of panels) {
     await commonTrackerPage.selectPanelAndViewlet(panel, viewletSelector)
     await commonTrackerPage.openViewOptionsAndSelectAssignee()
