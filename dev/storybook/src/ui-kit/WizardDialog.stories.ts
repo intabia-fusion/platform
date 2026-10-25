@@ -36,13 +36,14 @@ const meta = {
     width: 'large',
     canProceed: true,
     canSubmit: true,
+    earlySubmit: false,
     loading: false
   },
   parameters: {
     docs: {
       description: {
         component:
-          '**Когда:** создание или импорт в несколько шагов: слева `Steps`, справа тело текущего шага, в футере «Назад» слева, «Далее» (`brand`) или на последнем шаге главное действие (`positive`) справа. Отмены нет - закрывает крестик (отменяемое `cancel`, затем `close`, как у `Dialog`). **Не этот компонент:** диалог в один экран - `Dialog`; только индикатор шагов - `Steps`.\n\n`steps` - `StepsItem` (`id`, `label`); `selected` - текущий шаг, bindable, по умолчанию первый; «Назад» / «Далее» меняют его сами и шлют `select` с id шага - проверку шага место делает через `canProceed`. `loading` блокирует «Назад» и «Далее», у главного действия - спиннер. Тело шага - default slot, подсказка или ошибка шага - слот `footerStart` (после «Назад»). Ширина по умолчанию `x-large`. Новый шаг открывается с начала (прокрутка тела сбрасывается); если кнопка под фокусом пропала («Назад» на первом шаге, «Далее» на последнем), фокус переходит на главную кнопку. Escape и клик мимо в попапе спрашивают `canClose()`, как у `Dialog`.'
+          '**Когда:** создание или импорт в несколько шагов: слева `Steps`, справа тело текущего шага, в футере «Назад» слева, «Далее» (`brand`) или на последнем шаге главное действие (`positive`) справа. Отмены нет - закрывает крестик (отменяемое `cancel`, затем `close`, как у `Dialog`). **Не этот компонент:** диалог в один экран - `Dialog`; только индикатор шагов - `Steps`.\n\n`steps` - `StepsItem` (`id`, `label`); `selected` - текущий шаг, bindable, по умолчанию первый; «Назад» / «Далее» меняют его сами и шлют `select` с id шага - проверку шага место делает через `canProceed`. `loading` блокирует «Назад» и «Далее», у главного действия - спиннер. Тело шага - default slot, подсказка или ошибка шага - слот `footerStart` (после «Назад»). С `earlySubmit` (мастер, у которого следующие шаги необязательны) «Назад» и «Далее» стоят вместе слева, а главное действие справа на каждом шаге: вторичное до последнего шага, `positive` на последнем. Ширина по умолчанию `x-large`. Новый шаг открывается с начала (прокрутка тела сбрасывается); если кнопка под фокусом пропала («Назад» на первом шаге, «Далее» на последнем), фокус переходит на главную кнопку. Escape и клик мимо в попапе спрашивают `canClose()`, как у `Dialog`.'
       }
     }
   },
@@ -77,6 +78,8 @@ export const Variants: Story = {
           rows: [
             { title: 'canProceed=false', props: { selected: 'file', canProceed: false } },
             { title: 'canSubmit=false', props: { selected: 'review', canSubmit: false } },
+            { title: 'earlySubmit', props: { selected: 'statuses', earlySubmit: true } },
+            { title: 'earlySubmit, last', props: { selected: 'review', earlySubmit: true } },
             { title: 'loading', props: { selected: 'review', loading: true } }
           ],
           columns: [{ title: 'large', props: {} }],

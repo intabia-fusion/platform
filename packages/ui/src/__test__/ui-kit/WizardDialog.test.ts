@@ -122,6 +122,37 @@ describe('ui-kit WizardDialog', () => {
     expect(onSubmit).toHaveBeenCalledTimes(1)
   })
 
+  it('keeps the navigation on the left and the submit on the right with earlySubmit', async () => {
+    const { root, component } = mount({ earlySubmit: true, canSubmit: false, selected: 'review' })
+    const onSubmit = vi.fn()
+    component.$on('submit', onSubmit)
+    const [back, next] = buttons(root, 'start')
+    expect(buttons(root, 'start')).toHaveLength(2)
+    expect(back.classList.contains('button--secondary')).toBe(true)
+    expect(next.classList.contains('button--brand')).toBe(true)
+    // The footerStart slot of the place follows the navigation
+    expect(root.querySelector('.dialog__footer-start .message')).not.toBeNull()
+    const [submit] = buttons(root, 'actions')
+    expect(buttons(root, 'actions')).toHaveLength(1)
+    expect(submit.classList.contains('button--secondary')).toBe(true)
+    expect(submit.textContent?.trim()).toBe('Run')
+    expect(submit.disabled).toBe(true)
+
+    component.$set({
+      props: { label: getEmbeddedLabel('Import'), steps: STEPS, submitLabel: getEmbeddedLabel('Run'), earlySubmit: true, canSubmit: true, selected: 'review' }
+    })
+    await tick()
+    buttons(root, 'actions')[0].click()
+    expect(onSubmit).toHaveBeenCalledTimes(1)
+
+    next.click()
+    await tick()
+    expect(current(root)).toBe('3. Import')
+    expect(buttons(root, 'start')).toHaveLength(1)
+    const [last] = buttons(root, 'actions')
+    expect(last.classList.contains('button--positive')).toBe(true)
+  })
+
   it('blocks Back while loading', () => {
     const { root } = mount({ selected: 'review', loading: true })
     expect(buttons(root, 'start')[0].disabled).toBe(true)

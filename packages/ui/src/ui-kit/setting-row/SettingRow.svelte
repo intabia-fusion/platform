@@ -24,7 +24,7 @@
   import type { IconComponent } from '../../types'
   import IconButton from '../button/IconButton.svelte'
   import IconBox from '../icon-box/IconBox.svelte'
-  import type { SettingRowProps, SettingRowSlots, SettingRowVariant } from './types'
+  import type { SettingRowKind, SettingRowProps, SettingRowSlots, SettingRowVariant } from './types'
 
   type $$Props = SettingRowProps
   type $$Slots = SettingRowSlots
@@ -32,8 +32,11 @@
   export let label: IntlString
   export let labelParams: Record<string, any> = {}
   export let variant: SettingRowVariant | undefined = undefined
+  export let kind: SettingRowKind = 'line'
   export let hint: IntlString | undefined = undefined
+  export let hintParams: Record<string, any> = {}
   export let stacked: boolean = false
+  export let fullWidth: boolean = false
   export let icon: IconComponent | undefined = undefined
   export let color: string | undefined = undefined
   export let description: IntlString | undefined = undefined
@@ -65,12 +68,23 @@
     </div>
   </div>
 {:else}
-  <div class="setting-row" class:setting-row--stacked={stacked}>
+  <div
+    class="setting-row setting-row--{kind}"
+    class:setting-row--stacked={stacked}
+    class:setting-row--full-width={fullWidth}
+  >
     <div class="setting-row__main">
       <span class="setting-row__caption">
         <span class="setting-row__label" id={labelId}><Label {label} params={labelParams} /></span>
-        {#if hint != null}
-          <IconButton icon={ui.icon.InfoCircle} size="extra-small" kind="ghost" tooltip={{ label: hint }} />
+        {#if hint != null && kind === 'column'}
+          <span class="setting-row__hint"><Label label={hint} params={hintParams} /></span>
+        {:else if hint != null}
+          <IconButton
+            icon={ui.icon.InfoCircle}
+            size="extra-small"
+            kind="ghost"
+            tooltip={{ label: hint, props: hintParams }}
+          />
         {/if}
       </span>
       <div class="setting-row__control"><slot {labelId} {descriptionId} {controlId} /></div>
@@ -137,6 +151,45 @@
       &:not(:has(*)) {
         display: none;
       }
+    }
+
+    // A settings page: rows stand apart by the gap of the place, the controls line up after the caption column.
+    &--column {
+      border-bottom: none;
+
+      .setting-row__main,
+      &:first-child .setting-row__main {
+        justify-content: flex-start;
+        gap: var(--spacing-2);
+        min-height: var(--global-small-Size);
+        padding: 0;
+      }
+      .setting-row__caption {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.125rem;
+        width: 13.75rem;
+      }
+      .setting-row__label {
+        font-size: 0.875rem;
+        font-weight: 400;
+        line-height: normal;
+        text-transform: none;
+        color: var(--theme-content-color);
+      }
+      .setting-row__hint {
+        font-size: 0.75rem;
+        color: var(--theme-darker-color);
+      }
+      .setting-row__control {
+        flex-grow: 0;
+        justify-content: flex-start;
+      }
+    }
+
+    // The control takes the rest of the row in any kind, so a fullWidth field fills it.
+    &--full-width .setting-row__control {
+      flex: 1 1 0;
     }
 
     &--stacked .setting-row__main {

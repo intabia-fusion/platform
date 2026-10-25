@@ -65,6 +65,27 @@ describe('ui-kit SettingRow', () => {
     ).toHaveLength(0)
   })
 
+  it('shows the hint as text under the caption in the column kind', () => {
+    const root = mount({
+      props: {
+        label: getEmbeddedLabel('Identifier'),
+        kind: 'column',
+        hint: getEmbeddedLabel('Prefix of issue numbers')
+      }
+    })
+    expect(root.classList.contains('setting-row--column')).toBe(true)
+    expect(root.querySelector('.setting-row__hint')?.textContent).toContain('Prefix of issue numbers')
+    expect(root.querySelectorAll('.setting-row__caption button')).toHaveLength(0)
+  })
+
+  it('lets the control take the rest of the row with fullWidth', () => {
+    const root = mount({ props: { label: getEmbeddedLabel('Name'), kind: 'column', fullWidth: true } })
+    expect(root.classList.contains('setting-row--full-width')).toBe(true)
+    expect(
+      mount({ props: { label: getEmbeddedLabel('Name'), kind: 'column' } }).classList.contains('setting-row--full-width')
+    ).toBe(false)
+  })
+
   it('draws details only when the slot has content and stacks on request', () => {
     expect(
       mount({ props: { label: getEmbeddedLabel('Parents') }, details: true }).querySelector(

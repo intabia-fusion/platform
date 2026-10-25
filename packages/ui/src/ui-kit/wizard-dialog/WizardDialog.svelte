@@ -37,6 +37,7 @@
   export let canProceed: boolean = true
   export let canSubmit: boolean = true
   export let submitLabel: IntlString = ui.string.Submit
+  export let earlySubmit: boolean = false
   export let loading: boolean = false
   export let width: DialogWidth | undefined = undefined
 
@@ -121,13 +122,28 @@
         }}
       />
     {/if}
+    <!-- With earlySubmit the navigation stands together on the left, the submit keeps the right side on every step. -->
+    {#if earlySubmit && !isLast}
+      <Button
+        kind="brand"
+        size="medium"
+        label={ui.string.NextStep}
+        disabled={!canProceed || loading}
+        bind:element={nextButton}
+        on:click={() => {
+          void go(index + 1)
+        }}
+      >
+        <Icon icon={IconArrowRight} size="small" />
+      </Button>
+    {/if}
     <slot name="footerStart" />
   </svelte:fragment>
 
   <svelte:fragment slot="footerActions">
-    {#if isLast}
+    {#if isLast || earlySubmit}
       <Button
-        kind="positive"
+        kind={isLast ? 'positive' : 'secondary'}
         size="medium"
         label={submitLabel}
         disabled={!canSubmit}

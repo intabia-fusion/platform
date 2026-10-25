@@ -20,14 +20,16 @@
     Chip,
     Dropdown,
     MenuButton,
+    SelectButton,
     SettingRow,
     TextArea,
+    TextInput,
     Toggle,
     type DropdownItem
   } from '@hcengineering/ui/kit'
 
-  /** One row alone (`row`), the rows of a form on one plate (`form`) or a list of switches (`list`). */
-  export let sample: 'row' | 'form' | 'list' = 'row'
+  /** One row alone (`row`), the rows of a form on one plate (`form`), a list of switches (`list`) or a settings page (`page`, `kind="column"`). */
+  export let sample: 'row' | 'form' | 'list' | 'page' = 'row'
   export let control: 'dropdown' | 'toggle' | 'chips' | 'textarea' = 'dropdown'
   export let label = getEmbeddedLabel('Task type')
   export let hint: boolean = false
@@ -45,6 +47,7 @@
   let undo = false
   let limit = true
   let plain = false
+  let name = 'Mobile app'
 
   $: picked = types.filter((it) => parents.includes(it.id))
 </script>
@@ -141,6 +144,37 @@
       <Toggle id={controlId} aria-labelledby={labelId} bind:checked={plain} />
     </SettingRow>
   </div>
+{:else if sample === 'page'}
+  <div class="setting-row-example__set setting-row-example__page">
+    <SettingRow kind="column" label={getEmbeddedLabel('Name')} let:labelId>
+      <div class="setting-row-example__wide">
+        <TextInput bind:value={name} aria-labelledby={labelId} fullWidth />
+      </div>
+    </SettingRow>
+    <SettingRow
+      kind="column"
+      label={getEmbeddedLabel('Identifier')}
+      hint={getEmbeddedLabel('Prefix of issue numbers: APP-6')}
+      let:labelId
+    >
+      <div class="setting-row-example__narrow">
+        <TextInput value="APP" readonly aria-labelledby={labelId} fullWidth />
+      </div>
+    </SettingRow>
+    <SettingRow kind="column" label={getEmbeddedLabel('Description')} let:labelId>
+      <div class="setting-row-example__wide">
+        <TextArea bind:value={description} rows={2} aria-labelledby={labelId} />
+      </div>
+    </SettingRow>
+    <SettingRow kind="column" label={getEmbeddedLabel('Default status')}>
+      <div class="setting-row-example__field">
+        <SelectButton label={getEmbeddedLabel('Todo')} field fullWidth chevron />
+      </div>
+    </SettingRow>
+    <SettingRow kind="column" label={getEmbeddedLabel('Private')} hint={getEmbeddedLabel('Only members see it')} let:labelId>
+      <Toggle aria-labelledby={labelId} bind:checked={root} />
+    </SettingRow>
+  </div>
 {:else}
   <div class="setting-row-example setting-row-example__set setting-row-example__surface">
     <SettingRow
@@ -209,6 +243,15 @@
       padding: 0.25rem 1rem;
       border-radius: var(--medium-BorderRadius);
       background-color: var(--theme-panel-color);
+    }
+    &__page {
+      gap: 1rem;
+    }
+    &__wide {
+      width: 26.25rem;
+    }
+    &__narrow {
+      width: 10rem;
     }
   }
 </style>

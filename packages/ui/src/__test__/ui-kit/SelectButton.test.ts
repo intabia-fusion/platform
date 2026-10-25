@@ -135,6 +135,14 @@ describe('ui-kit SelectButton', () => {
     expect(root.classList.contains('select-button--full-width')).toBe(true)
   })
 
+  it('takes the field look only with field', async () => {
+    const { root, component } = mount({ label: VALUE })
+    expect(root.classList.contains('select-button--field')).toBe(false)
+    component.$set({ field: true })
+    await tick()
+    expect(root.classList.contains('select-button--field')).toBe(true)
+  })
+
   it('centers the value and the chevron only with justify center', async () => {
     const { root, component } = mount({ label: VALUE, fullWidth: true })
     expect(root.classList.contains('select-button--center')).toBe(false)
