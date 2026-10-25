@@ -31,7 +31,7 @@ import TopBar from './TopBar.svelte'
 import { railApps, sidebarWidgets } from './apps'
 
 const meta: Meta = {
-  title: 'Kit/Workbench',
+  title: 'Kit (pen.dev)/Workbench',
   tags: ['!autodocs'],
   parameters: { layout: 'padded', controls: { disable: true } }
 }
@@ -50,7 +50,7 @@ export const WithSidePanel: Story = {
 const sections = (list: unknown[]): Story => ({
   render: (_args, { title, name }) => ({
     Component: FramedSections,
-    props: { sections: list, title: `${title.replace('Kit/', '')} - ${name}` }
+    props: { sections: list, title: `${title.slice(title.lastIndexOf('/') + 1)} - ${name}` }
   })
 })
 

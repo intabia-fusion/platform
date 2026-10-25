@@ -22,7 +22,7 @@ import Table from './Table.svelte'
 import FramedSections from '../FramedSections.svelte'
 
 const meta: Meta = {
-  title: 'Kit/Settings',
+  title: 'Kit (pen.dev)/Settings',
   tags: ['!autodocs'],
   parameters: { layout: 'padded', controls: { disable: true } }
 }
@@ -33,7 +33,7 @@ type Story = StoryObj<typeof meta>
 const sections = (list: unknown[]): Story => ({
   render: (_args, { title, name }) => ({
     Component: FramedSections,
-    props: { sections: list, title: `${title.replace('Kit/', '')} - ${name}` }
+    props: { sections: list, title: `${title.slice(title.lastIndexOf('/') + 1)} - ${name}` }
   })
 })
 

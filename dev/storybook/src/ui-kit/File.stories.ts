@@ -18,7 +18,7 @@ import type { Meta, StoryObj } from '@storybook/svelte'
 import FileKit from './FileKit.svelte'
 
 const meta = {
-  title: 'UI Kit/File',
+  title: 'Media/File',
   parameters: { layout: 'fullscreen', controls: { disable: true } }
 } satisfies Meta
 

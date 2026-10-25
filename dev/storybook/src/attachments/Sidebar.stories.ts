@@ -20,10 +20,11 @@ import Sidebar from './Sidebar.svelte'
 const meta = {
   title: 'Attachments/Sidebar',
   component: Sidebar,
+  tags: ['!autodocs'],
   parameters: { layout: 'fullscreen', controls: { disable: true } }
 } satisfies Meta<Sidebar>
 
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const All: Story = {}
+export const All: Story = { name: 'Sidebar' }

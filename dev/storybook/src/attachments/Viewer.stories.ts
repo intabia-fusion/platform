@@ -20,10 +20,11 @@ import Viewer from './Viewer.svelte'
 const meta = {
   title: 'Attachments/Viewer',
   component: Viewer,
+  tags: ['!autodocs'],
   parameters: { layout: 'fullscreen', controls: { disable: true } }
 } satisfies Meta<Viewer>
 
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const All: Story = {}
+export const All: Story = { name: 'Viewer' }
