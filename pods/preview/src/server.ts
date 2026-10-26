@@ -30,7 +30,14 @@ import { pipeline } from 'stream/promises'
 
 import { createCache } from './cache'
 import { type Config } from './config'
-import { type RequestWithAuth, errorHandler, keepAlive, withBlob } from './middleware'
+import {
+  type RequestWithAuth,
+  createWorkspaceAccess,
+  errorHandler,
+  keepAlive,
+  withAuthorization,
+  withBlob
+} from './middleware'
 import { createPreviewService, ThumbnailParams } from './service'
 import { TemporaryDir } from './tempdir'
 
@@ -174,9 +181,17 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
 
   app.use(morgan('short', { stream: new LogStream() }))
 
+  const workspaceAccess = createWorkspaceAccess({
+    accountsUrl: config.AccountsUrl,
+    allowTtlMs: config.AuthAllowCacheMs,
+    denyTtlMs: config.AuthDenyCacheMs
+  })
+
   app.get(
     '/metadata/:workspace/:name',
+    withAuthorization,
     withBlob,
+    workspaceAccess,
     wrapRequest(ctx, 'getMetadata', async (ctx, req, res) => {
       const workspace = req.params.workspace as WorkspaceUuid
       const name = req.params.name
@@ -188,7 +203,9 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
 
   app.get(
     '/image/:transform/:workspace/:name',
+    withAuthorization,
     withBlob,
+    workspaceAccess,
     wrapRequest(ctx, 'getThumbnail', async (ctx, req, res) => {
       const workspace = req.params.workspace as WorkspaceUuid
       const name = req.params.name

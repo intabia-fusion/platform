@@ -50,14 +50,14 @@ test.describe('Preview service thumbnails', () => {
 
   for (const c of cases) {
     test(`renders a thumbnail for ${c.file} via ${c.tool}`, async ({ sharedWorkspace }) => {
-      const { ws } = await sharedWorkspace()
+      const { ws, token } = await sharedWorkspace()
       const name = randomUUID()
       const data = readFileSync(path.join(__dirname, '../files', c.file))
 
       await uploadBlob(ws.workspace, name, data, c.contentType)
 
       const response = await fetch(`${previewUrl}/image/width=${WIDTH}/${ws.workspace}/${name}`, {
-        headers: { Accept: 'image/png' }
+        headers: { Accept: 'image/png', Authorization: `Bearer ${token}` }
       })
       const body = Buffer.from(await response.arrayBuffer())
 
@@ -66,4 +66,12 @@ test.describe('Preview service thumbnails', () => {
       expect(pngWidth(body)).toBe(WIDTH)
     })
   }
+
+  test('refuses a thumbnail request without a token', async ({ sharedWorkspace }) => {
+    const { ws } = await sharedWorkspace()
+
+    const response = await fetch(`${previewUrl}/image/width=${WIDTH}/${ws.workspace}/${randomUUID()}`)
+
+    expect(response.status).toBe(401)
+  })
 })
