@@ -24,7 +24,7 @@ import core, {
   PersonId
 } from '@hcengineering/core'
 import activity, { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
-import notification, { DocNotifyContext, UnreadMessageId } from '@hcengineering/notification'
+import notification, { DocNotifyContext, EMBEDDED_MARKUP_LIMIT, UnreadMessageId } from '@hcengineering/notification'
 import { Receiver, Sender } from '@hcengineering/server-notification'
 import { Employee, PersonSpace } from '@hcengineering/contact'
 
@@ -503,9 +503,15 @@ describe('message module', () => {
         )
       })
 
-      it('looks applets up for a new message', async () => {
+      it('looks applets up for a new message once a receiver gets a notification', async () => {
         await handleMessage(mockClient, mockCache, txCache, result, mockTx)
+        expect(mockGetApplets).not.toHaveBeenCalled()
 
+        mockGetMessageNotifyProviders.mockResolvedValue({
+          [notification.providers.InboxNotificationProvider]: [{ _id: 'inbox-type-1' }]
+        })
+        mockCache.getPushSubscriptions.mockResolvedValue([])
+        await handleMessage(mockClient, mockCache, txCache, result, mockTx)
         expect(mockGetApplets).toHaveBeenCalledWith(expect.objectContaining({ _id: 'msg-1' }), mockClient)
       })
 
@@ -1184,6 +1190,7 @@ describe('message module', () => {
             $update: {
               // The cached message already carries the edit, the tx is not applied a second time.
               markup: 'New Mention Text',
+              truncated: false,
               attachments: [],
               applets: []
             }
@@ -1193,6 +1200,31 @@ describe('message module', () => {
       expect(result.updateContextTx[1].operations).toEqual({
         object: { text: 'NotifMsg' }
       })
+    })
+
+    it('excerpts an oversized message in the mention entry, as its creation does', async () => {
+      const longMarkup = JSON.stringify({
+        type: 'doc',
+        content: [{ type: 'paragraph', content: [{ type: 'text', text: 'x'.repeat(EMBEDDED_MARKUP_LIMIT + 1) }] }]
+      })
+      const messageDoc = {
+        _id: 'msg-1',
+        _class: 'MsgClass',
+        attachedTo: 'doc-1',
+        attachedToClass: 'DocClass',
+        message: longMarkup
+      } as unknown as ActivityMessage
+      const context = { _id: 'ctx-1', _class: 'DocNotifyContext', space: 'space-1' } as unknown as DocNotifyContext
+
+      mockCache.getDoc.mockResolvedValueOnce(messageDoc).mockResolvedValueOnce({ _id: 'doc-1' })
+      mockCache.getContexts.mockResolvedValue([context])
+      mockHasMentionNotificationByMessage.mockReturnValue(true)
+
+      await handleMessage(mockClient, mockCache, txCache, result, mockTx)
+
+      const update = (result.updateContextTx[0].operations as any).$update.latestNotifications.$update
+      expect(update.truncated).toBe(true)
+      expect(update.markup.length).toBeLessThan(longMarkup.length)
     })
 
     it('refreshes both the message entry and the mention entry of one message', async () => {
@@ -1230,7 +1262,7 @@ describe('message module', () => {
           $update: {
             latestNotifications: {
               $query: { type: 'mention', messageId: 'msg-1' },
-              $update: { markup: 'New Text', attachments: [], applets: [] }
+              $update: { markup: 'New Text', truncated: false, attachments: [], applets: [] }
             }
           }
         },

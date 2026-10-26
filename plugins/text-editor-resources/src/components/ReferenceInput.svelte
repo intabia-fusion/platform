@@ -214,7 +214,7 @@
   </div>
   {#if showActions || showSend}
     <div class="buttons-panel flex-between clear-mins">
-      <div class="buttons-group {shrinkButtons ? 'xxsmall-gap' : 'xsmall-gap'}">
+      <div class="buttons-group ref-actions {shrinkButtons ? 'xxsmall-gap' : 'xsmall-gap'}">
         {#if showActions}
           {#each actions as a, idx (a)}
             {#if idx !== 0 && a.order % 10 === 0}
@@ -316,5 +316,10 @@
   .buttons-panel {
     flex-shrink: 0;
     padding: 0.325rem 0.75rem;
+  }
+
+  // The kit symbols draw a heavier line than the old icons: a lighter tone keeps the panel as quiet.
+  .ref-actions :global(.antiButton:not(:hover, :disabled) .btn-icon) {
+    color: var(--theme-dark-color);
   }
 </style>

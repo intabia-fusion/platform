@@ -495,7 +495,7 @@ const noMetrics = {
  * What the web client does on the first login: the Person, the Employee and the social identities
  * of the account in the workspace. Without it the messages of the member are signed "System".
  */
-async function createEmployee (member: ChatMember, ws: WorkspaceLoginInfo): Promise<void> {
+export async function createEmployee (member: ChatMember, ws: WorkspaceLoginInfo): Promise<void> {
   const accountClient = getAccountClient(LocalUrl, ws.token)
   const account = await member.client.getAccount()
   const socialIds = await accountClient.getSocialIds()

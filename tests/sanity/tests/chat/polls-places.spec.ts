@@ -47,7 +47,6 @@ interface Chat {
 const channelClass = 'chunter:class:Channel' as Ref<Class<Doc>>
 const pollClass = 'activity:class:Poll' as Ref<Class<Doc>>
 const spaceSpace = 'core:space:Space' as Ref<Space>
-const pollIcon = 'use[href$="#poll-outline"]'
 
 test.describe.configure({ mode: 'parallel' })
 
@@ -121,7 +120,8 @@ test.describe('Poll placement tests', () => {
   const message = (page: Page, text: string): Locator =>
     page.locator('.hulyComponent .activityMessage:not([inert] *)').filter({ hasText: text })
 
-  const forwardDialog = (page: Page): Locator => page.locator('.hulyModal-container').filter({ hasText: 'Forward message' })
+  const forwardDialog = (page: Page): Locator =>
+    page.locator('.hulyModal-container').filter({ hasText: 'Forward message' })
 
   async function forwardTo (page: Page, text: string, target: string): Promise<void> {
     await channelPage.clickOpenMoreButton(text)
@@ -143,13 +143,13 @@ test.describe('Poll placement tests', () => {
 
     const sidebar = page.locator('#sidebar')
     const question = `Thread lunch? ${uniq}`
-    await sidebar.locator(`button:has(${pollIcon}):not([inert] *)`).click()
+    await polls.pollButton(sidebar).click()
     await expect(polls.questionInput()).toBeFocused()
     await polls.fill({ question, options: ['Pizza', 'Sushi'] })
     await polls.createButton().click()
     await expect(polls.form()).toBeHidden()
-    await expect(sidebar.locator('.tile').filter({ hasText: question })).toBeVisible()
-    await sidebar.locator('button:has(g#Send):not([inert] *)').click()
+    await expect(polls.draft(question, sidebar)).toBeVisible()
+    await polls.sendButton(sidebar).click()
 
     const inThread = polls.poll(question, sidebar)
     await expect(inThread).toBeVisible()
@@ -170,8 +170,9 @@ test.describe('Poll placement tests', () => {
     const reopened = polls.poll(question, page.locator('#sidebar'))
     await expect(reopened).toBeVisible()
     await expect(reopened.locator('.poll-option__result').first()).toBeVisible()
-    await expect(reopened.locator('.poll-option').filter({ hasText: 'Pizza' }).locator('.poll-option__percentage'))
-      .toHaveText('100%')
+    await expect(
+      reopened.locator('.poll-option').filter({ hasText: 'Pizza' }).locator('.poll-option__percentage')
+    ).toHaveText('100%')
   })
 
   test('A forwarded poll stays live: a vote in the forward lands in the original', async ({ page }) => {
@@ -204,8 +205,9 @@ test.describe('Poll placement tests', () => {
       .filter({ hasNot: page.locator('.forwarded-message') })
       .getByRole('region', { name: question })
     await expect(original.locator('.poll-option__result').first()).toBeVisible()
-    await expect(original.locator('.poll-option').filter({ hasText: 'Sushi' }).locator('.poll-option__percentage'))
-      .toHaveText('100%')
+    await expect(
+      original.locator('.poll-option').filter({ hasText: 'Sushi' }).locator('.poll-option__percentage')
+    ).toHaveText('100%')
   })
 
   test('A poll forwarded out of a private channel is a read-only copy for a member outside it', async ({
@@ -325,9 +327,10 @@ test.describe('Poll placement tests', () => {
       .locator('.hulyComponent .activityMessage:not([inert] *)')
       .filter({ has: page.locator('.text-editor-view') })
     await expect(editing.getByRole('button', { name: 'Update' })).toBeVisible()
-    await expect(editing.locator(`button:has(${pollIcon})`)).toHaveCount(0)
+    await expect(polls.pollButton(editing)).toHaveCount(0)
     // The poll stays visible under the editor, not votable there.
     await expect(polls.poll(question, editing)).toBeVisible()
+    await expect(polls.poll(question, editing).getByRole('radio')).toHaveCount(0)
 
     const edited = `Changed text ${uniq}`
     await editing.locator('.text-editor-view').click()
@@ -429,8 +432,12 @@ test.describe('Poll placement tests', () => {
     const first = `First poll ${uniq}`
     const second = `Second poll ${uniq}`
     // The later poll gets the smaller id: the order must come from the time, not from the id.
-    await addPoll(chat.me, chat.channel, parent, `z${generateId()}` as Ref<AttachedDoc>, first, options, { options: [] })
-    await addPoll(chat.me, chat.channel, parent, `a${generateId()}` as Ref<AttachedDoc>, second, options, { options: [] })
+    await addPoll(chat.me, chat.channel, parent, `z${generateId()}` as Ref<AttachedDoc>, first, options, {
+      options: []
+    })
+    await addPoll(chat.me, chat.channel, parent, `a${generateId()}` as Ref<AttachedDoc>, second, options, {
+      options: []
+    })
 
     const inMessage = channelPage.textMessage(`Two polls ${uniq}`).getByRole('region')
     await expect(inMessage).toHaveCount(2)
@@ -467,23 +474,18 @@ test.describe('Poll placement tests', () => {
   async function checkNoAppletBlock (content: Locator, text: string): Promise<void> {
     await expect(content).toBeVisible()
     await expect(content).toContainText(text)
-    await expect(content.locator('.applets-container')).toHaveCount(0)
     await expect(content.getByRole('region')).toHaveCount(0)
-    // The wrapper of the applets must not render at all without applets, the last block included.
-    const emptyBlocks = await content.evaluate(
-      (el) =>
-        [...el.children].filter(
-          (it) => it.tagName === 'DIV' && it.childElementCount === 0 && (it.textContent ?? '').trim() === ''
-        ).length
-    )
-    expect(emptyBlocks).toBe(0)
+    // An empty wrapper would still add its gap under the text.
+    await expect(content.locator('.forwarded-message__applets')).toHaveCount(0)
   }
 })
 
 /** A second project of the same type, for a move: the fields of the existing one with a new name. */
 async function cloneProject (client: TxOperations, source: Project, name: string): Promise<Ref<Project>> {
   const { _id, _class, space, modifiedOn, modifiedBy, createdOn, createdBy, ...data } = source as any
-  const identifier = `P${generateId().slice(-5).replace(/[^a-z]/gi, 'X').toUpperCase()}`
+  // An identifier is letters only: each hex digit of the id maps onto one of them.
+  const letters = [...generateId().slice(-6)].map((it) => String.fromCharCode(65 + parseInt(it, 16)))
+  const identifier = `P${letters.join('')}`
   return await client.createDoc(tracker.class.Project, space, {
     ...data,
     name,

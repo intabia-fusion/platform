@@ -30,7 +30,6 @@ import core, {
 } from '@hcengineering/core'
 import activity, { ActivityMessage, AppletSnapshot, UserMentionInfo } from '@hcengineering/activity'
 import notification, {
-  excerptMarkup,
   isOversizedMarkup,
   DocNotifyContext,
   MentionNotification,
@@ -59,6 +58,7 @@ import {
   getPushGroup,
   getApplets
 } from '../utils/utils'
+import { capMarkup } from '../utils/misc'
 import { pushNotification } from './notification'
 import { cancelHeldPushes, pushDismissMessage } from './dismiss'
 
@@ -193,8 +193,7 @@ async function createMentionsData (
   }
 
   // The message is the same for every receiver; only a create tx has a counter that is not raised yet.
-  const applets =
-    message != null ? await getApplets(message, client, { trustCounter: tx._class !== core.class.TxCreateDoc }) : []
+  let applets: AppletSnapshot[] | undefined
 
   const notified = new Set<AccountUuid>()
   const res: MentionResult[] = []
@@ -243,6 +242,10 @@ async function createMentionsData (
       } else {
         if (message != null && context != null && hasMessageNotification(context, message._id)) continue
 
+        applets ??=
+          message != null
+            ? await getApplets(message, client, { trustCounter: tx._class !== core.class.TxCreateDoc })
+            : []
         res.push(await getMentionResult(client, context, receiver, message, applets, notifyProviders, reference))
       }
     }
@@ -527,8 +530,4 @@ async function getMentionIntl (
       ...mention.intl.intlParamsNotLocalized
     }
   }
-}
-
-function capMarkup (markup: Markup): Markup {
-  return isOversizedMarkup(markup) ? excerptMarkup(markup) : markup
 }

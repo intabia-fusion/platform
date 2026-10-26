@@ -13,17 +13,15 @@
 // limitations under the License.
 //
 
-import { activityId } from '@hcengineering/activity'
+import activity, { activityId } from '@hcengineering/activity'
 import PollPresenter from '@hcengineering/activity-resources/src/components/poll/PollPresenter.svelte'
 import CreatePoll from '@hcengineering/activity-resources/src/components/poll/CreatePoll.svelte'
 import PollPreview from '@hcengineering/activity-resources/src/components/poll/PollPreview.svelte'
 import { createPoll, getPollTitle } from '@hcengineering/activity-resources/src/poll'
 import { setCurrentEmployee, setCurrentEmployeeSpace } from '@hcengineering/contact'
-import { AccountRole, setCurrentAccount } from '@hcengineering/core'
-import { emojiId } from '@hcengineering/emoji'
-import EmojiPopup from '@hcengineering/emoji-resources/src/components/EmojiPopup.svelte'
+import { AccountRole, getCurrentAccount, setCurrentAccount, type Client } from '@hcengineering/core'
 import { addLocation } from '@hcengineering/platform'
-import { setClient } from '@hcengineering/presentation'
+import { getClient, setClient } from '@hcengineering/presentation'
 import registerPresentationStrings from '@hcengineering/presentation/src/lang'
 import { Notifications } from '@hcengineering/ui'
 
@@ -37,18 +35,25 @@ import registerEmojiStrings from '../../../../plugins/emoji-assets/src/lang'
 import '../../../../plugins/view-assets/src/index'
 import registerViewStrings from '../../../../plugins/view-assets/src/lang'
 
+import { addEmojiLocation } from '../emoji'
 import { createStoryClient, seed } from './client'
 import { baseDocs, me } from './fixtures'
 
 let ready: Promise<void> | undefined
+let storyClient: Client | undefined
 
 // Once per preview document: every poll story shares the client and the viewer.
 export async function setupActivity (): Promise<void> {
   ready ??= init()
   await ready
+  // The attachments stories put their own client and account into the same preview document.
+  if (getCurrentAccount()?.uuid !== me.account || getClient().getModel().findObject(activity.applet.Poll) == null) {
+    useViewer()
+    if (storyClient != null) await setClient(storyClient)
+  }
 }
 
-async function init (): Promise<void> {
+function useViewer (): void {
   // Before setClient: the UI client takes the viewer's social id when it is built.
   setCurrentAccount({
     uuid: me.account,
@@ -59,6 +64,10 @@ async function init (): Promise<void> {
   })
   setCurrentEmployee(me.person)
   setCurrentEmployeeSpace(me.space)
+}
+
+async function init (): Promise<void> {
+  useViewer()
 
   registerPresentationStrings()
   registerActivityStrings()
@@ -73,12 +82,13 @@ async function init (): Promise<void> {
       function: { GetPollTitleFn: getPollTitle, CreatePollFn: createPoll }
     })
   }))
-  addLocation(emojiId, async () => ({ default: async () => ({ component: { EmojiPopup } }) }))
+  addEmojiLocation()
 
   // Toasts of the poll, such as a vote not counted, as the workbench hosts them.
   new Notifications({ target: document.body.appendChild(document.createElement('div')) }) // eslint-disable-line no-new
 
   // The employees query of contact-resources fills its stores from these on setClient.
   seed(baseDocs())
-  await setClient(await createStoryClient())
+  storyClient = await createStoryClient()
+  await setClient(storyClient)
 }

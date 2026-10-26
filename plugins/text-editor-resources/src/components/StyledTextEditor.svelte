@@ -210,7 +210,7 @@
   <slot name="actions">
     {#if showButtons}
       <div class="flex-between">
-        <div class="buttons-group {buttonsGap} mt-3">
+        <div class="buttons-group ref-actions {buttonsGap} mt-3">
           {#each actions as a}
             <Button
               icon={a.icon}
@@ -278,5 +278,10 @@
       margin: -0.25rem -1.25rem;
       padding: 0.25rem 1.25rem;
     }
+  }
+
+  // The kit symbols draw a heavier line than the old icons: a lighter tone keeps the panel as quiet.
+  .ref-actions :global(.antiButton:not(:hover, :disabled) .btn-icon) {
+    color: var(--theme-dark-color);
   }
 </style>

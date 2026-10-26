@@ -15,12 +15,11 @@
 
 import type { WorkspaceLoginInfo } from '@hcengineering/account'
 import { getClient as getAccountClient } from '@hcengineering/account-client'
-import { createRestClient, type RestClient } from '@hcengineering/api-client'
-import { ensureEmployee } from '@hcengineering/contact'
-import { AccountRole, generateId, type AttachedDoc, type MeasureContext } from '@hcengineering/core'
+import { createRestClient } from '@hcengineering/api-client'
+import { AccountRole, generateId, type AttachedDoc } from '@hcengineering/core'
 
 import { expect, test, type SharedWorkspace } from '../fixtures'
-import { ChatMember, connectOwner, joinWorkspace } from '../API/ChatApi'
+import { ChatMember, connectOwner, createEmployee, joinWorkspace } from '../API/ChatApi'
 import {
   addPoll,
   createPollAnswer,
@@ -48,39 +47,21 @@ test.describe.configure({ mode: 'parallel' })
 const others = new Map<string, ChatMember>()
 const owners = new Map<string, ChatMember>()
 
-// The server answers a refused write with 403 (Forbidden) or 400 (BadRequest).
-const refusal = /Forbidden|BadRequest/i
+// ForbiddenKind of @hcengineering/platform, which this package does not depend on.
+type Refusal = 'author-only' | 'system-only' | 'foreign-private-write'
 
-// A refusal that did not happen is a product bug: the message says what slipped through.
-async function expectRefused (what: string, write: Promise<unknown>): Promise<void> {
+// The reason is checked too: a payload that fails some other check would pass for the rule under test.
+async function expectRefused (what: string, write: Promise<unknown>, kind: Refusal): Promise<void> {
   const result = await write.then(
     () => undefined,
     (err: unknown) => err
   )
   expect(result, `The server accepted: ${what}`).toBeDefined()
-  expect(String((result as any)?.message ?? result), `Unexpected error for: ${what}`).toMatch(refusal)
-}
-
-// ensureEmployee only times its steps with the context.
-const noMetrics = {
-  with: async (_name: string, _params: unknown, op: (ctx: MeasureContext) => unknown) => await op(noMetrics)
-} as unknown as MeasureContext
-
-/** What the web client writes on the first login: without the Person of the owner a joining member never sees it. */
-async function createEmployee (client: RestClient, token: string): Promise<void> {
-  const account = await client.getAccount()
-  const accountClient = getAccountClient(LocalUrl, token)
-  const socialIds = await accountClient.getSocialIds()
-  // The transactor learns about a new member a moment after the account service does.
-  for (let attempt = 1; ; attempt++) {
-    try {
-      await ensureEmployee(noMetrics, account, client, socialIds, async () => await accountClient.getPerson())
-      return
-    } catch (err) {
-      if (attempt === 21) throw err
-      await new Promise((resolve) => setTimeout(resolve, 200))
-    }
-  }
+  const status = (result as { status?: { code?: string, params?: { kind?: string } } }).status
+  expect({ code: status?.code, kind: status?.params?.kind }, `Unexpected refusal for: ${what}`).toEqual({
+    code: 'platform:status:Forbidden',
+    kind
+  })
 }
 
 /** A guest joins by an invite with the Guest role: what the "Invite guest" link does, without the join page. */
@@ -105,8 +86,9 @@ async function joinAsGuest (owner: WorkspaceLoginInfo): Promise<ChatMember> {
     const client = createRestClient(joined.endpoint, joined.workspace, joined.token)
     const account = await client.getAccount()
     if (account.role !== AccountRole.Guest) throw new Error(`Joined as ${account.role}, not a guest`)
-    await createEmployee(client, joined.token)
-    return new ChatMember(client, account.uuid, account.primarySocialId, `${user.lastName} ${user.firstName}`)
+    const guest = new ChatMember(client, account.uuid, account.primarySocialId, `${user.lastName} ${user.firstName}`)
+    await createEmployee(guest, joined)
+    return guest
   })
 }
 
@@ -129,7 +111,7 @@ test.describe('Poll rights tests', () => {
     let me = owners.get(shared.ws.workspace)
     if (me == null) {
       me = await connectOwner(shared.ws, `${shared.data.lastName} ${shared.data.firstName}`)
-      await createEmployee(me.client, shared.token)
+      await createEmployee(me, shared.ws)
       owners.set(shared.ws.workspace, me)
     }
     return me
@@ -150,10 +132,23 @@ test.describe('Poll rights tests', () => {
     const pollBefore = await getPoll(me, sent.poll)
     const messageBefore = await me.getMessage(sent.message)
 
-    await expectRefused('other edits my message', other.editMessage(channel, sent.message, `Hacked ${uniq}`))
-    await expectRefused('other changes my poll', updatePoll(other, channel, sent, { question: `Hacked ${uniq}` }))
-    await expectRefused('I change my sent poll', updatePoll(me, channel, sent, { question: `Changed ${uniq}` }))
-    await expectRefused('other removes my poll', removePoll(other, channel, sent))
+    await expectRefused(
+      'other edits my message',
+      other.editMessage(channel, sent.message, `Hacked ${uniq}`),
+      'author-only'
+    )
+    // A sent poll is closed to everyone, so a foreign change stops there, before the author check.
+    await expectRefused(
+      'other changes my poll',
+      updatePoll(other, channel, sent, { question: `Hacked ${uniq}` }),
+      'system-only'
+    )
+    await expectRefused(
+      'I change my sent poll',
+      updatePoll(me, channel, sent, { question: `Changed ${uniq}` }),
+      'system-only'
+    )
+    await expectRefused('other removes my poll', removePoll(other, channel, sent), 'author-only')
     await expectRefused(
       'other adds a poll to my message',
       addPoll(
@@ -167,7 +162,8 @@ test.describe('Poll rights tests', () => {
           { id: 'o1', label: 'No' }
         ],
         { options: ['Yes', 'No'] }
-      )
+      ),
+      'author-only'
     )
 
     // An own message stays editable: the refusals above are about authorship, not about the member.
@@ -192,9 +188,14 @@ test.describe('Poll rights tests', () => {
 
     await expectRefused(
       'other votes from my personal space',
-      sendVote(other, await personSpace(me), sent.poll, { options: [sent.options[0]] })
+      sendVote(other, await personSpace(me), sent.poll, { options: [sent.options[0]] }),
+      'foreign-private-write'
     )
-    await expectRefused('other writes a poll answer', createPollAnswer(other, sent.poll, [sent.options[0]]))
+    await expectRefused(
+      'other writes a poll answer',
+      createPollAnswer(other, sent.poll, [sent.options[0]]),
+      'system-only'
+    )
 
     // The own vote goes through the same pipe: once it is counted, a slipped foreign vote would be counted too.
     await vote(other, sent.poll, [sent.options[1]])
@@ -203,7 +204,7 @@ test.describe('Poll rights tests', () => {
     expect((counted.userVotes ?? []).map((it) => it.account)).toEqual([other.account])
   })
 
-  test('A guest in a channel creates a poll and votes, and the vote is counted', async () => {
+  test('A guest in a channel creates a poll, votes, and the vote is counted, then removes the poll', async () => {
     const me = await openOwner()
     const guest = await joinAsGuest(shared.ws)
     const channel = await me.createChannel(`poll-guest-${uniq}`, [guest.account])
@@ -216,5 +217,10 @@ test.describe('Poll rights tests', () => {
     const counted = await waitForVotes(me, sent.poll, 1)
     expect(counted.votes ?? {}).toEqual({ [sent.options[0]]: 1 })
     expect((counted.userVotes ?? []).map((it) => it.account)).toEqual([guest.account])
+
+    await removePoll(guest, channel, sent)
+    await expect
+      .poll(async () => await me.client.findOne('activity:class:Poll' as any, { _id: sent.poll } as any))
+      .toBeUndefined()
   })
 })

@@ -458,7 +458,8 @@ export function createModel (builder: Builder): void {
   })
 
   builder.mixin(activity.class.AppletInstance, core.class.Class, core.mixin.TxAccessLevel, {
-    createAccessLevel: AccountRole.Guest
+    createAccessLevel: AccountRole.Guest,
+    removeAccessLevel: AccountRole.Guest
   })
 }
 

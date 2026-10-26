@@ -314,7 +314,12 @@
     const canSeeResults = (voted || ended) && !isAnonymous && !readonly
     const actions: Action[] = []
     if (canRetract) {
-      actions.push({ label: activity.string.RetractVote, icon: ui.icon.ArrowUturnLeft, group: 'create', action: retractVote })
+      actions.push({
+        label: activity.string.RetractVote,
+        icon: ui.icon.ArrowUturnLeft,
+        group: 'create',
+        action: retractVote
+      })
     }
     if (canSeeResults) {
       actions.push({

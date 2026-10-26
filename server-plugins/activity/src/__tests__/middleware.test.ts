@@ -42,7 +42,8 @@ const parents: Record<string, string> = {
   [activity.class.AppletInstance]: core.class.AttachedDoc,
   [activity.class.ActivityMessage]: core.class.AttachedDoc,
   [activity.class.PollAnswer]: core.class.Doc,
-  [activity.class.VotePollAction]: core.class.Doc
+  [activity.class.VotePollAction]: core.class.Doc,
+  [activity.class.Applet]: core.class.Doc
 }
 
 // A note applet declares its own `text`, the base class the binding and service fields.
@@ -231,7 +232,8 @@ describe('ActivityMiddleware', () => {
     const batch = [factory.createTxCreateDoc(activity.class.ActivityMessage, channel, {} as any, 'msg-1' as any), own]
     await middleware.tx(ctxOf(alice), batch)
     expect(passed).toEqual(batch)
-    expect(own.space).toBe(core.space.DerivedTx)
+    // Without a quiz hash it goes to the tx log: a reconnecting client learns of it by lastTx.
+    expect(own.space).toBe(core.space.Tx)
   })
 
   it('attaches an applet under the class of its message', async () => {
@@ -511,6 +513,23 @@ describe('ActivityMiddleware', () => {
     })
     await middleware.tx(ctxOf(systemAccountUuid), [answer])
     expect(passed).toEqual([answer])
+  })
+
+  it('lets no client change an applet kind of the model', async () => {
+    const update = factory.createTxUpdateDoc(activity.class.Applet, core.space.Model, activity.applet.Poll, {
+      editable: true
+    } as any)
+    const create = factory.createTxCreateDoc(activity.class.Applet, core.space.Model, { editable: true } as any)
+    const remove = factory.createTxRemoveDoc(activity.class.Applet, core.space.Model, activity.applet.Poll)
+    for (const tx of [update, create, remove]) {
+      expect((await refusal(middleware.tx(ctxOf(alice), [tx]))).params).toMatchObject({
+        kind: ForbiddenKind.SystemOnly
+      })
+      await expect(middleware.tx(ctxOf(alice, [aliceSocial], AccountRole.Owner), [tx])).rejects.toThrow()
+    }
+    expect(passed).toEqual([])
+    await middleware.tx(ctxOf(systemAccountUuid), [update])
+    expect(passed).toEqual([update])
   })
 
   it('keeps the own poll answer out of reach of the voter', async () => {

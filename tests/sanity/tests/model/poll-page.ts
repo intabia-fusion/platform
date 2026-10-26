@@ -15,6 +15,8 @@
 
 import { expect, type Locator, type Page } from '@playwright/test'
 
+import { ChannelPage } from './channel-page'
+
 export type PollSetting = 'Anonymous voting' | 'Multiple choice' | 'No revoting' | 'Quiz mode'
 
 export interface PollForm {
@@ -30,7 +32,9 @@ export class PollPage {
   constructor (readonly page: Page) {}
 
   // Live elements only: a switched channel fades out inert over the next one.
-  readonly pollButton = (): Locator => this.page.locator('button:has(use[href$="#poll-outline"]):not([inert] *)')
+  readonly pollButton = (root: Page | Locator = this.page): Locator =>
+    root.locator('button:has(use[href$="#poll-outline"]):not([inert] *)')
+
   readonly form = (): Locator => this.page.getByRole('dialog', { name: /^(Create|Edit) Poll$/ })
   readonly questionInput = (): Locator => this.form().getByPlaceholder('Ask a question...')
   readonly optionInput = (index: number): Locator => this.form().getByRole('textbox', { name: `Option ${index + 1}` })
@@ -42,13 +46,15 @@ export class PollPage {
   readonly closeQuestion = (): Locator =>
     this.page.getByRole('dialog').filter({ hasText: "Are you sure you want to close? The poll won't be saved." })
 
-  readonly draft = (question: string): Locator =>
-    this.page.locator('.tile:not([inert] *)').filter({ hasText: question })
+  readonly draft = (question: string, root: Page | Locator = this.page): Locator =>
+    root.locator('.tile:not([inert] *)').filter({ hasText: question })
 
-  readonly sendButton = (): Locator => this.page.locator('button:has(g#Send):not([inert] *)')
+  readonly sendButton = (root?: Locator): Locator =>
+    root?.locator('button:has(g#Send):not([inert] *)') ?? new ChannelPage(this.page).buttonSendMessage()
 
-  readonly poll = (question: string, root?: Locator): Locator =>
-    (root ?? this.page.locator(':not([inert] *)')).getByRole('region', { name: question })
+  // A role query does not skip inert subtrees, so the region itself is matched against them.
+  readonly poll = (question: string, root: Page | Locator = this.page): Locator =>
+    root.getByRole('region', { name: question }).and(this.page.locator(':not([inert] *)'))
 
   readonly option = (question: string, label: string): Locator =>
     this.poll(question).locator('.poll-option').filter({ hasText: label })

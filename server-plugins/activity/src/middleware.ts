@@ -69,7 +69,10 @@ class ActivityMiddleware extends BaseMiddleware {
       if (!TxProcessor.isExtendsCUD(_tx._class)) continue
       const tx = _tx as TxCUD<Doc>
 
-      if (hierarchy.isDerived(tx.objectClass, activity.class.PollAnswer)) {
+      // The middleware trusts `editable`, `snapshotFields` and the like of the applet kind.
+      if (hierarchy.isDerived(tx.objectClass, activity.class.Applet)) {
+        this.throwForbidden(ctx, tx, ForbiddenKind.SystemOnly, 'Applet kinds come from the model only')
+      } else if (hierarchy.isDerived(tx.objectClass, activity.class.PollAnswer)) {
         this.throwForbidden(ctx, tx, ForbiddenKind.SystemOnly, 'PollAnswer is written by the activity service only')
       } else if (hierarchy.isDerived(tx.objectClass, activity.class.VotePollAction)) {
         if (tx._class === core.class.TxCreateDoc) await this.validateVote(ctx, tx as TxCreateDoc<VotePollAction>)
@@ -99,7 +102,8 @@ class ActivityMiddleware extends BaseMiddleware {
       case core.class.TxMixin:
         this.throwForbidden(ctx, tx, ForbiddenKind.SystemOnly, 'An applet takes no mixins from clients')
     }
-    tx.space = core.space.DerivedTx
+    // A quiz refused by the storage would leave the hash of a guess in the log; other txes go there to move lastTx.
+    if ((tx as TxCreateDoc<Poll>).attributes?.quizAnswerHash != null) tx.space = core.space.DerivedTx
   }
 
   private async validateAppletUpdate (

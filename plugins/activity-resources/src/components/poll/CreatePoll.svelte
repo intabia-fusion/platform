@@ -15,19 +15,12 @@
 
 <script lang="ts">
   import { createEventDispatcher, tick } from 'svelte'
-  import ui, {
-    Label,
-    showPopup,
-    themeStore,
-    ticker1,
-    tooltip
-  } from '@hcengineering/ui'
+  import ui, { Label, showPopup, themeStore, ticker1, tooltip } from '@hcengineering/ui'
   import { Dialog, IconButton, Radio, SettingRow, TextInput, Toggle } from '@hcengineering/ui/kit'
   import { generateId } from '@hcengineering/core'
   import { translateCB, type IntlString } from '@hcengineering/platform'
   import emoji from '@hcengineering/emoji'
   import presentation from '@hcengineering/presentation'
-  import view from '@hcengineering/view'
   import {
     pollLimits,
     type Applet,
@@ -100,6 +93,8 @@
 
   // After the normalization, so an untouched form closes without asking.
   const initial = JSON.stringify(params)
+  // A draft whose start passed while it waited still sends, so its edit is not blocked by that start.
+  const initialStartAt = params.startAt
   $: dirty = JSON.stringify(params) !== initial
 
   $: updateOptions(params.options)
@@ -115,7 +110,9 @@
     if (filled.length < 2) return activity.string.AtLeastTwoOptions
     if (p.quiz === true && !filled.some((it) => it.id === p.quizAnswer)) return activity.string.ChooseCorrectAnswer
     // The server accepts a past exact start, but in the form it is a slip.
-    if (p.startDelay == null && p.startAt != null && p.startAt < now) return activity.string.StartInPast
+    if (p.startDelay == null && p.startAt != null && p.startAt !== initialStartAt && p.startAt < now) {
+      return activity.string.StartInPast
+    }
     return getPollTimeError(p, now)
   }
 
@@ -363,7 +360,7 @@
       <div class="settings">
         <SettingRow
           variant="list"
-          icon={view.icon.EyeCrossed}
+          icon={ui.icon.EyeSlash}
           color="Mauve"
           label={activity.string.AnonymousVoting}
           description={activity.string.AnonymousVotingHint}
@@ -382,7 +379,7 @@
         </SettingRow>
         <SettingRow
           variant="list"
-          icon={view.icon.TodoList}
+          icon={ui.icon.CheckSquare}
           color="Cerulean"
           label={activity.string.MultipleChoice}
           description={activity.string.MultipleChoiceHint}

@@ -15,7 +15,7 @@
 
 import { expect, test, type SharedWorkspace } from '../fixtures'
 import { type ChatMember, connectOwner, joinWorkspace } from '../API/ChatApi'
-import { getPoll, sendPoll, vote, waitForVotes } from '../API/PollApi'
+import { findPollAnswers, getPoll, sendPoll, vote, waitForVotes } from '../API/PollApi'
 import { ChannelPage } from '../model/channel-page'
 import { PollPage } from '../model/poll-page'
 import { generateUser, loginByToken } from '../utils'
@@ -79,7 +79,7 @@ test.describe('Poll tests', () => {
     await polls.voteFor(question, 'Pizza')
     await polls.checkVoted(question, true)
     await polls.checkPercent(question, 'Pizza', 100)
-    await expect(polls.avatars(question).locator('.hulyAvatar-container, [class*="avatar"]').first()).toBeVisible()
+    await expect(polls.avatars(question).locator('.hulyAvatar-container').first()).toBeVisible()
 
     await vote(chat.other, sent.poll, [sent.options[1]])
     await waitForVotes(chat.me, sent.poll, 2)
@@ -230,8 +230,11 @@ test.describe('Poll tests', () => {
     await expect(polls.option(question, 'Nice').locator('.checkbox')).toHaveCount(0)
     await waitForVotes(chat.me, sent.poll, 1)
 
+    // Until the end only the voter knows the choice: the answer lies in the own personal space.
     const poll = await getPoll(chat.other, sent.poll)
     expect(poll.quizAnswer == null).toBe(true)
+    expect(await findPollAnswers(chat.me, sent.poll)).toHaveLength(1)
+    expect(await findPollAnswers(chat.other, sent.poll)).toHaveLength(0)
   })
 
   test('The results popup lists the voters and updates live', async () => {

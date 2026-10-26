@@ -297,7 +297,7 @@
       {#if forwardedMessage != null ? (forwardedMessage.applets ?? 0) > 0 : lookedUpId === parent.forwardedMessage && snapshotApplets.length > 0}
         <!-- The whole block navigates to the original: a vote or a menu click inside the poll must stay here. -->
         <!-- svelte-ignore a11y-no-static-element-interactions -->
-        <div on:click|stopPropagation on:keydown|stopPropagation>
+        <div class="forwarded-message__applets" on:click|stopPropagation on:keydown|stopPropagation>
           {#if forwardedMessage != null}
             <AppletsList value={forwardedMessage} {readonly} fallback={snapshotApplets} spaced={false} />
           {:else}

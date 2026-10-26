@@ -247,3 +247,54 @@ describe('TriggersMiddleware collection counters', () => {
     ])
   })
 })
+
+describe('TriggersMiddleware counters of a moved document', () => {
+  const mixin = 'test:mixin:Candidate'
+  const hierarchy = {
+    getDomain: () => 'contact',
+    getBaseClass: (_class: string) => (_class === mixin ? 'person' : _class),
+    isMixin: (_class: string) => _class === mixin,
+    hasMixin: (doc: any, _class: string) => doc[_class] !== undefined,
+    // The collection sits on the mixin, the stored class knows nothing of it.
+    findAttribute: (_class: string, name: string) =>
+      _class === mixin && name === 'applications' ? { type: { _class: core.class.Collection } } : undefined
+  }
+  const middleware = new TriggersMiddleware({ hierarchy } as any, undefined)
+  afterAll(async () => {
+    await middleware.close()
+  })
+  const people: Record<string, any> = {
+    old: { _id: 'old', _class: 'person', space: 'contacts', [mixin]: {} },
+    candidate: { _id: 'candidate', _class: 'person', space: 'contacts', [mixin]: {} },
+    plain: { _id: 'plain', _class: 'person', space: 'contacts' }
+  }
+  const findAll = async (_ctx: any, _class: string, query: any): Promise<any[]> => [people[query._id]]
+  const move = (to: string): any => ({
+    _class: core.class.TxUpdateDoc,
+    objectId: 'applicant-1',
+    objectClass: 'applicant',
+    objectSpace: 'vacancy',
+    attachedTo: 'old',
+    attachedToClass: mixin,
+    collection: 'applications',
+    operations: { attachedTo: to },
+    modifiedBy: 'bob',
+    modifiedOn: 1
+  })
+
+  it('counts a collection of a mixin on both parents, the new one only when it carries the mixin', async () => {
+    const counters = async (to: string): Promise<any[]> =>
+      ((await (middleware as any).updateCollection({}, move(to), findAll)) as any[]).map((it) => [
+        it._class,
+        it.objectId,
+        it.attributes
+      ])
+
+    // The counter lives in the mixin data, so it changes by a mixin tx.
+    expect(await counters('candidate')).toEqual([
+      [core.class.TxMixin, 'old', { $inc: { applications: -1 } }],
+      [core.class.TxMixin, 'candidate', { $inc: { applications: 1 } }]
+    ])
+    expect(await counters('plain')).toEqual([[core.class.TxMixin, 'old', { $inc: { applications: -1 } }]])
+  })
+})

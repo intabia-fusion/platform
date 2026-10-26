@@ -41,7 +41,8 @@ import notification, {
   isUnreadMessageChunk,
   ContextNotification,
   appendAndCollapseUnreadMessages,
-  isOversizedChatMessage
+  isOversizedChatMessage,
+  isOversizedMarkup
 } from '@hcengineering/notification'
 import { truncateMessage, Sender, Receiver } from '@hcengineering/server-notification'
 import { isEmptyMarkup, markupToText } from '@hcengineering/text-core'
@@ -68,6 +69,7 @@ import {
   getPushGroup,
   isSender
 } from '../utils/utils'
+import { capMarkup } from '../utils/misc'
 import { Client, Result, TxCache, NotifyProviders } from '../types'
 import { cancelHeldPushes, pushDismissMessage } from './dismiss'
 import Cache from '../cache'
@@ -158,7 +160,8 @@ async function handleCreateMessage (
   const messageTimestamp = message.createdOn ?? message.modifiedOn
 
   const attachments = await getAttachments(message, client)
-  const applets = await getApplets(message, client)
+  // The counter of a new message is not raised yet: the lookup waits for a receiver who gets a notification.
+  let applets: AppletSnapshot[] | undefined
 
   for (const receiver of receivers) {
     if (isSender(receiver, sender)) continue
@@ -175,6 +178,7 @@ async function handleCreateMessage (
     const type = (notifyResult[notification.providers.InboxNotificationProvider] ?? [])[0]
 
     if (type != null) {
+      applets ??= await getApplets(message, client)
       await pushNotification(
         client,
         cache,
@@ -443,7 +447,8 @@ async function handleUpdateMessage (
             latestNotifications: {
               $query: { type: 'mention', messageId: tx.objectId },
               $update: {
-                markup: message.message,
+                markup: message.message != null ? capMarkup(message.message) : undefined,
+                truncated: message.message != null && isOversizedMarkup(message.message),
                 attachments,
                 applets
               }

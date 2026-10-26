@@ -148,7 +148,7 @@ test.describe('Threads list order tests', () => {
     const bReplies = await chat.me.getMessage(b.id)
     expect(bReplies.replies).toBe(1)
     await chat.other.editReply(chat.channel, a.id, aReply, `A second reply, edited ${uniq}`)
-    // By its author: the server lets no one else edit a message.
+    // By its author: another member may not edit it, only a maintainer.
     await chat.me.editMessage(chat.channel, b.id, `B parent ${uniq} edited`)
     await chat.other.react(chat.channel, b.id, '👍')
     await expect(threads.thread(`B parent ${uniq} edited`)).toBeVisible()

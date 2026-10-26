@@ -13,10 +13,15 @@
 // limitations under the License.
 //
 
-import { AccountUuid, BlobType, Doc, type Hierarchy, Space } from '@hcengineering/core'
+import { AccountUuid, BlobType, Doc, type Hierarchy, type Markup, Space } from '@hcengineering/core'
 import contact, { Employee } from '@hcengineering/contact'
 import activity, { ActivityMessage, AppletSnapshot, toAppletSummary } from '@hcengineering/activity'
-import { compactNotificationMessage, NotificationMessage } from '@hcengineering/notification'
+import {
+  compactNotificationMessage,
+  excerptMarkup,
+  isOversizedMarkup,
+  NotificationMessage
+} from '@hcengineering/notification'
 import { Receiver, Sender, TypeMatchClient } from '@hcengineering/server-notification'
 import chunter, { ChatMessage } from '@hcengineering/chunter'
 import attachment, { Attachment } from '@hcengineering/attachment'
@@ -79,6 +84,11 @@ export function getTypeMatchClient (client: Client): TypeMatchClient {
 
 export function toNotificationMessage (message: ActivityMessage, hierarchy: Hierarchy): NotificationMessage {
   return compactNotificationMessage(message, hierarchy)
+}
+
+// An embedded mention keeps the context doc small: an oversized body goes as an excerpt.
+export function capMarkup (markup: Markup): Markup {
+  return isOversizedMarkup(markup) ? excerptMarkup(markup) : markup
 }
 
 export function isChatMessage (message: ActivityMessage, hierarchy: Hierarchy): message is ChatMessage {

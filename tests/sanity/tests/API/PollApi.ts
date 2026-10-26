@@ -144,6 +144,11 @@ export async function createPollAnswer (member: ChatMember, poll: Ref<Doc>, opti
   await member.client.createDoc(pollAnswerClass, await personSpace(member), { attachedTo: poll, options } as any)
 }
 
+/** The answers of a poll the member can read. */
+export async function findPollAnswers (member: ChatMember, poll: Ref<Doc>): Promise<Doc[]> {
+  return await member.client.findAll(pollAnswerClass, { attachedTo: poll } as any)
+}
+
 export async function getPoll (member: ChatMember, poll: Ref<Doc>): Promise<PollDoc> {
   const found = await member.client.findOne(pollClass, { _id: poll } as any)
   if (found === undefined) throw new Error(`Poll ${poll} not found`)
