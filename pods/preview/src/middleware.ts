@@ -20,6 +20,7 @@ import { type WorkspaceInfoWithStatus, MeasureContext, systemAccountUuid } from 
 import { extractToken, readToken } from '@hcengineering/server-client'
 import { Token } from '@hcengineering/server-token'
 import { type Response, type Request, type NextFunction, type RequestHandler, type ErrorRequestHandler } from 'express'
+import { type IncomingHttpHeaders } from 'http'
 import { LRUCache } from 'lru-cache'
 import { BadRequestError, HttpError, ToolError } from './error'
 
@@ -32,9 +33,39 @@ export interface RequestWithAuth extends Request {
   token?: Token
 }
 
-// How long a blob that ffmpeg or LibreOffice failed on is refused, and how many are kept.
 const REFUSAL_TTL = 60 * 1000
 const REFUSAL_MAX = 1000
+
+const TOKEN_CACHE_MAX = 1000
+const TOKEN_CACHE_TTL = 30 * 1000
+
+const sessionTokens = new LRUCache<string, Token>({ max: TOKEN_CACHE_MAX, ttl: TOKEN_CACHE_TTL })
+
+function isCurrent (token: Token): boolean {
+  const now = Date.now()
+  if (token.nbf !== undefined && now < token.nbf * 1000) return false
+  if (token.exp !== undefined && now > token.exp * 1000) return false
+  return true
+}
+
+function requestToken (headers: IncomingHttpHeaders): Token | undefined {
+  const key = `${headers.authorization ?? ''}\n${headers.cookie ?? ''}`
+  const cached = sessionTokens.get(key)
+  if (cached !== undefined) {
+    if (isCurrent(cached)) {
+      return cached
+    }
+    sessionTokens.delete(key)
+    return undefined
+  }
+
+  const token = extractToken(headers)
+  if (token !== undefined && isCurrent(token)) {
+    sessionTokens.set(key, token)
+    return token
+  }
+  return undefined
+}
 
 export const keepAlive = (options: KeepAliveOptions): RequestHandler => {
   const { timeout, max } = options
@@ -47,7 +78,7 @@ export const keepAlive = (options: KeepAliveOptions): RequestHandler => {
 
 export const withAdminAuthorization = (req: RequestWithAuth, res: Response, next: NextFunction): void => {
   try {
-    const token = extractToken(req.headers)
+    const token = requestToken(req.headers)
     if (token == null || !(token.account === systemAccountUuid || token.extra?.admin === 'true')) {
       throw new HttpError(401, 'Unauthorized')
     }
@@ -61,7 +92,7 @@ export const withAdminAuthorization = (req: RequestWithAuth, res: Response, next
 
 export const withAuthorization = (req: RequestWithAuth, res: Response, next: NextFunction): void => {
   try {
-    const token = extractToken(req.headers)
+    const token = requestToken(req.headers)
     if (token == null || token.extra?.guest === 'true' || token.extra?.readonly === 'true') {
       throw new HttpError(401, 'Unauthorized')
     }
@@ -83,11 +114,6 @@ export interface WorkspaceAccessOptions {
   denyTtlMs: number
 }
 
-/**
- * Gates a route by the workspace in its url. A token carrying a workspace (Bearer, or the workspace
- * cookie the front and desktop set) is checked locally; the account cookie the browser sends to
- * /_preview has no workspace, so its membership is asked from account and cached.
- */
 export const createWorkspaceAccess = (options: WorkspaceAccessOptions): RequestHandler => {
   const cache = new LRUCache<string, boolean>({ max: REFUSAL_MAX, ttl: REFUSAL_TTL })
 
