@@ -18416,6 +18416,9 @@ importers:
       '@hcengineering/ui':
         specifier: workspace:^0.7.0
         version: link:../../packages/ui
+      svelte:
+        specifier: 'catalog:'
+        version: 4.2.20
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -31207,9 +31210,9 @@ importers:
       '@hcengineering/analytics':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/analytics
-      '@hcengineering/billing-resources':
+      '@hcengineering/billing':
         specifier: workspace:^0.7.0
-        version: link:../billing-resources
+        version: link:../billing
       '@hcengineering/client':
         specifier: workspace:^0.7.18
         version: link:../../foundations/core/packages/client

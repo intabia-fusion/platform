@@ -61,7 +61,7 @@ import plugin from './plugin'
 import { logOut, workspaceCreating } from './utils'
 import { WorkbenchEvents } from '@hcengineering/workbench'
 import { allowGuestSignUpStore } from '@hcengineering/view-resources'
-import { setIsPasswordAgain } from '@hcengineering/billing-resources'
+import { setIsPasswordAgain } from '@hcengineering/billing'
 
 export const error = writable<string | undefined>(undefined)
 export const errorActions = writable<ErrorAction[]>([])
