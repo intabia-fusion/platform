@@ -319,9 +319,7 @@
       }
     }
 
-    return Array.from(
-      new Set([...(template.labels ?? []), ...allLabels])
-    )
+    return Array.from(new Set([...(template.labels ?? []), ...allLabels]))
   }
 
   function labelsAsRefs (
