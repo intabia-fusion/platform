@@ -36,3 +36,26 @@ describe('RestClient rate limit retry', () => {
     expect(fetchMock).toHaveBeenCalledTimes(5)
   })
 })
+
+describe('RestClient refused write', () => {
+  const realFetch = globalThis.fetch
+
+  afterEach(() => {
+    globalThis.fetch = realFetch
+  })
+
+  it('a collection write gives the reason of the server and is not retried', async () => {
+    const status = { severity: 'ERROR', code: 'platform:status:Forbidden', params: { kind: 'author-only' } }
+    const fetchMock = jest.fn(
+      async () => new Response(JSON.stringify({ message: 'No', error: status }), { status: 403 })
+    )
+    globalThis.fetch = fetchMock as any
+    const client = createRestClient('http://x.test', 'ws', 'token')
+
+    const err = await client
+      .updateCollection('cls' as any, 'space' as any, 'doc' as any, 'parent' as any, 'pcls' as any, 'items', {})
+      .catch((err) => err)
+    expect(err.status).toEqual(status)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+})

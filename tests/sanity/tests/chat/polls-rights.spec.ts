@@ -48,7 +48,7 @@ const others = new Map<string, ChatMember>()
 const owners = new Map<string, ChatMember>()
 
 // ForbiddenKind of @hcengineering/platform, which this package does not depend on.
-type Refusal = 'author-only' | 'system-only' | 'foreign-private-write'
+type Refusal = 'author-only' | 'system-only' | 'not-space-member'
 
 // The reason is checked too: a payload that fails some other check would pass for the rule under test.
 async function expectRefused (what: string, write: Promise<unknown>, kind: Refusal): Promise<void> {
@@ -186,10 +186,11 @@ test.describe('Poll rights tests', () => {
     const { channel, me, other } = await openChat()
     const sent = await sendPoll(me, channel, `Lunch? ${uniq}`, { options: ['Pizza', 'Sushi'] })
 
+    // A personal space is private: space security stops the write before ActivityMiddleware sees it.
     await expectRefused(
       'other votes from my personal space',
       sendVote(other, await personSpace(me), sent.poll, { options: [sent.options[0]] }),
-      'foreign-private-write'
+      'not-space-member'
     )
     await expectRefused(
       'other writes a poll answer',

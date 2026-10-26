@@ -78,10 +78,16 @@ test.describe('Poll placement tests', () => {
     return { me, other }
   }
 
+  // By URL: a click waits for a channel made over REST to show up in the navigator, which is not always in time.
+  async function openChannel (page: Page, channel: Channel): Promise<void> {
+    const id = encodeURIComponent(`${channel._id}|${channel._class}`)
+    await page.goto(`${PlatformURI}/workbench/${shared.ws.workspaceUrl}/chunter/${id}`)
+  }
+
   async function openChat (name = 'poll'): Promise<Chat> {
     const { me, other } = await members()
     const channel = await me.createChannel(`${name}-${uniq}`, [other.account])
-    await channelPage.clickChannel(channel.name)
+    await openChannel(polls.page, channel)
     return { channel, me, other }
   }
 
@@ -190,7 +196,7 @@ test.describe('Poll placement tests', () => {
     await expect(forwardDialog(page)).toBeHidden()
 
     await forwardTo(page, question, target.name)
-    await channelPage.clickChannel(target.name)
+    await openChannel(page, target)
     const forwarded = page.locator('.forwarded-message:not([inert] *)').filter({ hasText: question })
     await expect(forwarded).toBeVisible()
     await forwarded.getByRole('radio', { name: 'Sushi' }).click()
@@ -198,8 +204,8 @@ test.describe('Poll placement tests', () => {
 
     const counted = await waitForVotes(chat.me, sent.poll, 1)
     expect(counted.votes?.[sent.options[1]]).toBe(1)
-    await channelPage.clickChannel(chat.channel.name)
-    // The channel left behind stays in the DOM, with the forwarded copy in it.
+    await openChannel(page, chat.channel)
+    // The region of the original only, not of a forwarded copy.
     const original = page
       .locator('.hulyComponent .activityMessage:not([inert] *)')
       .filter({ hasNot: page.locator('.forwarded-message') })
@@ -219,14 +225,14 @@ test.describe('Poll placement tests', () => {
     const target = await me.createChannel(`fwd-open-${uniq}`, [other.account])
     const question = `Private lunch? ${uniq}`
     const sent = await sendPoll(me, source, question, { options: ['Pizza', 'Sushi'] })
-    await channelPage.clickChannel(source.name)
+    await openChannel(page, source)
     await expect(polls.poll(question)).toBeVisible()
     await forwardTo(page, question, target.name)
 
     expect(await findPoll(other, sent.poll)).toBeUndefined()
     const { page: otherPage, context } = await openMemberPage(browser, other, 'chunter')
     try {
-      await new ChannelPage(otherPage).clickChannel(target.name)
+      await openChannel(otherPage, target)
       const forwarded = otherPage.locator('.forwarded-message:not([inert] *)').filter({ hasText: question })
       const copy = forwarded.getByRole('region', { name: question })
       await expect(copy).toBeVisible()
@@ -364,7 +370,7 @@ test.describe('Poll placement tests', () => {
     const { page: otherPage, context } = await openMemberPage(browser, chat.other, 'chunter')
     try {
       const otherPolls = new PollPage(otherPage)
-      await new ChannelPage(otherPage).clickChannel(chat.channel.name)
+      await openChannel(otherPage, chat.channel)
       await expect(otherPolls.poll(question)).toBeVisible()
 
       await channelPage.clickOpenMoreButton(question)
@@ -466,7 +472,7 @@ test.describe('Poll placement tests', () => {
     await channelPage.sendMessage(answer)
     await checkNoAppletBlock(message(page, answer).locator('.forwarded-message__content'), text)
 
-    await channelPage.clickChannel(target.name)
+    await openChannel(page, target)
     const forwarded = page.locator('.forwarded-message__content:not([inert] *)').filter({ hasText: text })
     await checkNoAppletBlock(forwarded, text)
   })

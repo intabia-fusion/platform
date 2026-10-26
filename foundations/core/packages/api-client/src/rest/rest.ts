@@ -453,20 +453,25 @@ export class RestClientImpl implements RestClient {
   private async v1op<T extends Doc, P>(op: string, data: any): Promise<P> {
     const requestUrl = concatLink(this.endpoint, `/api/v1/${op}/${this.workspace}`)
     await this.checkRate()
-    const result = await withRetry<{ result?: Ref<T>, error?: Status }>(async () => {
-      const response = await fetch(requestUrl, {
-        method: 'POST',
-        headers: this.jsonHeaders(),
-        keepalive: true,
-        body: JSON.stringify(data)
-      })
-      if (!response.ok) {
-        await this.checkRateLimits(response)
-        throw new PlatformError(unknownError(response.statusText))
-      }
-      this.updateRateLimit(response)
-      return await extractJson<TxResult>(response)
-    }, isRLE)
+    const result = await withRetry<{ result?: Ref<T>, error?: Status }>(
+      async () => {
+        const response = await fetch(requestUrl, {
+          method: 'POST',
+          headers: this.jsonHeaders(),
+          keepalive: true,
+          body: JSON.stringify(data)
+        })
+        if (!response.ok) {
+          await this.checkRateLimits(response)
+          // As tx(): the server puts the reason of a refusal (e.g. ForbiddenKind) into the body.
+          await throwResponseError(response)
+        }
+        this.updateRateLimit(response)
+        return await extractJson<TxResult>(response)
+      },
+      isRLE,
+      isPolicyReject
+    )
     if (result.error !== undefined) {
       throw new PlatformError(result.error)
     }
