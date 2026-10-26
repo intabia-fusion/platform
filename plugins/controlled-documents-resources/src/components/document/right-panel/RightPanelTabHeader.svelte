@@ -14,7 +14,8 @@
 -->
 
 <script lang="ts">
-  import { Button, IconClose } from '@hcengineering/ui'
+  import ui, { Button } from '@hcengineering/ui'
+
   import { rightPanelTabChanged } from '../../../stores/editors/document'
 </script>
 
@@ -22,7 +23,7 @@
   <slot />
   <Button
     kind="ghost"
-    icon={IconClose}
+    icon={ui.icon.Cross}
     on:click={() => {
       rightPanelTabChanged(null)
     }}

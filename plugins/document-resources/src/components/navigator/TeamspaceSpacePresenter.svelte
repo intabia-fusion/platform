@@ -20,14 +20,7 @@
   import { DocumentEvents } from '@hcengineering/document'
   import { IconWithEmoji, createQuery, getClient } from '@hcengineering/presentation'
   import type { Action } from '@hcengineering/ui'
-  import {
-    IconEdit,
-    getPaletteColorDef,
-    getPlatformColorForTextDef,
-    themeStore,
-    IconAdd,
-    closeTooltip
-  } from '@hcengineering/ui'
+  import ui, { getPaletteColorDef, getPlatformColorForTextDef, themeStore, closeTooltip } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { TreeNode, openDoc, getActions as getContributedActions } from '@hcengineering/view-resources'
   import type { SpacesNavModel } from '@hcengineering/workbench'
@@ -120,7 +113,7 @@
   function getDocActions (doc: Document): Action[] {
     return [
       {
-        icon: IconAdd,
+        icon: ui.icon.Plus,
         label: document.string.CreateDocument,
         action: async (ctx: any, evt: Event) => {
           Analytics.handleEvent(DocumentEvents.PlusDocumentButtonClicked, { parent: doc._id })
@@ -141,7 +134,7 @@
     const extraActions = await getContributedActions(client, obj)
     for (const act of extraActions) {
       result.push({
-        icon: act.icon ?? IconEdit,
+        icon: act.icon ?? ui.icon.PencilLine,
         label: act.label,
         action: async (ctx: any, evt: Event) => {
           const impl = await getResource(act.action)

@@ -17,14 +17,12 @@
   import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
   import { MessageBox, copyTextToClipboard, createQuery } from '@hcengineering/presentation'
   import setting from '@hcengineering/setting'
-  import { Button, EditBox, Grid, Label, Loading, MiniToggle, showPopup, ticker } from '@hcengineering/ui'
+  import ui, { Button, EditBox, Grid, Label, Loading, MiniToggle, showPopup, ticker, Icon } from '@hcengineering/ui'
   import { createEventDispatcher, onMount } from 'svelte'
-
   import platform, { OK, PlatformError, Severity, Status } from '@hcengineering/platform'
 
   import login from '../plugin'
   import { getAccountClient, getInviteLink } from '../utils'
-  import InviteWorkspace from './icons/InviteWorkspace.svelte'
   import StatusControl from './StatusControl.svelte'
 
   export let role: AccountRole = AccountRole.User
@@ -146,7 +144,7 @@
 <div class="antiPopup popup" class:secure={isSecureContext}>
   <div class="flex-between fs-title mb-9">
     <Label label={login.string.InviteDescription} />
-    <InviteWorkspace size="large" />
+    <Icon icon={ui.icon.PeopleFill} size="large" />
   </div>
   {#if isOwnerOrMaintainer && !ignoreSettings && seatsChecked}
     <Grid column={1} rowGap={1.5}>

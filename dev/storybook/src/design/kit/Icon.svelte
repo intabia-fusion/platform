@@ -13,8 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  // Icon by name, shared by every kit component: hand-drawn kit icon, product sprite or ui icon.
-  import { getMetadata } from '@hcengineering/platform'
+  // Icon by name, shared by every kit component: hand-drawn kit icon, product sprite, ui kit sprite or ui icon.
+  import { getMetadata, type Asset } from '@hcengineering/platform'
+  import ui from '@hcengineering/ui'
+
   import { spriteAssets } from '../setup'
   import { kitIcons } from './icons'
   import type { IconName } from './types'
@@ -30,7 +32,10 @@
     import: 'default'
   })
 
-  $: asset = spriteAssets.get(name.toLowerCase())
+  // 'kit/<Key>' is a symbol of the ui kit sprite
+  $: asset = name.startsWith('kit/')
+    ? (ui.icon as Record<string, Asset>)[name.slice(4)]
+    : spriteAssets.get(name.toLowerCase())
   $: href = asset !== undefined ? getMetadata<string>(asset as any) : undefined
   $: component = name.startsWith('ui/')
     ? uiIcons[`../../../../../packages/ui/src/components/icons/${name.slice(3)}.svelte`]

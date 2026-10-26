@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte'
-  import { liveKitClient, lk } from '../../utils'
   import type {
     LocalParticipant,
     LocalTrackPublication,
@@ -9,8 +8,10 @@
     RemoteTrackPublication
   } from 'livekit-client'
   import { RoomEvent, Track } from 'livekit-client'
-  import { IconScale, IconScaleFull } from '@hcengineering/ui'
+  import ui from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
+
+  import { liveKitClient, lk } from '../../utils'
   import love from '../../plugin'
 
   export let hasActiveTrack: boolean = false
@@ -221,7 +222,7 @@
   {#if hasActiveTrack}
     <div class="zoom-controls" class:visible={showControls}>
       <IconButton
-        icon={IconScale}
+        icon={ui.icon.Minus}
         size="small"
         tooltip={{ label: love.string.ZoomOut }}
         on:click={zoomOut}
@@ -229,14 +230,14 @@
       />
       <span class="zoom-level">{Math.round(scale * 100)}%</span>
       <IconButton
-        icon={IconScale}
+        icon={ui.icon.Plus}
         size="small"
         tooltip={{ label: love.string.ZoomIn }}
         on:click={zoomIn}
         disabled={scale >= MAX_SCALE}
       />
       <IconButton
-        icon={IconScaleFull}
+        icon={ui.icon.ArrowCounterClockwise}
         size="small"
         tooltip={{ label: love.string.ResetZoom }}
         on:click={resetZoom}

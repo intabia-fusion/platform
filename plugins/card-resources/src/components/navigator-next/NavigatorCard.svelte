@@ -20,7 +20,7 @@
   import { getClient } from '@hcengineering/presentation'
   import { createEventDispatcher } from 'svelte'
   import type { Action } from '@hcengineering/ui'
-  import { IconMoreV, NavItem } from '@hcengineering/ui'
+  import ui, { NavItem } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import { showMenu } from '@hcengineering/view-resources'
@@ -58,7 +58,7 @@
     {
       id: 'menu',
       label: view.string.MoreActions,
-      icon: IconMoreV,
+      icon: ui.icon.DotsVertical,
       action: async (_, e): Promise<void> => {
         activeAction = 'menu'
         showMenu(

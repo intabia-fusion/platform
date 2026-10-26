@@ -18,20 +18,20 @@
   import type { TagCategory } from '@hcengineering/tags'
   import { findTagCategory } from '@hcengineering/tags'
   import type { DropdownTextItem } from '@hcengineering/ui'
-  import {
+  import ui, {
     Button,
     DropdownLabels,
     EditBox,
     eventToHTMLElement,
     getColorNumberByText,
     getPlatformColorDef,
-    IconFolder,
     showPopup,
     TextArea,
     themeStore
   } from '@hcengineering/ui'
   import { ColorsPopup } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
+
   import tags from '../plugin'
   import { createTagElement, getTagStyle } from '../utils'
 
@@ -147,7 +147,7 @@
       {#if categories.length > 1}
         <div class="text-sm mt-4">
           <DropdownLabels
-            icon={IconFolder}
+            icon={ui.icon.Folder}
             label={tags.string.CategoryLabel}
             kind="regular"
             bind:selected={category}

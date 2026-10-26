@@ -14,12 +14,13 @@
 -->
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
-  import { Label, showPopup, IconFolder, Button, eventToHTMLElement, getFocusManager } from '@hcengineering/ui'
+  import ui, { Label, showPopup, Button, eventToHTMLElement, getFocusManager } from '@hcengineering/ui'
   import type { ButtonKind, ButtonSize, TooltipAlignment } from '@hcengineering/ui'
-  import EnumPopup from './EnumPopup.svelte'
   import type { Ref, Class, DocumentQuery, Enum } from '@hcengineering/core'
   import core from '@hcengineering/core'
   import type { ObjectCreate } from '@hcengineering/presentation'
+
+  import EnumPopup from './EnumPopup.svelte'
 
   export let label: IntlString
   export let value: Enum | undefined
@@ -63,7 +64,7 @@
   {focus}
   {focusIndex}
   justify="left"
-  icon={IconFolder}
+  icon={ui.icon.Folder}
   {size}
   {width}
   {kind}

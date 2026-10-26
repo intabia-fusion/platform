@@ -13,13 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import ui from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import type { Doc, Ref } from '@hcengineering/core'
   import type { Folder } from '@hcengineering/drive'
   import { getResource } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import type { Action } from '@hcengineering/ui'
-  import { IconEdit } from '@hcengineering/ui'
   import { getActions as getContributedActions, TreeItem } from '@hcengineering/view-resources'
 
   export let folders: Ref<Folder>[]
@@ -42,7 +42,7 @@
     const extraActions = await getContributedActions(client, obj)
     for (const act of extraActions) {
       result.push({
-        icon: act.icon ?? IconEdit,
+        icon: act.icon ?? ui.icon.PencilLine,
         label: act.label,
         action: async (ctx: any, evt: Event) => {
           const impl = await getResource(act.action)

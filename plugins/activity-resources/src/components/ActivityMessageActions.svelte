@@ -17,7 +17,7 @@
   import type { ActivityMessage } from '@hcengineering/activity'
   import activity from '@hcengineering/activity'
   import type { Action } from '@hcengineering/ui'
-  import { closeTooltip, IconMoreV, showPopup } from '@hcengineering/ui'
+  import ui, { closeTooltip, showPopup } from '@hcengineering/ui'
   import { actionGroupOrder, getActions, Menu } from '@hcengineering/view-resources'
   import { getClient } from '@hcengineering/presentation'
   import { getResource } from '@hcengineering/platform'
@@ -147,7 +147,7 @@
 
     {#if withActionMenu}
       <ActivityMessageAction
-        icon={IconMoreV}
+        icon={ui.icon.DotsVertical}
         label={view.string.MoreActions}
         size="small"
         opened={isActionMenuOpened}

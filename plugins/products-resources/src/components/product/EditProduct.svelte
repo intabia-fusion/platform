@@ -23,7 +23,7 @@
   import { Panel } from '@hcengineering/panel'
   import { getResource } from '@hcengineering/platform'
   import { ActionContext, MessageViewer, IconWithEmoji, createQuery, getClient } from '@hcengineering/presentation'
-  import { Button, EditBox, IconMixin, IconMoreH, getPaletteColorDef, showPopup, themeStore } from '@hcengineering/ui'
+  import ui, { Button, EditBox, getPaletteColorDef, showPopup, themeStore } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { DocAttributeBar, IconPicker, getDocMixins, showMenu } from '@hcengineering/view-resources'
   import type { Product } from '@hcengineering/products'
@@ -185,7 +185,7 @@
 
     <svelte:fragment slot="utils">
       <Button
-        icon={IconMoreH}
+        icon={ui.icon.DotsHorizontal}
         kind="ghost"
         size="medium"
         on:click={(e) => {
@@ -193,7 +193,7 @@
         }}
       />
       <Button
-        icon={IconMixin}
+        icon={ui.icon.LayoutSplit}
         kind="icon"
         iconProps={{ size: 'medium' }}
         selected={showAllMixins}

@@ -20,13 +20,12 @@
   import { getResource } from '@hcengineering/platform'
   import { IconWithEmoji, getClient } from '@hcengineering/presentation'
   import type { Action } from '@hcengineering/ui'
-  import { IconAdd, IconEdit, getPaletteColorDef, themeStore } from '@hcengineering/ui'
+  import ui, { getPaletteColorDef, themeStore } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { getActions as getContributedActions, openDoc } from '@hcengineering/view-resources'
 
   import document from '../../plugin'
   import { createEmptyDocument } from '../../utils'
-
   import DropArea from './DropArea.svelte'
   import DocTreeElement from './DocTreeElement.svelte'
 
@@ -55,7 +54,7 @@
   function getActions (doc: Document): Action[] {
     return [
       {
-        icon: IconAdd,
+        icon: ui.icon.Plus,
         label: document.string.CreateDocument,
         action: async (ctx: any, evt: Event) => {
           const id: Ref<Document> = generateId()
@@ -75,7 +74,7 @@
     const extraActions = await getContributedActions(client, obj)
     for (const act of extraActions) {
       result.push({
-        icon: act.icon ?? IconEdit,
+        icon: act.icon ?? ui.icon.PencilLine,
         label: act.label,
         action: async (ctx: any, evt: Event) => {
           const impl = await getResource(act.action)

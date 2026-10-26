@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { BlankView, IconSearch, Label, tooltip } from '@hcengineering/ui'
+  import ui, { BlankView, Label, tooltip } from '@hcengineering/ui'
   import { Button } from '@hcengineering/ui/kit'
   import { createEventDispatcher } from 'svelte'
 
@@ -48,7 +48,7 @@
 {:else}
   <!-- No error text here: on the whole place it would pop up over the retry button too. -->
   <div class="blank">
-    <BlankView icon={IconSearch} header={chunter.string.SearchFailed} label={hint}>
+    <BlankView icon={ui.icon.Search} header={chunter.string.SearchFailed} label={hint}>
       <Button label={chunter.string.SearchRetry} kind="secondary" size="medium" on:click={retry} />
     </BlankView>
   </div>

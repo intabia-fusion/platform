@@ -36,9 +36,7 @@
     WorkspaceEvent,
     getCurrentAccount
   } from '@hcengineering/core'
-  import {
-    IconCheckmark,
-    IconStorage,
+  import ui, {
     Label,
     Loading,
     Scroller,
@@ -51,17 +49,17 @@
     addNotification,
     NotificationSeverity,
     Switcher,
-    ticker
+    ticker,
+    Icon
   } from '@hcengineering/ui'
   import { onMount, onDestroy } from 'svelte'
   import support from '@hcengineering/support'
   import contact, { getCurrentEmployee, formatName } from '@hcengineering/contact'
+  import type { WorkspaceTokenWindows } from '@hcengineering/billing-client'
 
   import plugin from '../plugin'
   import { getAccountClient, getBillingClient, getPaymentClient, resolveLocale, checkWorkspaceLimits } from '../utils'
   import { subscriptionStore } from '../stores/subscription'
-  import type { WorkspaceTokenWindows } from '@hcengineering/billing-client'
-
   import UsageSection from './UsageSection.svelte'
   import TokenWindows from './TokenWindows.svelte'
   import BillingErrorNotification from './BillingErrorNotification.svelte'
@@ -1201,7 +1199,7 @@
                     <div class="flex-col flex-gap-2">
                       {#each currentPlan.features ?? [] as feature}
                         <div class="flex-row-center flex-gap-2">
-                          <IconCheckmark size="small" />
+                          <Icon icon={ui.icon.CheckSmall} size="small" />
                           <span class="text-md">{feature}</span>
                         </div>
                       {/each}
@@ -1442,7 +1440,7 @@
                   <div class="tier-features">
                     {#each planItem.features ?? [] as feature}
                       <div class="feature-item">
-                        <span class="feature-bullet"><IconCheckmark size="small" /></span>
+                        <span class="feature-bullet"><Icon icon={ui.icon.CheckSmall} size="small" /></span>
                         <span>{feature}</span>
                       </div>
                     {/each}
@@ -1518,7 +1516,7 @@
                       <div class="tier-card">
                         <div class="tier-card-content">
                           <div class="package-item">
-                            <IconStorage size="medium" />
+                            <Icon icon={ui.icon.Database} size="medium" />
                             <span class="fs-title text-lg">{pkgItem.description}</span>
                           </div>
                           <div class="flex-row-center items-end">
@@ -1580,7 +1578,7 @@
                 <div class="tier-card">
                   <div class="tier-card-content">
                     <div class="package-item">
-                      <IconStorage size="medium" />
+                      <Icon icon={ui.icon.Database} size="medium" />
                       <span class="fs-title text-lg">{item.description}</span>
                     </div>
                     <div class="flex-row-center items-end">

@@ -20,14 +20,14 @@
   import type { ObjectCreate } from '@hcengineering/presentation'
   import { getClient } from '@hcengineering/presentation'
   import type { ButtonKind, ButtonSize, TooltipAlignment, PopupResult } from '@hcengineering/ui'
-  import { Button, Label, showPopup } from '@hcengineering/ui'
+  import ui, { Button, Label, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+
   import plugin from '../plugin'
   import { getPersonByPersonRefStore } from '../utils'
   import CombineAvatars from './CombineAvatars.svelte'
   import UserInfo from './UserInfo.svelte'
   import UsersPopup from './UsersPopup.svelte'
-  import Members from './icons/Members.svelte'
 
   export let items: Ref<Person>[] = []
   export let _class: Ref<Class<Person>> = contact.mixin.Employee
@@ -106,7 +106,7 @@
 </script>
 
 <Button
-  icon={persons.length === 0 ? Members : undefined}
+  icon={persons.length === 0 ? ui.icon.PeopleFill : undefined}
   label={persons.length === 0 ? emptyLabel : undefined}
   notSelected={persons.length === 0}
   width={width ?? 'min-content'}

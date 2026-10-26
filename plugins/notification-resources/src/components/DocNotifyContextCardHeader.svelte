@@ -12,7 +12,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { CheckBox, Component, IconMoreV, Label, showPopup, Spinner } from '@hcengineering/ui'
+  import ui, { CheckBox, Component, Label, showPopup, Spinner } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import type { DocNotifyContext } from '@hcengineering/notification'
   import notification from '@hcengineering/notification'
@@ -96,7 +96,7 @@
       {/if}
     </div>
     <IconButton
-      icon={IconMoreV}
+      icon={ui.icon.DotsVertical}
       size="small"
       kind="tertiary"
       inheritColor

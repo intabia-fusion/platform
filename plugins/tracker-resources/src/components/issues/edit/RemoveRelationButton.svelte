@@ -1,8 +1,9 @@
 <script lang="ts">
   import type { Issue } from '@hcengineering/tracker'
-  import { Icon, IconClose, tooltip } from '@hcengineering/ui'
+  import ui, { Icon, tooltip } from '@hcengineering/ui'
   import type { RelatedDocument } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
+
   import { removeIssueRelation } from '../../../issues'
   import tracker from '../../../plugin'
 
@@ -21,7 +22,7 @@
   on:click|stopPropagation={handleClick}
   use:tooltip={{ label: tracker.string.RemoveRelation }}
 >
-  <Icon icon={IconClose} size="x-small" />
+  <Icon icon={ui.icon.Cross} size="x-small" />
 </button>
 
 <style>

@@ -18,12 +18,11 @@
   import { getObjectValue } from '@hcengineering/core'
   import type { Category } from '@hcengineering/inventory'
   import inventory from '@hcengineering/inventory'
-  import { IconMoreV } from '@hcengineering/ui'
+  import ui, { Icon } from '@hcengineering/ui'
   import type { AttributeModel } from '@hcengineering/view'
   import { showMenu } from '@hcengineering/view-resources'
+
   import HierarchyElement from './HierarchyElement.svelte'
-  import Collapse from './icons/Collapse.svelte'
-  import Expand from './icons/Expand.svelte'
 
   export let descendants: Map<Ref<Doc>, Category[]>
   export let level: number = 1
@@ -60,9 +59,9 @@
                 }}
               >
                 {#if expanded.has(object._id)}
-                  <Expand size="small" />
+                  <Icon icon={ui.icon.ChevronDown} size="small" />
                 {:else}
-                  <Collapse size="small" />
+                  <Icon icon={ui.icon.ChevronUp} size="small" />
                 {/if}
               </div>
             {/if}
@@ -79,7 +78,7 @@
                 showMenu(ev, { object })
               }}
             >
-              <IconMoreV size="small" />
+              <Icon icon={ui.icon.DotsVertical} size="small" />
             </div>
           </div>
         </td>

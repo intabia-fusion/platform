@@ -18,18 +18,19 @@
   import { AssigneeBox } from '@hcengineering/contact-resources'
   import type { Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { ActionIcon, EditBox, Icon, IconDelete, resizeObserver } from '@hcengineering/ui'
+  import ui, { ActionIcon, EditBox, Icon, resizeObserver } from '@hcengineering/ui'
   import type { Room } from '@hcengineering/love'
   import { RoomType, isOffice } from '@hcengineering/love'
   import { createEventDispatcher, onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { tweened } from 'svelte/motion'
+  import type { IntlString } from '@hcengineering/platform'
+
   import love from '../plugin'
   import { infos, lockedRoom } from '../stores'
   import type { RoomSide } from '../types'
   import { shadowNormal } from '../types'
   import { getRoomLabel } from '../utils'
-  import type { IntlString } from '@hcengineering/platform'
 
   export let room: Room
   export let cellSize: number
@@ -233,10 +234,10 @@
         on:mousedown|stopPropagation
       >
         {#if room.type === RoomType.Video}
-          <Icon icon={love.icon.CamEnabled} size={zoomOut ? 'x-small' : 'small'} />
+          <Icon icon={love.icon.CamEnabled} size={zoomOut ? 'x-small' : 'small'} fill="var(--bg-positive-default)" />
         {/if}
         {#if removable}
-          <ActionIcon icon={IconDelete} size={zoomOut ? 'x-small' : 'small'} action={remove} />
+          <ActionIcon icon={ui.icon.Trash} size={zoomOut ? 'x-small' : 'small'} action={remove} />
         {/if}
       </div>
     {/if}

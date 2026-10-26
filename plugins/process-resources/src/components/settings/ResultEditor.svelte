@@ -18,8 +18,9 @@
   import { translate } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import type { Process, UserResult } from '@hcengineering/process'
-  import { Button, EditBox, IconClose, Label } from '@hcengineering/ui'
+  import ui, { Button, EditBox, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+
   import { generateContextId } from '../../utils'
   import ResultTypeSelector from './ResultTypeSelector.svelte'
 
@@ -70,7 +71,7 @@
   <div class="flex-row-center flex-gap-2">
     <EditBox bind:value={name} placeholder={core.string.Description} on:change={handleNameChange} kind="default" />
     <Button
-      icon={IconClose}
+      icon={ui.icon.Cross}
       kind="ghost"
       on:click={() => {
         dispatch('remove')

@@ -28,7 +28,7 @@
   import type { Attachment } from '@hcengineering/attachment'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import { getObjectId } from '@hcengineering/view-resources'
-  import { ThrottledCaller } from '@hcengineering/ui'
+  import ui, { ThrottledCaller } from '@hcengineering/ui'
   import { getSpace, editingMessageStore } from '@hcengineering/activity-resources'
   import { setTyping, clearTyping } from '@hcengineering/presence-resources'
 
@@ -38,7 +38,6 @@
   import ChannelTypingInfo from '../ChannelTypingInfo.svelte'
   import AIRequestProgress from '../AIRequestProgress.svelte'
   import VoiceRecordingHud from './VoiceRecordingHud.svelte'
-  import IconMic from '../icons/IconMic.svelte'
 
   export let object: Doc
   export let chatMessage: ChatMessage | undefined = undefined
@@ -83,7 +82,7 @@
   const voiceActions: RefAction[] = [
     {
       label: chunter.string.RecordVoice,
-      icon: IconMic,
+      icon: ui.icon.Mic,
       order: 2000,
       action: () => {
         recording = true

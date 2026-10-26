@@ -13,11 +13,10 @@
 -->
 <script lang="ts">
   import { clearSettingsStore } from '@hcengineering/setting-resources'
-  import {
+  import ui, {
     desktopPlatform,
     getCurrentResolvedLocation,
     Icon,
-    IconOpenedArrow,
     Label,
     locationToUrl,
     navigate
@@ -62,7 +61,7 @@
           </div>
           <span class="task-type-tied-workflows--name">{wf.name}</span>
           <div class="task-type-tied-workflows--arrow">
-            <Icon icon={IconOpenedArrow} size="x-small" />
+            <Icon icon={ui.icon.ChevronRightSmall} size="x-small" />
           </div>
         </button>
       {/each}

@@ -19,8 +19,9 @@
   import type { Ref, WithLookup } from '@hcengineering/core'
   import type { Department, Staff } from '@hcengineering/hr'
   import { getClient } from '@hcengineering/presentation'
-  import { Button, IconAdd, Label, closeTooltip, eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  import ui, { Button, Label, closeTooltip, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import { openDoc, showMenu } from '@hcengineering/view-resources'
+
   import hr from '../plugin'
   import { addMember } from '../utils'
   import CreateDepartment from './CreateDepartment.svelte'
@@ -114,7 +115,7 @@
   >
     <div class="flex-center">
       <div class="mr-2">
-        <Button icon={IconAdd} kind="list" on:click={createChild} />
+        <Button icon={ui.icon.Plus} kind="list" on:click={createChild} />
       </div>
       <Avatar size="medium" person={value} icon={hr.icon.Department} name={value.name} />
       <div class="flex-row ml-2 mr-4">

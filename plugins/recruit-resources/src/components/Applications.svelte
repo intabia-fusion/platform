@@ -14,13 +14,12 @@
 -->
 <script lang="ts">
   import type { Doc, Ref } from '@hcengineering/core'
-  import { Button, IconAdd, Label, Scroller, Section, showPopup } from '@hcengineering/ui'
+  import ui, { Button, Label, Scroller, Section, showPopup } from '@hcengineering/ui'
   import type { Viewlet, ViewletPreference } from '@hcengineering/view'
   import { Table, ViewletsSettingButton } from '@hcengineering/view-resources'
+
   import recruit from '../plugin'
   import CreateApplication from './CreateApplication.svelte'
-  import IconApplication from './icons/Application.svelte'
-  import FileDuo from './icons/FileDuo.svelte'
   import SectionEmpty from './SectionEmpty.svelte'
 
   export let objectId: Ref<Doc>
@@ -36,7 +35,7 @@
   let loading = true
 </script>
 
-<Section label={recruit.string.Applications} icon={IconApplication}>
+<Section label={recruit.string.Applications} icon={recruit.icon.Applications}>
   <svelte:fragment slot="header">
     <div class="flex-row-center gap-2 reverse">
       <ViewletsSettingButton
@@ -47,7 +46,7 @@
         bind:preference
       />
       {#if !readonly}
-        <Button id="appls.add" icon={IconAdd} kind="ghost" on:click={createApp} />
+        <Button id="appls.add" icon={ui.icon.Plus} kind="ghost" on:click={createApp} />
       {/if}
     </div>
   </svelte:fragment>
@@ -65,7 +64,7 @@
         />
       </Scroller>
     {:else}
-      <SectionEmpty icon={FileDuo} label={recruit.string.NoApplicationsForTalent}>
+      <SectionEmpty icon={ui.icon.Document} label={recruit.string.NoApplicationsForTalent}>
         {#if !readonly}
           <!-- svelte-ignore a11y-click-events-have-key-events -->
           <!-- svelte-ignore a11y-no-static-element-interactions -->

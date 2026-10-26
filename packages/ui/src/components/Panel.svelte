@@ -14,6 +14,7 @@
 -->
 <script lang="ts">
   import { afterUpdate, createEventDispatcher, onMount } from 'svelte'
+
   import type { ButtonItem, HeaderAdaptive, IHeaderState } from '..'
   import {
     deviceOptionsStore as deviceInfo,
@@ -25,14 +26,7 @@
     panelSeparators,
     Header
   } from '..'
-  import IconClose from './icons/Close.svelte'
-  import IconDetails from './icons/Details.svelte'
-  import IconMaxWidth from './icons/MaxWidth.svelte'
-  import IconMinWidth from './icons/MinWidth.svelte'
-  import IconScale from './icons/Scale.svelte'
-  import IconScaleFull from './icons/ScaleFull.svelte'
   import IconButton from '../ui-kit/button/IconButton.svelte'
-
   import plugin from '../plugin'
 
   export let innerWidth: number = 0
@@ -188,7 +182,7 @@
         <IconButton
           id="btnPClose"
           focusIndex={10001}
-          icon={IconClose}
+          icon={plugin.icon.Cross}
           kind="ghost"
           size="small"
           iconSize="medium"
@@ -218,7 +212,7 @@
       {#if useMaxWidth !== undefined && showMaxWidthButton}
         <IconButton
           focusIndex={10009}
-          icon={useMaxWidth ? IconMaxWidth : IconMinWidth}
+          icon={useMaxWidth ? plugin.icon.ArrowsOutLineHorizontal : plugin.icon.ArrowsInLineHorizontal}
           kind="ghost"
           size="small"
           iconSize="medium"
@@ -233,7 +227,7 @@
       {#if isFullSize}
         <IconButton
           focusIndex={100010}
-          icon={fullSize ? IconScale : IconScaleFull}
+          icon={fullSize ? plugin.icon.ArrowsIn : plugin.icon.ArrowSquareOut}
           kind="ghost"
           size="small"
           iconSize="medium"
@@ -259,8 +253,7 @@
           <IconButton
             id="btnPAside"
             focusIndex={10008}
-            icon={IconDetails}
-            iconProps={{ filled: asideShown }}
+            icon={asideShown ? plugin.icon.PanelRightFill : plugin.icon.PanelRightLine}
             kind="ghost"
             size="small"
             iconSize="medium"

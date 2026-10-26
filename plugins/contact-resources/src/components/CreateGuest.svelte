@@ -20,12 +20,13 @@
   import login from '@hcengineering/login'
   import { getResource } from '@hcengineering/platform'
   import { Card, getClient } from '@hcengineering/presentation'
-  import { createFocusManager, EditBox, FocusHandler, IconInfo, Label } from '@hcengineering/ui'
+  import ui, { createFocusManager, EditBox, FocusHandler, Label, Icon } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+  import { Analytics } from '@hcengineering/analytics'
+
   import { ChannelsDropdown, employeeBySocialKeyStore } from '..'
   import contact from '../plugin'
   import { getAccountClient } from '../utils'
-  import { Analytics } from '@hcengineering/analytics'
 
   export let canSave: boolean = true
   export let onCreate: ((id: Ref<Person>) => Promise<void>) | undefined = undefined
@@ -193,7 +194,7 @@
   <svelte:fragment slot="error">
     {#if exists && !saving}
       <div class="flex-row-center error-color">
-        <IconInfo size="small" />
+        <Icon icon={ui.icon.InfoCircle} size="small" />
         <span class="text-sm overflow-label ml-2">
           <Label label={contact.string.PersonAlreadyExists} />
         </span>

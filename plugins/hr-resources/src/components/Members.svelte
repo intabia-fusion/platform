@@ -19,9 +19,10 @@
   import type { Ref } from '@hcengineering/core'
   import type { Department } from '@hcengineering/hr'
   import { getClient } from '@hcengineering/presentation'
-  import { Button, IconAdd, Label, Section, showPopup, Scroller } from '@hcengineering/ui'
+  import ui, { Button, Label, Section, showPopup, Scroller } from '@hcengineering/ui'
   import type { Viewlet, ViewletPreference } from '@hcengineering/view'
   import { Table, ViewletSelector, ViewletSettingButton } from '@hcengineering/view-resources'
+
   import hr from '../plugin'
 
   export let department: Department
@@ -75,7 +76,7 @@
       />
       <ViewletSettingButton kind="tertiary" bind:viewlet />
       {#if !readonly}
-        <Button id={hr.string.AddMember} icon={IconAdd} kind="ghost" on:click={createApp} />
+        <Button id={hr.string.AddMember} icon={ui.icon.Plus} kind="ghost" on:click={createApp} />
       {/if}
     </div>
   </svelte:fragment>

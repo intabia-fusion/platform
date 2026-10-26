@@ -14,7 +14,6 @@
 -->
 <script lang="ts">
   import contact from '@hcengineering/contact'
-  import { ExpandRightDouble } from '@hcengineering/contact-resources'
   import type { FindOptions, Status as TaskStatus } from '@hcengineering/core'
   import type { Status } from '@hcengineering/platform'
   import { OK, Severity } from '@hcengineering/platform'
@@ -26,6 +25,7 @@
     Button,
     ColorPopup,
     FocusHandler,
+    Icon,
     Label,
     ListView,
     Status as StatusControl,
@@ -40,6 +40,7 @@
   import { statusStore } from '@hcengineering/view-resources'
   import { moveToSpace } from '@hcengineering/view-resources/src/utils'
   import { createEventDispatcher } from 'svelte'
+
   import recruit from '../plugin'
   import ApplicationPresenter from './ApplicationPresenter.svelte'
   import VacancyCard from './VacancyCard.svelte'
@@ -143,7 +144,7 @@
     </div>
 
     <div class="flex-center" class:rotate={verticalContent}>
-      <ExpandRightDouble />
+      <Icon icon={ui.icon.ChevronDoubleRight} size="x-large" fill="var(--dark-color)" />
     </div>
     <div class="flex-grow">
       <SpaceSelect

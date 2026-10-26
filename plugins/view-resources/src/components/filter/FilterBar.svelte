@@ -17,9 +17,10 @@
   import { getCurrentAccount } from '@hcengineering/core'
   import { getResource } from '@hcengineering/platform'
   import { getClient, reduceCalls } from '@hcengineering/presentation'
-  import { Button, IconAdd, eventToHTMLElement, getCurrentLocation, showPopup } from '@hcengineering/ui'
+  import ui, { Button, eventToHTMLElement, getCurrentLocation, showPopup } from '@hcengineering/ui'
   import type { Filter, FilteredView, ViewOptions, Viewlet } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
+
   import { filterStore, removeFilter, selectedFilterStore, updateFilter } from '../../filter'
   import view from '../../plugin'
   import { activeViewlet, getActiveViewletId, makeViewletKey } from '../../utils'
@@ -188,7 +189,7 @@
         />
       {/each}
       <div class="add-filter">
-        <Button size="small" icon={IconAdd} kind="ghost" on:click={add} />
+        <Button size="small" icon={ui.icon.Plus} kind="ghost" on:click={add} />
       </div>
     </div>
 

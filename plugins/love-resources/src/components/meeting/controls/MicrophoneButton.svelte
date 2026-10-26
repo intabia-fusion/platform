@@ -1,9 +1,10 @@
 <script lang="ts">
-  import love from '../../../plugin'
   import { state, toggleMicState } from '@hcengineering/media-resources'
-  import { eventToHTMLElement, IconUpOutline, showPopup, SplitButton } from '@hcengineering/ui'
+  import ui, { eventToHTMLElement, showPopup, SplitButton } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { getClient } from '@hcengineering/presentation'
+
+  import love from '../../../plugin'
   import MicSettingPopup from '../MicSettingPopup.svelte'
 
   export let size: 'large' | 'medium' | 'small' | 'extra-small' | 'min' = 'large'
@@ -24,12 +25,13 @@
   <SplitButton
     {size}
     icon={isMicEnabled ? love.icon.MicEnabled : love.icon.MicDisabled}
+    iconProps={{ fill: isMicEnabled ? 'var(--theme-state-positive-color)' : 'var(--theme-error-color)' }}
     showTooltip={{
       label: isMicEnabled ? love.string.Mute : love.string.UnMute,
       keys: micKeys
     }}
     action={toggleMicState}
-    secondIcon={IconUpOutline}
+    secondIcon={ui.icon.ChevronUpSmall}
     secondAction={micSettings}
     separate
   />

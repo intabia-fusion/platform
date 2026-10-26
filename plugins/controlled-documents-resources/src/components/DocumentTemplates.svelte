@@ -16,7 +16,7 @@
   import type { Mixin, DocumentQuery, Ref } from '@hcengineering/core'
   import type { DocumentTemplate } from '@hcengineering/controlled-documents'
   import { ActionContext } from '@hcengineering/presentation'
-  import { Button, IconAdd, Loading, showPopup } from '@hcengineering/ui'
+  import ui, { Button, Loading, showPopup } from '@hcengineering/ui'
   import type { ViewOptions, Viewlet, ViewletPreference } from '@hcengineering/view'
   import view from '@hcengineering/view'
   import { TableBrowser, ViewletPanelHeader } from '@hcengineering/view-resources'
@@ -72,7 +72,7 @@
     <svelte:fragment slot="actions">
       {#if canAddTemplate}
         <Button
-          icon={IconAdd}
+          icon={ui.icon.Plus}
           label={documents.string.DocumentTemplateCreateLabel}
           size="small"
           kind="primary"

@@ -15,11 +15,10 @@
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
   import { createEventDispatcher } from 'svelte'
+
   import { deviceOptionsStore, resizeObserver } from '..'
   import plugin from '../plugin'
   import type { DropdownTextItem } from '../types'
-  import IconCheck from './icons/Check.svelte'
-  import IconSearch from './icons/Search.svelte'
   import ListView from './ListView.svelte'
   import Icon from './Icon.svelte'
   import EditWithIcon from './EditWithIcon.svelte'
@@ -101,7 +100,7 @@
   {#if enableSearch}
     <div class="header">
       <EditWithIcon
-        icon={IconSearch}
+        icon={plugin.icon.Search}
         size="large"
         width="100%"
         autoFocus={!$deviceOptionsStore.isMobile}
@@ -174,7 +173,7 @@
               <div class="label overflow-label flex-grow">{item.label}</div>
               <div class="check">
                 {#if isSelected(selected, item)}
-                  <Icon icon={IconCheck} size="small" />
+                  <Icon icon={plugin.icon.Check} size="small" />
                 {/if}
               </div>
             </button>

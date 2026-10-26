@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { IconAdd, IconDetails, IconMoreH } from '@hcengineering/ui'
+  import ui from '@hcengineering/ui'
   import {
     Breadcrumb,
     Button,
@@ -43,7 +43,7 @@
   <PanelHeader {...own} {...$$restProps} on:close>
     <svelte:fragment slot="before">
       {#if withBefore}
-        <IconButton icon={IconDetails} kind="ghost" size="small" tooltip={{ label: t('Space') }} />
+        <IconButton icon={ui.icon.PanelRightLine} kind="ghost" size="small" tooltip={{ label: t('Space') }} />
       {/if}
     </svelte:fragment>
     <Breadcrumb label={t(title)} current />
@@ -61,8 +61,8 @@
     </svelte:fragment>
     <svelte:fragment slot="actions">
       {#if withActions}
-        <IconButton icon={IconMoreH} kind="ghost" size="small" tooltip={{ label: t('More actions') }} />
-        <Button icon={IconAdd} label={t('New issue')} kind="brand" size="small" />
+        <IconButton icon={ui.icon.DotsHorizontal} kind="ghost" size="small" tooltip={{ label: t('More actions') }} />
+        <Button icon={ui.icon.Plus} label={t('New issue')} kind="brand" size="small" />
       {/if}
     </svelte:fragment>
   </PanelHeader>

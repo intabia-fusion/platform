@@ -18,13 +18,14 @@
   import type { AttachedData, Data } from '@hcengineering/core'
   import { generateId } from '@hcengineering/core'
   import { Card, getClient } from '@hcengineering/presentation'
-  import { createFocusManager, EditBox, FocusHandler, IconInfo, Label } from '@hcengineering/ui'
+  import ui, { createFocusManager, EditBox, FocusHandler, Label, Icon } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+  import { Analytics } from '@hcengineering/analytics'
+
   import { ChannelsDropdown } from '..'
   import contact from '../plugin'
   import EditableAvatar from './EditableAvatar.svelte'
   import PersonPresenter from './PersonPresenter.svelte'
-  import { Analytics } from '@hcengineering/analytics'
 
   let avatarEditor: EditableAvatar
 
@@ -92,7 +93,7 @@
   <svelte:fragment slot="error">
     {#if matches.length > 0}
       <div class="flex-row-center error-color">
-        <IconInfo size="small" />
+        <Icon icon={ui.icon.InfoCircle} size="small" />
         <span class="text-sm overflow-label ml-2">
           <Label label={contact.string.PersonAlreadyExists} />
         </span>

@@ -16,12 +16,11 @@
 <script lang="ts">
   import { createQuery } from '@hcengineering/presentation'
   import type { Applicant, Candidate, Vacancy } from '@hcengineering/recruit'
-  import { Scroller } from '@hcengineering/ui'
+  import ui, { Icon, Scroller } from '@hcengineering/ui'
   import { createEventDispatcher, onMount } from 'svelte'
+
   import CandidateCard from './CandidateCard.svelte'
   import VacancyCard from './VacancyCard.svelte'
-  import ExpandRightDouble from './icons/ExpandRightDouble.svelte'
-
   import recruit from '../plugin'
   import Reviews from './review/Reviews.svelte'
 
@@ -65,7 +64,9 @@
   <Scroller horizontal stickedScrollBars>
     <div class="flex-between min-w-min">
       <div class="card"><CandidateCard {candidate} disabled={readonly} on:click /></div>
-      <div class="flex-center arrows"><ExpandRightDouble /></div>
+      <div class="flex-center arrows">
+        <Icon icon={ui.icon.ChevronDoubleRight} size="x-large" fill="var(--dark-color)" />
+      </div>
       <div class="card"><VacancyCard {vacancy} disabled={readonly} /></div>
     </div>
   </Scroller>

@@ -18,8 +18,7 @@ import type { Attachment } from '@hcengineering/attachment'
 import type { BlobType, WithLookup } from '@hcengineering/core'
 import { getResource, setPlatformStatus, unknownError } from '@hcengineering/platform'
 import presentation, { downloadFile, MessageBox } from '@hcengineering/presentation'
-import { getEventPositionElement, Menu, showPopup, type Action } from '@hcengineering/ui'
-import { IconFileDownload as FileDownload } from '@hcengineering/ui/kit'
+import ui, { getEventPositionElement, Menu, showPopup, type Action } from '@hcengineering/ui'
 import view from '@hcengineering/view'
 import workbench from '@hcengineering/workbench'
 import { get } from 'svelte/store'
@@ -97,7 +96,7 @@ async function buildMenu (
     ...opens,
     {
       label: presentation.string.Download,
-      icon: FileDownload,
+      icon: ui.icon.Download,
       action: async () => {
         downloadFile(value.file, value.name)
       }

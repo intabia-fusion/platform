@@ -15,11 +15,12 @@
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
   import { createEventDispatcher } from 'svelte'
+
+  import Icon from './Icon.svelte'
   import ui from '../plugin'
   import { showPopup } from '../popups'
   import type { ButtonKind, ButtonSize, DropdownIntlItem } from '../types'
   import Button from './Button.svelte'
-  import DropdownIcon from './icons/Dropdown.svelte'
   import NestedMenu from './NestedMenu.svelte'
   import Label from './Label.svelte'
 
@@ -70,7 +71,11 @@
     </span>
     <svelte:fragment slot="iconRight">
       {#if withSelectIcon}
-        <DropdownIcon size="small" fill={!disabled ? 'var(--theme-content-color)' : 'var(--theme-dark-color)'} />
+        <Icon
+          icon={ui.icon.ChevronDown}
+          size="small"
+          fill={!disabled ? 'var(--theme-content-color)' : 'var(--theme-dark-color)'}
+        />
       {/if}
     </svelte:fragment>
   </Button>

@@ -24,15 +24,9 @@
   import { translate } from '@hcengineering/platform'
   import { Card, createQuery, getClient } from '@hcengineering/presentation'
   import { EmptyMarkup } from '@hcengineering/text'
-  import ui, {
-    Button,
-    DateRangePresenter,
-    DropdownLabelsIntl,
-    IconAttachment,
-    Label,
-    themeStore
-  } from '@hcengineering/ui'
+  import ui, { Button, DateRangePresenter, DropdownLabelsIntl, Label, themeStore } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+
   import hr from '../plugin'
   import { getRequests } from '../utils'
 
@@ -161,7 +155,7 @@
   </svelte:fragment>
   <svelte:fragment slot="footer">
     <Button
-      icon={IconAttachment}
+      icon={ui.icon.Paperclip}
       size="large"
       on:click={() => {
         descriptionBox.handleAttach()

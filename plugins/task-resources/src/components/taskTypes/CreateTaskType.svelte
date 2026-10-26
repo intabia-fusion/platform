@@ -22,7 +22,7 @@
   import type { ProjectType, ProjectTypeDescriptor, Task, TaskType, TaskTypeDescriptor } from '@hcengineering/task'
   import { createProjectTypeStates, findStatusAttr } from '@hcengineering/task'
   import type { DropdownIntlItem } from '@hcengineering/ui'
-  import { Icon, IconError, Modal, ModernEditbox, Label, Toggle, IconInfo } from '@hcengineering/ui'
+  import ui, { Icon, Modal, ModernEditbox, Label, Toggle } from '@hcengineering/ui'
   import { IconButton, MenuButton } from '@hcengineering/ui/kit'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
 
@@ -241,7 +241,7 @@
     />
     {#if errorMessage !== undefined}
       <div class="name-error">
-        <Icon icon={IconError} size="small" />
+        <Icon icon={ui.icon.ExclamationCircle} size="small" fill="var(--theme-error-color)" />
         <span><Label label={errorMessage} /></span>
       </div>
     {/if}
@@ -273,7 +273,7 @@
       <span class="label label-with-info">
         <Label label={task.string.AllowRootTask} />
         <IconButton
-          icon={IconInfo}
+          icon={ui.icon.InfoCircle}
           size="extra-small"
           kind="tertiary"
           tooltip={{ label: task.string.AllowRootTaskTooltip }}
@@ -286,7 +286,7 @@
       <span class="label label-with-info">
         <Label label={task.string.AllowAnyParentSubtask} />
         <IconButton
-          icon={IconInfo}
+          icon={ui.icon.InfoCircle}
           size="extra-small"
           kind="tertiary"
           tooltip={{ label: task.string.AllowAnyParentTooltip }}
@@ -307,7 +307,7 @@
 
     {#if !isRootTaskType && !allowAnyParent && allowedAsChildOf.length === 0}
       <div class="hierarchy-warning-box">
-        <Icon icon={IconError} size="small" />
+        <Icon icon={ui.icon.ExclamationCircle} size="small" fill="var(--theme-error-color)" />
         <span><Label label={task.string.HierarchyWarningNoParentAndNoRoot} /></span>
       </div>
     {/if}

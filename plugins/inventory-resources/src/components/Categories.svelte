@@ -16,8 +16,9 @@
 <script lang="ts">
   import type { DocumentQuery } from '@hcengineering/core'
   import core from '@hcengineering/core'
-  import { Button, Breadcrumb, Scroller, SearchInput, showPopup, IconAdd, Header } from '@hcengineering/ui'
+  import ui, { Button, Breadcrumb, Scroller, SearchInput, showPopup, Header } from '@hcengineering/ui'
   import type { Category } from '@hcengineering/inventory'
+
   import inventory from '../plugin'
   import CreateCategory from './CreateCategory.svelte'
   import HierarchyView from './HierarchyView.svelte'
@@ -49,7 +50,12 @@
     />
   </svelte:fragment>
   <svelte:fragment slot="actions">
-    <Button icon={IconAdd} label={inventory.string.CategoryCreateLabel} kind="primary" on:click={showCreateDialog} />
+    <Button
+      icon={ui.icon.Plus}
+      label={inventory.string.CategoryCreateLabel}
+      kind="primary"
+      on:click={showCreateDialog}
+    />
   </svelte:fragment>
 </Header>
 

@@ -13,18 +13,18 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import type { Asset } from '@hcengineering/platform'
+
+  import ui from '../plugin'
   import type { AnySvelteComponent } from '../types'
   import Icon from './Icon.svelte'
-  import KeyShift from './icons/KeyShift.svelte'
-  import KeyOption from './icons/KeyOption.svelte'
-  import KeyCommand from './icons/KeyCommand.svelte'
 
   export let key: string
 
-  const predefinedKeys: Record<string, AnySvelteComponent> = {
-    shift: KeyShift,
-    option: KeyOption,
-    command: KeyCommand
+  const predefinedKeys: Record<string, Asset | AnySvelteComponent> = {
+    shift: ui.icon.ArrowFatUp,
+    option: ui.icon.Option,
+    command: ui.icon.Command
   }
 
   $: isPredefinedKey = key in predefinedKeys

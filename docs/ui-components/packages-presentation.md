@@ -1,6 +1,6 @@
 # packages/presentation - каталог компонентов и API
 
-Индекс публичного API пакета `@hcengineering/presentation` (`packages/presentation/src/index.ts`). Компоненты вне `index.ts` (`SpaceInfo.svelte`, `icons/*`, `markup/*` и т.п.) не включены - используются только внутри пакета.
+Индекс публичного API пакета `@hcengineering/presentation` (`packages/presentation/src/index.ts`). Компоненты вне `index.ts` (`SpaceInfo.svelte`, `markup/*` и т.п.) не включены - используются только внутри пакета.
 
 ## Данные и клиент
 
@@ -88,7 +88,6 @@
 | Компонент/функция | Назначение | Ключевые props / сигнатура |
 |---|---|---|
 | `downloadFile` | Скачать файл хранилища под его именем | `downloadFile(file: string, name: string): void` |
-| `IconDownload` / `IconForward` | Иконки платформы (скачать / переслать) | `size` |
 | `getFileUrl` | URL файла в blob-хранилище для `<img src>`/ссылок | `getFileUrl(file: string, filename?): string` |
 | `uploadFile` / `deleteFile` | Загрузка/удаление файла в blob-хранилище воркспейса | `uploadFile(file, uuid?, opts?): Promise<...>` |
 | `getFileStorage` / `createFileStorage` | Доступ к абстракции файлового хранилища | `getFileStorage(): FileStorage` |

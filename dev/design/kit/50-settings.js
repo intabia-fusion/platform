@@ -135,7 +135,7 @@ kit.ClassicButton = (o = {}) => {
   if (o.content) kit.add(b, o.content)
   if (o.icon) kit.add(b, kit.icon(o.icon, K.icon, o.iconSize || 16))
   if (o.label) kit.add(b, kit.text(o.label, { size: 13, lh: 1.3125, color: K.label }))
-  if (o.menu) kit.add(b, kit.icon('ui/Down', K.icon, 16))
+  if (o.menu) kit.add(b, kit.icon('kit/CaretDownFill', K.icon, 16))
   return b
 }
 

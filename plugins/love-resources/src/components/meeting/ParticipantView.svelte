@@ -17,10 +17,7 @@
   import { formatName } from '@hcengineering/contact'
   import { Avatar, getPersonByPersonRefStore } from '@hcengineering/contact-resources'
   import type { Ref } from '@hcengineering/core'
-  import { Label, Loading } from '@hcengineering/ui'
-  import love from '../../plugin'
-  import { speakingWhileMuted } from '../../stores'
-  import MicDisabled from '../icons/MicDisabled.svelte'
+  import ui, { Label, Loading, Icon } from '@hcengineering/ui'
   import { onDestroy, onMount } from 'svelte'
   import type { ChatMessage, LocalParticipant, Participant, RemoteParticipant, TrackPublication } from 'livekit-client'
   import {
@@ -32,7 +29,9 @@
     RoomEvent,
     Track
   } from 'livekit-client'
-  import BadConnection from '../icons/BadConnection.svelte'
+
+  import love from '../../plugin'
+  import { speakingWhileMuted } from '../../stores'
   import { lk } from '../../utils'
   import Reaction from './Reaction.svelte'
 
@@ -215,14 +214,14 @@
   </div>
   {#if mirror && microphoneMuted && $speakingWhileMuted}
     <div class="speaking-muted-badge">
-      <MicDisabled fill="#fff" size="small" />
+      <Icon icon={ui.icon.MicOff} fill="#fff" size="small" />
       <span><Label label={love.string.SpeakingWhileMuted} /></span>
     </div>
   {/if}
   <div class="label" class:withIcon={microphoneMuted || isBadConnection || participant === undefined}>
     {#if participant === undefined}<Loading size="small" shrink />{/if}
-    {#if isBadConnection}<BadConnection fill="var(--bg-negative-default)" size="small" />{/if}
-    {#if microphoneMuted}<MicDisabled fill="var(--bg-negative-default)" size="small" />{/if}
+    {#if isBadConnection}<Icon icon={ui.icon.Wifi} fill="var(--bg-negative-default)" size="small" />{/if}
+    {#if microphoneMuted}<Icon icon={ui.icon.MicOff} fill="var(--bg-negative-default)" size="small" />{/if}
     <span class="overflow-label">{formatName(userName)}</span>
   </div>
   {#each reactions as reaction (reaction.id)}

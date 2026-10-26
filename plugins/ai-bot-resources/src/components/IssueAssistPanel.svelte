@@ -18,7 +18,7 @@
   import { createQuery } from '@hcengineering/presentation'
   import { jsonToMarkup, markupToText } from '@hcengineering/text'
   import { markdownToMarkup } from '@hcengineering/text-markdown'
-  import { Button, Component, IconAdd, Label, themeStore } from '@hcengineering/ui'
+  import ui, { Button, Component, Label, themeStore } from '@hcengineering/ui'
   import { translate } from '@hcengineering/platform'
   import aiBotPlugin, { type AIContextMessage, type AITaskProposalMessage } from '@hcengineering/ai-bot'
   import chunter, { type ChatMessage } from '@hcengineering/chunter'
@@ -346,7 +346,7 @@
         <!-- No close button here: the header toggle next to the dialog's own cross owns that. -->
         <div class="actions">
           <Button
-            icon={IconAdd}
+            icon={ui.icon.Plus}
             iconProps={{ size: 'small' }}
             label={aiBot.string.AssistIssueNewContext}
             kind="ghost"

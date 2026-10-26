@@ -14,7 +14,8 @@
 -->
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
-  import { IconChevronDown, IconChevronRight, Switcher } from '@hcengineering/ui'
+  import ui, { Switcher } from '@hcengineering/ui'
+
   import { swimLaneControlStore } from '../swimlane'
 
   export let viewlet: { _id: string } | undefined = undefined
@@ -25,14 +26,14 @@
   $: items = [
     {
       id: 'collapse',
-      icon: IconChevronRight,
+      icon: ui.icon.ChevronRight,
       labelIntl: config.collapseLabel,
       tooltip: config.collapseLabel,
       action: () => controls?.collapseAll()
     },
     {
       id: 'expand',
-      icon: IconChevronDown,
+      icon: ui.icon.ChevronDown,
       labelIntl: config.expandLabel,
       tooltip: config.expandLabel,
       action: () => controls?.expandAll()

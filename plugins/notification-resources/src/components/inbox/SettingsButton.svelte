@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { eventToHTMLElement, showPopup, IconSettings } from '@hcengineering/ui'
+  import ui, { eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import notification from '@hcengineering/notification'
 
@@ -28,7 +28,7 @@
 </script>
 
 <IconButton
-  icon={IconSettings}
+  icon={ui.icon.Sliders}
   size="small"
   tooltip={{ label: notification.string.Configure }}
   on:click={click}

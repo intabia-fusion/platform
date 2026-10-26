@@ -105,7 +105,8 @@ export default plugin(attachmentId, {
   },
   icon: {
     Attachment: '' as Asset,
-    FileBrowser: '' as Asset
+    FileBrowser: '' as Asset,
+    BrokenImage: '' as Asset
   },
   class: {
     Attachment: '' as Ref<Class<Attachment>>,

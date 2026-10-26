@@ -16,19 +16,20 @@ import { loadMetadata } from '@hcengineering/platform'
 import emojiPlugin from '@hcengineering/emoji'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(emojiPlugin.icon, {
-  Emoji: `${icons}#emoji`,
-  EmojiAdd: `${icons}#emoji-add`,
+  Emoji: `${uiIcons}#smiley`,
+  EmojiAdd: `${uiIcons}#smiley-plus`,
   Activities: `${icons}#activities`,
   AnimalsAndNature: `${icons}#animals-and-nature`,
   Flags: `${icons}#flags`,
   FoodAndDrink: `${icons}#food-and-drink`,
   FrequentlyUsed: `${icons}#frequently-used`,
   GettingWorkDone: `${icons}#getting-work-done`,
-  Objects: `${icons}#objects`,
-  Search: `${icons}#search`,
+  Objects: `${uiIcons}#key`,
+  Search: `${uiIcons}#search`,
   SmileysAndPeople: `${icons}#smileys-and-people`,
   Symbols: `${icons}#symbols`,
   TravelAndPlaces: `${icons}#travel-and-places`,
-  Custom: `${icons}#custom`
+  Custom: `${uiIcons}#gear`
 })

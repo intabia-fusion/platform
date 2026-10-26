@@ -17,7 +17,7 @@
   import { getClient } from '@hcengineering/presentation'
   import type { ProjectType, TaskType } from '@hcengineering/task'
   import { taskTypeStore } from '@hcengineering/task-resources'
-  import { closePopup, Icon, IconInfo, type IWizardStep, Label, ModernWizardDialog } from '@hcengineering/ui'
+  import ui, { closePopup, Icon, type IWizardStep, Label, ModernWizardDialog } from '@hcengineering/ui'
   import { statusStore } from '@hcengineering/view-resources'
   import workflow, {
     checkWorkflowCompatibility,
@@ -272,7 +272,7 @@
   <svelte:fragment slot="footerMessage">
     {#if importFailed}
       <div class="importError">
-        <Icon icon={IconInfo} size="small" />
+        <Icon icon={ui.icon.InfoCircle} size="small" />
         <Label label={plugin.string.ImportFailed} />
       </div>
     {/if}

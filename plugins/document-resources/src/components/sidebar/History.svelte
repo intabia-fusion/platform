@@ -21,16 +21,7 @@
   import type { Document } from '@hcengineering/document'
   import { getMarkup, getMarkupVersionContent, getMarkupVersions } from '@hcengineering/presentation'
   import { areEqualMarkups, markupToJSON, type MarkupNode } from '@hcengineering/text'
-  import {
-    Button,
-    ExpandCollapse,
-    IconCollapseArrow,
-    Label,
-    Loading,
-    Scroller,
-    TimeSince,
-    showPopup
-  } from '@hcengineering/ui'
+  import ui, { Button, ExpandCollapse, Label, Loading, Scroller, TimeSince, showPopup, Icon } from '@hcengineering/ui'
   import { MarkupDiffPresenter } from '@hcengineering/view-resources'
   import { createEventDispatcher, tick } from 'svelte'
 
@@ -199,7 +190,7 @@
             <div class="flex-between">
               <div class="flex-row-center">
                 <div class="chevron" class:expanded={isExpanded}>
-                  <IconCollapseArrow size="small" />
+                  <Icon icon={ui.icon.CaretRightFill} size="small" />
                 </div>
                 <!-- oldest version is #1, the list is sorted newest first -->
                 <div class="number">#{versions.length - i}</div>

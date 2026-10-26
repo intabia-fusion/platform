@@ -20,7 +20,7 @@
     hasAccountRole
   } from '@hcengineering/core'
   import { MessageViewer, createQuery, getClient } from '@hcengineering/presentation'
-  import { IconError, Label, type Action as UIAction, showPopup } from '@hcengineering/ui'
+  import ui, { Label, type Action as UIAction, showPopup, Icon } from '@hcengineering/ui'
   import { Button } from '@hcengineering/ui/kit'
   import view, { type Action } from '@hcengineering/view'
   import { invokeAction } from '@hcengineering/view-resources'
@@ -140,7 +140,9 @@
   <svelte:fragment slot="content">
     <div class="report">
       <div class="report__header">
-        <span class="report__badge"><IconError size="small" /></span>
+        <span class="report__badge"
+          ><Icon icon={ui.icon.ExclamationCircle} size="small" fill="var(--theme-error-color)" /></span
+        >
         <span class="report__heading">
           <span class="report__title"><Label label={chunter.string.ContentReportTitle} params={{ kind }} /></span>
           <span class="report__reason"><Label label={reasonLabels[reason]} /></span>

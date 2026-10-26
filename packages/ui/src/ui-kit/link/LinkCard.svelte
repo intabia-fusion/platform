@@ -16,7 +16,6 @@
   import { createEventDispatcher } from 'svelte'
 
   import Label from '../../components/Label.svelte'
-  import IconClose from '../../components/icons/Close.svelte'
   import ui from '../../plugin'
   import IconButton from '../button/IconButton.svelte'
   import Skeleton from '../skeleton/Skeleton.svelte'
@@ -114,7 +113,7 @@
   {#if removable}
     <span class="remove">
       <IconButton
-        icon={IconClose}
+        icon={ui.icon.Cross}
         kind="ghost"
         size="extra-small"
         iconSize="x-small"

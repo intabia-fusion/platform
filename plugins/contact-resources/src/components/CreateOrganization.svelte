@@ -22,14 +22,13 @@
   import core, { fillDefaults, generateId, makeCollabId } from '@hcengineering/core'
   import { Card, createMarkup, getClient, InlineAttributeBar } from '@hcengineering/presentation'
   import { EmptyMarkup, isEmptyMarkup } from '@hcengineering/text'
-  import { Button, createFocusManager, EditBox, FocusHandler, IconAttachment, IconInfo, Label } from '@hcengineering/ui'
+  import ui, { Button, createFocusManager, EditBox, FocusHandler, Label, Icon } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+  import { Analytics } from '@hcengineering/analytics'
 
   import contact from '../plugin'
   import ChannelsDropdown from './ChannelsDropdown.svelte'
-  import Company from './icons/Company.svelte'
   import OrganizationPresenter from './OrganizationPresenter.svelte'
-  import { Analytics } from '@hcengineering/analytics'
 
   export let onCreate: ((orgId: Ref<Organization>, client: TxOperations) => Promise<void>) | undefined = undefined
 
@@ -113,7 +112,7 @@
 >
   <div class="flex-row-center clear-mins mb-3">
     <div class="mr-3">
-      <Button icon={Company} size="medium" kind="link-bordered" noFocus />
+      <Button icon={ui.icon.Building} size="medium" kind="link-bordered" noFocus />
     </div>
     <EditBox
       placeholder={contact.string.OrganizationNamePlaceholder}
@@ -181,7 +180,7 @@
 
   <svelte:fragment slot="footer">
     <Button
-      icon={IconAttachment}
+      icon={ui.icon.Paperclip}
       size="large"
       on:click={() => {
         descriptionBox.handleAttach()
@@ -189,7 +188,7 @@
     />
     {#if matches.length > 0}
       <div class="flex-row-center error-color">
-        <IconInfo size="small" />
+        <Icon icon={ui.icon.InfoCircle} size="small" />
         <span class="text-sm overflow-label ml-2">
           <Label label={contact.string.PersonAlreadyExists} />
         </span>

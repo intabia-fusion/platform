@@ -14,10 +14,10 @@
 -->
 <script lang="ts">
   import { afterUpdate, createEventDispatcher } from 'svelte'
+
   import ui from '../../plugin'
   import Icon from '../Icon.svelte'
   import Label from '../Label.svelte'
-  import IconClose from '../icons/Close.svelte'
   import { daysInMonth, fromCurrentToTz, getUserTimezone } from './internal/DateUtils'
 
   export let currentDate: Date | null
@@ -319,7 +319,7 @@
       }}
       on:blur={() => (selected = null)}
     >
-      <Icon icon={IconClose} size="x-small" />
+      <Icon icon={ui.icon.Cross} size="x-small" />
     </div>
   {/if}
 </div>

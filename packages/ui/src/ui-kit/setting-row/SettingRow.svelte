@@ -19,8 +19,8 @@
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
 
-  import IconInfo from '../../components/icons/Info.svelte'
   import Label from '../../components/Label.svelte'
+  import ui from '../../plugin'
   import IconButton from '../button/IconButton.svelte'
   import type { SettingRowProps, SettingRowSlots } from './types'
 
@@ -40,7 +40,7 @@
     <span class="setting-row__caption">
       <span class="setting-row__label" id={labelId}><Label {label} params={labelParams} /></span>
       {#if hint !== undefined}
-        <IconButton icon={IconInfo} size="extra-small" kind="ghost" tooltip={{ label: hint }} />
+        <IconButton icon={ui.icon.InfoCircle} size="extra-small" kind="ghost" tooltip={{ label: hint }} />
       {/if}
     </span>
     <div class="setting-row__control"><slot {labelId} /></div>

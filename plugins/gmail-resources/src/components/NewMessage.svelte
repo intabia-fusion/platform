@@ -33,8 +33,9 @@
   import { EmptyMarkup, isEmptyMarkup, markupToJSON } from '@hcengineering/text'
   import { markupToHtml } from '@hcengineering/text-html'
   import { StyledTextEditor } from '@hcengineering/text-editor-resources'
-  import { Button, EditBox, IconArrowLeft, IconAttachment, Label, Scroller } from '@hcengineering/ui'
+  import ui, { Button, EditBox, Label, Scroller } from '@hcengineering/ui'
   import { createEventDispatcher, onDestroy } from 'svelte'
+
   import plugin from '../plugin'
 
   export let object: Contact
@@ -196,7 +197,7 @@
 <div class="flex-between bottom-divider min-h-12 px-2">
   <div class="buttons-group">
     <Button
-      icon={IconArrowLeft}
+      icon={ui.icon.ArrowLeft}
       kind="ghost"
       on:click={() => {
         dispatch('close')
@@ -209,7 +210,7 @@
   </div>
   <div class="buttons-group small-gap">
     <Button
-      icon={IconAttachment}
+      icon={ui.icon.Paperclip}
       kind="ghost"
       loading={progress}
       on:click={() => {

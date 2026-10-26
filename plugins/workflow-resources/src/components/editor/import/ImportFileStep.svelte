@@ -15,7 +15,7 @@
   import { createEventDispatcher, onMount } from 'svelte'
   import { translateCB } from '@hcengineering/platform'
   import task from '@hcengineering/task'
-  import { Icon, IconCheck, IconError, Label, themeStore } from '@hcengineering/ui'
+  import ui, { Icon, Label, themeStore } from '@hcengineering/ui'
   import type { WorkflowConfig } from '@hcengineering/workflow'
 
   import plugin from '../../../plugin'
@@ -172,7 +172,7 @@
       <div class="json-input-footer flex-row-center justify-between flex-wrap">
         {#if parseError != null}
           <div class="error-banner flex-row-center flex-gap-1-5">
-            <IconError size="small" />
+            <Icon icon={ui.icon.ExclamationCircle} size="small" fill="var(--theme-error-color)" />
             <span class="font-regular-12 error-text">
               {#if parseError === 'InvalidFileType'}
                 <Label label={plugin.string.InvalidFileType} />
@@ -205,7 +205,7 @@
     <div class="file-selected-card flex-between flex-row-center">
       <div class="flex-row-center flex-gap-2">
         <div class="success-icon flex-center">
-          <IconCheck size="small" />
+          <Icon icon={ui.icon.Check} size="small" />
         </div>
         <div class="file-meta flex-col">
           <span class="font-medium-14">

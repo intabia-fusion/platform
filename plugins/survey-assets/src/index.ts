@@ -18,18 +18,19 @@ import { loadMetadata } from '@hcengineering/platform'
 import survey from '@hcengineering/survey'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
+// Icons the kit has: the ids stay, stored documents keep pointing at them.
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(survey.icon, {
-  Application: `${icons}#application`,
-  Info: `${icons}#info`,
+  Application: `${uiIcons}#pencil-line`,
+  Info: `${uiIcons}#info-circle`,
   Poll: `${icons}#poll`,
   Question: `${icons}#question`,
-  QuestionKindString: `${icons}#textline`,
-  QuestionKindOption: `${icons}#radio`,
-  QuestionKindOptions: `${icons}#checkbox`,
-  Survey: `${icons}#survey`,
-  Submit: `${icons}#submit`,
+  QuestionKindString: `${icons}#textbox`,
+  QuestionKindOption: `${uiIcons}#circle-dot`,
+  QuestionKindOptions: `${uiIcons}#check-square`,
+  Survey: `${uiIcons}#list-squares`,
+  Submit: `${uiIcons}#check-square`,
   QuestionIsMandatory: `${icons}#asterisk`,
-  QuestionHasCustomOption: `${icons}#star`,
-  ValidateFail: `${icons}#validate-fail`,
-  ValidateOk: `${icons}#validate-ok`
+  QuestionHasCustomOption: `${uiIcons}#star`,
+  ValidateFail: `${uiIcons}#exclamation-circle`
 })

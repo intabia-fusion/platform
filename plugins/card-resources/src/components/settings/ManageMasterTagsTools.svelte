@@ -15,8 +15,9 @@
 <script lang="ts">
   import presentation from '@hcengineering/presentation'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
-  import { getCurrentResolvedLocation, IconAdd, IconAttachment, navigate, showPopup } from '@hcengineering/ui'
+  import ui, { getCurrentResolvedLocation, navigate, showPopup } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
+
   import card from '../../plugin'
   import CreateTag from '../CreateTag.svelte'
 
@@ -69,7 +70,7 @@
 
 <IconButton
   id="new-master-tag"
-  icon={IconAttachment}
+  icon={ui.icon.Paperclip}
   tooltip={{ label: card.string.Import }}
   kind="tertiary"
   size="extra-small"
@@ -77,7 +78,7 @@
 />
 <IconButton
   id="new-master-tag"
-  icon={IconAdd}
+  icon={ui.icon.Plus}
   kind="tertiary"
   size="extra-small"
   tooltip={{ label: presentation.string.Add }}

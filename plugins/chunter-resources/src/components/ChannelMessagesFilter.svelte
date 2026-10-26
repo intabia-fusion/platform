@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Button, eventToHTMLElement, IconFilter, showPopup } from '@hcengineering/ui'
+  import ui, { Button, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import type { Ref } from '@hcengineering/core'
   import type { ActivityMessagesFilter } from '@hcengineering/activity'
   import activity from '@hcengineering/activity'
@@ -44,7 +44,7 @@
 </script>
 
 <Button
-  icon={IconFilter}
+  icon={ui.icon.Funnel}
   kind="regular"
   size="medium"
   pressed={false}

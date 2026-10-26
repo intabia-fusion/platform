@@ -15,20 +15,10 @@
 <script lang="ts">
   import { fly } from 'svelte/transition'
   import type { Timestamp } from '@hcengineering/core'
-  import type { TimelinePoint, TimelineRow, TimelineState } from '../types'
-  import ui, {
-    CheckBox,
-    Icon,
-    Scroller,
-    Button,
-    resizeObserver,
-    MILLISECONDS_IN_DAY,
-    MILLISECONDS_IN_WEEK,
-    IconArrowLeft,
-    IconArrowRight,
-    IconAdd
-  } from '..'
   import { createEventDispatcher, onMount } from 'svelte'
+
+  import type { TimelinePoint, TimelineRow, TimelineState } from '../types'
+  import ui, { CheckBox, Icon, Scroller, Button, resizeObserver, MILLISECONDS_IN_DAY, MILLISECONDS_IN_WEEK } from '..'
 
   export let selectedRows: number[] = []
   export let selectedRow: number | undefined = undefined
@@ -392,7 +382,7 @@
                     if (rangeRow !== null) time.offsetView = -getOffsetByDate(rangeRow.min.date) + dayWidth * 5
                   }}
                 >
-                  <IconArrowRight size="small" />
+                  <Icon icon={ui.icon.ArrowRight} size="small" />
                 </button>
               {/if}
               {#if rangeRow !== null && -time.offsetView > rangeRow.max.x}
@@ -403,13 +393,13 @@
                     if (rangeRow !== null) time.offsetView = -getOffsetByDate(rangeRow.min.date) + dayWidth * 5
                   }}
                 >
-                  <IconArrowLeft size="small" />
+                  <Icon icon={ui.icon.ArrowLeft} size="small" />
                 </button>
               {/if}
             {/if}
             {#if rangeRow === null && selectedRow === row && time.cursorMarker && !moving}
               <button class="timeline-action__button add" style:left={`${time.offsetView + time.cursorMarker.x}px`}>
-                <IconAdd size="small" />
+                <Icon icon={ui.icon.Plus} size="small" />
               </button>
             {/if}
           </div>

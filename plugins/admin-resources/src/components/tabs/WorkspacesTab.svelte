@@ -34,16 +34,9 @@
     type OverviewStatistics,
     type WorkspaceStatistics
   } from '@hcengineering/presentation'
-  import {
+  import ui, {
     Button,
     CheckBox,
-    IconArrowRight,
-    IconCopy,
-    IconDetails,
-    IconDownOutline,
-    IconOpen,
-    IconStart,
-    IconStop,
     Label,
     locationToUrl,
     Scroller,
@@ -805,7 +798,7 @@
                     {/if}
                     {#if !readOnly && activeAll.length > 0}
                       <Button
-                        icon={IconStop}
+                        icon={ui.icon.SquareFill}
                         label={adminRes.string.MassArchive}
                         labelParams={{ count: activeAll.length }}
                         kind="ghost"
@@ -822,7 +815,7 @@
                     {/if}
                     {#if !readOnly && regionInfo.length > 0 && activeV.length > 0}
                       <Button
-                        icon={IconArrowRight}
+                        icon={ui.icon.ArrowRight}
                         kind="positive"
                         label={adminRes.string.MassMigrate}
                         labelParams={{ count: activeV.length, region: selectedRegionName ?? '' }}
@@ -851,21 +844,21 @@
                       <div class="flex-row-center">
                         <span class="label overflow-label">{workspace.name}</span>
                         <Button
-                          icon={IconOpen}
+                          icon={ui.icon.PencilLine}
                           size="small"
                           kind="ghost"
                           on:click={() => select(workspace.url)}
                           showTooltip={{ label: adminRes.string.OpenWorkspaceUrl }}
                         />
                         <Button
-                          icon={IconCopy}
+                          icon={ui.icon.Copy}
                           size="small"
                           kind="ghost"
                           on:click={() => copyTextToClipboard(workspace.uuid)}
                           showTooltip={{ label: adminRes.string.CopyUuid }}
                         />
                         <Button
-                          icon={IconDetails}
+                          icon={ui.icon.PanelRightLine}
                           size="small"
                           kind="ghost"
                           on:click={() => {
@@ -919,7 +912,7 @@
                                 }
                               })
                             }}
-                            icon={IconDownOutline}
+                            icon={ui.icon.ChevronDown}
                             size="small"
                             kind="ghost"
                           />
@@ -966,7 +959,7 @@
                       <div class="flex-row-center">
                         {#if !readOnly && workspace.mode === 'active'}
                           <Button
-                            icon={IconStop}
+                            icon={ui.icon.SquareFill}
                             size="small"
                             label={adminRes.string.Archive}
                             kind="ghost"
@@ -979,7 +972,7 @@
                         {/if}
                         {#if !readOnly && workspace.mode === 'archived'}
                           <Button
-                            icon={IconStart}
+                            icon={ui.icon.PlayFill}
                             size="small"
                             kind="ghost"
                             label={adminRes.string.Unarchive}
@@ -997,7 +990,7 @@
                         {/if}
                         {#if !readOnly && regionInfo.length > 0 && workspace.mode === 'active' && (workspace.region ?? '') !== selectedRegionId}
                           <Button
-                            icon={IconArrowRight}
+                            icon={ui.icon.ArrowRight}
                             size="small"
                             kind="positive"
                             label={adminRes.string.Migrate}
@@ -1010,7 +1003,7 @@
                         {/if}
                         {#if !readOnly && workspace.deleteOn != null}
                           <Button
-                            icon={IconStart}
+                            icon={ui.icon.PlayFill}
                             size="small"
                             kind="ghost"
                             label={adminRes.string.CancelDeletion}
@@ -1027,7 +1020,7 @@
                         {/if}
                         {#if !readOnly && superAdminMode && !isDeletingMode(workspace.mode) && (workspace.mode === 'archived' || !isArchivingMode(workspace.mode))}
                           <Button
-                            icon={IconStop}
+                            icon={ui.icon.SquareFill}
                             size="small"
                             kind="dangerous"
                             label={adminRes.string.Delete}

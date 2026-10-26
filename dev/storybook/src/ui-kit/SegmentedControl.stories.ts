@@ -14,7 +14,7 @@
 //
 
 import { getEmbeddedLabel } from '@hcengineering/platform'
-import { IconDetails, IconFolder, IconTableOfContents, IconThread } from '@hcengineering/ui'
+import ui from '@hcengineering/ui'
 import { SegmentedControl } from '@hcengineering/ui/kit'
 import type { Meta, StoryObj } from '@storybook/svelte'
 
@@ -30,13 +30,13 @@ const labels = [
   { id: 'completed', label: getEmbeddedLabel('Completed') }
 ]
 const both = [
-  { id: 'messages', icon: IconThread, label: getEmbeddedLabel('Messages') },
-  { id: 'files', icon: IconFolder, label: getEmbeddedLabel('Files') }
+  { id: 'messages', icon: ui.icon.Bubble, label: getEmbeddedLabel('Messages') },
+  { id: 'files', icon: ui.icon.Folder, label: getEmbeddedLabel('Files') }
 ]
 const views = [
-  { id: 'list', icon: IconDetails, label: getEmbeddedLabel('List') },
-  { id: 'board', icon: IconTableOfContents, label: getEmbeddedLabel('Board') },
-  { id: 'files', icon: IconFolder, label: getEmbeddedLabel('Files') }
+  { id: 'list', icon: ui.icon.PanelRightLine, label: getEmbeddedLabel('List') },
+  { id: 'board', icon: ui.icon.PanelRight, label: getEmbeddedLabel('Board') },
+  { id: 'files', icon: ui.icon.Folder, label: getEmbeddedLabel('Files') }
 ]
 const period = [
   { id: 'monthly', label: getEmbeddedLabel('Monthly') },

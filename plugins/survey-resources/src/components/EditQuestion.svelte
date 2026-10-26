@@ -17,10 +17,11 @@
 <script lang="ts">
   import type { Question } from '@hcengineering/survey'
   import { QuestionKind } from '@hcengineering/survey'
-  import { EditBox, Icon, IconDelete, SelectPopup, eventToHTMLElement, showPopup, tooltip } from '@hcengineering/ui'
+  import ui, { EditBox, Icon, SelectPopup, eventToHTMLElement, showPopup, tooltip } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher, onDestroy } from 'svelte'
+
   import survey from '../plugin'
 
   const dispatch = createEventDispatcher()
@@ -145,7 +146,7 @@
           {
             id: 'delete',
             label: survey.string.DeleteQuestion,
-            icon: IconDelete,
+            icon: ui.icon.Trash,
             category: { label: survey.string.Control }
           }
         ]
@@ -198,7 +199,7 @@
           {
             id: 'delete',
             label: survey.string.DeleteOption,
-            icon: IconDelete
+            icon: ui.icon.Trash
           }
         ]
       },

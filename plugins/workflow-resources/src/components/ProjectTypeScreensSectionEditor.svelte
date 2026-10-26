@@ -23,7 +23,7 @@
   import type { ProjectType, ProjectTypeDescriptor, Task } from '@hcengineering/task'
   import { taskTypeStore } from '@hcengineering/task-resources'
   import tracker from '@hcengineering/tracker'
-  import { Icon, IconAdd, Label } from '@hcengineering/ui'
+  import ui, { Icon, Label } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import type { Screen } from '@hcengineering/workflow'
 
@@ -70,7 +70,7 @@
   <span><Label label={plugin.string.Screens} /></span>
   <IconButton
     kind="primary"
-    icon={IconAdd}
+    icon={ui.icon.Plus}
     size="small"
     data-id="btnAddScreen"
     {disabled}

@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
-  import { Button, DropdownLabelsIntl, IconBack, IconForward } from '@hcengineering/ui'
+  import ui, { Button, DropdownLabelsIntl } from '@hcengineering/ui'
 
   import type { CalendarMode } from '../index'
   import calendar from '../plugin'
@@ -43,6 +43,6 @@
     />
   {/if}
   <Button label={calendar.string.Today} on:click={onToday} />
-  <Button icon={IconBack} kind="ghost" on:click={onBack} />
-  <Button icon={IconForward} kind="ghost" on:click={onForward} />
+  <Button icon={ui.icon.ChevronLeftLarge} kind="ghost" on:click={onBack} />
+  <Button icon={ui.icon.ChevronRightLarge} kind="ghost" on:click={onForward} />
 </div>

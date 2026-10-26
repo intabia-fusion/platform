@@ -13,15 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Breadcrumb, Header, IconAdd, IconCheck, Label, Loading, Scroller, showPopup } from '@hcengineering/ui'
+  import ui, { Breadcrumb, Header, Label, Loading, Scroller, showPopup } from '@hcengineering/ui'
   import { Button } from '@hcengineering/ui/kit'
   import setting from '@hcengineering/setting'
-  import MailboxEditorModal from './MailboxEditorModal.svelte'
-  import { getAccountClient } from '../utils'
   import { onMount } from 'svelte'
   import type { MailboxInfo, MailboxOptions } from '@hcengineering/account-client'
-  import MailboxItem from './MailboxItem.svelte'
   import { Analytics } from '@hcengineering/analytics'
+
+  import MailboxEditorModal from './MailboxEditorModal.svelte'
+  import { getAccountClient } from '../utils'
+  import MailboxItem from './MailboxItem.svelte'
 
   let boxesLoading = true
   let optionsLoading = true
@@ -81,11 +82,17 @@
     <svelte:fragment slot="actions">
       {#if mailboxOptions !== undefined && mailboxOptions.availableDomains.length > 0}
         {#if mailboxes.length >= mailboxOptions.maxMailboxCount}
-          <Button kind="secondary" icon={IconCheck} label={setting.string.MailboxLimitReached} size="small" disabled />
+          <Button
+            kind="secondary"
+            icon={ui.icon.Check}
+            label={setting.string.MailboxLimitReached}
+            size="small"
+            disabled
+          />
         {:else}
           <Button
             kind="primary"
-            icon={IconAdd}
+            icon={ui.icon.Plus}
             label={setting.string.CreateMailbox}
             disabled={boxesLoading}
             size="small"

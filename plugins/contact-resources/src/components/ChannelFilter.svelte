@@ -15,10 +15,11 @@
 <script lang="ts">
   import type { ChannelProvider } from '@hcengineering/contact'
   import type { Ref } from '@hcengineering/core'
-  import { IconCheck, Icon, Label, resizeObserver } from '@hcengineering/ui'
+  import ui, { Icon, Label, resizeObserver } from '@hcengineering/ui'
   import type { Filter } from '@hcengineering/view'
   import { FILTER_DEBOUNCE_MS, FilterQuery, sortFilterValues } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
+
   import { channelProviders } from '../utils'
   import contact from '../plugin'
 
@@ -88,7 +89,7 @@
           <span class="overflow-label label flex-grow"><Label label={element.label} /></span>
           <div class="check">
             {#if isSelected(element, selected)}
-              <Icon icon={IconCheck} size="small" />
+              <Icon icon={ui.icon.Check} size="small" />
             {/if}
           </div>
         </button>

@@ -29,10 +29,9 @@
   import { getEmbeddedLabel, translateCB } from '@hcengineering/platform'
   import presentation, { getClient, MessageBox } from '@hcengineering/presentation'
   import type { AnyComponent, DropdownIntlItem } from '@hcengineering/ui'
-  import {
+  import ui, {
     Component,
     DropdownLabelsIntl,
-    IconDelete,
     Label,
     Modal,
     ModernEditbox,
@@ -43,6 +42,7 @@
   import { IconButton } from '@hcengineering/ui/kit'
   import { IconPicker } from '@hcengineering/view-resources'
   import view from '@hcengineering/view-resources/src/plugin'
+
   import setting from '../plugin'
   import { clearSettingsStore } from '../store'
   import { showDeleteAttributePopup } from '../utils'
@@ -261,7 +261,7 @@
       />
       {#if attribute.isCustom}
         <IconButton
-          icon={IconDelete}
+          icon={ui.icon.Trash}
           size="small"
           kind="tertiary"
           {disabled}

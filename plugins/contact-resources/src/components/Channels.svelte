@@ -17,8 +17,9 @@
   import type { Channel } from '@hcengineering/contact'
   import type { AttachedData, Doc, Ref } from '@hcengineering/core'
   import presentation from '@hcengineering/presentation'
-  import { CircleButton, eventToHTMLElement, IconAdd, Label, showPopup } from '@hcengineering/ui'
+  import ui, { CircleButton, eventToHTMLElement, Label, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+
   import contact from '../plugin'
   import ChannelsView from './ChannelsView.svelte'
 
@@ -32,7 +33,7 @@
 {#if channels?.length === 0}
   <div id="channels-edit" class="flex-row-center">
     <CircleButton
-      icon={IconAdd}
+      icon={ui.icon.Plus}
       size="small"
       selected
       on:click={(ev) =>

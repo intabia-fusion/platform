@@ -20,10 +20,11 @@
   import type { WithLookup } from '@hcengineering/core'
   import { Panel } from '@hcengineering/panel'
   import { ActionContext, createQuery } from '@hcengineering/presentation'
-  import { Button, IconMoreH, navigate, type IModeSelector, rawLocation } from '@hcengineering/ui'
+  import ui, { Button, navigate, type IModeSelector, rawLocation } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { showMenu } from '@hcengineering/view-resources'
   import type { Training, TrainingAttempt, TrainingRequest } from '@hcengineering/training'
+
   import training from '../plugin'
   import { MyResultsRouteTab, myResultsRoute } from '../routing/routes/myResultsRoute'
   import { TrainingAttemptRouteTab, trainingAttemptRoute } from '../routing/routes/trainingAttemptRoute'
@@ -186,7 +187,7 @@
         {/if}
       </svelte:fragment>
       <svelte:fragment slot="post-utils">
-        <Button icon={IconMoreH} iconProps={{ size: 'medium' }} kind="icon" on:click={showContextMenu} />
+        <Button icon={ui.icon.DotsHorizontal} iconProps={{ size: 'medium' }} kind="icon" on:click={showContextMenu} />
       </svelte:fragment>
       <svelte:fragment slot="aside">
         <TrainingAttributes object={trainingObject} showHeader />

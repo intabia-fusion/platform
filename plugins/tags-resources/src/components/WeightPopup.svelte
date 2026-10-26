@@ -13,8 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { resizeObserver, Icon, IconCheck, Label } from '@hcengineering/ui'
+  import ui, { resizeObserver, Icon, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+
   import tags from '../plugin'
   import { tagLevel } from '../utils'
 
@@ -39,7 +40,7 @@
               <span class="overflow-label label flex-grow"><Label label={l} /></span>
               <div class="check pointer-events-none">
                 {#if value === valueK}
-                  <Icon icon={IconCheck} size="small" />
+                  <Icon icon={ui.icon.Check} size="small" />
                 {/if}
               </div>
             </button>
@@ -50,7 +51,7 @@
             <span class="overflow-label label flex-grow"><Label label={l} /></span>
             <div class="check pointer-events-none">
               {#if value === valueK}
-                <Icon icon={IconCheck} size="small" />
+                <Icon icon={ui.icon.Check} size="small" />
               {/if}
             </div>
           </button>

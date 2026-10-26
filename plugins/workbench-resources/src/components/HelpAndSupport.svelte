@@ -20,9 +20,8 @@
   import support from '@hcengineering/support'
   import { getCurrentEmployeeName } from '@hcengineering/contact-resources'
   import type { AnySvelteComponent } from '@hcengineering/ui'
-  import {
+  import ui, {
     Icon,
-    IconArrowLeft,
     Label,
     ListView,
     Scroller,
@@ -40,9 +39,6 @@
   import { Analytics } from '@hcengineering/analytics'
 
   import workbench from '../plugin'
-  import RightArrowIcon from './icons/Collapsed.svelte'
-  import DocumentationIcon from './icons/Documentation.svelte'
-  import KeyboardIcon from './icons/Keyboard.svelte'
 
   let shortcuts = false
   let actions: Action[] = []
@@ -116,7 +112,7 @@
 
   const cards: HelpCard[] = [
     {
-      icon: DocumentationIcon,
+      icon: ui.icon.Document,
       title: workbench.string.Documentation,
       description: workbench.string.OpenPlatformGuide,
       onClick: () => {
@@ -131,7 +127,7 @@
       onClick: navigateToSettings
     },
     {
-      icon: KeyboardIcon,
+      icon: workbench.icon.Shortcuts,
       title: workbench.string.KeyboardShortcuts,
       description: workbench.string.HowToWorkFaster,
       onClick: () => {
@@ -156,7 +152,7 @@
       <!-- svelte-ignore a11y-click-events-have-key-events -->
       <!-- svelte-ignore a11y-no-static-element-interactions -->
       <div class="mr-4 cursor-pointer" on:click={() => (shortcuts = !shortcuts)}>
-        <Icon icon={IconArrowLeft} size="medium" fill="var(--content-color)" />
+        <Icon icon={ui.icon.ArrowLeft} size="medium" fill="var(--content-color)" />
       </div>
     {/if}
     <span class="fs-title overflow-label">
@@ -177,7 +173,7 @@
             <div class="text-sm content-dark-color"><Label label={card.description} /></div>
           </div>
           <div class="rightIcon">
-            <Icon icon={RightArrowIcon} size="small" />
+            <Icon icon={ui.icon.ChevronRight} size="small" />
           </div>
         </div>
       </div>
@@ -204,7 +200,7 @@
           {@const action = actions[item]}
           <div class="flex-row-center flex-between flex-grow ml-2 p-3 text-base clear-mins">
             <div class="mr-4 {selection === item ? 'caption-color' : 'dark-color'}">
-              <Icon icon={action.icon ?? IconArrowLeft} size="small" />
+              <Icon icon={action.icon ?? ui.icon.ArrowLeft} size="small" />
             </div>
             <div class="flex-grow {selection === item ? 'caption-color' : 'content-color'}">
               <Label label={action.label} />

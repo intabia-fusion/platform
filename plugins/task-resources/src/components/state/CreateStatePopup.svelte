@@ -29,14 +29,10 @@
     getStatusNameBlock,
     resolveStatusReuse
   } from '@hcengineering/task'
-  import {
+  import ui, {
     Component,
     Button,
-    IconCopy,
     Icon,
-    IconDelete,
-    IconError,
-    IconSettings,
     Label,
     Modal,
     ModernEditbox,
@@ -53,6 +49,7 @@
   import view from '@hcengineering/view-resources/src/plugin'
   import emojiPlugin from '@hcengineering/emoji'
   import { get } from 'svelte/store'
+
   import { taskTypeStore, typeStore } from '../..'
   import task from '../../plugin'
   import { confirmStatusMerge } from '../../statusMergeFlow'
@@ -441,7 +438,7 @@
   <svelte:fragment slot="actions">
     {#if !readonly}
       <IconButton
-        icon={IconDelete}
+        icon={ui.icon.Trash}
         size="small"
         kind="tertiary"
         disabled={status === undefined || !(canDelete || projectMode) || readonly}
@@ -449,7 +446,7 @@
         on:click={onDelete}
       />
       <IconButton
-        icon={IconCopy}
+        icon={ui.icon.Copy}
         size="small"
         kind="tertiary"
         disabled={status === undefined || readonly}
@@ -463,7 +460,7 @@
     {#if saveError !== undefined}
       <div class="name-error">
         <div class="name-error-text">
-          <Icon icon={IconError} size="small" />
+          <Icon icon={ui.icon.ExclamationCircle} size="small" fill="var(--theme-error-color)" />
           <span><Label label={task.string.StatusSaveFailed} params={{ reason: saveError }} /></span>
         </div>
       </div>
@@ -471,7 +468,7 @@
     {#if saveConflicts.length > 0}
       <div class="name-error">
         <div class="name-error-text">
-          <Icon icon={IconError} size="small" />
+          <Icon icon={ui.icon.ExclamationCircle} size="small" fill="var(--theme-error-color)" />
           <span><Label label={task.string.StatusChangeRefused} /></span>
         </div>
         <MergeConflicts conflicts={saveConflicts} />
@@ -480,7 +477,7 @@
     {#if nameError !== undefined}
       <div class="name-error">
         <div class="name-error-text">
-          <Icon icon={IconError} size="small" />
+          <Icon icon={ui.icon.ExclamationCircle} size="small" fill="var(--theme-error-color)" />
           <span><Label label={nameError.label} params={nameError.params} /></span>
         </div>
         {#if nameError.mergeWith !== undefined && !readonly}
@@ -528,7 +525,7 @@
         <MenuButton
           {items}
           {selected}
-          icon={IconSettings}
+          icon={ui.icon.Sliders}
           label={items.find((it) => it.id === selected)?.label}
           kind="secondary"
           size="small"

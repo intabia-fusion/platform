@@ -14,7 +14,7 @@
 //
 
 import type { Ref } from '@hcengineering/core'
-import { Asset, IntlString, type Plugin, plugin } from '@hcengineering/platform'
+import { IntlString, type Plugin, plugin } from '@hcengineering/platform'
 import type { Tag } from '@hcengineering/card'
 
 /**
@@ -28,8 +28,5 @@ export default plugin(mailId, {
   },
   string: {
     MailTag: '' as IntlString
-  },
-  icon: {
-    Mail: '' as Asset
   }
 })

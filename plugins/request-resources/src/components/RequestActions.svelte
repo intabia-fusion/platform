@@ -24,12 +24,9 @@
   import { RequestStatus } from '@hcengineering/request'
   import { EmptyMarkup, isEmptyMarkup } from '@hcengineering/text'
   import type { RefAction } from '@hcengineering/text-editor'
-  import { Button } from '@hcengineering/ui'
+  import ui, { Button } from '@hcengineering/ui'
 
   import request from '../plugin'
-  import Comments from './icons/Comments.svelte'
-  import DocFail from './icons/DocFail.svelte'
-  import DocSuccess from './icons/DocSuccess.svelte'
 
   export let value: Request
 
@@ -104,7 +101,7 @@
   $: extraActions = [
     {
       label: request.string.Approve,
-      icon: DocSuccess,
+      icon: request.icon.Approve,
       action: () => {
         void approve()
       },
@@ -114,7 +111,7 @@
     },
     {
       label: request.string.Reject,
-      icon: DocFail,
+      icon: request.icon.Reject,
       action: () => {
         void reject()
       },
@@ -144,7 +141,7 @@
       space={value.space}
       _class={value._class}
       objectId={value._id}
-      iconSend={Comments}
+      iconSend={ui.icon.BubblesSquare}
       labelSend={request.string.Comment}
       on:message={comment}
       on:update={onUpdate}

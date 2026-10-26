@@ -13,14 +13,18 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import { getMetadata } from '@hcengineering/platform'
+  import ui from '@hcengineering/ui'
+
   // Outlined until set, filled gold once set; `amber` tints the outline too
   export let on = false
   export let amber = false
   export let pop = false
 </script>
 
-<svg class="star-mark" class:on class:amber class:pop viewBox="0 0 24 24" aria-hidden="true">
-  <path d="M12 2.8l2.75 5.8 6.35.78-4.68 4.38 1.2 6.29L12 16.97l-5.62 3.08 1.2-6.29L2.9 9.38l6.35-.78z" />
+<svg class="star-mark" class:on class:amber class:pop aria-hidden="true">
+  {#if on}<use class="star-mark__fill" href={getMetadata(ui.icon.StarFill)} />{/if}
+  <use class="star-mark__line" href={getMetadata(ui.icon.Star)} />
 </svg>
 
 <style lang="scss">
@@ -29,17 +33,14 @@
     flex-shrink: 0;
     width: 1.25rem;
     height: 1.25rem;
-    fill: transparent;
-    stroke: currentColor;
-    stroke-width: 1.5;
-    stroke-linejoin: round;
+    fill: currentColor;
     transition: fill 0.15s ease;
 
     &.amber,
     &.on {
-      stroke: var(--_amber);
+      fill: var(--_amber);
     }
-    &.on {
+    .star-mark__fill {
       fill: #ffc21a;
     }
     &.pop {

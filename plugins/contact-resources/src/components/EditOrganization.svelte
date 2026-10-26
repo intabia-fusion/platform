@@ -20,11 +20,11 @@
   import { createQuery, getClient } from '@hcengineering/presentation'
   import type { IntegrationType } from '@hcengineering/setting'
   import setting from '@hcengineering/setting'
-  import { createFocusManager, EditBox, FocusHandler, Scroller } from '@hcengineering/ui'
+  import ui, { createFocusManager, EditBox, FocusHandler, Scroller, Icon } from '@hcengineering/ui'
   import { createEventDispatcher, onMount } from 'svelte'
+
   import contact from '../plugin'
   import ChannelsEditor from './ChannelsEditor.svelte'
-  import Company from './icons/Company.svelte'
 
   export let object: Organization
   export let readonly: boolean = false
@@ -69,7 +69,7 @@
 {#if object !== undefined}
   <div class="flex-row-center">
     <div class="mr-8 flex-center flex-no-shrink logo">
-      <Company size="large" />
+      <Icon icon={ui.icon.Building} size="large" />
     </div>
     <div class="flex-grow flex-col">
       <div class="name">

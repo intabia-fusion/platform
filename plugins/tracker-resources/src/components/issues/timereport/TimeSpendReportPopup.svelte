@@ -23,16 +23,9 @@
   import { UserBox } from '@hcengineering/contact-resources'
   import type { Issue, TimeSpendReport } from '@hcengineering/tracker'
   import { type Project, TimeReportDayType, TrackerEvents, formatDuration } from '@hcengineering/tracker'
-  import {
-    Button,
-    DatePresenter,
-    EditBox,
-    IconChevronLeft,
-    IconChevronRight,
-    Label,
-    themeStore
-  } from '@hcengineering/ui'
+  import ui, { Button, DatePresenter, EditBox, Label, themeStore } from '@hcengineering/ui'
   import { Analytics } from '@hcengineering/analytics'
+
   import tracker from '../../../plugin'
   import TitlePresenter from '../TitlePresenter.svelte'
   import { type ITimeReportService, DirectTimeReportService } from './service'
@@ -201,7 +194,7 @@
       <div class="flex-row-center gap-2">
         <div class="flex flex-row-center gap-1">
           <Button
-            icon={IconChevronLeft}
+            icon={ui.icon.ChevronLeft}
             kind="regular"
             size="large"
             disabled={!canEdit}
@@ -211,7 +204,7 @@
           />
           <DatePresenter bind:value={data.date} editable={canEdit} kind="regular" size="large" />
           <Button
-            icon={IconChevronRight}
+            icon={ui.icon.ChevronRight}
             kind="regular"
             size="large"
             disabled={!canEdit}

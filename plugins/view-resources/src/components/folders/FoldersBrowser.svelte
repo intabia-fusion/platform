@@ -15,12 +15,11 @@
 
 <script lang="ts">
   import { createEventDispatcher, onDestroy } from 'svelte'
-
   import type { Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
   import { SortingOrder } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import type { Action } from '@hcengineering/ui'
-  import { IconEdit, navigate, type Location, Scroller, location, getLocation } from '@hcengineering/ui'
+  import ui, { navigate, type Location, Scroller, location, getLocation } from '@hcengineering/ui'
   import { getResource, type Resource } from '@hcengineering/platform'
   import type { IntlString, Asset } from '@hcengineering/platform'
 
@@ -107,7 +106,7 @@
     const extraActions = await getContributedActions(client, obj)
     for (const act of extraActions) {
       result.push({
-        icon: act.icon ?? IconEdit,
+        icon: act.icon ?? ui.icon.PencilLine,
         label: act.label,
         action: async (ctx: any, evt: Event) => {
           const impl = await getResource(act.action)

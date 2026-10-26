@@ -106,7 +106,7 @@ class RowInsertHandler {
 
     const button = document.createElement('button')
     button.className = 'table-insert-button'
-    button.innerHTML = addSvg
+    button.innerHTML = addSvg()
     handle.appendChild(button)
 
     button.addEventListener('mouseenter', () => {

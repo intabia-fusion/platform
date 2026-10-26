@@ -14,12 +14,11 @@
 -->
 <script lang="ts">
   import type { IconSize } from '@hcengineering/ui'
-  import {
+  import ui, {
     type Action,
     ActionIcon,
     type AnySvelteComponent,
     Icon,
-    IconMoreH,
     Menu,
     showPopup,
     NavItem
@@ -102,7 +101,7 @@
     {/each}
     {#if menuActions.length > 0}
       <button class="action" class:pressed={menuOpened} on:click|preventDefault|stopPropagation={handleMenuClicked}>
-        <IconMoreH size="small" />
+        <Icon icon={ui.icon.DotsHorizontal} size="small" />
       </button>
     {/if}
   </svelte:fragment>

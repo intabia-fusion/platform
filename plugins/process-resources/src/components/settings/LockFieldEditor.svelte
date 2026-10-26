@@ -18,7 +18,7 @@
   import type { AnyAttribute, Class, Ref } from '@hcengineering/core'
   import core from '@hcengineering/core'
   import type { Process, Step } from '@hcengineering/process'
-  import { Button, eventToHTMLElement, IconClose, Label, SelectPopup, showPopup, tooltip } from '@hcengineering/ui'
+  import ui, { Button, eventToHTMLElement, Label, SelectPopup, showPopup, tooltip } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import presentation, { getClient } from '@hcengineering/presentation'
 
@@ -97,7 +97,7 @@
       </span>
       <div class="button flex-row-center">
         <Button
-          icon={IconClose}
+          icon={ui.icon.Cross}
           kind="ghost"
           on:click={() => {
             remove(key)

@@ -5,11 +5,10 @@
   import { getClient } from '@hcengineering/presentation'
   import type { Project, ProjectTargetPreference } from '@hcengineering/tracker'
   import tracker from '@hcengineering/tracker'
-  import {
+  import ui, {
     Button,
     ButtonWithDropdown,
     Icon,
-    IconDropdown,
     Label,
     SelectPopup,
     eventToHTMLElement,
@@ -18,6 +17,7 @@
   } from '@hcengineering/ui'
   import type { GithubIntegrationRepository } from '@hcengineering/github'
   import type { Writable } from 'svelte/store'
+
   import github from '../plugin'
   import { integrationRepositories } from './utils'
 
@@ -160,7 +160,7 @@
     dropdownItems={repositories}
     disabled={!canSave}
     label={okLabel}
-    dropdownIcon={IconDropdown}
+    dropdownIcon={ui.icon.ChevronDown}
     loading={okProcessing}
     on:click={handleRepositoryEditorOpened}
     on:dropdown-selected={(ev) => {

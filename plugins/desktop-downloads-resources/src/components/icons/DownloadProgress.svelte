@@ -17,43 +17,32 @@
   export let fill: string = 'var(--theme-caption-color)'
   export let progress: number = 0
 
-  // Calculate stroke-dashoffset based on progress
-  const circumference = 62.83 // 2 × π × radius
+  const circumference = 2 * Math.PI * 13
   $: strokeDashoffset = circumference * (1 - progress / 100)
 </script>
 
-<svg class="svg-{size}" {fill} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background circle (optional, for visual reference) -->
-  <circle cx="12" cy="12" r="10" fill="none" stroke={fill} stroke-width="2.5" opacity="0.2" />
-
-  <!-- Progress circle -->
+<svg class="svg-{size}" {fill} viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <!-- The ring is thicker than the kit line so the progress reads at the status bar size -->
+  <circle cx="16" cy="16" r="13" fill="none" stroke={fill} stroke-width="3.33" opacity="0.2" />
   <circle
-    cx="12"
-    cy="12"
-    r="10"
+    cx="16"
+    cy="16"
+    r="13"
     fill="none"
     stroke={fill}
-    stroke-width="2.5"
+    stroke-width="3.33"
     stroke-linecap="round"
     stroke-dasharray={circumference}
     stroke-dashoffset={strokeDashoffset}
-    transform="rotate(-90 12 12)"
+    transform="rotate(-90 16 16)"
     style="transition: stroke-dashoffset 0.3s ease;"
   />
-
-  <!-- Download arrow icon -->
-  <g transform="translate(12, 12)">
-    <!-- Vertical line -->
-    <path d="M 0 -5 L 0 3" stroke={fill} stroke-width="2" stroke-linecap="round" />
-
-    <!-- Arrow head (chevron style) -->
-    <path
-      d="M -4 0 L 0 4 L 4 0"
-      stroke={fill}
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      fill="none"
-    />
-  </g>
+  <path
+    d="M16 9V22M10.5 16.5L16 22L21.5 16.5"
+    fill="none"
+    stroke={fill}
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
 </svg>

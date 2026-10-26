@@ -17,7 +17,8 @@
   import { AnyAttribute } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import type { MethodParams, Process, Step } from '@hcengineering/process'
-  import { Icon, IconError, Label, tooltip } from '@hcengineering/ui'
+  import ui, { Icon, Label, tooltip } from '@hcengineering/ui'
+
   import plugin from '../../plugin'
   import UpdateAttributePresenter from './UpdateAttributePresenter.svelte'
 
@@ -31,7 +32,7 @@
 
 {#if Object.keys(params).length === 0}
   <div class="mr-2" use:tooltip={{ label: plugin.string.NoAttributesForUpdate }}>
-    <Icon icon={IconError} size="medium" />
+    <Icon icon={ui.icon.ExclamationCircle} size="medium" fill="var(--theme-error-color)" />
   </div>
 {/if}
 <div class="flex-row-center flex-gap-1">

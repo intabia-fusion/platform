@@ -19,7 +19,8 @@
   import { AccountRole, SortingOrder, getCurrentAccount, hasAccountRole, notEmpty } from '@hcengineering/core'
   import { translateCB } from '@hcengineering/platform'
   import presentation, { getClient } from '@hcengineering/presentation'
-  import { ActionIcon, IconAdd, IconClose, Label, SearchEdit, showPopup, themeStore } from '@hcengineering/ui'
+  import ui, { ActionIcon, Label, SearchEdit, showPopup, themeStore, Icon } from '@hcengineering/ui'
+
   import AddMembersPopup from './AddMembersPopup.svelte'
   import UserInfo from './UserInfo.svelte'
   import { employeeByIdStore, employeeRefByAccountUuidStore } from '../utils'
@@ -111,7 +112,7 @@
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <!-- svelte-ignore a11y-no-static-element-interactions -->
         <div class="flex-row-center" on:click={openAddMembersPopup}>
-          <div class="flex-center ml-1 mr-1"><IconAdd size="large" /></div>
+          <div class="flex-center ml-1 mr-1"><Icon icon={ui.icon.Plus} size="large" /></div>
           <div class="flex-col ml-2 min-w-0 content-color">
             <Label label={presentation.string.Add} />
           </div>
@@ -123,7 +124,7 @@
         <div class="item fs-title"><UserInfo size="medium" value={person} /></div>
         {#if canRemove}
           <ActionIcon
-            icon={IconClose}
+            icon={ui.icon.Cross}
             size="small"
             action={() => {
               void removeMember(person._id)

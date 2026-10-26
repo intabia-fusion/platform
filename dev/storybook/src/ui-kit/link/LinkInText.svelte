@@ -13,15 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import ui from '@hcengineering/ui'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { IconLink } from '@hcengineering/ui'
   import { Link } from '@hcengineering/ui/kit'
 </script>
 
 <p class="link-in-text">
   The spec is in
   <Link label={getEmbeddedLabel('design-notes.pdf')} href="#spec" />, the demo on
-  <Link label={getEmbeddedLabel('example.com')} href="https://example.com" icon={IconLink} external />.
+  <Link label={getEmbeddedLabel('example.com')} href="https://example.com" icon={ui.icon.Link} external />.
 </p>
 
 <style lang="scss">

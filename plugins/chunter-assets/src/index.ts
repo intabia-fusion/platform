@@ -18,16 +18,18 @@ import chunter from '@hcengineering/chunter'
 import { loadMetadata } from '@hcengineering/platform'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
+// Icons the kit has: the ids stay, stored documents keep pointing at them.
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(chunter.icon, {
-  Chunter: `${icons}#chunter`,
-  Hashtag: `${icons}#hashtag`,
-  Thread: `${icons}#thread`,
-  Lock: `${icons}#lock`,
-  ChannelBrowser: `${icons}#channelbrowser`,
-  ChunterBrowser: `${icons}#chunterbrowser`,
-  Copy: `${icons}#copy`,
-  Messages: `${icons}#messages`,
-  Bookmarks: `${icons}#bookmarks`,
-  Report: `${icons}#report`,
-  Download: `${icons}#download`
+  Chunter: `${uiIcons}#bubble`,
+  Hashtag: `${uiIcons}#hash`,
+  Thread: `${uiIcons}#bubbles`,
+  Lock: `${uiIcons}#lock`,
+  ChannelBrowser: `${icons}#hash-search`,
+  ChunterBrowser: `${uiIcons}#database-search`,
+  Copy: `${uiIcons}#copy`,
+  Messages: `${uiIcons}#bubbles`,
+  Bookmarks: `${uiIcons}#bookmarks`,
+  Report: `${uiIcons}#exclamation-circle`,
+  Download: `${uiIcons}#download`
 })

@@ -19,8 +19,9 @@
   import { getClient } from '@hcengineering/presentation'
   import type { Process, State } from '@hcengineering/process'
   import { makeRank } from '@hcengineering/rank'
-  import { Button, IconAdd, Label } from '@hcengineering/ui'
+  import ui, { Button, Label } from '@hcengineering/ui'
   import { SortableDocList } from '@hcengineering/view-resources'
+
   import plugin from '../../plugin'
   import StateInlineEditor from './StateInlineEditor.svelte'
 
@@ -56,7 +57,7 @@
     </svelte:fragment>
   </SortableDocList>
   {#if !readonly}
-    <Button kind="ghost" width="100%" icon={IconAdd} label={plugin.string.AddState} on:click={addState} />
+    <Button kind="ghost" width="100%" icon={ui.icon.Plus} label={plugin.string.AddState} on:click={addState} />
   {/if}
 </div>
 

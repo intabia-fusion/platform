@@ -15,7 +15,7 @@
 <script lang="ts">
   import type { TaskType } from '@hcengineering/task'
   import { getAllowedParentTaskTypes } from '@hcengineering/task'
-  import { Icon, IconInfo, IconOpenedArrow, Label } from '@hcengineering/ui'
+  import ui, { Icon, Label } from '@hcengineering/ui'
   import { taskTypeStore } from '@hcengineering/task-resources'
   import type { ParentStatusesValidatorConfig } from '@hcengineering/workflow'
 
@@ -42,7 +42,7 @@
 {:else}
   <button type="button" class="parent-status--hint" on:click={handleConfigureTaskType}>
     <span class="parent-status--hint-icon">
-      <Icon icon={IconInfo} size="small" />
+      <Icon icon={ui.icon.InfoCircle} size="small" />
     </span>
     <span class="parent-status--hint-text">
       <Label label={plugin.string.NoParentTaskTypesDescription} />
@@ -52,7 +52,7 @@
         <Label label={plugin.string.ConfigureTaskType} params={{ name: taskType.name }} />
       </span>
       <span class="parent-status--hint-arrow">
-        <Icon icon={IconOpenedArrow} size="x-small" />
+        <Icon icon={ui.icon.ChevronRightSmall} size="x-small" />
       </span>
     </span>
   </button>

@@ -12,11 +12,11 @@ await kit.page('Project settings')
       { item: 'Тестирование', indent: true },
       { item: 'Мой спринт', indent: true },
       { group: 'Your projects', add: true },
-      { space: 'Мобильное приложение', icon: 'tracker/home', color: 'Porpoise' },
+      { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
       { item: 'Milestones', icon: 'milestone', indent: true },
-      { space: 'Маркетинг', icon: 'tracker/home', color: 'Porpoise' },
+      { space: 'Маркетинг', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
       { item: 'Milestones', icon: 'milestone', indent: true }
@@ -145,11 +145,11 @@ await kit.page('Project settings')
       { item: 'Тестирование', indent: true },
       { item: 'Мой спринт', indent: true },
       { group: 'Your projects', add: true },
-      { space: 'Мобильное приложение', icon: 'tracker/home', color: 'Porpoise' },
+      { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
       { item: 'Milestones', icon: 'milestone', indent: true },
-      { space: 'Маркетинг', icon: 'tracker/home', color: 'Porpoise' },
+      { space: 'Маркетинг', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
       { item: 'Milestones', icon: 'milestone', indent: true }
@@ -219,11 +219,11 @@ await kit.page('Project settings')
       { item: 'Тестирование', indent: true },
       { item: 'Мой спринт', indent: true },
       { group: 'Your projects', add: true },
-      { space: 'Мобильное приложение', icon: 'tracker/home', color: 'Porpoise' },
+      { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
       { item: 'Milestones', icon: 'milestone', indent: true },
-      { space: 'Маркетинг', icon: 'tracker/home', color: 'Porpoise' },
+      { space: 'Маркетинг', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
       { item: 'Milestones', icon: 'milestone', indent: true }
@@ -245,12 +245,12 @@ await kit.page('Project settings')
   kit.add(contentBox9, kit.SectionTitle('Задачи', 'Значения для новых задач проекта.', 720))
   kit.add(contentBox9, kit.FormRow(
     'Исполнитель по умолчанию',
-    kit.Input({ w: 240, icon: 'contact/Person', value: 'Не назначен', menu: true })
+    kit.Input({ w: 240, icon: 'kit/PersonCircle', value: 'Не назначен', menu: true })
   ))
   kit.add(contentBox9, kit.FormRow('Статус по умолчанию', kit.Input({ w: 240, value: 'Todo', menu: true })))
   kit.add(contentBox9, kit.FormRow(
     'Шаблоны задач',
-    kit.Input({ w: 240, icon: 'tracker/issuetemplates', value: 'Открыть шаблоны (3)' })
+    kit.Input({ w: 240, icon: 'kit/Layout', value: 'Открыть шаблоны (3)' })
   ))
 }
 {
@@ -263,11 +263,11 @@ await kit.page('Project settings')
       { item: 'Тестирование', indent: true },
       { item: 'Мой спринт', indent: true },
       { group: 'Your projects', add: true },
-      { space: 'Мобильное приложение', icon: 'tracker/home', color: 'Porpoise' },
+      { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
       { item: 'Milestones', icon: 'milestone', indent: true },
-      { space: 'Маркетинг', icon: 'tracker/home', color: 'Porpoise' },
+      { space: 'Маркетинг', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
       { item: 'Milestones', icon: 'milestone', indent: true }
@@ -400,11 +400,11 @@ await kit.page('Project settings')
       { item: 'Тестирование', indent: true },
       { item: 'Мой спринт', indent: true },
       { group: 'Your projects', add: true },
-      { space: 'Мобильное приложение', icon: 'tracker/home', color: 'Porpoise' },
+      { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
       { item: 'Milestones', icon: 'milestone', indent: true },
-      { space: 'Маркетинг', icon: 'tracker/home', color: 'Porpoise' },
+      { space: 'Маркетинг', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
       { item: 'Milestones', icon: 'milestone', indent: true }
@@ -441,18 +441,18 @@ await kit.page('Project settings')
       { item: 'Тестирование', indent: true },
       { item: 'Мой спринт', indent: true },
       { group: 'Your projects', add: true },
-      { space: 'Мобильное приложение', icon: 'tracker/home', color: 'Porpoise' },
+      { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
       { item: 'Milestones', icon: 'milestone', indent: true },
-      { space: 'Маркетинг', icon: 'tracker/home', color: 'Porpoise' },
+      { space: 'Маркетинг', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
       { item: 'Milestones', icon: 'milestone', indent: true }
     ],
     panel: { w: 400 },
-    selected: 'chunter/chunter',
-    widgets: ['calendar/calendar', 'chunter/chunter', 'love/office', 'rating/rating', 'view/ai-star']
+    selected: 'kit/Bubble',
+    widgets: ['kit/Calendar', 'kit/Bubble', 'kit/Building', 'kit/Star', 'kit/Sparkle']
   })
   const contentBox12 = kit.SettingsLayout(main, {
     back: 'К проекту',
@@ -470,7 +470,7 @@ await kit.page('Project settings')
   kit.add(contentBox12, kit.SectionTitle('Задачи', 'Значения для новых задач проекта.', 560))
   kit.add(contentBox12, kit.FormRow(
     'Исполнитель по умолчанию',
-    kit.Input({ w: 240, icon: 'contact/Person', value: 'Не назначен', menu: true }),
+    kit.Input({ w: 240, icon: 'kit/PersonCircle', value: 'Не назначен', menu: true }),
     { w: 560 }
   ))
   kit.add(contentBox12, kit.FormRow('Статус по умолчанию', kit.Input({ w: 240, value: 'Todo', menu: true }), { w: 560 }))
@@ -481,7 +481,7 @@ await kit.page('Project settings')
     ),
     kit.add(
       kit.row('title', 8),
-      kit.icon('chunter/chunter', T('theme-caption-color')),
+      kit.icon('kit/Bubble', T('theme-caption-color')),
       kit.text('Чат · Мобильное приложение', { weight: 600 })
     ),
     kit.Button({ kind: 'ghost', size: 'small', icon: 'x', name: 'Close chat' })

@@ -4,9 +4,7 @@
   import type { ReadState, ReadPosition } from '@hcengineering/notification'
   import { employeeByAccountStore } from '@hcengineering/contact-resources'
   import type { Employee } from '@hcengineering/contact'
-
-  import DoubleCheck from '../icons/DoubleCheck.svelte'
-  import Check from '../icons/Check.svelte'
+  import ui, { Icon } from '@hcengineering/ui'
 
   export let createdOn: Timestamp
   export let readState: ReadState
@@ -39,7 +37,7 @@
 </script>
 
 {#if readEmployees.size > 0}
-  <DoubleCheck size="small" fill="var(--accent-color-tertiary-pressed)" />
+  <Icon icon={ui.icon.CheckDouble} size="small" fill="var(--accent-color-tertiary-pressed)" />
 {:else}
-  <Check size="small" fill="var(--accent-color-tertiary-pressed)" />
+  <Icon icon={ui.icon.CheckSingle} size="small" fill="var(--accent-color-tertiary-pressed)" />
 {/if}

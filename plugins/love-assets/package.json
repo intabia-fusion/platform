@@ -10,7 +10,7 @@
     "assets",
     "lang"
   ],
-  "author": "Copyright \u00a9 Hardcore Engineering Inc.",
+  "author": "Copyright © Hardcore Engineering Inc.",
   "template": "@hcengineering/assets-package",
   "license": "EPL-2.0",
   "scripts": {
@@ -43,8 +43,9 @@
     "@stylistic/eslint-plugin": "catalog:"
   },
   "dependencies": {
+    "@hcengineering/love": "workspace:^0.7.0",
     "@hcengineering/platform": "workspace:^0.7.19",
-    "@hcengineering/love": "workspace:^0.7.0"
+    "@hcengineering/ui": "workspace:^0.7.0"
   },
   "exports": {
     ".": {

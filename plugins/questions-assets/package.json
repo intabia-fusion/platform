@@ -42,7 +42,8 @@
   },
   "dependencies": {
     "@hcengineering/questions": "workspace:^0.7.0",
-    "@hcengineering/platform": "workspace:^0.7.19"
+    "@hcengineering/platform": "workspace:^0.7.19",
+    "@hcengineering/ui": "workspace:^0.7.0"
   },
   "exports": {
     ".": {

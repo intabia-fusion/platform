@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import ui from '@hcengineering/ui'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { IconAdd } from '@hcengineering/ui'
   import { IconButton, Menu } from '@hcengineering/ui/kit'
 
   import { languages, priorities } from './items'
@@ -26,7 +26,7 @@
     <Menu items={priorities} selected="high" withSearch autofocus={false}>
       <IconButton
         slot="actions"
-        icon={IconAdd}
+        icon={ui.icon.Plus}
         kind="ghost"
         size="small"
         tooltip={{ label: getEmbeddedLabel('New priority') }}

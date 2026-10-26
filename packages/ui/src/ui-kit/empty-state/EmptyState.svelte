@@ -15,8 +15,8 @@
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
 
+  import ui from '../../plugin'
   import Icon from '../../components/Icon.svelte'
-  import IconAdd from '../../components/icons/Add.svelte'
   import Label from '../../components/Label.svelte'
   import type { IconComponent } from '../../types'
   import type { EmptyStateEvents, EmptyStateKind, EmptyStateProps, EmptyStateSize } from './types'
@@ -52,7 +52,7 @@
     {/if}
     <span class="empty-state__label"><Label {label} params={labelParams} /></span>
     <span class="empty-state__action">
-      <span class="empty-state__add-icon" aria-hidden="true"><Icon icon={IconAdd} size="full" /></span>
+      <span class="empty-state__add-icon" aria-hidden="true"><Icon icon={ui.icon.Plus} size="full" /></span>
       <Label label={action} params={actionParams} />
     </span>
   </button>

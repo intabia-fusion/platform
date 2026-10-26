@@ -99,10 +99,7 @@ const ratingPlugin = plugin(ratingId, {
   },
   icon: {
     Rating: '' as Asset,
-    StarYellow: '' as Asset,
-    StarRed: '' as Asset,
-    StarGreen: '' as Asset,
-    StarBlue: '' as Asset
+    StarYellow: '' as Asset
   },
   string: {
     Rating: '' as IntlString,

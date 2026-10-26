@@ -92,7 +92,9 @@ const request = plugin(requestId, {
     CancelRequestNotificationSubject: '' as IntlString
   },
   icon: {
-    Requests: '' as Asset
+    Requests: '' as Asset,
+    Approve: '' as Asset,
+    Reject: '' as Asset
   }
 })
 

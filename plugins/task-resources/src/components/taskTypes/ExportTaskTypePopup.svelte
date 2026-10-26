@@ -13,11 +13,11 @@
 -->
 <script lang="ts">
   import type { Ref } from '@hcengineering/core'
-  import { copyTextToClipboard, getClient, getCurrentWorkspaceUuid, IconDownload } from '@hcengineering/presentation'
+  import { copyTextToClipboard, getClient, getCurrentWorkspaceUuid } from '@hcengineering/presentation'
   import type { TaskType, TaskTypeDependencyItem } from '@hcengineering/task'
   import { exportTaskTypeConfig, getConnectedTaskTypesWithDependencies } from '@hcengineering/task'
   import type { DropdownIntlItem } from '@hcengineering/ui'
-  import ui, { IconCopy, IconInfo, Label, Modal, ModernDropdown, tooltip } from '@hcengineering/ui'
+  import ui, { Icon, Label, Modal, ModernDropdown, tooltip } from '@hcengineering/ui'
   import { Button } from '@hcengineering/ui/kit'
   import { createEventDispatcher } from 'svelte'
   import { Severity, Status, getEmbeddedLabel, setPlatformStatus } from '@hcengineering/platform'
@@ -221,7 +221,7 @@
   onCancel={handleClose}
 >
   <div class="export-dialog-body flex-col flex-gap-4">
-    <!-- Export Mode Field: Label and Dropdown on one row, Description with IconInfo below -->
+    <!-- Export Mode Field: Label and Dropdown on one row, Description with an info icon below -->
     <div class="mode-section flex-col flex-gap-2">
       <div class="hulyModal-content__settingsSet" style="padding: 0;">
         <div class="hulyModal-content__settingsSet-line" style="border: 0;padding-top: 0; padding-bottom: 0">
@@ -245,7 +245,7 @@
         <!-- Hint banner styled like workflow validators -->
         <div class="mode-hint">
           <div class="mode-hint-icon">
-            <IconInfo size="small" />
+            <Icon icon={ui.icon.InfoCircle} size="small" />
           </div>
           <span class="mode-hint-text">
             {#if exportMode === 'hierarchy'}
@@ -301,7 +301,7 @@
       <Button
         kind="primary"
         size="medium"
-        icon={IconCopy}
+        icon={ui.icon.Copy}
         label={plugin.string.CopyToClipboard}
         loading={isCopying}
         disabled={selectedCount === 0 || isExporting || isCopying}
@@ -310,7 +310,7 @@
       <Button
         kind="primary"
         size="medium"
-        icon={IconDownload}
+        icon={ui.icon.CloudDownload}
         label={plugin.string.ExportToFile}
         loading={isExporting}
         disabled={selectedCount === 0 || isExporting || isCopying}

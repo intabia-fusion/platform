@@ -16,12 +16,13 @@
 //
 -->
 <script lang="ts">
-  import { IconAdd } from '@hcengineering/ui'
+  import ui, { Icon } from '@hcengineering/ui'
   import { onDestroy, onMount } from 'svelte'
+  import { TableMap, updateColumnsOnResize } from '@tiptap/pm/tables'
+
   import type { NodeViewProps } from '../../node-view'
   import { NodeViewContent, NodeViewWrapper } from '../../node-view'
   import { findTable, insertColumn, insertRow } from './utils'
-  import { TableMap, updateColumnsOnResize } from '@tiptap/pm/tables'
   import { getToolbarCursor, setToolbarMeta } from '../toolbar/toolbar'
 
   export let node: NodeViewProps['node']
@@ -164,7 +165,7 @@
           <div class="w-full h-full flex showOnHover">
             <button class="table-button w-full h-full" on:click={handleAddColumn}>
               <div class="table-button__dot" />
-              <div class="table-button__icon"><IconAdd size="small" /></div>
+              <div class="table-button__icon"><Icon icon={ui.icon.Plus} size="small" /></div>
             </button>
           </div>
         </div>
@@ -173,7 +174,7 @@
           <div class="w-full h-full flex showOnHover">
             <button class="table-button w-full h-full" on:click={handleAddRow}>
               <div class="table-button__dot" />
-              <div class="table-button__icon"><IconAdd size="small" /></div>
+              <div class="table-button__icon"><Icon icon={ui.icon.Plus} size="small" /></div>
             </button>
           </div>
         </div>

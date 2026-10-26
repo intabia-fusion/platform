@@ -22,8 +22,6 @@
   import { FileNoPreview, IconButton } from '@hcengineering/ui/kit'
 
   import view from '../../plugin'
-  import IconCode from '../icons/Code.svelte'
-  import IconPicture from '../icons/Picture.svelte'
   import TextFlow from './TextFlow.svelte'
 
   export let value: Ref<Blob>
@@ -159,7 +157,7 @@
     {#if markdown !== undefined}
       <div class="mode">
         <IconButton
-          icon={IconPicture}
+          icon={ui.icon.Image}
           kind="ghost"
           size="small"
           iconSize="medium"
@@ -170,7 +168,7 @@
           }}
         />
         <IconButton
-          icon={IconCode}
+          icon={view.icon.MarkdownSource}
           kind="ghost"
           size="small"
           iconSize="medium"

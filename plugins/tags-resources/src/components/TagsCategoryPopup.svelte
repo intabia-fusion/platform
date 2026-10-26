@@ -18,17 +18,9 @@
   import { translateCB } from '@hcengineering/platform'
   import presentation, { createQuery } from '@hcengineering/presentation'
   import type { TagCategory, TagElement } from '@hcengineering/tags'
-  import {
-    Button,
-    CheckBox,
-    Icon,
-    IconClose,
-    Label,
-    getPlatformColorDef,
-    resizeObserver,
-    themeStore
-  } from '@hcengineering/ui'
+  import ui, { Button, CheckBox, Icon, Label, getPlatformColorDef, resizeObserver, themeStore } from '@hcengineering/ui'
   import { createEventDispatcher, onMount } from 'svelte'
+
   import tags from '../plugin'
 
   export let targetClass: Ref<Class<Doc>>
@@ -132,7 +124,7 @@
             searchElement.focus()
           }}
         >
-          {#if search !== ''}<div class="icon"><Icon icon={IconClose} size="inline" /></div>{/if}
+          {#if search !== ''}<div class="icon"><Icon icon={ui.icon.Cross} size="inline" /></div>{/if}
         </div>
       </div>
     </div>

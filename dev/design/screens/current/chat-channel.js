@@ -2,19 +2,19 @@
 // Geometry follows the sanity stand at 1920x1080; data is the demo workspace (DEMO.en).
 await kit.page('Chat')
 const nav = [
-  { item: 'Threads', icon: 'chunter/thread' },
-  { item: 'Saved', icon: 'chunter/bookmarks' },
-  { item: 'Browser', icon: 'chunter/chunterbrowser' },
-  { item: 'Channels & DMs', icon: 'chunter/channelbrowser' },
+  { item: 'Threads', icon: 'kit/Bubbles' },
+  { item: 'Saved', icon: 'kit/Bookmarks' },
+  { item: 'Browser', icon: 'kit/DatabaseSearch' },
+  { item: 'Channels & DMs', icon: 'chunter/hash-search' },
   { divider: true, tight: true },
   { caption: 'Channels', chevron: true, menu: true, compact: true, noDivider: true },
-  { item: 'random', icon: 'chunter/hashtag', object: true },
-  { item: 'general', icon: 'chunter/hashtag', object: true, selected: true },
+  { item: 'random', icon: 'kit/Hash', object: true },
+  { item: 'general', icon: 'kit/Hash', object: true, selected: true },
   { caption: 'Direct messages', menu: true, compact: true, noDivider: true }
 ]
-const { main } = kit.Workbench('Channel', 0, 0, { tab: 'general', tabIcon: 'chunter/hashtag', app: 'chunter', title: 'Chat', newLabel: null, tools: ['ui/Search', 'ui/Edit'], nav })
+const { main } = kit.Workbench('Channel', 0, 0, { tab: 'general', tabIcon: 'kit/Hash', app: 'chunter', title: 'Chat', newLabel: null, tools: ['kit/Search', 'kit/PencilLine'], nav })
 const tool = (icon, size) => kit.ClassicButton({ kind: 'icon', size: 'medium', icon, iconSize: size })
-kit.PanelHeader(main, { title: 'general', icon: 'chunter/hashtag', divided: true, actions: [tool('ui/Search', 16), tool('ui/ToDetails', 16), tool('ui/Settings', 20)] })
+kit.PanelHeader(main, { title: 'general', icon: 'kit/Hash', divided: true, actions: [tool('kit/Search', 16), tool('kit/ArrowInSquare', 16), tool('kit/Sliders', 20)] })
 
 const people = DEMO.en.people
 const W = main.width - 2

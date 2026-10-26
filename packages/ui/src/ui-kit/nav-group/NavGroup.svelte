@@ -17,9 +17,8 @@
   import { createEventDispatcher } from 'svelte'
 
   import Icon from '../../components/Icon.svelte'
-  import IconDown from '../../components/icons/Down.svelte'
-  import OpenedArrow from '../../components/icons/OpenedArrow.svelte'
   import Label from '../../components/Label.svelte'
+  import ui from '../../plugin'
   import type { IconComponent } from '../../types'
   import { pointerFocus } from '../utils/pointerFocus'
   import type { NavGroupEvents, NavGroupKind, NavGroupProps } from './types'
@@ -140,11 +139,11 @@
           aria-labelledby={labelId}
           on:click={toggle}
         >
-          <IconDown size="small" />
+          <Icon icon={ui.icon.CaretDownFill} size="small" />
         </button>
       {:else}
         <span class="nav-group__chevron" class:nav-group__chevron--closed={!open} aria-hidden="true">
-          <IconDown size="small" />
+          <Icon icon={ui.icon.CaretDownFill} size="small" />
         </span>
       {/if}
     {/if}
@@ -159,7 +158,7 @@
     {#if $$slots.extra}<span class="nav-group__extra"><slot name="extra" /></span>{/if}
     {#if $$slots.tools}<span class="nav-group__tools"><slot name="tools" /></span>{/if}
     {#if selected === true && resolvedKind === 'nested'}
-      <span class="nav-group__arrow" aria-hidden="true"><OpenedArrow size="small" /></span>
+      <span class="nav-group__arrow" aria-hidden="true"><Icon icon={ui.icon.ChevronRightSmall} size="small" /></span>
     {/if}
   </div>
   {#if !empty}

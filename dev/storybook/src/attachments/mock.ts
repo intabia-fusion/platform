@@ -20,7 +20,7 @@ import registerPresentationStrings from '@hcengineering/presentation/src/lang'
 import view from '@hcengineering/view'
 import { readable } from 'svelte/store'
 
-import viewIcons from '../../../../plugins/view-assets/assets/icons.svg?url'
+import kitSprite from '../../../../packages/ui/assets/icons.svg?url'
 import HighlightStub from './HighlightStub.svelte'
 
 let ready: Promise<void> | undefined
@@ -39,8 +39,8 @@ export async function setupAttachmentMocks (): Promise<void> {
   ready ??= (async () => {
     addStrings('attachment', attachmentStrings)
     addStrings('view', viewStrings)
-    setMetadata(view.icon.Open, `${viewIcons}#open`)
-    setMetadata(view.icon.Sidebar, `${viewIcons}#sidebar`)
+    setMetadata(view.icon.Open, `${kitSprite}#open-file`)
+    setMetadata(view.icon.Sidebar, `${kitSprite}#arrow-in-square`)
     registerPresentationStrings()
     // Fixtures carry their files as addresses; one given by id stands for a file the storage cannot serve.
     setMetadata(presentation.metadata.FileStorage, {

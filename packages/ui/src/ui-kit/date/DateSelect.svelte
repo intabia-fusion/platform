@@ -17,8 +17,6 @@
   import type { IntlString } from '@hcengineering/platform'
   import { createEventDispatcher, onDestroy } from 'svelte'
 
-  import DPCalendar from '../../components/calendar/icons/DPCalendar.svelte'
-  import DPCalendarOver from '../../components/calendar/icons/DPCalendarOver.svelte'
   import ui from '../../plugin'
   import { showPopup, type PopupResult } from '../../popups'
   import type { IconComponent, IconSize, LabelAndProps } from '../../types'
@@ -102,7 +100,7 @@
     {...$$restProps}
     {empty}
     placeholder={resolvedPlaceholder}
-    icon={icon ?? (shownTone === 'overdue' ? DPCalendarOver : DPCalendar)}
+    icon={icon ?? (shownTone === 'overdue' ? ui.icon.CalendarX : ui.icon.Calendar)}
     {iconSize}
     tooltip={tooltip ?? dueState?.tooltip}
     {disabled}

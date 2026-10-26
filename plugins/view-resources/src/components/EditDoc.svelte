@@ -31,7 +31,7 @@
     reduceCalls
   } from '@hcengineering/presentation'
   import type { AnyComponent } from '@hcengineering/ui'
-  import { Button as LegacyButton, Component, IconMixin, IconMoreH, languageStore } from '@hcengineering/ui'
+  import ui, { Button as LegacyButton, Component, languageStore } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import type { AttributeCategory } from '@hcengineering/view'
   import view from '@hcengineering/view'
@@ -301,7 +301,7 @@
         <IconButton
           size="small"
           tooltip={{ label: view.string.MoreActions }}
-          icon={IconMoreH}
+          icon={ui.icon.DotsHorizontal}
           iconProps={{ size: 'medium' }}
           kind="ghost"
           data-id="btnMoreActions"
@@ -311,7 +311,7 @@
         />
       {/if}
       <LegacyButton
-        icon={IconMixin}
+        icon={ui.icon.LayoutSplit}
         iconProps={{ size: 'medium' }}
         kind="icon"
         selected={showAllMixins}

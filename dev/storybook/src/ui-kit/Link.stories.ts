@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
+
 import { getEmbeddedLabel } from '@hcengineering/platform'
-import { IconLink } from '@hcengineering/ui'
+import ui from '@hcengineering/ui'
 import { Link } from '@hcengineering/ui/kit'
 import type { Meta, StoryObj } from '@storybook/svelte'
 
@@ -51,7 +52,7 @@ export const Variants: Story = {
           rows: [
             { title: 'button (no href)', props: {} },
             { title: 'anchor', props: { href: '#spec' } },
-            { title: 'external', props: { href: 'https://example.com', external: true, icon: IconLink } }
+            { title: 'external', props: { href: 'https://example.com', external: true, icon: ui.icon.Link } }
           ],
           columns: [
             { title: 'default', props: {} },

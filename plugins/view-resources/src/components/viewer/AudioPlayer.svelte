@@ -23,12 +23,9 @@
 -->
 <script lang="ts">
   import type { Blob as HulyBlob, Ref } from '@hcengineering/core'
-  import { CircleButton, Progress, CheckBox, Spinner } from '@hcengineering/ui'
+  import ui, { CircleButton, Progress, CheckBox, Spinner } from '@hcengineering/ui'
   import { getFileUrl } from '@hcengineering/presentation'
   import { onMount } from 'svelte'
-
-  import Pause from '../icons/Pause.svelte'
-  import Play from '../icons/Play.svelte'
 
   export let value: Ref<HulyBlob>
   export let name: string
@@ -83,7 +80,7 @@
     paused = !paused
   }
 
-  $: icon = !paused ? Pause : Play
+  $: icon = !paused ? ui.icon.PauseFill : ui.icon.PlayFill
   $: progressRatio = Number.isFinite(duration) && duration > 0 ? time / duration : 0
 
   // Handle noise reduction toggle

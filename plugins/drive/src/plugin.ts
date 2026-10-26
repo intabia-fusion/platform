@@ -45,8 +45,6 @@ export const drivePlugin = plugin(driveId, {
     Grid: '' as Asset,
     File: '' as Asset,
     Folder: '' as Asset,
-    FolderOpen: '' as Asset,
-    FolderClosed: '' as Asset,
     Download: '' as Asset,
     Restore: '' as Asset
   },

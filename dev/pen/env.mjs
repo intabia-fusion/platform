@@ -66,6 +66,13 @@ export function buildIcons () {
       }
     }
   }
+  // Kit icons by their ui.icon key, as in Storybook: kit/Plus is the symbol #plus of the kit sprite
+  const kitSprite = readFileSync(join(repo, 'packages/ui/assets/icons.svg'), 'utf8')
+  const kitIds = Object.fromEntries([...readFileSync(join(repo, 'packages/ui/src/icons.ts'), 'utf8').matchAll(/(\w+): `\$\{sprite\}#([\w-]+)`/g)].map((m) => [m[2], m[1]]))
+  for (const m of kitSprite.matchAll(/<symbol([^>]*)>([\s\S]*?)<\/symbol>/g)) {
+    const key = kitIds[m[1].match(/id="([^"]+)"/)?.[1]]
+    if (key != null) icons[`kit/${key}`] = { vb: viewBoxOf(m[1]), ...flatten(cleanSvg(m[2])) }
+  }
   const svelteDirs = [['ui', join(repo, 'packages/ui/src/components/icons')], ['ui-internal', join(repo, 'packages/ui/src/components/internal/icons')]]
   for (const dir of readdirSync(plugins).filter((it) => it.endsWith('-resources'))) svelteDirs.push([dir.slice(0, -'-resources'.length), join(plugins, dir, 'src/components/icons')])
   for (const [ns, dir] of svelteDirs) {

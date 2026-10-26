@@ -1,13 +1,14 @@
 <script lang="ts">
-  import { ActionIcon, IconAdd, showPopup, ModernEditbox, Spinner } from '@hcengineering/ui'
+  import ui, { ActionIcon, showPopup, ModernEditbox, Spinner } from '@hcengineering/ui'
   import { SortingOrder } from '@hcengineering/core'
   import { getCurrentEmployee } from '@hcengineering/contact'
   import { TimeEvents, ToDoPriority } from '@hcengineering/time'
   import { getClient } from '@hcengineering/presentation'
-  import CreateToDoPopup from './CreateToDoPopup.svelte'
-  import time from '../plugin'
   import { makeRank } from '@hcengineering/task'
   import { Analytics } from '@hcengineering/analytics'
+
+  import CreateToDoPopup from './CreateToDoPopup.svelte'
+  import time from '../plugin'
 
   export let fullSize: boolean = false
   export let value: string = ''
@@ -83,7 +84,7 @@
     {#if disabled}
       <Spinner size="small" />
     {:else}
-      <ActionIcon icon={IconAdd} action={openPopup} size="small" />
+      <ActionIcon icon={ui.icon.Plus} action={openPopup} size="small" />
     {/if}
   </ModernEditbox>
 </div>

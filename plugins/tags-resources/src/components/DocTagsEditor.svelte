@@ -19,11 +19,11 @@
   import { createQuery, getClient } from '@hcengineering/presentation'
   import type { TagReference } from '@hcengineering/tags'
   import tags from '@hcengineering/tags'
-  import { getEventPopupPositionElement, showPopup } from '@hcengineering/ui'
+  import ui, { getEventPopupPositionElement, showPopup } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
+
   import TagReferencePresenter from './TagReferencePresenter.svelte'
   import TagsEditorPopup from './TagsEditorPopup.svelte'
-  import TagIcon from './icons/TagIcon.svelte'
 
   export let object: Doc
   export let targetClass: Ref<Class<Doc>>
@@ -76,7 +76,7 @@
 
 {#if type === 'type-button-only'}
   <IconButton
-    icon={TagIcon}
+    icon={ui.icon.Tag}
     kind="secondary"
     size="small"
     {pressed}

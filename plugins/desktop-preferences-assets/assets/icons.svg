@@ -1,8 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
-  <symbol id="desktop" viewBox="0 0 24 24" fill="none">
-        <path d="M20 4H4C3.44772 4 3 4.44772 3 5V15C3 15.5523 3.44772 16 4 16H20C20.5523 16 21 15.5523 21 15V5C21 4.44772 20.5523 4 20 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M7 20H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M9 16V20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M15 16V20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <symbol id="monitor" viewBox="0 0 32 32">
+    <path d="M27.333 4.267h-22.666C3.333 4.267 2.4 5.333 2.4 6.666v13.333c0 1.333 1.067 2.4 2.4 2.4h6.933v4H9.333c-0.533 0 -1.067 0.4 -1.067 1.067c0 0.533 0.4 1.067 1.067 1.067h3.333h6.666H22.666c0.533 0 1.067 -0.4 1.067 -1.067c0 -0.533 -0.4 -1.067 -1.067 -1.067h-2.4v-4h6.933c1.333 0 2.4 -1.067 2.4 -2.4V6.666C29.599 5.333 28.666 4.267 27.333 4.267zM18.4 26.399h-4.667v-4h4.667V26.399zM27.733 19.999c0 0.133 -0.133 0.267 -0.267 0.267h-8h-6.666h-8c-0.133 0 -0.267 -0.133 -0.267 -0.267V6.666c0 -0.133 0.133 -0.267 0.267 -0.267h22.666c0.133 0 0.267 0.133 0.267 0.267V19.999z" />
+    <path d="M17.333 17.066h-2.667c-0.533 0 -1.067 0.4 -1.067 1.067c0 0.533 0.4 1.067 1.067 1.067h2.667c0.533 0 1.067 -0.4 1.067 -1.067C18.4 17.466 17.866 17.066 17.333 17.066z" />
   </symbol>
 </svg>

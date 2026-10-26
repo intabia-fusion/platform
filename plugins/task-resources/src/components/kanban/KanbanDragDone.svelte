@@ -17,11 +17,11 @@
   import { createQuery } from '@hcengineering/presentation'
   import type { Project } from '@hcengineering/task'
   import task, { getStates } from '@hcengineering/task'
+  import ui, { Icon } from '@hcengineering/ui'
   import { statusStore } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
+
   import { typeStore } from '../..'
-  import Lost from '../icons/Lost.svelte'
-  import Won from '../icons/Won.svelte'
 
   export let space: Ref<Project>
   let wonStates: Status[] = []
@@ -63,7 +63,7 @@
       on:dragover|preventDefault={() => {}}
       on:drop={onDone(wonState)}
     >
-      <div class="mr-2"><Won size="small" /></div>
+      <div class="mr-2"><Icon icon={ui.icon.CheckSmall} size="small" fill="var(--theme-won-color)" /></div>
       {wonState.name}
     </div>
   {/each}
@@ -83,7 +83,7 @@
       on:dragover|preventDefault={() => {}}
       on:drop={onDone(lostState)}
     >
-      <div class="mr-2"><Lost size="small" /></div>
+      <div class="mr-2"><Icon icon={ui.icon.Cross} size="small" fill="var(--theme-lost-color)" /></div>
       {lostState.name}
     </div>
   {/each}

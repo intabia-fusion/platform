@@ -154,7 +154,7 @@ kit.LoginStatus = (text, o = {}) => {
   const col = error ? LG_ERROR : LG.text
   const b = kit.box('message', { w: 396, h: 44, dir: 'row', gap: 8, pad: [12, 16, 12, 16], align: 'start', vs: 'auto', radius: 8, fill: LG.white, stroke: error ? LG_ERROR + '99' : LG.border })
   const icon = kit.box('icon', { w: 16, h: 18, dir: 'column', pad: [2, 0, 0, 0] })
-  kit.add(icon, kit.icon('ui/Info', col, 16))
+  kit.add(icon, kit.icon('kit/InfoCircle', col, 16))
   return kit.add(c, kit.add(b, icon, kit.text(text, { size: 12, lh: 1.5, color: col, w: 338 })))
 }
 
@@ -215,7 +215,7 @@ kit.LoginOtpHeader = (title, sent, email) => {
   const c = kit.box('Header', { w: 412, h: 10, dir: 'column', gap: 8, vs: 'auto' })
   const row = kit.box('title row', { w: 412, h: 36, dir: 'row', align: 'center', justify: 'center', clip: false })
   const back = kit.box('back', { w: 36, h: 36, dir: 'row', align: 'center', justify: 'center', radius: 8 })
-  kit.add(back, kit.icon('ui/Back', LG.text, 16))
+  kit.add(back, kit.icon('kit/ChevronLeftLarge', LG.text, 16))
   kit.at(row, back, 0, 0)
   kit.add(row, kit.text(title, { size: 28, weight: 700, lh: 1.3, color: LG.heading }))
   const d = kit.box('description', { w: 412, h: 20, dir: 'row', gap: 8, align: 'center', justify: 'center' })
@@ -246,6 +246,6 @@ kit.LoginWorkspace = (name, note, o = {}) => {
 kit.LoginBackTitle = (title, o = {}) => {
   const r = kit.box('Back title', { w: o.w || 428, h: 44, dir: 'row', gap: 8, align: 'center' })
   const back = kit.box('back', { w: 48, h: 44, dir: 'row', align: 'center', justify: 'center', radius: 8 })
-  kit.add(back, kit.icon('ui/Back', LG.text, 16))
+  kit.add(back, kit.icon('kit/ChevronLeftLarge', LG.text, 16))
   return kit.add(r, back, kit.text(title, { size: 24, weight: 600, lh: 1.3, color: LG.heading }))
 }

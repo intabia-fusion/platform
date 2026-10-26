@@ -17,9 +17,10 @@
   import type { Application } from '@hcengineering/workbench'
   import { createQuery } from '@hcengineering/presentation'
   import workbench from '@hcengineering/workbench'
-  import { getDefaultHiddenApps, hideApplication, isAllowedToRole, showApplication } from '../utils'
-  import { Loading, IconCheck, Label, Icon, deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
+  import ui, { Loading, Label, Icon, deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
   import { getMetadata } from '@hcengineering/platform'
+
+  import { getDefaultHiddenApps, hideApplication, isAllowedToRole, showApplication } from '../utils'
 
   export let apps: Application[] = []
 
@@ -114,7 +115,7 @@
             <span class="label overflow-label flex-grow"><Label label={app.label} /></span>
             <div class="ap-check">
               {#if !hiddenAppsIds.includes(app._id)}
-                <IconCheck size="small" />
+                <Icon icon={ui.icon.Check} size="small" />
               {/if}
             </div>
           </button>

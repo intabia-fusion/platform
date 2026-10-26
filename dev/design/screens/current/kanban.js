@@ -7,20 +7,20 @@ const people = new Map(DEMO.en.people.map((p) => [p.name, p]))
 const { frame, main } = kit.Workbench('Kanban board', 0, 0, {
   tab: 'Tracker',
   nav: [
-    { item: 'My issues', icon: 'tracker/myissues' },
-    { item: 'All issues', icon: 'tracker/issues' },
+    { item: 'My issues', icon: 'kit/Crosshair' },
+    { item: 'All issues', icon: 'kit/CheckSquare' },
     { divider: true },
-    { item: 'All projects', icon: 'tracker/list' },
-    { item: 'Labels', icon: 'tracker/labels' },
+    { item: 'All projects', icon: 'kit/BulletList' },
+    { item: 'Labels', icon: 'kit/Tags' },
     { group: 'Your projects', add: true },
-    { space: project.name, icon: 'tracker/home', color: 'Porpoise' },
-    { item: 'Issues', icon: 'tracker/issues', selected: true, indent: true },
-    { item: 'Components', icon: 'tracker/components', indent: true },
-    { item: 'Milestones', icon: 'tracker/milestone', indent: true },
-    { item: 'Templates', icon: 'tracker/issuetemplates', indent: true }
+    { space: project.name, icon: 'kit/HouseFill', color: 'Porpoise' },
+    { item: 'Issues', icon: 'kit/CheckSquare', selected: true, indent: true },
+    { item: 'Components', icon: 'kit/Diamond', indent: true },
+    { item: 'Milestones', icon: 'kit/Signpost', indent: true },
+    { item: 'Templates', icon: 'kit/Layout', indent: true }
   ]
 })
-const top = kit.SpaceHeader(main, { view: 'board', title: 'Issues', titleIcon: 'tracker/issues' })
+const top = kit.SpaceHeader(main, { view: 'board', title: 'Issues', titleIcon: 'kit/CheckSquare' })
 const board = kit.box('Kanban', { w: main.width - 2, h: main.height - top - 1, dir: 'row', pad: [24, 0, 0, 24] })
 // The project's own workflow: the first five statuses, the rest belong to the board columns
 const cols = DEMO.en.statuses.slice(0, 5).map((st) => {

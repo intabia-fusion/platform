@@ -17,12 +17,9 @@
   import presentation, { getClient, MessageBox } from '@hcengineering/presentation'
   import type { TaskType } from '@hcengineering/task'
   import { getConnectedTaskTypes } from '@hcengineering/task'
-  import {
+  import ui, {
     Button,
     Icon,
-    IconAdd,
-    IconError,
-    IconInfo,
     Label,
     languageStore,
     SelectPopup,
@@ -179,7 +176,7 @@
 
       <div class="header-right flex-row-center gap-2">
         <IconButton
-          icon={IconInfo}
+          icon={ui.icon.InfoCircle}
           size="small"
           kind="tertiary"
           tooltip={{ component: TaskTypeHierarchyHelp, props: helpProps, direction: 'bottom' }}
@@ -263,7 +260,7 @@
               <div class="side">
                 {#if !readonly && !allowAnyParent}
                   <IconButton
-                    icon={IconAdd}
+                    icon={ui.icon.Plus}
                     size="small"
                     kind="secondary"
                     tooltip={{ label: task.string.HierarchyAddParent }}
@@ -275,7 +272,7 @@
                     class="header-error-badge"
                     use:tooltip={{ label: task.string.HierarchyWarningNoParentAndNoRoot }}
                   >
-                    <Icon icon={IconError} size="small" />
+                    <Icon icon={ui.icon.ExclamationCircle} size="small" fill="var(--theme-error-color)" />
                     <span class="error-text"><Label label={task.string.HierarchyWarningShort} /></span>
                   </div>
                 {/if}
@@ -308,7 +305,7 @@
               {#if !readonly}
                 <div class="side">
                   <IconButton
-                    icon={IconAdd}
+                    icon={ui.icon.Plus}
                     size="small"
                     kind="secondary"
                     tooltip={{ label: task.string.HierarchyAddChild }}

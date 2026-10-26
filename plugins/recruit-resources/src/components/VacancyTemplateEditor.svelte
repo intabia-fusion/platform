@@ -17,8 +17,9 @@
   import type { ProjectType } from '@hcengineering/task'
   import { StyledTextBox } from '@hcengineering/text-editor-resources'
   import tracker from '@hcengineering/tracker'
-  import { Button, Component, Icon, IconAdd, Label, showPopup } from '@hcengineering/ui'
+  import ui, { Button, Component, Icon, Label, showPopup } from '@hcengineering/ui'
   import { getFiltredKeys } from '@hcengineering/view-resources'
+
   import recruit from '../plugin'
 
   export let type: ProjectType
@@ -69,7 +70,7 @@
         <Button
           id="add-sub-issue"
           width="min-content"
-          icon={IconAdd}
+          icon={ui.icon.Plus}
           label={undefined}
           labelParams={{ subIssues: 0 }}
           {disabled}

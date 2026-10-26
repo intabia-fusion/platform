@@ -15,7 +15,8 @@
 <script lang="ts">
   import type { Ref } from '@hcengineering/core'
   import type { State, Transition } from '@hcengineering/process'
-  import { getCurrentLocation, navigate, IconDescription, NavItem, Separator } from '@hcengineering/ui'
+  import { getCurrentLocation, navigate, NavItem, Separator } from '@hcengineering/ui'
+
   import TransitionPresenter from './TransitionPresenter.svelte'
   import process from '../../plugin'
 

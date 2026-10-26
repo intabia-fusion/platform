@@ -15,7 +15,6 @@
 <script lang="ts">
   import type { ComponentType } from 'svelte'
   import { createEventDispatcher } from 'svelte'
-
   import type { Class, DocumentQuery, FindOptions, Ref, Space } from '@hcengineering/core'
   import type { Asset, IntlString } from '@hcengineering/platform'
   import type {
@@ -26,9 +25,8 @@
     ButtonSize,
     TooltipAlignment
   } from '@hcengineering/ui'
-  import {
+  import ui, {
     Button,
-    IconFolder,
     Label,
     eventToHTMLElement,
     getEventPositionElement,
@@ -69,7 +67,7 @@
   export let readonly = false
   export let ignoreFill = false
   export let iconWithEmoji: AnySvelteComponent | Asset | ComponentType | undefined = view.ids.IconWithEmoji
-  export let defaultIcon: AnySvelteComponent | Asset | ComponentType = IconFolder
+  export let defaultIcon: AnySvelteComponent | Asset | ComponentType = ui.icon.Folder
   export let findDefaultSpace: (() => Promise<Space | undefined>) | undefined = undefined
 
   let selected: (Space & IconProps) | undefined

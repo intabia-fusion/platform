@@ -18,17 +18,17 @@
   import core from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import type { Applicant, Vacancy } from '@hcengineering/recruit'
-  import { Button, Component, IconAdd, Breadcrumb, Loading, SearchInput, showPopup, Header } from '@hcengineering/ui'
+  import ui, { Button, Component, Breadcrumb, Loading, SearchInput, showPopup, Header } from '@hcengineering/ui'
   import type { BuildModelKey, ViewOptions, Viewlet, ViewletPreference } from '@hcengineering/view'
   import view from '@hcengineering/view'
   import { FilterBar, FilterButton, ViewletSelector, ViewletSettingButton } from '@hcengineering/view-resources'
+  import { ExportButton } from '@hcengineering/export-resources'
+
   import recruit from '../plugin'
   import CreateOrganization from './CreateOrganization.svelte'
-  import { ExportButton } from '@hcengineering/export-resources'
   import VacancyListApplicationsPopup from './organizations/VacancyListApplicationsPopup.svelte'
   import VacancyListCountPresenter from './organizations/VacancyListCountPresenter.svelte'
   import VacancyPopup from './organizations/VacancyPopup.svelte'
-  import IconCompany from './icons/Company.svelte'
 
   let search: string = ''
   let searchQuery: DocumentQuery<Doc> = {}
@@ -210,7 +210,7 @@
     <ViewletSettingButton bind:viewOptions bind:viewlet />
   </svelte:fragment>
 
-  <Breadcrumb icon={IconCompany} label={recruit.string.Organizations} size="large" isCurrent />
+  <Breadcrumb icon={ui.icon.Building} label={recruit.string.Organizations} size="large" isCurrent />
 
   <svelte:fragment slot="search">
     <SearchInput bind:value={search} collapsed on:change={(e) => (search = e.detail)} />
@@ -251,7 +251,7 @@
         }
       }}
     />
-    <Button icon={IconAdd} label={recruit.string.CompanyCreateLabel} kind="primary" on:click={showCreateDialog} />
+    <Button icon={ui.icon.Plus} label={recruit.string.CompanyCreateLabel} kind="primary" on:click={showCreateDialog} />
   </svelte:fragment>
 </Header>
 <FilterBar

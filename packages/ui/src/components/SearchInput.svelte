@@ -17,9 +17,9 @@
   import { translateCB } from '@hcengineering/platform'
   import { themeStore } from '@hcengineering/theme'
   import { createEventDispatcher, onDestroy, onMount } from 'svelte'
+
+  import Icon from './Icon.svelte'
   import plugin from '../plugin'
-  import IconClose from './icons/Close.svelte'
-  import IconSearch from './icons/Search.svelte'
 
   export let value: string | undefined = undefined
   export let placeholder: IntlString = plugin.string.Search
@@ -61,7 +61,7 @@
 
 <label class="searchInput-wrapper {kind}" class:collapsed class:filled={value && value !== ''} style:width>
   <div class="searchInput-icon">
-    <IconSearch size="small" />
+    <Icon icon={plugin.icon.Search} size="small" />
   </div>
   <input
     bind:this={input}
@@ -95,7 +95,7 @@
       input.focus()
     }}
   >
-    <IconClose size="small" />
+    <Icon icon={plugin.icon.Cross} size="small" />
   </button>
 </label>
 

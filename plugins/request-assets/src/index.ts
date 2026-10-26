@@ -18,5 +18,7 @@ import request from '@hcengineering/request'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
 loadMetadata(request.icon, {
-  Requests: `${icons}#requests`
+  Requests: `${icons}#check-square-stack`,
+  Approve: `${icons}#file-check`,
+  Reject: `${icons}#file-x`
 })

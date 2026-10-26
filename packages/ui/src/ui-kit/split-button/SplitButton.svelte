@@ -16,7 +16,6 @@
   import type { IntlString } from '@hcengineering/platform'
   import { createEventDispatcher, onDestroy } from 'svelte'
 
-  import IconChevronDown from '../../components/icons/ChevronDown.svelte'
   import ModernPopup from '../../components/ModernPopup.svelte'
   import ui from '../../plugin'
   import { showPopup, type PopupResult } from '../../popups'
@@ -43,7 +42,7 @@
   export let items: Array<DropdownIntlItem<Id>> | undefined = undefined
   export let menuPressed: boolean = false
   export let menuTooltip: LabelAndProps | undefined = undefined
-  export let menuIcon: IconComponent = IconChevronDown
+  export let menuIcon: IconComponent = ui.icon.ChevronDown
   export let fill: boolean = false
   export let alignStart: boolean = false
   export let focusIndex: number | undefined = undefined

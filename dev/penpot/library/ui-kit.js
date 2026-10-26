@@ -69,7 +69,7 @@ const groups = [
   { name: 'QuickFilter', cat: 'Tags and filters', props: { On: ['false', 'true'] }, build: (p) => kit.QuickFilter('Quick filter', p.On === 'true') },
   { name: 'FilterChip', cat: 'Tags and filters', props: {}, build: () => kit.FilterChip('Attribute', 'is', 'Value') },
   { name: 'TopBar', cat: 'Workbench', props: {}, build: () => kit.TopBar(1920) },
-  { name: 'AppItem', cat: 'Workbench', props: { State: ['default', 'selected', 'marker'] }, build: (p) => kit.AppItem('tracker/tracker', { selected: p.State === 'selected', marker: p.State === 'marker' }) },
+  { name: 'AppItem', cat: 'Workbench', props: { State: ['default', 'selected', 'marker'] }, build: (p) => kit.AppItem('kit/CheckSquare', { selected: p.State === 'selected', marker: p.State === 'marker' }) },
   { name: 'AppRail', cat: 'Workbench', props: {}, build: () => kit.AppRail(1044) },
   { name: 'NavItem', cat: 'Workbench', props: { State: ['default', 'selected'], Level: ['0', '1'] }, build: (p) => kit.NavItem('Navigator item', { icon: 'tracker/issues', selected: p.State === 'selected', indent: p.Level === '1' }) },
   { name: 'NavGroupHeader', cat: 'Workbench', props: { Add: ['true', 'false'] }, build: (p) => kit.NavGroupHeader('Your projects', { add: p.Add === 'true' }) },

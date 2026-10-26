@@ -13,21 +13,13 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import {
-    IconDelete,
-    themeStore,
-    Hotkey,
-    HotkeyGroup,
-    Scroller,
-    formatDuration,
-    Label,
-    tooltip
-  } from '@hcengineering/ui'
+  import ui, { themeStore, Hotkey, HotkeyGroup, Scroller, formatDuration, Label, tooltip } from '@hcengineering/ui'
   import presentation from '@hcengineering/presentation'
   import { Button, IconButton } from '@hcengineering/ui/kit'
   import { EventTimeEditor } from '@hcengineering/calendar-resources'
   import type { WorkSlot } from '@hcengineering/time'
   import { createEventDispatcher } from 'svelte'
+
   import time from '../plugin'
   import { splitEventsDuration } from '../utils'
 
@@ -83,7 +75,7 @@
       <IconButton
         kind="tertiary"
         size="small"
-        icon={IconDelete}
+        icon={ui.icon.Trash}
         data-id="btnDelete"
         tooltip={{ label: presentation.string.Delete }}
         on:click={() => {

@@ -17,22 +17,23 @@ import calendar from '@hcengineering/calendar'
 import { loadMetadata } from '@hcengineering/platform'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(calendar.icon, {
-  Calendar: `${icons}#calendar`,
-  CalendarView: `${icons}#calendarView`,
-  Reminder: `${icons}#reminder`,
-  Notifications: `${icons}#notifications`,
-  Location: `${icons}#location`,
-  Watch: `${icons}#watch`,
-  Description: `${icons}#description`,
-  Participants: `${icons}#participants`,
-  Repeat: `${icons}#repeat`,
-  Globe: `${icons}#globe`,
-  Private: `${icons}#private`,
-  Public: `${icons}#public`,
-  Hidden: `${icons}#eyeCrossed`,
-  Duration: `${icons}#duration`,
-  Timer: `${icons}#timer`
+  Calendar: `${uiIcons}#calendar`,
+  CalendarView: `${uiIcons}#calendar`,
+  Reminder: `${icons}#alarm-clock`,
+  Notifications: `${uiIcons}#bell`,
+  Location: `${uiIcons}#map-pin`,
+  Watch: `${uiIcons}#clock`,
+  Description: `${uiIcons}#text-lines`,
+  Participants: `${uiIcons}#people`,
+  Repeat: `${uiIcons}#arrows-clockwise`,
+  Globe: `${uiIcons}#globe`,
+  Private: `${uiIcons}#lock`,
+  Public: `${uiIcons}#eye`,
+  Hidden: `${uiIcons}#eye-slash`,
+  Duration: `${icons}#circle-pie`,
+  Timer: `${uiIcons}#clock`
 })
 
 const permission = require('../assets/permission.png') as string // eslint-disable-line

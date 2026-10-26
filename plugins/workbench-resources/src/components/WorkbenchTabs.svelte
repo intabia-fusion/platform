@@ -13,18 +13,17 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { createTab, tabsStore, tabIdStore } from '../workbench'
-  import { WorkbenchTabs } from '../index'
-  import WorkbenchTabPresenter from './WorkbenchTabPresenter.svelte'
-  import {
-    IconAdd,
-    IconMoreH,
+  import ui, {
     ScrollerBar,
     deviceOptionsStore as deviceInfo,
     checkAdaptiveMatching,
     showPopup
   } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
+
+  import { createTab, tabsStore, tabIdStore } from '../workbench'
+  import { WorkbenchTabs } from '../index'
+  import WorkbenchTabPresenter from './WorkbenchTabPresenter.svelte'
 
   export let popup: boolean = false
 
@@ -67,7 +66,7 @@
     {#if $tabsStore.length > 1}
       <IconButton
         bind:element
-        icon={IconMoreH}
+        icon={ui.icon.DotsHorizontal}
         iconProps={{ fill: 'var(--theme-dark-color)' }}
         size="extra-small"
         kind="tertiary"
@@ -79,7 +78,7 @@
   {/if}
   {#if !popup}
     <IconButton
-      icon={IconAdd}
+      icon={ui.icon.Plus}
       iconProps={{ fill: 'var(--theme-dark-color)' }}
       size="extra-small"
       kind="tertiary"

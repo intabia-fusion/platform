@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Icon, IconEdit, Component } from '@hcengineering/ui'
+  import ui, { Icon, Component } from '@hcengineering/ui'
   import { ObjectPresenter } from '@hcengineering/view-resources'
   import { getClient } from '@hcengineering/presentation'
   import type { Doc, Ref, Space } from '@hcengineering/core'
@@ -38,7 +38,7 @@
   })
 
   $: viewletConfig = viewlet?.config?.[attributeModel.key]
-  $: _icon = viewletConfig?.icon ?? attributeModel.attribute?.icon ?? attributeModel.icon ?? IconEdit
+  $: _icon = viewletConfig?.icon ?? attributeModel.attribute?.icon ?? attributeModel.icon ?? ui.icon.PencilLine
   $: _space = space ?? (typeof attributeValues[0] === 'object' ? attributeValues[0]?.space : undefined)
 </script>
 

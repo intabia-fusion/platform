@@ -27,18 +27,18 @@
   } from '@hcengineering/presentation'
   import { EmptyMarkup } from '@hcengineering/text'
   import { StyledTextBox } from '@hcengineering/text-editor-resources'
-  import {
+  import ui, {
     Button,
     EditBox,
     FocusHandler,
     Icon,
-    IconClose,
     createFocusManager,
     getUserTimezone,
     showPopup,
     Scroller
   } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+
   import calendar from '../plugin'
   import { saveUTC } from '../utils'
   import CalendarSelector from './CalendarSelector.svelte'
@@ -216,7 +216,7 @@
       <Button
         id="card-close"
         focusIndex={10003}
-        icon={IconClose}
+        icon={ui.icon.Cross}
         kind="ghost"
         size="small"
         on:click={() => {

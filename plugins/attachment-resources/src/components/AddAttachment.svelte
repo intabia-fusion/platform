@@ -16,8 +16,9 @@
   import type { Attachment } from '@hcengineering/attachment'
   import type { Class, Data, Doc, Ref, Space } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { Button, IconAdd } from '@hcengineering/ui'
+  import ui, { Button } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+
   import { createAttachments } from '../utils'
   import attachment from '../plugin'
 
@@ -60,7 +61,7 @@
   {#if $$slots.control}
     <slot name="control" click={openFile} />
   {:else}
-    <Button icon={IconAdd} kind="ghost" on:click={openFile} />
+    <Button icon={ui.icon.Plus} kind="ghost" on:click={openFile} />
   {/if}
   <input
     bind:this={inputFile}

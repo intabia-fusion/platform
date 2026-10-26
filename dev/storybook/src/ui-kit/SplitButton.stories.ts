@@ -14,7 +14,7 @@
 //
 
 import { getEmbeddedLabel } from '@hcengineering/platform'
-import { IconAdd, IconSettings, IconUpOutline } from '@hcengineering/ui'
+import ui from '@hcengineering/ui'
 import { SplitButton } from '@hcengineering/ui/kit'
 import type { Meta, StoryObj } from '@storybook/svelte'
 
@@ -24,7 +24,7 @@ import { axis } from '../helpers/matrix'
 const kinds = ['primary', 'brand', 'secondary', 'ghost', 'positive', 'negative', 'light', 'dark'] as const
 const sizes = ['extra-large', 'large', 'medium', 'small', 'extra-small'] as const
 const label = getEmbeddedLabel('Create issue')
-const iconOnly = { icon: IconSettings, tooltip: { label: getEmbeddedLabel('Settings') } }
+const iconOnly = { icon: ui.icon.Sliders, tooltip: { label: getEmbeddedLabel('Settings') } }
 
 const meta = {
   title: 'Buttons/SplitButton',
@@ -64,7 +64,7 @@ export const Variants: Story = {
           rows: axis('kind', kinds),
           columns: [
             { title: 'default', props: {} },
-            { title: 'with icon', props: { icon: IconAdd } },
+            { title: 'with icon', props: { icon: ui.icon.Plus } },
             { title: 'menu open', props: { menuPressed: true } },
             { title: 'loading', props: { loading: true } },
             { title: 'disabled', props: { disabled: true } },
@@ -85,7 +85,7 @@ export const Variants: Story = {
           rows: axis('kind', kinds),
           columns: [
             { title: 'default', props: {} },
-            { title: 'menu up', props: { menuIcon: IconUpOutline } },
+            { title: 'menu up', props: { menuIcon: ui.icon.ChevronUpSmall } },
             { title: 'menu open', props: { menuPressed: true } },
             { title: 'loading', props: { loading: true } },
             { title: 'disabled', props: { disabled: true } }
@@ -97,7 +97,13 @@ export const Variants: Story = {
           component: SplitButton,
           rows: [{ title: 'brand', props: { kind: 'brand' } }],
           columns: [{ title: 'fill', props: {} }],
-          props: { label: getEmbeddedLabel('New issue'), icon: IconAdd, fill: true, alignStart: true, size: 'medium' }
+          props: {
+            label: getEmbeddedLabel('New issue'),
+            icon: ui.icon.Plus,
+            fill: true,
+            alignStart: true,
+            size: 'medium'
+          }
         }
       ]
     }

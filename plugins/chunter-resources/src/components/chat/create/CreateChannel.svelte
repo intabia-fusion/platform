@@ -14,13 +14,12 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { ModernEditbox, Label, Modal, TextArea } from '@hcengineering/ui'
+  import ui, { ModernEditbox, Label, Modal, TextArea } from '@hcengineering/ui'
   import { MenuButton } from '@hcengineering/ui/kit'
   import presentation, { getClient } from '@hcengineering/presentation'
   import core, { getCurrentAccount } from '@hcengineering/core'
   import contact, { getCurrentEmployee } from '@hcengineering/contact'
 
-  import Lock from '../../icons/Lock.svelte'
   import chunter from '../../../plugin'
   import { openChunterSpace } from '../../../navigation'
 
@@ -35,7 +34,7 @@
     },
     {
       id: 'private',
-      icon: Lock,
+      icon: ui.icon.Lock,
       label: chunter.string.Private
     }
   ]

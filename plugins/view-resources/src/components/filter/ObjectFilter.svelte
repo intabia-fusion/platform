@@ -23,8 +23,6 @@
     deviceOptionsStore,
     EditWithIcon,
     Icon,
-    IconCheck,
-    IconSearch,
     Label,
     Loading,
     resizeObserver,
@@ -33,6 +31,7 @@
   } from '@hcengineering/ui'
   import type { Filter, GrouppingManager } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
+
   import { FILTER_DEBOUNCE_MS, sortFilterValues } from '../../filter'
   import view from '../../plugin'
   import { buildConfigLookup, getPresenter } from '../../utils'
@@ -218,7 +217,7 @@
   {#if clazz.filteringKey}
     <div class="header">
       <EditWithIcon
-        icon={IconSearch}
+        icon={ui.icon.Search}
         size="large"
         width="100%"
         autoFocus={!$deviceOptionsStore.isMobile}
@@ -258,7 +257,7 @@
                 </div>
                 <div class="pointer-events-none">
                   {#if isSelected(value, filter.value)}
-                    <Icon icon={IconCheck} size="small" />
+                    <Icon icon={ui.icon.Check} size="small" />
                   {/if}
                 </div>
               </div>

@@ -49,23 +49,20 @@
   import type { Issue, Project } from '@hcengineering/tracker'
   import { IssuePriority, IssuesGrouping, IssuesOrdering, reduceChildInfoTree } from '@hcengineering/tracker'
   import type { BlankViewProps, ColorDefinition, SelectPopupValueType } from '@hcengineering/ui'
-  import {
+  import ui, {
     Button,
     Component,
     defaultBackground,
     getPlatformAvatarColorForTextDef,
     getPlatformColorDef,
-    IconAdd,
-    IconChevronDown,
-    IconChevronRight,
-    IconMixin,
     SelectPopup,
     eventToHTMLElement,
     Label,
     BlankView,
     Loading,
     showPopup,
-    themeStore
+    themeStore,
+    Icon
   } from '@hcengineering/ui'
   import type { AttributeModel, BuildModelKey, Viewlet, ViewOptionModel, ViewOptions } from '@hcengineering/view'
   import view from '@hcengineering/view'
@@ -803,7 +800,7 @@
                   toggleHeaderNames(String(state))
                 }}
               >
-                <IconChevronDown size="small" />
+                <Icon icon={ui.icon.ChevronDown} size="small" />
                 {#if !expandedHeaders.has(String(state))}<span>+{members.length - MERGED_NAMES}</span>{/if}
               </div>
             {/if}
@@ -815,13 +812,13 @@
         {#if !collapsed}
           <div class="tools flex-row-center flex-no-shrink gap-1">
             <Button
-              icon={IconChevronRight}
+              icon={ui.icon.ChevronRight}
               kind="ghost"
               showTooltip={{ label: tracker.string.CollapseColumn, direction: 'left' }}
               on:click={toggle}
             />
             <Button
-              icon={IconMixin}
+              icon={ui.icon.LayoutSplit}
               kind="ghost"
               showTooltip={{ label: tracker.string.MergeColumns, direction: 'left' }}
               on:click={(ev) => {
@@ -829,7 +826,7 @@
               }}
             />
             <Button
-              icon={IconAdd}
+              icon={ui.icon.Plus}
               kind="ghost"
               showTooltip={{ label: tracker.string.AddIssueTooltip, direction: 'left' }}
               on:click={() => {

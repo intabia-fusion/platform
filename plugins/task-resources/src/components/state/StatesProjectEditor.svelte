@@ -20,9 +20,10 @@
   import { settingsStore } from '@hcengineering/setting-resources'
   import type { ProjectStatus, ProjectType, TaskType } from '@hcengineering/task'
   import { getStatusCategoryOrder } from '@hcengineering/task'
-  import { IconMoreV2, IconOpenedArrow, Label } from '@hcengineering/ui'
+  import ui, { Label, Icon } from '@hcengineering/ui'
   import { ObjectPresenter, statusStore } from '@hcengineering/view-resources'
   import { createEventDispatcher, onDestroy } from 'svelte'
+
   import task from '../../plugin'
 
   // Absent: the statuses of the whole project type, reordered inside a category only
@@ -253,7 +254,7 @@
           }}
         >
           <button class="hulyTableAttr-content__row-dragMenu" on:click|stopPropagation={() => {}}>
-            <IconMoreV2 size="small" />
+            <Icon icon={ui.icon.GripVertical} size="small" />
           </button>
           <ObjectPresenter
             _class={state._class}
@@ -266,7 +267,7 @@
           </div>
           {#if !projectMode}
             <div class="hulyTableAttr-content__row-arrow">
-              <IconOpenedArrow size="small" />
+              <Icon icon={ui.icon.ChevronRightSmall} size="small" />
             </div>
           {/if}
         </button>

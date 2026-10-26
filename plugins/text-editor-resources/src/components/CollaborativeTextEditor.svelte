@@ -34,11 +34,10 @@
   import { isDocCreatedByAccount } from '@hcengineering/contact'
   import { markupToJSON } from '@hcengineering/text'
   import type { AnySvelteComponent, IconSize, PopupAlignment } from '@hcengineering/ui'
-  import {
+  import ui, {
     Button,
     getEventPositionElement,
     getPopupPositionElement,
-    IconScribble,
     Loading,
     themeStore,
     ThrottledCaller
@@ -49,7 +48,6 @@
   import { isChangeOrigin } from '@tiptap/extension-collaboration'
   import { createEventDispatcher, getContext, onDestroy, onMount, tick } from 'svelte'
   import { Doc as YDoc } from 'yjs'
-
   import type {
     CollaborationUser,
     RefAction,
@@ -57,6 +55,7 @@
     TextEditorHandler
   } from '@hcengineering/text-editor'
   import textEditor, { CollaborationIds } from '@hcengineering/text-editor'
+
   import type { EditorKitOptions } from '../kits/editor-kit'
   import { getEditorKit } from '../kits/editor-kit'
   import { registerEditor, unregisterEditor } from '../editorRegistry'
@@ -65,7 +64,6 @@
   import type { Provider } from '../provider/types'
   import { createRemoteProvider } from '../provider/utils'
   import { addTableHandler } from '../utils'
-
   import { noSelectionRender, renderCursor } from './editor/collaboration'
   import { defaultEditorAttributes } from './editor/editorProps'
   import type { SavedBoard } from './extension/drawingBoard'
@@ -451,7 +449,7 @@
             { id: 'code-block', label: textEditor.string.CodeBlock, icon: view.icon.CodeBlock },
             { id: 'separator-line', label: textEditor.string.SeparatorLine, icon: view.icon.SeparatorLine },
             { id: 'todo-list', label: textEditor.string.TodoItem, icon: view.icon.TodoList },
-            { id: 'drawing-board', label: textEditor.string.DrawingBoard, icon: IconScribble as any },
+            { id: 'drawing-board', label: textEditor.string.DrawingBoard, icon: ui.icon.Scribble },
             { id: 'mermaid', label: textEditor.string.MermaidDiargram, icon: view.icon.Model }
           ],
           handleSelect: handleLeftMenuClick

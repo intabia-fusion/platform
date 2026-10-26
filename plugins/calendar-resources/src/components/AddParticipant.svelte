@@ -24,8 +24,9 @@
   import type { Integration } from '@hcengineering/setting'
   import setting from '@hcengineering/setting'
   import { themeStore } from '@hcengineering/theme'
-  import { Button, IconAdd, closePopup, registerFocus, resizeObserver, showPopup } from '@hcengineering/ui'
+  import ui, { Button, closePopup, registerFocus, resizeObserver, showPopup } from '@hcengineering/ui'
   import { afterUpdate, createEventDispatcher, onMount } from 'svelte'
+
   import calendar from '../plugin'
   import ParticipantsPopup from './ParticipantsPopup.svelte'
 
@@ -222,7 +223,7 @@
         focusIndex={2}
         kind="ghost"
         size="small"
-        icon={IconAdd}
+        icon={ui.icon.Plus}
         showTooltip={{
           label: contact.string.AddGuest
         }}

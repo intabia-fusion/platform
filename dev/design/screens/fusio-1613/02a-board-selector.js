@@ -6,7 +6,7 @@ const sel = boardView('Доска - выбор доски', 2020, 0)
 const single = BOARD.boards.filter((b) => b.visibility === 'all' && b.projects.length === 1)
 // A board pinned to the navigator shows it instead of its description
 const hintOf = (b) => (b.pinned ? 'в навигаторе' : b.hint)
-const pinIcon = (b) => (b.pinned ? 'view/pin' : 'board')
+const pinIcon = (b) => (b.pinned ? 'kit/PushPin' : 'board')
 const shared = BOARD.boards.filter((b) => b.visibility === 'all' && b.projects.length > 1)
 const menu = kit.Menu([
   { header: BOARD.project },
@@ -16,7 +16,7 @@ const menu = kit.Menu([
   ...shared.map((b) => ({ label: b.title, icon: 'board', selected: b.key === 'main', hint: b.projects.join(' · ') })),
   '-',
   { header: 'Мои доски' },
-  ...BOARD.boards.filter((b) => b.visibility === 'me').map((b) => ({ label: b.title, icon: b.pinned ? 'view/pin' : 'star', hint: hintOf(b) })),
+  ...BOARD.boards.filter((b) => b.visibility === 'me').map((b) => ({ label: b.title, icon: b.pinned ? 'kit/PushPin' : 'star', hint: hintOf(b) })),
   '-',
   { label: 'Создать доску', icon: 'plus', accent: true },
   { label: 'Настройки доски', icon: 'gear' }

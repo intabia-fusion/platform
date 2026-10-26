@@ -18,8 +18,6 @@
   import type { AnyComponent, AnySvelteComponent } from '@hcengineering/ui'
   import ui, {
     Component,
-    IconMenuOpen,
-    IconMenuClose,
     Header,
     Separator,
     getLocation,
@@ -32,6 +30,7 @@
   import { IconButton } from '@hcengineering/ui/kit'
   import type { Class, Doc, DocumentQuery, Ref, Space } from '@hcengineering/core'
   import { mergeQueries } from '@hcengineering/core'
+
   import ClassHeader from './ClassHeader.svelte'
 
   export let space: Ref<Space> | undefined = undefined
@@ -156,7 +155,7 @@
     <Header adaptive="disabled">
       <svelte:fragment slot="beforeTitle">
         <IconButton
-          icon={visibleNavigator ? IconMenuClose : IconMenuOpen}
+          icon={visibleNavigator ? ui.icon.TextOutdent : ui.icon.TextIndent}
           kind="tertiary"
           size="small"
           pressed={!visibleNavigator}

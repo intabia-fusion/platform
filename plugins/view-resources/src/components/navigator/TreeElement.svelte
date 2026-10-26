@@ -17,7 +17,7 @@
   import type { Doc, Ref } from '@hcengineering/core'
   import type { Asset, IntlString } from '@hcengineering/platform'
   import type { Action, AnySvelteComponent, IconSize } from '@hcengineering/ui'
-  import { ActionIcon, IconMoreH, Menu, showPopup, getTreeCollapsed, NavItem, NavGroup } from '@hcengineering/ui'
+  import ui, { ActionIcon, Menu, showPopup, getTreeCollapsed, NavItem, NavGroup } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
 
@@ -133,7 +133,7 @@
         />
       {:else if popupMenuActions.length > 0}
         <IconButton
-          icon={IconMoreH}
+          icon={ui.icon.DotsHorizontal}
           size="extra-small"
           kind="tertiary"
           tooltip={{ label: view.string.MoreActions, direction: 'top' }}
@@ -201,7 +201,7 @@
         />
       {:else if popupMenuActions.length > 0}
         <IconButton
-          icon={IconMoreH}
+          icon={ui.icon.DotsHorizontal}
           size="extra-small"
           kind="tertiary"
           {pressed}

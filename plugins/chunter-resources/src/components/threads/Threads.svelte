@@ -21,9 +21,8 @@
   import core, { getCurrentAccount, SortingOrder } from '@hcengineering/core'
   import { addTxListener, createQuery, getClient, removeTxListener } from '@hcengineering/presentation'
   import { onDestroy } from 'svelte'
-  import {
+  import ui, {
     BlankView,
-    IconOptions,
     Label,
     Lazy,
     Loading,
@@ -206,7 +205,7 @@
     <ModernDropdown
       items={sortItems}
       selected={sort}
-      icon={IconOptions}
+      icon={ui.icon.ArrowUpLines}
       iconSize="small"
       kind="secondary"
       size="small"

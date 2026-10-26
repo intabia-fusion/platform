@@ -16,16 +16,16 @@
 import document from '@hcengineering/document'
 import { loadMetadata } from '@hcengineering/platform'
 
-const icons = require('../assets/icons.svg') as string // eslint-disable-line
+// Icons the kit has: the ids stay, stored documents keep pointing at them.
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(document.icon, {
-  DocumentApplication: `${icons}#documentapplication`,
-  Document: `${icons}#document`,
-  Add: `${icons}#add`,
-  Teamspace: `${icons}#teamspace`,
-  References: `${icons}#references`,
-  History: `${icons}#history`,
-  Lock: `${icons}#lock`,
-  Unlock: `${icons}#unlock`,
-  Star: `${icons}#star`,
-  Starred: `${icons}#starred`
+  DocumentApplication: `${uiIcons}#document`,
+  Document: `${uiIcons}#document`,
+  Add: `${uiIcons}#plus`,
+  Teamspace: `${uiIcons}#books`,
+  References: `${uiIcons}#file-arrow-in`,
+  History: `${uiIcons}#clock`,
+  Lock: `${uiIcons}#lock`,
+  Unlock: `${uiIcons}#lock-open-line`,
+  Star: `${uiIcons}#star`
 })

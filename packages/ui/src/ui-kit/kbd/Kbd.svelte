@@ -13,10 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import type { Asset } from '@hcengineering/platform'
+
   import Icon from '../../components/Icon.svelte'
-  import KeyCommand from '../../components/icons/KeyCommand.svelte'
-  import KeyOption from '../../components/icons/KeyOption.svelte'
-  import KeyShift from '../../components/icons/KeyShift.svelte'
+  import ui from '../../plugin'
   import type { AnySvelteComponent } from '../../types'
   import type { KbdProps } from './types'
 
@@ -25,10 +25,10 @@
   export let keys: string[]
 
   // Key names are the same in every language, so a symbol is read out by its name, not translated.
-  const symbols: Record<string, { icon: AnySvelteComponent, name: string }> = {
-    shift: { icon: KeyShift, name: 'Shift' },
-    option: { icon: KeyOption, name: 'Option' },
-    command: { icon: KeyCommand, name: 'Command' }
+  const symbols: Record<string, { icon: Asset | AnySvelteComponent, name: string }> = {
+    shift: { icon: ui.icon.ArrowFatUp, name: 'Shift' },
+    option: { icon: ui.icon.Option, name: 'Option' },
+    command: { icon: ui.icon.Command, name: 'Command' }
   }
 </script>
 

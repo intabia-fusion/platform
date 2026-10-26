@@ -16,12 +16,9 @@
   import type { Enum } from '@hcengineering/core'
   import core from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
-  import {
+  import ui, {
     Breadcrumb,
     Header,
-    IconAdd,
-    IconMoreH,
-    IconTableOfContents,
     Label,
     Scroller,
     Separator,
@@ -32,6 +29,7 @@
   import { Button, IconButton } from '@hcengineering/ui/kit'
   import { showMenu } from '@hcengineering/view-resources'
   import view from '@hcengineering/view'
+
   import setting from '../plugin'
   import EnumValues from './EnumValues.svelte'
 
@@ -59,7 +57,7 @@
   <Header adaptive="disabled">
     <Breadcrumb icon={setting.icon.Enums} label={setting.string.Enums} size="large" isCurrent />
     <svelte:fragment slot="actions">
-      <Button kind="primary" icon={IconAdd} label={setting.string.CreateEnum} size="small" on:click={create} />
+      <Button kind="primary" icon={ui.icon.Plus} label={setting.string.CreateEnum} size="small" on:click={create} />
     </svelte:fragment>
   </Header>
   <div class="hulyComponent-content__container columns">
@@ -68,7 +66,7 @@
         <div class="hulyComponent-content__navHeader-menu">
           <IconButton
             kind="tertiary"
-            icon={IconTableOfContents}
+            icon={ui.icon.PanelRight}
             size="small"
             inheritColor
             tooltip={{ label: setting.string.Enums }}
@@ -97,7 +95,7 @@
             <IconButton
               tooltip={{ label: view.string.MoreActions }}
               kind="tertiary"
-              icon={IconMoreH}
+              icon={ui.icon.DotsHorizontal}
               size="small"
               pressed={hovered === i}
               on:click={(ev) => {

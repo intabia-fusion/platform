@@ -7,7 +7,8 @@
   import type { DocumentComment } from '@hcengineering/controlled-documents'
   import documents from '@hcengineering/controlled-documents'
   import { ThreadView } from '@hcengineering/chunter-resources'
-  import { Button, IconCheckCircle, Label } from '@hcengineering/ui'
+  import ui, { Button, Label } from '@hcengineering/ui'
+
   import {
     $canAddDocumentCommentsFeedback as canAddDocumentCommentsFeedback,
     resolveCommentFx
@@ -43,7 +44,7 @@
       {#if $canAddDocumentCommentsFeedback}
         <div class="tools">
           <Button
-            icon={resolved ? IconCheckCircle : documents.icon.CheckmarkCircle}
+            icon={resolved ? ui.icon.CheckCircleFill : ui.icon.CheckCircle}
             iconProps={{ size: 'medium', fill: resolved ? 'var(--theme-docs-accepted-color)' : undefined }}
             kind="icon"
             showTooltip={{ label: resolved ? documents.string.Unresolve : documents.string.Resolve }}

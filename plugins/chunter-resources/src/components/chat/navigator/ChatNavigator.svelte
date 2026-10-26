@@ -16,7 +16,7 @@
 <script lang="ts">
   import type { Doc } from '@hcengineering/core'
   import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
-  import { Scroller, Label, IconEdit, showPopup, Menu, SearchInput } from '@hcengineering/ui'
+  import ui, { Scroller, Label, showPopup, Menu, SearchInput } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import type { SpecialNavModel } from '@hcengineering/workbench'
   import { NavLink } from '@hcengineering/view-resources'
@@ -25,7 +25,6 @@
   import presentation, { createQuery } from '@hcengineering/presentation'
   import type { Employee } from '@hcengineering/contact'
   import contact from '@hcengineering/contact'
-
   import view from '@hcengineering/view'
 
   import chunter from '../../../plugin'
@@ -141,7 +140,7 @@
     <div class="header-actions">
       <SearchInput bind:value={search} collapsed kind="ghost" width="100%" />
       <IconButton
-        icon={IconEdit}
+        icon={ui.icon.PencilLine}
         hasMenu
         {pressed}
         size="small"

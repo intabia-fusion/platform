@@ -20,15 +20,7 @@
   import type { Issue, Project } from '@hcengineering/tracker'
   import { TrackerEvents } from '@hcengineering/tracker'
   import type { IModeSelector } from '@hcengineering/ui'
-  import {
-    BlankView,
-    type DropdownIntlItem,
-    IconMixin,
-    IconMoreH,
-    IconUndo,
-    showPopup,
-    themeStore
-  } from '@hcengineering/ui'
+  import ui, { BlankView, type DropdownIntlItem, showPopup, themeStore } from '@hcengineering/ui'
   import { columnControlStore } from '@hcengineering/kanban'
   import { MenuButton } from '@hcengineering/ui/kit'
   import type { ViewOptions, Viewlet } from '@hcengineering/view'
@@ -131,10 +123,10 @@
       }
     ],
     ...(columnControls?.canMergeByGroup === true && viewOptions?.groupBy?.[0] === 'status'
-      ? [{ id: MERGE_BY_CATEGORY_ITEM_ID, label: tracker.string.MergeColumnsByCategory, icon: IconMixin }]
+      ? [{ id: MERGE_BY_CATEGORY_ITEM_ID, label: tracker.string.MergeColumnsByCategory, icon: ui.icon.LayoutSplit }]
       : []),
     ...(columnControls?.merged === true
-      ? [{ id: RESET_MERGE_ITEM_ID, label: tracker.string.ResetMergedColumns, icon: IconUndo }]
+      ? [{ id: RESET_MERGE_ITEM_ID, label: tracker.string.ResetMergedColumns, icon: ui.icon.ArrowUturnLeft }]
       : [])
   ] satisfies DropdownIntlItem[]
 
@@ -234,7 +226,7 @@
   <svelte:fragment slot="actions">
     {#if menuItems.length > 0}
       <MenuButton
-        icon={IconMoreH}
+        icon={ui.icon.DotsHorizontal}
         kind="secondary"
         size="small"
         noSelection

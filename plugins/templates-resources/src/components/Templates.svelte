@@ -6,12 +6,10 @@
   import type { MessageTemplate, TemplateCategory } from '@hcengineering/templates'
   import { StyledTextEditor } from '@hcengineering/text-editor-resources'
   import type { Action } from '@hcengineering/ui'
-  import {
+  import ui, {
     Button,
     EditBox,
     eventToHTMLElement,
-    IconAdd,
-    IconEdit,
     Label,
     showPopup,
     Header,
@@ -22,6 +20,7 @@
     Scroller
   } from '@hcengineering/ui'
   import { getActions as getContributedActions, TreeItem, TreeNode } from '@hcengineering/view-resources'
+
   import templatesPlugin from '../plugin'
   import CreateTemplateCategory from './CreateTemplateCategory.svelte'
   import FieldPopup from './FieldPopup.svelte'
@@ -112,7 +111,7 @@
     const extraActions = await getContributedActions(client, t)
     for (const act of extraActions) {
       result.push({
-        icon: act.icon ?? IconEdit,
+        icon: act.icon ?? ui.icon.PencilLine,
         label: act.label,
         action: async (ctx: any, evt: Event) => {
           const impl = await getResource(act.action)
@@ -125,7 +124,7 @@
 
   const addSpace: Action = {
     label: templatesPlugin.string.CreateTemplateCategory,
-    icon: IconAdd,
+    icon: ui.icon.Plus,
     action: async (): Promise<void> => {
       showPopup(CreateTemplateCategory, {}, 'top')
     }
@@ -136,7 +135,7 @@
     const extraActions = await getContributedActions(client, space, core.class.Space)
     for (const act of extraActions) {
       result.push({
-        icon: act.icon ?? IconEdit,
+        icon: act.icon ?? ui.icon.PencilLine,
         label: act.label,
         action: async (ctx: any, evt: Event) => {
           const impl = await getResource(act.action)

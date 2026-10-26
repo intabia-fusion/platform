@@ -19,10 +19,10 @@
   import { DateRangeMode } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import type { Applicant, Review } from '@hcengineering/recruit'
-  import { Button, DatePresenter, IconAdd, Label, Scroller, showPopup } from '@hcengineering/ui'
+  import ui, { Button, DatePresenter, Label, Scroller, showPopup } from '@hcengineering/ui'
   import { Table } from '@hcengineering/view-resources'
+
   import recruit from '../../plugin'
-  import FileDuo from '../icons/FileDuo.svelte'
   import SectionEmpty from '../SectionEmpty.svelte'
   import CreateReview from './CreateReview.svelte'
 
@@ -60,7 +60,7 @@
       <Label {label} />
     </span>
     {#if !readonly}
-      <Button icon={IconAdd} kind="ghost" on:click={createApp} />
+      <Button icon={ui.icon.Plus} kind="ghost" on:click={createApp} />
     {/if}
   </div>
   {#if reviews > 0}
@@ -96,7 +96,7 @@
       />
     </Scroller>
   {:else}
-    <SectionEmpty icon={FileDuo} label={recruit.string.NoReviewForCandidate}>
+    <SectionEmpty icon={ui.icon.Document} label={recruit.string.NoReviewForCandidate}>
       {#if !readonly}
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <!-- svelte-ignore a11y-no-static-element-interactions -->

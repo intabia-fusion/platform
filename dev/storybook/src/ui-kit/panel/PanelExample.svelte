@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { IconHistory, IconLink, IconMoreH, IconShare } from '@hcengineering/ui'
+  import ui from '@hcengineering/ui'
   import { Breadcrumbs, IconButton, Panel, type ButtonGroupItem, type PanelProps } from '@hcengineering/ui/kit'
 
   export let props: PanelProps = {}
@@ -25,8 +25,8 @@
   const t = getEmbeddedLabel
 
   const asides: ButtonGroupItem[] = [
-    { id: 'links', icon: IconShare, tooltip: { label: t('Backlinks') } },
-    { id: 'history', icon: IconHistory, tooltip: { label: t('History') } }
+    { id: 'links', icon: ui.icon.BoxArrowUp, tooltip: { label: t('Backlinks') } },
+    { id: 'history', icon: ui.icon.ClockCounterClockwise, tooltip: { label: t('History') } }
   ]
 </script>
 
@@ -36,8 +36,20 @@
     <Panel {...props} customAside={customAsides ? asides : undefined}>
       <Breadcrumbs slot="title" items={[{ label: t('Website') }, { label: t('WEB-128') }]} />
       <svelte:fragment slot="utils">
-        <IconButton icon={IconLink} kind="ghost" size="small" iconSize="medium" tooltip={{ label: t('Copy link') }} />
-        <IconButton icon={IconMoreH} kind="ghost" size="small" iconSize="medium" tooltip={{ label: t('More') }} />
+        <IconButton
+          icon={ui.icon.Link}
+          kind="ghost"
+          size="small"
+          iconSize="medium"
+          tooltip={{ label: t('Copy link') }}
+        />
+        <IconButton
+          icon={ui.icon.DotsHorizontal}
+          kind="ghost"
+          size="small"
+          iconSize="medium"
+          tooltip={{ label: t('More') }}
+        />
       </svelte:fragment>
       <div class="panel-example__content">Content</div>
       <div slot="aside" class="panel-example__aside">Properties</div>

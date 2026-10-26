@@ -1,9 +1,10 @@
-import { type AnySvelteComponent, ModernPopup, showPopup } from '@hcengineering/ui'
+import { type IconComponent, ModernPopup, showPopup } from '@hcengineering/ui'
+
 import { handleSvg } from './icons'
 
 export interface OptionItem {
   id: string
-  icon: AnySvelteComponent
+  icon: IconComponent
   label: string
   action: () => void
 }

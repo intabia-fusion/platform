@@ -17,12 +17,10 @@
   import core from '@hcengineering/core'
   import presentation, { getClient } from '@hcengineering/presentation'
   import type { Context, Func, Process, ProcessFunction, SelectedContext } from '@hcengineering/process'
-  import {
+  import ui, {
     CheckBox,
     closeTooltip,
     eventToHTMLElement,
-    IconClose,
-    IconSettings,
     Label,
     resizeObserver,
     Scroller,
@@ -32,6 +30,7 @@
   import { IconButton } from '@hcengineering/ui/kit'
   import type { AttributeCategory } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
+
   import plugin from '../../plugin'
   import FallbackEditor from '../contextEditors/FallbackEditor.svelte'
 
@@ -341,7 +340,7 @@
             <div>
               {#if getFunction(f.func).editor}
                 <IconButton
-                  icon={IconSettings}
+                  icon={ui.icon.Sliders}
                   size="small"
                   kind="tertiary"
                   tooltip={{ label: plugin.string.Settings }}
@@ -351,7 +350,7 @@
                 />
               {/if}
               <IconButton
-                icon={IconClose}
+                icon={ui.icon.Cross}
                 size="small"
                 kind="tertiary"
                 tooltip={{ label: presentation.string.Remove }}

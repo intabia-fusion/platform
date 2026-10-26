@@ -19,13 +19,11 @@
   import { createQuery, getClient } from '@hcengineering/presentation'
   import type { Issue } from '@hcengineering/tracker'
   import type { SelectPopupValueType } from '@hcengineering/ui'
-  import {
+  import ui, {
     Button,
     ButtonWithDropdown,
     Chevron,
     ExpandCollapse,
-    IconAdd,
-    IconDropdown,
     closeTooltip,
     resizeObserver,
     showPopup
@@ -34,6 +32,7 @@
   import type { ViewOptions, Viewlet, ViewletPreference } from '@hcengineering/view'
   import view from '@hcengineering/view'
   import { ViewletsSettingButton, restrictionStore } from '@hcengineering/view-resources'
+
   import tracker from '../../../plugin'
   import CreateIssue from '../../CreateIssue.svelte'
   import SubIssueList from './SubIssueList.svelte'
@@ -162,7 +161,7 @@
       {#if hasSubIssues}
         <Button
           id="add-sub-issue"
-          icon={IconAdd}
+          icon={ui.icon.Plus}
           kind="ghost"
           showTooltip={{ label: createLabel, direction: 'bottom' }}
           on:click={() => {
@@ -174,12 +173,12 @@
       {:else if dropdownItems !== undefined}
         <ButtonWithDropdown
           mainButtonId="add-sub-issue"
-          icon={IconAdd}
+          icon={ui.icon.Plus}
           label={createLabel}
           labelParams={{ subIssues: 0 }}
           kind="ghost"
           {dropdownItems}
-          dropdownIcon={IconDropdown}
+          dropdownIcon={ui.icon.ChevronDown}
           showTooltipMain={{ label: createLabel, direction: 'bottom' }}
           on:click={() => {
             isCollapsed = false
@@ -194,7 +193,7 @@
       {:else}
         <Button
           id="add-sub-issue"
-          icon={IconAdd}
+          icon={ui.icon.Plus}
           label={createLabel}
           labelParams={{ subIssues: 0 }}
           kind="ghost"

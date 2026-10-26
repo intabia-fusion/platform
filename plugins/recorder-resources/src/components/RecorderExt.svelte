@@ -18,8 +18,6 @@
   import { onDestroy } from 'svelte'
 
   import IconRec from './icons/Rec.svelte'
-  import IconRecordOn from './icons/RecordOn.svelte'
-
   import plugin from '../plugin'
   import { cancelRecording, recorderState, record, stopRecording } from '../recording'
   import { formatElapsedTime } from '../utils'
@@ -57,7 +55,7 @@
       style="padding-left: 0.25rem"
       on:click={handleRecClick}
     >
-      <Icon icon={IconRecordOn} iconProps={{ fill: 'var(--theme-dark-color)' }} size="small" />
+      <Icon icon={plugin.icon.Recording} iconProps={{ fill: 'var(--theme-dark-color)' }} size="small" />
       <Icon icon={IconRec} iconProps={{ fill: 'var(--theme-dark-color)' }} size="small" />
     </button>
   {/if}

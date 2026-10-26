@@ -17,7 +17,7 @@
   import { getClient } from '@hcengineering/presentation'
   import type { Process, Trigger } from '@hcengineering/process'
   import { parseContext } from '@hcengineering/process'
-  import { Component, Icon, IconError, Label, tooltip } from '@hcengineering/ui'
+  import ui, { Component, Icon, Label, tooltip } from '@hcengineering/ui'
 
   export let value: Ref<Trigger>
   export let process: Process
@@ -55,7 +55,11 @@
 
 {#if trigger}
   <div class="flex-row-center flex-gap-1" use:tooltip={{ label: trigger.label }}>
-    <Icon icon={error ? IconError : trigger.icon} size="medium" />
+    <Icon
+      icon={error ? ui.icon.ExclamationCircle : trigger.icon}
+      size="medium"
+      fill={error ? 'var(--theme-error-color)' : 'currentColor'}
+    />
     {#if withLabel}
       <Label label={trigger.label} />
       {#if trigger.presenter}

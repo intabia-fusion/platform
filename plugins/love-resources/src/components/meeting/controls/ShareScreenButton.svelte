@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { eventToHTMLElement, IconUpOutline, showPopup, SplitButton } from '@hcengineering/ui'
+  import ui, { eventToHTMLElement, showPopup, SplitButton } from '@hcengineering/ui'
+  import { createEventDispatcher } from 'svelte'
+
   import { isShareWithSound, liveKitClient } from '../../../utils'
   import ShareSettingPopup from '../../ShareSettingPopup.svelte'
   import love from '../../../plugin'
   import { lkSessionConnected, ScreenSharingState, screenSharingState } from '../../../liveKitClient'
-  import { createEventDispatcher } from 'svelte'
 
   export let size: 'large' | 'medium' | 'small' | 'extra-small' | 'min' = 'large'
 
@@ -33,7 +34,7 @@
   showTooltip={{ label: localScreenShare ? love.string.StopShare : love.string.Share }}
   disabled={$screenSharingState === ScreenSharingState.Remote || !$lkSessionConnected}
   action={changeShare}
-  secondIcon={IconUpOutline}
+  secondIcon={ui.icon.ChevronUpSmall}
   secondAction={shareSettings}
   separate
 />

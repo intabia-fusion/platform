@@ -20,7 +20,7 @@
   import IconButton from '../ui-kit/button/IconButton.svelte'
   import ui from '../plugin'
   import type { AnySvelteComponent, IconSize } from '../index'
-  import { Icon, IconClose, Label, tooltip } from '../index'
+  import { Icon, Label, tooltip } from '../index'
 
   export let label: string | undefined = undefined
   export let labelIntl: IntlString | undefined = undefined
@@ -88,7 +88,7 @@
   {#if canClose && !readonly}
     <div class="close-button {orientation}">
       <IconButton
-        icon={IconClose}
+        icon={ui.icon.Cross}
         kind="tertiary"
         iconSize="x-small"
         size="min"

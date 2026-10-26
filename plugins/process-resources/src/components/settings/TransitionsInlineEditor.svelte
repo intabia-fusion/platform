@@ -15,12 +15,13 @@
 <script lang="ts">
   import type { Doc, Ref } from '@hcengineering/core'
   import type { Process, Transition } from '@hcengineering/process'
-  import { Button, getCurrentLocation, IconAdd, Label, navigate, showPopup } from '@hcengineering/ui'
+  import ui, { Button, getCurrentLocation, Label, navigate, showPopup } from '@hcengineering/ui'
+  import { SortableDocList } from '@hcengineering/view-resources'
+
   import plugin from '../../plugin'
   import AddTransitionPopup from './AddTransitionPopup.svelte'
   import TransitionPresenter from './TransitionPresenter.svelte'
   import TriggerPresenter from './TriggerPresenter.svelte'
-  import { SortableDocList } from '@hcengineering/view-resources'
 
   export let process: Process
   export let readonly: boolean
@@ -68,7 +69,13 @@
     </svelte:fragment>
   </SortableDocList>
   {#if !readonly}
-    <Button kind="ghost" width="100%" icon={IconAdd} label={plugin.string.AddTransition} on:click={addTransition} />
+    <Button
+      kind="ghost"
+      width="100%"
+      icon={ui.icon.Plus}
+      label={plugin.string.AddTransition}
+      on:click={addTransition}
+    />
   {/if}
 </div>
 

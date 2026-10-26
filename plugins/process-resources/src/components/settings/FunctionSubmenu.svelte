@@ -16,8 +16,9 @@
   import type { AnyAttribute, Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import type { Context, Func, Process, ProcessFunction } from '@hcengineering/process'
-  import { eventToHTMLElement, IconSettings, Label, showPopup } from '@hcengineering/ui'
+  import ui, { eventToHTMLElement, Label, showPopup } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
+
   import plugin from '../../plugin'
 
   export let attribute: AnyAttribute
@@ -62,7 +63,7 @@
   </span>
   {#if getFunction(func.func).editor}
     <IconButton
-      icon={IconSettings}
+      icon={ui.icon.Sliders}
       size="small"
       kind="tertiary"
       tooltip={{ label: plugin.string.Settings }}

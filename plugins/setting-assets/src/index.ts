@@ -16,25 +16,26 @@
 import { loadMetadata } from '@hcengineering/platform'
 import setting from '@hcengineering/setting'
 
-const icons = require('../assets/icons.svg') as string // eslint-disable-line
+// Icons the kit has: the ids stay, stored documents keep pointing at them.
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(setting.icon, {
-  AccountSettings: `${icons}#accountSettings`,
-  Members: `${icons}#owners`,
-  Password: `${icons}#password`,
-  Setting: `${icons}#settings`,
-  Integrations: `${icons}#integration`,
-  Support: `${icons}#support`,
-  Privacy: `${icons}#privacy`,
-  Terms: `${icons}#terms`,
-  Signout: `${icons}#signout`,
-  SelectWorkspace: `${icons}#selectWorkspace`,
-  Clazz: `${icons}#clazz`,
-  Enums: `${icons}#enums`,
-  InviteSettings: `${icons}#inviteSettings`,
-  InviteWorkspace: `${icons}#inviteWorkspace`,
-  Views: `${icons}#views`,
-  Relations: `${icons}#relation`,
-  Mailbox: `${icons}#mailbox`,
-  OfficeSettings: `${icons}#office`,
-  Reset: `${icons}#reset`
+  AccountSettings: `${uiIcons}#person`,
+  Members: `${uiIcons}#people`,
+  Password: `${uiIcons}#key`,
+  Setting: `${uiIcons}#gear`,
+  Integrations: `${uiIcons}#cube`,
+  Support: `${uiIcons}#question-circle`,
+  Privacy: `${uiIcons}#shield-half`,
+  Terms: `${uiIcons}#document`,
+  Signout: `${uiIcons}#arrow-out`,
+  SelectWorkspace: `${uiIcons}#arrow-in`,
+  Clazz: `${uiIcons}#code`,
+  Enums: `${uiIcons}#bullet-list`,
+  InviteSettings: `${uiIcons}#envelope`,
+  InviteWorkspace: `${uiIcons}#person-plus`,
+  Views: `${uiIcons}#layers-fill`,
+  Relations: `${uiIcons}#arrows-horizontal`,
+  Mailbox: `${uiIcons}#mailbox`,
+  OfficeSettings: `${uiIcons}#building`,
+  Reset: `${uiIcons}#arrows-clockwise`
 })

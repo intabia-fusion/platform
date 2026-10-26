@@ -15,7 +15,7 @@
   import { createEventDispatcher } from 'svelte'
   import type { Class, Doc, Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { Button, IconAdd, Label, ModernEditbox } from '@hcengineering/ui'
+  import ui, { Button, Label, ModernEditbox } from '@hcengineering/ui'
   import type { WorkflowFieldValue } from '@hcengineering/workflow'
 
   import plugin from '../../../../plugin'
@@ -117,7 +117,7 @@
     {#if contextOptions.length > 0}
       <div class="box-actions">
         <Button
-          icon={IconAdd}
+          icon={ui.icon.Plus}
           kind="ghost"
           disabled={row.fieldKey === ''}
           on:click={(e) => {

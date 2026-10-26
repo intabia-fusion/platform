@@ -13,6 +13,7 @@
       "default": "./src/ui-kit/index.ts"
     },
     "./src/*": "./src/*.ts",
+    "./assets/*": "./assets/*",
     "./lang/*.json": "./lang/*.json",
     "./package.json": "./package.json"
   },

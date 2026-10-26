@@ -11,8 +11,6 @@
     Button,
     Expandable,
     Icon,
-    IconColStar,
-    IconMoreV,
     Label,
     Menu,
     SearchEdit,
@@ -203,7 +201,7 @@
               </div>
               <div class="ml-2">
                 <Button
-                  icon={IconMoreV}
+                  icon={ui.icon.DotsVertical}
                   size="small"
                   on:click={(evt) => {
                     void showMenu(evt, prj, repository)
@@ -228,7 +226,7 @@
           {/if}
 
           <div class="flex-row-center">
-            <Icon icon={IconColStar} fill="none" size="small" />
+            <Icon icon={ui.icon.Star} size="small" />
             <span class="ml-1">{repository.stargazers ?? 0}</span>
           </div>
 

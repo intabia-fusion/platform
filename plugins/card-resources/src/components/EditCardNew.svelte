@@ -20,7 +20,7 @@
   import presence from '@hcengineering/presence'
   import { ComponentExtensions, createQuery, getClient } from '@hcengineering/presentation'
   import type { DropdownIntlItem, IPanelState } from '@hcengineering/ui'
-  import {
+  import ui, {
     Button,
     Component,
     createFocusManager,
@@ -30,18 +30,15 @@
     eventToHTMLElement,
     FocusHandler,
     getCurrentLocation,
-    IconDetailsFilled,
-    IconMaxWidth,
-    IconMoreH,
     navigate,
     Panel,
     showPopup
   } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { canChangeDoc, showMenu } from '@hcengineering/view-resources'
-
   import { permissionsStore } from '@hcengineering/contact-resources'
   import { afterUpdate } from 'svelte'
+
   import card from '../plugin'
   import { openCardInSidebar, setViewMode, viewStore } from '../utils'
   import CardIcon from './CardIcon.svelte'
@@ -243,14 +240,14 @@
     <svelte:fragment slot="utils">
       <Button
         kind="icon"
-        icon={IconMaxWidth}
+        icon={ui.icon.ArrowsOutLineHorizontal}
         iconProps={{ size: 'medium' }}
         on:click={(ev) => {
           showViewPopup(ev)
         }}
       />
       <Button
-        icon={IconDetailsFilled}
+        icon={ui.icon.PanelRightFill}
         iconProps={{ size: 'medium' }}
         kind="icon"
         on:click={() => {
@@ -262,7 +259,7 @@
 
       {#if !readonly}
         <Button
-          icon={IconMoreH}
+          icon={ui.icon.DotsHorizontal}
           iconProps={{ size: 'medium' }}
           kind="icon"
           dataId="btnMoreActions"

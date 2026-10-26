@@ -14,16 +14,7 @@
 //
 
 import { getEmbeddedLabel } from '@hcengineering/platform'
-import {
-  IconAdd,
-  IconCopy,
-  IconDelete,
-  IconDetailsFilled,
-  IconEdit,
-  IconLink,
-  IconOpen,
-  IconSettings
-} from '@hcengineering/ui'
+import ui from '@hcengineering/ui'
 import type { MenuItem } from '@hcengineering/ui/kit'
 
 import ExampleIcon from '../select-button/ExampleIcon.svelte'
@@ -37,12 +28,12 @@ const glyph = (name: string): Pick<MenuItem, 'icon' | 'iconProps'> => ({
 
 /** A context menu: actions with icons, groups split by a line. */
 export const actions: MenuItem[] = [
-  { id: 'open', label: t('Open'), icon: IconOpen },
-  { id: 'sidebar', label: t('Open in sidebar'), icon: IconDetailsFilled },
-  { id: 'copy', label: t('Copy link'), icon: IconLink },
-  { id: 'edit', label: t('Rename'), icon: IconEdit, divider: true },
-  { id: 'duplicate', label: t('Duplicate'), icon: IconCopy },
-  { id: 'delete', label: t('Delete'), icon: IconDelete, divider: true }
+  { id: 'open', label: t('Open'), icon: ui.icon.PencilLine },
+  { id: 'sidebar', label: t('Open in sidebar'), icon: ui.icon.PanelRightFill },
+  { id: 'copy', label: t('Copy link'), icon: ui.icon.Link },
+  { id: 'edit', label: t('Rename'), icon: ui.icon.PencilLine, divider: true },
+  { id: 'duplicate', label: t('Duplicate'), icon: ui.icon.Copy },
+  { id: 'delete', label: t('Delete'), icon: ui.icon.Trash, divider: true }
 ]
 
 /** A value picker: icons of the values, the current one checked. */
@@ -67,9 +58,9 @@ export const languages: MenuItem[] = [
 
 /** Choices that need a word of explanation. */
 export const notifications: MenuItem[] = [
-  { id: 'all', label: t('All messages'), description: t('Every new message and reply'), icon: IconAdd },
-  { id: 'mentions', label: t('Only mentions'), description: t('When someone mentions you'), icon: IconLink },
-  { id: 'mute', label: t('Mute'), description: t('No notifications'), icon: IconDelete }
+  { id: 'all', label: t('All messages'), description: t('Every new message and reply'), icon: ui.icon.Plus },
+  { id: 'mentions', label: t('Only mentions'), description: t('When someone mentions you'), icon: ui.icon.Link },
+  { id: 'mute', label: t('Mute'), description: t('No notifications'), icon: ui.icon.Trash }
 ]
 
 /** Groups under headings. */
@@ -125,14 +116,14 @@ export const mixed: MenuItem[] = [
   {
     id: 'seen',
     label: t('Seen by'),
-    icon: IconOpen,
+    icon: ui.icon.PencilLine,
     component: ExampleSeenRow,
     componentProps: { label: 'Seen by', people: ['AK', 'MS', 'JD'] }
   },
   {
     id: 'settings',
     label: t('Task type settings'),
-    icon: IconSettings,
+    icon: ui.icon.Sliders,
     href: '#settings',
     opensPage: true,
     divider: true

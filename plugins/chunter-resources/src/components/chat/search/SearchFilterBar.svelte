@@ -25,11 +25,8 @@
   } from '@hcengineering/contact-resources'
   import chunterPlugin from '@hcengineering/chunter'
   import { getClient } from '@hcengineering/presentation'
-  import {
+  import ui, {
     RangeDatePopup,
-    IconAttachment,
-    IconCalendar,
-    IconClose,
     Label,
     ModernDropdownLabels,
     showPopup,
@@ -421,7 +418,7 @@
 
       <div class="filter">
         <Button
-          icon={IconCalendar}
+          icon={ui.icon.Calendar}
           label={filters.after === undefined && filters.before === undefined
             ? chunter.string.SearchFilterDate
             : getEmbeddedLabel(dateText)}
@@ -432,7 +429,7 @@
         />
         {#if filters.after !== undefined || filters.before !== undefined}
           <IconButton
-            icon={IconClose}
+            icon={ui.icon.Cross}
             kind="tertiary"
             size="small"
             iconSize="small"
@@ -449,7 +446,7 @@
       {#if shownOptions.length > 0}
         <div bind:this={optionsButton}>
           <Button
-            icon={IconAttachment}
+            icon={ui.icon.Paperclip}
             label={chunter.string.SearchFilterOptions}
             kind="secondary"
             size="small"

@@ -13,7 +13,7 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Button, IconAdd } from '@hcengineering/ui'
+  import ui, { Button } from '@hcengineering/ui'
   import type { WorkflowFieldValue, WorkflowTransformCall } from '@hcengineering/workflow'
   import { getClient } from '@hcengineering/presentation'
 
@@ -90,7 +90,7 @@
 
   <Button
     label={plugin.string.Transform}
-    icon={IconAdd}
+    icon={ui.icon.Plus}
     kind="ghost"
     size="small"
     disabled={isTransformDisabled}

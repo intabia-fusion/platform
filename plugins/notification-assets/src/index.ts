@@ -17,11 +17,13 @@ import notification from '@hcengineering/notification'
 import { loadMetadata } from '@hcengineering/platform'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(notification.icon, {
-  Notifications: `${icons}#notifications`,
-  Inbox: `${icons}#inbox`,
-  BellCrossed: `${icons}#bell-crossed`,
-  Appearance: `${icons}#appearance`
+  Notifications: `${uiIcons}#bell`,
+  Inbox: `${uiIcons}#tray`,
+  BellCrossed: `${uiIcons}#bell-slash`,
+  Appearance: `${uiIcons}#palette`,
+  Webpushes: `${icons}#browser-badge`
 })
 loadMetadata(notification.sound, {
   InboxNotification: require('../assets/inbox-notification.wav')

@@ -18,9 +18,10 @@
   import type { Issue, Project } from '@hcengineering/tracker'
   import { reduceChildInfoTree } from '@hcengineering/tracker'
   import type { EditStyle } from '@hcengineering/ui'
-  import { Button, eventToHTMLElement, floorFractionDigits, IconAdd, Label, showPopup } from '@hcengineering/ui'
-  import EditEstimationPopup from './EditEstimationPopup.svelte'
+  import ui, { Button, eventToHTMLElement, floorFractionDigits, Label, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+
+  import EditEstimationPopup from './EditEstimationPopup.svelte'
   import tracker from '../../../plugin'
   import IssuePresenter from '../IssuePresenter.svelte'
   import EstimationStatsPresenter from './EstimationStatsPresenter.svelte'
@@ -149,7 +150,7 @@
   {/if}
   <svelte:fragment slot="buttons">
     <Button
-      icon={IconAdd}
+      icon={ui.icon.Plus}
       size="large"
       on:click={() => {
         showPopup(

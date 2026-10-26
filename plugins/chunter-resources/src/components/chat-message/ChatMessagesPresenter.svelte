@@ -16,10 +16,10 @@
 <script lang="ts">
   import type { Doc } from '@hcengineering/core'
   import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
-  import { Button, IconThread } from '@hcengineering/ui'
+  import ui, { Button, Icon } from '@hcengineering/ui'
+  import { restrictionStore } from '@hcengineering/view-resources'
 
   import ChatMessagePopup from './ChatMessagePopup.svelte'
-  import { restrictionStore } from '@hcengineering/view-resources'
 
   export let value: number | undefined
   export let object: Doc
@@ -42,7 +42,7 @@
     }}
   >
     <div slot="icon">
-      <IconThread {size} />
+      <Icon icon={ui.icon.Bubble} {size} />
     </div>
     <div slot="content" style:margin-left={showCounter && !compactMode ? '.375rem' : '0'}>
       {#if showCounter && !compactMode}{value}{/if}

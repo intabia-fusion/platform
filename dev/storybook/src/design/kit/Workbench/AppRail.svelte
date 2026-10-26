@@ -14,8 +14,8 @@
 -->
 <script lang="ts">
   // Vertical application rail: workspace logo, menu button, applications and the account avatar
-  import { WorkspaceLogo } from '@hcengineering/ui'
-  import TopMenu from '../../../../../../plugins/workbench-resources/src/components/icons/TopMenu.svelte'
+  import ui, { WorkspaceLogo } from '@hcengineering/ui'
+
   import Avatar from '../People/Avatar.svelte'
   import type { AppEntry, Person } from '../types'
   import AppItem from './AppItem.svelte'
@@ -32,7 +32,7 @@
       <WorkspaceLogo name={workspace} accent />
     </div>
     <div class="topmenu-container clear-mins flex-no-shrink">
-      <AppItem icon={TopMenu} label="Hide menu" size="medium" />
+      <AppItem icon={ui.icon.Equals} label="Hide menu" size="medium" />
     </div>
     <Applications {apps} />
   </div>

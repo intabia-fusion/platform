@@ -44,8 +44,8 @@
   } from '@hcengineering/presentation'
   import { EmptyMarkup, extractLinks, isEmptyMarkup, markupToJSON } from '@hcengineering/text'
   import textEditor, { type RefAction } from '@hcengineering/text-editor'
-  import { AttachIcon, ReferenceInput } from '@hcengineering/text-editor-resources'
-  import type { AnySvelteComponent } from '@hcengineering/ui'
+  import { ReferenceInput } from '@hcengineering/text-editor-resources'
+  import ui, { type AnySvelteComponent } from '@hcengineering/ui'
   import {
     type FileUploadCallbackParams,
     type UploadHandlerDefinition,
@@ -626,7 +626,7 @@
           : [
               {
                 label: textEditor.string.Attach,
-                icon: AttachIcon,
+                icon: ui.icon.Paperclip,
                 action: () => {
                   dispatch('focus')
                   inputFile.click()

@@ -14,7 +14,7 @@
 //
 
 import { getEmbeddedLabel } from '@hcengineering/platform'
-import { IconAdd } from '@hcengineering/ui'
+import ui from '@hcengineering/ui'
 import { Button } from '@hcengineering/ui/kit'
 import type { Meta, StoryObj } from '@storybook/svelte'
 
@@ -41,7 +41,7 @@ const label = getEmbeddedLabel('Button')
 const meta = {
   title: 'Buttons/Button',
   component: Button,
-  args: { label, icon: IconAdd, kind: 'secondary', size: 'large' },
+  args: { label, icon: ui.icon.Plus, kind: 'secondary', size: 'large' },
   parameters: {
     docs: {
       description: {
@@ -71,7 +71,7 @@ export const Variants: Story = {
             'size',
             sizes.filter((size) => size !== 'min')
           ),
-          props: { label, icon: IconAdd }
+          props: { label, icon: ui.icon.Plus }
         },
         {
           title: 'Round',
@@ -81,7 +81,7 @@ export const Variants: Story = {
             'size',
             sizes.filter((size) => size !== 'min')
           ),
-          props: { label, icon: IconAdd, shape: 'round' }
+          props: { label, icon: ui.icon.Plus, shape: 'round' }
         },
         {
           title: 'States',
@@ -95,7 +95,7 @@ export const Variants: Story = {
             { title: 'loading', props: { loading: true } },
             { title: 'disabled', props: { disabled: true } }
           ],
-          props: { label, icon: IconAdd }
+          props: { label, icon: ui.icon.Plus }
         }
       ]
     }

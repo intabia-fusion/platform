@@ -22,7 +22,6 @@
   import type { DropdownIntlItem } from '../types'
   import { capitalizeFirstLetter, formatKey } from '../utils'
   import Icon from './Icon.svelte'
-  import IconCheck from './icons/Check.svelte'
   import Label from './Label.svelte'
   import ModernEditbox from './ModernEditbox.svelte'
   import Scroller from './Scroller.svelte'
@@ -221,7 +220,7 @@
         {/if}
         {#if isSelected(selected, item)}
           <div class="hulyPopup-row__icon">
-            <IconCheck size="small" />
+            <Icon icon={ui.icon.Check} size="small" />
           </div>
         {/if}
       </button>

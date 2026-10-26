@@ -17,10 +17,9 @@
   import type { DocumentCategory } from '@hcengineering/controlled-documents'
   import documents from '@hcengineering/controlled-documents'
   import presentation, { getClient } from '@hcengineering/presentation'
-  import { Button, Label } from '@hcengineering/ui'
+  import ui, { Button, Label, Icon } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
-  import Info from '../../icons/Info.svelte'
   import { canDeleteDocumentCategory } from '../../../utils'
 
   export let object: DocumentCategory
@@ -58,7 +57,7 @@
       {/if}
       {#if !canDelete}
         <div class="warning flex flex-gap-1 p-1 text-xs">
-          <Info size="small" />
+          <Icon icon={ui.icon.InfoCircle} size="small" />
           <Label label={documents.string.DeleteCategoryWarning} />
         </div>
       {/if}

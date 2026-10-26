@@ -24,19 +24,20 @@
   import { Card, createMarkup, getClient, InlineAttributeBar } from '@hcengineering/presentation'
   import { StyledTextBox } from '@hcengineering/text-editor-resources'
   import { EmptyMarkup, isEmptyMarkup } from '@hcengineering/text'
-  import {
+  import ui, {
     Button,
     createFocusManager,
     EditBox,
     eventToHTMLElement,
     FocusHandler,
-    IconInfo,
     Label,
     SelectPopup,
-    showPopup
+    showPopup,
+    Icon
   } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { Analytics } from '@hcengineering/analytics'
+
   import lead from '../plugin'
 
   let firstName = ''
@@ -263,7 +264,7 @@
   <svelte:fragment slot="footer">
     {#if matches.length > 0}
       <div class="flex-row-center error-color">
-        <IconInfo size="small" />
+        <Icon icon={ui.icon.InfoCircle} size="small" />
         <span class="text-sm overflow-label ml-2">
           <Label label={contact.string.PersonAlreadyExists} />
         </span>

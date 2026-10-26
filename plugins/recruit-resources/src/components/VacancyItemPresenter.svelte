@@ -16,8 +16,9 @@
   import type { Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import type { Vacancy } from '@hcengineering/recruit'
-  import { ActionIcon, Icon, IconEdit } from '@hcengineering/ui'
+  import ui, { ActionIcon, Icon } from '@hcengineering/ui'
   import { openDoc } from '@hcengineering/view-resources'
+
   import recruit from '../plugin'
 
   export let value: Vacancy
@@ -48,7 +49,7 @@
     <span class="label">{value.name}</span>
     {#if action !== undefined}
       <div class="action">
-        <ActionIcon label={recruit.string.Edit} size="small" icon={IconEdit} action={editVacancy} />
+        <ActionIcon label={recruit.string.Edit} size="small" icon={ui.icon.PencilLine} action={editVacancy} />
       </div>
     {/if}
   </div>

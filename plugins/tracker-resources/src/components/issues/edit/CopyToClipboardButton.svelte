@@ -15,7 +15,7 @@
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
   import { copyTextToClipboard } from '@hcengineering/presentation'
-  import { IconCheck, type IconComponent } from '@hcengineering/ui'
+  import ui, { type IconComponent } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import { onDestroy } from 'svelte'
@@ -51,7 +51,7 @@
 <span class="copy-button" class:copied>
   <IconButton
     size="small"
-    icon={copied ? IconCheck : icon}
+    icon={copied ? ui.icon.Check : icon}
     iconSize="medium"
     kind="ghost"
     tooltip={{ label: copied ? view.string.Copied : title, direction: 'bottom' }}

@@ -17,12 +17,10 @@
   import { onDestroy } from 'svelte'
   import type { Role, SpaceType, SpaceTypeDescriptor } from '@hcengineering/core'
   import core, { SortingOrder } from '@hcengineering/core'
-  import { IconAdd, Label, getCurrentResolvedLocation, navigate } from '@hcengineering/ui'
+  import ui, { Label, getCurrentResolvedLocation, navigate, Icon } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import { createQuery } from '@hcengineering/presentation'
 
-  import MembersIcon from '../../icons/Members.svelte'
-  import PersonIcon from '../../icons/Person.svelte'
   import CreateRole from './CreateRole.svelte'
   import { clearSettingsStore, settingsStore } from '../../../store'
   import settingRes from '../../../plugin'
@@ -65,11 +63,11 @@
 
 {#if descriptor !== undefined}
   <div class="hulyTableAttr-header font-medium-12">
-    <MembersIcon size="small" />
+    <Icon icon={ui.icon.PeopleFill} size="small" />
     <span><Label label={settingRes.string.Roles} /></span>
     <IconButton
       kind="primary"
-      icon={IconAdd}
+      icon={ui.icon.Plus}
       size="small"
       data-id="btnAdd"
       {disabled}
@@ -89,7 +87,7 @@
           }}
         >
           <div class="hulyTableAttr-content__row-icon-wrapper">
-            <PersonIcon size="small" />
+            <Icon icon={ui.icon.PersonCircle} size="small" />
           </div>
           {#if role.name !== ''}
             <div class="hulyTableAttr-content__row-label font-medium-14">

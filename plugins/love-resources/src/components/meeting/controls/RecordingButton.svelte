@@ -59,7 +59,8 @@
 {#if hasAccountRole(getCurrentAccount(), AccountRole.User) && $isRecordingAvailable && $currentMeetingMinutes !== undefined}
   <IconButton
     iconSize="medium"
-    icon={isVideoRecording ? love.icon.StopRecord : love.icon.Record}
+    icon={love.icon.Record}
+    iconProps={isVideoRecording ? { fill: 'var(--theme-error-color)' } : {}}
     tooltip={{
       label: isCancelling ? love.string.StoppingRecord : isVideoRecording ? love.string.StopRecord : love.string.Record
     }}

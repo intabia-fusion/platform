@@ -23,7 +23,7 @@
 <div class="login-status">
   {#if text !== undefined}
     <div class="message" class:error={kind === 'error'}>
-      <span class="icon"><Icon name="ui/Info" size={16} color="currentColor" /></span>
+      <span class="icon"><Icon name="kit/InfoCircle" size={16} color="currentColor" /></span>
       <span class="text">{text}</span>
     </div>
   {/if}

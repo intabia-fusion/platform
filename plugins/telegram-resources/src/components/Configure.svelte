@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte'
   import { fade } from 'svelte/transition'
-  import {
+  import ui, {
     CheckBox,
     Toggle,
     DropdownLabelsPopupIntl,
@@ -12,8 +12,6 @@
     Loading,
     closePopup,
     Icon,
-    IconMoreV,
-    IconError,
     FilterButton,
     Button,
     showPopup,
@@ -25,12 +23,12 @@
   import type { Integration } from '@hcengineering/account-client'
   import contact from '@hcengineering/contact'
   import card from '@hcengineering/card'
+  import type { Space } from '@hcengineering/core'
+  import core, { getCurrentAccount } from '@hcengineering/core'
 
   import TelegramIcon from './icons/TelegramColor.svelte'
   import telegram from '../plugin'
   import { type TelegramChannelConfig, getIntegrationClient, listChannels, restart } from '../api'
-  import type { Space } from '@hcengineering/core'
-  import core, { getCurrentAccount } from '@hcengineering/core'
 
   export let readonly: boolean = false
 
@@ -348,7 +346,7 @@
   <svelte:fragment slot="actions">
     <div class="actions-container">
       <Button
-        icon={IconMoreV}
+        icon={ui.icon.DotsVertical}
         kind="regular"
         disabled={filteredChannels.length === 0 || isLoading}
         on:click={showActionsPopup}
@@ -379,7 +377,7 @@
         </div>
       {:else if error}
         <div class="error-container" transition:fade={{ duration: 300 }}>
-          <IconError size="medium" />
+          <Icon icon={ui.icon.ExclamationCircle} size="medium" fill="var(--theme-error-color)" />
           <span class="text-normal font-medium">
             <Label label={telegram.string.ServiceIsUnavailable} />
           </span>

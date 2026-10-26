@@ -18,14 +18,15 @@
   import type { Class, Doc, Ref, Space } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import type { Survey } from '@hcengineering/survey'
-  import { Button, IconAdd, Label, Section, navigate, showPopup, Scroller } from '@hcengineering/ui'
+  import ui, { Button, Label, Section, navigate, showPopup, Scroller } from '@hcengineering/ui'
   import type { Viewlet, ViewletPreference } from '@hcengineering/view'
   import view from '@hcengineering/view'
   import { Table, ViewletSelector, ViewletSettingButton, getObjectLinkFragment } from '@hcengineering/view-resources'
+  import { Analytics } from '@hcengineering/analytics'
+
   import SurveyPopup from './SurveyPopup.svelte'
   import survey from '../plugin'
   import { makePollData } from '../utils'
-  import { Analytics } from '@hcengineering/analytics'
 
   export let objectId: Ref<Doc>
   export let space: Ref<Space>
@@ -74,7 +75,7 @@
       />
       <ViewletSettingButton kind="tertiary" bind:viewlet />
       {#if !readonly}
-        <Button id={survey.string.CreatePoll} icon={IconAdd} kind="ghost" on:click={selectSurvey} />
+        <Button id={survey.string.CreatePoll} icon={ui.icon.Plus} kind="ghost" on:click={selectSurvey} />
       {/if}
     </div>
   </svelte:fragment>

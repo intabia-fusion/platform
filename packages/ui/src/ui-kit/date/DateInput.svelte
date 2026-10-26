@@ -19,7 +19,6 @@
   import { createEventDispatcher } from 'svelte'
 
   import { daysInMonth, fromCurrentToTz, fromTzToCurrent } from '../../components/calendar/internal/DateUtils'
-  import IconClose from '../../components/icons/Close.svelte'
   import ui from '../../plugin'
   import IconButton from '../button/IconButton.svelte'
   import type { DateInputEvents, DateInputKind, DateInputPart, DateInputProps, DateInputSize } from './types'
@@ -274,7 +273,7 @@
     <IconButton
       kind="ghost"
       size="min"
-      icon={IconClose}
+      icon={ui.icon.Cross}
       tooltip={{ label: ui.string.Clear }}
       on:click={() => {
         parts = split(undefined)

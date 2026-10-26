@@ -17,8 +17,9 @@
   import type { Ref } from '@hcengineering/core'
   import type { TaskType } from '@hcengineering/task'
   import type { DropdownTextItem } from '@hcengineering/ui'
-  import { Button, IconAdd, IconClose, Label, ModernDropdownLabels } from '@hcengineering/ui'
+  import ui, { Button, Label, ModernDropdownLabels } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+
   import task from '../../plugin'
   import TaskTypeIcon from './TaskTypeIcon.svelte'
 
@@ -64,7 +65,7 @@
     kind="secondary"
     size="small"
     iconSize="small"
-    icon={IconAdd}
+    icon={ui.icon.Plus}
     showContent={false}
     {items}
     selected={value}
@@ -86,7 +87,7 @@
         {/if}
         <span class="chip-label">{item.name}</span>
         <Button
-          icon={IconClose}
+          icon={ui.icon.Cross}
           kind="ghost"
           size="inline"
           on:click={(e) => {

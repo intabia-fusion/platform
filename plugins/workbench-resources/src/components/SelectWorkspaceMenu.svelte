@@ -24,10 +24,9 @@
     getCurrentWorkspaceUuid
   } from '@hcengineering/presentation'
   import type { Location } from '@hcengineering/ui'
-  import {
+  import ui, {
     closePopup,
     getCurrentLocation,
-    IconCheck,
     isSameSegments,
     Label,
     Loading,
@@ -35,7 +34,8 @@
     locationToUrl,
     navigate,
     resolvedLocationStore,
-    SearchEdit
+    SearchEdit,
+    Icon
   } from '@hcengineering/ui'
   import { workbenchId } from '@hcengineering/workbench'
   import { onMount } from 'svelte'
@@ -203,7 +203,7 @@
               <!-- </div> -->
               <div class="ap-check">
                 {#if $resolvedLocationStore.path[1] === ws.url}
-                  <IconCheck size="small" />
+                  <Icon icon={ui.icon.Check} size="small" />
                 {/if}
               </div>
               {#if workspacesNotification?.[ws.uuid] === true && ws.uuid !== currentWorkspaceUuid}

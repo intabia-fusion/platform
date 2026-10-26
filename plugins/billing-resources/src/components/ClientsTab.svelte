@@ -13,8 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Button, IconChevronLeft, IconChevronRight, Label, Loading } from '@hcengineering/ui'
+  import ui, { Button, Label, Loading } from '@hcengineering/ui'
   import type { AiTokensBreakdown, AiTranscriptBreakdown } from '@hcengineering/billing-client'
+
   import { getBillingClient } from '../utils'
   import plugin from '../plugin'
   import { formatMinutes, formatTokens } from '../billingFormat'
@@ -124,9 +125,9 @@
 
 <div class="flex-col flex-gap-4 p-4">
   <div class="flex-row-center flex-gap-2">
-    <Button icon={IconChevronLeft} kind="ghost" on:click={() => (yearOffset -= 1)} />
+    <Button icon={ui.icon.ChevronLeft} kind="ghost" on:click={() => (yearOffset -= 1)} />
     <span class="fs-title" style="min-width: 6rem; text-align: center">{year}</span>
-    <Button icon={IconChevronRight} kind="ghost" disabled={isCurrentYear} on:click={() => (yearOffset += 1)} />
+    <Button icon={ui.icon.ChevronRight} kind="ghost" disabled={isCurrentYear} on:click={() => (yearOffset += 1)} />
   </div>
 
   {#if loading}

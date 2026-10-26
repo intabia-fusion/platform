@@ -15,7 +15,7 @@
 //
 -->
 <script lang="ts">
-  import ui, { Modal, IconClose, IconMaximize, IconMinimize } from '@hcengineering/ui'
+  import ui, { Modal } from '@hcengineering/ui'
   import presentation from '@hcengineering/presentation'
   import { IconButton } from '@hcengineering/ui/kit'
   import { createEventDispatcher } from 'svelte'
@@ -29,7 +29,7 @@
 <Modal type="type-component" scrollableContent={false} on:fullsize on:close>
   <svelte:fragment slot="beforeTitle">
     <IconButton
-      icon={IconClose}
+      icon={ui.icon.Cross}
       kind="tertiary"
       size="small"
       noPrint
@@ -40,7 +40,7 @@
     />
     <div class="hulyHeader-divider short no-line no-print" />
     <IconButton
-      icon={!fullSize ? IconMaximize : IconMinimize}
+      icon={!fullSize ? ui.icon.ArrowsOut : ui.icon.ArrowsIn}
       kind="tertiary"
       size="small"
       noPrint

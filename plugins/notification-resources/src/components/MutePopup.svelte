@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { SelectPopup } from '@hcengineering/ui'
+  import ui, { SelectPopup } from '@hcengineering/ui'
   import type { DocNotificationMode, DocNotificationSetting } from '@hcengineering/notification'
   import notification from '@hcengineering/notification'
   import type { Doc } from '@hcengineering/core'
@@ -8,7 +8,6 @@
   import { createEventDispatcher } from 'svelte'
   import { getCurrentEmployeeSpace } from '@hcengineering/contact'
 
-  import Mention from './icons/Mention.svelte'
   import { NotificationClientImpl } from '../client'
 
   export let value: Doc | Doc[]
@@ -64,7 +63,7 @@
     },
     {
       id: 'mentions',
-      icon: Mention,
+      icon: ui.icon.At,
       label: notification.string.JustMentions,
       isSelected: mode === 'mentions'
     },

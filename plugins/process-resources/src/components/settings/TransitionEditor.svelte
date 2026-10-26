@@ -19,13 +19,11 @@
   import type { Process, State, Step, Transition } from '@hcengineering/process'
   import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
   import type { DropdownIntlItem } from '@hcengineering/ui'
-  import {
+  import ui, {
     Button,
     DropdownLabelsPopupIntl,
     getCurrentLocation,
     getEventPositionElement,
-    IconAdd,
-    IconDelete,
     Label,
     navigate,
     Scroller,
@@ -34,6 +32,8 @@
   import { IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view-resources/src/plugin'
   import { createEventDispatcher, onDestroy } from 'svelte'
+  import { SortableList } from '@hcengineering/view-resources'
+
   import plugin from '../../plugin'
   import { initState } from '../../utils'
   import ActionPresenter from './ActionPresenter.svelte'
@@ -42,7 +42,6 @@
   import Navigator from './Navigator.svelte'
   import TransitionPresenter from './TransitionPresenter.svelte'
   import TriggerPresenter from './TriggerPresenter.svelte'
-  import { SortableList } from '@hcengineering/view-resources'
 
   export let _id: Ref<Transition>
   export let visibleSecondNav: boolean = true
@@ -158,7 +157,7 @@
           <div class="header flex-between">
             <TransitionPresenter transition={value} />
             <IconButton
-              icon={IconDelete}
+              icon={ui.icon.Trash}
               tooltip={{ label: view.string.Delete, direction: 'bottom' }}
               size="small"
               kind="secondary"
@@ -196,7 +195,13 @@
                   </Button>
                 </svelte:fragment>
               </SortableList>
-              <Button kind="ghost" width="100%" icon={IconAdd} label={plugin.string.AddAction} on:click={addAction} />
+              <Button
+                kind="ghost"
+                width="100%"
+                icon={ui.icon.Plus}
+                label={plugin.string.AddAction}
+                on:click={addAction}
+              />
             </div>
           </div>
         </div>

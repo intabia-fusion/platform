@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import ui from '@hcengineering/ui'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { IconAdd } from '@hcengineering/ui'
   import {
     Chip,
     Dialog,
@@ -63,7 +63,7 @@
         <MenuButton
           kind="secondary"
           size="small"
-          icon={IconAdd}
+          icon={ui.icon.Plus}
           items={types}
           selected={parents}
           multiselect
@@ -107,7 +107,7 @@
           <MenuButton
             kind="secondary"
             size="small"
-            icon={IconAdd}
+            icon={ui.icon.Plus}
             items={types}
             selected={parents}
             multiselect

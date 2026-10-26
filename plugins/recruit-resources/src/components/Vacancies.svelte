@@ -17,10 +17,9 @@
   import core, { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import type { Vacancy } from '@hcengineering/recruit'
-  import {
+  import ui, {
     Button,
     Component,
-    IconAdd,
     Loading,
     SearchInput,
     showPopup,
@@ -31,9 +30,9 @@
   import type { BuildModelKey, ViewOptions, Viewlet, ViewletPreference } from '@hcengineering/view'
   import view from '@hcengineering/view'
   import { FilterBar, FilterButton, ViewletSelector, ViewletSettingButton } from '@hcengineering/view-resources'
+
   import recruit from '../plugin'
   import CreateVacancy from './CreateVacancy.svelte'
-  import IconVacancy from './icons/Vacancy.svelte'
 
   let search: string = ''
   let searchQuery: DocumentQuery<Doc> = {}
@@ -149,7 +148,7 @@
     <ViewletSettingButton bind:viewOptions bind:viewlet />
   </svelte:fragment>
 
-  <Breadcrumb icon={IconVacancy} label={recruit.string.Vacancies} size="large" isCurrent />
+  <Breadcrumb icon={ui.icon.Briefcase} label={recruit.string.Vacancies} size="large" isCurrent />
 
   <svelte:fragment slot="search">
     <SearchInput bind:value={search} collapsed on:change={(e) => (search = e.detail)} />
@@ -177,7 +176,12 @@
       />
     {/if}
     {#if hasAccountRole(getCurrentAccount(), AccountRole.User)}
-      <Button icon={IconAdd} label={recruit.string.VacancyCreateLabel} kind="primary" on:click={showCreateDialog} />
+      <Button
+        icon={ui.icon.Plus}
+        label={recruit.string.VacancyCreateLabel}
+        kind="primary"
+        on:click={showCreateDialog}
+      />
     {/if}
   </svelte:fragment>
 </Header>

@@ -14,12 +14,12 @@
 -->
 <script lang="ts">
   // Status bar of the workbench: the open tab on the left (none on the login page), workspace tools and clock on the right
-  import { IconAdd, ModernTab, StatusBarButton } from '@hcengineering/ui'
+  import ui, { ModernTab, StatusBarButton } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
+
   import Clock from '../../../../../../packages/ui/src/components/internal/Clock.svelte'
   import ConnectionStatus from '../../../../../../packages/ui/src/components/internal/ConnectionStatus.svelte'
-  import Settings from '../../../../../../packages/ui/src/components/internal/icons/Settings.svelte'
-  import { spriteAssets } from '../../setup'
+  import { productIcon } from '../productIcon'
   import type { IconName } from '../types'
 
   export let tab: { label: string, icon: IconName } | undefined = undefined
@@ -31,16 +31,10 @@
       <div class="flex-row-center left-items flex-gap-1">
         <div class="flex-row-center flex-gap-2" style:padding="0 .25rem 0 0">
           <div class="flex-row-center gap-1 py-1 overflow-x-auto">
-            <ModernTab
-              label={tab.label}
-              icon={spriteAssets.get(tab.icon.toLowerCase())}
-              maxSize="12rem"
-              highlighted
-              canClose={false}
-            />
+            <ModernTab label={tab.label} icon={productIcon(tab.icon)} maxSize="12rem" highlighted canClose={false} />
           </div>
           <IconButton
-            icon={IconAdd}
+            icon={ui.icon.Plus}
             iconProps={{ fill: 'var(--theme-dark-color)' }}
             size="extra-small"
             kind="tertiary"
@@ -51,7 +45,7 @@
     {/if}
     <div class="flex-row-center justify-center status-info" />
     <div class="flex-row-reverse flex-gap-0-5">
-      <StatusBarButton icon={Settings} />
+      <StatusBarButton icon={ui.icon.Gear} />
       <ConnectionStatus />
       <Clock />
     </div>

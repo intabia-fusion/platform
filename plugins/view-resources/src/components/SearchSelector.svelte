@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { IconSearch, StatusBarButton, showPopup } from '@hcengineering/ui'
+  import ui, { StatusBarButton, showPopup } from '@hcengineering/ui'
+
   import ActionsPopup from './ActionsPopup.svelte'
 
   function openPopup (): void {
@@ -7,4 +8,4 @@
   }
 </script>
 
-<StatusBarButton id="statusbar-search" on:click={openPopup} icon={IconSearch} />
+<StatusBarButton id="statusbar-search" on:click={openPopup} icon={ui.icon.Search} />

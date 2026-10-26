@@ -16,7 +16,7 @@
   import type { IntlString } from '@hcengineering/platform'
   import { createEventDispatcher, onDestroy } from 'svelte'
 
-  import IconSearch from '../../components/icons/Search.svelte'
+  import Icon from '../../components/Icon.svelte'
   import ui from '../../plugin'
   import Spinner from '../spinner/Spinner.svelte'
   import TextInput from '../text-input/TextInput.svelte'
@@ -124,7 +124,7 @@
       {#if loading}
         <Spinner size="small" inheritColor />
       {:else}
-        <IconSearch size="small" />
+        <Icon icon={ui.icon.Search} size="small" />
       {/if}
     </span>
   </TextInput>

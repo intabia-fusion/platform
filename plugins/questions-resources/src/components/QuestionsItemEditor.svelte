@@ -6,7 +6,7 @@
   import type { Class, DocumentUpdate } from '@hcengineering/core'
   import { getResource } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
-  import { Button, IconMoreV, Loading } from '@hcengineering/ui'
+  import ui, { Button, Loading } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { showMenu } from '@hcengineering/view-resources'
   import type {
@@ -18,6 +18,7 @@
     QuestionMixin
   } from '@hcengineering/questions'
   import { deepEqual } from 'fast-equals'
+
   import { canUpdateQuestion, getQuestionMixin, isAssessment, updateQuestion } from '../utils'
   import LabelEditor from './LabelEditor.svelte'
   import LayoutRow from './LayoutRow.svelte'
@@ -87,7 +88,7 @@
   <LayoutRow baseline>
     <svelte:fragment slot="drag">
       <Button
-        icon={IconMoreV}
+        icon={ui.icon.DotsVertical}
         shape="circle"
         kind="ghost"
         size="x-small"

@@ -6,11 +6,8 @@
   import type { RefAction } from '@hcengineering/text-editor'
   import textEditor from '@hcengineering/text-editor'
   import type { ButtonSize, PopupAlignment } from '@hcengineering/ui'
-  import {
+  import ui, {
     ActionIcon,
-    IconCheck,
-    IconClose,
-    IconEdit,
     Label,
     ShowMore,
     getEventPositionElement,
@@ -19,12 +16,11 @@
     resizeObserver
   } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+  import view from '@hcengineering/view'
 
   import StyledTextEditor from './StyledTextEditor.svelte'
-
   import type { EditorKitOptions } from '../kits/editor-kit'
   import { addTableHandler } from '../utils'
-  import view from '@hcengineering/view'
   import type { FileAttachFunction } from './extension/types'
   import { inlineCommandsConfig } from './extensions'
 
@@ -340,7 +336,7 @@
       {#if !alwaysEdit && !hideExtraButtons}
         <div class="flex flex-reverse flex-grow gap-2 reverse">
           <ActionIcon
-            icon={IconCheck}
+            icon={ui.icon.Check}
             size="medium"
             direction="bottom"
             label={presentation.string.Save}
@@ -348,7 +344,7 @@
           />
           <ActionIcon
             size="medium"
-            icon={IconClose}
+            icon={ui.icon.Cross}
             direction="top"
             label={presentation.string.Cancel}
             action={cancelEdit}
@@ -366,7 +362,13 @@
     </div>
     {#if !alwaysEdit && !hideExtraButtons && !readonly}
       <div class="flex flex-reverse">
-        <ActionIcon size="medium" icon={IconEdit} direction="top" label={textEditor.string.Edit} action={startEdit} />
+        <ActionIcon
+          size="medium"
+          icon={ui.icon.PencilLine}
+          direction="top"
+          label={textEditor.string.Edit}
+          action={startEdit}
+        />
       </div>
     {/if}
   {/if}

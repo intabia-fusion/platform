@@ -31,8 +31,8 @@
   import { EmptyMarkup } from '@hcengineering/text'
   import textEditor, { type RefAction } from '@hcengineering/text-editor'
   import type { EditorKitOptions } from '@hcengineering/text-editor-resources'
-  import { AttachIcon, StyledTextBox } from '@hcengineering/text-editor-resources'
-  import type { ButtonSize } from '@hcengineering/ui'
+  import { StyledTextBox } from '@hcengineering/text-editor-resources'
+  import ui, { type ButtonSize } from '@hcengineering/ui'
   import { createEventDispatcher, onDestroy } from 'svelte'
 
   import attachment from '../plugin'
@@ -383,7 +383,7 @@
     extraActions = [
       {
         label: textEditor.string.Attach,
-        icon: AttachIcon,
+        icon: ui.icon.Paperclip,
         action: handleAttach,
         order: 1001
       }

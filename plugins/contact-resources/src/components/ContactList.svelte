@@ -18,12 +18,12 @@
   import type { IntlString } from '@hcengineering/platform'
   import { createQuery } from '@hcengineering/presentation'
   import type { ButtonKind, ButtonSize, TooltipAlignment } from '@hcengineering/ui'
-  import { Button, Label, showPopup } from '@hcengineering/ui'
+  import ui, { Button, Label, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+
   import { ContactPresenter } from '..'
   import contact from '../plugin'
   import CombineAvatars from './CombineAvatars.svelte'
-  import IconMembers from './icons/Members.svelte'
   import UsersPopup from './UsersPopup.svelte'
 
   export let items: Ref<Contact>[] | undefined = []
@@ -74,7 +74,7 @@
 </script>
 
 <Button
-  icon={contacts.length === 0 ? IconMembers : undefined}
+  icon={contacts.length === 0 ? ui.icon.PeopleFill : undefined}
   label={contacts.length === 0 ? emptyLabel : undefined}
   notSelected={contacts.length === 0}
   width={width ?? 'min-content'}

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher, onDestroy } from 'svelte'
+
   import EditWithIcon from './EditWithIcon.svelte'
-  import IconSearch from './icons/Search.svelte'
   import plugin from '../plugin'
 
   export let value: string = ''
@@ -25,7 +25,7 @@
 </script>
 
 <EditWithIcon
-  icon={IconSearch}
+  icon={plugin.icon.Search}
   {width}
   placeholder={plugin.string.Search}
   {kind}

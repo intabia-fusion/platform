@@ -19,10 +19,11 @@
   import { Panel } from '@hcengineering/panel'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import type { Poll } from '@hcengineering/survey'
-  import { Button, DebouncedCaller, IconMoreH, ThrottledCaller } from '@hcengineering/ui'
+  import ui, { Button, DebouncedCaller, ThrottledCaller } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { DocNavLink, ParentsNavigator, showMenu } from '@hcengineering/view-resources'
   import { createEventDispatcher, onDestroy } from 'svelte'
+
   import survey from '../plugin'
   import EditPoll from './EditPoll.svelte'
 
@@ -140,7 +141,7 @@
         />
       {/if}
       <Button
-        icon={IconMoreH}
+        icon={ui.icon.DotsHorizontal}
         iconProps={{ size: 'medium' }}
         kind="icon"
         on:click={(e) => {

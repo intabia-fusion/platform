@@ -40,7 +40,6 @@ const survey = plugin(surveyId, {
     QuestionHasCustomOption: '' as Asset,
     Submit: '' as Asset,
     Survey: '' as Asset,
-    ValidateOk: '' as Asset,
     ValidateFail: '' as Asset
   },
   space: {

@@ -15,15 +15,14 @@
 <script lang="ts">
   import { themeStore as themeOptions } from '@hcengineering/theme'
   import { afterUpdate, beforeUpdate, createEventDispatcher, onDestroy, onMount, tick } from 'svelte'
+
+  import ui from '../plugin'
   import { resizeObserver } from '../resize'
   import { closeTooltip, tooltipstore } from '../tooltips'
   import type { FadeOptions, ScrollParams, MouseTargetEvent } from '../types'
   import { defaultSP } from '../types'
   import { DelayedCaller } from '../utils'
-  import IconDownOutline from './icons/DownOutline.svelte'
-  import HalfUpDown from './icons/HalfUpDown.svelte'
-  import IconUpOutline from './icons/UpOutline.svelte'
-  import IconNavPrev from './icons/NavPrev.svelte'
+  import Icon from './Icon.svelte'
 
   export let padding: string | undefined = undefined
   export let bottomPadding: string | undefined = undefined
@@ -704,7 +703,7 @@
       }}
     >
       <div style:transform={orientir === 'horizontal' ? 'rotate(-90deg)' : ''}>
-        <IconUpOutline size="medium" />
+        <Icon icon={ui.icon.ChevronUpSmall} size="medium" />
       </div>
     </button>
     <button
@@ -715,7 +714,7 @@
       }}
     >
       <div style:transform={orientir === 'horizontal' ? 'rotate(-90deg)' : ''}>
-        <IconDownOutline size="medium" />
+        <Icon icon={ui.icon.ChevronDownSmall} size="medium" />
       </div>
     </button>
   {:else if buttons === 'union'}
@@ -727,7 +726,7 @@
           tapScroll(stepScroll, 'up')
         }}
       >
-        <HalfUpDown />
+        <Icon icon={ui.icon.CaretUpFill} size="small" />
       </button>
       <button
         class="updown-down"
@@ -736,7 +735,7 @@
           tapScroll(stepScroll, 'down')
         }}
       >
-        <HalfUpDown />
+        <Icon icon={ui.icon.CaretUpFill} size="small" />
       </button>
     </div>
   {/if}
@@ -786,7 +785,7 @@
   {#if showOverflowArrows}
     {#each ['up', 'right', 'down', 'left'] as dir, i}
       <button class="scrollArrow" data-direct={dir} class:shown={scrollArrows[i]} on:click={tapToScroll}>
-        <IconNavPrev size="full" />
+        <Icon icon={ui.icon.ChevronLeft} size="full" />
       </button>
     {/each}
   {/if}
@@ -821,8 +820,8 @@
       color: var(--theme-content-color);
     }
     :global(> svg) {
-      width: 0.5rem;
-      height: 0.75rem;
+      width: 1rem;
+      height: 1rem;
       pointer-events: none;
     }
   }
@@ -868,6 +867,9 @@
     transition: transform 0.15s var(--timing-main);
 
     button {
+      display: flex;
+      justify-content: center;
+      align-items: center;
       width: 1rem;
       height: 0.5rem;
       color: var(--theme-trans-color);

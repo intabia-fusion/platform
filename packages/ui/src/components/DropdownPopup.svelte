@@ -17,13 +17,13 @@
   import { translateCB } from '@hcengineering/platform'
   import { themeStore } from '@hcengineering/theme'
   import { createEventDispatcher, onMount } from 'svelte'
-  import { deviceOptionsStore, IconSearch, resizeObserver } from '..'
+
+  import { deviceOptionsStore, resizeObserver } from '..'
   import plugin from '../plugin'
   import type { AnySvelteComponent, ListItem } from '../types'
   import Icon from './Icon.svelte'
   import ListView from './ListView.svelte'
   import EditWithIcon from './EditWithIcon.svelte'
-  import IconCheck from './icons/Check.svelte'
 
   export let icon: Asset | AnySvelteComponent
   export let placeholder: IntlString = plugin.string.SearchDots
@@ -88,7 +88,7 @@
     <div class="header">
       <EditWithIcon
         bind:this={searchInput}
-        icon={IconSearch}
+        icon={plugin.icon.Search}
         size="large"
         width="100%"
         autoFocus={!$deviceOptionsStore.isMobile}
@@ -132,7 +132,7 @@
             {/if}
             {#if selectedId !== undefined && item._id === selectedId}
               <div class="check">
-                <Icon icon={IconCheck} size="small" />
+                <Icon icon={plugin.icon.Check} size="small" />
               </div>
             {/if}
           </button>

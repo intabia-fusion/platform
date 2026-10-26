@@ -21,15 +21,15 @@
   import { getResource, translate } from '@hcengineering/platform'
   import { getClient, isSpace } from '@hcengineering/presentation'
   import type { Action, AnySvelteComponent, IconSize } from '@hcengineering/ui'
-  import ui, { Icon, IconAdd, IconMoreH, languageStore, Menu, NavGroup, showPopup } from '@hcengineering/ui'
+  import ui, { Icon, languageStore, Menu, NavGroup, showPopup } from '@hcengineering/ui'
   import { Button } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import { getDocIdentifier } from '@hcengineering/view-resources'
   import { NotificationClientImpl, NotifyMarker } from '@hcengineering/notification-resources'
   import type { Chat } from '@hcengineering/chunter'
   import { getUnreadMessageCount } from '@hcengineering/notification'
-
   import { createEventDispatcher } from 'svelte'
+
   import chunter from '../../../plugin'
   import { getChannelName, getObjectIcon } from '../../../utils'
   import { getChatNavItemKey } from '../utils'
@@ -215,7 +215,7 @@
           on:click|preventDefault|stopPropagation={(e) => createAction.action({}, e)}
           data-testid={`action-create-${id}`}
         >
-          <Icon icon={IconAdd} size="small" />
+          <Icon icon={ui.icon.Plus} size="small" />
         </button>
       {/if}
       {#if actions.length > 0}
@@ -225,7 +225,7 @@
           on:click|preventDefault|stopPropagation={handleMenuClicked}
           data-testid={`action-menu-${id}`}
         >
-          <IconMoreH size="small" />
+          <Icon icon={ui.icon.DotsHorizontal} size="small" />
         </button>
       {/if}
     </svelte:fragment>

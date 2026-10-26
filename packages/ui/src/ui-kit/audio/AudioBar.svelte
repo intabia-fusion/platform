@@ -17,8 +17,6 @@
 
   import { lazyObserver } from '../../lazy'
   import ui from '../../plugin'
-  import IconPauseFill from '../_icons/IconPauseFill.svelte'
-  import IconPlayFill from '../_icons/IconPlayFill.svelte'
   import IconButton from '../button/IconButton.svelte'
   import { formatMediaDuration } from '../file/format'
   import { loadDuration } from './duration'
@@ -116,7 +114,7 @@
 
 <div class="audio-bar" class:active use:lazyObserver={(visible) => (seen ||= visible)}>
   <IconButton
-    icon={playing ? IconPauseFill : IconPlayFill}
+    icon={playing ? ui.icon.PauseFill : ui.icon.PlayFill}
     kind="secondary"
     size="medium"
     shape="round"

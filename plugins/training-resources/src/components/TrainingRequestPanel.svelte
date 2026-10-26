@@ -19,7 +19,7 @@
   import type { Class, Ref } from '@hcengineering/core'
   import { Panel } from '@hcengineering/panel'
   import { ActionContext, createQuery } from '@hcengineering/presentation'
-  import { Button, IconMoreH, type IModeSelector, navigate, rawLocation } from '@hcengineering/ui'
+  import ui, { Button, type IModeSelector, navigate, rawLocation } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { showMenu } from '@hcengineering/view-resources'
   import {
@@ -28,6 +28,7 @@
     TrainingAttemptState,
     type TrainingRequest
   } from '@hcengineering/training'
+
   import training from '../plugin'
   import { sentRequestRoute } from '../routing/routes/sentRequestsRoute'
   import { trainingAttemptRoute, TrainingAttemptRouteTab } from '../routing/routes/trainingAttemptRoute'
@@ -234,7 +235,7 @@
       </div>
     </svelte:fragment>
     <svelte:fragment slot="post-utils">
-      <Button icon={IconMoreH} iconProps={{ size: 'medium' }} kind="icon" on:click={showContextMenu} />
+      <Button icon={ui.icon.DotsHorizontal} iconProps={{ size: 'medium' }} kind="icon" on:click={showContextMenu} />
     </svelte:fragment>
     <svelte:fragment slot="aside">
       <TrainingAttributes object={trainingObject} showHeader />

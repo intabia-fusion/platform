@@ -16,18 +16,10 @@
   import type { ArrOf, Class, Doc, EnumOf, FindResult, Ref, Space } from '@hcengineering/core'
   import core, { getObjectValue, SortingOrder } from '@hcengineering/core'
   import presentation, { getClient } from '@hcengineering/presentation'
-  import ui, {
-    deviceOptionsStore,
-    EditWithIcon,
-    Icon,
-    IconCheck,
-    IconSearch,
-    Label,
-    Loading,
-    resizeObserver
-  } from '@hcengineering/ui'
+  import ui, { deviceOptionsStore, EditWithIcon, Icon, Label, Loading, resizeObserver } from '@hcengineering/ui'
   import type { Filter } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
+
   import { FILTER_DEBOUNCE_MS } from '../../filter'
   import view from '../../plugin'
   import { getPresenter } from '../../utils'
@@ -165,7 +157,7 @@
 <div class="selectPopup" use:resizeObserver={() => dispatch('changeContent')}>
   <div class="header">
     <EditWithIcon
-      icon={IconSearch}
+      icon={ui.icon.Search}
       size="large"
       width="100%"
       autoFocus={!$deviceOptionsStore.isMobile}
@@ -201,7 +193,7 @@
               {/if}
               <div class="check pointer-events-none">
                 {#if isSelected(value, selectedValues)}
-                  <Icon icon={IconCheck} size="small" />
+                  <Icon icon={ui.icon.Check} size="small" />
                 {/if}
               </div>
             </button>

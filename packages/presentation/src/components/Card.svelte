@@ -15,19 +15,18 @@
 -->
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
-  import {
+  import ui, {
     Button,
-    IconClose,
     Label,
     Scroller,
     deviceOptionsStore as deviceInfo,
     resizeObserver,
-    IconBack,
-    getFocusManager
+    getFocusManager,
+    Icon
   } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+
   import presentation from '..'
-  import IconForward from './icons/Forward.svelte'
 
   export let label: IntlString
   export let labelProps: any | undefined = undefined
@@ -121,13 +120,13 @@
           <slot name="header" />
         {/if}
         {#if isBack}
-          <Button icon={IconBack} kind="ghost" size="small" on:click={backAction} />
+          <Button icon={ui.icon.ChevronLeftLarge} kind="ghost" size="small" on:click={backAction} />
         {/if}
         <!-- Divider and title are one wrap item: on a narrow header the ">" has to travel to the
              second line with the title it points at, not stay behind on the first. -->
         <div class="antiCard-header__title-group">
           {#if $$slots.header}
-            <span class="antiCard-header__divider"><IconForward size="small" /></span>
+            <span class="antiCard-header__divider"><Icon icon={ui.icon.ChevronRightLarge} size="small" /></span>
           {/if}
           <div class="antiCard-header__title" class:accentHeader>
             {#if $$slots.title}
@@ -150,7 +149,7 @@
           <Button
             id="card-close"
             focusIndex={10002}
-            icon={IconClose}
+            icon={ui.icon.Cross}
             iconProps={{ size: 'medium', fill: 'var(--theme-dark-color)' }}
             kind="ghost"
             size="small"

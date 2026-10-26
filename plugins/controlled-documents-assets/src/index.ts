@@ -15,21 +15,19 @@
 import documents from '@hcengineering/controlled-documents'
 import { loadMetadata } from '@hcengineering/platform'
 
-const icons = require('../assets/icons.svg') as string // eslint-disable-line
+// Icons the kit has: the ids stay, stored documents keep pointing at them.
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(documents.icon, {
-  CheckmarkCircle: `${icons}#checkmark-circle`,
-  Approvals: `${icons}#approvals`,
-  DocumentApplication: `${icons}#documentapplication`,
-  NewDocument: `${icons}#newdocument`,
-  Folder: `${icons}#c-folder`,
-  Document: `${icons}#document`,
-  Library: `${icons}#library`,
-  StateApproved: `${icons}#state-approved`,
-  StateDraft: `${icons}#state-draft`,
-  StateEffective: `${icons}#state-effective`,
-  StateRejected: `${icons}#state-rejected`,
-  StateObsolete: `${icons}#state-obsolete`,
-  ArrowUp: `${icons}#arrow-up`,
-  ArrowDown: `${icons}#arrow-down`,
-  Configure: `${icons}#configure`
+  Approvals: `${uiIcons}#list-check`,
+  DocumentApplication: `${uiIcons}#clipboard`,
+  NewDocument: `${uiIcons}#pencil-square`,
+  Folder: `${uiIcons}#folder`,
+  Document: `${uiIcons}#files`,
+  Library: `${uiIcons}#books`,
+  StateEffective: `${uiIcons}#check-circle-fill`,
+  StateRejected: `${uiIcons}#cross-circle-fill`,
+  StateObsolete: `${uiIcons}#cross-circle-fill`,
+  ArrowUp: `${uiIcons}#arrow-up`,
+  ArrowDown: `${uiIcons}#arrow-down`,
+  Configure: `${uiIcons}#sliders`
 })

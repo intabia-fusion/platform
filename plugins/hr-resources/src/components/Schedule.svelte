@@ -21,9 +21,7 @@
   import { createQuery } from '@hcengineering/presentation'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import type { TabItem, DropdownIntlItem } from '@hcengineering/ui'
-  import {
-    IconBack,
-    IconForward,
+  import ui, {
     SearchInput,
     Separator,
     Header,
@@ -42,7 +40,6 @@
   import { getCurrentEmployee } from '@hcengineering/contact'
 
   import hr from '../plugin'
-
   import ScheduleView from './ScheduleView.svelte'
   import Sidebar from './sidebar/Sidebar.svelte'
   import ExportPopup from './schedule/ExportPopup.svelte'
@@ -259,7 +256,7 @@
     <div class="hulyHeader-container clearPadding justify-between flex-gap-4">
       <div class="flex-row-center flex-gap-2">
         <IconButton
-          icon={IconBack}
+          icon={ui.icon.ChevronLeftLarge}
           kind="tertiary"
           size="small"
           on:click={() => {
@@ -273,7 +270,7 @@
           on:click={() => (currentDate = new Date())}
         />
         <IconButton
-          icon={IconForward}
+          icon={ui.icon.ChevronRightLarge}
           kind="tertiary"
           size="small"
           on:click={() => {

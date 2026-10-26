@@ -25,10 +25,11 @@
   import type { DocumentUpdate } from '@hcengineering/core'
   import presentation, { createQuery, getClient } from '@hcengineering/presentation'
   import { StyledTextBox } from '@hcengineering/text-editor-resources'
-  import { Button, EditBox, Icon, IconClose, createFocusManager, FocusHandler } from '@hcengineering/ui'
+  import ui, { Button, EditBox, Icon, createFocusManager, FocusHandler } from '@hcengineering/ui'
   import type { ToDo, WorkSlot } from '@hcengineering/time'
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher } from 'svelte'
+
   import TaskSelector from './TaskSelector.svelte'
 
   export let object: WorkSlot
@@ -108,7 +109,7 @@
       <Button
         id="card-close"
         focusIndex={10003}
-        icon={IconClose}
+        icon={ui.icon.Cross}
         kind="ghost"
         size="small"
         on:click={() => {

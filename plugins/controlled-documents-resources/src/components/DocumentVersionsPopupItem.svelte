@@ -14,7 +14,8 @@
 -->
 <script lang="ts">
   import type { ControlledDocument } from '@hcengineering/controlled-documents'
-  import { IconCheck } from '@hcengineering/ui'
+  import ui, { Icon } from '@hcengineering/ui'
+
   import StatePresenter from './document/presenters/StatePresenter.svelte'
   import { getDocumentVersionString } from '../utils'
 
@@ -34,7 +35,7 @@
     </div>
     <span class="icon mr-4">
       {#if isCurrent}
-        <IconCheck size="small" fill="var(--theme-popup-checkicon)" />
+        <Icon icon={ui.icon.Check} size="small" fill="var(--theme-popup-checkicon)" />
       {/if}
     </span>
   </div>

@@ -15,12 +15,6 @@
 <script lang="ts">
   import { afterUpdate, createEventDispatcher, onMount } from 'svelte'
 
-  import IconClose from '../../components/icons/Close.svelte'
-  import IconDetails from '../../components/icons/Details.svelte'
-  import IconMaxWidth from '../../components/icons/MaxWidth.svelte'
-  import IconMinWidth from '../../components/icons/MinWidth.svelte'
-  import IconScale from '../../components/icons/Scale.svelte'
-  import IconScaleFull from '../../components/icons/ScaleFull.svelte'
   import Scroller from '../../components/Scroller.svelte'
   import Separator from '../../components/Separator.svelte'
   import { deviceOptionsStore as deviceInfo } from '../../index'
@@ -186,7 +180,7 @@
         <IconButton
           id="btnPClose"
           focusIndex={10001}
-          icon={IconClose}
+          icon={ui.icon.Cross}
           kind="ghost"
           size="small"
           iconSize="medium"
@@ -212,7 +206,7 @@
       {#if useMaxWidth !== undefined && showMaxWidthButton}
         <IconButton
           focusIndex={10009}
-          icon={useMaxWidth ? IconMaxWidth : IconMinWidth}
+          icon={useMaxWidth ? ui.icon.ArrowsOutLineHorizontal : ui.icon.ArrowsInLineHorizontal}
           kind="ghost"
           size="small"
           iconSize="medium"
@@ -227,7 +221,7 @@
       {#if isFullSize}
         <IconButton
           focusIndex={10010}
-          icon={fullSize ? IconScale : IconScaleFull}
+          icon={fullSize ? ui.icon.ArrowsIn : ui.icon.ArrowSquareOut}
           kind="ghost"
           size="small"
           iconSize="medium"
@@ -255,8 +249,7 @@
           <IconButton
             id="btnPAside"
             focusIndex={10008}
-            icon={IconDetails}
-            iconProps={{ filled: asideShown }}
+            icon={asideShown ? ui.icon.PanelRightFill : ui.icon.PanelRightLine}
             kind="ghost"
             size="small"
             iconSize="medium"

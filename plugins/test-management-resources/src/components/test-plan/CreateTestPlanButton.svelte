@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Button, IconAdd } from '@hcengineering/ui'
+  import ui, { Button } from '@hcengineering/ui'
 
   import testManagement from '../../plugin'
   import { showCreateTestPlanPanel } from '../../utils'
@@ -24,7 +24,7 @@
 </script>
 
 <Button
-  icon={IconAdd}
+  icon={ui.icon.Plus}
   justify="left"
   kind="primary"
   label={testManagement.string.CreateTestPlan}

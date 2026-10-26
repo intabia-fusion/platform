@@ -15,7 +15,7 @@
 <script lang="ts">
   import { translateCB } from '@hcengineering/platform'
   import process, { type ExecutionError } from '@hcengineering/process'
-  import { IconError, languageStore } from '@hcengineering/ui'
+  import ui, { languageStore } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
 
   import ErrorTooltip from './ErrorTooltip.svelte'
@@ -31,7 +31,8 @@
 
 {#if value}
   <IconButton
-    icon={IconError}
+    icon={ui.icon.ExclamationCircle}
+    iconProps={{ fill: 'var(--theme-error-color)' }}
     size="small"
     iconSize="medium"
     kind="tertiary"

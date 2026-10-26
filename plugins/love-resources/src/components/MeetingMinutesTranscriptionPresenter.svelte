@@ -15,7 +15,7 @@
   import type { Doc } from '@hcengineering/core'
   import type { MeetingMinutes } from '@hcengineering/love'
   import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
-  import { Button, IconScribble } from '@hcengineering/ui'
+  import ui, { Button, Icon } from '@hcengineering/ui'
 
   import CollectionChatMessagesPopup from './CollectionChatMessagesPopup.svelte'
 
@@ -40,7 +40,7 @@
     }}
   >
     <div slot="icon">
-      <IconScribble size="small" />
+      <Icon icon={ui.icon.Scribble} size="small" />
     </div>
     <div slot="content" style:margin-left={showCounter && !compactMode ? '.375rem' : '0'}>
       {#if showCounter && !compactMode}{count}{/if}

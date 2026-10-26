@@ -18,7 +18,7 @@
   import { translate } from '@hcengineering/platform'
   import { copyTextToClipboard, getClient } from '@hcengineering/presentation'
   import type { Action } from '@hcengineering/ui'
-  import { languageStore, lowercaseFirstLetter, Menu, showPopup } from '@hcengineering/ui'
+  import ui, { languageStore, lowercaseFirstLetter, Menu, showPopup } from '@hcengineering/ui'
   import { getLink, getObjectLinkId, canLeaveSpace, IconPicker } from '@hcengineering/view-resources'
   import { NotificationClientImpl, MutePopup } from '@hcengineering/notification-resources'
   import { createEventDispatcher } from 'svelte'
@@ -85,7 +85,7 @@
     if (hierarchy.isDerived(object._class, chunter.class.Channel)) {
       result.push({
         label: chunter.string.CopyLink,
-        icon: chunter.icon.Copy,
+        icon: ui.icon.Copy,
         group: 'edit',
         action: async () => {
           // The promise goes straight in: awaiting first loses the click gesture in Safari.

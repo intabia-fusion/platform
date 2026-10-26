@@ -45,7 +45,7 @@
 
 <script lang="ts">
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { IconFile, IconSearch } from '@hcengineering/ui'
+  import ui from '@hcengineering/ui'
   import {
     Breadcrumbs,
     Button,
@@ -110,8 +110,8 @@
     { id: 'board', label: label('Board') }
   ]
   const iconItems = [
-    { id: 'list', label: label('List'), icon: IconSearch },
-    { id: 'board', label: label('Board'), icon: IconFile }
+    { id: 'list', label: label('List'), icon: ui.icon.Search },
+    { id: 'board', label: label('Board'), icon: ui.icon.File }
   ]
   const date = new Date(2026, 9, 24, 9, 30).getTime()
   const stateNotes: Record<string, string> = { hover: 'ховер', focus: 'фокус', active: 'нажатие' }
@@ -162,7 +162,7 @@
     <Button
       {kind}
       label={label('Button')}
-      icon={withIcon ? IconSearch : undefined}
+      icon={withIcon ? ui.icon.Search : undefined}
       size="small"
       {disabled}
       {selected}
@@ -175,7 +175,7 @@
         <TextInput
           value={disabled ? 'Disabled' : 'Text'}
           placeholder={label('Text')}
-          icon={withIcon ? IconSearch : undefined}
+          icon={withIcon ? ui.icon.Search : undefined}
           size="small"
           {error}
           {disabled}
@@ -215,15 +215,15 @@
       <Toggle {checked} kind={toggleKind} aria-label="Toggle" {disabled} />
     {/each}
   {:else if component === 'Chip'}
-    <Chip label={label('Chip')} icon={withIcon ? IconFile : undefined} kind={chipKind} tone={chipTone} />
+    <Chip label={label('Chip')} icon={withIcon ? ui.icon.File : undefined} kind={chipKind} tone={chipTone} />
   {:else if component === 'SelectButton'}
-    <SelectButton label={label('Value')} icon={IconFile} size="small" {disabled} />
+    <SelectButton label={label('Value')} icon={ui.icon.File} size="small" {disabled} />
   {:else if component === 'SegmentedControl'}
     <SegmentedControl {items} selected="list" size="small" />
   {:else if component === 'Tabs'}
     <Tabs {items} selected="list" size="small" aria-label="Views" />
   {:else if component === 'Link'}
-    <Link label={label('Link')} icon={withIcon ? IconFile : undefined} href="#color-map" {disabled} />
+    <Link label={label('Link')} icon={withIcon ? ui.icon.File : undefined} href="#color-map" {disabled} />
   {:else if component === 'StatusIcon'}
     <StatusIcon tone={statusTone} />
   {:else if component === 'ProgressBar'}
@@ -233,9 +233,11 @@
   {:else if component === 'Slider'}
     <span class="specimen__bar"><Slider value={40} aria-label="Level" {disabled} /></span>
   {:else if component === 'Breadcrumbs'}
-    <Breadcrumbs items={[{ label: label('Space'), icon: withIcon ? IconFile : undefined }, { label: label('Page') }]} />
+    <Breadcrumbs
+      items={[{ label: label('Space'), icon: withIcon ? ui.icon.File : undefined }, { label: label('Page') }]}
+    />
   {:else if component === 'NavItem'}
-    <NavItem label={label('Item')} icon={IconSearch} {selected} />
+    <NavItem label={label('Item')} icon={ui.icon.Search} {selected} />
   {:else if component === 'Steps'}
     <Steps
       items={[

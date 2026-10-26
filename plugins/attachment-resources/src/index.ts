@@ -36,8 +36,6 @@ import AttachmentsGrid from './components/AttachmentsGrid.svelte'
 import AttachmentsPresenter from './components/AttachmentsPresenter.svelte'
 import AttachmentsTooltip from './components/AttachmentsTooltip.svelte'
 import Photos from './components/Photos.svelte'
-import IconAttachment from './components/icons/Attachment.svelte'
-import IconUploadDuo from './components/icons/UploadDuo.svelte'
 import PreviewWidget from './components/PreviewWidget.svelte'
 import PreviewPopupActions from './components/PreviewPopupActions.svelte'
 import DrawingPresenter from './components/DrawingPresenter.svelte'
@@ -84,8 +82,6 @@ export {
   AudioAttachment,
   FileCard,
   VoiceAttachment,
-  IconAttachment,
-  IconUploadDuo,
   AttachmentSimplePreview,
   AttachmentMiniPreview
 }

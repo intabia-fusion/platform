@@ -17,7 +17,7 @@
   import { getClient } from '@hcengineering/presentation'
   import type { ProjectType, TaskType } from '@hcengineering/task'
   import { taskTypeStore } from '@hcengineering/task-resources'
-  import { Icon, IconError, Label } from '@hcengineering/ui'
+  import ui, { Icon, Label } from '@hcengineering/ui'
   import type {
     AttributeResolutionConfig,
     ScreenResolutionConfig,
@@ -68,7 +68,7 @@
 <div class="form-section flex-col flex-gap-3">
   {#if hasSkippedAttributes}
     <div class="global-warning-banner flex-row-center flex-gap-2">
-      <IconError size="small" />
+      <Icon icon={ui.icon.ExclamationCircle} size="small" fill="var(--theme-error-color)" />
       <span class="font-regular-12">
         <Label label={plugin.string.AttributesSkippedGlobalWarning} />
       </span>
@@ -159,7 +159,7 @@
   {#if unresolvableAttrs.length > 0}
     <div class="unresolvable-section flex-col flex-gap-2 mt-2">
       <div class="unresolvable-banner flex-row-center flex-gap-2">
-        <IconError size="small" />
+        <Icon icon={ui.icon.ExclamationCircle} size="small" fill="var(--theme-error-color)" />
         <div class="flex-col">
           <span class="font-medium-14"><Label label={plugin.string.UnresolvableAttributesWarning} /></span>
           <span class="font-regular-12 secondary mt-0-5">

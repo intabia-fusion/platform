@@ -17,8 +17,8 @@
   import { createEventDispatcher } from 'svelte'
 
   import Icon from '../../components/Icon.svelte'
-  import IconDown from '../../components/icons/Down.svelte'
   import Label from '../../components/Label.svelte'
+  import ui from '../../plugin'
   import { tooltip } from '../../tooltips'
   import type { IconComponent } from '../../types'
   import IconBox from '../icon-box/IconBox.svelte'
@@ -149,7 +149,7 @@
         {disabled}
         on:click={toggle}
       >
-        <IconDown size="x-small" />
+        <Icon icon={ui.icon.CaretDownFill} size="x-small" />
       </button>
     {:else if expandable}
       <span class="nav-item__chevron nav-item__chevron--empty" aria-hidden="true" />

@@ -6,19 +6,21 @@ import { loadMetadata } from '@hcengineering/platform'
 import training from '@hcengineering/training'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
+// Icons the kit has: the ids stay, stored documents keep pointing at them.
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(training.icon, {
-  Cancel: `${icons}#cancel`,
-  Duplicate: `${icons}#duplicate`,
-  Release: `${icons}#release`,
-  Retry: `${icons}#retry`,
-  Training: `${icons}#training`,
-  TrainingApplication: `${icons}#training-application`,
-  TrainingRequest: `${icons}#request`,
-  TrainingAttempt: `${icons}#attempt`,
-  ViewAllTrainings: `${icons}#training`,
-  ViewIncomingRequests: `${icons}#view-incoming-requests`,
-  ViewMyResults: `${icons}#view-my-results`,
-  ViewMyTrainings: `${icons}#training-application`,
-  ViewSentRequests: `${icons}#view-sent-requests`,
-  ViewTraineesResults: `${icons}#attempt`
+  Cancel: `${uiIcons}#cross-circle`,
+  Duplicate: `${uiIcons}#copy`,
+  Release: `${uiIcons}#check-circle-fill`,
+  Retry: `${uiIcons}#arrow-clockwise`,
+  Training: `${uiIcons}#notebook-question`,
+  TrainingApplication: `${uiIcons}#graduation-cap`,
+  TrainingRequest: `${uiIcons}#notebook-arrows`,
+  TrainingAttempt: `${uiIcons}#list-check`,
+  ViewAllTrainings: `${uiIcons}#notebook-question`,
+  ViewIncomingRequests: `${uiIcons}#tray`,
+  ViewMyResults: `${icons}#chart-line-up`,
+  ViewMyTrainings: `${uiIcons}#graduation-cap`,
+  ViewSentRequests: `${uiIcons}#paper-plane-right`,
+  ViewTraineesResults: `${uiIcons}#list-check`
 })

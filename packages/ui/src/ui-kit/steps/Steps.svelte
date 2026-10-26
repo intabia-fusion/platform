@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts" generics="Id extends string = string">
+  import Icon from '../../components/Icon.svelte'
   import Label from '../../components/Label.svelte'
-  import Checkmark from '../../components/icons/Checkmark.svelte'
   import ui from '../../plugin'
   import type { StepsItem, StepsProps } from './types'
 
@@ -35,7 +35,7 @@
       aria-current={state === 'current' ? 'step' : undefined}
     >
       <span class="steps__marker" aria-hidden="true">
-        {#if state === 'done'}<Checkmark size="tiny" />{/if}
+        {#if state === 'done'}<Icon icon={ui.icon.CheckSmall} size="tiny" />{/if}
       </span>
       <span class="steps__label">{index + 1}. <Label label={item.label} params={item.labelParams} /></span>
       <!-- The check mark is a picture: the passed step is said in text. -->

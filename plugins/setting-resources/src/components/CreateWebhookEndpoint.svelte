@@ -17,18 +17,10 @@
   import core from '@hcengineering/core'
   import setting, { generateWebhookSecret, type WebhookSecretEntry } from '@hcengineering/setting'
   import presentation, { getClient } from '@hcengineering/presentation'
-  import ui, {
-    Button,
-    Chip,
-    IconAdd,
-    Label,
-    Modal,
-    ModernEditbox,
-    eventToHTMLElement,
-    showPopup
-  } from '@hcengineering/ui'
+  import ui, { Button, Chip, Label, Modal, ModernEditbox, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import { createEventDispatcher } from 'svelte'
+
   import settingsRes from '../plugin'
   import { webhookEventNames, webhookEventTypes, type WebhookEventType } from '../webhookEvents'
   import WebhookEventsPopup from './WebhookEventsPopup.svelte'
@@ -118,7 +110,7 @@
           <IconButton
             kind="tertiary"
             size="small"
-            icon={IconAdd}
+            icon={ui.icon.Plus}
             tooltip={{ label: presentation.string.Add }}
             on:click={pickEvents}
           />

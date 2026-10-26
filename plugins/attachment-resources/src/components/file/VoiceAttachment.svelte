@@ -20,7 +20,7 @@
   import { EmptyMarkup, jsonToMarkup, markupToJSON } from '@hcengineering/text'
   import { StyledTextEditor } from '@hcengineering/text-editor-resources'
   import { markdownToMarkup, markupToMarkdown } from '@hcengineering/text-markdown'
-  import { IconCheck, IconClose, IconEdit, Label, Spinner, themeStore } from '@hcengineering/ui'
+  import ui, { Label, Spinner, themeStore } from '@hcengineering/ui'
   import { AudioBar, IconButton } from '@hcengineering/ui/kit'
 
   import attachmentRes from '../../plugin'
@@ -139,7 +139,7 @@
           ? [
               {
                 label: presentation.string.Edit,
-                icon: IconEdit,
+                icon: ui.icon.PencilLine,
                 action: async () => {
                   startEdit()
                 }
@@ -169,14 +169,14 @@
       </div>
       <div class="actions">
         <IconButton
-          icon={IconClose}
+          icon={ui.icon.Cross}
           kind="ghost"
           size="extra-small"
           tooltip={{ label: presentation.string.Cancel }}
           on:click={cancelEdit}
         />
         <IconButton
-          icon={IconCheck}
+          icon={ui.icon.Check}
           kind="ghost"
           size="extra-small"
           tooltip={{ label: presentation.string.Save }}

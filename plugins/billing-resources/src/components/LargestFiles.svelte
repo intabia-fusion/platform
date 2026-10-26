@@ -15,7 +15,7 @@
   import { SortingOrder, type Ref, type Space } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import attachment, { type Attachment } from '@hcengineering/attachment'
-  import { Button, IconDelete, Loading, showPopup } from '@hcengineering/ui'
+  import ui, { Button, Loading, showPopup } from '@hcengineering/ui'
   import { filesize } from 'filesize'
   import { deleteObjects, FixedColumn, ObjectPresenter } from '@hcengineering/view-resources'
   import contact from '@hcengineering/contact'
@@ -70,7 +70,7 @@
         </div>
         <span class="file-size">{filesize(file.size, { spacer: ' ' })}</span>
         <Button
-          icon={IconDelete}
+          icon={ui.icon.Trash}
           on:click={() => {
             showPopup(
               contact.component.DeleteConfirmationPopup,

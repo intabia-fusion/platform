@@ -21,12 +21,11 @@
   import type { Message, SharedMessage } from '@hcengineering/gmail'
   import { NotificationClientImpl } from '@hcengineering/notification-resources'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import plugin, { Button, Icon, IconShare, Label, Scroller } from '@hcengineering/ui'
+  import plugin, { Button, Icon, Label, Scroller } from '@hcengineering/ui'
 
   import gmail from '../plugin'
   import { convertMessages } from '../utils'
   import Messages from './Messages.svelte'
-  import IconInbox from './icons/Inbox.svelte'
 
   export let object: Contact
   export let channel: Channel
@@ -116,7 +115,7 @@
       <div />
     {/if}
     <Button
-      icon={IconShare}
+      icon={plugin.icon.BoxArrowUp}
       kind="ghost"
       showTooltip={{ label: gmail.string.ShareMessages }}
       on:click={async () => {
@@ -137,7 +136,14 @@
   {/await}
 {:else}
   <div class="flex-col-center justify-center h-full">
-    <Icon icon={IconInbox} size="full" />
+    <div class="empty-icon content-dark-color"><Icon icon={plugin.icon.Tray} size="full" /></div>
     <div class="mt-4 fs-bold content-dark-color"><Label label={plugin.string.Incoming} /></div>
   </div>
 {/if}
+
+<style lang="scss">
+  .empty-icon {
+    width: 4rem;
+    height: 4rem;
+  }
+</style>

@@ -27,13 +27,13 @@
   import { RecruitEvents } from '@hcengineering/recruit'
   import { EmptyMarkup } from '@hcengineering/text'
   import { StyledTextArea } from '@hcengineering/text-editor-resources'
-  import { DateRangePresenter, EditBox, Status as StatusControl } from '@hcengineering/ui'
+  import ui, { DateRangePresenter, EditBox, Status as StatusControl } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { ObjectSearchBox } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
-  import recruit from '../../plugin'
-  import IconCompany from '../icons/Company.svelte'
   import { Analytics } from '@hcengineering/analytics'
+
+  import recruit from '../../plugin'
 
   export let candidate: Ref<Person>
   export let date: Date | undefined = undefined
@@ -197,7 +197,7 @@
       _class={contact.class.Organization}
       bind:value={company}
       label={recruit.string.Company}
-      icon={IconCompany}
+      icon={ui.icon.Building}
       kind="regular"
       size="large"
       showNavigate={false}

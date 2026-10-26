@@ -13,8 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import Play from '../icons/Play.svelte'
-  import { Html, getPlatformColor, themeStore } from '@hcengineering/ui'
+  import ui, { Html, getPlatformColor, themeStore, Icon } from '@hcengineering/ui'
 
   export let href: string
   const maxWidth = 400
@@ -71,7 +70,7 @@
           }}
         >
           <img width="400px" src={data.thumbnail} alt={data.title} />
-          <div class="play-btn"><Play size="full" /></div>
+          <div class="play-btn"><Icon icon={ui.icon.PlayFill} size="full" /></div>
         </div>
       {:else}
         <div bind:this={emb}>

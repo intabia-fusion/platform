@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Button, IconAdd, showPopup } from '@hcengineering/ui'
+  import ui, { Button, showPopup } from '@hcengineering/ui'
+  import { openDocFromRef } from '@hcengineering/view-resources'
+
   import products from '../../plugin'
   import CreateProduct from './CreateProduct.svelte'
-  import { openDocFromRef } from '@hcengineering/view-resources'
 
   async function newProduct (): Promise<void> {
     showPopup(CreateProduct, {}, 'top', async (id) => {
@@ -29,7 +30,7 @@
 
 <div class="antiNav-subheader">
   <Button
-    icon={IconAdd}
+    icon={ui.icon.Plus}
     label={products.string.CreateProduct}
     kind="primary"
     justify="left"

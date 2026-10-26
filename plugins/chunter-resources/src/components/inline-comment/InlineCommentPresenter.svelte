@@ -18,7 +18,7 @@
   import { getCurrentAccount } from '@hcengineering/core'
   import { MessageViewer } from '@hcengineering/presentation'
   import type { Action } from '@hcengineering/ui'
-  import { IconEdit, IconDelete, ShowMore } from '@hcengineering/ui'
+  import ui, { ShowMore } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import type { ActivityMessage, ActivityMessageViewType } from '@hcengineering/activity'
   import activity from '@hcengineering/activity'
@@ -72,13 +72,13 @@
       ? [
           {
             label: activity.string.Edit,
-            icon: IconEdit,
+            icon: ui.icon.PencilLine,
             group: 'edit',
             action: handleEditAction
           },
           {
             label: view.string.Delete,
-            icon: IconDelete,
+            icon: ui.icon.Trash,
             group: 'remove',
             action: handleDeleteAction
           }

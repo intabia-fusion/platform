@@ -20,14 +20,13 @@
   import { createQuery, getClient } from '@hcengineering/presentation'
   import type { TagReference, TagElement } from '@hcengineering/tags'
   import tags, { TagsEvents } from '@hcengineering/tags'
-  import { Icon, Label, getEventPopupPositionElement, showPopup } from '@hcengineering/ui'
+  import ui, { Icon, Label, getEventPopupPositionElement, showPopup } from '@hcengineering/ui'
   import { getObjectId } from '@hcengineering/view-resources'
   import { Analytics } from '@hcengineering/analytics'
 
   import { getTagsTargetClass } from '../utils'
   import TagReferencePresenter from './TagReferencePresenter.svelte'
   import TagsEditorPopup from './TagsEditorPopup.svelte'
-  import TagIcon from './icons/TagIcon.svelte'
 
   export let object: Doc
   export let label: IntlString = tags.string.AddLabel
@@ -181,7 +180,7 @@
     {#if !readonly}
       <div class="step-container clear-mins">
         <button class="tag-button" on:click|stopPropagation={tagsHandler}>
-          <div class="icon"><Icon icon={TagIcon} size="full" /></div>
+          <div class="icon"><Icon icon={ui.icon.Tag} size="full" /></div>
           <span class="overflow-label label"><Label {label} /></span>
         </button>
       </div>
@@ -189,7 +188,7 @@
   </div>
 {:else if !readonly}
   <button class="tag-button" style="width: min-content" on:click|stopPropagation={tagsHandler}>
-    <div class="icon"><Icon icon={TagIcon} size="full" /></div>
+    <div class="icon"><Icon icon={ui.icon.Tag} size="full" /></div>
     <span class="overflow-label label"><Label {label} /></span>
   </button>
 {/if}

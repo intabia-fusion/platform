@@ -14,26 +14,11 @@
 -->
 <script lang="ts">
   import type { SelectPopupValueType } from '@hcengineering/ui'
-  import {
-    Button,
-    IconAdd,
-    IconDelete,
-    IconEdit,
-    IconMoreH,
-    IconRedo,
-    IconUndo,
-    SelectPopup,
-    eventToHTMLElement,
-    showPopup
-  } from '@hcengineering/ui'
-  import type { ComponentType } from 'svelte'
+  import ui, { Button, Icon, SelectPopup, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher, onMount } from 'svelte'
-  import IconEraser from './icons/Eraser.svelte'
-  import IconMove from './icons/Move.svelte'
-  import IconText from './icons/Text.svelte'
-  import IconRectangle from './icons/Rectangle.svelte'
-  import IconEllipse from './icons/Ellipse.svelte'
-  import IconLine from './icons/Line.svelte'
+  import { Analytics } from '@hcengineering/analytics'
+  import type { Asset, IntlString } from '@hcengineering/platform'
+
   import type { DrawingTool } from '../drawing'
   import presentation from '../plugin'
   import type { ColorMetaName, ColorMetaNameOrHex } from '../drawingUtils'
@@ -41,23 +26,21 @@
   import DrawingBoardColorSelectorIcon from './DrawingBoardColorSelectorIcon.svelte'
   import type { ColorsList } from '../drawingColors'
   import { DrawingBoardColoringSetup } from '../drawingColors'
-  import { Analytics } from '@hcengineering/analytics'
-  import type { IntlString } from '@hcengineering/platform'
 
   interface ToolPresentation {
     label: IntlString
-    icon: ComponentType
+    icon: Asset
     tool: DrawingTool
   }
 
   const tools: ToolPresentation[] = [
-    { label: presentation.string.PenTool, icon: IconEdit, tool: 'pen' },
-    { label: presentation.string.EraserTool, icon: IconEraser, tool: 'erase' },
-    { label: presentation.string.PanTool, icon: IconMove, tool: 'pan' },
-    { label: presentation.string.TextTool, icon: IconText, tool: 'text' },
-    { label: presentation.string.LineTool, icon: IconLine, tool: 'shape-line' },
-    { label: presentation.string.RectangleTool, icon: IconRectangle, tool: 'shape-rectangle' },
-    { label: presentation.string.EllipseTool, icon: IconEllipse, tool: 'shape-ellipse' }
+    { label: presentation.string.PenTool, icon: ui.icon.PencilLine, tool: 'pen' },
+    { label: presentation.string.EraserTool, icon: ui.icon.Eraser, tool: 'erase' },
+    { label: presentation.string.PanTool, icon: ui.icon.ArrowsMove, tool: 'pan' },
+    { label: presentation.string.TextTool, icon: ui.icon.TextT, tool: 'text' },
+    { label: presentation.string.LineTool, icon: ui.icon.LineSegment, tool: 'shape-line' },
+    { label: presentation.string.RectangleTool, icon: ui.icon.Rectangle, tool: 'shape-rectangle' },
+    { label: presentation.string.EllipseTool, icon: ui.icon.Ellipse, tool: 'shape-ellipse' }
   ]
 
   interface DrawingBoardToolbarEvents {
@@ -119,20 +102,20 @@
       items.push({
         id: 'add-color',
         label: presentation.string.ColorAdd,
-        icon: IconAdd
+        icon: ui.icon.Plus
       })
     }
     if (userSelectedPalette.length > minColors) {
       items.push({
         id: 'remove-color',
         label: presentation.string.ColorRemove,
-        icon: IconDelete
+        icon: ui.icon.Trash
       })
     }
     items.push({
       id: 'reset-colors',
       label: presentation.string.ColorReset,
-      icon: IconRedo
+      icon: ui.icon.ArrowUturnRight
     })
 
     showPopup(SelectPopup, { value: items }, eventToHTMLElement(ev), (id: PaletteCommandId | undefined) => {
@@ -247,7 +230,7 @@
 
 <div class="toolbar" class:inside={placeInside} bind:this={toolbar}>
   <Button
-    icon={IconUndo}
+    icon={ui.icon.ArrowUturnLeft}
     kind="icon"
     showTooltip={{ label: presentation.string.Undo }}
     noFocus
@@ -257,7 +240,7 @@
     }}
   />
   <Button
-    icon={IconRedo}
+    icon={ui.icon.ArrowUturnRight}
     kind="icon"
     showTooltip={{ label: presentation.string.Redo }}
     noFocus
@@ -269,12 +252,12 @@
   <div class="divider buttons-divider" />
   <Button kind="icon" showTooltip={{ label: toolPresentation.label }} noFocus on:click={showToolSelectionMenu}>
     <div class="tool-button-with-indicator" slot="content">
-      <svelte:component this={toolPresentation.icon} size="small" />
+      <Icon icon={toolPresentation.icon} size="small" />
       <div class="tool-indicator" />
     </div>
   </Button>
   <Button
-    icon={IconDelete}
+    icon={ui.icon.Trash}
     kind="icon"
     showTooltip={{ label: presentation.string.ClearCanvas }}
     noFocus
@@ -336,7 +319,7 @@
   <div>
     <Button
       kind="icon"
-      icon={IconMoreH}
+      icon={ui.icon.DotsHorizontal}
       noFocus
       showTooltip={{ label: presentation.string.PaletteManagementMenu }}
       on:click={showPaletteManagementMenu}

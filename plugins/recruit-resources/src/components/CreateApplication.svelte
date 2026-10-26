@@ -17,7 +17,7 @@
   import chunter from '@hcengineering/chunter'
   import type { Contact, Employee, Person } from '@hcengineering/contact'
   import contact from '@hcengineering/contact'
-  import { EmployeeBox, ExpandRightDouble, UserBox } from '@hcengineering/contact-resources'
+  import { EmployeeBox, UserBox } from '@hcengineering/contact-resources'
   import type {
     Class,
     Client,
@@ -48,6 +48,7 @@
     Button,
     ColorPopup,
     FocusHandler,
+    Icon,
     Label,
     Status as StatusControl,
     createFocusManager,
@@ -60,11 +61,12 @@
   import view from '@hcengineering/view'
   import { statusStore } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
+  import { Analytics } from '@hcengineering/analytics'
+
   import recruit from '../plugin'
   import CandidateCard from './CandidateCard.svelte'
   import VacancyCard from './VacancyCard.svelte'
   import VacancyOrgPresenter from './VacancyOrgPresenter.svelte'
-  import { Analytics } from '@hcengineering/analytics'
   import { getCandidateIdentifier, getSequenceId } from '../utils'
 
   export let space: Ref<Vacancy>
@@ -318,7 +320,7 @@
     </div>
 
     <div class="flex-center" class:rotate={verticalContent}>
-      <ExpandRightDouble />
+      <Icon icon={ui.icon.ChevronDoubleRight} size="x-large" fill="var(--dark-color)" />
     </div>
     <div class="flex-grow">
       <SpaceSelect

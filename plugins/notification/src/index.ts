@@ -135,7 +135,8 @@ const notification = plugin(notificationId, {
     Notifications: '' as Asset,
     Inbox: '' as Asset,
     BellCrossed: '' as Asset,
-    Appearance: '' as Asset
+    Appearance: '' as Asset,
+    Webpushes: '' as Asset
   },
   sound: {
     InboxNotification: '' as Asset

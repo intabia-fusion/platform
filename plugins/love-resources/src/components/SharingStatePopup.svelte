@@ -14,14 +14,12 @@
 -->
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
-  import { Button, Icon, IconStop, Label } from '@hcengineering/ui'
+  import ui, { Button, Icon, Label } from '@hcengineering/ui'
   import { Track } from 'livekit-client'
   import { createEventDispatcher, onMount } from 'svelte'
 
   import love from '../plugin'
   import { liveKitClient, lk } from '../utils'
-
-  import IconShare from './icons/Share.svelte'
 
   const dispatch = createEventDispatcher()
 
@@ -80,7 +78,7 @@
       <div class="p-2 flex-between flex-grow flex-gap-2">
         <div class="flex-row-center flex-gap-2">
           <div class="icon">
-            <Icon icon={IconShare} size="small" />
+            <Icon icon={ui.icon.ScreenShare} size="small" />
           </div>
           <div class="flex-col">
             <span class="label overflow-label font-medium caption-color">
@@ -100,7 +98,7 @@
         <Button
           label={love.string.StopShare}
           kind="negative"
-          icon={IconStop}
+          icon={ui.icon.SquareFill}
           iconProps={{ size: 'large' }}
           padding="0 .5rem 0 .25rem"
           on:click={handleStop}

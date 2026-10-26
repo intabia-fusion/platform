@@ -13,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Button, IconScribble } from '@hcengineering/ui'
+  import ui, { Button } from '@hcengineering/ui'
   import type { Node } from '@tiptap/pm/model'
   import type { Editor } from '@tiptap/core'
   import { onDestroy, onMount } from 'svelte'
+
   import type { SavedBoard } from './extension/drawingBoard'
   import { showBoardPopup } from './extension/drawingBoard'
   import NodeViewWrapper from './node-view/NodeViewWrapper.svelte'
@@ -150,7 +151,7 @@
       <div class="openButtonContainer">
         <Button
           kind={selected ? 'primary' : 'ghost'}
-          icon={IconScribble}
+          icon={ui.icon.Scribble}
           disabled={loading}
           noFocus
           on:click={() => {

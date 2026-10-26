@@ -15,13 +15,13 @@
 <script lang="ts">
   import type { Doc, Ref } from '@hcengineering/core'
   import presentation from '@hcengineering/presentation'
-  import { Button, Icon, IconAdd, Label, Scroller, showPopup } from '@hcengineering/ui'
+  import ui, { Button, Icon, Label, Scroller, showPopup } from '@hcengineering/ui'
   import type { BuildModelKey } from '@hcengineering/view'
   import view from '@hcengineering/view'
   import { Table } from '@hcengineering/view-resources'
+
   import recruit from '../plugin'
   import CreateVacancy from './CreateVacancy.svelte'
-  import FileDuo from './icons/FileDuo.svelte'
   import SectionEmpty from './SectionEmpty.svelte'
 
   export let objectId: Ref<Doc>
@@ -58,7 +58,7 @@
       <Label label={recruit.string.Vacancies} />
     </span>
     {#if !readonly}
-      <Button id="appls.add" icon={IconAdd} kind="ghost" on:click={createApp} />
+      <Button id="appls.add" icon={ui.icon.Plus} kind="ghost" on:click={createApp} />
     {/if}
   </div>
   {#if (vacancies ?? 0) > 0}
@@ -73,7 +73,7 @@
       />
     </Scroller>
   {:else}
-    <SectionEmpty icon={FileDuo} label={recruit.string.NoVacancies}>
+    <SectionEmpty icon={ui.icon.Document} label={recruit.string.NoVacancies}>
       {#if !readonly}
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <!-- svelte-ignore a11y-no-static-element-interactions -->

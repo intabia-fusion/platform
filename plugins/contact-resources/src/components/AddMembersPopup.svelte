@@ -4,12 +4,13 @@
   import type { Ref, Space } from '@hcengineering/core'
   import { notEmpty } from '@hcengineering/core'
   import presentation, { getClient } from '@hcengineering/presentation'
-  import { ActionIcon, Button, IconClose, Label } from '@hcengineering/ui'
+  import ui, { ActionIcon, Button, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+  import { Analytics } from '@hcengineering/analytics'
+
   import contact from '../plugin'
   import UsersPopup from './UsersPopup.svelte'
   import { employeeByIdStore, employeeRefByAccountUuidStore } from '../utils'
-  import { Analytics } from '@hcengineering/analytics'
 
   export let value: Space
   const dispatch = createEventDispatcher()
@@ -48,7 +49,7 @@
     </div>
     <div class="tool">
       <ActionIcon
-        icon={IconClose}
+        icon={ui.icon.Cross}
         size="small"
         action={() => {
           dispatch('close')
@@ -64,7 +65,7 @@
           {employee !== undefined ? getName(client.getHierarchy(), employee) : ''}
           <div class="tool">
             <ActionIcon
-              icon={IconClose}
+              icon={ui.icon.Cross}
               size="small"
               action={() => {
                 removeMember(m)

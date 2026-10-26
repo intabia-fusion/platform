@@ -21,7 +21,7 @@
   import type { ProjectType, ProjectTypeDescriptor, TaskType } from '@hcengineering/task'
   import task from '@hcengineering/task'
   import { taskTypeStore } from '@hcengineering/task-resources'
-  import { type DropdownIntlItem, Icon, IconAdd, IconCopy, Label, showPopup } from '@hcengineering/ui'
+  import ui, { type DropdownIntlItem, Icon, Label, showPopup } from '@hcengineering/ui'
   import { IconButton, MenuButton } from '@hcengineering/ui/kit'
   import type { Workflow, WorkflowConfig } from '@hcengineering/workflow'
 
@@ -68,7 +68,7 @@
     {
       id: 'clipboard',
       label: plugin.string.ImportFromClipboard,
-      icon: IconCopy
+      icon: ui.icon.Copy
     }
   ]
 
@@ -211,7 +211,7 @@
     />
     <IconButton
       kind="primary"
-      icon={IconAdd}
+      icon={ui.icon.Plus}
       size="small"
       data-id="btnAddWorkflow"
       disabled={addDisabled}

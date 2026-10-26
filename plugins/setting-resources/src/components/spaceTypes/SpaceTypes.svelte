@@ -14,8 +14,9 @@
 -->
 <script lang="ts">
   import type { Ref, SpaceType, WithLookup } from '@hcengineering/core'
-  import { Icon, Label, IconOpenedArrow } from '@hcengineering/ui'
+  import ui, { Icon, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+
   import setting from '../../plugin'
 
   export let selectedTypeId: Ref<SpaceType> | undefined
@@ -57,7 +58,7 @@
     {/if}
     {#if type._id === selectedTypeId}
       <div class="hulyTaskNavLink-icon right">
-        <IconOpenedArrow size="small" />
+        <Icon icon={ui.icon.ChevronRightSmall} size="small" />
       </div>
     {/if}
   </button>

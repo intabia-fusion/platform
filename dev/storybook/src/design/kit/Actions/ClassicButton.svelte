@@ -15,7 +15,8 @@
 <script lang="ts">
   // Button of the settings and form pages: the product Button (antiButton), 28/32/36 px high
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { Button, IconDown } from '@hcengineering/ui'
+  import ui, { Button } from '@hcengineering/ui'
+
   import { productIcon } from '../productIcon'
   import type { IconName } from '../types'
 
@@ -43,7 +44,7 @@
     {disabled}
     icon={asset}
     iconProps={{ size: iconSize === 20 ? 'medium' : 'small' }}
-    iconRight={menu ? IconDown : undefined}
+    iconRight={menu ? ui.icon.CaretDownFill : undefined}
     iconRightProps={{ size: 'small' }}
     gap={menu ? 'large' : 'medium'}
     label={label !== undefined && label !== '' ? getEmbeddedLabel(label) : undefined}

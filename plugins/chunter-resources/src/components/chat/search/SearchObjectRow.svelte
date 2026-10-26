@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Icon, IconCheck } from '@hcengineering/ui'
+  import ui, { Icon } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   import { isAvatarObject } from '../../../search/classes'
@@ -51,7 +51,7 @@
     {item.title}
   </span>
   {#if selected}
-    <div class="hulyPopup-row__icon"><IconCheck size="small" /></div>
+    <div class="hulyPopup-row__icon"><Icon icon={ui.icon.Check} size="small" /></div>
   {/if}
 </button>
 

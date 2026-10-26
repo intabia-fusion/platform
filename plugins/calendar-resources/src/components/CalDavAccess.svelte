@@ -5,7 +5,7 @@
     getCurrentWorkspaceUrl,
     getCurrentWorkspaceUuid
   } from '@hcengineering/presentation'
-  import { Label, Modal, CheckBox, Spinner, Button, IconCopy, EditBox } from '@hcengineering/ui'
+  import ui, { Label, Modal, CheckBox, Spinner, Button, EditBox } from '@hcengineering/ui'
   import calendar, { caldavIntegrationKind } from '@hcengineering/calendar'
   import { createEventDispatcher, onMount } from 'svelte'
   import { slide } from 'svelte/transition'
@@ -13,8 +13,9 @@
   import { getMetadata } from '@hcengineering/platform'
   import type { SocialId } from '@hcengineering/core'
   import { getCurrentAccount, pickPrimarySocialId, SocialIdType } from '@hcengineering/core'
-  import { getAccountClient } from '../utils'
   import { Analytics } from '@hcengineering/analytics'
+
+  import { getAccountClient } from '../utils'
 
   const workspaceUuid = getCurrentWorkspaceUuid()
 
@@ -224,7 +225,7 @@
       <div class="flex-row-center flex-gap-1">
         <EditBox bind:value={serverUrl} kind="ghost" fullSize focusable disabled={true} />
         <Button
-          icon={IconCopy}
+          icon={ui.icon.Copy}
           size="small"
           kind="ghost"
           disabled={!accessEnabled}
@@ -239,7 +240,7 @@
       <div class="flex-row-center flex-gap-1">
         <EditBox bind:value={hulySocialId} kind="ghost" fullSize focusable disabled={true} />
         <Button
-          icon={IconCopy}
+          icon={ui.icon.Copy}
           size="small"
           kind="ghost"
           showTooltip={{ label: isServerUrlCopied ? presentation.string.DocumentUrlCopied : presentation.string.Copy }}
@@ -259,7 +260,7 @@
         <div class="flex-row-center flex-gap-1">
           <EditBox bind:value={password} kind="ghost" format="password" fullSize focusable disabled={true} />
           <Button
-            icon={IconCopy}
+            icon={ui.icon.Copy}
             size="small"
             kind="ghost"
             disabled={!accessEnabled}

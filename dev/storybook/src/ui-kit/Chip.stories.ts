@@ -14,7 +14,7 @@
 //
 
 import { getEmbeddedLabel } from '@hcengineering/platform'
-import { IconThread } from '@hcengineering/ui'
+import ui from '@hcengineering/ui'
 import { Chip } from '@hcengineering/ui/kit'
 import type { Meta, StoryObj } from '@storybook/svelte'
 
@@ -79,7 +79,7 @@ export const Variants: Story = {
             { title: 'data color', props: { removable: true, color: '#4CA185' } },
             {
               title: 'icon',
-              props: { icon: IconThread, kind: 'neutral', label: getEmbeddedLabel('general'), removable: true }
+              props: { icon: ui.icon.Bubble, kind: 'neutral', label: getEmbeddedLabel('general'), removable: true }
             },
             { title: 'counter', props: { label: getEmbeddedLabel('+3'), kind: 'neutral' } }
           ],

@@ -18,20 +18,12 @@
   import presentation, { getClient } from '@hcengineering/presentation'
   import type { Project, Milestone } from '@hcengineering/tracker'
   import { MilestoneStatus } from '@hcengineering/tracker'
-  import ui, {
-    IconCheck,
-    Icon,
-    Label,
-    Loading,
-    deviceOptionsStore,
-    resizeObserver,
-    EditWithIcon,
-    IconSearch
-  } from '@hcengineering/ui'
+  import ui, { Icon, Label, Loading, deviceOptionsStore, resizeObserver, EditWithIcon } from '@hcengineering/ui'
   import { FILTER_DEBOUNCE_MS, sortFilterValues } from '@hcengineering/view-resources'
   import type { Filter } from '@hcengineering/view'
   import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
+
   import tracker from '../../plugin'
   import { milestoneStatusAssets } from '../../types'
   import MilestoneTitlePresenter from './MilestoneTitlePresenter.svelte'
@@ -124,7 +116,7 @@
 <div class="selectPopup" use:resizeObserver={() => dispatch('changeContent')}>
   <div class="header">
     <EditWithIcon
-      icon={IconSearch}
+      icon={ui.icon.Search}
       size="large"
       width="100%"
       autoFocus={!$deviceOptionsStore.isMobile}
@@ -148,7 +140,7 @@
           </div>
           <div class="check pointer-events-none">
             {#if isSelected(undefined, selectedValues)}
-              <Icon icon={IconCheck} size="small" />
+              <Icon icon={ui.icon.Check} size="small" />
             {/if}
           </div>
         </button>
@@ -175,7 +167,7 @@
                 </div>
                 <div class="check pointer-events-none">
                   {#if isSelected(doc._id, selectedValues)}
-                    <Icon icon={IconCheck} size="small" />
+                    <Icon icon={ui.icon.Check} size="small" />
                   {/if}
                 </div>
               </button>

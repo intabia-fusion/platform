@@ -24,10 +24,11 @@
   import type { Vacancy } from '@hcengineering/recruit'
   import survey from '@hcengineering/survey'
   import tracker from '@hcengineering/tracker'
-  import { Button, Component, EditBox, IconMixin, IconMoreH, Label } from '@hcengineering/ui'
+  import ui, { Button, Component, EditBox, Label } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { DocAttributeBar, DocNavLink, getDocMixins, showMenu } from '@hcengineering/view-resources'
   import { createEventDispatcher, onDestroy } from 'svelte'
+
   import recruit from '../plugin'
   import VacancyApplications from './VacancyApplications.svelte'
 
@@ -156,7 +157,7 @@
     <svelte:fragment slot="utils">
       {#if !readonly}
         <Button
-          icon={IconMoreH}
+          icon={ui.icon.DotsHorizontal}
           iconProps={{ size: 'medium' }}
           kind="icon"
           dataId="btnMoreActions"
@@ -166,7 +167,7 @@
         />
       {/if}
       <Button
-        icon={IconMixin}
+        icon={ui.icon.LayoutSplit}
         kind="icon"
         iconProps={{ size: 'medium' }}
         selected={showAllMixins}

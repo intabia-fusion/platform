@@ -15,17 +15,8 @@
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
   import { createEventDispatcher } from 'svelte'
-  import ui, {
-    EditWithIcon,
-    Icon,
-    IconCheck,
-    IconChevronRight,
-    IconSearch,
-    Label,
-    NestedSelectPopup,
-    resizeObserver,
-    Submenu
-  } from '..'
+
+  import ui, { EditWithIcon, Icon, Label, NestedSelectPopup, resizeObserver, Submenu } from '..'
   import type { NestedSelectItem } from '../types'
 
   export let items: NestedSelectItem[] = []
@@ -84,7 +75,7 @@
 >
   {#if isTopLevel}
     <div class="header">
-      <EditWithIcon icon={IconSearch} size="large" width="100%" bind:value={search} {placeholder} autoFocus />
+      <EditWithIcon icon={ui.icon.Search} size="large" width="100%" bind:value={search} {placeholder} autoFocus />
     </div>
   {:else}
     <div class="menu-space" />
@@ -120,7 +111,7 @@
                 }}
               >
                 {#if selectedValues.includes(item.id)}
-                  <Icon icon={IconCheck} size="small" />
+                  <Icon icon={ui.icon.Check} size="small" />
                 {/if}
               </div>
               {#if item.icon}
@@ -140,7 +131,7 @@
           >
             <div class="check ml-0 mr-2">
               {#if selectedValues.includes(item.id)}
-                <Icon icon={IconCheck} size="small" />
+                <Icon icon={ui.icon.Check} size="small" />
               {/if}
             </div>
             {#if item.icon}

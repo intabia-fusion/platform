@@ -13,7 +13,7 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { Button, IconClose, Label, languageStore, tooltip } from '@hcengineering/ui'
+  import ui, { Button, Label, languageStore, tooltip } from '@hcengineering/ui'
   import type { WorkflowTransformCall, WorkflowValueFunction } from '@hcengineering/workflow'
   import { getClient } from '@hcengineering/presentation'
   import type { IntlString } from '@hcengineering/platform'
@@ -97,7 +97,7 @@
     <span class="pill-params"><Label label={hint} /></span>
   {/if}
   <Button
-    icon={IconClose}
+    icon={ui.icon.Cross}
     kind="ghost"
     size="inline"
     on:click={(e) => {

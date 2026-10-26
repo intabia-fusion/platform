@@ -15,11 +15,10 @@
 <script lang="ts">
   import type { Ref } from '@hcengineering/core'
   import type { Component, Issue, IssueTemplateChild, Project, Milestone } from '@hcengineering/tracker'
-  import { Button, ExpandCollapse, IconAdd, Scroller, closeTooltip } from '@hcengineering/ui'
+  import ui, { Button, ExpandCollapse, Scroller, closeTooltip } from '@hcengineering/ui'
   import { afterUpdate, createEventDispatcher } from 'svelte'
+
   import tracker from '../../plugin'
-  import Collapsed from '../icons/Collapsed.svelte'
-  import Expanded from '../icons/Expanded.svelte'
   import SubtaskEditor from './SubtaskEditor.svelte'
   import SubtaskList from './SubtaskList.svelte'
 
@@ -67,7 +66,7 @@
   {#if hasSubIssues}
     <Button
       width="min-content"
-      icon={isCollapsed ? Collapsed : Expanded}
+      icon={isCollapsed ? ui.icon.ChevronRight : ui.icon.ChevronDown}
       size="small"
       kind="ghost"
       label={tracker.string.SubIssuesList}
@@ -83,7 +82,7 @@
     <Button
       id="add-sub-issue"
       width="min-content"
-      icon={hasSubIssues ? IconAdd : undefined}
+      icon={hasSubIssues ? ui.icon.Plus : undefined}
       label={hasSubIssues ? undefined : tracker.string.AddSubIssues}
       kind="ghost"
       size="small"

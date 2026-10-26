@@ -17,16 +17,14 @@
   import type { IntlString, Asset } from '@hcengineering/platform'
   import type { ComponentType } from 'svelte'
   import { createEventDispatcher, afterUpdate } from 'svelte'
-
   import { DateRangeMode } from '@hcengineering/core'
+
   import ui from '../../plugin'
   import { showPopup } from '../../popups'
   import type { ButtonKind, ButtonSize, AnySvelteComponent } from '../../types'
   import Icon from '../Icon.svelte'
   import Label from '../Label.svelte'
   import DatePopup from './DatePopup.svelte'
-  import DPCalendar from './icons/DPCalendar.svelte'
-  import DPCalendarOver from './icons/DPCalendarOver.svelte'
   import { formatDate } from './internal/DateUtils'
   import { registerFocus } from '../../focus'
 
@@ -121,7 +119,7 @@
   {#if showIcon}
     <div class="btn-icon {iconModifier}" class:buttonIconNoLabel={!shouldShowLabel}>
       <Icon
-        icon={icon ?? (iconModifier === 'overdue' && !shouldIgnoreOverdue ? DPCalendarOver : DPCalendar)}
+        icon={icon ?? (iconModifier === 'overdue' && !shouldIgnoreOverdue ? ui.icon.CalendarX : ui.icon.Calendar)}
         size="full"
       />
     </div>

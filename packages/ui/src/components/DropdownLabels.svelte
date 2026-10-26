@@ -14,15 +14,16 @@
 -->
 <script lang="ts">
   import type { IntlString, Asset } from '@hcengineering/platform'
-  import type { AnySvelteComponent, DropdownTextItem, TooltipAlignment, ButtonKind, ButtonSize } from '../types'
   import { createEventDispatcher } from 'svelte'
+
+  import Icon from './Icon.svelte'
+  import type { AnySvelteComponent, DropdownTextItem, TooltipAlignment, ButtonKind, ButtonSize } from '../types'
   import ui from '../plugin'
   import { showPopup } from '../popups'
   import { getFocusManager } from '../focus'
   import Button from './Button.svelte'
   import DropdownLabelsPopup from './DropdownLabelsPopup.svelte'
   import Label from './Label.svelte'
-  import DropdownIcon from './icons/Dropdown.svelte'
 
   export let icon: Asset | AnySvelteComponent | undefined = undefined
   export let label: IntlString | undefined = undefined
@@ -129,7 +130,8 @@
     </span>
     <svelte:fragment slot="iconRight">
       {#if showDropdownIcon}
-        <DropdownIcon
+        <Icon
+          icon={ui.icon.ChevronDown}
           size="small"
           fill={kind === 'primary' && !disabled ? 'var(--primary-button-content-color)' : 'var(--theme-dark-color)'}
         />

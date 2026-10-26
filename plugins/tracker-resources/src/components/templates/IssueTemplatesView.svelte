@@ -3,9 +3,10 @@
   import type { IntlString } from '@hcengineering/platform'
   import { translate } from '@hcengineering/platform'
   import type { IssueTemplate } from '@hcengineering/tracker'
-  import { Button, IconAdd, showPopup, themeStore } from '@hcengineering/ui'
+  import ui, { Button, showPopup, themeStore } from '@hcengineering/ui'
   import type { ViewOptions, Viewlet } from '@hcengineering/view'
   import { FilterBar, SpaceHeader, ViewletSettingButton } from '@hcengineering/view-resources'
+
   import tracker from '../../plugin'
   import CreateIssueTemplate from './CreateIssueTemplate.svelte'
   import IssueTemplatesContent from './IssueTemplatesContent.svelte'
@@ -56,7 +57,7 @@
     <slot name="label_selector" />
   </svelte:fragment>
   <svelte:fragment slot="actions">
-    <Button icon={IconAdd} label={tracker.string.IssueTemplate} kind="primary" on:click={showCreateDialog} />
+    <Button icon={ui.icon.Plus} label={tracker.string.IssueTemplate} kind="primary" on:click={showCreateDialog} />
   </svelte:fragment>
 </SpaceHeader>
 <slot name="afterHeader" />

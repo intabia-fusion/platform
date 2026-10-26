@@ -31,9 +31,7 @@
   import { translateCB } from '@hcengineering/platform'
   import { configurationStore, createQuery, getClient, MessageBox, uiContext } from '@hcengineering/presentation'
   import type { WorkspaceSetting } from '@hcengineering/setting'
-
-  import { requestOperationOtpCode } from '../utils'
-  import {
+  import ui, {
     Breadcrumb,
     Button,
     deviceOptionsStore as deviceInfo,
@@ -44,9 +42,6 @@
     getWeekDayNames,
     hasLocalWeekStart,
     Header,
-    IconCheckmark,
-    IconClose,
-    IconEdit,
     Label,
     Loading,
     navigate,
@@ -55,6 +50,8 @@
     themeStore,
     Toggle
   } from '@hcengineering/ui'
+
+  import { requestOperationOtpCode } from '../utils'
   import settingsRes from '../plugin'
   import WorkspacePermissionEditor from './WorkspacePermissionEditor.svelte'
 
@@ -327,14 +324,14 @@
               />
             </div>
             <Button
-              icon={isEditingName ? IconCheckmark : IconEdit}
+              icon={isEditingName ? ui.icon.CheckSmall : ui.icon.PencilLine}
               kind="ghost"
               size="small"
               disabled={editNameDisabled}
               on:click={handleEditName}
             />
             {#if isEditingName}
-              <Button icon={IconClose} kind="ghost" size="small" on:click={handleCancelEditName} />
+              <Button icon={ui.icon.Cross} kind="ghost" size="small" on:click={handleCancelEditName} />
             {/if}
           </div>
 

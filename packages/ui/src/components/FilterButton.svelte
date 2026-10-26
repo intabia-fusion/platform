@@ -17,9 +17,8 @@
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
+
   import Button from './Button.svelte'
-  import IconFilter from './icons/Filter.svelte'
-  import IconClose from './icons/Close.svelte'
   import { eventToHTMLElement, showPopup } from '../popups'
   import FilterCategoryPopup from './FilterCategoryPopup.svelte'
   import type { ButtonKind, ActiveFilter, FilterCategory } from '../types'
@@ -71,7 +70,7 @@
 </script>
 
 <Button
-  icon={hasFilters ? IconClose : IconFilter}
+  icon={hasFilters ? ui.icon.Cross : ui.icon.Funnel}
   label={showLabel ? (hasFilters ? ui.string.Clear : ui.string.Filter) : undefined}
   {kind}
   {size}

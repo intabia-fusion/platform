@@ -24,8 +24,6 @@
     deviceOptionsStore,
     EditWithIcon,
     Icon,
-    IconCheck,
-    IconSearch,
     Loading,
     resizeObserver,
     themeStore
@@ -140,7 +138,7 @@
 <div class="selectPopup" use:resizeObserver={() => dispatch('changeContent')}>
   <div class="header">
     <EditWithIcon
-      icon={IconSearch}
+      icon={ui.icon.Search}
       size="large"
       width="100%"
       autoFocus={!$deviceOptionsStore.isMobile}
@@ -171,7 +169,7 @@
             </div>
             <div class="check pointer-events-none">
               {#if isSelected(value, filter.value)}
-                <Icon icon={IconCheck} size="small" />
+                <Icon icon={ui.icon.Check} size="small" />
               {/if}
             </div>
           </button>

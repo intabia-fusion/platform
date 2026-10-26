@@ -16,29 +16,28 @@
 import { loadMetadata } from '@hcengineering/platform'
 import love from '@hcengineering/love'
 
-const icons = require('../assets/icons.svg') as string // eslint-disable-line
+// Icons the kit has: the ids stay, stored documents keep pointing at them.
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(love.icon, {
-  Love: `${icons}#office`,
-  SharingEnabled: `${icons}#shareOn`,
-  SharingDisabled: `${icons}#shareOff`,
-  CamEnabled: `${icons}#cameraOn`,
-  CamDisabled: `${icons}#cameraOff`,
-  Cam: `${icons}#camera`,
-  Mic: `${icons}#mic`,
-  MicEnabled: `${icons}#micOn`,
-  MicDisabled: `${icons}#micOff`,
-  LeaveRoom: `${icons}#leave`,
-  EnterRoom: `${icons}#enter`,
-  Open: `${icons}#open`,
-  Knock: `${icons}#knock`,
-  DND: `${icons}#dnd`,
-  Record: `${icons}#record`,
-  StopRecord: `${icons}#stopRecord`,
-  FullScreen: `${icons}#fullscreen`,
-  ExitFullScreen: `${icons}#exitfullscreen`,
-  Invite: `${icons}#invite`,
-  Kick: `${icons}#kick`,
-  MeetingMinutes: `${icons}#meeting-minutes`
+  Love: `${uiIcons}#building`,
+  SharingEnabled: `${uiIcons}#screen-share-stop`,
+  SharingDisabled: `${uiIcons}#screen-share`,
+  CamEnabled: `${uiIcons}#camera`,
+  CamDisabled: `${uiIcons}#camera-off`,
+  Cam: `${uiIcons}#camera`,
+  Mic: `${uiIcons}#mic`,
+  MicEnabled: `${uiIcons}#mic`,
+  MicDisabled: `${uiIcons}#mic-off`,
+  LeaveRoom: `${uiIcons}#arrow-out`,
+  EnterRoom: `${uiIcons}#arrow-in`,
+  Open: `${uiIcons}#door-open`,
+  DND: `${uiIcons}#door-slash`,
+  Record: `${uiIcons}#circle-dot`,
+  FullScreen: `${uiIcons}#arrows-out`,
+  ExitFullScreen: `${uiIcons}#arrows-in-corners`,
+  Invite: `${uiIcons}#phone-plus`,
+  Kick: `${uiIcons}#person-cross`,
+  MeetingMinutes: `${uiIcons}#notepad-pencil`
 })
 loadMetadata(love.sound, {
   Knock: require('../assets/knock.wav'),

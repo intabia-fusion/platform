@@ -18,8 +18,9 @@ import { loadMetadata } from '@hcengineering/platform'
 import tags from '@hcengineering/tags'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(tags.icon, {
-  Tags: `${icons}#tags`,
+  Tags: `${uiIcons}#tag`,
   Level1: `${icons}#level-1`,
   Level2: `${icons}#level-2`,
   Level3: `${icons}#level-3`

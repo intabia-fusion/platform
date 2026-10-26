@@ -15,18 +15,19 @@
   import { onDestroy } from 'svelte'
   import type { Ref } from '@hcengineering/core'
   import type { TaskType } from '@hcengineering/task'
-  import {
+  import ui, {
     Button,
     getColorNumberByText,
     getPlatformColorDef,
-    IconError,
     Label,
     languageStore,
     Loading,
     resolvePaletteColor,
     themeStore,
-    Toggle
+    Toggle,
+    Icon
   } from '@hcengineering/ui'
+
   import plugin from '../../plugin'
 
   const COMPACT_LAYOUT_STORAGE_KEY = 'task-types-diagram-compact'
@@ -186,6 +187,7 @@
 
       const isSelf = t.allowAnyParent === true || (t.allowedAsChildOf ?? []).includes(t._id)
       const strokeColor = isDark ? '#f8fafc' : '#0f172a'
+      // Inline svg: mermaid strips <use>, and the diagram is downloaded as a standalone SVG
       const icon = isSelf
         ? ` <span style='display:inline-flex;align-items:center;vertical-align:middle;position:relative;top:-1.5px;margin-left:4px;background:transparent !important;'><svg style='display:block;background:transparent !important;background-color:transparent !important;fill:none !important;border:none !important;' width='14' height='14' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'><path style='fill:none !important;stroke:${strokeColor} !important;' fill='none' d='M3.26794 12.0431C3.7049 13.4662 4.58316 14.7135 5.77571 15.6046C6.96827 16.4957 8.41333 16.9844 9.90195 17.0001C11.6239 17.0213 13.2935 16.4081 14.5924 15.2774C15.8913 14.1467 16.7287 12.5775 16.9449 10.8691C17.1577 9.16057 16.7333 7.4336 15.753 6.01828C14.7727 4.60295 13.3052 3.59854 11.6309 3.19706C9.95636 2.792 8.19129 3.0168 6.6717 3.82869C5.1521 4.64058 3.98408 5.98286 3.38994 7.60006' stroke='${strokeColor}' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path style='fill:none !important;stroke:${strokeColor} !important;' fill='none' d='M3 4V8H7' stroke='${strokeColor}' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg></span>`
         : ''
@@ -488,22 +490,7 @@
     {#if hasSelfRefs}
       <div class="diagram-legend">
         <span class="legend-badge">
-          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path
-              d="M3.26794 12.0431C3.7049 13.4662 4.58316 14.7135 5.77571 15.6046C6.96827 16.4957 8.41333 16.9844 9.90195 17.0001C11.6239 17.0213 13.2935 16.4081 14.5924 15.2774C15.8913 14.1467 16.7287 12.5775 16.9449 10.8691C17.1577 9.16057 16.7333 7.4336 15.753 6.01828C14.7727 4.60295 13.3052 3.59854 11.6309 3.19706C9.95636 2.792 8.19129 3.0168 6.6717 3.82869C5.1521 4.64058 3.98408 5.98286 3.38994 7.60006"
-              stroke="var(--theme-text-primary, #0f172a)"
-              stroke-width="1.4"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-            <path
-              d="M3 4V8H7"
-              stroke="var(--theme-text-primary, #0f172a)"
-              stroke-width="1.4"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
+          <Icon icon={ui.icon.ArrowCounterClockwise} size="x-small" fill="var(--theme-text-primary-color)" />
         </span>
         <span class="legend-text font-normal-12">
           <Label label={plugin.string.SelfRefLegend} />
@@ -536,7 +523,7 @@
     {:else if errorMsg}
       <div class="diagram-error-state">
         <div class="diagram-error-icon">
-          <IconError size="large" />
+          <Icon icon={ui.icon.ExclamationCircle} size="large" fill="var(--theme-error-color)" />
         </div>
         <div class="diagram-error-title">
           <Label label={plugin.string.TaskTypesDiagram} />

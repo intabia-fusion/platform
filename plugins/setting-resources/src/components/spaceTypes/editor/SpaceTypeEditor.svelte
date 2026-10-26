@@ -19,9 +19,8 @@
   import core from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import type { SpaceTypeEditor } from '@hcengineering/setting'
-  import {
+  import ui, {
     Component,
-    IconDescription,
     NavItem,
     resolvedLocationStore,
     Scroller,
@@ -30,6 +29,7 @@
     secondNavSeparators
   } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
+
   import settingRes from '../../../plugin'
 
   export let type: SpaceType
@@ -85,7 +85,7 @@
           <div class="hulyComponent-content__navHeader-menu">
             <IconButton
               kind="tertiary"
-              icon={IconDescription}
+              icon={ui.icon.TextLines}
               size="small"
               inheritColor
               tooltip={{ label: settingRes.string.SpaceTypes }}

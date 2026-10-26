@@ -21,7 +21,8 @@
   import type { KeyedAttribute } from '@hcengineering/presentation'
   import presentation, { AttributesBar, createQuery, getAttribute, getClient } from '@hcengineering/presentation'
   import setting, { settingId } from '@hcengineering/setting'
-  import { Button, IconAdd, Label, getCurrentResolvedLocation, navigate } from '@hcengineering/ui'
+  import ui, { Button, Icon, Label, getCurrentResolvedLocation, navigate } from '@hcengineering/ui'
+
   import { getFiltredKeys, isCollectionAttr, restrictionStore } from '../utils'
 
   export let object: Doc | Record<string, any>
@@ -108,15 +109,13 @@
         <Label {label} />
       </span>
       <div class="icon-arrow">
-        <svg fill="var(--theme-dark-color)" viewBox="0 0 6 6" xmlns="http://www.w3.org/2000/svg">
-          <path d="M0,0L6,3L0,6Z" />
-        </svg>
+        <Icon icon={ui.icon.CaretRightFill} size="small" fill="var(--theme-dark-color)" />
       </div>
     </div>
     <div class="tool">
       {#if canApply}
         <Button
-          icon={IconAdd}
+          icon={ui.icon.Plus}
           kind="link"
           size="medium"
           showTooltip={{ label: presentation.string.Add }}
@@ -172,12 +171,16 @@
     &:first-child {
       border-top-color: transparent;
     }
+    // The kit caret is centred in its 16px icon, which overflows this small box evenly.
     .icon-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
       margin-left: 0.5rem;
       width: 0.325rem;
       height: 0.325rem;
       opacity: 0;
-      transform-origin: 35% center;
+      transform-origin: center;
       transform: rotate(90deg);
       transition-property: transform, opacity;
       transition-duration: 0.15s;

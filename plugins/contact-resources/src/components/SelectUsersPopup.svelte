@@ -15,7 +15,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
   import presentation from '@hcengineering/presentation'
-  import { deviceOptionsStore, EditWithIcon, IconSearch, Modal, Scroller } from '@hcengineering/ui'
+  import ui, { deviceOptionsStore, EditWithIcon, Modal, Scroller } from '@hcengineering/ui'
   import type { IntlString } from '@hcengineering/platform'
   import type { Class, Ref } from '@hcengineering/core'
   import type { Employee } from '@hcengineering/contact'
@@ -67,7 +67,7 @@
   <div class="hulyModal-content__titleGroup">
     <div class="search">
       <EditWithIcon
-        icon={IconSearch}
+        icon={ui.icon.Search}
         size="large"
         width="100%"
         autoFocus={!$deviceOptionsStore.isMobile}

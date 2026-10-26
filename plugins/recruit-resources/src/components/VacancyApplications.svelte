@@ -17,13 +17,12 @@
   import { createQuery } from '@hcengineering/presentation'
   import type { Vacancy } from '@hcengineering/recruit'
   import { recruitId } from '@hcengineering/recruit'
-  import { Button, Icon, IconAdd, Label, Loading, Scroller, showPopup } from '@hcengineering/ui'
+  import ui, { Button, Icon, Label, Loading, Scroller, showPopup } from '@hcengineering/ui'
   import type { Viewlet, ViewletPreference } from '@hcengineering/view'
   import { NavLink, Table, ViewletsSettingButton } from '@hcengineering/view-resources'
+
   import recruit from '../plugin'
   import CreateApplication from './CreateApplication.svelte'
-  import IconApplication from './icons/Application.svelte'
-  import FileDuo from './icons/FileDuo.svelte'
   import SectionEmpty from './SectionEmpty.svelte'
 
   export let objectId: Ref<Vacancy>
@@ -52,7 +51,7 @@
 <div class="antiSection max-h-125 clear-mins">
   <div class="antiSection-header">
     <div class="antiSection-header__icon">
-      <Icon icon={IconApplication} size="small" />
+      <Icon icon={recruit.icon.Applications} size="small" />
     </div>
     <span class="antiSection-header__title">
       <NavLink app={recruitId} space={objectId}>
@@ -68,7 +67,7 @@
         bind:loading
       />
       {#if !readonly}
-        <Button id="appls.add" icon={IconAdd} kind="ghost" on:click={createApp} />
+        <Button id="appls.add" icon={ui.icon.Plus} kind="ghost" on:click={createApp} />
       {/if}
     </div>
   </div>
@@ -88,7 +87,7 @@
       <Loading />
     {/if}
   {:else}
-    <SectionEmpty icon={FileDuo} label={recruit.string.NoApplicationsForVacancy}>
+    <SectionEmpty icon={ui.icon.Document} label={recruit.string.NoApplicationsForVacancy}>
       <!-- svelte-ignore a11y-click-events-have-key-events -->
       <!-- svelte-ignore a11y-no-static-element-interactions -->
       {#if !readonly}

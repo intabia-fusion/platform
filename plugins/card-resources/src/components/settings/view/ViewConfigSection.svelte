@@ -15,18 +15,19 @@
 <script lang="ts">
   import presentation from '@hcengineering/presentation'
   import { createEventDispatcher } from 'svelte'
-  import { Icon, IconAdd, IconDelete, Label } from '@hcengineering/ui'
+  import ui, { Icon, Label } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import setting from '@hcengineering/setting'
   import type { Class, Doc, Ref } from '@hcengineering/core'
   import { generateId } from '@hcengineering/core'
-  import DescriptorBox from './DescriptorBox.svelte'
-  import card from '../../../plugin'
   import type { MasterTag, Tag } from '@hcengineering/card'
   import type { MasterDetailConfig, ViewletDescriptor } from '@hcengineering/view'
   import view from '@hcengineering/view'
-  import RelatedTagSelect from './RelatedTagSelect.svelte'
   import type { Asset } from '@hcengineering/platform'
+
+  import DescriptorBox from './DescriptorBox.svelte'
+  import card from '../../../plugin'
+  import RelatedTagSelect from './RelatedTagSelect.svelte'
 
   export let tag: MasterTag | Tag
 
@@ -73,7 +74,7 @@
     <span><Label label={card.string.MasterDetailViews} /></span>
     <IconButton
       kind="primary"
-      icon={IconAdd}
+      icon={ui.icon.Plus}
       size="small"
       data-id="btnAddViewConfig"
       tooltip={{ label: presentation.string.Add }}
@@ -108,7 +109,7 @@
           </div>
           <IconButton
             kind="tertiary"
-            icon={IconDelete}
+            icon={ui.icon.Trash}
             size="small"
             disabled={viewConfigs.length === 1}
             tooltip={{ label: presentation.string.Delete }}

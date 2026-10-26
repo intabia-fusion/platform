@@ -31,15 +31,13 @@
     OtpConfirmDialog,
     type OtpConfirmResult
   } from '@hcengineering/presentation'
-  import {
+  import ui, {
     Button,
     CheckBox,
     Dialog,
     type DropdownIntlItem,
     EditBox,
     Expandable,
-    IconCopy,
-    IconStop,
     Label,
     Loading,
     navigate,
@@ -48,13 +46,9 @@
     themeStore
   } from '@hcengineering/ui'
   import { MenuButton } from '@hcengineering/ui/kit'
-
   import { onDestroy } from 'svelte'
-
   import { workbenchId } from '@hcengineering/workbench'
-
   import { WorkspaceTokenInfo } from '@hcengineering/billing-resources'
-
   import { currencyOf } from '@hcengineering/billing'
 
   import adminRes from '../plugin'
@@ -481,7 +475,7 @@
       {/if}
       {#if canDelete}
         <Button
-          icon={IconStop}
+          icon={ui.icon.SquareFill}
           size="small"
           kind="dangerous"
           label={adminRes.string.Delete}
@@ -532,7 +526,7 @@
         <div class="flex-row-center">
           <Label label={adminRes.string.Uuid} />: {workspace.uuid}
           <Button
-            icon={IconCopy}
+            icon={ui.icon.Copy}
             size="small"
             kind="ghost"
             on:click={() => copyTextToClipboard(workspace.uuid)}
@@ -670,7 +664,7 @@
                       }}
                     />
                     <Button
-                      icon={IconStop}
+                      icon={ui.icon.SquareFill}
                       size="small"
                       kind="dangerous"
                       showTooltip={{ label: adminRes.string.RemoveMember }}

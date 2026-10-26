@@ -18,9 +18,10 @@
   import core from '@hcengineering/core'
   import type { Asset, IntlString } from '@hcengineering/platform'
   import type { AnySvelteComponent } from '@hcengineering/ui'
-  import { CheckBox, deviceOptionsStore, resizeObserver, tooltip, EditWithIcon, IconSearch } from '@hcengineering/ui'
+  import ui, { CheckBox, deviceOptionsStore, resizeObserver, tooltip, EditWithIcon } from '@hcengineering/ui'
   import type { ComponentType } from 'svelte'
   import { createEventDispatcher } from 'svelte'
+
   import presentation from '..'
   import { createQuery } from '../utils'
   import SpaceInfo from './SpaceInfo.svelte'
@@ -80,7 +81,7 @@
 <div class="selectPopup" use:resizeObserver={() => dispatch('changeContent')}>
   <div class="header">
     <EditWithIcon
-      icon={IconSearch}
+      icon={ui.icon.Search}
       size="large"
       width="100%"
       autoFocus={!$deviceOptionsStore.isMobile}

@@ -95,7 +95,7 @@
         content: '';
         position: absolute;
         inset: 0;
-        background-image: url("data:image/svg+xml,%3C%3Fxml version='1.0' encoding='utf-8'%3F%3E%3Csvg version='1.1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='0 0 32 32'%3E%3Cpath fill='%23FFFFFF' d='M23.6,10.9c-0.6-0.6-1.5-0.6-2.1,0l-6.9,6.9l-3.4-3.4c-0.6-0.6-1.5-0.6-2.1,0c-0.6,0.6-0.6,1.5,0,2.1l5.6,5.6l9.1-9.1C24.1,12.5,24.1,11.5,23.6,10.9z'/%3E%3C/svg%3E%0A");
+        background-image: url("data:image/svg+xml,%3C%3Fxml version='1.0' encoding='utf-8'%3F%3E%3Csvg version='1.1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='0 0 32 32'%3E%3Cpath fill='%23FFFFFF' d='M6.44,15.19c-0.586,0.586 -0.586,1.536 0,2.121l5.5,5.5c0.586,0.586 1.536,0.586 2.121,0l11.5,-11.5c0.586,-0.586 0.586,-1.536 0,-2.121c-0.586,-0.586 -1.536,-0.586 -2.121,0l-10.439,10.439l-4.439,-4.439c-0.586,-0.586 -1.536,-0.586 -2.121,0z'/%3E%3C/svg%3E%0A");
       }
       &.disabled {
         cursor: default;

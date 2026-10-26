@@ -19,9 +19,10 @@
   import type { Class, Data, Doc, MarkupBlobRef, Ref } from '@hcengineering/core'
   import core, { fillDefaults } from '@hcengineering/core'
   import { translate } from '@hcengineering/platform'
-  import { getCurrentLocation, IconAdd, navigate, showPopup } from '@hcengineering/ui'
+  import ui, { getCurrentLocation, navigate, showPopup } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import { getClient } from '@hcengineering/presentation'
+
   import card from '../plugin'
   import { isBaseTypeWithSubtypes } from '../utils'
   import CreateCardPopup from './CreateCardPopup.svelte'
@@ -74,7 +75,7 @@
 
 <IconButton
   kind="primary"
-  icon={IconAdd}
+  icon={ui.icon.Plus}
   size="small"
   data-id="btnCreateCard"
   tooltip={{ label: card.string.CreateCard }}

@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import type { Room } from '@hcengineering/love'
-  import { IconMaximize, Popup, showPopup, TooltipInstance } from '@hcengineering/ui'
+  import ui, { Popup, showPopup, TooltipInstance } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
 
   import love from '../../plugin'
@@ -96,7 +96,7 @@
 
       {#if $lkSessionConnected && canMaximize}
         <IconButton
-          icon={IconMaximize}
+          icon={ui.icon.ArrowsOut}
           tooltip={{
             label: love.string.FullscreenMode,
             direction: 'top'

@@ -5,8 +5,7 @@
   import { copyTextToClipboard, createQuery, getClient } from '@hcengineering/presentation'
   import setting from '@hcengineering/setting'
   import type { Action, Location } from '@hcengineering/ui'
-  import {
-    IconAdd,
+  import ui, {
     SelectPopup,
     eventToHTMLElement,
     getEventPopupPositionElement,
@@ -38,8 +37,6 @@
   } from '@hcengineering/view-resources'
   import copy from 'fast-copy'
   import { createEventDispatcher } from 'svelte'
-  import TodoCheck from './icons/TodoCheck.svelte'
-  import TodoUncheck from './icons/TodoUncheck.svelte'
 
   export let alias: string | undefined
 
@@ -124,7 +121,7 @@
   async function switchPublicAction (object: FilteredView, originalEvent: MouseEvent | undefined): Promise<Action[]> {
     return [
       {
-        icon: object.sharable ? TodoCheck : TodoUncheck,
+        icon: object.sharable ? ui.icon.CheckCircle : ui.icon.Circle,
         label: view.string.PublicView,
         action: async (ctx: any, evt: Event) => {
           await client.update(object, { sharable: !object.sharable })
@@ -301,7 +298,7 @@
       }))
       const add: Action = {
         label: view.string.AddSavedView,
-        icon: IconAdd,
+        icon: ui.icon.Plus,
         action: async (_, e): Promise<void> => {
           showPopup(
             SelectPopup,

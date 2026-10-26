@@ -25,14 +25,15 @@
     MessageBox
   } from '@hcengineering/presentation'
   import type { Action } from '@hcengineering/ui'
-  import { IconAdd, IconDelete, IconLink, NavItem, showPopup } from '@hcengineering/ui'
+  import ui, { NavItem, showPopup } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import { TreeElement } from '@hcengineering/view-resources'
-  import ScheduleEditor from './ScheduleEditor.svelte'
-  import calendar from '../plugin'
   import { SortingOrder } from '@hcengineering/core'
   import { getMetadata } from '@hcengineering/platform'
+
+  import ScheduleEditor from './ScheduleEditor.svelte'
+  import calendar from '../plugin'
 
   const currentUser = getCurrentEmployee()
   const scheduleUrl = getMetadata(calendar.metadata.PublicScheduleURL)
@@ -56,7 +57,7 @@
   async function getScheduleListActions (): Promise<Action[]> {
     return [
       {
-        icon: IconAdd,
+        icon: ui.icon.Plus,
         label: calendar.string.ScheduleNew,
         inline: true,
         action: async () => {
@@ -112,7 +113,7 @@
     {#if schedules.length === 0}
       <NavItem
         label={calendar.string.ScheduleNew}
-        icon={IconAdd}
+        icon={ui.icon.Plus}
         type="type-object"
         on:click={() => {
           showPopup(ScheduleEditor, {}, undefined)
@@ -130,7 +131,7 @@
         >
           <svelte:fragment slot="actions">
             <IconButton
-              icon={IconLink}
+              icon={ui.icon.Link}
               size="extra-small"
               kind="tertiary"
               tooltip={{ label: calendar.string.ScheduleShareLink, direction: 'top' }}
@@ -139,7 +140,7 @@
               }}
             />
             <IconButton
-              icon={IconDelete}
+              icon={ui.icon.Trash}
               size="extra-small"
               kind="tertiary"
               tooltip={{ label: view.string.Delete, direction: 'top' }}

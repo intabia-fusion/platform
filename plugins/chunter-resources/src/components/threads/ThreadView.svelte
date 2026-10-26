@@ -16,14 +16,7 @@
   import type { Doc, Ref } from '@hcengineering/core'
   import { ComponentExtensions, createQuery, getClient } from '@hcengineering/presentation'
   import type { BreadcrumbItem } from '@hcengineering/ui'
-  import ui, {
-    Breadcrumbs,
-    location as locationStore,
-    Header,
-    Loading,
-    languageStore,
-    IconBack
-  } from '@hcengineering/ui'
+  import ui, { Breadcrumbs, location as locationStore, Header, Loading, languageStore } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import type { ActivityMessage } from '@hcengineering/activity'
@@ -144,7 +137,7 @@
     <svelte:fragment slot="beforeTitle">
       {#if withBackButton}
         <IconButton
-          icon={IconBack}
+          icon={ui.icon.ChevronLeftLarge}
           kind="tertiary"
           size="small"
           tooltip={{ label: ui.string.Back }}

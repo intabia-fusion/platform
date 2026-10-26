@@ -16,6 +16,7 @@
 import '@hcengineering/theme/styles/global.scss'
 import { accentColorOptions, AccentColor, ThemeVariant } from '@hcengineering/theme'
 import { Popup, TooltipInstance } from '@hcengineering/ui'
+import { registerIcons } from '@hcengineering/ui/src/icons'
 import registerUiStrings from '@hcengineering/ui/src/lang'
 import type { Preview } from '@storybook/svelte'
 
@@ -23,9 +24,11 @@ import './preview.scss'
 import '../src/design/setup'
 import StoryTheme from '../src/decorators/StoryTheme.svelte'
 import { defaultBooleans, hidePassthroughAttributes, organizeProps, prettifyTypeNames } from '../src/helpers/argTypes'
+import uiSprite from '../../../packages/ui/assets/icons.svg?url'
 import { systemTheme } from './theme'
 
 registerUiStrings()
+registerIcons(uiSprite)
 
 // One popup and tooltip host per preview document, as the workbench mounts them: a docs page shows several stories.
 const hosts = document.body.appendChild(document.createElement('div'))

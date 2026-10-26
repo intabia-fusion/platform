@@ -15,7 +15,7 @@
 <script lang="ts">
   import type { TaskType } from '@hcengineering/task'
   import { getAllowedChildTaskTypes } from '@hcengineering/task'
-  import { Icon, IconInfo, IconOpenedArrow, Label } from '@hcengineering/ui'
+  import ui, { Icon, Label } from '@hcengineering/ui'
   import { taskTypeStore } from '@hcengineering/task-resources'
   import type { SubtaskStatusesValidatorConfig } from '@hcengineering/workflow'
 
@@ -40,7 +40,7 @@
 {:else}
   <button type="button" class="subtask-status--hint" on:click={handleConfigureTaskTypes}>
     <span class="subtask-status--hint-icon">
-      <Icon icon={IconInfo} size="small" />
+      <Icon icon={ui.icon.InfoCircle} size="small" />
     </span>
     <span class="subtask-status--hint-text">
       <Label label={plugin.string.NoSubtaskTypesDescription} />
@@ -50,7 +50,7 @@
         <Label label={plugin.string.ConfigureTaskTypes} />
       </span>
       <span class="subtask-status--hint-arrow">
-        <Icon icon={IconOpenedArrow} size="x-small" />
+        <Icon icon={ui.icon.ChevronRightSmall} size="x-small" />
       </span>
     </span>
   </button>

@@ -13,7 +13,7 @@
 -->
 <script lang="ts">
   import type { Asset, IntlString } from '@hcengineering/platform'
-  import { Icon, IconOpenedArrow, Label } from '@hcengineering/ui'
+  import ui, { Icon, Label } from '@hcengineering/ui'
 
   import type { UsedInItem } from '../types'
 
@@ -40,7 +40,7 @@
             {/if}
           </span>
           <span class="used-in-list--arrow">
-            <Icon icon={IconOpenedArrow} size="x-small" />
+            <Icon icon={ui.icon.ChevronRightSmall} size="x-small" />
           </span>
         </button>
       {/each}

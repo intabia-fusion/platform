@@ -23,8 +23,8 @@
     isTextFile,
     showFileViewer
   } from '@hcengineering/presentation'
-  import { closeTooltip, IconClose } from '@hcengineering/ui'
-  import { IconButton, IconOpenFile, IconSaveFile } from '@hcengineering/ui/kit'
+  import ui, { closeTooltip } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import type { Widget, WidgetTab } from '@hcengineering/workbench'
   import workbench from '@hcengineering/workbench'
 
@@ -68,7 +68,7 @@
   <FileHeader {name} {contentType} {size}>
     {#if file != null}
       <IconButton
-        icon={IconSaveFile}
+        icon={ui.icon.Download}
         kind="ghost"
         size="small"
         iconSize="medium"
@@ -78,7 +78,7 @@
         }}
       />
       <IconButton
-        icon={IconOpenFile}
+        icon={ui.icon.OpenFile}
         kind="ghost"
         size="small"
         iconSize="medium"
@@ -91,7 +91,7 @@
     {/if}
     <span class="divider" />
     <IconButton
-      icon={IconClose}
+      icon={ui.icon.Cross}
       kind="ghost"
       size="small"
       iconSize="medium"

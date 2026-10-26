@@ -18,5 +18,5 @@ import desktopPreferences from '@hcengineering/desktop-preferences'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
 loadMetadata(desktopPreferences.icon, {
-  Desktop: `${icons}#desktop`
+  Desktop: `${icons}#monitor`
 })

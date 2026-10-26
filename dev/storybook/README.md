@@ -21,10 +21,30 @@ pnpm storybook
 |---|---|---|---|
 | UI kit | Overview, Buttons, Inputs, ..., Display, Media | `src/ui-kit`, `src/overview` | Компоненты `packages/ui/src/ui-kit` |
 | Plugins | Attachments | `src/attachments` | Компоненты плагинов на пустой модели (`mock.ts`) |
+| Plugins | Icons | `src/icons` | Все svg платформы вне кита по источникам (кит - UI kit / Overview / Icons) |
 | Screens | Kit (pen.dev) | `src/design/kit/<Категория>` | Визуальная библиотека: Workbench, Actions, Forms, Status, TagsAndFilters, People, Tracker, Settings, Chat, Login. Пропсы - данные предметной области (`kit/types.ts`), без раскладки |
 | Screens | страницы экранов | `src/design/generated` | Принятое текущее состояние UI (`dev/design/screens/current`). Страница - история верхнего уровня с тегом `screen`: `Canvas` на страницу и по истории на фрейм |
 
 Библиотека `src/design/kit` - первичный источник: компоненты продукта доводятся до неё.
+
+## Иконки кита
+
+`Overview / Icons` во вкладке UI kit - все ключи `ui.icon` по смысловым группам (`src/ui-kit/iconGroups.ts`); иконка
+кита без группы сама попадает в Other.
+
+## Иконки платформы
+
+`Icons` во вкладке Plugins - одна история со всеми svg платформы вне кита.
+
+- Источники: символы спрайтов `*-assets`, `<svg>` в `.svelte`, файлы `.svg`, svg-строки в `.ts`, data URI в стилях.
+  Не входят: спрайт кита (он в `Overview / Icons`), `dev/`, `tests/`, `docs/` и компоненты, которые не иконки - их
+  форма задаётся входными данными (чекбоксы, индикаторы прогресса, спиннеры, значки статуса, графики, шаги мастера,
+  маски, разделители; список - `COMPONENTS` в `scripts/platform-icons.mjs`).
+- Блоки - плагины (assets и resources вместе) и пакеты, внутри иконки по имени. Подсказка плитки - файл и строка; поиск
+  по имени и пути. Рисунок только белым (белые логотипы) показан на тёмной подложке.
+- Список собирает vite-плагин `scripts/platform-icons.mjs` (виртуальный модуль `virtual:platform-icons`) при старте
+  Storybook. Правка файла с иконками перезагружает страницу сама, новый файл появится после перезапуска.
+  `node scripts/platform-icons.mjs` печатает, сколько иконок найдено.
 
 ## Экраны макетов
 

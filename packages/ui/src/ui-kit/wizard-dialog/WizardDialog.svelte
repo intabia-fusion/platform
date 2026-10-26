@@ -18,8 +18,6 @@
 
   import Icon from '../../components/Icon.svelte'
   import Scroller from '../../components/Scroller.svelte'
-  import IconArrowLeft from '../../components/icons/ArrowLeft.svelte'
-  import IconArrowRight from '../../components/icons/ArrowRight.svelte'
   import ui from '../../plugin'
   import Button from '../button/Button.svelte'
   import Dialog from '../dialog/Dialog.svelte'
@@ -115,7 +113,7 @@
       <Button
         kind="secondary"
         size="medium"
-        icon={IconArrowLeft}
+        icon={ui.icon.ArrowLeft}
         label={ui.string.Back}
         disabled={loading}
         on:click={() => {
@@ -148,7 +146,7 @@
           void go(index + 1)
         }}
       >
-        <Icon icon={IconArrowRight} size="small" />
+        <Icon icon={ui.icon.ArrowRight} size="small" />
       </Button>
     {/if}
   </svelte:fragment>

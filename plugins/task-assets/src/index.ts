@@ -17,15 +17,17 @@ import { loadMetadata } from '@hcengineering/platform'
 import task from '@hcengineering/task'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
+// Icons the kit has: the ids stay, stored documents keep pointing at them.
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(task.icon, {
-  Task: `${icons}#task`,
-  Kanban: `${icons}#kanban`,
-  TodoCheck: `${icons}#todo-check`,
-  TodoUnCheck: `${icons}#todo-uncheck`,
-  ManageTemplates: `${icons}#manage-templates`,
-  TaskState: `${icons}#task-state`,
-  Dashboard: `${icons}#dashboard`,
-  TypeHierarchy: `${icons}#type-hierarchy`,
-  Export: `${icons}#export`,
-  Import: `${icons}#import`
+  Task: `${uiIcons}#check-square`,
+  Kanban: `${uiIcons}#kanban`,
+  TodoCheck: `${uiIcons}#check-circle`,
+  TodoUnCheck: `${uiIcons}#circle`,
+  ManageTemplates: `${uiIcons}#circle-gap-dot`,
+  TaskState: `${uiIcons}#circle-gap-dot`,
+  Dashboard: `${icons}#chart-bar-square`,
+  TypeHierarchy: `${uiIcons}#graph`,
+  Export: `${uiIcons}#cube-arrow-right`,
+  Import: `${uiIcons}#cube-arrow-left`
 })

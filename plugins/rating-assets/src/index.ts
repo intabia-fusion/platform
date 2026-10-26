@@ -17,10 +17,9 @@ import rating from '@hcengineering/rating'
 import { loadMetadata } from '@hcengineering/platform'
 
 const ratingIcon = require('../assets/icon.svg') as string // eslint-disable-line
+// Icons the kit has: the ids stay, stored documents keep pointing at them.
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(rating.icon, {
-  Rating: `${ratingIcon}#rating`,
-  StarYellow: `${ratingIcon}#star-yellow`,
-  StarGreen: `${ratingIcon}#star-green`,
-  StarBlue: `${ratingIcon}#star-blue`,
-  StarRed: `${ratingIcon}#star-red`
+  Rating: `${uiIcons}#star`,
+  StarYellow: `${ratingIcon}#star-yellow`
 })

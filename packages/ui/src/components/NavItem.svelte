@@ -16,17 +16,10 @@
   import { generateId } from '@hcengineering/core'
   import type { Asset, IntlString } from '@hcengineering/platform'
   import { getEmbeddedLabel } from '@hcengineering/platform'
+
   import type { AnySvelteComponent, IconSize } from '..'
-  import {
-    Icon,
-    Label,
-    IconDown,
-    getTreeCollapsed,
-    setTreeCollapsed,
-    tooltip,
-    IconFolderExpanded,
-    IconFolderCollapsed
-  } from '..'
+  import { Icon, Label, getTreeCollapsed, setTreeCollapsed, tooltip } from '..'
+  import ui from '../plugin'
 
   export let icon: Asset | AnySvelteComponent | undefined = undefined
   export let folderIcon: boolean = false
@@ -68,7 +61,7 @@
   $: if (!showMenu && levelReset && !hovered) levelReset = false
   $: isOpen = !getTreeCollapsed(_id, collapsedPrefix)
   $: setTreeCollapsed(_id, !isOpen, collapsedPrefix)
-  $: visibleIcon = folderIcon ? (isOpen && !empty ? IconFolderExpanded : IconFolderCollapsed) : icon
+  $: visibleIcon = folderIcon ? (isOpen && !empty ? ui.icon.FolderOpenFill : ui.icon.Folder) : icon
 
   const mouseOver = () => {
     if (!hovered) {
@@ -118,7 +111,7 @@
         if (!empty) isOpen = !isOpen
       }}
     >
-      {#if !empty}<IconDown size="x-small" />{/if}
+      {#if !empty}<Icon icon={ui.icon.CaretDownFill} size="x-small" />{/if}
     </button>
   {/if}
   {#if visibleIcon || (type === 'type-tag' && color)}

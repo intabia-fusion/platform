@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { IconAdd, IconSettings } from '@hcengineering/ui'
+  import ui from '@hcengineering/ui'
   import { Button, EmptyState, IconButton, Section, type SectionProps } from '@hcengineering/ui/kit'
 
   export let props: Partial<SectionProps> = {}
@@ -31,12 +31,12 @@
     <svelte:fragment slot="actions">
       {#if withActions}
         <IconButton
-          icon={IconSettings}
+          icon={ui.icon.Sliders}
           kind="ghost"
           size="small"
           tooltip={{ label: getEmbeddedLabel('View settings') }}
         />
-        <IconButton icon={IconAdd} kind="ghost" size="small" tooltip={{ label: getEmbeddedLabel('Add member') }} />
+        <IconButton icon={ui.icon.Plus} kind="ghost" size="small" tooltip={{ label: getEmbeddedLabel('Add member') }} />
       {/if}
     </svelte:fragment>
     {#if empty}

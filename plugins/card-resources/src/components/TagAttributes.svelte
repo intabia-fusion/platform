@@ -17,13 +17,12 @@
   import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import setting, { settingId } from '@hcengineering/setting'
-  import {
+  import ui, {
     Button,
     Chevron,
     ExpandCollapse,
     getCurrentResolvedLocation,
     getPlatformColorDef,
-    IconAdd,
     Label,
     navigate,
     showPopup,
@@ -31,10 +30,9 @@
     tooltip
   } from '@hcengineering/ui'
   import { permissionsStore } from '@hcengineering/contact-resources'
+
   import { canLockSection, canUnlockSection } from '../utils'
   import CardAttributes from './CardAttributes.svelte'
-  import Lock from './icons/Lock.svelte'
-  import Unlock from './icons/Unlock.svelte'
   import card from '../plugin'
   import MarkupProperties from './MarkupProperties.svelte'
 
@@ -89,7 +87,7 @@
     {#if (isLocked && canUnlock) || (!isLocked && canLock)}
       <div class="lock-btn">
         <Button
-          icon={isLocked ? Lock : Unlock}
+          icon={isLocked ? ui.icon.LockFill : ui.icon.LockOpen}
           kind="link"
           disabled={readonly}
           size="medium"
@@ -100,7 +98,7 @@
     {/if}
     {#if hasAccountRole(getCurrentAccount(), AccountRole.Maintainer) && isEditable}
       <Button
-        icon={IconAdd}
+        icon={ui.icon.Plus}
         kind="link"
         size="medium"
         showTooltip={{ label: setting.string.AddAttribute }}

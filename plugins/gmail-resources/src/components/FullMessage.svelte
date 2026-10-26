@@ -16,16 +16,17 @@
 -->
 <script lang="ts">
   import type { NewMessage, SharedMessage } from '@hcengineering/gmail'
-  import { Button, IconArrowLeft, Label, Scroller, tooltip } from '@hcengineering/ui'
+  import ui, { Button, Label, Scroller, tooltip } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
-  import gmail from '../plugin'
-  import FullMessageContent from './FullMessageContent.svelte'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import type { Attachment } from '@hcengineering/attachment'
   import attachment from '@hcengineering/attachment'
   import { AttachmentTile } from '@hcengineering/attachment-resources'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import type { Ref } from '@hcengineering/core'
+
+  import gmail from '../plugin'
+  import FullMessageContent from './FullMessageContent.svelte'
 
   export let currentMessage: SharedMessage
   export let newMessage: boolean
@@ -60,7 +61,7 @@
 <div class="flex-between min-h-12 px-2">
   <div class="flex-row-center clear-mins">
     <Button
-      icon={IconArrowLeft}
+      icon={ui.icon.ArrowLeft}
       kind="ghost"
       on:click={() => {
         dispatch('close')

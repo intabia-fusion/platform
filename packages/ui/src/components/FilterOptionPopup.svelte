@@ -13,8 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import Icon from './Icon.svelte'
+  import ui from '../plugin'
   import type { FilterCategory, FilterOption, ActiveFilter } from '../types'
-  import IconCheck from './icons/Check.svelte'
 
   export let category: FilterCategory
   export let activeFilters: ActiveFilter[] = []
@@ -57,7 +58,7 @@
       >
         <span class="option-label">{option.label}</span>
         {#if isSelected(option.id)}
-          <IconCheck size="small" />
+          <Icon icon={ui.icon.Check} size="small" />
         {/if}
       </button>
     {/each}

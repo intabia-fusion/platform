@@ -4,8 +4,9 @@
   import type { Process, State, Transition, Trigger } from '@hcengineering/process'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
   import type { DropdownIntlItem, ListItem } from '@hcengineering/ui'
-  import { Component, Dropdown, DropdownLabelsIntl, IconDelete, Label, Modal } from '@hcengineering/ui'
+  import ui, { Component, Dropdown, DropdownLabelsIntl, Label, Modal } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
+
   import plugin from '../../plugin'
   import TransitionPresenter from './TransitionPresenter.svelte'
 
@@ -87,7 +88,7 @@
   <svelte:fragment slot="actions">
     {#if !readonly}
       <IconButton
-        icon={IconDelete}
+        icon={ui.icon.Trash}
         size="small"
         kind="tertiary"
         tooltip={{ label: presentation.string.Delete }}

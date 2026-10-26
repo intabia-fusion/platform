@@ -15,10 +15,11 @@
 <script lang="ts">
   import type { AnyAttribute } from '@hcengineering/core'
   import type { TagReference, TagElement } from '@hcengineering/tags'
-  import tags from '../plugin'
   import type { LabelAndProps } from '@hcengineering/ui'
-  import { Chip, getPlatformColorDef, Icon, IconClose, resizeObserver, themeStore, tooltip } from '@hcengineering/ui'
+  import ui, { Chip, getPlatformColorDef, Icon, resizeObserver, themeStore, tooltip } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+
+  import tags from '../plugin'
   import TagItem from './TagItem.svelte'
 
   export let value: TagReference
@@ -79,7 +80,7 @@
       </span>
       {#if isEditable}
         <button class="btn-close" on:click|stopPropagation={() => dispatch('remove', value)}>
-          <Icon icon={IconClose} size="x-small" />
+          <Icon icon={ui.icon.Cross} size="x-small" />
         </button>
       {/if}
     </div>

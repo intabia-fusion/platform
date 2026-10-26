@@ -66,6 +66,7 @@
 
   $: icon = value === undefined ? testManagement.icon.StatusNonTested : testRunStatusAssets[value].icon
   $: label = value === undefined ? testManagement.string.StatusNonTested : testRunStatusAssets[value].label
+  $: iconProps = value === undefined ? undefined : testRunStatusAssets[value].iconProps
 </script>
 
 {#if kind === 'list'}
@@ -74,12 +75,12 @@
     {disabled}
     on:click={handlePopupOpen}
   >
-    <Icon {icon} {size} />
+    <Icon {icon} {size} {...iconProps} />
   </button>
 {:else if kind === 'list-header'}
   <div class="flex-row-center pl-0-5">
     {#if shouldShowAvatar}
-      <Icon {icon} {size} />
+      <Icon {icon} {size} {...iconProps} />
     {/if}
     <span class="overflow-label" class:ml-1-5={shouldShowAvatar} class:fs-bold={accent}><Label {label} /></span>
   </div>
@@ -88,6 +89,7 @@
     {label}
     {kind}
     {icon}
+    iconProps={iconProps ?? {}}
     {justify}
     {size}
     {width}

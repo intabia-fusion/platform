@@ -17,7 +17,7 @@
   import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import type { SelectPopupValueType } from '@hcengineering/ui'
-  import { Button, ButtonWithDropdown, IconAdd, IconDropdown, Loading } from '@hcengineering/ui'
+  import ui, { Button, ButtonWithDropdown, Loading } from '@hcengineering/ui'
   import type { TestProject } from '@hcengineering/test-management'
 
   import { showCreateTestCasePopup, showCreateTestSuitePopup, showCreateProjectPopup } from '../utils'
@@ -106,11 +106,11 @@
   <div class="antiNav-subheader">
     {#if hasProject}
       <ButtonWithDropdown
-        icon={IconAdd}
+        icon={ui.icon.Plus}
         justify="left"
         kind="primary"
         label={testManagement.string.CreateTestCase}
-        dropdownIcon={IconDropdown}
+        dropdownIcon={ui.icon.ChevronDown}
         {dropdownItems}
         disabled={currentSpace === undefined}
         on:click={handleCreateTestCase}
@@ -120,7 +120,7 @@
       />
     {:else}
       <Button
-        icon={IconAdd}
+        icon={ui.icon.Plus}
         label={testManagement.string.CreateProject}
         justify="left"
         width="100%"

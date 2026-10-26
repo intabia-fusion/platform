@@ -16,12 +16,12 @@
 import activity from '@hcengineering/activity'
 import { loadMetadata } from '@hcengineering/platform'
 
-const icons = require('../assets/icons.svg') as string // eslint-disable-line
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(activity.icon, {
-  Activity: `${icons}#activity`,
-  Emoji: `${icons}#emoji`,
-  Bookmark: `${icons}#bookmark`,
-  BookmarkFilled: `${icons}#bookmark-filled`,
-  Forward: `${icons}#forward`,
-  ReplyTo: `${icons}#reply-to`
+  Activity: `${uiIcons}#chart-square`,
+  Emoji: `${uiIcons}#smiley`,
+  Bookmark: `${uiIcons}#bookmark`,
+  BookmarkFilled: `${uiIcons}#bookmark-fill`,
+  Forward: `${uiIcons}#bubble-arrow-right`,
+  ReplyTo: `${uiIcons}#arrow-bend-up-left`
 })

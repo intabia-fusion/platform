@@ -20,7 +20,6 @@
   import plugin from '../plugin'
   import type { DropdownTextItem } from '../types'
   import Icon from './Icon.svelte'
-  import IconCheck from './icons/Check.svelte'
   import Label from './Label.svelte'
   import PopupCategory from './PopupCategory.svelte'
   import ModernEditbox from './ModernEditbox.svelte'
@@ -182,7 +181,7 @@
 
         {#if isSelected(selected, item)}
           <span class="hulyPopup-row__icon">
-            <IconCheck size="small" />
+            <Icon icon={plugin.icon.Check} size="small" />
           </span>
         {/if}
       </button>

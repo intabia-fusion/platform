@@ -16,7 +16,7 @@
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
   import { createEventDispatcher } from 'svelte'
-  import { Button, EditBox, IconCheck, resizeObserver } from '@hcengineering/ui'
+  import ui, { Button, EditBox, resizeObserver } from '@hcengineering/ui'
   import type { EditStyle } from '@hcengineering/ui'
 
   export let value: string | number | undefined
@@ -51,7 +51,7 @@
       />
     </div>
     <div class="ml-2">
-      <Button icon={IconCheck} size="small" on:click={() => dispatch('close', value)} />
+      <Button icon={ui.icon.Check} size="small" on:click={() => dispatch('close', value)} />
     </div>
   </div>
 </div>

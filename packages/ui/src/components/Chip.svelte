@@ -14,10 +14,11 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
+
   import IconButton from '../ui-kit/button/IconButton.svelte'
   import ui from '../plugin'
   import type { LabelAndProps } from '..'
-  import { IconClose, tooltip as tp } from '..'
+  import { tooltip as tp } from '..'
 
   export let label: string
   export let size: 'small' | 'min' = 'small'
@@ -52,7 +53,7 @@
       bind:this={buttonRef}
       kind="tertiary"
       size="min"
-      icon={IconClose}
+      icon={ui.icon.Cross}
       inheritColor={true}
       tooltip={{ label: ui.string.Remove }}
       on:click={(e) => {

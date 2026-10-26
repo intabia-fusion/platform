@@ -16,7 +16,8 @@
 import { loadMetadata } from '@hcengineering/platform'
 import print from '@hcengineering/print'
 
-const icons = require('../assets/icons.svg') as string // eslint-disable-line
+// Icons the kit has: the ids stay, stored documents keep pointing at them.
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(print.icon, {
-  Print: `${icons}#print`
+  Print: `${uiIcons}#document`
 })

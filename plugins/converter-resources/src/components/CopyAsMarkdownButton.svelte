@@ -8,10 +8,11 @@
 <script lang="ts">
   import type { Class, Doc, DocumentQuery, Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { IconCopy, IconMoreH, type DropdownIntlItem } from '@hcengineering/ui'
+  import ui, { type DropdownIntlItem } from '@hcengineering/ui'
   import { MenuButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import { viewletContextStore } from '@hcengineering/view-resources'
+
   import { copyAsMarkdownTableFromResource, copyRelationshipTableAsMarkdown } from '../markdown/copyActions'
 
   export let _class: Ref<Class<Doc>>
@@ -30,7 +31,7 @@
     {
       id: COPY_ALL_ACTION_ID,
       label: view.string.CopyAll,
-      icon: IconCopy
+      icon: ui.icon.Copy
     }
   ] satisfies DropdownIntlItem[]
 
@@ -60,5 +61,5 @@
 </script>
 
 {#if hasData}
-  <MenuButton size="small" noSelection icon={IconMoreH} items={actions} on:selected={onActionSelected} />
+  <MenuButton size="small" noSelection icon={ui.icon.DotsHorizontal} items={actions} on:selected={onActionSelected} />
 {/if}

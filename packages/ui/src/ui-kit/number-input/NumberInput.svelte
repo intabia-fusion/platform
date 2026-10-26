@@ -18,12 +18,10 @@
   import { languageStore } from '@hcengineering/theme'
   import { createEventDispatcher, onMount } from 'svelte'
 
-  import IconAdd from '../../components/icons/Add.svelte'
   import { registerFocus } from '../../focus'
   import ui from '../../plugin'
   import IconButton from '../button/IconButton.svelte'
   import type { ButtonSize } from '../button/types'
-  import IconMinus from './IconMinus.svelte'
   import type { NumberInputEvents, NumberInputProps, NumberInputSize } from './types'
 
   type $$Props = NumberInputProps
@@ -169,7 +167,7 @@
     tabindex={-1}
     kind="ghost"
     size={stepperSizes[resolvedSize]}
-    icon={IconMinus}
+    icon={ui.icon.Minus}
     tooltip={{ label: ui.string.Decrease }}
     disabled={!canDecrease}
     on:click={() => {
@@ -203,7 +201,7 @@
     tabindex={-1}
     kind="ghost"
     size={stepperSizes[resolvedSize]}
-    icon={IconAdd}
+    icon={ui.icon.Plus}
     tooltip={{ label: ui.string.Increase }}
     disabled={!canIncrease}
     on:click={() => {

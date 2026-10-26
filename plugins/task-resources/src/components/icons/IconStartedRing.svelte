@@ -25,8 +25,9 @@
 
   const dispatch = createEventDispatcher()
   const maxArcs = 6
-  const radius = 6.5
-  const gap = 1.4 / radius
+  // The kit grid of 32: the old 16 drawing doubled.
+  const radius = 13
+  const gap = 2.8 / radius
 
   $: color = getPlatformColorDef(fill, $themeStore.dark)
   $: stroke = color?.icon ?? 'currentColor'
@@ -40,7 +41,7 @@
   function arc (i: number, n: number): string {
     const from = (2 * Math.PI * i) / n + gap / 2
     const to = (2 * Math.PI * (i + 1)) / n - gap / 2
-    const point = (a: number): string => `${8 + Math.cos(a) * radius} ${8 + Math.sin(a) * radius}`
+    const point = (a: number): string => `${16 + Math.cos(a) * radius} ${16 + Math.sin(a) * radius}`
     return `M ${point(from)} A ${radius} ${radius} 0 0 1 ${point(to)}`
   }
 </script>
@@ -52,17 +53,17 @@
     class="svg-{size}"
     style:flex-shrink={0}
     style:transform="rotate(-90deg)"
-    viewBox="0 0 16 16"
+    viewBox="0 0 32 32"
     xmlns="http://www.w3.org/2000/svg"
   >
     {#if arcs < 1}
-      <circle cx="8" cy="8" r={radius} fill="none" {stroke} stroke-width="2" opacity="0.3" />
+      <circle cx="16" cy="16" r={radius} fill="none" {stroke} stroke-width="4" opacity="0.3" />
     {/if}
     {#each Array(Math.max(arcs, 0)) as _, i}
       {#if arcs === 1}
-        <circle cx="8" cy="8" r={radius} fill="none" {stroke} stroke-width="2" opacity={index > 0 ? 1 : 0.3} />
+        <circle cx="16" cy="16" r={radius} fill="none" {stroke} stroke-width="4" opacity={index > 0 ? 1 : 0.3} />
       {:else}
-        <path d={arc(i, arcs)} fill="none" {stroke} stroke-width="2" opacity={i < index ? 1 : 0.3} />
+        <path d={arc(i, arcs)} fill="none" {stroke} stroke-width="4" opacity={i < index ? 1 : 0.3} />
       {/if}
     {/each}
   </svg>

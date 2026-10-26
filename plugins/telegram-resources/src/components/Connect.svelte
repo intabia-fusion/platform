@@ -15,7 +15,7 @@
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
   import platform, { PlatformError } from '@hcengineering/platform'
-  import ui, { Button, EditBox, IconClose, Label, IconError } from '@hcengineering/ui'
+  import ui, { Button, EditBox, Label, Icon } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import type { Integration } from '@hcengineering/account-client'
   import { isValidPhoneNumber } from 'libphonenumber-js'
@@ -248,7 +248,7 @@
         close()
       }}
     >
-      <IconClose size="small" />
+      <Icon icon={ui.icon.Cross} size="small" />
     </div>
   </div>
 
@@ -280,7 +280,7 @@
       <Label label={telegram.string.IntegrationConnected} params={{ phone: state.hint }} />
     {:else if state.mode === 'Error'}
       <div class="flex-row-top flex-gap-1 gap-3 pt-2">
-        <IconError size="medium" />
+        <Icon icon={ui.icon.ExclamationCircle} size="medium" fill="var(--theme-error-color)" />
         {#if state.errorLabel !== undefined}
           <Label label={state.errorLabel} />
         {:else}

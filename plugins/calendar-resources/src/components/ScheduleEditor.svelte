@@ -39,10 +39,6 @@
     getUserTimezone,
     getWeekDayName,
     Icon,
-    IconCircleAdd,
-    IconClose,
-    IconDelete,
-    IconDropdown,
     Label,
     Scroller,
     SelectPopup,
@@ -53,10 +49,11 @@
   import { IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
+  import { Analytics } from '@hcengineering/analytics'
+
   import calendar from '../plugin'
   import CalendarSelector from './CalendarSelector.svelte'
   import TimeZoneSelector from './TimeZoneSelector.svelte'
-  import { Analytics } from '@hcengineering/analytics'
 
   export let schedule: Schedule | undefined
 
@@ -297,7 +294,7 @@
       <Button
         id="card-close"
         focusIndex={10002}
-        icon={IconClose}
+        icon={ui.icon.Cross}
         kind="ghost"
         size="small"
         on:click={() => {
@@ -328,7 +325,7 @@
           <Label label={calendar.string.MeetingDuration} />
           <Button
             focusIndex={10004}
-            iconRight={IconDropdown}
+            iconRight={ui.icon.ChevronDown}
             label={ui.string.TimeTooltip}
             labelParams={{ value: formattedMeetingDuration }}
             on:click={showDurationVariants}
@@ -338,7 +335,7 @@
           <Label label={calendar.string.MeetingInterval} />
           <Button
             focusIndex={10005}
-            iconRight={IconDropdown}
+            iconRight={ui.icon.ChevronDown}
             label={meetingInterval === 0 ? ui.string.None : ui.string.TimeTooltip}
             labelParams={{ value: formattedMeetingInterval }}
             on:click={showIntervalVariants}
@@ -377,7 +374,7 @@
               </div>
               {#if availability[weekDay].length > 0}
                 <IconButton
-                  icon={IconDelete}
+                  icon={ui.icon.Trash}
                   size="small"
                   kind="tertiary"
                   tooltip={{ label: calendar.string.ScheduleRemovePeriod }}
@@ -387,7 +384,7 @@
                 />
               {:else}
                 <IconButton
-                  icon={IconCircleAdd}
+                  icon={ui.icon.PlusCircle}
                   size="small"
                   kind="tertiary"
                   tooltip={{ label: calendar.string.ScheduleAddPeriod }}

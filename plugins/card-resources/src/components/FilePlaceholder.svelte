@@ -16,10 +16,9 @@
   import attachment from '@hcengineering/attachment'
   import type { Card } from '@hcengineering/card'
   import { getClient } from '@hcengineering/presentation'
-  import { Label } from '@hcengineering/ui'
+  import ui, { Label, Icon } from '@hcengineering/ui'
   import type { FileUploadCallbackParams } from '@hcengineering/uploader'
   import { uploadFiles } from '@hcengineering/uploader'
-  import UploadDuo from './icons/UploadDuo.svelte'
 
   export let doc: Card
 
@@ -98,7 +97,7 @@
 >
   <div class="antiSection-empty attachments flex-col mt-3" class:solid={dragover}>
     <div class="flex-center caption-color">
-      <UploadDuo size="large" />
+      <Icon icon={ui.icon.CloudUpload} size="large" />
     </div>
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <!-- svelte-ignore a11y-no-static-element-interactions -->

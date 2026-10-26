@@ -20,11 +20,11 @@
   import type { Ref, WithLookup } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import type { Vacancy } from '@hcengineering/recruit'
-  import { Component, Label } from '@hcengineering/ui'
+  import ui, { Component, Label, Icon } from '@hcengineering/ui'
   import { DocNavLink } from '@hcengineering/view-resources'
-  import recruit from '../plugin'
-  import VacancyIcon from './icons/Vacancy.svelte'
   import chunter from '@hcengineering/chunter'
+
+  import recruit from '../plugin'
 
   export let vacancy: WithLookup<Vacancy> | undefined
   export let disabled: boolean = false
@@ -69,7 +69,7 @@
   {#if !inline}
     <div class="label uppercase"><Label label={recruit.string.Vacancy} /></div>
     <div class="flex-center logo">
-      <VacancyIcon size="large" />
+      <Icon icon={ui.icon.Briefcase} size="large" />
     </div>
   {/if}
   {#if vacancy}
@@ -78,7 +78,7 @@
       <div class="name">
         {#if inline}
           <div class="flex-row-center">
-            <VacancyIcon size="small" />
+            <Icon icon={ui.icon.Briefcase} size="small" />
             <span class="ml-2">
               {vacancy.name}
             </span>

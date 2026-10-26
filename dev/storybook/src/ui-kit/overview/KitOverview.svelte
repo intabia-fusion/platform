@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { Severity, Status, getEmbeddedLabel } from '@hcengineering/platform'
-  import { IconAdd, IconFile, IconFolder, IconMoreH, IconSettings, IconThread } from '@hcengineering/ui'
+  import ui from '@hcengineering/ui'
   import {
     AccordionItem,
     Breadcrumbs,
@@ -100,8 +100,8 @@
     { id: 'table', label: t('Table') }
   ]
   const panels = [
-    { id: 'activity', icon: IconThread, tooltip: { label: t('Activity') } },
-    { id: 'settings', icon: IconSettings, tooltip: { label: t('Settings') } }
+    { id: 'activity', icon: ui.icon.Bubble, tooltip: { label: t('Activity') } },
+    { id: 'settings', icon: ui.icon.Sliders, tooltip: { label: t('Settings') } }
   ]
   const segments = [
     { id: 'all', label: t('All') },
@@ -118,7 +118,7 @@
     { id: 'statuses', label: t('Map statuses') },
     { id: 'review', label: t('Review') }
   ]
-  const crumbs = [{ icon: IconSettings, label: t('API and webhooks') }, { label: t('Outgoing endpoint') }]
+  const crumbs = [{ icon: ui.icon.Sliders, label: t('API and webhooks') }, { label: t('Outgoing endpoint') }]
   const listItems = ['Anna Petrova', 'Boris Ivanov', 'Clara Smith']
   const longText =
     'The release moves the editor to the new toolbar, keeps drafts between sessions and fixes the cursor jumping to the end of a paragraph after a paste.'
@@ -135,11 +135,11 @@
       <span class="line__label">Button, medium</span>
       <div class="line__items">
         {#each kinds as kind}
-          <Button {kind} size="medium" label={t(kind)} icon={IconAdd} />
+          <Button {kind} size="medium" label={t(kind)} icon={ui.icon.Plus} />
         {/each}
         <span class="surface">
           {#each surfaceKinds as kind}
-            <Button {kind} size="medium" label={t(kind)} icon={IconAdd} />
+            <Button {kind} size="medium" label={t(kind)} icon={ui.icon.Plus} />
           {/each}
         </span>
       </div>
@@ -148,7 +148,7 @@
       <span class="line__label">Button, disabled</span>
       <div class="line__items">
         {#each kinds as kind}
-          <Button {kind} size="medium" label={t(kind)} icon={IconAdd} disabled />
+          <Button {kind} size="medium" label={t(kind)} icon={ui.icon.Plus} disabled />
         {/each}
       </div>
     </div>
@@ -164,19 +164,19 @@
       <span class="line__label">IconButton</span>
       <div class="line__items">
         {#each kinds as kind}
-          <IconButton {kind} size="medium" icon={IconSettings} tooltip={{ label: t(`Settings ${kind}`) }} />
+          <IconButton {kind} size="medium" icon={ui.icon.Sliders} tooltip={{ label: t(`Settings ${kind}`) }} />
         {/each}
         <IconButton
           kind="secondary"
           size="medium"
-          icon={IconSettings}
+          icon={ui.icon.Sliders}
           disabled
           tooltip={{ label: t('Settings disabled') }}
         />
         <IconButton
           kind="secondary"
           size="medium"
-          icon={IconSettings}
+          icon={ui.icon.Sliders}
           loading
           tooltip={{ label: t('Settings loading') }}
         />
@@ -200,7 +200,7 @@
         <MenuButton
           items={views}
           noSelection
-          icon={IconMoreH}
+          icon={ui.icon.DotsHorizontal}
           kind="ghost"
           size="medium"
           tooltip={{ label: t('More actions') }}
@@ -434,7 +434,7 @@
           <EmptyState
             label={t('No issues yet')}
             description={t('Issues of the project will appear here')}
-            icon={IconFolder}
+            icon={ui.icon.Folder}
           >
             <Button kind="primary" size="medium" label={t('Create issue')} />
           </EmptyState>
@@ -473,10 +473,10 @@
         <div class="nav">
           <NavGroup label={t('Spaces')} kind="section" expandable open>
             <div class="nav__items">
-              <NavItem label={t('Documents')} icon={IconFolder} kind="link" count={3} />
-              <NavItem label={t('Product team')} icon={IconThread} kind="link" selected />
-              <NavItem label={t('Design')} icon={IconFile} kind="link" disabled />
-              <NavItem label={t('general')} icon={IconThread} kind="object" />
+              <NavItem label={t('Documents')} icon={ui.icon.Folder} kind="link" count={3} />
+              <NavItem label={t('Product team')} icon={ui.icon.Bubble} kind="link" selected />
+              <NavItem label={t('Design')} icon={ui.icon.File} kind="link" disabled />
+              <NavItem label={t('general')} icon={ui.icon.Bubble} kind="object" />
               <NavItem label={t('Overview')} kind="anchor" />
             </div>
           </NavGroup>
@@ -496,10 +496,10 @@
       <span class="line__label">WorkbenchTab</span>
       <div class="line__items">
         <div class="tabs" role="tablist" aria-label="Opened objects">
-          <WorkbenchTab label={t('Release plan')} icon={IconFolder} />
-          <WorkbenchTab label={t('Release plan')} icon={IconFolder} selected closable />
-          <WorkbenchTab label={t('Pinned')} icon={IconFolder} kind="outline" />
-          <WorkbenchTab label={t('Preview')} icon={IconFolder} preview closable />
+          <WorkbenchTab label={t('Release plan')} icon={ui.icon.Folder} />
+          <WorkbenchTab label={t('Release plan')} icon={ui.icon.Folder} selected closable />
+          <WorkbenchTab label={t('Pinned')} icon={ui.icon.Folder} kind="outline" />
+          <WorkbenchTab label={t('Preview')} icon={ui.icon.Folder} preview closable />
         </div>
       </div>
     </div>
@@ -510,8 +510,13 @@
           <PanelHeader>
             <span class="header__title">Issues</span>
             <svelte:fragment slot="actions">
-              <IconButton icon={IconMoreH} kind="ghost" size="small" tooltip={{ label: t('More actions') }} />
-              <Button icon={IconAdd} label={t('New issue')} kind="primary" size="small" />
+              <IconButton
+                icon={ui.icon.DotsHorizontal}
+                kind="ghost"
+                size="small"
+                tooltip={{ label: t('More actions') }}
+              />
+              <Button icon={ui.icon.Plus} label={t('New issue')} kind="primary" size="small" />
             </svelte:fragment>
           </PanelHeader>
         </div>
@@ -530,9 +535,9 @@
           <AccordionItem label={t('Yesterday')} counter={2} size="medium" />
         </div>
         <div class="panel panel--wide">
-          <Section label={t('Members')} icon={IconFile}>
+          <Section label={t('Members')} icon={ui.icon.File}>
             <svelte:fragment slot="actions">
-              <IconButton icon={IconAdd} kind="ghost" size="small" tooltip={{ label: t('Add member') }} />
+              <IconButton icon={ui.icon.Plus} kind="ghost" size="small" tooltip={{ label: t('Add member') }} />
             </svelte:fragment>
             <ul class="plain">
               <li>Anna Smirnova</li>
@@ -575,8 +580,8 @@
       <div class="line line--center">
         <span class="line__label">{size}</span>
         <div class="line__items line__items--aligned">
-          <Button kind="secondary" {size} label={t('Button')} icon={IconAdd} />
-          <IconButton kind="secondary" {size} icon={IconSettings} tooltip={{ label: t('Settings') }} />
+          <Button kind="secondary" {size} label={t('Button')} icon={ui.icon.Plus} />
+          <IconButton kind="secondary" {size} icon={ui.icon.Sliders} tooltip={{ label: t('Settings') }} />
           <SelectButton kind="secondary" {size} {...high} chevron />
           <div class="fixed"><TextInput kind="secondary" {size} placeholder={t('TextInput')} fullWidth /></div>
           <SearchInput kind="secondary" {size} />

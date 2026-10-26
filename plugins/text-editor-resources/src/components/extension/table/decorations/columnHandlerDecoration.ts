@@ -18,12 +18,12 @@ import { type Editor } from '@tiptap/core'
 import { Plugin, PluginKey } from '@tiptap/pm/state'
 import { CellSelection, TableMap } from '@tiptap/pm/tables'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
+import ui from '@hcengineering/ui'
 
 import { type TableNodeLocation } from '../types'
 import { findTable, getSelectedColumns, haveTableRelatedChanges, isColumnSelected, selectColumn } from '../utils'
 
 import DeleteCol from '../../../icons/table/DeleteCol.svelte'
-import Duplicate from '../../../icons/table/Duplicate.svelte'
 import { duplicateColumns, moveSelectedColumns } from './actions'
 import { createCellsHandle, type OptionItem } from './cellsHandle'
 import {
@@ -214,7 +214,7 @@ const createOptionItems = (editor: Editor): OptionItem[] => [
   },
   {
     id: 'duplicate',
-    icon: Duplicate,
+    icon: ui.icon.Copy,
     label: textEditor.string.Duplicate,
     action: () => {
       const table = findTable(editor.state.selection)

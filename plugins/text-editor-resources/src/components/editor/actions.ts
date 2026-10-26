@@ -1,15 +1,13 @@
 import { getResource } from '@hcengineering/platform'
 import { getClient } from '@hcengineering/presentation'
-import { showPopup } from '@hcengineering/ui'
+import ui, { showPopup } from '@hcengineering/ui'
 import emojiPlugin from '@hcengineering/emoji'
 import textEditor, { type RefAction } from '@hcengineering/text-editor'
-
-import RiMention from '../icons/RIMention.svelte'
 
 export const defaultRefActions: RefAction[] = [
   {
     label: textEditor.string.Mention,
-    icon: RiMention,
+    icon: ui.icon.At,
     action: (_element, editorHandler) => {
       editorHandler.insertText('@')
       editorHandler.focus()

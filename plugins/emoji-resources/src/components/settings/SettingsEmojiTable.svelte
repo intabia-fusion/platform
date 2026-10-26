@@ -17,7 +17,8 @@
   import { TableBrowser } from '@hcengineering/view-resources'
   import type { CustomEmoji } from '@hcengineering/emoji'
   import emojiPlugin from '@hcengineering/emoji'
-  import { showPopup, Breadcrumb, Button, Header, IconAdd } from '@hcengineering/ui'
+  import ui, { showPopup, Breadcrumb, Button, Header } from '@hcengineering/ui'
+
   import CustomEmojiPresenter from './CustomEmojiPresenter.svelte'
   import CreateCustomEmojiPopup from './CreateCustomEmojiPopup.svelte'
 
@@ -34,7 +35,7 @@
     <svelte:fragment slot="search"></svelte:fragment>
     <svelte:fragment slot="actions">
       <slot />
-      <Button icon={IconAdd} label={emojiPlugin.string.Create} kind="primary" on:click={showCreateDialog} />
+      <Button icon={ui.icon.Plus} label={emojiPlugin.string.Create} kind="primary" on:click={showCreateDialog} />
     </svelte:fragment>
   </Header>
   <div class="hulyComponent-content__column content">

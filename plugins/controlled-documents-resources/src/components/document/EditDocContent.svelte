@@ -23,10 +23,8 @@
   import type { Editor, Heading } from '@hcengineering/text-editor'
   import textEditorPlugin, { type TextEditorHandler } from '@hcengineering/text-editor'
   import {
-    AttachIcon,
     CollaboratorEditor,
     NodeHighlightType,
-    TableIcon,
     TableOfContents,
     TableOfContentsContent,
     addTableHandler,
@@ -36,11 +34,10 @@
     selectNode
   } from '@hcengineering/text-editor-resources'
   import { AttachmentLabel, AttachmentsGrid } from '@hcengineering/attachment-resources'
-  import {
+  import ui, {
     Button,
     Component,
     EditBox,
-    IconUndo,
     Label,
     Scroller,
     getEventPositionElement,
@@ -50,8 +47,8 @@
   import { merge } from 'effector'
   import { createEventDispatcher, onDestroy, tick } from 'svelte'
   import activity from '@hcengineering/activity'
-  import plugin from '../../plugin'
 
+  import plugin from '../../plugin'
   import {
     $areDocumentCommentPopupsOpened as arePopupsOpened,
     $canAddDocumentComments as canAddDocumentComments,
@@ -273,8 +270,8 @@
     ? []
     : defaultRefActions
         .concat([
-          { label: textEditorPlugin.string.Attach, icon: AttachIcon, action: handleAttach, order: 1001 },
-          { label: textEditorPlugin.string.Table, icon: TableIcon, action: handleTable, order: 1500 }
+          { label: textEditorPlugin.string.Attach, icon: ui.icon.Paperclip, action: handleAttach, order: 1001 },
+          { label: textEditorPlugin.string.Table, icon: ui.icon.TableCells, action: handleTable, order: 1500 }
         ])
         .sort((a, b) => a.order - b.order)
 
@@ -426,7 +423,7 @@
                 <AttachmentLabel value={att} />
                 <div class="restore-btn">
                   <Button
-                    icon={IconUndo}
+                    icon={ui.icon.ArrowUturnLeft}
                     kind="ghost"
                     size="small"
                     showTooltip={{ label: plugin.string.Restore }}

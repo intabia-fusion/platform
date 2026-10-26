@@ -19,10 +19,8 @@
   import { createQuery, getClient } from '@hcengineering/presentation'
   import task from '@hcengineering/task'
   import type { Issue } from '@hcengineering/tracker'
-  import {
+  import ui, {
     Icon,
-    IconDetails,
-    IconForward,
     SelectPopup,
     Spinner,
     closeTooltip,
@@ -32,6 +30,7 @@
     tooltip
   } from '@hcengineering/ui'
   import { statusStore } from '@hcengineering/view-resources'
+
   import { issueLinkFragmentProvider } from '../../../issues'
   import tracker from '../../../plugin'
   import { listIssueStatusOrder } from '../../../utils'
@@ -197,10 +196,10 @@
           <span class="overflow-label">{subIssues?.length}</span>
           <div class="ml-2">
             <!-- TODO: fix icon -->
-            <Icon icon={IconDetails} size="small" />
+            <Icon icon={ui.icon.PanelRightLine} size="small" />
           </div>
           <div class="ml-1-5">
-            <Icon icon={IconForward} size="small" />
+            <Icon icon={ui.icon.ChevronRightLarge} size="small" />
           </div>
         </div>
       {/if}

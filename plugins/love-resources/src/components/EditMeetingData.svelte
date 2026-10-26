@@ -15,12 +15,13 @@
 <script lang="ts">
   import type { Event } from '@hcengineering/calendar'
   import { getCurrentAccount } from '@hcengineering/core'
-  import love from '../plugin'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { ObjectPresenter } from '@hcengineering/view-resources'
   import type { MeetingMinutes } from '@hcengineering/love'
   import { MeetingStatus } from '@hcengineering/love'
-  import { Button, Icon, IconRedo, Label } from '@hcengineering/ui'
+  import ui, { Button, Icon, Label } from '@hcengineering/ui'
+
+  import love from '../plugin'
   import MeetingMinutesStatusPresenter from './MeetingMinutesStatusPresenter.svelte'
   import { joinMeeting, leaveMeeting } from '../meetings'
 
@@ -94,7 +95,7 @@
           {:else if meetingDoc.status === MeetingStatus.Active || meetingDoc.status === MeetingStatus.Pending}
             <Button kind="negative" label={love.string.EndMeeting} size="x-small" on:click={closeMeeting} />
           {:else if meetingDoc.status === MeetingStatus.Finished}
-            <Button kind="ghost" icon={IconRedo} size="x-small" on:click={() => resetMeeting(doc)} />
+            <Button kind="ghost" icon={ui.icon.ArrowUturnRight} size="x-small" on:click={() => resetMeeting(doc)} />
           {/if}
         {/if}
       </div>

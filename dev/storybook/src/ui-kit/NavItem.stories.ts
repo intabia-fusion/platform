@@ -14,7 +14,7 @@
 //
 
 import { getEmbeddedLabel } from '@hcengineering/platform'
-import { IconFile, IconFolder, IconThread } from '@hcengineering/ui'
+import ui from '@hcengineering/ui'
 import { NavItem } from '@hcengineering/ui/kit'
 import type { Meta, StoryObj } from '@storybook/svelte'
 
@@ -30,7 +30,7 @@ const meta = {
   title: 'Navigation/NavItem ⏳',
   id: 'navigation-navitem',
   component: NavItem,
-  args: { label, icon: IconFolder, kind: 'link', count: 3, selected: false, expandable: true, open: true },
+  args: { label, icon: ui.icon.Folder, kind: 'link', count: 3, selected: false, expandable: true, open: true },
   parameters: {
     docs: {
       description: {
@@ -64,7 +64,7 @@ export const Variants: Story = {
             { title: 'pressed (menu open)', props: { pressed: true } },
             { title: 'disabled', props: { disabled: true } }
           ],
-          props: { label, icon: IconThread }
+          props: { label, icon: ui.icon.Bubble }
         },
         {
           title: 'Content',
@@ -85,7 +85,7 @@ export const Variants: Story = {
             { title: 'color tag', props: { icon: undefined, color: '#F96E50', selected: true } },
             { title: 'long label', props: { label: getEmbeddedLabel('Quarterly planning and retrospective notes') } }
           ],
-          props: { label, icon: IconThread }
+          props: { label, icon: ui.icon.Bubble }
         },
         {
           title: 'Tree',
@@ -98,7 +98,7 @@ export const Variants: Story = {
             { title: 'selected, open', props: { expandable: true, open: true, selected: true } },
             { title: 'actions + badge', props: { expandable: true, withActions: true, withBadge: true, pressed: true } }
           ],
-          props: { icon: IconFile, children: 1 }
+          props: { icon: ui.icon.File, children: 1 }
         }
       ]
     }

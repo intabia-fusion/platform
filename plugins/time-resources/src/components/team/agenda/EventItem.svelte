@@ -2,7 +2,8 @@
   import type { Event } from '@hcengineering/calendar'
   import calendar from '@hcengineering/calendar'
   import { DateRangeMode } from '@hcengineering/core'
-  import { Icon, DatePresenter, IconArrowRight } from '@hcengineering/ui'
+  import ui, { Icon, DatePresenter } from '@hcengineering/ui'
+
   import TimePresenter from '../../presenters/TimePresenter.svelte'
 
   export let item: Event
@@ -24,7 +25,7 @@
         <div class="flex-row-center">
           <DatePresenter mode={DateRangeMode.TIMEONLY} value={item.date} />
           <div class="p-1">
-            <Icon icon={IconArrowRight} size="small" />
+            <Icon icon={ui.icon.ArrowRight} size="small" />
           </div>
           <DatePresenter mode={DateRangeMode.TIMEONLY} value={item.dueDate} />
         </div>

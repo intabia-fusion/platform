@@ -17,9 +17,10 @@
   import { createEventDispatcher } from 'svelte'
   import type { Asset, IntlString } from '@hcengineering/platform'
   import type { ComponentType } from 'svelte'
+
+  import ui from '../plugin'
   import type { AnySvelteComponent } from '../types'
   import { getTreeCollapsed, setTreeCollapsed } from '../location'
-  import IconChevronRight from './icons/ChevronRight.svelte'
   import { Label, Icon, formatDuration, themeStore } from '..'
 
   export let id: string
@@ -86,7 +87,7 @@
     >
       {#if size === 'large' && !disabled}
         <div class="hulyAccordionItem-header__chevron">
-          <Icon icon={IconChevronRight} size="small" />
+          <Icon icon={ui.icon.ChevronRight} size="small" />
         </div>
       {/if}
       {#if size !== 'small' && icon !== undefined && !disabled}

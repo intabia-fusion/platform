@@ -18,8 +18,9 @@
   import { ClassifierKind } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { ClassHierarchy } from '@hcengineering/setting-resources'
-  import { getCurrentLocation, Icon, IconAdd, Label, navigate, showPopup } from '@hcengineering/ui'
+  import ui, { getCurrentLocation, Icon, Label, navigate, showPopup } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
+
   import card from '../../plugin'
   import CreateTag from '../CreateTag.svelte'
   import TagsHierarchy from './TagsHierarchy.svelte'
@@ -62,7 +63,7 @@
   <span><Label label={card.string.Tags} /></span>
   <IconButton
     kind="primary"
-    icon={IconAdd}
+    icon={ui.icon.Plus}
     size="small"
     data-id="btnAdd"
     tooltip={{ label: card.string.AddTag }}

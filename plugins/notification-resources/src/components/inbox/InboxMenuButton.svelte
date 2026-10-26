@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import view from '@hcengineering/view'
-  import { IconMoreV } from '@hcengineering/ui'
+  import ui from '@hcengineering/ui'
   import { MenuButton } from '@hcengineering/ui/kit'
 
   import notification from '../../plugin'
@@ -36,7 +36,7 @@
 <MenuButton
   size="small"
   noSelection
-  icon={IconMoreV}
+  icon={ui.icon.DotsVertical}
   data-id="inbox_menu-button"
   items={[
     {
@@ -46,7 +46,7 @@
     },
     {
       id: 'clear',
-      icon: view.icon.CheckCircle,
+      icon: ui.icon.CheckCircle,
       label: notification.string.ClearAll
     }
   ]}

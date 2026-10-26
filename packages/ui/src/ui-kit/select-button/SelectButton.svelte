@@ -16,7 +16,6 @@
   import type { IntlString } from '@hcengineering/platform'
 
   import Icon from '../../components/Icon.svelte'
-  import IconChevronDown from '../../components/icons/ChevronDown.svelte'
   import Label from '../../components/Label.svelte'
   import ui from '../../plugin'
   import type { IconComponent, IconSize, LabelAndProps } from '../../types'
@@ -142,7 +141,7 @@
         </span>
       {/if}
       {#if chevron !== false}
-        <span class="select-button__chevron"><IconChevronDown size="small" /></span>
+        <span class="select-button__chevron"><Icon icon={ui.icon.ChevronDown} size="small" /></span>
       {/if}
     </Button>
   {/if}

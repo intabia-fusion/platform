@@ -13,8 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Icon, IconDPCalendar, Label, areDatesEqual, getMonthName } from '@hcengineering/ui'
+  import ui, { Icon, Label, areDatesEqual, getMonthName } from '@hcengineering/ui'
+
   import view from '../../plugin'
+
   export let value: Date
 
   const today: Date = new Date(Date.now())
@@ -25,7 +27,7 @@
     <Label label={view.string.Today} />
   {:else}
     <div class="btn-icon">
-      <Icon icon={IconDPCalendar} size="full" />
+      <Icon icon={ui.icon.Calendar} size="full" />
     </div>
     {value.getDate()}
     {getMonthName(value, 'short')}

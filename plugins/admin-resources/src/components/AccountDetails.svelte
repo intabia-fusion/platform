@@ -17,17 +17,7 @@
   import type { SocialIdType } from '@hcengineering/core'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { copyTextToClipboard, isAdminUser, isBillingAdminUser, MessageBox } from '@hcengineering/presentation'
-  import {
-    Button,
-    Dialog,
-    EditBox,
-    IconCopy,
-    IconDetails,
-    IconStop,
-    Label,
-    Loading,
-    showPopup
-  } from '@hcengineering/ui'
+  import ui, { Button, Dialog, EditBox, Label, Loading, showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
   import adminRes from '../plugin'
@@ -187,7 +177,7 @@
         <div class="flex-row-center">
           <Label label={adminRes.string.Uuid} />: {account.uuid}
           <Button
-            icon={IconCopy}
+            icon={ui.icon.Copy}
             size="small"
             kind="ghost"
             on:click={() => copyTextToClipboard(account.uuid)}
@@ -210,7 +200,7 @@
               }}
             />
             <Button
-              icon={IconStop}
+              icon={ui.icon.SquareFill}
               size="small"
               kind="dangerous"
               label={adminRes.string.Delete}
@@ -229,7 +219,7 @@
             <span>{socialId.type}: {socialId.value}</span>
             {#if !readOnly}
               <Button
-                icon={IconStop}
+                icon={ui.icon.SquareFill}
                 size="small"
                 kind="ghost"
                 disabled={releasing !== undefined}
@@ -280,14 +270,14 @@
                   <div class="flex-row-center">
                     {ws.uuid}
                     <Button
-                      icon={IconCopy}
+                      icon={ui.icon.Copy}
                       size="small"
                       kind="ghost"
                       on:click={() => copyTextToClipboard(ws.uuid)}
                       showTooltip={{ label: adminRes.string.CopyUuid }}
                     />
                     <Button
-                      icon={IconDetails}
+                      icon={ui.icon.PanelRightLine}
                       size="small"
                       kind="ghost"
                       label={adminRes.string.Details}

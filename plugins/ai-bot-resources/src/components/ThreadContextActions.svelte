@@ -16,7 +16,7 @@
   import type { Doc } from '@hcengineering/core'
   import aiBot, { type AIContextMessage } from '@hcengineering/ai-bot'
   import { getResource } from '@hcengineering/platform'
-  import { Button, IconDownOutline, showPopup } from '@hcengineering/ui'
+  import ui, { Button, showPopup } from '@hcengineering/ui'
   import { MessageBox } from '@hcengineering/presentation'
   import chunter from '@hcengineering/chunter'
   import view from '@hcengineering/view'
@@ -65,7 +65,7 @@
     on:click={newContext}
   />
   <Button
-    icon={IconDownOutline}
+    icon={ui.icon.ChevronDown}
     kind="ghost"
     size="small"
     dataId="btnAiExportChat"

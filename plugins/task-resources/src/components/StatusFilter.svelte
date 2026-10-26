@@ -20,8 +20,6 @@
   import ui, {
     EditWithIcon,
     Icon,
-    IconCheck,
-    IconSearch,
     Label,
     Loading,
     addNotification,
@@ -39,6 +37,7 @@
   import view from '@hcengineering/view-resources/src/plugin'
   import { buildConfigLookup, getPresenter, sortCategories } from '@hcengineering/view-resources/src/utils'
   import { createEventDispatcher } from 'svelte'
+
   import {
     getProjectType,
     typesOfJoinedProjectsStore,
@@ -211,7 +210,7 @@
   {#if clazz.filteringKey}
     <div class="header">
       <EditWithIcon
-        icon={IconSearch}
+        icon={ui.icon.Search}
         size="large"
         width="100%"
         autoFocus={!$deviceOptionsStore.isMobile}
@@ -254,7 +253,7 @@
                 </div>
                 <div class="pointer-events-none">
                   {#if isSelected(value, filter.value)}
-                    <Icon icon={IconCheck} size="small" />
+                    <Icon icon={ui.icon.Check} size="small" />
                   {/if}
                 </div>
               </div>

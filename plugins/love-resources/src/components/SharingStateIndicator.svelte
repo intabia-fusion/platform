@@ -13,13 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { tooltip, eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  import ui, { Icon, tooltip, eventToHTMLElement, showPopup } from '@hcengineering/ui'
 
   import love from '../plugin'
   import { isShareWithSound, liveKitClient } from '../utils'
-
   import SharingStatePopup from './SharingStatePopup.svelte'
-  import IconShare from './icons/Share.svelte'
   import { lkSessionConnected, ScreenSharingState, screenSharingState } from '../liveKitClient'
 
   let pressed: boolean = false
@@ -45,7 +43,7 @@
       use:tooltip={{ label: love.string.Sharing, direction: 'bottom' }}
       on:click={handleShowPopup}
     >
-      <IconShare size="small" />
+      <Icon icon={ui.icon.ScreenShare} size="small" />
     </button>
   {:else}
     <button
@@ -54,7 +52,7 @@
       use:tooltip={{ label: love.string.Share, direction: 'bottom' }}
       on:click={handleShare}
     >
-      <IconShare size="small" />
+      <Icon icon={ui.icon.ScreenShare} size="small" />
     </button>
   {/if}
 {/if}

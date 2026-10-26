@@ -16,11 +16,12 @@
 <script lang="ts">
   import { Analytics } from '@hcengineering/analytics'
   import { getMetadata, translate } from '@hcengineering/platform'
-  import { Button, Html, IconClose, Label, themeStore, IconError } from '@hcengineering/ui'
+  import ui, { Button, Html, Label, themeStore, Icon } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
-  import gmail from '../plugin'
   import { concatLink } from '@hcengineering/core'
   import presentation from '@hcengineering/presentation'
+
+  import gmail from '../plugin'
 
   const dispatch = createEventDispatcher()
 
@@ -73,7 +74,7 @@
         dispatch('close')
       }}
     >
-      <IconClose size="small" />
+      <Icon icon={ui.icon.Cross} size="small" />
     </div>
   </div>
   <div class="content">
@@ -84,7 +85,7 @@
 
     {#if error}
       <div class="flex-row-center gap-2 pt-2">
-        <IconError size="medium" />
+        <Icon icon={ui.icon.ExclamationCircle} size="medium" fill="var(--theme-error-color)" />
         <Label label={gmail.string.FailedToConnect} />
       </div>
     {/if}

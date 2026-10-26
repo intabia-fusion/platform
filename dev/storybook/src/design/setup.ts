@@ -19,6 +19,8 @@
 
 import { addStringsLoader, setMetadata, type Asset, type Metadata, type Plugin } from '@hcengineering/platform'
 
+import kitSprite from '../../../../packages/ui/assets/icons.svg?url'
+
 // Plugin ids that differ from the package name.
 const pluginIds: Record<string, string> = { 'test-management': 'testManagement', 'controlled-documents': 'documents' }
 const pluginId = (pkg: string): string => pluginIds[pkg] ?? pkg
@@ -45,14 +47,22 @@ function registerIcons (): void {
   for (const [file, source] of Object.entries(sources)) {
     const pkg = assetsDir.exec(file)?.[1]
     const sprite = sprites[file.replace('src/index.ts', 'assets/icons.svg')]
-    if (pkg === undefined || sprite === undefined) continue
+    if (pkg == null) continue
     const imports = new Map<string, string>()
     for (const m of source.matchAll(/import (\w+) from '@hcengineering\/([\w-]+)'/g)) imports.set(m[1], m[2])
+    // Ids moved to the kit sprite: `const uiIcons = require('@hcengineering/ui/assets/icons.svg')`.
+    const kitVars = new Set(
+      [...source.matchAll(/const (\w+) = require\('@hcengineering\/ui\/assets\/icons\.svg'\)/g)].map((m) => m[1])
+    )
     for (const block of source.matchAll(/loadMetadata\(\s*(\w+)\.icon,\s*\{([\s\S]*?)\n\}\)/g)) {
       const plugin = pluginId(imports.get(block[1]) ?? pkg)
-      for (const entry of block[2].matchAll(/(\w+):\s*`\$\{icons\}#([\w-]+)`/g)) {
-        setMetadata(`${plugin}:icon:${entry[1]}` as unknown as Metadata<string>, `${sprite}#${entry[2]}`)
-        spriteAssets.set(`${pkg}/${entry[2]}`.toLowerCase(), `${plugin}:icon:${entry[1]}` as Asset)
+      for (const entry of block[2].matchAll(/(\w+):\s*`\$\{(\w+)\}#([\w-]+)`/g)) {
+        const [, name, from, fragment] = entry
+        const kit = kitVars.has(from)
+        // A package whose ids all moved to the kit has no sprite of its own.
+        if (!kit && (from !== 'icons' || sprite == null)) continue
+        setMetadata(`${plugin}:icon:${name}` as unknown as Metadata<string>, `${kit ? kitSprite : sprite}#${fragment}`)
+        if (!kit) spriteAssets.set(`${pkg}/${fragment}`.toLowerCase(), `${plugin}:icon:${name}` as Asset)
       }
     }
   }

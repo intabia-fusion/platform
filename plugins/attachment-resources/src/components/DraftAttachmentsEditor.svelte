@@ -18,11 +18,10 @@
   import type { Blob, Class, Doc, Ref, Space } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import { createQuery, deleteFile, getClient, uploadFile } from '@hcengineering/presentation'
-  import { Icon, IconAdd, IconClose, Label, Spinner } from '@hcengineering/ui'
+  import ui, { Icon, Label, Spinner } from '@hcengineering/ui'
   import { filesize } from 'filesize'
 
   import { createAttachment, openAttachmentInSidebar, showAttachmentPreviewPopup, savedBlobs } from '../utils'
-  import IconAttachments from './icons/Attachments.svelte'
 
   export let object: Doc | undefined = undefined
   export let objectId: Ref<Doc> = object?._id as Ref<Doc>
@@ -229,7 +228,7 @@
             }
           }}
         >
-          <Icon icon={IconAttachments} size="x-small" />
+          <Icon icon={ui.icon.Paperclip} size="x-small" />
           <span class="attachments-editor--badge-name overflow-label">{name}</span>
           {#if size}
             <span class="attachments-editor--badge-size">{filesize(size)}</span>
@@ -240,7 +239,7 @@
               class="attachments-editor--btn-close"
               on:click|stopPropagation={() => removeItem(item, index)}
             >
-              <Icon icon={IconClose} size="x-small" />
+              <Icon icon={ui.icon.Cross} size="x-small" />
             </button>
           {/if}
         </div>
@@ -269,7 +268,7 @@
       {#if loading}
         <Spinner size="small" />
       {:else}
-        <Icon icon={IconAdd} size="small" />
+        <Icon icon={ui.icon.Plus} size="small" />
         <span class="attachments-editor--dropzone-text">
           <Label {label} />
         </span>

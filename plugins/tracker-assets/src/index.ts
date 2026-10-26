@@ -17,36 +17,34 @@ import { loadMetadata } from '@hcengineering/platform'
 import tracker from '@hcengineering/tracker'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
+// Icons the kit has: the ids stay, stored documents keep pointing at them.
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(tracker.icon, {
-  TrackerApplication: `${icons}#tracker`,
-  Component: `${icons}#component`,
-  Issue: `${icons}#issue`,
+  TrackerApplication: `${uiIcons}#check-square`,
+  Component: `${uiIcons}#diamond`,
+  Issue: `${uiIcons}#check-square`,
   Subissue: `${icons}#sub-issue`,
-  Project: `${icons}#project`,
-  Relations: `${icons}#relations`,
-  Inbox: `${icons}#inbox`,
-  MyIssues: `${icons}#myissues`,
-  Views: `${icons}#views`,
-  Issues: `${icons}#issues`,
-  Components: `${icons}#components`,
-  NewIssue: `${icons}#new-issue`,
-  Magnifier: `${icons}#magnifier`,
-  Home: `${icons}#home`,
+  Relations: `${uiIcons}#arrows-left-right`,
+  MyIssues: `${uiIcons}#crosshair`,
+  Views: `${uiIcons}#layers-fill`,
+  Issues: `${uiIcons}#check-square`,
+  Components: `${uiIcons}#diamond`,
+  NewIssue: `${uiIcons}#pencil-line`,
+  Home: `${uiIcons}#house-fill`,
+  // Unused in code, but projects may still store it: the project icon picker offered it in 2023-2025.
   RedCircle: `${icons}#red-circle`,
-  Labels: `${icons}#labels`,
-  DueDate: `${icons}#dueDate`, // TODO: add icon
+  Labels: `${uiIcons}#tags`,
+  DueDate: `${uiIcons}#clock`,
   Parent: `${icons}#parent-issue`, // TODO: add icon
-  UnsetParent: `${icons}#unset-parent-issue`, // TODO: add icon
-  Milestone: `${icons}#milestone`,
-  IssueTemplates: `${icons}#issuetemplates`,
-  Start: `${icons}#start`,
-  Stop: `${icons}#stop`,
+  UnsetParent: `${icons}#unset-parent-issue`,
+  Milestone: `${uiIcons}#signpost`,
+  IssueTemplates: `${uiIcons}#layout`,
+  Start: `${uiIcons}#play-fill`,
+  Stop: `${uiIcons}#square-fill`,
 
-  CategoryBacklog: `${icons}#status-backlog`,
-  CategoryUnstarted: `${icons}#status-todo`,
-  CategoryStarted: `${icons}#status-inprogress`,
-  CategoryCompleted: `${icons}#status-done`,
-  CategoryCanceled: `${icons}#status-canceled`,
+  CategoryBacklog: `${uiIcons}#circle-quarters`,
+  CategoryCompleted: `${uiIcons}#check-circle-fill`,
+  CategoryCanceled: `${uiIcons}#cross-circle-fill`,
   PriorityNoPriority: `${icons}#priority-nopriority`,
   PriorityUrgent: `${icons}#priority-urgent`,
   PriorityHigh: `${icons}#priority-high`,
@@ -54,18 +52,16 @@ loadMetadata(tracker.icon, {
   PriorityLow: `${icons}#priority-low`,
   Priority: `${icons}#priority`,
 
-  ComponentsList: `${icons}#list`,
-
   MilestoneStatusPlanned: `${icons}#component-status-planned`,
   MilestoneStatusInProgress: `${icons}#component-status-in-progress`,
-  MilestoneStatusPaused: `${icons}#component-status-paused`,
   MilestoneStatusCompleted: `${icons}#component-status-completed`,
   MilestoneStatusCanceled: `${icons}#component-status-canceled`,
 
-  CopyBranch: `${icons}#copyBranch`,
-  Duplicate: `${icons}#duplicate`,
-  TimeReport: `${icons}#timeReport`,
-  Estimation: `${icons}#estimation`,
-  Export: `${icons}#export`,
-  More: `${icons}#more`
+  CopyBranch: `${uiIcons}#text-aa-square`,
+  Duplicate: `${uiIcons}#copy-plus`,
+  TimeReport: `${uiIcons}#clock`,
+  Estimation: `${uiIcons}#circle-half-fill`,
+  Export: `${uiIcons}#cloud-download`,
+  More: `${uiIcons}#dots-horizontal`,
+  TimeReportDay: `${icons}#person-clock`
 })

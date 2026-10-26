@@ -15,21 +15,21 @@
 <script lang="ts">
   import type { Person } from '@hcengineering/contact'
   import type { Project } from '@hcengineering/task'
-  import TeamCalendar from './TeamCalendar.svelte'
-  import TeamCalendarDay from './TeamCalendarDay.svelte'
-  import YearCalendar from './YearCalendar.svelte'
   import type { Ref } from '@hcengineering/core'
-  import Header from '../../Header.svelte'
-  import {
+  import ui, {
     daysInMonth,
     DropdownLabels,
     DropdownLabelsIntl,
-    IconSettings,
     SelectPopup,
     showPopup,
     type SelectPopupValueType
   } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
+
+  import TeamCalendar from './TeamCalendar.svelte'
+  import TeamCalendarDay from './TeamCalendarDay.svelte'
+  import YearCalendar from './YearCalendar.svelte'
+  import Header from '../../Header.svelte'
   import time from '../../../plugin'
 
   export let spaces: Array<Ref<Project>> = []
@@ -106,7 +106,7 @@
   <DropdownLabelsIntl items={modeItems} bind:selected={mode} kind="regular" size="medium" />
   {#if mode === 'week' || mode === 'month'}
     <IconButton
-      icon={IconSettings}
+      icon={ui.icon.Sliders}
       size="small"
       kind="tertiary"
       tooltip={{ label: time.string.Settings }}

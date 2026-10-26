@@ -14,16 +14,17 @@
 -->
 <script lang="ts">
   import type { DropdownIntlItem } from '@hcengineering/ui'
-  import { Icon, IconDelete, IconMoreV, ModernPopup, eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  import ui, { Icon, ModernPopup, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import setting from '@hcengineering/setting'
   import type { MailboxInfo } from '@hcengineering/account-client'
   import { getClient, MessageBox } from '@hcengineering/presentation'
-  import { getAccountClient } from '../utils'
   import contact, { getCurrentEmployee } from '@hcengineering/contact'
   import { buildSocialIdString, SocialIdType } from '@hcengineering/core'
   import { Analytics } from '@hcengineering/analytics'
+
+  import { getAccountClient } from '../utils'
 
   export let mailbox: MailboxInfo
   export let mailboxIdx: number
@@ -102,7 +103,7 @@
       const items: (DropdownIntlItem & { action: () => void })[] = [
         {
           id: 'delete',
-          icon: IconDelete,
+          icon: ui.icon.Trash,
           label: setting.string.DeleteMailbox,
           action: deleteMailboxAction
         }
@@ -123,7 +124,7 @@
       <IconButton
         tooltip={{ label: view.string.MoreActions }}
         kind="tertiary"
-        icon={IconMoreV}
+        icon={ui.icon.DotsVertical}
         size="small"
         pressed={opened}
         inheritColor
@@ -149,7 +150,7 @@
           >
             <svelte:fragment slot="actions">
               <IconButton
-                icon={IconDelete}
+                icon={ui.icon.Trash}
                 size="extra-small"
                 kind="tertiary"
                 tooltip={{ label: setting.string.Delete, direction: 'top' }}
@@ -163,7 +164,7 @@
         {/each}
         <NavItem
           title="Create alias"
-          icon={IconAdd}
+          icon={ui.icon.Plus}
           type="type-link"
           on:click={createAlias}
         />
@@ -184,7 +185,7 @@
           >
             <svelte:fragment slot="actions">
               <IconButton
-                icon={IconDelete}
+                icon={ui.icon.Trash}
                 size="extra-small"
                 kind="tertiary"
                 tooltip={{ label: setting.string.Delete, direction: 'top' }}
@@ -198,7 +199,7 @@
         {/each}
         <NavItem
           title="Add password"
-          icon={IconAdd}
+          icon={ui.icon.Plus}
           type="type-link"
           on:click={createPassword}
         />

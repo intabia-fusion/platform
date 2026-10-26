@@ -15,6 +15,9 @@
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
   import { createEventDispatcher } from 'svelte'
+  import { translate } from '@hcengineering/platform'
+  import { themeStore } from '@hcengineering/theme'
+
   import { deviceOptionsStore, resizeObserver } from '..'
   import { createFocusManager } from '../focus'
   import type { SelectPopupValueType } from '../types'
@@ -25,10 +28,6 @@
   import Label from './Label.svelte'
   import ListView from './ListView.svelte'
   import Spinner from './Spinner.svelte'
-  import IconCheck from './icons/Check.svelte'
-  import IconSearch from './icons/Search.svelte'
-  import { translate } from '@hcengineering/platform'
-  import { themeStore } from '@hcengineering/theme'
 
   export let placeholder: IntlString | undefined = undefined
   export let placeholderParam: any | undefined = undefined
@@ -142,7 +141,7 @@
   {#if searchable}
     <div class="header flex flex-row-center">
       <EditWithIcon
-        icon={IconSearch}
+        icon={plugin.icon.Search}
         size="large"
         width="100%"
         autoFocus={!$deviceOptionsStore.isMobile}
@@ -199,7 +198,7 @@
                 {#if hasSelected}
                   <div class="check">
                     {#if item.isSelected}
-                      <Icon icon={IconCheck} size="small" />
+                      <Icon icon={plugin.icon.Check} size="small" />
                     {/if}
                   </div>
                 {/if}

@@ -20,7 +20,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { IconError, Label, ModernCheckbox, tooltip } from '@hcengineering/ui'
+  import ui, { Label, ModernCheckbox, tooltip, Icon } from '@hcengineering/ui'
 
   import plugin from '../../plugin'
   import TaskTypeIcon from './TaskTypeIcon.svelte'
@@ -110,7 +110,7 @@
 
         {#if item.exists === true}
           <div class="collision-warning flex-center" use:tooltip={{ label: plugin.string.TaskTypeAlreadyExists }}>
-            <IconError size="small" />
+            <Icon icon={ui.icon.ExclamationCircle} size="small" fill="var(--theme-error-color)" />
           </div>
         {/if}
 

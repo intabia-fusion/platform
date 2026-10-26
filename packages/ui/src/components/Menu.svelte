@@ -16,12 +16,11 @@
   import { createEventDispatcher, onDestroy, onMount } from 'svelte'
   import type { Ref, Doc } from '@hcengineering/core'
   import { generateId } from '@hcengineering/core'
+
   import ui from '../plugin'
   import { closePopup, showPopup } from '../popups'
   import type { Action } from '../types'
   import Icon from './Icon.svelte'
-  import IconArrowUpRight from './icons/ArrowUpRight.svelte'
-  import IconCheck from './icons/Check.svelte'
   import Label from './Label.svelte'
   import MouseSpeedTracker from './MouseSpeedTracker.svelte'
   import { resizeObserver } from '../resize'
@@ -171,7 +170,7 @@
                 ><Label label={action.label} params={action.labelParams ?? {}} /></span
               >
               {#if action.opensPage === true}
-                <div class="icon"><Icon icon={IconArrowUpRight} size="small" /></div>
+                <div class="icon"><Icon icon={ui.icon.ArrowUpRight} size="small" /></div>
               {/if}
             </button>
           </a>
@@ -225,7 +224,7 @@
               ><Label label={action.label} params={action.labelParams ?? {}} /></span
             >
             {#if action.checked === true}
-              <div class="icon"><Icon icon={IconCheck} size="small" /></div>
+              <div class="icon"><Icon icon={ui.icon.Check} size="small" /></div>
             {/if}
           </button>
         {/if}

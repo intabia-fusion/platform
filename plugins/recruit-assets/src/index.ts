@@ -17,20 +17,22 @@ import { loadMetadata } from '@hcengineering/platform'
 import recruit from '@hcengineering/recruit'
 
 const icons = require('../assets/icons.svg') as string // eslint-disable-line
+const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(recruit.icon, {
-  RecruitApplication: `${icons}#recruitment`,
-  Vacancy: `${icons}#vacancy`,
-  Location: `${icons}#location`,
-  Calendar: `${icons}#calendar`,
-  Create: `${icons}#create`,
-  Application: `${icons}#application`,
-  Review: `${icons}#review`,
-  Opinion: `${icons}#opinion`,
-  CreateCandidate: `${icons}#new-candidate`,
-  AssignedToMe: `${icons}#assignedToMe`,
+  RecruitApplication: `${uiIcons}#person-search`,
+  Vacancy: `${uiIcons}#briefcase`,
+  Location: `${uiIcons}#map-pin`,
+  Calendar: `${uiIcons}#calendar`,
+  Create: `${uiIcons}#document`,
+  Application: `${uiIcons}#id-card`,
+  Review: `${uiIcons}#bubbles-square`,
+  Opinion: `${uiIcons}#bubble-person`,
+  CreateCandidate: `${uiIcons}#pencil-square`,
+  AssignedToMe: `${uiIcons}#check-square`,
   Reviews: `${icons}#reviews`,
-  Skills: `${icons}#skills`,
-  Issue: `${icons}#issue`,
-  Schedule: `${icons}#schedule`,
-  Talents: `${icons}#talents`
+  Skills: `${uiIcons}#graduation-cap`,
+  Issue: `${icons}#circle-badge`,
+  Schedule: `${uiIcons}#clock`,
+  Talents: `${uiIcons}#people`,
+  Applications: `${icons}#id-badge`
 })

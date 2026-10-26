@@ -16,7 +16,7 @@
 <script lang="ts">
   import { metricsAggregate, type Metrics } from '@hcengineering/core'
   import presentation, { uiContext } from '@hcengineering/presentation'
-  import { Breadcrumb, Header, IconClose, IconSettings, ticker } from '@hcengineering/ui'
+  import ui, { Breadcrumb, Header, ticker } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import { MetricsInfo } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
@@ -36,7 +36,7 @@
   <Header type="type-panel" freezeBefore>
     <svelte:fragment slot="beforeTitle">
       <IconButton
-        icon={IconClose}
+        icon={ui.icon.Cross}
         kind="secondary"
         size="small"
         tooltip={{ label: presentation.string.Close }}
@@ -44,7 +44,7 @@
       />
     </svelte:fragment>
 
-    <Breadcrumb icon={IconSettings} title="Client statistics" size="large" isCurrent />
+    <Breadcrumb icon={ui.icon.Sliders} title="Client statistics" size="large" isCurrent />
   </Header>
 
   <div class="hulyComponent-content__column content">

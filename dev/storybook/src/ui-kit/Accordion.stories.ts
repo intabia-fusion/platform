@@ -14,7 +14,7 @@
 //
 
 import { getEmbeddedLabel } from '@hcengineering/platform'
-import { IconFolder } from '@hcengineering/ui'
+import ui from '@hcengineering/ui'
 import { AccordionItem } from '@hcengineering/ui/kit'
 import type { Meta, StoryObj } from '@storybook/svelte'
 
@@ -57,7 +57,7 @@ export const Variants: Story = {
           columns: [
             { title: 'closed', props: {} },
             { title: 'open', props: { open: true } },
-            { title: 'icon', props: { open: true, icon: IconFolder } },
+            { title: 'icon', props: { open: true, icon: ui.icon.Folder } },
             { title: 'disabled', props: { disabled: true } }
           ],
           props: { label: getEmbeddedLabel('Product'), rows: 1, width: '18rem' }

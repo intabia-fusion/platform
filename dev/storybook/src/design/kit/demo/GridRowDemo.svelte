@@ -21,6 +21,6 @@
 
 <div style="width: 34.375rem">
   <GridRow label="Project title" padded><EditBox kind="large-style" value="Mobile app" width={310} /></GridRow>
-  <GridRow label="Default assignee"><ClassicButton size="large" icon="contact/Person" label="Assignee" /></GridRow>
+  <GridRow label="Default assignee"><ClassicButton size="large" icon="kit/PersonCircle" label="Assignee" /></GridRow>
   <GridRow label="Make private" hint="Only members can see it"><Toggle on={false} /></GridRow>
 </div>

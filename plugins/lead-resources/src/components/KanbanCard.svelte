@@ -24,7 +24,7 @@
   import { getClient } from '@hcengineering/presentation'
   import task from '@hcengineering/task'
   import { AssigneePresenter, StateRefPresenter } from '@hcengineering/task-resources'
-  import { ActionIcon, Component, DueDatePresenter, IconMoreH } from '@hcengineering/ui'
+  import ui, { ActionIcon, Component, DueDatePresenter } from '@hcengineering/ui'
   import type { BuildModelKey } from '@hcengineering/view'
   import { enabledConfig, openDoc, showMenu, statusStore } from '@hcengineering/view-resources'
   import tracker from '@hcengineering/tracker'
@@ -61,7 +61,7 @@
         action={(evt) => {
           showMenu(evt, { object })
         }}
-        icon={IconMoreH}
+        icon={ui.icon.DotsHorizontal}
         size="small"
       />
     </div>

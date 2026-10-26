@@ -75,7 +75,7 @@ export const SwitcherStates: Story = sections([
     component: Switcher,
     rows: [
       { title: 'labels', props: { items: ['All', 'Active', 'Backlog'], selected: 'Active' } },
-      { title: 'icons', props: { items: ['tracker/list', 'task/kanban'], selected: 'task/kanban' } }
+      { title: 'icons', props: { items: ['kit/BulletList', 'kit/Kanban'], selected: 'kit/Kanban' } }
     ],
     columns: [{ title: '', props: {} }]
   }
@@ -116,8 +116,8 @@ export const ClassicButtonStates: Story = sections([
     component: ClassicButton,
     rows: axis('kind', ['regular', 'primary']),
     columns: [
-      { title: 'icon', props: { icon: 'ui/Edit' } },
-      { title: 'icon and label', props: { icon: 'contact/Person', label: 'Assignee' } },
+      { title: 'icon', props: { icon: 'kit/PencilLine' } },
+      { title: 'icon and label', props: { icon: 'kit/PersonCircle', label: 'Assignee' } },
       { title: 'menu', props: { label: 'Owner', menu: true } },
       { title: 'disabled', props: { label: 'Owner', disabled: true } }
     ],

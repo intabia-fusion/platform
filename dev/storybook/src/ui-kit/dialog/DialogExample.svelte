@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { IconMoreH, IconInfo } from '@hcengineering/ui'
+  import ui from '@hcengineering/ui'
   import { Button, Dialog, IconButton, Toggle, type DialogProps } from '@hcengineering/ui/kit'
 
   export let props: Partial<DialogProps> = {}
@@ -42,7 +42,12 @@
     </svelte:fragment>
     <svelte:fragment slot="actions">
       {#if withActions}
-        <IconButton icon={IconMoreH} kind="ghost" size="small" tooltip={{ label: getEmbeddedLabel('More actions') }} />
+        <IconButton
+          icon={ui.icon.DotsHorizontal}
+          kind="ghost"
+          size="small"
+          tooltip={{ label: getEmbeddedLabel('More actions') }}
+        />
       {/if}
     </svelte:fragment>
     <svelte:fragment slot="footerStart">
@@ -52,7 +57,7 @@
     </svelte:fragment>
     <svelte:fragment slot="footerActions">
       {#if withFooterActions}
-        <Button kind="ghost" size="medium" icon={IconInfo} label={getEmbeddedLabel('Preview')} />
+        <Button kind="ghost" size="medium" icon={ui.icon.InfoCircle} label={getEmbeddedLabel('Preview')} />
       {/if}
     </svelte:fragment>
 

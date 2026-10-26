@@ -28,17 +28,9 @@
   import { type Rank, toIdMap } from '@hcengineering/core'
   import { createQuery, getClient, type LiveQuery } from '@hcengineering/presentation'
   import { makeRank } from '@hcengineering/rank'
-  import ui, {
-    Button,
-    IconChevronDown,
-    IconChevronRight,
-    IconMoreH,
-    Scroller,
-    lazyObserver,
-    themeStore,
-    defaultBackground
-  } from '@hcengineering/ui'
+  import ui, { Button, Icon, Scroller, lazyObserver, themeStore, defaultBackground } from '@hcengineering/ui'
   import { createEventDispatcher, onDestroy, tick } from 'svelte'
+
   import type { CardDragEvent, DocWithRank, Item, SwimLane } from '../types'
   import {
     buildColumns,
@@ -1221,7 +1213,7 @@
                 }}
               >
                 <div class="swimlane-toggle">
-                  <svelte:component this={isCollapsed ? IconChevronRight : IconChevronDown} size="small" />
+                  <Icon icon={isCollapsed ? ui.icon.ChevronRight : ui.icon.ChevronDown} size="small" />
                 </div>
                 {#if $$slots.swimLaneHeader !== undefined}
                   <slot
@@ -1326,7 +1318,7 @@
               <span class="mr-2">{laneLimit} / {swimLanes.length}</span>
               <Button
                 size="small"
-                icon={IconMoreH}
+                icon={ui.icon.DotsHorizontal}
                 label={ui.string.ShowMore}
                 dataId="btn-kanban-show-more-lanes"
                 on:click={() => {

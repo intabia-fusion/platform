@@ -28,8 +28,9 @@
   import { StyledTextBox } from '@hcengineering/text-editor-resources'
   import type { ToDo, WorkSlot } from '@hcengineering/time'
   import { TimeEvents, ToDoPriority } from '@hcengineering/time'
-  import { Button, Component, EditBox, IconClose, Label, Scroller } from '@hcengineering/ui'
+  import ui, { Button, Component, EditBox, Label, Scroller } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
+
   import time from '../plugin'
   import { getWorkSlotSpace } from '../utils'
   import DueDateEditor from './DueDateEditor.svelte'
@@ -208,7 +209,7 @@
     <div class="flex-row-center gap-1 flex-no-shrink ml-3">
       <Button
         id="card-close"
-        icon={IconClose}
+        icon={ui.icon.Cross}
         kind="ghost"
         size="small"
         on:click={() => {

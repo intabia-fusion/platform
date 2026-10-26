@@ -1,7 +1,8 @@
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
   import { createEventDispatcher, onMount } from 'svelte'
-  import { IconClose } from '..'
+
+  import ui from '../plugin'
   import Button from './Button.svelte'
   import Label from './Label.svelte'
 
@@ -38,7 +39,7 @@
   {currentProgress}%
   {#if onCancel !== undefined}
     <Button
-      icon={IconClose}
+      icon={ui.icon.Cross}
       size="small"
       kind="ghost"
       on:click={() => {

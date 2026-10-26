@@ -15,8 +15,9 @@
 <script lang="ts">
   import type { Ref } from '@hcengineering/core'
   import type { WebhookEndpoint } from '@hcengineering/setting'
-  import { Icon, IconAdd, Label, Loading } from '@hcengineering/ui'
+  import ui, { Icon, Label, Loading } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
+
   import settingsRes from '../plugin'
 
   export let endpoints: WebhookEndpoint[]
@@ -30,7 +31,7 @@
   <span><Label label={settingsRes.string.WebhookAccess} /></span>
   <IconButton
     kind="primary"
-    icon={IconAdd}
+    icon={ui.icon.Plus}
     size="small"
     data-id="btnAddWebhook"
     on:click={onCreate}

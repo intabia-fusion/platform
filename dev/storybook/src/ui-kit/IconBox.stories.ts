@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { IconSettings } from '@hcengineering/ui'
+import ui from '@hcengineering/ui'
 import { IconBox } from '@hcengineering/ui/kit'
 import type { Meta, StoryObj } from '@storybook/svelte'
 
@@ -25,7 +25,7 @@ const sizes = ['large', 'medium', 'small', 'extra-small'] as const
 const meta = {
   title: 'Display/IconBox',
   component: IconBox,
-  args: { icon: IconSettings, size: 'small' },
+  args: { icon: ui.icon.Sliders, size: 'small' },
   parameters: {
     docs: {
       description: {
@@ -55,7 +55,7 @@ export const Variants: Story = {
             { title: 'round', props: { shape: 'round' } }
           ],
           columns: axis('size', sizes),
-          props: { icon: IconSettings }
+          props: { icon: ui.icon.Sliders }
         }
       ]
     }

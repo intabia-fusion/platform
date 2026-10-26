@@ -25,17 +25,12 @@
   import { ClassAttributes, clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
   import type { ProjectType, TaskType } from '@hcengineering/task'
   import task, { calculateStatuses, findStatusAttr } from '@hcengineering/task'
-  import {
+  import ui, {
     Icon,
-    IconDescription,
     NavItem,
     Separator,
     defineSeparators,
     secondNavSeparators,
-    IconAdd,
-    IconDelete,
-    IconError,
-    IconSquareExpand,
     Label,
     Scroller,
     ToggleWithLabel,
@@ -261,7 +256,7 @@
         <div class="hulyComponent-content__navHeader-menu">
           <IconButton
             kind="tertiary"
-            icon={IconDescription}
+            icon={ui.icon.TextLines}
             size="small"
             inheritColor
             tooltip={{ label: task.string.TaskType }}
@@ -300,7 +295,7 @@
               </div>
               <div class="flex-row gap-1">
                 <Button
-                  icon={IconSquareExpand}
+                  icon={ui.icon.ArrowSquareOut}
                   label={plugin.string.CountTasks}
                   labelParams={{ count: tasksCounter }}
                   disabled={tasksCounter === 0}
@@ -320,7 +315,7 @@
                 />
                 {#if canDelete}
                   <IconButton
-                    icon={IconDelete}
+                    icon={ui.icon.Trash}
                     size="small"
                     kind="secondary"
                     loading={isDeleting}
@@ -353,7 +348,7 @@
               />
               {#if errorMessage !== undefined}
                 <div class="name-error">
-                  <Icon icon={IconError} size="small" />
+                  <Icon icon={ui.icon.ExclamationCircle} size="small" fill="var(--theme-error-color)" />
                   <span><Label label={errorMessage} /></span>
                 </div>
               {/if}
@@ -376,7 +371,7 @@
                 />
                 <IconButton
                   kind="primary"
-                  icon={IconAdd}
+                  icon={ui.icon.Plus}
                   size="small"
                   tooltip={{ label: presentation.string.Add }}
                   on:click={handleAddStatus}

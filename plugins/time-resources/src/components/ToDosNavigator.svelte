@@ -22,13 +22,12 @@
     themeStore,
     deviceOptionsStore as deviceInfo,
     showPopup,
-    Menu,
-    IconMoreV,
-    IconLink
+    Menu
   } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
-  import type { ToDosMode } from '..'
   import view from '@hcengineering/view'
+
+  import type { ToDosMode } from '..'
   import time from '../plugin'
 
   export let mode: ToDosMode
@@ -126,7 +125,7 @@
     if (!isDisabled('caldav') && caldavUrl != null && caldavUrl !== '') {
       actions.push({
         label: calendar.string.CalDavAccess,
-        icon: IconLink,
+        icon: ui.icon.Link,
         action: async (): Promise<void> => {
           await (
             await getResource(calendar.function.ConfigureCalDavAccess)
@@ -154,7 +153,7 @@
       <Label label={time.string.Planner} />
       {#if actions.length > 0}
         <IconButton
-          icon={IconMoreV}
+          icon={ui.icon.DotsVertical}
           hasMenu
           {pressed}
           kind="tertiary"

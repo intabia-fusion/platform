@@ -17,10 +17,10 @@
   import { AttachmentDocList } from '@hcengineering/attachment-resources'
   import { ChatMessagePopup } from '@hcengineering/chunter-resources'
   import type { Ref } from '@hcengineering/core'
-  import { IconForward, createQuery, getClient } from '@hcengineering/presentation'
+  import { createQuery, getClient } from '@hcengineering/presentation'
   import { CollaborativeTextEditor } from '@hcengineering/text-editor-resources'
   import type { Issue } from '@hcengineering/tracker'
-  import { Label, Scroller, resizeObserver } from '@hcengineering/ui'
+  import ui, { Label, Scroller, resizeObserver, Icon } from '@hcengineering/ui'
   import { getCollaborationUser } from '@hcengineering/view-resources'
 
   import tracker from '../../plugin'
@@ -73,7 +73,7 @@
       <div class="flex-row-center gap-1">
         {#if parent}
           <span class="overflow-label content-color">{parent.title}</span>
-          <IconForward size="x-small" />
+          <Icon icon={ui.icon.ChevronRightLarge} size="x-small" />
         {/if}
         <span class="content-dark-color">{issue.identifier}</span>
       </div>

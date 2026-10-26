@@ -10,9 +10,10 @@
   import type { IntlString } from '@hcengineering/platform'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import type { ButtonKind, ButtonSize, LabelAndProps, SelectPopupValueType } from '@hcengineering/ui'
-  import { Button, IconChevronDown, SelectPopup, eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  import ui, { Button, SelectPopup, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import { HyperlinkEditor } from '@hcengineering/view-resources'
   import type { GithubIntegrationRepository, GithubProject } from '@hcengineering/github'
+
   import github from '../plugin'
   import { integrationRepositories } from './utils'
 
@@ -113,7 +114,7 @@
     disabled={disabled || readonly}
     label={(selectedRepository?.name ?? repository?.name) ? undefined : label}
     icon={showIcon || selectedRepository || repository ? github.icon.Github : undefined}
-    iconRight={disabled || readonly ? undefined : IconChevronDown}
+    iconRight={disabled || readonly ? undefined : ui.icon.ChevronDown}
     on:click={handleRepositoryEditorOpened}
   >
     <svelte:fragment slot="content">

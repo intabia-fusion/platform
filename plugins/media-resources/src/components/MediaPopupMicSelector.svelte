@@ -15,15 +15,12 @@
 <script lang="ts">
   import type { MediaInfo } from '@hcengineering/media'
   import { updateSelectedMicId } from '@hcengineering/media'
-  import { Label } from '@hcengineering/ui'
+  import ui, { Label } from '@hcengineering/ui'
 
   import media from '../plugin'
   import { micAccess, state, sessions } from '../stores'
   import { getDeviceLabel } from '../utils'
-
   import MediaPopupItem from './MediaPopupItem.svelte'
-  import IconMicOn from './icons/MicOn.svelte'
-  import IconMicOff from './icons/MicOff.svelte'
 
   export let mediaInfo: MediaInfo
   export let expanded: boolean = false
@@ -47,7 +44,7 @@
 {#if access === 'denied'}
   <MediaPopupItem
     label={media.string.NoMic}
-    icon={IconMicOff}
+    icon={ui.icon.MicOff}
     iconProps={{ fill: 'var(--theme-state-negative-color)' }}
     disabled
   />
@@ -56,7 +53,7 @@
     label={mediaInfo.activeMicrophone === undefined
       ? media.string.DefaultMic
       : getDeviceLabel(mediaInfo.activeMicrophone)}
-    icon={mediaInfo.activeMicrophone !== undefined ? IconMicOn : IconMicOff}
+    icon={mediaInfo.activeMicrophone !== undefined ? ui.icon.Mic : ui.icon.MicOff}
     expandable={true}
     {expanded}
     on:expand
@@ -83,7 +80,7 @@
       {:else}
         <MediaPopupItem
           label={media.string.NoMic}
-          icon={IconMicOff}
+          icon={ui.icon.MicOff}
           iconProps={{ fill: 'var(--theme-state-negative-color)' }}
           disabled
         />

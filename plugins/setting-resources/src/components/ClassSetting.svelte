@@ -20,9 +20,8 @@
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { createQuery, getClient, IconWithEmoji } from '@hcengineering/presentation'
   import type { AnySvelteComponent } from '@hcengineering/ui'
-  import {
+  import ui, {
     Scroller,
-    IconDescription,
     Label,
     getLocation,
     navigate,
@@ -176,7 +175,7 @@
         <div class="hulyComponent-content__navHeader-menu">
           <IconButton
             kind="tertiary"
-            icon={IconDescription}
+            icon={ui.icon.TextLines}
             size="small"
             inheritColor
             tooltip={{ label: setting.string.ClassSetting }}

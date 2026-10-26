@@ -14,3 +14,22 @@
 //
 
 /// <reference types="vite/client" />
+
+declare module 'virtual:platform-icons' {
+  /** An svg found in the platform sources (`scripts/platform-icons.mjs`). */
+  export interface PlatformIcon {
+    id: string
+    name: string
+    /** Plugin or package: `plugins/tracker`, `packages/ui`. */
+    source: string
+    file: string
+    line: number
+    kind: 'sprite' | 'svg' | 'svelte' | 'ts' | 'css'
+    /** Static markup with a viewBox and no size. */
+    svg: string
+    /** Has its own <style>: drawn as an image so the rules stay inside it. */
+    isolated: boolean
+  }
+  const icons: PlatformIcon[]
+  export default icons
+}

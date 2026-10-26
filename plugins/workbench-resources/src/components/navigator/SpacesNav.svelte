@@ -21,7 +21,7 @@
   import preference from '@hcengineering/preference'
   import { getClient } from '@hcengineering/presentation'
   import type { Action, AnyComponent } from '@hcengineering/ui'
-  import { IconAdd, IconSearch, getCurrentResolvedLocation, navigate, showPopup } from '@hcengineering/ui'
+  import ui, { getCurrentResolvedLocation, navigate, showPopup } from '@hcengineering/ui'
   import { TreeNode } from '@hcengineering/view-resources'
   import type { SpacesNavModel } from '@hcengineering/workbench'
   import { createEventDispatcher } from 'svelte'
@@ -46,7 +46,7 @@
 
   const addSpace = (addSpaceLabel: IntlString, createComponent: AnyComponent): Action => ({
     label: addSpaceLabel,
-    icon: IconAdd,
+    icon: ui.icon.Plus,
     action: async (_id: Ref<Doc>): Promise<void> => {
       dispatch('open')
       showPopup(createComponent, {}, 'top')
@@ -55,7 +55,7 @@
 
   const browseSpaces: Action = {
     label: plugin.string.BrowseSpaces,
-    icon: IconSearch,
+    icon: ui.icon.Search,
     action: async (_id: Ref<Doc>): Promise<void> => {
       const loc = getCurrentResolvedLocation()
       loc.path[3] = 'spaceBrowser'

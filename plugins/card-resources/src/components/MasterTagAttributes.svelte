@@ -16,23 +16,21 @@
   import type { Card, MasterTag } from '@hcengineering/card'
   import { getClient } from '@hcengineering/presentation'
   import setting, { settingId } from '@hcengineering/setting'
-  import {
+  import ui, {
     Button,
     Chevron,
     ExpandCollapse,
     getCurrentResolvedLocation,
-    IconAdd,
     Label,
     navigate,
     showPopup
   } from '@hcengineering/ui'
-  import CardAttributes from './CardAttributes.svelte'
   import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
+  import { permissionsStore } from '@hcengineering/contact-resources'
+
+  import CardAttributes from './CardAttributes.svelte'
   import CardIcon from './CardIcon.svelte'
   import { canLockSection, canUnlockSection } from '../utils'
-  import { permissionsStore } from '@hcengineering/contact-resources'
-  import Lock from './icons/Lock.svelte'
-  import Unlock from './icons/Unlock.svelte'
   import card from '../plugin'
   import MarkupProperties from './MarkupProperties.svelte'
 
@@ -83,7 +81,7 @@
     {#if (isLocked && canUnlock) || (!isLocked && canLock)}
       <div class="lock-btn">
         <Button
-          icon={isLocked ? Lock : Unlock}
+          icon={isLocked ? ui.icon.LockFill : ui.icon.LockOpen}
           kind="link"
           size="medium"
           disabled={readonly}
@@ -94,7 +92,7 @@
     {/if}
     {#if hasAccountRole(getCurrentAccount(), AccountRole.Maintainer)}
       <Button
-        icon={IconAdd}
+        icon={ui.icon.Plus}
         kind="link"
         size="medium"
         showTooltip={{ label: setting.string.AddAttribute }}

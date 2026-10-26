@@ -17,8 +17,6 @@
 
   import Label from '../../components/Label.svelte'
   import Spinner from '../../components/Spinner.svelte'
-  import IconCheck from '../../components/icons/Check.svelte'
-  import IconClose from '../../components/icons/Close.svelte'
   import ui from '../../plugin'
   import IconButton from '../button/IconButton.svelte'
   import { formatMediaDuration } from '../file/format'
@@ -46,7 +44,7 @@
 
 <div class="recorder">
   <IconButton
-    icon={IconClose}
+    icon={ui.icon.Cross}
     kind="ghost"
     shape="round"
     size="small"
@@ -67,7 +65,7 @@
     </span>
   {/if}
   <IconButton
-    icon={IconCheck}
+    icon={ui.icon.Check}
     kind="secondary"
     shape="round"
     size="small"

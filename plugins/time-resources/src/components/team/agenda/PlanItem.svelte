@@ -1,10 +1,11 @@
 <script lang="ts">
   import calendarPlugin from '@hcengineering/calendar'
-  import { Icon, Label, DatePresenter, IconArrowRight } from '@hcengineering/ui'
+  import ui, { Icon, Label, DatePresenter } from '@hcengineering/ui'
+  import { DateRangeMode } from '@hcengineering/core'
+
   import type { WorkSlotMapping } from '../../../types'
   import ToDoPresenter from '../../ToDoPresenter.svelte'
   import TimePresenter from '../../presenters/TimePresenter.svelte'
-  import { DateRangeMode } from '@hcengineering/core'
 
   export let item: WorkSlotMapping
   export let showAssignee: boolean = false
@@ -30,7 +31,7 @@
           <div class="flex-row-center">
             <DatePresenter mode={DateRangeMode.TIMEONLY} value={slot.date} />
             <div class="p-1">
-              <Icon icon={IconArrowRight} size="small" />
+              <Icon icon={ui.icon.ArrowRight} size="small" />
             </div>
             <DatePresenter mode={DateRangeMode.TIMEONLY} value={slot.dueDate} />
           </div>

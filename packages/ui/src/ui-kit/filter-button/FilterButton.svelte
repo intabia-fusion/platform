@@ -16,8 +16,6 @@
   import { createEventDispatcher, onDestroy } from 'svelte'
 
   import FilterCategoryPopup from '../../components/FilterCategoryPopup.svelte'
-  import IconClose from '../../components/icons/Close.svelte'
-  import IconFilter from '../../components/icons/Filter.svelte'
   import Label from '../../components/Label.svelte'
   import ui from '../../plugin'
   import { eventToHTMLElement, showPopup, type PopupResult } from '../../popups'
@@ -104,7 +102,7 @@
     bind:element={trigger}
     kind={resolvedKind}
     size={resolvedSize}
-    icon={IconFilter}
+    icon={ui.icon.Funnel}
     pressed={opened}
     {disabled}
     on:click={open}
@@ -124,7 +122,7 @@
       <IconButton
         kind="ghost"
         size="min"
-        icon={IconClose}
+        icon={ui.icon.Cross}
         iconSize="x-small"
         tooltip={{ label: ui.string.ClearFilters }}
         {disabled}

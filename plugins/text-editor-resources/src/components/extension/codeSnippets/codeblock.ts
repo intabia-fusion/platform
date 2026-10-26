@@ -15,7 +15,8 @@
 
 import { grammars } from '@hcengineering/highlight'
 import { backtickInputRegex, codeBlockOptions, tildeInputRegex } from '@hcengineering/text'
-import { DropdownLabelsPopup, getEventPositionElement, showPopup } from '@hcengineering/ui'
+import { getMetadata } from '@hcengineering/platform'
+import ui, { DropdownLabelsPopup, getEventPositionElement, showPopup } from '@hcengineering/ui'
 import { isActive, textblockTypeInputRule } from '@tiptap/core'
 import { type CodeBlockLowlightOptions, CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight'
 import { type Node as ProseMirrorNode } from '@tiptap/pm/model'
@@ -26,9 +27,9 @@ import { isChangeEditable } from '../hooks/editable'
 
 type Lowlight = ReturnType<typeof createLowlight>
 
-const chevronSvg = `<svg width="16" height="16" viewBox="0 0 32 32" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-  <path d="M16 22L6 12L7.4 10.6L16 19.2L24.6 10.6L26 12L16 22Z" />
-</svg>`
+// Plain DOM here, so the kit icon goes in as a sprite reference.
+const chevronSvg = (): string =>
+  `<svg width="16" height="16" fill="currentColor"><use href="${getMetadata(ui.icon.ChevronDown) ?? ''}" /></svg>`
 
 export const codeBlockHighlightOptions: CodeBlockLowlightOptions = {
   ...codeBlockOptions,
@@ -172,7 +173,7 @@ function createLangButton (language: string | null): HTMLButtonElement {
   label.textContent = language ?? 'auto'
 
   const icon = document.createElement('div')
-  icon.innerHTML = chevronSvg
+  icon.innerHTML = chevronSvg()
 
   button.append(label, icon)
 

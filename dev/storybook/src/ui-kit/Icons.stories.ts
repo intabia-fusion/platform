@@ -26,4 +26,5 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Components: Story = { name: 'Icons', render: () => ({ Component: IconsKit }) }
+// The only story of the component: the sidebar shows it as one item, Overview / Icons.
+export const Groups: Story = { name: 'Icons', render: () => ({ Component: IconsKit }) }

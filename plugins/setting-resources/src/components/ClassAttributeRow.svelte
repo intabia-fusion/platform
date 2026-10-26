@@ -18,8 +18,9 @@
   import type { IntlString } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import type { AnySvelteComponent } from '@hcengineering/ui'
-  import { Icon, IconMoreV2, IconOpenedArrow, Label, tooltip } from '@hcengineering/ui'
+  import ui, { Icon, Label, tooltip } from '@hcengineering/ui'
   import view from '@hcengineering/view'
+
   import setting from '../plugin'
 
   export let attribute: AnyAttribute
@@ -57,7 +58,7 @@
 
 <button class="hulyTableAttr-content__row w-full" class:hovered class:selected on:contextmenu on:click>
   <button class="hulyTableAttr-content__row-dragMenu">
-    <IconMoreV2 size="small" />
+    <Icon icon={ui.icon.GripVertical} size="small" />
   </button>
   {#if attribute.automationOnly === true}
     <div class="hulyTableAttr-content__row-icon" use:tooltip={{ label: view.string.AutomationOnly }}>
@@ -104,7 +105,7 @@
     {/if}
   </div>
   <div class="hulyTableAttr-content__row-arrow">
-    <IconOpenedArrow size="small" />
+    <Icon icon={ui.icon.ChevronRightSmall} size="small" />
   </div>
 </button>
 

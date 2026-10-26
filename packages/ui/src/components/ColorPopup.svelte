@@ -15,13 +15,13 @@
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
   import { createEventDispatcher } from 'svelte'
+
+  import ui from '../plugin'
   import { deviceOptionsStore, resizeObserver, themeStore } from '..'
   import { getPlatformColorDef } from '../colors'
   import EditWithIcon from './EditWithIcon.svelte'
   import Icon from './Icon.svelte'
   import ListView from './ListView.svelte'
-  import IconCheck from './icons/Check.svelte'
-  import IconSearch from './icons/Search.svelte'
 
   export let placeholder: IntlString | undefined = undefined
   export let placeholderParam: any | undefined = undefined
@@ -73,7 +73,7 @@
   {#if searchable}
     <div class="header">
       <EditWithIcon
-        icon={IconSearch}
+        icon={ui.icon.Search}
         size="large"
         width="100%"
         autoFocus={!$deviceOptionsStore.isMobile}
@@ -107,7 +107,7 @@
             <span class="label" style:color={color.title}>{itemValue.label}</span>
             <div class="check">
               {#if itemValue.id === selected}
-                <Icon icon={IconCheck} size="small" />
+                <Icon icon={ui.icon.Check} size="small" />
               {/if}
             </div>
           </button>

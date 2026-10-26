@@ -19,8 +19,6 @@
   import type { CalendarItem } from '@hcengineering/ui'
   import ui, {
     ActionIcon,
-    IconDownOutline,
-    IconUpOutline,
     Label,
     MILLISECONDS_IN_DAY,
     Scroller,
@@ -38,6 +36,7 @@
   } from '@hcengineering/ui'
   import { showMenu } from '@hcengineering/view-resources'
   import { createEventDispatcher, onDestroy, onMount } from 'svelte'
+
   import type {
     CalendarADGrid,
     CalendarADRows,
@@ -1021,7 +1020,7 @@
       </div>
       {#if showArrowAD}
         <ActionIcon
-          icon={shownAD ? IconUpOutline : IconDownOutline}
+          icon={shownAD ? ui.icon.ChevronUpSmall : ui.icon.ChevronDownSmall}
           size="small"
           action={() => {
             shownAD = !shownAD

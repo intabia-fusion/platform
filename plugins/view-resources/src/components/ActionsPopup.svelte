@@ -32,7 +32,6 @@
     Button,
     Component,
     Icon,
-    IconArrowLeft,
     Label,
     ListView,
     capitalizeFirstLetter,
@@ -44,15 +43,13 @@
   } from '@hcengineering/ui'
   import type { Action, ActionCategory, ViewContext } from '@hcengineering/view'
   import { createEventDispatcher, onMount, tick } from 'svelte'
+  import { contextStore } from '@hcengineering/presentation'
+
   import { filterActions, getSelection } from '../actions'
   import view from '../plugin'
   import { focusStore, selectionStore } from '../selection'
   import { openDoc } from '../utils'
   import ObjectPresenter from './ObjectPresenter.svelte'
-
-  import { contextStore } from '@hcengineering/presentation'
-  import ChevronDown from './icons/ChevronDown.svelte'
-  import ChevronUp from './icons/ChevronUp.svelte'
 
   export let viewContext: ViewContext | undefined = $contextStore.getLastContext()
 
@@ -331,7 +328,7 @@
       {#if activeAction?.actionPopup !== undefined}
         <div class="mr-2">
           <Button
-            icon={IconArrowLeft}
+            icon={ui.icon.ArrowLeft}
             label={ui.string.Back}
             kind="ghost"
             size="small"
@@ -414,7 +411,7 @@
               {@const action = item.action}
               <div class="flex-row-center flex-between flex-grow ml-2 text-base cursor-pointer actionsitem">
                 <div class="mr-4 {selection === num ? 'caption-color' : 'content-dark-color'}">
-                  <Icon icon={action.icon ?? IconArrowLeft} size="small" />
+                  <Icon icon={action.icon ?? ui.icon.ArrowLeft} size="small" />
                 </div>
                 <div class="flex-grow {selection === num ? 'caption-color' : 'content-color'}">
                   <Label label={action.label} />
@@ -450,10 +447,10 @@
     <div class="actionsHint">
       <div class="actionsHintLable">
         <span class="hintNav">
-          <ChevronUp size="small" />
+          <Icon icon={ui.icon.ChevronUp} size="small" />
         </span>
         <span class="hintNav">
-          <ChevronDown size="small" />
+          <Icon icon={ui.icon.ChevronDown} size="small" />
         </span>
         <span class="ml mr">
           <Label label={view.string.Type} />

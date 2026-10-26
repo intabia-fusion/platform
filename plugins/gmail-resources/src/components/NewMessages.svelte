@@ -32,18 +32,10 @@
   import { StyledTextEditor } from '@hcengineering/text-editor-resources'
   import { EmptyMarkup, isEmptyMarkup, markupToJSON } from '@hcengineering/text'
   import { markupToHtml } from '@hcengineering/text-html'
-  import {
-    Button,
-    EditBox,
-    eventToHTMLElement,
-    IconAttachment,
-    Label,
-    Panel,
-    Scroller,
-    showPopup
-  } from '@hcengineering/ui'
+  import ui, { Button, EditBox, eventToHTMLElement, Label, Panel, Scroller, showPopup } from '@hcengineering/ui'
   import { GmailEvents } from '@hcengineering/gmail'
   import { createEventDispatcher, onDestroy } from 'svelte'
+
   import plugin from '../plugin'
   import Connect from './Connect.svelte'
   import IntegrationSelector from './IntegrationSelector.svelte'
@@ -303,7 +295,7 @@
       </div>
       <div class="buttons-group small-gap">
         <Button
-          icon={IconAttachment}
+          icon={ui.icon.Paperclip}
           kind="ghost"
           disabled={channels.length === 0}
           on:click={() => {

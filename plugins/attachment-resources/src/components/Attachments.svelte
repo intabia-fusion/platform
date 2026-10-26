@@ -17,7 +17,7 @@
   import type { Attachment } from '@hcengineering/attachment'
   import type { Class, Data, Doc, DocumentQuery, Ref, Space } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
-  import { Icon, Label, resizeObserver, Scroller, Spinner, IconAdd } from '@hcengineering/ui'
+  import ui, { Icon, Label, resizeObserver, Scroller, Spinner } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import type { BuildModelKey } from '@hcengineering/view'
   import view from '@hcengineering/view'
@@ -29,10 +29,7 @@
 
   import attachment from '../plugin'
   import { createAttachment } from '../utils'
-
   import AttachmentDroppable from './AttachmentDroppable.svelte'
-  import IconAttachments from './icons/Attachments.svelte'
-  import UploadDuo from './icons/UploadDuo.svelte'
   import AttachmentRowPresenter from './AttachmentRowPresenter.svelte'
 
   export let object: Doc | undefined = undefined
@@ -105,7 +102,7 @@
   {#if showHeader}
     <div class="antiSection-header">
       <div class="antiSection-header__icon">
-        <Icon icon={IconAttachments} size="small" />
+        <Icon icon={ui.icon.Paperclip} size="small" />
       </div>
       <span class="antiSection-header__title">
         <Label {label} />
@@ -115,7 +112,7 @@
           <Spinner />
         {:else if !readonly}
           <IconButton
-            icon={IconAdd}
+            icon={ui.icon.Plus}
             kind="tertiary"
             size="small"
             tooltip={{ label: presentation.string.Add }}
@@ -148,7 +145,7 @@
     >
       <div class="antiSection-empty attachments flex-col" class:mt-3={showHeader} class:solid={dragover}>
         <div class="flex-center caption-color">
-          <UploadDuo size="large" />
+          <Icon icon={ui.icon.CloudUpload} size="large" />
         </div>
         <div class="text-sm content-dark-color" style:pointer-events="none">
           <Label label={attachment.string.NoAttachments} />

@@ -38,7 +38,8 @@
 </script>
 
 {#if isAsset(icon)}
-  <svg class="svg-{size}" fill={_fill} {...iconProps}>
+  <!-- The kit grid; without a viewBox a size with no CSS rule (card) falls back to 300x150 -->
+  <svg class="svg-{size}" viewBox="0 0 32 32" fill={_fill} {...iconProps}>
     <use href={url} />
   </svg>
 {:else if typeof icon !== 'string'}

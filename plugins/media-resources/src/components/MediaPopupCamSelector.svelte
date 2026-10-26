@@ -15,16 +15,13 @@
 <script lang="ts">
   import type { MediaInfo } from '@hcengineering/media'
   import { updateSelectedCamId } from '@hcengineering/media'
-  import { Label } from '@hcengineering/ui'
+  import ui, { Label } from '@hcengineering/ui'
 
   import media from '../plugin'
   import { camAccess, state, sessions } from '../stores'
   import { getDeviceLabel } from '../utils'
-
   import MediaPopupCamPreview from './MediaPopupCamPreview.svelte'
   import MediaPopupItem from './MediaPopupItem.svelte'
-  import IconCamOn from './icons/CamOn.svelte'
-  import IconCamOff from './icons/CamOff.svelte'
 
   export let mediaInfo: MediaInfo
   export let expanded: boolean = false
@@ -50,14 +47,14 @@
 {#if access === 'denied'}
   <MediaPopupItem
     label={media.string.NoCam}
-    icon={IconCamOff}
+    icon={ui.icon.CameraOff}
     iconProps={{ fill: 'var(--theme-state-negative-color)' }}
     disabled
   />
 {:else}
   <MediaPopupItem
     label={mediaInfo.activeCamera === undefined ? media.string.DefaultCam : getDeviceLabel(mediaInfo.activeCamera)}
-    icon={mediaInfo.activeCamera !== undefined ? IconCamOn : IconCamOff}
+    icon={mediaInfo.activeCamera !== undefined ? ui.icon.Camera : ui.icon.CameraOff}
     expandable={true}
     {expanded}
     on:expand
@@ -88,7 +85,7 @@
       {:else}
         <MediaPopupItem
           label={media.string.NoCam}
-          icon={IconCamOff}
+          icon={ui.icon.CameraOff}
           iconProps={{ fill: 'var(--theme-state-negative-color)' }}
           disabled
         />

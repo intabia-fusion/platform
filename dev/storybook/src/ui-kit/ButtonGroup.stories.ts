@@ -14,7 +14,7 @@
 //
 
 import { getEmbeddedLabel } from '@hcengineering/platform'
-import { IconActivity, IconAttachment, IconHistory, IconLink } from '@hcengineering/ui'
+import ui from '@hcengineering/ui'
 import { ButtonGroup } from '@hcengineering/ui/kit'
 import type { Meta, StoryObj } from '@storybook/svelte'
 
@@ -25,17 +25,17 @@ const kinds = ['secondary', 'ghost'] as const
 const sizes = ['large', 'medium', 'small', 'extra-small'] as const
 
 const icons = [
-  { id: 'references', icon: IconLink, tooltip: { label: getEmbeddedLabel('Backlinks') } },
-  { id: 'history', icon: IconHistory, tooltip: { label: getEmbeddedLabel('History') } },
-  { id: 'activity', icon: IconActivity, tooltip: { label: getEmbeddedLabel('Activity') } }
+  { id: 'references', icon: ui.icon.Link, tooltip: { label: getEmbeddedLabel('Backlinks') } },
+  { id: 'history', icon: ui.icon.ClockCounterClockwise, tooltip: { label: getEmbeddedLabel('History') } },
+  { id: 'activity', icon: ui.icon.ChartSquare, tooltip: { label: getEmbeddedLabel('Activity') } }
 ]
 const labels = [
   { id: 'activity', label: getEmbeddedLabel('Activity') },
   { id: 'attachments', label: getEmbeddedLabel('Attachments') }
 ]
 const both = [
-  { id: 'activity', icon: IconActivity, label: getEmbeddedLabel('Activity') },
-  { id: 'attachments', icon: IconAttachment, label: getEmbeddedLabel('Attachments') }
+  { id: 'activity', icon: ui.icon.ChartSquare, label: getEmbeddedLabel('Activity') },
+  { id: 'attachments', icon: ui.icon.Paperclip, label: getEmbeddedLabel('Attachments') }
 ]
 
 const meta = {

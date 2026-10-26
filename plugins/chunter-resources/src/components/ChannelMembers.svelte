@@ -15,9 +15,9 @@
 <script lang="ts">
   import type { Person } from '@hcengineering/contact'
   import presentation from '@hcengineering/presentation'
-  import { IconDelete, Scroller } from '@hcengineering/ui'
+  import ui, { Scroller } from '@hcengineering/ui'
   import { Button, IconButton } from '@hcengineering/ui/kit'
-  import { getPersonByPersonRefStore, IconAddMember, UserDetails } from '@hcengineering/contact-resources'
+  import { getPersonByPersonRefStore, UserDetails } from '@hcengineering/contact-resources'
   import type { Ref } from '@hcengineering/core'
   import { notEmpty } from '@hcengineering/core'
   import { createEventDispatcher } from 'svelte'
@@ -39,7 +39,7 @@
     <div class="item" style:padding="var(--spacing-1_5)" class:withoutBorder={persons.length === 0}>
       <Button
         label={chunter.string.AddMembers}
-        icon={IconAddMember}
+        icon={ui.icon.PersonPlus}
         iconSize="small"
         kind="secondary"
         size="small"
@@ -55,7 +55,7 @@
           {#if !readonly && !disableRemoveFor.includes(person._id)}
             <div class="item__action">
               <IconButton
-                icon={IconDelete}
+                icon={ui.icon.Trash}
                 size="small"
                 tooltip={{ label: presentation.string.Remove }}
                 on:click={() => {

@@ -13,8 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import ui from '@hcengineering/ui'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import { IconAdd } from '@hcengineering/ui'
   import { Button, EmptyState, type EmptyStateProps } from '@hcengineering/ui/kit'
 
   export let props: Partial<EmptyStateProps> = {}
@@ -27,7 +27,7 @@
 <div class="empty-state-example" style:width>
   <EmptyState {label} {...props} {...$$restProps}>
     {#if actions === 'button'}
-      <Button kind="tertiary" size="small" icon={IconAdd} label={getEmbeddedLabel('New issue')} />
+      <Button kind="tertiary" size="small" icon={ui.icon.Plus} label={getEmbeddedLabel('New issue')} />
     {:else if actions === 'text'}
       <Button kind="tertiary" size="extra-small" label={getEmbeddedLabel('Create an application')} />
     {/if}

@@ -20,8 +20,9 @@
   import { createQuery, getClient } from '@hcengineering/presentation'
   import type { Process, State } from '@hcengineering/process'
   import { makeRank } from '@hcengineering/rank'
-  import { getCurrentLocation, Icon, IconAdd, IconFile, Label, navigate, showPopup } from '@hcengineering/ui'
+  import ui, { getCurrentLocation, Icon, Label, navigate, showPopup } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
+
   import { getRequiredSlots, importProcess } from '../exporter'
   import process from '../plugin'
   import ImportSlotsPopup from './settings/ImportSlotsPopup.svelte'
@@ -116,14 +117,14 @@
   <div class="flex-row-center flex-gap-1">
     <IconButton
       kind="primary"
-      icon={IconFile}
+      icon={ui.icon.File}
       size="small"
       tooltip={{ label: process.string.Import, direction: 'bottom' }}
       on:click={handleImport}
     />
     <IconButton
       kind="primary"
-      icon={IconAdd}
+      icon={ui.icon.Plus}
       size="small"
       data-id="btnAdd"
       tooltip={{ label: process.string.Add }}

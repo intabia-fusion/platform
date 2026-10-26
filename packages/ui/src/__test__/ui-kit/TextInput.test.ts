@@ -17,7 +17,7 @@ import { getEmbeddedLabel, translateCB } from '@hcengineering/platform'
 import { tick, type ComponentProps } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import IconSearch from '../../components/icons/Search.svelte'
+import ui from '../../plugin'
 import TextInput from '../../ui-kit/text-input/TextInput.svelte'
 import TextInputWithBefore from './TextInputWithBefore.svelte'
 
@@ -147,7 +147,7 @@ describe('ui-kit TextInput', () => {
       heading: true,
       error: true,
       fullWidth: true,
-      icon: IconSearch
+      icon: ui.icon.Search
     })
     expect(root.classList.contains('text-input--ghost')).toBe(true)
     expect(root.classList.contains('text-input--heading')).toBe(true)

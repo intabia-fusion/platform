@@ -16,11 +16,12 @@
 <script lang="ts">
   import { createQuery } from '@hcengineering/presentation'
   import type { MessageTemplate, TemplateCategory } from '@hcengineering/templates'
-  import { closePopup, deviceOptionsStore, EditWithIcon, IconSearch } from '@hcengineering/ui'
+  import ui, { closePopup, deviceOptionsStore, EditWithIcon } from '@hcengineering/ui'
   import { groupBy } from '@hcengineering/view-resources'
+  import { createEventDispatcher } from 'svelte'
+
   import templates from '../plugin'
   import { getTemplateDataProvider } from '../utils'
-  import { createEventDispatcher } from 'svelte'
 
   let items: MessageTemplate[] = []
   let groups: TemplateCategory[] = []
@@ -102,7 +103,7 @@
 <div class="antiPopup template-popup">
   <div class="mt-4 mb-4">
     <EditWithIcon
-      icon={IconSearch}
+      icon={ui.icon.Search}
       bind:value={query}
       placeholder={templates.string.SearchTemplate}
       autoFocus={!$deviceOptionsStore.isMobile}

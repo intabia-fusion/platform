@@ -15,16 +15,9 @@
 <script lang="ts">
   import type { MasterTag } from '@hcengineering/card'
   import { getClient } from '@hcengineering/presentation'
-  import {
-    Component,
-    IconDescription,
-    NavItem,
-    Scroller,
-    Separator,
-    defineSeparators,
-    secondNavSeparators
-  } from '@hcengineering/ui'
+  import ui, { Component, NavItem, Scroller, Separator, defineSeparators, secondNavSeparators } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
+
   import card from '../../plugin'
 
   export let masterTag: MasterTag
@@ -50,7 +43,7 @@
         <div class="hulyComponent-content__navHeader-menu">
           <IconButton
             kind="tertiary"
-            icon={IconDescription}
+            icon={ui.icon.TextLines}
             size="small"
             inheritColor
             tooltip={{ label: card.string.TableOfContents }}

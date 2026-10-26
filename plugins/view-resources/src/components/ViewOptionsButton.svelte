@@ -14,16 +14,17 @@
 -->
 <script lang="ts">
   import { getClient } from '@hcengineering/presentation'
-  import { Button, closeTooltip, IconOptions, showPopup } from '@hcengineering/ui'
+  import ui, { Button, closeTooltip, showPopup } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import type { OrderOption, Viewlet, ViewOptionModel, ViewOptions } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
+  import type { Class, Doc, Hierarchy, Ref, Type } from '@hcengineering/core'
+  import core, { SortingOrder } from '@hcengineering/core'
+
   import view from '../plugin'
   import { focusStore } from '../selection'
   import { setViewOptions } from '../viewOptions'
   import ViewOptionsEditor from './ViewOptions.svelte'
-  import type { Class, Doc, Hierarchy, Ref, Type } from '@hcengineering/core'
-  import core, { SortingOrder } from '@hcengineering/core'
 
   export let viewlet: Viewlet | undefined
   export let kind: 'primary' | 'secondary' | 'tertiary' | 'negative' | 'ghost' = 'secondary'
@@ -108,7 +109,7 @@
 {#if viewlet?.viewOptions !== undefined}
   {#if kind === 'ghost'}
     <Button
-      icon={IconOptions}
+      icon={ui.icon.ArrowUpLines}
       {disabled}
       kind="ghost"
       {pressed}
@@ -119,7 +120,7 @@
     />
   {:else}
     <IconButton
-      icon={IconOptions}
+      icon={ui.icon.ArrowUpLines}
       {disabled}
       {kind}
       size="small"
