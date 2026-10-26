@@ -13,11 +13,29 @@
 // limitations under the License.
 //
 
-import { writable } from 'svelte/store'
+type Listener = (value: boolean) => void
 
-const passwordAgainStore = writable(false)
-export const isPasswordAgain = { subscribe: passwordAgainStore.subscribe }
+// Plain store contract instead of svelte/store: this package is imported by models and reaches
+// node-only jest runs, where svelte's ESM store cannot be parsed.
+const listeners = new Set<Listener>()
+let passwordAgain = false
+
+export const isPasswordAgain = {
+  subscribe (run: Listener): () => void {
+    listeners.add(run)
+    run(passwordAgain)
+    return () => {
+      listeners.delete(run)
+    }
+  }
+}
 
 export function setIsPasswordAgain (value: boolean): void {
-  passwordAgainStore.set(value)
+  if (value === passwordAgain) {
+    return
+  }
+  passwordAgain = value
+  for (const run of [...listeners]) {
+    run(passwordAgain)
+  }
 }
