@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -46,7 +47,7 @@ import { addPermissionHandlers } from './permissions'
 import autoUpdater from './updater'
 import { resolveUpdateFeed } from './updateChannel'
 import { generateId } from '@hcengineering/core'
-import { DownloadItem } from '@hcengineering/desktop-downloads'
+import { DownloadItem, DownloadConfirmTexts } from '@hcengineering/desktop-downloads'
 import { rebuildJumpList, setupWindowsSpecific } from './windowsSpecificSetup'
 import { readPackedConfig } from './config'
 import { Settings } from './settings'
@@ -56,6 +57,7 @@ import { OsIntegration } from './osIntegration'
 import { IpcMessage } from '../ui/ipcMessages'
 import { createSafeWindow } from './winBadgeProxy'
 import { applyBatchSavePath, downloadToFolder } from './batchDownload'
+import { openDownload, rememberDownload, revealDownload } from './revealDownload'
 
 let isQuiting = false
 
@@ -289,14 +291,15 @@ function runTheApp (): void {
       const key = generateId()
 
       const notifyDownloadUpdated = (): void => {
+        const savePath = item.getSavePath()
         const download: DownloadItem = {
           key,
           state: item.isPaused() ? 'paused' : item.getState(),
-          fileName: item.getFilename(),
+          fileName: savePath !== '' ? path.basename(savePath) : item.getFilename(),
           receivedBytes: item.getReceivedBytes(),
           totalBytes: item.getTotalBytes(),
           url: item.getURL(),
-          savePath: item.getSavePath()
+          savePath
         }
         window.webContents.send(IpcMessage.HandleDownloadItem, download)
       }
@@ -304,7 +307,11 @@ function runTheApp (): void {
       notifyDownloadUpdated()
 
       item.on('updated', notifyDownloadUpdated)
-      item.on('done', notifyDownloadUpdated)
+      item.on('done', (_event, state) => {
+        // Only a finished file may be shown or opened from the popup: the map behind those actions is fed here.
+        if (state === 'completed') rememberDownload(key, item.getSavePath())
+        notifyDownloadUpdated()
+      })
     })
   }
 
@@ -601,6 +608,14 @@ function runTheApp (): void {
     IpcMessage.DownloadToFolder,
     async (event, files: unknown) => await downloadToFolder(event.sender, files)
   )
+
+  ipcMain.handle(IpcMessage.RevealDownloadItem, (_event, key: string) => {
+    return revealDownload(key)
+  })
+
+  ipcMain.handle(IpcMessage.OpenDownloadItem, async (event, key: string, confirm: DownloadConfirmTexts) => {
+    return await openDownload(key, confirm, BrowserWindow.fromWebContents(event.sender) ?? undefined)
+  })
 
   ipcMain.handle(IpcMessage.GetScreenAccess, () => systemPreferences.getMediaAccessStatus('screen') === 'granted')
   ipcMain.handle(IpcMessage.GetScreenSources, () => {
