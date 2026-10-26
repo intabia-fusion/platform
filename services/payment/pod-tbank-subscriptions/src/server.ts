@@ -1218,17 +1218,31 @@ export async function processWebhook (
     typedNotification.Status === 'REFUNDED'
   ) {
     // Idempotency: at-least-once delivery (and consumer retry) re-delivers the same terminal webhook.
-    // Once we've recorded this exact status on a non-pending PastDue sub, re-applying only resets
-    // retryAfter and risks a duplicate notify — skip it. releaseCheckout below stays (idempotent).
+    // Once we've recorded this exact status on a non-pending PastDue sub (or a draft closed as Canceled
+    // below), re-applying would reset retryAfter / revive the draft as PastDue — skip it.
+    // releaseCheckout below stays (idempotent).
     const alreadyApplied =
       sub !== null &&
-      sub.status === SubscriptionStatus.PastDue &&
+      (sub.status === SubscriptionStatus.PastDue || sub.status === SubscriptionStatus.Canceled) &&
       sub.providerData?.pending !== true &&
       sub.providerData?.status === typedNotification.Status
-    if (sub !== null && !alreadyApplied) {
+    if (sub !== null && isPendingFirstPayment(sub)) {
+      // Failed first payment: the draft never became a subscription. PastDue would grant its plan
+      // and enter renewal retries/grace, so close it like an abandoned checkout.
+      await storage.upsert({
+        ...sub,
+        status: SubscriptionStatus.Canceled,
+        providerData: { ...sub.providerData, modifiedAt: Date.now(), status: typedNotification.Status, pending: false }
+      })
+      ctx.info('TBank first payment failed, pending draft closed', {
+        subId: sub.id,
+        paymentId: typedNotification.PaymentId,
+        status: typedNotification.Status
+      })
+    } else if (sub !== null && !alreadyApplied) {
       // Notify only when an active subscription fails (real renewal/charge failure).
-      // Excludes: repeated webhooks on an already-past_due sub, the pending first-payment draft
-      // (past_due + pending:true), and late REVERSED/REFUNDED on canceled/expired subscriptions.
+      // Excludes: repeated webhooks on an already-past_due sub and late REVERSED/REFUNDED on
+      // canceled/expired subscriptions.
       const wasActive = sub.status === SubscriptionStatus.Active
       // Mark as PastDue instead of canceling — keeps card and rebillId for retry
       const now = Date.now()
