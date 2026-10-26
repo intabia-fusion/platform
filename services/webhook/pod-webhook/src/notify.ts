@@ -18,7 +18,7 @@ import { getClient as getAccountClient } from '@hcengineering/account-client'
 import type { PlatformQueueProducer } from '@hcengineering/server-core'
 import type { WebhookEndpoint } from '@hcengineering/setting'
 
-import { buildWebhookDisabled, resolveLang } from './mail'
+import { buildWebhookDisabled, mailLang } from './mail'
 
 // Shape services/mail's pod-mail consumer expects off QueueTopic.NotificationQueue - duplicated here
 // (as billing/crm/gmail-resources each do) rather than depending on a mail-service-only package.
@@ -50,17 +50,7 @@ export async function notifyOwnerDisabled (
       return
     }
 
-    let language: string | undefined
-    try {
-      language = 'ru'
-    } catch (err) {
-      ctx.warn('webhook: failed to resolve workspace language, using the default', {
-        endpointId: endpoint._id,
-        err
-      })
-    }
-
-    const mail = buildWebhookDisabled(resolveLang(language), {
+    const mail = buildWebhookDisabled(mailLang(), {
       endpoint: endpointLabel(endpoint),
       reason
     })

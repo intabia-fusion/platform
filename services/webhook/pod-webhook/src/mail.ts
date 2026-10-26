@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { WEBHOOK_DISABLED, type MailLang } from './templates/webhook-disabled'
+import { WEBHOOK_DISABLED, resolveLang, type MailLang } from './templates/webhook-disabled'
 
 export { resolveLang } from './templates/webhook-disabled'
 export type { MailLang, WebhookDisabledCopy } from './templates/webhook-disabled'
@@ -24,6 +24,11 @@ const DEFAULT_PRODUCT_NAME = 'Intabia Platform'
 export function productName (): string {
   const name = process.env.PRODUCT_NAME?.trim()
   return name !== undefined && name !== '' ? name : DEFAULT_PRODUCT_NAME
+}
+
+/** Language of the outgoing mail: the pod's LANGUAGE, English when unset or unsupported. */
+export function mailLang (): MailLang {
+  return resolveLang(process.env.LANGUAGE)
 }
 
 export function escapeHtml (str: string): string {
