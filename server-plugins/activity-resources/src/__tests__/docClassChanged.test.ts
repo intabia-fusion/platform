@@ -75,7 +75,15 @@ describe('OnDocClassChanged (activity)', () => {
 
     expect(result).toHaveLength(1)
     expect((result[0].operations as any).attachedToClass).toBe(newClass)
-    expect((result[0].operations as any).objectClass).toBe(newClass)
+  })
+
+  it('keeps the class the message was written with', async () => {
+    const control = makeControl([makeMessage()])
+
+    const result = (await OnDocClassChanged([classChangeTx()], control)) as TxUpdateDoc<Doc>[]
+
+    // A task created as one type must keep reading as that type after the task is converted.
+    expect((result[0].operations as any).objectClass).toBeUndefined()
   })
 
   it('ignores updates that do not carry a class', async () => {
@@ -93,8 +101,8 @@ describe('OnDocClassChanged (activity)', () => {
     expect(await OnDocClassChanged([tx as TxCUD<Doc>], control)).toEqual([])
   })
 
-  it('leaves alone a message that already points at the new class', async () => {
-    const control = makeControl([makeMessage({ attachedToClass: newClass, objectClass: newClass })])
+  it('leaves alone a message that is already attached to the new class', async () => {
+    const control = makeControl([makeMessage({ attachedToClass: newClass })])
 
     expect(await OnDocClassChanged([classChangeTx()], control)).toEqual([])
   })

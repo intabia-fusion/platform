@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-import activity, { type ActivityMessage, type AppletInstance, type DocUpdateMessage } from '@hcengineering/activity'
+import activity, { type ActivityMessage, type AppletInstance } from '@hcengineering/activity'
 import core, {
   type Class,
   type Doc,
@@ -98,16 +98,9 @@ export async function OnDocClassChanged (txes: TxCUD<Doc>[], control: TriggerCon
       attachedTo: tx.objectId
     })
     for (const message of messages) {
-      const ops: DocumentUpdate<ActivityMessage> = {}
-      if (message.attachedToClass !== objectClass) {
-        ops.attachedToClass = objectClass
-      }
-      // DocUpdateMessage keeps its own copy of the class it describes.
-      const own = (message as DocUpdateMessage).objectClass
-      if (own != null && own !== objectClass) {
-        ;(ops as DocumentUpdate<DocUpdateMessage>).objectClass = objectClass
-      }
-      if (Object.keys(ops).length === 0) continue
+      if (message.attachedToClass === objectClass) continue
+
+      const ops: DocumentUpdate<ActivityMessage> = { attachedToClass: objectClass }
       result.push(control.txFactory.createTxUpdateDoc(message._class, message.space, message._id, ops))
     }
   }

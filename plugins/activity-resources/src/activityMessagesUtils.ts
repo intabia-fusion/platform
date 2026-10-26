@@ -1,5 +1,6 @@
 //
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -214,6 +215,14 @@ export function attributesFilter (message: ActivityMessage, _class?: Ref<Doc>): 
   }
 
   return false
+}
+
+export function getMessageObjectQueryClass (
+  hierarchy: Hierarchy,
+  message: Pick<DocUpdateMessage, 'objectClass' | 'attachedToClass'>
+): Ref<Class<Doc>> {
+  const clazz = hierarchy.hasClass(message.objectClass) ? message.objectClass : message.attachedToClass
+  return hierarchy.hasClass(clazz) ? hierarchy.getParentClass(clazz) : clazz
 }
 
 export function pinnedFilter (message: ActivityMessage, _class?: Ref<Doc>): boolean {
