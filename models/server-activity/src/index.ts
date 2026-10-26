@@ -100,6 +100,15 @@ export function createModel (builder: Builder): void {
   })
 
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverActivity.trigger.OnAppletRemoved,
+    txMatch: {
+      _class: core.class.TxRemoveDoc,
+      objectClass: activity.class.AppletInstance
+    },
+    isAsync: true
+  })
+
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
     trigger: serverActivity.trigger.OnDocClassChanged,
     txMatch: {
       _class: core.class.TxUpdateDoc

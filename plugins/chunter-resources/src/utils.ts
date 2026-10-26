@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { type ActivityMessage, type ForwardContent, type ForwardedAttachment } from '@hcengineering/activity'
+import { type ActivityMessage } from '@hcengineering/activity'
 import aiBot from '@hcengineering/ai-bot'
 import {
   summarizeMessages as aiSummarizeMessages,
@@ -47,8 +47,7 @@ import core, {
   type Ref,
   type RelatedDocument,
   type Space,
-  type Timestamp,
-  type WithLookup
+  type Timestamp
 } from '@hcengineering/core'
 import { type AttributeApplierResult } from '@hcengineering/view'
 import { type Asset, getMetadata, getResource, type IntlString, translate } from '@hcengineering/platform'
@@ -66,7 +65,6 @@ import {
 import { classIcon, getDocIdentifier, getDocLabel, getDocTitle } from '@hcengineering/view-resources'
 import { get, type Readable, type Unsubscriber } from 'svelte/store'
 import love, { type MeetingMinutes } from '@hcengineering/love'
-import attachment, { type Attachment } from '@hcengineering/attachment'
 import { isEmptyMarkup } from '@hcengineering/text'
 import { notificationId } from '@hcengineering/notification'
 
@@ -481,63 +479,6 @@ export async function toggleChannelIcon (channel: Channel, icon?: Asset, emoji?:
   } else {
     await client.update(channel, { icon, emoji })
   }
-}
-
-async function getForwardedAttachments (message: WithLookup<ChatMessage>): Promise<ForwardedAttachment[]> {
-  if ((message.attachments ?? 0) === 0) return []
-
-  const client = getClient()
-  const attachments = (
-    (message.$lookup?.attachments as Attachment[]) ??
-    (await client.findAll(attachment.class.Attachment, { attachedTo: message._id }))
-  ).filter((it) => it.type !== 'application/link-preview')
-
-  if (attachments.length === 0) return []
-
-  return attachments.map((it) => ({
-    originId: it._id,
-    name: it.name,
-    file: it.file,
-    size: it.size,
-    type: it.type,
-    createdOn: it.createdOn ?? it.modifiedOn,
-    metadata: it.metadata
-  }))
-}
-
-async function getForwardContent (message: WithLookup<ChatMessage>): Promise<ForwardContent | undefined> {
-  return {
-    author: message.createdBy ?? message.modifiedBy,
-    message: message.message,
-    createdOn: message.createdOn ?? message.modifiedOn,
-    attachments: await getForwardedAttachments(message)
-  }
-}
-
-export async function getForwardData (message: WithLookup<ChatMessage>): Promise<{
-  forwardedMessage?: Ref<ActivityMessage>
-  forwardFromId?: Ref<Doc>
-  forwardFromClass?: Ref<Class<Doc>>
-  forwardContent?: ForwardContent
-}> {
-  const hasContent = (message.attachments ?? 0) > 0 || !isEmptyMarkup(message.message)
-  if (hasContent) {
-    return {
-      forwardedMessage: message._id,
-      forwardFromId: message.attachedTo,
-      forwardFromClass: message.attachedToClass,
-      forwardContent: await getForwardContent(message)
-    }
-  } else if (message.forwardedMessage != null) {
-    return {
-      forwardedMessage: message.forwardedMessage,
-      forwardFromId: message.forwardFromId,
-      forwardFromClass: message.forwardFromClass,
-      forwardContent: message.forwardContent
-    }
-  }
-
-  return {}
 }
 
 export async function replyToMessage (message: ChatMessage): Promise<void> {

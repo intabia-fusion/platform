@@ -15,19 +15,34 @@
 
 import type { IntlString } from '@hcengineering/platform'
 
+import type { IconComponent } from '../../types'
+
+/** `form` (default) - a row of a form; `list` - an item of a list of switches, with an icon plate and a description. */
+export type SettingRowVariant = 'form' | 'list'
+
 /** One setting of a form or a dialog: the caption on the left, its control on the right, a line below. */
 export interface SettingRowProps {
   label: IntlString
   labelParams?: Record<string, any>
-  /** An info button after the caption that explains the setting. */
+  variant?: SettingRowVariant
+  /** An info button after the caption that explains the setting; `form` only. */
   hint?: IntlString
-  /** The caption above the control, for a wide control such as a text area. */
+  /** The caption above the control, for a wide control such as a text area; `form` only. */
   stacked?: boolean
+  /** `list` only: the mark of the setting on an `IconBox` plate. */
+  icon?: IconComponent
+  /** `list` only: a palette color name of the plate, as `IconBox` takes it. */
+  color?: string
+  /** `list` only: the second line under the caption, what the setting does. */
+  description?: IntlString
+  descriptionParams?: Record<string, any>
+  /** `list` only: the caption and the description read as disabled, for a control that is disabled too. */
+  disabled?: boolean
 }
 
 export interface SettingRowSlots {
-  /** The control; `labelId` names the caption for `aria-labelledby`. */
-  default: { labelId: string }
+  /** The control: ids for `aria-labelledby` and `aria-describedby`; in `list` the caption labels `id={controlId}`. */
+  default: { labelId: string, descriptionId: string | undefined, controlId: string }
   /** Under the caption and the control, above the line: picked values of the setting. */
   details: Record<string, never>
 }

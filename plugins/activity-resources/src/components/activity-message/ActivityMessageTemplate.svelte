@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -24,11 +25,12 @@
   import type { Asset } from '@hcengineering/platform'
   import { ComponentExtensions, getClient } from '@hcengineering/presentation'
   import type { Action } from '@hcengineering/ui'
-  import { Icon, Label } from '@hcengineering/ui'
+  import { getEventPositionElement, Icon, Label, Menu, showPopup } from '@hcengineering/ui'
   import type { Action as ViewAction } from '@hcengineering/view'
   import { getActions, restrictionStore, showMenu } from '@hcengineering/view-resources'
 
   import { messageInFocus, savedMessagesStore } from '../../activity'
+  import { getAppletContextActions, isAppletContextMenu } from '../../appletContextMenu'
   import type { MessageInlineAction } from '../../types'
   import ActivityMessageActions from '../ActivityMessageActions.svelte'
   import MessageTimestamp from '../MessageTimestamp.svelte'
@@ -158,12 +160,29 @@
 
   function handleContextMenu (event: MouseEvent): void {
     if (readonly) return
-    const showCustomPopup = !isTextClicked(event.target as HTMLElement, event.clientX, event.clientY)
-    if (showCustomPopup) {
+    // Over an applet the menu shows only its items, and none when it has none.
+    if (isAppletContextMenu(event)) {
+      event.stopPropagation()
+      event.preventDefault()
+      const appletActions = getAppletContextActions(event)
+      if (appletActions.length === 0) return
+      showPopup(Menu, { actions: appletActions }, getEventPositionElement(event), () => {
+        isActionsOpened = false
+      })
+      isActionsOpened = true
+      return
+    }
+    if (!isTextClicked(event.target as HTMLElement, event.clientX, event.clientY)) {
       const overrides = onReply ? new Map([[activity.action.Reply, onReply]]) : new Map()
       showMenu(
         event,
-        { object: message, baseMenuClass: activity.class.ActivityMessage, excludedActions, overrides, actions },
+        {
+          object: message,
+          baseMenuClass: activity.class.ActivityMessage,
+          excludedActions,
+          overrides,
+          actions
+        },
         () => {
           isActionsOpened = false
         }

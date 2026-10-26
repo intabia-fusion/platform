@@ -24,6 +24,7 @@
   import attachment from '@hcengineering/attachment'
   import presentation, { createQuery, LiteMessageViewer, getClient } from '@hcengineering/presentation'
   import activity from '@hcengineering/activity'
+  import { AppletsPreview } from '@hcengineering/activity-resources'
   import { getPersonByPersonIdCb } from '@hcengineering/contact-resources'
   import type { Person } from '@hcengineering/contact'
   import { formatName } from '@hcengineering/contact'
@@ -45,7 +46,7 @@
   let attachments: Attachment[] = []
   let person: Person | undefined
 
-  $: hasContent = (replyTo.attachments ?? 0) > 0 || !isEmptyMarkup(replyTo.message)
+  $: hasContent = (replyTo.attachments ?? 0) > 0 || (replyTo.applets ?? 0) > 0 || !isEmptyMarkup(replyTo.message)
   $: hasAttachments = (replyTo.attachments ?? 0) > 0
   $: lookupAttachments = replyTo.$lookup?.attachments as Attachment[] | undefined
   $: personId = replyTo.createdBy ?? replyTo.modifiedBy
@@ -156,6 +157,8 @@
       <div class="reply__text">
         {#if !isEmptyMarkup(replyTo.message)}
           <LiteMessageViewer message={replyTo.message} />
+        {:else if !hasAttachments && (replyTo.applets ?? 0) > 0}
+          <AppletsPreview messageId={replyTo._id} />
         {:else if !hasAttachments && !isEmptyMarkup(replyTo.forwardContent?.message ?? '')}
           <LiteMessageViewer message={replyTo.forwardContent?.message ?? ''} />
         {:else if file != null}
@@ -173,6 +176,8 @@
           <span class="reply__attachment-label">
             <Label label={attachment.string.Attachments} />
           </span>
+        {:else if (replyTo.forwardContent?.applets?.length ?? 0) > 0}
+          <AppletsPreview applets={replyTo.forwardContent?.applets} />
         {/if}
       </div>
     </div>

@@ -1,5 +1,6 @@
 //
 // Copyright © 2020 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -25,6 +26,9 @@ import ActivityReferencePresenter from './components/activity-reference/Activity
 import DocUpdateMessagePreview from './components/doc-update-message/DocUpdateMessagePreview.svelte'
 import ActivityReferencePreview from './components/activity-reference/ActivityReferencePreview.svelte'
 import ActivityInfoMessagePreview from './components/activity-info-message/ActivityInfoMessagePreview.svelte'
+import PollPresenter from './components/poll/PollPresenter.svelte'
+import CreatePoll from './components/poll/CreatePoll.svelte'
+import PollPreview from './components/poll/PollPreview.svelte'
 
 import { attributesFilter, pinnedFilter, referencesFilter } from './activityMessagesUtils'
 import { updateReferences } from './references'
@@ -41,6 +45,11 @@ import {
   shouldScrollToActivity,
   activityMessageTooltipProvider
 } from './utils'
+
+import { getPollTitle, createPoll } from './poll'
+
+export { getAppletDraftExpiry } from './poll'
+export { MAX_TIMER_DELAY } from './pollTime'
 
 export * from './types'
 export * from './activity'
@@ -63,6 +72,9 @@ export { default as ActivityMessagePreview } from './components/activity-message
 export { default as MessageTimestamp } from './components/MessageTimestamp.svelte'
 export { default as BaseMessagePreview } from './components/activity-message/BaseMessagePreview.svelte'
 export { default as BasePreview } from './components/BasePreview.svelte'
+export { default as AppletPreview } from './components/input/AppletPreview.svelte'
+export { default as AppletsList } from './components/applet/AppletsList.svelte'
+export { default as AppletsPreview } from './components/applet/AppletsPreview.svelte'
 
 export default async (): Promise<Resources> => ({
   component: {
@@ -75,7 +87,10 @@ export default async (): Promise<Resources> => ({
     ActivityReferencePresenter,
     DocUpdateMessagePreview,
     ActivityReferencePreview,
-    ActivityInfoMessagePreview
+    ActivityInfoMessagePreview,
+    PollPresenter,
+    CreatePoll,
+    PollPreview
   },
   filter: {
     AttributesFilter: attributesFilter,
@@ -88,7 +103,9 @@ export default async (): Promise<Resources> => ({
     CanPinMessage: canPinMessage,
     CanUnpinMessage: canUnpinMessage,
     ShouldScrollToActivity: shouldScrollToActivity,
-    ActivityMessageTooltipProvider: activityMessageTooltipProvider
+    ActivityMessageTooltipProvider: activityMessageTooltipProvider,
+    GetPollTitleFn: getPollTitle,
+    CreatePollFn: createPoll
   },
   backreference: {
     Update: updateReferences

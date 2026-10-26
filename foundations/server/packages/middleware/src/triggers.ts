@@ -439,10 +439,9 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
     const oldAttachedTo = (await findAll(ctx, _class, { _id }, { limit: 1 }))[0]
     let oldTx: Tx | null = null
     if (oldAttachedTo !== undefined) {
-      const attr = this.context.hierarchy.findAttribute(oldAttachedTo._class, colTx.collection)
-
-      if (attr !== undefined) {
-        oldTx = this.getCollectionUpdateTx(_id, _class, colTx.modifiedBy, colTx.modifiedOn, oldAttachedTo, {
+      const owner = this.getCollectionOwner(oldAttachedTo, _class, colTx.collection)
+      if (owner !== undefined) {
+        oldTx = this.getCollectionUpdateTx(_id, owner, colTx.modifiedBy, colTx.modifiedOn, oldAttachedTo, {
           $inc: { [colTx.collection]: -1 }
         })
       }
@@ -452,11 +451,14 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
     const newAttachedToCollection = operations.collection ?? colTx.collection
     const newAttachedTo = (await findAll(ctx, newAttachedToClass, { _id: operations.attachedTo }, { limit: 1 }))[0]
     let newTx: Tx | null = null
-    const newAttr = this.context.hierarchy.findAttribute(newAttachedToClass, newAttachedToCollection)
-    if (newAttachedTo !== undefined && newAttr !== undefined) {
+    const newOwner =
+      newAttachedTo !== undefined
+        ? this.getCollectionOwner(newAttachedTo, newAttachedToClass, newAttachedToCollection)
+        : undefined
+    if (newAttachedTo !== undefined && newOwner !== undefined) {
       newTx = this.getCollectionUpdateTx(
         newAttachedTo._id,
-        newAttachedTo._class,
+        newOwner,
         colTx.modifiedBy,
         colTx.modifiedOn,
         newAttachedTo,
@@ -506,7 +508,7 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
             attachedTo = createTx != null ? TxProcessor.createDoc2Doc(createTx as TxCreateDoc<Doc>) : undefined
           }
 
-          if (attachedTo !== undefined) {
+          if (attachedTo !== undefined && this.isCounterField(attachedTo, colTx.collection)) {
             res.push(
               this.getCollectionUpdateTx(
                 _id,
@@ -526,6 +528,22 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
       }
     }
     return result
+  }
+
+  // A mixin keeps its collections apart from the stored class: the tx names it then, and the parent must carry it.
+  private getCollectionOwner (parent: Doc, txClass: Ref<Class<Doc>>, name: string): Ref<Class<Doc>> | undefined {
+    const { hierarchy } = this.context
+    if (hierarchy.findAttribute(parent._class, name)?.type._class === core.class.Collection) return parent._class
+    if (!hierarchy.isMixin(txClass) || !hierarchy.hasMixin(parent, txClass as Ref<Mixin<Doc>>)) return undefined
+    return hierarchy.findAttribute(txClass, name)?.type._class === core.class.Collection ? txClass : undefined
+  }
+
+  // A declared collection, or an undeclared field holding a number or nothing: a client `$inc` would run trusted.
+  private isCounterField (parent: Doc, name: string): boolean {
+    const attr = this.context.hierarchy.findAttribute(parent._class, name)
+    if (attr != null) return attr.type._class === core.class.Collection
+    const value = (parent as any)[name]
+    return value == null || typeof value === 'number'
   }
 
   private getParentClass (_class: Ref<Class<Doc>>): Ref<Class<Doc>> {

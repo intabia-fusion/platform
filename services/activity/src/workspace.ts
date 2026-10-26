@@ -17,6 +17,7 @@
 import core, {
   type Class,
   type Doc,
+  type DocumentClassQuery,
   type DocumentQuery,
   type FindOptions,
   type FindResult,
@@ -26,6 +27,7 @@ import core, {
   type Ref,
   type Timestamp,
   type Tx,
+  type TxCreateDoc,
   type TxCUD,
   TxFactory,
   type WithLookup,
@@ -46,12 +48,13 @@ import {
   LowLevelMiddleware,
   ModelMiddleware
 } from '@hcengineering/middleware'
-import activity, { type DocUpdateMessage } from '@hcengineering/activity'
+import activity, { type DocUpdateMessage, type VotePollAction } from '@hcengineering/activity'
 
 import config from './config'
 import WsCache, { CACHE_TTL_MS } from './cache'
 import { type Client } from './types'
 import { ActivityMessagesHandler } from './activity'
+import { VotePollHandler } from './poll'
 
 class Workspace {
   private readonly cache: WsCache
@@ -93,23 +96,33 @@ class Workspace {
 
       if (this.hierarchy.isDerived(tx.objectClass, activity.class.ActivityMessage)) return
 
-      const res: TxCUD<Doc>[] = await ActivityMessagesHandler(tx, this.getClient(), this.cache)
+      const isVote = this.hierarchy.isDerived(tx.objectClass, activity.class.VotePollAction)
+      const res: TxCUD<Doc>[] = isVote
+        ? await VotePollHandler(tx as TxCUD<VotePollAction>, this.getClient())
+        : await ActivityMessagesHandler(tx, this.getClient(), this.cache)
 
       if (res.length > 0) {
         this.lastTxDate = tx.createdOn ?? tx.modifiedOn
         const silent = tx.meta?.silent
-        await this.applyTxes(res.map((it) => (silent !== undefined ? { ...it, meta: { ...it.meta, silent } } : it)))
+        // The poll may be removed while the vote waits in the queue: then no stray answer is written either.
+        const match: DocumentClassQuery<Doc>[] = isVote
+          ? [{ _class: activity.class.Poll, query: { _id: (tx as TxCreateDoc<VotePollAction>).attributes.attachedTo } }]
+          : []
+        await this.applyTxes(
+          res.map((it) => (silent != null ? { ...it, meta: { ...it.meta, silent } } : it)),
+          match
+        )
       }
     } finally {
       this.inProgress = false
     }
   }
 
-  private async applyTxes (txes: TxCUD<Doc>[]): Promise<void> {
+  private async applyTxes (txes: TxCUD<Doc>[], match: DocumentClassQuery<Doc>[]): Promise<void> {
     const txApply = this.txFactory.createTxApplyIf(
       core.space.DerivedTx,
       config.ServiceId,
-      [],
+      match,
       [],
       txes,
       undefined,

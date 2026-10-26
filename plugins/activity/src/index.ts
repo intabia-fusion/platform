@@ -38,6 +38,14 @@ import { Preference } from '@hcengineering/preference'
 import type { AnyComponent, ComponentExtensionId, LabelAndProps } from '@hcengineering/ui/src/types'
 import type { Action } from '@hcengineering/view'
 
+import type { Applet, AppletInstance, AppletGetTitleFnResource, AppletCreateFnResource, AppletSnapshot } from './applet'
+import type { Poll, PollAnswer, VotePollAction } from './poll'
+
+export type * from './applet'
+export type * from './poll'
+export { toAppletSnapshot, toAppletSummary } from './applet'
+export { pollLimits } from './poll'
+
 /**
  * @public
  */
@@ -53,6 +61,7 @@ export interface ActivityMessage extends AttachedDoc {
 
   replies?: number
   reactions?: number
+  applets?: number
   editedOn?: Timestamp
 
   forwardedMessage?: Ref<ActivityMessage>
@@ -66,7 +75,7 @@ export type ActivityMessageLite<T extends ActivityMessage = ActivityMessage> = O
   'isPinned' | 'repliedPersons' | 'lastReply' | 'reactions' | 'editedOn'
 >
 
-export interface ForwardedAttachment extends BlobType {
+export interface AttachmentSnapshot extends BlobType {
   originId: Ref<Doc>
   createdOn: Timestamp
 }
@@ -75,7 +84,8 @@ export interface ForwardContent {
   author: PersonId
   createdOn: Timestamp
   message: Markup
-  attachments: ForwardedAttachment[]
+  attachments: AttachmentSnapshot[]
+  applets?: AppletSnapshot[]
 }
 
 /**
@@ -319,7 +329,12 @@ export default plugin(activityId, {
     SavedMessage: '' as Ref<Class<SavedMessage>>,
     ActivityReference: '' as Ref<Class<ActivityReference>>,
     ReplyProvider: '' as Ref<Class<ReplyProvider>>,
-    UserMentionInfo: '' as Ref<Class<UserMentionInfo>>
+    UserMentionInfo: '' as Ref<Class<UserMentionInfo>>,
+    Applet: '' as Ref<Class<Applet>>,
+    AppletInstance: '' as Ref<Class<AppletInstance>>,
+    Poll: '' as Ref<Class<Poll>>,
+    PollAnswer: '' as Ref<Class<PollAnswer>>,
+    VotePollAction: '' as Ref<Class<VotePollAction>>
   },
   icon: {
     Activity: '' as Asset,
@@ -327,7 +342,9 @@ export default plugin(activityId, {
     Bookmark: '' as Asset,
     BookmarkFilled: '' as Asset,
     Forward: '' as Asset,
-    ReplyTo: '' as Asset
+    ReplyTo: '' as Asset,
+    Poll: '' as Asset,
+    PollOutline: '' as Asset
   },
   string: {
     Activity: '' as IntlString,
@@ -378,6 +395,7 @@ export default plugin(activityId, {
     RemovedTag: '' as IntlString,
     ValueTooLarge: '' as IntlString,
     SentAttachments: '' as IntlString,
+    SentApplet: '' as IntlString,
     ReplyTo: '' as IntlString,
     ForwardedFrom: '' as IntlString,
     ReplyToMessage: '' as IntlString,
@@ -385,7 +403,58 @@ export default plugin(activityId, {
     ForwardedMessage: '' as IntlString,
     ForwardedMessageFrom: '' as IntlString,
     Forward: '' as IntlString,
-    Reply: '' as IntlString
+    Reply: '' as IntlString,
+    Applet: '' as IntlString,
+    Applets: '' as IntlString,
+    Poll: '' as IntlString,
+    Polls: '' as IntlString,
+    CreatePoll: '' as IntlString,
+    EditPoll: '' as IntlString,
+    AnonymousVoting: '' as IntlString,
+    AnonymousQuiz: '' as IntlString,
+    AnonymousPoll: '' as IntlString,
+    MultipleChoice: '' as IntlString,
+    QuizMode: '' as IntlString,
+    Quiz: '' as IntlString,
+    Question: '' as IntlString,
+    AskQuestion: '' as IntlString,
+    PollOptions: '' as IntlString,
+    Option: '' as IntlString,
+    VotesCount: '' as IntlString,
+    PollResults: '' as IntlString,
+    VotedParticipants: '' as IntlString,
+    Vote: '' as IntlString,
+    ShowResults: '' as IntlString,
+    RetractVote: '' as IntlString,
+    Revote: '' as IntlString,
+    StartsIn: '' as IntlString,
+    EndsIn: '' as IntlString,
+    Ended: '' as IntlString,
+    StartTime: '' as IntlString,
+    EndTime: '' as IntlString,
+    DelayedStart: '' as IntlString,
+    LimitDuration: '' as IntlString,
+    PollSettings: '' as IntlString,
+    AnonymousVotingHint: '' as IntlString,
+    MultipleChoiceHint: '' as IntlString,
+    NoRevote: '' as IntlString,
+    ClosePollWithoutSaving: '' as IntlString,
+    NoRevoteHint: '' as IntlString,
+    QuizModeHint: '' as IntlString,
+    DelayedStartHint: '' as IntlString,
+    LimitDurationHint: '' as IntlString,
+    CustomTime: '' as IntlString,
+    AtLeastTwoOptions: '' as IntlString,
+    ChooseCorrectAnswer: '' as IntlString,
+    StartInPast: '' as IntlString,
+    EndInPast: '' as IntlString,
+    EndBeforeStart: '' as IntlString,
+    Options: '' as IntlString,
+    AddEmoji: '' as IntlString,
+    CorrectAnswer: '' as IntlString,
+    VoteNotCounted: '' as IntlString,
+    RetractNotCounted: '' as IntlString,
+    VoteNotConfirmed: '' as IntlString
   },
   component: {
     Activity: '' as AnyComponent,
@@ -397,7 +466,13 @@ export default plugin(activityId, {
     ActivityReferencePresenter: '' as AnyComponent,
     DocUpdateMessagePreview: '' as AnyComponent,
     ActivityReferencePreview: '' as AnyComponent,
-    ActivityInfoMessagePreview: '' as AnyComponent
+    ActivityInfoMessagePreview: '' as AnyComponent,
+    PollPresenter: '' as AnyComponent,
+    CreatePoll: '' as AnyComponent,
+    PollPreview: '' as AnyComponent
+  },
+  applet: {
+    Poll: '' as Ref<Applet>
   },
   ids: {
     AddReactionNotification: '' as Ref<any>
@@ -409,7 +484,9 @@ export default plugin(activityId, {
     ShouldScrollToActivity: '' as Resource<() => boolean>,
     ActivityMessageTooltipProvider: '' as Resource<
       (client: Client, doc?: Doc | null) => Promise<LabelAndProps | undefined>
-    >
+    >,
+    GetPollTitleFn: '' as AppletGetTitleFnResource,
+    CreatePollFn: '' as AppletCreateFnResource
   },
   backreference: {
     // Update list of back references

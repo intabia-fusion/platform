@@ -16,7 +16,7 @@ import { Button } from '@hcengineering/ui/kit'
 | Dropdown | Выбор значения из списка: триггер `SelectButton` и свой попап; ↓ / ↑ на кнопке открывают список, с клавиатуры фокус в списке и обратно на кнопку | `items` (с `children`), `selected`, `multiselect`, `separator`, `placeholder`, `icon`, `kind`, `size`, `chevron`, `fullWidth`, `justify` |
 | DateSelect | Дата, которую можно поменять: `SelectButton` открывает `DatePopup`; secondary с заливкой и рамкой полей ввода (`--input-*`), как DateInput, остальные SelectButton - кнопочные | `value`, `mode`, `placeholder`, `tone`, `readonly`, `on:change` |
 | DateLabel | Дата только для показа: текст строки с иконкой календаря | `value`, `mode`, `showIcon`, `icon`, `tone` |
-| IconBox | Декоративная плашка с иконкой вида объекта (у поля названия в диалоге создания) | `icon`, `iconProps`, `size`, `shape` |
+| IconBox | Декоративная плашка с иконкой вида объекта (у поля названия в диалоге создания); с `color` - знак апплета или настройки на плашке цвета палитры | `icon`, `iconProps`, `iconSize`, `size`, `shape`, `color` |
 | SelectButton | Триггер селектора: значение или плейсхолдер, попап открывает место; `kind="chip"` - пилюля строки списка без шеврона (веха, компонент, срок в списке задач) | `label` / slot, `placeholder`, `icon`, `kind`, `size`, `chevron`, `pressed` |
 | ButtonGroup | Переключатели, из которых включён не больше одного (боковые панели документа) | `items`, `selected`, `allowDeselect`, `kind`, `size`, `iconSize`, `on:select` |
 | SplitButton | Главное действие и меню связанных, склеенные в один контрол | `label`, `icon`, `kind`, `size`, `items`, `on:click`, `on:selected` |
@@ -35,7 +35,7 @@ import { Button } from '@hcengineering/ui/kit'
 | TextInput | Однострочное поле: имя обязательно по типам, иконка, очистка, подпись; заливка и рамка - токены полей ввода (`--input-*`), как у легаси; ghost вровень с краем и чистый в фокусе, `subtle` - ghost с подложкой на ховер, в фокусе заливка и кольцо поля; без `inset` это коробка залитого поля, сдвинутая влево на отступ (текст вровень, у заливки есть поле), с `inset` - отступ залитого поля (места ModernEditbox); ошибка у всех видов - полная рамка, у ghost без `inset` вынесена наружу на отступ поля, текст не сдвигается | `value`, `kind` (`secondary` / `ghost` / `subtle`), `size`, `heading`, `inset`, `label`, `placeholder`, `icon`, `clearable`, `type`, `error`, `on:input`, `on:change` |
 | TextArea | Многострочное поле, растёт до `maxRows`; плейсхолдер и значение весом 400 во всех размерах; ghost с `inset` стоит на одной линии с `inset` TextInput | `value`, `kind`, `size`, `inset`, `rows`, `maxRows`, `placeholder`, `on:input`, `on:change` |
 | CodeInput | Код по ячейкам: вставка и `one-time-code` раскладываются, переход между ячейками | `value`, `length`, `size`, `numeric`, `separator`, `error`, `on:input`, `on:complete` |
-| Dialog | Диалог: шапка с заголовком и закрытием, тело, футер с главным действием и отменой | `label`, `width`, `padding`, `embedded`, `footer`, `submitLabel`, `submitKind`, `canSubmit`, `loading`, `on:submit`, `on:cancel` (отменяемое), `on:close`; `canClose()` для хоста попапа; модальный: фокус внутри, Tab по кругу, возврат фокуса |
+| Dialog | Диалог: шапка с заголовком и закрытием, тело, футер с главным действием и отменой | `label`, `width`, `padding`, `embedded`, `footer`, `submitLabel`, `submitKind`, `canSubmit`, `loading`, `on:submit`, `on:cancel` (отменяемое), `on:close`, `closeConfirmationIntl` (вопрос перед любым закрытием), `dividers` (`false` - без линий у шапки и футера, для короткого вопроса), `aria-describedby`; `canClose()` для хоста попапа; модальный: фокус внутри, Tab по кругу, возврат фокуса |
 | Steps | Индикатор шагов (`ol`, `aria-current="step"`) | `items`, `selected` |
 | WizardDialog | Диалог-мастер: шаги слева, «Назад» / «Далее» / главное действие | `label`, `steps`, `selected`, `canProceed`, `canSubmit`, `on:select` (отменяемое), `on:submit` |
 | Menu | Список в попапе: иконка, цвет, описание, галочка, подменю, поиск, мультивыбор, заголовки групп; буквы на строке ищут по началу подписи, ↑ из поля поиска - на последнюю строку | `items` (`MenuItem`), `selected`, `multiselect`, `withSearch`, `headings` (`lines` / `divider` / `plain`), `width`, `embedded`, `loading`, `on:close`, `on:update`, слоты `header` / `actions` |
@@ -46,7 +46,7 @@ import { Button } from '@hcengineering/ui/kit'
 | ProgressCircle | Кольцо прогресса | `value`, `min`, `max`, `size`, обязателен `aria-label` / `aria-labelledby` |
 | StatusIcon | Состояние значком или точкой; `negative` - красный опасного действия (нет, отклонено), `error` - красный ошибки; `kind="outline"` - кольцо без заливки бледным оттенком тона (60%) | `tone`, `kind` (`solid` / `outline`), `size`, `dot`, `tooltip` |
 | Callout | Плашка с пояснением в форме или диалоге: значок, текст, заголовок, кнопки справа | `tone` (`info` / `positive` / `warning` / `error`), `label`, `title`, слоты по умолчанию / `actions` |
-| SettingRow | Строка настройки в форме или диалоге: подпись капсом слева, контрол справа, линия под строкой (над первой нет) | `label`, `hint` (кнопка-«i» с подсказкой), `stacked` (подпись над контролом), слот `details` (чипы под строкой), `let:labelId` для `aria-labelledby` |
+| SettingRow | Строка настройки в форме или диалоге: подпись капсом слева, контрол справа, линия под строкой (над первой нет); `variant="list"` - пункт списка переключателей: иконка на плашке `IconBox`, подпись и описание второй строкой, контрол в конце, линии между пунктами от подписи | `label`, `variant` (`form` / `list`), `hint` (кнопка-«i» с подсказкой), `stacked` (подпись над контролом), слот `details` (чипы под строкой); у `list` - `icon`, `color`, `description`, `disabled`; `let:labelId`, `let:descriptionId` (только у `list` с `description`), `let:controlId` (подпись `list` - `<label for>` этого id) |
 | MonthView | Вид «месяц» приложения: таблица целых недель на всю высоту, шапка дней недели прилипает, номер дня - кнопка, под ним содержимое места | `month`, `value`, `weeks`, `rowHeight`, `weekdayFormat`, слот `day` (`date`, `today`, `selected`, `outside`), `on:select`, `on:navigate` |
 | YearView | Вид «год» приложения: 12 `Calendar` без стрелок и года сеткой по ширине, выходные подсвечены, прокручивается сам | `year`, `value`, `marked`, `dayTooltip`, `on:select` |
 | StatusMessage | Строка результата `Status` под формой | `status`, `wrap` |
@@ -206,9 +206,11 @@ import { Button } from '@hcengineering/ui/kit'
 ### IconBox
 
 - Не кнопка: `<span aria-hidden="true">` без фокуса и событий. Вид - как у `IconButton kind="secondary"` того же
-  размера, чтобы стоять в ряд с кнопками. Иконка всегда `small`.
+  размера, чтобы стоять в ряд с кнопками. Иконка `small` на любом размере, другая - через `iconSize`.
 - `size` - высоты кнопок кита (`large`, `medium`, `small` по умолчанию, `extra-small`).
 - `shape="round"` - круг на любом размере (иконка канала вместо `CircleButton`); по умолчанию прямоугольник, как у кнопок.
+- `color` - имя цвета палитры: без рамки, оттенок по формуле `FileBadge` - плашка 14% / 26% цвета, иконка 82% / 62% цвета
+  в смеси с цветом текста (светлая / тёмная тема). Имя не из палитры оставляет вид кнопки.
 - Если по иконке кликают (выбор иконки, смена типа) - это `IconButton` с подписью, а не `IconBox`.
 
 ### ButtonGroup
@@ -329,10 +331,14 @@ import { Button } from '@hcengineering/ui/kit'
   70%-смесь вторичного и основного текста. У `SearchInput` боковой отступ как у `TextInput` того же размера, свёрнутый -
   квадрат с лупой по центру. Поиск - `SearchInput`, число - `NumberInput`.
 - `Dialog`: главная кнопка по умолчанию `brand`; `cancel` отменяемое (`preventDefault()` - подтверждение у места,
-  `close` не придёт); Escape - только с `closeOnEscape`, остальное закрывает хост попапа. Отправляют только своя кнопка и Enter в поле (с
+  `close` не придёт); готовое подтверждение - `closeConfirmationIntl` с текстом вопроса: поверх открывается `CloseConfirm` (`width="small"`,
+  `dividers={false}`, заголовок диалога, вопрос в `aria-describedby`), закрывает только «Закрыть», `canClose()` до ответа
+  возвращает `false`, вопрос закрывается вместе с диалогом; Escape - только с `closeOnEscape`, остальное закрывает хост попапа. Отправляют только своя кнопка и Enter в поле (с
   `submitOnEnter`) - кнопка без `type` в содержимом диалог не отправляет; с `hideSubmit` Enter в поле ничего не нажимает. `WizardDialog` - отменяемое `select` для
   проверки шага.
-- `Menu` говорит протоколом хоста попапов: `close` с id, `update` с массивом при мультивыборе, `submenu`. Кит
+- `Menu` говорит протоколом хоста попапов: `close` с id, `update` с массивом при мультивыборе, `submenu`. `submenu` хост попапов не
+  пробрасывает: результат подменю `popup` (например, `DatePicker`) корневое меню из `showPopup` отдаёт через проп `onResult`
+  (`id`, результат, закрыть ли меню). Кит
   `Dropdown` / `MenuButton` / `SplitButton` открывают `ModernPopup`.
 - `DatePicker` закрывается с `{ value, end? }` или `null`; только дата - полдень UTC, как у легаси; поля диапазона названы «Дата начала» / «Дата окончания»; футер прижат к низу. `DateSelect` открывает `DatePicker`
   во всех режимах (в `time` / `timeonly` только поле `HH:MM`); без `popupLabel` у `due` заголовок «Add / Edit due date», как у легаси.
@@ -460,6 +466,14 @@ pnpm run build-storybook   # статическая сборка в storybook-st
   `--global-error-TextColor`, а рамка ошибки полей ввода (TextInput, TextArea, CodeInput) - `--input-error-BorderColor`,
   как у легаси; негативные и опасные действия (Button `negative`, `kind="negative"` у Checkbox, Radio, Toggle,
   ProgressBar) - `--button-negative-BackgroundColor`, без заливки - `--theme-state-negative-color`.
+- Истории плагинов - рядом, в своей папке, во вкладке Plugins (`src/activity` - опрос: страницы «Poll Variants» с
+  основными состояниями и черновиками в поле ввода, «Poll Create» с формой создания).
+  Компоненты плагина рисуются как есть, на клиенте в памяти (`src/activity/client.ts`: модель из tx классов,
+  `ClientConnection` без сервера, свой обработчик голоса). `setup.ts` - загрузчик историй (`loaders`): текущий
+  аккаунт, строки и иконки `*-assets`, ресурсы по id через `addLocation`, хост тостов. Свой плагин: зависимости в
+  `package.json` Storybook, модель нужных классов, `setup` по образцу, корень заголовка историй в `rootSections`
+  (`.storybook/sections.ts`), иначе они попадут во вкладку UI kit. CommonJS `require` картинок в `*-assets`
+  переводит в импорт плагин `assetRequire` в `vite.config.mts`.
 - Хосты попапов и тултипов монтируются один раз в `.storybook/preview.ts`.
 - Проверки: `pnpm svelte-check --to @hcengineering/storybook` (typecheck историй), eslint - через `pnpm format`.
   В `pnpm build` Storybook не входит.

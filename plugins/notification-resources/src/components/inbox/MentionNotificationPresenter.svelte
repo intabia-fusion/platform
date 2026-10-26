@@ -12,7 +12,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { BasePreview } from '@hcengineering/activity-resources'
+  import { AppletsPreview, BasePreview } from '@hcengineering/activity-resources'
   import type { MentionNotification } from '@hcengineering/notification'
   import { Icon, tooltip } from '@hcengineering/ui'
   import { AttachmentsTooltip } from '@hcengineering/attachment-resources'
@@ -21,15 +21,21 @@
   export let value: MentionNotification
 
   $: attachments = value.attachments ?? []
+  $: applets = value.applets ?? []
 </script>
 
 <BasePreview text={value.markup} timestamp={value.createdOn} account={value.createdBy} on:click>
-  {#if attachments.length > 0}
-    <div class="attachments" use:tooltip={{ component: AttachmentsTooltip, props: { attachments } }}>
-      {attachments.length}
-      <Icon icon={attachment.icon.Attachment} size="small" />
-    </div>
-  {/if}
+  <svelte:fragment slot="content">
+    {#if attachments.length > 0}
+      <div class="attachments" use:tooltip={{ component: AttachmentsTooltip, props: { attachments } }}>
+        {attachments.length}
+        <Icon icon={attachment.icon.Attachment} size="small" />
+      </div>
+    {/if}
+    {#if applets.length > 0}
+      <AppletsPreview {applets} />
+    {/if}
+  </svelte:fragment>
 </BasePreview>
 
 <style lang="scss">

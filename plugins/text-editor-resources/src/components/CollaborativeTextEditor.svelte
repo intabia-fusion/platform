@@ -578,7 +578,7 @@
 
   {#if refActions.length > 0}
     <div class="buttons-panel flex-between clear-mins no-print">
-      <div class="buttons-group xsmall-gap mt-3">
+      <div class="buttons-group ref-actions xsmall-gap mt-3">
         {#each refActions as a, idx (a)}
           {#if idx !== 0 && a.order % 10 === 0}
             <div class="buttons-divider" />
@@ -645,5 +645,10 @@
 
   .hidden {
     display: none;
+  }
+
+  // The kit symbols draw a heavier line than the old icons: a lighter tone keeps the panel as quiet.
+  .ref-actions :global(.antiButton:not(:hover, :disabled) .btn-icon) {
+    color: var(--theme-dark-color);
   }
 </style>

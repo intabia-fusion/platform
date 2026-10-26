@@ -12,10 +12,14 @@
 | chunter | plugins/chunter/src | Клиентские типы и утилиты: createDirect/createAndGetDirect/findExistingDirect, ресурсы `ShowNotifyMarkerFn` (plugins/chunter) и `GetUnreadThreadsCountStore` (plugins/chunter-resources/src/plugin.ts) |
 | chunter-resources | plugins/chunter-resources/src | UI чата: `chatViewport.ts` (окно сообщений), `scroll.ts` (чтение при скролле), навигатор, сообщения, треды, поиск, sidebar-виджеты |
 | chunter-assets | plugins/chunter-assets/src | Иконки и переводы чата |
-| server-chunter | server-plugins/chunter/src | ChunterMiddleware: dedup DM, инварианты DM, auto-unhide скрытых чатов по `DocNotifyContext` |
+| server-chunter | server-plugins/chunter/src | ChunterMiddleware: dedup DM, инварианты DM, auto-unhide скрытых чатов по `DocNotifyContext`, права на правку и удаление сообщений |
 | server-chunter-resources | server-plugins/chunter-resources/src | Триггеры: `syncChat` (авто-скрытие давно неактивных чатов), search-title-providers |
 | notification / notification-resources | plugins/notification{,-resources}/src | `NotificationClient` (`unreadByDoc`, `readStateByDoc`, `setDocReading`, `forceReadDocState`) - см. notifications.md |
-| activity | plugins/activity/src | `ActivityMessage`/`ActivityMessageLite`, `replies` |
+| activity | plugins/activity/src | `ActivityMessage`/`ActivityMessageLite`, `replies`; апплеты сообщения: `Applet`, `AppletInstance`, `Poll`, `PollAnswer`, `VotePollAction`, `pollLimits`, `toAppletSnapshot`/`toAppletSummary` (applet.ts, poll.ts) |
+| activity-resources | plugins/activity-resources/src | UI апплетов: components/applet (`AppletsList`, `AppletsPreview`, `AppletTile`), components/poll/*, components/input/AppletPreview.svelte; `createPoll`/`votePoll`/`retractPollVote`/`requestQuizReveal` (poll.ts), время опроса (pollTime.ts), меню над апплетом (appletContextMenu.ts), порядок апплетов (applets.ts) |
+| server-activity | server-plugins/activity/src | `ActivityMiddleware`: проверка апплета и опроса при создании, хеш ответа викторины, права на апплеты, проверка голоса; `followsParent`/`getUpdatedFields` для ChunterMiddleware |
+| server-activity-resources | server-plugins/activity-resources/src | Триггер `OnAppletRemoved`: удаление зависимых документов апплета |
+| pod-activity | services/activity/src | `VotePollHandler` (poll.ts): голос -> `PollAnswer` и итоги `Poll`, раскрытие ответа викторины |
 
 ## Модель данных
 
@@ -28,6 +32,10 @@
 | `TThreadMessage` | сообщение треда: `attachedTo`/`attachedToClass` (родительский ActivityMessage), `objectId`/`objectClass` | models/chunter/src/types.ts |
 | `TChat` | персональное состояние (`pinned`/`hidden`) аккаунта для канала/DM, AttachedDoc в PersonSpace; `readState?` - ссылка на `ReadState` документа для join в навигаторе (колонка `chunter_doc.readState`, db-migrator `0015`; индекс по ней - `0017`). Ставит `OnCollaboratorAdded`; документу без состояния триггер заводит его сам (`makeReadState`: настоящее последнее сообщение, `control.apply` сразу, проигравший гонку берёт состояние победителя по уникальному индексу `(attachedTo, attachedToClass)`); если состояния не добиться, чат создаётся без ссылки (error в логе) и сортируется последним. Существующие чаты: `chat-read-state-refs-v2` (models/chunter/src/migration.ts) заводит недостающие состояния и проставляет ссылки; `create-chats-by-collaborators-v1` (models/notification) заводит их при создании чатов (`findOrMakeReadStates`, общий `newReadState` из model-notification) | models/chunter/src/types.ts |
 | `TChatSyncInfo` | отметка последнего `syncChat` аккаунта | models/chunter/src/types.ts |
+| `TApplet` | вид апплета, документ модели: `label`/`pluralLabel`, `icon` (плитка черновика, превью) и `actionIcon` (контурная иконка кнопки поля ввода; без неё - `icon`), `color` (имя цвета палитры для плашки на плитке черновика), компоненты `component` (отправленный экземпляр), `previewComponent` (плитка черновика), `createComponent` (форма) с `createLabel`/`editLabel`, `getTitleFn`, `createFn`, `editable` (можно ли менять отправленный экземпляр), `snapshotFields` и `summaryFields` (поля вида в снимке пересылки и в уведомлении), `dependents` (классы, которые ссылаются на экземпляр через `attachedTo` и удаляются вместе с ним). Единственный вид - `activity.applet.Poll` | models/activity/src/{applet,applets}.ts |
+| `TAppletInstance` / `TPoll` | экземпляр апплета: AttachedDoc к сообщению в коллекции `applets` (счётчик `ActivityMessage.applets`), поле `applet` - вид, домен `applet`. `TPoll` - опрос: `question`, `options`, режимы (`mode`, `anonymous`, `quiz`, `revote`), окно (`startAt`, `endAt`), ответ викторины (`quizAnswerHash`, после окончания - `quizAnswer`) и итоги (`totalVotes`, `votes`, `userVotes`) | models/activity/src/{applet,poll}.ts |
+| `TPollAnswer` | ответ голосующего в анонимном опросе и викторине (`options`, у викторины - `quizAnswer`), в его PersonSpace, домен `poll-answer` (таблица `poll_answer`); пишет только сервис activity | models/activity/src/poll.ts |
+| `TVotePollAction` | транзиентное действие голоса (`broadcastOnly`) в PersonSpace голосующего: `options`, `retract` (отмена), `reveal` (запрос ответа викторины); `account` ставит сервер | models/activity/src/poll.ts |
 | `ActivityMessage.replies` | число ответов; в Postgres - колонка `activity.replies`, фильтр списка Threads | services/db-migrator/migrations/0005_activityReplies.*.sql |
 | `ActivityMessage.lastReply` / `repliedPersons` | время последнего ответа и авторы ответов (в порядке первого ответа); ставит `OnThreadMessageCreated`, пересчитывает `OnThreadMessageDeleted`. `lastReply` - колонка `activity."lastReply"`; частичные индексы `("workspaceId", "lastReply" DESC)` и `("workspaceId", "createdOn" DESC)` `WHERE replies > 0` под две сортировки Threads | server-plugins/chunter-resources/src/index.ts; services/db-migrator/migrations/0011-0013_activityLastReply*.sql |
 | `ReadState` | `[account]: {messageId, timestamp}` + `latestMessageId/latestMessageTimestamp` | plugins/notification/src/types.ts |
@@ -69,6 +77,16 @@
 - **DM и групповые диалоги.** `TDirectMessage` - вариант ChunterSpace с readonly `type: 'person'|'group'` (>2 участников = группа). - models/chunter/src/types.ts.
 - **Server-дедупликация 1:1 DM через referenceId.** SHA-256 отсортированных members, `Forbidden` при повторе; действует только для DM из 2 участников. - `ChunterMiddleware.onDirectCreate`, `getMembersHash`, server-plugins/chunter/src/middleware.ts; тест server-plugins/chunter/src/__tests__/direct-create.spec.ts.
 - **Защита неизменяемости DM.** `referenceId`/`private`/`type` менять нельзя никогда; `members` - нельзя, если у DM есть `referenceId` или `type: 'person'`. - `ChunterMiddleware.onDirectUpdate`, server-plugins/chunter/src/middleware.ts.
+- **Права на сообщение на сервере.** `ChunterMiddleware.onMessageChange` повторяет правила интерфейса для клиентских tx домена сообщений. Правило решает по классу сохранённого документа, а не по `objectClass` tx (хранилище пишет tx по `_id`): проверяются `ChatMessage` и наследники (`ThreadMessage`, комментарии документов, сообщения ИИ), прочие документы домена (например, `DocUpdateMessage`) - нет. Документ ищется через `lowLevelStorage` без фильтра пространств сессии, так что защищено и сообщение из приватного канала, которого отправитель не видит.
+  - удалить сообщение может автор или роль Maintainer и выше (в интерфейсе - `canDeleteMessage`);
+  - в чужом сообщении участник меняет только `isPinned` (закрепление) и `resolved` (комментарии к документам), остальные поля - только автор. Поля берутся и из операторов (`$unset`, `$rename`) и путей через точку - `getUpdatedFields` (server-plugins/activity/src/middleware.ts);
+  - Maintainer и выше меняет чужое сообщение целиком: объединение персон перенаправляет его ссылки (`attachedTo`, `repliedPersons` и другие);
+  - карточки-предложения бота ИИ (`AIEditProposalMessage`, `AITaskProposalMessage`) правилу автора не подчиняются: их автор - бот, а применяют, переименовывают и дополняют ссылками на созданные задачи люди. Удаляются они по общему правилу;
+  - чужое сообщение меняет `space` только вместе с родителем: апдейт из одного `space` проходит, если в той же пачке родитель (`attachedTo`, тот же домен) переезжает в то же пространство (`followsParent`, server-plugins/activity/src/middleware.ts). Так перенос задачи (`moveIssueToSpace`) и `moveToSpace` уносят чужие комментарии и ответы. Сообщение, прикреплённое прямо к пространству (канал, директ), так не переезжает;
+  - `createdBy`/`createdOn` не меняет никто, включая Maintainer: по ним определяется автор;
+  - `TxMixin`, чей `mixin` не класс-миксин, запрещён: адаптер записал бы поле с этим именем, например `message`.
+
+  Нарушение правила автора - `ForbiddenKind.AuthorOnly`, правка `createdBy`/`createdOn` и неизвестный миксин - `SystemOnly`. Системный аккаунт и триггеры (`isTriggerCtx`) не проверяются: каскад удаления сообщения уносит чужие ответы треда. Автор - `createdBy` сохранённого сообщения (без него - `modifiedBy`), он сверяется с social id аккаунта сессии. - server-plugins/chunter/src/middleware.ts; тест server-plugins/chunter/src/__tests__/message-rights.spec.ts.
 - **Переход в DM с персоной.** Клик по упоминанию сотрудника (в тексте сообщения - через `contact.component.EmployeePresenter` inline, а не голый `ObjectMention`) и по ссылке на сотрудника внутри приложения chunter открывает DM, а не карточку персоны; кнопки "Сообщение"/"Позвонить" (`contact.extension.EmployeePopupActions`) есть и в тултипе, и в заголовке карточки персоны (`PersonHeaderActions` на `view.extensions.EditDocTitleExtension`); в шапке 1:1 DM - кнопка перехода в карточку и точка расширения `chunter.extensions.DirectHeaderExtension` (props `{ employee }`), куда love кладёт `InviteEmployeeButton` (звонок как в офисе; скрыт для себя и AI-бота, заблокирован, если нет миксина Employee или `active !== true`). - `openDirectForPerson`, plugins/chunter-resources/src/utils.ts; packages/presentation/src/components/markup/ObjectNode.svelte; plugins/contact-resources/src/components/PersonElement.svelte, `person/PersonHeaderActions.svelte`; plugins/chunter-resources/src/components/ChannelHeader.svelte.
 - **URL канала и директа.** `path[3]` любого `ChunterSpace` - `<имя>-<id>` без `|<class>` (`view.mixin.LinkIdProvider` на `ChunterSpace`/`Channel`/`DirectMessage`: `getChunterSpaceLinkId`/`parseChunterSpaceLinkId`); у модельных каналов `:` заменяется на `-` (`chunter:space:General` -> `chunter-space-General`). Без `|` класс декодируется как `ChunterSpace`, конкретный берётся из загруженного документа. Прочие документы в чате - по-прежнему `<id>|<class>`; старые ссылки `<id>|<class>` открываются. - `encodeChatURI`/`openChunterSpace`, plugins/chunter-resources/src/navigation.ts; `decodeChatURI`/`toChunterSpaceLinkId`/`parseChunterSpaceLinkId`, plugins/chunter-resources/src/linkId.ts (тест `__tests__/linkId.test.ts`); models/chunter/src/index.ts. В аналитику URL уходит без имени: `stripLinkSlugs`, packages/ui/src/location.ts.
 - **Ссылка на канал.** Пункт "Копировать ссылку" в контекстном меню канала в навигаторе (`getLink` -> `GetChunterSpaceLinkFragment`). - plugins/chunter-resources/src/components/chat/navigator/ChatNavItem.svelte.
@@ -115,6 +133,82 @@
 - **Бейджи.** Число `unreadMessagesCount`, цвет по `notifiedMessagesCount`, маркер приложения `ShowNotifyMarkerFn` + `showChatBadge`, счётчик Threads `unreadThreadsCountStore`. - navigator/ChatNavItem.svelte; plugins/chunter-resources/src/index.ts; stores.ts.
 - **Скрытые и закреплённые чаты.** `Chat.hidden/pinned`, auto-unhide (`ChunterMiddleware`), auto-hide (`syncChat`).
 
+### Опросы (апплеты)
+
+Апплет - интерактивный блок сообщения; вид апплета описывает документ модели `activity.class.Applet`. Сейчас вид один - опрос (`activity.applet.Poll`).
+
+- **Создание опроса.**
+  - Кнопка опроса в поле ввода (`ChatMessageInput`, иконка `Applet.actionIcon`) открывает `Applet.createComponent` - форму `CreatePoll`. В поле правки сообщения кнопок апплетов нет.
+  - Черновик опроса хранится в `draftApplets` и в черновике сообщения (`appletDrafts`). Над полем ввода он показан плиткой `PollPreview` на общей `AppletTile` (plugins/activity-resources/src/components/applet) - в той же полосе и того же вида, что плитки файлов: иконка `Applet.icon` на плашке цвета `Applet.color`, вопрос, тип опроса или ошибка времени. Клик по плитке открывает правку; крестик удаления виден при наведении и фокусе, на тач-экранах - всегда.
+  - Сообщение с черновиком опроса отправляется и без текста; стрелки не переходят к правке прошлого сообщения, пока в поле есть черновик опроса (`isMessageContentChanged`, `passesArrowKeys`, plugins/chunter-resources/src/chatInput.ts).
+  - При отправке `Applet.createFn` (`createPoll`, plugins/activity-resources/src/poll.ts) создаёт `Poll` в том же `client.apply`, что и сообщение. Счётчик `applets` сообщения поднимает `TriggersMiddleware.processCollection`.
+  - Создать опрос и проголосовать может и гость: `TxAccessLevel` у `AppletInstance` и `VotePollAction` - `Guest`. Удалить свой апплет гость тоже может (`removeAccessLevel` у `AppletInstance`), автора проверяет `ActivityMiddleware`.
+
+  Форма `CreatePoll` - `Dialog` кита; изменённую форму он закрывает только после подтверждения (`closeConfirmationIntl`). Вопрос и варианты - `TextInput`; в конце списка всегда один пустой вариант для ввода, у викторины перед каждым вариантом - радиокнопка правильного ответа. Настройки - строки `SettingRow variant="list"` (иконка на цветной плашке, название, подсказка, переключатель), по умолчанию все выключены:
+  - "Анонимное голосование" - `anonymous`;
+  - "Несколько вариантов ответа" - `mode: 'multiple'`, у викторины недоступно;
+  - "Без переголосования" (`NoRevote`) - `revote: false`. Выключено - голос можно отменить и проголосовать заново; у викторины включено и недоступно;
+  - "Режим викторины" - `quiz` с правильным вариантом `quizAnswer`;
+  - "Отложенный старт" и "Ограничить срок" (`PollTimeSetting`): переключатель включает пресет по умолчанию (1 ч и 24 ч), `SelectButton` открывает `Menu` кита с пресетами 1/3/8/24/72 ч и пунктом "Другое время…" с `DatePicker` в подменю. Пресет хранится в черновике как `startDelay`/`duration` и превращается в `startAt`/`endAt` только при отправке (`resolvePollTimes`, plugins/activity-resources/src/pollTime.ts), поэтому такой черновик не устаревает. Длительность отсчитывается от начала.
+
+  Форма не сохраняется без вопроса, двух заполненных вариантов и правильного ответа викторины, а также с точным началом в прошлом и с окончанием в прошлом или не позже начала. Лимиты `pollLimits` (plugins/activity/src/poll.ts): `maxOptions` - 10 вариантов, `maxQuestionLength` - 300 символов вопроса, `maxOptionLength` - 100 символов варианта. Форма держит их через `maxlength` и не добавляет пустой вариант сверх лимита, сервер проверяет их же.
+
+  Точное время черновика может пройти, пока он ждёт отправки. Тогда плитка показывает ошибку (`getPollTimeError`), а поле ввода не отправляет сообщение (`getAppletDraftExpiry` -> `disableSubmit`): сервер отклонил бы опрос вместе с сообщением.
+- **Проверка опроса при создании.** `ActivityMiddleware` (server-plugins/activity/src/middleware.ts) проверяет апплет любого вида (`validateAppletCreate`):
+  - tx создаёт апплет под классом его вида, базовый `AppletInstance` отклоняется;
+  - апплет прикреплён к сообщению коллекцией `applets`: `attachedTo` и `attachedToClass` - строки, класс - наследник `ActivityMessage`. Привязка берётся так же, как её возьмёт хранилище: из полей tx, если у tx задан `attachedTo`, иначе из атрибутов;
+  - сообщение - либо сохранённое, своё (иначе `AuthorOnly`), в том же пространстве и того же класса, что в привязке, либо создаваемое раньше в той же пачке в том же пространстве. Точный класс нужен триггеру: под ним он шлёт `$inc` счётчика.
+
+  Поля вида проверяет валидатор вида; он же проверяет, что `applet` документа - этот вид: интерфейс выбирает компонент по `applet`, а не по классу. Опрос (`validatePollCreate`):
+  - `applet` - `activity.applet.Poll`;
+  - непустой вопрос до `maxQuestionLength`; от 2 до `maxOptions` вариантов с уникальными id и непустыми подписями до `maxOptionLength`; id варианта - до 64 символов из `[A-Za-z0-9_-]`, но не имя из `Object.prototype` (`constructor`, `__proto__`): по id ключуется `votes`;
+  - `anonymous`, `quiz`, `revote` - булевы или пусто; `mode` - `single` или `multiple`; `startAt`/`endAt` - числа или пусто, окончание позже начала;
+  - у викторины правильный вариант есть среди вариантов, а `mode: 'single'` и `revote: false` middleware ставит сам. Id викторины не должен быть занят (поиск без фильтра пространств): иначе хеш своего варианта под id чужой викторины выдал бы её ответ.
+
+  Нарушение даёт `BadRequest`. Затем middleware обнуляет итоги (`totalVotes`, `votes`, `userVotes`) и заменяет `quizAnswer` на `quizAnswerHash` - HMAC-SHA256 от `воркспейс:опрос:вариант` с ключом из секрета токенов. Создание викторины (tx с `quizAnswerHash`) он переводит в `space: core.space.DerivedTx`, и `TxMiddleware` (foundations/server/packages/middleware/src/txPush.ts) не пишет его в журнал: иначе создание, отклонённое хранилищем, оставило бы там хеш для перебора ответа. Остальные tx апплетов идут в журнал: только он сдвигает `lastTx`, и клиент после переподключения без этого не узнал бы, например, об удалённом опросе. Документы вида (`activity.class.Applet`) клиент не меняет (`SystemOnly`): middleware верит их `editable`, `snapshotFields`, `summaryFields` и `dependents`. Системный аккаунт и триггеры не проверяются.
+- **Права на опрос после создания.**
+  - `TxMixin` на апплет от клиента запрещён (`SystemOnly`): адаптер записал бы его в документ в обход остальных проверок.
+  - Отправленный апплет меняется, только если это разрешает его вид (`Applet.editable`); у опроса `editable: false` (`SystemOnly`), его итоги и раскрытый ответ пишет только сервис activity. Где правка разрешена, менять может только автор (Maintainer тоже нет) и только поля, объявленные классом вида, а не `AppletInstance`: привязку, вид и служебные поля менять нельзя (`validateAppletUpdate`, поля собирает `getUpdatedFields`). Вид определяется по сохранённому экземпляру, а не по `objectClass` tx.
+  - Апплет любого автора переезжает вместе с сообщением: апдейт из одного `space` проходит, если в той же пачке сообщение переезжает туда же (`followsParent`), например при переносе задачи с опросом в комментарии.
+  - Удалить апплет отдельно от сообщения может автор или роль Maintainer и выше (`validateAppletRemove`). Привязку удаления (`attachedTo`, `attachedToClass`, `collection`) middleware берёт из сохранённого экземпляра: по ней триггер уменьшает счётчик сообщения. Каскад при удалении сообщения идёт из триггеров и не проверяется.
+  - `$inc` счётчика коллекции триггер шлёт, только если `collection` - атрибут-коллекция сохранённого родителя или необъявленное поле, где сейчас число или пусто (`TriggersMiddleware.isCounterField`, foundations/server/packages/middleware/src/triggers.ts). Иначе tx с подставленной `collection` сделала бы доверенный `$inc` любого поля опроса или сообщения.
+  - `PollAnswer` создаёт, меняет и удаляет только система (`SystemOnly`).
+  - Виды отказа: `AuthorOnly` - действие только автора (или Maintainer), `SystemOnly` - то, что меняет только система, `ForeignPrivateWrite` - голос не из своего PersonSpace. Клиент показывает "Нет доступа" ([../access_model.md](../access_model.md), п. 5).
+- **Голос в опросе.** Клиент создаёт транзиентный `VotePollAction` в своём PersonSpace (`votePoll`, `retractPollVote`, plugins/activity-resources/src/poll.ts). `ActivityMiddleware.validateVote` проверяет форму данных (`attachedTo` - непустая строка, `options` - массив строк, `retract`/`reveal` - булевы или пусто; иначе `BadRequest`), принимает голос только из PersonSpace своего аккаунта и ставит `account` сессии. Сервис activity пропускает `VotePollAction` мимо фильтра `DOMAIN_TRANSIENT` (services/activity/src/worker.ts). `VotePollHandler` (services/activity/src/poll.ts) форму данных сам не проверяет:
+  1. читает опрос из БД, а не из кэша;
+  2. проверяет, что голосующему доступно пространство опроса (не приватное или он участник);
+  3. сверяет окно `startAt`/`endAt` с `modifiedOn` tx, который ставит transactor;
+  4. проверяет выбор: непустой, без повторов, только варианты опроса, у `single` - ровно один.
+
+  Результат уходит через REST одним `TxApplyIf` от системы с условием "опрос существует" (services/activity/src/workspace.ts): голос, который дождался в очереди удаления опроса, ничего не пишет. Что пишется:
+  - итоги значением: `totalVotes` (число голосовавших, а не выбранных вариантов) и `votes` (по вариантам);
+  - неанонимный опрос - запись голосующего в `userVotes` (`{ account, options }`) парой `$pull`/`$push`: повторное применение оставляет одну запись;
+  - анонимный опрос и викторина - `PollAnswer` в PersonSpace голосующего, у викторины - с правильным вариантом: голосующий видит его сразу после голоса. Id ответа детерминированный (хеш опроса и PersonSpace), поэтому второй ответ того же голосующего падает на ключе.
+
+  Голос вне окна, повторный голос и неверный выбор игнорируются. Сменить ответ можно отменой (`retract`) и новым голосом; отмена принимается только у идущего опроса с `revote` и никогда у викторины.
+
+  `PollAnswer` и опрос пишутся в БД разными запросами. Если запись оборвалась между ними, Kafka передоставит голос, и сервис его досчитает (`syncWithAnswers`): пересчитает итоги по всем `PollAnswer` опроса, а голосующего неанонимной викторины допишет в `userVotes`. Оборванный голос распознаётся сверкой, а не по времени (время ответа и опроса ставят разные часы): у анонимного опроса число `PollAnswer` не сходится с `totalVotes`, у неанонимной викторины голосующего нет в `userVotes`. Так же досчитывается оборванная отмена анонимного голоса.
+- **Окончание викторины.** До раскрытия опрос хранит только `quizAnswerHash`. Клиент, у которого на экране завершённая викторина без `quizAnswer`, шлёт `VotePollAction` с `reveal: true` (`requestQuizReveal`, plugins/activity-resources/src/poll.ts); после `endAt` сервис находит вариант по хешу и пишет его в `quizAnswer`. Пока ответа нет, запрос повторяется раз в `QUIZ_REVEAL_RETRY_MS` (30 с), не больше 10 раз за сессию: часы клиента могут спешить.
+- **Отображение опроса.**
+  - `ChatMessagePresenter` рисует `AppletsList` (plugins/activity-resources/src/components/applet), тот - `Applet.component` каждого экземпляра (у опроса `PollPresenter`). Экземпляры берутся из `$lookup.applets` (окно чата `ChatViewport.LOOKUP`, `Activity.svelte`); без lookup при `applets > 0` `AppletsList` запрашивает их сам (треды, сохранённые, закреплённые, попапы). Несколько апплетов одного сообщения идут в порядке создания, то есть черновиков в поле ввода: `sortApplets` (plugins/activity-resources/src/applets.ts) сортирует по `createdOn`, а внутри одной миллисекунды по `_id`; так же сортирует `AppletsPreview`. Апдейты опроса окно чата применяет к lookup сообщения (`handleLookupTx`, chatViewport.ts).
+  - Над вариантами: вопрос, тип (опрос, анонимный опрос, викторина, анонимная викторина), статус "Начнётся через …", "Завершится через …" или "Завершён" с точным временем в подсказке и аватары проголосовавших (кроме анонимного опроса). Аватары - все персоны из `userVotes`, включая гостей и деактивированных: кого нет в сторе сотрудников, того находит запрос `Person` по `personUuid`. Статус обновляется раз в минуту, если до события меньше двух суток, иначе раз в час, и сам переключается в момент начала и конца (`getTimeUnitStep`, pollTime.ts).
+  - Строка варианта (`PollOptionPresenter`) одной высоты до и после голоса: опрос не прыгает в ленте, когда приходит свой голос.
+  - В опросе с одним ответом голос - клик по варианту, с несколькими - выбор и кнопка "Голосовать". Если голос или отмена не подтвердились за 10 с (сервис молча отбрасывает голос вне окна, повторный голос и отмену без `revote`) или запрос упал, появляется уведомление "Голос не учтён" / "Голос не отменён" (`PollNotCountedToast`).
+  - Проценты и число голосов по вариантам видны после своего голоса или после окончания опроса. Опрос только для чтения (снимок пересылки, архивный канал, гость только для чтения) показывает их сразу, кроме викторины до окончания: они подсказали бы ответ.
+  - "Показать результаты" (кнопка под опросом и пункт меню) открывает `PollResults` с голосовавшими по вариантам; попап подписан на опрос и обновляется, пока открыт. У анонимного опроса и опроса только для чтения попапа нет, под опросом - число голосов.
+  - Правый клик по опросу открывает меню только с пунктами опроса: "Отменить голос" (есть свой голос, `revote`, не викторина, опрос идёт) и "Показать результаты". Опрос кладёт их в событие (`addAppletContextActions`, plugins/activity-resources/src/appletContextMenu.ts), `ActivityMessageTemplate` показывает их вместо меню сообщения; без пунктов меню не открывается. Меню сообщения ("Ответить", "Переслать" и другие) открывается правым кликом вне опроса.
+  - Текстовые превью сообщения и цитата ответа показывают иконку и заголовок апплета (`AppletsPreview`, `Applet.getTitleFn`; у опроса - вопрос).
+  - Пересланное сообщение (`ForwardedMessagePresenter`, plugins/chunter-resources/src/components) показывает живой исходный опрос, если исходное сообщение доступно, иначе - снимок `forwardContent.applets` только для чтения. Если исходное сообщение пришло, а его опросы нет, `AppletsList` показывает тот же снимок (`fallback`). Так бывает у владельца воркспейса: lookup отдаёт ему сообщение, но не его опросы.
+  - Снимок собирает `getForwardData` (plugins/chunter-resources/src/forwardData.ts) через `toAppletSnapshot` (plugins/activity/src/applet.ts): служебные поля (`_id`, `_class`, `applet`, `collection`, автор и время) и поля вида из белого списка `Applet.snapshotFields`, так что новое поле нового вида по умолчанию не копируется. У опроса в снимок не входят `userVotes`, `quizAnswer` и `quizAnswerHash`. Пересылается и сообщение, где только опрос.
+- **Опрос в уведомлениях.** Уведомления о сообщении, упоминании и реакции несут `applets` - короткие снимки `toAppletSummary` по белому списку `Applet.summaryFields`: у опроса вопрос, вид и время, без вариантов, итогов, голосовавших и ответа викторины (уведомление копируется каждому получателю). Inbox показывает их без запросов: `MessageNotificationPresenter`, `ReactionNotificationPresenter`, `MentionNotificationPresenter` (plugins/notification-resources) и `ThreadNotificationPresenter` (plugins/chunter-resources) передают снимки в превью сообщения (`AppletsPreview`).
+  - Снимки собирает `getApplets` (services/notifications/src/utils/misc.ts). С `trustCounter` при `applets = 0` запроса нет; новое сообщение и упоминание в нём берутся из `TxCreateDoc`, где счётчика ещё нет, поэтому там экземпляры запрашиваются всегда, но только когда кому-то уходит уведомление. Апдейт сообщения обновляет и запись упоминания, с той же обрезкой разметки (`capMarkup`), что при создании.
+  - Апдейт `applets` сообщения (опрос добавлен или удалён) обновляет снимки в уже созданных уведомлениях.
+  - Push сообщения без текста и вложений - "Отправил(а) Опрос" (`SentApplet`; несколько опросов - "Опросы"), так же у пересланного.
+
+  Файлы: services/notifications/src/module/{message,mention,reaction}.ts.
+- **Опрос в поиске.** Вопрос и варианты опроса не индексируются: сообщение, где только опрос, полнотекстовый поиск по вопросу не находит.
+- **Удаление опроса.** `Poll` удаляется вместе с сообщением общим каскадом коллекций. Зависимые документы удаляет триггер `OnAppletRemoved` (server-plugins/activity-resources/src/index.ts), в том числе при отдельном удалении опроса: он собирает `Applet.dependents` всех видов и ищет их по `attachedTo`, потому что удалённый экземпляр уже не прочитать, а tx может называть базовый класс. У опроса зависимые - `PollAnswer`.
+
 ### Жалобы
 
 - **Опция воркспейса, по умолчанию выключена.** `core.class.Configuration` с id `chunter.ids.ContentReportsConfiguration`: нет документа или `enabled: false` - жалоб нет. Переключатель "Жалобы" в Настройки -> Общее виден только владельцу - plugins/setting-resources/src/components/General.svelte; писать в `DOMAIN_CONFIGURATION` может только владелец (`ConfigurationMiddleware`).
@@ -129,6 +223,7 @@
 - **Защита поиска от гонки и дублей.** `generation`, `appendUnique`. - plugins/chunter-resources/src/search/paged.ts.
 - **Лента вложений.** Миниатюры через сервис превью (`Image`, lazy, blurhash до загрузки), карточки аудио рендерятся лениво (`VirtualRow`), `content-visibility` у групп сетки медиа; превью ссылок дочитываются только для сообщений с вложениями. - plugins/chunter-resources/src/components/chat/search/browser.
 - **Кэш `hiddenChats` в middleware.** In-memory Map с ленивой подгрузкой из low-level storage. - server-plugins/chunter/src/middleware.ts.
+- **Таблицы апплетов.** Домены `applet` (экземпляры) и `poll-answer` (ответы, таблица `poll_answer`) - таблицы со своими схемами в foundations/server/packages/postgres/src/schemas.ts; адаптер создаёт их с индексами при старте, SQL-миграции не нужны. Индекс `("workspaceId", "attachedTo")` у `applet` - под lookup `applets` к каждому сообщению страницы чата, `("workspaceId", "attachedTo", space)` у `poll_answer` - под запрос своего ответа (`PollPresenter`, сервис activity). Индекс не уникальный: один ответ на голосующего обеспечивает детерминированный `_id`.
 
 ## Пользовательская документация
 
@@ -138,6 +233,7 @@
 | DM и групповые диалоги | communication/sending-messages | communication/sending-messages | ok | 0.8.60 | |
 | Server-дедупликация 1:1 DM через referenceId | - | - | internal | - | |
 | Защита неизменяемости DM | - | - | internal | - | |
+| Права на сообщение на сервере | - | - | internal | - | |
 | Переход в DM с персоной | - | - | plan | - | |
 | URL канала и директа | - | - | plan | - | |
 | Ссылка на канал | - | - | plan | - | |
@@ -147,8 +243,8 @@
 | Список Threads | communication/sending-messages | communication/sending-messages | partial | 0.8.60 | не описана сортировка списка (по последнему ответу/по дате создания), подъём треда при новом ответе |
 | Пересчёт при удалении ответа | - | - | internal | - | |
 | Закладки при удалении сообщения | - | - | internal | - | |
-| Reply на сообщение | communication/inbox | communication/inbox | ok | 0.8.60 | |
-| Forward сообщения | communication/inbox | communication/inbox | ok | 0.8.60 | |
+| Reply на сообщение | communication/inbox | communication/inbox | stale | 0.8.60 | цитата ответа на сообщение с опросом показывает значок и вопрос опроса |
+| Forward сообщения | communication/inbox | communication/inbox | stale | 0.8.60 | пересылается и опрос: живой, если исходное сообщение доступно, иначе снимок без голосования |
 | Удаление сообщения | communication/sending-messages | communication/sending-messages | ok | 0.8.60 | |
 | Перевод сообщения | communication/sending-messages | communication/sending-messages | ok | 0.8.60 | |
 | Вложения | communication/sending-messages | communication/sending-messages | ok | 0.8.60 | |
@@ -169,6 +265,16 @@
 | Sidebar-виджеты | communication/sending-messages | communication/sending-messages | ok | 0.8.60 | |
 | Боковая панель деталей открытого объекта | communication/chat-activity | communication/chat-activity | ok | 0.8.60 | |
 | Фильтр активности открытого объекта (сейчас выключен) | - | - | off | - | кнопка фильтра скрыта кодом (`ChannelHeader.svelte` `withFilters={false}` с #6736), раздел убран со страницы |
+| Создание опроса | - | - | plan | - | |
+| Проверка опроса при создании | - | - | internal | - | |
+| Права на опрос после создания | - | - | internal | - | |
+| Голос в опросе | - | - | plan | - | |
+| Окончание викторины | - | - | plan | - | |
+| Отображение опроса | - | - | plan | - | |
+| Опрос в уведомлениях | - | - | plan | - | |
+| Опрос в поиске | - | - | plan | - | |
+| Удаление опроса | - | - | plan | - | |
+| Таблицы апплетов | - | - | internal | - | |
 | Секции и сортировка | communication/chat-activity, communication/sending-messages | communication/chat-activity, communication/sending-messages | partial | 0.8.60 | не описан порядок секций (по времени последнего сообщения) и отложенная подгрузка секции активности |
 | Бейджи | communication/sending-messages | communication/sending-messages | partial | 0.8.60 | не описан отдельный счётчик непрочитанных Threads |
 | Скрытые и закреплённые чаты | communication/sending-messages | communication/sending-messages | ok | 0.8.60 | |
@@ -188,11 +294,14 @@
 - Изменить, когда сообщение считается прочитанным -> plugins/chunter-resources/src/scroll.ts (`readViewportMessages`, `readMessages`), `observeMessage`/`isReadingTail` в ReverseChannelScrollView.svelte; серверная сторона - [notifications.md](notifications.md).
 - Поменять сортировку/секции/бейджи навигатора -> plugins/chunter-resources/src/components/chat/utils.ts, navigator/{ChatNavGroup,ChatNavItem}.svelte.
 - Изменить правила дедупликации/неизменяемости DM -> `ChunterMiddleware.onDirectCreate`/`onDirectUpdate`, server-plugins/chunter/src/middleware.ts.
+- Изменить, кто правит и удаляет сообщения -> `canDeleteMessage` (plugins/chunter-resources/src/utils.ts) в интерфейсе и `ChunterMiddleware.onMessageChange` (server-plugins/chunter/src/middleware.ts) на сервере.
 - Изменить условия auto-unhide / auto-hide чатов -> server-plugins/chunter/src/middleware.ts (`tx`), server-plugins/chunter-resources/src/index.ts (`syncChat`, `hideDelay`).
 - Поменять формулу поиска по сообщениям -> plugins/chunter-resources/src/search/store.ts.
 - Добавить вкладку или формат в браузер вложений -> `AttachmentFormat`/`getAttachmentCategory` (plugins/attachment/src/category.ts), `BrowserTab`/`attachmentSearchRequest` (plugins/chunter-resources/src/search/attachments.ts); новый фасет появится в индексе только после переиндексации (миграция в models/chunter/src/migration.ts).
 - Добавить/поменять action на сообщении или канале -> models/chunter/src/actions.ts.
 - Изменить, кто и на что может пожаловаться -> `canReportMessage`/`canReportPerson`, plugins/chunter-resources/src/report.ts; серверная проверка - `ChunterMiddleware.onReportAction`.
+- Добавить новый вид апплета -> документ `activity.class.Applet` в models/activity/src/applets.ts (`editable`, `snapshotFields`, `summaryFields`, `dependents`), класс-наследник `AppletInstance` (models/activity/src), компоненты и `getTitleFn`/`createFn` в activity-resources; проверка полей вида - в `ActivityMiddleware` по образцу `validatePollCreate`.
+- Изменить правила голосования -> `VotePollHandler`, services/activity/src/poll.ts; проверки до записи - `ActivityMiddleware`, server-plugins/activity/src/middleware.ts.
 - Добавить чат-тип уведомления -> `defineNotifications`, models/chunter/src/notifications.ts.
 - Изменить окно агрегации activity-записей -> `activityAggregationDelay`, server/collaborator/src/storage/platform.ts.
 - Написать sanity-тест на доставку/непрочитанное -> `ChatMember` (tests/sanity/tests/API/ChatApi.ts) для второго пользователя по REST, `ChatUnreadPage` (tests/sanity/tests/model/chat-unread-page.ts).
@@ -203,13 +312,15 @@
 - `DocNotificationSetting.mode` - режим канала (all/mentions/mute).
 - `chunter.ids.ContentReportsConfiguration` - жалобы на сообщения и пользователей, по умолчанию выключены (см. "Жалобы").
 - Константы клиента: `limit=50`, `MAX_CACHE_SIZE=10`, `TTL_MS=15 мин` (chatViewport.ts); дебаунс чтения 500 мс (scroll.ts); `loadMoreThreshold=200`, `newSeparatorOffset=150`, `forceReadPauseMs=3000` (ReverseChannelScrollView.svelte); `SUMMARY_TIMEOUT_MS=3 мин` (stores.ts).
+- Ключ HMAC ответа викторины выводится из секрета токенов (`SERVER_SECRET` у transactor, `SECRET` у activity, значение должно совпадать). После смены секрета сервис не находит правильный вариант по старому хешу: ответ уже созданных викторин не раскрывается.
 - Константы сервера: `updateChatInfoDelay=24 ч`, `hideDelay=14 дней`, `syncChatCoalesceMs=60 с` (server-plugins/chunter-resources/src/index.ts).
 
 ## Тесты
 
 - Unit: plugins/chunter-resources/src/__tests__/{chatViewport,scroll,stores,utils}.test.ts (инициализация вьюпорта, анкоры, пагинация без пропусков/дублей, версии, live-Tx, LRU/TTL; чтение по дебаунсу; `unreadThreadsCountStore`).
-- Unit: server-plugins/chunter/src/__tests__/direct-create.spec.ts (dedup/инварианты DM); server-plugins/chunter/src/__tests__/content-report.spec.ts (жалоба только при включённой опции и из своего PersonSpace, карточки пишет только система); server-plugins/chunter-resources/src/__tests__/report.test.ts (`OnContentReport`); server-plugins/chunter-resources/src/__tests__/{search,threadReplies}.test.ts (`threadReplies` - пересчёт `lastReply`/`repliedPersons` при удалении ответа).
+- Unit: server-plugins/chunter/src/__tests__/direct-create.spec.ts (dedup/инварианты DM); server-plugins/chunter/src/__tests__/message-rights.spec.ts (кто правит и удаляет сообщение, в том числе под базовым классом; виды отказа); server-plugins/chunter/src/__tests__/content-report.spec.ts (жалоба только при включённой опции и из своего PersonSpace, карточки пишет только система); server-plugins/chunter-resources/src/__tests__/report.test.ts (`OnContentReport`); server-plugins/chunter-resources/src/__tests__/{search,threadReplies}.test.ts (`threadReplies` - пересчёт `lastReply`/`repliedPersons` при удалении ответа).
 - Unit: plugins/chunter-resources/src/search/__tests__/{store,resolve,classes,highlight,attachments,browser}.test.ts; server-plugins/chunter-resources/src/__tests__/facets.test.ts; server-plugins/attachment-resources/src/__tests__/facets.test.ts; plugins/attachment/src/__tests__/category.test.ts; foundations/core/packages/text-core/src/markup/__tests__/links.test.ts; plugins/chunter-assets/src/__tests__/lang.test.ts.
+- Unit, опросы: services/activity/src/__tests__/poll.test.ts (`VotePollHandler`: публичный, анонимный, викторина, повторный голос, отмена и `revote`, окно времени, доступ, раскрытие ответа, досчёт оборванного голоса, id ответа); services/activity/src/__tests__/worker.test.ts (голос проходит фильтр транзиентных tx); server-plugins/activity/src/__tests__/middleware.test.ts (`ActivityMiddleware`: создание опроса, неверные типы полей -> `BadRequest`, виды отказа, занятый id, привязка, привязка удаляемого апплета из хранилища, правка по `Applet.editable`, переезд вместе с сообщением, удаление апплета, `TxMixin`, голос из своего PersonSpace, `PollAnswer`, документы вида `Applet`); foundations/server/packages/middleware/src/__tests__/triggers.test.ts (счётчик только для коллекции, коллекция миксина при переносе); server-plugins/activity-resources/src/__tests__/appletRemoved.test.ts (`OnAppletRemoved`: ответы опроса и зависимые документы любого вида); plugins/chunter-resources/src/__tests__/chatViewport.test.ts 8.14-8.15 (опрос в `$lookup.applets`, устаревший апдейт); plugins/chunter-resources/src/__tests__/forwardData.test.ts (пересылка сообщения, где только опрос; снимок по `snapshotFields`); plugins/chunter-resources/src/__tests__/chatInput.test.ts (правила поля ввода с апплетами); plugins/activity-resources/src/__tests__/pollTime.test.ts (пресеты срока, ошибки времени, "через N"); services/notifications/src/utils/__tests__/misc.test.ts (`getApplets`: снимки для inbox); services/notifications/src/module/__tests__/reaction.test.ts (`applets` в уведомлении о реакции); services/notifications/src/module/__tests__/message.test.ts (апплеты нового сообщения только при уведомлении, обрезка упоминания при апдейте, push без текста, метка нескольких апплетов, пересланное); services/notifications/src/module/__tests__/mention.test.ts (апплеты в упоминании).
 - Sanity (Playwright): tests/sanity/tests/chat/{chat,direct-chat,message-search}.spec.ts; tests/sanity/tests/chat/chat-notifications.spec.ts (realtime-доставка без reload: сообщения, треды, реакции, правки, mention, mute); tests/sanity/tests/chat/chat-unread.spec.ts (счётчики, маркеры, "New", "Latest messages", mentions-only/muted, тред, открытый до первого ответа, Threads и его сортировки); tests/sanity/tests/chat/threads-list.spec.ts (порядок Threads: время последнего ответа, свой ответ, одновременные ответы, правки и реакции, неперерисовка строк, неподвижный скролл, вторая вкладка, тред без ответов, плашка чата в Threads и Saved), page object tests/sanity/tests/model/threads-list-page.ts. Page objects: tests/sanity/tests/model/{channel-page,chunter-page,chat-unread-page}.ts; REST-помощник tests/sanity/tests/API/ChatApi.ts (`ChatMember`: второй пользователь через API вместо второго браузера).
 
 ## Связанные документы
@@ -217,5 +328,8 @@
 - [notifications.md](notifications.md) - модель `DocNotifyContext`/`ReadState`, сервис `services/notifications`, inbox, push, email, бейджи приложений.
 - [../memory/chat-viewport.md](../memory/chat-viewport.md) - неочевидные решения загрузки и чтения чата.
 - [../memory/attachment_search_facets.md](../memory/attachment_search_facets.md) - браузер вложений: фасеты, индексация вложений, показ карточек.
+- [../memory/chat-message-rights.md](../memory/chat-message-rights.md) - почему правило автора у сообщений действует по полям, а не на весь апдейт.
+- [../memory/chat-polls.md](../memory/chat-polls.md) - неочевидное в опросах: путь голоса через сервис activity, права, отображение.
+- [chat-polls.md](chat-polls.md) - опросы: возможности, ограничения, деплой.
 - [../memory/sidebar-widget-tabs.md](../memory/sidebar-widget-tabs.md) - модель вкладок sidebar, которую использует открытие треда чата в сайдбаре (`openThreadInSidebar`).
 - [../memory/presence-fanout.md](../memory/presence-fanout.md) - кросс-воркспейс статус непрочитанного.

@@ -15,6 +15,7 @@
 
 import { createQuery, getClient, addTxListener, removeTxListener, onWorkspaceChange } from '@hcengineering/presentation'
 import core, {
+  type AttachedDoc,
   type Client,
   type Doc,
   getCurrentAccount,
@@ -32,7 +33,7 @@ import core, {
   type WithLookup
 } from '@hcengineering/core'
 import { derived, get, type Readable, writable } from 'svelte/store'
-import activity, { type ActivityMessage, type Reaction } from '@hcengineering/activity'
+import activity, { type ActivityMessage, type Reaction, type AppletInstance } from '@hcengineering/activity'
 import attachment, { type Attachment } from '@hcengineering/attachment'
 import { type ReadPosition, type ReadState } from '@hcengineering/notification'
 import chunter, { type ChatMessage } from '@hcengineering/chunter'
@@ -266,6 +267,7 @@ export class ChatViewport implements IChatViewport {
   private readonly loadedMessageIds = new Set<Ref<ActivityMessage>>()
   private readonly loadedAttachmentIds = new Map<Ref<Attachment>, Ref<ActivityMessage>>()
   private readonly loadedReactionIds = new Map<Ref<Reaction>, Ref<ActivityMessage>>()
+  private readonly loadedAppletIds = new Map<Ref<AppletInstance>, Ref<ActivityMessage>>()
   private readonly historyUnsubscribe: () => void
 
   public readonly isTailLoaded = writable(false)
@@ -310,7 +312,8 @@ export class ChatViewport implements IChatViewport {
   private readonly LOOKUP: Lookup<ActivityMessage> = {
     _id: {
       attachments: attachment.class.Attachment,
-      reactions: activity.class.Reaction
+      reactions: activity.class.Reaction,
+      applets: activity.class.AppletInstance
     },
     forwardedMessage: chunter.class.ChatMessage
   }
@@ -336,6 +339,7 @@ export class ChatViewport implements IChatViewport {
       this.loadedMessageIds.clear()
       this.loadedAttachmentIds.clear()
       this.loadedReactionIds.clear()
+      this.loadedAppletIds.clear()
 
       for (const msg of history) {
         this.loadedMessageIds.add(msg._id)
@@ -348,6 +352,11 @@ export class ChatViewport implements IChatViewport {
         const reactions = (msg.$lookup?.reactions ?? []) as Reaction[]
         for (const react of reactions) {
           this.loadedReactionIds.set(react._id, msg._id)
+        }
+
+        const applets = (msg.$lookup?.applets ?? []) as AppletInstance[]
+        for (const applet of applets) {
+          this.loadedAppletIds.set(applet._id, msg._id)
         }
       }
     })
@@ -936,8 +945,8 @@ export class ChatViewport implements IChatViewport {
       const updated = await client.findOne(activity.class.ActivityMessage, { _id: msgId }, { lookup: this.LOOKUP })
       this.loadedHistory.update((currentHistory) => {
         const foundLatest = this.findMessageInViewport(msgId, currentHistory)
-        if (foundLatest !== undefined) {
-          if (updated !== undefined) {
+        if (foundLatest != null) {
+          if (updated != null) {
             currentHistory[foundLatest.index] = updated
           } else {
             currentHistory.splice(foundLatest.index, 1)
@@ -950,7 +959,7 @@ export class ChatViewport implements IChatViewport {
 
     this.loadedHistory.update((currentHistory) => {
       const foundLatest = this.findMessageInViewport(msgId, currentHistory)
-      if (foundLatest !== undefined) {
+      if (foundLatest != null) {
         if (tx._class === core.class.TxUpdateDoc) {
           TxProcessor.updateDoc2Doc(foundLatest.message, tx as TxUpdateDoc<ActivityMessage>)
         } else if (tx._class === core.class.TxMixin) {
@@ -988,8 +997,8 @@ export class ChatViewport implements IChatViewport {
         )
         this.loadedHistory.update((currentHistory) => {
           const foundLatest = this.findMessageInViewport(resolvedMessageId, currentHistory)
-          if (foundLatest !== undefined) {
-            if (updated !== undefined) {
+          if (foundLatest != null) {
+            if (updated != null) {
               currentHistory[foundLatest.index] = updated
             } else {
               currentHistory.splice(foundLatest.index, 1)
@@ -1003,7 +1012,7 @@ export class ChatViewport implements IChatViewport {
 
     this.loadedHistory.update((currentHistory) => {
       const foundLatest = this.findMessageInViewport(resolvedMessageId, currentHistory)
-      if (foundLatest !== undefined) {
+      if (foundLatest != null) {
         const msgLatest = foundLatest.message as WithLookup<ChatMessage>
         msgLatest.$lookup = msgLatest.$lookup ?? {}
         msgLatest.$lookup.attachments = msgLatest.$lookup.attachments ?? []
@@ -1035,72 +1044,77 @@ export class ChatViewport implements IChatViewport {
     })
   }
 
-  private async handleReactionTx (tx: TxCUD<Reaction>): Promise<void> {
-    const reactionId = tx.objectId
-    const messageId = (tx.attachedTo as Ref<ActivityMessage>) ?? this.loadedReactionIds.get(reactionId)
+  // Reactions and applets of a loaded message live in its lookup: the viewport has no query of their own.
+  private async handleLookupTx<T extends AttachedDoc>(
+    tx: TxCUD<T>,
+    key: 'reactions' | 'applets',
+    loadedIds: Map<Ref<T>, Ref<ActivityMessage>>
+  ): Promise<void> {
+    const docId = tx.objectId
+    // An update carries no attachedTo: the message is the one the doc was loaded or created with.
+    const messageId = (tx.attachedTo as Ref<ActivityMessage>) ?? loadedIds.get(docId)
     if (messageId === undefined || !this.loadedMessageIds.has(messageId)) return
+
+    if (tx._class === core.class.TxCreateDoc) {
+      loadedIds.set(docId, messageId)
+    } else if (tx._class === core.class.TxRemoveDoc) {
+      loadedIds.delete(docId)
+    }
 
     const history = get(this.loadedHistory)
     const found = this.findMessageInViewport(messageId, history)
     if (found === undefined) return
 
-    const msg = found.message
-    const reaction = msg.$lookup?.reactions?.find((it) => it._id === reactionId) as Reaction
-
     const resolvedMessageId = found.message._id
+    const current = (found.message.$lookup?.[key] as T[] | undefined)?.find((it) => it._id === docId)
 
-    if (reaction !== undefined) {
-      const currentModifiedOn = reaction.modifiedOn ?? reaction.createdOn ?? 0
-      if (tx.modifiedOn < currentModifiedOn) {
-        const client = getClient()
-        const updated = await client.findOne(
-          activity.class.ActivityMessage,
-          { _id: resolvedMessageId },
-          { lookup: this.LOOKUP }
-        )
-        this.loadedHistory.update((currentHistory) => {
-          const foundLatest = this.findMessageInViewport(resolvedMessageId, currentHistory)
-          if (foundLatest !== undefined) {
-            if (updated !== undefined) {
-              currentHistory[foundLatest.index] = updated
-            } else {
-              currentHistory.splice(foundLatest.index, 1)
-            }
+    if (current != null && tx.modifiedOn < (current.modifiedOn ?? current.createdOn ?? 0)) {
+      const client = getClient()
+      const updated = await client.findOne(
+        activity.class.ActivityMessage,
+        { _id: resolvedMessageId },
+        { lookup: this.LOOKUP }
+      )
+      this.loadedHistory.update((currentHistory) => {
+        const foundLatest = this.findMessageInViewport(resolvedMessageId, currentHistory)
+        if (foundLatest != null) {
+          if (updated != null) {
+            currentHistory[foundLatest.index] = updated
+          } else {
+            currentHistory.splice(foundLatest.index, 1)
           }
-          return currentHistory
-        })
-        return
-      }
+        }
+        return currentHistory
+      })
+      return
     }
 
     this.loadedHistory.update((currentHistory) => {
       const foundLatest = this.findMessageInViewport(resolvedMessageId, currentHistory)
-      if (foundLatest !== undefined) {
+      if (foundLatest != null) {
         const msgLatest = foundLatest.message
         msgLatest.$lookup = msgLatest.$lookup ?? {}
-        msgLatest.$lookup.reactions = msgLatest.$lookup.reactions ?? []
-
-        const reactions = msgLatest.$lookup.reactions as Reaction[]
+        const docs = (msgLatest.$lookup[key] ?? []) as T[]
+        msgLatest.$lookup[key] = docs
 
         if (tx._class === core.class.TxCreateDoc) {
-          const newReaction = TxProcessor.createDoc2Doc(tx as TxCreateDoc<Reaction>)
-          if (!reactions.some((it) => it._id === tx.objectId)) {
-            reactions.push(newReaction)
+          if (!docs.some((it) => it._id === docId)) {
+            docs.push(TxProcessor.createDoc2Doc(tx as TxCreateDoc<T>))
           }
         } else if (tx._class === core.class.TxUpdateDoc) {
-          const idx = reactions.findIndex((r) => r._id === tx.objectId)
+          const idx = docs.findIndex((it) => it._id === docId)
           if (idx !== -1) {
-            reactions[idx] = TxProcessor.updateDoc2Doc(reactions[idx], tx as TxUpdateDoc<Reaction>)
+            docs[idx] = TxProcessor.updateDoc2Doc(docs[idx], tx as TxUpdateDoc<T>)
           }
         } else if (tx._class === core.class.TxMixin) {
-          const idx = reactions.findIndex((r) => r._id === tx.objectId)
+          const idx = docs.findIndex((it) => it._id === docId)
           if (idx !== -1) {
-            reactions[idx] = TxProcessor.updateMixin4Doc(reactions[idx], tx as TxMixin<Reaction, Reaction>)
+            docs[idx] = TxProcessor.updateMixin4Doc(docs[idx], tx as TxMixin<T, T>)
           }
         } else if (tx._class === core.class.TxRemoveDoc) {
-          const filtered = reactions.filter((r) => r._id !== tx.objectId)
-          if (filtered.length !== reactions.length) {
-            msgLatest.$lookup.reactions = filtered
+          const filtered = docs.filter((it) => it._id !== docId)
+          if (filtered.length !== docs.length) {
+            msgLatest.$lookup[key] = filtered
           }
         }
       }
@@ -1120,15 +1134,18 @@ export class ChatViewport implements IChatViewport {
       const isMessage = hierarchy.isDerived(cudTx.objectClass, activity.class.ActivityMessage)
       const isAttachment = hierarchy.isDerived(cudTx.objectClass, attachment.class.Attachment)
       const isReaction = hierarchy.isDerived(cudTx.objectClass, activity.class.Reaction)
+      const isApplet = hierarchy.isDerived(cudTx.objectClass, activity.class.AppletInstance)
 
-      if (!isMessage && !isAttachment && !isReaction) continue
+      if (!isMessage && !isAttachment && !isReaction && !isApplet) continue
 
       if (isMessage) {
         await this.handleMessageTx(cudTx as TxCUD<ActivityMessage>)
       } else if (isAttachment) {
         await this.handleAttachmentTx(cudTx as TxCUD<Attachment>)
       } else if (isReaction) {
-        await this.handleReactionTx(cudTx as TxCUD<Reaction>)
+        await this.handleLookupTx(cudTx as TxCUD<Reaction>, 'reactions', this.loadedReactionIds)
+      } else if (isApplet) {
+        await this.handleLookupTx(cudTx as TxCUD<AppletInstance>, 'applets', this.loadedAppletIds)
       }
     }
   }

@@ -16,11 +16,27 @@ import { getEmbeddedLabel } from '@hcengineering/platform'
 import { tick, type ComponentProps } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { showPopup } from '../../popups'
+import CloseConfirm from '../../ui-kit/dialog/CloseConfirm.svelte'
 import Dialog from '../../ui-kit/dialog/Dialog.svelte'
 import type { DialogProps } from '../../ui-kit/dialog/types'
 import DialogWithSlots from './DialogWithSlots.svelte'
 
+// The close question is a popup of its own: the test answers it through the callback.
+vi.mock('../../popups', async (original) => ({
+  ...(await original<typeof import('../../popups')>()),
+  showPopup: vi.fn(() => ({ id: 'close-confirm', close: vi.fn(), update: vi.fn() }))
+}))
+
 const LABEL = getEmbeddedLabel('New channel')
+const QUESTION = getEmbeddedLabel('Close without saving?')
+
+function answerClose (answer: boolean): void {
+  const call = vi.mocked(showPopup).mock.calls.at(-1)
+  expect(call?.[0]).toBe(CloseConfirm)
+  expect(call?.[1]).toMatchObject({ label: LABEL, message: QUESTION })
+  void call?.[3]?.(answer)
+}
 
 let target: HTMLElement
 const mounted: Array<{ $destroy: () => void }> = []
@@ -337,6 +353,64 @@ describe('ui-kit Dialog', () => {
     keep = true
     expect(component.canClose()).toBe(false)
     expect(events).toEqual(['cancel', 'cancel'])
+  })
+
+  it('asks before closing with closeConfirmationIntl and closes only on yes', () => {
+    vi.mocked(showPopup).mockClear()
+    const { root, component } = mount({ closeConfirmationIntl: QUESTION })
+    const events: string[] = []
+    component.$on('cancel', () => events.push('cancel'))
+    component.$on('close', () => events.push('close'))
+
+    footerButtons(root)[0].click()
+    expect(events).toEqual([])
+    answerClose(false)
+    expect(events).toEqual([])
+
+    headerButtons(root)[0].click()
+    answerClose(true)
+    expect(events).toEqual(['cancel', 'close'])
+  })
+
+  it('closes the open question along with the dialog', () => {
+    vi.mocked(showPopup).mockClear()
+    const { component } = mount({ closeConfirmationIntl: QUESTION })
+    const onClose = vi.fn()
+    component.$on('close', onClose)
+    component.canClose()
+    const question = vi.mocked(showPopup).mock.results.at(-1)?.value
+    component.$destroy()
+    expect(question.close).toHaveBeenCalled()
+    answerClose(true)
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
+  it('asks again after the question went without an answer', () => {
+    vi.mocked(showPopup).mockClear()
+    const { component } = mount({ closeConfirmationIntl: QUESTION })
+    component.canClose()
+    // `closePopup` destroys the question without its close callback.
+    void vi.mocked(showPopup).mock.calls.at(-1)?.[1]?.onDestroyed?.()
+    component.canClose()
+    expect(showPopup).toHaveBeenCalledTimes(2)
+  })
+
+  it('drops the header and footer lines with dividers off', () => {
+    expect(mount().root.classList.contains('dialog--plain')).toBe(false)
+    expect(mount({ dividers: false }).root.classList.contains('dialog--plain')).toBe(true)
+  })
+
+  it('keeps the popup host from closing with closeConfirmationIntl and asks once at a time', () => {
+    vi.mocked(showPopup).mockClear()
+    const { component } = mount({ closeConfirmationIntl: QUESTION })
+    const onClose = vi.fn()
+    component.$on('close', onClose)
+
+    expect(component.canClose()).toBe(false)
+    expect(component.canClose()).toBe(false)
+    expect(showPopup).toHaveBeenCalledTimes(1)
+    answerClose(true)
+    expect(onClose).toHaveBeenCalledTimes(1)
   })
 
   it('leaves Escape to a picker opened from the dialog and to a handled event', () => {

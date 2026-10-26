@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { Hierarchy, ModelDb, setCurrentAccount, type Client } from '@hcengineering/core'
+import { getCurrentAccount, Hierarchy, ModelDb, setCurrentAccount, type Client } from '@hcengineering/core'
 import { addLocation, addStringsLoader, setMetadata, type Plugin } from '@hcengineering/platform'
 import presentation, { previewTypes, setClient } from '@hcengineering/presentation'
 import registerPresentationStrings from '@hcengineering/presentation/src/lang'
@@ -21,9 +21,20 @@ import view from '@hcengineering/view'
 import { readable } from 'svelte/store'
 
 import kitSprite from '../../../../packages/ui/assets/icons.svg?url'
+import { addEmojiLocation } from '../emoji'
 import HighlightStub from './HighlightStub.svelte'
 
 let ready: Promise<void> | undefined
+let client: Client | undefined
+
+function useViewer (): void {
+  setCurrentAccount({
+    uuid: 'storybook',
+    role: 'USER',
+    primarySocialId: 'storybook',
+    socialIds: ['storybook']
+  } as any)
+}
 
 // The assets packages export their compiled loaders only, so the strings come from the files.
 const attachmentStrings = import.meta.glob('../../../../plugins/attachment-assets/lang/*.json')
@@ -50,20 +61,12 @@ export async function setupAttachmentMocks (): Promise<void> {
     const permissions = readable({ whitelist: new Set(), ps: {} })
     addLocation('contact' as Plugin, async () => ({ default: async () => ({ store: { Permissions: permissions } }) }))
     // A transcript is rendered as a message, which looks for emoji in its text.
-    const parse = (text: string): any => ({ nodes: [text], emojisOnly: false })
-    addLocation('emoji' as Plugin, async () => ({
-      default: async () => ({ functions: { ParseTextWithEmojis: parse } })
-    }))
+    addEmojiLocation()
     // A code block of a Markdown file asks for the highlighter.
     addLocation('diffview' as Plugin, async () => ({
       default: async () => ({ component: { Highlight: HighlightStub } })
     }))
-    setCurrentAccount({
-      uuid: 'storybook',
-      role: 'USER',
-      primarySocialId: 'storybook',
-      socialIds: ['storybook']
-    } as any)
+    useViewer()
     const hierarchy = new Hierarchy()
     const model = new ModelDb(hierarchy)
     // The editor asks the model for its extensions; a class missing from the empty model has none.
@@ -75,7 +78,7 @@ export async function setupAttachmentMocks (): Promise<void> {
         return []
       }
     }) as typeof findAllSync
-    const client: Client = {
+    const mockClient: Client = {
       getHierarchy: () => hierarchy,
       getModel: () => model,
       findAll: async () => Object.assign([], { total: 0 }) as any,
@@ -85,7 +88,8 @@ export async function setupAttachmentMocks (): Promise<void> {
       close: async () => {},
       domainRequest: async () => ({ domain: '', value: undefined }) as any
     } as any
-    await setClient(client)
+    client = mockClient
+    await setClient(mockClient)
     addLocation('view' as Plugin, async () => await import('@hcengineering/view-resources'))
     const viewer = (contentType: string | string[], component: string, alignment = 'centered'): any => ({
       _id: component,
@@ -108,4 +112,9 @@ export async function setupAttachmentMocks (): Promise<void> {
     })
   })()
   await ready
+  // The poll stories put their own client and account into the same preview document.
+  if (getCurrentAccount()?.uuid !== 'storybook' && client != null) {
+    useViewer()
+    await setClient(client)
+  }
 }

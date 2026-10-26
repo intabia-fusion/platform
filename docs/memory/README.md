@@ -10,6 +10,8 @@
 ## Чат и уведомления - [chat.md](../features/chat.md), [notifications.md](../features/notifications.md)
 
 - [chat-viewport.md](chat-viewport.md) - Чат: загрузка окна и чтение при скролле
+- [chat-message-rights.md](chat-message-rights.md) - Чат: права на правку и удаление сообщений на сервере
+- [chat-polls.md](chat-polls.md) - Чат: опросы (апплеты): путь голоса, права, модель и хранение, уведомления, клиент
 - [content-reports.md](content-reports.md) - Чат: жалобы и опция воркспейса для них
 - [attachment_search_facets.md](attachment_search_facets.md) - Чат: поиск вложений, фасеты и привязка к чату
 - [notifications-embedded-model.md](notifications-embedded-model.md) - Уведомления: встроенная модель и сервис
@@ -100,7 +102,7 @@
 - [fast_build_cache_external_deps.md](fast_build_cache_external_deps.md) - fast-build cache ignores external dependencies
 - [go-docker-build.md](go-docker-build.md) - Go docker builds (foundations/stream)
 - [svelte-type-imports.md](svelte-type-imports.md) - Type imports in .svelte, eslint rules, the no-duplicates fixer bug и пробел проверки относительно Storybook
-- [storybook.md](storybook.md) - Storybook 8.6 на Svelte 4: vite-плагины, CJS workspace-пакетов, имена типов в docgen, моки для историй вложений
+- [storybook.md](storybook.md) - Storybook 8.6 на Svelte 4: vite-плагины, CJS workspace-пакетов, имена типов в docgen, моки для историй вложений, истории плагинов на клиенте в памяти
 - [case-insensitive-module-names.md](case-insensitive-module-names.md) - `link.ts` и `Link.svelte` в одной папке: на macOS импорт уходит не туда
 - [test-stand-nodejs.md](test-stand-nodejs.md) - Test stand setup in node (dev/test-base)
 - [typescript7-migration.md](typescript7-migration.md) - TypeScript 7 (tsgo) build

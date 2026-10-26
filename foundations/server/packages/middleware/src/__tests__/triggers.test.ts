@@ -195,3 +195,106 @@ describe('TriggersMiddleware parallel trigger findAll', () => {
     }
   })
 })
+
+describe('TriggersMiddleware collection counters', () => {
+  const attributes: Record<string, any> = {
+    message: { type: { _class: core.class.TypeMarkup } },
+    applets: { type: { _class: core.class.Collection } }
+  }
+  const hierarchy = {
+    getDomain: () => 'activity',
+    getBaseClass: (_class: string) => _class,
+    // Only the stored class declares the fields, the base class named in the tx does not.
+    findAttribute: (_class: string, name: string) => (_class === 'chat-message' ? attributes[name] : undefined)
+  }
+  const middleware = new TriggersMiddleware({ hierarchy } as any, undefined)
+  const ctx = { contextData: { removedMap: new Map(), broadcast: { txes: [] } } }
+  // Its interval keeps jest from exiting.
+  afterAll(async () => {
+    await middleware.close()
+  })
+  // A mixin keeps its data under its id: an `$inc` there would wipe it.
+  const parent = {
+    _id: 'msg-1',
+    _class: 'chat-message',
+    space: 'channel',
+    'test:mixin:Extra': { note: 'x' },
+    _reactions: 2
+  }
+  const findAll = async (): Promise<any[]> => [parent]
+  const removal = (collection: string): Tx =>
+    ({
+      _class: core.class.TxRemoveDoc,
+      space: core.space.Tx,
+      objectId: 'reaction-1',
+      objectClass: 'reaction',
+      objectSpace: 'channel',
+      attachedTo: 'msg-1',
+      attachedToClass: 'base-message',
+      collection,
+      modifiedBy: 'bob',
+      modifiedOn: 1
+    }) as any
+
+  it('counts a collection only, by the class and data of the stored parent', async () => {
+    const names = ['message', '_id', 'test:mixin:Extra', 'applets', '_reactions', 'undeclared']
+    const result = await (middleware as any).processCollection(ctx, names.map(removal), findAll)
+
+    expect(result.map((it: any) => it.operations)).toEqual([
+      { $inc: { applets: -1 } },
+      { $inc: { _reactions: -1 } },
+      { $inc: { undeclared: -1 } }
+    ])
+  })
+})
+
+describe('TriggersMiddleware counters of a moved document', () => {
+  const mixin = 'test:mixin:Candidate'
+  const hierarchy = {
+    getDomain: () => 'contact',
+    getBaseClass: (_class: string) => (_class === mixin ? 'person' : _class),
+    isMixin: (_class: string) => _class === mixin,
+    hasMixin: (doc: any, _class: string) => doc[_class] !== undefined,
+    // The collection sits on the mixin, the stored class knows nothing of it.
+    findAttribute: (_class: string, name: string) =>
+      _class === mixin && name === 'applications' ? { type: { _class: core.class.Collection } } : undefined
+  }
+  const middleware = new TriggersMiddleware({ hierarchy } as any, undefined)
+  afterAll(async () => {
+    await middleware.close()
+  })
+  const people: Record<string, any> = {
+    old: { _id: 'old', _class: 'person', space: 'contacts', [mixin]: {} },
+    candidate: { _id: 'candidate', _class: 'person', space: 'contacts', [mixin]: {} },
+    plain: { _id: 'plain', _class: 'person', space: 'contacts' }
+  }
+  const findAll = async (_ctx: any, _class: string, query: any): Promise<any[]> => [people[query._id]]
+  const move = (to: string): any => ({
+    _class: core.class.TxUpdateDoc,
+    objectId: 'applicant-1',
+    objectClass: 'applicant',
+    objectSpace: 'vacancy',
+    attachedTo: 'old',
+    attachedToClass: mixin,
+    collection: 'applications',
+    operations: { attachedTo: to },
+    modifiedBy: 'bob',
+    modifiedOn: 1
+  })
+
+  it('counts a collection of a mixin on both parents, the new one only when it carries the mixin', async () => {
+    const counters = async (to: string): Promise<any[]> =>
+      ((await (middleware as any).updateCollection({}, move(to), findAll)) as any[]).map((it) => [
+        it._class,
+        it.objectId,
+        it.attributes
+      ])
+
+    // The counter lives in the mixin data, so it changes by a mixin tx.
+    expect(await counters('candidate')).toEqual([
+      [core.class.TxMixin, 'old', { $inc: { applications: -1 } }],
+      [core.class.TxMixin, 'candidate', { $inc: { applications: 1 } }]
+    ])
+    expect(await counters('plain')).toEqual([[core.class.TxMixin, 'old', { $inc: { applications: -1 } }]])
+  })
+})

@@ -20,8 +20,10 @@
   export let details: boolean = false
 </script>
 
-<SettingRow {...props} let:labelId>
-  <button class="control" type="button" aria-labelledby={labelId}>Bug</button>
+<SettingRow {...props} let:labelId let:descriptionId let:controlId>
+  <button class="control" type="button" id={controlId} aria-labelledby={labelId} aria-describedby={descriptionId}>
+    Bug
+  </button>
   <svelte:fragment slot="details">
     {#if details}<span class="chip">Epic</span>{/if}
   </svelte:fragment>

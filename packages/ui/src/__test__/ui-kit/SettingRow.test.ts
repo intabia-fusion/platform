@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { getEmbeddedLabel } from '@hcengineering/platform'
+import { getEmbeddedLabel, type Asset } from '@hcengineering/platform'
 import { type ComponentProps } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
@@ -73,5 +73,32 @@ describe('ui-kit SettingRow', () => {
     ).not.toBeNull()
     const stacked = mount({ props: { label: getEmbeddedLabel('Description'), stacked: true } })
     expect(stacked.classList.contains('setting-row--stacked')).toBe(true)
+  })
+
+  it('draws a list item: plate, caption with description, the control named and described by them', () => {
+    const root = mount({
+      props: {
+        label: getEmbeddedLabel('Anonymous voting'),
+        variant: 'list',
+        icon: 'ui:icon:Settings' as Asset,
+        color: 'Mauve',
+        description: getEmbeddedLabel('No one sees who voted for what')
+      }
+    })
+    const control = root.querySelector('.control') as HTMLElement
+    const caption = root.querySelector('label.setting-row__text') as HTMLLabelElement
+    expect(root.classList.contains('setting-row--list')).toBe(true)
+    expect(root.querySelector('.setting-row__icon .icon-box--tinted')).not.toBeNull()
+    expect(caption.htmlFor).toBe(control.id)
+    expect(control.getAttribute('aria-labelledby')).toBe(root.querySelector('.setting-row__title')?.id)
+    expect(control.getAttribute('aria-describedby')).toBe(root.querySelector('.setting-row__description')?.id)
+    expect(root.querySelector('.setting-row__description')?.textContent).toContain('No one sees')
+  })
+
+  it('has no plate and no description id without them, and marks a disabled item', () => {
+    const root = mount({ props: { label: getEmbeddedLabel('Quiz mode'), variant: 'list', disabled: true } })
+    expect(root.querySelector('.setting-row__icon')).toBeNull()
+    expect(root.querySelector('.control')?.hasAttribute('aria-describedby')).toBe(false)
+    expect(root.classList.contains('setting-row--disabled')).toBe(true)
   })
 })

@@ -18,15 +18,16 @@ import {
   getTypeMatchClient,
   toNotificationMessage,
   isChatMessage,
-  getAttachments
+  getAttachments,
+  getApplets
 } from '../misc'
 import contact from '@hcengineering/contact'
 import chunter from '@hcengineering/chunter'
 import attachment from '@hcengineering/attachment'
+import activity, { ActivityMessage } from '@hcengineering/activity'
 import { Client } from '../../types'
 import Cache from '../../cache'
 import { Doc, Space, AccountUuid, Ref, Class, MeasureContext } from '@hcengineering/core'
-import { ActivityMessage } from '@hcengineering/activity'
 
 jest.mock('@hcengineering/contact', () => ({
   mixin: {
@@ -318,6 +319,108 @@ describe('misc utils', () => {
           name: 'doc.pdf',
           size: 2048,
           metadata: {}
+        }
+      ])
+    })
+  })
+
+  describe('getApplets', () => {
+    let mockClientInstance: {
+      hierarchy: {
+        isDerived: jest.Mock
+      }
+      findAll: jest.Mock
+      model: { findObject: jest.Mock }
+    }
+
+    beforeEach(() => {
+      const pollApplet = { summaryFields: ['question'] }
+      mockClientInstance = {
+        hierarchy: {
+          isDerived: jest.fn()
+        },
+        findAll: jest.fn(),
+        model: { findObject: jest.fn((_id) => (_id === activity.applet.Poll ? pollApplet : undefined)) }
+      }
+    })
+
+    it('returns empty array if message is not a ChatMessage', async () => {
+      mockClientInstance.hierarchy.isDerived.mockReturnValue(false)
+      const msg = { _id: 'msg-1', applets: 2 } as unknown as ActivityMessage
+
+      const result = await getApplets(msg, mockClientInstance as unknown as Client)
+      expect(result).toEqual([])
+      expect(mockClientInstance.findAll).not.toHaveBeenCalled()
+    })
+
+    it('looks the applets of a chat message up whatever its counter says', async () => {
+      mockClientInstance.hierarchy.isDerived.mockReturnValue(true)
+      mockClientInstance.findAll.mockResolvedValue([{ _id: 'applet-inst-1', applet: 'applet-def-1' }])
+
+      // Taken from its create tx, before the trigger raises the counter.
+      const fresh = { _id: 'msg-1' } as unknown as ActivityMessage
+      expect(await getApplets(fresh, mockClientInstance as unknown as Client)).toEqual([
+        { _id: 'applet-inst-1', applet: 'applet-def-1' }
+      ])
+      const zero = { _id: 'msg-1', applets: 0 } as unknown as ActivityMessage
+      expect(await getApplets(zero, mockClientInstance as unknown as Client)).toHaveLength(1)
+    })
+
+    it('skips the query for a stored message whose counter is 0 or absent when the counter is trusted', async () => {
+      mockClientInstance.hierarchy.isDerived.mockReturnValue(true)
+      mockClientInstance.findAll.mockResolvedValue([{ _id: 'applet-inst-1', applet: 'applet-def-1' }])
+      const client = mockClientInstance as unknown as Client
+
+      const zero = { _id: 'msg-1', applets: 0 } as unknown as ActivityMessage
+      const absent = { _id: 'msg-2' } as unknown as ActivityMessage
+      expect(await getApplets(zero, client, { trustCounter: true })).toEqual([])
+      expect(await getApplets(absent, client, { trustCounter: true })).toEqual([])
+      expect(mockClientInstance.findAll).not.toHaveBeenCalled()
+    })
+
+    it('queries a stored message with a raised counter when the counter is trusted', async () => {
+      mockClientInstance.hierarchy.isDerived.mockReturnValue(true)
+      mockClientInstance.findAll.mockResolvedValue([{ _id: 'applet-inst-1', applet: 'applet-def-1' }])
+      const msg = { _id: 'msg-1', applets: 2 } as unknown as ActivityMessage
+
+      const result = await getApplets(msg, mockClientInstance as unknown as Client, { trustCounter: true })
+
+      expect(result).toHaveLength(1)
+      expect(mockClientInstance.findAll).toHaveBeenCalledTimes(1)
+    })
+
+    it('copies only the title of the applets for the inbox, without voters, quiz answer or options', async () => {
+      mockClientInstance.hierarchy.isDerived.mockReturnValue(true)
+      const msg = { _id: 'msg-1', applets: 1 } as unknown as ActivityMessage
+      mockClientInstance.findAll.mockResolvedValue([
+        {
+          _id: 'poll-1',
+          _class: activity.class.Poll,
+          space: 'channel-1',
+          attachedTo: 'msg-1',
+          attachedToClass: 'chunter:class:ChatMessage',
+          collection: 'applets',
+          applet: activity.applet.Poll,
+          question: 'Lunch?',
+          options: [{ id: 'a', label: 'Pizza' }],
+          votes: { a: 1 },
+          totalVotes: 1,
+          userVotes: [{ account: 'voter', options: ['a'] }],
+          quizAnswer: 'a',
+          quizAnswerHash: 'hash'
+        }
+      ])
+
+      const result = await getApplets(msg, mockClientInstance as unknown as Client)
+
+      expect(mockClientInstance.findAll).toHaveBeenCalledWith(activity.class.AppletInstance, { attachedTo: 'msg-1' })
+      expect(result).toEqual([
+        {
+          _id: 'poll-1',
+          _class: activity.class.Poll,
+          collection: 'applets',
+          applet: activity.applet.Poll,
+          question: 'Lunch?'
         }
       ])
     })

@@ -17,7 +17,12 @@
   import type { ActivityMessage, ActivityMessageViewType } from '@hcengineering/activity'
   import activity from '@hcengineering/activity'
   import type { MessageInlineAction } from '@hcengineering/activity-resources'
-  import { ActivityDocLink, ActivityMessageTemplate, editingMessageStore } from '@hcengineering/activity-resources'
+  import {
+    ActivityDocLink,
+    ActivityMessageTemplate,
+    AppletsList,
+    editingMessageStore
+  } from '@hcengineering/activity-resources'
   import type { Attachment } from '@hcengineering/attachment'
   import type { AttachmentImageSize } from '@hcengineering/attachment-resources'
   import { AttachmentDocList } from '@hcengineering/attachment-resources'
@@ -266,7 +271,7 @@
     const target = e.target as HTMLElement | null
     if (
       target?.closest(
-        '.replies-container, .replies, .hulyReactions-container, .reactions, .actions, .gallery, .attachment-preview, .forwarded-message, .read-marker, .avatar, .socialIcon, .saveMarker, .header, button, input, textarea, img, [role="button"]'
+        '.replies-container, .replies, .hulyReactions-container, .reactions, .actions, .gallery, .attachment-preview, .applets-container, .forwarded-message, .read-marker, .avatar, .socialIcon, .saveMarker, .header, button, input, textarea, img, [role="button"]'
       )
     ) {
       return
@@ -345,7 +350,7 @@
         </div>
       {/if}
     </svelte:fragment>
-    <svelte:fragment slot="content">
+    <svelte:fragment slot="content" let:readonly={contentReadonly}>
       {#if !isEditing}
         <div class="clear-mins" {...!pending && { 'data-delivered': true }}>
           <MessageViewer message={displayText} />
@@ -353,7 +358,8 @@
             <div class="mt-2" />
           {/if}
           <AttachmentDocList {value} {attachments} imageSize={attachmentImageSize} {videoPreload} {isOwn} />
-          <ForwardedMessagePresenter parent={value} {object} />
+          <AppletsList {value} readonly={contentReadonly} />
+          <ForwardedMessagePresenter parent={value} {object} readonly={contentReadonly} />
         </div>
       {:else if object}
         <ChatMessageInput
@@ -367,6 +373,8 @@
             editingMessageStore.set(undefined)
           }}
         />
+        <!-- Applets are not edited with the message, but they stay with it. -->
+        <AppletsList {value} readonly />
         <div class="flex-row-center gap-2 justify-end mt-2">
           <Button
             label={view.string.Cancel}

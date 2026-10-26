@@ -141,6 +141,7 @@ const mockHierarchy = {
     if (sub === parent) return true
     if (sub === 'ChatMessage' && parent === activity.class.ActivityMessage) return true
     if (sub === 'Reaction' && parent === activity.class.Reaction) return true
+    if (sub === 'Poll' && parent === activity.class.AppletInstance) return true
     if (sub === 'Attachment' && parent === attachment.class.Attachment) return true
     if (typeof sub === 'string' && typeof parent === 'string') {
       if (sub === parent) return true
@@ -1653,6 +1654,83 @@ describe('ChatViewport', () => {
 
       msgs = get(viewport.messages)
       expect(msgs[0].message).toBe('Refetched after attachment conflict')
+    })
+
+    it('8.14 should keep a poll in $lookup.applets up to date, including service updates without attachedTo', async () => {
+      listener([
+        {
+          _class: 'TxCreateDoc',
+          objectId: 'poll-1',
+          objectClass: 'Poll',
+          attachedTo: 'msg-1',
+          attachedToClass: 'ChatMessage',
+          modifiedOn: 1050,
+          attributes: { question: 'Lunch?', totalVotes: 0, votes: {} }
+        }
+      ])
+      await flushTasks()
+
+      let msgs = get(viewport.messages)
+      expect((msgs[0] as any).$lookup?.applets.map((it: any) => it._id)).toEqual(['poll-1'])
+
+      // The activity service writes tallies with a plain update, the message is found by the remembered applet id.
+      listener([
+        {
+          _class: 'TxUpdateDoc',
+          objectId: 'poll-1',
+          objectClass: 'Poll',
+          modifiedOn: 1060,
+          operations: { totalVotes: 1, votes: { a: 1 } }
+        }
+      ])
+      await flushTasks()
+
+      msgs = get(viewport.messages)
+      expect((msgs[0] as any).$lookup?.applets[0].totalVotes).toBe(1)
+
+      listener([{ _class: 'TxRemoveDoc', objectId: 'poll-1', objectClass: 'Poll', modifiedOn: 1070 }])
+      await flushTasks()
+
+      msgs = get(viewport.messages)
+      expect((msgs[0] as any).$lookup?.applets).toEqual([])
+      expect(mockClient.findOne).not.toHaveBeenCalled()
+    })
+
+    it('8.15 should refetch the message when a poll update is older than the poll in $lookup.applets', async () => {
+      listener([
+        {
+          _class: 'TxCreateDoc',
+          objectId: 'poll-stale',
+          objectClass: 'Poll',
+          attachedTo: 'msg-1',
+          attachedToClass: 'ChatMessage',
+          modifiedOn: 1050,
+          attributes: { question: 'Lunch?', totalVotes: 2, votes: { a: 2 } }
+        }
+      ])
+      await flushTasks()
+
+      mockClient.findOne.mockResolvedValueOnce({ ...mockMsg, message: 'Refetched after poll conflict' })
+
+      // A late tally from before the poll already shown must not roll it back.
+      listener([
+        {
+          _class: 'TxUpdateDoc',
+          objectId: 'poll-stale',
+          objectClass: 'Poll',
+          modifiedOn: 950,
+          operations: { totalVotes: 1, votes: { a: 1 } }
+        }
+      ])
+      await flushTasks()
+
+      expect(mockClient.findOne).toHaveBeenCalledWith(
+        activity.class.ActivityMessage,
+        { _id: 'msg-1' },
+        expect.any(Object)
+      )
+      const msgs = get(viewport.messages)
+      expect(msgs[0].message).toBe('Refetched after poll conflict')
     })
   })
 

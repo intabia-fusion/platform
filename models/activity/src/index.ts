@@ -84,7 +84,10 @@ import { type AnyComponent } from '@hcengineering/ui/src/types'
 
 import { buildActions } from './actions'
 import { buildNotifications } from './notification'
+import { buildApplets } from './applets'
 import activity from './plugin'
+import { TApplet, TAppletInstance } from './applet'
+import { TPoll, TPollAnswer, TVotePollAction } from './poll'
 
 export { activityId } from '@hcengineering/activity'
 export { activityOperation, migrateMessagesSpace } from './migration'
@@ -123,6 +126,9 @@ export class TActivityMessage extends TAttachedDoc implements ActivityMessage {
 
   @Prop(Collection(activity.class.ActivityMessage), activity.string.Replies)
   replies?: number
+
+  @Prop(Collection(activity.class.AppletInstance), activity.string.Applets)
+  applets?: number
 
   @Prop(TypeRef(activity.class.ActivityMessage), activity.string.ForwardedMessage)
   @Index(IndexKind.Indexed)
@@ -314,7 +320,12 @@ export function createModel (builder: Builder): void {
     TActivityReference,
     TActivityMessagePreview,
     TReplyProvider,
-    TUserMentionInfo
+    TUserMentionInfo,
+    TApplet,
+    TAppletInstance,
+    TPoll,
+    TPollAnswer,
+    TVotePollAction
   )
 
   builder.mixin(activity.class.Reaction, core.class.Class, core.mixin.TxAccessLevel, {
@@ -426,6 +437,7 @@ export function createModel (builder: Builder): void {
 
   buildActions(builder)
   buildNotifications(builder)
+  buildApplets(builder)
 
   builder.mixin<Class<UserMentionInfo>, IndexingConfiguration<UserMentionInfo>>(
     activity.class.UserMentionInfo,
@@ -436,6 +448,19 @@ export function createModel (builder: Builder): void {
       indexes: []
     }
   )
+
+  builder.mixin(activity.class.VotePollAction, core.class.Class, core.mixin.TransientConfiguration, {
+    broadcastOnly: true
+  })
+
+  builder.mixin(activity.class.VotePollAction, core.class.Class, core.mixin.TxAccessLevel, {
+    createAccessLevel: AccountRole.Guest
+  })
+
+  builder.mixin(activity.class.AppletInstance, core.class.Class, core.mixin.TxAccessLevel, {
+    createAccessLevel: AccountRole.Guest,
+    removeAccessLevel: AccountRole.Guest
+  })
 }
 
 export default activity

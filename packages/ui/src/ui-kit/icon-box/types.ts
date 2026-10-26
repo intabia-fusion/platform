@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import type { IconComponent } from '../../types'
+import type { IconComponent, IconSize } from '../../types'
 import type { ButtonShape } from '../button/types'
 
 /** Heights match the kit buttons of the same name; `small` by default, as next to a title field. */
@@ -22,7 +22,11 @@ export type IconBoxSize = 'large' | 'medium' | 'small' | 'extra-small'
 export interface IconBoxProps {
   icon: IconComponent
   iconProps?: Record<string, any>
+  /** `small` by default at every box size. */
+  iconSize?: IconSize
   size?: IconBoxSize
   /** `rectangle` by default, as the buttons of the same size. */
   shape?: ButtonShape
+  /** A palette color name (`getPlatformColorByName`): a soft tinted plate instead of the button look. */
+  color?: string
 }

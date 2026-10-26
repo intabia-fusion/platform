@@ -14,7 +14,9 @@
 //
 
 import type { Asset } from '@hcengineering/platform'
-import type { ComponentProps } from 'svelte'
+import { themeStore, ThemeOptions } from '@hcengineering/theme'
+import { tick, type ComponentProps } from 'svelte'
+import { get } from 'svelte/store'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import IconBox from '../../ui-kit/icon-box/IconBox.svelte'
@@ -68,5 +70,33 @@ describe('ui-kit IconBox', () => {
     component.$set({ shape: 'round' })
     await Promise.resolve()
     expect(box.classList.contains('icon-box--round')).toBe(true)
+  })
+
+  it('keeps the button look without a color and for a name outside the palette', () => {
+    for (const color of [undefined, 'NoSuchColor']) {
+      const { box } = mount({ icon: ICON, color })
+      expect(box.classList.contains('icon-box--tinted')).toBe(false)
+      expect(box.style.getPropertyValue('--_tint-background')).toBe('')
+    }
+  })
+
+  it('tints the plate and the icon by a palette color, stronger on a dark theme', async () => {
+    const theme = get(themeStore)
+    themeStore.set(new ThemeOptions(theme.fontSize, false, theme.language, theme.emoji, theme.accent))
+    const { box } = mount({ icon: ICON, color: 'Firework' })
+    await tick()
+    expect(box.classList.contains('icon-box--tinted')).toBe(true)
+    expect(box.style.getPropertyValue('--_tint-color')).toContain('82%')
+    expect(box.style.getPropertyValue('--_tint-background')).toContain('14%')
+    themeStore.set(new ThemeOptions(theme.fontSize, true, theme.language, theme.emoji, theme.accent))
+    await tick()
+    expect(box.style.getPropertyValue('--_tint-background')).toContain('26%')
+    themeStore.set(theme)
+  })
+
+  it('draws the icon by iconSize at any box size', () => {
+    const { box } = mount({ icon: ICON, size: 'large', iconSize: 'large' })
+    expect(box.classList.contains('icon-box--large')).toBe(true)
+    expect(box.querySelector('svg.svg-large')).not.toBeNull()
   })
 })

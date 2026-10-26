@@ -26,9 +26,10 @@ import core, {
   Ref,
   SortingOrder,
   Timestamp,
-  generateId
+  generateId,
+  groupByArray
 } from '@hcengineering/core'
-import activity, { ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
+import activity, { ActivityMessage, Applet, AppletSnapshot, DocUpdateMessage } from '@hcengineering/activity'
 import notification, {
   DocNotifyContext,
   NotificationIntl,
@@ -40,7 +41,8 @@ import notification, {
   isUnreadMessageChunk,
   ContextNotification,
   appendAndCollapseUnreadMessages,
-  isOversizedChatMessage
+  isOversizedChatMessage,
+  isOversizedMarkup
 } from '@hcengineering/notification'
 import { truncateMessage, Sender, Receiver } from '@hcengineering/server-notification'
 import { isEmptyMarkup, markupToText } from '@hcengineering/text-core'
@@ -62,10 +64,12 @@ import {
   getLastNotify,
   hasMentionNotificationByMessage,
   getAttachments,
+  getApplets,
   getCreateContextTx,
   getPushGroup,
   isSender
 } from '../utils/utils'
+import { capMarkup } from '../utils/misc'
 import { Client, Result, TxCache, NotifyProviders } from '../types'
 import { cancelHeldPushes, pushDismissMessage } from './dismiss'
 import Cache from '../cache'
@@ -156,6 +160,8 @@ async function handleCreateMessage (
   const messageTimestamp = message.createdOn ?? message.modifiedOn
 
   const attachments = await getAttachments(message, client)
+  // The counter of a new message is not raised yet: the lookup waits for a receiver who gets a notification.
+  let applets: AppletSnapshot[] | undefined
 
   for (const receiver of receivers) {
     if (isSender(receiver, sender)) continue
@@ -172,6 +178,7 @@ async function handleCreateMessage (
     const type = (notifyResult[notification.providers.InboxNotificationProvider] ?? [])[0]
 
     if (type != null) {
+      applets ??= await getApplets(message, client)
       await pushNotification(
         client,
         cache,
@@ -186,6 +193,7 @@ async function handleCreateMessage (
         type,
         notifyResult,
         attachments,
+        applets,
         alreadyRead
       )
     } else if (!alreadyRead) {
@@ -380,7 +388,12 @@ async function handleUpdateMessage (
   }
 
   const ops = tx.operations as any
-  const contentChanged = ops.message != null || ops.attachments != null || ops.$inc?.attachments != null
+  const contentChanged =
+    ops.message != null ||
+    ops.attachments != null ||
+    ops.$inc?.attachments != null ||
+    ops.applets != null ||
+    ops.$inc?.applets != null
   if (!contentChanged && !isDUM) return
 
   // The cache (or the DB behind it) already holds this tx: applying it again doubles $push/$inc.
@@ -402,6 +415,7 @@ async function handleUpdateMessage (
 
   const contexts = await cache.getContexts(doc._id)
   const attachments = await getAttachments(message, client)
+  const applets = await getApplets(message, client, { trustCounter: true })
   for (const context of contexts) {
     // Check if the notification exists in this context before emitting update
     const ops: DocumentUpdate<DocNotifyContext> = {}
@@ -413,7 +427,8 @@ async function handleUpdateMessage (
           $query: { messageId: tx.objectId },
           $update: {
             message: toNotificationMessage(message, client.hierarchy),
-            attachments
+            attachments,
+            applets
           }
         }
       }
@@ -432,8 +447,10 @@ async function handleUpdateMessage (
             latestNotifications: {
               $query: { type: 'mention', messageId: tx.objectId },
               $update: {
-                markup: message.message,
-                attachments
+                markup: message.message != null ? capMarkup(message.message) : undefined,
+                truncated: message.message != null && isOversizedMarkup(message.message),
+                attachments,
+                applets
               }
             }
           }
@@ -539,6 +556,7 @@ async function handleUpdateDUM (
         type,
         notifyResult,
         [],
+        [],
         alreadyRead
       )
     } else if (!alreadyRead) {
@@ -547,12 +565,28 @@ async function handleUpdateDUM (
   }
 }
 
+async function getAppletsLabel (
+  client: Client,
+  applets: Array<{ applet: Ref<Applet> }>,
+  receiverLang: string
+): Promise<string> {
+  const models = client.model.findAllSync(activity.class.Applet, { _id: { $in: applets.map((it) => it.applet) } })
+  const labels: string[] = []
+  for (const [appletId, instances] of groupByArray(applets, (it) => it.applet).entries()) {
+    const model = models.find((it) => it._id === appletId)
+    if (model == null) continue
+    labels.push(await translate(instances.length > 1 ? model.pluralLabel : model.label, {}, receiverLang))
+  }
+  return labels.length > 0 ? labels.join(', ') : await translate(activity.string.Applets, {}, receiverLang)
+}
+
 async function getMessageIntl (
   client: Client,
   txCache: TxCache,
   type: NotificationType,
   doc: Doc,
   message: ActivityMessage,
+  applets: AppletSnapshot[],
   sender: Sender,
   receiverLang: string
 ): Promise<NotificationIntl> {
@@ -591,6 +625,9 @@ async function getMessageIntl (
     ((message as ChatMessage).attachments ?? 0) > 0
   ) {
     intlParamsNotLocalized.message = activity.string.SentAttachments
+  } else if (applets.length > 0) {
+    intlParamsNotLocalized.message = activity.string.SentApplet
+    intlParams.applet = await getAppletsLabel(client, applets, receiverLang)
   } else if (
     message.forwardedMessage != null &&
     message.forwardContent?.message != null &&
@@ -599,6 +636,9 @@ async function getMessageIntl (
     intlParams.message = truncateMessage(markupToText(message.forwardContent.message))
   } else if (message.forwardedMessage != null && (message.forwardContent?.attachments.length ?? 0) > 0) {
     intlParamsNotLocalized.message = activity.string.SentAttachments
+  } else if (message.forwardedMessage != null && (message.forwardContent?.applets?.length ?? 0) > 0) {
+    intlParamsNotLocalized.message = activity.string.SentApplet
+    intlParams.applet = await getAppletsLabel(client, message.forwardContent?.applets ?? [], receiverLang)
   } else {
     intlParamsNotLocalized.object = hierarchy.getClass(doc._class).label
     intlParamsNotLocalized.message = activity.string.UpdatedObject
@@ -676,9 +716,10 @@ async function pushNotification (
   type: NotificationType,
   notifyResult: NotifyProviders,
   attachments: BlobType[],
+  applets: AppletSnapshot[],
   alreadyRead: boolean
 ): Promise<void> {
-  const content = await getMessageIntl(client, txCache, type, doc, message, sender, receiver.language)
+  const content = await getMessageIntl(client, txCache, type, doc, message, applets, sender, receiver.language)
   const objectDisplayData = await getObjectDisplayData(client, cache, txCache, doc, receiver.account)
   const pushSubscriptions = await cache.getPushSubscriptions(receiver.account)
   const settings = await cache.getSettings()
@@ -704,6 +745,7 @@ async function pushNotification (
       message: toNotificationMessage(message, client.hierarchy),
       truncated: isOversizedChatMessage(message) || undefined,
       attachments,
+      applets,
       createdOn: message.createdOn ?? message.modifiedOn,
       createdBy: message.createdBy ?? message.modifiedBy
     },
@@ -820,6 +862,7 @@ async function restoreLatestNotifications (
       message: toNotificationMessage(message, client.hierarchy),
       truncated: isOversizedChatMessage(message) || undefined,
       attachments: await getAttachments(message, client),
+      applets: await getApplets(message, client, { trustCounter: true }),
       createdOn: message.createdOn ?? message.modifiedOn,
       createdBy: message.createdBy ?? message.modifiedBy
     })

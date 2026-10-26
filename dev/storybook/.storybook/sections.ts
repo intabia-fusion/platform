@@ -30,6 +30,7 @@ const sections: Array<{ id: SectionId, label: string }> = [
 // An unlisted root goes to UI kit; null keeps the root in every tab.
 const rootSections: Record<string, SectionId | null> = {
   Introduction: null,
+  Activity: 'plugins',
   Attachments: 'plugins',
   Icons: 'plugins',
   'Kit (pen.dev)': 'screens'

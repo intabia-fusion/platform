@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -14,8 +15,8 @@
 -->
 
 <script lang="ts">
-  import type { ActivityMessagePreviewType, ActivityMessageLite } from '@hcengineering/activity'
-  import { BaseMessagePreview } from '@hcengineering/activity-resources'
+  import type { ActivityMessagePreviewType, ActivityMessageLite, AppletSnapshot } from '@hcengineering/activity'
+  import { AppletsPreview, BaseMessagePreview } from '@hcengineering/activity-resources'
   import attachment from '@hcengineering/attachment'
   import { AttachmentsTooltip } from '@hcengineering/attachment-resources'
   import type { ChatMessage } from '@hcengineering/chunter'
@@ -26,10 +27,14 @@
 
   export let value: ActivityMessageLite<ChatMessage>
   export let attachments: BlobType[] | undefined = undefined
+  // From a notification: shown as they are, without fetching the applets of the message.
+  export let applets: AppletSnapshot[] | undefined = undefined
   export let readonly = false
   export let type: ActivityMessagePreviewType = 'full'
 
   const attachmentsQuery = createQuery()
+
+  $: hasApplets = applets != null ? applets.length > 0 : (value.applets ?? 0) > 0
 
   let _attachments: BlobType[] = []
 
@@ -73,11 +78,15 @@
       <Label label={attachment.string.Attachments} />:
       {_attachments.map(({ name }) => name).join(', ')}
     </span>
+  {:else if hasApplets && isEmptyMarkup(value.message)}
+    <AppletsPreview messageId={value._id} {applets} />
   {:else if value.forwardContent?.attachments != null && value.forwardContent.attachments.length > 0 && isEmptyMarkup(value.forwardContent?.message ?? '')}
     <span class="font-normal secondaryColor">
       <Label label={attachment.string.Attachments} />:
       {value.forwardContent.attachments.map(({ name }) => name).join(', ')}
     </span>
+  {:else if (value.forwardContent?.applets?.length ?? 0) > 0 && isEmptyMarkup(value.forwardContent?.message ?? '')}
+    <AppletsPreview applets={value.forwardContent?.applets} />
   {/if}
 </BaseMessagePreview>
 
