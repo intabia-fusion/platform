@@ -473,6 +473,12 @@
     return total
   }
 
+  // A card leaves its lane only for a lane that knows what to write into the card.
+  function laneTakes (lane: SwimLane | undefined): boolean {
+    if (dragCard === undefined || lane === undefined || lane._id === dragCardInitialSwimLane?._id) return true
+    return getSwimLaneUpdateProps?.(dragCard, lane) !== undefined
+  }
+
   async function move (state: CategoryType, targetSwimLane?: SwimLane): Promise<void> {
     if (dragCard === undefined) {
       return
@@ -480,7 +486,8 @@
 
     const canDrop =
       (dragCardAvailableCategories === undefined || dragCardAvailableCategories.includes(state)) &&
-      !isMerged(state, membersOf)
+      !isMerged(state, membersOf) &&
+      laneTakes(targetSwimLane)
 
     if (!canDrop) {
       dragCard = undefined
@@ -695,7 +702,8 @@
 
       const canDrop =
         (dragCardAvailableCategories === undefined || dragCardAvailableCategories.includes(state)) &&
-        !isMerged(state, membersOf)
+        !isMerged(state, membersOf) &&
+        laneTakes(swimLane)
 
       if (!canDrop) {
         return
@@ -806,7 +814,8 @@
     if (dragCard !== undefined) {
       const canDrop =
         (dragCardAvailableCategories === undefined || dragCardAvailableCategories.includes(state)) &&
-        !isMerged(state, membersOf)
+        !isMerged(state, membersOf) &&
+        laneTakes(swimLane)
       if (!canDrop) {
         dragCard = undefined
         dragCardAvailableCategories = undefined

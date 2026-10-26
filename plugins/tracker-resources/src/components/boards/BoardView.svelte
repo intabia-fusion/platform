@@ -98,7 +98,9 @@
     for (const id of ids) {
       const project = found.find((p) => p._id === id)
       if (project === undefined) names.push(await translate(tracker.string.ProjectHidden, {}, lang))
-      else if (project.archived) { names.push(await translate(tracker.string.ProjectArchived, { identifier: project.identifier }, lang)) }
+      else if (project.archived) {
+        names.push(await translate(tracker.string.ProjectArchived, { identifier: project.identifier }, lang))
+      }
     }
     return names
   }

@@ -57,7 +57,9 @@
   async function leaveBoard (id: Ref<Board>, current: Board | undefined): Promise<void> {
     // The first answer of the query may come before a board just created: ask the server
     const found = current ?? (await client.findOne(tracker.class.Board, { _id: id }))
-    if (found !== undefined && isBoardAvailable(found, account) && (settingsOpen || found.projects.includes(project))) { return }
+    if (found !== undefined && isBoardAvailable(found, account) && (settingsOpen || found.projects.includes(project))) {
+      return
+    }
     const loc = getCurrentResolvedLocation()
     if (loc.path[5] !== id) return
     loc.path.length = 5

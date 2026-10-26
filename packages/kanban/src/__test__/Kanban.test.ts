@@ -1469,6 +1469,37 @@ describe('Kanban swim lanes', () => {
       expect(onMoveCommit).toHaveBeenCalledWith('a1', update)
     })
 
+    it('keeps a card in its lane when the other lane has no update for it', async () => {
+      await dragBoard({ getSwimLaneUpdateProps: () => undefined })
+
+      fire(cardEl('a1'), 'dragstart')
+      await settle()
+      fire(cell('B', 'done'), 'dragover')
+      await settle()
+      expect(cardIds(cell('B', 'done'))).not.toContain('a1')
+      fire(cell('B', 'done'), 'drop')
+      await settle()
+
+      expect(fakeClient.update).not.toHaveBeenCalled()
+      expect(fakeClient.diffUpdate).not.toHaveBeenCalled()
+    })
+
+    it('moves a card between columns of its lane when the other lanes have no update for it', async () => {
+      await dragBoard({ getSwimLaneUpdateProps: () => undefined })
+
+      fire(cardEl('a1'), 'dragstart')
+      await settle()
+      fire(cell('A', 'done'), 'dragover')
+      await settle()
+      fire(cell('A', 'done'), 'drop')
+      await settle()
+
+      expect(fakeClient.update).toHaveBeenCalledTimes(1)
+      const [, update] = fakeClient.update.mock.calls[0] as [Card, Record<string, string>]
+      expect(update.status).toBe('done')
+      expect(update).not.toHaveProperty('lane')
+    })
+
     it('moving across lanes and columns updates the status too', async () => {
       await dragBoard()
 
