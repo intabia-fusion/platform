@@ -127,9 +127,7 @@
     if (!canSave(params, Date.now())) return
 
     const validQuestion = (params.question ?? '').trim()
-    const validOptions = params.options
-      .map((it) => ({ ...it, label: it.label.trim() }))
-      .filter((it) => it.label !== '')
+    const validOptions = params.options.map((it) => ({ ...it, label: it.label.trim() })).filter((it) => it.label !== '')
 
     const validIds = new Set(validOptions.map((it) => it.id))
     const saveConfig: CreatePollParams = {

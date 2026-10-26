@@ -17,7 +17,10 @@ import type { Doc, Ref } from '@hcengineering/core'
 
 import { sortApplets } from '../applets'
 
-const applet = (_id: string, createdOn?: number): Pick<Doc, '_id' | 'createdOn'> => ({ _id: _id as Ref<Doc>, createdOn })
+const applet = (_id: string, createdOn?: number): Pick<Doc, '_id' | 'createdOn'> => ({
+  _id: _id as Ref<Doc>,
+  createdOn
+})
 
 describe('sortApplets', () => {
   it('orders by creation, the id deciding within one millisecond', () => {

@@ -180,7 +180,11 @@
   async function notifyNotCounted (kind: 'vote' | 'retract'): Promise<void> {
     const { language } = $themeStore
     addNotification(
-      await translate(kind === 'vote' ? activity.string.VoteNotCounted : activity.string.RetractNotCounted, {}, language),
+      await translate(
+        kind === 'vote' ? activity.string.VoteNotCounted : activity.string.RetractNotCounted,
+        {},
+        language
+      ),
       await translate(activity.string.VoteNotConfirmed, {}, language),
       PollNotCountedToast,
       {},

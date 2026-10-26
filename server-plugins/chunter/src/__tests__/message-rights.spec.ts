@@ -201,16 +201,26 @@ describe('ChunterMiddleware message rights', () => {
   })
 
   it('lets members work with a proposal card of the AI bot', async () => {
-    const edit = factory.createTxUpdateDoc(aiBot.class.AITaskProposalMessage, channel, 'proposal-1' as any, {
-      message: 'With links to the created issues',
-      project: 'project-1'
-    } as any)
+    const edit = factory.createTxUpdateDoc(
+      aiBot.class.AITaskProposalMessage,
+      channel,
+      'proposal-1' as any,
+      {
+        message: 'With links to the created issues',
+        project: 'project-1'
+      } as any
+    )
     await middleware.tx(bob(), [edit])
     expect(passed).toEqual([edit])
 
-    const author = factory.createTxUpdateDoc(aiBot.class.AITaskProposalMessage, channel, 'proposal-1' as any, {
-      createdBy: bobSocial
-    } as any)
+    const author = factory.createTxUpdateDoc(
+      aiBot.class.AITaskProposalMessage,
+      channel,
+      'proposal-1' as any,
+      {
+        createdBy: bobSocial
+      } as any
+    )
     await expect(middleware.tx(bob(), [author])).rejects.toThrow()
 
     const remove = factory.createTxRemoveDoc(aiBot.class.AITaskProposalMessage, channel, 'proposal-1' as any)
@@ -236,9 +246,14 @@ describe('ChunterMiddleware message rights', () => {
 
   it('leaves new messages and other activity messages to other rules', async () => {
     const create = factory.createTxCreateDoc(chunter.class.ChatMessage, channel, { message: 'Hi' } as any)
-    const docUpdate = factory.createTxUpdateDoc(activity.class.DocUpdateMessage, channel, 'doc-update-1' as any, {
-      action: 'update'
-    } as any)
+    const docUpdate = factory.createTxUpdateDoc(
+      activity.class.DocUpdateMessage,
+      channel,
+      'doc-update-1' as any,
+      {
+        action: 'update'
+      } as any
+    )
     await middleware.tx(bob(), [create, docUpdate])
     expect(passed).toEqual([create, docUpdate])
   })

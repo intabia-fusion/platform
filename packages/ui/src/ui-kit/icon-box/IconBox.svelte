@@ -34,8 +34,11 @@
   // The shares of FileBadge: pulled towards the theme's text, the palette's own dark shades are lost on a dark theme.
   $: hue = color == null ? undefined : getPlatformColorByName(color, $themeStore.dark)?.color
   $: tintColor =
-    hue == null ? undefined : `color-mix(in srgb, ${hue} ${$themeStore.dark ? '62%' : '82%'}, var(--theme-caption-color))`
-  $: tintBackground = hue == null ? undefined : `color-mix(in srgb, ${hue} ${$themeStore.dark ? '26%' : '14%'}, transparent)`
+    hue == null
+      ? undefined
+      : `color-mix(in srgb, ${hue} ${$themeStore.dark ? '62%' : '82%'}, var(--theme-caption-color))`
+  $: tintBackground =
+    hue == null ? undefined : `color-mix(in srgb, ${hue} ${$themeStore.dark ? '26%' : '14%'}, transparent)`
 </script>
 
 <!-- Decorative: the object kind is already named by the field or title next to it. -->

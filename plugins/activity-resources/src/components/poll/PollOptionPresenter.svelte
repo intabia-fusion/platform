@@ -258,7 +258,8 @@
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    padding: calc((var(--_bar-line) + 0.25rem) / 2) calc(2.25rem + 0.5rem + var(--_votes) - var(--spacing-2)) calc((var(--_bar-line) + 0.25rem) / 2) 0;
+    padding: calc((var(--_bar-line) + 0.25rem) / 2) calc(2.25rem + 0.5rem + var(--_votes) - var(--spacing-2))
+      calc((var(--_bar-line) + 0.25rem) / 2) 0;
     font-size: 0.75rem;
     word-break: break-word;
     overflow-wrap: anywhere;

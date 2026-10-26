@@ -111,7 +111,7 @@ class ActivityMiddleware extends BaseMiddleware {
     if (followsParent(this.context.hierarchy, tx, instance, batch)) return
 
     const applet = this.context.modelDb.findAllSync(activity.class.Applet, { _id: instance.applet })[0]
-    if (!applet?.editable) this.throwForbidden(ctx, tx, ForbiddenKind.SystemOnly, 'This applet is not changed once sent')
+    if (!applet?.editable) { this.throwForbidden(ctx, tx, ForbiddenKind.SystemOnly, 'This applet is not changed once sent') }
     if (!this.isAuthor(ctx, instance)) {
       this.throwForbidden(ctx, tx, ForbiddenKind.AuthorOnly, 'Only the author changes an applet')
     }
@@ -121,10 +121,7 @@ class ActivityMiddleware extends BaseMiddleware {
     }
   }
 
-  private async validateAppletRemove (
-    ctx: MeasureContext<SessionData>,
-    tx: TxRemoveDoc<AppletInstance>
-  ): Promise<void> {
+  private async validateAppletRemove (ctx: MeasureContext<SessionData>, tx: TxRemoveDoc<AppletInstance>): Promise<void> {
     const instance = await this.findApplet(ctx, tx.objectId)
     if (!this.isAuthor(ctx, instance) && !hasAccountRole(ctx.contextData.account, AccountRole.Maintainer)) {
       this.throwForbidden(ctx, tx, ForbiddenKind.AuthorOnly, 'Only the author or a maintainer removes an applet')
@@ -212,7 +209,7 @@ class ActivityMiddleware extends BaseMiddleware {
 
     if (!Array.isArray(options)) this.throwBadRequest('Poll options must be a list')
     if (options.length < 2) this.throwBadRequest('Poll needs at least 2 options')
-    if (options.length > pollLimits.maxOptions) this.throwBadRequest(`Poll allows at most ${pollLimits.maxOptions} options`)
+    if (options.length > pollLimits.maxOptions) { this.throwBadRequest(`Poll allows at most ${pollLimits.maxOptions} options`) }
 
     const ids = new Set<OptionID>()
     for (const option of options) {
@@ -259,9 +256,7 @@ class ActivityMiddleware extends BaseMiddleware {
     this.validateVoteFields(tx.attributes)
 
     const account = ctx.contextData.account
-    const space = (
-      await this.findAll(ctx, contact.class.PersonSpace, { _id: tx.objectSpace as Ref<PersonSpace> })
-    )[0]
+    const space = (await this.findAll(ctx, contact.class.PersonSpace, { _id: tx.objectSpace as Ref<PersonSpace> }))[0]
     if (space?.account !== account.uuid) {
       this.throwForbidden(ctx, tx, ForbiddenKind.ForeignPrivateWrite, 'A vote is accepted from own personal space only')
     }

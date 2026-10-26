@@ -13,7 +13,13 @@
 // limitations under the License.
 //
 
-import activity, { type OptionID, type Poll, type PollAnswer, type PollOption, type UserVote } from '@hcengineering/activity'
+import activity, {
+  type OptionID,
+  type Poll,
+  type PollAnswer,
+  type PollOption,
+  type UserVote
+} from '@hcengineering/activity'
 import contact, { type Employee, type Person, type PersonSpace } from '@hcengineering/contact'
 import core, { type AccountUuid, type Doc, type PersonId, type Ref, type Space } from '@hcengineering/core'
 

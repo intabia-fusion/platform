@@ -35,7 +35,18 @@ export function buildApplets (builder: Builder): void {
       getTitleFn: activity.function.GetPollTitleFn,
       createFn: activity.function.CreatePollFn,
       editable: false,
-      snapshotFields: ['mode', 'anonymous', 'quiz', 'revote', 'question', 'options', 'startAt', 'endAt', 'totalVotes', 'votes'],
+      snapshotFields: [
+        'mode',
+        'anonymous',
+        'quiz',
+        'revote',
+        'question',
+        'options',
+        'startAt',
+        'endAt',
+        'totalVotes',
+        'votes'
+      ],
       summaryFields: ['mode', 'anonymous', 'quiz', 'revote', 'question', 'startAt', 'endAt'],
       dependents: [activity.class.PollAnswer]
     },

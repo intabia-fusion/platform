@@ -36,12 +36,7 @@
 
 <!-- Siblings, not nested: a button inside a button is invalid. -->
 <div class="tile">
-  <button
-    type="button"
-    class="open"
-    title={title !== '' ? title : undefined}
-    on:click|stopPropagation={open}
-  >
+  <button type="button" class="open" title={title !== '' ? title : undefined} on:click|stopPropagation={open}>
     <span class="thumb"><IconBox {icon} {color} size="large" iconSize="large" /></span>
     <span class="info">
       <span class="name">

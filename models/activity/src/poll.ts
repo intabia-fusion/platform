@@ -22,13 +22,7 @@ import activity, {
   type UserVote,
   type VotePollAction
 } from '@hcengineering/activity'
-import core, {
-  type AccountUuid,
-  DOMAIN_TRANSIENT,
-  type Domain,
-  type Ref,
-  type Timestamp
-} from '@hcengineering/core'
+import core, { type AccountUuid, DOMAIN_TRANSIENT, type Domain, type Ref, type Timestamp } from '@hcengineering/core'
 import {
   ArrOf,
   Hidden,

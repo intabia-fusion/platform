@@ -214,7 +214,13 @@ describe('TriggersMiddleware collection counters', () => {
     await middleware.close()
   })
   // A mixin keeps its data under its id: an `$inc` there would wipe it.
-  const parent = { _id: 'msg-1', _class: 'chat-message', space: 'channel', 'test:mixin:Extra': { note: 'x' }, _reactions: 2 }
+  const parent = {
+    _id: 'msg-1',
+    _class: 'chat-message',
+    space: 'channel',
+    'test:mixin:Extra': { note: 'x' },
+    _reactions: 2
+  }
   const findAll = async (): Promise<any[]> => [parent]
   const removal = (collection: string): Tx =>
     ({
