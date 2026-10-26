@@ -25,6 +25,7 @@ import core, {
 import { getResourcePlugin, type Plugin, type Resource } from '@hcengineering/platform'
 import { writable } from 'svelte/store'
 import { addTxListener, createQuery } from '.'
+import { isDisabled } from './utils'
 
 /**
  * @public
@@ -37,7 +38,8 @@ export class ConfigurationManager {
 
   has (plugin: Plugin): boolean {
     const configuration = this.configuration.get(plugin)
-    return configuration?.enabled === true
+    // DISABLED_FEATURES lists plugin ids: their resources (space types, task types, presenters) are off too.
+    return configuration?.enabled === true && !isDisabled(plugin)
   }
 
   hasResource<T>(resource?: Resource<T> | null): boolean | undefined {

@@ -296,7 +296,10 @@ async function createChannel (
 // Chat messages are editor markup, as the composer writes them: plain text that happens to start with "{"
 // would otherwise render as an empty message (markupToJSON).
 function textMarkup (text: string): string {
-  return jsonToMarkup({ type: MarkupNodeType.doc, content: [{ type: MarkupNodeType.paragraph, content: [{ type: MarkupNodeType.text, text }] }] })
+  return jsonToMarkup({
+    type: MarkupNodeType.doc,
+    content: [{ type: MarkupNodeType.paragraph, content: [{ type: MarkupNodeType.text, text }] }]
+  })
 }
 
 async function postReply (

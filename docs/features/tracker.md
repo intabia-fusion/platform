@@ -147,8 +147,8 @@ Issue-трекер платформы: проекты (`Project`), задачи 
 | Формат длительности | task-tracking/time-reports | - | partial | 0.8.60 | показан только пример «4ч», без недель/дней/минут и составных значений вида «2ч 30м» |
 | Иерархия типов задач | - | - | plan | - | |
 | Редактор иерархии типа | - | - | plan | - | |
-| Тип задачи по умолчанию | advanced-settings/task-types | advanced-settings/task-types | partial | 0.8.60 | текст сверен и исправлен; скриншоты (6 ru, 3 en) остались старыми (апстрим Huly) - переснять нельзя, путь `Настройки -> Типы пространств` недоступен в UI (см. ниже) |
-| 5 категорий статусов | advanced-settings/task-types, workflow/create-statuses | advanced-settings/task-types | partial | 0.8.60 | та же причина |
+| Тип задачи по умолчанию | advanced-settings/task-types | advanced-settings/task-types | ok | 0.8.61 | |
+| 5 категорий статусов | advanced-settings/task-types, workflow/create-statuses | advanced-settings/task-types | ok | 0.8.61 | |
 | Смена типа задачи | - | - | plan | - | |
 | Экспорт/импорт TaskType | - | - | plan | - | |
 | Уникальность статусов в типе проекта | - | - | internal | - | |
@@ -160,7 +160,7 @@ Issue-трекер платформы: проекты (`Project`), задачи 
 | Конфликты переходов | workflow/create-rules-transitions | - | no-en | 0.8.60 | |
 | Каскадное удаление | - | - | plan | - | |
 | Экспорт/импорт workflow-конфигурации | workflow/create-rules-transitions | - | partial | 0.8.60 | импорт упомянут (раздел "Воркфлоу" типа проекта, из файла или буфера обмена), сам процесс (выбор файла, проверка совместимости) не раскрыт |
-| Создание workflow и его экранов перехода | workflow/create-workflow, workflow/create-screens, workflow/add-workflow, workflow/defining-workflow | - | no-en | 0.8.60 | скриншоты (12 ru) остались старыми (апстрим Huly) - переснять нельзя, путь `Настройки -> Типы пространств` недоступен в UI (см. ниже) |
+| Создание workflow и его экранов перехода | workflow/create-workflow, workflow/create-screens, workflow/add-workflow, workflow/defining-workflow | - | no-en | 0.8.61 | |
 | Навигатор "Мои задачи" / "Все задачи" | task-tracking/issue-collaborators | task-tracking/issue-collaborators | partial | 0.8.60 | описана только вкладка «Отслеживаемые» в «Моих задачах»; остальные вкладки и отдельный раздел «Все задачи» с его вкладками не раскрыты |
 | Viewlet'ы трекера | task-tracking/viewing-issues | task-tracking/viewing-issues | partial | 0.8.60 | описаны только список и канбан, остальные viewlet'ы (подзадачи, этапы, компоненты, отчёты по времени) не упомянуты |
 | Группировка/сортировка | task-tracking/viewing-issues | task-tracking/viewing-issues | ok | 0.8.60 | |
