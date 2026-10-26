@@ -50,7 +50,7 @@ export async function createRestTxOperations (
   const account = await restClient.getAccount()
   const { hierarchy, model } = await restClient.getModel(fullModel)
 
-  return new TxOperations(new RestTxClient(restClient, hierarchy, model, account), account.primarySocialId)
+  return new TxOperations(new RestTxClient(restClient, hierarchy, model, account), account.socialIds[0])
 }
 
 class RestTxClient implements Client {
