@@ -5,6 +5,12 @@
     "Cancelled": "İptal Edildi",
     "Interrupted": "Kesintiye Uğradı",
     "Paused": "Duraklatıldı",
-    "Progressing": "Devam Ediyor"
+    "Progressing": "Devam Ediyor",
+    "ShowInFolder": "Klasörde göster",
+    "OpenFile": "Dosyayı aç",
+    "Open": "Aç",
+    "FileMissing": "Dosya bulunamadı. Taşınmış veya silinmiş olabilir.",
+    "OpenFailed": "Dosya açılamadı: bu dosya türüyle ilişkilendirilmiş bir uygulama yok.",
+    "OpenExecutable": "Bu dosya bir program çalıştırabilir. Açılsın mı?"
   }
 }

@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-import { DownloadItem } from '@hcengineering/desktop-downloads'
+import { DownloadActionStatus, DownloadConfirmTexts, DownloadItem } from '@hcengineering/desktop-downloads'
 import { ScreenSource } from '@hcengineering/love'
 import { Plugin } from '@hcengineering/platform'
 import { IpcRendererEvent } from 'electron'
@@ -192,6 +192,8 @@ export interface IPCMainExposed {
   handleAuth: (callback: (token: string) => void) => void
   handleDownloadItem: (callback: (item: DownloadItem) => void) => void
   downloadToFolder: (files: DownloadEntry[]) => Promise<string[]>
+  revealDownloadItem: (key: string) => Promise<DownloadActionStatus>
+  openDownloadItem: (key: string, confirm: DownloadConfirmTexts) => Promise<DownloadActionStatus>
 
   cancelBackup: () => void
   startBackup: (token: string, endpoint: string, workspace: string) => void

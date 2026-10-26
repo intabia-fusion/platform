@@ -5,6 +5,12 @@
     "Cancelled": "Annulé",
     "Interrupted": "Interrompu",
     "Paused": "En pause",
-    "Progressing": "En cours"
+    "Progressing": "En cours",
+    "ShowInFolder": "Afficher dans le dossier",
+    "OpenFile": "Ouvrir le fichier",
+    "Open": "Ouvrir",
+    "FileMissing": "Le fichier est introuvable. Il a peut-être été déplacé ou supprimé.",
+    "OpenFailed": "Impossible d'ouvrir le fichier : aucune application n'est associée à ce type de fichier.",
+    "OpenExecutable": "Ce fichier peut exécuter un programme. L'ouvrir ?"
   }
 }

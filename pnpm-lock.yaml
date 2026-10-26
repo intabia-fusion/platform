@@ -20469,6 +20469,9 @@ importers:
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
+      '@hcengineering/presentation':
+        specifier: workspace:^0.7.0
+        version: link:../../packages/presentation
       '@hcengineering/ui':
         specifier: workspace:^0.7.0
         version: link:../../packages/ui

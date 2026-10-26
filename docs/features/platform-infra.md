@@ -1,6 +1,6 @@
 # Платформа: рабочее место, настройки, экспорт, бэкап, desktop
 
-> Сверено с кодом: коммит 39ae47eb6f, 2026-09-23.
+> Сверено с кодом: коммит 16da753f62, 2026-10-26.
 
 Пользовательский каркас платформы: левая панель приложений и навигатор (workbench), сайдбар с виджетами и вкладками, настройки аккаунта/воркспейса (setting), персональные предпочтения (preference), экспорт данных в файл или в другой воркспейс, резервное копирование/восстановление и Electron-приложение для десктопа. Сущности: `Application`, `Widget`/`WidgetPreference`, `WorkbenchTab`, `SettingsCategory`, `Integration`, `Preference`, `BackupInfo`.
 
@@ -21,7 +21,7 @@
 | models/desktop-preferences | `models/desktop-preferences/src` | `TDesktopNotificationPreference`, группа в Notification Preferences |
 | plugins/desktop-preferences | `plugins/desktop-preferences/src` | типы desktop-уведомлений |
 | models/desktop-downloads | `models/desktop-downloads/src` | регистрация `WorkbenchExtension` для панели загрузок |
-| plugins/desktop-downloads | `plugins/desktop-downloads/src` | `DownloadItem`, IPC-функция `HandleDownloadItem` |
+| plugins/desktop-downloads | `plugins/desktop-downloads/src` | `DownloadItem`, IPC-функция `HandleDownloadItem`, сеттер действий `setDownloadItemActions` |
 | plugins/export | `plugins/export/src` | типы (`TransformConfig`, `RelationDefinition`, `ExportResultRecord`), plugin-id |
 | plugins/export-resources | `plugins/export-resources/src` | UI (`ExportSettings`, `ExportButton`, `ExportToWorkspaceModal`) + клиент к pod-export |
 | services/export/pod-export | `services/export/pod-export/src` | сервис экспорта: `/exportAsync`, `/exportSync`, `/export-to-workspace` |
@@ -52,6 +52,7 @@
 | `Preference`/`SpacePreference` | базовый персональный настройка (`attachedTo`) и её сужение до `Ref<Space>` | `models/preference/src/index.ts` |
 | `DesktopNotificationPreference` | showNotifications/playSound/bounceAppIcon/showUnreadCounter | `models/desktop-preferences/src/index.ts` |
 | `DownloadItem` | состояние загрузки в desktop: key/state/receivedBytes/totalBytes/savePath | `plugins/desktop-downloads/src/types.ts` |
+| `DownloadActionStatus` | результат действия над загрузкой: ok/missing/failed/cancelled/unknown/unavailable | `plugins/desktop-downloads/src/types.ts` |
 | `TransformConfig`/`RelationDefinition`/`ExportResultRecord` | правила трансформации при экспорте между воркспейсами, лог результата | `plugins/export/src/types.ts` |
 | `BackupInfo` (+ `revision`) | индекс бэкапа: снапшоты, домены, ревизия для контроля конкурентной записи | `server/backup/src/types.ts` |
 | `BackupConfig.DeletedRetentionDays` | сколько дней хранить архив удалённого воркспейса (0 = не чистить) | `server/backup/src/service.ts` |
@@ -117,6 +118,7 @@
 - **Персистентная сессия с патчем cookie SameSite.** Partition `persist:huly`/`persist:huly_dev`, `handleSetCookie` на `onHeadersReceived`. - `desktop/src/main/start.ts`.
 - **Трей, автозапуск, сохранение геометрии окна.** `TrayController`/`Settings` классы. - `desktop/src/main/tray.ts`, `desktop/src/main/settings.ts`.
 - **Пайплайн загрузок.** `will-download` в main-процессе генерирует ключ и шлёт прогресс/завершение в renderer через `IpcMessage.HandleDownloadItem`, модель `DownloadItem`. - `desktop/src/main/start.ts`, `plugins/desktop-downloads/src/types.ts`.
+- **Показать загрузку в папке / открыть файл.** В строке завершённой загрузки (попап у иконки в статус-баре) две кнопки `IconButton` по наведению: `RevealDownloadItem` -> `shell.showItemInFolder`, `OpenDownloadItem` -> `shell.openPath`. Renderer называет загрузку только по `key`; main держит `Map<key, savePath>`, которую наполняет `done` со статусом `completed`, и возвращает статус (`ok`/`missing`/`failed`/`cancelled`/`unknown`) - путь из renderer не принимается. Открыть одним кликом можно только безопасные типы (`isSafeToOpen`), остальное main подтверждает нативным диалогом; ошибка рисуется в самой строке (`FileMissing`/`OpenFailed`). На Linux без `DBUS_SESSION_BUS_ADDRESS` вместо выделения открывается папка. Мост регистрирует `desktop/src/ui/index.ts` (`setDownloadItemActions`). - `desktop/src/main/revealDownload.ts`, `desktop/src/main/downloadFileTypes.ts`, `plugins/desktop-downloads-resources/src/components/FileDownloadStatusPopup.svelte`; детали - `docs/memory/desktop-reveal-download.md`.
 - **Пакетная загрузка в папку.** `downloadFiles` (presentation) в десктопе зовёт обработчик из `setDownloadFilesHandler` (`desktop/src/ui/index.ts`) -> `IpcMessage.DownloadToFolder`. Main (`downloadToFolder`) один раз спрашивает папку, каждому файлу подбирает свободное имя (занятое на диске или ещё докачиваемое, без учёта регистра, получает суффикс « (1)»; недопустимое для Windows исправляется, длинное обрезается), запоминает путь по адресу и сам запускает `downloadURL`. В `will-download` `applyBatchSavePath` ставит `setSavePath` по цепочке адресов, иначе Electron спросил бы про каждый файл. Путь незапущенной загрузки забывается через минуту. - `desktop/src/main/batchDownload.ts`; детали - `docs/memory/desktop-batch-download.md`.
 - **Скриншаринг и бейдж непрочитанных.** `SetBadge` на иконке/доке, `GetScreenSources`/`GetScreenAccess` (desktopCapturer). - `desktop/src/main/start.ts`.
 - **Автообновление (electron-updater) с диалогом на русском.** Канал через `resolveUpdateFeed` (`updateChannel.ts`), диалог "Обновить и перезапустить" - `desktop/src/main/start.ts`. Полная цепочка до дист-сервера и разобранные баги multi-range/ дефолтного канала - `docs/memory/desktop-update-system.md`.
@@ -165,6 +167,7 @@
 | Персистентная сессия с патчем cookie SameSite | - | - | internal | - | |
 | Трей, автозапуск, сохранение геометрии окна | - | - | plan | - | отложено |
 | Пайплайн загрузок | - | - | internal | - | |
+| Панель загрузок в десктопе (иконка в статус-баре, «Показать в папке»/«Открыть файл») | - | - | plan | - | в браузере панели нет; в desktop это попап текущей сессии, история загрузок между перезапусками не сохраняется |
 | Скриншаринг и бейдж непрочитанных | - | - | plan | - | отложено |
 | Автообновление (electron-updater) с диалогом на русском | - | - | plan | - | отложено |
 | macOS-подпись и нотаризация | - | - | internal | - | |
@@ -206,6 +209,7 @@
 - [../connection_reconnect.md](../connection_reconnect.md) - жизненный цикл клиентского WebSocket-соединения (использует `connect()` из workbench-resources).
 - [../macos_signing.md](../macos_signing.md) - подпись и нотаризация desktop-сборки для macOS.
 - [../memory/desktop-update-system.md](../memory/desktop-update-system.md) - цепочка автообновления Electron-приложения и разобранные баги.
+- [../memory/desktop-reveal-download.md](../memory/desktop-reveal-download.md) - «показать в папке»/«открыть файл» для скачанного: проверка пути, Linux/DBus.
 - [../memory/sidebar-widget-tabs.md](../memory/sidebar-widget-tabs.md) - модель состояний вкладок сайдбар-виджетов.
 - [../memory/backup_index_revision_guard.md](../memory/backup_index_revision_guard.md) - аренда бэкапа и защита индекса от конкурентной записи.
 - [../memory/deferred-deletion.md](../memory/deferred-deletion.md) - отложенное удаление воркспейсов/аккаунтов, grace/readonly-периоды.

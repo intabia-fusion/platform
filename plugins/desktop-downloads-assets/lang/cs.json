@@ -5,6 +5,12 @@
     "Cancelled": "Zrušeno",
     "Interrupted": "Přerušeno",
     "Paused": "Pozastaveno",
-    "Progressing": "Probíhá"
+    "Progressing": "Probíhá",
+    "ShowInFolder": "Zobrazit ve složce",
+    "OpenFile": "Otevřít soubor",
+    "Open": "Otevřít",
+    "FileMissing": "Soubor nebyl nalezen. Možná byl přesunut nebo smazán.",
+    "OpenFailed": "Soubor nelze otevřít: pro tento typ souboru není přidružena žádná aplikace.",
+    "OpenExecutable": "Tento soubor může spustit program. Otevřít jej?"
   }
 }
