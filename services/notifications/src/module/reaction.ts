@@ -32,6 +32,7 @@ import Cache from '../cache'
 import {
   getAllowedProviders,
   getAttachments,
+  getApplets,
   getBaseDisplayParams,
   getLastNotify,
   getObjectDisplayData,
@@ -114,6 +115,7 @@ async function handleCreateReaction (
 
   const objectDisplayData = await getObjectDisplayData(client, cache, txCache, doc, receiver.account)
   const attachments = await getAttachments(message, client)
+  const applets = await getApplets(message, client, { trustCounter: true })
   const pushSubscriptions = await cache.getPushSubscriptions(receiver.account)
 
   await pushNotification(client, txCache, result, context, {
@@ -134,6 +136,7 @@ async function handleCreateReaction (
       message: toNotificationMessage(message, client.hierarchy),
       truncated: isOversizedChatMessage(message) || undefined,
       attachments,
+      applets,
       reaction,
       createdOn: reaction.createdOn ?? reaction.modifiedOn,
       createdBy: reaction.createdBy ?? reaction.modifiedBy

@@ -13,8 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import { themeStore } from '@hcengineering/theme'
+
+  import { getPlatformColorByName } from '../../colors'
   import Icon from '../../components/Icon.svelte'
-  import type { IconComponent } from '../../types'
+  import type { IconComponent, IconSize } from '../../types'
   import type { ButtonShape } from '../button/types'
   import type { IconBoxProps, IconBoxSize } from './types'
 
@@ -22,15 +25,29 @@
 
   export let icon: IconComponent
   export let iconProps: Record<string, any> = {}
+  export let iconSize: IconSize | undefined = undefined
   export let size: IconBoxSize | undefined = undefined
   export let shape: ButtonShape | undefined = undefined
+  export let color: string | undefined = undefined
 
   $: resolvedSize = size ?? 'small'
+  // The shares of FileBadge: pulled towards the theme's text, the palette's own dark shades are lost on a dark theme.
+  $: hue = color == null ? undefined : getPlatformColorByName(color, $themeStore.dark)?.color
+  $: tintColor =
+    hue == null ? undefined : `color-mix(in srgb, ${hue} ${$themeStore.dark ? '62%' : '82%'}, var(--theme-caption-color))`
+  $: tintBackground = hue == null ? undefined : `color-mix(in srgb, ${hue} ${$themeStore.dark ? '26%' : '14%'}, transparent)`
 </script>
 
 <!-- Decorative: the object kind is already named by the field or title next to it. -->
-<span class="icon-box icon-box--{resolvedSize}" class:icon-box--round={shape === 'round'} aria-hidden="true">
-  <Icon {icon} {iconProps} size="small" />
+<span
+  class="icon-box icon-box--{resolvedSize}"
+  class:icon-box--round={shape === 'round'}
+  class:icon-box--tinted={hue != null}
+  style:--_tint-color={tintColor}
+  style:--_tint-background={tintBackground}
+  aria-hidden="true"
+>
+  <Icon {icon} {iconProps} size={iconSize ?? 'small'} />
 </span>
 
 <style lang="scss">
@@ -60,6 +77,11 @@
     &--extra-small {
       height: var(--global-extra-small-Size);
       border-radius: var(--extra-small-BorderRadius);
+    }
+    &--tinted {
+      border-color: transparent;
+      background-color: var(--_tint-background);
+      color: var(--_tint-color);
     }
     // Always square, so a circle at every size, unlike the button radius token.
     &--round {

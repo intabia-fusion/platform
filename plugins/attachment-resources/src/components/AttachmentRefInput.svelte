@@ -81,6 +81,7 @@
   export let placeholder: IntlString | undefined = undefined
   export let disableSubmit = false
   export let clearOnSubmit = true
+  export let hasHeader: boolean = false
   export let extraActions: RefAction[] = []
   export let boundary: HTMLElement | undefined = undefined
   export let skipAttachmentsPreload = false
@@ -636,7 +637,7 @@
             ]),
         ...(disableAttachments ? [] : uploadActions)
       ]}
-      showHeader={tiles.length > 0 || recording}
+      showHeader={tiles.length > 0 || recording || hasHeader}
       haveAttachment={attachments.size > 0 || recording}
       on:focus
       on:blur
@@ -654,9 +655,9 @@
         {#if recording}
           <div class="recorder"><slot name="recorder" /></div>
         {/if}
-        {#if tiles.length > 0 && !disableAttachments}
+        {#if (tiles.length > 0 && !disableAttachments) || hasHeader}
           <div class="list">
-            {#each tiles as tile (tile.doc._id)}
+            {#each disableAttachments ? [] : tiles as tile (tile.doc._id)}
               <AttachmentTile
                 value={tile.doc}
                 upload={tile.upload}
@@ -671,6 +672,7 @@
                 }}
               />
             {/each}
+            <slot name="header" />
           </div>
         {/if}
       </div>

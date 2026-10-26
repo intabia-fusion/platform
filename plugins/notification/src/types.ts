@@ -33,7 +33,7 @@ import {
   type TxOperations
 } from '@hcengineering/core'
 import { AnyComponent, Location } from '@hcengineering/ui'
-import { ActivityMessage, ActivityMessageLite, Reaction } from '@hcengineering/activity'
+import { ActivityMessage, ActivityMessageLite, AppletSnapshot, Reaction } from '@hcengineering/activity'
 import { Preference } from '@hcengineering/preference'
 import { PersonSpace } from '@hcengineering/contact'
 import { Readable } from 'svelte/store'
@@ -281,6 +281,7 @@ export interface MessageNotification<T extends ActivityMessage = ActivityMessage
   intlMessage?: IntlString
 
   attachments?: BlobType[]
+  applets?: AppletSnapshot[]
 
   createdBy: PersonId
   createdOn: Timestamp
@@ -294,6 +295,7 @@ export interface ReactionNotification {
   message: NotificationMessage
   truncated?: boolean
   attachments?: BlobType[]
+  applets?: AppletSnapshot[]
   reaction: Reaction
 
   createdBy: PersonId
@@ -310,6 +312,7 @@ export interface MentionNotification {
   // `markup` is an excerpt of the mentioning message.
   truncated?: boolean
   attachments?: BlobType[]
+  applets?: AppletSnapshot[]
 
   createdBy: PersonId
   createdOn: Timestamp

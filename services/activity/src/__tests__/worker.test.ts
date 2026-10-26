@@ -13,14 +13,21 @@
 // limitations under the License.
 //
 
+import activity from '@hcengineering/activity'
 import core, {
   type Class,
+  ClassifierKind,
   type Doc,
+  DOMAIN_MODEL,
+  DOMAIN_TRANSIENT,
   MeasureMetricsContext,
   type Ref,
+  type Tx,
   type TxCUD,
+  TxFactory,
   type WorkspaceUuid
 } from '@hcengineering/core'
+import type { IntlString } from '@hcengineering/platform'
 import { Worker } from '../worker'
 
 // Classes the workspace model has right now; a restore changes it under a running service.
@@ -148,5 +155,45 @@ describe('Worker after workspace restore', () => {
     expect(mockShared[0][0]).toBeDefined()
     expect(mockShared[0][0]).toBe(mockShared[1][0])
     expect(mockShared[0][1]).toBe(mockShared[1][1])
+  })
+})
+
+describe('Worker transient actions', () => {
+  const ctx = new MeasureMetricsContext('test', {})
+  const Transient = 'test:class:Transient' as Ref<Class<Doc>>
+  let worker: Worker
+
+  function createClass (_class: Ref<Class<Doc>>, data: Record<string, any>): Tx {
+    return new TxFactory(core.account.System).createTxCreateDoc(
+      core.class.Class,
+      core.space.Model,
+      { label: _class as unknown as IntlString, kind: ClassifierKind.CLASS, ...data } as any,
+      _class
+    )
+  }
+
+  beforeEach(() => {
+    mockModel = new Set([activity.class.VotePollAction, Transient])
+    mockGate = Promise.resolve()
+    mockCreated.length = 0
+    worker = new Worker(ctx, [
+      createClass(core.class.Obj, {}),
+      createClass(core.class.Doc, { extends: core.class.Obj }),
+      createClass(core.class.Class, { extends: core.class.Doc, domain: DOMAIN_MODEL }),
+      createClass(activity.class.VotePollAction, { extends: core.class.Doc, domain: DOMAIN_TRANSIENT }),
+      createClass(Transient, { extends: core.class.Doc, domain: DOMAIN_TRANSIENT })
+    ])
+  })
+
+  afterEach(() => {
+    worker.close()
+  })
+
+  it('passes poll votes and drops other transient docs', async () => {
+    await worker.tx(ctx, ws, createTx(Transient))
+    expect(mockCreated).toHaveLength(0)
+
+    await worker.tx(ctx, ws, createTx(activity.class.VotePollAction))
+    expect(mockCreated).toHaveLength(1)
   })
 })

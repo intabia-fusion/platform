@@ -47,7 +47,7 @@ function typeOnlyImports (): Plugin {
   async function exportsOf (
     ctx: Rollup.PluginContext,
     file: string,
-    visiting: Set<string> = new Set()
+    visiting = new Set<string>()
   ): Promise<Set<string> | undefined> {
     if (!file.endsWith('.ts') || visiting.has(file)) return undefined
     // By modification time: an edited index gains exports the cached list lacks.
@@ -105,6 +105,24 @@ function typeOnlyImports (): Plugin {
   }
 }
 
+// The *-assets packages take their icons by a CommonJS require, as webpack builds them: here an url import.
+function assetRequire (): Plugin {
+  return {
+    name: 'asset-require',
+    enforce: 'pre',
+    transform (code, id) {
+      if (!/-assets\/src\/index\.ts$/.test(id)) return undefined
+      const imports: string[] = []
+      const out = code.replace(/require\((['"])([^'"]+\.(svg|png))\1\)/g, (_match, _quote, path: string) => {
+        const name = `__asset${imports.length}`
+        imports.push(`import ${name} from '${path}?url'`)
+        return name
+      })
+      return imports.length === 0 ? undefined : `${imports.join('\n')}\n${out}`
+    }
+  }
+}
+
 /** Requests under /__hang never answer, to show a loading file or picture. */
 function hangingRequests (): Plugin {
   return {
@@ -123,6 +141,7 @@ export default defineConfig({
       resolveId: (id) => (id === 'emojibase' ? emojibaseShim : id === 'emojibase-real' ? emojibaseReal : null)
     },
     workspaceSources(),
+    assetRequire(),
     svelte(),
     typeOnlyImports(),
     hangingRequests(),

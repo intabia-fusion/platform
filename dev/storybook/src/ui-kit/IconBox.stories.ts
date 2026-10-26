@@ -21,16 +21,18 @@ import Sections from '../helpers/Sections.svelte'
 import { axis } from '../helpers/matrix'
 
 const sizes = ['large', 'medium', 'small', 'extra-small'] as const
+const colors = ['Firework', 'Sunshine', 'Houseplant', 'Cerulean', 'Mauve', 'Lavander'] as const
 
 const meta = {
   title: 'Display/IconBox',
   component: IconBox,
   args: { icon: ui.icon.Sliders, size: 'small' },
+  argTypes: { color: { control: 'select', options: [undefined, ...colors] } },
   parameters: {
     docs: {
       description: {
         component:
-          '**Когда:** декоративная иконка вида объекта в ряд с кнопками: у поля названия в диалоге создания, иконка канала. **Не этот компонент:** по иконке кликают (выбор иконки, смена типа) - `IconButton` с подписью.\n\nНе кнопка: `<span aria-hidden="true">` без фокуса. Вид - как у `IconButton kind="secondary"` того же размера, иконка всегда `small`; `shape="round"` - круг на любом размере.'
+          '**Когда:** декоративная иконка вида объекта в ряд с кнопками: у поля названия в диалоге создания, иконка канала. **Не этот компонент:** по иконке кликают (выбор иконки, смена типа) - `IconButton` с подписью.\n\nНе кнопка: `<span aria-hidden="true">` без фокуса. Вид - как у `IconButton kind="secondary"` того же размера, иконка `small` (`iconSize` - другая); `shape="round"` - круг на любом размере.\n\n`color` - имя цвета палитры: вместо вида кнопки мягкая плашка оттенка, иконка того же оттенка (формула `FileBadge`), без рамки - знак апплета или строки настроек.'
       }
     }
   }
@@ -56,6 +58,24 @@ export const Variants: Story = {
           ],
           columns: axis('size', sizes),
           props: { icon: ui.icon.Sliders }
+        },
+        {
+          title: 'Palette',
+          component: IconBox,
+          rows: [
+            { title: 'history', props: { icon: ui.icon.ClockCounterClockwise } },
+            { title: 'undo', props: { icon: ui.icon.ArrowUturnLeft } },
+            { title: 'settings', props: { icon: ui.icon.Sliders } },
+            { title: 'check', props: { icon: ui.icon.CheckCircle } }
+          ],
+          columns: axis('color', colors)
+        },
+        {
+          title: 'Palette sizes',
+          component: IconBox,
+          rows: axis('color', ['Firework', 'Cerulean']),
+          columns: axis('size', sizes),
+          props: { icon: ui.icon.ClockCounterClockwise }
         }
       ]
     }

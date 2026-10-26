@@ -173,7 +173,8 @@ export enum ForbiddenKind {
   ApiKey = 'api-key',
   ForeignPrivateWrite = 'foreign-private-write',
   DirectMessage = 'direct-message',
-  ReadState = 'read-state'
+  ReadState = 'read-state',
+  AuthorOnly = 'author-only'
 }
 
 /**

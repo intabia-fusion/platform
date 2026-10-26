@@ -5,11 +5,14 @@ import {
   type TxMiddlewareResult
 } from '@hcengineering/server-core'
 import core, {
+  AccountRole,
   type Doc,
+  hasAccountRole,
   Tx,
   type TxCreateDoc,
   type TxCUD,
   TxProcessor,
+  type TxMixin,
   type TxUpdateDoc,
   MeasureContext,
   TxFactory,
@@ -22,14 +25,17 @@ import core, {
   type FindOptions,
   type FindResult,
   combineAttributes,
+  type LowLevelStorage,
   systemAccountUuid
 } from '@hcengineering/core'
-import chunter, { Chat, type ContentReportAction, type DirectMessage } from '@hcengineering/chunter'
+import chunter, { Chat, type ChatMessage, type ContentReportAction, type DirectMessage } from '@hcengineering/chunter'
 import contact, { PersonSpace } from '@hcengineering/contact'
 import { ForbiddenKind } from '@hcengineering/platform'
 import { createHash } from 'crypto'
 import notification, { ContextNotification, DocNotifyContext } from '@hcengineering/notification'
 import activity, { ActivityInfoMessage } from '@hcengineering/activity'
+import aiBot from '@hcengineering/ai-bot'
+import { followsParent, getUpdatedFields } from '@hcengineering/server-activity'
 
 export const DOMAIN_CHUNTER_DOC = 'chunter_doc' as Domain
 
@@ -90,6 +96,9 @@ export class ChunterMiddleware extends BaseMiddleware {
 
       if (hierarchy.isDerived(tx.objectClass, activity.class.ActivityInfoMessage)) {
         await this.onInfoMessage(ctx, tx as TxCUD<ActivityInfoMessage>)
+      }
+      if (hierarchy.findDomain(tx.objectClass) === hierarchy.findDomain(chunter.class.ChatMessage)) {
+        await this.onMessageChange(ctx, tx, txes)
       }
       if (
         _tx._class === core.class.TxCreateDoc &&
@@ -213,6 +222,69 @@ export class ChunterMiddleware extends BaseMiddleware {
     }
   }
 
+  private async onMessageChange (ctx: MeasureContext<SessionData>, tx: TxCUD<Doc>, batch: Tx[]): Promise<void> {
+    if (ctx.contextData.isTriggerCtx === true || ctx.contextData.account.uuid === systemAccountUuid) return
+    if (tx._class === core.class.TxUpdateDoc) {
+      await this.onMessageUpdate(ctx, tx as TxUpdateDoc<Doc>, batch)
+    } else if (tx._class === core.class.TxRemoveDoc) {
+      await this.onMessageRemove(ctx, tx)
+    } else if (tx._class === core.class.TxMixin) {
+      this.onMessageMixin(ctx, tx as TxMixin<Doc, Doc>)
+    }
+  }
+
+  private async onMessageUpdate (ctx: MeasureContext<SessionData>, tx: TxUpdateDoc<Doc>, batch: Tx[]): Promise<void> {
+    const fields = getUpdatedFields(tx.operations)
+    if (fields.some((it) => ['createdBy', 'createdOn'].includes(it))) {
+      this.throwForbidden(ctx, tx, 'Message authorship cannot be changed', ForbiddenKind.SystemOnly)
+    }
+
+    if (this.isMaintainer(ctx)) return
+
+    if (fields.every((it) => ['isPinned', 'resolved'].includes(it))) return
+
+    const message = await this.findStoredMessage(tx.objectId)
+    if (message == null || this.isAuthor(ctx, message) || this.isAiProposal(message)) return
+    if (followsParent(this.context.hierarchy, tx, message, batch)) return
+
+    this.throwForbidden(ctx, tx, 'Only the author can edit a message', ForbiddenKind.AuthorOnly)
+  }
+
+  private async onMessageRemove (ctx: MeasureContext<SessionData>, tx: TxCUD<Doc>): Promise<void> {
+    if (this.isMaintainer(ctx)) return
+    const message = await this.findStoredMessage(tx.objectId)
+    if (message != null && !this.isAuthor(ctx, message)) {
+      this.throwForbidden(ctx, tx, 'Only the author can delete a message', ForbiddenKind.AuthorOnly)
+    }
+  }
+
+  private onMessageMixin (ctx: MeasureContext<SessionData>, tx: TxMixin<Doc, Doc>): void {
+    if (!this.context.hierarchy.isMixin(tx.mixin)) this.throwForbidden(ctx, tx, 'Unknown mixin', ForbiddenKind.SystemOnly)
+  }
+
+  private isAuthor (ctx: MeasureContext<SessionData>, message: ChatMessage): boolean {
+    return ctx.contextData.account.socialIds.includes(message.createdBy ?? message.modifiedBy)
+  }
+
+  private isAiProposal (message: ChatMessage): boolean {
+    return [aiBot.class.AIEditProposalMessage, aiBot.class.AITaskProposalMessage]
+      .some((it) => this.context.hierarchy.isDerived(message._class, it))
+  }
+
+  private isMaintainer (ctx: MeasureContext<SessionData>): boolean {
+    return hasAccountRole(ctx.contextData.account, AccountRole.Maintainer)
+  }
+
+  // Without the session's space filter: a message the sender cannot read is still someone's to protect.
+  private async findStoredMessage (_id: Ref<Doc>): Promise<ChatMessage | undefined> {
+    const { hierarchy, lowLevelStorage } = this.context
+    const domain = hierarchy.getDomain(chunter.class.ChatMessage)
+    const query = { _id: _id as Ref<ChatMessage> }
+    const doc = (await (lowLevelStorage as LowLevelStorage).rawFindAll<ChatMessage>(domain, query, { limit: 1 }))[0]
+    // The domain keeps other activity messages too, such as document updates.
+    return doc != null && hierarchy.isDerived(doc._class, chunter.class.ChatMessage) ? doc : undefined
+  }
+
   private async onReportAction (ctx: MeasureContext<SessionData>, tx: TxCreateDoc<ContentReportAction>): Promise<void> {
     const account = ctx.contextData.account
     if (account.uuid === systemAccountUuid) return
@@ -285,8 +357,13 @@ export class ChunterMiddleware extends BaseMiddleware {
     }
   }
 
-  private throwForbidden (ctx: MeasureContext<SessionData>, tx: Tx, message: string): void {
-    throw this.forbiddenTx(ctx, ForbiddenKind.DirectMessage, message, tx)
+  private throwForbidden (
+    ctx: MeasureContext<SessionData>,
+    tx: Tx,
+    message: string,
+    kind = ForbiddenKind.DirectMessage
+  ): void {
+    throw this.forbiddenTx(ctx, kind, message, tx)
   }
 }
 

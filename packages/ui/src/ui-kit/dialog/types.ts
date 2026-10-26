@@ -64,7 +64,13 @@ export interface DialogProps {
   loading?: boolean
   /** Enter in a field submits the dialog; otherwise only the submit button does. */
   submitOnEnter?: boolean
+  /** The question asked before any close, for a form with unsaved input; the dialog's label is its title. */
+  closeConfirmationIntl?: IntlString
+  /** `true` by default: lines under the header and over the footer; `false` for a short question in one card. */
+  dividers?: boolean
   id?: string
+  /** The text that explains a short dialog, e.g. the question of a confirmation. */
+  'aria-describedby'?: string
   [dataAttribute: `data-${string}`]: string | number | boolean | undefined
 }
 

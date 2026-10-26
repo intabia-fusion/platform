@@ -28,7 +28,7 @@ import core, {
   TxProcessor,
   Blob
 } from '@hcengineering/core'
-import activity, { ActivityMessage, UserMentionInfo } from '@hcengineering/activity'
+import activity, { ActivityMessage, AppletSnapshot, UserMentionInfo } from '@hcengineering/activity'
 import notification, {
   excerptMarkup,
   isOversizedMarkup,
@@ -56,7 +56,8 @@ import {
   getLastNotify,
   hasMessageNotification,
   getAttachments,
-  getPushGroup
+  getPushGroup,
+  getApplets
 } from '../utils/utils'
 import { pushNotification } from './notification'
 import { cancelHeldPushes, pushDismissMessage } from './dismiss'
@@ -191,6 +192,10 @@ async function createMentionsData (
     return []
   }
 
+  // The message is the same for every receiver; only a create tx has a counter that is not raised yet.
+  const applets =
+    message != null ? await getApplets(message, client, { trustCounter: tx._class !== core.class.TxCreateDoc }) : []
+
   const notified = new Set<AccountUuid>()
   const res: MentionResult[] = []
 
@@ -238,7 +243,7 @@ async function createMentionsData (
       } else {
         if (message != null && context != null && hasMessageNotification(context, message._id)) continue
 
-        res.push(await getMentionResult(client, context, receiver, message, notifyProviders, reference))
+        res.push(await getMentionResult(client, context, receiver, message, applets, notifyProviders, reference))
       }
     }
   }
@@ -250,6 +255,7 @@ async function getMentionResult (
   context: DocNotifyContext | undefined,
   receiver: Receiver,
   message: ActivityMessage | undefined,
+  applets: AppletSnapshot[],
   notifyProviders: NotifyProviders,
   reference: MentionRef
 ): Promise<MentionResult> {
@@ -260,7 +266,8 @@ async function getMentionResult (
       markup: capMarkup(markup),
       truncated: isOversizedMarkup(markup) || undefined,
       messageId: message?._id,
-      attachments
+      attachments,
+      applets
     },
     markup,
     intl: {

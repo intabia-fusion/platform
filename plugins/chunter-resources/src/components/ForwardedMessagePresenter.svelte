@@ -19,8 +19,9 @@
   import { createQuery, getClient, MessageViewer } from '@hcengineering/presentation'
   import type { Attachment } from '@hcengineering/attachment'
   import attachment from '@hcengineering/attachment'
-  import type { ActivityMessage } from '@hcengineering/activity'
+  import type { ActivityMessage, AppletInstance } from '@hcengineering/activity'
   import activity from '@hcengineering/activity'
+  import { AppletsList } from '@hcengineering/activity-resources'
   import { getPersonByPersonIdCb, PersonPresenter } from '@hcengineering/contact-resources'
   import type { Person } from '@hcengineering/contact'
   import type { Location } from '@hcengineering/ui'
@@ -33,6 +34,8 @@
 
   export let object: Doc | undefined
   export let parent: WithLookup<ChatMessage>
+  // An archived channel or a read-only guest: the original poll is shown but not votable.
+  export let readonly: boolean = false
 
   const query = createQuery()
   const client = getClient()
@@ -58,22 +61,29 @@
     forwardedFromIdentifier = undefined
   }
 
+  // The original the lookup answered for: until then the copy of its applets would flash before the live ones.
+  let lookedUpId: Ref<ActivityMessage> | undefined = undefined
+
   $: if (parent.forwardedMessage != null) {
+    const forwardedId = parent.forwardedMessage
     if (parent.$lookup?.forwardedMessage != null) {
       forwardedMessage = parent.$lookup.forwardedMessage as WithLookup<ChatMessage>
+      lookedUpId = forwardedId
       query.unsubscribe()
     } else {
       query.query(
         chunter.class.ChatMessage,
-        { _id: parent.forwardedMessage as Ref<ChatMessage> },
+        { _id: forwardedId as Ref<ChatMessage> },
         (res) => {
           forwardedMessage = res[0]
+          lookedUpId = forwardedId
         },
         {
           limit: 1,
           lookup: {
             _id: {
-              attachments: attachment.class.Attachment
+              attachments: attachment.class.Attachment,
+              applets: activity.class.AppletInstance
             }
           }
         }
@@ -100,6 +110,7 @@
 
   $: isOtherDoc = parent.attachedTo !== parent.forwardFromId
   $: attachments = getAttachments(parent, forwardedMessage)
+  $: snapshotApplets = getSnapshotApplets(parent)
 
   $: originalTime = forwardedMessage?.createdOn ?? parent?.forwardContent?.createdOn ?? 0
   $: time = getDay(originalTime)
@@ -133,6 +144,19 @@
         modifiedBy: core.account.System
       })) ?? []
     )
+  }
+
+  // The original or its applets are out of reach (deleted, or in a closed space): the copy taken on forward.
+  function getSnapshotApplets (parent: ChatMessage): AppletInstance[] {
+    return (parent.forwardContent?.applets ?? []).map((it) => {
+      const instance: AppletInstance = {
+        ...it,
+        attachedTo: parent.forwardedMessage ?? parent._id,
+        attachedToClass: activity.class.ActivityMessage,
+        space: parent.space
+      }
+      return instance
+    })
   }
 
   $: void updateForwardedFromTitle(forwardedFromDoc)
@@ -268,6 +292,17 @@
       {#if attachments.length > 0}
         <div class="forwarded-message__attachments">
           <AttachmentList {attachments} imageSize="medium" withActions={false} />
+        </div>
+      {/if}
+      {#if forwardedMessage != null ? (forwardedMessage.applets ?? 0) > 0 : lookedUpId === parent.forwardedMessage && snapshotApplets.length > 0}
+        <!-- The whole block navigates to the original: a vote or a menu click inside the poll must stay here. -->
+        <!-- svelte-ignore a11y-no-static-element-interactions -->
+        <div on:click|stopPropagation on:keydown|stopPropagation>
+          {#if forwardedMessage != null}
+            <AppletsList value={forwardedMessage} {readonly} fallback={snapshotApplets} spaced={false} />
+          {:else}
+            <AppletsList applets={snapshotApplets} readonly spaced={false} />
+          {/if}
         </div>
       {/if}
       {#if isOtherDoc}

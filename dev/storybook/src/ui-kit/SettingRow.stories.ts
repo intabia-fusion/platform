@@ -23,14 +23,14 @@ const meta = {
   component: SettingRowExample,
   args: { sample: 'row', control: 'dropdown', hint: false },
   argTypes: {
-    sample: { control: 'inline-radio', options: ['row', 'dialog'] },
+    sample: { control: 'inline-radio', options: ['row', 'form', 'list'] },
     control: { control: 'inline-radio', options: ['dropdown', 'toggle', 'chips', 'textarea'] }
   },
   parameters: {
     docs: {
       description: {
         component:
-          '**Когда:** одна настройка в форме или диалоге создания: подпись слева, контрол справа, линия под строкой. **Не этот компонент:** переключатель с описанием без линий - `Toggle` с `label`; заголовок блока - `Section`.\n\nПодпись - 12px / 500 капсом, вторичный цвет. `hint` - кнопка-«i» с подсказкой после подписи. `stacked` - подпись над контролом (текстовое поле). Слот `details` - под строкой над линией: выбранные значения чипами. Слот по умолчанию отдаёт `labelId` для `aria-labelledby` контрола. Линия только под строкой: над первой её нет, чтобы не дублировать шапку диалога.'
+          '**Когда:** одна настройка в форме или диалоге создания: подпись слева, контрол справа, линия под строкой. **Не этот компонент:** переключатель с описанием без линий - `Toggle` с `label`; заголовок блока - `Section`.\n\nПодпись - 12px / 500 капсом, вторичный цвет. `hint` - кнопка-«i» с подсказкой после подписи. `stacked` - подпись над контролом (текстовое поле). Слот `details` - под строкой над линией: выбранные значения чипами. Слот по умолчанию отдаёт `labelId` для `aria-labelledby` контрола. Линия только под строкой: над первой её нет, чтобы не дублировать шапку диалога.\n\n`variant="list"` - пункт списка переключателей: `icon` на плашке `IconBox` цвета `color` из палитры, подпись обычным текстом и `description` второй строкой, контрол в конце, линии между пунктами начинаются после иконки. Подпись - `<label>` элемента с `id={controlId}` из слота: клик по тексту переключает `Toggle`; `descriptionId` - для `aria-describedby`. `disabled` гасит подпись и иконку вместе с контролом.'
       }
     }
   }
@@ -48,25 +48,21 @@ export const Variants: Story = {
     props: {
       sections: [
         {
-          title: 'Control',
+          title: 'Form: dropdown, toggle, chips (details), textarea (stacked)',
           component: SettingRowExample,
-          rows: [
-            { title: 'dropdown', props: { control: 'dropdown' } },
-            { title: 'toggle', props: { control: 'toggle' } },
-            { title: 'chips (details)', props: { control: 'chips' } },
-            { title: 'textarea (stacked)', props: { control: 'textarea' } }
-          ],
+          rows: [{ title: '', props: { sample: 'form' } }],
           columns: [
             { title: 'caption', props: {} },
             { title: 'hint', props: { hint: true } }
           ]
+        },
+        {
+          title: 'List: icon, description, a value before the switch, disabled, no icon',
+          component: SettingRowExample,
+          rows: [{ title: '', props: { sample: 'list' } }],
+          columns: [{ title: '', props: {} }]
         }
       ]
     }
   })
-}
-
-export const InDialog: Story = {
-  parameters: { layout: 'padded', controls: { disable: true } },
-  args: { sample: 'dialog' }
 }

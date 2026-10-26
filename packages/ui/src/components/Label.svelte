@@ -22,13 +22,17 @@
   export let params: Record<string, any> = {}
 
   let _value: string | undefined
+  let request = 0
 
   $: if (label !== undefined) {
+    // A slower answer for previous params (strings still loading) must not overwrite the current one.
+    const current = ++request
     // languageStore fires on a language change only, not on every theme update; '' until the theme is set.
     translateCB(label, params ?? {}, $languageStore === '' ? undefined : $languageStore, (r) => {
-      _value = r
+      if (current === request) _value = r
     })
   } else {
+    ++request
     _value = label
   }
 </script>

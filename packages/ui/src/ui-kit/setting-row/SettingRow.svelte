@@ -21,34 +21,65 @@
 
   import Label from '../../components/Label.svelte'
   import ui from '../../plugin'
+  import type { IconComponent } from '../../types'
   import IconButton from '../button/IconButton.svelte'
-  import type { SettingRowProps, SettingRowSlots } from './types'
+  import IconBox from '../icon-box/IconBox.svelte'
+  import type { SettingRowProps, SettingRowSlots, SettingRowVariant } from './types'
 
   type $$Props = SettingRowProps
   type $$Slots = SettingRowSlots
 
   export let label: IntlString
   export let labelParams: Record<string, any> = {}
+  export let variant: SettingRowVariant | undefined = undefined
   export let hint: IntlString | undefined = undefined
   export let stacked: boolean = false
+  export let icon: IconComponent | undefined = undefined
+  export let color: string | undefined = undefined
+  export let description: IntlString | undefined = undefined
+  export let descriptionParams: Record<string, any> = {}
+  export let disabled: boolean = false
 
-  const labelId = `setting-row-label-${++lastId}`
+  const id = ++lastId
+  const labelId = `setting-row-label-${id}`
+  const controlId = `setting-row-control-${id}`
+  // Only a list item draws the description: a form row would point at a missing id.
+  $: descriptionId = variant === 'list' && description != null ? `setting-row-description-${id}` : undefined
 </script>
 
-<div class="setting-row" class:setting-row--stacked={stacked}>
-  <div class="setting-row__main">
-    <span class="setting-row__caption">
-      <span class="setting-row__label" id={labelId}><Label {label} params={labelParams} /></span>
-      {#if hint !== undefined}
-        <IconButton icon={ui.icon.InfoCircle} size="extra-small" kind="ghost" tooltip={{ label: hint }} />
-      {/if}
-    </span>
-    <div class="setting-row__control"><slot {labelId} /></div>
+{#if variant === 'list'}
+  <div class="setting-row setting-row--list" class:setting-row--disabled={disabled}>
+    {#if icon != null}
+      <span class="setting-row__icon"><IconBox {icon} {color} size="small" /></span>
+    {/if}
+    <div class="setting-row__body">
+      <label class="setting-row__text" for={controlId}>
+        <span class="setting-row__title" id={labelId}><Label {label} params={labelParams} /></span>
+        {#if description != null}
+          <span class="setting-row__description" id={descriptionId}>
+            <Label label={description} params={descriptionParams} />
+          </span>
+        {/if}
+      </label>
+      <div class="setting-row__end"><slot {labelId} {descriptionId} {controlId} /></div>
+    </div>
   </div>
-  {#if $$slots.details}
-    <div class="setting-row__details"><slot name="details" /></div>
-  {/if}
-</div>
+{:else}
+  <div class="setting-row" class:setting-row--stacked={stacked}>
+    <div class="setting-row__main">
+      <span class="setting-row__caption">
+        <span class="setting-row__label" id={labelId}><Label {label} params={labelParams} /></span>
+        {#if hint != null}
+          <IconButton icon={ui.icon.InfoCircle} size="extra-small" kind="ghost" tooltip={{ label: hint }} />
+        {/if}
+      </span>
+      <div class="setting-row__control"><slot {labelId} {descriptionId} {controlId} /></div>
+    </div>
+    {#if $$slots.details}
+      <div class="setting-row__details"><slot name="details" /></div>
+    {/if}
+  </div>
+{/if}
 
 <style lang="scss">
   .setting-row {
@@ -115,6 +146,64 @@
     }
     &--stacked .setting-row__control {
       display: block;
+    }
+
+    &--list {
+      flex-direction: row;
+      align-items: center;
+      gap: var(--spacing-1_5);
+      border-bottom: none;
+    }
+    &__icon {
+      display: flex;
+      flex-shrink: 0;
+    }
+    // The line starts after the icon, so the plates stand in one column.
+    &__body {
+      display: flex;
+      flex-grow: 1;
+      align-items: center;
+      gap: var(--spacing-1_5);
+      min-width: 0;
+      padding: var(--spacing-0_75) 0;
+    }
+    &--list:not(:last-child) &__body {
+      border-bottom: 1px solid var(--global-subtle-ui-BorderColor);
+    }
+    &__text {
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+      min-width: 0;
+      cursor: pointer;
+    }
+    &__title {
+      font-size: 0.875rem;
+      line-height: 1.25rem;
+      color: var(--global-primary-TextColor);
+    }
+    &__description {
+      font-size: 0.75rem;
+      line-height: 1rem;
+      color: var(--global-secondary-TextColor);
+    }
+    &__end {
+      display: flex;
+      flex-shrink: 0;
+      align-items: center;
+      gap: var(--spacing-1);
+    }
+    &--disabled {
+      .setting-row__text {
+        cursor: default;
+      }
+      .setting-row__title,
+      .setting-row__description {
+        color: var(--global-disabled-TextColor);
+      }
+      .setting-row__icon {
+        opacity: 0.5;
+      }
     }
   }
 </style>

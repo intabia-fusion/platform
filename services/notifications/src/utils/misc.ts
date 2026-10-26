@@ -15,7 +15,7 @@
 
 import { AccountUuid, BlobType, Doc, type Hierarchy, Space } from '@hcengineering/core'
 import contact, { Employee } from '@hcengineering/contact'
-import { ActivityMessage } from '@hcengineering/activity'
+import activity, { ActivityMessage, AppletSnapshot, toAppletSummary } from '@hcengineering/activity'
 import { compactNotificationMessage, NotificationMessage } from '@hcengineering/notification'
 import { Receiver, Sender, TypeMatchClient } from '@hcengineering/server-notification'
 import chunter, { ChatMessage } from '@hcengineering/chunter'
@@ -110,4 +110,16 @@ export async function getAttachments (message: ActivityMessage, client: Client):
 export function isSender (receiver: Receiver, sender: Sender): boolean {
   if (sender.account != null && receiver.account === sender.account) return true
   return receiver.socialIds.includes(sender.socialId)
+}
+
+// trustCounter: skip the query at applets=0; not for a create-tx message, whose counter is not raised yet
+export async function getApplets (
+  message: ActivityMessage,
+  client: Client,
+  options: { trustCounter?: boolean } = {}
+): Promise<AppletSnapshot[]> {
+  if (!isChatMessage(message, client.hierarchy)) return []
+  if (options.trustCounter === true && (message.applets ?? 0) === 0) return []
+  const applets = await client.findAll(activity.class.AppletInstance, { attachedTo: message._id })
+  return applets.map((it) => toAppletSummary(it, client.model.findObject(it.applet)))
 }

@@ -19,10 +19,12 @@
   import Label from '../../components/Label.svelte'
   import Scroller from '../../components/Scroller.svelte'
   import ui from '../../plugin'
+  import { showPopup, type PopupResult } from '../../popups'
   import type { LabelAndProps } from '../../types'
   import Button from '../button/Button.svelte'
   import IconButton from '../button/IconButton.svelte'
   import Kbd from '../kbd/Kbd.svelte'
+  import CloseConfirm from './CloseConfirm.svelte'
   import type { DialogEvents, DialogPadding, DialogProps, DialogSlots, DialogSubmitKind, DialogWidth } from './types'
 
   type $$Props = DialogProps
@@ -49,6 +51,8 @@
   export let hideCancel: boolean = false
   export let loading: boolean = false
   export let submitOnEnter: boolean = false
+  export let closeConfirmationIntl: IntlString | undefined = undefined
+  export let dividers: boolean = true
 
   const dispatch = createEventDispatcher<{ submit: null, cancel: null, close: null, fullsize: boolean }>()
   const titleId = `dialog-${Math.random().toString(36).slice(2, 10)}-title`
@@ -69,15 +73,49 @@
   $: hasFooter = footer && (!hideSubmit || !hideCancel || $$slots.footerStart || $$slots.footerActions)
   $: modal = !embedded
 
+  let confirmPopup: PopupResult | undefined
+
   function cancel (): void {
+    if (closeConfirmationIntl != null) {
+      askToClose(closeConfirmationIntl)
+      return
+    }
     if (dispatch('cancel', null, { cancelable: true })) dispatch('close', null)
+  }
+
+  // Cleared by the question's own destroy too: `closePopup` removes it without the close callback.
+  function askToClose (message: IntlString): void {
+    if (confirmPopup != null) return
+    const popup = showPopup(
+      CloseConfirm,
+      {
+        label,
+        labelParams,
+        message,
+        onDestroyed: () => {
+          if (confirmPopup === popup) confirmPopup = undefined
+        }
+      },
+      'center',
+      (result) => {
+        if (confirmPopup !== popup) return
+        confirmPopup = undefined
+        if (result === true && dispatch('cancel', null, { cancelable: true })) dispatch('close', null)
+      }
+    )
+    confirmPopup = popup
   }
 
   /**
    * The popup host asks it before closing on Escape or a click outside: a prevented `cancel` keeps the dialog open.
    * A place that wraps the dialog forwards it: `export function canClose () { return dialog.canClose() }`.
+   * With `closeConfirmationIntl` it asks first and keeps the dialog until the answer.
    */
   export function canClose (): boolean {
+    if (closeConfirmationIntl != null) {
+      askToClose(closeConfirmationIntl)
+      return false
+    }
     return dispatch('cancel', null, { cancelable: true })
   }
 
@@ -135,6 +173,10 @@
   })
 
   onDestroy(() => {
+    // Not left alone over the place: its answer would close a dialog that is gone.
+    const popup = confirmPopup
+    confirmPopup = undefined
+    popup?.close()
     if (embedded || !(opener instanceof HTMLElement) || opener === document.body || !opener.isConnected) return
     const active = document.activeElement
     if (active === null || active === document.body || form?.contains(active) === true) {
@@ -151,6 +193,7 @@
   class="dialog dialog--{resolvedWidth}"
   class:dialog--embedded={embedded}
   class:dialog--full-size={fullSize}
+  class:dialog--plain={!dividers}
   role={modal ? 'dialog' : undefined}
   aria-modal={modal ? 'true' : undefined}
   aria-labelledby={hasTitle ? titleId : undefined}
@@ -439,6 +482,19 @@
     gap: var(--spacing-2);
     padding: var(--spacing-1_5);
     border-top: 1px solid var(--theme-dialog-border-color);
+  }
+
+  // A short question: the header, the text and the buttons read as one card.
+  .dialog--plain {
+    .dialog__header,
+    .dialog__footer {
+      border-color: transparent;
+    }
+    // Equal room above and below the text: the header and the footer pad the rest.
+    .dialog__body--padded .dialog__content {
+      padding-top: var(--spacing-0_5);
+      padding-bottom: var(--spacing-0_5);
+    }
   }
 
   .dialog__footer-start {

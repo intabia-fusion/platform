@@ -1,5 +1,6 @@
 //
 // Copyright © 2020 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -16,6 +17,7 @@
 import activity from '@hcengineering/activity'
 import { loadMetadata } from '@hcengineering/platform'
 
+const icons = require('../assets/icons.svg') as string // eslint-disable-line
 const uiIcons = require('@hcengineering/ui/assets/icons.svg') as string // eslint-disable-line
 loadMetadata(activity.icon, {
   Activity: `${uiIcons}#chart-square`,
@@ -23,5 +25,7 @@ loadMetadata(activity.icon, {
   Bookmark: `${uiIcons}#bookmark`,
   BookmarkFilled: `${uiIcons}#bookmark-fill`,
   Forward: `${uiIcons}#bubble-arrow-right`,
-  ReplyTo: `${uiIcons}#arrow-bend-up-left`
+  ReplyTo: `${uiIcons}#arrow-bend-up-left`,
+  Poll: `${icons}#poll`,
+  PollOutline: `${icons}#poll-outline`
 })

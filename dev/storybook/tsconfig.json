@@ -2,6 +2,7 @@
   "extends": "./node_modules/@hcengineering/platform-rig/profiles/ui/tsconfig.json",
 
   "compilerOptions": {
+    // Plugin stories import the *-assets sources of the workspace directly.
     "rootDir": "../..",
     "noEmit": true,
     "incremental": false,

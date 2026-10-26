@@ -99,7 +99,9 @@ export class Worker {
     if (this.sysHierarchy.isDerived(tx.objectClass, pulse.class.WorkspacesNotification)) return
 
     const domain = this.sysHierarchy.findDomain(tx.objectClass)
-    if (domain === DOMAIN_TRANSIENT) return
+    if (domain === DOMAIN_TRANSIENT && !this.sysHierarchy.isDerived(tx.objectClass, activity.class.VotePollAction)) {
+      return
+    }
 
     const exists = this.workspaces.get(ws)
 

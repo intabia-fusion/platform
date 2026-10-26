@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-import activity, { type ActivityMessage, type DocUpdateMessage } from '@hcengineering/activity'
+import activity, { type ActivityMessage, type AppletInstance, type DocUpdateMessage } from '@hcengineering/activity'
 import core, {
   type Class,
   type Doc,
@@ -22,6 +22,7 @@ import core, {
   type Ref,
   type Tx,
   type TxCUD,
+  TxRemoveDoc,
   type TxUpdateDoc
 } from '@hcengineering/core'
 import type { TriggerControl } from '@hcengineering/server-core'
@@ -64,6 +65,26 @@ export async function OnActivityMessageRemoved (txes: TxCUD<Doc>[], control: Tri
   return saved.map((it) => control.txFactory.createTxRemoveDoc(it._class, it.space, it._id))
 }
 
+// The removed instance is gone and a tx may name the base class: dependents of every kind are looked up.
+export async function OnAppletRemoved (txes: TxRemoveDoc<AppletInstance>[], control: TriggerControl): Promise<Tx[]> {
+  const removed = txes.map((tx) => tx.objectId)
+  if (removed.length === 0) return []
+
+  const applets = control.modelDb.findAllSync(activity.class.Applet, {})
+  const dependents = new Set(applets.flatMap((it) => it.dependents ?? []))
+  const result: Tx[] = []
+  for (const _class of dependents) {
+    const docs = await control.findAll(
+      control.ctx,
+      _class,
+      { attachedTo: { $in: removed } },
+      { projection: { _id: 1, _class: 1, space: 1 } }
+    )
+    result.push(...docs.map((it) => control.txFactory.createTxRemoveDoc(it._class, it.space, it._id)))
+  }
+  return result
+}
+
 export async function OnDocClassChanged (txes: TxCUD<Doc>[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []
 
@@ -102,6 +123,7 @@ export default async () => ({
     ReferenceTrigger,
     OnDocRemoved,
     OnDocClassChanged,
-    OnActivityMessageRemoved
+    OnActivityMessageRemoved,
+    OnAppletRemoved
   }
 })

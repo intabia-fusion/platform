@@ -45,6 +45,7 @@ describe('handleReaction', () => {
     findAll: jest.Mock
     model: {
       findAllSync: jest.Mock
+      findObject: jest.Mock
     }
     hierarchy: Record<string, jest.Mock>
     txFactory: {
@@ -74,7 +75,8 @@ describe('handleReaction', () => {
       findOne: jest.fn(),
       findAll: jest.fn(),
       model: {
-        findAllSync: jest.fn()
+        findAllSync: jest.fn(),
+        findObject: jest.fn((_id) => (_id === activity.applet.Poll ? { summaryFields: ['question'] } : undefined))
       },
       hierarchy: {
         isDerived: jest.fn().mockReturnValue(true),
@@ -222,7 +224,12 @@ describe('handleReaction', () => {
       expect(mockClient.ctx.warn).toHaveBeenCalled()
     })
 
-    it('calls pushNotification if all conditions are met', async () => {
+    // The message, its document and one receiver with inbox enabled: everything a reaction push needs.
+    function prepareReactionPush (message: ActivityMessage): {
+      tx: TxCreateDoc<Reaction>
+      receiver: { account: AccountUuid, socialIds: string[] }
+      context: DocNotifyContext
+    } {
       const tx = {
         _class: core.class.TxCreateDoc,
         attachedTo: 'msg-1',
@@ -232,13 +239,6 @@ describe('handleReaction', () => {
         createdOn: 100,
         modifiedOn: 100
       } as unknown as TxCreateDoc<Reaction>
-
-      const message = {
-        _id: 'msg-1',
-        createdBy: 'user-1',
-        attachedTo: 'doc-1',
-        attachedToClass: 'DocClass'
-      } as unknown as ActivityMessage
 
       const doc = {
         _id: 'doc-1',
@@ -265,8 +265,6 @@ describe('handleReaction', () => {
         _id: activity.ids.AddReactionNotification,
         defaultEnabled: true
       }
-      mockClient.model.findAllSync.mockReturnValue([type])
-
       mockClient.model.findAllSync.mockImplementation((cls: string) => {
         if (cls === notification.class.NotificationProvider) {
           return [{ _id: notification.providers.InboxNotificationProvider, defaultEnabled: true }]
@@ -279,13 +277,21 @@ describe('handleReaction', () => {
         user: 'user-1' as AccountUuid
       } as unknown as DocNotifyContext
       mockCache.getContexts.mockResolvedValue([context])
-
-      const sender = { _id: 'user-2' }
-      mockCache.getSender.mockResolvedValue(sender)
-
+      mockCache.getSender.mockResolvedValue({ _id: 'user-2' })
       mockCache.getPushSubscriptions.mockResolvedValue([])
-
       mockClient.findAll.mockResolvedValue([])
+
+      return { tx, receiver, context }
+    }
+
+    it('calls pushNotification if all conditions are met', async () => {
+      const message = {
+        _id: 'msg-1',
+        createdBy: 'user-1',
+        attachedTo: 'doc-1',
+        attachedToClass: 'DocClass'
+      } as unknown as ActivityMessage
+      const { tx, receiver, context } = prepareReactionPush(message)
 
       await handleReaction(mockClient as unknown as Client, mockCache as unknown as Cache, txCache, result, tx)
 
@@ -301,6 +307,68 @@ describe('handleReaction', () => {
           notifyProviders: expect.any(Object)
         })
       )
+    })
+
+    it('puts the poll of the reacted message into the notification', async () => {
+      const message = {
+        _id: 'msg-1',
+        _class: 'chunter:class:ChatMessage',
+        createdBy: 'user-1',
+        attachedTo: 'doc-1',
+        attachedToClass: 'DocClass',
+        attachments: 0,
+        applets: 1
+      } as unknown as ActivityMessage
+      const { tx, context } = prepareReactionPush(message)
+      const poll = { _id: 'poll-1', applet: activity.applet.Poll, question: 'Lunch?' }
+      mockClient.findAll.mockImplementation(async (cls: string) =>
+        cls === activity.class.AppletInstance ? [{ ...poll, userVotes: [{ account: 'voter', options: ['a'] }] }] : []
+      )
+
+      await handleReaction(mockClient as unknown as Client, mockCache as unknown as Cache, txCache, result, tx)
+
+      expect(pushNotification).toHaveBeenCalledWith(
+        mockClient,
+        txCache,
+        result,
+        context,
+        expect.objectContaining({
+          // The inbox shows the poll from this copy, the voters stay out of it.
+          notification: expect.objectContaining({ applets: [poll] })
+        })
+      )
+    })
+
+    const appletQueries = (): any[] =>
+      mockClient.findAll.mock.calls.filter((call: any[]) => call[0] === activity.class.AppletInstance)
+
+    const reactTo = async (applets: number | undefined): Promise<void> => {
+      const message = {
+        _id: 'msg-1',
+        _class: 'chunter:class:ChatMessage',
+        createdBy: 'user-1',
+        attachedTo: 'doc-1',
+        attachedToClass: 'DocClass',
+        applets
+      } as unknown as ActivityMessage
+      const { tx } = prepareReactionPush(message)
+      mockClient.findAll.mockResolvedValue([])
+      await handleReaction(mockClient as unknown as Client, mockCache as unknown as Cache, txCache, result, tx)
+    }
+
+    it('does not query the applets of a message without any', async () => {
+      await reactTo(0)
+      expect(appletQueries()).toHaveLength(0)
+    })
+
+    it('does not query the applets of a message without the counter', async () => {
+      await reactTo(undefined)
+      expect(appletQueries()).toHaveLength(0)
+    })
+
+    it('queries the applets of a message with the counter raised', async () => {
+      await reactTo(1)
+      expect(appletQueries()).toHaveLength(1)
     })
   })
 

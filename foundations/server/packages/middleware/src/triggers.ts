@@ -441,7 +441,7 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
     if (oldAttachedTo !== undefined) {
       const attr = this.context.hierarchy.findAttribute(oldAttachedTo._class, colTx.collection)
 
-      if (attr !== undefined) {
+      if (attr?.type._class === core.class.Collection) {
         oldTx = this.getCollectionUpdateTx(_id, _class, colTx.modifiedBy, colTx.modifiedOn, oldAttachedTo, {
           $inc: { [colTx.collection]: -1 }
         })
@@ -452,8 +452,11 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
     const newAttachedToCollection = operations.collection ?? colTx.collection
     const newAttachedTo = (await findAll(ctx, newAttachedToClass, { _id: operations.attachedTo }, { limit: 1 }))[0]
     let newTx: Tx | null = null
-    const newAttr = this.context.hierarchy.findAttribute(newAttachedToClass, newAttachedToCollection)
-    if (newAttachedTo !== undefined && newAttr !== undefined) {
+    const newAttr =
+      newAttachedTo !== undefined
+        ? this.context.hierarchy.findAttribute(newAttachedTo._class, newAttachedToCollection)
+        : undefined
+    if (newAttachedTo !== undefined && newAttr?.type._class === core.class.Collection) {
       newTx = this.getCollectionUpdateTx(
         newAttachedTo._id,
         newAttachedTo._class,
@@ -506,7 +509,7 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
             attachedTo = createTx != null ? TxProcessor.createDoc2Doc(createTx as TxCreateDoc<Doc>) : undefined
           }
 
-          if (attachedTo !== undefined) {
+          if (attachedTo !== undefined && this.isCounterField(attachedTo, colTx.collection)) {
             res.push(
               this.getCollectionUpdateTx(
                 _id,
@@ -526,6 +529,14 @@ export class TriggersMiddleware extends BaseMiddleware implements Middleware {
       }
     }
     return result
+  }
+
+  // A declared collection, or an undeclared field holding a number or nothing: a client `$inc` would run trusted.
+  private isCounterField (parent: Doc, name: string): boolean {
+    const attr = this.context.hierarchy.findAttribute(parent._class, name)
+    if (attr !== undefined) return attr.type._class === core.class.Collection
+    const value = (parent as any)[name]
+    return value == null || typeof value === 'number'
   }
 
   private getParentClass (_class: Ref<Class<Doc>>): Ref<Class<Doc>> {

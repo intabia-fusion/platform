@@ -102,6 +102,7 @@ const mockIsMuted = jest.fn()
 const mockGetMentionNotification = jest.fn()
 const mockHasMessageNotification = jest.fn()
 const mockGetAttachments = jest.fn()
+const mockGetApplets = jest.fn()
 
 const mockGetPushGroup = jest.fn()
 jest.mock('../../utils/utils', () => ({
@@ -115,7 +116,8 @@ jest.mock('../../utils/utils', () => ({
   hasMessageNotification: (...args: any[]) => mockHasMessageNotification(...args),
   getLastNotify: (context: any) =>
     Math.max(...(context.latestNotifications ?? []).map((it: any) => it.createdOn ?? 0), 0),
-  getAttachments: (...args: any[]) => mockGetAttachments(...args)
+  getAttachments: (...args: any[]) => mockGetAttachments(...args),
+  getApplets: (...args: any[]) => mockGetApplets(...args)
 }))
 
 describe('mention module', () => {
@@ -202,6 +204,7 @@ describe('mention module', () => {
     mockGetMentionNotification.mockReset()
     mockHasMessageNotification.mockReset()
     mockGetAttachments.mockReset()
+    mockGetApplets.mockReset()
 
     // Default mock setups
     ;(global as any).mockGenerateId.mockReturnValue('gen-id')
@@ -213,6 +216,7 @@ describe('mention module', () => {
     mockGetMentionNotification.mockReturnValue(null)
     mockHasMessageNotification.mockReturnValue(false)
     mockGetAttachments.mockResolvedValue([])
+    mockGetApplets.mockResolvedValue([])
     mockAreEqualJson.mockReturnValue(false)
     mockMarkupToText.mockReturnValue('mocked-text')
   })
@@ -312,10 +316,12 @@ describe('mention module', () => {
       })
 
       mockCache.getPushSubscriptions.mockResolvedValue([])
+      mockGetApplets.mockResolvedValue([{ _id: 'poll-1', applet: activity.applet.Poll }])
 
       await handleMention(mockClient, mockCache, txCache, result, tx, doc, txObject, 'test-type' as any)
 
       expect(result.createUserMentionInfoTx).toHaveLength(1)
+      expect(mockGetApplets).toHaveBeenCalledWith(txObject, mockClient, { trustCounter: false })
       expect(mockPushNotification).toHaveBeenCalledWith(
         mockClient,
         txCache,
@@ -327,7 +333,8 @@ describe('mention module', () => {
           notification: expect.objectContaining({
             id: 'gen-id',
             type: 'mention',
-            createdOn: 100
+            createdOn: 100,
+            applets: [{ _id: 'poll-1', applet: activity.applet.Poll }]
           })
         })
       )
@@ -1121,6 +1128,69 @@ describe('mention module', () => {
 
       expect(mockCache.getCollaborators).toHaveBeenCalledWith('doc-1', 'DocClass')
       expect(mockCache.getReceivers).toHaveBeenCalledWith(['user-1', 'user-3'])
+    })
+
+    it('looks the applets of the message up once for all receivers of a group mention', async () => {
+      mockClient.hierarchy.isDerived.mockImplementation((cls: string, target: string) => {
+        if (target === contact.class.Person) return true
+        if (target === activity.class.ActivityMessage && cls === 'MsgClass') return true
+        return false
+      })
+      mockExtractReferences.mockReturnValue([
+        {
+          objectId: contact.mention.Everyone,
+          objectClass: contact.class.Person,
+          parentNode: { type: 'paragraph' }
+        }
+      ])
+      mockJsonToMarkup.mockReturnValue('<everyone-markup>')
+      mockCache.getDocSpace.mockResolvedValue({ _id: 'space-1', private: false })
+      mockCache.getCollaborators.mockResolvedValue([{ collaborator: 'user-1' }, { collaborator: 'user-3' }])
+      mockCache.getReceivers.mockResolvedValue([
+        { account: 'user-1' as AccountUuid, employeeRef: 'emp-1' },
+        { account: 'user-3' as AccountUuid, employeeRef: 'emp-3' }
+      ] as unknown as Receiver[])
+      mockCache.getPushSubscriptions.mockResolvedValue([])
+      mockGetTxNotifyProviders.mockResolvedValue({
+        [notification.providers.InboxNotificationProvider]: [{ _id: 'provider-1' }]
+      })
+      mockGetApplets.mockResolvedValue([{ _id: 'poll-1', applet: activity.applet.Poll }])
+
+      await handleMention(mockClient, mockCache, txCache, result, tx, doc, txObject, 'test-type' as any)
+
+      expect(mockPushNotification).toHaveBeenCalledTimes(2)
+      expect(mockGetApplets).toHaveBeenCalledTimes(1)
+      for (const call of mockPushNotification.mock.calls) {
+        expect(call[4].notification.applets).toEqual([{ _id: 'poll-1', applet: activity.applet.Poll }])
+      }
+    })
+
+    it('trusts the applets counter of a message mentioned by an update tx', async () => {
+      tx = { ...tx, _class: core.class.TxUpdateDoc, operations: { message: '<content>' } } as unknown as TxCUD<Doc>
+      mockClient.hierarchy.isDerived.mockImplementation((cls: string, target: string) => {
+        if (target === contact.class.Person) return true
+        if (target === activity.class.ActivityMessage && cls === 'MsgClass') return true
+        return false
+      })
+      mockClient.findAll.mockResolvedValue([])
+      mockExtractReferences.mockReturnValue([
+        { objectId: contact.mention.Everyone, objectClass: contact.class.Person, parentNode: { type: 'paragraph' } }
+      ])
+      mockJsonToMarkup.mockReturnValue('<everyone-markup>')
+      mockCache.getDocSpace.mockResolvedValue({ _id: 'space-1', private: false })
+      mockCache.getCollaborators.mockResolvedValue([{ collaborator: 'user-1' }])
+      mockCache.getReceivers.mockResolvedValue([
+        { account: 'user-1' as AccountUuid, employeeRef: 'emp-1' }
+      ] as unknown as Receiver[])
+      mockCache.getPushSubscriptions.mockResolvedValue([])
+      mockGetTxNotifyProviders.mockResolvedValue({
+        [notification.providers.InboxNotificationProvider]: [{ _id: 'provider-1' }]
+      })
+
+      await handleMention(mockClient, mockCache, txCache, result, tx, doc, txObject, 'test-type' as any)
+
+      expect(mockGetApplets).toHaveBeenCalledTimes(1)
+      expect(mockGetApplets).toHaveBeenCalledWith(txObject, mockClient, { trustCounter: true })
     })
 
     it('maps Here mention to online space collaborators only', async () => {

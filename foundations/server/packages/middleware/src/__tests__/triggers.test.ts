@@ -195,3 +195,49 @@ describe('TriggersMiddleware parallel trigger findAll', () => {
     }
   })
 })
+
+describe('TriggersMiddleware collection counters', () => {
+  const attributes: Record<string, any> = {
+    message: { type: { _class: core.class.TypeMarkup } },
+    applets: { type: { _class: core.class.Collection } }
+  }
+  const hierarchy = {
+    getDomain: () => 'activity',
+    getBaseClass: (_class: string) => _class,
+    // Only the stored class declares the fields, the base class named in the tx does not.
+    findAttribute: (_class: string, name: string) => (_class === 'chat-message' ? attributes[name] : undefined)
+  }
+  const middleware = new TriggersMiddleware({ hierarchy } as any, undefined)
+  const ctx = { contextData: { removedMap: new Map(), broadcast: { txes: [] } } }
+  // Its interval keeps jest from exiting.
+  afterAll(async () => {
+    await middleware.close()
+  })
+  // A mixin keeps its data under its id: an `$inc` there would wipe it.
+  const parent = { _id: 'msg-1', _class: 'chat-message', space: 'channel', 'test:mixin:Extra': { note: 'x' }, _reactions: 2 }
+  const findAll = async (): Promise<any[]> => [parent]
+  const removal = (collection: string): Tx =>
+    ({
+      _class: core.class.TxRemoveDoc,
+      space: core.space.Tx,
+      objectId: 'reaction-1',
+      objectClass: 'reaction',
+      objectSpace: 'channel',
+      attachedTo: 'msg-1',
+      attachedToClass: 'base-message',
+      collection,
+      modifiedBy: 'bob',
+      modifiedOn: 1
+    }) as any
+
+  it('counts a collection only, by the class and data of the stored parent', async () => {
+    const names = ['message', '_id', 'test:mixin:Extra', 'applets', '_reactions', 'undeclared']
+    const result = await (middleware as any).processCollection(ctx, names.map(removal), findAll)
+
+    expect(result.map((it: any) => it.operations)).toEqual([
+      { $inc: { applets: -1 } },
+      { $inc: { _reactions: -1 } },
+      { $inc: { undeclared: -1 } }
+    ])
+  })
+})
