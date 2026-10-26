@@ -259,7 +259,9 @@ export class ChunterMiddleware extends BaseMiddleware {
   }
 
   private onMessageMixin (ctx: MeasureContext<SessionData>, tx: TxMixin<Doc, Doc>): void {
-    if (!this.context.hierarchy.isMixin(tx.mixin)) { this.throwForbidden(ctx, tx, 'Unknown mixin', ForbiddenKind.SystemOnly) }
+    if (!this.context.hierarchy.isMixin(tx.mixin)) {
+      this.throwForbidden(ctx, tx, 'Unknown mixin', ForbiddenKind.SystemOnly)
+    }
   }
 
   private isAuthor (ctx: MeasureContext<SessionData>, message: ChatMessage): boolean {

@@ -302,12 +302,15 @@ describe('createPlayback', () => {
 })
 
 describe('playbackOf', () => {
+  // A card that goes stops its recording on a timer: a real one would fire after the test environment is gone.
   beforeEach(() => {
+    vi.useFakeTimers()
     FakeAudio.deferLoad = false
     vi.stubGlobal('Audio', FakeAudio)
   })
 
   afterEach(() => {
+    vi.runOnlyPendingTimers()
     vi.useRealTimers()
     vi.unstubAllGlobals()
   })
@@ -337,7 +340,6 @@ describe('playbackOf', () => {
   })
 
   it('stops the recording shortly after its last card is gone', () => {
-    vi.useFakeTimers()
     const playback = createPlayback()
     const first = playbackOf(playback, 'a').subscribe(() => {})
     const second = playbackOf(playback, 'a').subscribe(() => {})
@@ -352,7 +354,6 @@ describe('playbackOf', () => {
   })
 
   it('keeps playing a recording whose card comes back at once', () => {
-    vi.useFakeTimers()
     const playback = createPlayback()
     const card = playbackOf(playback, 'a').subscribe(() => {})
     playback.toggle('a', 'a.ogg')
@@ -364,7 +365,6 @@ describe('playbackOf', () => {
   })
 
   it('leaves alone the recording that plays when another card goes', () => {
-    vi.useFakeTimers()
     const playback = createPlayback()
     const a = playbackOf(playback, 'a').subscribe(() => {})
     const b = playbackOf(playback, 'b').subscribe(() => {})

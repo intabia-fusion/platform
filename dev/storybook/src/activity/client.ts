@@ -172,7 +172,9 @@ async function handleVote (action: VotePollAction): Promise<void> {
         ...(personal ? {} : { $pull: { userVotes: { account: action.account } as any } })
       })
     ]
-    if (answers[0] != null) { txes.unshift(service.createTxRemoveDoc(activity.class.PollAnswer, action.space, answers[0]._id)) }
+    if (answers[0] != null) {
+      txes.unshift(service.createTxRemoveDoc(activity.class.PollAnswer, action.space, answers[0]._id))
+    }
     await apply(...txes)
     return
   }

@@ -111,7 +111,9 @@ class ActivityMiddleware extends BaseMiddleware {
     if (followsParent(this.context.hierarchy, tx, instance, batch)) return
 
     const applet = this.context.modelDb.findAllSync(activity.class.Applet, { _id: instance.applet })[0]
-    if (!applet?.editable) { this.throwForbidden(ctx, tx, ForbiddenKind.SystemOnly, 'This applet is not changed once sent') }
+    if (!applet?.editable) {
+      this.throwForbidden(ctx, tx, ForbiddenKind.SystemOnly, 'This applet is not changed once sent')
+    }
     if (!this.isAuthor(ctx, instance)) {
       this.throwForbidden(ctx, tx, ForbiddenKind.AuthorOnly, 'Only the author changes an applet')
     }
@@ -209,7 +211,9 @@ class ActivityMiddleware extends BaseMiddleware {
 
     if (!Array.isArray(options)) this.throwBadRequest('Poll options must be a list')
     if (options.length < 2) this.throwBadRequest('Poll needs at least 2 options')
-    if (options.length > pollLimits.maxOptions) { this.throwBadRequest(`Poll allows at most ${pollLimits.maxOptions} options`) }
+    if (options.length > pollLimits.maxOptions) {
+      this.throwBadRequest(`Poll allows at most ${pollLimits.maxOptions} options`)
+    }
 
     const ids = new Set<OptionID>()
     for (const option of options) {
