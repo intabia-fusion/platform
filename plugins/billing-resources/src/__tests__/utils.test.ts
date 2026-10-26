@@ -13,28 +13,61 @@
 // limitations under the License.
 //
 
-import type { PlanItem, PackageItem } from '@hcengineering/billing'
-import type { SubscriptionData } from '@hcengineering/account-client'
+import type { PlanItem, PackageItem, PlanConfig } from '@hcengineering/billing'
+import {
+  getClient as getAccountClientRaw,
+  SubscriptionStatus,
+  SubscriptionType,
+  type Subscription,
+  type SubscriptionData
+} from '@hcengineering/account-client'
 import type { UsageStatus } from '@hcengineering/core'
 
-import { isPlanConfig, calculateLimits, checkUsageAgainstLimits } from '../utils'
+import { isPlanConfig, calculateLimits, checkUsageAgainstLimits, checkWorkspaceLimits } from '../utils'
+import { setSubscriptionState } from '../stores/subscription'
 
 jest.mock('svelte/store', () => ({
   get: jest.fn(),
   writable: jest.fn(() => ({ subscribe: jest.fn(), set: jest.fn(), update: jest.fn() })),
   derived: jest.fn(() => ({ subscribe: jest.fn() }))
 }))
-jest.mock('@hcengineering/login', () => ({ default: {} }))
-jest.mock('@hcengineering/platform', () => ({ getMetadata: jest.fn() }))
-jest.mock('@hcengineering/presentation', () => ({ default: {}, getClient: jest.fn() }))
+jest.mock('@hcengineering/login', () => ({
+  __esModule: true,
+  default: { metadata: { AccountsUrl: {} } }
+}))
+jest.mock('@hcengineering/platform', () => ({ getMetadata: jest.fn(() => 'test') }))
+jest.mock('@hcengineering/presentation', () => ({
+  __esModule: true,
+  default: { metadata: { WorkspaceUuid: {}, Token: {}, PaymentUrl: {} } },
+  getClient: jest.fn()
+}))
 jest.mock('@hcengineering/billing', () => ({ default: {} }))
 jest.mock('@hcengineering/contact', () => ({ default: {} }))
 jest.mock('@hcengineering/ai-bot', () => ({ aiBotEmailSocialKey: 'ai-bot:social:email' }))
-jest.mock('@hcengineering/account-client', () => ({
-  getClient: jest.fn(),
-  SubscriptionStatus: {},
-  SubscriptionType: {}
-}))
+jest.mock('@hcengineering/account-client', () => {
+  const SubscriptionType = { Tier: 'tier', Support: 'support', Package: 'package', Purchase: 'purchase' }
+  const SubscriptionStatus = {
+    Active: 'active',
+    Trialing: 'trialing',
+    PastDue: 'past_due',
+    ReadOnly: 'readonly',
+    Canceled: 'canceled',
+    Paused: 'paused',
+    Expired: 'expired'
+  }
+  const granting = ['active', 'trialing', 'past_due', 'readonly']
+  return {
+    getClient: jest.fn(),
+    SubscriptionStatus,
+    SubscriptionType,
+    grantsPlan: (sub: any): boolean => {
+      if (sub == null) return false
+      if (sub.status === 'past_due' && sub.providerData?.pending === true) return false
+      if (sub.status === 'trialing' && sub.trialEnd != null && sub.trialEnd < Date.now()) return false
+      return granting.includes(sub.status)
+    }
+  }
+})
 jest.mock('@hcengineering/billing-client', () => ({ getClient: jest.fn() }))
 jest.mock('@hcengineering/payment-client', () => ({ getClient: jest.fn() }))
 jest.mock('@hcengineering/core', () => ({
@@ -171,5 +204,84 @@ describe('checkUsageAgainstLimits — storage packages', () => {
 
   it('missing storageBytes counts as zero usage', () => {
     expect(checkUsageAgainstLimits(usage({}), plan({ storageLimitGB: 100 }))).toBe(false)
+  })
+})
+
+const DAY = 24 * 60 * 60 * 1000
+
+const PLAN_CONFIG = {
+  plans: { trial: { free: false }, max: { free: false } },
+  packages: {}
+} as unknown as PlanConfig
+
+const fakeAccountClient = (subscriptions: Subscription[]): any => ({
+  getWorkspaceInfo: jest.fn().mockResolvedValue({ usageInfo: null }),
+  getSubscriptions: jest.fn().mockResolvedValue(subscriptions)
+})
+
+const tier = (over: Partial<Subscription>): Subscription =>
+  ({ type: SubscriptionType.Tier, providerData: {}, ...over }) as unknown as Subscription
+
+describe('checkWorkspaceLimits — banner tier selection', () => {
+  beforeAll(() => {
+    ;(globalThis as any).fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => PLAN_CONFIG })
+  })
+
+  beforeEach(() => {
+    jest.mocked(setSubscriptionState).mockClear()
+    ;(getAccountClientRaw as unknown as jest.Mock).mockReset()
+  })
+
+  it('a newer pending checkout draft does not override the live trial status', async () => {
+    const trial = tier({
+      id: 'trial',
+      status: SubscriptionStatus.Trialing,
+      plan: 'trial',
+      trialEnd: Date.now() + 5 * DAY,
+      createdOn: 100
+    })
+    const draft = tier({
+      id: 'draft',
+      status: SubscriptionStatus.PastDue,
+      plan: 'trial',
+      createdOn: 200,
+      providerData: { pending: true }
+    })
+    ;(getAccountClientRaw as unknown as jest.Mock).mockReturnValue(fakeAccountClient([trial, draft]))
+
+    await checkWorkspaceLimits()
+
+    const call = jest.mocked(setSubscriptionState).mock.calls[0]
+    expect(call[0]).toBe(trial)
+    expect(call[1]).toBe(PLAN_CONFIG.plans.trial)
+    expect(call[5]).toBe(trial)
+  })
+
+  it('a newer non-granting tier does not hide an older live trial', async () => {
+    const trial = tier({
+      id: 'trial',
+      status: SubscriptionStatus.Trialing,
+      plan: 'trial',
+      trialEnd: Date.now() + 5 * DAY,
+      createdOn: 100
+    })
+    const canceled = tier({ id: 'canceled', status: SubscriptionStatus.Canceled, plan: 'max', createdOn: 200 })
+    ;(getAccountClientRaw as unknown as jest.Mock).mockReturnValue(fakeAccountClient([trial, canceled]))
+
+    await checkWorkspaceLimits()
+
+    expect(jest.mocked(setSubscriptionState).mock.calls[0][5]).toBe(trial)
+  })
+
+  it('without a granting tier, the latest tier regardless of status still drives the banner', async () => {
+    const older = tier({ id: 'older', status: SubscriptionStatus.Canceled, plan: 'trial', createdOn: 100 })
+    const newer = tier({ id: 'newer', status: SubscriptionStatus.Canceled, plan: 'max', createdOn: 200 })
+    ;(getAccountClientRaw as unknown as jest.Mock).mockReturnValue(fakeAccountClient([older, newer]))
+
+    await checkWorkspaceLimits()
+
+    const call = jest.mocked(setSubscriptionState).mock.calls[0]
+    expect(call[0]).toBeUndefined()
+    expect(call[5]).toBe(newer)
   })
 })

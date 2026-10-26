@@ -357,6 +357,47 @@ describe('processWebhook (consumer)', () => {
     expect(storage.getAccountContact).not.toHaveBeenCalled()
   })
 
+  // A failed first payment must not become a plan-granting PastDue (it would hide a live trial).
+  test('REJECTED on a pending first-payment draft -> Canceled, no notify, releases checkout', async () => {
+    const storage = makeStorage({
+      ...activeSub,
+      status: SubscriptionStatus.PastDue,
+      providerData: { ...activeSub.providerData, pending: true }
+    })
+    await processWebhook(
+      newCtx(),
+      baseConfig,
+      makeTbank(true),
+      storage,
+      { PaymentId: 'pay_1', Status: 'REJECTED', Amount: 49900 },
+      true
+    )
+    expect(storage.upsert).toHaveBeenCalledTimes(1)
+    const saved = storage.upsert.mock.calls[0][0]
+    expect(saved.status).toBe(SubscriptionStatus.Canceled)
+    expect(saved.providerData).toMatchObject({ pending: false, status: 'REJECTED' })
+    expect(storage.getAccountContact).not.toHaveBeenCalled()
+    expect(storage.releaseCheckout).toHaveBeenCalledWith('pay_1')
+  })
+
+  test('duplicate REJECTED on a draft already closed as Canceled -> no upsert (not revived as PastDue)', async () => {
+    const storage = makeStorage({
+      ...activeSub,
+      status: SubscriptionStatus.Canceled,
+      providerData: { ...activeSub.providerData, status: 'REJECTED', pending: false }
+    })
+    await processWebhook(
+      newCtx(),
+      baseConfig,
+      makeTbank(true),
+      storage,
+      { PaymentId: 'pay_1', Status: 'REJECTED', Amount: 49900 },
+      true
+    )
+    expect(storage.upsert).not.toHaveBeenCalled()
+    expect(storage.releaseCheckout).toHaveBeenCalledWith('pay_1')
+  })
+
   test('DEADLINE_EXPIRED on active (not pending-first) sub -> no cancel, releases checkout', async () => {
     const storage = makeStorage(activeSub)
     await processWebhook(
