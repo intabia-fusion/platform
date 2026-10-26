@@ -245,7 +245,9 @@ async function createBoards (
     for (const line of skipped) console.log(`[demo-data] board condition skipped: ${line}`)
     const id = await client.createDoc(tracker.class.Board, core.space.Workspace, board)
     // Pinned for the first account, the viewer of the mockups
-    if (src.pinned === true) { await client.createDoc(tracker.class.BoardPreference, core.space.Workspace, { attachedTo: id }) }
+    if (src.pinned === true) {
+      await client.createDoc(tracker.class.BoardPreference, core.space.Workspace, { attachedTo: id })
+    }
     console.log(`[demo-data] board: ${src.title}${src.pinned === true ? ' (pinned)' : ''}`)
   }
 }
