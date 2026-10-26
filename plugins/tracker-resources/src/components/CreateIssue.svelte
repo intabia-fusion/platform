@@ -307,10 +307,42 @@
     }
   }
 
+  let templateTags: { template: IssueTemplate, elements: Map<Ref<TagElement>, TagElement> } | undefined
+  let appliedTemplateTags: Ref<IssueTemplate> | undefined
+
+  function templateTagRefs (template: IssueTemplate): Ref<TagElement>[] {
+    const allLabels = new Set<Ref<TagElement>>()
+
+    for (const child of template.children) {
+      for (const label of child.labels ?? []) {
+        allLabels.add(label)
+      }
+    }
+
+    return Array.from(
+      new Set([...(template.labels ?? []), ...allLabels])
+    )
+  }
+
+  function labelsAsRefs (
+    refs: Ref<TagElement>[] | undefined,
+    tagElements: Map<Ref<TagElement>, TagElement>
+  ): TagReference[] {
+    return (refs ?? []).flatMap((it) => {
+      const element = tagElements.get(it)
+      return element !== undefined ? [tagAsRef(element)] : []
+    })
+  }
+
   async function updateTemplate (template: IssueTemplate): Promise<void> {
     if (object.template?.template === template._id) {
       return
     }
+    const elements = toIdMap(await client.findAll(tags.class.TagElement, { _id: { $in: templateTagRefs(template) } }))
+    templateTags = { template, elements }
+  }
+
+  function applyTemplate (template: IssueTemplate, tagElements: Map<Ref<TagElement>, TagElement>): void {
     const { _class, _id, space, children, comments, attachments, labels, description, ...templBase } = template
 
     object = {
@@ -318,56 +350,33 @@
       description: description ?? EmptyMarkup,
       ...templBase,
       template: {
+        ...template,
         template: template._id
-      }
+      },
+      subIssues: children.map((p) => {
+        return {
+          ...p,
+          kind: p.kind ?? kind ?? ('' as Ref<TaskType>),
+          _id: generateId(),
+          space: _space as Ref<Project>,
+          subIssues: [],
+          dueDate: null,
+          labels: labelsAsRefs(p.labels, tagElements),
+          status: currentProject?.defaultIssueStatus
+        }
+      }),
+      labels: labelsAsRefs(labels, tagElements)
     }
-
-    const allLabels = new Set<Ref<TagElement>>()
-    for (const label of labels ?? []) {
-      allLabels.add(label)
-    }
-    for (const child of children) {
-      for (const label of child.labels ?? []) {
-        allLabels.add(label)
-      }
-    }
-    const tagElements = toIdMap(await client.findAll(tags.class.TagElement, { _id: { $in: Array.from(allLabels) } }))
-
-    object.subIssues = template.children.map((p) => {
-      return {
-        ...p,
-        kind: p.kind ?? kind ?? ('' as Ref<TaskType>),
-        _id: generateId(),
-        space: _space as Ref<Project>,
-        subIssues: [],
-        dueDate: null,
-        labels:
-          p.labels !== undefined
-            ? p.labels
-                .map((p) => {
-                  const val = tagElements.get(p)
-                  return val !== undefined ? tagAsRef(val) : undefined
-                })
-                .filter((p) => p !== undefined)
-            : [],
-        status: currentProject?.defaultIssueStatus
-      }
-    })
-
-    object.labels =
-      labels !== undefined
-        ? labels
-            .map((p) => {
-              const val = tagElements.get(p)
-              return val !== undefined ? tagAsRef(val) : undefined
-            })
-            .filter((p) => p !== undefined)
-        : []
 
     if (object.kind !== undefined) {
       kind = object.kind
     }
     fillDefaults(hierarchy, object, issueClass)
+  }
+
+  $: if (templateTags !== undefined && templateTags.template._id !== appliedTemplateTags) {
+    appliedTemplateTags = templateTags.template._id
+    applyTemplate(templateTags.template, templateTags.elements)
   }
 
   $: if (template !== undefined) {
