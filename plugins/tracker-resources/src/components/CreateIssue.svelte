@@ -32,7 +32,7 @@
     SortingOrder,
     toIdMap
   } from '@hcengineering/core'
-  import { getResource, translate } from '@hcengineering/platform'
+  import { getResource, translate, type IntlString } from '@hcengineering/platform'
   import type { SpacePreference } from '@hcengineering/preference'
   import preference from '@hcengineering/preference'
   import type { KeyedAttribute } from '@hcengineering/presentation'
@@ -246,6 +246,7 @@
   let currentProject: Project | undefined
 
   let descriptionBox: AttachmentStyledBox | undefined
+  let uploadBlock: IntlString | undefined
 
   $: updateIssueStatusId(object, currentProject)
   $: updateAssigneeId(object, currentProject)
@@ -254,7 +255,8 @@
     getTitle(object.title ?? '').length > 0 &&
     object.status !== undefined &&
     kind !== undefined &&
-    currentProject !== undefined
+    currentProject !== undefined &&
+    uploadBlock == null
 
   $: empty = {
     assignee: assignee ?? currentProject?.defaultAssignee,
@@ -1019,6 +1021,7 @@
     {#key objectId}
       <AttachmentStyledBox
         bind:this={descriptionBox}
+        bind:uploadBlock
         focusIndex={2}
         objectId={object._id}
         {shouldSaveDraft}
@@ -1211,6 +1214,7 @@
       loading={okProcessing}
       disabled={!canSave}
       label={okLabel}
+      showTooltipMain={uploadBlock != null ? { label: uploadBlock } : undefined}
       kind="primary"
       size="large"
       justify="center"

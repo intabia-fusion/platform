@@ -25,6 +25,7 @@
   import ui, { Button, createFocusManager, EditBox, FocusHandler, Label, Icon } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { Analytics } from '@hcengineering/analytics'
+  import type { IntlString } from '@hcengineering/platform'
 
   import contact from '../plugin'
   import ChannelsDropdown from './ChannelsDropdown.svelte'
@@ -96,6 +97,8 @@
   let descriptionBox: AttachmentStyledBox
   let attachments: Map<Ref<Attachment>, Attachment> = new Map<Ref<Attachment>, Attachment>()
   let uploads: UploadQueue | undefined
+
+  let uploadBlock: IntlString | undefined = undefined
 </script>
 
 <FocusHandler {manager} />
@@ -104,7 +107,8 @@
   label={contact.string.CreateOrganization}
   okAction={createOrganization}
   hideAttachments={attachments.size === 0 && (uploads?.size ?? 0) === 0}
-  canSave={object.name.length > 0}
+  canSave={object.name.length > 0 && uploadBlock == null}
+  okTooltip={uploadBlock}
   on:close={() => {
     dispatch('close')
   }}
@@ -124,6 +128,7 @@
   </div>
 
   <AttachmentStyledBox
+    bind:uploadBlock
     bind:this={descriptionBox}
     objectId={id}
     _class={contact.class.Organization}

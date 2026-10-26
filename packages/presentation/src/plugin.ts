@@ -109,6 +109,8 @@ export default plugin(presentationId, {
     Saving: '' as IntlString,
     Download: '' as IntlString,
     DownloadOriginal: '' as IntlString,
+    FilesNotDownloaded: '' as IntlString,
+    FilesNotDownloadedHint: '' as IntlString,
     Delete: '' as IntlString,
     Close: '' as IntlString,
     NotSelected: '' as IntlString,

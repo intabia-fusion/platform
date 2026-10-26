@@ -25,11 +25,13 @@ import presentation, {
 } from '@hcengineering/presentation'
 import setting, { settingId } from '@hcengineering/setting'
 import {
+  addNotification,
   closePanel,
   closePopup,
   createApp,
   getCurrentResolvedLocation,
   navigate,
+  NotificationSeverity,
   parseLocation,
   pushRootBarProgressComponent,
   removeRootBarComponent,
@@ -242,7 +244,17 @@ window.addEventListener('DOMContentLoaded', () => {
   })
 
   setDownloadFilesHandler(async (files) => {
-    await ipcMain.downloadToFolder(files)
+    const refused = await ipcMain.downloadToFolder(files)
+    if (refused.length === 0) return
+    const { SimpleNotification } = await import('@hcengineering/view-resources')
+    const names = refused.filter((n) => n !== '')
+    addNotification(
+      await translate(presentation.string.FilesNotDownloaded, { count: refused.length }),
+      names.length > 0 ? await translate(presentation.string.FilesNotDownloadedHint, { names: names.join(', ') }) : '',
+      SimpleNotification,
+      undefined,
+      NotificationSeverity.Error
+    )
   })
 
   ipcMain.handleUpdateDownloadProgress((progress) => {

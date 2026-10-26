@@ -40,6 +40,7 @@
   import { createEventDispatcher } from 'svelte'
   import { Analytics } from '@hcengineering/analytics'
   import { isEmptyMarkup } from '@hcengineering/text'
+  import type { IntlString } from '@hcengineering/platform'
 
   import recruit from '../plugin'
   import { getSequenceId } from '../utils'
@@ -308,13 +309,16 @@
 
     rolesAssignment[roleId] = newMembers
   }
+
+  let uploadBlock: IntlString | undefined = undefined
 </script>
 
 <FocusHandler {manager} />
 <Card
   label={recruit.string.CreateVacancy}
   okAction={createVacancy}
-  canSave={name.trim() !== ''}
+  canSave={name.trim() !== '' && uploadBlock == null}
+  okTooltip={uploadBlock}
   gap="gapV-4"
   on:close={() => {
     dispatch('close')
@@ -336,6 +340,7 @@
   </div>
   {#key appliedTemplateId}
     <AttachmentStyledBox
+      bind:uploadBlock
       bind:this={descriptionBox}
       {objectId}
       _class={recruit.class.Vacancy}

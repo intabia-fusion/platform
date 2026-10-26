@@ -8,6 +8,8 @@
     "Saving": "保存中...",
     "Download": "ダウンロード",
     "DownloadOriginal": "オリジナルをダウンロード",
+    "FilesNotDownloaded": "{count, plural, other {ダウンロードできなかったファイル}}",
+    "FilesNotDownloadedHint": "ダウンロードできませんでした: {names}",
     "Delete": "削除",
     "Close": "閉じる",
     "NotSelected": "未選択",

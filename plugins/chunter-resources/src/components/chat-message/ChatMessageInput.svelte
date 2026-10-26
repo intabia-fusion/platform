@@ -174,6 +174,11 @@
     void deleteTypingInfo()
   })
 
+  // A file stored behind a slower one joins the draft only as the input goes: without the count it is dropped as empty.
+  function onInputLeave (attachments: number): void {
+    if (attachments !== currentMessage.attachments) objectChange({ ...currentMessage, attachments }, emptyMessage)
+  }
+
   function onUpdate (event: CustomEvent<{ message: Markup, attachments: number }>): void {
     if (!isEmptyMarkup(event.detail.message)) {
       void updateTypingInfo()
@@ -377,6 +382,7 @@
     (!isEmptyMarkup(inputContent) || (currentMessage.attachments ?? 0) > 0 || forwardedMessage != null)}
   on:message={onMessage}
   on:update={onUpdate}
+  onLeave={onInputLeave}
   on:focus
   on:blur
   bind:loading

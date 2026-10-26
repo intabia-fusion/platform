@@ -8,6 +8,8 @@
     "Saving": "保存中...",
     "Download": "下载",
     "DownloadOriginal": "下载原文件",
+    "FilesNotDownloaded": "{count, plural, other {文件下载失败}}",
+    "FilesNotDownloadedHint": "无法下载：{names}。",
     "Delete": "删除",
     "Close": "关闭",
     "NotSelected": "未选择",

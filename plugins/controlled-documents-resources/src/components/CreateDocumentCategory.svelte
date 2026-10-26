@@ -24,6 +24,7 @@
   import { Card, getClient } from '@hcengineering/presentation'
   import ui, { Button, EditBox, tooltip, Icon, FlamingoColor } from '@hcengineering/ui'
   import type { DocumentCategory } from '@hcengineering/controlled-documents'
+  import type { IntlString } from '@hcengineering/platform'
 
   import documents from '../plugin'
 
@@ -80,12 +81,15 @@
   let attachments: Map<Ref<Attachment>, Attachment> = new Map<Ref<Attachment>, Attachment>()
 
   let uploads: UploadQueue | undefined
+
+  let uploadBlock: IntlString | undefined = undefined
 </script>
 
 <Card
   label={documents.string.CreateDocumentCategory}
   okAction={handleOkAction}
-  canSave={!isCodeWrong && !isTitleWrong}
+  canSave={!isCodeWrong && !isTitleWrong && uploadBlock == null}
+  okTooltip={uploadBlock}
   hideAttachments={attachments.size === 0 && (uploads?.size ?? 0) === 0}
   on:close={() => {
     dispatch('close')
@@ -148,6 +152,7 @@
   </div>
   <div class="description-box">
     <AttachmentStyledBox
+      bind:uploadBlock
       bind:this={descriptionBox}
       bind:content={description}
       placeholder={documents.string.Description}

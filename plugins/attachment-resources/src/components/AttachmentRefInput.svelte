@@ -57,7 +57,8 @@
   import { compareAsInMessage } from '../utils'
   import AttachmentTile from './file/AttachmentTile.svelte'
   import { dropFiles, pickedFiles } from './file/drop'
-  import { UploadQueue, draftAttachment, uploadTiles } from './file/uploads'
+  import { notifyInterrupted } from './file/interrupted'
+  import { UploadQueue, draftAttachment, keepStored, uploadTiles } from './file/uploads'
 
   export let objectId: Ref<Doc>
   export let space: Ref<Space>
@@ -87,6 +88,8 @@
   export let disableAttachments = false
   export let onKeyDown: ((event: KeyboardEvent) => boolean) | undefined = undefined
   export let recording = false
+  /** Called from this input's own destroy with the files it kept: the owner may be destroyed already. */
+  export let onLeave: ((attachments: number) => void) | undefined = undefined
   export let beforeSend: (() => Promise<void>) | undefined = undefined
 
   let refInput: ReferenceInput
@@ -196,6 +199,10 @@
     }
     loadedFor = objectId
     draftAttachments = $draftsStore[draftKey]
+    // Written before the `_files` key: its docs are already in the DB and load by the query below.
+    if (shouldSaveDraft && $draftsStore[`${objectId}_attachments`] != null) {
+      DraftController.remove(`${objectId}_attachments`)
+    }
     if (draftAttachments && shouldSaveDraft) {
       attachments = new Map()
       newAttachments.clear()
@@ -330,10 +337,9 @@
   }
 
   onDestroy(() => {
-    for (const doc of uploads.flush().stored) {
-      attachments.set(doc._id, doc)
-      newAttachments.add(doc._id)
-    }
+    const lost = keepStored(uploads, attachments, newAttachments)
+    // Only where the files were to stay: leaving without a draft is discarding them on purpose.
+    if (shouldSaveDraft) void notifyInterrupted(lost)
     if (shouldSaveDraft) {
       saveDraft()
     } else if (!saved) {
@@ -342,6 +348,7 @@
         if (doc != null) void deleteFile(doc.file)
       }
     }
+    onLeave?.(attachments.size)
     uploads.releaseAll()
   })
 

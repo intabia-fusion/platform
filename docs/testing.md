@@ -81,8 +81,8 @@ Prints a per-package table worst-first and one total, and writes into `coverage/
 The last line is `Coverage: NN.NN% of statements`, which is what GitLab's `coverage:` regex
 reads. A failing test fails the command unless `--allow-failures` is passed.
 
-Two runners feed it: jest for everything with a `jest.config.js`, vitest (istanbul provider) for
-`packages/ui`. Packages that jest cannot run together - `desktop` and `presentation` declare
+Two runners feed it: jest for everything with a `jest.config.js`, vitest for the packages with a
+`vitest.config.mts` (`packages/ui`, `plugins/attachment-resources`). Packages that jest cannot run together - `desktop` and `presentation` declare
 their own `projects`, which jest will not nest - get their own invocation; flattened into the
 shared run they lose their preset and babel then fails to parse TypeScript.
 
@@ -90,7 +90,7 @@ Two things the number does not include, both reported as separate lines:
 
 - packages with a `src/` and no test at all - they are in neither report, so they cannot be
   told apart from 0% any other way
-- `.svelte` outside `packages/ui`, which no runner mounts
+- `.svelte` outside the vitest packages, which no runner mounts
 
 ### Stand coverage (`pnpm coverage:stand`)
 

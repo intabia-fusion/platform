@@ -28,7 +28,11 @@ export default mergeIds(attachmentId, attachment, {
     RemoveAttachmentFromSaved: '' as IntlString,
     Pinned: '' as IntlString,
     FilesUploading: '' as IntlString,
-    FilesNotUploaded: '' as IntlString
+    FilesNotUploaded: '' as IntlString,
+    UploadInterrupted: '' as IntlString,
+    UploadInterruptedHint: '' as IntlString,
+    FilesNotAttached: '' as IntlString,
+    FilesNotAttachedHint: '' as IntlString
   },
   actionImpl: {
     AddAttachmentToSaved: '' as ViewAction,

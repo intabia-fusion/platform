@@ -68,6 +68,11 @@ export function tabFromQuery (query: UrlQuery): BrowserTab | undefined {
   return TABS.includes(tab as BrowserTab) ? (tab as BrowserTab) : undefined
 }
 
+/** A link naming a search is a message search unless it names a tab; a plain one opens the last tab. */
+export function startTab (query: UrlQuery, saved: () => BrowserTab): BrowserTab {
+  return tabFromQuery(query) ?? (namesSearch(query) ? BrowserTab.Messages : saved())
+}
+
 export function formatsFromQuery (query: UrlQuery): AttachmentFormat[] {
   return split(query?.formats).filter((it): it is AttachmentFormat => FORMATS.has(it))
 }
@@ -166,11 +171,22 @@ export async function filtersFromQuery (query: UrlQuery): Promise<ChatSearchFilt
   return filters
 }
 
+/** Filters of a link, or none when they fail to load: the browser must open either way. */
+export async function filtersFromLink (query: UrlQuery): Promise<ChatSearchFilters> {
+  try {
+    return await filtersFromQuery(query)
+  } catch (err) {
+    console.error('failed to restore search filters', err)
+    return {}
+  }
+}
+
 async function resolveObjects (refs: Array<{ _class: Ref<Class<Doc>>, _id: Ref<Doc> }>): Promise<PickedObject[]> {
   const client = getClient()
   const hierarchy = client.getHierarchy()
 
-  const found = await Promise.all(
+  // One object whose title fails to load drops only itself.
+  const found = await Promise.allSettled(
     refs.map(async ({ _class, _id }): Promise<PickedObject | undefined> => {
       if (!hierarchy.hasClass(_class)) return undefined
 
@@ -187,5 +203,5 @@ async function resolveObjects (refs: Array<{ _class: Ref<Class<Doc>>, _id: Ref<D
     })
   )
 
-  return found.filter((o): o is PickedObject => o !== undefined)
+  return found.flatMap((r) => (r.status === 'fulfilled' && r.value != null ? [r.value] : []))
 }

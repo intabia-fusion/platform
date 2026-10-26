@@ -30,7 +30,7 @@
     Status as TaskStatus
   } from '@hcengineering/core'
   import core, { AccountRole, fillDefaults, generateId, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
-  import type { Resource, Status } from '@hcengineering/platform'
+  import type { IntlString, Resource, Status } from '@hcengineering/platform'
   import { OK, Severity, getResource } from '@hcengineering/platform'
   import presentation, {
     Card,
@@ -275,6 +275,8 @@
   let descriptionBox: AttachmentStyledBox
 
   const assignAttr = getClient().getHierarchy().getAttribute(recruit.class.Applicant, 'assignee')
+
+  let uploadBlock: IntlString | undefined = undefined
 </script>
 
 <FocusHandler {manager} />
@@ -282,7 +284,8 @@
 <Card
   label={recruit.string.CreateApplication}
   okAction={createApplication}
-  canSave={status.severity === Severity.OK}
+  canSave={status.severity === Severity.OK && uploadBlock == null}
+  okTooltip={uploadBlock}
   gap="gapV-4"
   on:close={() => {
     dispatch('close')
@@ -352,6 +355,7 @@
 
   {#key doc._id}
     <AttachmentStyledBox
+      bind:uploadBlock
       bind:this={descriptionBox}
       objectId={doc._id}
       shouldSaveDraft={false}

@@ -191,9 +191,7 @@ const expose: IPCMainExposed = {
     })
   },
 
-  downloadToFolder: async (files) => {
-    await ipcRenderer.invoke(IpcMessage.DownloadToFolder, files)
-  },
+  downloadToFolder: async (files) => await ipcRenderer.invoke(IpcMessage.DownloadToFolder, files),
 
   async setFrontCookie (host: string, name: string, value: string): Promise<void> {
     ipcRenderer.send(IpcMessage.SetFrontCookie, host, name, value)

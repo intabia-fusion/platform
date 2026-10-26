@@ -1,6 +1,6 @@
 /* eslint-disable import/first */
 /**
- * @jest-environment jsdom
+ * @vitest-environment jsdom
  */
 
 //
@@ -18,24 +18,22 @@
 // limitations under the License.
 //
 
-// Mocked before importing utils - Jest can't parse Svelte syntax otherwise.
-jest.mock(
-  '@hcengineering/platform',
-  () => ({
-    plugin: jest.fn(() => ({})),
-    mergeIds: jest.fn(() => ({})),
-    getMetadata: jest.fn(),
-    getResource: jest.fn(),
-    setPlatformStatus: jest.fn(),
-    unknownError: jest.fn()
-  }),
-  { virtual: true }
-)
-jest.mock('@hcengineering/presentation', () => ({}), { virtual: true })
-jest.mock('@hcengineering/ui', () => ({}), { virtual: true })
-jest.mock('@hcengineering/workbench', () => ({}), { virtual: true })
-jest.mock('@hcengineering/view', () => ({}), { virtual: true })
-jest.mock('../components/AttachmentPreviewPopup.svelte', () => ({}), { virtual: true })
+import { beforeAll, describe, expect, test, vi } from 'vitest'
+
+// Mocked before importing utils: keeps the platform's heavy modules out of a pure test.
+vi.mock('@hcengineering/platform', () => ({
+  plugin: vi.fn(() => ({})),
+  mergeIds: vi.fn(() => ({})),
+  getMetadata: vi.fn(),
+  getResource: vi.fn(),
+  setPlatformStatus: vi.fn(),
+  unknownError: vi.fn()
+}))
+vi.mock('@hcengineering/presentation', () => ({}))
+vi.mock('@hcengineering/ui', () => ({}))
+vi.mock('@hcengineering/workbench', () => ({}))
+vi.mock('@hcengineering/view', () => ({}))
+vi.mock('../components/AttachmentPreviewPopup.svelte', () => ({}))
 
 import type { BlobMetadata } from '@hcengineering/core'
 

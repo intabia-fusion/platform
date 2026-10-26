@@ -25,6 +25,7 @@
   import { Card, createQuery, getClient } from '@hcengineering/presentation'
   import { EmptyMarkup } from '@hcengineering/text'
   import ui, { Button, DateRangePresenter, DropdownLabelsIntl, Label, themeStore } from '@hcengineering/ui'
+  import type { IntlString } from '@hcengineering/platform'
   import { createEventDispatcher } from 'svelte'
 
   import hr from '../plugin'
@@ -104,13 +105,16 @@
     new Date(new Date(dueDate).setHours(23, 59, 59, 999)),
     type
   )
+
+  let uploadBlock: IntlString | undefined = undefined
 </script>
 
 <Card
   label={hr.string.CreateRequest}
   labelProps={{ type: typeLabel }}
   okAction={saveRequest}
-  canSave={value !== undefined && !notLimit}
+  canSave={value !== undefined && !notLimit && uploadBlock == null}
+  okTooltip={uploadBlock}
   gap="gapV-4"
   on:close={() => {
     dispatch('close')
@@ -139,6 +143,7 @@
     }}
   />
   <AttachmentStyledBox
+    bind:uploadBlock
     bind:this={descriptionBox}
     {objectId}
     _class={hr.class.Request}

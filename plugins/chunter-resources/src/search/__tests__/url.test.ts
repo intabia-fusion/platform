@@ -22,8 +22,21 @@ jest.mock('../hydrate', () => ({}))
 jest.mock('@hcengineering/contact-resources', () => ({}))
 
 /* eslint-disable import/first */
+import { getClient } from '@hcengineering/presentation'
+import { getDocIdentifier, getDocTitle } from '@hcengineering/view-resources'
+
 import { BrowserTab } from '../attachments'
-import { defaultSort, formatsFromQuery, namesSearch, replaceSearch, searchToQuery, tabFromQuery } from '../url'
+import { pickAuthors } from '../resolve'
+import {
+  defaultSort,
+  filtersFromLink,
+  formatsFromQuery,
+  namesSearch,
+  replaceSearch,
+  searchToQuery,
+  startTab,
+  tabFromQuery
+} from '../url'
 
 const plain = {
   tab: BrowserTab.Messages,
@@ -77,5 +90,56 @@ describe('browser url', () => {
 
   it('replaces the previous search and keeps the rest of the page', () => {
     expect(replaceSearch({ q: 'old', tab: 'media', message: 'm1' }, { q: 'new' })).toEqual({ message: 'm1', q: 'new' })
+  })
+})
+
+describe('browser start tab', () => {
+  const saved = (): BrowserTab => BrowserTab.Audio
+
+  it('opens the tab a link names', () => {
+    expect(startTab({ tab: 'files', from: 'p1' }, saved)).toBe(BrowserTab.Files)
+  })
+
+  // A link copied from the messages tab carries no tab: it must not open on the recipient's last one.
+  it('opens messages for a link naming only a filter', () => {
+    expect(startTab({ from: 'p1' }, saved)).toBe(BrowserTab.Messages)
+    expect(startTab({ in: 'tracker:class:Issue~i1' }, saved)).toBe(BrowserTab.Messages)
+    expect(startTab({ q: 'x' }, saved)).toBe(BrowserTab.Messages)
+  })
+
+  it('opens the last tab for a plain link', () => {
+    expect(startTab({ message: 'm1' }, saved)).toBe(BrowserTab.Audio)
+    expect(startTab(undefined, saved)).toBe(BrowserTab.Audio)
+  })
+})
+
+describe('filters from a link', () => {
+  const objects = {
+    getHierarchy: () => ({ hasClass: () => true, getClass: () => ({ icon: 'icon' }) }),
+    findOne: async (_class: string, query: { _id: string }) => ({ _id: query._id })
+  }
+
+  beforeEach(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {})
+    ;(getClient as jest.Mock).mockReturnValue(objects)
+    ;(getDocIdentifier as jest.Mock).mockResolvedValue(undefined)
+    ;(getDocTitle as jest.Mock).mockImplementation(async (_client, _id) => {
+      if (_id === 'bad') throw new Error('no title')
+      return `Title ${_id as string}`
+    })
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
+  it('drops only the object whose title fails to load', async () => {
+    const filters = await filtersFromLink({ in: 'tracker:class:Issue~good,tracker:class:Issue~bad' })
+    expect(filters.attachedTo?.map((o) => o._id)).toEqual(['good'])
+  })
+
+  it('opens unfiltered when the filters fail to load', async () => {
+    ;(pickAuthors as jest.Mock).mockRejectedValueOnce(new Error('network'))
+    await expect(filtersFromLink({ from: 'p1', after: '10' })).resolves.toEqual({})
   })
 })

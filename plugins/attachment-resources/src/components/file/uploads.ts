@@ -91,6 +91,20 @@ export function uploadTiles (
   ]
 }
 
+/** Leaving the message: stored files join its lists, the rest are dropped; returns those still going up. */
+export function keepStored (
+  queue: UploadQueue,
+  attachments: Map<Ref<Attachment>, Attachment>,
+  added: Set<Ref<Attachment>>
+): string[] {
+  const { stored, lost } = queue.flush()
+  for (const doc of stored) {
+    attachments.set(doc._id, doc)
+    added.add(doc._id)
+  }
+  return lost
+}
+
 export class UploadQueue {
   private readonly items = new Map<Ref<Attachment>, Running>()
   private readonly running = new Map<Ref<Attachment>, Promise<void>>()
@@ -166,8 +180,8 @@ export class UploadQueue {
     }
   }
 
-  /** Takes the stored files out and drops the rest, naming them: failed or still going up. */
-  flush (): { stored: Attachment[], lost: string[] } {
+  /** Takes the stored files out and drops the rest, naming those still going up and those failed. */
+  flush (): { stored: Attachment[], lost: string[], failed: string[] } {
     const stored: Attachment[] = []
     for (const [_id, item] of this.items) {
       if (item.stored) {
@@ -175,9 +189,11 @@ export class UploadQueue {
         this.items.delete(_id)
       }
     }
-    const lost = Array.from(this.items.values(), (it) => it.doc.name)
+    const rest = Array.from(this.items.values())
+    const lost = rest.filter((it) => it.failed == null).map((it) => it.doc.name)
+    const failed = rest.filter((it) => it.failed != null).map((it) => it.doc.name)
     this.clear()
-    return { stored, lost }
+    return { stored, lost, failed }
   }
 
   clear (): void {
