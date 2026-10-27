@@ -13,12 +13,12 @@
 -->
 <script lang="ts">
   import type { Doc, DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
-  import { isOwnerOrMaintainer } from '@hcengineering/core'
+  import { getCurrentAccount, isOwnerOrMaintainer } from '@hcengineering/core'
   import type { Asset, IntlString } from '@hcengineering/platform'
   import { translateCB } from '@hcengineering/platform'
   import { ComponentExtensions, getClient } from '@hcengineering/presentation'
   import type { Board, Issue, Project } from '@hcengineering/tracker'
-  import { TrackerEvents } from '@hcengineering/tracker'
+  import { TrackerEvents, canEditBoard } from '@hcengineering/tracker'
   import type { IModeSelector } from '@hcengineering/ui'
   import ui, { BlankView, type DropdownIntlItem, showPopup, themeStore } from '@hcengineering/ui'
   import { columnControlStore } from '@hcengineering/kanban'
@@ -30,6 +30,9 @@
   import {
     FilterBar,
     filterStore,
+    getDefaults,
+    getViewOptions,
+    viewOptionStore,
     selectionStore,
     setViewOptions,
     SpaceHeader,
@@ -45,10 +48,9 @@
   import tracker from '../../plugin'
   import CreateIssue from '../CreateIssue.svelte'
   import { openProjectSettings } from '../../projectSettings'
-  import { boardContextKey } from '../../boards'
+  import { boardContextKey, boardLocation } from '../../boards'
   import { activeProjects, exportIssuesToCSV } from '../../utils'
   import IssueStatistics from '../milestones/IssueStatistics.svelte'
-  import ProjectBoardsBar from '../boards/ProjectBoardsBar.svelte'
 
   export let space: Ref<Space> | undefined = undefined
   export let query: DocumentQuery<Issue> = {}
@@ -59,7 +61,6 @@
   // A board turns the kanban into the board's columns, lanes and colors
   export let board: Board | undefined = undefined
   // A board in place of the project issues: picking a viewlet closes it
-  export let onViewletPick: ((viewlet: WithLookup<Viewlet>) => void) | undefined = undefined
 
   const boardStore = writable<Board | undefined>(board)
   $: boardStore.set(board)
@@ -68,6 +69,10 @@
   export let viewlet: WithLookup<Viewlet> | undefined = undefined
   const viewlets: WithLookup<Viewlet>[] | undefined = undefined
   let viewOptions: ViewOptions | undefined
+  // A board has no view options button: its header shows the density slider only, the rest is in its settings
+  $: if (board !== undefined && viewlet !== undefined) {
+    viewOptions = getViewOptions(viewlet, $viewOptionStore, getDefaults(viewlet.viewOptions))
+  }
 
   let search = ''
   let searchQuery: DocumentQuery<Issue> = { ...query }
@@ -100,8 +105,6 @@
   $: noTaskTypes = currentProject !== undefined && $taskTypeStore.size > 0 && !hasTaskTypes
 
   $: projectRef = space as Ref<Project> | undefined
-  // Issues of a project show its boards in place of the title
-  $: projectBoards = board === undefined && projectRef !== undefined
   let canEditProject = false
   // Depends on the project itself: on a reload the space is known before the project is loaded
   async function checkCanEditProject (project: ProjectWorkflow | undefined): Promise<void> {
@@ -118,11 +121,15 @@
   const EXPORT_CSV_ITEM_ID = 'export-scv'
   const MERGE_BY_CATEGORY_ITEM_ID = 'merge-columns-by-category'
   const RESET_MERGE_ITEM_ID = 'reset-merged-columns'
+  const BOARD_SETTINGS_ITEM_ID = 'board-settings'
 
   // Column merging of the board shown for this viewlet; only a kanban registers it.
   $: columnControls = viewlet != null ? $columnControlStore.get(viewlet._id) : undefined
 
   $: menuItems = [
+    ...(board !== undefined && canEditBoard(board, getCurrentAccount().uuid)
+      ? [{ id: BOARD_SETTINGS_ITEM_ID, label: tracker.string.BoardSettings, icon: view.icon.Setting }]
+      : []),
     ...(hasWorkflow
       ? [
           {
@@ -193,6 +200,8 @@
       columnControls?.mergeByGroup()
     } else if (action === RESET_MERGE_ITEM_ID) {
       columnControls?.resetMerge()
+    } else if (action === BOARD_SETTINGS_ITEM_ID && board !== undefined) {
+      boardLocation(board._id, true)
     }
   }
 
@@ -229,10 +238,12 @@
   {icon}
   bind:viewlet
   bind:search
-  showLabelSelector={$$slots.label_selector || projectBoards}
+  showLabelSelector={$$slots.label_selector}
   viewletQuery={{ attachTo: tracker.class.Issue, variant: { $exists: false } }}
   defaultViewletDescriptor={board !== undefined ? tracker.viewlet.Kanban : undefined}
-  {onViewletPick}
+  hideViewlets={board !== undefined}
+  searchFirst={board !== undefined}
+  adaptive={board !== undefined ? 'disabled' : undefined}
   {viewlets}
   {label}
   {space}
@@ -240,15 +251,15 @@
   {modeSelectorProps}
 >
   <svelte:fragment slot="header-tools">
-    <ViewletSettingButton bind:viewOptions bind:viewlet />
+    <!-- Made with the viewlet known: made before, its binding writes its empty viewlet over the one
+         a cached viewlet query sets while the header mounts, and the button stays empty -->
+    {#if viewlet !== undefined && board === undefined}
+      <ViewletSettingButton bind:viewOptions bind:viewlet />
+    {/if}
   </svelte:fragment>
 
   <svelte:fragment slot="label_selector">
-    {#if projectBoards && projectRef !== undefined}
-      <ProjectBoardsBar project={projectRef} />
-    {:else}
-      <slot name="label_selector" />
-    {/if}
+    <slot name="label_selector" />
   </svelte:fragment>
 
   <svelte:fragment slot="type_selector">
@@ -260,10 +271,11 @@
   </svelte:fragment>
 
   <svelte:fragment slot="actions">
-    <slot name="board_actions" />
+    <slot name="board_actions" {viewlet} {viewOptions} />
     {#if menuItems.length > 0}
       <MenuButton
-        icon={ui.icon.DotsHorizontal}
+        data-id="btnIssuesMenu"
+        icon={board !== undefined ? ui.icon.DotsVertical : ui.icon.DotsHorizontal}
         kind="secondary"
         size="small"
         noSelection

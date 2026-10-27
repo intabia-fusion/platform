@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { DocumentQuery, Ref, Status, WithLookup } from '@hcengineering/core'
+  import type { DocumentQuery, Ref, Status } from '@hcengineering/core'
   import { mergeQueries } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { getStates } from '@hcengineering/task'
@@ -21,21 +21,28 @@
   import type { Board, Issue, Project } from '@hcengineering/tracker'
   import { statusesWithoutColumn } from '@hcengineering/tracker'
   import { translate } from '@hcengineering/platform'
-  import { Label, getCurrentResolvedLocation, navigate, showPopup, themeStore, tooltip } from '@hcengineering/ui'
-  import { Button } from '@hcengineering/ui/kit'
-  import view, { type Viewlet } from '@hcengineering/view'
-  import { buildFilterKey, parseFilters, setFilters, statusStore } from '@hcengineering/view-resources'
+  import ui, { Label, getCurrentResolvedLocation, navigate, showPopup, themeStore, tooltip } from '@hcengineering/ui'
+  import { Button, Slider } from '@hcengineering/ui/kit'
+  import view, { type SliderViewOption, type ViewOptions, type Viewlet } from '@hcengineering/view'
+  import {
+    buildFilterKey,
+    isSliderType,
+    parseFilters,
+    setFilters,
+    setViewOptions,
+    statusStore
+  } from '@hcengineering/view-resources'
+  import { fullscreenStore } from '@hcengineering/workbench-resources'
+  import { onDestroy } from 'svelte'
   import { boardLocation, boardQuery } from '../../boards'
   import tracker from '../../plugin'
   import IssuesView from '../issues/IssuesView.svelte'
   import BoardQuickFilters from './BoardQuickFilters.svelte'
   import BoardUncoveredPopup from './BoardUncoveredPopup.svelte'
 
-  // Board issues with the board header; the board page and the project issues
-  // put their own board selector into `label_selector`
+  // Board issues with the board header: no title, the navigator shows the board; its settings are in the header menu
   export let board: Board
   export let canEdit: boolean
-  export let onViewletPick: ((viewlet: WithLookup<Viewlet>) => void) | undefined = undefined
 
   const client = getClient()
 
@@ -207,14 +214,26 @@
       }
     )
   }
+
+  // Other sections know nothing of the board mode: leaving the board brings the panels back
+  onDestroy(() => {
+    fullscreenStore.set(false)
+  })
+
+  // The density option of the kanban view options, shown in the board header as a slider
+  function densityOf (viewlet: Viewlet | undefined): SliderViewOption | undefined {
+    const option = viewlet?.viewOptions?.other.find((o) => o.key === 'density')
+    return option !== undefined && isSliderType(option) ? option : undefined
+  }
+
+  function setDensity (viewlet: Viewlet, viewOptions: ViewOptions, id: string): void {
+    setViewOptions(viewlet, { ...viewOptions, density: id })
+  }
 </script>
 
 {#if query !== undefined}
-  <IssuesView {query} {board} label={board.title} space={undefined} {onViewletPick}>
-    <svelte:fragment slot="label_selector">
-      <slot name="label_selector" />
-    </svelte:fragment>
-    <svelte:fragment slot="board_actions">
+  <IssuesView {query} {board} space={undefined}>
+    <svelte:fragment slot="board_actions" let:viewlet let:viewOptions>
       {#if uncovered.length > 0}
         <button type="button" class="uncovered" data-id="boardUncovered" on:click={openUncovered}>
           <svg class="uncovered-icon" viewBox="0 0 16 16" aria-hidden="true">
@@ -243,23 +262,42 @@
           <Label label={tracker.string.ProjectsUnavailable} params={{ count: unavailableCount }} />
         </span>
       {/if}
-      {#if canEdit}
-        <span class="settings">
-          <Button
-            icon={view.icon.Setting}
-            iconSize="small"
-            kind="ghost"
-            size="medium"
-            inheritColor
-            label={tracker.string.BoardSettings}
-            tooltip={{ label: tracker.string.BoardSettingsTooltip, direction: 'bottom-end', noArrow: true }}
-            data-id="boardSettingsButton"
-            on:click={() => {
-              boardLocation(board._id, true)
+      {@const density = densityOf(viewlet)}
+      {#if density !== undefined && viewlet !== undefined && viewOptions !== undefined}
+        {@const index = density.values.findIndex((v) => v.id === (viewOptions.density ?? density.defaultValue))}
+        <div class="density" data-id="boardDensity">
+          <span class="density-caption" id="boardDensityLabel">
+            <Label label={index >= 0 ? density.values[index].label : (density.defaultLabel ?? density.label)} />
+          </span>
+          <Slider
+            value={Math.max(index, 0)}
+            min={0}
+            max={density.values.length - 1}
+            step={1}
+            size="small"
+            aria-labelledby="boardDensityLabel"
+            on:change={(e) => {
+              setDensity(viewlet, viewOptions, density.values[e.detail].id)
             }}
           />
-        </span>
+        </div>
       {/if}
+      <Button
+        icon={$fullscreenStore ? ui.icon.ArrowsIn : ui.icon.ArrowsOut}
+        iconSize="small"
+        kind="ghost"
+        size="medium"
+        inheritColor
+        tooltip={{
+          label: $fullscreenStore ? tracker.string.BoardExitFullscreen : tracker.string.BoardFullscreen,
+          direction: 'bottom-end',
+          noArrow: true
+        }}
+        data-id="boardFullscreenButton"
+        on:click={() => {
+          fullscreenStore.update((on) => !on)
+        }}
+      />
     </svelte:fragment>
     <svelte:fragment slot="afterSearch">
       <BoardQuickFilters
@@ -317,13 +355,16 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-  .settings {
-    display: contents;
-    color: var(--global-primary-TextColor);
-
-    // The mockup keeps the background on hover
-    :global(button[data-id='boardSettingsButton']:not(:disabled):hover) {
-      background-color: transparent;
-    }
+  .density {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 12rem;
+  }
+  .density-caption {
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    color: var(--theme-dark-color);
+    white-space: nowrap;
   }
 </style>

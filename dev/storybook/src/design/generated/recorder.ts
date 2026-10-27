@@ -245,6 +245,7 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
       count: o.count,
       draggable: o.drag,
       block: o.w !== undefined ? true : undefined,
+      pill: o.pill,
       width: o.w
     })
   kit.Input = (o: Record<string, any> = {}) => {

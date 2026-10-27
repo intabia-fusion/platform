@@ -120,7 +120,7 @@
 | AttachedDocPanel.svelte | Панель редактирования AttachedDoc | _id, _class, embedded | view.component.AttachedDocPanel |
 | ParentsNavigator.svelte | Хлебные крошки родителей документа | element, maxWidth | import |
 | UpDownNavigator.svelte | Кнопки перехода к соседнему документу | element | both |
-| SpaceHeader.svelte | Заголовок страницы пространства; слот `afterSearch` - контролы после поиска в строке фильтра | space, _class, viewlet, viewlets, defaultViewletDescriptor, onViewletPick | import |
+| SpaceHeader.svelte | Заголовок страницы пространства; слот `afterSearch` - контролы после поиска в строке фильтра | space, _class, viewlet, viewlets, defaultViewletDescriptor | import |
 | DocsNavigator.svelte | Список ссылок на документы | elements, maxWidth | both |
 | ClassAttributeBar.svelte | Панель кастомных атрибутов класса объекта | object, _class, to, ignoreKeys | import |
 | DocAttributeBar.svelte | Панель атрибутов документа по всем миксинам | object, mixins, ignoreKeys | import |
@@ -140,7 +140,7 @@
 |---|---|---|---|
 | ViewletContentView.svelte | Переключает List/Table по типу вьюлета | viewlet, _class, query, viewOptions | both |
 | ViewletPanelHeader.svelte | Заголовок панели: селектор вьюлета и настройки | viewletQuery, viewlet, viewOptions | both |
-| ViewletSelector.svelte | Выпадающий селектор вьюлета; с `onPick` ни один вид не отмечен, клик отдаётся наружу | viewlet, viewlets, viewletQuery, onPick | import |
+| ViewletSelector.svelte | Выпадающий селектор вьюлета | viewlet, viewlets, viewletQuery | import |
 | ViewletSetting.svelte | Настройка списка колонок: видимость и порядок | viewlet, defaultConfig | internal |
 | ViewletSettingButton.svelte | Кнопка настроек вьюлета | viewlet, viewOptions, viewOptionsConfig | both |
 | ViewletsSettingButton.svelte | Кнопка настроек с выбором вида и опциями | viewletQuery, viewlet, viewlets | import |

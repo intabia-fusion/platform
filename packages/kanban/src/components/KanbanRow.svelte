@@ -122,8 +122,11 @@
 {/each}
 {#if hasMoreToShow}
   <div class="flex-no-shrink clear-mins" class:p-1={!modern} data-id="kanban-show-more">
-    <div class="card-container flex-center flex-row-center p-4 gap-2 no-word-wrap">
-      <span class="caption-color">{visibleObjects.length}</span> <span>/</span><span>{stateObjects.length}</span>
+    <!-- Wraps in a narrow column: the counter and the button do not fit a board column on one line -->
+    <div class="card-container show-more flex-center flex-row-center p-4 gap-2 no-word-wrap">
+      <span class="flex-row-center gap-2">
+        <span class="caption-color">{visibleObjects.length}</span><span>/</span><span>{stateObjects.length}</span>
+      </span>
       <Button
         size="small"
         icon={ui.icon.DotsHorizontal}
@@ -136,6 +139,9 @@
 {/if}
 
 <style lang="scss">
+  .show-more {
+    flex-wrap: wrap;
+  }
   .card-container {
     background-color: var(--theme-kanban-card-bg-color);
     border: 1px solid var(--theme-kanban-card-border);
@@ -148,11 +154,11 @@
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
     }
 
-    // Mouse and keyboard focus look the same: a ring outside the card, the background stays
+    // Mouse and keyboard focus look the same, as a hovered file card of the drive: a brand tinted border
+    // and a deeper shadow, the background stays
     &.modern.selection {
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-      outline: 2px solid var(--kanban-focus-ring-color, #6b3ad3);
-      outline-offset: 2px;
+      border-color: color-mix(in srgb, var(--button-brand-BackgroundColor) 30%, var(--global-ui-BorderColor));
+      box-shadow: 0 0.125rem 0.375rem color-mix(in srgb, var(--global-popover-ShadowColor) 65%, transparent);
     }
 
     &.checked {

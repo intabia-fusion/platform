@@ -13,15 +13,17 @@
 // limitations under the License.
 //
 
-import core, { setCurrentAccount, type Ref, type Status, type TxOperations } from '@hcengineering/core'
+import core, { setCurrentAccount, type Ref, type TxOperations } from '@hcengineering/core'
 import type { Board, Project } from '@hcengineering/tracker'
 import { getCurrentResolvedLocation, navigate } from '@hcengineering/ui'
 import { filtersToQuery } from '@hcengineering/view-resources'
 import { createQuery } from '@hcengineering/presentation'
-import { boardLocation, boardQuery, ConditionMatches, createBoard, projectBoardLocation, togglePinned } from '../boards'
+import task from '@hcengineering/task'
+import { boardLocation, boardQuery, ConditionMatches, createBoard, togglePinned, updateBoard } from '../boards'
 import tracker from '../plugin'
 
 // The module imports UI packages that need a browser; only these calls are used
+jest.mock('@hcengineering/contact', () => ({ getCurrentEmployeeSpace: () => 'anna-space' }))
 jest.mock('@hcengineering/presentation', () => ({ createQuery: jest.fn() }))
 jest.mock('@hcengineering/ui', () => ({ getCurrentResolvedLocation: jest.fn(), navigate: jest.fn() }))
 jest.mock('@hcengineering/view-resources', () => ({
@@ -117,52 +119,70 @@ describe('board locations', () => {
     boardLocation(undefined)
     expect(target().path).toEqual(['workbench', 'ws', 'tracker', 'boards'])
   })
-
-  it('keeps a board of the project issues in place unless the page is asked', () => {
-    location(['workbench', 'ws', 'tracker', 'p1', 'issues', 'b1'])
-    boardLocation(ref<Board>('b2'), true, 'columns')
-    expect(target().path).toEqual(['workbench', 'ws', 'tracker', 'p1', 'issues', 'b2', 'settings'])
-    expect(target().query).toEqual({ tab: 'columns' })
-
-    location(['workbench', 'ws', 'tracker', 'p1', 'issues', 'b1'])
-    boardLocation(ref<Board>('b2'), false, undefined, true)
-    expect(target().path).toEqual(['workbench', 'ws', 'tracker', 'boards', 'b2'])
-  })
-
-  it('gives the project issues their own view back without an id', () => {
-    location(['workbench', 'ws', 'tracker', 'p1', 'issues', 'b1', 'settings'], { tab: 'card' })
-    projectBoardLocation(undefined)
-    expect(target().path).toEqual(['workbench', 'ws', 'tracker', 'p1', 'issues'])
-    expect(target().query).toBeUndefined()
-  })
 })
 
 describe('createBoard', () => {
-  const status = (id: string, name: string, category?: string): Status => stub<Status>({ _id: ref(id), name, category })
-
-  it('makes a column per status in the project order', async () => {
+  it('saves the given projects, visibility, editors, filter and columns', async () => {
     const createDoc = jest.fn(async () => 'new')
-    const project = stub<Project>({ _id: ref<Project>('p1') })
-    const id = await createBoard(stub<any>({ createDoc }), 'Title', project, [
-      status('s1', 'Backlog', 'cat1'),
-      status('s2', 'Todo')
-    ])
+    const columns = [{ id: 'c1', title: 'My column', category: task.statusCategory.UnStarted, statuses: [] }]
+    const data = {
+      title: 'Title',
+      description: 'About',
+      projects: [ref<Project>('p1')],
+      visibility: 'me' as const,
+      editors: [],
+      filter: '[]',
+      columns
+    }
+    const id = await createBoard(stub<any>({ createDoc }), data)
     expect(id).toBe('new')
-    const [cls, space, data] = createDoc.mock.calls[0] as any[]
+    const [cls, space, doc] = createDoc.mock.calls[0] as any[]
     expect(cls).toBe(tracker.class.Board)
-    expect(space).toBe(core.space.Workspace)
-    expect(data).toMatchObject({ title: 'Title', projects: ['p1'], visibility: 'all', author: 'anna', editors: [] })
-    expect(data.columns.map((c: any) => [c.title, c.statuses, c.category])).toEqual([
-      ['Backlog', ['s1'], 'cat1'],
-      ['Todo', ['s2'], expect.any(String)]
-    ])
-    expect(new Set(data.columns.map((c: any) => c.id)).size).toBe(2)
+    expect(space).toBe('anna-space')
+    expect(doc).toMatchObject({
+      title: 'Title',
+      description: 'About',
+      projects: ['p1'],
+      visibility: 'me',
+      author: 'anna',
+      editors: [],
+      filter: '[]'
+    })
+    expect(doc.columns.map((c: any) => [c.title, c.statuses])).toEqual([['My column', []]])
+  })
+})
+
+describe('createBoard visibility', () => {
+  it('puts a team board into the workspace space', async () => {
+    const createDoc = jest.fn(async () => 'new')
+    const data = { title: 'T', projects: [], visibility: 'all' as const, editors: [], filter: '', columns: [] }
+    await createBoard(stub<any>({ createDoc }), data)
+    expect((createDoc.mock.calls[0] as any[])[1]).toBe(core.space.Workspace)
+  })
+})
+
+describe('updateBoard', () => {
+  const board = makeBoard({ space: core.space.Workspace, visibility: 'all' })
+
+  it('moves the board to the personal space with the switch to "me"', async () => {
+    const update = jest.fn()
+    await updateBoard(stub<any>({ update }), board, { visibility: 'me' })
+    expect(update).toHaveBeenCalledWith(board, { visibility: 'me', space: 'anna-space' })
   })
 
-  it('makes a board without projects when no project is given', async () => {
-    const createDoc = jest.fn(async () => 'new')
-    await createBoard(stub<any>({ createDoc }), 'Title', undefined, [])
-    expect((createDoc.mock.calls[0] as any[])[2].projects).toEqual([])
+  it('moves a personal board back to the workspace', async () => {
+    const update = jest.fn()
+    const personal = makeBoard({ space: 'anna-space' as any, visibility: 'me' })
+    await updateBoard(stub<any>({ update }), personal, { visibility: 'all' })
+    expect(update).toHaveBeenCalledWith(personal, { visibility: 'all', space: core.space.Workspace })
+  })
+
+  it('keeps the space for other edits and for the same visibility', async () => {
+    const update = jest.fn()
+    await updateBoard(stub<any>({ update }), board, { title: 'New' })
+    await updateBoard(stub<any>({ update }), board, { visibility: 'all' })
+    expect(update).toHaveBeenNthCalledWith(1, board, { title: 'New' })
+    expect(update).toHaveBeenNthCalledWith(2, board, { visibility: 'all' })
   })
 })
 

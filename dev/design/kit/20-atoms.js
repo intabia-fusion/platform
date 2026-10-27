@@ -119,8 +119,10 @@ kit.Count = (n, o = {}) => {
 }
 
 // Status chip: icon + name, used where statuses are listed or mapped
+// o.pill: the rounded 24px chip on a popup surface, as in the statuses tooltip of a board column
 kit.StatusChip = (name, cat, o = {}) => {
-  const b = kit.box('StatusChip/' + name, { w: 10, h: o.h || 20, dir: 'row', gap: 4, pad: [0, 6, 0, 4], align: 'center', hs: o.w ? 'fix' : 'auto', radius: 4, fill: o.fill || T('theme-button-hovered'), stroke: o.stroke })
+  if (o.pill) o = { ...o, h: 24, size: 12, fill: T('theme-popup-color'), stroke: T('theme-button-border') }
+  const b = kit.box('StatusChip/' + name, { w: 10, h: o.h || 20, dir: 'row', gap: 4, pad: o.pill ? [0, 8, 0, 6] : [0, 6, 0, 4], align: 'center', hs: o.w ? 'fix' : 'auto', radius: o.pill ? 12 : 4, fill: o.fill || T('theme-button-hovered'), stroke: o.stroke })
   if (o.w) b.resize(o.w, o.h || 20)
   if (o.drag) kit.add(b, kit.icon('drag', T('theme-darker-color'), 14))
   kit.add(b, kit.StatusIcon(cat, 12), kit.text(name, { size: o.size || 11, color: T('theme-content-color') }))

@@ -55,6 +55,7 @@
     isOverLimit,
     pickSwimlane,
     resolveCardDensity,
+    type CardDensity,
     type CardField
   } from '@hcengineering/tracker'
   import type { BlankViewProps, ColorDefinition, SelectPopupValueType } from '@hcengineering/ui'
@@ -112,7 +113,7 @@
   } from '../../swimLanes'
   import CreateIssue from '../CreateIssue.svelte'
   import IssueKanbanCard from './IssueKanbanCard.svelte'
-  import BoardColumnTooltip from '../boards/BoardColumnTooltip.svelte'
+  import BoardColumnStatuses from '../boards/BoardColumnStatuses.svelte'
   import BoardConditionHint from '../boards/BoardConditionHint.svelte'
 
   const _class = tracker.class.Issue
@@ -135,8 +136,17 @@
   ) as IssuesGrouping
   // Set together with categories: columns of the old grouping under a new key query {space: 0}.
   let groupByKey = (viewOptions.groupBy[0] ?? noCategory) as IssuesGrouping
-  $: orderBy = viewOptions.orderBy
+  // A board sorts its cards itself ("Card order" of its settings), the first order of the viewlet by default
+  $: orderBy = board !== undefined ? (board.orderBy ?? viewlet.viewOptions?.orderBy[0]) : viewOptions.orderBy
   $: density = resolveCardDensity(viewOptions.density, board?.density, viewOptions.compactMode === true)
+  // Paddings of the grid shrink with the cards; 'detailed' keeps the defaults of the kanban
+  const densityGrid: Record<CardDensity, { inset: string, padding: string, headerGap: string } | undefined> = {
+    detailed: undefined,
+    normal: { inset: '0.75rem', padding: '1.25rem', headerGap: '0.875rem' },
+    compact: { inset: '0.5rem', padding: '1rem', headerGap: '0.75rem' },
+    dense: { inset: '0.375rem', padding: '0.75rem', headerGap: '0.5rem' }
+  }
+  $: grid = densityGrid[density]
   // Fields a board picked win over the view config; the parent has no config key and shows unless the board hides it
   $: cardFieldShown = (field: CardField): boolean =>
     board?.cardFields !== undefined
@@ -314,7 +324,8 @@
 
   let fastQueryIds = new Set<Ref<DocWithRank>>()
 
-  $: swimLaneBy = (viewOptions.swimLaneBy as string) ?? 'none'
+  // A board has no lanes option in the view options: only the board sets its lanes
+  $: swimLaneBy = board !== undefined ? (board.swimLaneBy ?? 'none') : ((viewOptions.swimLaneBy as string) ?? 'none')
 
   let categoryQueryOptions: Partial<FindOptions<DocWithRank>>
   $: categoryQueryOptions = {
@@ -518,7 +529,6 @@
     (board?.colorRules ?? []).map((r) => ({ id: r.id, condition: r.condition })),
     boardScope
   )
-  // The kanban lanes of the user (view options) win over the lanes of the board
   $: boardLanes = board !== undefined && swimLaneBy === 'none' && board.swimlanes.length > 0
   $: if (boardLanes && board !== undefined) {
     void matchesVersion
@@ -533,6 +543,11 @@
   }
 
   // Status counts of the column: shown on hover over its title
+  // The statuses of a board column open by a click: a hover popup got in the way of the cards
+  function openColumnStatuses (e: MouseEvent, column: BoardColumn | undefined): void {
+    showPopup(BoardColumnStatuses, { statuses: columnStatuses(column, tasks) }, e.currentTarget as HTMLElement)
+  }
+
   function columnStatuses (column: BoardColumn | undefined, docs: DocWithRank[]): { status: Status, count: number }[] {
     return (column?.statuses ?? []).flatMap((id) => {
       const status = $statusStore.byId.get(id)
@@ -798,12 +813,12 @@
   <!-- svelte-ignore a11y-no-static-element-interactions -->
   <KanbanUI
     bind:this={kanbanUI}
-    --kanban-column-width={board !== undefined ? '14.625rem' : undefined}
-    --kanban-column-gap={board !== undefined ? '0.75rem' : undefined}
-    --kanban-column-inset={board !== undefined ? '0rem' : undefined}
-    --kanban-padding-top={board !== undefined ? '0.75rem' : undefined}
-    --kanban-padding-x={board !== undefined ? '1rem' : undefined}
-    --kanban-header-gap={board !== undefined ? '0.5rem' : undefined}
+    limitScale={density === 'dense' ? 2 : 1}
+    overLimit={board !== undefined ? (state, count) => isOverLimit(count, boardColumn(state)?.limit) : undefined}
+    --kanban-column-inset={grid?.inset}
+    --kanban-padding-top={grid?.padding}
+    --kanban-padding-x={grid?.padding}
+    --kanban-header-gap={grid?.headerGap}
     {categories}
     {dontUpdateRank}
     {orderBy}
@@ -887,11 +902,12 @@
         class="header flex-between"
         class:merged={members.length > 1}
         class:collapsed
-        use:tooltip={board !== undefined
-          ? { component: BoardColumnTooltip, props: { statuses: columnStatuses(column, tasks) } }
+        use:tooltip={board !== undefined && !collapsed
+          ? { label: tracker.string.ColumnStatusesHint, direction: 'top' }
           : undefined}
-        on:click={() => {
+        on:click={(e) => {
           if (collapsed) toggle()
+          else if (board !== undefined) openColumnStatuses(e, column)
         }}
       >
         <div class="flex-row-center gap-1 flex-grow clear-mins">

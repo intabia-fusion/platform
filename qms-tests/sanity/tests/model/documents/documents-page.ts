@@ -29,7 +29,10 @@ export class DocumentsPage extends CalendarPage {
     this.buttonParentSelector = page.locator('div.parentSelector span[class*="label"]')
     this.inputNewDocumentTitle = page.locator('div[id="doc-title"] input')
     this.inputNewDocumentDescription = page.locator('div[id="doc-description"] input')
-    this.inputNewDocumentCreateDaft = page.locator('div.footer div.footerButtons button[type="button"]')
+    this.inputNewDocumentCreateDaft = page
+      .locator('div.footer div.footerButtons button[type="button"]')
+      // Back stands before Next or the submit: the main button is the last one
+      .last()
     this.category = page.locator(
       "xpath=//button[@class='antiButton no-border small jf-center sh-no-shape bs-solid gap-medium iconR']"
     )

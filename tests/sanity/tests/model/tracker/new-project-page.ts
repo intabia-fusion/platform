@@ -27,9 +27,10 @@ export class NewProjectPage extends CommonTrackerPage {
   buttonMakePrivate = (): Locator => this.root().locator('input#project-private')
 
   buttonClose = (): Locator => this.root().locator('.dialog__tools button').last()
-  buttonNext = (): Locator => this.root().locator('.dialog__footer-start').getByRole('button', { name: 'Next step' })
+  buttonNext = (): Locator =>
+    this.root().locator('.dialog__footer-actions').getByRole('button', { name: 'Next', exact: true })
 
-  buttonBack = (): Locator => this.root().locator('.dialog__footer-start').getByRole('button', { name: 'Back' })
+  buttonBack = (): Locator => this.root().locator('.dialog__footer-actions').getByRole('button', { name: 'Back' })
   // Secondary before the last step, positive on it
   buttonCreateProject = (): Locator =>
     this.root().locator('.dialog__footer-actions').getByRole('button', { name: 'Create', exact: true })

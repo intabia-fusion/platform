@@ -100,10 +100,11 @@ export const issuesOptions = (kanban: boolean): ViewOptionsModel => ({
           },
           {
             key: 'density',
-            type: 'dropdown' as const,
+            type: 'slider' as const,
+            // Not a step: the board decides until the user moves the slider
             defaultValue: 'default',
+            defaultLabel: tracker.string.DensityDefault,
             values: [
-              { id: 'default', label: tracker.string.DensityDefault },
               { id: 'detailed', label: tracker.string.DensityDetailed },
               { id: 'normal', label: tracker.string.DensityNormal },
               { id: 'compact', label: tracker.string.DensityCompact },

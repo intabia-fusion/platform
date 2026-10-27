@@ -184,9 +184,10 @@
     &.focus-inset {
       border: 2px solid var(--primary-edit-border-color);
     }
+    // As a hovered file card of the drive (ui-kit FileCard)
     &.focus-ring {
-      outline: 2px solid var(--accent-color-primary);
-      outline-offset: 2px;
+      border-color: color-mix(in srgb, var(--button-brand-BackgroundColor) 30%, var(--global-ui-BorderColor));
+      box-shadow: 0 0.125rem 0.375rem color-mix(in srgb, var(--global-popover-ShadowColor) 65%, transparent);
     }
   }
   .top {

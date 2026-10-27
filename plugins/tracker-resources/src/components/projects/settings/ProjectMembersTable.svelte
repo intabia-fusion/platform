@@ -23,13 +23,14 @@
   import type { AccountUuid, Doc, Role, RolesAssignment } from '@hcengineering/core'
   import { notEmpty } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { getEmbeddedLabel, translate } from '@hcengineering/platform'
+  import { getEmbeddedLabel, translate, type IntlString } from '@hcengineering/platform'
   import ui, {
     getEventPositionElement,
     Label,
     languageStore,
     Menu,
     ModernPopupLabels,
+    Scroller,
     showPopup,
     type DropdownTextItem,
     type PopupResult
@@ -42,16 +43,22 @@
 
   // The place keeps the members (saved or of a project being created) and validates every change
   export let members: AccountUuid[]
-  export let owners: AccountUuid[]
-  export let assignment: RolesAssignment
-  export let roles: Role[]
+  export let owners: AccountUuid[] = []
+  export let assignment: RolesAssignment = {}
+  export let roles: Role[] = []
   // Bumped by the place on a rejected change to rebuild the role fields from the kept state
   export let resetKey: number = 0
   // A member whose row cannot be changed: the creator of a new project stays its owner
   export let lockedAccount: AccountUuid | undefined = undefined
   export let onAdd: (account: AccountUuid) => void | Promise<void>
   export let onRemove: (account: AccountUuid) => void | Promise<void>
-  export let onRolesChange: (account: AccountUuid, selected: string[]) => void | Promise<void>
+  export let onRolesChange: (account: AccountUuid, selected: string[]) => void | Promise<void> = () => {}
+  // A place without project roles (a board) shows a fixed caption instead of the role field
+  export let fixedRole: ((account: AccountUuid) => IntlString) | undefined = undefined
+  export let removeLabel: IntlString = tracker.string.ProjectSettingsRemoveMember
+  export let addDataId: string = 'project-add-member'
+  // Accounts that are not rows but cannot be picked either (the board author)
+  export let ignoreAccounts: AccountUuid[] = []
 
   const hierarchy = getClient().getHierarchy()
 
@@ -70,7 +77,7 @@
       {
         actions: [
           {
-            label: tracker.string.ProjectSettingsRemoveMember,
+            label: removeLabel,
             icon: view.icon.Delete,
             action: async () => {
               await onRemove(account)
@@ -83,7 +90,9 @@
   }
 
   function showAddMember (e: MouseEvent): void {
-    const ignoreUsers = rows.map((it) => $employeeRefByAccountUuidStore.get(it)).filter(notEmpty)
+    const ignoreUsers = [...rows, ...ignoreAccounts]
+      .map((it) => $employeeRefByAccountUuidStore.get(it))
+      .filter(notEmpty)
     showPopup(
       UsersPopup,
       {
@@ -148,7 +157,7 @@
     <Label label={tracker.string.ProjectSettingsMembersCount} params={{ count: rows.length }} />
   </span>
   <Button
-    data-id="project-add-member"
+    data-id={addDataId}
     kind="secondary"
     size="small"
     icon={ui.icon.Plus}
@@ -164,47 +173,58 @@
     <div class="cell role"><Label label={tracker.string.ProjectSettingsRole} /></div>
     <div class="cell action" />
   </div>
-  {#key resetKey}
-    {#each rows as account (account)}
-      {@const ref = $employeeRefByAccountUuidStore.get(account)}
-      {@const roles = roleLabel(account, roleItems, owners, assignment)}
-      <div class="members-row" data-id="project-settings-member">
-        <div class="cell person">
-          <EmployeePresenter value={ref} avatarSize="small" showPopup={false} />
-        </div>
-        <div class="cell role">
-          <div class="role-field">
-            <SelectButton
-              data-id="project-member-roles"
-              label={roles !== '' ? getEmbeddedLabel(roles) : undefined}
-              placeholder={tracker.string.ProjectSettingsMemberRole}
-              field
-              fullWidth
-              chevron
-              disabled={account === lockedAccount}
-              pressed={rolesAccount === account}
-              on:click={(e) => {
-                chooseRoles(e, account)
-              }}
-            />
+  <!-- A long list scrolls inside the table: the head and the count stay in view -->
+  <div class="members-body">
+    <Scroller maxHeight={20} shrink noFade={false}>
+      {#key resetKey}
+        {#each rows as account (account)}
+          {@const ref = $employeeRefByAccountUuidStore.get(account)}
+          {@const roles = roleLabel(account, roleItems, owners, assignment)}
+          <div class="members-row" data-id="project-settings-member">
+            <div class="cell person">
+              <EmployeePresenter value={ref} avatarSize="small" showPopup={false} />
+            </div>
+            <div class="cell role">
+              {#if fixedRole !== undefined}
+                <Label label={fixedRole(account)} />
+              {:else}
+                <div class="role-field">
+                  <SelectButton
+                    data-id="project-member-roles"
+                    label={roles !== '' ? getEmbeddedLabel(roles) : undefined}
+                    placeholder={tracker.string.ProjectSettingsMemberRole}
+                    field
+                    fullWidth
+                    chevron
+                    disabled={account === lockedAccount}
+                    pressed={rolesAccount === account}
+                    on:click={(e) => {
+                      chooseRoles(e, account)
+                    }}
+                  />
+                </div>
+              {/if}
+            </div>
+            <div class="cell action">
+              {#if account !== lockedAccount || fixedRole === undefined}
+                <IconButton
+                  icon={ui.icon.DotsHorizontal}
+                  kind="ghost"
+                  size="extra-small"
+                  data-id="project-member-menu"
+                  disabled={account === lockedAccount}
+                  tooltip={{ label: removeLabel }}
+                  on:click={(e) => {
+                    showMemberMenu(e, account)
+                  }}
+                />
+              {/if}
+            </div>
           </div>
-        </div>
-        <div class="cell action">
-          <IconButton
-            icon={ui.icon.DotsHorizontal}
-            kind="ghost"
-            size="extra-small"
-            data-id="project-member-menu"
-            disabled={account === lockedAccount}
-            tooltip={{ label: tracker.string.ProjectSettingsRemoveMember }}
-            on:click={(e) => {
-              showMemberMenu(e, account)
-            }}
-          />
-        </div>
-      </div>
-    {/each}
-  {/key}
+        {/each}
+      {/key}
+    </Scroller>
+  </div>
 </div>
 
 <style lang="scss">
@@ -224,6 +244,11 @@
   .members-table {
     border: 1px solid var(--theme-divider-color);
     border-radius: 0.5rem;
+  }
+  .members-body {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--theme-divider-color);
   }
   .members-row {
     display: flex;

@@ -24,17 +24,12 @@ export class BoardsPage {
     return `${PlatformURI}/workbench/sanity-ws/tracker/boards/${id}${settings ? '/settings' : ''}${tab !== undefined ? `?tab=${tab}` : ''}`
   }
 
-  // The board in place of the view of the project issues
-  projectBoardUrl (project: string, id: string, settings: boolean = false, tab?: string): string {
-    const path = `${PlatformURI}/workbench/sanity-ws/tracker/${encodeURIComponent(project)}/issues/${id}`
-    return `${path}${settings ? '/settings' : ''}${tab !== undefined ? `?tab=${tab}` : ''}`
-  }
-
   navSection = (): Locator => this.page.locator('#navGroup-tree-boards')
   navItems = (): Locator => this.page.locator('[data-id="boardsNav"]')
   columns = (): Locator => this.page.locator('[data-id="kanban-column"]')
   wipLimit = (): Locator => this.page.locator('[data-id="kanban-wip-limit"]')
-  settingsButton = (): Locator => this.page.locator('[data-id="boardSettingsButton"]')
+  // Board settings are an item of the header menu
+  menuButton = (): Locator => this.page.locator('[data-id="btnIssuesMenu"]')
   settings = (): Locator => this.page.locator('[data-id="boardSettings"]')
   settingsBack = (): Locator => this.page.locator('[data-id="boardSettingsBack"]')
   settingsColumns = (): Locator => this.page.locator('[data-id="boardSettingsColumns"]')
@@ -53,6 +48,7 @@ export class BoardsPage {
   radioInput = (dataId: string): Locator => this.page.locator(`input[data-id="${dataId}"]`)
   swimlaneRules = (): Locator => this.page.locator('[data-id="boardRule"]')
   swimlanes = (): Locator => this.page.locator('[data-id="kanban-swimlane"]')
+  fullscreenButton = (): Locator => this.page.locator('[data-id="boardFullscreenButton"]')
   quickFilter = (title: string): Locator => this.page.locator('[data-id="boardQuickFilter"]', { hasText: title })
 
   uncovered = (): Locator => this.page.locator('[data-id="boardUncovered"]')
@@ -60,7 +56,6 @@ export class BoardsPage {
   uncoveredShow = (): Locator => this.page.locator('[data-id="boardUncoveredShow"]')
   uncoveredAdd = (): Locator => this.page.locator('[data-id="boardUncoveredAdd"]')
   unavailable = (): Locator => this.page.locator('[data-id="boardUnavailableProjects"]')
-  switcher = (): Locator => this.page.locator('[data-id="boardSwitcher"]')
   filterAdd = (): Locator => this.page.locator('[data-id="boardSettingsGeneral"] [data-id="filterConditionsAdd"]')
   // Filter attributes and the saved lists share this popup menu
   popupItem = (text: string): Locator =>
@@ -94,12 +89,6 @@ export class BoardsPage {
   }
 
   card = (density: string): Locator => this.page.locator(`.tracker-card[data-density="${density}"]`)
-  // Segments of the project boards in the header of the project issues
-  projectBoard = (title: string): Locator =>
-    this.page.locator('[data-id="projectBoards"] [role="radio"]', { hasText: title })
-
-  // The menu of all project boards next to the bar
-  projectBoardsMenu = (): Locator => this.page.locator('[data-id="projectBoardsMenu"]')
   menuItem = (title: string): Locator => this.page.locator('.popup [role^="menuitem"]', { hasText: title })
 
   async open (id: string): Promise<void> {
@@ -107,13 +96,31 @@ export class BoardsPage {
     await this.columns().first().waitFor({ state: 'visible', timeout: 15000 })
   }
 
-  // The plus of the "Boards" section creates a board and opens its settings
-  async createFromNavigator (): Promise<void> {
+  async openSettings (): Promise<void> {
+    await this.menuButton().click()
+    await this.page.locator('div.hulyPopup-container .hulyPopup-row', { hasText: 'Board settings' }).click()
+  }
+
+  createWizard = (): Locator => this.page.locator('[data-id="board-create-wizard"]')
+  createFooter = (): Locator => this.createWizard().locator('.dialog__footer-actions')
+  createNext = (): Locator =>
+    this.createWizard().locator('.dialog__footer-actions').getByRole('button', { name: 'Next', exact: true })
+
+  createSubmit = (): Locator => this.createFooter().getByRole('button', { name: 'Create', exact: true })
+
+  // The plus of the "Boards" section opens the creation wizard; the title is enough to create
+  async openCreateWizard (): Promise<void> {
     const plus = this.navSection().locator('xpath=../button[1]')
     await this.navSection().hover()
     await plus.click()
     const item = this.page.getByText('Create board', { exact: true })
     if (await item.isVisible().catch(() => false)) await item.click()
-    await expect(this.settings()).toBeVisible()
+    await expect(this.createWizard()).toBeVisible()
+  }
+
+  async createFromNavigator (title: string): Promise<void> {
+    await this.openCreateWizard()
+    await this.page.locator('#board-create-title').fill(title)
+    await this.createSubmit().click()
   }
 }

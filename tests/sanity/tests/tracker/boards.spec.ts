@@ -133,8 +133,6 @@ test.describe('task boards', () => {
       colorRules: [],
       density: 'normal'
     })
-    // The project issues bar shows only the boards the user put on it
-    await client.createDoc(tracker.class.BoardPreference, core.space.Workspace, { attachedTo: boardId })
   })
 
   test.beforeEach(() => {
@@ -143,10 +141,10 @@ test.describe('task boards', () => {
 
   test.afterAll(async () => {
     if (client === undefined) return
-    // Every board of the spec, including the one the navigator test created
+    // Every board of the spec, including the one the wizard test created
     const boards = await client.findAll(tracker.class.Board, {})
     for (const board of boards) {
-      if (!board.title.startsWith(titlePrefix) && board.title !== 'New board') continue
+      if (!board.title.startsWith(titlePrefix)) continue
       for (const pref of await client.findAll(tracker.class.BoardPreference, { attachedTo: board._id })) {
         await client.remove(pref)
       }
@@ -163,8 +161,9 @@ test.describe('task boards', () => {
     // Backlog and Todo share the first column
     await expect(boards.columns().first().locator('[data-id="kanban-card"]')).toHaveCount(2)
     await expect(boards.columns().last().locator('[data-id="kanban-card"]')).toHaveCount(1)
-    // 2 cards over the limit of 1: only the limit is red
+    // 2 cards over the limit of 1: the limit and the cards area of the column are red
     await expect(boards.wipLimit()).toHaveClass(/over/)
+    await expect(boards.columns().first().locator('.column-cards')).toHaveClass(/over-limit/)
   })
 
   test('the board opens from the navigator', async ({ page }) => {
@@ -188,17 +187,6 @@ test.describe('task boards', () => {
     await expect(page.getByText('Board not found')).toHaveCount(0)
   })
 
-  test('closing an issue opened from a board in a project keeps the board', async ({ page }) => {
-    const boards = new BoardsPage(page)
-    await (await page.goto(boards.projectBoardUrl(project?._id ?? '', boardId)))?.finished()
-    await boards.columns().first().waitFor({ state: 'visible', timeout: 15000 })
-    await boards.columns().first().locator('.tracker-card').first().click()
-    await page.locator('#btnPClose').click()
-    await expect(page.locator('#btnPClose')).toHaveCount(0)
-    await expect(page).toHaveURL(new RegExp(`/issues/${boardId}$`))
-    await expect(boards.columns()).toHaveCount(2)
-  })
-
   test('a board project the user cannot see gets its own chip', async ({ page }) => {
     const id = await makeBoard('hidden-project', {
       projects: [project?._id as Ref<Project>, generateId<Project>()],
@@ -215,7 +203,7 @@ test.describe('task boards', () => {
   test('the board without hidden projects has no unavailable chip', async ({ page }) => {
     const boards = new BoardsPage(page)
     await boards.open(boardId)
-    await expect(boards.settingsButton()).toBeVisible()
+    await expect(boards.menuButton()).toBeVisible()
     await expect(boards.unavailable()).toHaveCount(0)
   })
 
@@ -230,11 +218,34 @@ test.describe('task boards', () => {
     await expect(boards.card('dense').first()).toBeVisible()
   })
 
+  test('the density slider of the board header wins over the board, the header has no view controls', async ({
+    page
+  }) => {
+    // Own board: view options are kept per board, the slider must not touch the shared one
+    const id = await makeBoard('density-slider', {
+      columns: [{ id: 'queue', title: 'Queue', category: task.statusCategory.ToDo, statuses: [statusId('Todo')] }],
+      density: 'normal'
+    })
+    const boards = new BoardsPage(page)
+    await boards.open(id)
+    await expect(boards.card('normal').first()).toBeVisible()
+
+    // The board sets its order, fields, columns and lanes: no viewlets and no view options in its header
+    const slider = page.locator('[data-id="boardDensity"]')
+    await expect(slider).toContainText('Board default')
+    await expect(page.locator('button[data-id="btn-viewOptions"]')).toHaveCount(0)
+    await expect(page.locator('button[data-id="btn-viewSetting"]')).toHaveCount(0)
+    await expect(page.locator('[name="viewletSelector"]')).toHaveCount(0)
+    await slider.locator('input[type="range"]').fill('3')
+    await expect(boards.card('dense').first()).toBeVisible()
+    await expect(boards.card('normal')).toHaveCount(0)
+  })
+
   test('settings: a column is renamed and the board density is picked by a click', async ({ page }) => {
     const boards = new BoardsPage(page)
     await boards.open(boardId)
 
-    await boards.settingsButton().click()
+    await boards.openSettings()
     await expect(boards.settings()).toBeVisible()
     await boards.settings().getByText('Columns', { exact: true }).click()
     await expect(boards.settingsColumns()).toBeVisible()
@@ -250,6 +261,8 @@ test.describe('task boards', () => {
     await boards.settingsBack().click()
     await expect(boards.columns().first()).toBeVisible()
     await expect(boards.columns().first().locator('.header')).toContainText('Waiting')
+    // The board mounts again with the viewlets cached: the density slider must come back too
+    await expect(page.locator('[data-id="boardDensity"]')).toBeVisible()
   })
 
   test('a project kanban stays the plain kanban even when the project has a board', async ({ page }) => {
@@ -261,47 +274,34 @@ test.describe('task boards', () => {
     await expect(page).not.toHaveURL(new RegExp(`/tracker/boards/${boardId}`))
   })
 
-  test('the project issues header lists the project board and opens it in place', async ({ page }) => {
+  test('an old project link with a board id shows the project issues', async ({ page }) => {
     const projectPath = encodeURIComponent(project?._id ?? '')
-    await (await page.goto(`${PlatformURI}/workbench/sanity-ws/tracker/${projectPath}/issues`))?.finished()
-    const boards = new BoardsPage(page)
-    await boards.projectBoard(`${titlePrefix}board`).click()
-    // The board replaces the view of the project issues: same project path, its segment selected
-    await expect(page).toHaveURL(new RegExp(`/tracker/${projectPath}/issues/${boardId}`))
-    await expect(boards.projectBoard(`${titlePrefix}board`)).toHaveAttribute('aria-checked', 'true')
-    await expect(boards.columns()).toHaveCount(2)
-    await expect(boards.settingsButton()).toBeVisible()
-
-    // No viewlet is marked on the board; picking one closes the board in that view
-    await expect(page.locator(ViewletSelectors.Table).locator('input')).not.toBeChecked()
-    await expect(page.locator(ViewletSelectors.Board).locator('input')).not.toBeChecked()
-    await page.locator(ViewletSelectors.Table).click()
-    await expect(page).toHaveURL(new RegExp(`/tracker/${projectPath}/issues$`))
-    await expect(page.locator(ViewletSelectors.Table).locator('input')).toBeChecked()
-    await expect(boards.projectBoard(`${titlePrefix}board`)).toHaveAttribute('aria-checked', 'false')
+    await (await page.goto(`${PlatformURI}/workbench/sanity-ws/tracker/${projectPath}/issues/${boardId}`))?.finished()
+    await expect(page.locator('button[data-id="btn-viewOptions"]')).toBeVisible()
+    await expect(page.locator('[data-id="boardDensity"]')).toHaveCount(0)
   })
 
-  test('the project boards menu takes a board off the bar and puts it back', async ({ page }) => {
-    const projectPath = encodeURIComponent(project?._id ?? '')
-    await (await page.goto(`${PlatformURI}/workbench/sanity-ws/tracker/${projectPath}/issues`))?.finished()
+  test('a board is created by the wizard with one empty column of the current project and opens', async ({ page }) => {
+    // Inside a project the board takes it
+    await (await page.goto(`${PlatformURI}/workbench/sanity-ws/tracker/${project?._id}/issues`))?.finished()
     const boards = new BoardsPage(page)
-    await boards.projectBoardsMenu().click()
-    const item = boards.menuItem(`${titlePrefix}board`)
-    await expect(item).toHaveAttribute('aria-checked', 'true')
-    // The menu stays open while boards go on and off the bar
-    await item.click()
-    await expect(item).toHaveAttribute('aria-checked', 'false')
-    await expect(boards.projectBoard(`${titlePrefix}board`)).toHaveCount(0)
-    await item.click()
-    await expect(item).toHaveAttribute('aria-checked', 'true')
-    await expect(boards.projectBoard(`${titlePrefix}board`)).toBeVisible()
-  })
+    await boards.openCreateWizard()
+    await page.locator('#board-create-title').fill(`${titlePrefix}created`)
+    await page.locator('#board-create-description').fill('Board made by the wizard')
+    // A team board: the editors step, then the columns
+    await boards.createNext().click()
+    await expect(page.locator('[data-id="board-create-editors"]')).toBeVisible()
+    await boards.createNext().click()
+    await expect(page.locator('[data-id="boardStatus"]').first()).toBeVisible()
+    await boards.createSubmit().click()
+    await expect(page).toHaveURL(/\/tracker\/boards\/[^/]+$/)
 
-  test('a board is created from the navigator and its settings open', async ({ page }) => {
-    await (await page.goto(`${PlatformURI}/workbench/sanity-ws/tracker`))?.finished()
-    const boards = new BoardsPage(page)
-    await boards.createFromNavigator()
-    await expect(page).toHaveURL(/\/tracker\/boards\/.+\/settings/)
+    const created = new URL(page.url()).pathname.split('/')[5] as Ref<Board>
+    await expect.poll(async () => (await readBoardById(created))?.description).toBe('Board made by the wizard')
+    const board = await readBoardById(created)
+    expect(board?.projects).toEqual([project?._id])
+    // The statuses wait in "Statuses without a column" until the user drags them
+    expect(board?.columns.map((c) => [c.title, c.statuses])).toEqual([['My column', []]])
   })
 
   test('card fields: a field is hidden on the board cards and the preview, and comes back when checked', async ({
@@ -347,7 +347,7 @@ test.describe('task boards', () => {
     await expect(boards.cardFieldMark(richCard, 'dueDate')).toHaveCount(0)
     await expect(boards.cardFieldMark(richCard, 'estimation')).toHaveCount(1)
 
-    await boards.settingsButton().click()
+    await boards.openSettings()
     await boards.settings().getByText('Card', { exact: true }).click()
     await boards.cardFieldLabel('priority').click()
     await expect.poll(async () => (await visibleFields())?.includes('priority')).toBe(true)
@@ -405,6 +405,73 @@ test.describe('task boards', () => {
     await expect(boards.radioInput('boardSwimlanesNone')).not.toBeChecked()
     await expect(boards.swimlaneRules()).toHaveCount(1)
     expect((await readBoardById(id))?.swimlanes).toHaveLength(2)
+  })
+
+  test('swimlanes by a field replace the lanes by filters, which then hide', async ({ page }) => {
+    const id = await makeBoard('lanes-field', {
+      columns: [{ id: 'queue', title: 'Queue', category: task.statusCategory.ToDo, statuses: [statusId('Todo')] }],
+      swimlanes: [
+        { id: 'first', title: 'First', condition: '' },
+        { id: 'rest', title: 'Others', condition: '' }
+      ]
+    })
+    const boards = new BoardsPage(page)
+    await (await page.goto(boards.boardUrl(id, true, 'swimlanes')))?.finished()
+    await expect(boards.radioInput('boardSwimlanesByFilters')).toBeChecked()
+
+    await boards.radio('boardSwimlanesByField').click()
+    await page.locator('.popup').getByRole('button', { name: 'Ok', exact: true }).click()
+    await expect(boards.radioInput('boardSwimlanesByField')).toBeChecked()
+    await expect(boards.swimlaneRules()).toHaveCount(0)
+    await expect.poll(async () => (await readBoardById(id))?.swimLaneBy).toBe('assignee')
+    expect((await readBoardById(id))?.swimlanes).toHaveLength(0)
+
+    await page.locator('[data-id="boardSwimlanesField"]').click()
+    await boards.menuItem('Priority').click()
+    await expect.poll(async () => (await readBoardById(id))?.swimLaneBy).toBe('priority')
+
+    await page.reload()
+    await expect(boards.radioInput('boardSwimlanesByField')).toBeChecked()
+    // Lanes by filters hide behind tracker-board-next once the board has none
+    await expect(boards.radio('boardSwimlanesByFilters')).toHaveCount(0)
+
+    await boards.radio('boardSwimlanesNone').click()
+    await expect(boards.radioInput('boardSwimlanesNone')).toBeChecked()
+    await expect.poll(async () => (await readBoardById(id))?.swimLaneBy).toBeNull()
+    // The saved board does not take the check away; the field picker stays, disabled
+    await expect(boards.radioInput('boardSwimlanesNone')).toBeChecked()
+    await expect(page.locator('[data-id="boardSwimlanesField"]')).toBeDisabled()
+
+    await boards.radio('boardSwimlanesByField').click()
+    await expect.poll(async () => (await readBoardById(id))?.swimLaneBy).toBe('assignee')
+    await expect(boards.radioInput('boardSwimlanesByField')).toBeChecked()
+    await expect(page.locator('[data-id="boardSwimlanesField"]')).toBeEnabled()
+  })
+
+  test('full screen hides the side panels and brings them back', async ({ page }) => {
+    const id = await makeBoard('fullscreen', {
+      columns: [{ id: 'queue', title: 'Queue', category: task.statusCategory.ToDo, statuses: [statusId('Todo')] }]
+    })
+    const boards = new BoardsPage(page)
+    await boards.open(id)
+    await expect(page.locator('.antiPanel-navigator')).toBeVisible()
+
+    await boards.fullscreenButton().click()
+    await expect(page.locator('.antiPanel-navigator')).toHaveCount(0)
+    await expect(page.locator('.antiPanel-application')).toBeHidden()
+    await expect(boards.columns().first()).toBeVisible()
+
+    // A task opened in the sidebar from the full screen board keeps the sidebar shown
+    await boards.card('detailed').first().locator('a').first().click()
+    await page.locator('[data-id="btnOpenInSidebar"]').click()
+    await page.goBack()
+    await expect(boards.columns().first()).toBeVisible()
+    await expect(page.locator('#sidebar')).toBeVisible()
+    await expect(page.locator('.antiPanel-application')).toBeHidden()
+
+    await boards.fullscreenButton().click()
+    await expect(page.locator('.antiPanel-navigator')).toBeVisible()
+    await expect(page.locator('.antiPanel-application')).toBeVisible()
   })
 
   test('card field clicks in a row are all kept', async ({ page }) => {
@@ -520,7 +587,9 @@ test.describe('task boards', () => {
     await expect(second.page.getByText('Board not found')).toBeVisible()
 
     await boards.radio('boardVisibilityAll').click()
-    await expect(boards2.columns().first()).toBeVisible()
+    await expect.poll(async () => (await readBoardById(id))?.visibility).toBe('all')
+    // BoardMiddleware tells every session to reload boards: the board comes back without a reload
+    await expect(boards2.columns().first()).toBeVisible({ timeout: 15000 })
   })
 
   test('the board filter does not offer the project as a condition', async ({ page }) => {
@@ -533,9 +602,8 @@ test.describe('task boards', () => {
     await expect(boards.popupItem('Project')).toHaveCount(0)
   })
 
-  test('the settings open on the tab of the link, in the project and on the board page', async ({ page }) => {
+  test('the settings open on the tab of the link', async ({ page }) => {
     const boards = new BoardsPage(page)
-    const projectId = project?._id ?? ''
     const tabs: Array<[string, () => Locator]> = [
       ['card', boards.settingsCard],
       ['columns', boards.settingsColumns],
@@ -549,28 +617,8 @@ test.describe('task boards', () => {
       await expect(boards.settingsGeneral(), tab).toHaveCount(0)
     }
 
-    await (await page.goto(boards.projectBoardUrl(projectId, boardId, true, 'quickFilters')))?.finished()
-    await expect(boards.settingsTab('quickFilters')).toBeVisible()
-
     // A tab nobody knows gives the first one
     await (await page.goto(boards.boardUrl(boardId, true, 'nonsense')))?.finished()
     await expect(boards.settingsGeneral()).toBeVisible()
-  })
-
-  test('the board switcher lists the boards and creates a new one', async ({ page }) => {
-    const boards = new BoardsPage(page)
-    await boards.open(boardId)
-    await boards.switcher().click()
-    await expect(boards.menuItem(`${titlePrefix}board`)).toBeVisible()
-    await boards.menuItem('Create board').click()
-    await expect(page).toHaveURL(/\/tracker\/boards\/.+\/settings/)
-    await expect(boards.settings()).toBeVisible()
-
-    // A new board of the project with a column per status of the project
-    const created = new URL(page.url()).pathname.split('/')[5] as Ref<Board>
-    const board = await readBoardById(created)
-    expect(board?.title).toBe('New board')
-    expect(board?.projects).toEqual([project?._id])
-    expect(board?.columns.length).toBeGreaterThan(0)
   })
 })

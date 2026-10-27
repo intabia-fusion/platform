@@ -24,7 +24,6 @@
 
   import tracker from '../../plugin'
   import IssuesView from './IssuesView.svelte'
-  import ProjectBoard from '../boards/ProjectBoard.svelte'
 
   import task from '@hcengineering/task'
 
@@ -82,8 +81,6 @@
   }
 </script>
 
-{#if currentSpace !== undefined && $resolvedLocationStore.path[5] !== undefined}
-  <ProjectBoard project={currentSpace} />
-{:else if query !== undefined && modeSelectorProps !== undefined}
+{#if query !== undefined && modeSelectorProps !== undefined}
   <IssuesView {query} space={currentSpace} {icon} {title} {modeSelectorProps} />
 {/if}

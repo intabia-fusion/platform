@@ -285,8 +285,8 @@ kit.Dialog = (title, kids, o = {}) => {
   return kit.add(d, kit.box('border', { w, h: 1, fill: T('theme-dialog-border-color') }), foot)
 }
 
-// WizardDialog of ui/kit: Steps on the left, the step content, Back / Next or the submit on the last step.
-// o: w (932) h (content height) submitLabel canProceed canSubmit earlySubmit (Back and Next on the left, the submit on the right on every step)
+// WizardDialog of ui/kit: Steps on the left, the step content, Back / Next / the submit together on the right.
+// o: w (932) h (content height) submitLabel canProceed canSubmit earlySubmit (the submit on every step)
 kit.KitWizardDialog = (title, steps, selected, kids, o = {}) => {
   const w = o.w || 932
   const h = o.h || 400
@@ -297,13 +297,15 @@ kit.KitWizardDialog = (title, steps, selected, kids, o = {}) => {
   const body = kit.box('body', { w: w - 224, h, dir: 'column', gap: D('spacing-2'), pad: [24, 24, 24, 24], clip: false })
   kit.add(middle, side, kit.box('border', { w: 1, h, fill: T('theme-dialog-border-color') }), kit.add(body, kids || []))
   const foot = kit.box('footer', { w, h: 64, dir: 'row', gap: D('spacing-2'), pad: [12, 12, 12, 12], align: 'center', justify: 'space-between' })
-  const back = selected > 0 ? kit.Button({ kind: 'secondary', size: 'medium', icon: 'kit/ArrowLeft', label: 'Back' }) : undefined
+  // Back is disabled on the first step, not hidden
+  const back = kit.Button({ kind: 'secondary', size: 'medium', icon: 'kit/ArrowLeft', label: 'Back' })
+  if (selected === 0) back.opacity = 0.5
   const last = selected === steps.length - 1
-  const next = last ? undefined : kit.add(kit.Button({ kind: 'brand', size: 'medium', label: 'Next step' }), kit.icon('kit/ArrowRight', '#FFFFFF', 16))
+  const next = last ? undefined : kit.add(kit.Button({ kind: 'brand', size: 'medium', label: 'Next' }), kit.icon('kit/ArrowRight', '#FFFFFF', 16))
   const submit = (kind) => kit.Button({ kind, size: 'medium', label: o.submitLabel || 'Create' })
-  // earlySubmit: Back and Next together on the left, the submit on the right on every step
-  if (o.earlySubmit) kit.add(foot, kit.add(kit.row('navigation', D('spacing-1')), back || kit.spacer(1, 1), next), submit(last ? 'positive' : 'secondary'))
-  else kit.add(foot, back || kit.spacer(1, 1), next || submit('positive'))
+  // Back, Next and the submit together on the right; earlySubmit shows the submit on every step
+  const sub = last || o.earlySubmit ? submit(last ? 'positive' : 'secondary') : undefined
+  kit.add(foot, kit.spacer(1, 1), kit.add(kit.row('actions', D('spacing-2')), ...[back, next, sub].filter(Boolean)))
   return kit.add(d, middle, kit.box('border', { w, h: 1, fill: T('theme-dialog-border-color') }), foot)
 }
 

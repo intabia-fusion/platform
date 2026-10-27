@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import { createRestClient } from '@hcengineering/api-client'
+import contact from '@hcengineering/contact'
 import core, { generateId, type AccountUuid, type Ref, type TxOperations } from '@hcengineering/core'
 import task from '@hcengineering/task'
 import tracker, { type Board, type IssueStatus, type Project } from '@hcengineering/tracker'
@@ -127,8 +128,90 @@ test.describe('board settings', () => {
     await openTab(boards, 'general')
     await expect(boards.radio('boardVisibilityAll')).toHaveText(/^\s*Visible to everyone\s*$/)
     await expect(boards.radio('boardVisibilityMe')).toHaveText(/^\s*Only me\s*$/)
-    await expect(boards.settingsGeneral()).toContainText('A personal board, shown in My boards')
+    await expect(boards.settingsGeneral()).toContainText('A personal board, only you see it')
     await expect(boards.settingsGeneral()).not.toContainText('All project members')
+  })
+
+  test('a project picked in the popup shows at once, without reopening the settings', async ({ page }) => {
+    // Own board: the shared one keeps a single project for the other tests
+    const board = await client.findOne(tracker.class.Board, { _id: boardId })
+    if (board === undefined) throw new Error('no board')
+    const { _id, _class, space, modifiedOn, modifiedBy, createdOn, createdBy, ...data } = board
+    const id = await client.createDoc(tracker.class.Board, core.space.Workspace, {
+      ...data,
+      title: `${titlePrefix}projects`
+    })
+    const boards = new BoardsPage(page)
+    await (await page.goto(boards.boardUrl(id, true, 'general')))?.finished()
+    const chips = page.locator('[data-id="boardProjects"] .chip')
+    await expect(chips).toHaveCount(1)
+
+    await page.locator('[data-id="boardAddProject"]').click()
+    await page.locator('.popup .menu-item', { hasText: 'Default' }).click()
+    await expect(chips).toHaveCount(2)
+    await page.keyboard.press('Escape')
+    await expect.poll(async () => (await client.findOne(tracker.class.Board, { _id: id }))?.projects.length).toBe(2)
+  })
+
+  test('an editor is removed from the editors table', async ({ page }) => {
+    const board = await client.findOne(tracker.class.Board, { _id: boardId })
+    if (board === undefined) throw new Error('no board')
+    const others = (await client.findAll(contact.mixin.Employee, { active: true }))
+      .map((e) => e.personUuid as AccountUuid | undefined)
+      .filter((a): a is AccountUuid => a !== undefined && a !== board.author)
+    test.skip(others.length === 0, 'no second employee seeded')
+    // Own board: the shared one keeps no editors for the other tests
+    const { _id, _class, space, modifiedOn, modifiedBy, createdOn, createdBy, ...data } = board
+    const id = await client.createDoc(tracker.class.Board, core.space.Workspace, {
+      ...data,
+      title: `${titlePrefix}editors`,
+      editors: [others[0]]
+    })
+    const boards = new BoardsPage(page)
+    await (await page.goto(boards.boardUrl(id, true, 'general')))?.finished()
+    const rows = page.locator('[data-id="boardEditors"] [data-id="project-settings-member"]')
+    // The author row and the editor row
+    await expect(rows).toHaveCount(2)
+    await rows.nth(1).locator('[data-id="project-member-menu"]').click()
+    await page.locator('.menu-item', { hasText: 'Remove' }).click()
+    await expect(rows).toHaveCount(1)
+    await expect.poll(async () => (await client.findOne(tracker.class.Board, { _id: id }))?.editors.length).toBe(0)
+  })
+
+  test('the card order is picked in the general tab and saved on the board', async ({ page }) => {
+    // Own board: the shared one keeps the default order for the other tests
+    const board = await client.findOne(tracker.class.Board, { _id: boardId })
+    if (board === undefined) throw new Error('no board')
+    const { _id, _class, space, modifiedOn, modifiedBy, createdOn, createdBy, ...data } = board
+    const id = await client.createDoc(tracker.class.Board, core.space.Workspace, {
+      ...data,
+      title: `${titlePrefix}order`
+    })
+    const boards = new BoardsPage(page)
+    await (await page.goto(boards.boardUrl(id, true, 'general')))?.finished()
+    await page.locator('[data-id="boardCardOrder"]').click()
+    await page.locator('.popup .menu-item', { hasText: 'Priority' }).click()
+    await expect
+      .poll(async () => (await client.findOne(tracker.class.Board, { _id: id }))?.orderBy?.[0])
+      .toBe('priority')
+  })
+
+  test('the description is saved on the board when the field loses focus', async ({ page }) => {
+    // Own board: the shared one keeps no description for the other tests
+    const board = await client.findOne(tracker.class.Board, { _id: boardId })
+    if (board === undefined) throw new Error('no board')
+    const { _id, _class, space, modifiedOn, modifiedBy, createdOn, createdBy, ...data } = board
+    const id = await client.createDoc(tracker.class.Board, core.space.Workspace, {
+      ...data,
+      title: `${titlePrefix}description`
+    })
+    const boards = new BoardsPage(page)
+    await (await page.goto(boards.boardUrl(id, true, 'general')))?.finished()
+    await page.locator('#board-description').fill('About this board')
+    await page.locator('#board-title').focus()
+    await expect
+      .poll(async () => (await client.findOne(tracker.class.Board, { _id: id }))?.description)
+      .toBe('About this board')
   })
 
   test('the board switcher in the header is a dropdown with a chevron', async ({ page }) => {
@@ -159,9 +242,9 @@ test.describe('board settings', () => {
   test('controls without a model field are absent while the flags are off', async ({ page }) => {
     const boards = new BoardsPage(page)
     const absent: Record<string, string[]> = {
-      general: ['boardHideDone', 'boardCardOrder'],
+      general: ['boardHideDone'],
       columns: ['boardWipMin', 'boardDaysInColumn'],
-      swimlanes: ['boardSwimlanesAssignee', 'boardSwimlanesPriority', 'boardSwimlanesRelation', 'boardLaneExample'],
+      swimlanes: ['boardLaneExample'],
       quickFilters: ['boardQuickFilterOnBoard'],
       colorRules: ['boardColorBy'],
       card: ['boardCardField-daysInColumn']

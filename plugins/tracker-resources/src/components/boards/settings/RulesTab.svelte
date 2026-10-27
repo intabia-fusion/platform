@@ -13,10 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { generateId, getCurrentAccount, type Data, type Ref, type WithLookup } from '@hcengineering/core'
-  import { getEmbeddedLabel, translate } from '@hcengineering/platform'
-  import { createQuery, getClient, isDisabled, MessageBox } from '@hcengineering/presentation'
+  import { generateId, type Data, type Ref, type WithLookup } from '@hcengineering/core'
+  import { translate, type IntlString } from '@hcengineering/platform'
+  import { getClient, isDisabled, MessageBox } from '@hcengineering/presentation'
+  import task from '@hcengineering/task'
   import {
+    boardSwimLaneFields,
     isCardFieldVisible,
     pickRuleSamples,
     pickSwimlane,
@@ -24,20 +26,13 @@
     type BoardColorRule,
     type BoardQuickFilter,
     type BoardSwimlane,
+    type BoardSwimLaneField,
     type CardField,
     type Issue
   } from '@hcengineering/tracker'
   import { onDestroy } from 'svelte'
-  import ui, {
-    eventToHTMLElement,
-    getPlatformColorDef,
-    Icon,
-    Label,
-    showPopup,
-    themeStore
-  } from '@hcengineering/ui'
-  import { Button, Dropdown, IconButton, MenuButton, Radio, SettingRow, Toggle } from '@hcengineering/ui/kit'
-  import view, { type FilteredView } from '@hcengineering/view'
+  import ui, { eventToHTMLElement, getPlatformColorDef, Icon, Label, showPopup, themeStore } from '@hcengineering/ui'
+  import { Button, Dropdown, IconButton, Radio, SettingRow, Toggle } from '@hcengineering/ui/kit'
   import { ColorsPopup, FilterConditions } from '@hcengineering/view-resources'
   import { boardQuery, ConditionMatches } from '../../../boards'
   import tracker from '../../../plugin'
@@ -120,48 +115,69 @@
     over = undefined
   }
 
-  // Lanes by filters or none; grouping by an attribute is the user's view option
-  let lanes: 'none' | 'filters' = 'none'
-  $: lanes = rules.length > 0 ? 'filters' : 'none'
+  type LaneMode = 'none' | 'field' | 'filters'
+  // The picked mode holds until the board shows it: a render with the board before the change would
+  // uncheck the clicked radio, and the browser has already unchecked the one before it
+  let pending: LaneMode | undefined
+  let stored: LaneMode
+  $: stored = board.swimLaneBy != null ? 'field' : board.swimlanes.length > 0 ? 'filters' : 'none'
+  $: if (pending === stored) pending = undefined
+  $: lanes = pending ?? stored
 
-  function setLanes (on: boolean): void {
-    if (on && rules.length === 0) {
-      void add()
-    } else if (!on && rules.length > 0) {
-      showPopup(
-        MessageBox,
-        {
-          label: tracker.string.SwimlanesNone,
-          message: tracker.string.SwimlanesRemoveConfirm,
-          action: async () => {
-            save([])
-          }
-        },
-        undefined,
-        (removed) => {
-          // A cancelled removal keeps the lanes: the radio goes back to them
-          if (removed !== true) lanes = 'filters'
-        }
-      )
+  const laneFieldLabels: Record<BoardSwimLaneField, IntlString> = {
+    assignee: tracker.string.Assignee,
+    priority: tracker.string.Priority,
+    component: tracker.string.Component,
+    milestone: tracker.string.Milestone,
+    attachedTo: task.string.TaskParent,
+    space: tracker.string.Project
+  }
+  const laneFieldItems = boardSwimLaneFields.map((id) => ({ id, label: laneFieldLabels[id] }))
+
+  // Lanes by filters are typed by hand: dropping them asks first
+  function confirmDropLanes (apply: () => void): void {
+    if (board.swimlanes.length === 0) {
+      apply()
+      return
     }
+    showPopup(
+      MessageBox,
+      {
+        label: tracker.string.SwimlanesNone,
+        message: tracker.string.SwimlanesRemoveConfirm,
+        action: async () => {
+          apply()
+        }
+      },
+      undefined,
+      (removed) => {
+        // A cancelled removal keeps the lanes: the radio goes back to them
+        if (removed !== true) pending = undefined
+      }
+    )
   }
 
-  // Saved filters of issues the user can take as quick filters
-  const account = getCurrentAccount().uuid
-  let saved: FilteredView[] = []
-  const savedQuery = createQuery()
-  $: if (kind === 'quickFilters') {
-    savedQuery.query(view.class.FilteredView, { filterClass: tracker.class.Issue }, (res) => {
-      saved = res.filter((v) => v.filters !== '' && (v.users.includes(account) || v.sharable === true))
-    })
-  } else {
-    savedQuery.unsubscribe()
-  }
-  $: savedItems = saved.map((v) => ({ id: v._id, label: getEmbeddedLabel(v.name) }))
-
-  function addSaved (id: Ref<FilteredView>): void {
-    const source = saved.find((v) => v._id === id)
-    if (source !== undefined) save([...rules, { id: generateId(), title: source.name, condition: source.filters }])
+  async function setLanes (mode: LaneMode): Promise<void> {
+    pending = mode
+    if (mode === 'none') {
+      confirmDropLanes(() => {
+        void onChange({ swimlanes: [], swimLaneBy: null })
+      })
+    } else if (mode === 'field') {
+      confirmDropLanes(() => {
+        void onChange({ swimlanes: [], swimLaneBy: board.swimLaneBy ?? boardSwimLaneFields[0] })
+      })
+    } else if (board.swimlanes.length === 0) {
+      const title = await translate(tracker.string.NewSwimlane, {})
+      const restTitle = await translate(tracker.string.AllOthers, {})
+      void onChange({
+        swimLaneBy: null,
+        swimlanes: [
+          { id: generateId(), title, condition: '' },
+          { id: generateId(), title: restTitle, condition: '' }
+        ]
+      })
+    }
   }
 
   // Quick filters shown above the board and the color source: display only until the board has fields for them
@@ -266,51 +282,53 @@
       <div class="radios" role="radiogroup">
         <Radio
           value="none"
-          bind:group={lanes}
+          group={lanes}
           name="board-swimlanes"
           label={tracker.string.SwimlanesNone}
           data-id="boardSwimlanesNone"
           on:change={() => {
-            setLanes(false)
+            void setLanes('none')
           }}
         />
-        <!-- tracker-board-next: the board stores lanes by conditions only, no grouping by an attribute -->
-        {#if boardNext}
+        <div class="radio-field">
           <Radio
-            value="assignee"
+            value="field"
             group={lanes}
             name="board-swimlanes"
-            label={tracker.string.Assignee}
-            data-id="boardSwimlanesAssignee"
-          />
-          <Radio
-            value="priority"
-            group={lanes}
-            name="board-swimlanes"
-            label={tracker.string.Priority}
-            data-id="boardSwimlanesPriority"
-          />
-          <Radio
-            value="relation"
-            group={lanes}
-            name="board-swimlanes"
-            label={tracker.string.SwimlanesByRelation}
-            data-id="boardSwimlanesRelation"
-          />
-        {/if}
-        <div class="radio">
-          <Radio
-            value="filters"
-            bind:group={lanes}
-            name="board-swimlanes"
-            label={tracker.string.SwimlanesByFilters}
-            data-id="boardSwimlanesByFilters"
+            label={tracker.string.SwimlanesByField}
+            data-id="boardSwimlanesByField"
             on:change={() => {
-              setLanes(true)
+              void setLanes('field')
             }}
           />
-          <span class="radio-hint"><Label label={tracker.string.SwimlanesByFiltersHint} /></span>
+          <!-- Always in its place, enabled only for lanes by a field -->
+          <Dropdown
+            data-id="boardSwimlanesField"
+            kind="secondary"
+            items={laneFieldItems}
+            selected={board.swimLaneBy ?? boardSwimLaneFields[0]}
+            disabled={board.swimLaneBy == null}
+            on:selected={(e) => {
+              if (e.detail !== board.swimLaneBy) void onChange({ swimLaneBy: e.detail })
+            }}
+          />
         </div>
+        <!-- tracker-board-next: lanes by filters; a board that has them still shows the radio to leave them -->
+        {#if boardNext || board.swimlanes.length > 0}
+          <div class="radio">
+            <Radio
+              value="filters"
+              group={lanes}
+              name="board-swimlanes"
+              label={tracker.string.SwimlanesByFilters}
+              data-id="boardSwimlanesByFilters"
+              on:change={() => {
+                void setLanes('filters')
+              }}
+            />
+            <span class="radio-hint"><Label label={tracker.string.SwimlanesByFiltersHint} /></span>
+          </div>
+        {/if}
       </div>
     {/if}
 
@@ -441,27 +459,23 @@
       </div>
     {/if}
 
-    <div class="actions">
-      <Button kind="secondary" size="small" icon={ui.icon.Plus} label={addLabel} data-id="boardAddRule" on:click={add} />
-      {#if kind === 'quickFilters'}
-        <MenuButton
-          kind="ghost"
-          size="small"
-          icon={view.icon.Star}
-          label={tracker.string.FromSavedFilters}
-          items={savedItems}
-          noSelection
-          disabled={savedItems.length === 0}
-          data-id="boardAddSavedFilter"
-          on:selected={(e) => {
-            addSaved(e.detail)
-          }}
-        />
-      {/if}
+    <!-- tracker-board-next: adding a lane makes lanes by filters; without the flag only a board that has them adds more -->
+    <div
+      class="actions"
+      class:hidden={kind === 'swimlanes' && (lanes === 'field' || (!boardNext && lanes !== 'filters'))}
+    >
+      <Button
+        kind="secondary"
+        size="small"
+        icon={ui.icon.Plus}
+        label={addLabel}
+        data-id="boardAddRule"
+        on:click={add}
+      />
     </div>
 
     {#if kind === 'swimlanes' && boardNext && laneSample !== undefined && board.swimlanes.length > 0}
-      <!-- tracker-board-next: same logic as the board, shown with the lanes of the board; the list of modes above is display only -->
+      <!-- tracker-board-next: same logic as the board, shown with the lanes of the board -->
       <div class="lane-example" data-id="boardLaneExample">
         <span class="lane-example-title">
           <Label
@@ -525,10 +539,18 @@
     flex-direction: column;
     gap: var(--spacing-0_25);
   }
+  .radio-field {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-1_5);
+  }
   .radio-hint {
     padding-left: calc(1rem + var(--spacing-1));
     font-size: 0.75rem;
     color: var(--global-secondary-TextColor);
+  }
+  .actions.hidden {
+    display: none;
   }
   .table {
     align-self: stretch;

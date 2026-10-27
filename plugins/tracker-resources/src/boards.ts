@@ -13,19 +13,27 @@
 // limitations under the License.
 //
 
+import { getCurrentEmployeeSpace } from '@hcengineering/contact'
 import core, {
-  generateId,
   getCurrentAccount,
   mergeQueries,
+  type AccountUuid,
+  type Data,
   type Doc,
   type DocumentQuery,
   type Ref,
-  type Status,
+  type Space,
   type TxOperations
 } from '@hcengineering/core'
 import { createQuery, type LiveQuery } from '@hcengineering/presentation'
-import task from '@hcengineering/task'
-import { defaultCardDensity, type Board, type BoardColumn, type Issue, type Project } from '@hcengineering/tracker'
+import {
+  defaultCardDensity,
+  type Board,
+  type BoardColumn,
+  type BoardVisibility,
+  type Issue,
+  type Project
+} from '@hcengineering/tracker'
 import { getCurrentResolvedLocation, navigate } from '@hcengineering/ui'
 import tracker from './plugin'
 import { filtersToQuery, parseFilters } from '@hcengineering/view-resources'
@@ -44,7 +52,7 @@ export async function conditionToQuery (
 // Issues of the board: its projects, its filter, and the quick filters that are on.
 export async function boardQuery (
   client: TxOperations,
-  board: Board,
+  board: Pick<Board, 'projects' | 'filter' | 'quickFilters'>,
   activeQuickFilters: ReadonlySet<string>,
   onUpdate: () => void
 ): Promise<DocumentQuery<Issue>> {
@@ -122,22 +130,9 @@ export class ConditionMatches {
   }
 }
 
-// Special view of the project issues; a board opened there sits after it in the path
-const projectIssues = 'issues'
-
-// `tab` opens the settings on that tab. A board open in the project issues stays there
-// with its settings, unless `page` asks for the board page.
-export function boardLocation (
-  id: Ref<Board> | undefined,
-  settings: boolean = false,
-  tab?: string,
-  page: boolean = false
-): void {
+// `tab` opens the settings on that tab
+export function boardLocation (id: Ref<Board> | undefined, settings: boolean = false, tab?: string): void {
   const loc = getCurrentResolvedLocation()
-  if (!page && loc.path[4] === projectIssues && loc.path[5] !== undefined) {
-    projectBoardLocation(id, settings, tab)
-    return
-  }
   loc.path[3] = 'boards'
   loc.path.length = 4
   if (id !== undefined) {
@@ -149,41 +144,38 @@ export function boardLocation (
   navigate(loc)
 }
 
-// The board in place of the view of the project issues: tracker/<project>/issues/<board>.
-// Without `id` the project issues get their own view back.
-export function projectBoardLocation (id: Ref<Board> | undefined, settings: boolean = false, tab?: string): void {
-  const loc = getCurrentResolvedLocation()
-  loc.path.length = 5
-  if (id !== undefined) {
-    loc.path[5] = id
-    if (settings) loc.path[6] = 'settings'
-  }
-  loc.query = settings && tab !== undefined ? { tab } : undefined
-  loc.fragment = undefined
-  navigate(loc)
+export interface NewBoardData {
+  title: string
+  description?: string
+  projects: Array<Ref<Project>>
+  visibility: BoardVisibility
+  editors: AccountUuid[]
+  filter: string
+  columns: BoardColumn[]
 }
 
-// New board with one column per status of the project, in the order of the project.
-export async function createBoard (
-  client: TxOperations,
-  title: string,
-  project: Project | undefined,
-  statuses: Status[]
-): Promise<Ref<Board>> {
-  const columns: BoardColumn[] = statuses.map((status) => ({
-    id: generateId(),
-    title: status.name,
-    category: status.category ?? task.statusCategory.UnStarted,
-    statuses: [status._id]
-  }))
-  return await client.createDoc(tracker.class.Board, core.space.Workspace, {
-    title,
-    projects: project !== undefined ? [project._id] : [],
-    visibility: 'all',
+// A personal board lives in its author's private PersonSpace, so the server hides it from the others.
+export function boardSpace (visibility: BoardVisibility): Ref<Space> {
+  if (visibility === 'all') return core.space.Workspace
+  const space: Ref<Space> | undefined = getCurrentEmployeeSpace()
+  if (space === undefined) throw new Error('The personal space is not loaded')
+  return space
+}
+
+// Switching visibility moves the board to the matching space; only the author can do it.
+export function spaceAfterPatch (board: Board, patch: Partial<Data<Board>>): Ref<Space> {
+  return patch.visibility === undefined ? board.space : boardSpace(patch.visibility)
+}
+
+export async function updateBoard (client: TxOperations, board: Board, patch: Partial<Data<Board>>): Promise<void> {
+  const space = spaceAfterPatch(board, patch)
+  await client.update(board, space === board.space ? patch : { ...patch, space })
+}
+
+export async function createBoard (client: TxOperations, data: NewBoardData): Promise<Ref<Board>> {
+  return await client.createDoc(tracker.class.Board, boardSpace(data.visibility), {
+    ...data,
     author: getCurrentAccount().uuid,
-    editors: [],
-    filter: '',
-    columns,
     swimlanes: [],
     quickFilters: [],
     colorRules: [],

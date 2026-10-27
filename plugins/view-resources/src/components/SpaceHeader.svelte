@@ -24,8 +24,10 @@
   export let resultQuery: DocumentQuery<Doc> = {}
   // The viewlet shown until the user picks another one
   export let defaultViewletDescriptor: Ref<ViewletDescriptor> | undefined = undefined
-  // A click on a viewlet goes here instead of switching (see ViewletSelector)
-  export let onViewletPick: ((viewlet: WithLookup<Viewlet>) => void) | undefined = undefined
+  // The view shows only the default viewlet, without the switcher
+  export let hideViewlets: boolean = false
+  // Search, filter and `afterSearch` open the row in place of the title (single-row header only)
+  export let searchFirst: boolean = false
 
   let scroller: HTMLElement
 
@@ -39,6 +41,7 @@
   overflowExtra
   hideActions={!$$slots.actions}
   hideExtra={!$$slots.extra && modeSelectorProps === undefined}
+  hideSearch={searchFirst}
 >
   <svelte:fragment slot="beforeTitle">
     <ViewletSelector
@@ -47,12 +50,18 @@
       ignoreFragment
       viewletQuery={viewletQuery ?? { attachTo: _class }}
       {defaultViewletDescriptor}
-      onPick={onViewletPick}
+      hidden={hideViewlets}
     />
     <slot name="header-tools" />
   </svelte:fragment>
 
-  {#if showLabelSelector}
+  {#if searchFirst}
+    <div class="search-first">
+      <SearchInput bind:value={search} collapsed />
+      <FilterButton {_class} {space} />
+      <slot name="afterSearch" />
+    </div>
+  {:else if showLabelSelector}
     <slot name="label_selector" />
   {:else if label}
     <Breadcrumb {icon} title={label} size="large" isCurrent />
@@ -100,3 +109,12 @@
     {/if}
   </svelte:fragment>
 </Header>
+
+<style lang="scss">
+  .search-first {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-0_5);
+    min-width: 0;
+  }
+</style>

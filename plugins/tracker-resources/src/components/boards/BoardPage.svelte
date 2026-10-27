@@ -22,7 +22,6 @@
   import { boardLocation } from '../../boards'
   import tracker from '../../plugin'
   import BoardSettings from './BoardSettings.svelte'
-  import BoardSwitcher from './BoardSwitcher.svelte'
   import BoardView from './BoardView.svelte'
 
   // Props the workbench gives to every special view
@@ -61,11 +60,7 @@
 {#if board !== undefined && settingsOpen}
   <BoardSettings {board} {boards} {canEdit} />
 {:else if board !== undefined}
-  <BoardView {board} {canEdit}>
-    <svelte:fragment slot="label_selector">
-      <BoardSwitcher {board} {boards} {pinned} {canEdit} />
-    </svelte:fragment>
-  </BoardView>
+  <BoardView {board} {canEdit} />
 {:else if loaded}
   <div class="flex-col-center flex-grow">
     <BlankView

@@ -4,24 +4,26 @@
 // Status palette name per category (models/task/src/index.ts); a status may override it with its own color
 kit.statusPalette = (cat, color) => color || kit.CATEGORY[cat]
 
-// Card of a board in four densities (detailed, normal, compact, dense), 234px wide in a board column.
+// Card of a board in four densities (detailed, normal, compact, dense), 278px wide in a column of the kanban.
 // d: id cat color(palette) title assignee[initials, palette] priority sub due overdue component milestone
 //    labels[[name, palette]] est(text, "13h") accent(color) parent density estLabel att com(counters of a detailed card)
 //    productIcons(the icons of the product card: layers, signpost, orange due date)
 //    hover dragged(the drop place) lifted(in hand) focus('inset' as today: a rule border hides it | 'ring' outside the card)
-// The 'ring' needs an outline, which Penpot and pen do not have: only the Storybook card draws it.
-kit.IssueCard = (d, w = 234) => {
+// The 'ring' is the selection of a hovered file card of the drive: a brand tinted border and a deeper shadow.
+kit.IssueCard = (d, w = 278) => {
   const density = d.density || 'detailed'
   const [py, px] = { detailed: [12, 14], normal: [10, 12], compact: [8, 10], dense: [6, 10] }[density]
   const gap = { detailed: 8, normal: 8, compact: 6, dense: 4 }[density]
   const inner = w - 2 * px - 2
   const dark = T('theme-dark-color')
   const inset = d.focus === 'inset' && !d.accent
+  const ring = d.focus === 'ring' && !d.accent
   // A focused card keeps its background: the ring already marks it
   const fill = d.dragged ? T('accent-bg-color') : d.hover && !d.focus ? T('highlight-hover') : T('theme-popup-color')
-  const card = kit.box('IssueCard ' + d.id, { w, h: 40, dir: 'column', gap, pad: [py, px, py, px], vs: 'auto', fill, stroke: d.accent || (inset ? T('primary-edit-border-color') : T('theme-divider-color')), strokeW: d.accent || inset ? 2 : 1, radius: 8 })
+  const card = kit.box('IssueCard ' + d.id, { w, h: 40, dir: 'column', gap, pad: [py, px, py, px], vs: 'auto', fill, stroke: d.accent || (inset ? T('primary-edit-border-color') : ring ? TM(T('button-brand-BackgroundColor'), 30, T('global-ui-BorderColor')) : T('theme-divider-color')), strokeW: d.accent || inset ? 2 : 1, radius: 8 })
   const lift = d.lifted ? [{ style: 'drop-shadow', offsetX: 0, offsetY: 8, blur: 24, spread: 0, color: { color: '#000000', opacity: 0.15 } }] : []
-  card.shadows = [{ style: 'drop-shadow', offsetX: 0, offsetY: 1, blur: 3, spread: 0, color: { color: '#000000', opacity: 0.06 } }, ...lift]
+  const base = ring ? { offsetY: 2, blur: 6, opacity: 0.1 } : { offsetY: 1, blur: 3, opacity: 0.06 }
+  card.shadows = [{ style: 'drop-shadow', offsetX: 0, offsetY: base.offsetY, blur: base.blur, spread: 0, color: { color: '#000000', opacity: base.opacity } }, ...lift]
   const avatar = () => d.assignee ? kit.Avatar(d.assignee[0], d.assignee[1], 20, true) : kit.AvatarEmpty(20)
   const txt = (s, size, color, o = {}) => kit.text(s, { size, color, ...o })
   const pill = (name, content) => kit.add(kit.box(name, { w: 10, h: 20, dir: 'row', gap: 6, pad: [3, 8, 3, 8], align: 'center', hs: 'auto', vs: 'auto', radius: 12, fill: T('theme-popup-color'), stroke: T('theme-button-border') }), content)

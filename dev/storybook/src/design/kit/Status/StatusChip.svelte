@@ -23,11 +23,13 @@
   export let draggable: boolean = false
   // Fills the row and sits on a popup surface instead of the tinted chip
   export let block: boolean = false
+  // Rounded chip on a popup surface, as in the statuses tooltip of a board column
+  export let pill: boolean = false
   // px; the content width when absent
   export let width: number | undefined = undefined
 </script>
 
-<div class="kit-status-chip" class:block style:width={width !== undefined ? `${width}px` : undefined}>
+<div class="kit-status-chip" class:block class:pill style:width={width !== undefined ? `${width}px` : undefined}>
   {#if draggable}<Icon name="drag" size={14} color="var(--theme-darker-color)" />{/if}
   <StatusIcon {status} size="x-small" />
   <span class="name">{status.name}</span>
@@ -54,11 +56,19 @@
       background-color: var(--theme-popup-color);
       border: 1px solid var(--theme-button-border);
     }
+    &.pill {
+      height: 1.5rem;
+      padding: 0 0.5rem 0 0.375rem;
+      font-size: 0.75rem;
+      background-color: var(--theme-popup-color);
+      border: 1px solid var(--theme-button-border);
+      border-radius: 0.75rem;
+    }
     .count {
       color: var(--theme-darker-color);
     }
   }
-  .name + .count {
+  .kit-status-chip:not(.pill) .name + .count {
     margin-left: 0.25rem;
   }
 </style>

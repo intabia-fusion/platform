@@ -19,6 +19,7 @@ import core, {
   type AccountUuid,
   type Doc,
   type Ref,
+  type SortingOrder,
   type Status,
   type StatusCategory
 } from '@hcengineering/core'
@@ -91,6 +92,21 @@ export interface BoardColumn {
 }
 
 /**
+ * Issue fields a board may group its lanes by, one lane per value.
+ * @public
+ */
+export type BoardSwimLaneField = 'assignee' | 'priority' | 'component' | 'milestone' | 'attachedTo' | 'space'
+
+export const boardSwimLaneFields: readonly BoardSwimLaneField[] = [
+  'assignee',
+  'priority',
+  'component',
+  'milestone',
+  'attachedTo',
+  'space'
+]
+
+/**
  * A card goes to the first lane its condition fits.
  * The last lane takes the rest and ignores its condition.
  * @public
@@ -127,6 +143,7 @@ export interface BoardColorRule {
  */
 export interface Board extends Doc {
   title: string
+  description?: string
   projects: Ref<Project>[]
   visibility: BoardVisibility
   author: AccountUuid
@@ -135,12 +152,16 @@ export interface Board extends Doc {
   filter: BoardCondition
   columns: BoardColumn[]
   swimlanes: BoardSwimlane[]
+  // Lanes by a field win over `swimlanes`; not set or null: lanes by conditions, or none
+  swimLaneBy?: BoardSwimLaneField | null
   quickFilters: BoardQuickFilter[]
   colorRules: BoardColorRule[]
   // Layout of cards for those who did not pick their own
   density: CardDensity
   // Fields the cards show; not set on boards made before the setting: every field
   cardFields?: CardField[]
+  // Card order: a field of the kanban sorting and its direction; not set: the order of the view options
+  orderBy?: [string, SortingOrder]
 }
 
 /**

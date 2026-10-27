@@ -19,18 +19,11 @@
   import task, { getStates } from '@hcengineering/task'
   import { typeStore } from '@hcengineering/task-resources'
   import type { Board, Project } from '@hcengineering/tracker'
-  import ui, {
-    BlankView,
-    Header,
-    Label,
-    NavItem,
-    Scroller,
-    getCurrentResolvedLocation
-  } from '@hcengineering/ui'
+  import ui, { BlankView, Header, Label, NavItem, Scroller, getCurrentResolvedLocation } from '@hcengineering/ui'
   import { Button, Dropdown, IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import { statusStore } from '@hcengineering/view-resources'
-  import { boardLocation } from '../../boards'
+  import { boardLocation, spaceAfterPatch, updateBoard } from '../../boards'
   import tracker from '../../plugin'
   import CardTab from './settings/CardTab.svelte'
   import ColumnsTab from './settings/ColumnsTab.svelte'
@@ -58,8 +51,8 @@
   async function onChange (patch: Partial<Data<Board>>): Promise<void> {
     const current = board
     // The next edit builds on this one before the query brings it back
-    board = { ...board, ...patch }
-    await client.update(current, patch)
+    board = { ...board, ...patch, space: spaceAfterPatch(board, patch) }
+    await updateBoard(client, current, patch)
   }
 
   // Archived projects stay on the board; the store of active projects drops them

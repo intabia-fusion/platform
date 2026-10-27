@@ -88,8 +88,12 @@
     | ((swimLane: SwimLane) => { background?: string, color?: string } | undefined)
     | undefined = undefined
   export let compact: boolean = false
+  // Multiplies the cards a column or a lane cell shows before "show more": smaller cards fit more
+  export let limitScale: number = 1
   // Grey column background and elevated cards
   export let modern: boolean = false
+  // A column over its WIP limit by its card count: its cards area turns red, in every lane
+  export let overLimit: ((state: CategoryType, count: number) => boolean) | undefined = undefined
   // The group a category belongs to (e.g. the category of a status), for merging columns by it.
   export let getCategoryGroup: ((state: CategoryType) => string | undefined) | undefined = undefined
 
@@ -123,6 +127,8 @@
 
   // Per-cell card limit, keyed by cellKey; a cell absent here shows its initial limit.
   let cellLimits = new Map<string, number>()
+  $: columnLimit = COLUMN_LIMIT * limitScale
+  $: swimCellLimit = SWIM_CELL_LIMIT * limitScale
   let laneLimit = SWIM_LANE_PAGE
   $: shownSwimLanes = swimLanes.slice(0, laneLimit)
   // A lane queries its cards and header only once it nears the viewport; it keeps them after.
@@ -440,6 +446,8 @@
     seenLanes,
     collapsedColumns,
     cellLimits,
+    columnLimit,
+    swimCellLimit,
     swimLaneMode,
     lanesPending: swimLaneKey !== undefined && swimLanes.length === 0,
     dragging: isDragging,
@@ -1274,6 +1282,8 @@
                           (dragCardAvailableCategories === undefined || dragCardAvailableCategories.includes(state))}
                         class:drop-disabled={blocked}
                         class:filled={modern}
+                        class:over-limit={overLimit?.(state, columnValues(groupByDocs, state, membersOf).length) ===
+                          true}
                         data-id="kanban-swimlane-cell"
                         data-swimlane-id={swimLane._id}
                         data-state={stateKey(state)}
@@ -1298,9 +1308,9 @@
                           {checkedSet}
                           {state}
                           loaded={loadedDocs}
-                          limit={cellLimit(cellLimits, cellKey(swimLane._id, state), SWIM_CELL_LIMIT)}
+                          limit={cellLimit(cellLimits, cellKey(swimLane._id, state), swimCellLimit)}
                           onShowMore={() => {
-                            showMore(cellKey(swimLane._id, state), SWIM_CELL_LIMIT, SWIM_CELL_LIMIT_STEP)
+                            showMore(cellKey(swimLane._id, state), swimCellLimit, SWIM_CELL_LIMIT_STEP)
                           }}
                           cardDragOver={(evt, obj) => {
                             cardDragOver(evt, obj, state)
@@ -1464,7 +1474,11 @@
                 on:dragover
                 on:drop
               >
-                <div class="column-cards" class:filled={modern && stateObjects.length > 0}>
+                <div
+                  class="column-cards"
+                  class:filled={modern && stateObjects.length > 0}
+                  class:over-limit={overLimit?.(state, stateObjects.length) === true}
+                >
                   <slot name="beforeCard" {state} />
                   <KanbanRow
                     bind:this={stateRows[si]}
@@ -1477,9 +1491,9 @@
                     {checkedSet}
                     {state}
                     loaded={loadedDocs}
-                    limit={cellLimit(cellLimits, cellKey('', state), COLUMN_LIMIT)}
+                    limit={cellLimit(cellLimits, cellKey('', state), columnLimit)}
                     onShowMore={() => {
-                      showMore(cellKey('', state), COLUMN_LIMIT, COLUMN_LIMIT_STEP)
+                      showMore(cellKey('', state), columnLimit, COLUMN_LIMIT_STEP)
                     }}
                     cardDragOver={(evt, obj) => {
                       cardDragOver(evt, obj, state)
@@ -1768,6 +1782,11 @@
     padding: 0.5rem;
     background-color: var(--theme-kanban-card-bg-color);
     border-radius: 0.5rem;
+  }
+  .column-cards.over-limit,
+  .swimlane-cell.over-limit {
+    background-color: color-mix(in srgb, var(--theme-state-negative-color) 8%, var(--theme-kanban-card-bg-color));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--theme-state-negative-color) 45%, transparent);
   }
   .swimlane-cell {
     display: flex;

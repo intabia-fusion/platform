@@ -271,7 +271,10 @@ export const BreadcrumbsStates: Story = sections([
     component: Breadcrumbs,
     rows: [
       { title: 'labels', props: { items: ['Projects', 'Mobile app', 'APP-6'] } },
-      { title: 'icons', props: { items: [['Projects', 'kit/CheckSquare'], ['Mobile app', 'kit/CheckSquare'], 'APP-6'] } }
+      {
+        title: 'icons',
+        props: { items: [['Projects', 'kit/CheckSquare'], ['Mobile app', 'kit/CheckSquare'], 'APP-6'] }
+      }
     ],
     columns: [{ title: '', props: {} }]
   }

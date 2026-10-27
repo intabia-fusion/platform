@@ -23,21 +23,29 @@
 
 <div class="column-statuses" data-id="boardColumnStatuses">
   <span class="title"><Label label={tracker.string.ColumnStatuses} /></span>
-  {#each statuses as { status, count } (status._id)}
-    <div class="row">
-      <IssueStatusIcon value={status} size="x-small" />
-      <span class="name">{status.name}</span>
-      <span class="count">{count}</span>
-    </div>
-  {/each}
+  <div class="chips">
+    {#each statuses as { status, count } (status._id)}
+      <div class="chip">
+        <IssueStatusIcon value={status} size="x-small" />
+        <span class="name">{status.name}</span>
+        <span class="count">{count}</span>
+      </div>
+    {/each}
+  </div>
 </div>
 
 <style lang="scss">
   .column-statuses {
     display: flex;
     flex-direction: column;
-    gap: 0.625rem;
-    padding: 0.5rem;
+    gap: 0.5rem;
+    box-sizing: border-box;
+    max-width: 22rem;
+    padding: var(--spacing-1_5);
+    background-color: var(--theme-popup-color);
+    border: 1px solid var(--theme-popup-divider);
+    border-radius: var(--medium-BorderRadius);
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.15);
   }
   .title {
     font-size: 0.75rem;
@@ -45,19 +53,25 @@
     line-height: 1.25;
     color: var(--theme-darker-color);
   }
-  .row {
+  // As many chips as fit a line, the rest wrap to the next lines
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+  .chip {
     display: flex;
     align-items: center;
     gap: 0.25rem;
     box-sizing: border-box;
-    width: 14.25rem;
-    height: 2rem;
-    padding: 0 0.375rem 0 0.25rem;
-    font-size: 0.8125rem;
+    max-width: 100%;
+    height: 1.5rem;
+    padding: 0 0.5rem 0 0.375rem;
+    font-size: 0.75rem;
     color: var(--theme-content-color);
     background-color: var(--theme-popup-color);
     border: 1px solid var(--theme-button-border);
-    border-radius: 0.25rem;
+    border-radius: 0.75rem;
   }
   .name {
     min-width: 0;
@@ -66,7 +80,6 @@
     white-space: nowrap;
   }
   .count {
-    margin-left: 0.25rem;
     color: var(--theme-darker-color);
   }
 </style>

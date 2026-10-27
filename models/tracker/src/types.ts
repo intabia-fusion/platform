@@ -30,7 +30,8 @@ import {
   type RolesAssignment,
   type Role,
   type CollectionSize,
-  type AccountUuid
+  type AccountUuid,
+  type SortingOrder
 } from '@hcengineering/core'
 import {
   ArrOf,
@@ -65,6 +66,7 @@ import {
   type BoardPreference,
   type BoardQuickFilter,
   type BoardSwimlane,
+  type BoardSwimLaneField,
   type BoardVisibility,
   type CardDensity,
   type CardField,
@@ -482,6 +484,8 @@ export class TBoard extends TDoc implements Board {
   @Prop(TypeString(), tracker.string.BoardTitle)
   title!: string
 
+  description?: string
+
   @Prop(ArrOf(TypeRef(tracker.class.Project)), tracker.string.Projects)
   projects!: Ref<Project>[]
 
@@ -497,6 +501,8 @@ export class TBoard extends TDoc implements Board {
 
   swimlanes!: BoardSwimlane[]
 
+  swimLaneBy?: BoardSwimLaneField | null
+
   quickFilters!: BoardQuickFilter[]
 
   colorRules!: BoardColorRule[]
@@ -504,6 +510,8 @@ export class TBoard extends TDoc implements Board {
   density!: CardDensity
 
   cardFields?: CardField[]
+
+  orderBy?: [string, SortingOrder]
 }
 
 @Model(tracker.class.BoardPreference, preference.class.Preference)

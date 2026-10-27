@@ -15,20 +15,14 @@
 <script lang="ts">
   import { getCurrentAccount, type Doc, type Ref, type Space } from '@hcengineering/core'
   import { createQuery, getClient, MessageBox } from '@hcengineering/presentation'
-  import type { Project } from '@hcengineering/tracker'
   import { canEditBoard, isBoardAvailable, sortBoards, type Board } from '@hcengineering/tracker'
   import task from '@hcengineering/task'
-  import ui, {
-    Icon,
-    resolvedLocationStore,
-    showPopup,
-    type Action
-  } from '@hcengineering/ui'
+  import ui, { Icon, resolvedLocationStore, showPopup, type Action } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { TreeItem, TreeNode } from '@hcengineering/view-resources'
   import { boardLocation, togglePinned } from '../../boards'
   import tracker from '../../plugin'
-  import { newBoard } from './actions'
+  import CreateBoard from './CreateBoard.svelte'
 
   // Props the workbench gives to every navigator section
   export let currentSpace: Ref<Space> | undefined = undefined
@@ -57,7 +51,7 @@
     label: tracker.string.CreateBoard,
     icon: ui.icon.Plus,
     action: async (_id: Ref<Doc>): Promise<void> => {
-      await newBoard(client, $resolvedLocationStore.path[3] as Ref<Project>)
+      showPopup(CreateBoard, {}, 'top')
     }
   }
 
@@ -77,7 +71,7 @@
           label: tracker.string.BoardSettings,
           icon: ui.icon.Gear,
           action: async () => {
-            boardLocation(board._id, true, undefined, true)
+            boardLocation(board._id, true)
           }
         },
         {
@@ -116,7 +110,7 @@
         selected={selectedId === board._id}
         icon={task.icon.Kanban}
         on:click={() => {
-          boardLocation(board._id, false, undefined, true)
+          boardLocation(board._id)
         }}
         actions={async () => await boardActions(board)}
       >

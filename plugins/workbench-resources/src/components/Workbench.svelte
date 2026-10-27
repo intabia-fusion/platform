@@ -92,7 +92,7 @@
 
   import { subscribeMobile } from '../mobile'
   import workbench from '../plugin'
-  import { buildNavModel, isAllowedToRole, logOut, workspacesStore } from '../utils'
+  import { buildNavModel, fullscreenStore, isAllowedToRole, logOut, workspacesStore } from '../utils'
   import AccountPopup from './AccountPopup.svelte'
   import AppItem from './AppItem.svelte'
   import AppSwitcher from './AppSwitcher.svelte'
@@ -772,7 +772,19 @@
   defineSeparators('workbench', workbenchSeparators)
   defineSeparators('main', mainSeparators)
 
-  $: mainNavigator = currentApplication != null && navigatorModel != null && $deviceInfo.navigator.visible
+  $: mainNavigator =
+    currentApplication != null && navigatorModel != null && $deviceInfo.navigator.visible && !$fullscreenStore
+
+  // Full screen hides the sidebar it found open, but not the one opened in it (e.g. a task from a board)
+  let fullscreenSidebar = false
+  let lastSidebarVariant = $sidebarStore.variant
+  $: {
+    if (!$fullscreenStore) fullscreenSidebar = false
+    else if ($sidebarStore.variant !== lastSidebarVariant) {
+      fullscreenSidebar = $sidebarStore.variant === SidebarVariant.EXPANDED
+    }
+    lastSidebarVariant = $sidebarStore.variant
+  }
   $: elementPanel = $deviceInfo.replacedPanel ?? contentPanel
 
   $: deactivated =
@@ -826,6 +838,7 @@
     <div
       class="antiPanel-application {$deviceInfo.navigator.direction} no-print"
       class:lastDivider={!$deviceInfo.navigator.visible}
+      class:fullscreen-hidden={$fullscreenStore}
     >
       <div
         class="hamburger-container clear-mins"
@@ -922,7 +935,7 @@
         application: currentApplication?._id
       }}
     />
-    <div class="flex-row-center w-full h-full">
+    <div class="flex-row-center w-full h-full" class:fullscreen={$fullscreenStore && !fullscreenSidebar}>
       <div
         class="workbench-container inner"
         class:rounded={$sidebarStore.variant === SidebarVariant.EXPANDED}
@@ -1079,6 +1092,13 @@
 {/if}
 
 <style lang="scss">
+  .fullscreen-hidden {
+    display: none !important;
+  }
+  // Hidden, not unmounted: widgets such as a call keep running
+  .fullscreen > :global(:not(.workbench-container)) {
+    display: none !important;
+  }
   .workbench-container {
     position: relative;
     display: flex;

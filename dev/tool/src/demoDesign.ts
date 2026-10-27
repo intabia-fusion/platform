@@ -16,7 +16,7 @@
 // Imports dev/design/demo/<lang> on top of tests/demo-ws*: statuses, extra issues, boards.
 // Existing statuses, issues and boards are left as they are.
 
-import { formatName } from '@hcengineering/contact'
+import contact, { formatName } from '@hcengineering/contact'
 import { WorkspaceImporter, type FileUploader, type Logger } from '@hcengineering/importer'
 import core, {
   generateId,
@@ -218,7 +218,9 @@ async function createBoards (
 
   for (const f of files) {
     const src = f.header as DemoBoard
-    if ((await client.findOne(tracker.class.Board, { title: src.title })) !== undefined) continue
+    // The server accepts a board only from its author, and shows a personal one to the author only
+    const authorClient = accounts.find((a) => a.token.info.account === accountByName.get(src.author))?.client ?? client
+    if ((await authorClient.findOne(tracker.class.Board, { title: src.title })) !== undefined) continue
     const ctx: BoardContext = {
       project: (id) => projects.find((p) => p.identifier === id)?._id,
       statuses: (name, ids) => {
@@ -243,7 +245,16 @@ async function createBoards (
     }
     const { board, skipped } = convertBoard(src, ctx)
     for (const line of skipped) console.log(`[demo-data] board condition skipped: ${line}`)
-    const id = await client.createDoc(tracker.class.Board, core.space.Workspace, board)
+    // A personal board lives in the PersonSpace of its author
+    const space =
+      board.visibility === 'me'
+        ? (await authorClient.findOne(contact.class.PersonSpace, { members: board.author }))?._id
+        : core.space.Workspace
+    if (space === undefined) {
+      console.log(`[demo-data] board skipped, no personal space: ${src.title}`)
+      continue
+    }
+    const id = await authorClient.createDoc(tracker.class.Board, space, board)
     // Pinned for the first account, the viewer of the mockups
     if (src.pinned === true) {
       await client.createDoc(tracker.class.BoardPreference, core.space.Workspace, { attachedTo: id })

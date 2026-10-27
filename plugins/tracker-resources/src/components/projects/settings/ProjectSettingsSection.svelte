@@ -16,7 +16,8 @@
   import type { IntlString } from '@hcengineering/platform'
   import { Label } from '@hcengineering/ui'
 
-  export let title: IntlString
+  // No title: a section embedded in a dialog
+  export let title: IntlString | undefined = undefined
   export let description: IntlString | undefined = undefined
   export let descriptionParams: Record<string, any> = {}
   // Tables take the whole content width; forms keep the narrow column
@@ -24,12 +25,14 @@
 </script>
 
 <div class="section" class:wide>
-  <div class="head">
-    <span class="title"><Label label={title} /></span>
-    {#if description !== undefined}
-      <span class="description"><Label label={description} params={descriptionParams} /></span>
-    {/if}
-  </div>
+  {#if title !== undefined}
+    <div class="head">
+      <span class="title"><Label label={title} /></span>
+      {#if description !== undefined}
+        <span class="description"><Label label={description} params={descriptionParams} /></span>
+      {/if}
+    </div>
+  {/if}
   <slot />
 </div>
 

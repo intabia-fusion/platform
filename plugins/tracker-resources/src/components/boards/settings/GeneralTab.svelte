@@ -13,22 +13,17 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact, { type Employee } from '@hcengineering/contact'
-  import {
-    EmployeePresenter,
-    UsersPopup,
-    employeeByIdStore,
-    employeeRefByAccountUuidStore
-  } from '@hcengineering/contact-resources'
-  import { notEmpty, type AccountUuid, type Data, type Doc, type Ref } from '@hcengineering/core'
+  import { getCurrentAccount, notEmpty, type AccountUuid, type Data, type Ref } from '@hcengineering/core'
   import { getClient, isDisabled, SpacesMultiPopup } from '@hcengineering/presentation'
   import type { Board, Issue, Project } from '@hcengineering/tracker'
   import ui, { Icon, Label, showPopup } from '@hcengineering/ui'
-  import { Button, Dropdown, Radio, SettingRow, TextInput } from '@hcengineering/ui/kit'
-  import { FilterConditions } from '@hcengineering/view-resources'
+  import { Button, Dropdown, IconButton, Radio, SettingRow, TextArea, TextInput } from '@hcengineering/ui/kit'
+  import view from '@hcengineering/view'
+  import { FilterConditions, getKeyLabel } from '@hcengineering/view-resources'
   import task from '@hcengineering/task'
   import { boardQuery } from '../../../boards'
   import tracker from '../../../plugin'
+  import ProjectMembersTable from '../../projects/settings/ProjectMembersTable.svelte'
   import ProjectSettingsSection from '../../projects/settings/ProjectSettingsSection.svelte'
 
   export let board: Board
@@ -39,8 +34,16 @@
   const boardNext = !isDisabled('tracker-board-next')
   // Display only until the board gets fields for them
   const hideDoneItems = [{ id: 'older', label: tracker.string.BoardHideDoneValue }]
-  const cardOrderItems = [{ id: 'manual', label: tracker.string.BoardCardOrderManual }]
-  const hierarchy = client.getHierarchy()
+  // The orders of the kanban view options; the first one is the default of a board
+  const cardOrders =
+    client
+      .getModel()
+      .findAllSync(view.class.Viewlet, { attachTo: tracker.class.Issue, descriptor: tracker.viewlet.Kanban })
+      .find((v) => v.variant === undefined)?.viewOptions?.orderBy ?? []
+  const cardOrderItems = cardOrders.map(([key]) => ({
+    id: key,
+    label: key === 'rank' ? tracker.string.Manual : getKeyLabel(client, tracker.class.Issue, key, undefined)
+  }))
 
   let title = board.title
   // An object prop is invalidated on every parent update: take the title only when it changed
@@ -53,6 +56,18 @@
   function saveTitle (): void {
     const value = title.trim()
     if (value !== '' && value !== board.title) void onChange({ title: value })
+  }
+
+  let description = board.description ?? ''
+  let savedDescription = board.description ?? ''
+  $: if ((board.description ?? '') !== savedDescription) {
+    savedDescription = board.description ?? ''
+    description = savedDescription
+  }
+
+  function saveDescription (): void {
+    const value = description.trim()
+    if (value !== savedDescription) void onChange({ description: value })
   }
 
   // Board projects in the board order; a project the user cannot see is left out
@@ -89,30 +104,20 @@
   }
   $: void count(board)
 
-  $: authorRef = $employeeRefByAccountUuidStore.get(board.author)
-  $: editorRefs = board.editors.map((a) => $employeeRefByAccountUuidStore.get(a)).filter(notEmpty)
+  // The board moves to the personal space of the one who switches it: the author only
+  $: isAuthor = getCurrentAccount().uuid === board.author
 
-  function chooseEditors (e: MouseEvent): void {
-    showPopup(
-      UsersPopup,
-      {
-        _class: contact.mixin.Employee,
-        multiSelect: true,
-        allowDeselect: true,
-        selectedUsers: editorRefs,
-        ignoreUsers: authorRef !== undefined ? [authorRef] : [],
-        filter: (it: Doc) => hierarchy.as(it, contact.mixin.Employee).active
-      },
-      e.currentTarget as HTMLElement,
-      undefined,
-      (result: Array<Ref<Employee>> | undefined) => {
-        if (result == null) return
-        const editors = result
-          .map((ref) => $employeeByIdStore.get(ref)?.personUuid as AccountUuid | undefined)
-          .filter(notEmpty)
-        void onChange({ editors })
-      }
-    )
+  function addEditor (account: AccountUuid): void {
+    if (account === board.author || board.editors.includes(account)) return
+    void onChange({ editors: [...board.editors, account] })
+  }
+
+  function removeEditor (account: AccountUuid): void {
+    void onChange({ editors: board.editors.filter((a) => a !== account) })
+  }
+
+  function removeProject (id: Ref<Project>): void {
+    void onChange({ projects: board.projects.filter((p) => p !== id) })
   }
 </script>
 
@@ -131,12 +136,39 @@
       </div>
     </SettingRow>
 
+    <SettingRow kind="column" label={tracker.string.Description} let:labelId>
+      <div class="field wide">
+        <TextArea
+          id="board-description"
+          bind:value={description}
+          rows={2}
+          placeholder={tracker.string.IssueDescriptionPlaceholder}
+          aria-labelledby={labelId}
+          on:change={saveDescription}
+        />
+      </div>
+    </SettingRow>
+
     <SettingRow kind="column" label={tracker.string.BoardProjects} hint={tracker.string.BoardProjectsHint}>
       <div class="chips" data-id="boardProjects">
         {#each shown as project (project._id)}
           <span class="chip">
             <Icon icon={task.icon.Kanban} size="small" />
             {project.name} · {project.identifier}
+            {#if board.projects.length > 1}
+              <span class="remove">
+                <IconButton
+                  data-id="boardRemoveProject"
+                  kind="ghost"
+                  size="min"
+                  icon={ui.icon.Cross}
+                  tooltip={{ label: ui.string.Remove }}
+                  on:click={() => {
+                    removeProject(project._id)
+                  }}
+                />
+              </span>
+            {/if}
           </span>
         {/each}
         <Button
@@ -151,34 +183,45 @@
     </SettingRow>
 
     <div class="top">
-      <SettingRow kind="column" label={tracker.string.BoardFilter} hint={tracker.string.BoardFilterHint}>
-        <div class="filter">
-          <FilterConditions
-            _class={tracker.class.Issue}
-            value={board.filter}
-            removable
-            addLabel={tracker.string.BoardCondition}
-            hiddenKeys={['space']}
-            on:change={(e) => onChange({ filter: e.detail })}
-          />
-          {#if counts !== undefined}
-            <span class="note" data-id="boardFilterCount">
-              <Label label={tracker.string.BoardFilterCount} params={counts} />
-            </span>
-          {/if}
-        </div>
-      </SettingRow>
+      <div class="filter-row">
+        <SettingRow kind="column" label={tracker.string.BoardFilter} hint={tracker.string.BoardFilterHint}>
+          <div class="filter">
+            <FilterConditions
+              _class={tracker.class.Issue}
+              value={board.filter}
+              removable
+              addLabel={tracker.string.BoardCondition}
+              hiddenKeys={['space']}
+              on:change={(e) => onChange({ filter: e.detail })}
+            />
+            {#if counts !== undefined}
+              <span class="note" data-id="boardFilterCount">
+                <Label label={tracker.string.BoardFilterCount} params={counts} />
+              </span>
+            {/if}
+          </div>
+        </SettingRow>
+      </div>
     </div>
 
-    <!-- tracker-board-next: Board has no field for hiding old done issues or for the card order -->
+    <!-- tracker-board-next: Board has no field for hiding old done issues -->
     {#if boardNext}
       <SettingRow kind="column" label={tracker.string.BoardHideDoneOlder} hint={tracker.string.BoardHideDoneOlderHint}>
         <Dropdown data-id="boardHideDone" kind="secondary" items={hideDoneItems} selected="older" />
       </SettingRow>
-      <SettingRow kind="column" label={tracker.string.BoardCardOrder}>
-        <Dropdown data-id="boardCardOrder" kind="secondary" items={cardOrderItems} selected="manual" />
-      </SettingRow>
     {/if}
+    <SettingRow kind="column" label={tracker.string.BoardCardOrder}>
+      <Dropdown
+        data-id="boardCardOrder"
+        kind="secondary"
+        items={cardOrderItems}
+        selected={board.orderBy?.[0] ?? cardOrders[0]?.[0]}
+        on:selected={(e) => {
+          const order = cardOrders.find(([key]) => key === e.detail)
+          if (order !== undefined && order[0] !== board.orderBy?.[0]) void onChange({ orderBy: order })
+        }}
+      />
+    </SettingRow>
 
     <div class="divider" />
 
@@ -190,6 +233,7 @@
             group={board.visibility}
             name="board-visibility"
             label={tracker.string.BoardVisibilityAllMembers}
+            disabled={!isAuthor}
             data-id="boardVisibilityAll"
             on:change={() => onChange({ visibility: 'all' })}
           />
@@ -199,6 +243,7 @@
               group={board.visibility}
               name="board-visibility"
               label={tracker.string.BoardVisibilityOnlyMe}
+              disabled={!isAuthor}
               data-id="boardVisibilityMe"
               on:change={() => onChange({ visibility: 'me' })}
             />
@@ -208,27 +253,21 @@
       </SettingRow>
     </div>
 
-    <SettingRow kind="column" label={tracker.string.BoardAuthor} hint={tracker.string.BoardAuthorHint}>
-      <div class="people" data-id="boardAuthor">
-        <EmployeePresenter value={authorRef} showPopup={false} />
-      </div>
-    </SettingRow>
-
-    <SettingRow kind="column" label={tracker.string.BoardEditors} hint={tracker.string.BoardEditorsHint}>
-      <div class="people" data-id="boardEditors">
-        {#each editorRefs as ref (ref)}
-          <EmployeePresenter value={ref} showPopup={false} />
-        {/each}
-        <Button
-          data-id="boardAddEditor"
-          kind="tertiary"
-          size="extra-small"
-          icon={ui.icon.Plus}
-          label={tracker.string.BoardAdd}
-          on:click={chooseEditors}
+    <!-- A personal board sits in the author's PersonSpace: editors could not even see it -->
+    {#if board.visibility !== 'me'}
+      <div class="editors" data-id="boardEditors">
+        <ProjectMembersTable
+          members={[board.author, ...board.editors]}
+          lockedAccount={board.author}
+          ignoreAccounts={[board.author]}
+          fixedRole={(a) => (a === board.author ? tracker.string.BoardAuthor : tracker.string.BoardEditorRole)}
+          removeLabel={ui.string.Remove}
+          addDataId="boardAddEditor"
+          onAdd={addEditor}
+          onRemove={removeEditor}
         />
       </div>
-    </SettingRow>
+    {/if}
   </div>
 </ProjectSettingsSection>
 
@@ -246,15 +285,19 @@
   .field.wide {
     width: 26.25rem;
   }
-  .chips,
-  .people {
+  .chips {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 0.375rem;
   }
-  .people {
-    gap: 0.75rem;
+  .remove {
+    display: inline-flex;
+    opacity: 0;
+  }
+  .chip:hover .remove,
+  .chip:focus-within .remove {
+    opacity: 1;
   }
   .chip {
     display: inline-flex;
@@ -269,15 +312,33 @@
     border: 1px solid var(--theme-button-border);
     border-radius: 0.375rem;
   }
+  // The label line is as tall as the add button, so the count starts where the hint does
+  .filter-row :global(.setting-row__main) {
+    align-items: flex-start;
+  }
+  .filter-row :global(.setting-row__label) {
+    display: flex;
+    align-items: center;
+    min-height: var(--global-extra-small-Size);
+  }
   .filter {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.125rem;
     max-width: 30rem;
   }
   .note {
     font-size: 0.75rem;
     color: var(--theme-darker-color);
+  }
+  // A table section: apart from the rows above, as sections of the project settings
+  // The last section of the page: room under the table when the page scrolls to the end
+  .editors {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    padding-bottom: 1rem;
   }
   .divider {
     width: 45rem;

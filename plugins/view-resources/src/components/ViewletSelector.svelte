@@ -17,9 +17,6 @@
   export let hidden = false
   export let ignoreFragment = false
   export let defaultViewletDescriptor: Ref<ViewletDescriptor> | undefined = undefined
-  // The switcher only offers the viewlets: none is marked, a click goes here;
-  // the shown viewlet is the default one, the saved choice is not read
-  export let onPick: ((viewlet: WithLookup<Viewlet>) => void) | undefined = undefined
 
   const query = createQuery()
 
@@ -56,7 +53,7 @@
   ): void {
     if (viewlets == null || viewlets.length === 0) return
     const newViewlet =
-      (onPick === undefined ? viewlets.find((viewlet) => viewlet?._id === activeViewlet[key]) : undefined) ??
+      viewlets.find((viewlet) => viewlet?._id === activeViewlet[key]) ??
       viewlets.find((viewlet) => viewlet.descriptor === defaultViewletDescriptor) ??
       viewlets[0]
     if (viewlet?._id !== newViewlet?._id || !deepEqual(viewlet.config, newViewlet.config)) {
@@ -106,19 +103,14 @@
   <Switcher
     name="viewletSelector"
     items={viewslist}
-    selected={onPick === undefined ? viewlet?._id : ''}
+    selected={viewlet?._id}
     kind="subtle"
     on:select={(result) => {
       if (result.detail !== undefined) {
-        const picked = viewlets.find((vl) => vl._id === result.detail.id)
-        if (onPick !== undefined) {
-          if (picked !== undefined) onPick(picked)
-          return
-        }
         if (viewlet?._id === result.detail.id) {
           return
         }
-        viewlet = picked
+        viewlet = viewlets.find((vl) => vl._id === result.detail.id)
         if (viewlet) {
           setActiveViewletId(viewlet._id, undefined, ignoreFragment)
         }
