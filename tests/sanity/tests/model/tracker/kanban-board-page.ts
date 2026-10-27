@@ -295,13 +295,8 @@ export class KanbanBoardPage extends CommonTrackerPage {
     const centre = { x: (left + right) / 2, y: (top + bottom) / 2 }
     const free = await target.evaluate(
       (el, { rect, zone }) => {
-        // A held card within 60px of the board's side scrolls it (EDGE_PX in Kanban.svelte), and the
-        // scroll goes on with the pointer at rest: a waypoint there drags the drop target off screen.
-        const board = el.closest('.kanban-container')?.getBoundingClientRect()
-        const nearSide = (x: number): boolean => board !== undefined && (x - board.left < 64 || board.right - x < 64)
         for (const y of [rect.cy, rect.top + 6, rect.bottom - 6, (rect.top + rect.cy) / 2]) {
           for (const x of [rect.left + 3, rect.right - 3, rect.left + 6, rect.right - 6, rect.cx]) {
-            if (nearSide(x)) continue
             const node = document.elementFromPoint(x, y)
             if (node === null) continue
             if (node.closest('[data-id="kanban-card"]') !== null) continue
@@ -410,6 +405,18 @@ export class KanbanBoardPage extends CommonTrackerPage {
     await this.grabCard(source)
     try {
       await this.carryOver(via)
+      // A waypoint point sits at a cell's edge, so in the first column the held card rests within 60px
+      // of the board's side (EDGE_PX in Kanban.svelte) and the board keeps scrolling back, undoing the
+      // scrollIntoView below - the target then measured off screen on every attempt. Park mid-board;
+      // a single-hop move sends no dragover, so the board would never learn the pointer left the edge.
+      if (via.length > 0) {
+        const board = await this.page.locator('.kanban-container').first().boundingBox()
+        if (board !== null) {
+          const mid = { x: board.x + board.width / 2, y: board.y + board.height / 2 }
+          await this.page.mouse.move(mid.x, mid.y, { steps: 5 })
+          await this.page.mouse.move(mid.x + 2, mid.y + 2)
+        }
+      }
       // The board scrolls horizontally and does not fit five columns, so bring the target into view
       // only after the card is grabbed: hovering the source scrolls it back and a box measured
       // before that points outside the viewport. Scroll through the DOM - scrollIntoViewIfNeeded

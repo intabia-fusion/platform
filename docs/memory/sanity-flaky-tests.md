@@ -197,6 +197,7 @@ Everything the drop checks must compare, learned over three rounds:
 - **Re-measure inside the held drag** (up to 4 times): taking the card out of its own cell rearranges the board, so the target moves after it was measured.
 - `grabCard()` retries the grab three times; `expectCardInColumn` calls `revealCard` first (past a column's limit the card is not in the DOM at all) and `revealCard` round-robins over all "Show more" buttons instead of always expanding the leftmost column.
 - Six status columns need ~2000px: `test.use({ viewport: { width: 2200, height: 1000 } })`.
+- **Held card at rest <60px from the board side autoscrolls it** (`EDGE_PX` in `Kanban.svelte`): a waypoint at `left + 3` of the first column undid `scrollIntoView` of the target. `dragPointer` parks mid-board after waypoints with `steps: 5` (a one-hop move sends no dragover). Skipping side points in `visiblePointOf` broke `legacy drop on self`.
 - `dragUntilField(read, target, drag)` reads the field *after* the drag, swallows the drag error and polls at `[100, 200, 300, 500]` with a 40s bound - shorter than the test timeout, so the poll gets to report its own error.
 
 ## love / LiveKit
@@ -293,3 +294,8 @@ Kept, with the reason (a condition would be a guess):
 - `getInviteLink` waited 5s for `appHeader`, which a fresh workspace never renders (`workspace/create.spec.ts` x2, 5005ms each); it now waits for `#profile-button`, which the toPass below clicks anyway. Join-link tests 4.0s/4.3s after.
 - `auth.setup.ts`: three tests ran on one worker (~1.2s each); `describe.configure({ mode: 'parallel' })`, setup 3 passed in 2.9s on 3 workers.
 - Re-running plan.spec many times (and `--repeat-each`) piles up `Plan work for several days-*` todos, and `Add several slots for the same day` then goes missing from the "All" list (todo is in the DB; fails the same on the original code). Needs a stand restore.
+
+## Run series 20261020-130621 .. 133105
+
+- kanban counters/lanes: other workers add issues to `DefaultProject` and the swim-lane projection lands late - poll live values (DB count, lane id), never compare to a value read earlier.
+- `changeState` must wait for the panel to close: a finishing save closes the panel reopened for the same status. Love invite race is a product bug: `love_invite_before_participant_info.md`.
