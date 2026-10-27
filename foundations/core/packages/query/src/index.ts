@@ -217,6 +217,10 @@ export class LiveQuery implements WithTx, Client {
     q.callbacks.forEach((callback) => {
       callback(toFindResult([], 0))
     })
+    // doRefresh unregisters only the result it replaces, which is empty from here on.
+    if (!(q.result instanceof Promise)) {
+      this.refs.updateDocuments(q, q.result.getDocs(), true)
+    }
     q.result = new ResultArray([], this.getHierarchy())
     q.refsRegistered = false
     q.total = -1
@@ -1078,6 +1082,9 @@ export class LiveQuery implements WithTx, Client {
       q.refreshId === qid &&
       (!deepEqual(res, current.getDocs()) || (res.total !== q.total && q.options?.total === true))
     ) {
+      // The callback registers only the new result: a document gone from it
+      // would stay in Refs and keep serving findOne.
+      this.refs.updateDocuments(q, current.getDocs(), true)
       q.result = new ResultArray(res, this.getHierarchy())
       q.refsRegistered = false
       q.total = res.total
