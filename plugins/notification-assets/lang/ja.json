@@ -79,7 +79,7 @@
     "PushSubscribeErrorNotSupported": "このブラウザではプッシュ通知がサポートされていません",
     "PushSubscribeErrorDefault": "通知の購読に失敗しました",
     "Subscribe": "登録",
-    "InboxNotificationsDescription": "Hulyの受信箱で個人通知を受け取ります。",
+    "InboxNotificationsDescription": "受信箱で個人通知を受け取ります。",
     "PushNotificationsDescription": "デスクトップで個人通知を受け取ります。",
     "CommonNotificationCollectionAdded": "{senderName} が {collection} を追加しました",
     "CommonNotificationCollectionRemoved": "{senderName} が {collection} を削除しました",

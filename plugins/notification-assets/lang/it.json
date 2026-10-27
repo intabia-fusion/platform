@@ -79,7 +79,7 @@
     "PushSubscribeErrorNotSupported": "Le notifiche push non sono supportate in questo browser",
     "PushSubscribeErrorDefault": "Impossibile iscriversi alle notifiche",
     "Subscribe": "Iscriviti",
-    "InboxNotificationsDescription": "Ricevi notifiche personali nella tua casella di posta Huly.",
+    "InboxNotificationsDescription": "Ricevi notifiche personali nella tua casella in arrivo.",
     "PushNotificationsDescription": "Ricevi notifiche personali sul desktop.",
     "CommonNotificationCollectionAdded": "{senderName} ha aggiunto {collection}",
     "CommonNotificationCollectionRemoved": "{senderName} ha rimosso {collection}",

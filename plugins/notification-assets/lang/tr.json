@@ -79,7 +79,7 @@
     "PushSubscribeErrorNotSupported": "Bu tarayıcıda push bildirimleri desteklenmiyor",
     "PushSubscribeErrorDefault": "Bildirimlere abone olunamadı",
     "Subscribe": "Abone ol",
-    "InboxNotificationsDescription": "Huly gelen kutunuzda kişisel bildirimler alın.",
+    "InboxNotificationsDescription": "Gelen kutunuzda kişisel bildirimler alın.",
     "PushNotificationsDescription": "Masaüstünde kişisel bildirimler alın.",
     "CommonNotificationCollectionAdded": "{senderName}, {collection} ekledi",
     "CommonNotificationCollectionRemoved": "{senderName}, {collection} kaldırdı",

@@ -28,14 +28,15 @@ Please set a DISABLED_FEATURES environment variable for front service container,
 - card - Will disable cards
 - hide-ru-banned-channels - Will hide channels banned in Russia
 - hr - Will disable HR (departments, vacations)
-- mail - Will disable the mail plugin
+- mail - Will disable the mail plugin and hide the Email channel in notification settings
 - gmail - Will disable Gmail
 - contact.persons - Will hide the "Persons" section of Contacts
 - contact.companies - Will hide the "Companies" section of Contacts
 - tracker.issueImport - Will hide "Import" in the New Issue menu
 - contact:ids:OrganizationNotificationGroup, setting:ids:SettingNotificationGroup - Will hide these notification groups in notification settings
+- request - Will disable requests (the "Requests" notification group included); requests are created only by controlled documents, so disable it together with `documents`
 
-Any plugin id works the same way: the plugin is filtered out of the UI model (`returnUITxes` in `foundations/core/packages/client-resources/src/index.ts`).
+Any plugin id works the same way: the plugin is filtered out of the UI model (`returnUITxes` in `foundations/core/packages/client-resources/src/index.ts`). A disabled plugin id also makes `hasResource()` / `pluginConfiguration.has()` false (`packages/presentation/src/configuration.ts`), which hides its space types in Settings > Space types and in the create space/task type dialogs.
 
 ## Связанные документы
 

@@ -10,7 +10,7 @@ services:
       - LANGUAGES=en,ru,es,pt,zh,fr,it
       - LOGIN_THEME=intabia
       - ACCENT_THEME=accent-intabia
-      - DISABLED_FEATURES=mail,auto-translate,github,integrations,documents,inventory,survey,lead,products,recruit,training,process,gmail,mailboxes,export,contact.persons,contact.companies,tracker.issueImport,card,testManagement,telegram,hr,contact:ids:OrganizationNotificationGroup,setting:ids:SettingNotificationGroup,hide-ru-banned-channels
+      - DISABLED_FEATURES=mail,auto-translate,github,integrations,documents,inventory,survey,lead,products,recruit,training,process,gmail,mailboxes,export,contact.persons,contact.companies,tracker.issueImport,card,testManagement,telegram,hr,contact:ids:OrganizationNotificationGroup,setting:ids:SettingNotificationGroup,request,hide-ru-banned-channels
   account:
     volumes:
       - ./branding-persona.json:/var/cfg/branding.json
