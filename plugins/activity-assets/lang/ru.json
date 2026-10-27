@@ -30,7 +30,7 @@
     "RepliesCount": "{replies, plural, one {# ответ} few {# ответа} other {# ответов}}",
     "Set": "установлен",
     "To": "на",
-    "Unset": "Сбросил",
+    "Unset": "Сбросил(а)",
     "Update": "Обновить",
     "Updated": "Обновил(а)",
     "UpdatedCollection": "Обновленные",

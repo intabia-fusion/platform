@@ -1,6 +1,7 @@
 <!--
 //
 // Copyright © 2022, 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -35,7 +36,8 @@
   export let type: ObjectPresenterType = 'link'
 </script>
 
-{#if value}
+<!-- Activity passes a raw ref when the document is not readable, e.g. a parent in another teamspace -->
+{#if typeof value === 'object' && value !== null}
   {#if inline}
     <ObjectMention object={value} {disabled} component={document.component.EditDoc} />
   {:else if type === 'link'}

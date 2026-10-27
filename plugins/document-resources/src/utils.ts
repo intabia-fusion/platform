@@ -1,5 +1,6 @@
 //
 // Copyright © 2023, 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -16,6 +17,7 @@
 import {
   type Client,
   type Data,
+  type DocumentUpdate,
   type QuerySelector,
   type Ref,
   SortingOrder,
@@ -38,7 +40,7 @@ export async function moveDocument (doc: Document, space: Ref<Teamspace>, parent
   const prevRank = await getFirstRank(client, space, parent)
   const rank = makeRank(prevRank, undefined)
 
-  await client.update(doc, { space, parent, rank })
+  await client.update(doc, moveUpdate(doc, space, parent, rank))
 }
 
 export async function moveDocumentBefore (doc: Document, before: Document): Promise<void> {
@@ -49,7 +51,7 @@ export async function moveDocumentBefore (doc: Document, before: Document): Prom
   const lastRank = await getFirstRank(client, space, parent, SortingOrder.Descending, query)
   const rank = makeRank(lastRank, before.rank)
 
-  await client.update(doc, { space, parent, rank })
+  await client.update(doc, moveUpdate(doc, space, parent, rank))
 }
 
 export async function moveDocumentAfter (doc: Document, after: Document): Promise<void> {
@@ -60,7 +62,20 @@ export async function moveDocumentAfter (doc: Document, after: Document): Promis
   const nextRank = await getFirstRank(client, space, parent, SortingOrder.Ascending, query)
   const rank = makeRank(after.rank, nextRank)
 
-  await client.update(doc, { space, parent, rank })
+  await client.update(doc, moveUpdate(doc, space, parent, rank))
+}
+
+// Activity records every passed key, so an unchanged space or parent would show up as a change.
+function moveUpdate (
+  doc: Document,
+  space: Ref<Teamspace>,
+  parent: Ref<Document>,
+  rank: string
+): DocumentUpdate<Document> {
+  const update: DocumentUpdate<Document> = { rank }
+  if (doc.space !== space) update.space = space
+  if (doc.parent !== parent) update.parent = parent
+  return update
 }
 
 export async function createEmptyDocument (

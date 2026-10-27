@@ -674,7 +674,10 @@ export async function getDocUpdateMessageIntl (
         const values = attributeUpdates.set
         const isUnset =
           values.length > 0 &&
-          !values.some((value) => value !== null && value !== '' && value !== 'tracker:ids:NoParent')
+          !values.some(
+            (value) =>
+              value !== null && value !== '' && value !== 'tracker:ids:NoParent' && value !== 'document:ids:NoParent'
+          )
 
         if (isUnset) {
           return {
