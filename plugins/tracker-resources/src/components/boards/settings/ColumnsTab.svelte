@@ -21,9 +21,6 @@
   import ui, {
     getEventPositionElement,
     Icon,
-    IconAdd,
-    IconCircles,
-    IconMoreH,
     Label,
     Menu,
     showPopup
@@ -213,7 +210,7 @@
       <Button
         kind="secondary"
         size="small"
-        icon={IconAdd}
+        icon={ui.icon.Plus}
         label={tracker.string.AddColumn}
         data-id="boardAddColumn"
         on:click={addColumn}
@@ -249,7 +246,7 @@
             }}
             on:dragend={endDrag}
           >
-            <span class="grip"><Icon icon={IconCircles} size="small" /></span>
+            <span class="grip"><Icon icon={ui.icon.GripVertical} size="small" /></span>
             <IssueStatusIcon value={status} size="x-small" />
             <span class="status-name">{status.name}</span>
             <span class="count">{counts.get(status._id) ?? ''}</span>
@@ -285,7 +282,7 @@
               }}
               on:dragend={endDrag}
             >
-              <Icon icon={IconCircles} size="small" />
+              <Icon icon={ui.icon.GripVertical} size="small" />
             </span>
             {#if first !== undefined}
               <IssueStatusIcon value={first} size="small" />
@@ -299,7 +296,7 @@
               }}
             />
             <IconButton
-              icon={IconMoreH}
+              icon={ui.icon.DotsHorizontal}
               kind="ghost"
               size="extra-small"
               tooltip={{ label: ui.string.MoreOptions }}
@@ -349,7 +346,7 @@
                 }}
                 on:dragend={endDrag}
               >
-                <span class="grip"><Icon icon={IconCircles} size="small" /></span>
+                <span class="grip"><Icon icon={ui.icon.GripVertical} size="small" /></span>
                 <IssueStatusIcon value={status} size="x-small" />
                 <span class="status-name">{status.name}</span>
                 <span class="count">{counts.get(id) ?? ''}</span>

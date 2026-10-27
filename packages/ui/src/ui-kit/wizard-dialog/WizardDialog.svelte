@@ -134,7 +134,7 @@
           void go(index + 1)
         }}
       >
-        <Icon icon={IconArrowRight} size="small" />
+        <Icon icon={ui.icon.ArrowRight} size="small" />
       </Button>
     {/if}
     <slot name="footerStart" />

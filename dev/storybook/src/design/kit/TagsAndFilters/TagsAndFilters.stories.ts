@@ -95,7 +95,7 @@ export const KitChipStates: Story = sections([
     columns: [
       { title: 'default', props: {} },
       { title: 'color', props: { color: 'var(--pal-Orange)' } },
-      { title: 'icon', props: { icon: 'ui/Add' } },
+      { title: 'icon', props: { icon: 'kit/Plus' } },
       { title: 'removable', props: { removable: true } },
       { title: 'extra-small', props: { size: 'extra-small' } }
     ],

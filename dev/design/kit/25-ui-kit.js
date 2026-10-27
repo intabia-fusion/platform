@@ -40,7 +40,7 @@ kit.TextInput = (o = {}) => {
   const color = o.disabled ? T('button-disabled-LabelColor') : o.value ? T('global-primary-TextColor') : T('global-secondary-TextColor')
   kit.add(f, kit.text(text, { size: font, weight, lh: lh / font, color }))
   grow(f, kit.box('grow', { w: 1, h: 1 }))
-  if (o.clearable && o.value) kit.add(f, iconSlot('ui/Close', T('global-secondary-TextColor'), 14))
+  if (o.clearable && o.value) kit.add(f, iconSlot('kit/Cross', T('global-secondary-TextColor'), 14))
   return kit.add(c, f)
 }
 
@@ -87,7 +87,7 @@ kit.SelectButton = (o = {}) => {
   if (o.icon) kit.add(b, iconSlot(o.icon, muted || K.icon))
   kit.add(b, kit.text(o.label || o.placeholder || '', { size: s.font, lh: 16 / s.font, color: muted || K.label }))
   if (o.w) grow(b, kit.box('grow', { w: 1, h: 1 }))
-  if (o.chevron) kit.add(b, iconSlot('ui/Down', muted || K.icon))
+  if (o.chevron) kit.add(b, iconSlot('kit/CaretDownFill', muted || K.icon))
   return b
 }
 
@@ -96,8 +96,8 @@ kit.Dropdown = (o = {}) => kit.SelectButton({ ...o, chevron: o.chevron ?? true, 
 
 // SearchInput: a TextInput with the magnifier; collapsed - a square button. o: kind(secondary|ghost) size value placeholder collapsed w
 kit.SearchInput = (o = {}) => {
-  if (o.collapsed) return kit.Button({ kind: 'secondary', size: o.size || 'small', icon: 'ui/Search', name: 'SearchInput/collapsed' })
-  return kit.TextInput({ kind: o.kind, size: o.size, value: o.value, placeholder: o.placeholder ?? 'Search', icon: 'ui/Search', clearable: true, w: o.w })
+  if (o.collapsed) return kit.Button({ kind: 'secondary', size: o.size || 'small', icon: 'kit/Search', name: 'SearchInput/collapsed' })
+  return kit.TextInput({ kind: o.kind, size: o.size, value: o.value, placeholder: o.placeholder ?? 'Search', icon: 'kit/Search', clearable: true, w: o.w })
 }
 
 // ---- Settings ----
@@ -124,7 +124,7 @@ kit.SettingRow = (label, control, o = {}) => {
   })
   const caption = kit.row('caption', D('spacing-0_5'))
   kit.add(caption, kit.text(label, { size: 12, weight: 500, lh: 16 / 12, upper: true, color: T('global-secondary-TextColor') }))
-  if (o.hint) kit.add(caption, kit.Button({ kind: 'ghost', size: 'extra-small', icon: 'ui/Info', name: 'hint' }))
+  if (o.hint) kit.add(caption, kit.Button({ kind: 'ghost', size: 'extra-small', icon: 'kit/InfoCircle', name: 'hint' }))
   const slot = kit.box('control', { w: stacked ? w : 10, h: 10, dir: 'row', align: 'center', justify: stacked ? 'start' : 'end', hs: stacked ? 'fix' : 'auto', vs: 'auto', clip: false })
   kit.add(slot, control)
   kit.add(main, caption, slot)
@@ -208,7 +208,7 @@ kit.Steps = (items, selected) => {
     const row = kit.row('step ' + (i + 1), D('spacing-1'))
     const state = selected === undefined || i > selected ? 'ahead' : i === selected ? 'current' : 'done'
     const marker = kit.box('marker', { w: 16, h: 16, dir: 'row', align: 'center', justify: 'center', radius: 8, fill: state === 'done' ? done : null, stroke: state === 'ahead' ? ahead : done, strokeW: state === 'ahead' ? 1.5 : 2 })
-    if (state === 'done') kit.add(marker, kit.icon('ui/Checkmark', T('button-positive-IconColor'), 10))
+    if (state === 'done') kit.add(marker, kit.icon('kit/CheckSmall', T('button-positive-IconColor'), 10))
     kit.add(row, marker, kit.text(`${i + 1}. ${label}`, { size: 14, weight: reached ? 500 : 400, lh: 20 / 14, color: T('global-primary-TextColor') }))
     kit.add(s, row)
   })
@@ -222,13 +222,13 @@ kit.EmptyState = (label, o = {}) => {
   if (o.size === 'small') {
     const b = kit.box('EmptyState ' + label, { w, h: 10, dir: 'column', gap: D('spacing-1'), pad: [16, 16, 16, 16], align: 'center', vs: 'auto', radius: D('medium-BorderRadius'), stroke: o.action ? TM(T('global-secondary-TextColor'), 40) : T('global-subtle-ui-BorderColor'), strokeStyle: o.action ? 'dashed' : 'solid' })
     kit.add(b, kit.text(label, { size: 12, lh: 16 / 12, color: T('global-secondary-TextColor') }))
-    if (o.action) kit.add(b, kit.add(kit.row('action', D('spacing-0_5')), kit.icon('ui/Add', T('button-selected-LabelColor'), 16), kit.text(o.action, { size: 12, weight: 500, lh: 16 / 12, color: T('button-selected-LabelColor') })))
+    if (o.action) kit.add(b, kit.add(kit.row('action', D('spacing-0_5')), kit.icon('kit/Plus', T('button-selected-LabelColor'), 16), kit.text(o.action, { size: 12, weight: 500, lh: 16 / 12, color: T('button-selected-LabelColor') })))
     return b
   }
   const b = kit.box('EmptyState ' + label, { w, h: o.h || 196, dir: 'column', pad: [32, 16, 32, 16], align: 'center', justify: 'center' })
   const brand = (o.kind || 'brand') === 'brand'
   const plate = kit.box('plate', { w: 56, h: 56, dir: 'row', align: 'center', justify: 'center', radius: brand ? 28 : D('large-BorderRadius'), fill: brand ? T('button-selected-BackgroundColor') : TM(T('global-ui-hover-BackgroundColor'), 60) })
-  kit.add(plate, kit.icon(o.icon || 'ui/Search', brand ? T('button-selected-LabelColor') : T('global-secondary-TextColor'), 28))
+  kit.add(plate, kit.icon(o.icon || 'kit/Search', brand ? T('button-selected-LabelColor') : T('global-secondary-TextColor'), 28))
   kit.add(b, plate, kit.spacer(1, 16), kit.text(label, { size: 14, weight: 500, lh: 20 / 14, color: T('global-primary-TextColor') }))
   if (o.description) kit.add(b, kit.spacer(1, 4), kit.text(o.description, { size: 14, lh: 20 / 14, color: T('global-secondary-TextColor'), align: 'center' }))
   return b
@@ -254,7 +254,7 @@ kit.KitChip = (label, o = {}) => {
   const b = kit.box('KitChip ' + label, { w: 10, h: xs ? 24 : 32, dir: 'row', gap: xs ? 2 : 4, pad: [0, o.removable ? (xs ? 2 : 4) : pl, 0, pl], align: 'center', hs: 'auto', radius: xs ? D('extra-small-BorderRadius') : D('small-BorderRadius'), fill: K.bg, stroke: K.border })
   if (o.icon) kit.add(b, kit.icon(o.icon, K.text, xs ? 12 : 16))
   kit.add(b, kit.text(label, { size: xs ? 12 : 14, weight: 500, lh: 16 / (xs ? 12 : 14), color: K.text }))
-  if (o.removable) kit.add(b, kit.add(kit.box('remove', { w: 16, h: 16, dir: 'row', align: 'center', justify: 'center' }), kit.icon('ui/Close', K.text, xs ? 12 : 14)))
+  if (o.removable) kit.add(b, kit.add(kit.box('remove', { w: 16, h: 16, dir: 'row', align: 'center', justify: 'center' }), kit.icon('kit/Cross', K.text, xs ? 12 : 14)))
   return b
 }
 
@@ -271,7 +271,7 @@ const dialogFrame = (name, title, w, o) => {
   // Esc hint (Kbd) before the close button, as the dialog shows it
   const esc = kit.box('Esc', { w: 10, h: 16, dir: 'row', pad: [0, 4, 0, 4], align: 'center', hs: 'auto', radius: D('extra-small-BorderRadius'), fill: T('global-ui-hover-BackgroundColor') })
   kit.add(esc, kit.text('Esc', { size: 10, weight: 500, lh: 1.2, color: T('global-secondary-TextColor') }))
-  kit.add(head, kit.add(kit.row('tools', D('spacing-0_5')), esc, kit.Button({ kind: 'ghost', size: 'small', icon: 'ui/Close', name: 'Close' })))
+  kit.add(head, kit.add(kit.row('tools', D('spacing-0_5')), esc, kit.Button({ kind: 'ghost', size: 'small', icon: 'kit/Cross', name: 'Close' })))
   return kit.add(d, head, kit.box('border', { w, h: 1, fill: T('theme-dialog-border-color') }))
 }
 kit.Dialog = (title, kids, o = {}) => {
@@ -297,9 +297,9 @@ kit.KitWizardDialog = (title, steps, selected, kids, o = {}) => {
   const body = kit.box('body', { w: w - 224, h, dir: 'column', gap: D('spacing-2'), pad: [24, 24, 24, 24], clip: false })
   kit.add(middle, side, kit.box('border', { w: 1, h, fill: T('theme-dialog-border-color') }), kit.add(body, kids || []))
   const foot = kit.box('footer', { w, h: 64, dir: 'row', gap: D('spacing-2'), pad: [12, 12, 12, 12], align: 'center', justify: 'space-between' })
-  const back = selected > 0 ? kit.Button({ kind: 'secondary', size: 'medium', icon: 'ui/ArrowLeft', label: 'Back' }) : undefined
+  const back = selected > 0 ? kit.Button({ kind: 'secondary', size: 'medium', icon: 'kit/ArrowLeft', label: 'Back' }) : undefined
   const last = selected === steps.length - 1
-  const next = last ? undefined : kit.add(kit.Button({ kind: 'brand', size: 'medium', label: 'Next step' }), kit.icon('ui/ArrowRight', '#FFFFFF', 16))
+  const next = last ? undefined : kit.add(kit.Button({ kind: 'brand', size: 'medium', label: 'Next step' }), kit.icon('kit/ArrowRight', '#FFFFFF', 16))
   const submit = (kind) => kit.Button({ kind, size: 'medium', label: o.submitLabel || 'Create' })
   // earlySubmit: Back and Next together on the left, the submit on the right on every step
   if (o.earlySubmit) kit.add(foot, kit.add(kit.row('navigation', D('spacing-1')), back || kit.spacer(1, 1), next), submit(last ? 'positive' : 'secondary'))
@@ -391,7 +391,7 @@ kit.Breadcrumbs = (items) => {
   items.forEach((raw, i) => {
     const it = kitItem(raw)
     const current = i === items.length - 1
-    if (i > 0) kit.add(b, kit.icon('ui/ChevronRight', T('global-tertiary-TextColor'), 16))
+    if (i > 0) kit.add(b, kit.icon('kit/ChevronRight', T('global-tertiary-TextColor'), 16))
     const c = kit.box('crumb ' + it.label, { w: 10, h: D('global-small-Size'), dir: 'row', gap: D('spacing-0_75'), pad: [0, 8, 0, 8], align: 'center', hs: 'auto', radius: D('small-BorderRadius') })
     if (it.icon) kit.add(c, kit.add(kit.box('icon', { w: 24, h: 24, dir: 'row', align: 'center', justify: 'center', radius: D('extra-small-BorderRadius'), fill: TM(T('global-ui-hover-BackgroundColor'), 50) }), kit.icon(it.icon, T('global-secondary-TextColor'), 16)))
     kit.add(c, kit.text(it.label, { size: 16, weight: current ? 700 : 500, lh: 20 / 16, color: T('global-secondary-TextColor') }))

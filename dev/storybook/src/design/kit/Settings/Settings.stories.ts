@@ -127,7 +127,7 @@ export const SectionStates: Story = sections([
     component: SectionDemo,
     rows: [
       { title: 'level 2', props: {} },
-      { title: 'icon', props: { icon: 'setting/settings' } },
+      { title: 'icon', props: { icon: 'kit/Gear' } },
       { title: 'actions', props: { actions: true } },
       { title: 'level 3', props: { level: 3 } },
       { title: 'level 4', props: { level: 4 } }

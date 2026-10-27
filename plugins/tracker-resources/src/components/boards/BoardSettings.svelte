@@ -19,11 +19,9 @@
   import task, { getStates } from '@hcengineering/task'
   import { typeStore } from '@hcengineering/task-resources'
   import type { Board, Project } from '@hcengineering/tracker'
-  import {
+  import ui, {
     BlankView,
     Header,
-    IconBack,
-    IconClose,
     Label,
     NavItem,
     Scroller,
@@ -97,7 +95,7 @@
       data-id="boardSettingsBack"
       kind="ghost"
       size="small"
-      icon={IconBack}
+      icon={ui.icon.ChevronLeftLarge}
       iconSize="small"
       label={tracker.string.BackToBoard}
       on:click={back}
@@ -120,7 +118,7 @@
         data-id="boardSettingsClose"
         kind="ghost"
         size="small"
-        icon={IconClose}
+        icon={ui.icon.Cross}
         tooltip={{ label: tracker.string.BackToBoard }}
         on:click={back}
       />

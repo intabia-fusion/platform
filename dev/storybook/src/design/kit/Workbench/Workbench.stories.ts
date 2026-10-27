@@ -235,13 +235,13 @@ export const KitNavItemStates: Story = sections([
       { title: 'expandable', props: { expandable: true, open: true } },
       { title: 'description', props: { description: '12' } }
     ],
-    columns: [{ title: '', props: { label: 'Issues', icon: 'tracker/issues', width: 240 } }]
+    columns: [{ title: '', props: { label: 'Issues', icon: 'kit/CheckSquare', width: 240 } }]
   },
   {
     title: 'NavItem (product) - kinds',
     component: KitNavItem,
     rows: [
-      { title: 'object', props: { kind: 'object', icon: 'chunter/hashtag' } },
+      { title: 'object', props: { kind: 'object', icon: 'kit/Hash' } },
       { title: 'identifier', props: { identifier: 'APP-6' } },
       { title: 'anchor', props: { kind: 'anchor' } }
     ],
@@ -258,7 +258,7 @@ export const KitNavGroupStates: Story = sections([
       { title: 'no divider', props: { divider: false } },
       { title: 'expandable', props: { expandable: true } },
       { title: 'collapsed', props: { expandable: true, open: false } },
-      { title: 'nested', props: { kind: 'nested', icon: 'setting/settings' } },
+      { title: 'nested', props: { kind: 'nested', icon: 'kit/Gear' } },
       { title: 'selected', props: { selected: true } }
     ],
     columns: [{ title: '', props: { label: 'Projects', width: 240 } }]
@@ -271,7 +271,7 @@ export const BreadcrumbsStates: Story = sections([
     component: Breadcrumbs,
     rows: [
       { title: 'labels', props: { items: ['Projects', 'Mobile app', 'APP-6'] } },
-      { title: 'icons', props: { items: [['Projects', 'tracker/tracker'], ['Mobile app', 'tracker/issues'], 'APP-6'] } }
+      { title: 'icons', props: { items: [['Projects', 'kit/CheckSquare'], ['Mobile app', 'kit/CheckSquare'], 'APP-6'] } }
     ],
     columns: [{ title: '', props: {} }]
   }

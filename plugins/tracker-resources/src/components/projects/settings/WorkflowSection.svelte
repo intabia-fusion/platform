@@ -19,7 +19,7 @@
   import type { Project as TaskProject, TaskType } from '@hcengineering/task'
   import { taskTypeStore } from '@hcengineering/task-resources'
   import type { Project } from '@hcengineering/tracker'
-  import { IconOpenedArrow } from '@hcengineering/ui'
+  import ui from '@hcengineering/ui'
   import { Button, IconButton, SettingRow } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import type { ProjectWorkflow, Workflow } from '@hcengineering/workflow'
@@ -100,7 +100,7 @@
           {#if canOpenType && selected !== undefined}
             <IconButton
               data-id={`open-workflow-for-${taskType.name}`}
-              icon={IconOpenedArrow}
+              icon={ui.icon.ChevronRightSmall}
               kind="ghost"
               size="small"
               tooltip={{ label: tracker.string.OpenWorkflow }}

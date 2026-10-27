@@ -26,8 +26,6 @@
   import { getEmbeddedLabel, translate } from '@hcengineering/platform'
   import ui, {
     getEventPositionElement,
-    IconAdd,
-    IconMoreH,
     Label,
     languageStore,
     Menu,
@@ -153,7 +151,7 @@
     data-id="project-add-member"
     kind="secondary"
     size="small"
-    icon={IconAdd}
+    icon={ui.icon.Plus}
     iconSize="small"
     label={tracker.string.ProjectSettingsAddMember}
     on:click={showAddMember}
@@ -193,7 +191,7 @@
         </div>
         <div class="cell action">
           <IconButton
-            icon={IconMoreH}
+            icon={ui.icon.DotsHorizontal}
             kind="ghost"
             size="extra-small"
             data-id="project-member-menu"

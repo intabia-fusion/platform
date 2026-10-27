@@ -43,14 +43,14 @@
   </div>
 
   <div slot="footerExtra" class="footerExtra">
-    {#if step > 0}<ClassicButton size="large" icon="ui/ArrowLeft" label={back} />{/if}
+    {#if step > 0}<ClassicButton size="large" icon="kit/ArrowLeft" label={back} />{/if}
   </div>
 
   <svelte:fragment slot="footerButtons">
     {#if step === steps.length - 1}
       <ClassicButton kind="positive" size="large" label={submit} />
     {:else}
-      <ClassicButton kind="primary" size="large" label={next} iconRight="ui/ArrowRight" disabled={!canProceed} />
+      <ClassicButton kind="primary" size="large" label={next} iconRight="kit/ArrowRight" disabled={!canProceed} />
     {/if}
   </svelte:fragment>
 </ModernDialog>

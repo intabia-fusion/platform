@@ -17,11 +17,9 @@
   import type { Ref } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import type { Project } from '@hcengineering/tracker'
-  import {
+  import ui, {
     getCurrentLocation,
     Header,
-    IconBack,
-    IconClose,
     Label,
     NavItem,
     navigate,
@@ -82,7 +80,7 @@
       data-id="btnBackToProject"
       kind="ghost"
       size="small"
-      icon={IconBack}
+      icon={ui.icon.ChevronLeftLarge}
       label={tracker.string.BackToProject}
       on:click={close}
     />
@@ -93,7 +91,7 @@
         data-id="btnCloseProjectSettings"
         kind="tertiary"
         size="small"
-        icon={IconClose}
+        icon={ui.icon.Cross}
         tooltip={{ label: tracker.string.BackToProject }}
         on:click={close}
       />

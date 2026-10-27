@@ -137,7 +137,7 @@ export const ClassicButtonStates: Story = sections([
       { title: 'icon', props: { icon: 'kit/PencilLine' } },
       { title: 'icon and label', props: { icon: 'kit/PersonCircle', label: 'Assignee' } },
       { title: 'menu', props: { label: 'Owner', menu: true } },
-      { title: 'icon after label', props: { label: 'Next', iconRight: 'ui/ArrowRight' } },
+      { title: 'icon after label', props: { label: 'Next', iconRight: 'kit/ArrowRight' } },
       { title: 'disabled', props: { label: 'Owner', disabled: true } }
     ],
     props: { size: 'medium' }
@@ -220,8 +220,8 @@ export const TabsStates: Story = sections([
         title: 'icons',
         props: {
           items: [
-            ['Issues', 'tracker/issues'],
-            ['Board', 'task/kanban']
+            ['Issues', 'kit/CheckSquare'],
+            ['Board', 'kit/Kanban']
           ],
           selected: 'Issues'
         }
@@ -242,8 +242,8 @@ export const SegmentedControlStates: Story = sections([
         title: 'icon only',
         props: {
           items: [
-            ['List', 'tracker/list'],
-            ['Board', 'task/kanban']
+            ['List', 'kit/BulletList'],
+            ['Board', 'kit/Kanban']
           ],
           selected: 'List',
           iconOnly: true
@@ -263,8 +263,8 @@ export const ButtonGroupStates: Story = sections([
         title: 'labels',
         props: {
           items: [
-            ['List', 'tracker/list'],
-            ['Board', 'task/kanban']
+            ['List', 'kit/BulletList'],
+            ['Board', 'kit/Kanban']
           ],
           selected: 'List'
         }
@@ -273,10 +273,10 @@ export const ButtonGroupStates: Story = sections([
         title: 'icon only',
         props: {
           items: [
-            ['', 'tracker/list'],
-            ['', 'task/kanban']
+            ['', 'kit/BulletList'],
+            ['', 'kit/Kanban']
           ],
-          selected: 'task/kanban'
+          selected: 'kit/Kanban'
         }
       },
       { title: 'small', props: { items: ['Day', 'Week'], selected: 'Day', size: 'small' } }

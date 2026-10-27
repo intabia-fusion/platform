@@ -28,7 +28,6 @@
   import { TimeReportDayType, TrackerEvents } from '@hcengineering/tracker'
   import ui, {
     getColorNumberByText,
-    IconChevronDown,
     Label,
     ModernPopupLabels,
     Scroller,
@@ -848,7 +847,7 @@
                   />
                   <span class="chevron" class:open={templatesOpen}>
                     <IconButton
-                      icon={IconChevronDown}
+                      icon={ui.icon.ChevronDown}
                       kind="ghost"
                       size="extra-small"
                       tooltip={{ label: tracker.string.ProjectCopyTemplates }}

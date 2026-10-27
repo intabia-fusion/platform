@@ -28,13 +28,10 @@
     type Issue
   } from '@hcengineering/tracker'
   import { onDestroy } from 'svelte'
-  import {
+  import ui, {
     eventToHTMLElement,
     getPlatformColorDef,
     Icon,
-    IconAdd,
-    IconCircles,
-    IconDelete,
     Label,
     showPopup,
     themeStore
@@ -363,7 +360,7 @@
                   over = undefined
                 }}
               >
-                <Icon icon={IconCircles} size="small" />
+                <Icon icon={ui.icon.GripVertical} size="small" />
               </span>
               {#if isTitled(rule)}
                 <input
@@ -390,6 +387,7 @@
               <FilterConditions
                 _class={tracker.class.Issue}
                 value={rule.condition}
+                removable
                 hiddenKeys={['space']}
                 on:change={(e) => {
                   patch(rule.id, { condition: e.detail })
@@ -411,7 +409,7 @@
             {/if}
             <div class="cell action">
               <IconButton
-                icon={IconDelete}
+                icon={ui.icon.Trash}
                 kind="ghost"
                 size="extra-small"
                 tooltip={{ label: tracker.string.Delete }}
@@ -426,7 +424,7 @@
         {#if rest !== undefined}
           <div class="row" data-id="boardRestLane">
             <div class="cell lead">
-              <span class="grip disabled"><Icon icon={IconCircles} size="small" /></span>
+              <span class="grip disabled"><Icon icon={ui.icon.GripVertical} size="small" /></span>
               <input
                 class="name"
                 value={rest.title}
@@ -444,7 +442,7 @@
     {/if}
 
     <div class="actions">
-      <Button kind="secondary" size="small" icon={IconAdd} label={addLabel} data-id="boardAddRule" on:click={add} />
+      <Button kind="secondary" size="small" icon={ui.icon.Plus} label={addLabel} data-id="boardAddRule" on:click={add} />
       {#if kind === 'quickFilters'}
         <MenuButton
           kind="ghost"

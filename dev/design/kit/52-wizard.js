@@ -21,7 +21,7 @@ kit.WizardBar = (steps, selected, o = {}) => {
       stroke: past || current ? T('positive-button-default') : T('theme-wizard-not-visited-color'),
       strokeW: 2
     })
-    if (past) kit.add(circle, kit.icon('ui/Checkmark', T('theme-button-contrast-color'), 12))
+    if (past) kit.add(circle, kit.icon('kit/CheckSmall', T('theme-button-contrast-color'), 12))
     const label = kit.text(`${i + 1}. ${title}`, { size: 13, lh: 16 / 13, weight: current || past ? 500 : 400, color: T('theme-text-primary-color') })
     kit.add(bar, kit.add(kit.row('step ' + (i + 1), 8), circle, label))
     if (i < steps.length - 1) kit.add(bar, line(i))
@@ -45,11 +45,11 @@ kit.WizardDialog = (title, steps, selected, o = {}) => {
   kit.add(middle, side, border('divider', 1, bodyH), body)
   const foot = kit.box('footer', { w, h: 77, dir: 'row', pad: [0, 40, 0, 40], align: 'center', justify: 'space-between' })
   const extra = kit.row('footer extra', 16)
-  if (selected > 0) kit.add(extra, kit.ClassicButton({ kind: 'regular', size: 'large', icon: 'ui/ArrowLeft', label: o.back || 'Back' }))
+  if (selected > 0) kit.add(extra, kit.ClassicButton({ kind: 'regular', size: 'large', icon: 'kit/ArrowLeft', label: o.back || 'Back' }))
   else kit.add(extra, kit.spacer(1, 1))
   const buttons = kit.row('footer buttons', 12)
   if (selected === steps.length - 1) kit.add(buttons, kit.ClassicButton({ kind: 'positive', size: 'large', label: o.submit || 'Create' }))
-  else kit.add(buttons, kit.ClassicButton({ kind: 'primary', size: 'large', label: o.next || 'Next', iconRight: 'ui/ArrowRight', disabled: o.canProceed === false }))
+  else kit.add(buttons, kit.ClassicButton({ kind: 'primary', size: 'large', label: o.next || 'Next', iconRight: 'kit/ArrowRight', disabled: o.canProceed === false }))
   kit.add(foot, extra, buttons)
   kit.add(modal, head, border('border', w, 1), middle, border('border', w, 1), foot)
   return { modal, body }

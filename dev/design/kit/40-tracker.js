@@ -27,7 +27,7 @@ kit.IssueCard = (d, w = 234) => {
   const pill = (name, content) => kit.add(kit.box(name, { w: 10, h: 20, dir: 'row', gap: 6, pad: [3, 8, 3, 8], align: 'center', hs: 'auto', vs: 'auto', radius: 12, fill: T('theme-popup-color'), stroke: T('theme-button-border') }), content)
   const dueColor = d.overdue ? T('theme-state-negative-color') : dark
   const ic = d.productIcons
-    ? { sub: 'tracker/sub-issue', due: 'calendar', component: 'tracker/component', milestone: 'tracker/milestone' }
+    ? { sub: 'tracker/sub-issue', due: 'calendar', component: 'kit/Diamond', milestone: 'kit/Signpost' }
     : { sub: 'subissues', due: 'calendar', component: 'component', milestone: 'milestone' }
   const dueIcon = d.productIcons && !d.overdue ? T('theme-warning-color') : dueColor
   if (density === 'dense') {

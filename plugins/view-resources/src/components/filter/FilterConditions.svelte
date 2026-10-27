@@ -15,7 +15,7 @@
 <script lang="ts">
   import type { Class, Doc, Ref, Space } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
-  import { IconAdd, eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  import ui, { eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import { Button, IconButton } from '@hcengineering/ui/kit'
   import type { Filter } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
@@ -95,7 +95,7 @@
       {#if addLabel !== undefined}
         <Button
           size="extra-small"
-          icon={IconAdd}
+          icon={ui.icon.Plus}
           kind="ghost"
           label={addLabel}
           data-id="filterConditionsAdd"
@@ -104,7 +104,7 @@
       {:else}
         <IconButton
           size="small"
-          icon={IconAdd}
+          icon={ui.icon.Plus}
           kind="ghost"
           tooltip={{ label: view.string.Filter }}
           data-id="filterConditionsAdd"

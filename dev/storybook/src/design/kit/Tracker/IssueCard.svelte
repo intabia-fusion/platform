@@ -36,7 +36,7 @@
     ([, color]) => getPlatformColorDef(paletteIndex(color), $themeStore.dark).color
   )
   $: icons = productIcons
-    ? { sub: 'tracker/sub-issue', due: 'calendar', component: 'tracker/component', milestone: 'tracker/milestone' }
+    ? { sub: 'tracker/sub-issue', due: 'calendar', component: 'kit/Diamond', milestone: 'kit/Signpost' }
     : { sub: 'subissues', due: 'calendar', component: 'component', milestone: 'milestone' }
   $: dueColor =
     issue.overdue === true

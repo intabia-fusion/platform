@@ -156,7 +156,7 @@ export const TextInputStates: Story = sections([
     columns: [
       { title: 'placeholder', props: { placeholder: 'Name' } },
       { title: 'label', props: { label: 'Identifier', value: 'APP' } },
-      { title: 'icon', props: { icon: 'ui/Add', value: 'Mobile app' } },
+      { title: 'icon', props: { icon: 'kit/Plus', value: 'Mobile app' } },
       { title: 'clearable', props: { clearable: true, value: 'Mobile app' } },
       { title: 'error', props: { error: true, value: 'APP' } },
       { title: 'disabled', props: { disabled: true, value: 'Mobile app' } }
@@ -206,7 +206,7 @@ export const SelectButtonStates: Story = sections([
     rows: [{ title: 'secondary', props: {} }],
     columns: [
       { title: 'placeholder', props: { placeholder: 'Status' } },
-      { title: 'icon', props: { icon: 'ui/Add', label: 'In progress' } },
+      { title: 'icon', props: { icon: 'kit/Plus', label: 'In progress' } },
       { title: 'pressed', props: { pressed: true, label: 'In progress', chevron: true } },
       { title: 'disabled', props: { disabled: true, label: 'In progress', chevron: true } },
       { title: 'width 240', props: { width: 240, label: 'In progress', chevron: true } }
@@ -223,7 +223,7 @@ export const DropdownStates: Story = sections([
       { title: 'one value', props: { values: ['In progress'] } },
       { title: 'multiselect', props: { values: ['Alice', 'Bob'] } },
       { title: 'placeholder', props: { placeholder: 'Status' } },
-      { title: 'icon', props: { icon: 'ui/Add', values: ['In progress'] } },
+      { title: 'icon', props: { icon: 'kit/Plus', values: ['In progress'] } },
       { title: 'no chevron', props: { values: ['In progress'], chevron: false } },
       { title: 'width 240', props: { values: ['In progress'], width: 240 } }
     ]

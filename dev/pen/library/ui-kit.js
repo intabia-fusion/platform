@@ -78,7 +78,7 @@ for (const [name, step] of [['first', 0], ['middle', 1], ['last', 3]]) {
 def('Actions/Tabs', kit.Tabs(['General', 'Members'], 'General'), { slots: ['$root'] })
 def('Actions/Tabs/small', kit.Tabs(['General', 'Members'], 'General', { size: 'small' }), { slots: ['$root'] })
 for (const size of ['medium', 'small', 'extra-small']) def(`Actions/SegmentedControl/${size}`, kit.SegmentedControl(['All', 'Active'], 'All', { size }), { slots: ['$root'] })
-for (const kind of ['ghost', 'secondary']) def(`Actions/ButtonGroup/${kind}`, kit.ButtonGroup([['', 'ui/Search'], ['', 'ui/Info']], 'ui/Search', { kind }), { slots: ['$root'] })
+for (const kind of ['ghost', 'secondary']) def(`Actions/ButtonGroup/${kind}`, kit.ButtonGroup([['', 'kit/Search'], ['', 'kit/InfoCircle']], 'kit/Search', { kind }), { slots: ['$root'] })
 
 // ---- Forms ----
 def('Forms/Input', kit.Input({ w: 240, label: 'Label', icon: 'kit/PersonCircle', value: 'Value', menu: true }), { hide: ['0', '1/0', '1/2', '1/3'] })
@@ -94,17 +94,17 @@ def('Forms/Checkbox/indeterminate', kit.Checkbox(false, 'Label', { indeterminate
 // ui/kit fields: label, icon and the clear button are optional parts
 for (const kind of ['secondary', 'ghost', 'subtle']) {
   for (const size of ['large', 'medium', 'small', 'extra-small']) {
-    def(`Forms/TextInput/${kind}/${size}`, kit.TextInput({ kind, size, label: 'Label', icon: 'ui/Search', value: 'Value', clearable: true }), { hide: ['0', '1/0', '1/3'] })
+    def(`Forms/TextInput/${kind}/${size}`, kit.TextInput({ kind, size, label: 'Label', icon: 'kit/Search', value: 'Value', clearable: true }), { hide: ['0', '1/0', '1/3'] })
   }
   for (const size of ['medium', 'small']) def(`Forms/TextArea/${kind}/${size}`, kit.TextArea({ kind, size, value: 'Text' }))
 }
 for (const kind of ['secondary', 'ghost', 'primary', 'brand', 'chip']) {
   for (const size of kind === 'secondary' || kind === 'ghost' ? ['large', 'medium', 'small', 'extra-small'] : ['small']) {
-    def(`Forms/SelectButton/${kind}/${size}`, kit.SelectButton({ kind, size, label: 'Value', icon: 'ui/Add', chevron: true }), { hide: ['0', '2'] })
+    def(`Forms/SelectButton/${kind}/${size}`, kit.SelectButton({ kind, size, label: 'Value', icon: 'kit/Plus', chevron: true }), { hide: ['0', '2'] })
   }
 }
 // Full width: the value at the start, the chevron at the end
-for (const size of ['medium', 'small']) def(`Forms/SelectButton/secondary/${size}/full`, kit.SelectButton({ size, label: 'Value', icon: 'ui/Add', chevron: true, w: 240 }), { hide: ['0'] })
+for (const size of ['medium', 'small']) def(`Forms/SelectButton/secondary/${size}/full`, kit.SelectButton({ size, label: 'Value', icon: 'kit/Plus', chevron: true, w: 240 }), { hide: ['0'] })
 
 // ---- People: avatars are drawn by kit/90-pen.js, the library holds the 20px look ----
 def('People/Avatar', kit.add(kit.box('Avatar', { w: 20, h: 20, dir: 'row', align: 'center', justify: 'center', radius: 4, fill: '#666ECC' }),
@@ -136,9 +136,9 @@ def('TagsAndFilters/QuickFilter/on', kit.QuickFilter('Only mine', true))
 def('TagsAndFilters/FilterChip', kit.FilterChip('Priority', 'in', 'Urgent, High'))
 def('TagsAndFilters/Swatch', kit.Swatch(P('Orange')))
 for (const kind of ['tint', 'solid', 'outline', 'neutral']) {
-  for (const size of ['small', 'extra-small']) def(`TagsAndFilters/KitChip/${kind}/${size}`, kit.KitChip('Value', { kind, size, icon: 'ui/Add', removable: true }), { hide: ['0', '2'] })
+  for (const size of ['small', 'extra-small']) def(`TagsAndFilters/KitChip/${kind}/${size}`, kit.KitChip('Value', { kind, size, icon: 'kit/Plus', removable: true }), { hide: ['0', '2'] })
 }
-for (const tone of ['positive', 'negative', 'regular', 'ghost']) def('TagsAndFilters/KitChip/tone/' + tone, kit.KitChip('Value', { tone, icon: 'ui/Add', removable: true }), { hide: ['0', '2'] })
+for (const tone of ['positive', 'negative', 'regular', 'ghost']) def('TagsAndFilters/KitChip/tone/' + tone, kit.KitChip('Value', { tone, icon: 'kit/Plus', removable: true }), { hide: ['0', '2'] })
 
 // ---- Tracker ----
 def('Tracker/IssueCard', kit.IssueCard(card), { hide: ['0/0/1'], slots: ['chips'] })
@@ -171,7 +171,7 @@ def('Settings/GridRow', kit.GridRow('Label', kit.EditBox('Value', { kind: 'editb
 }
 def('Settings/SettingRow', kit.SettingRow('Label', kit.Toggle(true), { hint: true, details: [kit.KitChip('Value')] }), { hide: ['0/0/1', '1'], slots: ['control', 'details'] })
 def('Settings/SettingRow/stacked', kit.SettingRow('Label', kit.TextArea({ kind: 'ghost', w: 560, value: 'Text' }), { stacked: true, hint: true }), { hide: ['0/0/1'], slots: ['control'] })
-def('Settings/Section', kit.Section('Title', [kit.text('Content')], { icon: 'ui/Search', actions: [kit.Button({ kind: 'ghost', size: 'small', icon: 'ui/Add' })] }), { hide: ['0/0/0'], slots: ['actions', 'content'] })
+def('Settings/Section', kit.Section('Title', [kit.text('Content')], { icon: 'kit/Search', actions: [kit.Button({ kind: 'ghost', size: 'small', icon: 'kit/Plus' })] }), { hide: ['0/0/0'], slots: ['actions', 'content'] })
 
 // ---- Workbench ----
 def('Workbench/TopBar', kit.TopBar(1920, { tab: 'Tracker' }))

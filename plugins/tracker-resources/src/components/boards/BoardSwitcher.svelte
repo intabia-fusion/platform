@@ -18,7 +18,7 @@
   import { getClient } from '@hcengineering/presentation'
   import task from '@hcengineering/task'
   import type { Board, Project } from '@hcengineering/tracker'
-  import { Icon, IconAdd, IconChevronDown, showPopup } from '@hcengineering/ui'
+  import ui, { Icon, showPopup } from '@hcengineering/ui'
   import { Button, Menu, type MenuItem } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import { boardLocation } from '../../boards'
@@ -45,7 +45,7 @@
     result.push({
       id: CREATE,
       label: tracker.string.CreateBoard,
-      icon: IconAdd,
+      icon: ui.icon.Plus,
       divider: result.length > 0 ? true : undefined,
       component: BoardMenuRow,
       componentProps: { label: tracker.string.CreateBoard, accent: true }
@@ -84,7 +84,7 @@
     data-id="boardSwitcher"
     on:click={open}
   >
-    <span class="chevron"><Icon icon={IconChevronDown} size="small" /></span>
+    <span class="chevron"><Icon icon={ui.icon.ChevronDown} size="small" /></span>
   </Button>
 </span>
 

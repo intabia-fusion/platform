@@ -18,10 +18,8 @@
   import { createQuery, getClient } from '@hcengineering/presentation'
   import task from '@hcengineering/task'
   import { canEditBoard, isBoardAvailable, sortBoards, type Board, type Project } from '@hcengineering/tracker'
-  import {
+  import ui, {
     Icon,
-    IconAdd,
-    IconChevronDown,
     resizeObserver,
     showPopup,
     themeStore,
@@ -166,7 +164,7 @@
     result.push({
       id: CREATE,
       label: tracker.string.CreateBoard,
-      icon: IconAdd,
+      icon: ui.icon.Plus,
       divider: result.length > 0 ? true : undefined,
       component: BoardMenuRow,
       componentProps: { label: tracker.string.CreateBoard, accent: true }
@@ -214,7 +212,7 @@
   {#if hidden.length > 0}
     <IconButton
       bind:element={chevron}
-      icon={IconChevronDown}
+      icon={ui.icon.ChevronDown}
       kind="ghost"
       size="small"
       hasMenu
@@ -238,7 +236,7 @@
       data-id="projectBoardsMenu"
       on:click={openMenu}
     >
-      <span class="chevron"><Icon icon={IconChevronDown} size="small" /></span>
+      <span class="chevron"><Icon icon={ui.icon.ChevronDown} size="small" /></span>
     </Button>
   </span>
   <div class="measure" aria-hidden="true">

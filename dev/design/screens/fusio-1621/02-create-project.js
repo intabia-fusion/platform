@@ -26,20 +26,20 @@ await kit.page(typeof PAGE_NAME === 'string' ? PAGE_NAME : '2. Создание 
     const { frame, main } = kit.Workbench(name, x, y, {
       tab: 'Tracker',
       nav: [
-        { item: 'My issues', icon: 'tracker/myissues' },
-        { item: 'All issues', icon: 'tracker/issues' },
+        { item: 'My issues', icon: 'kit/Crosshair' },
+        { item: 'All issues', icon: 'kit/CheckSquare' },
         { divider: true },
-        { item: 'All projects', icon: 'tracker/list' },
-        { item: 'Labels', icon: 'tracker/labels' },
+        { item: 'All projects', icon: 'kit/BulletList' },
+        { item: 'Labels', icon: 'kit/Tags' },
         { group: 'Your projects', add: true },
-        { space: mkt.name, icon: 'tracker/home', color: 'Porpoise' },
-        { item: 'Issues', icon: 'tracker/issues', selected: true, indent: true },
-        { item: 'Components', icon: 'tracker/components', indent: true },
-        { item: 'Milestones', icon: 'tracker/milestone', indent: true },
-        { item: 'Templates', icon: 'tracker/issuetemplates', indent: true }
+        { space: mkt.name, icon: 'kit/HouseFill', color: 'Porpoise' },
+        { item: 'Issues', icon: 'kit/CheckSquare', selected: true, indent: true },
+        { item: 'Components', icon: 'kit/Diamond', indent: true },
+        { item: 'Milestones', icon: 'kit/Signpost', indent: true },
+        { item: 'Templates', icon: 'kit/Layout', indent: true }
       ]
     })
-    kit.SpaceHeader(main, { view: 'list', title: 'Issues', titleIcon: 'tracker/issues' })
+    kit.SpaceHeader(main, { view: 'list', title: 'Issues', titleIcon: 'kit/CheckSquare' })
     const groups = ['In Progress', 'Todo', 'Backlog', 'Done', 'Canceled'].map((statusName) => {
       const st = demo.statuses.find((s) => s.name === statusName)
       const issues = mkt.issues.filter((i) => i.status === statusName).map((i) => {
@@ -88,7 +88,7 @@ await kit.page(typeof PAGE_NAME === 'string' ? PAGE_NAME : '2. Создание 
       stroke: T('primary-button-default'),
       radius: 6
     }),
-    kit.icon('tracker/home', P('Porpoise'))
+    kit.icon('kit/HouseFill', P('Porpoise'))
   )
 
   const basics = (id, error) => [
@@ -143,7 +143,7 @@ await kit.page(typeof PAGE_NAME === 'string' ? PAGE_NAME : '2. Создание 
   ])
 
   wizard('Создание проекта - Шаг 3. Задачи', 2020, 1200, 2, [
-    row('Исполнитель по умолчанию', select('Не назначен', { icon: 'contact/Person', w: 240 })),
+    row('Исполнитель по умолчанию', select('Не назначен', { icon: 'kit/PersonCircle', w: 240 })),
     row('Статус по умолчанию', select('Todo', { w: 240 }))
   ])
 
@@ -195,7 +195,7 @@ await kit.page(typeof PAGE_NAME === 'string' ? PAGE_NAME : '2. Создание 
   // The base field: the project in the value, its archive mark after the name
   const baseField = (name, archived) => {
     const b = kit.box('base field', { w: fieldW, h: 32 })
-    kit.at(b, select(name, { icon: 'tracker/home' }), 0, 0)
+    kit.at(b, select(name, { icon: 'kit/HouseFill' }), 0, 0)
     if (archived) kit.at(b, archiveChip(), 106, 4)
     return b
   }
@@ -224,12 +224,12 @@ await kit.page(typeof PAGE_NAME === 'string' ? PAGE_NAME : '2. Создание 
       kit.add(kit.box('search', { w: fieldW, h: 10, dir: 'row', pad: [12, 12, 12, 12], vs: 'auto' }), kit.SearchInput({ placeholder: 'Поиск проекта', w: fieldW - 24 })),
       kit.Menu([
         { header: 'Активные' },
-        { label: 'Маркетинг', icon: 'tracker/home', hint: 'MKT' },
-        { label: 'Мобильное приложение', icon: 'tracker/home', hint: 'APP' },
-        { label: 'Поддержка', icon: 'tracker/home', hint: 'SUP' },
+        { label: 'Маркетинг', icon: 'kit/HouseFill', hint: 'MKT' },
+        { label: 'Мобильное приложение', icon: 'kit/HouseFill', hint: 'APP' },
+        { label: 'Поддержка', icon: 'kit/HouseFill', hint: 'SUP' },
         { header: 'Архивные' },
-        { label: 'Сайт 2025', icon: 'tracker/home', hint: 'Архив · WEB', selected: true },
-        { label: 'Лендинг 2024', icon: 'tracker/home', hint: 'Архив · LND' }
+        { label: 'Сайт 2025', icon: 'kit/HouseFill', hint: 'Архив · WEB', selected: true },
+        { label: 'Лендинг 2024', icon: 'kit/HouseFill', hint: 'Архив · LND' }
       ], { w: fieldW - 2 }),
       kit.add(kit.box('footer', { w: fieldW, h: 10, dir: 'row', pad: [8, 12, 8, 12], vs: 'auto' }), kit.Toggle(true, 'Показывать архивные', { size: 'small' }))
     )
@@ -241,7 +241,7 @@ await kit.page(typeof PAGE_NAME === 'string' ? PAGE_NAME : '2. Создание 
   const baseHead = (name, id, archived) => kit.add(
     kit.row('base head', D('spacing-1')),
     sub('Из проекта'),
-    kit.icon('tracker/home', P('Porpoise')),
+    kit.icon('kit/HouseFill', P('Porpoise')),
     kit.text(name, { size: 14, weight: 600, color: T('theme-caption-color') }),
     archived ? archiveChip() : null,
     sub(id + ' · тип Default')
@@ -256,7 +256,7 @@ await kit.page(typeof PAGE_NAME === 'string' ? PAGE_NAME : '2. Создание 
   const templatesValue = kit.add(
     kit.row('templates value', D('spacing-0_5')),
     kit.KitChip('выбрано 3 из 5', { kind: 'neutral', size: 'extra-small' }),
-    kit.IconButton('ui/Up', { kind: 'ghost', size: 'extra-small' })
+    kit.IconButton('kit/CaretUpFill', { kind: 'ghost', size: 'extra-small' })
   )
   const template = (title, type, checked) => copyRow(title, type, { checked, size: 'small', w: bodyW - 24 })
   const templateList = kit.add(
@@ -332,7 +332,7 @@ await kit.page(typeof PAGE_NAME === 'string' ? PAGE_NAME : '2. Создание 
   const baseBlock = kit.add(
     kit.box('summary base', { w: bodyW, h: 10, dir: 'column', gap: D('spacing-1'), pad: [12, 12, 12, 12], vs: 'auto', radius: D('medium-BorderRadius'), stroke: T('theme-divider-color') }),
     kit.text('На основе проекта', { size: 14, weight: 600, lh: 1.3, color: T('theme-caption-color') }),
-    kv('Основа', kit.add(kit.row('base', D('spacing-1')), kit.icon('tracker/home', P('Porpoise')), kit.text('Сайт 2025 (WEB)', { size: 14, color: T('theme-caption-color') }), archiveChip())),
+    kv('Основа', kit.add(kit.row('base', D('spacing-1')), kit.icon('kit/HouseFill', P('Porpoise')), kit.text('Сайт 2025 (WEB)', { size: 14, color: T('theme-caption-color') }), archiveChip())),
     kv('Шаблоны задач', '3 из 5'),
     kv('Workflow', '2 из 3 типов задач'),
     kv('Настройки', 'Участники и роли, Приватность, Исполнитель и статус по умолчанию'),

@@ -23,7 +23,7 @@
   import { notEmpty, type AccountUuid, type Data, type Doc, type Ref } from '@hcengineering/core'
   import { getClient, isDisabled, SpacesMultiPopup } from '@hcengineering/presentation'
   import type { Board, Issue, Project } from '@hcengineering/tracker'
-  import { Icon, IconAdd, Label, showPopup } from '@hcengineering/ui'
+  import ui, { Icon, Label, showPopup } from '@hcengineering/ui'
   import { Button, Dropdown, Radio, SettingRow, TextInput } from '@hcengineering/ui/kit'
   import { FilterConditions } from '@hcengineering/view-resources'
   import task from '@hcengineering/task'
@@ -143,7 +143,7 @@
           data-id="boardAddProject"
           kind="tertiary"
           size="extra-small"
-          icon={IconAdd}
+          icon={ui.icon.Plus}
           label={tracker.string.BoardAdd}
           on:click={chooseProjects}
         />
@@ -223,7 +223,7 @@
           data-id="boardAddEditor"
           kind="tertiary"
           size="extra-small"
-          icon={IconAdd}
+          icon={ui.icon.Plus}
           label={tracker.string.BoardAdd}
           on:click={chooseEditors}
         />

@@ -16,7 +16,7 @@
   import type { Ref, Status } from '@hcengineering/core'
   import type { ProjectType } from '@hcengineering/task'
   import type { Project } from '@hcengineering/tracker'
-  import { IconAdd, Label } from '@hcengineering/ui'
+  import ui, { Label } from '@hcengineering/ui'
   import { Button } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
@@ -60,7 +60,7 @@
       <Button
         kind="primary"
         size="small"
-        icon={IconAdd}
+        icon={ui.icon.Plus}
         iconSize="small"
         label={tracker.string.AddToColumn}
         data-id="boardUncoveredAdd"

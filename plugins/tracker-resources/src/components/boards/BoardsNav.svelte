@@ -18,11 +18,8 @@
   import type { Project } from '@hcengineering/tracker'
   import { canEditBoard, isBoardAvailable, sortBoards, type Board } from '@hcengineering/tracker'
   import task from '@hcengineering/task'
-  import {
+  import ui, {
     Icon,
-    IconAdd,
-    IconDelete,
-    IconSettings,
     resolvedLocationStore,
     showPopup,
     type Action
@@ -58,7 +55,7 @@
 
   const addBoard: Action = {
     label: tracker.string.CreateBoard,
-    icon: IconAdd,
+    icon: ui.icon.Plus,
     action: async (_id: Ref<Doc>): Promise<void> => {
       await newBoard(client, $resolvedLocationStore.path[3] as Ref<Project>)
     }
@@ -78,14 +75,14 @@
       result.push(
         {
           label: tracker.string.BoardSettings,
-          icon: IconSettings,
+          icon: ui.icon.Gear,
           action: async () => {
             boardLocation(board._id, true, undefined, true)
           }
         },
         {
           label: tracker.string.DeleteBoard,
-          icon: IconDelete,
+          icon: ui.icon.Trash,
           action: async () => {
             showPopup(MessageBox, {
               label: tracker.string.DeleteBoard,

@@ -156,7 +156,7 @@ export const EmptyStateStates: Story = sections([
         props: {
           label: 'No issues',
           description: 'Create the first issue',
-          icon: 'ui/Add',
+          icon: 'kit/Plus',
           size: 'large',
           width: 420,
           height: 240

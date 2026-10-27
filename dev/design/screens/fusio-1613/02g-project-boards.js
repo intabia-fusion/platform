@@ -30,7 +30,7 @@ await kit.page(typeof PAGE_NAME === 'string' ? PAGE_NAME : '2. Доска (to-be
   }
   const APP = boardsOf('APP')
   const MKT = boardsOf('MKT')
-  const iconOf = (b) => (b.pinned ? 'view/pin' : 'board')
+  const iconOf = (b) => (b.pinned ? 'kit/PushPin' : 'board')
   const shared = (b) => (b.projects.length > 1 ? b.projects.join(' · ') : undefined)
   const hintOf = (b) => [b.visibility === 'me' ? 'личная' : undefined, b.pinned ? 'в навигаторе' : undefined, shared(b)].filter((s) => s !== undefined).join(' · ')
 
@@ -46,7 +46,7 @@ await kit.page(typeof PAGE_NAME === 'string' ? PAGE_NAME : '2. Доска (to-be
   }
   const crumb = () => {
     const av = kit.box('avatar', { w: 24, h: 24, dir: 'row', align: 'center', justify: 'center', radius: 4, fill: T('global-ui-BackgroundColor') })
-    return kit.add(kit.row('Breadcrumb', 6), kit.add(av, kit.icon('tracker/issues', T('global-secondary-TextColor'))), kit.text('Задачи', { size: 16, weight: 700, color: T('global-secondary-TextColor') }))
+    return kit.add(kit.row('Breadcrumb', 6), kit.add(av, kit.icon('kit/CheckSquare', T('global-secondary-TextColor'))), kit.text('Задачи', { size: 16, weight: 700, color: T('global-secondary-TextColor') }))
   }
   const gear = () => kit.Button({ kind: 'secondary', size: 'small', icon: 'gear', name: 'Project settings' })
   // Board button of variants 2 and 3: board or pin icon, title, projects of a shared board
@@ -103,7 +103,7 @@ await kit.page(typeof PAGE_NAME === 'string' ? PAGE_NAME : '2. Доска (to-be
   // 2. Board buttons after the search, where the board shows its quick filters
   const v2 = issuesView('Задачи проекта - 2. кнопки в строке фильтров', 2020, 0, {
     title: 'Задачи',
-    titleIcon: 'tracker/issues',
+    titleIcon: 'kit/CheckSquare',
     actions: [gear()],
     filters: [sep(), mark('Proposal board buttons', APP.map((b) => pill(b)))]
   })
@@ -112,7 +112,7 @@ await kit.page(typeof PAGE_NAME === 'string' ? PAGE_NAME : '2. Доска (to-be
   // 3. One to three boards - buttons, four and more - a button with a menu
   const v3 = issuesView('Задачи проекта - 3. кнопка "Доски (N)"', 0, 1200, {
     title: 'Задачи',
-    titleIcon: 'tracker/issues',
+    titleIcon: 'kit/CheckSquare',
     actions: [mark('Proposal boards button', boardsButton(APP.length)), gear()]
   })
   const menu = kit.Menu([
