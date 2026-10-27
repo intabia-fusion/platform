@@ -38,18 +38,42 @@ interface Waiting {
 const waitingByUrl = new Map<string, Waiting>()
 /** Paths still being written: the disk calls them free while they are a `.crdownload`. */
 const pathsInUse = new Set<string>()
-
-export async function downloadToFolder (sender: WebContents, files: DownloadEntry[]): Promise<void> {
+/** Returns the names of the files refused, for the page to tell the user. */
+export async function downloadToFolder (sender: WebContents, files: unknown): Promise<string[]> {
+  const entries = validEntries(files)
+  const refused = Array.isArray(files)
+    ? files.filter((f) => !entries.includes(f)).map((f) => (typeof f?.name === 'string' ? f.name : ''))
+    : []
+  if (entries.length === 0) return refused
   const folder = await pickFolder(sender)
-  if (folder == null) return
+  if (folder == null) return []
 
   const namesInBatch = new Set<string>()
-  for (const file of files) {
+  for (const file of entries) {
     // Already on its way: a duplicate in the batch, or the batch started twice.
     if (waitingByUrl.has(file.url)) continue
     const savePath = path.join(folder, freeName(folder, file.name, namesInBatch))
     reserve(file.url, savePath)
     sender.downloadURL(file.url)
+  }
+  return refused
+}
+
+// The renderer is not trusted: web addresses only, so a `file:` one can't copy local files into the folder.
+// Not the front's origin alone: an attachment may keep an external address (`getFileUrl` passes it through).
+export function validEntries (files: unknown): DownloadEntry[] {
+  if (!Array.isArray(files)) return []
+  return files.filter(
+    (f): f is DownloadEntry => typeof f?.url === 'string' && typeof f?.name === 'string' && isWebUrl(f.url)
+  )
+}
+
+function isWebUrl (url: string): boolean {
+  try {
+    const { protocol } = new URL(url)
+    return protocol === 'https:' || protocol === 'http:'
+  } catch {
+    return false
   }
 }
 

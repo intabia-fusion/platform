@@ -38,6 +38,7 @@
   import attachment from '../plugin'
   import AttachmentsGrid from './AttachmentsGrid.svelte'
   import { dropFiles, droppedFiles, pickedFiles } from './file/drop'
+  import { notifyFailed, notifyInterrupted } from './file/interrupted'
   import { UploadQueue, draftAttachment } from './file/uploads'
 
   export let objectId: Ref<Doc> | undefined = undefined
@@ -61,6 +62,8 @@
 
   export let useDirectAttachDelete = false
   export let boundary: HTMLElement | undefined = undefined
+  /** Why the form may not save yet: files still going up or failed. Bind it to the save button. */
+  export let uploadBlock: IntlString | undefined = undefined
 
   let draftKey = objectId != null ? `${objectId as string}_attachments` : undefined
   $: draftKey = objectId ? `${objectId}_attachments` : undefined
@@ -188,6 +191,13 @@
     dispatch('uploads', uploads)
   }, addStored)
 
+  $: uploadBlock =
+    uploads.size > 0
+      ? uploads.failed
+        ? attachment.string.FilesNotUploaded
+        : attachment.string.FilesUploading
+      : undefined
+
   let dragging = false
 
   // `enableAttachments` only hides the grid: a form drawing the files itself still takes them on drop.
@@ -260,8 +270,10 @@
   }
 
   onDestroy(() => {
-    const { stored } = uploads.flush()
+    const { stored, lost } = uploads.flush()
     if (stored.length > 0) addStored(stored)
+    // Only where the files were to stay: a draft or a document they attach to at once.
+    if (shouldSaveDraft || useDirectAttachDelete) void notifyInterrupted(lost)
     uploads.releaseAll()
     if (!saved && !shouldSaveDraft) {
       newAttachments.forEach((p) => {
@@ -312,10 +324,11 @@
     }
     saved = true
     await uploads.settled()
-    const { stored, lost } = uploads.flush()
+    const { stored, lost, failed } = uploads.flush()
     if (stored.length > 0) addStored(stored)
     // The form closes after this: a file that failed during the wait has no tile left to show it.
-    if (lost.length > 0) void setPlatformStatus(unknownError(`Not attached: ${lost.join(', ')}`))
+    void notifyInterrupted(lost)
+    void notifyFailed(failed)
     // Adding the stored files marked the draft unsaved again.
     saved = true
     const promises: Promise<any>[] = []

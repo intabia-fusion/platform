@@ -193,7 +193,7 @@ export interface IPCMainExposed {
   getScreenSources: () => Promise<ScreenSource[]>
   handleAuth: (callback: (token: string) => void) => void
   handleDownloadItem: (callback: (item: DownloadItem) => void) => void
-  downloadToFolder: (files: DownloadEntry[]) => Promise<void>
+  downloadToFolder: (files: DownloadEntry[]) => Promise<string[]>
 
   cancelBackup: () => void
   startBackup: (token: string, endpoint: string, workspace: string) => void

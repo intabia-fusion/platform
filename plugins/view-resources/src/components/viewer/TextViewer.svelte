@@ -21,6 +21,7 @@
   import ui, { Label, Loading, Scroller } from '@hcengineering/ui'
   import { FileNoPreview, IconButton } from '@hcengineering/ui/kit'
 
+  import { indentJson } from '../../jsonText'
   import view from '../../plugin'
   import TextFlow from './TextFlow.svelte'
 
@@ -74,9 +75,9 @@
     // The text of an error answer is not the file's; an empty sheet would pass for an empty file.
     failed = res?.ok !== true || raw === undefined
     const json = isJson(name, res?.headers.get('content-type'))
-    const body = json ? pretty(raw ?? '') : (raw ?? '')
     fromStart = json || isMarkdown(name, contentType)
-    fullText = body
+    // Re-indented by tokens, not parsed: numbers past 2^53 and key order stay as in the file.
+    fullText = json && (raw ?? '').length <= MAX_JSON_CHARS ? indentJson(raw ?? '') : (raw ?? '')
 
     loading = false
   }
@@ -127,15 +128,6 @@
 
   function isJson (name: string, type: string | null | undefined): boolean {
     return name.toLowerCase().endsWith('.json') || (type ?? '').includes('json')
-  }
-
-  function pretty (text: string): string {
-    if (text.length > MAX_JSON_CHARS) return text
-    try {
-      return JSON.stringify(JSON.parse(text), null, 2)
-    } catch {
-      return text
-    }
   }
 </script>
 

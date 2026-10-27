@@ -40,6 +40,7 @@
   } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { IconPicker, SpaceTypeSelector } from '@hcengineering/view-resources'
+  import type { IntlString } from '@hcengineering/platform'
 
   import products from '../../plugin'
 
@@ -221,6 +222,8 @@
     object.owners !== undefined &&
     object.owners.length > 0 &&
     (!object.private || object.owners.some((p) => object.members.includes(p)))
+
+  let uploadBlock: IntlString | undefined = undefined
 </script>
 
 <FocusHandler {manager} />
@@ -228,7 +231,8 @@
 <Card
   label={products.string.CreateProduct}
   okAction={handleOkAction}
-  {canSave}
+  canSave={canSave && uploadBlock == null}
+  okTooltip={uploadBlock}
   on:close={handleClose}
   hideAttachments={attachments.size === 0 && (uploads?.size ?? 0) === 0}
 >
@@ -266,6 +270,7 @@
 
   {#key productId}
     <AttachmentStyledBox
+      bind:uploadBlock
       bind:this={descriptionBox}
       objectId={productId}
       _class={products.class.Product}

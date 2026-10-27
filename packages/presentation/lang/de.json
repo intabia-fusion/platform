@@ -8,6 +8,8 @@
     "Saving": "Speichern...",
     "Download": "Herunterladen",
     "DownloadOriginal": "Original herunterladen",
+    "FilesNotDownloaded": "{count, plural, one {Datei nicht heruntergeladen} other {Dateien nicht heruntergeladen}}",
+    "FilesNotDownloadedHint": "Herunterladen fehlgeschlagen: {names}.",
     "Delete": "Löschen",
     "Close": "Schließen",
     "NotSelected": "Nicht ausgewählt",

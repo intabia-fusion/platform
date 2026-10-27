@@ -8,6 +8,8 @@
     "Saving": "Salvando...",
     "Download": "Fazer download",
     "DownloadOriginal": "Fazer download do original",
+    "FilesNotDownloaded": "{count, plural, one {Falha no download do arquivo} other {Falha no download dos arquivos}}",
+    "FilesNotDownloadedHint": "Não foi possível fazer download: {names}.",
     "Delete": "Excluir",
     "Close": "Fechar",
     "NotSelected": "Não selecionado",

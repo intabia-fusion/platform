@@ -8,6 +8,8 @@
     "Saving": "Enregistrement...",
     "Download": "Télécharger",
     "DownloadOriginal": "Télécharger l'original",
+    "FilesNotDownloaded": "{count, plural, one {Fichier non téléchargé} other {Fichiers non téléchargés}}",
+    "FilesNotDownloadedHint": "Impossible de télécharger : {names}.",
     "Delete": "Supprimer",
     "Close": "Fermer",
     "NotSelected": "Non sélectionné",

@@ -38,7 +38,7 @@ import { ProgressInfo, UpdateInfo } from 'electron-updater'
 import WinBadge from 'electron-windows-badge'
 import * as path from 'path'
 
-import { Config, MenuBarAction, NotificationParams, JumpListSpares, CommandCloseTab, DownloadEntry } from '../ui/types'
+import { Config, MenuBarAction, NotificationParams, JumpListSpares, CommandCloseTab } from '../ui/types'
 import { getOptions } from './args'
 import { addMenus } from './standardMenu'
 import { dispatchMenuBarAction } from './customMenu'
@@ -597,9 +597,10 @@ function runTheApp (): void {
     })
   }
 
-  ipcMain.handle(IpcMessage.DownloadToFolder, async (event, files: DownloadEntry[]) => {
-    await downloadToFolder(event.sender, files)
-  })
+  ipcMain.handle(
+    IpcMessage.DownloadToFolder,
+    async (event, files: unknown) => await downloadToFolder(event.sender, files)
+  )
 
   ipcMain.handle(IpcMessage.GetScreenAccess, () => systemPreferences.getMediaAccessStatus('screen') === 'granted')
   ipcMain.handle(IpcMessage.GetScreenSources, () => {

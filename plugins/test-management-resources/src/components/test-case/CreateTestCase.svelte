@@ -25,6 +25,7 @@
   import { Card, SpaceSelector, createMarkup, getClient } from '@hcengineering/presentation'
   import { EmptyMarkup, isEmptyMarkup } from '@hcengineering/text'
   import ui, { Button, createFocusManager, EditBox, FocusHandler, getLocation } from '@hcengineering/ui'
+  import type { IntlString } from '@hcengineering/platform'
 
   import StatusEditor from './StatusEditor.svelte'
   import ProjectPresenter from '../project/ProjectPresenter.svelte'
@@ -95,6 +96,8 @@
   let descriptionBox: AttachmentStyledBox
   let attachments: Map<Ref<Attachment>, Attachment> = new Map<Ref<Attachment>, Attachment>()
   let uploads: UploadQueue | undefined
+
+  let uploadBlock: IntlString | undefined = undefined
 </script>
 
 <FocusHandler {manager} />
@@ -103,7 +106,8 @@
   label={testManagement.string.CreateTestCase}
   okAction={createTestCase}
   hideAttachments={attachments.size === 0 && (uploads?.size ?? 0) === 0}
-  canSave={object.name.length > 0}
+  canSave={object.name.length > 0 && uploadBlock == null}
+  okTooltip={uploadBlock}
   on:close={() => {
     dispatch('close')
   }}
@@ -148,6 +152,7 @@
   </div>
 
   <AttachmentStyledBox
+    bind:uploadBlock
     bind:this={descriptionBox}
     objectId={id}
     _class={testManagement.class.TestCase}

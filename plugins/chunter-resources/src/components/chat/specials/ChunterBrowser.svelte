@@ -22,13 +22,13 @@
   import type { ChatSearchFilters } from '../../../search/types'
   import {
     defaultSort,
-    filtersFromQuery,
+    filtersFromLink,
     formatsFromQuery,
     namesSearch,
     replaceSearch,
     searchToQuery,
     sortFromQuery,
-    tabFromQuery
+    startTab
   } from '../../../search/url'
   import Header from '../../Header.svelte'
   import FilesPanel from '../search/browser/FilesPanel.svelte'
@@ -53,7 +53,7 @@
   const url = getCurrentLocation().query
   const last = namesSearch(url) ? undefined : peekSearchSnapshot()
 
-  let tab: BrowserTab = startTab()
+  let tab: BrowserTab = initialTab()
   // The kept search is a message search: a file tab opens with its own box empty.
   let query: string = pending?.search ?? (tab === BrowserTab.Messages ? last?.search : undefined) ?? url?.q ?? ''
   let filters: ChatSearchFilters = pending?.filters ?? last?.filters ?? {}
@@ -77,7 +77,7 @@
   // Filters from a link name people and objects, which load first.
   let ready = pending != null || last != null
   if (!ready) {
-    void filtersFromQuery(url).then((restored) => {
+    void filtersFromLink(url).then((restored) => {
       filters = restored
       ready = true
     })
@@ -114,10 +114,9 @@
     navigate(loc, true)
   }
 
-  // A handed-over search and a link with a query are message searches, whatever tab was last.
-  function startTab (): BrowserTab {
-    if (pending != null) return BrowserTab.Messages
-    return tabFromQuery(url) ?? (url?.q != null ? BrowserTab.Messages : savedTab())
+  // A handed-over search is a message search, whatever tab was last.
+  function initialTab (): BrowserTab {
+    return pending != null ? BrowserTab.Messages : startTab(url, savedTab)
   }
 
   function savedTab (): BrowserTab {

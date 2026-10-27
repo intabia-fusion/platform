@@ -8,6 +8,8 @@
     "Saving": "A guardar...",
     "Download": "Transferir",
     "DownloadOriginal": "Transferir original",
+    "FilesNotDownloaded": "{count, plural, one {Ficheiro não transferido} other {Ficheiros não transferidos}}",
+    "FilesNotDownloadedHint": "Não foi possível transferir: {names}.",
     "Delete": "Eliminar",
     "Close": "Fechar",
     "NotSelected": "Não selecionado",

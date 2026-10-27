@@ -8,6 +8,8 @@
     "Saving": "Saving...",
     "Download": "Download",
     "DownloadOriginal": "Download original",
+    "FilesNotDownloaded": "{count, plural, one {File not downloaded} other {Files not downloaded}}",
+    "FilesNotDownloadedHint": "Couldn't download: {names}.",
     "Delete": "Delete",
     "Close": "Close",
     "NotSelected": "Not selected",

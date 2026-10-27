@@ -8,6 +8,8 @@
     "Saving": "Kaydediliyor...",
     "Download": "İndir",
     "DownloadOriginal": "Orijinali indir",
+    "FilesNotDownloaded": "{count, plural, one {Dosya indirilemedi} other {Dosyalar indirilemedi}}",
+    "FilesNotDownloadedHint": "İndirilemedi: {names}.",
     "Delete": "Sil",
     "Close": "Kapat",
     "NotSelected": "Seçilmedi",

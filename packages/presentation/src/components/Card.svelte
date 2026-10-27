@@ -33,6 +33,7 @@
   export let okAction: () => Promise<void> | void
   export let canSave: boolean = false
   export let okLabel: IntlString = presentation.string.Create
+  export let okTooltip: IntlString | undefined = undefined
   export let onCancel: (() => void) | undefined = undefined
   export let backAction: () => Promise<void> | void = () => {}
   export let isBack: boolean = false
@@ -220,6 +221,7 @@
               minWidth="5rem"
               disabled={!canSave}
               label={okLabel}
+              showTooltip={okTooltip != null ? { label: okTooltip } : undefined}
               kind="primary"
               size="large"
               on:click={handleOkClick}

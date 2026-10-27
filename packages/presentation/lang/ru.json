@@ -8,6 +8,8 @@
     "Saving": "Сохранение...",
     "Download": "Скачать",
     "DownloadOriginal": "Скачать оригинал",
+    "FilesNotDownloaded": "{count, plural, one {Файл не скачан} other {Файлы не скачаны}}",
+    "FilesNotDownloadedHint": "Не удалось скачать: {names}.",
     "Delete": "Удалить",
     "Close": "Закрыть",
     "NotSelected": "Не выбрано",

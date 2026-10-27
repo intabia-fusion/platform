@@ -22,7 +22,7 @@
   import type { CardSpace } from '@hcengineering/card'
   import type { Data, Markup, Ref } from '@hcengineering/core'
   import core, { generateId, getCurrentAccount } from '@hcengineering/core'
-  import { getResource } from '@hcengineering/platform'
+  import { getResource, type IntlString } from '@hcengineering/platform'
   import { EmptyMarkup, isEmptyMarkup, markupToText } from '@hcengineering/text'
   import textEditor, { type RefAction } from '@hcengineering/text-editor'
   import { permissionsStore } from '@hcengineering/contact-resources'
@@ -73,7 +73,9 @@
   $: draftController.save({ title, description, type, space }, getEmptyCardDraft())
 
   let creating = false
+  let uploadBlock: IntlString | undefined = undefined
   $: applyDisabled =
+    uploadBlock != null ||
     (title.trim() === '' && isEmptyMarkup(description)) ||
     space == null ||
     type == null ||
@@ -182,6 +184,7 @@
   <!-- svelte-ignore a11y-no-static-element-interactions -->
   <div class="form-row description" class:collapsed={!isExpanded} on:click={expand}>
     <AttachmentStyledBox
+      bind:uploadBlock
       bind:this={descriptionBox}
       objectId={_id}
       _class={type}
@@ -224,6 +227,7 @@
               size="small"
               kind="primary"
               disabled={applyDisabled}
+              tooltip={uploadBlock != null ? { label: uploadBlock } : undefined}
               loading={creating}
               on:click={() => {
                 void okAction()

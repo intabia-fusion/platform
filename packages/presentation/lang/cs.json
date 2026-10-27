@@ -8,6 +8,8 @@
     "Saving": "Ukládání...",
     "Download": "Stáhnout",
     "DownloadOriginal": "Stáhnout originál",
+    "FilesNotDownloaded": "{count, plural, one {Soubor nebyl stažen} few {Soubory nebyly staženy} many {Souborů nebylo staženo} other {Souborů nebylo staženo}}",
+    "FilesNotDownloadedHint": "Nepodařilo se stáhnout: {names}.",
     "Delete": "Smazat",
     "Close": "Zavřít",
     "NotSelected": "Nevybráno",
