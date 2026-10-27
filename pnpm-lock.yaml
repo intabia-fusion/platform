@@ -31387,6 +31387,9 @@ importers:
       '@hcengineering/analytics':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/analytics
+      '@hcengineering/billing':
+        specifier: workspace:^0.7.0
+        version: link:../billing
       '@hcengineering/client':
         specifier: workspace:^0.7.18
         version: link:../../foundations/core/packages/client

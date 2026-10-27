@@ -66,6 +66,8 @@ export const isLimited = derived(subscriptionStore, ($store) => $store.isLimited
 export const onTrial = derived(subscriptionStore, ($store) => $store.onTrial)
 export const trialDaysLeft = derived(subscriptionStore, ($store) => $store.trialDaysLeft)
 
+export { isPasswordAgain, setIsPasswordAgain } from '@hcengineering/billing'
+
 /** Resolved numeric limits (0 = unlimited) for the active plan/package, reactive on subscription changes. */
 export const planLimits = derived(subscriptionStore, ($s) =>
   calculateLimits($s.currentPlan, $s.currentPackage, $s.currentSubscription, $s.currentPackageSubscription)

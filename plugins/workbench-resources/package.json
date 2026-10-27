@@ -56,6 +56,7 @@
     "@hcengineering/preference": "workspace:^0.7.0",
     "@hcengineering/support": "workspace:^0.7.0",
     "@hcengineering/view-resources": "workspace:^0.7.0",
+    "@hcengineering/billing": "workspace:^0.7.0",
     "fast-copy": "catalog:",
     "@hcengineering/analytics": "workspace:^0.7.17",
     "@hcengineering/account-client": "workspace:^0.7.21",

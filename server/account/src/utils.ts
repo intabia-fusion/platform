@@ -50,6 +50,7 @@ import { createHash, pbkdf2Sync, randomBytes } from 'crypto'
 import otpGenerator from 'otp-generator'
 
 import { Analytics } from '@hcengineering/analytics'
+import { type PasswordAgingStatus } from '@hcengineering/account-client'
 import {
   decodeTokenVerbose,
   generateToken,
@@ -1311,7 +1312,8 @@ export async function selectWorkspace (
     workspaceDataId: workspace.dataId,
     allowGuestSignUp: workspace.allowReadOnlyGuest && workspace.allowGuestSignUp,
     role,
-    disabledFeaturesOverride: workspace.disabledFeaturesOverride
+    disabledFeaturesOverride: workspace.disabledFeaturesOverride,
+    passwordAging: await resolvePasswordAging(db, workspace, accountUuid, extra)
   }
 }
 
@@ -1404,16 +1406,45 @@ export async function updatePasswordAgingRule (
   await db.updatePasswordAgingRule(workspace, days ?? null)
 }
 
+// Days past the workspace rule during which the user is still let in, with a reminder on the client.
+const PASSWORD_AGING_GRACE_DAYS = 2
+
+export async function resolvePasswordAging (
+  db: AccountDB,
+  workspace: Workspace,
+  account: AccountUuid,
+  extra: Record<string, any> | undefined
+): Promise<PasswordAgingStatus> {
+  if (extra?.authMethod !== 'password') {
+    return 'ok'
+  }
+  if (workspace.passwordAgingRule == null || workspace.passwordAgingRule <= 0) {
+    return 'ok'
+  }
+
+  const day = 24 * 60 * 60 * 1000
+  const now = Date.now()
+  if (await isPasswordChangedSince(db, account, now - workspace.passwordAgingRule * day)) {
+    return 'ok'
+  }
+  if (
+    await isPasswordChangedSince(db, account, now - (workspace.passwordAgingRule + PASSWORD_AGING_GRACE_DAYS) * day)
+  ) {
+    return 'warn'
+  }
+  return 'expired'
+}
+
 export async function checkPasswordAging (
   ctx: MeasureContext,
   db: AccountDB,
   branding: Branding | null,
   token: string
-): Promise<boolean> {
+): Promise<PasswordAgingStatus> {
   const { account, workspace, extra } = decodeTokenVerbose(ctx, token)
 
   if (extra?.authMethod !== 'password') {
-    return true
+    return 'ok'
   }
 
   if (workspace === null) {
@@ -1423,12 +1454,8 @@ export async function checkPasswordAging (
   if (ws == null) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.WorkspaceNotFound, { workspaceUuid: workspace }))
   }
-  if (ws.passwordAgingRule == null || ws.passwordAgingRule <= 0) {
-    return true
-  }
-  const since = Date.now() - ws.passwordAgingRule * 24 * 60 * 60 * 1000
-  const res = await isPasswordChangedSince(db, account, since)
-  return res
+
+  return await resolvePasswordAging(db, ws, account, extra)
 }
 
 export async function updateAllowGuestSignUp (

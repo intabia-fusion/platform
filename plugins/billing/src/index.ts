@@ -16,6 +16,7 @@ import { billingId, billingPlugin } from './plugin'
 
 export type * from './types'
 export * from './pricing'
+export * from './passwordAging'
 
 export { billingId }
 export default billingPlugin

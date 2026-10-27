@@ -71,6 +71,8 @@ export interface WorkspaceLoginInfo extends LoginInfo {
   role: AccountRole
   allowGuestSignUp?: boolean
   disabledFeaturesOverride?: string[]
+  /** Password aging state for this login, so the client does not have to ask for it separately. */
+  passwordAging?: PasswordAgingStatus
 }
 
 export interface LoginInfoRequestData {
@@ -658,3 +660,5 @@ export interface ApiKeyCheck {
   /** Used by pod-webhook to accept incoming rules only from the key creator's PersonSpace. */
   createdBy: AccountUuid
 }
+
+export type PasswordAgingStatus = 'ok' | 'warn' | 'expired'
