@@ -26,8 +26,16 @@
   export let opened: boolean = false
   export let dataId: string | undefined = undefined
 
-  function onClick (ev: MouseEvent): void {
-    void action(ev)
+  let running = false
+
+  async function onClick (ev: MouseEvent): Promise<void> {
+    if (running) return
+    running = true
+    try {
+      await action(ev)
+    } finally {
+      running = false
+    }
   }
 </script>
 
@@ -39,6 +47,7 @@
   kind="tertiary"
   pressed={opened}
   data-id={dataId}
+  loading={running}
   tooltip={{ label, direction: 'bottom' }}
   on:click={onClick}
 />

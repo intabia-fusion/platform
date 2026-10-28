@@ -35,8 +35,13 @@
     })
   }
 
+  let creating = false
   const showCreateDialog = async () => {
-    showPopup(CreateIssueTemplate, { targetElement: null, space }, 'top')
+    if (creating) return
+    creating = true
+    showPopup(CreateIssueTemplate, { targetElement: null, space }, 'top', () => {
+      creating = false
+    })
   }
 </script>
 
@@ -57,7 +62,13 @@
     <slot name="label_selector" />
   </svelte:fragment>
   <svelte:fragment slot="actions">
-    <Button icon={ui.icon.Plus} label={tracker.string.IssueTemplate} kind="primary" on:click={showCreateDialog} />
+    <Button
+      icon={ui.icon.Plus}
+      label={tracker.string.IssueTemplate}
+      kind="primary"
+      loading={creating}
+      on:click={showCreateDialog}
+    />
   </svelte:fragment>
 </SpaceHeader>
 <slot name="afterHeader" />

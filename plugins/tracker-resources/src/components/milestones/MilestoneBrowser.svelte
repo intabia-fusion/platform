@@ -33,8 +33,13 @@
   export let mode: MilestoneViewMode = 'all'
 
   const space = typeof query.space === 'string' ? query.space : tracker.project.DefaultProject
+  let creating = false
   const showCreateDialog = async () => {
-    showPopup(NewMilestone, { space, targetElement: null }, 'top')
+    if (creating) return
+    creating = true
+    showPopup(NewMilestone, { space, targetElement: null }, 'top', () => {
+      creating = false
+    })
   }
 
   export let panelWidth: number = 0
@@ -115,7 +120,13 @@
     <FilterButton _class={tracker.class.Milestone} {space} />
   </svelte:fragment>
   <svelte:fragment slot="actions">
-    <Button icon={ui.icon.Plus} label={tracker.string.Milestone} kind="primary" on:click={showCreateDialog} />
+    <Button
+      icon={ui.icon.Plus}
+      label={tracker.string.Milestone}
+      kind="primary"
+      loading={creating}
+      on:click={showCreateDialog}
+    />
   </svelte:fragment>
   <svelte:fragment slot="extra">
     <Switcher

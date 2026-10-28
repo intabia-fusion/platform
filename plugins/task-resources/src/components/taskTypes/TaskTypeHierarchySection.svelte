@@ -119,12 +119,17 @@
     await client.diffUpdate(taskType, addParentTo(taskType, id, taskTypes))
   }
 
+  let picking = false
   async function openTypesPopup (
     evt: MouseEvent,
     available: TaskType[],
     withAny: boolean,
     onPick: (id: Ref<TaskType> | typeof anyId) => void
   ): Promise<void> {
+    if (picking) return
+    picking = true
+    // currentTarget is reset once the click dispatch ends, before the await below resumes
+    const anchor = evt.currentTarget as HTMLElement
     const selfMark = await translate(task.string.SameTypeNesting, {}, $themeStore.language)
     const value = [
       ...(withAny ? [{ id: anyId, label: task.string.AllowAnyParent }] : []),
@@ -132,7 +137,8 @@
         .sort((a, b) => a.name.localeCompare(b.name))
         .map((t) => ({ id: t._id, text: t._id === taskType._id ? `${t.name} (${selfMark})` : t.name }))
     ]
-    showPopup(SelectPopup, { value, searchable: true }, evt.currentTarget as HTMLElement, (id: string | undefined) => {
+    showPopup(SelectPopup, { value, searchable: true }, anchor, (id: string | undefined) => {
+      picking = false
       if (id !== undefined) onPick(id as Ref<TaskType> | typeof anyId)
     })
   }
@@ -264,6 +270,7 @@
                     size="small"
                     kind="secondary"
                     tooltip={{ label: task.string.HierarchyAddParent }}
+                    disabled={picking}
                     on:click={handleAdd}
                   />
                 {/if}
@@ -309,6 +316,7 @@
                     size="small"
                     kind="secondary"
                     tooltip={{ label: task.string.HierarchyAddChild }}
+                    disabled={picking}
                     on:click={handleAddChild}
                   />
                 </div>

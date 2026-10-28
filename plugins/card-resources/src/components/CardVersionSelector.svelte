@@ -73,18 +73,26 @@
     }
   }
 
+  let creatingVersion = false
+
   async function newVersion (): Promise<void> {
-    const _id = await createNewVersion(value)
-    const loc = getCurrentLocation()
-    loc.path[2] = cardId
-    loc.path[3] = _id
-    navigate(loc)
+    if (creatingVersion) return
+    creatingVersion = true
+    try {
+      const _id = await createNewVersion(value)
+      const loc = getCurrentLocation()
+      loc.path[2] = cardId
+      loc.path[3] = _id
+      navigate(loc)
+    } finally {
+      creatingVersion = false
+    }
   }
 </script>
 
 {#if enabled}
   <DropdownLabels kind="link" {items} on:selected={selectHandler} selected={value._id} />
   {#if value.isLatest}
-    <Button label={card.string.NewVersion} on:click={newVersion} />
+    <Button label={card.string.NewVersion} loading={creatingVersion} on:click={newVersion} />
   {/if}
 {/if}

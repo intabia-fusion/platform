@@ -8,7 +8,8 @@ export class CategoriesPage extends CalendarPage {
   constructor (page: Page) {
     super(page)
     this.page = page
-    this.buttonCreateCategory = page.getByRole('button', { name: 'Category' })
+    // exact: a category nav item whose name contains "Category" matches too.
+    this.buttonCreateCategory = page.getByRole('button', { name: 'Category', exact: true })
   }
 
   async openCategory (categoryTitle: string): Promise<void> {

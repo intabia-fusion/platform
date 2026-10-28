@@ -59,7 +59,11 @@
     return value?.trim().toLowerCase() ?? ''
   }
 
+  let sending = false
+
   async function sendConfirmation (): Promise<void> {
+    if (sending) return
+    sending = true
     try {
       status = OK
       otpInfo = await accountClient.addEmailSocialId(getCleanEmail(email))
@@ -75,6 +79,8 @@
       } else {
         status = unknownError(err)
       }
+    } finally {
+      sending = false
     }
   }
 
@@ -195,7 +201,13 @@
 
         {#if canResend}
           <div class="ml-1">
-            <Button label={setting.string.SendAgain} kind="ghost" size="small" on:click={handleResend} />
+            <Button
+              label={setting.string.SendAgain}
+              kind="ghost"
+              size="small"
+              loading={sending}
+              on:click={handleResend}
+            />
           </div>
         {/if}
       </div>
@@ -209,7 +221,8 @@
           label={setting.string.SendConfirmation}
           kind="primary"
           size="small"
-          disabled={!canSend}
+          disabled={!canSend || sending}
+          loading={sending}
           on:click={handleSendConfirmation}
         />
       </div>

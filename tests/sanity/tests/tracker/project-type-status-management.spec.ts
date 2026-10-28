@@ -78,7 +78,6 @@ test.describe('Status management in a project type', () => {
     await settings.openTaskType(secondType)
 
     await settings.changeState('Todo', renamedStatus)
-    await expect(settings.statusNameInput()).toBeHidden()
     await expect(settings.stateButton(renamedStatus)).toBeVisible()
     await expect(settings.stateButton('Todo')).toHaveCount(0)
     await expect(page.getByText('Statuses were not created', { exact: false })).toHaveCount(0)

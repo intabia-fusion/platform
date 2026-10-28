@@ -53,6 +53,19 @@
     }
   }
 
+  let toggling = false
+
+  async function toggleApp (app: Application): Promise<void> {
+    if (toggling) return
+    toggling = true
+    try {
+      if (hiddenAppsIds.includes(app._id)) await showApplication(app)
+      else await hideApplication(app)
+    } finally {
+      toggling = false
+    }
+  }
+
   let loaded: boolean = false
   let storedHiddenIds: Array<Ref<Application>> = []
   let hiddenAppsIds: Array<Ref<Application>> = []
@@ -103,9 +116,9 @@
             bind:this={btns[i]}
             class="ap-menuItem withIcon flex-row-center flex-grow"
             class:hover={btns[i] === activeElement}
+            disabled={toggling}
             on:click={() => {
-              if (hiddenAppsIds.includes(app._id)) void showApplication(app)
-              else void hideApplication(app)
+              void toggleApp(app)
             }}
             on:mousemove={() => {
               focusTarget(btns[i])

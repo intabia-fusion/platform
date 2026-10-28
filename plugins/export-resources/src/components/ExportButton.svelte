@@ -25,7 +25,11 @@
   export let visible: boolean = false
   export let config: TransformConfig = {}
 
+  let exporting = false
+
   async function handleExport (): Promise<void> {
+    if (exporting) return
+    exporting = true
     try {
       const baseUrl = getMetadata(plugin.metadata.ExportUrl)
       const token = getMetadata(presentation.metadata.Token)
@@ -78,6 +82,8 @@
         kind: 'error',
         message: plugin.string.ExportRequestFailedMessage
       })
+    } finally {
+      exporting = false
     }
   }
 </script>
@@ -88,6 +94,8 @@
     label={plugin.string.Export}
     kind="regular"
     size="medium"
+    loading={exporting}
+    disabled={exporting}
     showTooltip={{ label: plugin.string.Export }}
     on:click={handleExport}
   />

@@ -53,14 +53,22 @@
     clearSettingsStore()
   }
 
+  let removing = false
+
   async function remove (): Promise<void> {
-    const doc = client.getModel().findObject(_id)
-    if (doc === undefined) return
-    const index = doc.actions.findIndex((it) => it._id === step._id)
-    if (index === -1) return
-    doc.actions.splice(index, 1)
-    await client.update(doc, { actions: doc.actions })
-    clearSettingsStore()
+    if (removing) return
+    removing = true
+    try {
+      const doc = client.getModel().findObject(_id)
+      if (doc === undefined) return
+      const index = doc.actions.findIndex((it) => it._id === step._id)
+      if (index === -1) return
+      doc.actions.splice(index, 1)
+      await client.update(doc, { actions: doc.actions })
+      clearSettingsStore()
+    } finally {
+      removing = false
+    }
   }
 
   function change (e: CustomEvent<Step<Doc>>): void {
@@ -82,6 +90,7 @@
         icon={ui.icon.Trash}
         size="small"
         kind="tertiary"
+        loading={removing}
         tooltip={{ label: presentation.string.Delete }}
         on:click={remove}
       />

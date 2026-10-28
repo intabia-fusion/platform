@@ -59,7 +59,11 @@
     }
   }
 
+  let membersPopupOpen = false
+
   const handleMembersEditorOpened = async (event: MouseEvent) => {
+    if (membersPopupOpen) return
+    membersPopupOpen = true
     showPopup(
       UsersPopup,
       {
@@ -73,7 +77,9 @@
         placeholder: intlSearchPh
       },
       eventToHTMLElement(event),
-      undefined,
+      () => {
+        membersPopupOpen = false
+      },
       handleMembersChanged
     )
   }
@@ -88,5 +94,6 @@
   labelParams={shouldShowLabel ? { count: members.length } : {}}
   title={buttonTitle}
   icon={contact.icon.ComponentMembers}
+  loading={membersPopupOpen}
   on:click={handleMembersEditorOpened}
 />

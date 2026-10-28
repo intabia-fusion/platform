@@ -5,6 +5,7 @@
   import type { DocumentQuery } from '@hcengineering/core'
   import { type IModeSelector, navigate, rawLocation } from '@hcengineering/ui'
   import { SpecialView } from '@hcengineering/workbench-resources'
+  import { permissionsStore } from '@hcengineering/contact-resources'
   import { type Training, TrainingState } from '@hcengineering/training'
   import type { ComponentProps } from 'svelte'
   import training from '../plugin'
@@ -50,7 +51,8 @@
     }
   }
 
-  const canCreate = canCreateTraining()
+  // Permissions load after the view may mount: a one-time read hid the button until a reload
+  $: canCreate = canCreateTraining($permissionsStore)
 </script>
 
 <SpecialView

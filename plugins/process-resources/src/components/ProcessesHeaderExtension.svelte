@@ -69,26 +69,48 @@
 
   const client = getClient()
 
+  let checking = false
+  let performing = false
+  let rollingBack = false
+
   async function checkTodo (todo: ProcessToDo) {
-    await client.update(todo, {
-      doneOn: new Date().getTime()
-    })
+    if (checking) return
+    checking = true
+    try {
+      await client.update(todo, {
+        doneOn: new Date().getTime()
+      })
+    } finally {
+      checking = false
+    }
   }
 
   async function performAction (action: EventButton) {
-    await client.createDoc(process.class.ProcessCustomEvent, action.space, {
-      execution: action.execution,
-      eventType: action.eventType,
-      card: card._id
-    })
+    if (performing) return
+    performing = true
+    try {
+      await client.createDoc(process.class.ProcessCustomEvent, action.space, {
+        execution: action.execution,
+        eventType: action.eventType,
+        card: card._id
+      })
+    } finally {
+      performing = false
+    }
   }
 
   async function performRollback (execution: Execution) {
-    await client.createDoc(process.class.ProcessCustomEvent, execution.space, {
-      execution: execution._id,
-      eventType: 'rollback',
-      card: card._id
-    })
+    if (rollingBack) return
+    rollingBack = true
+    try {
+      await client.createDoc(process.class.ProcessCustomEvent, execution.space, {
+        execution: execution._id,
+        eventType: 'rollback',
+        card: card._id
+      })
+    } finally {
+      rollingBack = false
+    }
   }
 
   function getExecutionLabel (execution: Execution): string {
@@ -110,13 +132,23 @@
   {#if isRequest(todo)}
     <ApproveRequestButtons {todo} card={card._id} />
   {:else}
-    <Button kind="primary" label={getEmbeddedLabel(todo.title)} on:click={() => checkTodo(todo)} />
+    <Button kind="primary" label={getEmbeddedLabel(todo.title)} loading={checking} on:click={() => checkTodo(todo)} />
   {/if}
 {/each}
 {#each actions as action (action._id)}
-  <Button kind="primary" label={getEmbeddedLabel(action.title)} on:click={() => performAction(action)} />
+  <Button
+    kind="primary"
+    label={getEmbeddedLabel(action.title)}
+    loading={performing}
+    on:click={() => performAction(action)}
+  />
 {/each}
 {#each rollbacks as rollback}
   {getExecutionLabel(rollback)}
-  <Button kind="dangerous" label={process.string.Rollback} on:click={() => performRollback(rollback)} />
+  <Button
+    kind="dangerous"
+    label={process.string.Rollback}
+    loading={rollingBack}
+    on:click={() => performRollback(rollback)}
+  />
 {/each}

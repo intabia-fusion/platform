@@ -222,16 +222,27 @@
     clearSettingsStore()
   }
 
+  let removing = false
+
   async function handleRemove (): Promise<void> {
-    showPopup(MessageBox, {
-      label: plugin.string.DeleteWorkflowTransition,
-      message: plugin.string.DeleteWorkflowTransitionConfirm,
-      dangerous: true,
-      action: async () => {
-        await removeTransition(client, workflow._id, _id)
-        clearSettingsStore()
+    if (removing) return
+    removing = true
+    showPopup(
+      MessageBox,
+      {
+        label: plugin.string.DeleteWorkflowTransition,
+        message: plugin.string.DeleteWorkflowTransitionConfirm,
+        dangerous: true,
+        action: async () => {
+          await removeTransition(client, workflow._id, _id)
+          clearSettingsStore()
+        }
+      },
+      undefined,
+      () => {
+        removing = false
       }
-    })
+    )
   }
 
   onDestroy(() => {
@@ -369,6 +380,7 @@
           label={presentation.string.Remove}
           size="large"
           kind="secondary"
+          loading={removing}
           on:click={handleRemove}
         />
       {/if}

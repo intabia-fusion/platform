@@ -88,9 +88,15 @@
   $: isMixinClass = hierarchy.isMixin(_class)
   $: canApply = isMixinClass && !readonly && rawObject !== undefined && !hierarchy.hasMixin(rawObject, _class)
 
+  let applying = false
   async function applyMixin (): Promise<void> {
-    if (rawObject === undefined) return
-    await client.createMixin(rawObject._id, rawObject._class, rawObject.space, _class, {})
+    if (rawObject === undefined || applying) return
+    applying = true
+    try {
+      await client.createMixin(rawObject._id, rawObject._class, rawObject.space, _class, {})
+    } finally {
+      applying = false
+    }
   }
 </script>
 
@@ -118,6 +124,7 @@
           icon={ui.icon.Plus}
           kind="link"
           size="medium"
+          loading={applying}
           showTooltip={{ label: presentation.string.Add }}
           on:click={(ev) => {
             ev.stopPropagation()

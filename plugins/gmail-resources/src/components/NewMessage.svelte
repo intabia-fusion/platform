@@ -73,26 +73,34 @@
 
   $: templateProvider?.set(contact.class.Contact, object)
 
+  let sending = false
+
   async function sendMsg (): Promise<void> {
-    await client.createDoc(
-      plugin.class.NewMessage,
-      core.space.Workspace,
-      {
-        ...obj,
-        content: markupToHtml(markupToJSON(content)),
-        attachments: attachments.length,
-        from: selectedIntegration.createdBy,
-        copy: copy
-          .split(',')
-          .map((m) => m.trim())
-          .filter((m) => m.length)
-      },
-      objectId
-    )
-    Analytics.handleEvent(GmailEvents.SentEmail, { to: channel.value })
-    await inboxClient.forceReadDoc(channel)
-    objectId = generateId()
-    dispatch('close')
+    if (sending) return
+    sending = true
+    try {
+      await client.createDoc(
+        plugin.class.NewMessage,
+        core.space.Workspace,
+        {
+          ...obj,
+          content: markupToHtml(markupToJSON(content)),
+          attachments: attachments.length,
+          from: selectedIntegration.createdBy,
+          copy: copy
+            .split(',')
+            .map((m) => m.trim())
+            .filter((m) => m.length)
+        },
+        objectId
+      )
+      Analytics.handleEvent(GmailEvents.SentEmail, { to: channel.value })
+      await inboxClient.forceReadDoc(channel)
+      objectId = generateId()
+      dispatch('close')
+    } finally {
+      sending = false
+    }
   }
 
   const dispatch = createEventDispatcher()
@@ -221,6 +229,7 @@
       label={plugin.string.Send}
       kind="primary"
       disabled={progress || isEmptyMarkup(content)}
+      loading={sending}
       on:click={sendMsg}
     />
   </div>

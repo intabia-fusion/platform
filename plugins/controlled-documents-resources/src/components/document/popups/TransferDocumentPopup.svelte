@@ -74,10 +74,17 @@
 
   const dispatch = createEventDispatcher()
 
+  let transferring = false
+
   async function transfer (): Promise<void> {
-    if (request !== undefined) {
+    if (request === undefined || transferring) return
+
+    transferring = true
+    try {
       await transferDocuments(client, request)
       dispatch('close')
+    } finally {
+      transferring = false
     }
   }
 
@@ -220,7 +227,8 @@
       <Button kind="regular" label={presentation.string.Cancel} on:click={() => dispatch('close')} />
       <Button
         kind={canTransfer ? 'primary' : 'ghost'}
-        disabled={!canTransfer}
+        disabled={!canTransfer || transferring}
+        loading={transferring}
         label={documents.string.Transfer}
         on:click={transfer}
       />

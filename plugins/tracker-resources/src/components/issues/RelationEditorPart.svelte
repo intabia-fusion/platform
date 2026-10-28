@@ -33,8 +33,22 @@
     documents = result
   })
 
+  let removingIds = new Set<Ref<Doc>>()
+
   async function handleClick (issue: RelatedDocument) {
     if (readonly || disabled) return
+    if (removingIds.has(issue._id)) return
+    removingIds.add(issue._id)
+    removingIds = removingIds
+    try {
+      await handleClickInner(issue)
+    } finally {
+      removingIds.delete(issue._id)
+      removingIds = removingIds
+    }
+  }
+
+  async function handleClickInner (issue: RelatedDocument) {
     const prop = type === 'isBlocking' ? 'blockedBy' : type
     const isBlockingValue = await client.findAll(value._class, { 'blockedBy._id': value._id })
 
@@ -92,7 +106,11 @@
         </button>
       </div>
       {#if !readonly}
-        <button class="btn-close" on:click|stopPropagation={() => handleClick(issue)}>
+        <button
+          class="btn-close"
+          disabled={removingIds.has(issue._id)}
+          on:click|stopPropagation={() => handleClick(issue)}
+        >
           <Icon icon={ui.icon.Cross} size="x-small" />
         </button>
       {/if}
@@ -104,7 +122,7 @@
         props={{ objectId: doc._id, _class: doc._class, value: doc, noUnderline: true, props: { avatarSize: 'card' } }}
       />
       {#if !readonly}
-        <button class="btn-close" on:click|stopPropagation={() => handleClick(doc)}>
+        <button class="btn-close" disabled={removingIds.has(doc._id)} on:click|stopPropagation={() => handleClick(doc)}>
           <Icon icon={ui.icon.Cross} size="x-small" />
         </button>
       {/if}

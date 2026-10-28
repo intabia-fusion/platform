@@ -94,11 +94,20 @@
     }
   }
 
+  let joiningSpaces = new Set<Ref<Space>>()
+
   async function joinSpace (space: Space): Promise<void> {
     if (space.members?.includes(myAcc.uuid)) return
-
-    const newMembers = [...(space.members ?? []), myAcc.uuid]
-    await client.update(space, { members: newMembers })
+    if (joiningSpaces.has(space._id)) return
+    joiningSpaces.add(space._id)
+    joiningSpaces = joiningSpaces
+    try {
+      const newMembers = [...(space.members ?? []), myAcc.uuid]
+      await client.update(space, { members: newMembers })
+    } finally {
+      joiningSpaces.delete(space._id)
+      joiningSpaces = joiningSpaces
+    }
   }
 
   void loadLargestSpaces()
@@ -132,6 +141,7 @@
                 label={view.string.Join}
                 kind="primary"
                 size="small"
+                loading={joiningSpaces.has(spaceInfo.space._id)}
                 on:click={() => joinSpace(spaceInfo.space)}
               />
             {/if}

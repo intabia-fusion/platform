@@ -53,15 +53,25 @@
     ])
   }
 
+  let addingTokens = new Set<string>()
+
   async function addTokens (providerId: string, model: string): Promise<void> {
     const key = poolKey(providerId, model)
+    if (addingTokens.has(key)) return
     const delta = topup[key]
     if (delta === undefined || delta <= 0) return
     const client = getBillingClient()
     if (client === null) return
-    await client.addProviderPoolTokens(providerId, model, delta)
-    topup[key] = 0
-    await reloadPools()
+    addingTokens.add(key)
+    addingTokens = addingTokens
+    try {
+      await client.addProviderPoolTokens(providerId, model, delta)
+      topup[key] = 0
+      await reloadPools()
+    } finally {
+      addingTokens.delete(key)
+      addingTokens = addingTokens
+    }
   }
 
   async function setLimit (providerId: string, model: string): Promise<void> {
@@ -157,6 +167,7 @@
             <Button
               label={plugin.string.AddTokens}
               kind="regular"
+              loading={addingTokens.has(key)}
               on:click={() => addTokens(entry.providerId, entry.model)}
             />
             <Button

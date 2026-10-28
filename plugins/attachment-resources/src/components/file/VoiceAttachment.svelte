@@ -106,18 +106,23 @@
   }
 
   // The editor stays open until the text is stored: a failed save keeps what was typed.
+  let saving = false
   async function saveEdit (): Promise<void> {
+    if (saving) return
     const md = toMarkdown(editMarkup)
     if (md === toMarkdown(markup)) {
       editing = false
       return
     }
+    saving = true
     try {
       await client.updateDoc(live._class, live.space, live._id, { text: md, edited: true })
       live = { ...live, text: md, edited: true }
       editing = false
     } catch (err: any) {
       await setPlatformStatus(unknownError(err))
+    } finally {
+      saving = false
     }
   }
 
@@ -180,6 +185,7 @@
           kind="ghost"
           size="extra-small"
           tooltip={{ label: presentation.string.Save }}
+          loading={saving}
           on:click={saveEdit}
         />
       </div>

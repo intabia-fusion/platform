@@ -78,11 +78,19 @@
 
   // No title check here: the model often changes the description only, and the panel keeps
   // whatever the proposal leaves out.
+  let applyingToDraft = false
+
   async function applyToDraft (): Promise<void> {
+    if (applyingToDraft) return
     const applier = get(issueDraftApplier)
     if (applier === undefined) return
-    applier(value)
-    await client.diffUpdate(value, { applied: true })
+    applyingToDraft = true
+    try {
+      applier(value)
+      await client.diffUpdate(value, { applied: true })
+    } finally {
+      applyingToDraft = false
+    }
   }
 
   $: rootQuery.query(
@@ -380,6 +388,7 @@
             <Button
               label={value.applied === true ? plugin.string.AssistIssueApplyAgain : plugin.string.AssistIssueApply}
               kind={value.applied === true ? 'regular' : 'primary'}
+              loading={applyingToDraft}
               on:click={applyToDraft}
             />
           {/if}

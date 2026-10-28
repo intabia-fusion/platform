@@ -55,8 +55,15 @@
     await client.diffUpdate(object, { name: newName })
   }
 
+  let togglingPrivate = false
   async function togglePrivate (): Promise<void> {
-    await setMeetingPrivate(object, !object.private)
+    if (togglingPrivate) return
+    togglingPrivate = true
+    try {
+      await setMeetingPrivate(object, !object.private)
+    } finally {
+      togglingPrivate = false
+    }
   }
 
   // Check if current user is owner of the meeting
@@ -78,8 +85,15 @@
     mounted = true
   })
 
+  let joining = false
   async function join (): Promise<void> {
-    await client.update(object, { $push: { members: currentAccount.uuid } })
+    if (joining) return
+    joining = true
+    try {
+      await client.update(object, { $push: { members: currentAccount.uuid } })
+    } finally {
+      joining = false
+    }
   }
 
   // Check if pending join is for THIS session (same browser tab)
@@ -90,6 +104,17 @@
   async function connect (): Promise<void> {
     if ($connectingToMeeting) return
     await joinMeeting(object)
+  }
+
+  let leavingRoom = false
+  async function handleLeaveRoom (): Promise<void> {
+    if (leavingRoom) return
+    leavingRoom = true
+    try {
+      await leaveMeeting()
+    } finally {
+      leavingRoom = false
+    }
   }
 
   $: connectLabel = object.status !== MeetingStatus.Scheduled ? love.string.JoinMeeting : love.string.StartMeeting
@@ -150,6 +175,7 @@
           kind={object.private ? 'secondary' : 'primary'}
           on:click={togglePrivate}
           data-id="meeting-toggle-private"
+          loading={togglingPrivate}
         />
       {/if}
       {#if showConnectionButton(object, hasPendingJoinInThisSession || $connectingToMeeting, $lkSessionConnected, currentAccount.role)}
@@ -176,9 +202,8 @@
           label={love.string.LeaveRoom}
           size="large"
           kind="negative"
-          on:click={() => {
-            void leaveMeeting()
-          }}
+          on:click={handleLeaveRoom}
+          loading={leavingRoom}
           data-id="meeting-leave"
         />
       {/if}
@@ -194,7 +219,7 @@
       <div class="header"><Label label={love.string.PrivateMeetingJoinHeader} /></div>
       <span><Label label={love.string.PrivateMeetingJoinText} /></span>
       <span class="mt-4" />
-      <Button label={view.string.Join} kind="primary" on:click={join} data-id="meeting-join" />
+      <Button label={view.string.Join} kind="primary" loading={joining} on:click={join} data-id="meeting-join" />
     </div>
   {/if}
   {#if pendingRecordings.length > 0}

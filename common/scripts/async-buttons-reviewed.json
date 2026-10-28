@@ -1,0 +1,1004 @@
+[
+  {
+    "file": "packages/presentation/src/components/SpaceMultiBoxList.svelte",
+    "id": "93f5cc56fd1f",
+    "handler": "on:click={addSpace}",
+    "reason": "addSpace only calls showPopup synchronously, no awaited work and no API call; worst case is two transient stacked selector popups, no data mutation."
+  },
+  {
+    "file": "packages/ui/src/components/DropdownPopup.svelte",
+    "id": "b2419aba246a",
+    "handler": "on:click={(evt) => {",
+    "reason": "Pure selection plus dispatch of a close event; no API call or mutation in this component, idempotent."
+  },
+  {
+    "file": "packages/ui/src/components/StepsDialog.svelte",
+    "id": "3b86b6df23d9",
+    "handler": "on:click={async () => {",
+    "reason": "Back button branch has no awaited work; the async completeCurrentStep only runs on forward navigation, which is already guarded by isSaving on the sibling button."
+  },
+  {
+    "file": "plugins/admin-resources/src/components/AccountDetails.svelte",
+    "id": "bb3236ed63df",
+    "handler": "on:click={() => {",
+    "reason": "Opens a read-only WorkspaceDetails popup (GET + showPopup); no mutation, worst case is a duplicate harmless popup"
+  },
+  {
+    "file": "plugins/admin-resources/src/components/tabs/AccountsTab.svelte",
+    "id": "67826b811b1c",
+    "handler": "on:click={async () => {",
+    "reason": "loadAccounts is wrapped in core's reduceCalls, which coalesces overlapping calls into one trailing call, so rapid clicks on Next cannot fire duplicate requests"
+  },
+  {
+    "file": "plugins/admin-resources/src/components/tabs/WorkspacesTab.svelte",
+    "id": "cd1467542913",
+    "handler": "on:click={() => select(workspace.url)}",
+    "reason": "Only opens the workspace URL in a new browser tab via window.open; no server mutation, worst case is a few extra tabs"
+  },
+  {
+    "file": "plugins/ai-bot-resources/src/components/DiscussWithAI.svelte",
+    "id": "43d4e88aed0c",
+    "handler": "on:click={() => discussWithAI(value)}",
+    "reason": "conversation get-or-create is server-side atomic (apply/notMatch in createObjectContext); concurrent clicks resolve to the same root, worst case opens the same thread twice"
+  },
+  {
+    "file": "plugins/ai-bot-resources/src/components/ThreadContextActions.svelte",
+    "id": "9c9897f25f56",
+    "handler": "on:click={() => {",
+    "reason": "export path is GET requests plus a client-side blob download; no server mutation, repeat clicks only cause redundant reads/downloads"
+  },
+  {
+    "file": "plugins/attachment-resources/src/components/AttachmentAction.svelte",
+    "id": "6901962e187b",
+    "handler": "on:click={onClick}",
+    "reason": "Generic action-prop wrapper; all current callers (open preview, trigger download anchor, open menu) are idempotent navigation/menu actions with no server side effects"
+  },
+  {
+    "file": "plugins/attachment-resources/src/components/FileBrowserSortMenu.svelte",
+    "id": "edbc2c9b4add",
+    "handler": "on:click={(event) => showSortMenu(event)}",
+    "reason": "Opens a sort selection menu popup only; no side effects until a menu item is picked"
+  },
+  {
+    "file": "plugins/attachment-resources/src/components/VoiceAttachmentPresenter.svelte",
+    "id": "fdcee00f0d45",
+    "handler": "on:click={saveEdit}",
+    "reason": "editing=false is set synchronously as the first statement, removing the button from the DOM before the await runs; update is also idempotent on unchanged content"
+  },
+  {
+    "file": "plugins/billing-resources/src/components/LimitsIndicator.svelte",
+    "id": "20669885fe3c",
+    "handler": "on:click={handleClick}",
+    "reason": "upgradePlan() only opens the read-only SubscriptionsModal popup, no mutation; the modal itself blocks further interaction with the trigger"
+  },
+  {
+    "file": "plugins/billing-resources/src/components/ModelsTab.svelte",
+    "id": "15c66c390fab",
+    "handler": "on:click={() => setLimit(entry.providerId, entry.model)}",
+    "reason": "upsertProviderPool sets the limit to the same entered value; repeating it with the same value is an idempotent upsert, unlike addTokens which is additive"
+  },
+  {
+    "file": "plugins/billing-resources/src/components/ModelsTab.svelte",
+    "id": "dd9cac0c6cf0",
+    "handler": "on:click={() => resetUsed(entry.providerId, entry.model)}",
+    "reason": "resetPoolUsed sets usage to zero; calling it twice in a row yields the same end state, so it is idempotent"
+  },
+  {
+    "file": "plugins/billing-resources/src/components/ReadOnlyBanner.svelte",
+    "id": "3871448fbb17",
+    "handler": "on:click={() => {",
+    "reason": "Free-plan banner (line 62): upgradePlan() only opens the read-only SubscriptionsModal popup, no mutation"
+  },
+  {
+    "file": "plugins/billing-resources/src/components/Subscriptions.svelte",
+    "id": "38dd391676ea",
+    "handler": "on:click={() => {",
+    "reason": "handleCancel only opens a MessageBox confirmation; its own Ok button is guarded by a local processing/loading flag, and the real mutation (executeCancel) is already guarded by isCanceling"
+  },
+  {
+    "file": "plugins/billing-resources/src/components/Subscriptions.svelte",
+    "id": "4e760cacfa4b",
+    "handler": "on:click={() => {",
+    "reason": "handleUncancel only opens a MessageBox confirmation; its own Ok button is guarded by a local processing/loading flag, and the real mutation (executeUncancel) is already guarded by isUncanceling"
+  },
+  {
+    "file": "plugins/billing-resources/src/components/Subscriptions.svelte",
+    "id": "55938d28e85c",
+    "handler": "on:click={() => {",
+    "reason": "openSalesMail only builds a mailto: link and clicks a hidden anchor to open the OS mail client; no server request, worst case is two compose windows"
+  },
+  {
+    "file": "plugins/billing-resources/src/components/Subscriptions.svelte",
+    "id": "d7fc4cd5f40d",
+    "handler": "on:click={() => {",
+    "reason": "Retry only re-fetches plan config (GET), overwriting the same state; a pure read with no side effect"
+  },
+  {
+    "file": "plugins/calendar-resources/src/components/CalDavAccess.svelte",
+    "id": "57e04a245811",
+    "handler": "on:click={copyAccount}",
+    "reason": "pure clipboard copy, no side effect beyond resetting a UI timeout"
+  },
+  {
+    "file": "plugins/calendar-resources/src/components/CalDavAccess.svelte",
+    "id": "a7d6d8d3cf82",
+    "handler": "on:click={copyServer}",
+    "reason": "pure clipboard copy, no side effect beyond resetting a UI timeout"
+  },
+  {
+    "file": "plugins/calendar-resources/src/components/CalDavAccess.svelte",
+    "id": "efb7ea294a0f",
+    "handler": "on:click={copyPassword}",
+    "reason": "pure clipboard copy of a password generated once in onMount, no side effect beyond resetting a UI timeout"
+  },
+  {
+    "file": "plugins/card-resources/src/components/EditCardNew.svelte",
+    "id": "a0177a0a3380",
+    "handler": "on:click={() => {",
+    "reason": "openCardInSidebar/createWidgetTab is idempotent, keyed by cardId; repeated calls update or reuse the same tab rather than creating duplicates."
+  },
+  {
+    "file": "plugins/card-resources/src/components/FeedCardPresenter.svelte",
+    "id": "6ce9eaa0d903",
+    "handler": "on:click={() => {",
+    "reason": "Same target function as EditCardNew.svelte: openCardInSidebar/createWidgetTab is idempotent, keyed by cardId, no duplicate tabs or requests from repeated clicks."
+  },
+  {
+    "file": "plugins/card-resources/src/components/settings/EditRole.svelte",
+    "id": "fddeb1f530eb",
+    "handler": "on:click={handleDeleteRole}",
+    "reason": "handleDeleteRole only opens a MessageBox confirmation; the actual role deletion runs inside that dialog's explicit confirm action, so rage-clicking the trash icon just stacks duplicate confirmation dialogs, not duplicate deletes."
+  },
+  {
+    "file": "plugins/card-resources/src/components/settings/GeneralSection.svelte",
+    "id": "e467dfd76396",
+    "handler": "on:click={handleExport}",
+    "reason": "handleExport only reads the in-memory model and triggers a client-side file download; it performs no server mutation, so repeated clicks just produce duplicate identical downloads."
+  },
+  {
+    "file": "plugins/card-resources/src/components/settings/GeneralSection.svelte",
+    "id": "ee29e905cd81",
+    "handler": "on:click={handleDelete}",
+    "reason": "handleDelete delegates to deleteMasterTag, which only opens a MessageBox confirmation dialog; the destructive update/remove runs inside that dialog's own confirm action, so rage-clicking this button only stacks duplicate confirmation popups."
+  },
+  {
+    "file": "plugins/card-resources/src/components/settings/view/EditView.svelte",
+    "id": "85811d6f032a",
+    "handler": "on:click={remove}",
+    "reason": "remove only opens a MessageBox confirmation; the actual client.remove(viewlet) call runs inside that dialog's own confirm action, so rage-clicking the trash button only stacks duplicate confirmation dialogs."
+  },
+  {
+    "file": "plugins/chunter-resources/src/components/AIRequestProgress.svelte",
+    "id": "6d752e3c7398",
+    "handler": "on:click={cancel}",
+    "reason": "sets request status to the same 'cancelled' value each time; idempotent, and the button disappears once the reactive query updates"
+  },
+  {
+    "file": "plugins/chunter-resources/src/components/ChannelIcon.svelte",
+    "id": "e838b4d9fe16",
+    "handler": "on:click={chooseIcon}",
+    "reason": "handler only opens an IconPicker popup; the actual icon update runs from the picker's own callback once the user picks, not from the trigger click"
+  },
+  {
+    "file": "plugins/chunter-resources/src/components/ChannelView.svelte",
+    "id": "3a8bd4c17cc1",
+    "handler": "on:click={toggleSearch}",
+    "reason": "pure sync boolean toggle for the search panel, no network call"
+  },
+  {
+    "file": "plugins/chunter-resources/src/components/ContentReportPresenter.svelte",
+    "id": "2155061f539e",
+    "handler": "on:click={kick}",
+    "reason": "delegates to contact's own KickEmployee action, which shows its own confirmation dialog before any removal; removal is also idempotent"
+  },
+  {
+    "file": "plugins/chunter-resources/src/components/EditChannelDescriptionTab.svelte",
+    "id": "a58198a46672",
+    "handler": "on:click={() => {",
+    "reason": "leaveChannel does an idempotent $pull plus a dispatch('close') that is harmless to repeat"
+  },
+  {
+    "file": "plugins/chunter-resources/src/components/EditChannelSettingsTab.svelte",
+    "id": "c0c0d9dbf60f",
+    "handler": "on:click={(evt) => {",
+    "reason": "only opens ArchiveChannel's MessageBox confirmation; the archive update runs from the dialog's own confirm action and is idempotent"
+  },
+  {
+    "file": "plugins/chunter-resources/src/components/Header.svelte",
+    "id": "f3606fe70055",
+    "handler": "on:click={() => {",
+    "reason": "openChannelInSidebar keys the tab by a deterministic id from the object id, so repeat clicks reuse/focus the same tab"
+  },
+  {
+    "file": "plugins/chunter-resources/src/components/ReverseChannelScrollView.svelte",
+    "id": "0b4caaac27bb",
+    "handler": "on:click={handleScrollToLatestMessage}",
+    "reason": "only scrolls to bottom and calls an idempotent readDoc mark-as-read"
+  },
+  {
+    "file": "plugins/contact-resources/src/components/AssigneePopup.svelte",
+    "id": "5b9649631287",
+    "handler": "on:click={() => {",
+    "reason": "handler has no await; dispatch('close') synchronously unmounts the popup before a second click can register, and re-selecting the same item is idempotent"
+  },
+  {
+    "file": "plugins/contact-resources/src/components/ChannelEditor.svelte",
+    "id": "de0e3d4f4ff7",
+    "handler": "on:click={copyChannel}",
+    "reason": "self-guarded: handler only runs while label === CopyToClipboard, flips to Copied for 3s, so rapid re-clicks hit the guard and no-op"
+  },
+  {
+    "file": "plugins/contact-resources/src/components/EditAvatarPopup.svelte",
+    "id": "85811d6f032a",
+    "handler": "on:click={remove}",
+    "reason": "handler has no await; dispatch('close', null) is synchronous, unmounts the popup before a second click can land, and repeating the same null dispatch is idempotent"
+  },
+  {
+    "file": "plugins/contact-resources/src/components/person/EmployeePreviewPopup.svelte",
+    "id": "091425d3b5e7",
+    "handler": "on:click={viewProfile}",
+    "reason": "pure read (getObjectLinkFragment) plus client-side navigate(); no writes or API side effects, repeated navigation is a no-op"
+  },
+  {
+    "file": "plugins/controlled-documents-resources/src/components/document/EditDocContent.svelte",
+    "id": "cb965cdf2ab9",
+    "handler": "on:click={() => restoreAttachment(att)}",
+    "reason": "Sets deletedIn to null (idempotent) and the attachment leaves the deleted-attachments list once restored, removing the button from the DOM"
+  },
+  {
+    "file": "plugins/controlled-documents-resources/src/components/document/right-panel/DocumentCommentThread.svelte",
+    "id": "8ea4bf3c45de",
+    "handler": "on:click={handleResolveComment}",
+    "reason": "Resolve/unresolve is a toggle; a double click at worst flips back to the original state"
+  },
+  {
+    "file": "plugins/controlled-documents-resources/src/components/EditDocPanel.svelte",
+    "id": "31543bb573a4",
+    "handler": "on:click={(ev) => changeApprovalRequestState(ev, false)}",
+    "reason": "Only opens a modal SignatureDialog requiring re-entered credentials; the actual completeRequest call runs from the dialog's own submit"
+  },
+  {
+    "file": "plugins/controlled-documents-resources/src/components/EditDocPanel.svelte",
+    "id": "427ecb308190",
+    "handler": "on:click={(ev) => changeApprovalRequestState(ev, true)}",
+    "reason": "Only opens a modal SignatureDialog requiring re-entered credentials and a rejection note; the actual rejectRequest call runs from the dialog's own submit"
+  },
+  {
+    "file": "plugins/controlled-documents-resources/src/components/EditDocPanel.svelte",
+    "id": "8190ef4e7099",
+    "handler": "on:click={(ev) => completeReviewRequest(ev)}",
+    "reason": "Only opens a modal SignatureDialog requiring re-entered credentials; the actual completeRequest call runs from the dialog's own submit, not from this button"
+  },
+  {
+    "file": "plugins/document-resources/src/components/EditDoc.svelte",
+    "id": "d001e40e3f57",
+    "handler": "on:click={async () => {",
+    "reason": "unlockContent sets lockedBy to null (idempotent) and the Locked button disappears once unlocked since it is behind an {#if locked} guard"
+  },
+  {
+    "file": "plugins/document-resources/src/components/EditDoc.svelte",
+    "id": "e79a392ab2c9",
+    "handler": "on:click={copyLink}",
+    "reason": "clipboard copy, idempotent"
+  },
+  {
+    "file": "plugins/document-resources/src/components/EditDoc.svelte",
+    "id": "e838b4d9fe16",
+    "handler": "on:click={chooseIcon}",
+    "reason": "Only opens an IconPicker popup; the actual client.update for icon/color runs from the picker's selection callback"
+  },
+  {
+    "file": "plugins/document-resources/src/components/navigator/DocTreeElement.svelte",
+    "id": "4ed55ea3f95f",
+    "handler": "on:click={onMenuClick}",
+    "reason": "Opens a context menu popup only; no side effects by itself"
+  },
+  {
+    "file": "plugins/document-resources/src/components/sidebar/History.svelte",
+    "id": "64e2cfa6b28d",
+    "handler": "on:click={() => {",
+    "reason": "Toggles expand/collapse of a version row; no data mutation"
+  },
+  {
+    "file": "plugins/gmail-resources/src/components/Chats.svelte",
+    "id": "b2598f7d22dc",
+    "handler": "on:click={async () => {",
+    "reason": "handler only toggles a local boolean (selectable); no await, no API call, fully idempotent"
+  },
+  {
+    "file": "plugins/gmail-resources/src/components/FullMessage.svelte",
+    "id": "dc1abe28dec5",
+    "handler": "on:click={() => {",
+    "reason": "both branches synchronously cause the parent to unmount this component before a second click can land"
+  },
+  {
+    "file": "plugins/guest-resources/src/components/CreatePublicLink.svelte",
+    "id": "1ce4d62fc6e7",
+    "handler": "on:click={revoke}",
+    "reason": "opens a MessageBox confirmation; the destructive client.remove only runs from the modal's own confirm action, a different component"
+  },
+  {
+    "file": "plugins/hr-resources/src/components/Members.svelte",
+    "id": "19dc1937a3fc",
+    "handler": "on:click={createApp}",
+    "reason": "createApp only opens a popup synchronously; the mutating updateMixin call only runs inside the popup's own explicit selection callback."
+  },
+  {
+    "file": "plugins/hr-resources/src/components/schedule/CreatePublicHoliday.svelte",
+    "id": "9abc985885b2",
+    "handler": "on:click={() => {",
+    "reason": "Remove on an already-removed doc is a harmless server no-op, and dispatch('close') fires the same tick, removing the button before a realistic second click lands."
+  },
+  {
+    "file": "plugins/login-resources/src/components/InviteLink.svelte",
+    "id": "40f074894893",
+    "handler": "on:click={() => {",
+    "reason": "getLink() sets loading=true synchronously on entry, and the template swaps the button out for a Loading spinner while loading is true, so a second rage click cannot reach the handler again"
+  },
+  {
+    "file": "plugins/login-resources/src/components/InviteLink.svelte",
+    "id": "aa598be92692",
+    "handler": "on:click={copy}",
+    "reason": "copy() only writes to the clipboard and sets local UI state; no server side effect"
+  },
+  {
+    "file": "plugins/login-resources/src/components/WorkspaceDeletionDialog.svelte",
+    "id": "17ec865d3b6a",
+    "handler": "on:click={() => {",
+    "reason": "copy() only writes the backup link to the clipboard; no server side effect"
+  },
+  {
+    "file": "plugins/login-resources/src/components/WorkspaceDeletionDialog.svelte",
+    "id": "9662592a5a3f",
+    "handler": "on:click={() => {",
+    "reason": "copy() only writes the backup bearer token to the clipboard; no server side effect"
+  },
+  {
+    "file": "plugins/love-resources/src/components/EditRoom.svelte",
+    "id": "8eea827cf7f2",
+    "handler": "on:click={() => {",
+    "reason": "cancelKnock removes an already-removed doc on repeat; the failure is caught and logged, no duplicate or incorrect side effect"
+  },
+  {
+    "file": "plugins/love-resources/src/components/EditRoom.svelte",
+    "id": "ff495770641f",
+    "handler": "on:click={() => {",
+    "reason": "sendKnockRequest uses a server-side apply().notMatch(status: pending) transactional dedup, so a duplicate pending knock cannot be created"
+  },
+  {
+    "file": "plugins/love-resources/src/components/guest/GuestJoinPopup.svelte",
+    "id": "b3a43034c1cf",
+    "handler": "on:click={() => {",
+    "reason": "synchronous checkbox toggle; the only async side effect (startLocalPreview) already guards re-entry internally"
+  },
+  {
+    "file": "plugins/love-resources/src/components/MediaPopupItemExt.svelte",
+    "id": "0b7f0328443e",
+    "handler": "on:click={stopShare}",
+    "reason": "setScreenShareEnabled(false) is an idempotent SDK toggle-off wrapped in try/catch; a repeat call is a no-op"
+  },
+  {
+    "file": "plugins/love-resources/src/components/meeting/invites/InviteEmployeeButton.svelte",
+    "id": "f730ef87bd4d",
+    "handler": "on:click={invite}",
+    "reason": "sendInvites() uses a server-side apply.notMatch(status: pending) check before createDoc, so a duplicate invite cannot be created while one is pending"
+  },
+  {
+    "file": "plugins/love-resources/src/components/meeting/invites/OutgoingInvitePopup.svelte",
+    "id": "5229c3aed308",
+    "handler": "on:click={handleCancel}",
+    "reason": "cancelInvites() wraps client.remove in try/catch and the popup auto-closes reactively once the invite leaves the store, so a repeat remove just logs a warning"
+  },
+  {
+    "file": "plugins/love-resources/src/components/RoomPopup.svelte",
+    "id": "38ce5e5806cb",
+    "handler": "on:click={backOrOpen}",
+    "reason": "pure client-side navigate(), no network or mutating call, repeat is idempotent (second button, mutually exclusive render branch of the same handler)"
+  },
+  {
+    "file": "plugins/notification-resources/src/components/Notification.svelte",
+    "id": "19e4e520c250",
+    "handler": "on:click={() => {",
+    "reason": "navigation/open-thread target is idempotent and onRemove dismissal is idempotent; no create/update performed"
+  },
+  {
+    "file": "plugins/notification-resources/src/components/settings/WebpushesPreferencesPresenter.svelte",
+    "id": "cf40d0e8690e",
+    "handler": "on:click={() => remove(subscription)}",
+    "reason": "opens a MessageBox confirmation; actual removal runs from the modal's own confirm action"
+  },
+  {
+    "file": "plugins/process-resources/src/components/contextEditors/ToDoContextSelector.svelte",
+    "id": "f1a1a4ba3dc3",
+    "handler": "on:click={click}",
+    "reason": "click only performs an in-memory model lookup then opens a SelectPopup; the actual createContext/dispatch mutation only fires from a distinct click on a popup item, not from re-clicking this button."
+  },
+  {
+    "file": "plugins/process-resources/src/components/settings/BindingsEditor.svelte",
+    "id": "3230fc36a297",
+    "handler": "on:click={(e) => setBinding(id, e)}",
+    "reason": "setBinding is async but has no await in its own body - it only opens a SelectPopup; the actual client.update(process, {bindings}) runs inside that popup's selection callback, not from this button directly."
+  },
+  {
+    "file": "plugins/products-resources/src/components/product/NewProductHeader.svelte",
+    "id": "729249e6b61d",
+    "handler": "on:click={newProduct}",
+    "reason": "Only opens the CreateProduct popup; the actual product creation happens from that popup's own submit"
+  },
+  {
+    "file": "plugins/questions-resources/src/components/QuestionsCollectionEditor.svelte",
+    "id": "0a949d9bb284",
+    "handler": "on:click={(e) => onClickAdd(e, null)}",
+    "reason": "Only opens a question-type selection dropdown; createQuestion runs from the dropdown's selection callback, not from this button"
+  },
+  {
+    "file": "plugins/questions-resources/src/components/QuestionsCollectionEditor.svelte",
+    "id": "86e3cd8c182c",
+    "handler": "on:click={(e) => {",
+    "reason": "Empty-state add button, same onClickAdd pattern; only opens a question-type selection dropdown"
+  },
+  {
+    "file": "plugins/questions-resources/src/components/QuestionsCollectionEditor.svelte",
+    "id": "c7da73b94f60",
+    "handler": "on:click={(e) => onClickAdd(e, index)}",
+    "reason": "Same onClickAdd pattern; only opens a question-type selection dropdown, real create gated behind an explicit choice there"
+  },
+  {
+    "file": "plugins/questions-resources/src/components/QuestionsItemEditor.svelte",
+    "id": "5834edb53c72",
+    "handler": "on:click={showContextMenu}",
+    "reason": "Opens a context menu popup only; no side effects by itself"
+  },
+  {
+    "file": "plugins/rating-resources/src/components/ReactionsPopup.svelte",
+    "id": "19e8e5a59a9f",
+    "handler": "on:click={() => {",
+    "reason": "dispatches close synchronously in the same click, the popup is gone before a second click"
+  },
+  {
+    "file": "plugins/rating-resources/src/components/ReactionsPopup.svelte",
+    "id": "e1f5fc3cb015",
+    "handler": "on:click={() => {",
+    "reason": "dispatches close synchronously in the same click, the popup is gone before a second click"
+  },
+  {
+    "file": "plugins/recorder-resources/src/components/RecorderExt.svelte",
+    "id": "7601497c06e4",
+    "handler": "on:click={handleRecClick}",
+    "reason": "recorder.initialize() has no internal await and flips state synchronously before returning, and showRecordingPopup() guards on a null-check store, so re-entry neither reinitializes nor opens a second popup"
+  },
+  {
+    "file": "plugins/recorder-resources/src/components/RecorderExt.svelte",
+    "id": "c34fb30fdfc8",
+    "handler": "on:click={stopRecording}",
+    "reason": "recorder.stop() flips shared state to 'stopping' synchronously before its first await, so a concurrent call sees the new state and throws instead of running a second real stop"
+  },
+  {
+    "file": "plugins/recorder-resources/src/components/RecordingPopup.svelte",
+    "id": "c34fb30fdfc8",
+    "handler": "on:click={stopRecording}",
+    "reason": "same stopRecording()/recorder.stop() synchronous state-to-'stopping' flip as RecorderExt, plus the template swaps to an already disabled+loading 'stopping' button variant"
+  },
+  {
+    "file": "plugins/setting-resources/src/components/ApiKeyPopup.svelte",
+    "id": "aa598be92692",
+    "handler": "on:click={copy}",
+    "reason": "Copies text to clipboard only; idempotent, no request or persisted state change."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/Backup.svelte",
+    "id": "09b597f42c21",
+    "handler": "on:click={() => downloadFile('backup.json.gz')}",
+    "reason": "Plain authenticated GET download via anchor click; no mutation, repeat just re-downloads."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/Backup.svelte",
+    "id": "0faf03f6049a",
+    "handler": "on:click={() => downloadFile(filename)}",
+    "reason": "Plain authenticated GET download via anchor click; no mutation, repeat just re-downloads."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/Backup.svelte",
+    "id": "1804d8d84203",
+    "handler": "on:click={() => {",
+    "reason": "navigator.clipboard.writeText copy button; idempotent, no mutation."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/Backup.svelte",
+    "id": "44e38faf9c8f",
+    "handler": "on:click={() => downloadFile('blob-info.json.gz')}",
+    "reason": "Plain authenticated GET download via anchor click; no mutation, repeat just re-downloads."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/Backup.svelte",
+    "id": "54f886b7e259",
+    "handler": "on:click={() => downloadFile('index.html')}",
+    "reason": "Plain authenticated GET download via anchor click; no mutation, repeat just re-downloads."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/Backup.svelte",
+    "id": "5526c40b5622",
+    "handler": "on:click={() => downloadFile('index.json')}",
+    "reason": "Plain authenticated GET download via anchor click; no mutation, repeat just re-downloads."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/Backup.svelte",
+    "id": "9626def625eb",
+    "handler": "on:click={() => {",
+    "reason": "navigator.clipboard.writeText copy button; idempotent, no mutation."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/Backup.svelte",
+    "id": "998940f16353",
+    "handler": "on:click={() => {",
+    "reason": "navigator.clipboard.writeText copy button; idempotent, no mutation."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/Backup.svelte",
+    "id": "b0e827579253",
+    "handler": "on:click={() => {",
+    "reason": "navigator.clipboard.writeText copy button; idempotent, no mutation."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/Backup.svelte",
+    "id": "d3f300180260",
+    "handler": "on:click={() => downloadBlobFile(file.name)}",
+    "reason": "Plain authenticated GET download via anchor click; no mutation, repeat just re-downloads."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/Configure.svelte",
+    "id": "0152113c306a",
+    "handler": "on:click={() => change(config, !(config.enabled ?? true))}",
+    "reason": "Boolean toggle of plugin enabled flag; worst case flips twice and lands back where it started."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/EditAttribute.svelte",
+    "id": "85811d6f032a",
+    "handler": "on:click={remove}",
+    "reason": "remove() only opens a MessageBox confirmation; the actual client.remove runs only in the popup's explicit confirm action, so repeated clicks just stack dialogs, not deletions."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/EditAttribute.svelte",
+    "id": "b5242c5bbb60",
+    "handler": "on:click={hide}",
+    "reason": "Boolean toggle of attribute.hidden; worst case flips twice and lands back where it started."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/EditClassLabel.svelte",
+    "id": "4d20c6794e65",
+    "handler": "on:click={() => save(label)}",
+    "reason": "updateDoc with a fixed label value from closure; idempotent regardless of click count."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/EditRelation.svelte",
+    "id": "85811d6f032a",
+    "handler": "on:click={remove}",
+    "reason": "remove() only opens a MessageBox; actual client.remove runs only in the popup's explicit confirm action."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/General.svelte",
+    "id": "ee29e905cd81",
+    "handler": "on:click={handleDelete}",
+    "reason": "handleDelete fetches policy then opens a MessageBox; actual deleteWorkspace requires explicit confirm plus an emailed OTP code, so repeat clicks only duplicate a harmless read and stack dialogs."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/integrations/IntegrationCard.svelte",
+    "id": "77090f33b2e5",
+    "handler": "on:click={(ev) => handleConfigure(integrationType.configureComponent)}",
+    "reason": "handleConfigure only opens a configure popup after an async analytics/translate call; no document mutation happens before or during the popup's opening."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/integrations/IntegrationCard.svelte",
+    "id": "d81933b6b6f0",
+    "handler": "on:click={(ev) => handleConfigure(integrationType.createComponent)}",
+    "reason": "handleConfigure only opens a create popup after an async analytics/translate call; no document mutation happens before or during the popup's opening."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/Password.svelte",
+    "id": "b66a29bea33e",
+    "handler": "on:click={() => {",
+    "reason": "Already guarded: save() sets saved=true synchronously before the await, and the Button's disabled expression includes `|| saved`, so a second click can't fire while the first is in flight."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/Profile.svelte",
+    "id": "9b7451875e84",
+    "handler": "on:click={() => {",
+    "reason": "leave() does an async owner check then opens a MessageBox; actual leave flow (incl. OTP) requires explicit confirm."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/Profile.svelte",
+    "id": "fb068e3d6e91",
+    "handler": "on:click={() => {",
+    "reason": "deleteAccount() does async checks then opens a MessageBox; actual deleteAccount call requires explicit confirm plus an emailed OTP code."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/RelationSetting.svelte",
+    "id": "03075e645e92",
+    "handler": "on:click={() => remove(selected)}",
+    "reason": "remove() only opens a MessageBox; actual client.remove runs only in the popup's explicit confirm action."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/spaceTypes/editor/SpaceTypeGeneralSectionEditor.svelte",
+    "id": "ee29e905cd81",
+    "handler": "on:click={handleDelete}",
+    "reason": "handleDelete only opens a MessageBox; actual deleteObjects runs only in the popup's explicit confirm action."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/spaceTypes/RoleEditor.svelte",
+    "id": "fddeb1f530eb",
+    "handler": "on:click={handleDeleteRole}",
+    "reason": "handleDeleteRole only opens a MessageBox; actual deleteSpaceTypeRole runs only in the popup's explicit confirm action."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/typeEditors/EnumTypeEditor.svelte",
+    "id": "8bb0fee62824",
+    "handler": "on:click={edit}",
+    "reason": "edit() only opens the EditEnum popup; no mutation happens from opening it."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/typeEditors/IdentifierTypeEditor.svelte",
+    "id": "1d726da53b3b",
+    "handler": "on:click={resetSequence}",
+    "reason": "Resets the sequence counter to the fixed value 0; idempotent regardless of click count."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/WebhookEndpointEditor.svelte",
+    "id": "6df7d3ce893d",
+    "handler": "on:click={() => {",
+    "reason": "update({ spaces: [] }) clears the list; idempotent, repeating yields the same empty state."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/WebhookEndpointEditor.svelte",
+    "id": "94c2b930587f",
+    "handler": "on:click={() => {",
+    "reason": "update({ events: [] }) clears the list; idempotent, repeating yields the same empty state."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/WebhookEndpointEditor.svelte",
+    "id": "d05c4a97d38c",
+    "handler": "on:click={() => {",
+    "reason": "revokeSecret() is synchronous and only opens a MessageBox; actual secret removal runs only in the popup's explicit confirm action."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/WebhookIncomingExample.svelte",
+    "id": "31d3d12a27de",
+    "handler": "on:click={() => {",
+    "reason": "copyText() writes to clipboard only; idempotent, no request or persisted state."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/WebhookIncomingExample.svelte",
+    "id": "5883b02c8fd4",
+    "handler": "on:click={() => {",
+    "reason": "copyText() writes to clipboard only; idempotent, no request or persisted state."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/WebhookIncomingExample.svelte",
+    "id": "5a4cf432272c",
+    "handler": "on:click={() => {",
+    "reason": "copyText() writes to clipboard only; idempotent, no request or persisted state."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/WebhookIncomingExample.svelte",
+    "id": "c505011e0319",
+    "handler": "on:click={() => {",
+    "reason": "copyText() writes to clipboard only; idempotent, no request or persisted state."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/WebhookIncomingExample.svelte",
+    "id": "ca42d26da1bd",
+    "handler": "on:click={() => {",
+    "reason": "copyText() writes to clipboard only; idempotent, no request or persisted state."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/WebhookOutgoingExample.svelte",
+    "id": "b0ad980302e2",
+    "handler": "on:click={() => {",
+    "reason": "copyText() writes to clipboard only; idempotent, no request or persisted state."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/WebhookRuleEditor.svelte",
+    "id": "ada8492cf0d4",
+    "handler": "on:click={() => {",
+    "reason": "copyText() writes to clipboard only; idempotent, no request or persisted state."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/WebhookRuleFromTemplate.svelte",
+    "id": "4109a211272a",
+    "handler": "on:click={() => {",
+    "reason": "copyText() writes to clipboard only; idempotent, no request or persisted state."
+  },
+  {
+    "file": "plugins/setting-resources/src/components/WebhookRulesSection.svelte",
+    "id": "a74b66bb5ce4",
+    "handler": "on:click={() => {",
+    "reason": "copyText() writes to clipboard only; idempotent, no request or persisted state."
+  },
+  {
+    "file": "plugins/tags-resources/src/components/TagsAttributeEditor.svelte",
+    "id": "cddca65a8fd0",
+    "handler": "on:click|stopPropagation={tagsHandler}",
+    "reason": "tagsHandler is async but contains no await - it only calls showPopup, which queues a popup descriptor with no network/data mutation; rage-clicking stacks overlay popups, not data writes."
+  },
+  {
+    "file": "plugins/tags-resources/src/components/TagsDropdownEditor.svelte",
+    "id": "5a8b6fc57834",
+    "handler": "on:click={addTag}",
+    "reason": "addTag only opens TagsPopup via showPopup; the actual addRef/removeTag mutation happens from a click inside that popup, dispatched to the parent, not from this button."
+  },
+  {
+    "file": "plugins/tags-resources/src/components/TagsEditor.svelte",
+    "id": "5a8b6fc57834",
+    "handler": "on:click={addTag}",
+    "reason": "addTag only opens TagsPopup via showPopup; the actual mutation happens from a click inside that popup, not from this button."
+  },
+  {
+    "file": "plugins/tags-resources/src/components/TagsPopup.svelte",
+    "id": "f64c396f048d",
+    "handler": "on:click={createTagElementPopup}",
+    "reason": "createTagElementPopup only opens the CreateTagElement creation form via showPopup; the actual tag-element creation happens from the Save action inside that separate popup component, not from this button."
+  },
+  {
+    "file": "plugins/task-resources/src/components/taskTypes/TaskTypeEditor.svelte",
+    "id": "60a98d1c98c1",
+    "handler": "on:click={() => {",
+    "reason": "Idempotent read-only navigation (navigate + setFilters), no server mutation."
+  },
+  {
+    "file": "plugins/telegram-resources/src/components/Chat.svelte",
+    "id": "1808ccfae93f",
+    "handler": "on:click={share}",
+    "reason": "share() is an unimplemented stub that only throws an Error; no side effect exists yet to duplicate"
+  },
+  {
+    "file": "plugins/telegram-resources/src/components/Chat.svelte",
+    "id": "b2598f7d22dc",
+    "handler": "on:click={async () => {",
+    "reason": "handler only toggles a local boolean (selectable), no async/network side effect"
+  },
+  {
+    "file": "plugins/templates-resources/src/components/Templates.svelte",
+    "id": "3b0f987417e0",
+    "handler": "on:click={addTemplate}",
+    "reason": "addTemplate is async but contains no await and no network/client calls - it only resets local component state to show a blank create form; fully idempotent."
+  },
+  {
+    "file": "plugins/test-management-resources/src/components/test-case/RunButton.svelte",
+    "id": "cad1fb6a2a14",
+    "handler": "on:click={handleRun}",
+    "reason": "Only opens the NewTestRunPanel create form via showCreateTestRunPanel; the real TestRun creation is that panel's own guarded Save button"
+  },
+  {
+    "file": "plugins/test-management-resources/src/components/test-case/SelectTestCasesModal.svelte",
+    "id": "456681d4ee63",
+    "handler": "on:click={handleSave}",
+    "reason": "Only calls a local onSave callback that assigns a local array and closes the modal; no server write"
+  },
+  {
+    "file": "plugins/test-management-resources/src/components/test-case/TestCaseSelector.svelte",
+    "id": "608968b569ba",
+    "handler": "on:click={showSelectDialog}",
+    "reason": "Only opens the test-case selection modal; no side effect by itself"
+  },
+  {
+    "file": "plugins/test-management-resources/src/components/test-plan/CreateTestPlanButton.svelte",
+    "id": "cad1fb6a2a14",
+    "handler": "on:click={handleRun}",
+    "reason": "Only opens the NewTestPlanPanel create form via showCreateTestPlanPanel; the real TestPlan creation is that panel's own guarded Save button"
+  },
+  {
+    "file": "plugins/test-management-resources/src/components/test-plan/RunTestPlanButton.svelte",
+    "id": "cad1fb6a2a14",
+    "handler": "on:click={handleRun}",
+    "reason": "Only opens the NewTestRunPanel create form via showCreateTestRunPanel; the real TestRun creation is that panel's own guarded Save button"
+  },
+  {
+    "file": "plugins/test-management-resources/src/components/test-result/TestRunner.svelte",
+    "id": "d2a5f795631b",
+    "handler": "on:click={goToNextItem}",
+    "reason": "Declared async but body is fully synchronous local iterator advance; no network call to duplicate"
+  },
+  {
+    "file": "plugins/test-management-resources/src/components/test-run/CreateTestRunButton.svelte",
+    "id": "cad1fb6a2a14",
+    "handler": "on:click={handleRun}",
+    "reason": "Only opens the NewTestRunPanel create form via showCreateTestRunPanel; the real TestRun creation is that panel's own guarded Save button"
+  },
+  {
+    "file": "plugins/test-management-resources/src/components/test-run/TestRunButton.svelte",
+    "id": "cad1fb6a2a14",
+    "handler": "on:click={handleRun}",
+    "reason": "Only opens the TestRunner panel via showTestRunnerPanel, which sets up a local iterator; no doc creation"
+  },
+  {
+    "file": "plugins/test-management-resources/src/components/TestManagementSpaceHeader.svelte",
+    "id": "31767bc1f2c3",
+    "handler": "on:click={handleCreateTestCase}",
+    "reason": "Only opens the CreateTestCase popup; actual creation happens from that popup's own submit"
+  },
+  {
+    "file": "plugins/test-management-resources/src/components/TestManagementSpaceHeader.svelte",
+    "id": "6b91d28cf302",
+    "handler": "on:click={showCreateProjectPopup}",
+    "reason": "Only opens the CreateProject popup; actual creation happens from that popup's own submit"
+  },
+  {
+    "file": "plugins/text-editor-resources/src/components/TextActionButton.svelte",
+    "id": "20669885fe3c",
+    "handler": "on:click={handleClick}",
+    "reason": "Generic rich-text toolbar button; registered actions run local tiptap editor commands (toggle bold/list/etc.), not server-side creates"
+  },
+  {
+    "file": "plugins/time-resources/src/components/team/PersonDayWidget.svelte",
+    "id": "4331d6463699",
+    "handler": "on:click={handleClose}",
+    "reason": "Closing an already-closed widget by id is idempotent; no document is created, updated, or removed."
+  },
+  {
+    "file": "plugins/tracker-resources/src/components/components/ComponentSelector.svelte",
+    "id": "436cd7bd2ace",
+    "handler": "on:click={handleComponentEditorOpened}",
+    "reason": "Only opens a selector popup; mutation happens only on an explicit pick inside the popup."
+  },
+  {
+    "file": "plugins/tracker-resources/src/components/components/DeleteComponentPresenter.svelte",
+    "id": "2e5f152b6422",
+    "handler": "on:click={() => showConfirmationDialog()}",
+    "reason": "Only opens a confirmation dialog; the destructive remove is gated behind one explicit confirm click inside it."
+  },
+  {
+    "file": "plugins/tracker-resources/src/components/issues/edit/CopyToClipboardButton.svelte",
+    "id": "aa598be92692",
+    "handler": "on:click={copy}",
+    "reason": "clipboard copy, idempotent"
+  },
+  {
+    "file": "plugins/tracker-resources/src/components/issues/edit/EditIssue.svelte",
+    "id": "be5fde263dfc",
+    "handler": "on:click={() => {",
+    "reason": "Update target is a fixed constant (NoParent), not relative; repeating it is a no-op on data, and the button unmounts once the field updates."
+  },
+  {
+    "file": "plugins/tracker-resources/src/components/issues/edit/RemoveRelationButton.svelte",
+    "id": "f24818d23437",
+    "handler": "on:click|stopPropagation={handleClick}",
+    "reason": "$pull-based array removal of an already-absent item is a no-op; the chip disappears once the reactive query updates."
+  },
+  {
+    "file": "plugins/tracker-resources/src/components/issues/ParentIssueSelector.svelte",
+    "id": "dca2a11656b5",
+    "handler": "on:click={handleOpenEditor}",
+    "reason": "Only opens a selector popup; the onChange mutation only fires from an explicit pick inside the popup."
+  },
+  {
+    "file": "plugins/tracker-resources/src/components/issues/RelationEditorPart.svelte",
+    "id": "9919b37afbf8",
+    "handler": "on:click|stopPropagation={() => handleRedirect(issue)}",
+    "reason": "Pure client-side navigation, idempotent."
+  },
+  {
+    "file": "plugins/tracker-resources/src/components/templates/DraftIssueChildEditor.svelte",
+    "id": "c8a5d315ef75",
+    "handler": "on:click={createIssue}",
+    "reason": "Handler already self-guards via the canSave reactive flag / disabled={!canSave}, which flips true immediately after submit, before a real second click can land."
+  },
+  {
+    "file": "plugins/training-resources/src/components/TrainingRefEditor.svelte",
+    "id": "aaabd7378a85",
+    "handler": "on:click={(event) => {",
+    "reason": "Only opens a training-reference picker popup; the real onChange runs from that popup's selection callback"
+  },
+  {
+    "file": "plugins/training-resources/src/components/TrainingRequestPanel.svelte",
+    "id": "b399027190ad",
+    "handler": "on:click={openLatestAttempt}",
+    "reason": "Pure navigate() call to the existing latest attempt, no doc mutation (covers both the draft and latest-result button variants)"
+  },
+  {
+    "file": "plugins/training-resources/src/components/TrainingRequestRolesEditor.svelte",
+    "id": "6901962e187b",
+    "handler": "on:click={onClick}",
+    "reason": "Only opens a roles picker popup; the real onChange runs from that popup's own close handler"
+  },
+  {
+    "file": "plugins/view-resources/src/components/EditDoc.svelte",
+    "id": "4601c2829bcf",
+    "handler": "on:click={() => {",
+    "reason": "openDocInSidebar builds a deterministic tab id (preview_<docId>); createWidgetTab replaces the matching existing tab instead of appending, so repeats are idempotent."
+  },
+  {
+    "file": "plugins/view-resources/src/components/filter/FilterBar.svelte",
+    "id": "09957bb6b25c",
+    "handler": "on:click={async () => {",
+    "reason": "Only opens a naming dialog (FilterSave); the actual write happens later on an explicit confirm inside that dialog."
+  },
+  {
+    "file": "plugins/view-resources/src/components/navigator/TreeElement.svelte",
+    "id": "4ed55ea3f95f",
+    "handler": "on:click={onMenuClick}",
+    "reason": "Duplicate render branch (NavItem variant) of the same onMenuClick handler; same reasoning as the other instance in this file."
+  },
+  {
+    "file": "plugins/view-resources/src/components/UpDownNavigator.svelte",
+    "id": "3a9bbc8f5a7e",
+    "handler": "on:click={async (evt) => {",
+    "reason": "Pure client-side selection/navigation (local store + client.findOne read + navigate), no create/update/remove side effects."
+  },
+  {
+    "file": "plugins/view-resources/src/components/UpDownNavigator.svelte",
+    "id": "6d346dfbb7c8",
+    "handler": "on:click={async (evt) => {",
+    "reason": "Symmetric up-navigation button, same pure client-side mechanism as the down button."
+  },
+  {
+    "file": "plugins/view-resources/src/components/ViewOptionsButton.svelte",
+    "id": "d7d29694985f",
+    "handler": "on:click={clickHandler}",
+    "reason": "Same clickHandler as the other ViewOptionsButton variant on this page; no data mutation."
+  },
+  {
+    "file": "plugins/workbench-resources/src/components/Workbench.svelte",
+    "id": "621437e0a046",
+    "handler": "on:click={() => {",
+    "reason": "logOut() only clears cookie/metadata (idempotent, errors swallowed) and the trailing navigate() is idempotent in-app navigation"
+  },
+  {
+    "file": "services/github/github-resources/src/components/GithubRepositories.svelte",
+    "id": "e9993c7c582b",
+    "handler": "on:click={(evt) => {",
+    "reason": "handler (showMenu) is async in signature only; body has zero await before showPopup, so the default overlay mounts synchronously and blocks a second click before it can reach the button"
+  },
+  {
+    "file": "services/github/github-resources/src/components/RepositoryPresenterRefEditor.svelte",
+    "id": "c496bacdbd79",
+    "handler": "on:click={handleRepositoryEditorOpened}",
+    "reason": "handler has no await before showPopup; synchronous execution means the default overlay mounts before a rage-click's second click event can be dispatched, so the popup never stacks"
+  },
+  {
+    "file": "services/github/github-resources/src/components/RepositorySelector.svelte",
+    "id": "c496bacdbd79",
+    "handler": "on:click={handleRepositoryEditorOpened}",
+    "reason": "handler has no await before showPopup, same self-protection as RepositoryPresenterRefEditor; component is also currently unreferenced anywhere in the codebase"
+  },
+  {
+    "file": "dev/storybook/src/design/PanZoom.svelte",
+    "id": "2dea1f610cf3",
+    "handler": "on:click={fit}",
+    "reason": "Storybook only: awaits tick() and recomputes the view transform from the current size; repeats land on the same transform."
+  },
+  {
+    "file": "dev/storybook/src/design/generated/Canvas.svelte",
+    "id": "e72320b79965",
+    "handler": "on:click={() => {",
+    "reason": "Storybook only: opens a frame of the design canvas, no data written."
+  },
+  {
+    "file": "packages/ui/src/ui-kit/wizard-dialog/WizardDialog.svelte",
+    "id": "5147bc3706ff",
+    "handler": "on:click={() => {",
+    "reason": "go() sets selected synchronously and awaits only tick() for focus; a repeat in the same task reads the same index and selects the same step."
+  },
+  {
+    "file": "packages/ui/src/ui-kit/wizard-dialog/WizardDialog.svelte",
+    "id": "2cea8b70bf47",
+    "handler": "on:click={() => {",
+    "reason": "go() sets selected synchronously and awaits only tick() for focus; a repeat in the same task reads the same index and selects the same step."
+  },
+  {
+    "file": "plugins/activity-resources/src/components/poll/CreatePoll.svelte",
+    "id": "64e82b9d263b",
+    "handler": "on:click={() => {",
+    "reason": "removeOption filters the local draft by id before its only await (tick for focus); a repeat finds nothing to remove."
+  },
+  {
+    "file": "plugins/attachment-resources/src/components/PreviewPopupActions.svelte",
+    "id": "6b37a368f2b5",
+    "handler": "on:click={() => {",
+    "reason": "closePopup() removes the button synchronously; the sidebar tab is keyed by the file id, so a repeat reopens the same tab."
+  },
+  {
+    "file": "plugins/attachment-resources/src/components/PreviewWidget.svelte",
+    "id": "e03fb8bb3d83",
+    "handler": "on:click={closeTab}",
+    "reason": "Closing a widget tab by id is idempotent; a repeat closes nothing."
+  }
+]

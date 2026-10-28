@@ -67,34 +67,41 @@
     return true
   }
 
+  let saving = false
+
   async function saveEvent () {
-    if (readOnly) {
+    if (readOnly || saving) {
       return
     }
-    const update: DocumentUpdate<Event> = {}
-    if (object.description !== description) {
-      update.description = description.trim()
-    }
-    if (object.date !== startDate) {
-      update.date = startDate
-    }
-    if (object.dueDate !== dueDate) {
-      update.dueDate = dueDate
-    }
-    if (object.visibility !== visibility) {
-      update.visibility = visibility
-    }
-    if (object.calendar !== _calendar) {
-      update.calendar = _calendar
-    }
-    if (!deepEqual(object.reminders, reminders)) {
-      update.reminders = reminders
-    }
+    saving = true
+    try {
+      const update: DocumentUpdate<Event> = {}
+      if (object.description !== description) {
+        update.description = description.trim()
+      }
+      if (object.date !== startDate) {
+        update.date = startDate
+      }
+      if (object.dueDate !== dueDate) {
+        update.dueDate = dueDate
+      }
+      if (object.visibility !== visibility) {
+        update.visibility = visibility
+      }
+      if (object.calendar !== _calendar) {
+        update.calendar = _calendar
+      }
+      if (!deepEqual(object.reminders, reminders)) {
+        update.reminders = reminders
+      }
 
-    if (Object.keys(update).length > 0) {
-      await client.update(object, update)
+      if (Object.keys(update).length > 0) {
+        await client.update(object, update)
+      }
+      dispatch('close')
+    } finally {
+      saving = false
     }
-    dispatch('close')
   }
 
   const manager = createFocusManager()
@@ -152,6 +159,7 @@
       kind="primary"
       label={presentation.string.Save}
       disabled={readOnly}
+      loading={saving}
       on:click={saveEvent}
       focusIndex={10010}
     />

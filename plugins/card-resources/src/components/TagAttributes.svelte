@@ -64,10 +64,18 @@
   $: canUnlock = canUnlockSection(value.space, $permissionsStore)
   $: _readonly = readonly || isLocked
 
+  let toggling = false
+
   async function toggleLock (ev: MouseEvent): Promise<void> {
     ev.stopPropagation()
-    const op = isLocked ? '$pull' : '$push'
-    await client.update(value, { [op]: { readonlySections: tag._id } })
+    if (toggling) return
+    toggling = true
+    try {
+      const op = isLocked ? '$pull' : '$push'
+      await client.update(value, { [op]: { readonlySections: tag._id } })
+    } finally {
+      toggling = false
+    }
   }
 </script>
 
@@ -91,6 +99,7 @@
           kind="link"
           disabled={readonly}
           size="medium"
+          loading={toggling}
           showTooltip={{ label: isLocked ? card.string.UnLockSection : card.string.LockSection }}
           on:click={toggleLock}
         />

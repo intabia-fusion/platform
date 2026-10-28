@@ -127,31 +127,38 @@
         (client.getHierarchy().asIf(it, github.mixin.GithubProject)?.integration ?? integration._id) === integration._id
     )
     .concat(orphanProjects)
+  let selecting = false
   async function selectProject (event: MouseEvent): Promise<void> {
-    showPopup(
-      DropdownLabelsPopup,
-      {
-        enableSearch: allowedProjects.length > 5,
-        items: [
-          ...allowedProjects.map((it) => ({ id: `${it._id}`, label: it.name })),
-          { id: '#', label: await translate(tracker.string.NewProject, {}) }
-        ]
-      },
-      getEventPopupPositionElement(event),
-      (result) => {
-        if (result != null) {
-          if (result === '#') {
-            showPopup(tracker.component.CreateProject, {}, 'center', (prj) => {
-              if (prj != null) {
-                void assignRepository(prj)
-              }
-            })
-          } else {
-            void assignRepository(result)
+    if (selecting) return
+    selecting = true
+    try {
+      showPopup(
+        DropdownLabelsPopup,
+        {
+          enableSearch: allowedProjects.length > 5,
+          items: [
+            ...allowedProjects.map((it) => ({ id: `${it._id}`, label: it.name })),
+            { id: '#', label: await translate(tracker.string.NewProject, {}) }
+          ]
+        },
+        getEventPopupPositionElement(event),
+        (result) => {
+          if (result != null) {
+            if (result === '#') {
+              showPopup(tracker.component.CreateProject, {}, 'center', (prj) => {
+                if (prj != null) {
+                  void assignRepository(prj)
+                }
+              })
+            } else {
+              void assignRepository(result)
+            }
           }
         }
-      }
-    )
+      )
+    } finally {
+      selecting = false
+    }
   }
 </script>
 
@@ -160,6 +167,7 @@
   kind="primary"
   label={github.string.LinkToProject}
   labelParams={{ title: getMetadata(ui.metadata.PlatformTitle) }}
+  loading={selecting}
   on:click={selectProject}
   iconRight={ui.icon.ChevronDown}
 />

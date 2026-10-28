@@ -13,10 +13,11 @@
 // limitations under the License.
 //
 
+import type { PermissionsStore } from '@hcengineering/contact'
 import { checkMyPermission, permissionsStore } from '@hcengineering/contact-resources'
 import { get } from 'svelte/store'
 import training from '../plugin'
 
-export function canCreateTraining (): boolean {
-  return checkMyPermission(training.permission.CreateTraining, training.space.Trainings, get(permissionsStore))
+export function canCreateTraining (permissions: PermissionsStore = get(permissionsStore)): boolean {
+  return checkMyPermission(training.permission.CreateTraining, training.space.Trainings, permissions)
 }

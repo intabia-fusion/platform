@@ -120,10 +120,17 @@
     loading = false
   }
 
+  let loadingMore = false
   async function loadMore (): Promise<void> {
-    const next = await getPaymentOperations(opFilterParams(operations.length))
-    operations = [...operations, ...next]
-    hasMore = next.length === PAGE
+    if (loadingMore) return
+    loadingMore = true
+    try {
+      const next = await getPaymentOperations(opFilterParams(operations.length))
+      operations = [...operations, ...next]
+      hasMore = next.length === PAGE
+    } finally {
+      loadingMore = false
+    }
   }
 
   // Reload when the refresh tick, period, selected day or server-side filters change.
@@ -761,6 +768,7 @@
         <Button
           label={adminRes.string.MoreItems}
           kind="regular"
+          loading={loadingMore}
           on:click={() => {
             void loadMore()
           }}

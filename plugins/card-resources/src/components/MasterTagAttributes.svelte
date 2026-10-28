@@ -59,14 +59,22 @@
   $: canLock = canLockSection(value.space, $permissionsStore)
   $: canUnlock = canUnlockSection(value.space, $permissionsStore)
 
+  let toggling = false
+
   async function toggleLock (ev: MouseEvent): Promise<void> {
     ev.stopPropagation()
-    const op = isLocked ? '$pull' : '$push'
-    const targets = isLocked
-      ? hierarchy.getAncestors(value._class).filter((p) => value.readonlySections?.includes(p))
-      : [value._class]
-    for (const target of targets) {
-      await client.update(value, { [op]: { readonlySections: target } })
+    if (toggling) return
+    toggling = true
+    try {
+      const op = isLocked ? '$pull' : '$push'
+      const targets = isLocked
+        ? hierarchy.getAncestors(value._class).filter((p) => value.readonlySections?.includes(p))
+        : [value._class]
+      for (const target of targets) {
+        await client.update(value, { [op]: { readonlySections: target } })
+      }
+    } finally {
+      toggling = false
     }
   }
 </script>
@@ -85,6 +93,7 @@
           kind="link"
           size="medium"
           disabled={readonly}
+          loading={toggling}
           showTooltip={{ label: isLocked ? card.string.UnLockSection : card.string.LockSection }}
           on:click={toggleLock}
         />

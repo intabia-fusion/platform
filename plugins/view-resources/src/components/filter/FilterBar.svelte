@@ -63,8 +63,11 @@
     showPopup(FilterSave, { viewOptions, _class })
   }
 
+  let savingFilteredView = false
   async function saveCurrentFilteredView (filter: FilteredView | undefined) {
-    if (filter !== undefined) {
+    if (savingFilteredView || filter === undefined) return
+    savingFilteredView = true
+    try {
       const filters = JSON.stringify($filterStore)
       await client.update(filter, {
         filters,
@@ -77,6 +80,8 @@
         viewOptions,
         viewletId: getActiveViewletId()
       })
+    } finally {
+      savingFilteredView = false
     }
   }
 
@@ -208,6 +213,7 @@
             icon={view.icon.Views}
             label={view.string.Save}
             width="fit-content"
+            loading={savingFilteredView}
             on:click={async () => {
               await saveCurrentFilteredView($selectedFilterStore)
             }}

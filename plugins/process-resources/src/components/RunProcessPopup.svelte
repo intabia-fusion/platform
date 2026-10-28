@@ -99,13 +99,20 @@
 
   const dispatch = createEventDispatcher()
 
+  let running = false
+
   async function runProcess (_id: Ref<Process>): Promise<void> {
-    if (!value) return
-    for (const element of values) {
-      const tx = await createExecution(element._id, _id, element.space, client.txFactory)
-      if (tx) await client.tx(tx)
+    if (!value || running) return
+    running = true
+    try {
+      for (const element of values) {
+        const tx = await createExecution(element._id, _id, element.space, client.txFactory)
+        if (tx) await client.tx(tx)
+      }
+      dispatch('close')
+    } finally {
+      running = false
     }
-    dispatch('close')
   }
 </script>
 
@@ -121,6 +128,7 @@
         {#each processes as process}
           <button
             class="ap-menuItem flex-row-center withIcon w-full"
+            disabled={running}
             on:click|preventDefault|stopPropagation={async () => {
               await runProcess(process._id)
             }}
