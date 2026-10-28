@@ -72,8 +72,7 @@ interface Stored {
   docs?: Doc[]
 }
 
-// `class:Issue`, `class:Task` and `class:DirectMessage` have previews; the direct is a space. Titles
-// come from `titleKey: 'name'`. `findAll` answers from `stored`, by class.
+// Issue, Task and DirectMessage (a space) have previews; `findAll` answers from `stored`
 function makeControl (stored: Stored = {}): TriggerControl {
   const activityClasses: Ref<Class<Doc>>[] = [issueClass, taskClass, directClass]
   return {

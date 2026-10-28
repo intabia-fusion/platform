@@ -719,11 +719,9 @@ describe('PostgreSQL storage.ts coverage', () => {
         description: ''
       })
 
-      await serverStorage.rawUpdate<Task>(
-        'test-task' as Domain,
-        { _id: id },
-        { $unset: { createdBy: '', modifiedBy: '' } } as any
-      )
+      await serverStorage.rawUpdate<Task>('test-task' as Domain, { _id: id }, {
+        $unset: { createdBy: '', modifiedBy: '' }
+      } as any)
 
       const updated = await client.findOne<Task>(taskPlugin.class.Task, { _id: id })
       expect(updated?.createdBy ?? null).toBeNull()

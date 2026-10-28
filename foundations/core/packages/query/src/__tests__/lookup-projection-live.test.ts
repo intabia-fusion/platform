@@ -393,7 +393,7 @@ describe('LiveQuery lookup projection, live', () => {
       result = await waitForNextCall(mock, before)
       expect(result.map((it: Doc) => it._id)).toEqual([one, two])
 
-      // A joined field the query does not filter by is applied in place, as before.
+      // A joined field the query does not filter by is applied in place.
       before = mock.mock.calls.length
       await factory.updateDoc(core.class.Space, core.space.Model, second, { name: 'c-second' })
       result = await waitForNextCall(mock, before)

@@ -384,7 +384,6 @@ export async function createRealDirectFromFake (fake: DocPreview): Promise<Direc
   return await client.findOne(chunter.class.DirectMessage, { _id })
 }
 
-// A person-to-person direct by the type its preview carries
 export function isPersonDirect (preview: DocPreview): boolean {
   return preview.objectClass === chunter.class.DirectMessage && preview.props?.type === 'person'
 }

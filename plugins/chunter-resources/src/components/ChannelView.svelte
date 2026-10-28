@@ -102,8 +102,13 @@
   $: withInput = !hierarchy.isDerived(_class, core.class.Space) || object != null || preview != null
   $: showJoinOverlay = shouldShowJoinOverlay(object)
   $: isDocChat = !hierarchy.isDerived(_class, chunter.class.ChunterSpace)
+  // A chat opened by its link is a ChunterSpace until it loads: a direct must not show the aside meanwhile
   $: withAside =
-    !embedded && !isThreadOpened && !hierarchy.isDerived(_class, chunter.class.DirectMessage) && !showJoinOverlay
+    !embedded &&
+    !isThreadOpened &&
+    _class !== chunter.class.ChunterSpace &&
+    !hierarchy.isDerived(_class, chunter.class.DirectMessage) &&
+    !showJoinOverlay
 
   function toChannel (object: Doc): Channel {
     return object as Channel

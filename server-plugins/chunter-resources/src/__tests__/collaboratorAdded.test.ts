@@ -38,8 +38,7 @@ const ALICE_SPACE = 'person-space-alice' as Ref<Space>
 
 const txFactory = new TxFactory('test-account' as any)
 
-// Alice has a person space; both documents have their preview, `channel-1` its read state too,
-// `doc-old` none yet.
+// Both documents have a preview; only `channel-1` has a read state
 const previews = [
   { _id: 'preview-1', objectId: CHANNEL, objectDomain: 'space' },
   { _id: 'preview-old', objectId: OLD_DOC, objectDomain: 'space' }

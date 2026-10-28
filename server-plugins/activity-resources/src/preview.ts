@@ -77,7 +77,6 @@ function touchedKeys (tx: TxUpdateDoc<Doc>): Set<string> {
   return keys
 }
 
-// Whether a tx changes what the preview shows.
 function showsChange (tx: TxUpdateDoc<Doc>, control: TriggerControl): boolean {
   const { hierarchy } = control
   const keys = touchedKeys(tx)
@@ -144,7 +143,7 @@ export async function OnDocUpdated (txes: TxUpdateDoc<Doc>[], control: TriggerCo
   return res
 }
 
-// In the request of the change: an asynchronous trigger of an older move could come last and leave the preview in a space its document has left
+// Sync: an async trigger of an older move could come last and leave the preview behind
 export async function OnDocPreviewMoved (txes: TxUpdateDoc<Doc>[], control: TriggerControl): Promise<Tx[]> {
   const { hierarchy } = control
   const asks = new Map<string, Ask & { retyped: boolean }>()

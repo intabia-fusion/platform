@@ -116,5 +116,10 @@ async function buildDirectName (
   // A direct with oneself is called by oneself
   const shown = others.length > 0 ? others : members
   const persons = await control.findAll<Person>(control.ctx, contact.class.Person, { personUuid: { $in: shown } })
-  return persons.map((p) => formatName(p.name, control.branding?.lastNameFirst)).join(', ')
+  const byUuid = new Map(persons.map((p) => [p.personUuid, p]))
+  return shown
+    .map((m) => byUuid.get(m))
+    .filter((p): p is Person => p != null)
+    .map((p) => formatName(p.name, control.branding?.lastNameFirst))
+    .join(', ')
 }

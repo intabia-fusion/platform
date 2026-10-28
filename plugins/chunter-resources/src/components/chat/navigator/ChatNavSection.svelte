@@ -108,7 +108,6 @@
   }
   let built = new Map<Ref<Doc>, Built>()
 
-  // The items come from the previews alone, the documents are not loaded.
   const getChatNavItems = reduceCalls(
     async (
       entries: ChatNavEntry[],
@@ -154,7 +153,6 @@
     const isDirect = hierarchy.isDerived(_class, chunter.class.DirectMessage)
     const [title, icon] = await Promise.all([
       getPreviewTitle(client, preview, lang),
-      // Presence is shown on the avatars of people
       getPreviewIcon(client, preview, isDirect || isPerson ? { showStatus: true } : {})
     ])
     return {

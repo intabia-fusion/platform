@@ -37,7 +37,11 @@
     // A list hands over a fresh copy on every update: new props would make the icon component ask again
     if (asked?.objectId === preview.objectId && asked.modifiedOn === preview.modifiedOn) return
     asked = preview
-    const res = await getPreviewIcon(client, preview)
+    const res = await getPreviewIcon(client, preview).catch((err) => {
+      asked = undefined
+      console.error(err)
+      return undefined
+    })
     // A late answer for a preview no longer shown is dropped
     if (asked === preview) data = res
   }

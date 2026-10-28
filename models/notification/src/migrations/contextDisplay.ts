@@ -18,7 +18,7 @@ import { type DocNotifyContext, type NotificationMessage } from '@hcengineering/
 
 import { DOMAIN_DOC_NOTIFY } from '../index'
 
-// What a context kept before the previews: its own copy of the display and the thread message under `object`.
+// A context before the previews: its display copies and the thread message under `object`.
 interface OldContext extends DocNotifyContext {
   object?: NotificationMessage
   objectTitle?: string

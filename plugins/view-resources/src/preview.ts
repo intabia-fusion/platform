@@ -79,7 +79,6 @@ function rememberTitle (key: string, title: string): void {
   if (builtTitles.size > BUILT_TITLES_MAX) builtTitles.delete(builtTitles.keys().next().value as string)
 }
 
-// The title as a store: the shared one at once, the built one when ready, a late answer to an older call dropped.
 // `withLabel: false` leaves a title-less preview empty for a caller that draws the class label itself.
 export function previewTitle (
   client: Client,
@@ -93,10 +92,14 @@ export function previewTitle (
   const shared = !isBuiltPerViewer(preview) && preview.title !== ''
   return readable(shared ? preview.title : (builtTitles.get(key) ?? ''), (set) => {
     let live = true
-    void getPreviewTitle(client, preview, lang, withLabel).then((title) => {
-      if (!shared) rememberTitle(key, title)
-      if (live) set(title)
-    })
+    void getPreviewTitle(client, preview, lang, withLabel)
+      .then((title) => {
+        if (!shared) rememberTitle(key, title)
+        if (live) set(title)
+      })
+      .catch((err) => {
+        console.error(err)
+      })
     return () => {
       live = false
     }

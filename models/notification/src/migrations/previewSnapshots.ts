@@ -32,7 +32,7 @@ type SnapshotContext = Pick<
   '_id' | 'user' | 'objectId' | 'objectSpace' | 'preview' | 'previewSnapshot'
 >
 
-// The snapshots and spaces the triggers keep, for contexts made before them: the preview's space, as `objectSpace` stayed behind a moved document
+// What the triggers keep, for contexts made before them: `objectSpace` stayed behind a moved document
 export async function fillPreviewSnapshots (client: MigrationClient): Promise<void> {
   const counters = { snapshots: 0, moved: 0, failed: 0 }
   const spaces = await client.find<Space>(DOMAIN_SPACE, { private: true }, { projection: { _id: 1, members: 1 } })

@@ -1036,8 +1036,7 @@ export interface Collaborator extends AttachedDoc {
 }
 
 /**
- * What a list shows of a document without loading it: one per document with activity, written by
- * triggers only. The `_id` is its own; `objectDomain` + `objectId` are unique per workspace.
+ * What a list shows of a document without loading it; written by triggers only, unique by `objectDomain` + `objectId`.
  */
 export interface DocPreview extends Doc {
   objectId: Ref<Doc>
@@ -1052,7 +1051,7 @@ export interface DocPreview extends Doc {
 }
 
 /**
- * What a list draws of a preview; a copy of it stays with the one who can no longer read the preview.
+ * A copy of it stays with a user who can no longer read the preview.
  */
 export type PreviewSnapshot = Pick<
   DocPreview,

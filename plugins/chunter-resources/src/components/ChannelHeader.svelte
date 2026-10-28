@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import type { AccountUuid, Class, Doc, DocPreview, Ref } from '@hcengineering/core'
-  import { getDocTitle, getPreviewTitle, openDoc, previewMembers } from '@hcengineering/view-resources'
+  import { getDocTitle, getPreviewTitle, openDoc, previewMembers, PreviewIcon } from '@hcengineering/view-resources'
   import { ComponentExtensions, getClient } from '@hcengineering/presentation'
   import type { Channel } from '@hcengineering/chunter'
   import type { ActivityMessagesFilter, WithReferences } from '@hcengineering/activity'
@@ -54,12 +54,12 @@
 
   $: void updateDescription(_id, _class, object)
 
-  // Only the latest call sets its field: a slow answer for the chat left meanwhile is dropped, not waited for
+  // A late answer for a chat left meanwhile is dropped
   let titleAsk = 0
   let descriptionAsk = 0
   let directPersonAsk = 0
 
-  // Before the document comes its preview names it without a request
+  // Until the document comes, its preview names it
   async function updateTitle (
     _id: Ref<Doc>,
     _class: Ref<Class<Doc>>,
@@ -70,7 +70,7 @@
     const ask = ++titleAsk
     let res: string | undefined
     if (object != null) res = await getChannelName(_id, _class, object, lang)
-    else if (preview?.objectId === _id) res = await getPreviewTitle(client, preview, lang)
+    else if (preview?.objectId === _id) res = await getPreviewTitle(client, preview, lang).catch(() => undefined)
     if (ask === titleAsk) title = res
   }
   $: void updateTitle(_id, _class, object, preview, $languageStore)
@@ -105,7 +105,7 @@
     if (ask === directPersonAsk) directPerson = members.length === 2 && res.length === 1 ? res[0] : undefined
   }
 
-  // The direct's own members; the preview of the click carries them before the direct comes
+  // The preview of the click carries the members before the direct comes
   function getDirectMembers (
     _id: Ref<Doc>,
     object: Doc | undefined,
@@ -122,15 +122,20 @@
 
   $: isPerson =
     hierarchy.isDerived(_class, chunter.class.DirectMessage) || hierarchy.isDerived(_class, contact.class.Person)
+
+  // Before the document its preview draws the icon; a chat opened by its link knows no concrete class yet
+  $: byPreview = object == null && preview?.objectId === _id
+  $: icon = byPreview ? PreviewIcon : _class === chunter.class.ChunterSpace ? undefined : getObjectIcon(_class)
+  $: iconProps = byPreview ? { value: preview } : { value: object, showStatus: true, editable: true }
 </script>
 
 <Header
   bind:filters
   {object}
-  icon={getObjectIcon(_class)}
-  iconProps={{ value: object, showStatus: true, editable: true }}
+  {icon}
+  {iconProps}
   label={title}
-  intlLabel={chunter.string.Channel}
+  intlLabel={_class === chunter.class.ChunterSpace ? undefined : chunter.string.Channel}
   {description}
   titleKind={isPerson ? 'default' : 'breadcrumbs'}
   withFilters={false}

@@ -757,7 +757,6 @@ async function createChats (client: MigrationClient): Promise<void> {
     if (collaborators.length === 0) break
 
     const res: Chat[] = []
-    // The chat points at the preview of its document, the key of which is the domain and the id
     const previewByDoc = await findPreviews(
       client,
       collaborators.flatMap((it) => {

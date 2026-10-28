@@ -10,7 +10,6 @@
 
   import { NotificationClientImpl } from '../client'
 
-  // The document whose notifications are set: its id and class are all the popup needs
   export let value: Pick<Doc, '_id' | '_class'> | Array<Pick<Doc, '_id' | '_class'>>
 
   const client = getClient()

@@ -348,7 +348,7 @@ export async function migrateSpaceRanks (client: MigrationClient, domain: Domain
 }
 
 /**
- * A write resolves to nothing, so its outcome is whether it threw; a failed one is logged.
+ * Logs a failed write instead of throwing it.
  */
 export async function written (
   client: MigrationClient,
@@ -366,7 +366,7 @@ export async function written (
 }
 
 /**
- * A batch write fails as a whole on one bad row: then the rows go one by one, each on its own.
+ * One bad row fails a whole batch: then the rows go one by one.
  */
 export async function createEach<T extends Doc> (client: MigrationClient, domain: Domain, docs: T[]): Promise<number> {
   if (docs.length === 0) return 0

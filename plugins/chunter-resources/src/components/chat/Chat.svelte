@@ -95,6 +95,7 @@
     }
 
     const _id: Ref<Doc> | undefined = await parseLinkId(linkProviders, id, _class)
+    if (selectedData?.id !== id || selectedData?._class !== _class) return
 
     if (_id === undefined) {
       opened = undefined
@@ -197,7 +198,7 @@
     const ask = selectAsk
     selectedId = preview.objectId
 
-    // The navigator knows the preview only; the document comes with the location (`loadObject`).
+    // The document comes later with the location (`loadObject`)
     let _id = preview.objectId
     const _class = preview.objectClass
 
@@ -217,10 +218,11 @@
       }
     }
 
-    // The chat or the document panel shows at once by the preview: no request for the link or the header
+    // Shown at once by the preview, without waiting for the document
     opened = { _id, _class, preview: { ...preview, objectId: _id } }
     if (!isDocPanel(_class)) {
-      const name = await getPreviewTitle(client, opened.preview as DocPreview, $languageStore)
+      // Without a name the link is the bare id: the chat still opens
+      const name = await getPreviewTitle(client, opened.preview as DocPreview, $languageStore).catch(() => '')
       if (ask !== selectAsk) return
       selectedData = { id: toChunterSpaceLinkId(_id, name), _class }
       openChannel(selectedData.id, selectedData._class, undefined, true)

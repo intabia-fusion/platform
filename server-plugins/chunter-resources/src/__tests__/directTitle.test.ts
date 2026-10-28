@@ -37,6 +37,11 @@ describe('DirectTitlePresenter', () => {
     expect(title).toContain('Bob')
   })
 
+  it('lists the names in the order of the members, not of the storage', async () => {
+    const title = await DirectTitlePresenter(direct({ members: ['c', 'a', 'b'] as any }), control)
+    expect(title).toMatch(/Cat.*Ann.*Bob/)
+  })
+
   it('names a direct with oneself by oneself', async () => {
     const title = await DirectTitlePresenter(direct({ type: 'person', members: ['a'] as any }), control, {
       account: 'a' as AccountUuid

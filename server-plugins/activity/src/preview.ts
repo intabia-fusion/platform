@@ -72,15 +72,7 @@ export async function getPreviewData (control: PresenterControl, doc: Doc): Prom
 }
 
 // The domain is not here: with the id it is the key a preview is found by
-const previewFields = [
-  'objectClass',
-  'title',
-  'identifier',
-  'label',
-  'icon',
-  'archived',
-  'props'
-] as const
+const previewFields = ['objectClass', 'title', 'identifier', 'label', 'icon', 'archived', 'props'] as const
 
 // `$unset` for a field that went away: an absent key would leave the old value.
 export function previewUpdate (preview: DocPreview, data: Data<DocPreview>): DocumentUpdate<DocPreview> {

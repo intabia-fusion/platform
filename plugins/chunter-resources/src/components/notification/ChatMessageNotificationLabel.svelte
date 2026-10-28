@@ -43,7 +43,6 @@
   $: previewStore = contextPreview(context)
   $: preview = $previewStore
 
-  // An issue goes by its identifier, anything else by its title
   $: titleStore = previewTitle(client, preview, $languageStore)
   $: channelTitle = preview?.identifier ?? $titleStore
 

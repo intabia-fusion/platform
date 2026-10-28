@@ -40,8 +40,7 @@ const todoClass = 'class:ToDo' as Ref<Class<Doc>>
 const reviewClass = 'class:Review' as Ref<Class<Doc>>
 const messageClass = activity.class.ActivityMessage
 
-// Issue, the direct and a review have activity; a request and a to-do have collaborators only; the direct
-// is a space. A to-do and a review are marked `NoPreview`.
+// Activity: issue, direct (a space), review; collaborators only: request, to-do; `NoPreview`: to-do, review
 function makeControl (): PresenterControl {
   const parents: Record<string, string> = { [directClass]: core.class.Space }
   const withActivity: string[] = [issueClass, directClass, reviewClass, messageClass]

@@ -36,8 +36,7 @@ interface ChatIssue {
 }
 
 /**
- * A document reached from the chat (navigator, Saved, Threads, search) opens its panel in place of
- * the conversation: the navigator stays, the address stays in the chat, nothing opens over the app.
+ * A document reached from the chat opens in place of the conversation, not over the app.
  */
 test.describe('Document panel inside the chat', () => {
   let channelPage: ChannelPage
