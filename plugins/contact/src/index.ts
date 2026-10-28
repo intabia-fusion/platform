@@ -387,6 +387,7 @@ export const contactPlugin = plugin(contactId, {
     EveryoneDescription: '' as IntlString,
     HereDescription: '' as IntlString,
     Guest: '' as IntlString,
+    Guests: '' as IntlString,
     Deleted: '' as IntlString,
     Email: '' as IntlString
   },

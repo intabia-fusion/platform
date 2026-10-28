@@ -29,6 +29,7 @@
   import view, { type ReferenceVersion, type ReferenceVersionsProvider } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import { getReferenceLabel, getReferenceObject } from './extension/reference'
+  import { loadGuestIds, splitMentionItems, type GuestCache } from '../mentionSections'
 
   import MentionVersionPopup from './MentionVersionPopup.svelte'
 
@@ -96,6 +97,8 @@
 
   const dispatch = createEventDispatcher()
   const client = getClient()
+  // Roles of the persons already shown once: the popup asks for them before splitting the list.
+  const guestCache: GuestCache = new Map()
 
   let list: ListView
   let scrollContainer: HTMLElement
@@ -216,15 +219,25 @@
       searchIn: ['title', 'identifier'],
       infix: true
     })
-    if (r.query === query) {
-      const latestIndex = r.items.findLastIndex((it) => it.category.classToSearch === contact.mixin.Employee)
-      const multipleEmployeeSearchItems = await getMultipleEmployeeSearchItems(localQuery, latestIndex)
+    if (r.query !== query) return
 
-      items =
-        latestIndex === -1
-          ? [...multipleEmployeeSearchItems, ...r.items]
-          : [...r.items.slice(0, latestIndex + 1), ...multipleEmployeeSearchItems, ...r.items.slice(latestIndex + 1)]
-    }
+    const latestIndex = r.items.findLastIndex((it) => it.category.classToSearch === contact.mixin.Employee)
+    const multipleEmployeeSearchItems = await getMultipleEmployeeSearchItems(localQuery, latestIndex)
+    const merged =
+      latestIndex === -1
+        ? [...multipleEmployeeSearchItems, ...r.items]
+        : [...r.items.slice(0, latestIndex + 1), ...multipleEmployeeSearchItems, ...r.items.slice(latestIndex + 1)]
+
+    const employeeIds = merged
+      .filter((it) => it.category.classToSearch === contact.mixin.Employee)
+      .map((it) => it.item.doc._id)
+      // Everyone/Here are synthetic suggestions, not contacts - there is no role to ask for.
+      .filter((id) => id !== contact.mention.Everyone && id !== contact.mention.Here)
+    const guestIds = await loadGuestIds(client, employeeIds, guestCache)
+    // Another keystroke may have replaced the query while the roles were loading.
+    if (r.query !== query) return
+
+    items = splitMentionItems(merged, guestIds, contact.string.Guests)
   })
   $: void updateItems(query)
 </script>
