@@ -1,0 +1,113 @@
+entry "../../../PlatformDesign.tenn"
+
+item Root {
+    auto-layout column; width 1520; padding 40; gap 28; color #f7f7fa; corner-radius 16; font-family "IBM Plex Sans"
+    item Header {
+      auto-layout row; width fill; align center
+      item Title { title "Пространства: голый список против профиля аккаунта"; width fill; font-size 22; font-weight 600; line-height 28; text-color #201240; layout left }
+      item Num { title "Сравнение 3 из 6"; font-size 12; line-height 16; text-color #7f7f7f }
+    }
+    item Columns {
+      auto-layout row; gap 32; width fill; align start
+      item Current {
+        auto-layout column; gap 12; width 460
+        item Label {
+          auto-layout row; padding 4 10; color #ffffff; border-color #00000014; corner-radius 6
+          item Text { title "СЕЙЧАС"; font-size 11; font-weight 600; text-color #5c6470 }
+        }
+        use Libraries.login_kit.LoginCard as Card {
+          slot content {
+            use Libraries.login_kit.LoginForm as Form {
+              padding 16
+              slot content {
+                item form {
+                  auto-layout column; gap 12; width 428
+                  use Libraries.login_kit.LoginBackTitle as "Back title" {
+                    at Title { title "Выбрать рабочее пространство" }
+                  }
+                  item person {
+                    auto-layout column; padding 4 0 8 0; width 428
+                    item Name { title "Анна Смирнова"; font-size 14; font-weight 600; line-height 18; text-color #201240; layout left }
+                  }
+                  use Libraries.login_kit.LoginWorkspace as "Workspace demo-ws" { width 428; name demo-ws; note "(2 days)" }
+                  use Libraries.login_kit.LoginLinks as Links {
+                    align start; width 428
+                    slot content {
+                      item "link row" {
+                        auto-layout row; gap 3; align center; width 428; wrap yes; line-gap 3
+                        item Caption { title "Хотите создать другое рабочее пространство?"; font-size 12.8; line-height 17; text-color #000061cc; layout left }
+                        item Link { title "Создать рабочее пространство"; font-size 12.8; line-height 17; text-color #6e48cecc; layout left }
+                      }
+                      item "link row 2" {
+                        auto-layout row; gap 3; align center; width 428; wrap yes; line-gap 3
+                        item Caption { title "Не видите ваше рабочее пространство?"; font-size 12.8; line-height 17; text-color #000061cc; layout left }
+                        item Link { title "Сменить пользователя"; font-size 12.8; line-height 17; text-color #6e48cecc; layout left }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        item Problem {
+          auto-layout column; gap 6; width fill; padding 12; color #ffffff; border-color #ee7a7a66; corner-radius 10
+          item PTitle { title "Проблема"; font-size 12; font-weight 600; text-color #c14b4b; layout left }
+          item PText { title "Только имя, без почты: неясно, под каким аккаунтом список. Строка пространства не показывает роль и активность. Приглашения здесь не видны - они на отдельном экране, легко пропустить."; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+        }
+      }
+      item Proposed {
+        auto-layout column; gap 12; width 460
+        item Label {
+          auto-layout row; padding 4 10; color #efdcf2; corner-radius 6
+          item Text { title "ПРЕДЛОЖЕНИЕ"; font-size 11; font-weight 600; text-color #7d1f70 }
+        }
+        use Libraries.login_kit.LoginCard as Card {
+          slot content {
+            use Libraries.login_kit.LoginForm as Form {
+              slot content {
+                item form {
+                  auto-layout column; gap 12; width 396
+                  item Heading {
+                    auto-layout column; gap 8; width 396; align center
+                    item Hello { title "Здравствуйте, Анна"; font-size 28; font-weight 700; line-height 36; text-color #000061 }
+                    item Account { title "anna.smirnova@intabia.io · Бесплатный план"; font-size 14; line-height 18; text-color #5c6470 }
+                  }
+                  use Libraries.login_kit.LoginWorkspace as Platform { width 396; name "Intabia Platform"; note "Владелец · сегодня, 16:42" }
+                  use Libraries.login_kit.LoginWorkspace as Marketing { width 396; name "Маркетинг"; note "Участник · вчера" }
+                  item Invitation {
+                    auto-layout column; gap 12; width 396; padding 16; color #f8f5fa; border-color #d9b9d8; corner-radius 12; clip yes
+                    item "inv text" {
+                      auto-layout column; gap 4; width fill
+                      item T1 { title "Приглашение в «Дизайн-команда»"; font-size 14; font-weight 600; line-height 18; text-color #201240; layout left }
+                      item T2 { title "Мария Орлова · роль: участник"; font-size 13; line-height 18; text-color #5c6470; layout left }
+                    }
+                    item "inv buttons" {
+                      auto-layout row; gap 8; width fill; justify end
+                      use Libraries.login_kit.LoginButton as Decline {
+                        kind default; width 140
+                        at Button { title "Отклонить" }
+                      }
+                      use Libraries.login_kit.LoginButton as Accept {
+                        width 140
+                        at Button { title "Принять" }
+                      }
+                    }
+                  }
+                  use Libraries.login_kit.LoginButton as "Button Создать" {
+                    kind default
+                    at Button { title "Создать пространство" }
+                  }
+                }
+              }
+            }
+          }
+        }
+        item Change {
+          auto-layout column; gap 6; width fill; padding 12; color #ffffff; border-color #d9b9d8; corner-radius 10
+          item CTitle { title "Что меняется"; font-size 12; font-weight 600; text-color #7d1f70; layout left }
+          item CText { title "Шапка аккаунта: почта и план - профиль глобальный, а не привязан к одному пространству. Пространства с ролью и последним визитом, приглашения с действиями прямо в списке, создание всегда на виду."; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+        }
+      }
+    }
+}

@@ -17,7 +17,7 @@ import FramedSections from './FramedSections.svelte'
 import Icon from './Icon.svelte'
 
 const meta: Meta = {
-  title: 'Kit (pen.dev)/Icon',
+  title: 'Kit/Icon',
   tags: ['!autodocs'],
   parameters: { layout: 'padded', controls: { disable: true } }
 }

@@ -1,0 +1,91 @@
+entry "../../../../PlatformDesign.tenn"
+item "§ StatusIcon" {
+	auto-layout abs; width 113; height 82; color #ffffff; border-color #0000000f; corner-radius 8; pos 0 0
+	item title { title StatusIcon; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ PriorityIcon" {
+	auto-layout abs; width 117; height 82; color #ffffff; border-color #0000000f; corner-radius 8; pos 161 0
+	item title { title PriorityIcon; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ StatusChip" {
+	auto-layout abs; width 143; height 88; color #ffffff; border-color #0000000f; corner-radius 8; pos 326 0
+	item title { title StatusChip; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ Count" {
+	auto-layout abs; width 78; height 88; color #ffffff; border-color #0000000f; corner-radius 8; pos 517 0
+	item title { title Count; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ Notice" {
+	auto-layout abs; width 188; height 96; color #ffffff; border-color #0000000f; corner-radius 8; pos 643 0
+	item title { title Notice; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item StatusIcon {
+	export let category = active; auto-layout abs; width 14; height 14; pos 24 -44
+	styles { category one-of backlog todo active won lost }
+	item ring {
+		width 12; height 12; corner-radius 6; line-width 1.5; pos 1 -1; hidden ${category === "backlog"}
+		border-color ${category === "todo" ? "#758595" : category === "active" ? "#5195d7" : category === "won" ? "#83af12" : "#939395"}
+	}
+	item wedge { width 14; height 14; path "M7 7L7 3A4 4 0 0 1 11 7Z"; view-box 0 0 14 14; color #5195d7; hidden ${category !== "active"} }
+	item disc {
+		width 12; height 12; corner-radius 6; pos 1 -1; hidden ${category !== "won" && category !== "lost"}; color ${category === "won" ? "#83af12" : "#939395"}
+	}
+	item check { width 14; height 14; path "M4 7.2L6.2 9.4L10 5"; view-box 0 0 14 14; border-color #ffffff; line-width 1.5; hidden ${category !== "won"} }
+	item cross { width 14; height 14; path "M5 5L9 9M9 5L5 9"; view-box 0 0 14 14; border-color #ffffff; line-width 1.5; hidden ${category !== "lost"} }
+	item segments {
+		width 14; height 14
+		path "M7.00 1.00A6 6 0 0 1 7.55 1.03M10.53 2.15A6 6 0 0 1 10.96 2.49M12.71 5.15A6 6 0 0 1 12.85 5.68M12.71 8.85A6 6 0 0 1 12.51 9.37M10.53 11.85A6 6 0 0 1 10.06 12.16M7.00 13.00A6 6 0 0 1 6.45 12.97M3.47 11.85A6 6 0 0 1 3.04 11.51M1.29 8.85A6 6 0 0 1 1.15 8.32M1.29 5.15A6 6 0 0 1 1.49 4.63M3.47 2.15A6 6 0 0 1 3.94 1.84"
+		view-box 0 0 14 14; border-color #a1a1a1; line-width 1.5; hidden ${category !== "backlog"}
+	}
+}
+item PriorityIcon {
+	export let priority = high; auto-layout abs; width 14; height 14; pos 185 -44
+	styles { priority one-of urgent high medium low none }
+	item bar {
+		width 2.4; height 3; corner-radius 0.6; pos 2 -9; hidden ${priority === "urgent" || priority === "none"}
+		color ${priority === "high" ? "#d29840" : priority === "medium" ? "#167b82" : "#a1a1a1"}
+	}
+	item "bar 2" {
+		width 2.4; height 6; corner-radius 0.6; pos 6 -6; hidden ${priority === "urgent" || priority === "none"}
+		color ${priority === "high" ? "#d29840" : priority === "medium" ? "#167b82" : "#000000"}; opacity ${priority === "low" ? 0.3 : 1}
+	}
+	item "bar 3" {
+		width 2.4; height 9; corner-radius 0.6; pos 10 -3; hidden ${priority === "urgent" || priority === "none"}
+		color ${priority === "high" ? "#d29840" : "#000000"}; opacity ${priority === "high" ? 1 : 0.3}
+	}
+	item box { width 12; height 12; color #d27540; corner-radius 3; pos 1 -1; hidden ${priority !== "urgent"} }
+	item stem { width 1.6; height 4.5; color #ffffff; pos 6.2 -3.5; hidden ${priority !== "urgent"} }
+	item dot { width 1.6; height 1.6; color #ffffff; pos 6.2 -9; hidden ${priority !== "urgent"} }
+	item dash { width 8; height 1.2; color #000000; opacity 0.6; pos 3 -6.4; hidden ${priority !== "none"} }
+}
+item StatusChip {
+	export let label = "In Progress"; export let count = ""; export let draggable = false; auto-layout row; gap 4; padding 0 6 0 4; align center; height 20
+	clip yes; color #f0f0f0; corner-radius 4; pos 350 -44
+	use Icon.drag as "icon/drag" { width 14; height 14; border-color #00000066; line-width 1.14; hidden ${!(draggable === "true")} }
+	item "StatusIcon/active" {
+		auto-layout abs; width 12; height 12
+		item ring { width 10; height 10; corner-radius 5; border-color #5195d7; line-width 1.5; pos 1 -1 }
+		item wedge { width 12; height 12; path "M6 6L6 3A3 3 0 0 1 9 6Z"; view-box 0 0 12 12; color #5195d7 }
+	}
+	item "In Progress" { font-size 11; line-height 14; font-family "IBM Plex Sans"; layout left; text-color #000000cc; title ${label} }
+	item _7 { font-size 11; line-height 14; font-family "IBM Plex Sans"; layout left; text-color #00000066; title ${count}; hidden ${count === ""} }
+}
+item Count {
+	export let value = 12; auto-layout row; padding 0 6; align center; height 20; clip yes; color #f0f0f0; corner-radius 10; pos 541 -44
+	item _12 { font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #00000099; title ${value} }
+}
+item Notice {
+	export let text = "Notice text"; export let kind = warning; export let pill = false; export let block = false; auto-layout row; gap 8; padding 6 10
+	align center; clip yes; color #d298401f; border-color #d2984066; corner-radius 6; width ${(block === "true") ? "fill" : "hug"}
+	use-style ${kind} ${(pill === "true") ? "pill" : ""}; pos 667 -44
+	styles {
+		kind one-of warning info negative
+		warning { color #d298401f; border-color #d2984066; text-color #8a5300 }
+		info { color #3070dc1a; border-color #3070dc26; text-color #3070dc }
+		negative { color #cb4b4226; border-color #cb4b4226; text-color #cb4b42 }
+		pill { corner-radius 14 }
+	}
+	use Icon.warn as "icon/warn" { line-width 1; hidden ${kind === "info"} }
+	item "Notice text" { font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; title ${text} }
+	use Icon.eye as "icon/eye" { line-width 1; hidden ${kind !== "info"} }
+}

@@ -1,0 +1,100 @@
+entry "../../../PlatformDesign.tenn"
+
+item Root {
+    auto-layout column; width 1520; padding 40; gap 28; color #f7f7fa; corner-radius 16; font-family "IBM Plex Sans"
+    item Header {
+      auto-layout row; width fill; align center
+      item Title { title "Вход с кодом: сноска против равного пути"; width fill; font-size 22; font-weight 600; line-height 28; text-color #201240; layout left }
+      item Num { title "Сравнение 4 из 6"; font-size 12; line-height 16; text-color #7f7f7f }
+    }
+    item Columns {
+      auto-layout row; gap 32; width fill; align start
+      item Current {
+        auto-layout column; gap 12; width 460
+        item Label {
+          auto-layout row; padding 4 10; color #ffffff; border-color #00000014; corner-radius 6
+          item Text { title "СЕЙЧАС"; font-size 11; font-weight 600; text-color #5c6470 }
+        }
+        use Libraries.login_kit.LoginCard as Card {
+          slot content {
+            use Libraries.login_kit.LoginForm as Form {
+              slot content {
+                item form {
+                  auto-layout column; gap 24; width 396
+                  use Libraries.login_kit.LoginTabs as Tabs {
+                    at heading.Platform { title "Интабия Платформа" }
+                    at tabs.Tab_Sign_up.Sign_up { title Регистрация }
+                    at tabs.Tab_Log_In.Log_In { title Вход }
+                  }
+                  use Libraries.login_kit.LoginField as "Field Email" { label Email; at Value { title demo1 } }
+                  use Libraries.login_kit.LoginField as "Field Пароль" { label Пароль; at Value { title "********" } }
+                  use Libraries.login_kit.LoginButton as "Button Войти" { at Button { title Вход } }
+                }
+              }
+            }
+            use Libraries.login_kit.LoginLinks as Links {
+              slot content {
+                item "link row" {
+                  auto-layout row; gap 3; align center; justify center; width 396; wrap yes; line-gap 3
+                  item Caption { title "Забыли пароль?"; font-size 12.8; line-height 17; text-color #333333 }
+                  item Link { title "Восстановить"; font-size 12.8; line-height 17; text-color #333333 }
+                }
+              }
+            }
+          }
+        }
+        use Libraries.login_kit.LoginAction as "Action Код" { at Action { title "Войти с кодом" } }
+        item Problem {
+          auto-layout column; gap 6; width fill; padding 12; color #ffffff; border-color #ee7a7a66; corner-radius 10
+          item PTitle { title "Проблема"; font-size 12; font-weight 600; text-color #c14b4b; layout left }
+          item PText { title "Вход без пароля существует, но спрятан мелкой ссылкой под формой. Пользователь с забытым паролем уходит в восстановление - письмо и смена пароля - вместо одного кода из письма."; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+        }
+      }
+      item Proposed {
+        auto-layout column; gap 12; width 460
+        item Label {
+          auto-layout row; padding 4 10; color #efdcf2; corner-radius 6
+          item Text { title "ПРЕДЛОЖЕНИЕ"; font-size 11; font-weight 600; text-color #7d1f70 }
+        }
+        use Libraries.login_kit.LoginCard as Card {
+          slot content {
+            use Libraries.login_kit.LoginForm as Form {
+              padding 16 24
+              slot content {
+                item form {
+                  auto-layout column; gap 24; width 412
+                  use Libraries.login_kit.LoginOtpHeader as Header {
+                    at title_row.Enter_the_code { title "Введите код" }
+                    at description.We_sent_the_code_to { title "Мы отправили код на" }
+                    at description.name_example_com { title "anna.smirnova@intabia.io" }
+                  }
+                  use Libraries.login_kit.LoginCode as Code {
+                    at digit_1._1 { title "4" }
+                    at digit_2._2 { title "8" }
+                    at digit_3._3 { title "2" }
+                    at digit_4._4 { title "9" }
+                    at digit_5._5 { title "1" }
+                    at digit_6._6 { title "3" }
+                  }
+                  item footer {
+                    auto-layout column; gap 8; width 412
+                    item hint { title "Не пришло письмо? Проверьте папку «Спам»."; font-size 12.8; line-height 17; text-color #00000066; layout left }
+                    item row {
+                      auto-layout row; gap 16; width 412
+                      item Resend { title "Отправить код повторно"; font-size 12.8; line-height 17; text-color #333333 }
+                      item Alt { title "Сменить почту"; font-size 12.8; line-height 17; text-color #333333 }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        item Change {
+          auto-layout column; gap 6; width fill; padding 12; color #ffffff; border-color #d9b9d8; corner-radius 10
+          item CTitle { title "Что меняется"; font-size 12; font-weight 600; text-color #7d1f70; layout left }
+          item CText { title "Код из письма - равноправный способ: для новых и когда требуется OTP, email подставлен из landing. Существующий с паролем идёт сразу в последнее пространство. Сноска «Войти с кодом» заменена явным действием без потери email."; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+        }
+      }
+    }
+}

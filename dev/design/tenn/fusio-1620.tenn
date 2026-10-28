@@ -1,0 +1,528 @@
+entry "../../../PlatformDesign.tenn"
+
+
+element "1 Регистрация" {
+  element "1 Email" {
+    use Libraries.login_kit.LoginPage as Screen {
+      slot Card_slot {
+        use Libraries.login_kit.LoginCard as Card {
+          slot content {
+            use Libraries.login_kit.LoginForm as Form {
+              slot content {
+                item Form {
+                  auto-layout column
+                  width 396
+                  gap 20
+                  item Title { title "Начнем с почты"; font-size 28; font-weight 700; line-height 36; layout left; text-color #000061 }
+                  item Subtitle { title "Пришлем одноразовый код. Пароль не нужен."; width fill; font-size 14; line-height 20; layout left; text-color #5c6470 }
+                  use Libraries.login_kit.LoginField as Email { label "Email"; value "anna.smirnova@intabia.io" }
+                  use Libraries.login_kit.LoginButton as Continue { label "Получить код" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  element "2 OTP" {
+    use Libraries.login_kit.LoginPage as Screen {
+      slot Card_slot {
+        use Libraries.login_kit.LoginCard as Card {
+          slot content {
+            use Libraries.login_kit.LoginForm as Form {
+              padding 16 24
+              slot content {
+                item Form {
+                  auto-layout column
+                  width 412
+                  gap 16
+                  use Libraries.login_kit.LoginOtpHeader as Header {
+                    at title_row.Enter_the_code { title "Введите код" }
+                    at description.We_sent_the_code_to { title "Мы отправили код на" }
+                    at description.name_example_com { title "anna.smirnova@intabia.io" }
+                  }
+                  use Libraries.login_kit.LoginCode as Code {
+                    at digit_1._1 { title "4" }
+                    at digit_2._2 { title "8" }
+                    at digit_3._3 { title "2" }
+                    at digit_4._4 { title "9" }
+                    at digit_5._5 { title "1" }
+                    at digit_6._6 { title "3" }
+                  }
+                  use Libraries.login_kit.LoginButton as Continue { width 412; label "Подтвердить" }
+                  item Resend { title "Отправить код повторно"; font-size 13; line-height 18; layout left; text-color #7d1f70 }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  element "3 Пространство или приглашение" {
+    use Libraries.login_kit.LoginPage as Screen {
+      slot Card_slot {
+        use Libraries.login_kit.LoginCard as Card {
+          slot content {
+            use Libraries.login_kit.LoginForm as Form {
+              slot content {
+                item Form {
+                  auto-layout column
+                  width 396
+                  gap 16
+                  item Title { title "Где будем работать?"; font-size 28; font-weight 700; line-height 36; layout left; text-color #000061 }
+                  use Libraries.login_kit.LoginField as Workspace { label "Новое пространство"; value "Команда Анны" }
+                  use Libraries.login_kit.LoginButton as Create { label "Создать пространство" }
+                  item Divider {
+                    auto-layout row
+                    width fill
+                    gap 12
+                    align center
+                    item Line { width fill; height 1; color #00000014 }
+                    item Or { title "или"; font-size 12; text-color #7f7f7f }
+                    item Line2 { width fill; height 1; color #00000014 }
+                  }
+                  use Libraries.login_kit.LoginField as Invite { label "Токен приглашения"; value "FUS-7K2F-9Q4M" }
+                  use Libraries.login_kit.LoginButton as Accept { label "Войти по приглашению"; kind default }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  element "4 Профиль" {
+    use Libraries.login_kit.LoginPage as Screen {
+      slot Card_slot {
+        use Libraries.login_kit.LoginCard as Card {
+          slot content {
+            use Libraries.login_kit.LoginForm as Form {
+              slot content {
+                item Form {
+                  auto-layout column
+                  width 396
+                  gap 20
+                  item Title { title "Как вас зовут?"; font-size 28; font-weight 700; line-height 36; layout left; text-color #000061 }
+                  item Subtitle { title "Имя и фамилия сохранятся в глобальном профиле и будут видны во всех пространствах."; width fill; font-size 14; line-height 20; layout left; text-color #5c6470 }
+                  use Libraries.login_kit.LoginField as FirstName { label "Имя"; value "Анна" }
+                  use Libraries.login_kit.LoginField as LastName { label "Фамилия"; value "Смирнова" }
+                  use Libraries.login_kit.LoginButton as Save { label "Открыть пространство" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+element "2 Повторный вход" {
+  element "1 Email" {
+    use Libraries.login_kit.LoginPage as Screen {
+      slot Card_slot {
+        use Libraries.login_kit.LoginCard as Card {
+          slot content {
+            use Libraries.login_kit.LoginForm as Form {
+              slot content {
+                item Form {
+                  auto-layout column
+                  width 396
+                  gap 20
+                  item Title { title "С возвращением"; font-size 28; font-weight 700; line-height 36; layout left; text-color #000061 }
+                  item Subtitle { title "Введите почту, чтобы получить код для входа."; width fill; font-size 14; line-height 20; layout left; text-color #5c6470 }
+                  use Libraries.login_kit.LoginField as Email { label "Email"; value "anna.smirnova@intabia.io" }
+                  use Libraries.login_kit.LoginButton as Continue { label "Получить код" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  element "2 OTP" {
+    use Libraries.login_kit.LoginPage as Screen {
+      slot Card_slot {
+        use Libraries.login_kit.LoginCard as Card {
+          slot content {
+            use Libraries.login_kit.LoginForm as Form {
+              padding 16 24
+              slot content {
+                item Form {
+                  auto-layout column
+                  width 412
+                  gap 16
+                  use Libraries.login_kit.LoginOtpHeader as Header {
+                    at title_row.Enter_the_code { title "Введите код" }
+                    at description.We_sent_the_code_to { title "Мы отправили код на" }
+                    at description.name_example_com { title "anna.smirnova@intabia.io" }
+                  }
+                  use Libraries.login_kit.LoginCode as Code {
+                    at digit_1._1 { title "4" }
+                    at digit_2._2 { title "8" }
+                    at digit_3._3 { title "2" }
+                    at digit_4._4 { title "9" }
+                    at digit_5._5 { title "1" }
+                    at digit_6._6 { title "3" }
+                  }
+                  use Libraries.login_kit.LoginButton as Continue { width 412; label "Войти" }
+                  item Resend { title "Отправить код повторно"; font-size 13; line-height 18; layout left; text-color #7d1f70 }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+
+
+
+
+element "3 Меню аккаунта" {
+  item Screen {
+    auto-layout abs
+    width 1920
+    height 1080
+    clip yes
+    color #ffffff
+    use Libraries.workbench.Workbench as Workbench {
+      pos 0 0
+      slot Main_panel {
+        item Content {
+          auto-layout column
+          width 1515
+          height 1044
+          padding 32
+          gap 16
+          color #ffffff
+          item Title { title "Intabia Platform"; font-size 26; font-weight 600; line-height 32; layout left; text-color #201240 }
+          item Section { title "Мои задачи"; font-size 15; font-weight 600; line-height 20; layout left; text-color #5c6470 }
+          item Task {
+            auto-layout row
+            width 560
+            height 44
+            padding 0 12
+            gap 12
+            align center
+            border-color #00000014
+            corner-radius 6
+            item Check { width 16; height 16; border-color #cf13a2; corner-radius 4 }
+            item Name { title "Настроить проект"; width fill; font-size 13; layout left; text-color #201240 }
+          }
+        }
+      }
+    }
+    use Libraries.ui_kit.Actions.Menu as Account_menu {
+      width 304
+      pos 55 -819
+      slot content {
+        item Header {
+          auto-layout row
+          width fill
+          height 64
+          padding 8
+          gap 12
+          align center
+          use Libraries.ui_kit.People.Avatar as Avatar { width 40; height 40; corner-radius 8; at initials { title "АС"; font-size 14; line-height 18 } }
+          item Account {
+            auto-layout column
+            width fill
+            gap 3
+            item Name { title "Анна Смирнова"; font-size 14; font-weight 600; line-height 18; layout left }
+            item Email { title "anna.smirnova@intabia.io"; font-size 12; line-height 16; text-color #7f7f7f; layout left }
+          }
+        }
+        item divider { width fill; height 1; color #0000000f }
+        item Profile {
+          auto-layout row
+          width fill
+          height 40
+          padding 0 10
+          gap 10
+          align center
+          color #efdcf2
+          corner-radius 5
+          use Libraries.ui_kit.Icon.kit_Person as Icon { width 18; height 18; color #7d1f70 }
+          item Label { title "Глобальный профиль"; width fill; font-size 14; font-weight 500; line-height 18; text-color #7d1f70; layout left }
+        }
+        item Workspaces {
+          auto-layout row
+          width fill
+          height 40
+          padding 0 10
+          gap 10
+          align center
+          corner-radius 5
+          use Libraries.ui_kit.Icon.kit_Building as Icon { width 18; height 18; color #5c6470 }
+          item Label { title "Сменить пространство"; width fill; font-size 14; line-height 18; layout left }
+        }
+        item divider_2 { width fill; height 1; color #0000000f }
+        item Logout {
+          auto-layout row
+          width fill
+          height 40
+          padding 0 10
+          gap 10
+          align center
+          corner-radius 5
+          use Libraries.ui_kit.Icon.kit_ArrowOut as Icon { width 18; height 18; color #9e342a }
+          item Label { title "Выйти"; width fill; font-size 14; line-height 18; text-color #9e342a; layout left }
+        }
+      }
+    }
+  }
+}
+
+element "4 Глобальный профиль" {
+  use Libraries.profile_kit.ProfilePage as Screen {
+    at Cabinet.Sidebar.Account.Account_text.Name { title "Анна Смирнова" }
+    at Cabinet.Sidebar.Account.Account_text.Email { title "anna.smirnova@intabia.io" }
+    at Cabinet.Sidebar.navigation.Subscriptions { hidden yes }
+    at Cabinet.Sidebar.navigation.Profile { color #efdcf2; text-color #7d1f70 }
+    slot header {
+      item Header_text {
+        auto-layout column
+        gap 4
+        item Title { title "Профиль"; font-size 24; font-weight 600; line-height 30; layout left }
+        item Subtitle { title "Единые данные во всех пространствах"; font-size 13; line-height 18; text-color #7f7f7f; layout left }
+      }
+      item grow { width fill }
+      use Libraries.ui_kit.Actions.Button as Edit {
+        kind secondary
+        size medium
+        at Button { title "Редактировать" }
+        at icon_kit_Plus { hidden yes }
+        at icon_chevronD { hidden yes }
+      }
+    }
+    slot content {
+      item Public_card {
+        auto-layout row
+        width fill
+        padding 24
+        gap 20
+        align center
+        color #f8f5fa
+        corner-radius 10
+        use Libraries.ui_kit.People.Avatar as Avatar { width 72; height 72; at initials { title "АС"; font-size 24 } }
+        item Public_text {
+          auto-layout column
+          width fill
+          gap 6
+          item Name { title "Анна Смирнова"; font-size 22; font-weight 600; line-height 28; layout left }
+          item Bio { title "Продуктовый дизайнер"; font-size 14; line-height 20; layout left; text-color #5c6470 }
+          item Place { title "Новосибирск, Россия"; font-size 13; line-height 18; layout left; text-color #7f7f7f }
+        }
+        item Public_badge {
+          auto-layout row
+          padding 5 10
+          color #e7f4ed
+          corner-radius 12
+          item Label { title "Публичный"; font-size 12; line-height 16; text-color #26815c }
+        }
+      }
+      item Fields {
+        auto-layout column
+        width fill
+        color #ffffff
+        border-color #00000014
+        corner-radius 10
+        padding 4 20
+        use Libraries.profile_kit.ProfileField as Name { width fill; label "Имя"; value "Анна Смирнова" }
+        item divider { width fill; height 1; color #0000000f }
+        use Libraries.profile_kit.ProfileField as Username { width fill; label "Имя пользователя"; value "@anna" }
+        item divider_2 { width fill; height 1; color #0000000f }
+        use Libraries.profile_kit.ProfileField as Email { width fill; label "Email"; value "anna.smirnova@intabia.io" }
+        item divider_3 { width fill; height 1; color #0000000f }
+        use Libraries.profile_kit.ProfileField as City { width fill; label "Город"; value "Новосибирск" }
+        item divider_4 { width fill; height 1; color #0000000f }
+        use Libraries.profile_kit.ProfileField as Country { width fill; label "Страна"; value "Россия" }
+      }
+    }
+  }
+}
+
+element "5 Пространства" {
+  use Libraries.profile_kit.ProfilePage as Screen {
+    at Cabinet.Sidebar.Account.Account_text.Name { title "Анна Смирнова" }
+    at Cabinet.Sidebar.Account.Account_text.Email { title "anna.smirnova@intabia.io" }
+    at Cabinet.Sidebar.navigation.Subscriptions { hidden yes }
+    at Cabinet.Sidebar.navigation.Workspaces { color #efdcf2; text-color #7d1f70 }
+    slot header {
+      item Header_text {
+        auto-layout column
+        gap 4
+        item Title { title "Пространства"; font-size 24; font-weight 600; line-height 30; layout left }
+        item Subtitle { title "Переход между пространствами и приглашения"; font-size 13; line-height 18; text-color #7f7f7f; layout left }
+      }
+      item grow { width fill }
+      use Libraries.ui_kit.Actions.Button as Create {
+        kind primary
+        size medium
+        at Button { title "Создать пространство" }
+        at icon_chevronD { hidden yes }
+      }
+    }
+    slot content {
+      item Section_title { title "Ваши пространства"; font-size 15; font-weight 600; line-height 20; layout left }
+      item Workspace_list {
+        auto-layout column
+        width fill
+        color #ffffff
+        border-color #00000014
+        corner-radius 10
+        clip yes
+        use Libraries.profile_kit.WorkspaceRow as Platform { width fill; name "Intabia Platform"; mark "IP"; role "Участник"; visit "Сегодня, 16:42" }
+        item divider { width fill; height 1; color #0000000f }
+        use Libraries.profile_kit.WorkspaceRow as Team { width fill; name "Команда Анны"; mark "КА"; role "Владелец"; visit "Сегодня, 14:18" }
+        item divider_2 { width fill; height 1; color #0000000f }
+        use Libraries.profile_kit.WorkspaceRow as Design { width fill; name "Design Team"; mark "DT"; role "Участник"; visit "Вчера" }
+      }
+      item Invitations {
+        auto-layout column
+        width fill
+        padding 20
+        gap 12
+        color #f8f5fa
+        border-color #d9b9d8
+        corner-radius 10
+        item Invitation_title { title "Приглашения"; font-size 15; font-weight 600; line-height 20; layout left }
+        item Invitation_row {
+          auto-layout row
+          width fill
+          gap 16
+          align center
+          item Invitation_text {
+            auto-layout column
+            width fill
+            gap 4
+            item Name { title "Research"; font-size 14; font-weight 500; line-height 20; layout left }
+            item From { title "Мария Орлова приглашает вас как участника"; font-size 13; line-height 18; text-color #5c6470; layout left }
+          }
+          use Libraries.ui_kit.Actions.Button as Decline {
+            kind secondary
+            size medium
+            at Button { title "Отклонить" }
+            at icon_kit_Plus { hidden yes }
+            at icon_chevronD { hidden yes }
+          }
+          use Libraries.ui_kit.Actions.Button as Accept {
+            kind primary
+            size medium
+            at Button { title "Принять" }
+            at icon_kit_Plus { hidden yes }
+            at icon_chevronD { hidden yes }
+          }
+        }
+      }
+    }
+  }
+}
+
+element "6 Безопасность" {
+  use Libraries.profile_kit.ProfilePage as Screen {
+    at Cabinet.Sidebar.Account.Account_text.Name { title "Анна Смирнова" }
+    at Cabinet.Sidebar.Account.Account_text.Email { title "anna.smirnova@intabia.io" }
+    at Cabinet.Sidebar.navigation.Subscriptions { hidden yes }
+    at Cabinet.Sidebar.navigation.Security { color #efdcf2; text-color #7d1f70 }
+    slot header {
+      item Header_text {
+        auto-layout column
+        gap 4
+        item Title { title "Безопасность"; font-size 24; font-weight 600; line-height 30; layout left }
+        item Subtitle { title "Вход по коду, активные сессии и аккаунт"; font-size 13; line-height 18; text-color #7f7f7f; layout left }
+      }
+    }
+    slot content {
+      item Section {
+        auto-layout column
+        width fill
+        gap 12
+        item Section_title { title "Способ входа"; font-size 15; font-weight 600; line-height 20; layout left }
+        item Login_methods {
+          auto-layout column
+          width fill
+          padding 4 20
+          color #ffffff
+          border-color #00000014
+          corner-radius 10
+          use Libraries.profile_kit.ProfileField as Email { width fill; label "Email"; value "anna.smirnova@intabia.io" }
+          item divider { width fill; height 1; color #0000000f }
+          use Libraries.profile_kit.ProfileField as Otp { width fill; label "Подтверждение"; value "Одноразовый код из письма" }
+        }
+      }
+      item Sessions {
+        auto-layout column
+        width fill
+        padding 20
+        gap 12
+        color #ffffff
+        border-color #00000014
+        corner-radius 10
+        item Sessions_title { title "Активные сессии"; font-size 15; font-weight 600; line-height 20; layout left }
+        use Libraries.profile_kit.ProfileField as Current { width fill; label "MacBook · Новосибирск"; value "Текущая сессия" }
+        item divider { width fill; height 1; color #0000000f }
+        use Libraries.profile_kit.ProfileField as Mobile { width fill; label "iPhone · Новосибирск"; value "2 часа назад" }
+        use Libraries.ui_kit.Actions.Button as CloseOthers {
+          kind secondary
+          size medium
+          at Button { title "Завершить другие сессии" }
+          at icon_kit_Plus { hidden yes }
+          at icon_chevronD { hidden yes }
+        }
+      }
+      item Danger {
+        auto-layout row
+        width fill
+        padding 20
+        gap 20
+        align center
+        color #fff8f7
+        border-color #efc3bd
+        corner-radius 10
+        item Danger_text {
+          auto-layout column
+          width fill
+          gap 4
+          item Title { title "Удалить аккаунт"; font-size 14; font-weight 500; line-height 20; layout left; text-color #9e342a }
+          item Hint { title "Профиль и личные данные будут удалены. Пространства останутся у их владельцев."; font-size 13; line-height 18; text-color #7f7f7f; layout left }
+        }
+        use Libraries.ui_kit.Actions.Button as Delete {
+          kind negative
+          size medium
+          at Button { title "Удалить аккаунт" }
+          at icon_kit_Plus { hidden yes }
+          at icon_chevronD { hidden yes }
+        }
+      }
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

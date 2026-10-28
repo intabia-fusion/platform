@@ -1,0 +1,67 @@
+entry "../../../../PlatformDesign.tenn"
+item "§ Chip" {
+	auto-layout abs; width 161; height 96; color #ffffff; border-color #0000000f; corner-radius 8; pos 0 0
+	item title { title Chip; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ Tag" {
+	auto-layout abs; width 95; height 88; color #ffffff; border-color #0000000f; corner-radius 8; pos 209 0
+	item title { title Tag; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ QuickFilter" {
+	auto-layout abs; width 139; height 96; color #ffffff; border-color #0000000f; corner-radius 8; pos 352 0
+	item title { title QuickFilter; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ FilterChip" {
+	auto-layout abs; width 277; height 96; color #ffffff; border-color #0000000f; corner-radius 8; pos 539 0
+	item title { title FilterChip; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ Swatch" {
+	auto-layout abs; width 98; height 88; color #ffffff; border-color #0000000f; corner-radius 8; pos 864 0
+	item title { title Swatch; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item Chip {
+	auto-layout row; gap 4; padding 0 6; align center; height 28; clip yes; color #e5e5e7; border-color #00000017; corner-radius 6; pos 24 -44
+	slot content {
+		use Icon.milestone as "icon/milestone" { width 14; height 14; border-color #00000099; line-width 1.14 }
+		item "Release 1.0" { title "Release 1.0"; font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; text-color #00000099 }
+	}
+}
+item Tag {
+	export let label = bug; export let color = #4ca6ee; auto-layout row; gap 4; padding 0 6; align center; height 20; clip yes; border-color #00000017
+	corner-radius 10; pos 233 -44
+	item Ellipse { width 8; height 8; corner-radius 4; color ${color} }
+	item bug { font-size 11; line-height 14; font-family "IBM Plex Sans"; layout left; text-color #000000cc; title ${label} }
+}
+item QuickFilter {
+	export let label = "Only mine"; export let on = false; auto-layout row; padding 0 10; align center; height 28; clip yes; border-color #00000017
+	corner-radius 14; use-style ${(on === "true") ? "on" : ""}; pos 376 -44
+	styles {
+		on { color #cf13a21a; border-color #cf13a2; text-color #cf13a2 }
+	}
+	item "Only mine" { font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; title ${label} }
+}
+item FilterChip {
+	export let attribute = Priority; export let operator = in; export let value = "Urgent, High"; auto-layout row; align center; height 28; clip yes
+	border-color #00000017; corner-radius 6; pos 563 -44
+	item part {
+		auto-layout row; padding 0 8; align center; height 28; clip yes; color #6b3ad31a; border-color #0000000f
+		item Priority { font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; title ${attribute}; text-color gray-900 }
+	}
+	item "part 2" {
+		auto-layout row; padding 0 8; align center; height 28; clip yes; color #6b3ad31a; border-color #0000000f
+		item in { font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; text-color #00000099; title ${operator} }
+	}
+	item "part 3" {
+		auto-layout row; padding 0 8; align center; height 28; clip yes; color #6b3ad31a; border-color #0000000f
+		item "Urgent, High" { font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; title ${value}; text-color gray-900 }
+	}
+	item remove {
+		auto-layout row; align center; justify center; width 26; height 28; clip yes
+		use Icon.x as "icon/x" { width 12; height 12; border-color #00000066; line-width 0.98 }
+	}
+
+	text-color #000000}
+item Swatch {
+	export let color = #d27540; export let size = 20; auto-layout abs; clip yes; border-color #00000017; corner-radius 4; color ${color}; width ${size}
+	height ${size}; pos 888 -44
+}

@@ -1,0 +1,7 @@
+entry "../../../PlatformDesign.tenn"
+element Actions --from-file "lib/actions.tenn"
+element Forms --from-file "lib/forms.tenn"
+element People --from-file "lib/people.tenn"
+element Status --from-file "lib/status.tenn"
+element TagsAndFilters --from-file "lib/tags-and-filters.tenn"
+element Icon --from-file "lib/icon.tenn"

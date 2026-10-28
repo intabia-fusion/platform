@@ -1,0 +1,309 @@
+entry "../../../../PlatformDesign.tenn"
+element Shell {
+	use Libraries.workbench.Workbench as "Application shell" {
+		pos 0 0
+		replace _Navigator {
+			use Libraries.workbench.Navigator as Navigator {
+				pos 68 -36
+				slot items {
+					use Libraries.workbench.NavItem as "NavItem/My issues" {
+						pos 13 -112
+						replace icon_kit_CheckSquare {
+							use Libraries.ui_kit.Icon.kit_Crosshair as "icon/kit/Crosshair" { color #0f121a }
+						}
+						at Issues { title "My issues" }
+					}
+					use Libraries.workbench.NavItem as "NavItem/All issues" {
+						pos 13 -144
+						at Issues { title "All issues" }
+					}
+					item divider { auto-layout abs; width 279; height 1; clip yes; color #0000001a; pos 1 -188 }
+					use Libraries.workbench.NavItem as "NavItem/All projects" {
+						pos 13 -201
+						replace icon_kit_CheckSquare {
+							use Libraries.ui_kit.Icon.kit_BulletList as "icon/kit/BulletList" { color #0f121a }
+						}
+						at Issues { title "All projects" }
+					}
+					use Libraries.workbench.NavItem as "NavItem/Labels" {
+						pos 13 -233
+						replace icon_kit_CheckSquare {
+							use Libraries.ui_kit.Icon.kit_Tags as "icon/kit/Tags" { color #0f121a }
+						}
+						at Issues { title Labels }
+					}
+					item divider { auto-layout abs; width 279; height 1; clip yes; color #0000001a; pos 1 -277 }
+					use Libraries.workbench.NavGroup as "NavGroup Your projects" { pos 0 -277 }
+					use Libraries.workbench.NavSpace as "NavSpace Mobile App" { pos 0 -322 }
+					use Libraries.workbench.NavItem as "NavItem/Issues" { selected true; padding 0 8 0 32; pos 13 -358 }
+					use Libraries.workbench.NavItem as "NavItem/Components" {
+						padding 0 8 0 32; pos 13 -390
+						replace icon_kit_CheckSquare {
+							use Libraries.ui_kit.Icon.kit_Diamond as "icon/kit/Diamond" { color #0f121a }
+						}
+						at Issues { title Components }
+					}
+					use Libraries.workbench.NavItem as "NavItem/Milestones" {
+						padding 0 8 0 32; pos 13 -422
+						replace icon_kit_CheckSquare {
+							use Libraries.ui_kit.Icon.kit_Signpost as "icon/kit/Signpost" { color #0f121a }
+						}
+						at Issues { title Milestones }
+					}
+					use Libraries.workbench.NavItem as "NavItem/Templates" {
+						padding 0 8 0 32; pos 13 -454
+						replace icon_kit_CheckSquare {
+							use Libraries.ui_kit.Icon.kit_Layout as "icon/kit/Layout" { color #0f121a }
+						}
+						at Issues { title Templates }
+					}
+					item "footer line" { auto-layout abs; width 279; height 1; clip yes; color #0000001a; pos 1 -494 }
+				}
+			}
+		}
+		slot Main_panel {
+			use Libraries.workbench.SpaceHeader as "Space header" {
+				width 1515
+				at Header_row { width 1481 }
+				at divider { width 1481 }
+				at Filter_row { width 1481 }
+				at divider_2 { width 1513 }
+				slot left {
+					use Libraries.ui_kit.Actions.Switcher as ViewletSelector {
+						slot content {
+							item "element kit/BulletList" {
+								auto-layout row; align center; justify center; width 32; height 32; clip yes; color #a5bdff40; corner-radius 6
+								use Libraries.ui_kit.Icon.kit_BulletList as "icon/kit/BulletList" { color #0f121a }
+							}
+							item "element kit/Kanban" {
+								auto-layout row; align center; justify center; width 32; height 32; clip yes; corner-radius 6
+								use Libraries.ui_kit.Icon.kit_Kanban as "icon/kit/Kanban" { color #3c4149 }
+							}
+							item "element kit/CircleHalfFill" {
+								auto-layout row; align center; justify center; width 32; height 32; clip yes; corner-radius 6
+								use Libraries.ui_kit.Icon.kit_CircleHalfFill as "icon/kit/CircleHalfFill" { color #3c4149 }
+							}
+						}
+					}
+					item "button kit/ArrowUpLines" {
+						auto-layout row; align center; justify center; width 32; height 32; clip yes; color #1725470d; border-color #1725471a; corner-radius 6
+						use Libraries.ui_kit.Icon.kit_ArrowUpLines as "icon/kit/ArrowUpLines" { color #000000 }
+					}
+					item "button kit/SlidersHorizontal" {
+						auto-layout row; align center; justify center; width 32; height 32; clip yes; color #1725470d; border-color #1725471a; corner-radius 6
+						use Libraries.ui_kit.Icon.kit_SlidersHorizontal as "icon/kit/SlidersHorizontal" { color #000000 }
+					}
+					item spacer { auto-layout abs; width 12; height 1; clip yes }
+					item Breadcrumb {
+						auto-layout row; gap 6; align center; clip yes
+						item avatar {
+							auto-layout row; align center; justify center; width 24; height 24; clip yes; color #1530720d; corner-radius 4
+							use Libraries.ui_kit.Icon.kit_CheckSquare as "icon/kit/CheckSquare" { color #5a667e }
+						}
+						item Issues { title Issues; font-size 16; line-height 20; font-family "IBM Plex Sans"; font-weight 700; layout left; text-color #5a667e }
+					}
+				}
+				slot right {
+					item "button kit/DotsHorizontal" {
+						auto-layout row; align center; justify center; width 32; height 32; clip yes; color #1725470d; border-color #1725471a; corner-radius 6
+						use Libraries.ui_kit.Icon.kit_DotsHorizontal as "icon/kit/DotsHorizontal" { color #000000 }
+					}
+				}
+				slot filters {
+					item Filter {
+						auto-layout row; gap 6; padding 0 12; align center; height 32; clip yes; color #6b3ad31a; border-color #00000017; corner-radius 6
+						use Libraries.ui_kit.Icon.kit_Funnel as "icon/kit/Funnel" { color #000000cc }
+						item Filter { title Filter; font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; text-color #000000cc }
+					}
+					item Search {
+						auto-layout row; align center; justify center; width 32; height 32; clip yes; color #6b3ad31a; border-color #00000017; corner-radius 6
+						use Libraries.ui_kit.Icon.kit_Search as "icon/kit/Search" { color #0f121a }
+					}
+				}
+			}
+		}
+	}
+	use Libraries.workbench.Workbench_with_side_panel as "Shell with side panel" {
+		pos 2040 0
+		replace _Navigator {
+			use Libraries.workbench.Navigator as Navigator {
+				pos 68 -36
+				slot items {
+					use Libraries.workbench.NavItem as "NavItem/My issues" {
+						pos 13 -112
+						replace icon_kit_CheckSquare {
+							use Libraries.ui_kit.Icon.kit_Crosshair as "icon/kit/Crosshair" { color #0f121a }
+						}
+						at Issues { title "My issues" }
+					}
+					use Libraries.workbench.NavItem as "NavItem/All issues" {
+						pos 13 -144
+						at Issues { title "All issues" }
+					}
+					item divider { auto-layout abs; width 279; height 1; clip yes; color #0000001a; pos 1 -188 }
+					use Libraries.workbench.NavItem as "NavItem/All projects" {
+						pos 13 -201
+						replace icon_kit_CheckSquare {
+							use Libraries.ui_kit.Icon.kit_BulletList as "icon/kit/BulletList" { color #0f121a }
+						}
+						at Issues { title "All projects" }
+					}
+					use Libraries.workbench.NavItem as "NavItem/Labels" {
+						pos 13 -233
+						replace icon_kit_CheckSquare {
+							use Libraries.ui_kit.Icon.kit_Tags as "icon/kit/Tags" { color #0f121a }
+						}
+						at Issues { title Labels }
+					}
+					item divider { auto-layout abs; width 279; height 1; clip yes; color #0000001a; pos 1 -277 }
+					use Libraries.workbench.NavGroup as "NavGroup Your projects" { pos 0 -277 }
+					use Libraries.workbench.NavSpace as "NavSpace Mobile App" { pos 0 -322 }
+					use Libraries.workbench.NavItem as "NavItem/Issues" { selected true; padding 0 8 0 32; pos 13 -358 }
+					use Libraries.workbench.NavItem as "NavItem/Components" {
+						padding 0 8 0 32; pos 13 -390
+						replace icon_kit_CheckSquare {
+							use Libraries.ui_kit.Icon.kit_Diamond as "icon/kit/Diamond" { color #0f121a }
+						}
+						at Issues { title Components }
+					}
+					use Libraries.workbench.NavItem as "NavItem/Milestones" {
+						padding 0 8 0 32; pos 13 -422
+						replace icon_kit_CheckSquare {
+							use Libraries.ui_kit.Icon.kit_Signpost as "icon/kit/Signpost" { color #0f121a }
+						}
+						at Issues { title Milestones }
+					}
+					use Libraries.workbench.NavItem as "NavItem/Templates" {
+						padding 0 8 0 32; pos 13 -454
+						replace icon_kit_CheckSquare {
+							use Libraries.ui_kit.Icon.kit_Layout as "icon/kit/Layout" { color #0f121a }
+						}
+						at Issues { title Templates }
+					}
+					item "footer line" { auto-layout abs; width 279; height 1; clip yes; color #0000001a; pos 1 -494 }
+				}
+			}
+		}
+		slot Main_panel {
+			use Libraries.workbench.SpaceHeader as "Space header" {
+				width 1115
+				at Header_row { width 1081 }
+				at divider { width 1081 }
+				at Filter_row { width 1081 }
+				at divider_2 { width 1113 }
+				slot left {
+					use Libraries.ui_kit.Actions.Switcher as ViewletSelector {
+						slot content {
+							item "element kit/BulletList" {
+								auto-layout row; align center; justify center; width 32; height 32; clip yes; color #a5bdff40; corner-radius 6
+								use Libraries.ui_kit.Icon.kit_BulletList as "icon/kit/BulletList" { color #0f121a }
+							}
+							item "element kit/Kanban" {
+								auto-layout row; align center; justify center; width 32; height 32; clip yes; corner-radius 6
+								use Libraries.ui_kit.Icon.kit_Kanban as "icon/kit/Kanban" { color #3c4149 }
+							}
+							item "element kit/CircleHalfFill" {
+								auto-layout row; align center; justify center; width 32; height 32; clip yes; corner-radius 6
+								use Libraries.ui_kit.Icon.kit_CircleHalfFill as "icon/kit/CircleHalfFill" { color #3c4149 }
+							}
+						}
+					}
+					item "button kit/ArrowUpLines" {
+						auto-layout row; align center; justify center; width 32; height 32; clip yes; color #1725470d; border-color #1725471a; corner-radius 6
+						use Libraries.ui_kit.Icon.kit_ArrowUpLines as "icon/kit/ArrowUpLines" { color #000000 }
+					}
+					item "button kit/SlidersHorizontal" {
+						auto-layout row; align center; justify center; width 32; height 32; clip yes; color #1725470d; border-color #1725471a; corner-radius 6
+						use Libraries.ui_kit.Icon.kit_SlidersHorizontal as "icon/kit/SlidersHorizontal" { color #000000 }
+					}
+					item spacer { auto-layout abs; width 12; height 1; clip yes }
+					item Breadcrumb {
+						auto-layout row; gap 6; align center; clip yes
+						item avatar {
+							auto-layout row; align center; justify center; width 24; height 24; clip yes; color #1530720d; corner-radius 4
+							use Libraries.ui_kit.Icon.kit_CheckSquare as "icon/kit/CheckSquare" { color #5a667e }
+						}
+						item Issues { title Issues; font-size 16; line-height 20; font-family "IBM Plex Sans"; font-weight 700; layout left; text-color #5a667e }
+					}
+				}
+				slot right {
+					item "button kit/DotsHorizontal" {
+						auto-layout row; align center; justify center; width 32; height 32; clip yes; color #1725470d; border-color #1725471a; corner-radius 6
+						use Libraries.ui_kit.Icon.kit_DotsHorizontal as "icon/kit/DotsHorizontal" { color #000000 }
+					}
+				}
+				slot filters {
+					item Filter {
+						auto-layout row; gap 6; padding 0 12; align center; height 32; clip yes; color #6b3ad31a; border-color #00000017; corner-radius 6
+						use Libraries.ui_kit.Icon.kit_Funnel as "icon/kit/Funnel" { color #000000cc }
+						item Filter { title Filter; font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; text-color #000000cc }
+					}
+					item Search {
+						auto-layout row; align center; justify center; width 32; height 32; clip yes; color #6b3ad31a; border-color #00000017; corner-radius 6
+						use Libraries.ui_kit.Icon.kit_Search as "icon/kit/Search" { color #0f121a }
+					}
+				}
+			}
+		}
+		slot Side_panel {
+			use Libraries.workbench.PanelHeader as "Panel header" {
+				width 400
+				at Panel_header { width 400 }
+				replace Panel_header.Breadcrumb.avatar.icon_kit_People {
+					use Libraries.ui_kit.Icon.kit_Bubble as "icon/kit/Bubble" { color #5a667e }
+				}
+				at Panel_header.Breadcrumb.Members { title Chat }
+				at divider { width 400 }
+				slot actions {}
+			}
+			item Messages {
+				auto-layout column; width 400; clip yes; pos 0 -57
+				use Libraries.chat_kit.DateSeparator as "Date Today" {
+					width 400
+					at line { width 400 }
+					at date_row { width 400 }
+					at date_row.date.Tuesday_March_29 { title Today }
+				}
+				use Libraries.chat_kit.Message as "Message Anna Smith" {
+					width 400
+					replace avatar.Avatar_40 {
+						use Libraries.ui_kit.People.Avatar as "Avatar/40" {
+							width 40; height 40; color #925cb1; corner-radius 8
+							at initials { title SA; font-size 17; line-height 21 }
+						}
+					}
+					at body.The_new_column_is_in__please_check_the_o { width 302 }
+				}
+				use Libraries.chat_kit.Message as "Message Maria Cole" {
+					width 400
+					replace avatar.Avatar_40 {
+						use Libraries.ui_kit.People.Avatar as "Avatar/40" {
+							width 40; height 40; color #758595; corner-radius 8
+							at initials { title CM; font-size 17; line-height 21 }
+						}
+					}
+					at body.header.Anna_Smith { title "Maria Cole" }
+					at body.header._10_12_AM { title "10:15 AM" }
+					at body.The_new_column_is_in__please_check_the_o { title "The order is right. Set the In Progress limit to 8?"; width 302 }
+				}
+				use Libraries.chat_kit.Message as "Message Ivan Peterson" {
+					width 400
+					replace avatar.Avatar_40 {
+						use Libraries.ui_kit.People.Avatar as "Avatar/40" {
+							width 40; height 40; color #dc85f5; corner-radius 8
+							at initials { title PI; font-size 17; line-height 21 }
+						}
+					}
+					at body.header.Anna_Smith { title "Ivan Peterson" }
+					at body.header._10_12_AM { title "10:18 AM" }
+					at body.The_new_column_is_in__please_check_the_o { title "Yes, 8. I will set it on the Boards tab."; width 302 }
+				}
+			}
+			use Libraries.chat_kit.MessageInput as "Message input" {
+				width 368; pos 16 -932
+				at field { width 366 }
+				at panel { width 366 }
+			}
+		}
+	}
+}

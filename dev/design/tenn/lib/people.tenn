@@ -1,0 +1,49 @@
+entry "../../../../PlatformDesign.tenn"
+item "§ Avatar" {
+	auto-layout abs; width 420; height 100; color #ffffff; border-color #0000000f; corner-radius 8; pos 0 0
+	item title { title Avatar; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ Avatar/dark" {
+	auto-layout abs; width 420; height 100; color #1f2129; border-color #0000000f; corner-radius 8; pos 452 0
+	item title { title "Avatar on dark"; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; text-color #ffffff99; pos 24 -14 }
+}
+item "Avatar/sizes dark" {
+	auto-layout row; gap 8; align end; clip yes; pos 516 -44
+	use Avatar as "Avatar/dark/24" { size 24; initials MC }
+	use Avatar as "Avatar/dark/32" { size 32; initials MC }
+	use Avatar as "Avatar/dark/40" { size 40; initials MC }
+	use Avatar as "Avatar/dark/empty" { size 40; empty true; at "icon/kit/PersonCircle" { color #ffffff99 } }
+}
+item "Avatar/status dark" {
+	auto-layout row; gap 8; align end; clip yes; pos 700 -44
+	use Avatar as "Avatar/dark/status" { size 32; status true }
+	use Avatar as "Avatar/dark/round" { size 40; round true }
+}
+item Avatar {
+	export let initials = AJ; export let empty = false; export let size = 20; export let status = false; export let round = false
+	auto-layout row; align center; justify center; width ${size}; height ${size}; clip yes
+	color ${(empty === "true") ? "#6b3ad31a" : "#666ecc"}
+	corner-radius ${(round === "true") ? size : 4}; use-style ${(empty === "true") ? "empty" : ""}; pos 24 -64
+	styles {
+		empty { color #6b3ad31a }
+	}
+	item initials {
+		font-size ${size * 0.4}; line-height ${size * 0.5}; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #ffffff; title ${initials}; hidden ${empty}
+	}
+	use Icon.kit_PersonCircle as "icon/kit/PersonCircle" { width ${size * 0.6}; height ${size * 0.6}; color #00000099; hidden ${!(empty === "true")} }
+	item "status marker" {
+		auto-layout abs; width 10; height 10; corner-radius 5; color #05a05c; border-color #ffffff; line-width 2
+		pos ${size - 7} ${7 - size}; hidden ${status !== "true"}
+	}
+}
+item "Avatar/sizes" {
+	auto-layout row; gap 8; align end; clip yes; pos 64 -44
+	use Avatar as "Avatar/24" { size 24; initials MC }
+	use Avatar as "Avatar/32" { size 32; initials MC }
+	use Avatar as "Avatar/40" { size 40; initials MC }
+}
+item "Avatar/status and round" {
+	auto-layout row; gap 8; align end; clip yes; pos 220 -44
+	use Avatar as "Avatar/status" { size 32; status true }
+	use Avatar as "Avatar/round" { size 40; round true }
+}

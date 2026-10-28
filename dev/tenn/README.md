@@ -1,0 +1,97 @@
+# Tenniarb design as code
+
+The interface mockups as [Tenniarb](https://github.com/haiodo/tenniarb) `.tenn` files. They were generated from the screen scripts of `dev/design` (listed in `dev/design/design.json`) and the library definitions in `library/ui-kit.js`; the generator (`build.mjs`) is removed, and the files under `dev/design/tenn` together with `PlatformDesign.tenn` (the repository root) are edited by hand in Tenniarb. The kit scripts stay as the seed that produced them. `PlatformDesign.tenn` is organised as application > category > screens. `tenniarb check` validates the files when it is in PATH.
+
+The Tenniarb library is the product: from now on the library files are edited in Tenniarb, and the scripts here are the seed that produced them. Storybook is to be generated from the library later, not the other way round.
+
+## Layout
+
+| File | Content |
+|---|---|
+| `PlatformDesign.tenn` (repository root) | the hand-owned entry document, the only file that mounts anything shared: the libraries (below), one file per application (`Workbench`, `Tracker`, `Chat`, `Settings`, `Login`) and the element `Tasks` with the files of the design tasks |
+| `dev/design/tenn/ui-kit.lib.tenn` | the file of `ui_kit`: mounts one file per category, `element Actions --from-file "lib/actions.tenn"` |
+| `dev/design/tenn/lib/<category>.tenn` | the components of a category as `item`s; for a library of one category (`workbench`, `settings_kit`, `tracker_kit`, `chat_kit`, `login_kit`) this is the mounted library file itself |
+| `dev/design/tenn/apps/<app>.tenn` | an `element` per category of the application, with its screens on a grid |
+| `dev/design/tenn/{fusio-1613,fusio-1621}.tenn` | design tasks as they were drawn (former generator output): an `element` per `kit.page`, the screens on `pos` |
+| `dev/design/tenn/fusio-1620.tenn` | a design task file added and maintained by hand, mounted under `Tasks` in `PlatformDesign.tenn` |
+
+Every file but `PlatformDesign.tenn` starts with `entry "<path to PlatformDesign.tenn>"` and mounts no library: a name is looked up in the file, then up the chain of mounts to the entry document (Tenniarb spec 5a.1, 5a.19), so a part opens on its own and `tenniarb check <file>` resolves it in the context of the entry.
+
+## Libraries
+
+`dev/tenn/libs.mjs` splits the categories of `library/ui-kit.js` into libraries; a category that is not listed belongs to no library.
+
+| Library (name under `Libraries` in PlatformDesign) | Categories | Path of a component |
+|---|---|---|
+| `ui_kit` | `Actions`, `Forms`, `People`, `Status`, `TagsAndFilters`, `Icon`: base components and icons | `Libraries.ui_kit.Actions.Button`, `Libraries.ui_kit.Icon.tick` |
+| `workbench` | `Workbench`: shell, top bar, app rail, navigator, nav items, space and panel headers | `Libraries.workbench.TopBar`, `Libraries.workbench.Workbench` |
+| `settings_kit` | `Settings`: section title, form and grid rows, table, settings layout | `Libraries.settings_kit.FormRow` |
+| `tracker_kit` | `Tracker`: issue cards, kanban column, issue rows and groups, issue page | `Libraries.tracker_kit.IssueCard` |
+| `chat_kit` | `Chat`: messages, date separator, input | `Libraries.chat_kit.Message` |
+| `login_kit` | `Login`: login card, form parts, pages | `Libraries.login_kit.LoginCard` |
+
+The split follows the data: `Settings`, `Tracker`, `Chat`, `Login` and `Workbench` are used by one or two applications each, while the base categories are used by all of them and by the other libraries (`Workbench`, `Tracker`, `Chat` use `Actions`, `Icon`, `People`; `Tracker` also `Status`, `TagsAndFilters`; `Settings` and `Login` use `Workbench`). Dependencies point down the list. A library of one category has no category level in the path. Inside a library file a component of the same category is named by its item, one of another category of the same library by `Category.item`, one of another library by its full path with the `Libraries.` prefix.
+
+## Structure of PlatformDesign
+
+Application > category > screens. The taxonomy is `dev/tenn/apps.mjs`: for every application the categories and, per category, the frame names of the screens in the order of the grid (two 1920x1080 frames per row, cell 2040x1200; `GRID` in `emit.mjs`). Variants of one screen (`Kanban board` and `Стало - канбан`) and the steps of a flow (sign up, invitation) are listed one after another, so they sit side by side.
+
+The screens come from the file `Intabia Screens` of `design.json` (`screens/current`, the accepted state). Its `kit.page` names no longer shape the output; a frame is placed by its name. **Every frame of `Intabia Screens` is listed in `apps.mjs`**: a name that is listed twice or does not exist is a mistake, and a new screen needs a decision about where it belongs. A new application is a new entry of `APPS` (the file is `apps/<name>.tenn`).
+
+The design tasks (`FUSIO-1613`, `FUSIO-1621`, the other screen files of `design.json`) are not part of the structure: they are kept as files under the element `Tasks` at the end of `PlatformDesign.tenn`. Their screens are the earlier state of what `Intabia Screens` holds as accepted (boards, board settings, project settings), so the same screen exists twice, the accepted one in its application.
+
+The frames `Status bar`, `Application rail`, `Navigator`, `Widget bar` and `Space header` of the Workbench page are samples of `workbench.TopBar`, `AppRail`, `Navigator`, `Sidebar` and `SpaceHeader`: they are not screens and are not drawn in the application (`LIBRARY_PARTS` in `apps.mjs`). Paths stay `Libraries.ui_kit.<Category>.<Item>`, for example `use Libraries.ui_kit.Actions.Button as Save { label "Save"; kind primary; size medium }`.
+
+Library layout (`catalogue.mjs`): a category canvas holds one framed section per group, the group being a component without its variant (`Forms/Toggle` and `Forms/Toggle/off` are the group `Toggle`, `Actions/Button/primary/medium` is `Button`). The section is an `item "§ <Group>"` with a border and the group name as its title; the variants sit inside it, packed on shelves by their size (wrapping at 1500 px, 32 px apart, 24 px padding, 44 px for the title), and the sections are packed on shelves of the category (wrapping at 2400 px, 48 px apart). Order is the order of `library/ui-kit.js`, positions depend only on the kit data, so a diff stays local to what changed.
+
+The section is a sibling of its components, not their parent, and is drawn first: the path of a component does not depend on the layout. A `§` item is a frame without content, not a component (Insert Component in Tenniarb lists any named node, skip the `§` ones). The icons (`Icon`) are one component per name and stay on a plain grid of 48 px cells, 16 to a row.
+
+Sizes come from the kit drawing: declared sizes as they are, content-sized frames summed from their visible children, text measured with the kit's advance widths (`host.textWidth`, 20% wider since the renderer font is wider), wrapped text and wrap containers laid out in their width. This is an estimate, checked against the sizes `tenn-render` gives (the SVG size of a lone instance): the estimate is never more than 18 px short, the gaps between variants (32) cover it. The generator printed the canvas size of every category (`canvas: ...`).
+
+## Theme
+
+Colors are hex values of the light theme, resolved when the tree is emitted (`$<token>` placeholders in the node tree, `colorOf` in `emit.mjs`). `dark` is not emitted until the theme design is decided. A palette header (`PB()`) is a gradient `palbg-X` to `palbge-X` that is flat in light and becomes a real `color linear ...` once the dark values differ.
+
+## How the seed works
+
+1. `env.mjs` loads tokens and demo data (`dev/design/kit/*.generated.js`), the icons of the repository (`kit/<Key>` is a `ui.icon` key, `<ns>/<id>` a plugin sprite symbol or Svelte icon, short names are `line-icons.mjs`) and the kit source.
+2. The generator ran the screen scripts of every file in `design.json` on the kit (`kit/*.js` in file name order, then the script), then `library/ui-kit.js`.
+3. A kit function is a shape tree (`kit/10-core.js`; fields are named as in the pen.dev node schema this tree was first built on). `kit/90-tenn.js` redraws atoms with primitives and gives containers with variable content a frame of their own, which becomes a slot of the library component.
+4. `kit/95-library.js` turns a shape into an instance of the library variant that needs the fewest overrides: same child order, optional parts matched by key, the differences become `at`, `replace` and `slot` blocks. What no variant fits stays drawn in place.
+5. `emit.mjs` writes the trees as commands (property mapping below), `print.mjs` prints them in the compact form of the spec (9.5): tabs, packed lines, short blocks on one line. Output was deterministic: sorted directory reads, no random ids, no timestamps.
+
+## Mapping to .tenn
+
+The decisions follow `go/penimport` of Tenniarb (`props.go`, `overrides.go`, `defaults.go`); the format is `docs/spec/tenn-scene.md` and `go/mcpserver/skill/*.md` there.
+
+| Node | .tenn |
+|---|---|
+| frame, layout horizontal / vertical / none | `item` with `auto-layout row / column / abs`, `gap`, `padding`, `align`, `justify`, `clip` |
+| `fill_container` / fit content | `width fill` / `hug` |
+| fill, stroke, radius, opacity | `color`, `border-color` + `line-width`, `corner-radius`, `opacity` |
+| ellipse | `item` with `corner-radius` = width / 2 |
+| text | `item` with `title`, `font-*`, `line-height`, `text-color`, `layout left / middle / right` |
+| path | `item` with `path`, `view-box`, `fill-rule`, `color` / `border-color` |
+| shadow | `shadow dx dy blur color`, y points up (`-dy` of the node) |
+| linear gradient | `color linear <360 - rotation> <color> <pos> ...`; equal stops become a flat color; gradient on text or path keeps the first stop |
+| wrap container | `wrap yes; line-gap` |
+| instance | `use <path> as <name>`; overrides `at <part>`, `replace <part>`, `slot <name>` |
+| slot | `slot <name>` of the frame, the root slot is named `content`; an empty fill is `slot name {}` |
+| `kit.page` | `element` of a task file (a dot in the name is replaced by a space, it breaks paths); in the application files the pages are not used, see the structure above |
+
+Names: a part is named as the kit names its layer (a text layer by its content, an icon `icon/<name>`), so these names are part of the paths in `at` / `replace`. A reference named like a category or a sibling component gets a `_` prefix (otherwise its short path is captured: `cycle`), and a name starting with a digit too. An item named like its category keeps the full name (`Workbench_Workbench`).
+
+Not expressed by the emitter, so not in the files: stroke alignment other than inner, line cap and join, a gradient that is not linear, a part rotation or flip.
+
+## Add a component
+
+The library is the source: add or change a component in Tenniarb, in `dev/design/tenn/lib/<category>.tenn` (an `item` with `export let` parameters and `styles`, optional parts `hidden`, containers with variable content as `slot`), and use it in screens with `use <library>.<Category>.<Item> as ...` (`<library>.<Item>` for a library of one category), passing parameters by name.
+
+To seed a component from the scripts:
+
+1. Storybook: the visual component in `dev/storybook/src/design/kit/<Category>/<Name>.svelte` and a state in the category story.
+2. The kit function `kit.<Name>` in `kit/*.js`; the recorder `dev/storybook/src/design/generated/recorder.ts` maps it to the Svelte component.
+3. A part with variable content gets its own frame in `kit/90-tenn.js` (see `kit.Navigator`, `kit.Table`), so it can be a slot.
+4. The function name goes to the tagged list in `kit/95-library.js` and a definition to `library/ui-kit.js`: `def('<Category>/<Name>', kit.<Name>(sample arguments), options)`. `hide` and `slots` work as before. `params` declares `export let` defaults, `styles` declares styles and `one-of` groups, `expr` puts expressions on the root or named parts (`null` removes a literal), `animations` declares component keyframes. `element: true` emits an `element` catalogue with one `Catalog` item.
+5. Keep seed variants only for recognition where needed: `{ alias: { kind, size } }` redirects a variant to the canonical component of its group and emits those parameters on every instance. `target` selects another canonical name. Aliases are not emitted as separate library items; structural variants with different slot layouts stay separate.
+6. Run `tenniarb check` and render the changed `element` or an application screen in Tenniarb. Boolean parameters are strings in scene expressions; the files write their comparisons as `flag === "true"`.

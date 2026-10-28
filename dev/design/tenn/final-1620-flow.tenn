@@ -1,0 +1,493 @@
+entry "../../../PlatformDesign.tenn"
+
+item "Кадр 1: landing" {
+    auto-layout abs; width 660; height 1000; clip yes; pos 0 0
+    item head1 {
+      auto-layout row; gap 10; align center; width 620; pos 20 -24
+      item num1 {
+        auto-layout row; width 28; height 28; align center; justify center; color #cf13a2; corner-radius 14
+        item n1 { title 1; font-size 13; font-weight 700; text-color #ffffff }
+      }
+      item t1 { title "Landing: рабочая почта"; width fill; font-size 15; font-weight 600; text-color #201240; layout left }
+    }
+    item scene1 {
+      auto-layout abs; width 620; height 680; color #130228; corner-radius 12; clip yes; pos 20 -100
+      item beam1 { width 14; height 680; color linear 90 #a96bff00 0 #a96bff73 0.5 #a96bff00 1; pos 452 0 }
+      item balll1 { width 84; height 84; corner-radius 42; color linear 45 #5b25a8 0 #0e0220 1; pos 385 -380 }
+      item disc1 { width 250; height 105; corner-radius 52; color linear 135 #7a3fd0 0 #24083f 1; pos 380 -300 }
+      item ballt1 { width 84; height 84; corner-radius 42; color linear 45 #8a4de0 0 #180533 1; pos 455 -153 }
+      item top1 {
+        auto-layout row; width 620; padding 12 16; gap 8; align center; pos 0 -14
+        item lg1 {
+          auto-layout row; gap 6; align center
+          item mark1 {
+            auto-layout row; width 16; height 16; align center; justify center; color #6c3bd4; corner-radius 4
+            item mk1 { title P; font-size 9; font-weight 700; text-color #ffffff }
+          }
+          item lgt1 {
+            auto-layout column; gap 0
+            item lgt1a { title ИНТАБИЯ; font-size 6; font-weight 700; line-height 7; text-color #ffffff; layout left }
+            item lgt1b { title ПЛАТФОРМА; font-size 6; font-weight 700; line-height 7; text-color #a96bff; layout left }
+          }
+        }
+        item menu1 {
+          auto-layout row; gap 8; align center
+          item mn1 { title Инструменты; font-size 6; line-height 8; text-color #ffffffb3 }
+          item mn2 { title Тарифы; font-size 6; line-height 8; text-color #ffffffb3 }
+          item mn3 { title Блог; font-size 6; line-height 8; text-color #ffffffb3 }
+          item mn4 { title Контакты; font-size 6; line-height 8; text-color #ffffffb3 }
+        }
+        item grow1 { width fill }
+        item d1 {
+          auto-layout row; padding 4 10; align center; corner-radius 999; border-color #6c3bd4
+          item dt1 { title Демо; font-size 8; line-height 10; text-color #ffffff }
+        }
+        item li1 {
+          auto-layout row; padding 4 12; align center; corner-radius 999; border-color #ffffff66
+          item lt1 { title Войти; font-size 8; line-height 10; text-color #ffffff }
+        }
+      }
+      item hero1 {
+        auto-layout column; width 300; gap 8; pos 30 -250
+        item h1s {
+          auto-layout column; gap 1; width fill
+          item l1a { title Управляйте; width fill; font-size 22; font-weight 700; line-height 26; text-color #ffffff; layout left }
+          item l1b { title "командной работой"; width fill; font-size 20; font-weight 700; line-height 26; text-color #ffffff; layout left }
+          item l1c { title "на единой AI-платформе"; width fill; font-size 22; font-weight 700; line-height 26; text-color #a96bff; layout left }
+        }
+        item lead1 { title "Задачи, документы, встречи и договорённости - в одном контуре, без потери рабочего контекста."; width fill; font-size 9; line-height 12; text-color #ffffffb3; layout left }
+        item row1 {
+          auto-layout row; gap 6; width fill; align center
+          item f1 {
+            auto-layout row; width 150; height 28; padding 0 10; align center; color #ffffff12; border-color #ffffff2e; corner-radius 6
+            item ph1 { title "Рабочая почта"; width fill; font-size 8; line-height 10; text-color #ffffff8c; layout left }
+          }
+          item cta1 {
+            auto-layout row; padding 8 12; align center; justify center; color #f5f1e8; corner-radius 999
+            item ct1 { title Продолжить; font-size 8; font-weight 600; line-height 10; text-color #201240 }
+          }
+        }
+        item cap1 { title "Без привязки карты. Можно начать одному. Бесплатно для команд до 5 человек."; width fill; font-size 7; line-height 9; text-color #ffffff99; layout left }
+      }
+    }
+    item caption1 { title "Email вводится один раз, дальше без повторного ввода"; width 620; font-size 12; line-height 16; text-color #5c6470; layout left; pos 26 -808 }
+  }
+
+  item arrow1 { title ">"; font-size 22; text-color #a3a3ad; pos 684 -340 }
+
+  item "Кадр 2: пароль" {
+    auto-layout abs; width 660; height 1000; clip yes; pos 720 0
+    item head2 {
+      auto-layout row; gap 10; align center; width 620; pos 20 -24
+      item num2 {
+        auto-layout row; width 28; height 28; align center; justify center; color #cf13a2; corner-radius 14
+        item n2 { title 2; font-size 13; font-weight 700; text-color #ffffff }
+      }
+      item t2 { title "Вход: пароль, email подставлен"; width fill; font-size 15; font-weight 600; text-color #201240; layout left }
+    }
+    item scene2 {
+      auto-layout abs; width 620; height 680; color #f3f3f6; corner-radius 12; clip yes; pos 20 -100
+      use Libraries.login_kit.LoginCard as Card2 {
+        pos 80 -60
+        slot content {
+          use Libraries.login_kit.LoginForm as Form2 {
+            slot content {
+              item form2 {
+                auto-layout column; gap 16; width 396; clip yes; font-family "IBM Plex Sans"
+                item h2s {
+                  auto-layout column; gap 8; width 396; align center
+                  item t2s { title "С возвращением"; font-size 24; font-weight 700; line-height 30; text-color #000061 }
+                  item e2r {
+                    auto-layout row; gap 6; align center; justify center; width 396
+                    item e2 { title "anna.smirnova@intabia.io"; font-size 12; line-height 16; text-color #000061 }
+                    item c2 { title "Сменить"; font-size 12; line-height 16; text-color #6e48ce }
+                  }
+                  item s2 { title "После входа - сразу в последнее активное пространство"; width fill; font-size 11; line-height 15; text-color #5c6470; layout left }
+                }
+                use Libraries.login_kit.LoginField as "F2 Пароль" {
+                  label Пароль
+                  at Value { title "********" }
+                }
+                use Libraries.login_kit.LoginButton as "B2 Войти" {
+                  at Button { title Войти }
+                }
+                item hint2 { title "Сменить пространство можно внутри продукта"; width fill; font-size 10; line-height 13; text-color #7f7f7f; layout left }
+              }
+            }
+          }
+        }
+      }
+    }
+    item caption2 { title "Существующий с паролем; поле email не показываем"; width 620; font-size 12; line-height 16; text-color #5c6470; layout left; pos 36 -794 }
+  }
+
+  item arrow2 { title ">"; font-size 22; text-color #a3a3ad; pos 1404 -340 }
+
+  item "Кадр 3: последнее пространство" {
+    auto-layout abs; width 660; height 1000; clip yes; pos 1440 0
+    item head3 {
+      auto-layout row; gap 10; align center; width 620; pos 20 -24
+      item num3 {
+        auto-layout row; width 28; height 28; align center; justify center; color #cf13a2; corner-radius 14
+        item n3 { title 3; font-size 13; font-weight 700; text-color #ffffff }
+      }
+      item t3 { title "Сразу в последнее пространство"; width fill; font-size 15; font-weight 600; text-color #201240; layout left }
+    }
+    item scene3 {
+      auto-layout column; width 620; height 680; color #ffffff; corner-radius 12; border-color #00000014; clip yes; pos 20 -100
+      item wtop3 {
+        auto-layout row; width fill; padding 10 14; gap 8; align center
+        item dots3 {
+          auto-layout row; gap 4; align center
+          item d3a { width 8; height 8; corner-radius 4; color #00000022 }
+          item d3b { width 8; height 8; corner-radius 4; color #00000022 }
+          item d3c { width 8; height 8; corner-radius 4; color #00000022 }
+        }
+        item wt3 { title "Intabia Platform"; width fill; font-size 12; font-weight 600; text-color #201240; layout left }
+        item wh3 { title "последнее активное"; font-size 9; line-height 12; text-color #7f7f7f }
+      }
+      item wbody3 {
+        auto-layout row; width fill; height fill
+        item rail3 {
+          auto-layout column; width 36; padding 10 0; gap 8; align center; color #fafafc
+          item r3a { width 16; height 16; corner-radius 4; color #e5e1ea }
+          item r3b { width 16; height 16; corner-radius 4; color #cf13a2 }
+          item r3c { width 16; height 16; corner-radius 4; color #e5e1ea }
+          item r3d { width 16; height 16; corner-radius 4; color #e5e1ea }
+          item r3e { width 16; height 16; corner-radius 4; color #e5e1ea }
+        }
+        item wmain3 {
+          auto-layout column; width fill; padding 14; gap 10
+          item wtitle3 { title "Мои задачи"; font-size 13; font-weight 600; text-color #201240; layout left }
+          item task3a {
+            auto-layout row; width fill; height 26; gap 8; align center
+            item cb3a { width 10; height 10; corner-radius 3; border-color #00000033 }
+            item bar3a { width 220; height 8; corner-radius 4; color #efedf2 }
+          }
+          item task3b {
+            auto-layout row; width fill; height 26; gap 8; align center
+            item cb3b { width 10; height 10; corner-radius 3; border-color #00000033 }
+            item bar3b { width 160; height 8; corner-radius 4; color #efedf2 }
+          }
+          item task3c {
+            auto-layout row; width fill; height 26; gap 8; align center
+            item cb3c { width 10; height 10; corner-radius 3; color #cf13a2 }
+            item bar3c { width 260; height 8; corner-radius 4; color #efedf2 }
+          }
+          item task3d {
+            auto-layout row; width fill; height 26; gap 8; align center
+            item cb3d { width 10; height 10; corner-radius 3; border-color #00000033 }
+            item bar3d { width 190; height 8; corner-radius 4; color #efedf2 }
+          }
+        }
+      }
+      item wpanel3 {
+        auto-layout row; width fill; padding 12 14; gap 8; align center; color #f8f5fa; border-color #d9b9d8
+        item dotp3 { width 8; height 8; corner-radius 4; color #cf13a2 }
+        item wp3 { title "Вошли сразу в последнее активное пространство. Сменить: меню профиля."; width fill; font-size 10; line-height 13; text-color #7d1f70; layout left }
+      }
+    }
+    item caption3 { title "Последнее активное из профиля; если последнего нет - выбор или создание"; width 620; font-size 12; line-height 16; text-color #5c6470; layout left; pos 20 -470 }
+  }
+
+  item arrow3 { title ">"; font-size 22; text-color #a3a3ad; pos 2124 -340 }
+
+  item "Кадр 4: код" {
+    auto-layout abs; width 660; height 1000; clip yes; pos 2160 0
+    item head4 {
+      auto-layout row; gap 10; align center; width 620; pos 20 -24
+      item num4 {
+        auto-layout row; width 28; height 28; align center; justify center; color #cf13a2; corner-radius 14
+        item n4 { title 4; font-size 13; font-weight 700; text-color #ffffff }
+      }
+      item t4 { title "Новый и OTP: код из письма"; width fill; font-size 15; font-weight 600; text-color #201240; layout left }
+    }
+    item scene4 {
+      auto-layout abs; width 620; height 680; color #f3f3f6; corner-radius 12; clip yes; pos 20 -100
+      use Libraries.login_kit.LoginCard as Card4 {
+        pos 60 -80
+        slot content {
+          use Libraries.login_kit.LoginForm as Form4 {
+            padding 16 24
+            slot content {
+              item form4 {
+                auto-layout column; gap 20; width 412; clip yes; font-family "IBM Plex Sans"
+                use Libraries.login_kit.LoginOtpHeader as Header4 {
+                  at title_row.Enter_the_code { title "Введите код" }
+                  at description.We_sent_the_code_to { title "Мы отправили код на" }
+                  at description.name_example_com { title "anna.smirnova@intabia.io" }
+                }
+                use Libraries.login_kit.LoginCode as Code4 {
+                  at digit_1._1 { title "4" }
+                  at digit_2._2 { title "8" }
+                  at digit_3._3 { title "2" }
+                  at digit_4._4 { title "9" }
+                  at digit_5._5 { title "1" }
+                  at digit_6._6 { title "3" }
+                }
+                item hint4 { title "Не пришло письмо? Проверьте папку «Спам»."; width fill; font-size 11; line-height 14; text-color #00000066; layout left }
+                item row4 {
+                  auto-layout row; gap 14; width 412
+                  item Resend4 { title "Отправить код повторно"; font-size 11; line-height 14; text-color #333333 }
+                  item Alt4 { title "Сменить почту"; font-size 11; line-height 14; text-color #333333 }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    item caption4 { title "Код для новых и когда требуется OTP; email подставлен"; width 620; font-size 12; line-height 16; text-color #5c6470; layout left; pos 26 -804 }
+  }
+
+  item arrow4 { title ">"; font-size 22; text-color #a3a3ad; pos 2844 -340 }
+
+  item "Кадр 5: имя пространства" {
+    auto-layout abs; width 660; height 1000; clip yes; pos 2880 0
+    item head5 {
+      auto-layout row; gap 10; align center; width 620; pos 20 -24
+      item num5 {
+        auto-layout row; width 28; height 28; align center; justify center; color #cf13a2; corner-radius 14
+        item n5 { title 5; font-size 13; font-weight 700; text-color #ffffff }
+      }
+      item t5 { title "Новый: имя пространства"; width fill; font-size 15; font-weight 600; text-color #201240; layout left }
+    }
+    item scene5 {
+      auto-layout abs; width 620; height 680; color #f3f3f6; corner-radius 12; clip yes; pos 20 -100
+      use Libraries.login_kit.LoginCard as Card5 {
+        pos 80 -110
+        slot content {
+          use Libraries.login_kit.LoginForm as Form5 {
+            slot content {
+              item form5 {
+                auto-layout column; gap 20; width 396; clip yes; font-family "IBM Plex Sans"
+                item h5s {
+                  auto-layout column; gap 8; width 396; align center
+                  item t5s { title "Сначала пространство"; font-size 24; font-weight 700; line-height 30; text-color #000061 }
+                  item s5 { title "Назовите его - создадим, пока вы заполняете профиль"; width fill; font-size 12; line-height 16; text-color #5c6470; layout left }
+                }
+                use Libraries.login_kit.LoginField as "F5 Название" {
+                  label "Название пространства"
+                  at Value { title "Команда Анны" }
+                }
+                use Libraries.login_kit.LoginButton as "B5 Создать" {
+                  at Button { title "Создать и продолжить" }
+                }
+              }
+            }
+          }
+          use Libraries.login_kit.LoginAction as "A5 Приглашение" {
+            at Action { title "У меня есть ссылка-приглашение" }
+          }
+        }
+      }
+    }
+    item caption5 { title "Пространство начинает создаваться сразу, до заполнения профиля"; width 620; font-size 12; line-height 16; text-color #5c6470; layout left; pos 31 -798 }
+  }
+
+  item arrow5 { title ">"; font-size 22; text-color #a3a3ad; pos 3564 -340 }
+
+  item "Кадр 6: профиль в фоне" {
+    auto-layout abs; width 660; height 1000; clip yes; pos 3600 0
+    item head6 {
+      auto-layout row; gap 10; align center; width 620; pos 20 -24
+      item num6 {
+        auto-layout row; width 28; height 28; align center; justify center; color #cf13a2; corner-radius 14
+        item n6 { title 6; font-size 13; font-weight 700; text-color #ffffff }
+      }
+      item t6 { title "Профиль, пространство в фоне"; width fill; font-size 15; font-weight 600; text-color #201240; layout left }
+    }
+    item scene6 {
+      auto-layout abs; width 620; height 680; color #f3f3f6; corner-radius 12; clip yes; pos 20 -100
+      use Libraries.login_kit.LoginCard as Card6 {
+        pos 80 -10
+        slot content {
+          use Libraries.login_kit.LoginForm as Form6 {
+            slot content {
+              item form6 {
+                auto-layout column; gap 14; width 396; clip yes; font-family "IBM Plex Sans"
+                item h6s {
+                  auto-layout column; gap 8; width 396; align center
+                  item t6s { title "Ваш профиль"; font-size 24; font-weight 700; line-height 30; text-color #000061 }
+                  item s6 { title "«Команда Анны» создаётся, пока вы заполняете форму"; width fill; font-size 12; line-height 16; text-color #5c6470; layout left }
+                }
+                use Libraries.login_kit.LoginStatus as Progress6 {
+                  at message.Message { title "Создаём «Команда Анны»…" }
+                }
+                use Libraries.login_kit.LoginField as "F6 Имя" { label Имя; at Value { title Анна } }
+                use Libraries.login_kit.LoginField as "F6 Фамилия" { label Фамилия; at Value { title Смирнова } }
+                use Libraries.login_kit.LoginField as "F6 Телефон" { label "Телефон · необязательно"; at Value { hidden yes } }
+                item consent6 {
+                  auto-layout column; gap 6; width 396
+                  use Libraries.login_kit.LoginCheckbox as "Check6 Согласие" {
+                    checked true; label "Соглашаюсь с Условиями использования и обработкой персональных данных"
+                  }
+                  item links6 { title "Условия использования · Политика конфиденциальности"; width fill; font-size 10; line-height 13; text-color #6e48ce; layout left }
+                }
+                use Libraries.login_kit.LoginButton as "B6 Сохранить" {
+                  at Button { title "Сохранить и войти" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    item caption6 { title "Имя и фамилия один раз на аккаунт; телефон необязателен; согласие одно"; width 620; font-size 12; line-height 16; text-color #5c6470; layout left; pos 25 -803 }
+  }
+
+  item arrow6 { title ">"; font-size 22; text-color #a3a3ad; pos 4284 -340 }
+
+  item "Кадр 7: готово" {
+    auto-layout abs; width 660; height 1000; clip yes; pos 4320 0
+    item head7 {
+      auto-layout row; gap 10; align center; width 620; pos 20 -24
+      item num7 {
+        auto-layout row; width 28; height 28; align center; justify center; color #cf13a2; corner-radius 14
+        item n7 { title 7; font-size 13; font-weight 700; text-color #ffffff }
+      }
+      item t7 { title "Готово: профиль + пространство"; width fill; font-size 15; font-weight 600; text-color #201240; layout left }
+    }
+    item scene7 {
+      auto-layout column; width 620; height 680; color #ffffff; corner-radius 12; border-color #00000014; clip yes; pos 20 -100
+      item account7 {
+        auto-layout row; width fill; padding 12 14; gap 10; align center; color #faf7fc; border-color #0000000f
+        item ava7 {
+          auto-layout row; width 28; height 28; align center; justify center; color #cf13a2; corner-radius 14
+          item av7 { title АС; font-size 11; font-weight 600; text-color #ffffff }
+        }
+        item atext7 {
+          auto-layout column; gap 2; width fill
+          item ae7 { title "anna.smirnova@intabia.io · Бесплатный план"; font-size 11; line-height 14; text-color #201240; layout left }
+          item ag7 { title "глобальный профиль - один на все пространства"; font-size 9; line-height 12; text-color #7f7f7f; layout left }
+        }
+      }
+      item wtop7 {
+        auto-layout row; width fill; padding 10 14; gap 8; align center
+        item wt7 { title "Команда Анны"; width fill; font-size 12; font-weight 600; text-color #201240; layout left }
+        item wh7 { title "первое пространство создано"; font-size 9; line-height 12; text-color #7f7f7f }
+      }
+      item wbody7 {
+        auto-layout row; width fill; height fill
+        item rail7 {
+          auto-layout column; width 36; padding 10 0; gap 8; align center; color #fafafc
+          item r7a { width 16; height 16; corner-radius 4; color #e5e1ea }
+          item r7b { width 16; height 16; corner-radius 4; color #e5e1ea }
+          item r7c { width 16; height 16; corner-radius 4; color #cf13a2 }
+          item r7d { width 16; height 16; corner-radius 4; color #e5e1ea }
+          item r7e { width 16; height 16; corner-radius 4; color #e5e1ea }
+        }
+        item wmain7 {
+          auto-layout column; width fill; padding 14; gap 10
+          item wtitle7 { title "Мои задачи"; font-size 13; font-weight 600; text-color #201240; layout left }
+          item task7a {
+            auto-layout row; width fill; height 26; gap 8; align center
+            item cb7a { width 10; height 10; corner-radius 3; color #cf13a2 }
+            item bar7a { width 200; height 8; corner-radius 4; color #efedf2 }
+          }
+          item task7b {
+            auto-layout row; width fill; height 26; gap 8; align center
+            item cb7b { width 10; height 10; corner-radius 3; border-color #00000033 }
+            item bar7b { width 250; height 8; corner-radius 4; color #efedf2 }
+          }
+          item task7c {
+            auto-layout row; width fill; height 26; gap 8; align center
+            item cb7c { width 10; height 10; corner-radius 3; border-color #00000033 }
+            item bar7c { width 170; height 8; corner-radius 4; color #efedf2 }
+          }
+        }
+      }
+      item wpanel7 {
+        auto-layout row; width fill; padding 12 14; gap 8; align center; color #f8f5fa; border-color #d9b9d8
+        item dotp7 { width 8; height 8; corner-radius 4; color #cf13a2 }
+        item wp7 { title "Приглашение, если оно было, сохранено и ведёт в это пространство"; width fill; font-size 10; line-height 13; text-color #7d1f70; layout left }
+      }
+    }
+    item caption7 { title "Рабочее пространство готово к моменту сохранения профиля"; width 620; font-size 12; line-height 16; text-color #5c6470; layout left; pos 30 -814 }
+  }
+
+  item arrow7 { title ">"; font-size 22; text-color #a3a3ad; pos 5004 -340 }
+
+  item "Кадр 8: ошибка создания" {
+    auto-layout abs; width 660; height 1000; clip yes; pos 5040 0
+    item head8 {
+      auto-layout row; gap 10; align center; width 620; pos 20 -24
+      item num8 {
+        auto-layout row; width 28; height 28; align center; justify center; color #cf13a2; corner-radius 14
+        item n8 { title 8; font-size 13; font-weight 700; text-color #ffffff }
+      }
+      item t8 { title "Ошибка создания - не тупик"; width fill; font-size 15; font-weight 600; text-color #201240; layout left }
+    }
+    item scene8 {
+      auto-layout abs; width 620; height 680; color #f3f3f6; corner-radius 12; clip yes; pos 20 -100
+      use Libraries.login_kit.LoginCard as Card8 {
+        pos 80 -60
+        slot content {
+          use Libraries.login_kit.LoginForm as Form8 {
+            slot content {
+              item form8 {
+                auto-layout column; gap 16; width 396; clip yes; font-family "IBM Plex Sans"
+                item h8s {
+                  auto-layout column; gap 8; width 396; align center
+                  item t8s { title "Ваш профиль"; font-size 24; font-weight 700; line-height 30; text-color #000061 }
+                  item s8 { title "Пространство не создано - вы ничего не потеряли"; width fill; font-size 12; line-height 16; text-color #5c6470; layout left }
+                }
+                use Libraries.login_kit.LoginStatus as Error8 {
+                  kind error
+                  at message.Message { title "Не удалось создать «Команда Анны». Профиль сохранён." }
+                }
+                use Libraries.login_kit.LoginField as "F8 Имя" { label Имя; at Value { title Анна } }
+                use Libraries.login_kit.LoginField as "F8 Фамилия" { label Фамилия; at Value { title Смирнова } }
+                item actions8 {
+                  auto-layout row; gap 8; width 396
+                  use Libraries.login_kit.LoginButton as "B8 Повторить" {
+                    width 190
+                    at Button { title Повторить }
+                  }
+                  use Libraries.login_kit.LoginButton as "B8 Войти" {
+                    kind default; width 190
+                    at Button { title "Войти и создать позже" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    item caption8 { title "Профиль сохранён: повторить создание или войти и создать позже"; width 620; font-size 12; line-height 16; text-color #5c6470; layout left; pos 21 -825 }
+  }
+
+  item Rules {
+    auto-layout column; width 5660; gap 8; pos 0 -1060
+    item Rules_row1 {
+      auto-layout row; width 5660; gap 8
+      item rule1 {
+        auto-layout row; padding 6 12; color #efdcf2; corner-radius 999
+        item rt1 { title "Email вводится один раз - на landing"; font-size 11; line-height 14; text-color #7d1f70 }
+      }
+      item rule2 {
+        auto-layout row; padding 6 12; color #efdcf2; corner-radius 999
+        item rt2 { title "Существующий с паролем - сразу в последнее пространство"; font-size 11; line-height 14; text-color #7d1f70 }
+      }
+      item rule3 {
+        auto-layout row; padding 6 12; color #efdcf2; corner-radius 999
+        item rt3 { title "Новый - код из письма, пространство создаётся в фоне"; font-size 11; line-height 14; text-color #7d1f70 }
+      }
+    }
+    item Rules_row2 {
+      auto-layout row; width 5660; gap 8
+      item rule4 {
+        auto-layout row; padding 6 12; color #efdcf2; corner-radius 999
+        item rt4 { title "Телефон необязателен, согласие одно"; font-size 11; line-height 14; text-color #7d1f70 }
+      }
+      item rule5 {
+        auto-layout row; padding 6 12; color #efdcf2; corner-radius 999
+        item rt5 { title "Ошибка создания - не тупик; приглашения сохраняются"; font-size 11; line-height 14; text-color #7d1f70 }
+      }
+      item rule6 {
+        auto-layout row; padding 6 12; color #efdcf2; corner-radius 999
+        item rt6 { title "Без Google/GitHub"; font-size 11; line-height 14; text-color #7d1f70 }
+      }
+    }
+  }
