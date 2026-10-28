@@ -2624,32 +2624,90 @@ export function sanitizeEmail (email: string): string {
   return sanitizedEmail
 }
 
+export interface InviteSender {
+  name: string
+  email?: string
+  role: AccountRole | null
+}
+
+// Cc/Cf - control and invisible format characters (bidi, zero-width), Zl/Zp - line separators.
+function normalizeSenderName (name: string): string {
+  return name
+    .replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 120)
+}
+
+export async function getInviteSender (
+  db: AccountDB,
+  account: AccountUuid,
+  role: AccountRole | null,
+  lastNameFirst = false
+): Promise<InviteSender | undefined> {
+  const email = await getPersonEmail(db, account)
+  const person = await db.person.findOne({ uuid: account })
+  const first = person != null ? person.firstName : ''
+  const last = person != null ? person.lastName : ''
+  const own = lastNameFirst ? [last, first] : [first, last]
+  const personName = normalizeSenderName(own.join(' '))
+  const name = personName !== '' ? personName : email
+  if (name === undefined || name === '') return undefined
+  return { name, email, role }
+}
+
+function isInviteSenderAdmin (role: AccountRole | null): boolean {
+  return role === AccountRole.Owner || role === AccountRole.Maintainer
+}
+
 export async function getInviteEmail (
   branding: Branding | null,
   email: string,
   link: string,
   workspace: Workspace,
   expHours: number,
-  resend = false
+  resend = false,
+  sender?: InviteSender
 ): Promise<EmailInfo> {
   const ws = sanitizeEmail(workspace.name !== '' ? workspace.name : workspace.url)
   const lang = branding?.defaultLanguage
   const app = branding?.title ?? getMetadata(accountPlugin.metadata.ProductName)
 
+  const senderLabel = await translate(accountPlugin.string.InviteSenderLabel, {}, lang)
+  const senderRole = await translate(
+    isInviteSenderAdmin(sender?.role ?? null)
+      ? accountPlugin.string.InviteSenderRoleAdmin
+      : accountPlugin.string.InviteSenderRoleMember,
+    {},
+    lang
+  )
+  const senderName = sender !== undefined && sender.name !== '' ? sender.name : ws
+  const details = (separator: string): string =>
+    [sender?.email ?? '', senderRole].filter((it) => it !== '').join(separator)
+
+  const params = { link, ws, expHours, app }
+  const textParams = { ...params, senderLabel, senderName, senderDetails: details(', ') }
+  const htmlParams = {
+    ...params,
+    senderLabel: escapeHtml(senderLabel),
+    senderName: escapeHtml(senderName),
+    senderDetails: escapeHtml(details(' · '))
+  }
+
   return {
     text: await translate(
       resend ? accountPlugin.string.ResendInviteText : accountPlugin.string.InviteText,
-      { link, ws, expHours, app },
+      textParams,
       lang
     ),
     html: await translate(
       resend ? accountPlugin.string.ResendInviteHTML : accountPlugin.string.InviteHTML,
-      { link, ws, expHours, app },
+      htmlParams,
       lang
     ),
     subject: await translate(
       resend ? accountPlugin.string.ResendInviteSubject : accountPlugin.string.InviteSubject,
-      { ws, app },
+      { ws, app, senderName },
       lang
     ),
     to: email

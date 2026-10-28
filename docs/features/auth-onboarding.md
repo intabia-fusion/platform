@@ -96,7 +96,7 @@
 - **Регистрация паролем (deprecated, только dev без mail-сервиса).** `signUp()`, флаг `hasSignUp` в `getMethods()` - `operations.ts`.
 - **Восстановление и смена пароля.** `requestPasswordReset`/`restorePassword`/`changePassword`/`getPasswordPolicy` - `operations.ts`. Политика сложности пароля принадлежит account-сервису (`PASSWORD_STRICTNESS`), проверяется на сервере при записи и отдаётся клиенту через `getPasswordPolicy`.
 - **OAuth Google/GitHub/OpenID Connect.** `pods/authProviders/src/{google,github,openid}.ts`.
-- **Инвайты и access-ссылки.** `createInvite`/`sendInvite`/`resendInvite`/`createInviteLink`/`createAccessLink` (экспирация, email-маска, лимит мест, роль) - `operations.ts`.
+- **Инвайты и access-ссылки.** `createInvite`/`sendInvite`/`resendInvite`/`createInviteLink`/`createAccessLink` (экспирация, email-маска, лимит мест, роль) - `operations.ts`. Письмо-приглашение называет отправителя: `getInviteSender()` (имя - из account-БД `person` в порядке `branding.lastNameFirst`, контакт - первый подтверждённый `EMAIL` social id, роль - `getWorkspaceRole`); клиент имя не передаёт. Из имени вычищаются control/format-символы (включая bidi и zero-width) и разделители строк -> блок в `Invite*`/`ResendInvite*` (`getInviteEmail()`, `utils.ts`); Owner/Maintainer подписываются как "Администратор пространства", остальные - "Участник пространства" (`InviteSenderRole*`), новые роли попадают в "участника". Имя в HTML экранируется, в plain-text - нет.
 - **Привязка social identity.** `addEmailSocialId`/`addHulyAssistantSocialId`/`refreshHulyAssistantToken`/`releaseSocialId` - `operations.ts`.
 
 ### Сессии и токены
@@ -145,7 +145,7 @@
 | Регистрация паролем (deprecated, только dev без mail-сервиса) | - | - | internal | - | |
 | Восстановление и смена пароля | - | - | plan | - | отложено |
 | OAuth Google/GitHub/OpenID Connect | - | - | plan | - | отложено |
-| Инвайты и access-ссылки | getting-started/workspace-setup | getting-started/workspace-setup | stale | 0.8.60 | скрин settings-modules.png устарел (старая навигация с «Пространства», надпись «Бета-версия» вместо «Ознакомительная версия») |
+| Инвайты и access-ссылки | getting-started/workspace-setup | getting-started/workspace-setup | stale | 0.8.60 | скрин settings-modules.png устарел (старая навигация с «Пространства», надпись «Бета-версия» вместо «Ознакомительная версия»); не описано, что письмо-приглашение называет отправителя (имя, email, роль) в теме, тексте и HTML-блоке |
 | Привязка social identity | people-contacts/managing-account | - | no-en | 0.8.60 | исправлено: текст про удаление аккаунта (отложенное удаление + отмена входом) и про возврат в пространство (по новому приглашению, не только от владельца) |
 | Подписанный JSON-токен без refresh-механики | - | - | internal | - | |
 | LRU-кэш верифицированных токенов | - | - | internal | - | |
