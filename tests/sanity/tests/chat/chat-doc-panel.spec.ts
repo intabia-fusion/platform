@@ -50,6 +50,8 @@ test.describe('Document panel inside the chat', () => {
     channelPage = new ChannelPage(page)
     me = await connectOwner(shared.ws, `${shared.data.lastName} ${shared.data.firstName}`)
     await loginByToken(page, shared.token, shared.ws, 'chunter')
+    // A collaborator with no personal space yet gets no chat; the first visit makes the space and its channel chats.
+    await expect(channelPage.channelName('general')).toBeVisible()
   })
 
   /** My issue with my comment on it, then `newer` comments after it: the last one lifts it in the navigator. */
