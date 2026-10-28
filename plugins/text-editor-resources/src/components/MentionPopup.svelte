@@ -29,6 +29,7 @@
   import view, { type ReferenceVersion, type ReferenceVersionsProvider } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import { getReferenceLabel, getReferenceObject } from './extension/reference'
+  import { findMentionEmployees, mergeMentionSections } from '../mentionSections'
 
   import MentionVersionPopup from './MentionVersionPopup.svelte'
 
@@ -212,19 +213,28 @@
   }
 
   const updateItems = reduceCalls(async function (localQuery: string): Promise<void> {
-    const r = await searchFor('mention', localQuery, undefined, undefined, {
-      searchIn: ['title', 'identifier'],
-      infix: true
-    })
-    if (r.query === query) {
-      const latestIndex = r.items.findLastIndex((it) => it.category.classToSearch === contact.mixin.Employee)
-      const multipleEmployeeSearchItems = await getMultipleEmployeeSearchItems(localQuery, latestIndex)
+    const [r, employees] = await Promise.all([
+      searchFor('mention', localQuery, undefined, undefined, {
+        searchIn: ['title', 'identifier'],
+        infix: true
+      }),
+      employeeSearchCategory !== undefined
+        ? findMentionEmployees(client, localQuery, employeeSearchCategory)
+        : Promise.resolve([])
+    ])
+    if (r.query !== query) return
 
-      items =
-        latestIndex === -1
-          ? [...multipleEmployeeSearchItems, ...r.items]
-          : [...r.items.slice(0, latestIndex + 1), ...multipleEmployeeSearchItems, ...r.items.slice(latestIndex + 1)]
-    }
+    // Employees come from the database, where guests are filtered out before the limit; the
+    // fulltext result still carries them, so its employee section is dropped.
+    const fromFulltext = r.items.filter((it) => it.category.classToSearch === contact.mixin.Employee)
+    const others = r.items.filter((it) => it.category.classToSearch !== contact.mixin.Employee)
+    const employeeItems = employeeSearchCategory !== undefined ? employees : fromFulltext
+
+    const special = await getMultipleEmployeeSearchItems(localQuery, employeeItems.length - 1)
+    // Another keystroke may have replaced the query while the list was loading.
+    if (r.query !== query) return
+
+    items = mergeMentionSections(employeeItems, special, others)
   })
   $: void updateItems(query)
 </script>
