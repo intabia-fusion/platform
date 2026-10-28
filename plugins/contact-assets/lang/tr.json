@@ -123,6 +123,7 @@
     "EveryoneDescription": "Bu {title} içindeki herkesi bilgilendir",
     "HereDescription": "Bu {title} içindeki çevrimiçi üyeleri bilgilendir",
     "Guest": "Misafir",
+    "Guests": "Misafirler",
     "Deleted": "Silindi",
     "CannotMerge": "Hata: Global kişiler birleştirilemez",
     "RecentlyUsed": "Son kullanımlar"
