@@ -1,0 +1,101 @@
+entry "../../../../PlatformDesign.tenn"
+item "§ Input" {
+	auto-layout abs; width 560; height 132; border-color #0000000f; corner-radius 8; pos 0 0
+	item title { title Input; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ Checkbox" {
+	auto-layout abs; width 212; height 86; border-color #0000000f; corner-radius 8; pos 608 0
+	item title { title Checkbox; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ Toggle" {
+	auto-layout abs; width 252; height 88; border-color #0000000f; corner-radius 8; pos 868 0
+	item title { title Toggle; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ Radio" {
+	auto-layout abs; width 212; height 86; border-color #0000000f; corner-radius 8; pos 1168 0
+	item title { title Radio; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ EditBox" {
+	auto-layout abs; width 880; height 104; border-color #0000000f; corner-radius 8; pos 1428 0
+	item title { title EditBox; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item Input {
+	auto-layout column; gap 4; clip yes; pos 24 -44
+	item Label { hidden yes; title Label; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #00000099 }
+	item field {
+		auto-layout row; gap 6; padding 0 10; align center; width 240; height 32; clip yes; color #1530720d; border-color #1530720d; corner-radius 6
+		use Icon.kit_PersonCircle as "icon/kit/PersonCircle" { hidden yes; color #00000099 }
+		item Value { title Value; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #0f121a }
+		item grow { hidden yes; auto-layout abs; width fill; height 1; clip yes }
+		use Icon.chevronD as "icon/chevronD" { hidden yes; width 14; height 14; border-color #00000099; line-width 1.14 }
+	}
+}
+item "Input/multiline" {
+	auto-layout column; gap 4; clip yes; pos 296 -44
+	item Label { hidden yes; title Label; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #00000099 }
+	item field {
+		auto-layout row; padding 8 10; width 240; height 64; clip yes; color #1530720d; border-color #1530720d; corner-radius 6
+		item "Long value that wraps to the next line" {
+			title "Long value that wraps to the next line"; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; width 220; text-color #0f121a
+		}
+	}
+}
+item Checkbox {
+	auto-layout row; gap 8; align center; clip yes; pos 632 -44
+	item box {
+		auto-layout row; align center; justify center; width 16; height 16; clip yes; color #cf13a2; corner-radius 4
+		use Icon.tick as "icon/tick" { width 12; height 12; border-color #ffffff; line-width 0.98 }
+	}
+	item Label { title Label; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left }
+}
+item "Checkbox/empty" {
+	auto-layout row; gap 8; align center; clip yes; pos 730 -44
+	item box { auto-layout row; align center; justify center; width 16; height 16; clip yes; border-color #00000017; corner-radius 4 }
+	item Label { title Label; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left }
+}
+item Toggle {
+	auto-layout row; gap 8; align center; clip yes; pos 892 -44
+	item track {
+		auto-layout row; padding 2; align center; justify end; width 36; height 20; clip yes; color #cf13a2; corner-radius 10
+		item Ellipse { width 16; height 16; corner-radius 8; color #ffffff; shadow 0 -3 8 #00000026 }
+	}
+	item Label { title Label; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left }
+}
+item "Toggle/off" {
+	auto-layout row; gap 8; align center; clip yes; pos 1010 -44
+	item track {
+		auto-layout row; padding 2; align center; width 36; height 20; clip yes; color #78788052; corner-radius 10
+		item Ellipse { width 16; height 16; corner-radius 8; color #ffffff; shadow 0 -3 8 #00000026 }
+	}
+	item Label { title Label; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left }
+}
+item Radio {
+	auto-layout row; gap 8; clip yes; pos 1192 -44
+	item dot { auto-layout row; align center; justify center; width 16; height 16; clip yes; border-color #cf13a2; line-width 5; corner-radius 8 }
+	item text {
+		auto-layout column; gap 2; clip yes
+		item Label { title Label; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left }
+		item Hint { hidden yes; title Hint; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #00000066 }
+	}
+}
+item "Radio/off" {
+	auto-layout row; gap 8; clip yes; pos 1290 -44
+	item dot { auto-layout row; align center; justify center; width 16; height 16; clip yes; border-color #00000017; corner-radius 8 }
+	item text {
+		auto-layout column; gap 2; clip yes
+		item Label { title Label; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left }
+		item Hint { hidden yes; title Hint; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #00000066 }
+	}
+}
+item "EditBox/ghost-large" {
+	auto-layout row; padding 0 8; align center; width 256; height 36; clip yes; border-color #0000000f; corner-radius 6; pos 1452 -44
+	item Value { title Value; font-size 16; line-height 21; font-family "IBM Plex Sans"; font-weight 500; layout left }
+}
+item "EditBox/large-style" {
+	auto-layout row; align center; width 256; height 26; clip yes; corner-radius 6; pos 1740 -44
+	item Value { title Value; font-size 20; line-height 26; font-family "IBM Plex Sans"; layout left }
+}
+item "EditBox/editbox" {
+	auto-layout row; align center; width 256; height 19; clip yes; corner-radius 6; pos 2028 -44
+	item Value { title Value; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left }
+}

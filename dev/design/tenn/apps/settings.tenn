@@ -1,0 +1,577 @@
+entry "../../../../PlatformDesign.tenn"
+element Workspace {
+	use workbench.Workbench as General {
+		pos 0 0
+		replace Top_bar {
+			use workbench.TopBar as "Top bar" {
+				replace tabs.tab.icon_kit_CheckSquare {
+					use ui_kit.Icon.kit_Gear as "icon/kit/Gear" { width 12; height 12; color #000000cc }
+				}
+				at tabs.tab.Tracker { title Settings }
+			}
+		}
+		replace App_rail {
+			use workbench.AppRail as "App rail" {
+				pos 0 -36
+				at AppItem_kit_CheckSquare { color #00000000; border-color #00000000; line-width 1 }
+				at AppItem_kit_CheckSquare.icon_kit_CheckSquare { color #7f7f7f }
+			}
+		}
+		replace _Navigator {
+			use workbench.Navigator_tools as Navigator {
+				pos 68 -36
+				at Chat { title Settings; pos 21 -22 }
+				at Button_ghost_small { hidden yes }
+				at Button_tertiary_small { hidden yes }
+				slot items {
+					use workbench.NavItem as "NavItem/Account settings" {
+						pos 13 -68
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Person as "icon/kit/Person" { color #0f121a }
+						}
+						at Issues { title "Account settings" }
+					}
+					use workbench.NavItem as "NavItem/Change password" {
+						pos 13 -100
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Key as "icon/kit/Key" { color #0f121a }
+						}
+						at Issues { title "Change password" }
+					}
+					use workbench.NavItem as "NavItem/Integrations" {
+						pos 13 -132
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Cube as "icon/kit/Cube" { color #0f121a }
+						}
+						at Issues { title Integrations }
+					}
+					use workbench.NavItem as "NavItem/Notifications" {
+						pos 13 -164
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Bell as "icon/kit/Bell" { color #0f121a }
+						}
+						at Issues { title Notifications }
+					}
+					use workbench.NavItem as "NavItem/Auto translation" {
+						pos 13 -196
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Translate as "icon/kit/Translate" { color #0f121a }
+						}
+						at Issues { title "Auto translation" }
+					}
+					use workbench.NavItem as "NavItem/Calendar" {
+						pos 13 -228
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Calendar as "icon/kit/Calendar" { color #0f121a }
+						}
+						at Issues { title Calendar }
+					}
+					use workbench.NavItem as "NavItem/Office" {
+						pos 13 -260
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Building as "icon/kit/Building" { color #0f121a }
+						}
+						at Issues { title Office }
+					}
+					use workbench.NavItem as "NavItem/Sidebar Menu Settings" {
+						pos 13 -292
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Gear as "icon/kit/Gear" { color #0f121a }
+						}
+						at Issues { title "Sidebar Menu Settings" }
+					}
+					use workbench.NavItem as "NavItem/Mailboxes" {
+						pos 13 -324
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Mailbox as "icon/kit/Mailbox" { color #0f121a }
+						}
+						at Issues { title Mailboxes }
+					}
+					use workbench.NavItem as "NavItem/AI settings" {
+						pos 13 -356
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Sparkle as "icon/kit/Sparkle" { color #0f121a }
+						}
+						at Issues { title "AI settings" }
+					}
+					item divider { auto-layout abs; width 279; height 1; clip yes; color #0000001a; pos 1 -400 }
+					use workbench.NavCaption_highlighted as "NavCaption Workspace settings" {
+						pos 16 -411
+						at Channels { title "WORKSPACE SETTINGS" }
+					}
+					use workbench.NavItem_selected as "NavItem/General" {
+						pos 13 -441
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Gear as "icon/kit/Gear" { color #cf13a2 }
+						}
+						at Issues { title General }
+					}
+					use workbench.NavItem as "NavItem/Billing" {
+						pos 13 -473
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Receipt as "icon/kit/Receipt" { color #0f121a }
+						}
+						at Issues { title Billing }
+					}
+					use workbench.NavItem as "NavItem/Backup" {
+						pos 13 -505
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Gear as "icon/kit/Gear" { color #0f121a }
+						}
+						at Issues { title Backup }
+					}
+					use workbench.NavItem as "NavItem/API + Webhooks" {
+						pos 13 -537
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Gear as "icon/kit/Gear" { color #0f121a }
+						}
+						at Issues { title "API + Webhooks" }
+					}
+					use workbench.NavItem as "NavItem/Members" {
+						pos 13 -569
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_People as "icon/kit/People" { color #0f121a }
+						}
+						at Issues { title Members }
+					}
+					use workbench.NavItem as "NavItem/Trainings" {
+						pos 13 -601
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_NotebookQuestion as "icon/kit/NotebookQuestion" { color #0f121a }
+						}
+						at Issues { title Trainings }
+					}
+					use workbench.NavItem as "NavItem/Configure" {
+						pos 13 -633
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Gear as "icon/kit/Gear" { color #0f121a }
+						}
+						at Issues { title Configure }
+					}
+					use workbench.NavItem as "NavItem/Text Templates" {
+						pos 13 -665
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_BubblePlus as "icon/kit/BubblePlus" { color #0f121a }
+						}
+						at Issues { title "Text Templates" }
+					}
+					use workbench.NavItem as "NavItem/Related issues" {
+						pos 13 -697
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_ArrowsLeftRight as "icon/kit/ArrowsLeftRight" { color #0f121a }
+						}
+						at Issues { title "Related issues" }
+					}
+					use workbench.NavItem as "NavItem/Classes" {
+						pos 13 -729
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Code as "icon/kit/Code" { color #0f121a }
+						}
+						at Issues { title Classes }
+					}
+					use workbench.NavItem as "NavItem/Tag Relations" {
+						pos 13 -761
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_ArrowsHorizontal as "icon/kit/ArrowsHorizontal" { color #0f121a }
+						}
+						at Issues { title "Tag Relations" }
+					}
+					use workbench.NavItem as "NavItem/Enums" {
+						pos 13 -793
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_BulletList as "icon/kit/BulletList" { color #0f121a }
+						}
+						at Issues { title Enums }
+					}
+					item "footer line" { auto-layout abs; width 279; height 1; clip yes; color #0000001a; pos 1 -837 }
+					use workbench.NavItem as "NavItem/Select workspace" {
+						pos 13 -929
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_ArrowIn as "icon/kit/ArrowIn" { color #0f121a }
+						}
+						at Issues { title "Select workspace" }
+					}
+					use workbench.NavItem as "NavItem/Invite to workspace" {
+						pos 13 -961
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_PersonPlus as "icon/kit/PersonPlus" { color #0f121a }
+						}
+						at Issues { title "Invite to workspace" }
+					}
+					use workbench.NavItem as "NavItem/Sign out" {
+						pos 13 -993
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_ArrowOut as "icon/kit/ArrowOut" { color #0f121a }
+						}
+						at Issues { title "Sign out" }
+					}
+				}
+			}
+		}
+		slot Main_panel {
+			use workbench.PanelHeader as "Panel header" {
+				width 1515
+				at Panel_header { width 1515 }
+				replace Panel_header.Breadcrumb.avatar.icon_kit_People {
+					use ui_kit.Icon.kit_Gear as "icon/kit/Gear" { color #5a667e }
+				}
+				at Panel_header.Breadcrumb.Members { title "Workspace settings" }
+				at divider { width 1515 }
+				slot actions {}
+			}
+			item Content {
+				auto-layout column; gap 16; width 1024; clip yes; pos 246 -81
+				item "Section Workspace" {
+					auto-layout column; gap 16; width 1024; clip yes
+					item Workspace { title Workspace; font-size 16; line-height 21; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #3c4149 }
+					item row {
+						auto-layout row; gap 16; align center; clip yes
+						use ui_kit.People.Avatar as "Avatar/40" {
+							width 40; height 40; color #6260c2; corner-radius 8
+							at initials { title S; font-size 17; line-height 21 }
+						}
+						use ui_kit.Forms.EditBox_ghost_large as EditBox {
+							at Value { title sanity-ws }
+						}
+						use ui_kit.Actions.ClassicButton_ghost_small_icon as "ClassicButton/ghost/small"
+					}
+				}
+				item "Section Password aging rule" {
+					auto-layout column; gap 16; padding 24 0 0 0; width 1024; clip yes
+					item "Password aging rule" {
+						title "Password aging rule"; font-size 16; line-height 21; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #3c4149
+					}
+					item row {
+						auto-layout row; gap 16; align center; clip yes
+						item "Number of days after which users will be" {
+							title "Number of days after which users will be required to change their password."; font-size 14; line-height 18; font-family "IBM Plex Sans"
+							layout left; text-color #3c4149
+						}
+						use ui_kit.Forms.Toggle_off as Toggle {
+							at Label { hidden yes }
+						}
+					}
+				}
+				item "Section Calendar" {
+					auto-layout column; gap 16; padding 24 0 0 0; width 1024; clip yes
+					item Calendar { title Calendar; font-size 16; line-height 21; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #3c4149 }
+					item row {
+						auto-layout row; gap 16; align center; clip yes
+						item "Start of the week" { title "Start of the week"; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #3c4149 }
+						use ui_kit.Actions.ClassicButton_regular_medium as "ClassicButton/regular/medium" {
+							gap 6
+							at icon_kit_Plus { hidden yes }
+							at Button { title "System Setup (monday)" }
+						}
+					}
+				}
+				item "Section Access control" {
+					auto-layout column; gap 16; padding 24 0 0 0; width 1024; clip yes
+					item "Access control" {
+						title "Access control"; font-size 16; line-height 21; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #3c4149
+					}
+					use ui_kit.Actions.ClassicButton_regular_medium as "ClassicButton/regular/medium" {
+						gap 6
+						at icon_kit_Plus { hidden yes }
+						at Button { title "Disable role-based access control" }
+					}
+				}
+				item "Section Import documents" {
+					auto-layout column; gap 16; padding 24 0 0 0; width 1024; clip yes
+					item "Import documents" {
+						title "Import documents"; font-size 16; line-height 21; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #3c4149
+					}
+					item row {
+						auto-layout row; gap 16; align center; clip yes
+						item "Grants users ability to import documents" {
+							title "Grants users ability to import documents into the workspace"; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left
+							text-color #3c4149
+						}
+						use ui_kit.Actions.ClassicButton_regular_large as "ClassicButton/regular/large" {
+							gap 6
+							replace icon_kit_Plus {
+								use ui_kit.Icon.kit_People as "icon/kit/People" { color #00000099 }
+							}
+							at Button { title "Select users" }
+						}
+					}
+				}
+				item "Section Reports" {
+					auto-layout column; gap 16; padding 24 0 0 0; width 1024; clip yes
+					item Reports { title Reports; font-size 16; line-height 21; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #3c4149 }
+					item row {
+						auto-layout row; gap 16; align center; clip yes
+						item "Allow members to report messages and oth" {
+							title "Allow members to report messages and other members"; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #3c4149
+						}
+						use ui_kit.Forms.Toggle_off as Toggle {
+							at Label { hidden yes }
+						}
+					}
+				}
+				item "Section Danger zone" {
+					auto-layout column; gap 16; padding 24 0 0 0; width 1024; clip yes
+					item "Danger zone" { title "Danger zone"; font-size 16; line-height 21; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #3c4149 }
+					use ui_kit.Actions.ClassicButton_dangerous_medium as "ClassicButton/dangerous/medium" {
+						gap 6
+						at icon_kit_Plus { hidden yes }
+						at Button { title "Delete workspace" }
+					}
+				}
+			}
+		}
+	}
+	use workbench.Workbench as Members {
+		pos 2040 0
+		replace Top_bar {
+			use workbench.TopBar as "Top bar" {
+				replace tabs.tab.icon_kit_CheckSquare {
+					use ui_kit.Icon.kit_Gear as "icon/kit/Gear" { width 12; height 12; color #000000cc }
+				}
+				at tabs.tab.Tracker { title Settings }
+			}
+		}
+		replace App_rail {
+			use workbench.AppRail as "App rail" {
+				pos 0 -36
+				at AppItem_kit_CheckSquare { color #00000000; border-color #00000000; line-width 1 }
+				at AppItem_kit_CheckSquare.icon_kit_CheckSquare { color #7f7f7f }
+			}
+		}
+		replace _Navigator {
+			use workbench.Navigator_tools as Navigator {
+				pos 68 -36
+				at Chat { title Settings; pos 21 -22 }
+				at Button_ghost_small { hidden yes }
+				at Button_tertiary_small { hidden yes }
+				slot items {
+					use workbench.NavItem as "NavItem/Account settings" {
+						pos 13 -68
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Person as "icon/kit/Person" { color #0f121a }
+						}
+						at Issues { title "Account settings" }
+					}
+					use workbench.NavItem as "NavItem/Change password" {
+						pos 13 -100
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Key as "icon/kit/Key" { color #0f121a }
+						}
+						at Issues { title "Change password" }
+					}
+					use workbench.NavItem as "NavItem/Integrations" {
+						pos 13 -132
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Cube as "icon/kit/Cube" { color #0f121a }
+						}
+						at Issues { title Integrations }
+					}
+					use workbench.NavItem as "NavItem/Notifications" {
+						pos 13 -164
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Bell as "icon/kit/Bell" { color #0f121a }
+						}
+						at Issues { title Notifications }
+					}
+					use workbench.NavItem as "NavItem/Auto translation" {
+						pos 13 -196
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Translate as "icon/kit/Translate" { color #0f121a }
+						}
+						at Issues { title "Auto translation" }
+					}
+					use workbench.NavItem as "NavItem/Calendar" {
+						pos 13 -228
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Calendar as "icon/kit/Calendar" { color #0f121a }
+						}
+						at Issues { title Calendar }
+					}
+					use workbench.NavItem as "NavItem/Office" {
+						pos 13 -260
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Building as "icon/kit/Building" { color #0f121a }
+						}
+						at Issues { title Office }
+					}
+					use workbench.NavItem as "NavItem/Sidebar Menu Settings" {
+						pos 13 -292
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Gear as "icon/kit/Gear" { color #0f121a }
+						}
+						at Issues { title "Sidebar Menu Settings" }
+					}
+					use workbench.NavItem as "NavItem/Mailboxes" {
+						pos 13 -324
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Mailbox as "icon/kit/Mailbox" { color #0f121a }
+						}
+						at Issues { title Mailboxes }
+					}
+					use workbench.NavItem as "NavItem/AI settings" {
+						pos 13 -356
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Sparkle as "icon/kit/Sparkle" { color #0f121a }
+						}
+						at Issues { title "AI settings" }
+					}
+					item divider { auto-layout abs; width 279; height 1; clip yes; color #0000001a; pos 1 -400 }
+					use workbench.NavCaption_highlighted as "NavCaption Workspace settings" {
+						pos 16 -411
+						at Channels { title "WORKSPACE SETTINGS" }
+					}
+					use workbench.NavItem as "NavItem/General" {
+						pos 13 -441
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Gear as "icon/kit/Gear" { color #0f121a }
+						}
+						at Issues { title General }
+					}
+					use workbench.NavItem as "NavItem/Billing" {
+						pos 13 -473
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Receipt as "icon/kit/Receipt" { color #0f121a }
+						}
+						at Issues { title Billing }
+					}
+					use workbench.NavItem as "NavItem/Backup" {
+						pos 13 -505
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Gear as "icon/kit/Gear" { color #0f121a }
+						}
+						at Issues { title Backup }
+					}
+					use workbench.NavItem as "NavItem/API + Webhooks" {
+						pos 13 -537
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Gear as "icon/kit/Gear" { color #0f121a }
+						}
+						at Issues { title "API + Webhooks" }
+					}
+					use workbench.NavItem_selected as "NavItem/Members" {
+						pos 13 -569
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_People as "icon/kit/People" { color #cf13a2 }
+						}
+						at Issues { title Members }
+					}
+					use workbench.NavItem as "NavItem/Trainings" {
+						pos 13 -601
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_NotebookQuestion as "icon/kit/NotebookQuestion" { color #0f121a }
+						}
+						at Issues { title Trainings }
+					}
+					use workbench.NavItem as "NavItem/Configure" {
+						pos 13 -633
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Gear as "icon/kit/Gear" { color #0f121a }
+						}
+						at Issues { title Configure }
+					}
+					use workbench.NavItem as "NavItem/Text Templates" {
+						pos 13 -665
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_BubblePlus as "icon/kit/BubblePlus" { color #0f121a }
+						}
+						at Issues { title "Text Templates" }
+					}
+					use workbench.NavItem as "NavItem/Related issues" {
+						pos 13 -697
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_ArrowsLeftRight as "icon/kit/ArrowsLeftRight" { color #0f121a }
+						}
+						at Issues { title "Related issues" }
+					}
+					use workbench.NavItem as "NavItem/Classes" {
+						pos 13 -729
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Code as "icon/kit/Code" { color #0f121a }
+						}
+						at Issues { title Classes }
+					}
+					use workbench.NavItem as "NavItem/Tag Relations" {
+						pos 13 -761
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_ArrowsHorizontal as "icon/kit/ArrowsHorizontal" { color #0f121a }
+						}
+						at Issues { title "Tag Relations" }
+					}
+					use workbench.NavItem as "NavItem/Enums" {
+						pos 13 -793
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_BulletList as "icon/kit/BulletList" { color #0f121a }
+						}
+						at Issues { title Enums }
+					}
+					item "footer line" { auto-layout abs; width 279; height 1; clip yes; color #0000001a; pos 1 -837 }
+					use workbench.NavItem as "NavItem/Select workspace" {
+						pos 13 -929
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_ArrowIn as "icon/kit/ArrowIn" { color #0f121a }
+						}
+						at Issues { title "Select workspace" }
+					}
+					use workbench.NavItem as "NavItem/Invite to workspace" {
+						pos 13 -961
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_PersonPlus as "icon/kit/PersonPlus" { color #0f121a }
+						}
+						at Issues { title "Invite to workspace" }
+					}
+					use workbench.NavItem as "NavItem/Sign out" {
+						pos 13 -993
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_ArrowOut as "icon/kit/ArrowOut" { color #0f121a }
+						}
+						at Issues { title "Sign out" }
+					}
+				}
+			}
+		}
+		slot Main_panel {
+			use workbench.PanelHeader as "Panel header" {
+				width 1515
+				at Panel_header { width 1515 }
+				at divider { width 1515 }
+				slot actions {}
+			}
+			item Content {
+				auto-layout column; width 1024; clip yes; pos 246 -81
+				item "Member Anna Smith" {
+					auto-layout row; padding 8; align center; width 1024; height 48; clip yes
+					item who {
+						auto-layout row; gap 8; padding 4; align center; width 320; height 32; clip yes
+						use ui_kit.People.Avatar as "Avatar/24" {
+							width 24; height 24; color #925cb1; corner-radius 5
+							at initials { title SA; font-size 10; line-height 13 }
+						}
+						item "Anna Smith" { title "Anna Smith"; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left }
+					}
+					use ui_kit.Actions.ClassicButton_ghost_medium as "ClassicButton/primary/medium" {
+						color #cf13a21f
+						at icon_kit_Plus { hidden yes }
+						at Button { title Owner; text-color #000000 }
+						at icon_kit_CaretDownFill { hidden no; color #000000 }
+					}
+				}
+				item "Member Maria Cole" {
+					auto-layout row; padding 8; align center; width 1024; height 48; clip yes
+					item who {
+						auto-layout row; gap 8; padding 4; align center; width 320; height 32; clip yes
+						use ui_kit.People.Avatar as "Avatar/24" {
+							width 24; height 24; color #758595; corner-radius 5
+							at initials { title CM; font-size 10; line-height 13 }
+						}
+						item "Maria Cole" { title "Maria Cole"; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left }
+					}
+					use ui_kit.Actions.ClassicButton_primary_medium as "ClassicButton/primary/medium" {
+						at icon_kit_Plus { hidden yes }
+						at Button { title Owner }
+						at icon_kit_CaretDownFill { hidden no }
+					}
+				}
+			}
+		}
+	}
+}

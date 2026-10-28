@@ -1,6 +1,6 @@
-// FUSIO-1621: project settings rework. Seeded from the accepted screens/current/settings-project.js; fusio-1621.pen is hand-edited after the seed.
+// FUSIO-1621: project settings rework. Seeded from the accepted screens/current/settings-project.js; fusio-1621.tenn is hand-edited after the seed.
 // Project settings of the tracker as a page (FUSIO-1613, accepted): the project popup is gone, boards are not a tab.
-// Imported from the hand-edited fusio-1613.pen by dev/pen/import.mjs.
+// Imported from the hand-edited fusio-1613.pen.
 
 await kit.page('1. Настройки проекта')
 {

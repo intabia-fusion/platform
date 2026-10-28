@@ -1,5 +1,5 @@
 // Project settings of the tracker as a page (FUSIO-1613, accepted): the project popup is gone, boards are not a tab.
-// Imported from the hand-edited fusio-1613.pen by dev/pen/import.mjs.
+// Imported from the hand-edited fusio-1613.pen.
 
 await kit.page('Project settings')
 {

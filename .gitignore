@@ -1,5 +1,7 @@
 .heft/
 lib/
+# The Tenniarb design library is source, not build output.
+!dev/design/tenn/lib/
 _api-extractor-temp/
 temp/
 .idea
@@ -127,4 +129,3 @@ tests/sanity/step-report.ndjson
 .profile-tests
 .tmp-shots/
 coverage-stand.json
-dev/pen/.state.json

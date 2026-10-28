@@ -1,0 +1,145 @@
+entry "../../../../PlatformDesign.tenn"
+element Channels {
+	use workbench.Workbench as Channel {
+		pos 0 0
+		replace Top_bar {
+			use workbench.TopBar as "Top bar" {
+				replace tabs.tab.icon_kit_CheckSquare {
+					use ui_kit.Icon.kit_Hash as "icon/kit/Hash" { width 12; height 12; color #000000cc }
+				}
+				at tabs.tab.Tracker { title general }
+			}
+		}
+		replace App_rail {
+			use workbench.AppRail as "App rail" {
+				pos 0 -36
+				at AppItem_kit_Bubble { color #e6e6e6; border-color #00000017; line-width 1 }
+				at AppItem_kit_Bubble.icon_kit_Bubble { color #000000 }
+				at AppItem_kit_CheckSquare { color #00000000; border-color #00000000; line-width 1 }
+				at AppItem_kit_CheckSquare.icon_kit_CheckSquare { color #7f7f7f }
+			}
+		}
+		replace _Navigator {
+			use workbench.Navigator_tools as Navigator {
+				pos 68 -36
+				slot items {
+					use workbench.NavItem as "NavItem/Threads" {
+						pos 13 -56
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Bubbles as "icon/kit/Bubbles" { color #0f121a }
+						}
+						at Issues { title Threads }
+					}
+					use workbench.NavItem as "NavItem/Saved" {
+						pos 13 -88
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_Bookmarks as "icon/kit/Bookmarks" { color #0f121a }
+						}
+						at Issues { title Saved }
+					}
+					use workbench.NavItem as "NavItem/Browser" {
+						pos 13 -120
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.kit_DatabaseSearch as "icon/kit/DatabaseSearch" { color #0f121a }
+						}
+						at Issues { title Browser }
+					}
+					use workbench.NavItem as "NavItem/Channels & DMs" {
+						pos 13 -152
+						replace icon_kit_CheckSquare {
+							use ui_kit.Icon.chunter_hash_search as "icon/chunter/hash-search" { color #0f121a }
+						}
+						at Issues { title "Channels & DMs" }
+					}
+					item divider { auto-layout abs; width 279; height 1; clip yes; color #0000001a; pos 1 -196 }
+					item chevron {
+						auto-layout row; align center; justify center; width 20; height 20; clip yes; corner-radius 4; pos 18 -215
+						use ui_kit.Icon.kit_CaretDownFill as "icon/kit/CaretDownFill" { color #7b879e }
+					}
+					use workbench.NavCaption_highlighted as "NavCaption Channels" {
+						pos 40 -215
+						at icon_kit_CaretDownFill { hidden no }
+					}
+					use workbench.NavItem_object as "NavItem/random" {
+						pos 13 -245
+						at general { title random }
+					}
+					use workbench.NavItem_object_selected as "NavItem/general" { pos 13 -277 }
+					use workbench.NavCaption as "NavCaption Direct messages" {
+						pos 16 -323
+						at Channels { title "DIRECT MESSAGES" }
+						at icon_kit_CaretDownFill { hidden no }
+					}
+					item "footer line" { auto-layout abs; width 279; height 1; clip yes; color #0000001a; pos 1 -361 }
+				}
+			}
+		}
+		slot Main_panel {
+			use workbench.PanelHeader_divided as "Panel header" {
+				width 1515
+				at Panel_header { width 1515 }
+				replace Panel_header.Breadcrumb.avatar.icon_kit_People {
+					use ui_kit.Icon.kit_Hash as "icon/kit/Hash" { color #5a667e }
+				}
+				at Panel_header.Breadcrumb.Members { title general }
+				at divider { width 1515 }
+				slot actions {
+					use ui_kit.Actions.ClassicButton_ghost_medium_icon as "ClassicButton/icon/medium" {
+						replace icon_kit_PencilLine {
+							use ui_kit.Icon.kit_Search as "icon/kit/Search" { color #00000099 }
+						}
+					}
+					use ui_kit.Actions.ClassicButton_ghost_medium_icon as "ClassicButton/icon/medium" {
+						replace icon_kit_PencilLine {
+							use ui_kit.Icon.kit_ArrowInSquare as "icon/kit/ArrowInSquare" { color #00000099 }
+						}
+					}
+					use ui_kit.Actions.ClassicButton_ghost_medium_icon as "ClassicButton/icon/medium" {
+						replace icon_kit_PencilLine {
+							use ui_kit.Icon.kit_Sliders as "icon/kit/Sliders" { width 20; height 20; color #00000099 }
+						}
+					}
+				}
+			}
+			item Messages {
+				auto-layout column; width 1513; height 268; clip yes; pos 1 -649
+				use chat_kit.DateSeparator as "Date Tuesday March 29"
+				use chat_kit.NewMarker as "New messages"
+				use chat_kit.Message as "Message Anna Smith" {
+					replace avatar.Avatar_40 {
+						use ui_kit.People.Avatar as "Avatar/40" {
+							width 40; height 40; color #925cb1; corner-radius 8
+							at initials { title SA; font-size 17; line-height 21 }
+						}
+					}
+				}
+				use chat_kit.Message as "Message Maria Cole" {
+					replace avatar.Avatar_40 {
+						use ui_kit.People.Avatar as "Avatar/40" {
+							width 40; height 40; color #758595; corner-radius 8
+							at initials { title CM; font-size 17; line-height 21 }
+						}
+					}
+					at body.header.Anna_Smith { title "Maria Cole" }
+					at body.header._10_12_AM { title "10:15 AM" }
+					at body.The_new_column_is_in__please_check_the_o { title "The order is right. Set the In Progress limit to 8?" }
+				}
+				use chat_kit.DateSeparator as "Date Wednesday May 08" {
+					at date_row.date.Tuesday_March_29 { title "Wednesday May 08" }
+				}
+				use chat_kit.Message as "Message Ivan Peterson" {
+					replace avatar.Avatar_40 {
+						use ui_kit.People.Avatar as "Avatar/40" {
+							width 40; height 40; color #dc85f5; corner-radius 8
+							at initials { title PI; font-size 17; line-height 21 }
+						}
+					}
+					at body.header.Anna_Smith { title "Ivan Peterson" }
+					at body.header._10_12_AM { title "1:21 AM" }
+					at body.The_new_column_is_in__please_check_the_o { title "Yes, 8. I will set it on the Boards tab." }
+				}
+			}
+			use chat_kit.MessageInput as "Message input" { pos 17 -933 }
+		}
+	}
+}

@@ -1,0 +1,389 @@
+entry "../../../../PlatformDesign.tenn"
+item "§ LoginPage" {
+	auto-layout abs; width 1968; height 1148; border-color #0000000f; corner-radius 8; pos 0 0
+	item title { title LoginPage; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ LoginCard" {
+	auto-layout abs; width 508; height 116; border-color #0000000f; corner-radius 8; pos 0 -1196
+	item title { title LoginCard; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ LoginForm" {
+	auto-layout abs; width 508; height 132; border-color #0000000f; corner-radius 8; pos 556 -1196
+	item title { title LoginForm; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ LoginTabs" {
+	auto-layout abs; width 444; height 138; border-color #0000000f; corner-radius 8; pos 1112 -1196
+	item title { title LoginTabs; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ LoginTitle" {
+	auto-layout abs; width 872; height 123; border-color #0000000f; corner-radius 8; pos 0 -1382
+	item title { title LoginTitle; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ LoginField" {
+	auto-layout abs; width 444; height 120; border-color #0000000f; corner-radius 8; pos 920 -1382
+	item title { title LoginField; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ LoginStatus" {
+	auto-layout abs; width 872; height 126; border-color #0000000f; corner-radius 8; pos 1412 -1382
+	item title { title LoginStatus; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ LoginButton" {
+	auto-layout abs; width 1300; height 212; border-color #0000000f; corner-radius 8; pos 0 -1556
+	item title { title LoginButton; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ LoginIcon" {
+	auto-layout abs; width 208; height 100; border-color #0000000f; corner-radius 8; pos 1348 -1556
+	item title { title LoginIcon; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ LoginProviders" {
+	auto-layout abs; width 444; height 140; border-color #0000000f; corner-radius 8; pos 1604 -1556
+	item title { title LoginProviders; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ LoginCheckbox" {
+	auto-layout abs; width 872; height 92; border-color #0000000f; corner-radius 8; pos 0 -1816
+	item title { title LoginCheckbox; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ LoginLinks" {
+	auto-layout abs; width 444; height 85; border-color #0000000f; corner-radius 8; pos 920 -1816
+	item title { title LoginLinks; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ LoginAction" {
+	auto-layout abs; width 508; height 87; border-color #0000000f; corner-radius 8; pos 1412 -1816
+	item title { title LoginAction; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ LoginOtpHeader" {
+	auto-layout abs; width 460; height 132; border-color #0000000f; corner-radius 8; pos 0 -1956
+	item title { title LoginOtpHeader; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ LoginCode" {
+	auto-layout abs; width 460; height 146; border-color #0000000f; corner-radius 8; pos 508 -1956
+	item title { title LoginCode; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ LoginWorkspace" {
+	auto-layout abs; width 476; height 137; border-color #0000000f; corner-radius 8; pos 1016 -1956
+	item title { title LoginWorkspace; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ LoginBackTitle" {
+	auto-layout abs; width 476; height 112; border-color #0000000f; corner-radius 8; pos 1540 -1956
+	item title { title LoginBackTitle; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item LoginPage {
+	auto-layout abs; width 1920; height 1080; clip yes; color #f1f1f4; pos 24 -44
+	item "Login background" {
+		auto-layout abs; width 1920; height 1080; clip yes
+		item sky { width 1920; height 1080; color linear 180 #0b0123 0 #170134 0.33 #250932 0.66 #100118 1; pos 0 -32 }
+		item "ball top" {
+			width 1920; height 1080; path "M232.00 -10.00A125 125 0 1 0 482.00 -10.00A125 125 0 1 0 232.00 -10.00Z"; view-box 0 0 1920 1080; color #2e0f52
+		}
+		item "ball small" {
+			width 1920; height 1080; path "M1292.00 238.00A72 72 0 1 0 1436.00 238.00A72 72 0 1 0 1292.00 238.00Z"; view-box 0 0 1920 1080; color #4a2070; opacity 0.5
+		}
+		item "ball big" {
+			width 1920; height 1080; path "M1412.00 585.00A213 213 0 1 0 1838.00 585.00A213 213 0 1 0 1412.00 585.00Z"; view-box 0 0 1920 1080; color #431870
+		}
+		item oval {
+			width 1920; height 1080; path "M-552.07 990.40A1527.59 201.19691119691117 0 1 0 2503.11 990.40A1527.59 201.19691119691117 0 1 0 -552.07 990.40Z"
+			view-box 0 0 1920 1080; color #f5f4f5
+		}
+		item "ball left" {
+			width 1920; height 1080; path "M218.00 807.00A72 72 0 1 0 362.00 807.00A72 72 0 1 0 218.00 807.00Z"; view-box 0 0 1920 1080; color #6b1f8a
+		}
+		item "pin shadow" {
+			width 1920; height 1080; path "M1395.00 860.00A105 22 0 1 0 1605.00 860.00A105 22 0 1 0 1395.00 860.00Z"; view-box 0 0 1920 1080; color #3c1250; opacity 0.5
+		}
+		item "pin body" { width 1920; height 1080; path "M1500 628L1640 668L1585 830L1445 775Z"; view-box 0 0 1920 1080; color #f760d3 }
+		item "pin rim" {
+			width 1920; height 1080; path "M1504.34 623.37A72 26 20 1 0 1639.66 672.63A72 26 20 1 0 1504.34 623.37Z"; view-box 0 0 1920 1080; color #d43cb0
+		}
+		item "pin base" {
+			width 1920; height 1080; path "M1425.06 758.65A86 40 25 1 0 1580.94 831.35A86 40 25 1 0 1425.06 758.65Z"; view-box 0 0 1920 1080; color #c0289c
+		}
+		item "pin head" {
+			width 1920; height 1080; path "M1543.00 568.00A59 59 0 1 0 1661.00 568.00A59 59 0 1 0 1543.00 568.00Z"; view-box 0 0 1920 1080; color #f760d3
+		}
+	}
+	item Logo {
+		auto-layout abs; width 235; height 50; pos 44 -48
+		item "path 1" {
+			width 235; height 50
+			path "M19.469 27.9642C17.8289 27.9642 16.5013 26.6366 16.5013 25.0356C16.5013 23.3955 17.8289 22.1069 19.469 22.1069C21.07 22.1069 22.3976 23.3955 22.3976 25.0356C22.3976 26.6366 21.07 27.9642 19.469 27.9642Z"
+			view-box 0 0 235 50; color #cf13a2
+		}
+		item "path 2" {
+			width 235; height 50; path "M15.7203 32.2206V29.37H23.1396V32.2206H22.0071V38.898H24.272V43.5057H14.5879V38.898H16.8137V32.2206H15.7203Z"
+			view-box 0 0 235 50; color #cf13a2
+		}
+		item "path 3" {
+			width 235; height 50
+			path "M36.299 35.5788V43.3495H41.4925V33.3921C41.4925 30.971 40.0867 28.9796 36.8457 28.9796C34.3856 28.9796 32.8237 29.9948 32.0427 30.932V29.331H26.8101V43.3495H32.0427V34.6807C32.4722 34.2121 33.058 33.5873 34.2685 33.5873C35.518 33.5873 36.299 34.134 36.299 35.5788Z"
+			view-box 0 0 235 50; color #cf13a2
+		}
+		item "path 4" {
+			width 235; height 50
+			path "M5.63094 16.0006C4.86473 17.1762 4.37346 18.0019 4.37346 18.0019L0 14.5266C0 14.5266 1.83528 11.4417 3.94392 8.74735C5.93541 6.17012 8.20023 3.94434 8.20023 3.94434L12.5737 7.41968C12.5737 7.41968 12.4667 7.52484 12.2788 7.71551C13.8925 8.108 16.8214 9.49243 19.1798 10.6072C19.8661 10.9316 20.5041 11.2332 21.0473 11.4808C22.0235 11.8713 22.7654 13.0428 23.8198 14.7609C24.9131 16.5181 25.8893 18.1191 25.9284 19.5249C25.9428 19.7992 26.0533 20.7673 26.1849 21.9201C26.4093 23.8857 26.6949 26.3882 26.6703 26.9051C26.5922 27.6861 24.5617 27.8423 23.7026 25.3431C23.5074 24.0936 22.8045 20.1497 22.5702 19.5639C22.3749 19.0172 19.8758 16.4791 17.4158 16.2838C16.5567 16.2057 15.5024 16.2838 15.3071 16.5181C14.6433 17.1429 14.2138 18.041 13.9795 18.7439C13.8693 19.809 14.7608 23.3265 14.9647 24.131C14.9776 24.1819 14.9878 24.2219 14.9947 24.2498C15.6195 26.9441 13.628 27.4518 13.3937 27.2565C13.2319 27.0515 13.0074 26.6467 12.7178 26.1244C11.9595 24.7569 10.7548 22.5845 9.05932 21.0868C8.20024 20.3449 7.10687 19.2515 6.67734 18.7829C6.22991 18.2759 5.78248 16.9713 5.63094 16.0006Z"
+			view-box 0 0 235 50; color #ffffff
+		}
+		item "path 5" {
+			width 235; height 50
+			path "M51.1185 37.7549C51.1185 38.4968 51.587 39.0825 52.2899 39.0825C52.7585 39.0825 53.2271 38.9263 53.3442 38.8092L54.2424 42.7531C53.6957 43.2217 52.4852 43.6903 50.728 43.6903C47.6431 43.6903 45.925 42.2064 45.925 39.2778V33.85H43.6211V29.3203H45.925V25.4936H51.1185V29.3203H53.969V33.85H51.1185V37.7549ZM65.137 43.3388V42.0112C64.356 42.9874 62.6769 43.6903 60.9197 43.6903C58.8501 43.6903 56.1167 42.2455 56.1167 39.0825C56.1167 35.5681 58.8501 34.5919 60.9197 34.5919C62.755 34.5919 64.395 35.1776 65.137 36.1539V34.67C65.137 33.6938 64.2388 32.9519 62.5597 32.9519C61.2321 32.9519 59.7482 33.4595 58.6549 34.3186L56.8977 31.0775C58.772 29.5937 61.3883 28.9689 63.4969 28.9689C66.9723 28.9689 70.3695 30.1794 70.3695 34.8653V43.3388H65.137ZM65.137 38.7311C64.7855 38.2625 63.8874 37.9892 63.1064 37.9892C62.2083 37.9892 61.2711 38.2625 61.2711 39.1606C61.2711 40.0197 62.2083 40.293 63.1064 40.293C63.8874 40.293 64.7855 40.0197 65.137 39.5121V38.7311ZM81.8108 43.6903C80.405 43.6903 79.0774 43.1827 77.9059 41.855V43.3388H72.6734V23.9707H77.9059V30.8042C78.9993 29.4765 80.405 28.9689 81.8108 28.9689C85.2861 28.9689 87.9805 31.6633 87.9805 36.3101C87.9805 41.1131 85.208 43.6903 81.8108 43.6903ZM80.0536 33.5766C79.3507 33.5766 78.3745 33.9281 77.9059 34.5529V38.1454C78.3745 38.7311 79.3507 39.0825 80.0536 39.0825C81.4594 39.0825 82.6699 38.0673 82.6699 36.3101C82.6699 34.5529 81.4594 33.5766 80.0536 33.5766ZM92.5492 28.3051C90.9092 28.3051 89.6205 27.0165 89.6205 25.3764C89.6205 23.7364 90.9092 22.4478 92.5492 22.4478C94.1502 22.4478 95.4779 23.7364 95.4779 25.3764C95.4779 27.0165 94.1502 28.3051 92.5492 28.3051ZM95.1264 43.3388H89.9329V29.3203H95.1264V43.3388ZM106.685 43.3388V42.0112C105.904 42.9874 104.225 43.6903 102.468 43.6903C100.398 43.6903 97.6646 42.2455 97.6646 39.0825C97.6646 35.5681 100.398 34.5919 102.468 34.5919C104.303 34.5919 105.943 35.1776 106.685 36.1539V34.67C106.685 33.6938 105.787 32.9519 104.108 32.9519C102.78 32.9519 101.296 33.4595 100.203 34.3186L98.4456 31.0775C100.32 29.5937 102.936 28.9689 105.045 28.9689C108.52 28.9689 111.917 30.1794 111.917 34.8653V43.3388H106.685ZM106.685 38.7311C106.333 38.2625 105.435 37.9892 104.654 37.9892C103.756 37.9892 102.819 38.2625 102.819 39.1606C102.819 40.0197 103.756 40.293 104.654 40.293C105.435 40.293 106.333 40.0197 106.685 39.5121V38.7311Z"
+			view-box 0 0 235 50; fill-rule evenodd; color #ffffff
+		}
+	}
+	item Copyright {
+		auto-layout row; gap 4; align center; clip yes; pos 28 -1045.5
+		item "© 2026," { title "© 2026,"; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #3c4149 }
+		item "Intabia Fusion" { title "Intabia Fusion"; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #333333 }
+	}
+	item "Card slot" {
+		auto-layout row; align center; justify center; width 1920; height 1080
+		slot Card_slot {
+			use LoginCard as "Login card" {
+				slot content {}
+			}
+		}
+	}
+	use workbench.TopBar as "Top bar" {
+		at limits { hidden yes }
+		at icon_kit_Search { hidden yes }
+		at icon_kit_Camera { hidden yes }
+		at icon_recorder_dot { hidden yes }
+		at icon_recorder_Rec { hidden yes }
+		at tabs { hidden yes }
+	}
+}
+item LoginCard {
+	auto-layout column; padding 16 0 32 0; width 460; clip yes; color linear 225 #f0f0f0 0 #ffffff 1; corner-radius 16; shadow -30 -1.5 174 #121437ff; pos 24 -1240
+	slot content
+}
+item LoginForm {
+	auto-layout column; padding 32; width 460; clip yes; pos 580 -1240
+	slot content
+}
+item LoginTabs {
+	auto-layout column; align center; width 396; clip yes; pos 1136 -1240
+	item heading {
+		auto-layout row; align center; justify center; width 396; height 36; clip yes
+		item Platform { title Platform; font-size 28; line-height 36; font-family "IBM Plex Sans"; layout left; text-color #000061 }
+	}
+	item tabs {
+		auto-layout row; gap 28; justify center; width 396; height 34; clip yes
+		item "Tab/Sign up" {
+			auto-layout column; gap 6; height 34; clip yes
+			item "Sign up" { title "Sign up"; font-size 20; line-height 26; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #333333 }
+			item underline { auto-layout abs; width fill; height 2; clip yes }
+		}
+		item "Tab/Log In" {
+			auto-layout column; gap 6; height 34; clip yes
+			item "Log In" { title "Log In"; font-size 20; line-height 26; font-family "IBM Plex Sans"; font-weight 600; layout left; text-color #333333 }
+			item underline { auto-layout abs; width fill; height 2; clip yes; color #cf13a2 }
+		}
+	}
+}
+item LoginTitle {
+	auto-layout column; width 396; clip yes; pos 24 -1426
+	item Title { title Title; font-size 28; line-height 36; font-family "IBM Plex Sans"; font-weight 700; layout left; text-color #333333 }
+}
+item "LoginTitle/subtitle" {
+	auto-layout column; width 396; clip yes; pos 452 -1426
+	item Subtitle { title Subtitle; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #201240 }
+	item Title { title Title; font-size 28; line-height 36; font-family "IBM Plex Sans"; font-weight 700; layout left; text-color #333333 }
+}
+item LoginField {
+	auto-layout abs; width 396; height 52; clip yes; color #f3e5f5; border-color #e5e7eb; corner-radius 12; pos 944 -1426
+	item Label { title Label; font-size 12; line-height 16; font-family "IBM Plex Sans"; layout left; text-color #333333cc; pos 21 -9 }
+	item Value { title Value; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #201240; pos 21 -24 }
+}
+item LoginStatus {
+	auto-layout column; padding 16 0 0 0; width 396; clip yes; pos 1436 -1426
+	item message {
+		auto-layout row; gap 8; padding 12 16; width 396; clip yes; color #ffffff; border-color #e5e7eb; corner-radius 8
+		item icon {
+			auto-layout column; padding 2 0 0 0; width 16; height 18; clip yes
+			use ui_kit.Icon.kit_InfoCircle as "icon/kit/InfoCircle" { color #201240 }
+		}
+		item Message { title Message; font-size 12; line-height 18; font-family "IBM Plex Sans"; layout left; width 338; text-color #201240 }
+	}
+}
+item "LoginStatus/error" {
+	auto-layout column; padding 16 0 0 0; width 396; clip yes; pos 1864 -1426
+	item message {
+		auto-layout row; gap 8; padding 12 16; width 396; clip yes; color #ffffff; border-color #ee7a7a99; corner-radius 8
+		item icon {
+			auto-layout column; padding 2 0 0 0; width 16; height 18; clip yes
+			use ui_kit.Icon.kit_InfoCircle as "icon/kit/InfoCircle" { color #ee7a7a }
+		}
+		item Message { title Message; font-size 12; line-height 18; font-family "IBM Plex Sans"; layout left; width 338; text-color #ee7a7a }
+	}
+}
+item "LoginButton/primary" {
+	auto-layout row; gap 8; padding 0 24; align center; justify center; width 396; height 56; clip yes; color #cf13a2; corner-radius 8; pos 24 -1600
+	item Button { title Button; font-size 16; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; text-color #ffffff }
+}
+item "LoginButton/default" {
+	auto-layout row; gap 8; padding 0 24; align center; justify center; width 396; height 56; clip yes; color #ffffff; border-color #e5e7eb; corner-radius 8
+	pos 452 -1600
+	item Button { title Button; font-size 16; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; text-color #201240 }
+}
+item "LoginButton/primary/disabled" {
+	auto-layout row; gap 8; padding 0 24; align center; justify center; width 396; height 56; clip yes; color #f3eafb; corner-radius 8; pos 880 -1600
+	item Button { title Button; font-size 16; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; text-color #9ca3af }
+}
+item "LoginButton/provider" {
+	auto-layout row; gap 8; padding 0 24; align center; justify center; width 396; height 56; clip yes; color #07040f; corner-radius 8; pos 24 -1688
+	use LoginIcon_google as "icon/google"
+	item Button { title Button; font-size 16; line-height 16; font-family "IBM Plex Sans"; layout left; text-color #ffffff }
+}
+item "LoginIcon/google" {
+	auto-layout abs; width 32; height 32; pos 1372 -1600
+	item "path 1" {
+		width 32; height 32
+		path "M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"
+		view-box 0 0 48 48; color #ffc107
+	}
+	item "path 2" {
+		width 32; height 32
+		path "M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"
+		view-box 0 0 48 48; color #ff3d00
+	}
+	item "path 3" {
+		width 32; height 32
+		path "M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"
+		view-box 0 0 48 48; color #4caf50
+	}
+	item "path 4" {
+		width 32; height 32
+		path "M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"
+		view-box 0 0 48 48; color #1976d2
+	}
+}
+item "LoginIcon/github" {
+	auto-layout abs; width 32; height 32; pos 1436 -1600
+	item "path 1" {
+		width 32; height 32
+		path "M36,12c13.255,0,24,10.745,24,24c0,10.656-6.948,19.685-16.559,22.818c0.003-0.009,0.007-0.022,0.007-0.022s-1.62-0.759-1.586-2.114c0.038-1.491,0-4.971,0-6.248c0-2.193-1.388-3.747-1.388-3.747s10.884,0.122,10.884-11.491c0-4.481-2.342-6.812-2.342-6.812s1.23-4.784-0.426-6.812c-1.856-0.2-5.18,1.774-6.6,2.697c0,0-2.25-0.922-5.991-0.922c-3.742,0-5.991,0.922-5.991,0.922c-1.419-0.922-4.744-2.897-6.6-2.697c-1.656,2.029-0.426,6.812-0.426,6.812s-2.342,2.332-2.342,6.812c0,11.613,10.884,11.491,10.884,11.491s-1.097,1.239-1.336,3.061c-0.76,0.258-1.877,0.576-2.78,0.576c-2.362,0-4.159-2.296-4.817-3.358c-0.649-1.048-1.98-1.927-3.221-1.927c-0.817,0-1.216,0.409-1.216,0.876s1.146,0.793,1.902,1.659c1.594,1.826,1.565,5.933,7.245,5.933c0.617,0,1.876-0.152,2.823-0.279c-0.006,1.293-0.007,2.657,0.013,3.454c0.034,1.355-1.586,2.114-1.586,2.114s0.004,0.013,0.007,0.022C18.948,55.685,12,46.656,12,36C12,22.745,22.745,12,36,12z"
+		view-box 0 0 72 72; color #ffffff
+	}
+}
+item "LoginIcon/openid" {
+	auto-layout abs; width 32; height 32; pos 1500 -1600
+	item "path 1" {
+		width 32; height 32; path "M64,0H448A64,64 0 0 1 512,64V448A64,64 0 0 1 448,512H64A64,64 0 0 1 0,448V64A64,64 0 0 1 64,0Z"; view-box 0 0 512 512
+		color #f68423
+	}
+	item "path 2" {
+		width 32; height 32
+		path "m 416.99957,216.95084 c -39.2625,-22.18682 -78.9827,-34.64025 -117.0052,-39.52028 V 73.776502 l -60.66712,39.049158 v 63.02711 c -188.010218,14.68899 -295.068752,208.65924 0,262.37073 l 60.66712,-39.04916 V 218.28862 c 24.3468,4.22226 50.4759,12.17342 78.0094,24.69351 l -34.6758,21.70238 h 112.6719 v -73.76497 l -39.0003,26.0313 z m -177.67682,-1.66668 v 183.89018 c -182.841238,-23.72461 -140.809838,-171.94788 0,-183.89018 z"
+		view-box 0 0 512 512; color #ffffff
+	}
+}
+item LoginProviders {
+	auto-layout column; gap 16; padding 16 0 0 0; width 396; clip yes; pos 1628 -1600
+	slot content {
+		item row {
+			auto-layout row; gap 16; width 396; height 56; clip yes
+			use LoginButton_provider as "Button Sign in with Google" {
+				width 190
+				at Button { title "Sign in with Google" }
+			}
+			use LoginButton_provider as "Button Sign in with GitHub" {
+				width 190
+				replace icon_google {
+					use LoginIcon_github as "icon/github"
+				}
+				at Button { title "Sign in with GitHub" }
+			}
+		}
+	}
+}
+item LoginCheckbox {
+	auto-layout row; gap 11; padding 0 0 0 4; width 396; clip yes; pos 24 -1860
+	item "box holder" {
+		auto-layout column; padding 3 0 0 0; width 18; height 24; clip yes
+		item box {
+			auto-layout row; align center; justify center; width 18; height 18; clip yes; color #cf13a2; border-color #cf13a2; line-width 2; corner-radius 3.2
+			use ui_kit.Icon.tick as "icon/tick" { width 12; height 12; border-color #ffffff; line-width 0.98 }
+		}
+	}
+	item Label { title Label; font-size 15.2; line-height 20; font-family "IBM Plex Sans"; layout left; width 363; text-color #201240 }
+}
+item "LoginCheckbox/empty" {
+	auto-layout row; gap 11; padding 0 0 0 4; width 396; clip yes; pos 452 -1860
+	item "box holder" {
+		auto-layout column; padding 3 0 0 0; width 18; height 24; clip yes
+		item box {
+			auto-layout row; align center; justify center; width 18; height 18; clip yes; color #ffffff; border-color #00000066; line-width 2; corner-radius 3.2
+		}
+	}
+	item Label { title Label; font-size 15.2; line-height 20; font-family "IBM Plex Sans"; layout left; width 363; text-color #201240 }
+}
+item LoginLinks {
+	auto-layout column; align center; width 396; clip yes; pos 944 -1860
+	slot content {
+		item "link row" {
+			auto-layout row; gap 3; align center; justify center; width 396; clip yes; wrap yes; line-gap 3
+			item Caption { title Caption; font-size 12.8; line-height 17; font-family "IBM Plex Sans"; layout left; text-color #333333 }
+			item Link { title Link; font-size 12.8; line-height 17; font-family "IBM Plex Sans"; layout left; text-color #333333 }
+		}
+	}
+}
+item LoginAction {
+	auto-layout row; align center; justify center; width 460; height 18.5; clip yes; pos 1436 -1860
+	item Action { title Action; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #6e48ce }
+}
+item LoginOtpHeader {
+	auto-layout column; gap 8; width 412; clip yes; pos 24 -2000
+	item "title row" {
+		auto-layout row; align center; justify center; width 412; height 36
+		item back {
+			auto-layout row; align center; justify center; width 36; height 36; clip yes; corner-radius 8
+			use ui_kit.Icon.kit_ChevronLeftLarge as "icon/kit/ChevronLeftLarge" { color #201240 }
+		}
+		item "Enter the code" { title "Enter the code"; font-size 28; line-height 36; font-family "IBM Plex Sans"; font-weight 700; layout left; text-color #000061 }
+	}
+	item description {
+		auto-layout row; gap 8; align center; justify center; width 412; height 20; clip yes
+		item "We sent the code to" { title "We sent the code to"; font-size 16; line-height 21; font-family "IBM Plex Sans"; layout left; text-color #333333 }
+		item "name@example.com" { title "name@example.com"; font-size 16; line-height 21; font-family "IBM Plex Sans"; layout left; text-color #000061 }
+	}
+}
+item LoginCode {
+	auto-layout row; gap 6.4; align center; width 412; height 78; clip yes; pos 532 -2000
+	item "digit 1" {
+		auto-layout row; align center; justify center; width 60; height 78; clip yes; color #f3e5f5; border-color #00000017; corner-radius 12
+		item _1 { title "1"; font-size 32; line-height 42; font-family "IBM Plex Sans"; layout left; text-color #201240 }
+	}
+	item "digit 2" {
+		auto-layout row; align center; justify center; width 60; height 78; clip yes; color #f3e5f5; border-color #00000017; corner-radius 12
+		item _2 { title "2"; font-size 32; line-height 42; font-family "IBM Plex Sans"; layout left; text-color #201240 }
+	}
+	item "digit 3" {
+		auto-layout row; align center; justify center; width 60; height 78; clip yes; color #f3e5f5; border-color #00000017; corner-radius 12
+		item _3 { title "3"; font-size 32; line-height 42; font-family "IBM Plex Sans"; layout left; text-color #201240 }
+	}
+	item separator { auto-layout abs; width 12; height 1; clip yes; color #e5e7eb }
+	item "digit 4" {
+		auto-layout row; align center; justify center; width 60; height 78; clip yes; color #f3e5f5; border-color #00000017; corner-radius 12
+		item _4 { title "4"; font-size 32; line-height 42; font-family "IBM Plex Sans"; layout left; text-color #201240 }
+	}
+	item "digit 5" {
+		auto-layout row; align center; justify center; width 60; height 78; clip yes; color #f3e5f5; border-color #00000017; corner-radius 12
+		item _5 { title "5"; font-size 32; line-height 42; font-family "IBM Plex Sans"; layout left; text-color #201240 }
+	}
+	item "digit 6" {
+		auto-layout row; align center; justify center; width 60; height 78; clip yes; color #f3e5f5; border-color #00000017; corner-radius 12
+		item _6 { title "6"; font-size 32; line-height 42; font-family "IBM Plex Sans"; layout left; text-color #201240 }
+	}
+}
+item LoginWorkspace {
+	auto-layout column; padding 16; align center; width 428; clip yes; color #6b3ad31a; border-color #00000017; corner-radius 16; pos 1040 -2000
+	item Workspace { title Workspace; font-size 14; line-height 18; font-family "IBM Plex Sans"; font-weight 600; layout left; text-color #201240 }
+	item "last visit 2 days ago" { title "last visit 2 days ago"; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #201240 }
+}
+item LoginBackTitle {
+	auto-layout row; gap 8; align center; width 428; height 44; clip yes; pos 1564 -2000
+	item back {
+		auto-layout row; align center; justify center; width 48; height 44; clip yes; corner-radius 8
+		use ui_kit.Icon.kit_ChevronLeftLarge as "icon/kit/ChevronLeftLarge" { color #201240 }
+	}
+	item Title { title Title; font-size 24; line-height 31; font-family "IBM Plex Sans"; font-weight 600; layout left; text-color #000061 }
+}

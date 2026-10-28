@@ -1,0 +1,173 @@
+entry "../../../../PlatformDesign.tenn"
+item "§ SectionTitle" {
+	auto-layout abs; width 87; height 88; border-color #0000000f; corner-radius 8; pos 0 0
+	item title { title SectionTitle; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ FormRow" {
+	auto-layout abs; width 768; height 100; border-color #0000000f; corner-radius 8; pos 135 0
+	item title { title FormRow; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ Table" {
+	auto-layout abs; width 448; height 166; border-color #0000000f; corner-radius 8; pos 951 0
+	item title { title Table; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ GridRow" {
+	auto-layout abs; width 598; height 103; border-color #0000000f; corner-radius 8; pos 1447 0
+	item title { title GridRow; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ SettingsLayout" {
+	auto-layout abs; width 1248; height 768; border-color #0000000f; corner-radius 8; pos 0 -214
+	item title { title SettingsLayout; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item SectionTitle {
+	auto-layout column; gap 4; clip yes; pos 24 -44
+	item Title { title Title; font-size 16; line-height 20; font-family "IBM Plex Sans"; font-weight 600; layout left }
+	item "Hint of the section" {
+		hidden yes; title "Hint of the section"; font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; width 420; text-color #00000099
+	}
+}
+item FormRow {
+	auto-layout row; gap 16; align center; width 720; clip yes; pos 159 -44
+	item label {
+		auto-layout column; gap 2; clip yes
+		item Label { title Label; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; width 220; text-color #000000cc }
+		item Hint { hidden yes; title Hint; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; width 220; text-color #00000066 }
+	}
+	item control {
+		auto-layout row
+		slot control {
+			use ui_kit.Forms.Input as Input
+		}
+	}
+}
+item Table {
+	auto-layout column; width 400; clip yes; border-color #0000000f; corner-radius 8; pos 975 -44
+	item head {
+		auto-layout row; align center; width 400; height 36; clip yes; color #f7f7f8
+		slot head {
+			item th {
+				auto-layout row; padding 0 12; align center; width 240; height 36; clip yes
+				item Name { title Name; font-size 12; line-height 15; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #00000099 }
+			}
+			item "th 2" {
+				auto-layout row; padding 0 12; align center; width 160; height 36; clip yes
+				item Role { title Role; font-size 12; line-height 15; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #00000099 }
+			}
+		}
+	}
+	item body {
+		auto-layout column; width 400
+		slot body {
+			item divider { auto-layout abs; width 400; height 1; clip yes; color #0000000f }
+			item row {
+				auto-layout row; align center; width 400; clip yes
+				item td {
+					auto-layout row; gap 6; padding 6 12; align center; width 240; clip yes; wrap yes; line-gap 6
+					item Ivan { title Ivan; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left }
+				}
+				item "td 2" {
+					auto-layout row; gap 6; padding 6 12; align center; width 160; clip yes; wrap yes; line-gap 6
+					item Admin { title Admin; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left }
+				}
+			}
+			item "divider 2" { auto-layout abs; width 400; height 1; clip yes; color #0000000f }
+			item "row 2" {
+				auto-layout row; align center; width 400; clip yes
+				item td {
+					auto-layout row; gap 6; padding 6 12; align center; width 240; clip yes; wrap yes; line-gap 6
+					item Anna { title Anna; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left }
+				}
+				item "td 2" {
+					auto-layout row; gap 6; padding 6 12; align center; width 160; clip yes; wrap yes; line-gap 6
+					item Member { title Member; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left }
+				}
+			}
+		}
+	}
+}
+item GridRow {
+	auto-layout row; padding 0 0 8 0; align center; width 550; clip yes; pos 1471 -44
+	item label {
+		auto-layout column; padding 4 16 4 0; width 240; clip yes
+		item Label { title Label; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; width 224 }
+		item Hint { hidden yes; title Hint; font-size 12; line-height 16; font-family "IBM Plex Sans"; layout left; width 224; text-color #00000080 }
+	}
+	item control {
+		auto-layout row; padding 4 0; align center; clip yes
+		slot control {
+			use ui_kit.Forms.EditBox_editbox as EditBox
+		}
+	}
+}
+item SettingsLayout {
+	auto-layout abs; width 1200; height 700; pos 24 -258
+	item "Settings header" {
+		auto-layout row; padding 0 16; align center; justify space-between; width 1200; height 56; clip yes
+		item left {
+			auto-layout row; gap 8; align center; clip yes
+			use ui_kit.Actions.Button_ghost_small as "Button/ghost/small" {
+				replace icon_kit_Plus {
+					use ui_kit.Icon.chevronL as "icon/chevronL" { border-color #5a667e; line-width 1 }
+				}
+				at Button { title Back }
+			}
+			item sep { auto-layout abs; width 1; height 20; clip yes; color #0000000f }
+			item Settings { title Settings; font-size 16; line-height 20; font-family "IBM Plex Sans"; font-weight 600; layout left }
+		}
+		item right {
+			auto-layout row; gap 8; align center; clip yes
+			slot right {
+				use ui_kit.Actions.Button_tertiary_small_icon as "Close settings" {
+					replace icon_gear {
+						use ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
+					}
+				}
+			}
+		}
+	}
+	item divider { auto-layout abs; width 1200; height 1; clip yes; color #0000000f; pos 0 -56 }
+	item "Settings tabs" {
+		auto-layout column; gap 2; padding 16 12 0 12; width 232; height 643; clip yes; pos 0 -57
+		slot Settings_tabs {
+			use workbench.NavItem_selected as "NavItem/General" {
+				width 208
+				at icon_kit_CheckSquare { hidden yes }
+				at Issues { title General }
+			}
+			use workbench.NavItem as "NavItem/Members" {
+				width 208
+				at icon_kit_CheckSquare { hidden yes }
+				at Issues { title Members }
+			}
+		}
+	}
+	item "divider 2" { auto-layout abs; width 1; height 643; clip yes; color #0000000f; pos 232 -57 }
+	item "Settings subtabs" {
+		hidden yes; auto-layout row; gap 12; padding 0 32; align center; width 967; height 48; clip yes; pos 233 -57
+		slot Settings_subtabs {
+			use ui_kit.Actions.Button_ghost_small as "Button/ghost/small" {
+				at icon_kit_Plus { hidden yes }
+				at Button { title Board }
+				at icon_chevronD { hidden no }
+			}
+			item sep { auto-layout abs; width 1; height 20; clip yes; color #0000000f }
+			use ui_kit.Actions.Switcher as "Settings subtabs switcher" {
+				slot content {
+					item "element General" {
+						auto-layout row; padding 0 12; align center; justify center; height 32; clip yes; color #a5bdff40; corner-radius 6
+						item General { title General; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #0f121a }
+					}
+					item "element Columns" {
+						auto-layout row; padding 0 12; align center; justify center; height 32; clip yes; corner-radius 6
+						item Columns { title Columns; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #5a667e }
+					}
+				}
+			}
+		}
+	}
+	item "divider 3" { hidden yes; auto-layout abs; width 967; height 1; clip yes; color #0000000f; pos 233 -105 }
+	item "Settings content" {
+		auto-layout column; gap 16; padding 24 32; width 967; height 594; clip yes; pos 233 -106
+		slot Settings_content
+	}
+}

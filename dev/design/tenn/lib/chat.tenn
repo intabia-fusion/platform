@@ -1,0 +1,129 @@
+entry "../../../../PlatformDesign.tenn"
+item "§ DateSeparator" {
+	auto-layout abs; width 1561; height 101; border-color #0000000f; corner-radius 8; pos 0 0
+	item title { title DateSeparator; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ NewMarker" {
+	auto-layout abs; width 1561; height 84; border-color #0000000f; corner-radius 8; pos 0 -149
+	item title { title NewMarker; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ Message" {
+	auto-layout abs; width 1561; height 224; border-color #0000000f; corner-radius 8; pos 0 -281
+	item title { title Message; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item "§ MessageInput" {
+	auto-layout abs; width 1529; height 156; border-color #0000000f; corner-radius 8; pos 0 -553
+	item title { title MessageInput; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+item DateSeparator {
+	auto-layout abs; width 1513; height 33; clip yes; pos 24 -44
+	item line { auto-layout abs; width 1513; height 1; clip yes; color #e6eaff; pos 0 -16 }
+	item "date row" {
+		auto-layout row; align center; justify center; width 1513; height 26; clip yes; pos 0 -4
+		item date {
+			auto-layout row; padding 0 8; align center; height 26; clip yes; color #f0f4ff; border-color #e6eaff; corner-radius 16
+			item "Tuesday March 29" {
+				title "Tuesday March 29"; font-size 12; line-height 15; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #000000cc
+			}
+		}
+	}
+}
+item NewMarker {
+	auto-layout row; gap 12; align center; justify center; width 1513; height 16; clip yes; pos 24 -193
+	item line { auto-layout abs; width 732.5; height 1; clip yes; border-color #cb4b42 }
+	item New { title New; font-size 12; line-height 16; font-family "IBM Plex Sans"; layout left; text-color #cb4b42 }
+	item "line 2" { auto-layout abs; width 732.5; height 1; clip yes; border-color #cb4b42 }
+}
+item Message {
+	auto-layout row; gap 16; padding 9 21; width 1513; clip yes; pos 24 -325
+	item avatar {
+		auto-layout column; padding 4 0 0 0; width 40; height 44; clip yes
+		use ui_kit.People.Avatar as "Avatar/40" {
+			width 40; height 40; color #6260c2; corner-radius 8
+			at initials { title AJ; font-size 17; line-height 21 }
+		}
+	}
+	item body {
+		auto-layout column; gap 4; clip yes
+		item header {
+			auto-layout row; gap 4; align center; clip yes
+			item "Anna Smith" { title "Anna Smith"; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #5a667e }
+			item "_10:12 AM" { title "10:12 AM"; font-size 12; line-height 20; font-family "IBM Plex Sans"; layout left; text-color #5a667e }
+		}
+		item "The new column is in, please check the o" {
+			title "The new column is in, please check the order."; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; width 1415; text-color #3c4149
+		}
+	}
+}
+item "Message/system" {
+	auto-layout row; gap 16; padding 9 21; width 1513; clip yes; pos 24 -419
+	item avatar {
+		auto-layout column; padding 4 0 0 0; width 40; height 44; clip yes
+		item "Avatar/system" {
+			auto-layout row; align center; justify center; width 40; height 40; clip yes; color #e0e0e0; corner-radius 8
+			item S { title S; font-size 14; line-height 18; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #000000cc }
+		}
+	}
+	item body {
+		auto-layout column; gap 4; clip yes
+		item header {
+			auto-layout row; gap 4; align center; clip yes
+			item System { title System; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #5a667e }
+			item "_5:47 PM" { title "5:47 PM"; font-size 12; line-height 20; font-family "IBM Plex Sans"; layout left; text-color #5a667e }
+		}
+		item "Created this channel on Mar 29, 2022" {
+			title "Created this channel on Mar 29, 2022"; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; width 1415; text-color #3c4149
+		}
+	}
+}
+item MessageInput {
+	auto-layout column; padding 1; width 1481; height 88; clip yes; border-color #0000001a; corner-radius 6; pos 24 -597
+	item field {
+		auto-layout row; padding 2 12; width 1479; height 44; clip yes
+		item "Start typing..." { title "Start typing..."; font-size 14; line-height 21; font-family "IBM Plex Sans"; layout left; text-color #0000004d }
+	}
+	item panel {
+		auto-layout row; padding 5 12; align center; justify space-between; width 1479; height 42; clip yes
+		item group {
+			auto-layout row; gap 6; align center; clip yes
+			use ui_kit.Actions.ClassicButton_ghost_medium_icon as "ClassicButton/ghost/medium" {
+				replace icon_kit_PencilLine {
+					use ui_kit.Icon.kit_Paperclip as "icon/kit/Paperclip" { width 20; height 20; color #000000cc }
+				}
+			}
+			use ui_kit.Actions.ClassicButton_ghost_medium_icon as "ClassicButton/ghost/medium 2" {
+				replace icon_kit_PencilLine {
+					use ui_kit.Icon.kit_Camera as "icon/kit/Camera" { width 20; height 20; color #000000cc }
+				}
+			}
+			item divider { auto-layout abs; width 1; height 24; clip yes; color #00000012 }
+			use ui_kit.Actions.ClassicButton_ghost_medium_icon as "ClassicButton/ghost/medium 3" {
+				replace icon_kit_PencilLine {
+					use ui_kit.Icon.kit_Mic as "icon/kit/Mic" { width 20; height 20; color #000000cc }
+				}
+			}
+			item "divider 2" { auto-layout abs; width 1; height 24; clip yes; color #00000012 }
+			use ui_kit.Actions.ClassicButton_ghost_medium_icon as "ClassicButton/ghost/medium 4" {
+				replace icon_kit_PencilLine {
+					use ui_kit.Icon.kit_At as "icon/kit/At" { width 20; height 20; color #000000cc }
+				}
+			}
+			use ui_kit.Actions.ClassicButton_ghost_medium_icon as "ClassicButton/ghost/medium 5" {
+				replace icon_kit_PencilLine {
+					use ui_kit.Icon.kit_Smiley as "icon/kit/Smiley" { width 20; height 20; color #000000cc }
+				}
+			}
+			item "divider 3" { auto-layout abs; width 1; height 24; clip yes; color #00000012 }
+			use ui_kit.Actions.ClassicButton_ghost_medium_icon as "ClassicButton/ghost/medium 6" {
+				replace icon_kit_PencilLine {
+					use ui_kit.Icon.kit_BubblePlus as "icon/kit/BubblePlus" { width 20; height 20; color #000000cc }
+				}
+			}
+		}
+		use ui_kit.Actions.ClassicButton_ghost_medium_icon as "ClassicButton/ghost/medium" {
+			replace icon_kit_PencilLine {
+				use ui_kit.Icon.text_editor_Send as "icon/text-editor/Send" { width 20; height 20; color #00000066 }
+			}
+		}
+	}
+}

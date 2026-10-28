@@ -1,25 +1,15 @@
 {
-  "project": "Intabia",
-  "user": {
-    "name": "Designer",
-    "email": "designer@local.dev",
-    "password": "designer123"
-  },
   "files": [
     {
       "name": "Intabia UI Kit",
-      "shared": true,
       "build": [
         [
-          "../penpot/library/ui-kit.js"
+          "../tenn/library/ui-kit.js"
         ]
       ]
     },
     {
       "name": "FUSIO-1613 Доски задач",
-      "libraries": [
-        "Intabia UI Kit"
-      ],
       "build": [
         [
           "screens/fusio-1613/_page-as-is.js",
@@ -59,9 +49,6 @@
     },
     {
       "name": "FUSIO-1621 Настройки проекта",
-      "libraries": [
-        "Intabia UI Kit"
-      ],
       "build": [
         [
           "screens/fusio-1621/01-project-settings.js"
@@ -73,9 +60,6 @@
     },
     {
       "name": "Intabia Screens",
-      "libraries": [
-        "Intabia UI Kit"
-      ],
       "storybook": "Screens",
       "build": [
         [
