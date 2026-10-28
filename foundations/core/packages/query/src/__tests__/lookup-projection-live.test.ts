@@ -358,6 +358,50 @@ describe('LiveQuery lookup projection, live', () => {
       await close()
     })
 
+    it('asks the server again when a joined field the query filters by changes', async () => {
+      const { liveQuery, factory, close } = await getClient()
+      const tag = 'filter-' + Date.now()
+      const first = await createSpace(factory, 'a-first')
+      const second = await createSpace(factory, 'b-second')
+      const one = await factory.addCollection(test.class.TestComment, first, first, core.class.Space, 'comments', {
+        message: tag
+      })
+      const two = await factory.addCollection(test.class.TestComment, second, second, core.class.Space, 'comments', {
+        message: tag
+      })
+
+      const { mock } = await subscribe(
+        liveQuery,
+        test.class.TestComment,
+        { message: tag, '$lookup.space.archived': { $ne: true } },
+        {
+          lookup: { space: core.class.Space },
+          projection: { '$lookup.space.name': 1 },
+          sort: { '$lookup.space.name': SortingOrder.Ascending }
+        }
+      )
+      expect(mock.mock.calls[0][0].map((it: Doc) => it._id)).toEqual([one, two])
+
+      // Archived: out of the result; back when unarchived.
+      let before = mock.mock.calls.length
+      await factory.updateDoc(core.class.Space, core.space.Model, first, { archived: true })
+      let result = await waitForNextCall(mock, before)
+      expect(result.map((it: Doc) => it._id)).toEqual([two])
+
+      before = mock.mock.calls.length
+      await factory.updateDoc(core.class.Space, core.space.Model, first, { archived: false })
+      result = await waitForNextCall(mock, before)
+      expect(result.map((it: Doc) => it._id)).toEqual([one, two])
+
+      // A joined field the query does not filter by is applied in place, as before.
+      before = mock.mock.calls.length
+      await factory.updateDoc(core.class.Space, core.space.Model, second, { name: 'c-second' })
+      result = await waitForNextCall(mock, before)
+      expect(result[1].$lookup?.space?.name).toBe('c-second')
+
+      await close()
+    })
+
     it('fetches a newly referenced document with the projected fields', async () => {
       const { liveQuery, factory, findAll, findOne, close } = await getClient()
       const tag = 'ref-' + Date.now()

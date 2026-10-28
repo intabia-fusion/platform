@@ -17,8 +17,8 @@
   import { createEventDispatcher } from 'svelte'
   import type { Doc, Ref } from '@hcengineering/core'
   import { SortingOrder } from '@hcengineering/core'
-  import { createQuery } from '@hcengineering/presentation'
-  import activity from '@hcengineering/activity'
+  import { createQuery, getClient } from '@hcengineering/presentation'
+  import activity, { type ActivityMessage } from '@hcengineering/activity'
   import type { ChatMessage } from '@hcengineering/chunter'
   import chunter from '@hcengineering/chunter'
   import { closeTooltip, Label, Lazy, Spinner, resizeObserver, MiniToggle } from '@hcengineering/ui'
@@ -27,7 +27,7 @@
 
   import ChatMessageInput from './ChatMessageInput.svelte'
   import ChatMessagePresenter from './ChatMessagePresenter.svelte'
-  import { getChannelSpace } from '../../utils'
+  import { getChannelSpace, getChatTarget } from '../../utils'
 
   export let objectId: Ref<Doc>
   export let object: Doc
@@ -35,6 +35,7 @@
 
   const dispatch = createEventDispatcher()
   const query = createQuery()
+  const hierarchy = getClient().getHierarchy()
 
   let loading = true
   let messages: ChatMessage[] = []
@@ -59,6 +60,11 @@
   $: if (isTextMode) {
     dispatch('tooltip', { kind: 'popup' })
   }
+
+  // A reply into a message's thread records the document of its parent
+  $: parentMessage = hierarchy.isDerived(object._class, activity.class.ActivityMessage)
+    ? (object as ActivityMessage)
+    : undefined
 </script>
 
 <div class="commentPopup-container">
@@ -103,7 +109,8 @@
   {#if withInput}
     <div class="input">
       <ChatMessageInput
-        {object}
+        target={getChatTarget(object)}
+        {parentMessage}
         on:focus={() => {
           isTextMode = true
         }}

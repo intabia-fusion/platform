@@ -27,6 +27,7 @@ export default plugin(serverDocumentsId, {
   },
   function: {
     ControlledDocumentUrlPresenter: '' as Resource<StringPresenterFn>,
+    DocumentIdentifierPresenter: '' as Resource<StringPresenterFn>,
     CoAuthorsTypeMatch: '' as TypeMatchFuncResource
   }
 })

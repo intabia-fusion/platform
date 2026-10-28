@@ -346,3 +346,64 @@ export async function migrateSpaceRanks (client: MigrationClient, domain: Domain
     await iterator.close()
   }
 }
+
+/**
+ * A write resolves to nothing, so its outcome is whether it threw; a failed one is logged.
+ */
+export async function written (
+  client: MigrationClient,
+  what: string,
+  data: object,
+  fn: () => Promise<unknown>
+): Promise<boolean> {
+  try {
+    await fn()
+    return true
+  } catch (err: any) {
+    client.logger.error(what, { ...data, err })
+    return false
+  }
+}
+
+/**
+ * A batch write fails as a whole on one bad row: then the rows go one by one, each on its own.
+ */
+export async function createEach<T extends Doc> (client: MigrationClient, domain: Domain, docs: T[]): Promise<number> {
+  if (docs.length === 0) return 0
+  if (
+    await written(client, 'batch create failed, retrying one by one', { domain }, () => client.create(domain, docs))
+  ) {
+    return docs.length
+  }
+  let done = 0
+  for (const doc of docs) {
+    if (await written(client, 'create failed', { domain, _id: doc._id }, () => client.create(domain, doc))) done++
+  }
+  return done
+}
+
+export interface MigrationUpdate<T extends Doc> {
+  filter: MigrationDocumentQuery<T>
+  update: MigrateUpdate<T>
+}
+
+/**
+ * As `createEach`, for updates.
+ */
+export async function updateEach<T extends Doc> (
+  client: MigrationClient,
+  domain: Domain,
+  updates: Array<MigrationUpdate<T>>
+): Promise<number> {
+  if (updates.length === 0) return 0
+  if (
+    await written(client, 'bulk update failed, retrying one by one', { domain }, () => client.bulk(domain, updates))
+  ) {
+    return updates.length
+  }
+  let done = 0
+  for (const { filter, update } of updates) {
+    if (await written(client, 'update failed', { domain, filter }, () => client.update(domain, filter, update))) done++
+  }
+  return done
+}

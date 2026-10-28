@@ -18,6 +18,7 @@
   import activity from '@hcengineering/activity'
   import chunter from '@hcengineering/chunter'
   import type { Class, Doc, Ref } from '@hcengineering/core'
+  import core from '@hcengineering/core'
   import type { ContextNotification, DocNotifyContext } from '@hcengineering/notification'
   import { notificationId } from '@hcengineering/notification'
   import { ActionContext, getClient } from '@hcengineering/presentation'
@@ -150,7 +151,11 @@
     if (queryContext != null) {
       context =
         contexts.find((c) => c._id === queryContext) ??
-        (await client.findOne(notification.class.DocNotifyContext, { _id: queryContext }))
+        (await client.findOne(
+          notification.class.DocNotifyContext,
+          { _id: queryContext },
+          { lookup: { preview: core.class.DocPreview }, showArchived: true }
+        ))
     } else {
       // The channel view asks for the same context right after: one cached, user-scoped lookup.
       context = await inboxClient.getContextByDoc(thread ?? _id)

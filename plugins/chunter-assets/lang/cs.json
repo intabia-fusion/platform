@@ -237,9 +237,9 @@
     "ChannelNotificationText": "{sender} poslal zprávu v {doc}: \n\n {message}",
     "ChannelNotificationHtml": "<p><b>{sender}</b> poslal zprávu v {doc}:</p> {message} <p>{link}</p>",
     "ChannelNotificationSubject": "Máte novou zprávu v {doc}",
-    "JoinChannelNotificationText": "Byli jste přidáni do #{doc}",
-    "JoinChannelNotificationHtml": "<p>Byli jste přidáni do <b>#{doc}</b></p> <p>{link}</p>",
-    "JoinChannelNotificationSubject": "Byli jste přidáni do #{doc}",
+    "JoinChannelNotificationText": "Byli jste přidáni do {doc}",
+    "JoinChannelNotificationHtml": "<p>Byli jste přidáni do <b>{doc}</b></p> <p>{link}</p>",
+    "JoinChannelNotificationSubject": "Byli jste přidáni do {doc}",
     "ThreadNotificationText": "{sender} odpověděl na {doc}: \n\n{message}",
     "ThreadNotificationHtml": "<p><b>{sender}</b> odpověděl na {doc}:</p><p>{message}</p><p>{link}</p>",
     "ThreadNotificationSubject": "Nová odpověď na {doc}"

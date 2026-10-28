@@ -42,7 +42,7 @@ import notification, {
 } from '@hcengineering/notification'
 import { Receiver } from '@hcengineering/server-notification'
 
-import { Client, ObjectDisplayData, Result } from '../types'
+import { Client, ContextRefs, Result } from '../types'
 import type Cache from '../cache'
 
 // ---- Notification presence checks ----
@@ -170,13 +170,13 @@ export function getCreateContextTx (
   receiver: Receiver,
   result: Result,
   factory: TxFactory,
-  display: ObjectDisplayData
+  refs: ContextRefs
 ): TxCreateDoc<DocNotifyContext> {
   const tx = factory.createTxCreateDoc(
     notification.class.DocNotifyContext,
     receiver.space,
     {
-      ...display,
+      ...refs,
       user: receiver.account,
       objectId,
       objectClass,

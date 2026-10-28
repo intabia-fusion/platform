@@ -165,12 +165,7 @@ describe('pushNotification', () => {
       objectId: 'doc-1' as Ref<Doc>,
       objectClass: 'DocClass' as Ref<Class<Doc>>,
       objectSpace: 'space-1' as Ref<Space>,
-      objectDisplayData: {
-        objectTitle: 'Doc Title',
-        objectIcon: 'doc-icon',
-        objectLabel: 'doc-label',
-        objectIdentifier: 'doc-id'
-      },
+      contextRefs: { preview: 'preview-1' as any },
       notifyProviders: {},
       notification: {
         id: 'notify-1',
@@ -279,7 +274,7 @@ describe('pushNotification', () => {
         mockData.receiver,
         result,
         mockClient.txFactory,
-        mockData.objectDisplayData
+        mockData.contextRefs
       )
 
       expect(mockCreateTx.attributes).toEqual({
@@ -347,8 +342,21 @@ describe('pushNotification', () => {
         _id: 'existing-ctx-id',
         _class: 'DocNotifyContextClass',
         space: 'existing-space',
-        lastNotify: 50
+        lastNotify: 50,
+        preview: 'preview-1'
       } as unknown as DocNotifyContext
+    })
+
+    it('gives a context without a preview the ref, once its document has one', async () => {
+      delete context.preview
+      await pushNotification(mockClient, txCache, result, context, mockData)
+      expect(result.updateContextTx[0].operations).toEqual(expect.objectContaining({ preview: 'preview-1' }))
+    })
+
+    it('leaves a context without a preview as it is while its document has none either', async () => {
+      delete context.preview
+      await pushNotification(mockClient, txCache, result, context, { ...mockData, contextRefs: {} })
+      expect(result.updateContextTx[0].operations).not.toHaveProperty('preview')
     })
 
     it('handles context update when context exists', async () => {

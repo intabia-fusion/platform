@@ -21,6 +21,7 @@ import {
   Class,
   Configuration,
   Doc,
+  DocPreview,
   Markup,
   Mixin,
   Ref,
@@ -115,7 +116,7 @@ export interface Chat extends AttachedDoc {
   space: Ref<PersonSpace>
   pinned: boolean
   hidden: boolean
-  // Joined by the chat navigator for the time of the last message; missing only until the backfill
+  preview?: Ref<DocPreview>
   readState?: Ref<ReadState>
 }
 

@@ -83,7 +83,9 @@ export function updateInboxContexts (query: DocumentQuery<DocNotifyContext>, lim
       sort: {
         lastNotify: SortingOrder.Descending
       },
-      limit: limit + 1
+      limit: limit + 1,
+      lookup: { preview: core.class.DocPreview },
+      showArchived: true
     }
   )
 }

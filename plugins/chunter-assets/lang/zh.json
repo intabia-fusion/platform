@@ -237,9 +237,9 @@
     "ChannelNotificationText": "{sender}在{doc}中发送了一条消息: \n\n {message}",
     "ChannelNotificationHtml": "<p><b>{sender}</b>在{doc}中发送了一条消息:</p> {message} <p>{link}</p>",
     "ChannelNotificationSubject": "您在{doc}中有新消息",
-    "JoinChannelNotificationText": "您已被添加到#{doc}",
-    "JoinChannelNotificationHtml": "<p>您已被添加到<b>#{doc}</b></p> <p>{link}</p>",
-    "JoinChannelNotificationSubject": "您已被添加到#{doc}",
+    "JoinChannelNotificationText": "您已被添加到{doc}",
+    "JoinChannelNotificationHtml": "<p>您已被添加到<b>{doc}</b></p> <p>{link}</p>",
+    "JoinChannelNotificationSubject": "您已被添加到{doc}",
     "ThreadNotificationText": "{sender}回复了{doc}: \n\n{message}",
     "ThreadNotificationHtml": "<p><b>{sender}</b>回复了{doc}:</p><p>{message}</p><p>{link}</p>",
     "ThreadNotificationSubject": "{doc}的新回复"

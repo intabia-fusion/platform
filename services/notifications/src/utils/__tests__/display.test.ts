@@ -17,20 +17,15 @@ import {
   getDocTitle,
   getDocIdentifier,
   getDocUrl,
-  getDocLabel,
-  getDocIcon,
-  getObjectDisplayData,
+  getContextRefs,
   getBaseDisplayParams,
   getPushGroup
 } from '../display'
 import { getEmptyTxCache } from '../result'
 import {
-  getDocIcon as _getDocIcon,
   getDocIdentifier as _getDocIdentifier,
-  getDocLabel as _getDocLabel,
   getDocTitle as _getDocTitle,
   getDocUrl as _getDocUrl,
-  getIconPresenter,
   getTitlePresenter
 } from '@hcengineering/server-activity'
 import { getSenderName, Sender } from '@hcengineering/server-notification'
@@ -149,107 +144,67 @@ describe('display utils', () => {
     })
   })
 
-  describe('getDocLabel', () => {
-    it('fetches and caches document label', async () => {
+  describe('getContextRefs', () => {
+    it('refers to the preview of the document', async () => {
       const doc = { _id: 'doc-1', _class: 'DocClass' } as unknown as Doc
-      ;(_getDocLabel as jest.Mock).mockResolvedValue('My Label')
+      const cache = { getDocPreviewId: jest.fn().mockResolvedValue('preview-1') } as any
 
-      const label1 = await getDocLabel(mockClient, txCache, doc)
-      const label2 = await getDocLabel(mockClient, txCache, doc)
-
-      expect(label1).toBe('My Label')
-      expect(label2).toBe('My Label')
-      expect(_getDocLabel).toHaveBeenCalledTimes(1)
-    })
-  })
-
-  describe('getDocIcon', () => {
-    it('fetches and caches personalized icon', async () => {
-      const doc = { _id: 'doc-1', _class: 'DocClass' } as unknown as Doc
-      ;(getIconPresenter as jest.Mock).mockReturnValue({ personalized: true })
-      ;(_getDocIcon as jest.Mock).mockResolvedValue('icon-user-1')
-
-      const icon1 = await getDocIcon(mockClient, txCache, doc, 'user-1' as AccountUuid)
-      const icon2 = await getDocIcon(mockClient, txCache, doc, 'user-1' as AccountUuid)
-
-      expect(icon1).toBe('icon-user-1')
-      expect(icon2).toBe('icon-user-1')
-      expect(_getDocIcon).toHaveBeenCalledTimes(1)
-    })
-  })
-
-  describe('getObjectDisplayData', () => {
-    it('returns combined property display data', async () => {
-      const doc = { _id: 'doc-1', _class: 'DocClass' } as unknown as Doc
-      ;(getTitlePresenter as jest.Mock).mockReturnValue({ personalized: false })
-      ;(getIconPresenter as jest.Mock).mockReturnValue({ personalized: false })
-      ;(_getDocTitle as jest.Mock).mockResolvedValue('Title')
-      ;(_getDocIdentifier as jest.Mock).mockResolvedValue('ID')
-      ;(_getDocLabel as jest.Mock).mockResolvedValue('Label')
-      ;(_getDocIcon as jest.Mock).mockResolvedValue('Icon')
-
-      const result = await getObjectDisplayData(mockClient, {} as any, txCache, doc, 'user-1' as AccountUuid)
-
-      expect(result).toEqual({
-        objectTitle: 'Title',
-        objectIdentifier: 'ID',
-        objectLabel: 'Label',
-        objectIcon: 'Icon'
-      })
+      expect(await getContextRefs(mockClient, cache, doc)).toEqual({ preview: 'preview-1' })
+      expect(cache.getDocPreviewId).toHaveBeenCalledWith('doc-1', 'DocClass')
     })
 
-    it('resolves and aggregates parent display properties if parent details exist on doc', async () => {
+    it('refers a thread to the preview of its parent and keeps its own message', async () => {
       const doc = {
         _id: 'msg-1',
         _class: 'MessageClass',
         attachedTo: 'parent-1',
         attachedToClass: 'ParentClass'
       } as unknown as Doc
-      const parentDoc = { _id: 'parent-1', _class: 'ParentClass' } as unknown as Doc
-
-      const mockCache = {
-        getDoc: jest.fn().mockResolvedValue(parentDoc)
-      } as any
-
+      const cache = { getDocPreviewId: jest.fn().mockResolvedValue('preview-1') } as any
       ;(mockClient.hierarchy.isDerived as jest.Mock).mockReturnValue(true)
-      ;(getTitlePresenter as jest.Mock).mockReturnValue({ personalized: false })
-      ;(getIconPresenter as jest.Mock).mockReturnValue({ personalized: false })
-      ;(_getDocTitle as jest.Mock).mockImplementation(async (_, d) =>
-        d?._id === 'msg-1' ? 'Msg Title' : 'Parent Title'
-      )
-      ;(_getDocIdentifier as jest.Mock).mockImplementation(async (_, d) =>
-        d?._id === 'msg-1' ? 'Msg ID' : 'Parent ID'
-      )
-      ;(_getDocLabel as jest.Mock).mockImplementation(async (_, d) =>
-        d?._id === 'msg-1' ? 'Msg Label' : 'Parent Label'
-      )
-      ;(_getDocIcon as jest.Mock).mockImplementation(async (_, d) => (d?._id === 'msg-1' ? 'Msg Icon' : 'Parent Icon'))
 
-      const result = await getObjectDisplayData(mockClient, mockCache, txCache, doc, 'user-1' as AccountUuid)
+      const res = await getContextRefs(mockClient, cache, doc)
 
-      expect(mockCache.getDoc).toHaveBeenCalledWith('parent-1', 'ParentClass')
-      expect(result).toEqual({
-        objectTitle: 'Msg Title',
-        objectIdentifier: 'Msg ID',
-        objectLabel: 'Msg Label',
-        objectIcon: 'Msg Icon',
-        object: {
-          _id: 'msg-1',
-          _class: 'MessageClass',
-          attachedTo: 'parent-1',
-          attachedToClass: 'ParentClass'
-        },
-        parentObjectId: 'parent-1',
-        parentObjectClass: 'ParentClass',
-        parentObjectTitle: 'Parent Title',
-        parentObjectIdentifier: 'Parent ID',
-        parentObjectLabel: 'Parent Label',
-        parentObjectIcon: 'Parent Icon'
+      expect(cache.getDocPreviewId).toHaveBeenCalledWith('parent-1', 'ParentClass')
+      expect(res).toEqual({
+        preview: 'preview-1',
+        message: { _id: 'msg-1', _class: 'MessageClass', attachedTo: 'parent-1', attachedToClass: 'ParentClass' }
       })
+    })
+
+    it('leaves the preview unset when the document has none, for the backfill to fill', async () => {
+      const doc = { _id: 'doc-1', _class: 'DocClass' } as unknown as Doc
+      const cache = { getDocPreviewId: jest.fn().mockResolvedValue(undefined) } as any
+
+      expect(await getContextRefs(mockClient, cache, doc)).toEqual({})
     })
   })
 
   describe('getBaseDisplayParams', () => {
+    const receiver = { account: 'acc-1' as AccountUuid, language: 'en' }
+
+    it('names a personalized document as the receiver sees it', async () => {
+      const doc = { _id: 'dm-1', _class: 'DirectClass' } as unknown as Doc
+      ;(getTitlePresenter as jest.Mock).mockReturnValue({ personalized: true })
+      ;(_getDocTitle as jest.Mock).mockResolvedValue('Alice')
+
+      const result = await getBaseDisplayParams(mockClient, txCache, undefined, doc, {} as unknown as Sender, receiver)
+
+      expect(_getDocTitle).toHaveBeenCalledWith(expect.anything(), doc, { account: 'acc-1', lang: 'en' })
+      expect(result.intlParams).toMatchObject({ title: 'Alice', doc: 'Alice' })
+    })
+
+    it('writes a channel with its hash, the title giving the bare name', async () => {
+      const doc = { _id: 'ch-1', _class: chunter.class.Channel } as unknown as Doc
+      ;(mockClient.hierarchy.isDerived as jest.Mock).mockImplementation((a, b) => a === b)
+      ;(getTitlePresenter as jest.Mock).mockReturnValue({ personalized: false })
+      ;(_getDocTitle as jest.Mock).mockResolvedValue('general')
+
+      const result = await getBaseDisplayParams(mockClient, txCache, undefined, doc, {} as unknown as Sender, receiver)
+
+      expect(result.intlParams).toMatchObject({ title: '#general', doc: '#general' })
+    })
+
     it('resolves parameters from title, url, identifier, sender, and message type', async () => {
       const doc = { _id: 'doc-1', _class: 'DocClass' } as unknown as Doc
       ;(getTitlePresenter as jest.Mock).mockReturnValue({ personalized: false })
@@ -261,7 +216,7 @@ describe('display utils', () => {
       const type = { notificationMessage: 'Hello World' } as unknown as NotificationType
       const sender = { name: 'John' } as unknown as Sender
 
-      const result = await getBaseDisplayParams(mockClient, txCache, type, doc, sender, 'en')
+      const result = await getBaseDisplayParams(mockClient, txCache, type, doc, sender, receiver)
 
       expect(getSenderName).toHaveBeenCalledWith(sender, true) // client.branding.lastNameFirst is true
       expect(result).toEqual({
@@ -289,7 +244,7 @@ describe('display utils', () => {
       const type = {} as unknown as NotificationType
       const sender = {} as unknown as Sender
 
-      const result = await getBaseDisplayParams(mockClient, txCache, type, doc, sender, 'en')
+      const result = await getBaseDisplayParams(mockClient, txCache, type, doc, sender, receiver)
 
       expect(result).toEqual({
         intlParams: {

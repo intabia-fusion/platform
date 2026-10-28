@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 import { type Asset, type IntlString } from '@hcengineering/platform'
-import { type Class, type Doc, type Ref, type DocumentQuery } from '@hcengineering/core'
+import { type Class, type Doc, type DocPreview, type Ref, type DocumentQuery } from '@hcengineering/core'
 import { type AnySvelteComponent, type IconSize, type Action } from '@hcengineering/ui'
 import { type Chat } from '@hcengineering/chunter'
 
@@ -34,9 +34,14 @@ export interface ChatNavGroupModel {
   deferred?: boolean
 }
 
+export interface ChatNavEntry {
+  preview: DocPreview
+  chat?: Chat
+}
+
 export interface ChatNavItemModel {
   id: Ref<Doc>
-  object: Doc
+  preview: DocPreview
   title: string
   subTitle?: string
   identifier?: string
@@ -48,6 +53,6 @@ export interface ChatNavItemModel {
 }
 
 export interface SelectChannelEvent {
-  chat: Chat
-  object: Doc
+  chat?: Chat
+  preview: DocPreview
 }

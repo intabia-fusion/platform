@@ -25,10 +25,12 @@ import {
   type AccountUuid,
   type Class,
   type Doc,
+  type DocPreview,
   type DocumentQuery,
   type Domain,
   type IndexingConfiguration,
   type PersonId,
+  type PreviewSnapshot,
   type Ref,
   type Space,
   type Timestamp,
@@ -47,8 +49,7 @@ import {
   type Builder,
   TypeNumber,
   ArrOf,
-  TypeRecord,
-  TypeIntlString
+  TypeRecord
 } from '@hcengineering/model'
 import core, { TAttachedDoc, TClass, TDoc } from '@hcengineering/model-core'
 import preference, { TPreference } from '@hcengineering/model-preference'
@@ -72,6 +73,7 @@ import {
   type PushSubscriptionKeys,
   type NotificationType,
   type NotificationGroup,
+  type NotificationMessage,
   type NotificationPreferencesGroup,
   type NotificationTemplate,
   type NotificationProvider,
@@ -241,39 +243,14 @@ export class TDocNotifyContext extends TDoc implements DocNotifyContext {
   @Prop(TypeRef(core.class.Space), core.string.Space)
   objectSpace!: Ref<Space>
 
-  @Prop(TypeString(), core.string.String)
-  objectIdentifier?: string
-
-  @Prop(TypeString(), core.string.String)
-  objectTitle!: string
-
-  @Prop(TypeIntlString(), core.string.String)
-  objectLabel?: IntlString
-
-  @Prop(TypeRecord(), getEmbeddedLabel('icon'))
-  objectIcon?: Record<string, any>
+  @Prop(TypeRef(core.class.DocPreview), core.string.Object)
+  preview?: Ref<DocPreview>
 
   @Prop(TypeRecord(), core.string.Object)
-  object?: Partial<Doc>
+  previewSnapshot?: PreviewSnapshot
 
-  @Prop(TypeRef(core.class.Doc), core.string.Object)
-  @Index(IndexKind.Indexed)
-  parentObjectId?: Ref<Doc>
-
-  @Prop(TypeRef(core.class.Class), core.string.Class)
-  parentObjectClass?: Ref<Class<Doc>>
-
-  @Prop(TypeString(), core.string.String)
-  parentObjectTitle?: string
-
-  @Prop(TypeString(), core.string.String)
-  parentObjectIdentifier?: string
-
-  @Prop(TypeIntlString(), core.string.String)
-  parentObjectLabel?: IntlString
-
-  @Prop(TypeRecord(), getEmbeddedLabel('icon'))
-  parentObjectIcon?: Record<string, any>
+  @Prop(TypeRecord(), core.string.Object)
+  message?: NotificationMessage
 
   @Prop(TypeDate(), core.string.Date)
   lastNotify!: Timestamp

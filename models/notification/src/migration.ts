@@ -70,6 +70,9 @@ import {
 import { removeArchivedNotifications, removeEmptyContexts, removeArchivedContexts } from './migrations/clear'
 import { migrateNotificationsToEmbedded } from './migrations/migrateNotificationsToEmbedded'
 import { migrateDocNotifyContextSettings } from './migrations/settings'
+import { fillContextPreviews, findPreviews } from './migrations/contextPreviews'
+import { dropContextDisplayCopies } from './migrations/contextDisplay'
+import { fillPreviewSnapshots } from './migrations/previewSnapshots'
 
 interface OldCollaborators extends Doc {
   collaborators: AccountUuid[]
@@ -753,9 +756,16 @@ async function createChats (client: MigrationClient): Promise<void> {
     const collaborators = (await iterator.next(500)) ?? []
     if (collaborators.length === 0) break
 
-    const readStateByDoc = await findOrMakeReadStates(client, collaborators)
-
     const res: Chat[] = []
+    // The chat points at the preview of its document, the key of which is the domain and the id
+    const previewByDoc = await findPreviews(
+      client,
+      collaborators.flatMap((it) => {
+        const domain = client.hierarchy.findDomain(it.attachedToClass)
+        return domain != null ? [`${domain}:${it.attachedTo}`] : []
+      })
+    )
+    const readStateByDoc = await findOrMakeReadStates(client, collaborators)
     for (const collaborator of collaborators) {
       if (processed.get(collaborator.attachedTo)?.includes(collaborator.collaborator) === true) continue
       processed.set(
@@ -767,6 +777,10 @@ async function createChats (client: MigrationClient): Promise<void> {
       if (client.hierarchy.classHierarchyMixin(collaborator.attachedToClass, activity.mixin.ActivityDoc) == null) {
         continue
       }
+      const preview = previewByDoc.get(
+        `${client.hierarchy.findDomain(collaborator.attachedToClass)}:${collaborator.attachedTo}`
+      )
+      if (preview == null) continue
       // Without a read state the chat waits for the chunter backfill to point it at one
       const readState = readStateByDoc.get(collaborator.attachedTo)
       res.push({
@@ -774,7 +788,6 @@ async function createChats (client: MigrationClient): Promise<void> {
         _class: chunter.class.Chat,
         attachedTo: collaborator.attachedTo,
         attachedToClass: collaborator.attachedToClass,
-        ...(readState !== undefined ? { readState } : {}),
         hidden: false,
         pinned: pinnedContexts.some(
           (ctx) => ctx.objectId === collaborator.attachedTo && ctx.user === collaborator.collaborator
@@ -782,6 +795,8 @@ async function createChats (client: MigrationClient): Promise<void> {
         account: collaborator.collaborator,
         space: space._id,
         collection: 'chats',
+        preview,
+        ...(readState != null ? { readState } : {}),
         modifiedOn: collaborator.modifiedOn,
         modifiedBy: core.account.System,
         createdOn: collaborator.createdOn,
@@ -1445,6 +1460,21 @@ export const notificationOperation: MigrateOperation = {
         state: 'hide-inactive-chats-v1',
         mode: 'upgrade',
         func: hideInactiveChats
+      },
+      {
+        state: 'context-previews-v1',
+        mode: 'upgrade',
+        func: fillContextPreviews
+      },
+      {
+        state: 'context-display-copies-v1',
+        mode: 'upgrade',
+        func: dropContextDisplayCopies
+      },
+      {
+        state: 'context-preview-snapshots-v1',
+        mode: 'upgrade',
+        func: fillPreviewSnapshots
       }
     ])
   },

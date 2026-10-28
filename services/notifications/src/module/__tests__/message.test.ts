@@ -59,9 +59,7 @@ function createEmptyTxCache (): TxCache {
   return {
     titleByDoc: new Map(),
     urlByDoc: new Map(),
-    labelByDoc: new Map(),
     identifierByDoc: new Map(),
-    iconByDoc: new Map(),
     templates: new Map()
   }
 }
@@ -98,7 +96,7 @@ jest.mock('@hcengineering/core', () => {
 
 const mockGetBaseDisplayParams = jest.fn()
 const mockGetCollaboratorAccounts = jest.fn()
-const mockGetObjectDisplayData = jest.fn()
+const mockGetContextRefs = jest.fn()
 const mockGetNotificationsByMessage = jest.fn()
 const mockGetMessageNotifyProviders = jest.fn()
 const mockGetMode = jest.fn()
@@ -119,7 +117,7 @@ jest.mock('../../utils/utils', () => {
   return {
     getBaseDisplayParams: (...args: any[]) => mockGetBaseDisplayParams(...args),
     getCollaboratorAccounts: (...args: any[]) => mockGetCollaboratorAccounts(...args),
-    getObjectDisplayData: (...args: any[]) => mockGetObjectDisplayData(...args),
+    getContextRefs: (...args: any[]) => mockGetContextRefs(...args),
     getNotificationsByMessage: (...args: any[]) => mockGetNotificationsByMessage(...args),
     getMessageNotifyProviders: (...args: any[]) => mockGetMessageNotifyProviders(...args),
     getMode: (...args: any[]) => mockGetMode(...args),
@@ -188,6 +186,7 @@ describe('message module', () => {
 
     mockCache = {
       getDoc: jest.fn(),
+      getDocPreviewId: jest.fn().mockResolvedValue('preview-1'),
       getDocSpace: jest.fn(),
       getReceivers: jest.fn(),
       getSettings: jest.fn(),
@@ -204,7 +203,7 @@ describe('message module', () => {
     mockPushNotification.mockReset()
     mockGetBaseDisplayParams.mockReset()
     mockGetCollaboratorAccounts.mockReset()
-    mockGetObjectDisplayData.mockReset()
+    mockGetContextRefs.mockReset()
     mockGetNotificationsByMessage.mockReset()
     mockGetMessageNotifyProviders.mockReset()
     mockGetMode.mockReset()
@@ -228,7 +227,7 @@ describe('message module', () => {
     ;(global as any).mockGenerateId.mockReturnValue('gen-id')
     mockGetBaseDisplayParams.mockResolvedValue({ intlParams: { doc: 'doc' }, intlParamsNotLocalized: {} })
     mockGetCollaboratorAccounts.mockResolvedValue([])
-    mockGetObjectDisplayData.mockResolvedValue({ objectTitle: 'Object Title' })
+    mockGetContextRefs.mockResolvedValue({ preview: 'preview-1' })
     mockGetNotificationsByMessage.mockReturnValue([])
     mockGetMessageNotifyProviders.mockResolvedValue({})
     mockGetMode.mockReturnValue('all')
@@ -1132,7 +1131,7 @@ describe('message module', () => {
         }
       })
       expect(result.updateContextTx[1].operations).toEqual({
-        object: { text: 'NotifMsg' }
+        message: { text: 'NotifMsg' }
       })
     })
 
@@ -1198,7 +1197,7 @@ describe('message module', () => {
         }
       })
       expect(result.updateContextTx[1].operations).toEqual({
-        object: { text: 'NotifMsg' }
+        message: { text: 'NotifMsg' }
       })
     })
 
@@ -1266,7 +1265,7 @@ describe('message module', () => {
             }
           }
         },
-        { object: { text: 'NotifMsg' } }
+        { message: { text: 'NotifMsg' } }
       ])
     })
   })
@@ -1449,6 +1448,53 @@ describe('message module', () => {
       })
     })
 
+    it('gives a context without a preview the ref, once its document has one', async () => {
+      mockGetContextRefs.mockResolvedValueOnce({ preview: 'preview-1' })
+      const context = { _id: 'ctx-1', _class: 'DocNotifyContextClass', space: 'space-1' } as unknown as DocNotifyContext
+      const doc = { _id: 'doc-1' }
+      const receiver = { account: 'user-1' }
+      const unreadMessage: UnreadMessageId = { id: 'msg-1' as Ref<ActivityMessage>, createdOn: 1, notified: false }
+
+      await addUnreadMessage(
+        mockClient,
+        receiver as Receiver,
+        doc as Doc,
+        unreadMessage,
+        context,
+        result,
+        txCache,
+        mockCache
+      )
+
+      expect(result.updateContextTx[0].operations.preview).toBe('preview-1')
+    })
+
+    it('does not look the refs up for a context that has its preview', async () => {
+      const context = {
+        _id: 'ctx-1',
+        _class: 'DocNotifyContextClass',
+        space: 'space-1',
+        preview: 'preview-1'
+      } as unknown as DocNotifyContext
+      const doc = { _id: 'doc-1' }
+      const receiver = { account: 'user-1' }
+      const unreadMessage: UnreadMessageId = { id: 'msg-1' as Ref<ActivityMessage>, createdOn: 1, notified: false }
+
+      await addUnreadMessage(
+        mockClient,
+        receiver as Receiver,
+        doc as Doc,
+        unreadMessage,
+        context,
+        result,
+        txCache,
+        mockCache
+      )
+
+      expect(mockGetContextRefs).not.toHaveBeenCalled()
+      expect(result.updateContextTx[0].operations.preview).toBeUndefined()
+    })
+
     it('creates context if context is undefined', async () => {
       const doc = { _id: 'doc-1', _class: 'DocClass', space: 'space-1' }
       const receiver = { account: 'user-1', space: 'user-space' }
@@ -1465,7 +1511,7 @@ describe('message module', () => {
         mockCache
       )
 
-      expect(mockGetObjectDisplayData).toHaveBeenCalledWith(mockClient, mockCache, txCache, doc, 'user-1')
+      expect(mockGetContextRefs).toHaveBeenCalledWith(mockClient, mockCache, doc)
       expect(mockGetCreateContextTx).toHaveBeenCalled()
       expect(result.createContextTx[0].attributes.unreadMessages).toEqual([unreadMessage])
     })

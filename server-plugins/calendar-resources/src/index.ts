@@ -107,8 +107,9 @@ const ReminderTitlePresenter: StringPresenterFn = async (
   control: PresenterControl
 ): Promise<string | undefined> => {
   const event = doc as Event
+  if (event.attachedTo === calendar.ids.NoAttached) return event.title
   const target = (await control.findAll(control.ctx, event.attachedToClass, { _id: event.attachedTo }, { limit: 1 }))[0]
-  if (target == null) return undefined
+  if (target == null) return event.title
   return await getDocTitle(control, target)
 }
 

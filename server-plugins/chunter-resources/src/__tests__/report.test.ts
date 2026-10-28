@@ -66,7 +66,9 @@ const hierarchy = {
     c === base || (c === chunter.class.ThreadMessage && base === chunter.class.ChatMessage),
   // getDocTitle: no TitlePresenter mixins in the test model, the chat is named by its titleKey.
   classHierarchyMixin: () => undefined,
-  getClass: () => ({ titleKey: 'name' })
+  getClass: () => ({ titleKey: 'name' }),
+  findClass: () => ({ titleKey: 'name' }),
+  getAncestors: (c: Ref<any>) => [c]
 } as unknown as Hierarchy
 
 function chatMessage (fields: Partial<ChatMessage> = {}): ChatMessage {
@@ -217,7 +219,7 @@ describe('OnContentReport', () => {
         authorName: 'Bob Builder',
         chat: CHANNEL,
         chatClass: chunter.class.Channel,
-        chatName: 'general',
+        chatName: '#general',
         messageId: 'msg1',
         quote: 'hello world',
         attachments: ['a.pdf', 'b.png']
@@ -275,7 +277,7 @@ describe('OnContentReport', () => {
     const created = cards(txes)
     expect(created.length).toBeGreaterThan(0)
     expect(created[0].attributes.props?.link).toContain('workbench/ws1/chunter/chan1/msg1?message=reply1')
-    expect(created[0].attributes.props?.chatName).toBe('general')
+    expect(created[0].attributes.props?.chatName).toBe('#general')
   })
 
   it('reports a person without quoting anything', async () => {

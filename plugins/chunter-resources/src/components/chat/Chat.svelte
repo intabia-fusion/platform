@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Doc, Ref, Class } from '@hcengineering/core'
+  import type { Doc, DocPreview, Ref, Class } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import type { Location } from '@hcengineering/ui'
+  import type { AnyComponent, Location } from '@hcengineering/ui'
   import {
     Component,
     defineSeparators,
@@ -24,14 +24,15 @@
     navigate,
     Separator,
     restoreLocation,
-    deviceOptionsStore as deviceInfo
+    deviceOptionsStore as deviceInfo,
+    languageStore
   } from '@hcengineering/ui'
   import type { NavigatorModel, SpecialNavModel } from '@hcengineering/workbench'
   import { onMount, onDestroy } from 'svelte'
   import type { Chat } from '@hcengineering/chunter'
   import { chunterId } from '@hcengineering/chunter'
   import view from '@hcengineering/view'
-  import { parseLinkId, getObjectLinkId, openDoc } from '@hcengineering/view-resources'
+  import { parseLinkId, getPreviewTitle } from '@hcengineering/view-resources'
   import type { ActivityMessage } from '@hcengineering/activity'
   import { loadSavedAttachments } from '@hcengineering/attachment-resources'
 
@@ -40,6 +41,7 @@
   import { chatSpecials, createRealDirectFromFake, isFakeDirect } from './utils'
   import type { SelectChannelEvent } from './types'
   import { decodeChatURI, openChannel, openThreadInSidebar } from '../../navigation'
+  import { toChunterSpaceLinkId } from '../../linkId'
   import chunter from '../../plugin'
 
   const objectQuery = createQuery()
@@ -59,6 +61,17 @@
 
   let object: Doc | undefined = undefined
   let chat: Chat | undefined
+  let opened: { _id: Ref<Doc>, _class: Ref<Class<Doc>>, preview?: DocPreview } | undefined
+  // The click highlights at once; the open document catches up with the location
+  let selectedId: Ref<Doc> | undefined
+  $: selectedId = opened?._id
+
+  // A slower earlier click must not navigate after a later one, nor after a move by the address
+  let selectAsk = 0
+
+  function cancelSelect (): void {
+    ++selectAsk
+  }
 
   let replacedPanel: HTMLElement
   let needRestoreLoc = true
@@ -74,6 +87,7 @@
 
   async function loadObject (id?: string, _class?: Ref<Class<Doc>>): Promise<void> {
     if (id == null || _class == null || _class === '') {
+      opened = undefined
       object = undefined
       chat = undefined
       objectQuery.unsubscribe()
@@ -83,18 +97,30 @@
     const _id: Ref<Doc> | undefined = await parseLinkId(linkProviders, id, _class)
 
     if (_id === undefined) {
+      opened = undefined
       object = undefined
       chat = undefined
       objectQuery.unsubscribe()
       return
     }
 
+    if (opened?._id !== _id) opened = { _id, _class }
+    if (object?._id !== _id) {
+      object = undefined
+      chat = undefined
+    }
     objectQuery.query(
       _class,
       { _id },
       (res) => {
         object = res[0]
         chat = (res[0] as any)?.$lookup?.chats?.[0]
+        // A link to nothing (a removed or unreadable document) shows no chat
+        if (res[0] == null && opened?._id === _id) opened = undefined
+        // A link names a chat space by its id only: the input and the panels go by the concrete class
+        if (res[0] != null && opened?._id === _id && opened._class !== res[0]._class) {
+          opened = { ...opened, _class: res[0]._class }
+        }
       },
       {
         limit: 1,
@@ -107,12 +133,14 @@
     if (loc.path[2] !== chunterId) {
       return
     }
+    cancelSelect()
 
     const id = loc.path[3]
 
     if (id == null || id === '') {
       currentSpecial = undefined
       selectedData = undefined
+      opened = undefined
       object = undefined
       chat = undefined
       if (needRestoreLoc) {
@@ -127,6 +155,7 @@
 
     if (currentSpecial !== undefined) {
       selectedData = undefined
+      opened = undefined
       object = undefined
       chat = undefined
     } else {
@@ -141,45 +170,65 @@
     }
   }
 
+  function isDocPanel (_class: Ref<Class<Doc>>): boolean {
+    return hierarchy.hasClass(_class) && !hierarchy.isDerived(_class, chunter.class.ChunterSpace)
+  }
+
+  function getDocPanel (_class: Ref<Class<Doc>>): AnyComponent {
+    return hierarchy.classHierarchyMixin(_class, view.mixin.ObjectPanel)?.component ?? view.component.EditDoc
+  }
+
+  function closeDocPanel (): void {
+    const loc = getCurrentLocation()
+    loc.path.length = 3
+    loc.fragment = undefined
+    loc.query = undefined
+    navigate(loc)
+  }
+
   async function handleChannelSelected (event: CustomEvent): Promise<void> {
+    cancelSelect()
     if (event.detail === null) {
       selectedData = undefined
       return
     }
 
-    const detail = (event.detail ?? {}) as SelectChannelEvent
+    const { preview, chat: selectedChat } = (event.detail ?? {}) as SelectChannelEvent
+    const ask = selectAsk
+    selectedId = preview.objectId
 
-    let selectedObject = detail.object
-    const selectedChat = detail.chat
+    // The navigator knows the preview only; the document comes with the location (`loadObject`).
+    let _id = preview.objectId
+    const _class = preview.objectClass
 
-    if (isFakeDirect(selectedObject)) {
-      const direct = await createRealDirectFromFake(selectedObject)
-      if (direct != null) {
-        selectedObject = direct
-      } else {
+    if (isFakeDirect(preview)) {
+      const direct = await createRealDirectFromFake(preview)
+      if (ask !== selectAsk) return
+      if (direct == null) {
+        selectedId = opened?._id
         selectedData = undefined
         return
       }
+      _id = direct._id
+      // A direct just created shows at once; anything else waits for `loadObject`
+      if (_id !== object?._id) {
+        object = direct
+        chat = selectedChat
+      }
     }
 
-    const _class = selectedObject._class
-    const _id = selectedObject._id
-
-    if (_id !== object?._id) {
-      object = selectedObject
-      chat = selectedChat
-    }
-
-    const id = await getObjectLinkId(linkProviders, _id, _class, selectedObject)
-
-    selectedData = { id, _class }
-
-    const isChatSpace = hierarchy.hasClass(_class) && hierarchy.isDerived(_class, chunter.class.ChunterSpace)
-    if (isChatSpace) {
+    // The chat or the document panel shows at once by the preview: no request for the link or the header
+    opened = { _id, _class, preview: { ...preview, objectId: _id } }
+    if (!isDocPanel(_class)) {
+      const name = await getPreviewTitle(client, opened.preview as DocPreview, $languageStore)
+      if (ask !== selectAsk) return
+      selectedData = { id: toChunterSpaceLinkId(_id, name), _class }
       openChannel(selectedData.id, selectedData._class, undefined, true)
-    } else {
-      await openDoc(hierarchy, selectedObject)
+      return
     }
+    // A document opens in its panel inside the chat, the address stays here
+    selectedData = { id: _id, _class }
+    openChannel(_id, _class, undefined, true)
   }
 
   defineSeparators('chat', [
@@ -204,7 +253,7 @@
       class:fly={$deviceInfo.navigator.float}
     >
       <div class="antiPanel-wrap__content hulyNavPanel-container">
-        <ChatNavigator {object} {chat} {currentSpecial} on:select={handleChannelSelected} />
+        <ChatNavigator {object} {chat} {selectedId} {currentSpecial} on:select={handleChannelSelected} />
       </div>
       {#if !($deviceInfo.isMobile && $deviceInfo.isPortrait && $deviceInfo.minWidth)}
         <Separator name="chat" float={$deviceInfo.navigator.float ? 'navigator' : true} index={0} />
@@ -228,8 +277,19 @@
           }
         }}
       />
-    {:else if object}
-      <ChannelView {object} />
+    {:else if opened != null && isDocPanel(opened._class)}
+      <Component
+        is={getDocPanel(opened._class)}
+        props={{ _id: opened._id, _class: opened._class, embedded: true }}
+        on:close={closeDocPanel}
+      />
+    {:else if opened != null}
+      <ChannelView
+        _id={opened._id}
+        _class={opened._class}
+        object={object?._id === opened._id ? object : undefined}
+        preview={opened.preview}
+      />
     {/if}
   </div>
 </div>

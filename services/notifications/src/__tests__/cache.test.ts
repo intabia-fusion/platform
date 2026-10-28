@@ -15,6 +15,7 @@
 //
 
 const mockGetClassCollaborators = jest.fn()
+const mockHasPreview = jest.fn()
 const mockIsDerived = jest.fn()
 const mockHasClass = jest.fn()
 
@@ -40,6 +41,11 @@ jest.mock('@hcengineering/core', () => {
     }
   ) as unknown as typeof import('@hcengineering/core')
 })
+
+jest.mock('@hcengineering/server-activity', () => ({
+  ...jest.requireActual('@hcengineering/server-activity'),
+  hasPreview: (...args: any[]) => mockHasPreview(...args)
+}))
 
 import {
   Doc,
@@ -299,6 +305,69 @@ describe('WorkspaceCache', () => {
       const space1 = await cache.getDocSpace(doc)
       expect(mockClient.findOne).toHaveBeenCalledWith(core.class.Space, { _id: 'space-1' }, { limit: 1 })
       expect(space1).toEqual(spaceDoc)
+    })
+  })
+
+  describe('getDocPreviewId', () => {
+    beforeEach(() => {
+      mockHasPreview.mockReset()
+      mockHasPreview.mockReturnValue(true)
+      ;(mockClient.hierarchy as any).getDomain = jest.fn().mockReturnValue('tracker')
+    })
+
+    it('finds the preview by the domain and the id, and caches it', async () => {
+      mockClient.findOne.mockResolvedValue({ _id: 'preview-1' } as any)
+
+      expect(await cache.getDocPreviewId('doc-1' as Ref<Doc>, 'Issue' as Ref<Class<Doc>>)).toBe('preview-1')
+      expect(await cache.getDocPreviewId('doc-1' as Ref<Doc>, 'Issue' as Ref<Class<Doc>>)).toBe('preview-1')
+      expect(mockClient.findOne).toHaveBeenCalledTimes(1)
+      expect(mockClient.findOne).toHaveBeenCalledWith(
+        core.class.DocPreview,
+        { objectId: 'doc-1', objectDomain: 'tracker' },
+        { projection: { _id: 1 } }
+      )
+    })
+
+    it('asks again once the preview is removed: one made anew has a new id', async () => {
+      mockClient.findOne
+        .mockResolvedValueOnce({ _id: 'preview-1' } as any)
+        .mockResolvedValueOnce({ _id: 'preview-2' } as any)
+
+      expect(await cache.getDocPreviewId('doc-1' as Ref<Doc>, 'Issue' as Ref<Class<Doc>>)).toBe('preview-1')
+      cache.tx({
+        _id: 'tx-rm',
+        _class: core.class.TxRemoveDoc,
+        objectId: 'preview-1',
+        objectClass: core.class.DocPreview
+      } as unknown as TxCUD<Doc>)
+      expect(await cache.getDocPreviewId('doc-1' as Ref<Doc>, 'Issue' as Ref<Class<Doc>>)).toBe('preview-2')
+    })
+
+    it('remembers a missing preview instead of asking again', async () => {
+      mockClient.findOne.mockResolvedValue(undefined)
+
+      expect(await cache.getDocPreviewId('doc-1' as Ref<Doc>, 'Issue' as Ref<Class<Doc>>)).toBeUndefined()
+      expect(await cache.getDocPreviewId('doc-1' as Ref<Doc>, 'Issue' as Ref<Class<Doc>>)).toBeUndefined()
+      expect(mockClient.findOne).toHaveBeenCalledTimes(1)
+    })
+
+    it('asks nothing for a class without previews', async () => {
+      mockHasPreview.mockReturnValue(false)
+
+      expect(await cache.getDocPreviewId('event-1' as Ref<Doc>, 'Event' as Ref<Class<Doc>>)).toBeUndefined()
+      expect(mockClient.findOne).not.toHaveBeenCalled()
+    })
+
+    it('takes the class of a mixin the message names its parent by', async () => {
+      ;(mockClient.hierarchy.getBaseClass as jest.Mock).mockImplementation((cls) =>
+        cls === 'contact.mixin.Employee' ? 'contact.class.Person' : cls
+      )
+      mockClient.findOne.mockResolvedValue({ _id: 'preview-1' } as any)
+
+      await cache.getDocPreviewId('person-1' as Ref<Doc>, 'contact.mixin.Employee' as Ref<Class<Doc>>)
+
+      expect(mockHasPreview).toHaveBeenCalledWith(expect.anything(), 'contact.class.Person')
+      expect((mockClient.hierarchy as any).getDomain).toHaveBeenCalledWith('contact.class.Person')
     })
   })
 
@@ -727,7 +796,7 @@ describe('WorkspaceCache', () => {
         _id: 'ctx-1',
         _class: 'NotifyCtxClass',
         objectId: 'doc-1',
-        objectTitle: 'old',
+        lastNotify: 1,
         modifiedOn: 10
       } as unknown as DocNotifyContext
       mockClient.findAll.mockResolvedValue([context] as unknown as FindResult<DocNotifyContext>)
@@ -738,7 +807,7 @@ describe('WorkspaceCache', () => {
         _class: core.class.TxUpdateDoc,
         objectId: 'ctx-1',
         objectClass: 'NotifyCtxClass',
-        operations: { objectTitle: 'new' },
+        operations: { lastNotify: 2 },
         modifiedOn: 20
       } as unknown as TxUpdateDoc<Doc>
 
@@ -746,7 +815,7 @@ describe('WorkspaceCache', () => {
       cache.tx(tx, true)
 
       const updated = await cache.getContexts('doc-1' as Ref<Doc>)
-      expect(updated[0].objectTitle).toBe('new')
+      expect(updated[0].lastNotify).toBe(2)
       expect(mockClient.findAll).toHaveBeenCalledTimes(1)
     })
 
@@ -787,7 +856,7 @@ describe('WorkspaceCache', () => {
         _id: 'ctx-1',
         _class: 'NotifyCtxClass',
         objectId: 'doc-1',
-        objectTitle: 'old',
+        lastNotify: 1,
         modifiedOn: 100
       } as unknown as DocNotifyContext
       mockClient.findAll.mockResolvedValue([context] as unknown as FindResult<DocNotifyContext>)
@@ -798,7 +867,7 @@ describe('WorkspaceCache', () => {
         _class: core.class.TxUpdateDoc,
         objectId: 'ctx-1',
         objectClass: 'NotifyCtxClass',
-        operations: { objectTitle: 'new' },
+        operations: { lastNotify: 2 },
         modifiedOn: 50 // transaction modifiedOn < cached modifiedOn
       } as unknown as TxUpdateDoc<Doc>
 

@@ -178,6 +178,21 @@ export class ChatMember {
     return id
   }
 
+  /** A thread reply to a comment of a document that is not a channel, in the document's space. */
+  async replyToComment (doc: Pick<Doc, '_id' | '_class' | 'space'>, message: Ref<Doc>, text: string): Promise<Ref<Doc>> {
+    const id = generateId<AttachedDoc>()
+    await this.client.addCollection(
+      threadMessageClass,
+      doc.space,
+      message,
+      chatMessageClass,
+      'replies',
+      { message: paragraph([{ type: 'text', text }]), objectId: doc._id, objectClass: doc._class } as any,
+      id
+    )
+    return id
+  }
+
   async removeReply (channel: ChannelDoc, message: Ref<Doc>, reply: Ref<Doc>): Promise<void> {
     await this.client.removeCollection(
       threadMessageClass,

@@ -18,6 +18,7 @@ import { serverActivityId, serverActivityPlugin } from './plugin'
 
 export type * from './types'
 export * from './utils'
+export * from './preview'
 export * from './middleware'
 export { default as ActivityMiddleware } from './middleware'
 

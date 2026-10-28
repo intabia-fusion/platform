@@ -22,7 +22,7 @@
     messageInFocus,
     editingMessageStore
   } from '@hcengineering/activity-resources'
-  import type { Doc, Ref, Space, Tx, TxCUD, Timestamp } from '@hcengineering/core'
+  import type { Doc, Ref, Tx, TxCUD, Timestamp } from '@hcengineering/core'
   import core, { getCurrentAccount, getDay, notEmpty } from '@hcengineering/core'
   import type { ReadState } from '@hcengineering/notification'
   import { NotificationClientImpl } from '@hcengineering/notification-resources'
@@ -34,6 +34,7 @@
   import type { ChatMessage } from '@hcengineering/chunter'
 
   import type { ChatViewport } from '../chatViewport'
+  import type { ChatTarget } from '../utils'
   import chunter from '../plugin'
   import {
     messageInView,
@@ -48,8 +49,8 @@
   import JumpToDateSelector from './JumpToDateSelector.svelte'
 
   export let viewport: ChatViewport
-  export let object: Doc
-  export let channel: Doc
+  export let target: ChatTarget
+  export let object: Doc | undefined = undefined
   export let selectedMessageId: Ref<ActivityMessage> | undefined = undefined
   export let fixedInput = true
   export let collection: string = 'messages'
@@ -81,8 +82,6 @@
   const newTimestampStore = viewport.newTimestamp
   const canLoadNextForward = viewport.canLoadNextForward
   const isLoadingMoreStore = viewport.isLoadingMore
-
-  const doc = object
 
   let messages: ActivityMessage[] = []
   let messagesCount = 0
@@ -156,13 +155,11 @@
     }
     messageGroups = groups
   }
-  $: void inboxClient.loadContextByDoc(doc._id)
-  $: notifyContext = $contextByDocStore.get(doc._id) ?? undefined
-  $: isThread = hierarchy.isDerived(doc._class, activity.class.ActivityMessage)
-  $: isChunterSpace = hierarchy.isDerived(doc._class, chunter.class.ChunterSpace)
-  $: readonly = hierarchy.isDerived(channel._class, core.class.Space)
-    ? readonly || (channel as Space).archived
-    : readonly
+  $: void inboxClient.loadContextByDoc(target._id)
+  $: notifyContext = $contextByDocStore.get(target._id) ?? undefined
+  $: isThread = hierarchy.isDerived(target._class, activity.class.ActivityMessage)
+  $: isChunterSpace = hierarchy.isDerived(target._class, chunter.class.ChunterSpace)
+  $: parentMessage = isThread ? (object as ActivityMessage | undefined) : undefined
 
   $: separatorIndex =
     $newTimestampStore !== undefined
@@ -179,7 +176,7 @@
   // old message) is not the end of the chat.
   const reader = {}
   $: isReadingTail = !freeze && !isPageHidden && isScrollInitialized && isScrollAtBottom && $isTailLoadedStore
-  $: inboxClient.setDocReading(object._id, isReadingTail, reader)
+  $: inboxClient.setDocReading(target._id, isReadingTail, reader)
 
   // What is on screen is read once when the view stops reading: when it is left, or frozen (a channel
   // under its thread, one being replaced by the next view and still fading out), and nothing after.
@@ -187,20 +184,20 @@
   function leave (): void {
     if (isLeft) return
     isLeft = true
-    inboxClient.setDocReading(object._id, false, reader)
+    inboxClient.setDocReading(target._id, false, reader)
     if (!isPageHidden && isScrollInitialized) {
-      readViewportMessages(object._id, messages, scrollDiv, contentDiv, notifyContext, readState, true)
+      readViewportMessages(target._id, messages, scrollDiv, contentDiv, notifyContext, readState, true)
     }
     flushReadQueue()
   }
   $: if (freeze) leave()
   $: if (!freeze) isLeft = false
 
-  $: void inboxClient.getReadState(object._id).then((it) => {
+  $: void inboxClient.getReadState(target._id).then((it) => {
     readState = it
     isReadStateLoaded = true
   })
-  $: readState = $readStateByDocStore.get(doc._id) ?? undefined
+  $: readState = $readStateByDocStore.get(target._id) ?? undefined
 
   $: if (notifyContext !== undefined && !isFreeze() && isScrollInitialized) {
     recheckNotifications(notifyContext)
@@ -396,7 +393,7 @@
 
   function read (): void {
     if (isFreeze() || !isScrollInitialized) return
-    readViewportMessages(object._id, messages, scrollDiv, contentDiv, notifyContext, readState)
+    readViewportMessages(target._id, messages, scrollDiv, contentDiv, notifyContext, readState)
   }
 
   function updateScrollData (): void {
@@ -455,7 +452,7 @@
       scrollToBottom()
     }
 
-    await inboxClient.readDoc(doc._id)
+    await inboxClient.readDoc(target._id)
   }
 
   let forceRead = false
@@ -474,7 +471,7 @@
     forceRead = true
     forceReadAt = Date.now()
     try {
-      await inboxClient.forceReadDocState(object._id)
+      await inboxClient.forceReadDocState(target._id)
     } finally {
       forceRead = false
     }
@@ -690,7 +687,7 @@
   const newMessageTxListener = (txes: Tx[]): void => {
     const ctx = txes
       .map((it) => it as TxCUD<ActivityMessage>)
-      .filter((it) => it.attachedTo === doc._id && it._class === core.class.TxCreateDoc)
+      .filter((it) => it.attachedTo === target._id && it._class === core.class.TxCreateDoc)
 
     if (ctx.length > 0 && shouldScrollToNew) {
       void wait().then(scrollToNewMessages)
@@ -815,7 +812,7 @@
 
           <div use:observeMessage={message} class="activityMessageWrapper" id={message._id}>
             <ActivityMessagePresenter
-              {doc}
+              doc={object}
               value={message}
               skipLabel={isThread || isChunterSpace}
               hideLink
@@ -842,7 +839,8 @@
     {/if}
     {#if !fixedInput && withInput}
       <ChannelInput
-        {object}
+        {target}
+        {parentMessage}
         {readonly}
         boundary={scrollDiv}
         {collection}
@@ -867,7 +865,8 @@
 
 {#if fixedInput && withInput}
   <ChannelInput
-    {object}
+    {target}
+    {parentMessage}
     {readonly}
     boundary={scrollDiv}
     {collection}

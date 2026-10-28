@@ -19,21 +19,21 @@
   import { copyTextToClipboard, getClient } from '@hcengineering/presentation'
   import type { Action } from '@hcengineering/ui'
   import ui, { languageStore, lowercaseFirstLetter, Menu, showPopup } from '@hcengineering/ui'
-  import { getLink, getObjectLinkId, canLeaveSpace, IconPicker } from '@hcengineering/view-resources'
+  import { getLink, getObjectLinkId, IconPicker } from '@hcengineering/view-resources'
   import { NotificationClientImpl, MutePopup } from '@hcengineering/notification-resources'
   import { createEventDispatcher } from 'svelte'
   import view from '@hcengineering/view'
-  import type { Doc, Space } from '@hcengineering/core'
+  import type { Space } from '@hcengineering/core'
   import { getCurrentAccount } from '@hcengineering/core'
-  import type { Channel, Chat } from '@hcengineering/chunter'
+  import type { Channel } from '@hcengineering/chunter'
   import workbench from '@hcengineering/workbench'
 
   import NavItem from './NavItem.svelte'
   import type { ChatNavItemModel } from '../types'
+  import { isFakeDirect } from '../utils'
   import { openChannel, openChannelInSidebar, resetChunterLocIfEqual } from '../../../navigation'
   import chunter from '../../../plugin'
   import { leaveChannel, toggleChannelIcon } from '../../../utils'
-  import ChannelIcon from '../../ChannelIcon.svelte'
 
   export let unread: UnreadContext | undefined
   export let item: ChatNavItemModel
@@ -50,17 +50,21 @@
   let count: number = 0
   let actions: Action[] = []
 
-  $: void notificationClient.loadDocSetting(item.object._id)
-  $: setting = $settingByDocStore.get(item.object._id) ?? undefined
+  $: void notificationClient.loadDocSetting(item.id)
+  $: setting = $settingByDocStore.get(item.id) ?? undefined
   $: count = unread?.unreadMessagesCount ?? 0
 
-  $: void getActions(item.object, item.chat).then((res) => {
+  $: void getActions(item).then((res) => {
     actions = res
   })
 
   const linkProviders = client.getModel().findAllSync(view.mixin.LinkIdProvider, {})
 
-  async function getActions (object: Doc, chat?: Chat): Promise<Action[]> {
+  // The menu is built from the preview; an action that changes the document loads it when run.
+  async function getActions ({ preview, chat, icon, iconProps }: ChatNavItemModel): Promise<Action[]> {
+    if (isFakeDirect(preview)) return []
+    const { objectId: _id, objectClass: _class } = preview
+    const isChannel = hierarchy.isDerived(_class, chunter.class.Channel)
     const result: Action[] = []
 
     result.push({
@@ -68,8 +72,8 @@
       label: view.string.Open,
       group: 'edit',
       action: async () => {
-        const id = await getObjectLinkId(linkProviders, object._id, object._class, object)
-        openChannel(id, object._class, undefined, true)
+        const id = await getObjectLinkId(linkProviders, _id, _class)
+        openChannel(id, _class, undefined, true)
       }
     })
 
@@ -78,23 +82,28 @@
       icon: view.icon.DetailsFilled,
       group: 'edit',
       action: async () => {
-        await openChannelInSidebar(object._id, object._class, object)
+        await openChannelInSidebar(_id, _class)
       }
     })
 
-    if (hierarchy.isDerived(object._class, chunter.class.Channel)) {
+    if (isChannel) {
       result.push({
         label: chunter.string.CopyLink,
         icon: ui.icon.Copy,
         group: 'edit',
         action: async () => {
           // The promise goes straight in: awaiting first loses the click gesture in Safari.
-          await copyTextToClipboard(getLink(object))
+          // A channel gone meanwhile fails the copy instead of putting an empty line in the clipboard
+          const link = client.findOne(_class, { _id }).then(async (channel) => {
+            if (channel == null) throw new Error(`Channel ${_id} not found`)
+            return await getLink(channel)
+          })
+          await copyTextToClipboard(link)
         }
       })
     }
 
-    const label = lowercaseFirstLetter(await translate(hierarchy.getClass(object._class).label, {}, $languageStore))
+    const label = lowercaseFirstLetter(await translate(hierarchy.getClass(_class).label, {}, $languageStore))
 
     if (chat != null && !chat.pinned) {
       result.push({
@@ -133,19 +142,22 @@
       })
     }
 
-    if (hierarchy.isDerived(object._class, chunter.class.Channel)) {
-      const channel = object as Channel
+    if (isChannel) {
+      const { asset, emoji } = preview.icon ?? {}
+      // The preview carries the default asset of a channel without its own icon
+      const own = asset !== chunter.icon.Hashtag && asset !== chunter.icon.Lock ? asset : undefined
       result.push({
-        icon: ChannelIcon,
-        iconProps: { value: object },
+        icon,
+        iconProps,
         label: chunter.string.ChangeIcon,
         group: 'tools',
         component: IconPicker,
-        props: { icon: channel.icon, color: channel.emoji },
+        props: { icon: own, color: emoji },
         action: async () => {},
         onSubmenuResult: async (result) => {
           if (result == null) return
-          await toggleChannelIcon(channel, result.icon, result.color)
+          const channel = (await client.findOne(_class, { _id })) as Channel | undefined
+          if (channel != null) await toggleChannelIcon(channel, result.icon, result.color)
         }
       })
     }
@@ -155,23 +167,38 @@
       label: notification.string.EditNotifications,
       group: 'associate',
       component: MutePopup,
-      props: { value: object },
+      props: { value: { _id, _class } },
       action: async () => {}
     })
 
-    const canLeave = await canLeaveSpace(object)
-
-    if (!hierarchy.isDerived(object._class, chunter.class.DirectMessage) && canLeave) {
+    // A channel has a chat of the user only while they are a member: an open one they did not join has none
+    if (isChannel && chat != null) {
       result.push({
         icon: view.icon.Delete,
         label: chunter.string.Leave,
         labelParams: { label },
         group: 'remove',
         action: async () => {
-          await leaveChannel(object as Space, getCurrentAccount().uuid)
+          const channel = (await client.findOne(_class, { _id })) as Space | undefined
+          const me = getCurrentAccount().uuid
+          if (channel?.members.includes(me) === true) {
+            await leaveChannel(channel, me)
+            return
+          }
+          // Not a member any more: there is nothing to leave, the chat only leaves the list
+          await client.updateCollection(
+            chat._class,
+            chat.space,
+            chat._id,
+            chat.attachedTo,
+            chat.attachedToClass,
+            'chats',
+            { hidden: true }
+          )
+          await resetChunterLocIfEqual(_id)
         }
       })
-    } else if (chat != null && !chat.hidden) {
+    } else if (!isChannel && chat != null && !chat.hidden) {
       result.push({
         icon: view.icon.EyeCrossed,
         label: chunter.string.HideFromChatList,
@@ -186,7 +213,7 @@
             'chats',
             { hidden: true }
           )
-          await resetChunterLocIfEqual(object._id)
+          await resetChunterLocIfEqual(_id)
         }
       })
     }
@@ -214,7 +241,7 @@
   withIconBackground={item.withIconBackground}
   iconSize={item.iconSize}
   {isSelected}
-  iconProps={{ ...item.iconProps, value: item.object }}
+  iconProps={item.iconProps}
   {count}
   countColor={(unread?.notifiedMessagesCount ?? 0) === 0 ? 'gray' : 'red'}
   title={item.title}
@@ -225,7 +252,7 @@
   muted={setting?.mode === 'mute'}
   {pressed}
   on:click={() => {
-    const select = { chat: item.chat, object: item.object }
+    const select = { chat: item.chat, preview: item.preview }
     dispatch('select', select)
   }}
   on:contextmenu={handleContextMenu}

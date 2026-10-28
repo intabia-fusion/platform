@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Doc, Ref, Space } from '@hcengineering/core'
+  import type { Class, Doc, DocPreview, Ref, Space } from '@hcengineering/core'
   import core, { getCurrentAccount } from '@hcengineering/core'
   import ui, {
     defineSeparators,
@@ -44,11 +44,14 @@
   import SearchPanel from './chat/search/SearchPanel.svelte'
   import SearchInputBox from './chat/search/SearchInputBox.svelte'
   import SearchFilterBar from './chat/search/SearchFilterBar.svelte'
-  import { isThreadMessage } from '../utils'
+  import { getChatTarget, isThreadMessage, type ChatTarget } from '../utils'
   import { openSearchResult } from '../navigation'
   import type { ChatSearchFilters, SearchResultRow } from '../search/types'
 
-  export let object: Doc
+  export let _id: Ref<Doc>
+  export let _class: Ref<Class<Doc>>
+  export let object: Doc | undefined = undefined
+  export let preview: DocPreview | undefined = undefined
   export let autofocus = true
   export let embedded: boolean = false
   export let readonly: boolean = false
@@ -78,20 +81,37 @@
     navigate(loc)
   }
 
-  function isReadonly (object: Doc, readonly: boolean): boolean {
-    return hierarchy.isDerived(object._class, core.class.Space) ? readonly || (object as Space).archived : readonly
+  function getTarget (
+    _id: Ref<Doc>,
+    _class: Ref<Class<Doc>>,
+    object: Doc | undefined,
+    preview: DocPreview | undefined
+  ): ChatTarget | undefined {
+    if (object != null) return getChatTarget(object)
+    if (hierarchy.isDerived(_class, core.class.Space)) return { _id, _class, space: _id as Ref<Space> }
+    if (preview != null) return { _id, _class, space: preview.space }
+    return undefined
   }
+
+  $: target = getTarget(_id, _class, object, preview)
+  $: chatReadonly =
+    readonly ||
+    (hierarchy.isDerived(_class, core.class.Space) &&
+      ((object as Space | undefined)?.archived ?? preview?.archived) === true)
+  // Whether a space is archived is known with its document or preview: no input to send into it before
+  $: withInput = !hierarchy.isDerived(_class, core.class.Space) || object != null || preview != null
   $: showJoinOverlay = shouldShowJoinOverlay(object)
-  $: isDocChat = !hierarchy.isDerived(object._class, chunter.class.ChunterSpace)
+  $: isDocChat = !hierarchy.isDerived(_class, chunter.class.ChunterSpace)
   $: withAside =
-    !embedded && !isThreadOpened && !hierarchy.isDerived(object._class, chunter.class.DirectMessage) && !showJoinOverlay
+    !embedded && !isThreadOpened && !hierarchy.isDerived(_class, chunter.class.DirectMessage) && !showJoinOverlay
 
   function toChannel (object: Doc): Channel {
     return object as Channel
   }
 
-  function shouldShowJoinOverlay (object: Doc): boolean {
-    if (hierarchy.isDerived(object._class, core.class.Space)) {
+  // Known with the document: the messages show until then
+  function shouldShowJoinOverlay (object: Doc | undefined): boolean {
+    if (object != null && hierarchy.isDerived(object._class, core.class.Space)) {
       const space = object as Space
 
       return !space.members.includes(acc.uuid)
@@ -102,7 +122,7 @@
 
   let joining = false
   async function join (): Promise<void> {
-    if (joining) return
+    if (object == null || joining) return
     joining = true
     try {
       await client.update(object as Space, { $push: { members: acc.uuid } })
@@ -139,9 +159,9 @@
     lastQuery = searchQuery
     searchDismissed = false
   }
-  $: searchSpace = isDocChat ? undefined : (object._id as Ref<Space>)
-  $: searchAttachedTo = isDocChat ? object._id : undefined
-  $: searchMembersOf = isDocChat ? object.space : (object._id as Ref<Space>)
+  $: searchSpace = isDocChat ? undefined : (_id as Ref<Space>)
+  $: searchAttachedTo = isDocChat ? _id : undefined
+  $: searchMembersOf = target?.space
 
   function openSearch (initial: string = ''): void {
     searchQuery = initial
@@ -193,9 +213,9 @@
   let objectChatPanel: ObjectChatPanel | undefined
   let prevObjectId: Ref<Doc> | undefined = undefined
 
-  $: if (prevObjectId !== object._id) {
-    prevObjectId = object._id
-    objectChatPanel = hierarchy.classHierarchyMixin(object._class, chunter.mixin.ObjectChatPanel)
+  $: objectChatPanel = hierarchy.classHierarchyMixin(_class, chunter.mixin.ObjectChatPanel)
+  $: if (prevObjectId !== _id) {
+    prevObjectId = _id
     isAsideShown = isAsideShown ?? objectChatPanel?.openByDefault === true
     closeSearch()
   }
@@ -203,16 +223,19 @@
 
 <svelte:window on:keydown={handleKeydown} />
 
-<Presence {object} />
+{#if object != null}
+  <Presence {object} />
+{/if}
 
 {#if mobileThread !== undefined}
   <ThreadView _id={mobileThread} withBackButton on:close={closeThread} />
 {:else}
   <div class="popupPanel">
     <ChannelHeader
-      _id={object._id}
-      _class={object._class}
+      {_id}
+      {_class}
       {object}
+      {preview}
       {withAside}
       canOpen={isDocChat}
       allowClose={embedded}
@@ -272,8 +295,17 @@
 
     <div class="popupPanel-body" class:asideShown={withAside && isAsideShown}>
       <div class="popupPanel-body__main searchHost">
-        <FadeSwap key={object._id} item={object} let:item let:current let:revealed let:onReady>
-          {#if !isReadonly(item, readonly) && shouldShowJoinOverlay(item)}
+        <FadeSwap
+          key={_id}
+          item={{ target, object, readonly: chatReadonly, withInput }}
+          let:item
+          let:current
+          let:revealed
+          let:onReady
+        >
+          {#if item.target == null}
+            <!-- A document chat opened by a link: its messages need the space the document brings -->
+          {:else if item.readonly !== true && shouldShowJoinOverlay(item.object)}
             <div class="body h-full w-full clear-mins flex-center">
               <div class="joinOverlay">
                 <div class="an-element__label header">
@@ -289,8 +321,10 @@
           {:else}
             <!-- The outgoing channel neither follows the location (it would jump to a message it lacks) nor reads. -->
             <ChannelComponent
-              readonly={isReadonly(item, readonly)}
-              object={item}
+              readonly={item.readonly}
+              withInput={item.withInput}
+              target={item.target}
+              object={item.object}
               syncLocation={current}
               freeze={current !== true}
               autofocus={autofocus && !searchOpened && current}
@@ -315,7 +349,7 @@
         {/if}
       </div>
 
-      {#if withAside && isAsideShown}
+      {#if withAside && isAsideShown && object != null}
         <Separator name="aside" float={false} index={0} />
         <div class="popupPanel-body__aside" class:float={false} class:shown={withAside && isAsideShown}>
           <Separator name="aside" float index={0} />

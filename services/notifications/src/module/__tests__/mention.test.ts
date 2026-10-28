@@ -42,9 +42,7 @@ function createEmptyTxCache (): TxCache {
   return {
     titleByDoc: new Map(),
     urlByDoc: new Map(),
-    labelByDoc: new Map(),
     identifierByDoc: new Map(),
-    iconByDoc: new Map(),
     templates: new Map()
   }
 }
@@ -95,7 +93,7 @@ jest.mock('@hcengineering/core', () => {
 })
 
 const mockGetBaseDisplayParams = jest.fn()
-const mockGetObjectDisplayData = jest.fn()
+const mockGetContextRefs = jest.fn()
 const mockGetMode = jest.fn()
 const mockGetTxNotifyProviders = jest.fn()
 const mockIsMuted = jest.fn()
@@ -108,7 +106,7 @@ const mockGetPushGroup = jest.fn()
 jest.mock('../../utils/utils', () => ({
   getPushGroup: (...args: any[]) => mockGetPushGroup(...args),
   getBaseDisplayParams: (...args: any[]) => mockGetBaseDisplayParams(...args),
-  getObjectDisplayData: (...args: any[]) => mockGetObjectDisplayData(...args),
+  getContextRefs: (...args: any[]) => mockGetContextRefs(...args),
   getMode: (...args: any[]) => mockGetMode(...args),
   getTxNotifyProviders: (...args: any[]) => mockGetTxNotifyProviders(...args),
   isMuted: (...args: any[]) => mockIsMuted(...args),
@@ -184,6 +182,7 @@ describe('mention module', () => {
       getUserStatuses: jest.fn(),
       getPushSubscriptions: jest.fn().mockResolvedValue([]),
       getDoc: jest.fn(),
+      getDocPreviewId: jest.fn().mockResolvedValue('preview-1'),
       getContext: jest.fn()
     }
 
@@ -197,7 +196,7 @@ describe('mention module', () => {
     mockMarkupToJSON.mockReset()
     mockMarkupToText.mockReset()
     mockGetBaseDisplayParams.mockReset()
-    mockGetObjectDisplayData.mockReset()
+    mockGetContextRefs.mockReset()
     mockGetMode.mockReset()
     mockGetTxNotifyProviders.mockReset()
     mockIsMuted.mockReset()
@@ -209,7 +208,7 @@ describe('mention module', () => {
     // Default mock setups
     ;(global as any).mockGenerateId.mockReturnValue('gen-id')
     mockGetBaseDisplayParams.mockResolvedValue({ intlParams: { doc: 'doc' }, intlParamsNotLocalized: {} })
-    mockGetObjectDisplayData.mockResolvedValue({ objectTitle: 'Object Title' })
+    mockGetContextRefs.mockResolvedValue({ preview: 'preview-1' })
     mockGetMode.mockReturnValue('all')
     mockGetTxNotifyProviders.mockResolvedValue({})
     mockIsMuted.mockReturnValue(false)

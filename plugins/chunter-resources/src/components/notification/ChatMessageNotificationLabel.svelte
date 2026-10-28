@@ -13,39 +13,39 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Component, Icon, Label, tooltip } from '@hcengineering/ui'
+  import type { IconSize } from '@hcengineering/ui'
+  import { Icon, Label, languageStore, tooltip } from '@hcengineering/ui'
   import type { DocNotifyContext } from '@hcengineering/notification'
   import notification from '@hcengineering/notification'
-  import { getClient, IconWithEmoji } from '@hcengineering/presentation'
-  import type { Class, Doc, Ref } from '@hcengineering/core'
-  import { classIcon } from '@hcengineering/view-resources'
+  import { getClient } from '@hcengineering/presentation'
+  import type { Class, Doc, Ref, WithLookup } from '@hcengineering/core'
+  import { contextPreview, PreviewIcon, previewTitle } from '@hcengineering/view-resources'
   import type { ChatMessage, ThreadMessage } from '@hcengineering/chunter'
   import contact from '@hcengineering/contact'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import type { ActivityMessageLite } from '@hcengineering/activity'
-  import view from '@hcengineering/view'
 
   import chunter from '../../plugin'
   import ChatMessagePreview from '../chat-message/ChatMessagePreview.svelte'
   import ThreadMessagePreview from '../threads/ThreadMessagePreview.svelte'
 
-  export let context: DocNotifyContext<ChatMessage>
+  export let context: WithLookup<DocNotifyContext<ChatMessage>>
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
 
   let message: ActivityMessageLite<ChatMessage> | undefined = undefined
-  let channelTitle: string | undefined = undefined
-
-  $: message = context.object as ActivityMessageLite<ChatMessage>
+  $: message = context.message as ActivityMessageLite<ChatMessage>
 
   $: isThread = hierarchy.isDerived(context.objectClass, chunter.class.ThreadMessage)
-  $: channelTitle =
-    context.parentObjectClass != null &&
-    hierarchy.isDerived(context.parentObjectClass, chunter.class.Channel) &&
-    (context.parentObjectTitle ?? '').startsWith('#')
-      ? context.parentObjectTitle?.slice(1)
-      : (context.parentObjectIdentifier ?? context.parentObjectTitle)
+
+  // The preview of a thread's context is the one of the channel the thread is in
+  $: previewStore = contextPreview(context)
+  $: preview = $previewStore
+
+  // An issue goes by its identifier, anything else by its title
+  $: titleStore = previewTitle(client, preview, $languageStore)
+  $: channelTitle = preview?.identifier ?? $titleStore
 
   function toThread (message: ChatMessage): ActivityMessageLite<ThreadMessage> {
     return message as ActivityMessageLite<ThreadMessage>
@@ -56,11 +56,8 @@
     return hierarchy.isDerived(_class, contact.class.Person) || hierarchy.isDerived(_class, chunter.class.DirectMessage)
   }
 
-  $: iconMixin =
-    context.parentObjectClass != null
-      ? hierarchy.classHierarchyMixin(context.parentObjectClass, view.mixin.ObjectIcon)
-      : undefined
-  $: iconSize = isAvatarIcon(context?.parentObjectClass) ? 'tiny' : 'small'
+  let iconSize: IconSize = 'small'
+  $: iconSize = isAvatarIcon(preview?.objectClass) ? 'tiny' : 'small'
 </script>
 
 <span class="flex-presenter flex-gap-1 header">
@@ -68,30 +65,11 @@
   <span class="lower">
     <Label label={chunter.string.In} />
   </span>
-  <span
-    class="flex-presenter flex-gap-0-5"
-    use:tooltip={channelTitle != null ? { label: getEmbeddedLabel(channelTitle) } : {}}
-  >
-    {#if iconMixin}
-      <Component
-        is={iconMixin.component}
-        props={{
-          ...context.parentObjectIcon?.props,
-          asset: context.parentObjectIcon?.asset,
-          emoji: context.parentObjectIcon?.emoji,
-          size: iconSize
-        }}
-        showLoading={false}
-      />
-    {:else if context.parentObjectIcon?.emoji}
-      <IconWithEmoji icon={context.parentObjectIcon.emoji} size="small" />
+  <span class="flex-presenter flex-gap-0-5" use:tooltip={{ label: getEmbeddedLabel(channelTitle) }}>
+    {#if preview != null}
+      <PreviewIcon value={preview} size={iconSize} fallback={notification.icon.Notifications} />
     {:else}
-      <Icon
-        icon={context.parentObjectIcon?.asset ??
-          classIcon(client, context.parentObjectClass) ??
-          notification.icon.Notifications}
-        size="small"
-      />
+      <Icon icon={notification.icon.Notifications} size={iconSize} />
     {/if}
     <span class="overflow-label ml-0-5">
       {channelTitle}

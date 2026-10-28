@@ -700,6 +700,36 @@ describe('PostgreSQL storage.ts coverage', () => {
       expect(updated?.rate).toBe(15)
     })
 
+    it('rawUpdate stores what an operator leaves in a column, not its operand', async () => {
+      const id = await operations.createDoc(taskPlugin.class.Task, '' as Ref<Space>, {
+        name: 'to-inc-column',
+        description: ''
+      })
+      const before = await client.findOne<Task>(taskPlugin.class.Task, { _id: id })
+
+      await serverStorage.rawUpdate<Task>('test-task' as Domain, { _id: id }, { $inc: { modifiedOn: 1000 } } as any)
+
+      const updated = await client.findOne<Task>(taskPlugin.class.Task, { _id: id })
+      expect(updated?.modifiedOn).toBe((before?.modifiedOn ?? 0) + 1000)
+    })
+
+    it('rawUpdate unsets a nullable column to NULL and a NOT NULL one to the dummy of an insert', async () => {
+      const id = await operations.createDoc(taskPlugin.class.Task, '' as Ref<Space>, {
+        name: 'to-unset-columns',
+        description: ''
+      })
+
+      await serverStorage.rawUpdate<Task>(
+        'test-task' as Domain,
+        { _id: id },
+        { $unset: { createdBy: '', modifiedBy: '' } } as any
+      )
+
+      const updated = await client.findOne<Task>(taskPlugin.class.Task, { _id: id })
+      expect(updated?.createdBy ?? null).toBeNull()
+      expect(updated?.modifiedBy).toBe('')
+    })
+
     it('rawDeleteMany removes matching documents', async () => {
       await operations.createDoc(taskPlugin.class.Task, '' as Ref<Space>, { name: 'del-1', description: '' })
       await operations.createDoc(taskPlugin.class.Task, '' as Ref<Space>, { name: 'del-2', description: '' })

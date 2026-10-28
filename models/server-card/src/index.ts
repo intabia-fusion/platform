@@ -124,6 +124,11 @@ export function createModel (builder: Builder): void {
     contentField: 'content'
   })
 
+  builder.mixin(card.class.Card, core.class.Class, serverActivity.mixin.IconPresenter, {
+    presenter: serverActivity.function.FieldsIconPresenter,
+    triggerFields: ['icon', 'color']
+  })
+
   builder.mixin(card.class.Card, core.class.Class, serverActivity.mixin.UrlPresenter, {
     presenter: serverCard.function.CardUrlPresenter
   })

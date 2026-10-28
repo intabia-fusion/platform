@@ -237,9 +237,9 @@
     "ChannelNotificationText": "{sender} ha inviato un messaggio in {doc}: \n\n {message}",
     "ChannelNotificationHtml": "<p><b>{sender}</b> ha inviato un messaggio in {doc}:</p> {message} <p>{link}</p>",
     "ChannelNotificationSubject": "Hai un nuovo messaggio in {doc}",
-    "JoinChannelNotificationText": "Sei stato aggiunto a #{doc}",
-    "JoinChannelNotificationHtml": "<p>Sei stato aggiunto a <b>#{doc}</b></p> <p>{link}</p>",
-    "JoinChannelNotificationSubject": "Sei stato aggiunto a #{doc}",
+    "JoinChannelNotificationText": "Sei stato aggiunto a {doc}",
+    "JoinChannelNotificationHtml": "<p>Sei stato aggiunto a <b>{doc}</b></p> <p>{link}</p>",
+    "JoinChannelNotificationSubject": "Sei stato aggiunto a {doc}",
     "ThreadNotificationText": "{sender} ha risposto a {doc}: \n\n{message}",
     "ThreadNotificationHtml": "<p><b>{sender}</b> ha risposto a {doc}:</p><p>{message}</p><p>{link}</p>",
     "ThreadNotificationSubject": "Nuova risposta a {doc}"

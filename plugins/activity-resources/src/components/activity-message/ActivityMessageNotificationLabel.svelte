@@ -13,67 +13,54 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Component, Icon, Label, tooltip } from '@hcengineering/ui'
+  import { Icon, Label, languageStore, tooltip } from '@hcengineering/ui'
   import type { DocNotifyContext } from '@hcengineering/notification'
   import notification from '@hcengineering/notification'
   import type { ActivityMessage, ActivityMessageLite } from '@hcengineering/activity'
   import activity from '@hcengineering/activity'
-  import { getClient, IconWithEmoji } from '@hcengineering/presentation'
-  import { classIcon } from '@hcengineering/view-resources'
+  import type { WithLookup } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
+  import { classIcon, contextPreview, PreviewIcon, previewTitle } from '@hcengineering/view-resources'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import view from '@hcengineering/view'
 
   import ActivityMessagePreview from './ActivityMessagePreview.svelte'
 
-  export let context: DocNotifyContext<ActivityMessage>
+  export let context: WithLookup<DocNotifyContext<ActivityMessage>>
 
   const client = getClient()
-  const hierarchy = client.getHierarchy()
 
   let message: ActivityMessageLite | undefined = undefined
-  $: message = context.object as ActivityMessageLite
+  $: message = context.message as ActivityMessageLite
 
-  let title: string | undefined = undefined
-  $: title = context.parentObjectIdentifier ?? context.parentObjectTitle
+  // The preview of a thread's context is the one of the document the thread is in
+  $: previewStore = contextPreview(context)
+  $: preview = $previewStore
 
-  $: iconMixin =
-    context.parentObjectClass != null
-      ? hierarchy.classHierarchyMixin(context.parentObjectClass, view.mixin.ObjectIcon)
-      : undefined
+  $: titleStore = previewTitle(client, preview, $languageStore)
+  $: title = preview?.identifier ?? $titleStore
+
+  // A thread in a document without a preview (an event, a to-do) is named by the class of that document
+  $: parentClass = context.preview == null ? message?.attachedToClass : undefined
+  $: parentLabel = parentClass != null ? client.getHierarchy().findClass(parentClass)?.label : undefined
 </script>
 
 <span class="flex-presenter flex-gap-1 font-semi-bold">
   <Label label={activity.string.Thread} />
-  {#if title}
+  {#if title && preview != null}
     <span class="lower">
       <Label label={activity.string.In} />
     </span>
-    <span
-      class="flex-presenter flex-gap-0-5"
-      use:tooltip={title != null ? { label: getEmbeddedLabel(title) } : undefined}
-    >
-      {#if iconMixin}
-        <Component
-          is={iconMixin.component}
-          props={{
-            ...context.parentObjectIcon?.props,
-            asset: context.parentObjectIcon?.asset,
-            emoji: context.parentObjectIcon?.emoji,
-            size: 'small'
-          }}
-          showLoading={false}
-        />
-      {:else if context.parentObjectIcon?.emoji}
-        <IconWithEmoji icon={context.parentObjectIcon.emoji} size="small" />
-      {:else}
-        <Icon
-          icon={context.parentObjectIcon?.asset ??
-            classIcon(client, context.parentObjectClass) ??
-            notification.icon.Notifications}
-          size="small"
-        />
-      {/if}
+    <span class="flex-presenter flex-gap-0-5" use:tooltip={{ label: getEmbeddedLabel(title) }}>
+      <PreviewIcon value={preview} size="small" fallback={notification.icon.Notifications} />
       {title}
+    </span>
+  {:else if parentLabel != null}
+    <span class="lower">
+      <Label label={activity.string.In} />
+    </span>
+    <span class="flex-presenter flex-gap-0-5">
+      <Icon icon={classIcon(client, parentClass) ?? notification.icon.Notifications} size="small" />
+      <Label label={parentLabel} />
     </span>
   {/if}
 </span>

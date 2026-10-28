@@ -487,6 +487,11 @@ export const DOMAIN_COLLABORATOR = 'collaborator' as Domain
 /**
  * @public
  */
+export const DOMAIN_DOC_PREVIEW = 'doc-preview' as Domain
+
+/**
+ * @public
+ */
 export interface TransientConfiguration extends Class<Doc> {
   // If set will not store transient objects into memdb
   broadcastOnly: boolean
@@ -1028,6 +1033,36 @@ export interface ClassCollaborators<T extends Doc> extends Doc {
 
 export interface Collaborator extends AttachedDoc {
   collaborator: AccountUuid
+}
+
+/**
+ * What a list shows of a document without loading it: one per document with activity, written by
+ * triggers only. The `_id` is its own; `objectDomain` + `objectId` are unique per workspace.
+ */
+export interface DocPreview extends Doc {
+  objectId: Ref<Doc>
+  objectClass: Ref<Class<Doc>>
+  objectDomain: Domain
+  title: string
+  identifier?: string
+  label?: IntlString
+  icon?: DocPreviewIcon
+  archived: boolean
+  props?: Record<string, any>
+}
+
+/**
+ * What a list draws of a preview; a copy of it stays with the one who can no longer read the preview.
+ */
+export type PreviewSnapshot = Pick<
+  DocPreview,
+  'objectId' | 'objectClass' | 'title' | 'identifier' | 'label' | 'icon' | 'props' | 'modifiedOn'
+>
+
+export interface DocPreviewIcon {
+  asset?: Asset
+  emoji?: number | number[]
+  props?: Record<string, any>
 }
 
 /**

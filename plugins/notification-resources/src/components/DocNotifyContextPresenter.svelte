@@ -13,16 +13,25 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import type { WithLookup } from '@hcengineering/core'
   import type { DocNotifyContext } from '@hcengineering/notification'
+  import { getClient } from '@hcengineering/presentation'
+  import { languageStore } from '@hcengineering/ui'
+  import { contextPreview, previewTitle } from '@hcengineering/view-resources'
 
   import NotifyContextIcon from './NotifyContextIcon.svelte'
 
-  export let value: DocNotifyContext
+  export let value: WithLookup<DocNotifyContext>
+
+  const client = getClient()
+
+  $: previewStore = contextPreview(value)
+  $: titleStore = previewTitle(client, $previewStore, $languageStore)
 </script>
 
 <div class="flex-presenter">
   <NotifyContextIcon {value} size="small" />
   <div class="mr-4" />
 
-  {value.objectTitle}
+  {$titleStore}
 </div>

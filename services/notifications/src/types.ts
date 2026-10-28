@@ -52,7 +52,6 @@ import { Employee, SocialIdentity } from '@hcengineering/contact'
 import { StorageAdapter } from '@hcengineering/storage'
 import { Receiver } from '@hcengineering/server-notification'
 import { UserMentionInfo } from '@hcengineering/activity'
-import { IntlString } from '@hcengineering/platform'
 import type { QueueTopic } from '@hcengineering/server-core'
 import type { HeldPush, PendingPushHolder } from './pendingPush'
 
@@ -138,23 +137,9 @@ export interface Result {
 export interface TxCache {
   titleByDoc: Map<Ref<Doc>, Partial<Record<AccountUuid | '', string>>>
   urlByDoc: Map<Ref<Doc>, string>
-  labelByDoc: Map<Ref<Doc>, IntlString>
   identifierByDoc: Map<Ref<Doc>, string>
-  iconByDoc: Map<Ref<Doc>, Partial<Record<AccountUuid | '', DocNotifyContext['objectIcon']>>>
   templates: Map<string, QueueNotifyMessage['template']>
 }
 
-export type ObjectDisplayData = Pick<
-  DocNotifyContext,
-  | 'objectTitle'
-  | 'objectIdentifier'
-  | 'objectIcon'
-  | 'objectLabel'
-  | 'object'
-  | 'parentObjectId'
-  | 'parentObjectClass'
-  | 'parentObjectTitle'
-  | 'parentObjectIdentifier'
-  | 'parentObjectLabel'
-  | 'parentObjectIcon'
->
+// What a context refers to for display: the preview of its document and the thread's own message
+export type ContextRefs = Pick<DocNotifyContext, 'preview' | 'message'>

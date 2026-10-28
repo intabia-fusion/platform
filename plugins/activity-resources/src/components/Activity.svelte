@@ -54,6 +54,11 @@
   const activityMessagesQuery = createQuery()
   const refsQuery = createQuery()
 
+  $: target = { _id: object._id, _class: object._class, space: getSpace(object) }
+  $: parentMessage = hierarchy.isDerived(object._class, activity.class.ActivityMessage)
+    ? (object as ActivityMessage)
+    : undefined
+
   let enabledFilters: Ref<ActivityMessagesFilter>[] = []
   let extensions: ActivityExtension[] = []
 
@@ -317,7 +322,7 @@
         <ActivityExtensionComponent
           kind="input"
           {extensions}
-          props={{ object, boundary, focusIndex, withTypingInfo: true, onKeyDown: handleKeyDown }}
+          props={{ target, parentMessage, boundary, focusIndex, withTypingInfo: true, onKeyDown: handleKeyDown }}
         />
       </div>
     {/if}
@@ -344,7 +349,7 @@
         <ActivityExtensionComponent
           kind="input"
           {extensions}
-          props={{ object, boundary, focusIndex, withTypingInfo: true, onKeyDown: handleKeyDown }}
+          props={{ target, parentMessage, boundary, focusIndex, withTypingInfo: true, onKeyDown: handleKeyDown }}
         />
       </div>
     {/if}

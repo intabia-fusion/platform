@@ -21,17 +21,15 @@
   import type { ChatMessage, ThreadMessage } from '@hcengineering/chunter'
   import chunter, { ChunterEvents } from '@hcengineering/chunter'
   import type { Class, Doc, Ref, Markup, WithLookup, DocumentUpdate, Space } from '@hcengineering/core'
-  import core, { generateId, getCurrentAccount, type CommitResult } from '@hcengineering/core'
+  import { generateId, getCurrentAccount, type CommitResult } from '@hcengineering/core'
   import { createQuery, DraftController, draftsStore, getClient } from '@hcengineering/presentation'
   import { EmptyMarkup, isEmptyMarkup } from '@hcengineering/text'
   import type { RefAction } from '@hcengineering/text-editor'
   import type { Attachment } from '@hcengineering/attachment'
   import { createEventDispatcher, onDestroy } from 'svelte'
-  import { getObjectId } from '@hcengineering/view-resources'
   import { getResource } from '@hcengineering/platform'
   import ui, { showPopup, ThrottledCaller } from '@hcengineering/ui'
   import {
-    getSpace,
     editingMessageStore,
     AppletPreview,
     getAppletDraftExpiry,
@@ -40,15 +38,16 @@
   import { setTyping, clearTyping } from '@hcengineering/presence-resources'
 
   import ReplyToMessagePresenter from '../ReplyToMessagePresenter.svelte'
-  import { getChannelSpace } from '../../utils'
   import { getForwardData } from '../../forwardData'
+  import type { ChatTarget } from '../../utils'
   import { isMessageContentChanged, passesArrowKeys } from '../../chatInput'
   import { replyingToMessageStore } from '../../stores'
   import ChannelTypingInfo from '../ChannelTypingInfo.svelte'
   import AIRequestProgress from '../AIRequestProgress.svelte'
   import VoiceRecordingHud from './VoiceRecordingHud.svelte'
 
-  export let object: Doc
+  export let target: ChatTarget
+  export let parentMessage: ActivityMessage | undefined = undefined
   export let chatMessage: ChatMessage | undefined = undefined
   export let shouldSaveDraft: boolean = true
   export let focusIndex: number = -1
@@ -68,13 +67,13 @@
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
-  const _class: Ref<Class<ChatMessage>> = hierarchy.isDerived(object._class, activity.class.ActivityMessage)
+  const _class: Ref<Class<ChatMessage>> = hierarchy.isDerived(target._class, activity.class.ActivityMessage)
     ? chunter.class.ThreadMessage
     : chunter.class.ChatMessage
   const createdMessageQuery = createQuery()
   const replyMessageQuery = createQuery()
 
-  const draftKey = `${object._id}_${_class}`
+  const draftKey = `${target._id}_${_class}`
   const draftController = new DraftController<MessageDraft>(draftKey)
   const currentDraft = shouldSaveDraft ? $draftsStore[draftKey] : undefined
 
@@ -166,7 +165,7 @@
   }
 
   $: if (currentDraft != null) {
-    createdMessageQuery.query(_class, { _id, space: getSpace(object) }, (result: ChatMessage[]) => {
+    createdMessageQuery.query(_class, { _id, space: target.space }, (result: ChatMessage[]) => {
       if (result.length > 0 && _id !== chatMessage?._id) {
         // Ouch we have got comment with same id created already.
         clear()
@@ -201,18 +200,16 @@
   const acc = getCurrentAccount()
   const throttle = new ThrottledCaller(500)
 
-  $: space = hierarchy.isDerived(object._class, core.class.Space) ? (object._id as Ref<Space>) : object.space
-
   async function deleteTypingInfo (): Promise<void> {
     if (!withTypingInfo) return
-    void clearTyping(acc.primarySocialId, object._id)
+    void clearTyping(acc.primarySocialId, target._id)
   }
 
   async function updateTypingInfo (): Promise<void> {
     if (!withTypingInfo) return
 
     throttle.call(() => {
-      void setTyping(acc.primarySocialId, object._id, space)
+      void setTyping(acc.primarySocialId, target._id, target.space)
     })
   }
 
@@ -237,16 +234,23 @@
     currentMessage.attachments = attachments
   }
 
+  // An identifier like FUSIO-123 needs the document; a chat space or a class without its own link id goes by the id
   async function handleCreate (event: CustomEvent, _id: Ref<ChatMessage>, applets: AppletDraft[]): Promise<void> {
     try {
-      const res = await createMessage(event, _id, `chunter.create.${_class} ${object._class}`, applets)
+      const res = await createMessage(event, _id, `chunter.create.${_class} ${target._class}`, applets)
 
       console.log(`create.${_class} measure`, res.serverTime, res.time)
-      const objectId = await getObjectId(object, client.getHierarchy())
-      Analytics.handleEvent(ChunterEvents.MessageCreated, { ok: res.result, objectId, objectClass: object._class })
+      Analytics.handleEvent(ChunterEvents.MessageCreated, {
+        ok: res.result,
+        objectId: target._id,
+        objectClass: target._class
+      })
     } catch (err: any) {
-      const objectId = await getObjectId(object, client.getHierarchy())
-      Analytics.handleEvent(ChunterEvents.MessageCreated, { ok: false, objectId, objectClass: object._class })
+      Analytics.handleEvent(ChunterEvents.MessageCreated, {
+        ok: false,
+        objectId: target._id,
+        objectClass: target._class
+      })
       Analytics.handleError(err)
     }
   }
@@ -254,11 +258,13 @@
   async function handleEdit (event: CustomEvent): Promise<void> {
     try {
       await editMessage(event)
-      const objectId = await getObjectId(object, client.getHierarchy())
-      Analytics.handleEvent(ChunterEvents.MessageEdited, { ok: true, objectId, objectClass: object._class })
+      Analytics.handleEvent(ChunterEvents.MessageEdited, { ok: true, objectId: target._id, objectClass: target._class })
     } catch (err: any) {
-      const objectId = await getObjectId(object, client.getHierarchy())
-      Analytics.handleEvent(ChunterEvents.MessageEdited, { ok: false, objectId, objectClass: object._class })
+      Analytics.handleEvent(ChunterEvents.MessageEdited, {
+        ok: false,
+        objectId: target._id,
+        objectClass: target._class
+      })
       Analytics.handleError(err)
     }
   }
@@ -294,16 +300,15 @@
   ): Promise<CommitResult> {
     const { message, attachments } = event.detail
     const operations = client.apply(undefined, msg)
-    const messageSpace = _class === chunter.class.ThreadMessage ? (object as ActivityMessage).space : getSpace(object)
+    const messageSpace = target.space
 
     if (_class === chunter.class.ThreadMessage) {
-      const parentMessage = object as ActivityMessage
-
+      if (parentMessage == null) throw new Error(`A reply to ${target._id} needs its parent message`)
       await operations.addCollection<ActivityMessage, ThreadMessage>(
         chunter.class.ThreadMessage,
         messageSpace,
-        parentMessage._id,
-        parentMessage._class,
+        target._id as Ref<ActivityMessage>,
+        target._class as Ref<Class<ActivityMessage>>,
         'replies',
         {
           message,
@@ -318,8 +323,8 @@
       await operations.addCollection<Doc, ChatMessage>(
         _class,
         messageSpace,
-        object._id,
-        object._class,
+        target._id,
+        target._class,
         collection,
         {
           message,
@@ -407,7 +412,7 @@
   let prevReplyTo: Ref<ActivityMessage>
 
   $: if (
-    $replyingToMessageStore?.attachedTo === object._id &&
+    $replyingToMessageStore?.attachedTo === target._id &&
     currentMessage.forwardedMessage !== $replyingToMessageStore._id
   ) {
     currentMessage.forwardedMessage = $replyingToMessageStore._id
@@ -461,7 +466,7 @@
 </script>
 
 {#if chatMessage === undefined}
-  {#if forwardedMessage?.attachedTo === object._id}
+  {#if forwardedMessage?.attachedTo === target._id}
     <ReplyToMessagePresenter replyTo={forwardedMessage} on:delete={handleReplyMessageDelete} />
   {/if}
 {:else if forwardedMessage !== undefined && currentMessage.forwardedMessage === forwardedMessage._id}
@@ -472,10 +477,10 @@
   {focusIndex}
   bind:this={inputRef}
   bind:content={inputContent}
-  docId={object._id}
-  docClass={object._class}
+  docId={target._id}
+  docClass={target._class}
   {_class}
-  space={getChannelSpace(object._class, object._id, object.space)}
+  space={target.space}
   skipAttachmentsPreload={(currentMessage.attachments ?? 0) === 0}
   bind:objectId={_id}
   {shouldSaveDraft}
@@ -507,7 +512,7 @@
         bind:this={recorder}
         objectId={_id}
         objectClass={_class}
-        space={getChannelSpace(object._class, object._id, object.space)}
+        space={target.space}
         on:audio={onAudioAttachment}
         on:close={() => {
           recording = false
@@ -539,8 +544,8 @@
 
 {#if withTypingInfo}
   <div class="typing-row">
-    <ChannelTypingInfo {object} />
-    <AIRequestProgress {object} />
+    <ChannelTypingInfo objectId={target._id} />
+    <AIRequestProgress objectId={target._id} />
   </div>
 {/if}
 

@@ -430,9 +430,10 @@ abstract class PostgresAdapterBase implements DbAdapter {
           const newAttachedTo = (doc as any).attachedTo
           if (Object.keys(extractedFields).length > 0) {
             for (const key in extractedFields) {
-              const val = (extractedFields as any)[key]
+              // The value the operator left, not its operand; an unset NOT NULL column gets the dummy of an insert
+              const val = (converted as any)[key]
               if (key === 'attachedTo' && val === prevAttachedTo) continue
-              updates.push(`"${key}" = ${params.add(val)}`)
+              updates.push(`"${key}" = ${params.add(val, `::${schemaFields.schema[key].type}`)}`)
             }
           } else if (prevAttachedTo !== undefined && prevAttachedTo !== newAttachedTo) {
             updates.push(`"attachedTo" = ${params.add(newAttachedTo)}`)
@@ -710,6 +711,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
           if (collabSec?.provideAttachedSecurity === true) {
             collabRes += ` OR EXISTS (SELECT 1 FROM ${translateDomain(DOMAIN_COLLABORATOR)} collab_sec WHERE collab_sec."workspaceId" = ${vars.add(this.workspaceId, '::uuid')} AND collab_sec."attachedTo" = ${domain}."attachedTo" AND collab_sec.collaborator = ${accUuidVar})`
           }
+          // TODO: a guest collaborating on a document in a closed space (QMS) cannot read its DocPreview, so the inbox shows no title
         }
         return `AND (${res}${collabRes})`
       }

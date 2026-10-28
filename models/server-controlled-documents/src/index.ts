@@ -65,6 +65,11 @@ export function createModel (builder: Builder): void {
     title: [['title']]
   })
 
+  builder.mixin(documents.class.Document, core.class.Class, serverActivity.mixin.IdentifierPresenter, {
+    presenter: serverDocuments.function.DocumentIdentifierPresenter,
+    triggerFields: ['code']
+  })
+
   builder.mixin(documents.class.ControlledDocument, core.class.Class, serverActivity.mixin.UrlPresenter, {
     presenter: serverDocuments.function.ControlledDocumentUrlPresenter
   })
