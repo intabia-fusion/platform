@@ -1,5 +1,5 @@
-// Board settings page of the tracker (FUSIO-1683), one frame per tab.
-// Imported from the hand-edited fusio-1613.pen by dev/pen/import.mjs; the density samples of the Card tab are kit.IssueCard.
+// Board settings page of the tracker (FUSIO-1683, accepted), one frame per tab.
+// Imported from the hand-edited fusio-1613.pen; the density samples of the Card tab are kit.IssueCard.
 
 await kit.page('Board settings')
 // A condition as in the product: the tinted chip with icons or avatars as values and a separate "+"

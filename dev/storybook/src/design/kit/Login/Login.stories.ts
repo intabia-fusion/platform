@@ -32,7 +32,7 @@ import LoginTitle from './LoginTitle.svelte'
 import LoginWorkspace from './LoginWorkspace.svelte'
 
 const meta: Meta = {
-  title: 'Kit (pen.dev)/Login',
+  title: 'Kit/Login',
   tags: ['!autodocs'],
   parameters: { layout: 'padded', controls: { disable: true } }
 }

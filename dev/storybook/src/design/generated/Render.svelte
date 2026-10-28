@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  // Draws a tree recorded from the Penpot screen scripts: kit components as visual components, primitives as flex divs.
+  // Draws a tree recorded from screen scripts: kit components as visual components, primitives as flex divs.
   import Button from '../kit/Actions/Button.svelte'
   import Menu from '../kit/Actions/Menu.svelte'
   import ButtonGroup from '../kit/Actions/ButtonGroup.svelte'
@@ -478,7 +478,7 @@
     height: 100%;
     overflow: hidden;
   }
-  /* Absolute children are placed from the outer edge of the bordered panel, as in the Penpot kit; flow children stay inside the border */
+  /* Absolute children are placed from the outer edge of the bordered panel; flow children stay inside the border */
   .main-slot {
     box-sizing: border-box;
     width: calc(100% + 2px);

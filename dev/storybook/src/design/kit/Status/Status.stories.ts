@@ -28,7 +28,7 @@ import Steps from './Steps.svelte'
 import FramedSections from '../FramedSections.svelte'
 
 const meta: Meta = {
-  title: 'Kit (pen.dev)/Status',
+  title: 'Kit/Status',
   tags: ['!autodocs'],
   parameters: { layout: 'padded', controls: { disable: true } }
 }

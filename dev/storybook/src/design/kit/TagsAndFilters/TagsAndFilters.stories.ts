@@ -24,7 +24,7 @@ import Tag from './Tag.svelte'
 import FramedSections from '../FramedSections.svelte'
 
 const meta: Meta = {
-  title: 'Kit (pen.dev)/Tags and filters',
+  title: 'Kit/Tags and filters',
   tags: ['!autodocs'],
   parameters: { layout: 'padded', controls: { disable: true } }
 }

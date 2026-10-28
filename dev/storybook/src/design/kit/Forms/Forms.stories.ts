@@ -28,7 +28,7 @@ import Toggle from './Toggle.svelte'
 import FramedSections from '../FramedSections.svelte'
 
 const meta: Meta = {
-  title: 'Kit (pen.dev)/Forms',
+  title: 'Kit/Forms',
   tags: ['!autodocs'],
   parameters: { layout: 'padded', controls: { disable: true } }
 }

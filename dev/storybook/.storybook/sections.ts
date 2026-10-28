@@ -33,7 +33,7 @@ const rootSections: Record<string, SectionId | null> = {
   Activity: 'plugins',
   Attachments: 'plugins',
   Icons: 'plugins',
-  'Kit (pen.dev)': 'screens'
+  'Kit': 'screens'
 }
 
 // Generated screens are top-level stories marked by the tag.

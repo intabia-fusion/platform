@@ -1,5 +1,5 @@
 // Task boards of the tracker (FUSIO-1613, accepted): board view, board switcher, column statuses, kanban with lanes.
-// Imported from the hand-edited fusio-1613.pen by dev/pen/import.mjs; the cards are kit.IssueCard, the card density is its `density`.
+// Imported from the hand-edited fusio-1613.pen; the cards are kit.IssueCard, the card density is its `density`.
 
 const boardIssueStatuses = new Map(DEMO.ru.projects.flatMap((project) => project.issues).map((issue) => [issue.id, issue.status]))
 
