@@ -14,7 +14,18 @@
 //
 
 import type { AccountUuid, Ref, Role } from '@hcengineering/core'
-import { applyRoles, isAccessValid, mergeOwners, OWNER_ROLE, removeFromRoles, rowRoles } from '../projectSettingsLogic'
+import {
+  addMemberOps,
+  applyRoles,
+  changedRoles,
+  isAccessValid,
+  mergeOwners,
+  ownerChangeOps,
+  OWNER_ROLE,
+  removeFromRoles,
+  removeMemberOps,
+  rowRoles
+} from '../projectSettingsLogic'
 
 const acc = (id: string): AccountUuid => id as AccountUuid
 
@@ -70,5 +81,52 @@ describe('member roles', () => {
     const res = applyRoles(acc('a'), [], [acc('a'), acc('x')], { [r1]: undefined })
     expect(res.owners).toEqual(['x'])
     expect(res.assignment[r1]).toBeUndefined()
+  })
+})
+
+describe('access operators', () => {
+  it('adds a member with $push of that account only', () => {
+    expect(addMemberOps(acc('c'))).toEqual({ $push: { members: 'c' } })
+  })
+
+  it('removes a member with $pull from members and owners', () => {
+    expect(removeMemberOps(acc('a'), [acc('a'), acc('b')])).toEqual({
+      $pull: { members: { $in: ['a'] }, owners: { $in: ['a'] } }
+    })
+  })
+
+  it('does not pull a plain member from owners', () => {
+    expect(removeMemberOps(acc('c'), [acc('a')])).toEqual({ $pull: { members: { $in: ['c'] } } })
+  })
+
+  it('promotes a non-member to owner with $push to both lists', () => {
+    expect(ownerChangeOps(acc('c'), false, true, [acc('a')])).toEqual({ $push: { owners: 'c', members: 'c' } })
+  })
+
+  it('promotes a member to owner with $push to owners only', () => {
+    expect(ownerChangeOps(acc('a'), false, true, [acc('a')])).toEqual({ $push: { owners: 'a' } })
+  })
+
+  it('demotes an owner with $pull from owners', () => {
+    expect(ownerChangeOps(acc('a'), true, false, [acc('a')])).toEqual({ $pull: { owners: { $in: ['a'] } } })
+  })
+
+  it('sends nothing when ownership is unchanged', () => {
+    expect(ownerChangeOps(acc('a'), true, true, [acc('a')])).toBeUndefined()
+  })
+})
+
+describe('changedRoles', () => {
+  const r1 = 'r1' as Ref<Role>
+  const r2 = 'r2' as Ref<Role>
+
+  it('keeps only the roles that changed', () => {
+    const prev = { [r1]: [acc('a')], [r2]: [acc('b')] }
+    expect(changedRoles(prev, { [r1]: [acc('a'), acc('c')], [r2]: [acc('b')] })).toEqual({ [r1]: ['a', 'c'] })
+  })
+
+  it('returns undefined when nothing changed, ignoring order and empty vs missing', () => {
+    const prev = { [r1]: [acc('a'), acc('b')], [r2]: undefined }
+    expect(changedRoles(prev, { [r1]: [acc('b'), acc('a')], [r2]: [] })).toBeUndefined()
   })
 })

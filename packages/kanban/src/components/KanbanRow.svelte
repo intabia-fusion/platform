@@ -175,6 +175,9 @@
          the same accent token that the theme provides (avoids abrupt color jumps). */
       box-shadow: inset 0 0 1px 1px var(--primary-edit-border-color, var(--primary-button-default));
     }
+    &.selection:not(.modern):hover {
+      background-color: var(--highlight-hover);
+    }
     &.checked.selection:hover {
       background-color: var(--highlight-select-hover);
     }

@@ -17,11 +17,12 @@
   import { translate } from '@hcengineering/platform'
   import { getClient, isDisabled } from '@hcengineering/presentation'
   import task from '@hcengineering/task'
-  import { statusesWithoutColumn, type Board, type BoardColumn, type Issue } from '@hcengineering/tracker'
+  import { statusesWithoutColumn, type Board, type BoardColumn } from '@hcengineering/tracker'
   import ui, { getEventPositionElement, Icon, Label, Menu, showPopup } from '@hcengineering/ui'
   import { Button, Callout, IconButton, Toggle } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import { statusStore } from '@hcengineering/view-resources'
+  import { StatusCounts } from '../../../boards'
   import tracker from '../../../plugin'
   import IssueStatusIcon from '../../issues/IssueStatusIcon.svelte'
   import ProjectSettingsSection from '../../projects/settings/ProjectSettingsSection.svelte'
@@ -48,20 +49,12 @@
 
   // Issues of the board projects per status, the board filter aside
   let counts = new Map<Ref<Status>, number>()
+  const statusCounts = new StatusCounts()
   let countSeq = 0
   async function countIssues (projects: Board['projects'], ids: Array<Ref<Status>>): Promise<void> {
     const seq = ++countSeq
-    const totals = await Promise.all(
-      ids.map(
-        async (status) =>
-          await client.findAll<Issue>(
-            tracker.class.Issue,
-            { space: { $in: projects }, status },
-            { limit: 1, total: true }
-          )
-      )
-    )
-    if (seq === countSeq) counts = new Map(ids.map((id, i) => [id, totals[i].total]))
+    const res = await statusCounts.load(client, projects, ids)
+    if (seq === countSeq) counts = res
   }
   $: void countIssues(board.projects, [...new Set([...statuses.map((s) => s._id), ...placed])])
 

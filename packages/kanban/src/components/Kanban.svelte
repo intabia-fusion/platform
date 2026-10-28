@@ -288,6 +288,9 @@
     return (members.get(stateKey(state)) ?? [state]).flatMap((m) => getGroupByValues(_groupByDocs, m) ?? [])
   }
 
+  // Card count per column, computed once per update for the WIP limit check of every cell.
+  $: columnCounts = new Map(categories.map((c) => [stateKey(c), columnValues(groupByDocs, c, membersOf).length]))
+
   // The category a card of a merged column really has.
   function cardState (object: Item, column: CategoryType): CategoryType {
     return (
@@ -1282,8 +1285,7 @@
                           (dragCardAvailableCategories === undefined || dragCardAvailableCategories.includes(state))}
                         class:drop-disabled={blocked}
                         class:filled={modern}
-                        class:over-limit={overLimit?.(state, columnValues(groupByDocs, state, membersOf).length) ===
-                          true}
+                        class:over-limit={overLimit?.(state, columnCounts.get(stateKey(state)) ?? 0) === true}
                         data-id="kanban-swimlane-cell"
                         data-swimlane-id={swimLane._id}
                         data-state={stateKey(state)}

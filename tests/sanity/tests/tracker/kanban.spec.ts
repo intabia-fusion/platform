@@ -999,7 +999,16 @@ test.describe('Kanban board', () => {
             timeout: 2000
           })
         }
-        await board.dragCardVia(cardId, [{ over: board.swimLaneCell(otherLane, backlog), check: inOtherLane }], stacked)
+        // Off the left edge before the stack scrolls into view: a pointer left there auto-scrolls the board back
+        const todo = ctx.statuses.get('Todo') as string
+        await board.dragCardVia(
+          cardId,
+          [
+            { over: board.swimLaneCell(otherLane, backlog), check: inOtherLane },
+            { over: board.swimLaneCell(otherLane, todo) }
+          ],
+          stacked
+        )
       })
 
       expect((await client.findOne(tracker.class.Issue, { _id: cardId }))?.priority).toBe(IssuePriority.Low)

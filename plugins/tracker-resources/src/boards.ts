@@ -23,8 +23,10 @@ import core, {
   type DocumentQuery,
   type Ref,
   type Space,
+  type Status,
   type TxOperations
 } from '@hcengineering/core'
+import { setPlatformStatus, unknownError } from '@hcengineering/platform'
 import { createQuery, type LiveQuery } from '@hcengineering/presentation'
 import {
   defaultCardDensity,
@@ -187,4 +189,105 @@ export async function togglePinned (client: TxOperations, board: Ref<Board>): Pr
   const current = await client.findOne(tracker.class.BoardPreference, { attachedTo: board })
   if (current !== undefined) await client.remove(current)
   else await client.createDoc(tracker.class.BoardPreference, core.space.Workspace, { attachedTo: board })
+}
+
+interface PendingEdit {
+  patch: Partial<Data<Board>>
+}
+
+// Settings edits: shown at once, sent one by one. While some are in flight the server echo
+// is held back, otherwise an echo of an earlier edit would erase the later ones.
+export class BoardEditor {
+  private base: Board
+  private latest: Board | undefined
+  private readonly pending: PendingEdit[] = []
+
+  constructor (
+    initial: Board,
+    private readonly client: TxOperations,
+    private readonly onState: (board: Board) => void,
+    private readonly onError: (err: unknown) => void
+  ) {
+    this.base = initial
+  }
+
+  get board (): Board {
+    return this.pending.reduce((b, e) => applyPatch(b, e.patch), this.base)
+  }
+
+  receive (server: Board): void {
+    if (this.pending.length > 0) this.latest = server
+    else this.base = server
+    this.onState(this.board)
+  }
+
+  async edit (patch: Partial<Data<Board>>): Promise<void> {
+    const before = this.board
+    const entry: PendingEdit = { patch }
+    try {
+      applyPatch(before, patch)
+    } catch (err) {
+      this.onError(err)
+      return
+    }
+    this.pending.push(entry)
+    this.onState(this.board)
+    try {
+      await updateBoard(this.client, before, patch)
+      this.base = applyPatch(this.base, patch)
+    } catch (err) {
+      this.onError(err)
+    } finally {
+      this.pending.splice(this.pending.indexOf(entry), 1)
+      if (this.pending.length === 0 && this.latest !== undefined) {
+        this.base = this.latest
+        this.latest = undefined
+      }
+      this.onState(this.board)
+    }
+  }
+}
+
+function applyPatch (board: Board, patch: Partial<Data<Board>>): Board {
+  return { ...board, ...patch, space: spaceAfterPatch(board, patch) }
+}
+
+// Issues of the projects per status, counted by the server; equal inputs reuse the last answer.
+// One count per status: fetching the issues to count them would move every row of the projects
+export class StatusCounts {
+  private key = ''
+  private result: Promise<Map<Ref<Status>, number>> | undefined
+
+  async load (
+    client: TxOperations,
+    projects: Array<Ref<Project>>,
+    ids: Array<Ref<Status>>
+  ): Promise<Map<Ref<Status>, number>> {
+    const unique = [...new Set(ids)]
+    const key = JSON.stringify([[...projects].sort(), [...unique].sort()])
+    if (this.result !== undefined && key === this.key) return await this.result
+    this.key = key
+    this.result = Promise.all(
+      unique.map(
+        async (status) =>
+          await client.findAll<Issue>(
+            tracker.class.Issue,
+            { space: { $in: projects }, status },
+            { limit: 1, total: true }
+          )
+      )
+    ).then((totals) => new Map(unique.map((id, i) => [id, totals[i].total])))
+    this.result.catch(() => {
+      this.result = undefined
+    })
+    return await this.result
+  }
+}
+
+export function canDeleteBoard (board: Board, account: AccountUuid): boolean {
+  return board.author === account
+}
+
+export function reportBoardError (err: unknown): void {
+  void setPlatformStatus(unknownError(err))
 }

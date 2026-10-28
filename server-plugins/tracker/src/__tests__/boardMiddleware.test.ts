@@ -33,7 +33,13 @@ import { BoardMiddleware } from '../boardMiddleware'
 const alice = 'alice' as AccountUuid
 const bob = 'bob' as AccountUuid
 const carol = 'carol' as AccountUuid
-const hierarchy = { isDerived: (a: string, b: string) => a === b }
+// Board and Component share the tracker domain
+const hierarchy = {
+  isDerived: (a: string, b: string) => a === b,
+  findDomain: (_class: string) =>
+    _class === tracker.class.Board || _class === tracker.class.Component ? 'tracker' : undefined
+}
+const personSpaces: Record<string, AccountUuid> = { 'alice-space': alice, 'bob-space': bob }
 
 function board (id: string, data: Partial<Board> = {}): Board {
   return {
@@ -49,8 +55,16 @@ function board (id: string, data: Partial<Board> = {}): Board {
 
 function ctxOf (uuid: AccountUuid, extra: Record<string, unknown> = {}): any {
   return {
-    contextData: { account: { uuid }, contextCache: new Map(), broadcast: { targets: {}, txes: [] }, ...extra }
+    contextData: { account: { uuid }, contextCache: new Map(), broadcast: { targets: {}, txes: [] }, ...extra },
+    newChild: () => ctxOf(uuid, extra)
   }
+}
+
+// As the storage reads: a private PersonSpace and its docs only for its account (and the system)
+function visible (doc: Doc, account: AccountUuid): boolean {
+  if (account === systemAccountUuid) return true
+  const owner = personSpaces[doc._class === contact.class.PersonSpace ? doc._id : doc.space]
+  return owner === undefined || owner === account
 }
 
 async function refusal (promise: Promise<unknown>): Promise<Status> {
@@ -81,9 +95,14 @@ describe('BoardMiddleware', () => {
         passed.push(...txes)
         return {}
       },
-      findAll: async (_ctx: any, _class: string, query: any) => {
+      findAll: async (ctx: any, _class: string, query: any) => {
         const ids: string[] | undefined = query._id?.$in ?? (query._id !== undefined ? [query._id] : undefined)
-        const found = stored.filter((it) => it._class === _class && (ids === undefined || ids.includes(it._id)))
+        const found = stored.filter(
+          (it) =>
+            it._class === _class &&
+            (ids === undefined || ids.includes(it._id)) &&
+            visible(it, ctx.contextData.account.uuid)
+        )
         return toFindResult(found, found.length)
       }
     }
@@ -108,6 +127,55 @@ describe('BoardMiddleware', () => {
       expect(status.params).toMatchObject({ kind: ForbiddenKind.AuthorOnly })
     }
     expect(passed).toEqual([])
+  })
+
+  it('refuses a board the caller cannot read, whatever space the tx names', async () => {
+    // Alice's personal board is hidden from Carol; the tx claims the workspace
+    for (const tx of [update('personal', { title: 'X' }), remove('personal')]) {
+      const status = await refusal(middleware.tx(ctxOf(carol), [tx]))
+      expect(status.params).toMatchObject({ kind: ForbiddenKind.AuthorOnly })
+    }
+    expect(passed).toEqual([])
+  })
+
+  it('refuses a board change sent under another class of its domain', async () => {
+    const spoofed = factory.createTxUpdateDoc(
+      tracker.class.Component,
+      core.space.Workspace,
+      'own' as any,
+      {
+        author: carol
+      } as any
+    )
+    await expect(middleware.tx(ctxOf(carol), [spoofed])).rejects.toThrow(PlatformError)
+    // The author is refused too: a board changes only as a board
+    await expect(middleware.tx(ctxOf(alice), [spoofed])).rejects.toThrow(PlatformError)
+    expect(passed).toEqual([])
+  })
+
+  it('lets a tx of another class of the domain through when its id is no board', async () => {
+    const component = factory.createTxUpdateDoc(
+      tracker.class.Component,
+      core.space.Workspace,
+      'comp' as any,
+      {
+        label: 'C'
+      } as any
+    )
+    await middleware.tx(ctxOf(carol), [component])
+    expect(passed).toHaveLength(1)
+  })
+
+  it('refuses a stranger with Forbidden on a board stored without editors', async () => {
+    stored.push(board('bare', { editors: undefined }))
+    const status = await refusal(middleware.tx(ctxOf(carol), [update('bare', { title: 'X' })]))
+    expect(status.params).toMatchObject({ kind: ForbiddenKind.AuthorOnly })
+  })
+
+  it('lets only the author remove a board', async () => {
+    await expect(middleware.tx(ctxOf(bob), [remove('own')])).rejects.toThrow(PlatformError)
+    await middleware.tx(ctxOf(alice), [remove('own')])
+    expect(passed).toHaveLength(1)
   })
 
   it('refuses a stranger when the batch hides the change among other txes', async () => {

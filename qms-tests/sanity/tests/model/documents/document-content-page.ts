@@ -164,7 +164,7 @@ export class DocumentContentPage extends DocumentCommonPage {
     this.createNewDocument = page.getByRole('button', { name: 'Create new document' })
     this.selectCustom = page.getByText('Custom')
     this.customSpecificReason = page.getByPlaceholder('Specify the reason...')
-    this.nextStepButton = page.getByRole('button', { name: 'Next step' })
+    this.nextStepButton = page.getByRole('button', { name: 'Next', exact: true })
     this.newDocumentTitle = page.getByPlaceholder('New document')
     this.createDraft = page.getByRole('button', { name: 'Create Draft' })
     this.draftNewVersion = page.getByRole('button', { name: 'Draft new version' })

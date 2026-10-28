@@ -15,7 +15,7 @@
 <script lang="ts">
   import type { Data, Ref } from '@hcengineering/core'
   import { getEmbeddedLabel, type Asset, type IntlString } from '@hcengineering/platform'
-  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { createQuery, getClient, isDisabled } from '@hcengineering/presentation'
   import task, { getStates } from '@hcengineering/task'
   import { typeStore } from '@hcengineering/task-resources'
   import type { Board, Project } from '@hcengineering/tracker'
@@ -23,7 +23,7 @@
   import { Button, Dropdown, IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import { statusStore } from '@hcengineering/view-resources'
-  import { boardLocation, spaceAfterPatch, updateBoard } from '../../boards'
+  import { BoardEditor, boardLocation, reportBoardError } from '../../boards'
   import tracker from '../../plugin'
   import CardTab from './settings/CardTab.svelte'
   import ColumnsTab from './settings/ColumnsTab.svelte'
@@ -43,16 +43,28 @@
     { id: 'swimlanes', label: tracker.string.BoardTabSwimlanes, icon: tracker.icon.MyIssues },
     { id: 'quickFilters', label: tracker.string.BoardTabQuickFilters, icon: view.icon.Star },
     { id: 'colorRules', label: tracker.string.BoardTabColorRules, icon: tracker.icon.Milestone },
-    { id: 'card', label: tracker.string.BoardTabCard, icon: tracker.icon.Issues }
+    // tracker-board-next: the card fields and the density are not ready for users yet
+    ...(!isDisabled('tracker-board-next')
+      ? [{ id: 'card' as const, label: tracker.string.BoardTabCard, icon: tracker.icon.Issues }]
+      : [])
   ]
   const tabFromQuery = getCurrentResolvedLocation().query?.tab
   let tab: Tab = tabs.find((t) => t.id === tabFromQuery)?.id ?? 'general'
 
+  // The prop is the server version; `current` also holds the edits not saved yet
+  let current: Board = board
+  const editor = new BoardEditor(
+    board,
+    client,
+    (b) => {
+      current = b
+    },
+    reportBoardError
+  )
+  $: editor.receive(board)
+
   async function onChange (patch: Partial<Data<Board>>): Promise<void> {
-    const current = board
-    // The next edit builds on this one before the query brings it back
-    board = { ...board, ...patch, space: spaceAfterPatch(board, patch) }
-    await updateBoard(client, current, patch)
+    await editor.edit(patch)
   }
 
   // Archived projects stay on the board; the store of active projects drops them
@@ -60,7 +72,7 @@
   const projectsQuery = createQuery()
   $: projectsQuery.query(
     tracker.class.Project,
-    { _id: { $in: board.projects } },
+    { _id: { $in: current.projects } },
     (res) => {
       projects = res
     },
@@ -74,11 +86,11 @@
   $: boardItems = boards.map((b) => ({ id: b._id, label: getEmbeddedLabel(b.title), icon: task.icon.Kanban }))
 
   function switchBoard (id: Ref<Board>): void {
-    if (id !== board._id) boardLocation(id, true)
+    if (id !== current._id) boardLocation(id, true)
   }
 
   function back (): void {
-    boardLocation(board._id)
+    boardLocation(current._id)
   }
 </script>
 
@@ -102,7 +114,7 @@
         size="small"
         icon={task.icon.Kanban}
         items={boardItems}
-        selected={board._id}
+        selected={current._id}
         on:selected={(e) => {
           switchBoard(e.detail)
         }}
@@ -140,14 +152,14 @@
       <div class="hulyComponent-content__column content">
         <Scroller padding="1.5rem 2rem">
           {#if tab === 'general'}
-            <GeneralTab {board} {projects} {onChange} />
+            <GeneralTab board={current} {projects} {onChange} />
           {:else if tab === 'columns'}
-            <ColumnsTab {board} {statuses} {onChange} />
+            <ColumnsTab board={current} {statuses} {onChange} />
           {:else if tab === 'card'}
-            <CardTab {board} {onChange} />
+            <CardTab board={current} {onChange} />
           {:else}
             {#key tab}
-              <RulesTab {board} kind={tab} {onChange} />
+              <RulesTab board={current} kind={tab} {onChange} />
             {/key}
           {/if}
         </Scroller>

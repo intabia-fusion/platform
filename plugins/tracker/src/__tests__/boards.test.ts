@@ -51,6 +51,12 @@ describe('board rights', () => {
     expect(canEditBoard(b, maria)).toBe(false)
   })
 
+  it('answers for a board stored without editors', () => {
+    const b = board('b', { editors: undefined as any })
+    expect(canEditBoard(b, anna)).toBe(true)
+    expect(canEditBoard(b, maria)).toBe(false)
+  })
+
   it('shows a personal board to its author only', () => {
     const personal = board('b', { visibility: 'me' })
     expect(isBoardAvailable(personal, anna)).toBe(true)

@@ -37,7 +37,7 @@ export class DocumentsPage extends CalendarPage {
       "xpath=//button[@class='antiButton no-border small jf-center sh-no-shape bs-solid gap-medium iconR']"
     )
     this.search = page.getByPlaceholder('Search...')
-    this.nextStep = page.getByRole('button', { name: 'Next step' })
+    this.nextStep = page.getByRole('button', { name: 'Next', exact: true })
     this.addMember = page.getByText('Add member')
     this.newMember = page.getByRole('button', { name: 'AJ Appleseed John' })
     this.changeSpaceButton = page.locator('[id="space\\.selector"]')

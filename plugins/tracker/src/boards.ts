@@ -203,7 +203,8 @@ export function toggleCardField (visible: CardField[] | undefined, field: CardFi
 }
 
 export function canEditBoard (board: Pick<Board, 'author' | 'editors'>, account: AccountUuid): boolean {
-  return board.author === account || board.editors.includes(account)
+  // A board written past the client (REST, API) may come without editors
+  return board.author === account || (board.editors ?? []).includes(account)
 }
 
 export function isBoardAvailable (board: Pick<Board, 'author' | 'visibility'>, account: AccountUuid): boolean {

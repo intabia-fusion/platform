@@ -23,7 +23,7 @@
   import { Button, Chip, IconButton, Radio, SettingRow, TextArea, TextInput, WizardDialog } from '@hcengineering/ui/kit'
   import { FilterConditions, statusStore } from '@hcengineering/view-resources'
   import { createEventDispatcher, onMount } from 'svelte'
-  import { boardLocation, boardQuery, createBoard } from '../../boards'
+  import { boardLocation, boardQuery, createBoard, reportBoardError } from '../../boards'
   import tracker from '../../plugin'
   import { activeProjects } from '../../utils'
   import ProjectMembersTable from '../projects/settings/ProjectMembersTable.svelte'
@@ -138,6 +138,8 @@
       })
       dispatch('close')
       boardLocation(id)
+    } catch (err) {
+      reportBoardError(err)
     } finally {
       isSaving = false
     }

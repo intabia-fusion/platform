@@ -27,6 +27,9 @@ import {
   type ProjectContext
 } from '../API/TrackerApi'
 import { BoardsPage } from '../model/tracker/boards-page'
+import { PlatformSetting } from '../utils'
+
+test.use({ storageState: PlatformSetting })
 
 // Settings of a board on Second Project: the boards of boards.spec.ts live there too, own prefix keeps them apart
 test.describe('board settings', () => {
@@ -173,7 +176,7 @@ test.describe('board settings', () => {
     // The author row and the editor row
     await expect(rows).toHaveCount(2)
     await rows.nth(1).locator('[data-id="project-member-menu"]').click()
-    await page.locator('.menu-item', { hasText: 'Remove' }).click()
+    await page.locator('.antiPopup .ap-menuItem', { hasText: 'Remove' }).click()
     await expect(rows).toHaveCount(1)
     await expect.poll(async () => (await client.findOne(tracker.class.Board, { _id: id }))?.editors.length).toBe(0)
   })
@@ -190,7 +193,7 @@ test.describe('board settings', () => {
     const boards = new BoardsPage(page)
     await (await page.goto(boards.boardUrl(id, true, 'general')))?.finished()
     await page.locator('[data-id="boardCardOrder"]').click()
-    await page.locator('.popup .menu-item', { hasText: 'Priority' }).click()
+    await page.locator('div.hulyPopup-container .hulyPopup-row', { hasText: 'Priority' }).click()
     await expect
       .poll(async () => (await client.findOne(tracker.class.Board, { _id: id }))?.orderBy?.[0])
       .toBe('priority')
@@ -230,8 +233,7 @@ test.describe('board settings', () => {
     const example = page.locator('[data-id="boardColorExample"]')
     await expect(example).toBeVisible()
     await expect(example.locator('[data-id="boardColorSample"]')).toHaveCount(2)
-    await expect(example.locator('[data-id="boardColorSample"]').first()).toContainText(`${titlePrefix}doing`)
-    await expect(example.locator('[data-id="boardColorSample"]').last()).toContainText(`${titlePrefix}backlog`)
+    // Any issue of the rule's status may stand for it: the project also holds seeded and boards.spec.ts issues
     await expect(example.locator('[data-id="boardColorSample"] .tracker-card.accent')).toHaveCount(2)
     await expect(example.locator('[data-id="boardColorSampleNone"]')).toHaveCount(1)
     await expect(example.locator('[data-id="boardColorSampleNone"]')).toContainText(
@@ -246,22 +248,24 @@ test.describe('board settings', () => {
       columns: ['boardWipMin', 'boardDaysInColumn'],
       swimlanes: ['boardLaneExample'],
       quickFilters: ['boardQuickFilterOnBoard'],
-      colorRules: ['boardColorBy'],
-      card: ['boardCardField-daysInColumn']
+      colorRules: ['boardColorBy']
     }
     for (const [tab, ids] of Object.entries(absent)) {
       await openTab(boards, tab)
       // The tab content is up before the absence counts
       const ready: Record<string, () => Locator> = {
         general: boards.settingsGeneral,
-        columns: boards.settingsColumns,
-        card: boards.settingsCard
+        columns: boards.settingsColumns
       }
       await expect((ready[tab] ?? (() => boards.settingsTab(tab)))()).toBeVisible()
       for (const id of ids) {
         await expect(page.locator(`[data-id="${id}"]`), `${tab}: ${id}`).toHaveCount(0)
       }
     }
+    // The card tab hides as a whole: its link opens the general tab
+    await expect(page.locator('[data-id="boardSettingsTab-card"]')).toHaveCount(0)
+    await openTab(boards, 'card')
+    await expect(boards.settingsGeneral()).toBeVisible()
     // What stays: the max limit field of the open column editor and the rule rows
     await openTab(boards, 'columns')
     await expect(boards.settingsColumns()).toBeVisible()

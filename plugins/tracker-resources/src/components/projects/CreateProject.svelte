@@ -52,6 +52,7 @@
   import workflow from '@hcengineering/workflow'
 
   import tracker from '../../plugin'
+  import { createProjectWithMixins, type CreateProjectResult } from '../../projectCreate'
   import {
     copyTemplate,
     defaultCopyOptions,
@@ -224,7 +225,9 @@
   }
 
   $: identifier = identifier.toLocaleUpperCase().replaceAll('-', '_').replaceAll(' ', '_').substring(0, 5)
-  $: identifierExists = !isSaving && projectsIdentifiers.has(identifier.toUpperCase())
+  let takenIdentifier: string | undefined
+  $: identifierExists =
+    !isSaving && (projectsIdentifiers.has(identifier.toUpperCase()) || identifier.toUpperCase() === takenIdentifier)
 
   $: generalValid =
     typeId !== undefined &&
@@ -525,35 +528,41 @@
 
   async function createProject (): Promise<void> {
     if (!canSave || typeId === undefined || typeType === undefined) return
-    const projectId = generateId<Project>()
     const projectData = getProjectData()
-    const ops = client
-      .apply('create-project')
-      .notMatch(tracker.class.Project, { identifier: projectData.identifier.toUpperCase() })
 
     isSaving = true
-    await ops.createDoc(tracker.class.Project, core.space.Space, { ...projectData, type: typeId }, projectId)
-    const succeeded = await ops.commit()
-    Analytics.handleEvent(TrackerEvents.ProjectCreated, {
-      ok: succeeded.result,
-      id: projectData.identifier
-    })
-    if (!succeeded.result) {
+    let result: CreateProjectResult
+    try {
+      result = await createProjectWithMixins(client, {
+        projectData,
+        typeId,
+        targetClass: typeType.targetClass,
+        rolesAssignment,
+        workflowsMapping
+      })
+    } catch (err: any) {
+      Analytics.handleError(err)
+      console.error(err)
       isSaving = false
+      showPopup(MessageBox, {
+        label: ui.string.StatusError,
+        message: getEmbeddedLabel(String(err?.message ?? err)),
+        canSubmit: false
+      })
       return
     }
-    // Add space type's mixin with roles assignments
-    await client.createMixin(projectId, tracker.class.Project, core.space.Space, typeType.targetClass, rolesAssignment)
-
-    if (Object.keys(workflowsMapping).length > 0) {
-      await client.createMixin<TaskProject, ProjectWorkflow>(
-        projectId,
-        tracker.class.Project,
-        core.space.Space,
-        workflow.mixin.ProjectWorkflow,
-        { workflows: workflowsMapping }
-      )
+    Analytics.handleEvent(TrackerEvents.ProjectCreated, {
+      ok: result.ok,
+      id: projectData.identifier
+    })
+    if (!result.ok) {
+      // The identifier is held by a project this user cannot see, so the local check did not catch it
+      takenIdentifier = projectData.identifier
+      isSaving = false
+      step = 'general'
+      return
     }
+    const projectId = result.projectId
     if (mode === 'base' && base !== undefined) {
       try {
         await copyContent(projectId)

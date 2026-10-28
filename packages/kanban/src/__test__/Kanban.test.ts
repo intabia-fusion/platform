@@ -1678,3 +1678,62 @@ describe('Kanban select', () => {
     expect(seen).toEqual(['c1'])
   })
 })
+
+describe('Kanban WIP limit in swim lane mode', () => {
+  const states = ['s0', 's1', 's2', 's3', 's4']
+  const laneIds = Array.from({ length: 12 }, (_, i) => `L${i}`)
+
+  function laneBoard (): Record<string, Card[]> {
+    const groups: Record<string, Card[]> = {}
+    states.forEach((s, si) => {
+      groups[s] = laneIds.flatMap((l) => cards(`${s}${l}-`, 10 + si, s, l))
+    })
+    return groups
+  }
+
+  it('reads the card count of a column once per column, not once per cell', async () => {
+    const groups = laneBoard()
+    const reads = vi.fn((g: Record<string, Item[]>, c: string) => g[c])
+    const overLimit = vi.fn((_state: string, count: number) => count > 150)
+    const props = swimProps(groups, laneIds.map(lane), { getGroupByValues: reads })
+
+    await mount(props)
+    await flush()
+    const baseline = reads.mock.calls.length
+    mounted.forEach((c) => {
+      c.$destroy()
+    })
+    mounted = []
+    parent.innerHTML = ''
+    reads.mockClear()
+
+    await mount({ ...props, overLimit })
+    await flush()
+
+    // Column s1 has 12 * 11 = 132 cards, s2 144, s3 156, s4 168: only s3 and s4 are over 150.
+    const red = q('[data-id="kanban-swimlane-cell"].over-limit').map((e) => e.dataset.state)
+    expect(new Set(red)).toEqual(new Set(['s3', 's4']))
+    expect(red).toHaveLength(laneIds.length * 2)
+    expect(overLimit).toHaveBeenCalledWith('s4', 168)
+    expect(overLimit).toHaveBeenCalledWith('s0', 120)
+    // The check may add one read per column, a recount per cell adds one per cell (60) per render.
+    const extra = reads.mock.calls.length - baseline
+    expect(extra).toBeLessThanOrEqual(states.length * 2)
+  })
+})
+
+describe('Kanban card modern mode', () => {
+  it('marks the card container modern only in modern mode, so the scoped styles can tell the modes apart', async () => {
+    await mount(legacyProps(board({ todo: cards('m', 2, 'todo') }), { modern: true }))
+    await flush()
+    expect(q('.card-container.modern').length).toBeGreaterThan(0)
+
+    document.body.innerHTML = ''
+    parent = document.createElement('div')
+    document.body.appendChild(parent)
+    await mount(legacyProps(board({ todo: cards('n', 2, 'todo') })))
+    await flush()
+    expect(cardEls().length).toBeGreaterThan(0)
+    expect(q('.card-container.modern')).toHaveLength(0)
+  })
+})

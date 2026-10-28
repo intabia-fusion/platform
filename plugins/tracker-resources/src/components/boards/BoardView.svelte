@@ -15,7 +15,7 @@
 <script lang="ts">
   import type { DocumentQuery, Ref, Status } from '@hcengineering/core'
   import { mergeQueries } from '@hcengineering/core'
-  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { createQuery, getClient, isDisabled } from '@hcengineering/presentation'
   import { getStates } from '@hcengineering/task'
   import { typeStore } from '@hcengineering/task-resources'
   import type { Board, Issue, Project } from '@hcengineering/tracker'
@@ -45,6 +45,8 @@
   export let canEdit: boolean
 
   const client = getClient()
+  // tracker-board-next: the density slider is not ready for users yet
+  const boardNext = !isDisabled('tracker-board-next')
 
   let activeQuickFilters = new Set<string>()
   $: {
@@ -262,7 +264,7 @@
           <Label label={tracker.string.ProjectsUnavailable} params={{ count: unavailableCount }} />
         </span>
       {/if}
-      {@const density = densityOf(viewlet)}
+      {@const density = boardNext ? densityOf(viewlet) : undefined}
       {#if density !== undefined && viewlet !== undefined && viewOptions !== undefined}
         {@const index = density.values.findIndex((v) => v.id === (viewOptions.density ?? density.defaultValue))}
         <div class="density" data-id="boardDensity">

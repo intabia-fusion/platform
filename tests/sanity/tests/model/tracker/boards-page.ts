@@ -89,7 +89,8 @@ export class BoardsPage {
   }
 
   card = (density: string): Locator => this.page.locator(`.tracker-card[data-density="${density}"]`)
-  menuItem = (title: string): Locator => this.page.locator('.popup [role^="menuitem"]', { hasText: title })
+  // A row of the kit Dropdown popup
+  menuItem = (title: string): Locator => this.page.locator('div.hulyPopup-container .hulyPopup-row', { hasText: title })
 
   async open (id: string): Promise<void> {
     await (await this.page.goto(this.boardUrl(id)))?.finished()
@@ -108,13 +109,12 @@ export class BoardsPage {
 
   createSubmit = (): Locator => this.createFooter().getByRole('button', { name: 'Create', exact: true })
 
-  // The plus of the "Boards" section opens the creation wizard; the title is enough to create
+  // The plus of the "Boards" section opens the creation wizard; the title is enough to create.
+  // The plus sits in the section header: the section content is absent while it is collapsed or empty
   async openCreateWizard (): Promise<void> {
-    const plus = this.navSection().locator('xpath=../button[1]')
-    await this.navSection().hover()
-    await plus.click()
-    const item = this.page.getByText('Create board', { exact: true })
-    if (await item.isVisible().catch(() => false)) await item.click()
+    // The tools of the header show on hover
+    await this.page.locator('.hulyNavGroup-header', { has: this.page.locator('#tree-boards') }).hover()
+    await this.page.locator('#tree-boards').click()
     await expect(this.createWizard()).toBeVisible()
   }
 

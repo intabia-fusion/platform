@@ -34,8 +34,10 @@ import {
   type ProjectContext
 } from '../API/TrackerApi'
 import { BoardsPage } from '../model/tracker/boards-page'
-import { getSecondPage, PlatformURI } from '../utils'
+import { getSecondPage, PlatformSetting, PlatformURI } from '../utils'
 import { ViewletSelectors } from './tracker.utils'
+
+test.use({ storageState: PlatformSetting })
 
 // Boards cover Second Project only: a project kanban opens the first board of the project
 // by default, and the kanban specs of the default project must not meet them.
@@ -158,9 +160,10 @@ test.describe('task boards', () => {
     await boards.open(boardId)
 
     await expect(boards.columns()).toHaveCount(2)
-    // Backlog and Todo share the first column
-    await expect(boards.columns().first().locator('[data-id="kanban-card"]')).toHaveCount(2)
-    await expect(boards.columns().last().locator('[data-id="kanban-card"]')).toHaveCount(1)
+    // Backlog and Todo share the first column; board-settings.spec.ts puts its issues into the same project
+    const own = (column: Locator): Locator => column.locator('[data-id="kanban-card"]', { hasText: titlePrefix })
+    await expect(own(boards.columns().first())).toHaveCount(2)
+    await expect(own(boards.columns().last())).toHaveCount(1)
     // 2 cards over the limit of 1: the limit and the cards area of the column are red
     await expect(boards.wipLimit()).toHaveClass(/over/)
     await expect(boards.columns().first().locator('.column-cards')).toHaveClass(/over-limit/)
@@ -218,9 +221,7 @@ test.describe('task boards', () => {
     await expect(boards.card('dense').first()).toBeVisible()
   })
 
-  test('the density slider of the board header wins over the board, the header has no view controls', async ({
-    page
-  }) => {
+  test('the board header has no view controls and no density slider', async ({ page }) => {
     // Own board: view options are kept per board, the slider must not touch the shared one
     const id = await makeBoard('density-slider', {
       columns: [{ id: 'queue', title: 'Queue', category: task.statusCategory.ToDo, statuses: [statusId('Todo')] }],
@@ -231,17 +232,14 @@ test.describe('task boards', () => {
     await expect(boards.card('normal').first()).toBeVisible()
 
     // The board sets its order, fields, columns and lanes: no viewlets and no view options in its header
-    const slider = page.locator('[data-id="boardDensity"]')
-    await expect(slider).toContainText('Board default')
     await expect(page.locator('button[data-id="btn-viewOptions"]')).toHaveCount(0)
     await expect(page.locator('button[data-id="btn-viewSetting"]')).toHaveCount(0)
     await expect(page.locator('[name="viewletSelector"]')).toHaveCount(0)
-    await slider.locator('input[type="range"]').fill('3')
-    await expect(boards.card('dense').first()).toBeVisible()
-    await expect(boards.card('normal')).toHaveCount(0)
+    // The density slider hides behind tracker-board-next
+    await expect(page.locator('[data-id="boardDensity"]')).toHaveCount(0)
   })
 
-  test('settings: a column is renamed and the board density is picked by a click', async ({ page }) => {
+  test('settings: a column is renamed', async ({ page }) => {
     const boards = new BoardsPage(page)
     await boards.open(boardId)
 
@@ -254,15 +252,9 @@ test.describe('task boards', () => {
     await title.blur()
     await expect.poll(async () => (await readBoard())?.columns[0].title).toBe('Waiting')
 
-    await boards.settings().getByText('Card', { exact: true }).click()
-    await boards.density('compact').click()
-    await expect.poll(async () => (await readBoard())?.density).toBe('compact')
-
     await boards.settingsBack().click()
     await expect(boards.columns().first()).toBeVisible()
     await expect(boards.columns().first().locator('.header')).toContainText('Waiting')
-    // The board mounts again with the viewlets cached: the density slider must come back too
-    await expect(page.locator('[data-id="boardDensity"]')).toBeVisible()
   })
 
   test('a project kanban stays the plain kanban even when the project has a board', async ({ page }) => {
@@ -304,7 +296,8 @@ test.describe('task boards', () => {
     expect(board?.columns.map((c) => [c.title, c.statuses])).toEqual([['My column', []]])
   })
 
-  test('card fields: a field is hidden on the board cards and the preview, and comes back when checked', async ({
+  // The card tab hides behind tracker-board-next
+  test.skip('card fields: a field is hidden on the board cards and the preview, and comes back when checked', async ({
     page
   }) => {
     const title = `${titlePrefix}rich`
@@ -380,7 +373,8 @@ test.describe('task boards', () => {
     await page.reload()
     await expect(boards.settingsTab('swimlanes')).toBeVisible()
     await expect(boards.radioInput('boardSwimlanesNone')).toBeChecked()
-    await expect(boards.radioInput('boardSwimlanesByFilters')).not.toBeChecked()
+    // Lanes by filters hide behind tracker-board-next once the board has none
+    await expect(boards.radioInput('boardSwimlanesByFilters')).toHaveCount(0)
     await expect(boards.swimlaneRules()).toHaveCount(0)
 
     await boards.open(id)
@@ -453,28 +447,30 @@ test.describe('task boards', () => {
       columns: [{ id: 'queue', title: 'Queue', category: task.statusCategory.ToDo, statuses: [statusId('Todo')] }]
     })
     const boards = new BoardsPage(page)
+    // The apps panel on the left; the right sidebar is an antiPanel-application too
+    const apps = page.locator('.antiPanel-application:not(.sidebar-container)')
     await boards.open(id)
     await expect(page.locator('.antiPanel-navigator')).toBeVisible()
 
     await boards.fullscreenButton().click()
     await expect(page.locator('.antiPanel-navigator')).toHaveCount(0)
-    await expect(page.locator('.antiPanel-application')).toBeHidden()
+    await expect(apps).toBeHidden()
     await expect(boards.columns().first()).toBeVisible()
 
     // A task opened in the sidebar from the full screen board keeps the sidebar shown
-    await boards.card('detailed').first().locator('a').first().click()
+    await boards.card('normal').first().locator('a').first().click()
     await page.locator('[data-id="btnOpenInSidebar"]').click()
     await page.goBack()
     await expect(boards.columns().first()).toBeVisible()
     await expect(page.locator('#sidebar')).toBeVisible()
-    await expect(page.locator('.antiPanel-application')).toBeHidden()
+    await expect(apps).toBeHidden()
 
     await boards.fullscreenButton().click()
     await expect(page.locator('.antiPanel-navigator')).toBeVisible()
-    await expect(page.locator('.antiPanel-application')).toBeVisible()
+    await expect(apps).toBeVisible()
   })
 
-  test('card field clicks in a row are all kept', async ({ page }) => {
+  test.skip('card field clicks in a row are all kept', async ({ page }) => {
     const id = await makeBoard('fast-clicks')
     const boards = new BoardsPage(page)
     await (await page.goto(boards.boardUrl(id, true, 'card')))?.finished()
@@ -605,7 +601,6 @@ test.describe('task boards', () => {
   test('the settings open on the tab of the link', async ({ page }) => {
     const boards = new BoardsPage(page)
     const tabs: Array<[string, () => Locator]> = [
-      ['card', boards.settingsCard],
       ['columns', boards.settingsColumns],
       ['swimlanes', () => boards.settingsTab('swimlanes')],
       ['quickFilters', () => boards.settingsTab('quickFilters')],

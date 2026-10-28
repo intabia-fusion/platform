@@ -66,3 +66,47 @@ export function applyRoles (
   }
   return { owners: selected.includes(OWNER_ROLE) ? [...others, account] : others, assignment: nextAssignment }
 }
+
+/** Members/owners operators of a project update; sent as operators so concurrent admins do not overwrite each other. */
+export interface AccessOps {
+  $push?: { members?: AccountUuid, owners?: AccountUuid }
+  $pull?: { members?: { $in: AccountUuid[] }, owners?: { $in: AccountUuid[] } }
+}
+
+export function addMemberOps (account: AccountUuid): AccessOps {
+  return { $push: { members: account } }
+}
+
+/** Removing a member also removes them from owners when they were one. */
+export function removeMemberOps (account: AccountUuid, owners: AccountUuid[]): AccessOps {
+  return {
+    $pull: { members: { $in: [account] }, ...(owners.includes(account) ? { owners: { $in: [account] } } : {}) }
+  }
+}
+
+/** New owners are made members too; a demoted owner stays a member. Undefined when ownership did not change. */
+export function ownerChangeOps (
+  account: AccountUuid,
+  wasOwner: boolean,
+  isOwner: boolean,
+  members: AccountUuid[]
+): AccessOps | undefined {
+  if (wasOwner === isOwner) return undefined
+  if (!isOwner) return { $pull: { owners: { $in: [account] } } }
+  return { $push: { owners: account, ...(members.includes(account) ? {} : { members: account }) } }
+}
+
+/** Only the roles whose holders changed; undefined when none did. */
+export function changedRoles (prev: RolesAssignment, next: RolesAssignment): RolesAssignment | undefined {
+  const result: RolesAssignment = {}
+  let changed = false
+  for (const [role, accounts] of Object.entries(next)) {
+    const before = new Set(prev[role as Ref<Role>] ?? [])
+    const after = new Set(accounts ?? [])
+    if (before.size !== after.size || [...after].some((it) => !before.has(it))) {
+      result[role as Ref<Role>] = accounts
+      changed = true
+    }
+  }
+  return changed ? result : undefined
+}

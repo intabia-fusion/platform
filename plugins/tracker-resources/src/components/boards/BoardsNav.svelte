@@ -20,7 +20,7 @@
   import ui, { Icon, resolvedLocationStore, showPopup, type Action } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { TreeItem, TreeNode } from '@hcengineering/view-resources'
-  import { boardLocation, togglePinned } from '../../boards'
+  import { boardLocation, canDeleteBoard, togglePinned } from '../../boards'
   import tracker from '../../plugin'
   import CreateBoard from './CreateBoard.svelte'
 
@@ -66,28 +66,28 @@
       }
     ]
     if (canEditBoard(board, account)) {
-      result.push(
-        {
-          label: tracker.string.BoardSettings,
-          icon: ui.icon.Gear,
-          action: async () => {
-            boardLocation(board._id, true)
-          }
-        },
-        {
-          label: tracker.string.DeleteBoard,
-          icon: ui.icon.Trash,
-          action: async () => {
-            showPopup(MessageBox, {
-              label: tracker.string.DeleteBoard,
-              message: tracker.string.DeleteBoardConfirm,
-              action: async () => {
-                await client.remove(board)
-              }
-            })
-          }
+      result.push({
+        label: tracker.string.BoardSettings,
+        icon: ui.icon.Gear,
+        action: async () => {
+          boardLocation(board._id, true)
         }
-      )
+      })
+    }
+    if (canDeleteBoard(board, account)) {
+      result.push({
+        label: tracker.string.DeleteBoard,
+        icon: ui.icon.Trash,
+        action: async () => {
+          showPopup(MessageBox, {
+            label: tracker.string.DeleteBoard,
+            message: tracker.string.DeleteBoardConfirm,
+            action: async () => {
+              await client.remove(board)
+            }
+          })
+        }
+      })
     }
     return result
   }

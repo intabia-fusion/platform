@@ -24,6 +24,7 @@ import core, {
   type TxCUD,
   TxProcessor,
   type TxUpdateDoc,
+  systemAccount,
   systemAccountUuid
 } from '@hcengineering/core'
 import contact from '@hcengineering/contact'
@@ -31,6 +32,7 @@ import { ForbiddenKind } from '@hcengineering/platform'
 import {
   BaseMiddleware,
   createBroadcastEvent,
+  SessionDataImpl,
   type Middleware,
   type PipelineContext,
   type TxMiddlewareResult
@@ -38,7 +40,7 @@ import {
 import tracker, { type Board, canEditBoard } from '@hcengineering/tracker'
 
 /**
- * Board write rights: only the author or an editor changes a board.
+ * Board write rights: only the author or an editor changes a board, only the author removes it.
  * Reads need no check: a personal board lives in its author's private PersonSpace.
  * @public
  */
@@ -51,12 +53,17 @@ export class BoardMiddleware extends BaseMiddleware {
     const trusted = ctx.contextData.account.uuid === systemAccountUuid || ctx.contextData.isTriggerCtx === true
     // Boards of this batch as the batch leaves them: a later tx checks against the earlier ones.
     const batch = new Map<Ref<Board>, Board | null>()
+    // Read past the caller's rights: a board hidden from the caller, or one named by another class of
+    // its domain, would otherwise pass as "nothing stored"
+    const stored = trusted ? undefined : await this.storedBoards(ctx, txes)
     let moved = false
     for (const tx of txes) {
       if (!TxProcessor.isExtendsCUD(tx._class)) continue
       const cud = tx as TxCUD<Doc>
       if (this.context.hierarchy.isDerived(cud.objectClass, tracker.class.Board)) {
-        moved = (await this.checkBoardTx(ctx, cud as TxCUD<Board>, batch, trusted)) || moved
+        moved = (await this.checkBoardTx(ctx, cud as TxCUD<Board>, batch, stored, trusted)) || moved
+      } else if (stored?.has(cud.objectId as Ref<Board>) === true) {
+        throw this.forbiddenTx(ctx, ForbiddenKind.AuthorOnly, 'A board changes only as a board', cud)
       }
     }
     const result = await this.provideTx(ctx, txes)
@@ -65,10 +72,45 @@ export class BoardMiddleware extends BaseMiddleware {
     return result
   }
 
+  // Stored boards with the ids of the updates and removals of the board domain, one query per batch
+  private async storedBoards (ctx: MeasureContext<SessionData>, txes: Tx[]): Promise<Map<Ref<Board>, Board>> {
+    const h = this.context.hierarchy
+    const domain = h.findDomain(tracker.class.Board)
+    const ids = new Set<Ref<Board>>()
+    for (const tx of txes) {
+      if (!TxProcessor.isExtendsCUD(tx._class) || tx._class === core.class.TxCreateDoc) continue
+      const cud = tx as TxCUD<Doc>
+      if (h.findDomain(cud.objectClass) === domain) ids.add(cud.objectId as Ref<Board>)
+    }
+    if (ids.size === 0) return new Map()
+    const found = await this.provideFindAll(this.systemContext(ctx), tracker.class.Board, { _id: { $in: [...ids] } })
+    return new Map(found.map((it) => [it._id, it]))
+  }
+
+  // The system account: the storage hides private spaces of others from the caller
+  private systemContext (ctx: MeasureContext<SessionData>): MeasureContext<SessionData> {
+    const sctx = ctx.newChild('board-lookup', {}) as MeasureContext<SessionData>
+    sctx.contextData = new SessionDataImpl(
+      systemAccount,
+      ctx.contextData.sessionId,
+      true,
+      { targets: {}, txes: [], queue: [], sessions: {} },
+      this.context.workspace,
+      true,
+      undefined,
+      undefined,
+      this.context.modelDb,
+      new Map(),
+      'transactor'
+    )
+    return sctx
+  }
+
   private async checkBoardTx (
     ctx: MeasureContext<SessionData>,
     tx: TxCUD<Board>,
     batch: Map<Ref<Board>, Board | null>,
+    stored: Map<Ref<Board>, Board> | undefined,
     trusted: boolean
   ): Promise<boolean> {
     const account = ctx.contextData.account.uuid
@@ -85,12 +127,17 @@ export class BoardMiddleware extends BaseMiddleware {
 
     const before = batch.has(tx.objectId)
       ? (batch.get(tx.objectId) ?? undefined)
-      : (await this.provideFindAll(ctx, tracker.class.Board, { _id: tx.objectId }, { limit: 1 }))[0]
+      : stored !== undefined
+        ? stored.get(tx.objectId)
+        : (await this.provideFindAll(ctx, tracker.class.Board, { _id: tx.objectId }, { limit: 1 }))[0]
     // Nothing stored, nothing to protect
     if (before === undefined) return false
 
     if (!trusted && !canEditBoard(before, account)) {
       throw this.forbiddenTx(ctx, ForbiddenKind.AuthorOnly, 'Only the author or an editor changes a board', tx)
+    }
+    if (!trusted && tx._class === core.class.TxRemoveDoc && before.author !== account) {
+      throw this.forbiddenTx(ctx, ForbiddenKind.AuthorOnly, 'Only the author removes a board', tx)
     }
 
     let after: Board = before

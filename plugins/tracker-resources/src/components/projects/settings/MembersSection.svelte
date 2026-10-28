@@ -23,7 +23,17 @@
   import { SettingRow, Toggle } from '@hcengineering/ui/kit'
 
   import tracker from '../../../plugin'
-  import { applyRoles, isAccessValid, mergeOwners, removeFromRoles } from '../../../projectSettingsLogic'
+  import {
+    addMemberOps,
+    applyRoles,
+    changedRoles,
+    isAccessValid,
+    mergeOwners,
+    OWNER_ROLE,
+    ownerChangeOps,
+    removeFromRoles,
+    removeMemberOps
+  } from '../../../projectSettingsLogic'
   import ProjectMembersTable from './ProjectMembersTable.svelte'
   import ProjectSettingsSection from './ProjectSettingsSection.svelte'
 
@@ -64,9 +74,12 @@
 
   $: assignment = readRoles(project, typeType, roles)
 
-  async function saveRoles (assignment: RolesAssignment): Promise<void> {
+  // Writes only the roles whose holders changed
+  async function saveRoles (next: RolesAssignment): Promise<void> {
     if (typeType?.targetClass === undefined) return
-    await client.updateMixin(project._id, tracker.class.Project, core.space.Space, typeType.targetClass, assignment)
+    const changed = changedRoles(assignment, next)
+    if (changed === undefined) return
+    await client.updateMixin(project._id, tracker.class.Project, core.space.Space, typeType.targetClass, changed)
   }
 
   async function setPrivate (on: boolean): Promise<void> {
@@ -92,9 +105,8 @@
       return
     }
     rejected = false
-    if (next.owners.length !== owners.length || next.owners.some((it) => !owners.includes(it))) {
-      await client.update(project, { owners: next.owners, members })
-    }
+    const ops = ownerChangeOps(account, owners.includes(account), selected.includes(OWNER_ROLE), project.members)
+    if (ops !== undefined) await client.update(project, ops)
     await saveRoles(next.assignment)
   }
 
@@ -106,13 +118,13 @@
       return
     }
     rejected = false
-    await client.update(project, { members, owners: newOwners })
+    await client.update(project, removeMemberOps(account, owners))
     await saveRoles(removeFromRoles(assignment, [account]))
   }
 
   async function addMember (account: AccountUuid): Promise<void> {
     if (project.members.includes(account)) return
-    await client.update(project, { members: [...project.members, account] })
+    await client.update(project, addMemberOps(account))
   }
 
   let isPrivate = project.private
