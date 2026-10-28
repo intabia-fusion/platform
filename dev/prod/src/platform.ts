@@ -39,7 +39,7 @@ import { hrId } from '@hcengineering/hr'
 import { imageCropperId } from '@hcengineering/image-cropper'
 import { inventoryId } from '@hcengineering/inventory'
 import { leadId } from '@hcengineering/lead'
-import login, { loginId, passwordRequirements, type PasswordStrictness } from '@hcengineering/login'
+import login, { loginId } from '@hcengineering/login'
 import love, { loveId } from '@hcengineering/love'
 import notification, { notificationId } from '@hcengineering/notification'
 import onboard, { onboardId } from '@hcengineering/onboard'
@@ -185,7 +185,6 @@ export interface Config {
   DISABLE_SIGNUP?: string
   HIDE_LOCAL_LOGIN?: string
   LINK_PREVIEW_URL?: string
-  PASSWORD_STRICTNESS?: PasswordStrictness
   // Could be defined for dev environment
   FRONT_URL?: string
   PREVIEW_URL?: string
@@ -499,8 +498,6 @@ export async function configurePlatform() {
   setMetadata(login.metadata.Copyright, config.COPYRIGHT ?? login.string.IntabiaFusion)
   setMetadata(login.metadata.UsageUrl, config.USAGE_URL)
   setMetadata(login.metadata.SupportUrl, config.SUPPORT_URL)
-
-  setMetadata(login.metadata.PasswordValidations, passwordRequirements[config.PASSWORD_STRICTNESS ?? 'none'])
 
   setMetadata(presentation.metadata.UploadURL, config.UPLOAD_URL)
   setMetadata(presentation.metadata.DatalakeUrl, config.DATALAKE_URL)

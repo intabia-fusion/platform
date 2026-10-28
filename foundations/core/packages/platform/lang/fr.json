@@ -26,6 +26,7 @@
     "WorkspaceAlreadyExists": "L'espace de travail existe déjà",
     "InvalidOtp": "Code invalide",
     "TooManyOtpAttempts": "Trop de tentatives échouées. Réessayez dans {minutes, plural, one {# minute} other {# minutes}}. Si cette adresse est associée à un compte, nous lui avons envoyé un e-mail contenant un lien de connexion.",
+    "PasswordPolicyViolation": "Le mot de passe ne respecte pas la politique de mots de passe",
     "PasswordLoginLocked": "La connexion par mot de passe est verrouillée en raison de trop nombreuses tentatives échouées. Veuillez utiliser une méthode de connexion OTP pour déverrouiller votre compte.",
     "AccountBlocked": "Votre compte a été bloqué par l'administrateur.",
     "WorkspaceReadOnly": "Cet espace de travail est en lecture seule pour le moment.",

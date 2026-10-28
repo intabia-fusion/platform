@@ -52,7 +52,6 @@ services:
       - ANALYTICS_COLLECTOR_URL=http://localhost:8084/_analytics
       - USE_OTP=true
       - LANGUAGES=en,ru,es,pt,zh,fr,it
-      - PASSWORD_STRICTNESS=normal
       - LOGIN_THEME=intabia
       - ACCENT_THEME=accent-intabia
       - DISABLED_FEATURES=mail,auto-translate,github,integrations,documents,inventory,survey,lead,products,recruit,training,process,gmail,mailboxes,export,contact.persons,contact.companies,tracker.issueImport,card,testManagement,telegram,hr,contact:ids:OrganizationNotificationGroup,setting:ids:SettingNotificationGroup,hide-ru-banned-channels
@@ -60,6 +59,8 @@ services:
     volumes:
       - ./branding-persona.json:/var/cfg/branding.json
       - ./region-config-persona.yaml:/var/cfg/region-config.yaml
+    environment:
+      - PASSWORD_STRICTNESS=normal
   workspace:
     volumes:
       - ./branding-persona.json:/var/cfg/branding.json

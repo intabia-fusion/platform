@@ -47,7 +47,7 @@ import { hrId } from '@hcengineering/hr'
 import { imageCropperId } from '@hcengineering/image-cropper'
 import { inventoryId } from '@hcengineering/inventory'
 import { leadId } from '@hcengineering/lead'
-import login, { loginId, passwordRequirements } from '@hcengineering/login'
+import login, { loginId } from '@hcengineering/login'
 import notification, { notificationId } from '@hcengineering/notification'
 import onboard, { onboardId } from '@hcengineering/onboard'
 import presence, { presenceId } from '@hcengineering/presence'
@@ -368,7 +368,6 @@ export async function configurePlatform (onWorkbenchConnect?: () => Promise<void
   setMetadata(login.metadata.DisableSignUp, config.DISABLE_SIGNUP === 'true')
   setMetadata(login.metadata.HideLocalLogin, config.HIDE_LOCAL_LOGIN === 'true')
   setMetadata(login.metadata.LoginTheme, config.LOGIN_THEME ?? 'intabia')
-  setMetadata(login.metadata.PasswordValidations, passwordRequirements[config.PASSWORD_STRICTNESS ?? 'none'])
 
   setMetadata(login.metadata.Copyright, config.COPYRIGHT ?? login.string.IntabiaFusion)
   setMetadata(presentation.metadata.UploadURL, config.UPLOAD_URL)

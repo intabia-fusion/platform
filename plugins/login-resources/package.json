@@ -51,6 +51,7 @@
     "@hcengineering/theme": "workspace:^0.7.0",
     "@hcengineering/analytics": "workspace:^0.7.17",
     "@hcengineering/account-client": "workspace:^0.7.21",
+    "@hcengineering/retry": "workspace:^0.7.17",
     "@hcengineering/analytics-providers": "workspace:^0.7.0"
   }
 }

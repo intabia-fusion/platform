@@ -25,6 +25,7 @@
     "WorkspaceAlreadyExists": "Çalışma alanı zaten mevcut",
     "InvalidOtp": "Geçersiz kod",
     "TooManyOtpAttempts": "Çok fazla başarısız deneme. {minutes} dakika sonra tekrar deneyin. Bu adresle ilişkili bir hesap varsa, giriş bağlantısı içeren bir e-posta gönderdik.",
+    "PasswordPolicyViolation": "Parola, parola ilkesiyle uyumlu değil",
     "PasswordLoginLocked": "Çok fazla başarısız deneme nedeniyle parola girişi kilitlendi. Hesabınızın kilidini açmak için OTP giriş yöntemini kullanın.",
     "AccountBlocked": "Hesabınız yönetici tarafından engellendi.",
     "WorkspaceReadOnly": "Bu çalışma alanı şu anda salt okunur.",

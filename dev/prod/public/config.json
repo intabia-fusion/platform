@@ -20,7 +20,6 @@
   "MODEL_VERSION": null,
   "STATS_URL": "/_stats",
   "WEBHOOK_SERVICE_URL": "/_webhook",
-  "PASSWORD_STRICTNESS": "none",
   "STREAM_URL": "http://localhost:8087/_stream/recording",
   "PUBLIC_SCHEDULE_URL": "http://localhost:8060",
   "CALDAV_SERVER_URL": "http://localhost:9070",
