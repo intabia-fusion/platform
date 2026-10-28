@@ -134,11 +134,15 @@ describe('pushNotification', () => {
   let mockData: any
 
   beforeEach(() => {
+    const testCtx: any = {
+      error: jest.fn(),
+      warn: jest.fn(),
+      info: jest.fn()
+    }
+    // pushNotification wraps its work in ctx.with: the mock runs the operation and passes itself on.
+    testCtx.with = jest.fn(async (_name: string, _params: any, op: (c: any) => any) => await op(testCtx))
     mockClient = {
-      ctx: {
-        error: jest.fn(),
-        warn: jest.fn()
-      },
+      ctx: testCtx,
       txFactory: {
         createTxUpdateDoc: jest.fn().mockImplementation((cls, space, id, payload) => ({
           _class: 'TxUpdateDoc',
@@ -668,7 +672,8 @@ describe('pushNotification', () => {
 
       await pushNotification(mockClient, txCache, result, undefined, mockData)
 
-      expect(mockClient.ctx.info).not.toHaveBeenCalled()
+      // The point is that the redelivery guard did not fire; other info lines are allowed.
+      expect(mockClient.ctx.info).not.toHaveBeenCalledWith('notification already recorded, skipping', expect.anything())
       expect(result.queueMessages).toHaveLength(1)
       expect(mockGetCreateContextTx).toHaveBeenCalled()
     })

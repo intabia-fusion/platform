@@ -85,6 +85,23 @@ export async function pushNotification (
   context: DocNotifyContext | undefined,
   _data: CreateNotificationData
 ): Promise<void> {
+  // One span per receiver: inside are the translation, the template and the provider decision.
+  await client.ctx.with(
+    'notification.queue',
+    { object: _data.objectId, account: _data.receiver.account, type: String(_data.notification.type ?? '') },
+    async () => {
+      await queueNotification(client, txCache, result, context, _data)
+    }
+  )
+}
+
+async function queueNotification (
+  client: Client,
+  txCache: TxCache,
+  result: Result,
+  context: DocNotifyContext | undefined,
+  _data: CreateNotificationData
+): Promise<void> {
   const data: CreateNotificationData =
     _data.alreadyRead === true ? { ..._data, notifyProviders: inboxProvidersOnly(_data.notifyProviders) } : _data
   const {
@@ -147,6 +164,18 @@ export async function pushNotification (
     }
     const native = pushSubscriptions.filter((it) => isNativePushEndpoint(it.endpoint))
     const web = pushSubscriptions.filter((it) => !isNativePushEndpoint(it.endpoint))
+    // The lifecycle starts here: `notification.id` is the key every later stage logs under, and
+    // `ageFromAwareness` counts milliseconds from the transaction stamp the notification was
+    // planned from. A number, not a string: Uptrace aggregates and sorts by it.
+    client.ctx.info('notification planned', {
+      notification: message.id,
+      object: `${objectClass}:${objectId}`,
+      account: receiver.account,
+      createdOn: message.createdOn,
+      ageFromAwareness: Date.now() - message.createdOn,
+      web: web.length,
+      native: native.length
+    })
     // Only an unread notification can be read later, so only such a one waits.
     const readBy = heldReadBy(data)
     const heldPart = (provider: Ref<NotificationProvider>, part: Partial<QueueNotifyMessage>): HeldPush | undefined =>

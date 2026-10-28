@@ -229,7 +229,23 @@ class Workspace {
   }
 
   async tx (tx: TxCUD<Doc>): Promise<void> {
-    await this.track(this.processTx(tx))
+    // How long the transaction waited for us. The same stamp travels on in the queue message as
+    // `createdOn`, so this span and `notification.deliver` report their ages against one clock.
+    const createdOn = tx.createdOn ?? tx.modifiedOn
+    await this.track(
+      this.ctx.with(
+        'notification.tx',
+        {
+          tx: tx._id,
+          objectClass: tx.objectClass,
+          object: tx.objectId,
+          ...(createdOn !== undefined ? { age: Date.now() - createdOn } : {})
+        },
+        async () => {
+          await this.processTx(tx)
+        }
+      )
+    )
   }
 
   // A letter the time machine fired: out unless read meanwhile (heldLetter.ts).
@@ -379,6 +395,16 @@ class Workspace {
   }
 
   private async applyResult (result: Result): Promise<void> {
+    await this.ctx.with(
+      'notification.apply',
+      { queue: result.queueMessages.length, held: result.heldPushes.length },
+      async () => {
+        await this.applyResultInner(result)
+      }
+    )
+  }
+
+  private async applyResultInner (result: Result): Promise<void> {
     const txes = getResultTxes(result)
     for (let i = 0; i < txes.length; i += config.ApplyTxBatchSize) {
       const batch = txes.slice(i, i + config.ApplyTxBatchSize)
@@ -449,10 +475,18 @@ class Workspace {
   }
 
   private async publish (messages: QueueNotificationMessage[]): Promise<void> {
-    await withRetry(() => this.producer.send(this.ctx, this.ws.uuid, messages), {
-      maxRetries: publishAttempts,
-      isRetryable: () => true,
-      delayStrategy: publishBackoff
+    await this.ctx.with('notification.publish', { messages: messages.length }, async (ctx) => {
+      const now = Date.now()
+      ctx.info('notifications published', {
+        ids: messages.map((it) => it.id),
+        // Age of the oldest message in the batch, milliseconds: transaction stamp -> queue.
+        ageFromAwareness: messages.reduce((max, it) => ('createdOn' in it ? Math.max(max, now - it.createdOn) : max), 0)
+      })
+      await withRetry(() => this.producer.send(ctx, this.ws.uuid, messages), {
+        maxRetries: publishAttempts,
+        isRetryable: () => true,
+        delayStrategy: publishBackoff
+      })
     })
   }
 

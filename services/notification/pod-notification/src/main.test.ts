@@ -14,10 +14,13 @@
 //
 
 import webpush, { WebPushError } from 'web-push'
-import core, { type Ref, type AccountUuid, type PersonId } from '@hcengineering/core'
+import core, { MeasureMetricsContext, type Ref, type AccountUuid, type PersonId } from '@hcengineering/core'
 import notification, { type PushSubscription } from '@hcengineering/notification'
 
 import { sendDismissToSubscription, sendPushToSubscription } from './main'
+
+// Spans are a no-op here: the delivery code only needs a context to hang them on.
+const ctx = new MeasureMetricsContext('test', {})
 
 jest.mock('./config', () => ({
   default: {
@@ -96,7 +99,7 @@ describe('sendPushToSubscription', () => {
   it('should successfully send notifications and return no failed subscription IDs', async () => {
     ;(webpush.sendNotification as jest.Mock).mockResolvedValue({})
 
-    const failedIds = await sendPushToSubscription(mockSubscriptions, mockData)
+    const failedIds = await sendPushToSubscription(ctx, mockSubscriptions, mockData)
 
     expect(failedIds).toEqual([])
     expect(webpush.sendNotification).toHaveBeenCalledTimes(2)
@@ -117,7 +120,7 @@ describe('sendPushToSubscription', () => {
         )
       )
 
-    const failedIds = await sendPushToSubscription(mockSubscriptions, mockData)
+    const failedIds = await sendPushToSubscription(ctx, mockSubscriptions, mockData)
 
     expect(failedIds).toEqual(['sub-1', 'sub-2'])
   })
@@ -133,7 +136,7 @@ describe('sendPushToSubscription', () => {
       )
     )
 
-    const failedIds = await sendPushToSubscription([mockSubscriptions[0]], mockData)
+    const failedIds = await sendPushToSubscription(ctx, [mockSubscriptions[0]], mockData)
 
     expect(failedIds).toEqual(['sub-1'])
   })
@@ -143,7 +146,7 @@ describe('sendPushToSubscription', () => {
       new WebPushError('Quota exceeded', 429, {}, '{"code": "quotaExceeded"}', 'https://example.com/endpoint1')
     )
 
-    const failedIds = await sendPushToSubscription(mockSubscriptions, mockData)
+    const failedIds = await sendPushToSubscription(ctx, mockSubscriptions, mockData)
 
     expect(failedIds).toEqual([])
   })
@@ -153,7 +156,7 @@ describe('sendPushToSubscription', () => {
     ;(errorWithNullBody as { body: string | undefined }).body = undefined
     ;(webpush.sendNotification as jest.Mock).mockRejectedValue(errorWithNullBody)
 
-    const failedIds = await sendPushToSubscription(mockSubscriptions, mockData)
+    const failedIds = await sendPushToSubscription(ctx, mockSubscriptions, mockData)
 
     expect(failedIds).toEqual([])
   })
@@ -161,7 +164,7 @@ describe('sendPushToSubscription', () => {
   it('should handle non-WebPush errors gracefully and return empty list', async () => {
     ;(webpush.sendNotification as jest.Mock).mockRejectedValue(new Error('Network connection timeout'))
 
-    const failedIds = await sendPushToSubscription(mockSubscriptions, mockData)
+    const failedIds = await sendPushToSubscription(ctx, mockSubscriptions, mockData)
 
     expect(failedIds).toEqual([])
   })
