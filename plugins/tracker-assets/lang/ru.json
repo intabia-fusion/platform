@@ -111,6 +111,7 @@
     "SetDueDate": "Указать срок выполнения…",
     "ChangeDueDate": "Изменить срок выполнения…",
     "ModificationDate": "Изменено {value}",
+    "CreationDate": "Создано {value}",
     "Project": "Проект",
     "Issue": "Задача",
     "SubIssue": "Подзадача",

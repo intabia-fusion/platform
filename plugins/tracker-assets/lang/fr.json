@@ -111,6 +111,7 @@
     "SetDueDate": "Définir la date d'échéance...",
     "ChangeDueDate": "Changer la date d'échéance...",
     "ModificationDate": "Mis à jour {value}",
+    "CreationDate": "Créé le {value}",
     "Project": "Projet",
     "Issue": "Issue",
     "SubIssue": "Sub-issue",

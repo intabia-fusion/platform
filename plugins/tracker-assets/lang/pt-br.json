@@ -111,6 +111,7 @@
     "SetDueDate": "Definir data de vencimento…",
     "ChangeDueDate": "Alterar data de vencimento",
     "ModificationDate": "Atualizado {value}",
+    "CreationDate": "Criado {value}",
     "Project": "Projeto",
     "Issue": "Tarefa",
     "SubIssue": "Sub-Tarefa",

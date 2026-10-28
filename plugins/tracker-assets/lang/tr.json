@@ -111,6 +111,7 @@
     "SetDueDate": "Bitiş tarihi belirle…",
     "ChangeDueDate": "Bitiş tarihini değiştir…",
     "ModificationDate": "{value} güncellendi",
+    "CreationDate": "{value} oluşturuldu",
     "Project": "Proje",
     "Issue": "Sorun",
     "SubIssue": "Alt sorun",

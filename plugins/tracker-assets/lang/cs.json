@@ -111,6 +111,7 @@
     "SetDueDate": "Nastavit datum splnění…",
     "ChangeDueDate": "Změnit datum splnění…",
     "ModificationDate": "Aktualizováno {value}",
+    "CreationDate": "Vytvořeno {value}",
     "Project": "Projekt",
     "Issue": "Úkol",
     "SubIssue": "Podúkol",

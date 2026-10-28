@@ -235,6 +235,7 @@ export function issueConfig (
     },
     {
       key: 'createdOn',
+      presenter: tracker.component.CreationDatePresenter,
       displayProps: { key: key + 'created', fixed: 'left', dividerBefore: true }
     },
     {
