@@ -22,6 +22,7 @@
   import { NavLink } from '@hcengineering/view-resources'
   import { TreeSeparator } from '@hcengineering/workbench-resources'
   import type { Chat } from '@hcengineering/chunter'
+  import { chunterId } from '@hcengineering/chunter'
   import presentation, { createQuery } from '@hcengineering/presentation'
   import type { Employee } from '@hcengineering/contact'
   import contact from '@hcengineering/contact'
@@ -157,7 +158,7 @@
   {#if row > 0 && chatSpecials[row].position !== chatSpecials[row - 1].position}
     <TreeSeparator line />
   {/if}
-  <NavLink space={special.id}>
+  <NavLink app={chunterId} space={special.id}>
     <ChatSpecialElement {special} {currentSpecial} on:select />
   </NavLink>
 {/each}

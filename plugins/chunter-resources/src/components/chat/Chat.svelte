@@ -117,7 +117,7 @@
       chat = undefined
       if (needRestoreLoc) {
         needRestoreLoc = false
-        restoreLocation(loc, chunterId)
+        restoreLocation(loc, chunterId, (last) => chatSpecials.some((special) => special.id === last.path[3]))
       }
       return
     }
