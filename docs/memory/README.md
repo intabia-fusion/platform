@@ -52,6 +52,7 @@
 - [auth-email-storage.md](auth-email-storage.md) - AuthEmail: почему читается напрямую из localStorage, а не через fetchMetadataLocalStorage
 - [admin_plugin_refactor.md](admin_plugin_refactor.md) - Admin plugin gotchas
 - [deferred-deletion.md](deferred-deletion.md) - Отложенное удаление пространств и аккаунтов
+- [login-signup-analytics.md](login-signup-analytics.md) - Регистрация: клики кнопки и цели Метрики
 
 ## Планировщик и календарь - [planner-calendar.md](../features/planner-calendar.md)
 
