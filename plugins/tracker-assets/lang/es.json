@@ -494,6 +494,7 @@
     "DaysInColumnToggle": "Días en la columna en la tarjeta",
     "DaysInColumn": "Días en la columna",
     "BoardColumnSummary": "{statuses, plural, one {# estado} other {# estados}} · {issues, plural, one {# incidencia} other {# incidencias}}",
+    "BoardColumnHidden": "Esta columna está oculta en el tablero hasta que se añada un estado",
     "BoardHiddenIssues": "{count, plural, one {# incidencia no está} other {# incidencias no están}} en el tablero",
     "ColumnMoveLeft": "Mover a la izquierda",
     "ColumnMoveRight": "Mover a la derecha",

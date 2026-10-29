@@ -121,6 +121,7 @@ export default mergeIds(trackerId, tracker, {
     ColorExample: '' as IntlString,
     ColorExampleNone: '' as IntlString,
     BoardColumnSummary: '' as IntlString,
+    BoardColumnHidden: '' as IntlString,
     BoardHiddenIssues: '' as IntlString,
     ColumnMoveLeft: '' as IntlString,
     ColumnMoveRight: '' as IntlString,

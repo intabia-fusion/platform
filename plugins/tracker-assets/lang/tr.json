@@ -494,6 +494,7 @@
     "DaysInColumnToggle": "Kartta sütundaki gün sayısı",
     "DaysInColumn": "Sütundaki gün sayısı",
     "BoardColumnSummary": "{statuses, plural, one {# durum} other {# durum}} · {issues, plural, one {# görev} other {# görev}}",
+    "BoardColumnHidden": "Bir durum eklenene kadar bu sütun panoda gizlidir",
     "BoardHiddenIssues": "{count, plural, one {# görev} other {# görev}} panoda yok",
     "ColumnMoveLeft": "Sola taşı",
     "ColumnMoveRight": "Sağa taşı",

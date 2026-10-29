@@ -494,6 +494,7 @@
     "DaysInColumnToggle": "Dny ve sloupci na kartě",
     "DaysInColumn": "Dny ve sloupci",
     "BoardColumnSummary": "{statuses, plural, one {# stav} few {# stavy} many {# stavu} other {# stavů}} · {issues, plural, one {# úkol} few {# úkoly} many {# úkolu} other {# úkolů}}",
+    "BoardColumnHidden": "Tento sloupec je na nástěnce skrytý, dokud do něj není přidán stav",
     "BoardHiddenIssues": "{count, plural, one {# úkol není} few {# úkoly nejsou} many {# úkolu není} other {# úkolů není}} na nástěnce",
     "ColumnMoveLeft": "Posunout doleva",
     "ColumnMoveRight": "Posunout doprava",

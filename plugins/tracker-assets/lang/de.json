@@ -494,6 +494,7 @@
     "DaysInColumnToggle": "Tage in der Spalte auf der Karte",
     "DaysInColumn": "Tage in der Spalte",
     "BoardColumnSummary": "{statuses, plural, one {# Status} other {# Status}} · {issues, plural, one {# Ticket} other {# Tickets}}",
+    "BoardColumnHidden": "Diese Spalte ist auf dem Board ausgeblendet, bis ein Status hinzugefügt wird",
     "BoardHiddenIssues": "{count, plural, one {# Ticket ist} other {# Tickets sind}} nicht auf dem Board",
     "ColumnMoveLeft": "Nach links verschieben",
     "ColumnMoveRight": "Nach rechts verschieben",

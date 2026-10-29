@@ -494,6 +494,7 @@
     "DaysInColumnToggle": "Jours dans la colonne sur la carte",
     "DaysInColumn": "Jours dans la colonne",
     "BoardColumnSummary": "{statuses, plural, one {# statut} other {# statuts}} · {issues, plural, one {# tâche} other {# tâches}}",
+    "BoardColumnHidden": "Cette colonne est masquée sur le tableau tant qu'aucun statut n'y est ajouté",
     "BoardHiddenIssues": "{count, plural, one {# tâche n'est pas} other {# tâches ne sont pas}} sur le tableau",
     "ColumnMoveLeft": "Déplacer vers la gauche",
     "ColumnMoveRight": "Déplacer vers la droite",

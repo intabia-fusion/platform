@@ -494,6 +494,7 @@
     "DaysInColumnToggle": "カードに列内の日数を表示",
     "DaysInColumn": "列内の日数",
     "BoardColumnSummary": "{statuses, plural, other {#件のステータス}} · {issues, plural, other {#件の課題}}",
+    "BoardColumnHidden": "ステータスが追加されるまで、この列はボードに表示されません",
     "BoardHiddenIssues": "{count, plural, other {#件の課題}}がボードに表示されていません",
     "ColumnMoveLeft": "左へ移動",
     "ColumnMoveRight": "右へ移動",

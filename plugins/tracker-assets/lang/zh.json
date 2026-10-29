@@ -493,6 +493,7 @@
     "DaysInColumnToggle": "在卡片上显示在列中的天数",
     "DaysInColumn": "在列中的天数",
     "BoardColumnSummary": "{statuses, plural, other {# 个状态}} · {issues, plural, other {# 个问题}}",
+    "BoardColumnHidden": "添加状态后，此列才会显示在看板上",
     "BoardHiddenIssues": "{count, plural, other {# 个问题}}不在看板上",
     "ColumnMoveLeft": "左移",
     "ColumnMoveRight": "右移",

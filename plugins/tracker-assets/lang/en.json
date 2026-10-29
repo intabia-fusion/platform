@@ -516,6 +516,7 @@
     "DaysInColumnToggle": "Days in column on the card",
     "DaysInColumn": "Days in column",
     "BoardColumnSummary": "{statuses, plural, one {# status} other {# statuses}} · {issues, plural, one {# issue} other {# issues}}",
+    "BoardColumnHidden": "This column is hidden on the board until a status is added",
     "BoardHiddenIssues": "{count, plural, one {# issue is} other {# issues are}} not on the board",
     "ColumnMoveLeft": "Move left",
     "ColumnMoveRight": "Move right",

@@ -494,6 +494,7 @@
     "DaysInColumnToggle": "Dias na coluna no cartão",
     "DaysInColumn": "Dias na coluna",
     "BoardColumnSummary": "{statuses, plural, one {# status} other {# status}} · {issues, plural, one {# tarefa} other {# tarefas}}",
+    "BoardColumnHidden": "Esta coluna fica oculta no quadro até que um status seja adicionado",
     "BoardHiddenIssues": "{count, plural, one {# tarefa não está} other {# tarefas não estão}} no quadro",
     "ColumnMoveLeft": "Mover para a esquerda",
     "ColumnMoveRight": "Mover para a direita",

@@ -443,7 +443,7 @@
       boardColumnsKey = key
       groupByKey = IssuesGrouping.Status
       headerComponent = undefined
-      categories = board.columns.map(columnCategory)
+      categories = board.columns.filter((column) => column.statuses.length > 0).map(columnCategory)
       loadCategories = false
     }
   }

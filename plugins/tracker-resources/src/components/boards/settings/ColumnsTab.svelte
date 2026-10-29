@@ -332,6 +332,11 @@
               <Label label={tracker.string.BoardColumnSummary} params={{ statuses: column.statuses.length, issues }} />
             </span>
           {/if}
+          {#if column.statuses.length === 0}
+            <span class="summary" data-id="boardColumnHidden">
+              <Label label={tracker.string.BoardColumnHidden} />
+            </span>
+          {/if}
           <div class="statuses">
             {#each column.statuses as id (id)}
               {@const status = byId.get(id)}

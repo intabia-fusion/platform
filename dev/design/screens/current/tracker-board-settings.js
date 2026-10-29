@@ -427,15 +427,11 @@ const addValue = () => kit.IconButton('plus', { kind: 'ghost', size: 'extra-smal
           kit.text('—', { size: 13, color: T('theme-darker-color') })
         )
       ),
-      kit.text('1 статус · 1 задача', { size: 12, color: T('theme-dark-color') }),
-      kit.StatusChip('On Hold', 'todo', {
-        drag: true,
-        count: 1,
+      kit.text('0 статусов · 0 задач', { size: 12, color: T('theme-dark-color') }),
+      kit.text('Колонка скрыта на доске, пока в нее не добавлен статус', {
         w: 206,
-        h: 32,
-        fill: T('theme-popup-color'),
-        stroke: T('theme-button-border'),
-        size: 13
+        size: 12,
+        color: T('theme-dark-color')
       })
     ),
     kit.add(

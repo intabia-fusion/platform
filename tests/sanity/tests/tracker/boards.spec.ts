@@ -315,6 +315,9 @@ test.describe('task boards', () => {
     await expect(boards.createWizard().locator('.wizard__steps')).not.toContainText('Can edit')
     await boards.createNext().click()
     await expect(page.locator('[data-id="board-create-step-columns"]')).toBeVisible()
+    await expect(page.locator('[data-id="boardColumnHidden"]')).toContainText(
+      'This column is hidden on the board until a status is added'
+    )
     await expect(page.locator('[data-id="board-create-editors"]')).toHaveCount(0)
     await boards.createFooter().getByRole('button', { name: 'Back', exact: true }).click()
     await page.locator('[data-id="board-create-visibility-all"]').click()
@@ -332,6 +335,7 @@ test.describe('task boards', () => {
     expect(board?.projects).toEqual([project?._id])
     // The statuses wait in "Statuses without a column" until the user drags them
     expect(board?.columns.map((c) => [c.title, c.statuses])).toEqual([['My column', []]])
+    await expect(boards.columns()).toHaveCount(0)
   })
 
   // The card tab hides behind tracker-board-next

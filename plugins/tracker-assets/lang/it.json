@@ -494,6 +494,7 @@
     "DaysInColumnToggle": "Giorni nella colonna sulla scheda",
     "DaysInColumn": "Giorni nella colonna",
     "BoardColumnSummary": "{statuses, plural, one {# stato} other {# stati}} · {issues, plural, one {# attività} other {# attività}}",
+    "BoardColumnHidden": "Questa colonna è nascosta nella bacheca finché non viene aggiunto uno stato",
     "BoardHiddenIssues": "{count, plural, one {# attività non è} other {# attività non sono}} sulla bacheca",
     "ColumnMoveLeft": "Sposta a sinistra",
     "ColumnMoveRight": "Sposta a destra",

@@ -126,6 +126,49 @@ test.describe('board settings', () => {
     await expect(boards.settings()).toBeVisible()
   }
 
+  test('columns without statuses stay editable but are hidden on the board', async ({ page }) => {
+    const board = await client.findOne(tracker.class.Board, { _id: boardId })
+    if (board === undefined) throw new Error('no board')
+    const { _id, _class, space, modifiedOn, modifiedBy, createdOn, createdBy, ...data } = board
+    const columns = [
+      { id: 'empty', title: 'No statuses', category: task.statusCategory.ToDo, statuses: [] },
+      { id: 'doing', title: 'Has status', category: task.statusCategory.Active, statuses: [statusId('In Progress')] }
+    ]
+    const id = await client.createDoc(tracker.class.Board, core.space.Workspace, {
+      ...data,
+      title: `${titlePrefix}empty-column`,
+      filter: statusCondition(statusId('Backlog')),
+      columns,
+      swimlanes: []
+    })
+    const boards = new BoardsPage(page)
+    await boards.open(id)
+    await expect(boards.columns()).toHaveCount(1)
+    await expect(boards.columns().first().locator('.header')).toContainText('Has status')
+    await expect(boards.columns().locator('[data-id="kanban-card"]')).toHaveCount(0)
+
+    const saved = await client.findOne(tracker.class.Board, { _id: id })
+    if (saved === undefined) throw new Error('no board')
+    await client.update(saved, {
+      columns: [{ ...columns[0], statuses: [statusId('Cancelled')] }, columns[1]]
+    })
+    await expect(boards.columns()).toHaveCount(2)
+    await expect(boards.columns().first().locator('.header')).toContainText('No statuses')
+    await expect(boards.columns().locator('[data-id="kanban-card"]')).toHaveCount(0)
+    await client.update(saved, { columns })
+    await expect(boards.columns()).toHaveCount(1)
+    await expect(boards.columns().first().locator('.header')).toContainText('Has status')
+
+    await (await page.goto(boards.boardUrl(id, true, 'columns')))?.finished()
+    await expect(boards.settingsColumn()).toHaveCount(2)
+    await expect(boards.settingsColumn().first().locator('input.name')).toHaveValue('No statuses')
+    await expect(page.locator('[data-id="boardColumnHidden"]')).toHaveCount(1)
+    await expect(boards.settingsColumn().first()).toContainText(
+      'This column is hidden on the board until a status is added'
+    )
+    expect((await client.findOne(tracker.class.Board, { _id: id }))?.columns).toEqual(columns)
+  })
+
   test('visibility reads "Visible to everyone" and "Only me" with the hint', async ({ page }) => {
     const boards = new BoardsPage(page)
     await openTab(boards, 'general')

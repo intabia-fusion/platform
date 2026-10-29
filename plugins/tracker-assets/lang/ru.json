@@ -516,6 +516,7 @@
     "DaysInColumnToggle": "Дни в колонке на карточке",
     "DaysInColumn": "Дни в колонке",
     "BoardColumnSummary": "{statuses, plural, one {# статус} few {# статуса} other {# статусов}} · {issues, plural, one {# задача} few {# задачи} other {# задач}}",
+    "BoardColumnHidden": "Колонка скрыта на доске, пока в нее не добавлен статус",
     "BoardHiddenIssues": "{count, plural, one {# задача не видна} few {# задачи не видны} other {# задач не видны}} на доске",
     "ColumnMoveLeft": "Сдвинуть влево",
     "ColumnMoveRight": "Сдвинуть вправо",
