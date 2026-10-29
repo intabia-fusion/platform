@@ -111,7 +111,9 @@ export class ConditionMatches {
         if (this.queries.get(item.id) !== entry) return
         const version = ++entry.version
         entry.pending = true
-        const query = await conditionToQuery(client, item.condition, () => { void refresh() })
+        const query = await conditionToQuery(client, item.condition, () => {
+          void refresh()
+        })
         // A removed condition or a newer compilation owns the result now.
         if (this.queries.get(item.id) !== entry || version !== entry.version) return
         const updated = entry.query.query(

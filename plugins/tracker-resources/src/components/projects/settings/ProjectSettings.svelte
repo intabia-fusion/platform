@@ -56,9 +56,14 @@
   const projectQuery = createQuery()
   $: if (currentSpace !== undefined) {
     activeProject = undefined
-    projectQuery.query(tracker.class.Project, { _id: currentSpace }, (res) => {
-      project = res[0]
-    }, { showArchived: true })
+    projectQuery.query(
+      tracker.class.Project,
+      { _id: currentSpace },
+      (res) => {
+        project = res[0]
+      },
+      { showArchived: true }
+    )
   } else {
     projectQuery.unsubscribe()
     project = undefined
@@ -69,7 +74,11 @@
   let activeProject: Ref<Project> | undefined
   $: if (project !== undefined && project._id === currentSpace && !project.archived) {
     activeProject = project._id
-  } else if (currentSpace !== undefined && activeProject === currentSpace && (project === undefined || project.archived)) {
+  } else if (
+    currentSpace !== undefined &&
+    activeProject === currentSpace &&
+    (project === undefined || project.archived)
+  ) {
     navigate({ path: [...getCurrentLocation().path.slice(0, 3), 'all-projects'] })
   }
 

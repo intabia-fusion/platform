@@ -1,6 +1,6 @@
 # Карта фич
 
-Один файл на продуктовую область. В каждом: пакеты ("Где код"), модель данных, сценарии со ссылками на файлы и символы, список фич с символами и файлами, "Куда смотреть, если нужно...", настройки, тесты, связанные документы. Как устроены слои плагина и путь запроса клиент -> транзактор -> БД - [../architecture.md](../architecture.md).
+Одна входная карта на продуктовую область; крупная область может иметь отдельные подробные карты. В каждом: пакеты ("Где код"), модель данных, сценарии со ссылками на файлы и символы, список фич с символами и файлами, "Куда смотреть, если нужно...", настройки, тесты, связанные документы. Как устроены слои плагина и путь запроса клиент -> транзактор -> БД - [../architecture.md](../architecture.md).
 
 Каждый файл помечен коммитом, с которым сверен. Путь или символ, которого больше нет в коде, - ошибка документа: исправлять в том же PR, что меняет код (см. "Where features live" в [AGENTS.md](../../AGENTS.md)).
 
@@ -8,7 +8,7 @@
 
 | Область | Документ | Основные пакеты |
 | --- | --- | --- |
-| Трекер: проекты, задачи, статусы, типы задач, workflow, учёт времени, метки | [tracker.md](tracker.md) | `tracker`, `task`, `workflow`, `time` (отчёты), `tags`, `view` |
+| Трекер: [задачи, время, виды](tracker-issues.md), [доски](tracker-boards.md), [проекты, типы и workflow](tracker-projects-workflow.md) | [tracker.md](tracker.md) | `tracker`, `task`, `workflow`, `time` (отчёты), `tags`, `view` |
 | Чат: каналы, DM, треды, окно сообщений, чтение при скролле, навигатор, поиск | [chat.md](chat.md) | `chunter`, `activity` |
 | Уведомления: DocNotifyContext, inbox, бейджи, push, email, упоминания, реакции, mute | [notifications.md](notifications.md) | `notification`, `services/notifications`, `services/notification`, `services/mail` |
 | Виртуальный офис и встречи: этаж, комнаты, LiveKit, knock, запись, транскрипция | [office-meetings.md](office-meetings.md) | `love`, `services/love`, `recorder`, `media` |
@@ -32,8 +32,10 @@
 
 | Ищешь | Документ |
 | --- | --- |
-| Issue, sub-issue, Milestone, Component, статусы, канбан, оценка, time report | [tracker.md](tracker.md) |
-| Workflow, переходы статусов, валидаторы, post-functions | [tracker.md](tracker.md) |
+| Issue, sub-issue, канбан, оценка, time report, поиск и фильтры | [tracker-issues.md](tracker-issues.md) |
+| Board, доски, колонки, дорожки, WIP, настройки и доступ | [tracker-boards.md](tracker-boards.md) |
+| Project, Milestone, Component, типы задач и статусы | [tracker-projects-workflow.md](tracker-projects-workflow.md) |
+| Workflow, переходы статусов, валидаторы, post-functions | [tracker-projects-workflow.md](tracker-projects-workflow.md) |
 | Process (визуальные процессы над карточками) | [integrations.md](integrations.md) |
 | Card (generic-карточки) | [cards.md](cards.md) |
 | Сообщение, тред, канал, DM, поиск по чату, "New"-разделитель | [chat.md](chat.md) |
