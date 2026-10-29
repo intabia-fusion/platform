@@ -107,8 +107,12 @@ test.describe('Tracker tests', () => {
 
   test('report-time-from-main-view', async ({ page }) => {
     const issuesPage = new IssuesPage(page)
+    const navigationMenu = new TrackerNavigationMenuPage(page)
     await navigate(page)
-    await issuesPage.navigateToIssues()
+    // `text="Issues"` now matches every project's Issues link; open Default and switch to the table
+    // viewlet - only it renders `.estimation-container`, which this test reports time through.
+    await navigationMenu.openIssuesForProject('Default')
+    await page.click(ViewletSelectors.Table)
     const values = [2, 4, 6, 8]
     const assignee = 'Chen Rosamund'
     const status = 'In Progress'
@@ -127,7 +131,8 @@ test.describe('Tracker tests', () => {
       const random = Math.floor(Math.random() * values.length)
       const time = values[random]
       count += time
-      await page.click('text="Issues"')
+      await navigationMenu.openIssuesForProject('Default')
+      await page.click(ViewletSelectors.Table)
       const issuesPage = new IssuesPage(page)
       await issuesPage.clickModelSelectorAll()
       await issuesPage.clickModelSelectorAll()
