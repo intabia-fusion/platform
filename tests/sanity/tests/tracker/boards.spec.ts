@@ -34,6 +34,7 @@ import {
   type ProjectContext
 } from '../API/TrackerApi'
 import { BoardsPage } from '../model/tracker/boards-page'
+import { KanbanBoardPage } from '../model/tracker/kanban-board-page'
 import { getSecondPage, PlatformSetting, PlatformURI } from '../utils'
 import { ViewletSelectors } from './tracker.utils'
 
@@ -167,6 +168,35 @@ test.describe('task boards', () => {
     // 2 cards over the limit of 1: the limit and the cards area of the column are red
     await expect(boards.wipLimit()).toHaveClass(/over/)
     await expect(boards.columns().first().locator('.column-cards')).toHaveClass(/over-limit/)
+  })
+
+  test('a multi-status column reveals a landing spot per status it accepts', async ({ page }) => {
+    const boards = new BoardsPage(page)
+    const board = new KanbanBoardPage(page)
+    const doing = await createIssue(client, ctx, { title: `${titlePrefix}spot`, status: 'In Progress' })
+    await boards.open(boardId)
+    const spots = page.locator('[data-id="kanban-drop-targets"] [data-drop-target]')
+    await board.holdCardVia(doing, [
+      {
+        over: board.column('queue'),
+        check: async () => {
+          await expect(spots).toHaveCount(2)
+          await expect(spots.nth(0)).toHaveAttribute('data-drop-target', statusId('Backlog'))
+          await expect(spots.nth(1)).toHaveAttribute('data-drop-target', statusId('Todo'))
+        }
+      }
+    ])
+    await board.releaseAboveBoard(board.card(doing))
+  })
+
+  test('a drop on a landing spot sets exactly that status', async ({ page }) => {
+    const boards = new BoardsPage(page)
+    const board = new KanbanBoardPage(page)
+    const id = await createIssue(client, ctx, { title: `${titlePrefix}spot-drop`, status: 'In Progress' })
+    await boards.open(boardId)
+    await board.dropCardOnDropTarget(id, 'queue', statusId('Todo'))
+    const issue = await client.findOne(tracker.class.Issue, { _id: id })
+    expect(issue?.status).toBe(statusId('Todo'))
   })
 
   test('the board opens from the navigator', async ({ page }) => {

@@ -31,7 +31,7 @@
   import ui, { Button, Icon, Scroller, lazyObserver, themeStore, defaultBackground } from '@hcengineering/ui'
   import { createEventDispatcher, onDestroy, tick } from 'svelte'
 
-  import type { CardDragEvent, DocWithRank, Item, SwimLane } from '../types'
+  import type { CardDragEvent, DocWithRank, DropTarget, Item, SwimLane } from '../types'
   import {
     buildColumns,
     insertIndex,
@@ -71,8 +71,12 @@
   export let onMoveCommit: ((id: string, fields: Record<string, unknown>) => void) | undefined = undefined
   export let onMoveRollback: ((id: string) => void) | undefined = undefined
 
-  export let getUpdateProps: (doc: Doc, state: CategoryType) => DocumentUpdate<Item> | undefined
+  export let getUpdateProps: (doc: Doc, state: CategoryType, dropTargetId?: string) => DocumentUpdate<Item> | undefined
   export let getAvailableCategories: ((doc: Doc) => Promise<CategoryType[]>) | undefined = undefined
+
+  // Landing spots per column (stateKey -> spots), shown inside the column while a card is held
+  // over it. The host computes them; on drop the spot id goes back through `getUpdateProps`.
+  export let dropTargets = new Map<string, DropTarget[]>()
 
   // SwimLane support. When empty - classic kanban layout (legacy).
   export let swimLanes: SwimLane[] = []
@@ -334,6 +338,39 @@
     if (!item.contains(event.relatedTarget as Node | null)) dragOverCollapsed = undefined
   }
 
+  // The landing spot under the dragged card shows the card, as a slot it stands in.
+  let dragOverDropTarget: string | undefined
+
+  function leaveDropTarget (event: DragEvent): void {
+    const item = event.currentTarget as HTMLElement
+    if (!item.contains(event.relatedTarget as Node | null)) dragOverDropTarget = undefined
+  }
+
+  function dropTargetDragOver (event: DragEvent, target: DropTarget): void {
+    event.preventDefault()
+    event.stopPropagation()
+    dragOverDropTarget = target.id
+  }
+
+  function dropTargetDrop (event: DragEvent, state: CategoryType, target: DropTarget, swimLane?: SwimLane): void {
+    event.preventDefault()
+    event.stopPropagation()
+    dragOverDropTarget = undefined
+    void move(state, swimLane, target.id).then(() => {
+      isDragging = false
+    })
+  }
+
+  // Spots of the column the card is held over, for the full-form status slots. Shown once the
+  // drag is under way, so slots appearing on dragstart do not reflow the board under the pointer.
+  $: shownSpots =
+    dragUnderway && dragCard !== undefined && dragCardState !== undefined
+      ? (dropTargets.get(stateKey(dragCardState)) ?? [])
+      : []
+  // The card shown in a spot is out of the column's card list, so it is not drawn twice, and not
+  // again at the bottom of the column when the pointer is off the spots.
+  $: cardInSpot = shownSpots.length > 1 && dragCard !== undefined
+
   function toggleSwimLane (id: string): void {
     if (collapsed.has(id)) collapsed.delete(id)
     else collapsed.add(id)
@@ -490,7 +527,7 @@
     return getSwimLaneUpdateProps?.(dragCard, lane) !== undefined
   }
 
-  async function move (state: CategoryType, targetSwimLane?: SwimLane): Promise<void> {
+  async function move (state: CategoryType, targetSwimLane?: SwimLane, dropTargetId?: string): Promise<void> {
     if (dragCard === undefined) {
       return
     }
@@ -506,7 +543,7 @@
       return
     }
 
-    let updates = getUpdateProps(dragCard, state)
+    let updates = getUpdateProps(dragCard, state, dropTargetId)
 
     if (updates === undefined) {
       panelDragLeave(undefined, dragCardState)
@@ -736,6 +773,7 @@
           arr.push(dragCard)
           setGroupByValues(groupByDocs, state, arr)
         }
+        dragOverDropTarget = undefined
         dragCardState = state
         dragCardTargetIndex = dontUpdateRank && orderBy?.[1] === -1 ? 0 : undefined
       }
@@ -918,6 +956,7 @@
     dragCardToRestore = swimLaneMode ? undefined : object
     dragMoved = false
     dragOverCollapsed = undefined
+    dragOverDropTarget = undefined
     isDragging = true
     dragCardTargetIndex = undefined
     const available = await getAvailableCategories?.(object)
@@ -936,6 +975,7 @@
     isDragging = false
     dragCard = undefined
     dragCardAvailableCategories = undefined
+    dragOverDropTarget = undefined
     stopAutoScroll()
     window.removeEventListener('mousemove', onDragEnd, true)
   }
@@ -1299,10 +1339,41 @@
                         }}
                       >
                         <slot name="beforeCard" {state} {swimLane} />
+                        {#if dragCardState === state && dragCardCurrentSwimLane?._id === swimLane._id && shownSpots.length > 1}
+                          <div class="drop-targets" data-id="kanban-drop-targets">
+                            {#each shownSpots as target (target.id)}
+                              <!-- svelte-ignore a11y-no-static-element-interactions -->
+                              <div
+                                class="drop-target"
+                                class:drag-over={dragOverDropTarget === target.id}
+                                data-drop-target={target.id}
+                                on:dragover={(event) => { dropTargetDragOver(event, target) }}
+                                on:dragleave={leaveDropTarget}
+                                on:drop={(event) => { dropTargetDrop(event, state, target, swimLane) }}
+                              >
+                                <div class="drop-target-label">
+                                  <slot name="dropTarget" {state} {target} {dragCard} />
+                                </div>
+                                {#if dragOverDropTarget === target.id && dragCard !== undefined}
+                                  <div class="drop-target-card">
+                                    <slot
+                                      name="card"
+                                      object={dragCard}
+                                      dragged={true}
+                                      swimLane={dragCardCurrentSwimLane}
+                                    />
+                                  </div>
+                                {/if}
+                              </div>
+                            {/each}
+                          </div>
+                        {/if}
                         <KanbanRow
                           bind:this={swimRowBindings[swimCellKey(swimLane._id, si)]}
                           on:obj-focus
-                          stateObjects={laneStateObjects}
+                          stateObjects={cardInSpot
+                            ? laneStateObjects.filter((doc) => doc._id !== dragCard?._id)
+                            : laneStateObjects}
                           {isDragging}
                           {dragCard}
                           {objects}
@@ -1482,10 +1553,34 @@
                   class:over-limit={overLimit?.(state, stateObjects.length) === true}
                 >
                   <slot name="beforeCard" {state} />
+                  {#if dragCardState === state && shownSpots.length > 1}
+                    <div class="drop-targets" data-id="kanban-drop-targets">
+                      {#each shownSpots as target (target.id)}
+                        <!-- svelte-ignore a11y-no-static-element-interactions -->
+                        <div
+                          class="drop-target"
+                          class:drag-over={dragOverDropTarget === target.id}
+                          data-drop-target={target.id}
+                          on:dragover={(event) => { dropTargetDragOver(event, target) }}
+                          on:dragleave={leaveDropTarget}
+                          on:drop={(event) => { dropTargetDrop(event, state, target) }}
+                        >
+                          <div class="drop-target-label">
+                            <slot name="dropTarget" {state} {target} {dragCard} />
+                          </div>
+                          {#if dragOverDropTarget === target.id && dragCard !== undefined}
+                            <div class="drop-target-card">
+                              <slot name="card" object={dragCard} dragged={true} />
+                            </div>
+                          {/if}
+                        </div>
+                      {/each}
+                    </div>
+                  {/if}
                   <KanbanRow
                     bind:this={stateRows[si]}
                     on:obj-focus
-                    {stateObjects}
+                    stateObjects={cardInSpot ? stateObjects.filter((doc) => doc._id !== dragCard?._id) : stateObjects}
                     {isDragging}
                     {dragCard}
                     {objects}
@@ -1886,5 +1981,40 @@
     background: var(--theme-button-hovered);
     border-radius: 0.625rem;
     line-height: 1.25rem;
+  }
+  // Landing spots of the column a card is held over: one full-width slot per value the card
+  // can take, the card standing in the hovered slot. A drop sets exactly that value.
+  .drop-targets {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    padding: 0.25rem 0;
+    width: 100%;
+  }
+  .drop-target {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 3.5rem;
+    padding: 0.5rem;
+    border: 1px dashed var(--theme-divider-color);
+    border-radius: 0.375rem;
+    background-color: var(--theme-drop-zone-bg-color, var(--theme-button-hovered));
+    cursor: pointer;
+
+    &.drag-over {
+      border: 2px solid var(--primary-button-default);
+    }
+  }
+  .drop-target-label {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-width: 0;
+  }
+  .drop-target-card {
+    pointer-events: none;
   }
 </style>

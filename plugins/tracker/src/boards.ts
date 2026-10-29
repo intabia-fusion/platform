@@ -279,6 +279,16 @@ export function columnStatusFor (
   return column.statuses.find((s) => allowed === undefined || allowed.includes(s))
 }
 
+// Statuses a card may take in a column, for the drop spots: its current one and the ones the
+// workflow allows. `columnStatusFor` picks the first of them for a drop on the column itself.
+export function columnDropTargets (
+  column: BoardColumn,
+  current: Ref<Status>,
+  allowed: Array<Ref<Status>> | undefined
+): Ref<Status>[] {
+  return column.statuses.filter((s) => s === current || allowed === undefined || allowed.includes(s))
+}
+
 // One issue per rule that gets the rule's border: it fits the rule and no rule above it.
 export function pickRuleSamples (
   rules: Array<{ id: string }>,

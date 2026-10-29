@@ -4,6 +4,7 @@ import {
   canEditBoard,
   cardFields,
   columnCategory,
+  columnDropTargets,
   columnIndexByStatus,
   columnStatusFor,
   isBoardAvailable,
@@ -189,6 +190,13 @@ describe('column drops', () => {
 
   it('refuses a column the workflow does not reach', () => {
     expect(columnStatusFor(column, id('x'), [id('z')])).toBeUndefined()
+  })
+
+  it('lists the statuses a card may take, for the drop spots', () => {
+    expect(columnDropTargets(column, id('x'), undefined)).toEqual(['a', 'b'])
+    expect(columnDropTargets(column, id('x'), [id('b')])).toEqual(['b'])
+    expect(columnDropTargets(column, id('x'), [id('z')])).toEqual([])
+    expect(columnDropTargets(column, id('b'), [id('a')])).toEqual(['a', 'b'])
   })
 
   it('makes one kanban category of the column statuses', () => {

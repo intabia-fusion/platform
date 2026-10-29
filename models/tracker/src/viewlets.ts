@@ -97,7 +97,7 @@ export const issuesOptions = (kanban: boolean): ViewOptionsModel => ({
               { id: 'space', label: tracker.string.Project }
             ],
             label: tracker.string.SwimLaneBy
-          },
+          }
           // {
           //   key: 'density',
           //   type: 'slider' as const,

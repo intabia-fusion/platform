@@ -28,7 +28,7 @@
     WithLookup
   } from '@hcengineering/core'
   import core, { generateId, getObjectValue, groupByArray, mergeQueries } from '@hcengineering/core'
-  import type { Item, SwimLane } from '@hcengineering/kanban'
+  import type { Item, SwimLane, DropTarget } from '@hcengineering/kanban'
   import { Kanban as KanbanUI } from '@hcengineering/kanban'
   import { employeeByIdStore } from '@hcengineering/contact-resources'
   import type { Employee } from '@hcengineering/contact'
@@ -51,6 +51,7 @@
     IssuesGrouping,
     IssuesOrdering,
     columnCategory,
+    columnDropTargets,
     columnStatusFor,
     isOverLimit,
     pickSwimlane,
@@ -113,6 +114,7 @@
   } from '../../swimLanes'
   import CreateIssue from '../CreateIssue.svelte'
   import IssueKanbanCard from './IssueKanbanCard.svelte'
+  import IssueStatusIcon from './IssueStatusIcon.svelte'
   import BoardColumnStatuses from '../boards/BoardColumnStatuses.svelte'
   import BoardConditionHint from '../boards/BoardConditionHint.svelte'
 
@@ -195,6 +197,11 @@
 
   function toIssue (object: any): WithLookup<Issue> {
     return object as WithLookup<Issue>
+  }
+
+  // Status a landing spot names, for its icon and label.
+  function dropTargetStatus (target: DropTarget): Status | undefined {
+    return $statusStore.byId.get(target.id as Ref<Status>)
   }
 
   const lookup: Lookup<Issue> = {
@@ -487,11 +494,42 @@
   // Statuses each dragged issue may take, by the workflow: a board column picks one of them on a drop
   const allowedByDoc = new Map<Ref<Doc>, Ref<Status>[] | undefined>()
 
-  const getUpdateProps = (doc: Doc, category: CategoryType): DocumentUpdate<Item> | undefined => {
+  // Landing spots per board column for the dragged issue, so the kanban reveals a spot per status.
+  // Computed eagerly on drag start; the kanban only shows them while a card is held over a column.
+  let dropTargets = new Map<string, DropTarget[]>()
+
+  function buildDropTargets (board: Board, doc: Doc, allowed: Ref<Status>[] | undefined): Map<string, DropTarget[]> {
+    const result = new Map<string, DropTarget[]>()
+    const issue = toIssue(doc)
+    for (const column of board.columns) {
+      const statuses = columnDropTargets(column, issue.status, allowed)
+      if (statuses.length > 1) {
+        result.set(
+          column.id,
+          statuses.map((s) => ({ id: s }))
+        )
+      }
+    }
+    return result
+  }
+
+  const getUpdateProps = (
+    doc: Doc,
+    category: CategoryType,
+    dropTargetId?: string
+  ): DocumentUpdate<Item> | undefined => {
     if (board !== undefined) {
       const column = boardColumn(category)
+      if (column === undefined) return undefined
+      const current = toIssue(doc).status
+      const allowed = allowedByDoc.get(doc._id)
+      // A landing spot names the exact status; otherwise the first status the column allows.
       const status =
-        column !== undefined ? columnStatusFor(column, toIssue(doc).status, allowedByDoc.get(doc._id)) : undefined
+        dropTargetId !== undefined
+          ? columnDropTargets(column, current, allowed).includes(dropTargetId as Ref<Status>)
+            ? (dropTargetId as Ref<Status>)
+            : undefined
+          : columnStatusFor(column, current, allowed)
       return status === undefined ? undefined : { [groupByKey]: status, space: doc.space }
     }
     const groupValue =
@@ -758,8 +796,10 @@
     const issue = toIssue(doc)
 
     if (board !== undefined) {
+      const currentBoard = board
       const allowed = await allowedStatuses(issue)
       allowedByDoc.set(doc._id, allowed)
+      dropTargets = buildDropTargets(currentBoard, doc, allowed)
       return categories.filter((c) => {
         const statuses = boardColumn(c)?.statuses ?? []
         return statuses.includes(issue.status) || allowed === undefined || statuses.some((s) => allowed.includes(s))
@@ -836,6 +876,7 @@
       groupByKey === noCategory ? tasks : getGroupByValues(groupByDocs, category)}
     {setGroupByValues}
     {getUpdateProps}
+    {dropTargets}
     {groupByDocs}
     {groupByKey}
     on:obj-focus={(evt) => {
@@ -1015,6 +1056,13 @@
         />
       {/key}
     </svelte:fragment>
+    <svelte:fragment slot="dropTarget" let:target let:dragCard>
+      {@const status = dropTargetStatus(target)}
+      {#if status !== undefined}
+        <IssueStatusIcon value={status} size="small" space={toIssue(dragCard).space} />
+        <span class="drop-target-name">{status.name}</span>
+      {/if}
+    </svelte:fragment>
   </KanbanUI>
 {/if}
 
@@ -1129,5 +1177,11 @@
         transform: rotate(180deg);
       }
     }
+  }
+  .drop-target-name {
+    min-width: 0;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--theme-content-color);
   }
 </style>
