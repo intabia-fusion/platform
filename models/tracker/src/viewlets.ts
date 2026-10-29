@@ -235,13 +235,13 @@ export function issueConfig (
     },
     {
       key: 'createdOn',
-      presenter: tracker.component.TimestampLabel,
+      presenter: view.component.TimestampLabel,
       displayProps: { key: key + 'created', fixed: 'left', dividerBefore: true },
       props: { label: tracker.string.CreationDate }
     },
     {
       key: 'modifiedOn',
-      presenter: tracker.component.TimestampLabel,
+      presenter: view.component.TimestampLabel,
       displayProps: { key: key + 'modified', fixed: 'left', dividerBefore: true },
       props: { label: tracker.string.ModificationDate }
     },
@@ -556,7 +556,7 @@ export function defineViewlets (builder: Builder): void {
         { key: '', displayProps: { grow: true } },
         {
           key: 'modifiedOn',
-          presenter: tracker.component.TimestampLabel,
+          presenter: view.component.TimestampLabel,
           displayProps: { fixed: 'right', dividerBefore: true },
           props: { label: tracker.string.ModificationDate }
         },
@@ -717,7 +717,7 @@ export function defineViewlets (builder: Builder): void {
         },
         {
           key: 'modifiedOn',
-          presenter: tracker.component.TimestampLabel,
+          presenter: view.component.TimestampLabel,
           displayProps: { fixed: 'right', dividerBefore: true },
           props: { label: tracker.string.ModificationDate }
         }
@@ -756,7 +756,7 @@ export function defineViewlets (builder: Builder): void {
         },
         {
           key: 'modifiedOn',
-          presenter: tracker.component.TimestampLabel,
+          presenter: view.component.TimestampLabel,
           displayProps: { fixed: 'right', dividerBefore: true },
           props: { label: tracker.string.ModificationDate }
         }

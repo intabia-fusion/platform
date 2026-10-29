@@ -374,7 +374,6 @@ export default mergeIds(trackerId, tracker, {
     ComponentPresenter: '' as AnyComponent,
     ComponentRefPresenter: '' as AnyComponent,
     TitlePresenter: '' as AnyComponent,
-    TimestampLabel: '' as AnyComponent,
     PriorityPresenter: '' as AnyComponent,
     PriorityFilterValuePresenter: '' as AnyComponent,
     StatusFilterValuePresenter: '' as AnyComponent,
