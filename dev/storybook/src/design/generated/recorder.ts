@@ -120,6 +120,17 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
     CATEGORY: { backlog: 'Cloud', todo: 'Porpoise', active: 'Cerulean', won: 'Grass', lost: 'Coin' }
   }
 
+  // Advance widths of IBM Plex Sans (the product font) per 100px for ASCII 32..126, measured on the stand;
+  // Kept consistent with dev/design/kit/40-tracker.js for screen scripts shared with Penpot.
+  const PLEX = [
+    24, 28, 42, 71, 60, 93, 69, 24, 34, 34, 45, 60, 27, 40, 27, 38, 60, 60, 60, 60, 60, 60, 60, 60,
+    60, 60, 29, 29, 60, 60, 60, 48, 89, 64, 65, 62, 67, 58, 56, 70, 71, 40, 51, 63, 50, 81, 71, 71,
+    61, 71, 64, 58, 57, 68, 61, 89, 61, 59, 58, 32, 38, 32, 60, 57, 60, 53, 58, 50, 58, 55, 32, 53,
+    57, 25, 25, 53, 27, 87, 57, 56, 58, 58, 37, 49, 35, 57, 49, 77, 51, 50, 46, 34, 31, 34, 60
+  ]
+  kit.textWidth = (s: string, size: number) =>
+    Math.ceil([...String(s)].reduce((sum, ch) => sum + (PLEX[ch.charCodeAt(0) - 32] ?? 55), 0) * size / 100)
+
   // ---- Primitives -------------------------------------------------------------
   kit.box = (name: string, o: Record<string, any> = {}) =>
     node(
@@ -348,6 +359,7 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
       label,
       hint: o.hint,
       stacked: o.stacked,
+      alignTop: o.alignTop,
       kind: o.kind,
       fullWidth: o.fill,
       width: o.w
@@ -692,6 +704,7 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
       title: o.title ?? '',
       close: o.close,
       tabs: o.tabs,
+      tabsWidth: o.tabsWidth,
       tab: o.tab,
       subtabs: o.subtabs,
       subtab: o.subtab

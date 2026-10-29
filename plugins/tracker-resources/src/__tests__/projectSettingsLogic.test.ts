@@ -77,6 +77,13 @@ describe('member roles', () => {
     expect(res.assignment[r2]).toEqual(['a'])
   })
 
+  it('assigns selected roles when a new project has no assignments', () => {
+    expect(applyRoles(acc('a'), [OWNER_ROLE, 'r1'], [], {})).toEqual({
+      owners: ['a'],
+      assignment: { r1: ['a'] }
+    })
+  })
+
   it('drops the owner entry and keeps unheld roles as they are', () => {
     const res = applyRoles(acc('a'), [], [acc('a'), acc('x')], { [r1]: undefined })
     expect(res.owners).toEqual(['x'])

@@ -32,7 +32,7 @@
 
   import tracker from '../../../plugin'
   import { closeProjectSettings, openProjectSection } from '../../../projectSettings'
-  import { activeProjects } from '../../../utils'
+  import { createQuery } from '@hcengineering/presentation'
   import { canEditSpace } from '@hcengineering/view-resources'
   import ArchiveSection from './ArchiveSection.svelte'
   import GeneralSection from './GeneralSection.svelte'
@@ -52,14 +52,24 @@
     { id: 'archive', label: tracker.string.ProjectSettingsArchive, icon: view.icon.Delete }
   ] satisfies Array<{ id: string, label: IntlString, icon: any }>
 
-  $: project = currentSpace !== undefined ? $activeProjects.get(currentSpace) : undefined
+  let project: Project | undefined
+  const projectQuery = createQuery()
+  $: if (currentSpace !== undefined) {
+    activeProject = undefined
+    projectQuery.query(tracker.class.Project, { _id: currentSpace }, (res) => {
+      project = res[0]
+    }, { showArchived: true })
+  } else {
+    projectQuery.unsubscribe()
+    project = undefined
+  }
   $: section = sections.find((it) => it.id === $resolvedLocationStore.query?.section)?.id ?? sections[0].id
 
-  // An archived project drops out of the store: leave the page for the project list
-  let hadProject = false
-  $: if (project !== undefined && !project.archived) {
-    hadProject = true
-  } else if (hadProject) {
+  // Archiving the project being edited leaves the page, while an already archived project remains editable.
+  let activeProject: Ref<Project> | undefined
+  $: if (project !== undefined && project._id === currentSpace && !project.archived) {
+    activeProject = project._id
+  } else if (currentSpace !== undefined && activeProject === currentSpace && (project === undefined || project.archived)) {
     navigate({ path: [...getCurrentLocation().path.slice(0, 3), 'all-projects'] })
   }
 

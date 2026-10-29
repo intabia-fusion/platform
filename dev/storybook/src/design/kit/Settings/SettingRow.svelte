@@ -20,6 +20,7 @@
   export let label: string
   // true shows the info button with a stock text
   export let hint: string | boolean | undefined = undefined
+  export let alignTop: boolean = false
   export let stacked: boolean = false
   export let kind: SettingRowKind | undefined = undefined
   export let fullWidth: boolean = false
@@ -29,7 +30,7 @@
   $: hintLabel = hintText !== undefined ? getEmbeddedLabel(hintText) : undefined
 </script>
 
-<div style:width={width !== undefined ? `${width}px` : 'fit-content'}>
+<div class:top={alignTop} style:width={width !== undefined ? `${width}px` : 'fit-content'}>
   {#if $$slots.details}
     <SettingRow label={getEmbeddedLabel(label)} hint={hintLabel} {stacked} {kind} {fullWidth}>
       <slot />
@@ -39,3 +40,9 @@
     <SettingRow label={getEmbeddedLabel(label)} hint={hintLabel} {stacked} {kind} {fullWidth}><slot /></SettingRow>
   {/if}
 </div>
+
+<style>
+  .top :global(.setting-row__main) {
+    align-items: flex-start;
+  }
+</style>

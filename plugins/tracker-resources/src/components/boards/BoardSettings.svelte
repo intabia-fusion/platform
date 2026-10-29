@@ -13,6 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import contact from '@hcengineering/contact'
   import type { Data, Ref } from '@hcengineering/core'
   import { getEmbeddedLabel, type Asset, type IntlString } from '@hcengineering/platform'
   import { createQuery, getClient, isDisabled } from '@hcengineering/presentation'
@@ -28,6 +29,7 @@
   import CardTab from './settings/CardTab.svelte'
   import ColumnsTab from './settings/ColumnsTab.svelte'
   import GeneralTab from './settings/GeneralTab.svelte'
+  import MembersTab from './settings/MembersTab.svelte'
   import RulesTab from './settings/RulesTab.svelte'
 
   export let board: Board
@@ -36,9 +38,10 @@
 
   const client = getClient()
 
-  type Tab = 'general' | 'columns' | 'swimlanes' | 'quickFilters' | 'colorRules' | 'card'
+  type Tab = 'general' | 'members' | 'columns' | 'swimlanes' | 'quickFilters' | 'colorRules' | 'card'
   const tabs: Array<{ id: Tab, label: IntlString, icon: Asset }> = [
     { id: 'general', label: tracker.string.BoardTabGeneral, icon: view.icon.Setting },
+    { id: 'members', label: tracker.string.ProjectSettingsAccess, icon: contact.icon.Contacts },
     { id: 'columns', label: tracker.string.BoardTabColumns, icon: task.icon.Kanban },
     { id: 'swimlanes', label: tracker.string.BoardTabSwimlanes, icon: tracker.icon.MyIssues },
     { id: 'quickFilters', label: tracker.string.BoardTabQuickFilters, icon: view.icon.Star },
@@ -153,6 +156,8 @@
         <Scroller padding="1.5rem 2rem">
           {#if tab === 'general'}
             <GeneralTab board={current} {projects} {onChange} />
+          {:else if tab === 'members'}
+            <MembersTab board={current} {onChange} />
           {:else if tab === 'columns'}
             <ColumnsTab board={current} {statuses} {onChange} />
           {:else if tab === 'card'}

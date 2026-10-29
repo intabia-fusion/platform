@@ -30,7 +30,7 @@ await kit.page('Task boards')
     ),
     actions: [
       kit.Notice('1 статус без колонки · 1 задача не видна', 'warning', { pill: true }),
-      kit.Button({ kind: 'ghost', size: 'medium', label: 'Настройки доски', icon: 'gear', name: 'Board settings' })
+      kit.IconButton('kit/DotsVertical', { kind: 'secondary', size: 'small', name: 'Board actions' })
     ],
     filters: [
       sep,
@@ -412,7 +412,7 @@ await kit.page('Task boards')
     ),
     actions: [
       kit.Notice('1 статус без колонки · 1 задача не видна', 'warning', { pill: true }),
-      kit.Button({ kind: 'ghost', size: 'medium', label: 'Настройки доски', icon: 'gear', name: 'Board settings' })
+      kit.IconButton('kit/DotsVertical', { kind: 'secondary', size: 'small', name: 'Board actions' })
     ],
     filters: [
       sep2,
@@ -802,7 +802,7 @@ await kit.page('Task boards')
     ),
     actions: [
       kit.Notice('1 статус без колонки · 1 задача не видна', 'warning', { pill: true }),
-      kit.Button({ kind: 'ghost', size: 'medium', label: 'Настройки доски', icon: 'gear', name: 'Board settings' })
+      kit.IconButton('kit/DotsVertical', { kind: 'secondary', size: 'small', name: 'Board actions' })
     ],
     filters: [
       sep3,
@@ -1146,13 +1146,10 @@ await kit.page('Task boards')
       kit.text('рамка карточки: статус Peer Review', { size: 12, color: T('theme-dark-color') })
     )
   ), 16, 1000)
-  kit.at(main, kit.add(
-    kit.box(
-      'Tooltip',
-      { w: 350, h: 28, dir: 'row', pad: [0, 10, 0, 10], align: 'center', fill: T('theme-tooltip-bg'), radius: 4 }
-    ),
-    kit.text('Настройки доски: колонки, дорожки, фильтры, цвета', { size: 12, color: T('theme-tooltip-color') })
-  ), 1108, 52)
+  kit.at(main, kit.Menu(
+    [{ label: 'Настройки доски', icon: 'gear' }],
+    { w: 240, name: 'Board actions menu' }
+  ), 1210, 52)
 }
 {
   const { main } = kit.Workbench('Доска - статусы без колонки', 2020, 1200, {
@@ -1182,7 +1179,7 @@ await kit.page('Task boards')
     ),
     actions: [
       kit.Notice('1 статус без колонки · 1 задача не видна', 'warning', { pill: true }),
-      kit.Button({ kind: 'ghost', size: 'medium', label: 'Настройки доски', icon: 'gear', name: 'Board settings' })
+      kit.IconButton('kit/DotsVertical', { kind: 'secondary', size: 'small', name: 'Board actions' })
     ],
     filters: [
       sep4,
@@ -1593,7 +1590,7 @@ await kit.page('Task boards')
     ),
     actions: [
       kit.Notice('1 статус без колонки · 1 задача не видна', 'warning', { pill: true }),
-      kit.Button({ kind: 'ghost', size: 'medium', label: 'Настройки доски', icon: 'gear', name: 'Board settings' })
+      kit.IconButton('kit/DotsVertical', { kind: 'secondary', size: 'small', name: 'Board actions' })
     ],
     filters: [
       sep5,

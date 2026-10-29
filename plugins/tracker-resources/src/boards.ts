@@ -77,19 +77,18 @@ export interface ConditionItem {
 // Lanes and card colors are chosen from them.
 export class ConditionMatches {
   readonly ids = new Map<string, Set<Ref<Doc>>>()
-  private readonly queries = new Map<string, { key: string, query: LiveQuery }>()
-  private seq = 0
-  // Queries are being created: their answers are not in yet
-  private pending = false
+  private readonly queries = new Map<string, { key: string, query: LiveQuery, version: number, pending: boolean }>()
+
+  private syncVersion = 0
 
   constructor (private readonly onChange: () => void) {}
 
   get ready (): boolean {
-    return !this.pending && this.ids.size === this.queries.size
+    return this.ids.size === this.queries.size && [...this.queries.values()].every((entry) => !entry.pending)
   }
 
   async sync (client: TxOperations, items: ConditionItem[], scope: DocumentQuery<Issue>): Promise<void> {
-    const seq = ++this.seq
+    const syncVersion = ++this.syncVersion
     const scopeKey = JSON.stringify(scope)
     const wanted = new Map(items.filter((i) => i.condition !== '').map((i) => [i.id, i]))
     for (const [id, entry] of this.queries) {
@@ -98,26 +97,41 @@ export class ConditionMatches {
       this.queries.delete(id)
       this.ids.delete(id)
     }
-    const fresh = Array.from(wanted.values()).filter((i) => !this.queries.has(i.id))
-    this.pending = fresh.length > 0
-    for (const item of fresh) {
-      const query = await conditionToQuery(client, item.condition, () => {})
-      // A newer sync owns the queries: this one is stale
-      if (seq !== this.seq) return
-      const lq = createQuery(true)
-      this.queries.set(item.id, { key: `${scopeKey}|${item.condition}`, query: lq })
-      lq.query(
-        tracker.class.Issue,
-        mergeQueries(scope, query),
-        (res) => {
-          this.ids.set(item.id, new Set(res.map((it) => it._id)))
-          this.onChange()
-        },
-        { projection: { _id: 1 } }
-      )
+    const updates: Array<Promise<void>> = []
+    for (const item of wanted.values()) {
+      if (this.queries.has(item.id)) continue
+      const entry = {
+        key: `${scopeKey}|${item.condition}`,
+        query: createQuery(true),
+        version: 0,
+        pending: true
+      }
+      this.queries.set(item.id, entry)
+      const refresh = async (): Promise<void> => {
+        if (this.queries.get(item.id) !== entry) return
+        const version = ++entry.version
+        entry.pending = true
+        const query = await conditionToQuery(client, item.condition, () => { void refresh() })
+        // A removed condition or a newer compilation owns the result now.
+        if (this.queries.get(item.id) !== entry || version !== entry.version) return
+        const updated = entry.query.query(
+          tracker.class.Issue,
+          mergeQueries(scope, query),
+          (res) => {
+            if (this.queries.get(item.id) !== entry) return
+            entry.pending = false
+            this.ids.set(item.id, new Set(res.map((it) => it._id)))
+            this.onChange()
+          },
+          { projection: { _id: 1 } }
+        )
+        if (!updated) entry.pending = false
+        this.onChange()
+      }
+      updates.push(refresh())
     }
-    this.pending = false
-    this.onChange()
+    await Promise.all(updates)
+    if (syncVersion === this.syncVersion) this.onChange()
   }
 
   has (id: string, doc: Ref<Doc>): boolean {
@@ -125,7 +139,7 @@ export class ConditionMatches {
   }
 
   destroy (): void {
-    this.seq++
+    this.syncVersion++
     for (const { query } of this.queries.values()) query.unsubscribe()
     this.queries.clear()
     this.ids.clear()

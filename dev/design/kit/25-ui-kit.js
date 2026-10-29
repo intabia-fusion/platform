@@ -108,7 +108,7 @@ kit.SearchInput = (o = {}) => {
 kit.SettingRow = (label, control, o = {}) => {
   const w = o.w || 560
   if (o.kind === 'column') {
-    const r = kit.box('SettingRow ' + label, { w, h: 10, dir: 'row', gap: D('spacing-2'), align: 'center', vs: 'auto', clip: false })
+    const r = kit.box('SettingRow ' + label, { w, h: 10, dir: 'row', gap: D('spacing-2'), align: o.alignTop ? 'start' : 'center', vs: 'auto', clip: false })
     const caption = kit.col('caption', 2, { w: 220, hs: 'fix' })
     kit.add(caption, kit.text(label, { size: 14, lh: 1.3, color: T('theme-content-color') }))
     if (typeof o.hint === 'string') kit.add(caption, kit.text(o.hint, { size: 12, lh: 1.3, color: T('theme-darker-color'), w: 220 }))

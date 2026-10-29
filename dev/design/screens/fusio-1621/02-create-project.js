@@ -92,6 +92,7 @@ await kit.page(typeof PAGE_NAME === 'string' ? PAGE_NAME : '2. Создание 
   )
 
   const basics = (id, error) => [
+    row('Способ создания', kit.SegmentedControl(['Пустой проект', 'На основе проекта'], 'Пустой проект')),
     row('Тип проекта', select('Default'), { hint: 'Статусы и типы задач берутся из типа проекта', fill: true }),
     row('Название', kit.TextInput({ value: 'Сайт', w: fieldW }), { fill: true }),
     row(

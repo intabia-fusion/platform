@@ -310,6 +310,14 @@ test.describe('task boards', () => {
     await boards.openCreateWizard()
     await page.locator('#board-create-title').fill(`${titlePrefix}created`)
     await page.locator('#board-create-description').fill('Board made by the wizard')
+    // A personal board skips the editors step; switching back restores it.
+    await page.locator('[data-id="board-create-visibility-me"]').click()
+    await expect(boards.createWizard().locator('.wizard__steps')).not.toContainText('Can edit')
+    await boards.createNext().click()
+    await expect(page.locator('[data-id="board-create-step-columns"]')).toBeVisible()
+    await expect(page.locator('[data-id="board-create-editors"]')).toHaveCount(0)
+    await boards.createFooter().getByRole('button', { name: 'Back', exact: true }).click()
+    await page.locator('[data-id="board-create-visibility-all"]').click()
     // A team board: the editors step, then the columns
     await boards.createNext().click()
     await expect(page.locator('[data-id="board-create-editors"]')).toBeVisible()
@@ -495,6 +503,20 @@ test.describe('task boards', () => {
     await expect(page.locator('#sidebar')).toBeVisible()
     await expect(apps).toBeHidden()
 
+    // Re-enter with the same tab already expanded, then explicitly reopen it with Space.
+    await boards.fullscreenButton().click()
+    await expect(page.locator('#sidebar')).toBeVisible()
+    await boards.fullscreenButton().click()
+    await expect(page.locator('#sidebar')).toBeHidden()
+    await boards.fullscreenButton().evaluate((element: HTMLButtonElement) => {
+      element.blur()
+    })
+    await boards.card('normal').first().hover()
+    await page.keyboard.press('Space')
+    await expect(boards.fullscreenButton()).toHaveAttribute('aria-label', 'Exit full screen')
+    await expect(page.locator('#sidebar')).toBeVisible()
+    await expect(apps).toBeHidden()
+
     await boards.fullscreenButton().click()
     await expect(page.locator('.antiPanel-navigator')).toBeVisible()
     await expect(apps).toBeVisible()
@@ -523,7 +545,7 @@ test.describe('task boards', () => {
     await (await second.page.goto(`${PlatformURI}/workbench/sanity-ws/tracker`))?.finished()
     await expect(boards2.navItems()).toContainText(`${titlePrefix}nav-visibility`)
 
-    await (await page.goto(boards.boardUrl(id, true)))?.finished()
+    await (await page.goto(boards.boardUrl(id, true, 'members')))?.finished()
     await boards.radio('boardVisibilityMe').click()
     await expect(boards2.navItems()).not.toContainText(`${titlePrefix}nav-visibility`)
   })
@@ -605,7 +627,7 @@ test.describe('task boards', () => {
     const boards2 = new BoardsPage(second.page)
     await boards2.open(id)
 
-    await (await page.goto(boards.boardUrl(id, true)))?.finished()
+    await (await page.goto(boards.boardUrl(id, true, 'members')))?.finished()
     await boards.radio('boardVisibilityMe').click()
     await expect.poll(async () => (await readBoardById(id))?.visibility).toBe('me')
     // The viewer lives on: the board leaves the page of the second user without a reload

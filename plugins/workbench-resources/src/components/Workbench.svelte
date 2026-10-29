@@ -104,7 +104,7 @@
   import SelectWorkspaceMenu from './SelectWorkspaceMenu.svelte'
   import SpaceView from './SpaceView.svelte'
   import WidgetsBar from './sidebar/Sidebar.svelte'
-  import { sidebarStore, SidebarVariant, syncSidebarState } from '../sidebar'
+  import { sidebarStore, sidebarOpenSequence, SidebarVariant, syncSidebarState } from '../sidebar'
   import {
     getTabDataByLocation,
     getTabLocation,
@@ -778,12 +778,14 @@
   // Full screen hides the sidebar it found open, but not the one opened in it (e.g. a task from a board)
   let fullscreenSidebar = false
   let lastSidebarVariant = $sidebarStore.variant
+  let lastSidebarOpenSequence = $sidebarOpenSequence
   $: {
     if (!$fullscreenStore) fullscreenSidebar = false
-    else if ($sidebarStore.variant !== lastSidebarVariant) {
+    else if ($sidebarStore.variant !== lastSidebarVariant || $sidebarOpenSequence !== lastSidebarOpenSequence) {
       fullscreenSidebar = $sidebarStore.variant === SidebarVariant.EXPANDED
     }
     lastSidebarVariant = $sidebarStore.variant
+    lastSidebarOpenSequence = $sidebarOpenSequence
   }
   $: elementPanel = $deviceInfo.replacedPanel ?? contentPanel
 

@@ -387,12 +387,22 @@ test.describe('Tracker Projects tests', () => {
       await expect(projectSettingsPage.statusRows().filter({ hasText: 'Backlog' })).toHaveCount(1)
     })
 
+    const settingsUrl = page.url()
     await test.step('Archive section archives the project', async () => {
       await projectSettingsPage.archiveProject()
       await trackerNavigationMenuPage.checkProjectNotExist(data.title)
       await trackerNavigationMenuPage.openAllProjects()
       await allProjectsPage.checkProjectExistInTable(`${data.title} (archived)`)
       await expect(page.locator('[data-id="project-settings"]')).toBeHidden()
+    })
+
+    await test.step('An archived project opens its settings by address and saves changes', async () => {
+      await page.goto(settingsUrl)
+      await projectSettingsPage.openSection('general')
+      await expect(projectSettingsPage.inputTitle()).toHaveValue(data.title)
+      await projectSettingsPage.setDescription('Archived project description')
+      await page.reload()
+      await expect(projectSettingsPage.inputDescription()).toHaveValue('Archived project description')
     })
   })
 

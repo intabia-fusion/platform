@@ -215,6 +215,7 @@ describe('ConditionMatches', () => {
 
   beforeEach(() => {
     lives = []
+    ;(createQuery as jest.Mock).mockClear()
     ;(filtersToQuery as jest.Mock).mockReset()
     ;(filtersToQuery as jest.Mock).mockImplementation(
       async (_c: unknown, _q: unknown, parsed: Array<{ q: any }>) => parsed[0].q
@@ -229,6 +230,7 @@ describe('ConditionMatches', () => {
           live.answer = (ids) => {
             cb(ids.map((_id) => ({ _id })))
           }
+          return true
         }
       }
     })
@@ -283,6 +285,60 @@ describe('ConditionMatches', () => {
     await matches.sync(stub<TxOperations>({}), items, stub<any>({ space: 's2' }))
     expect(lives).toHaveLength(2)
     expect(lives[0].unsubscribe).toHaveBeenCalled()
+  })
+
+  it('recompiles nested conditions on updates and keeps unchanged queries usable', async () => {
+    let update = (): void => {}
+    let milestone = 'm1'
+    ;(filtersToQuery as jest.Mock).mockImplementation(async (_c, _q, _p, callback) => {
+      update = callback
+      return { milestone }
+    })
+    const matches = new ConditionMatches(() => {})
+    await matches.sync(stub<TxOperations>({}), [{ id: 'a', condition: cond({}) }], {})
+    lives[0].answer(['i1'])
+    milestone = 'm2'
+    update()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(lives[0].scope).toEqual({ milestone: 'm2' })
+    lives[0].answer(['i2'])
+    expect(matches.has('a', ref('i1'))).toBe(false)
+    expect(matches.has('a', ref('i2'))).toBe(true)
+    const answer = lives[0].answer
+    ;(createQuery as jest.Mock).mock.results[0].value.query = jest.fn(() => false)
+    update()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(matches.ready).toBe(true)
+    expect(matches.has('a', ref('i2'))).toBe(true)
+    answer(['i3'])
+    expect(matches.has('a', ref('i3'))).toBe(true)
+    matches.destroy()
+    update()
+    await Promise.resolve()
+    expect(matches.ids.size).toBe(0)
+  })
+
+  it('ignores an older async compilation and updates after destroy', async () => {
+    const completions: Array<(query: object) => void> = []
+    let update = (): void => {}
+    ;(filtersToQuery as jest.Mock).mockImplementation(async (_c, _q, _p, callback) => {
+      update = callback
+      return await new Promise((resolve) => completions.push(resolve))
+    })
+    const matches = new ConditionMatches(() => {})
+    const syncing = matches.sync(stub<TxOperations>({}), [{ id: 'a', condition: cond({}) }], {})
+    update()
+    completions[1]({ milestone: 'new' })
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    completions[0]({ milestone: 'old' })
+    await syncing
+    expect(lives[0].scope).toEqual({ milestone: 'new' })
+    update()
+    matches.destroy()
+    completions[2]({ milestone: 'late' })
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(lives[0].scope).toEqual({ milestone: 'new' })
+    expect(matches.ids.size).toBe(0)
   })
 
   it('unsubscribes everything on destroy', async () => {

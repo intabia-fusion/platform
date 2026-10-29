@@ -13,17 +13,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getCurrentAccount, notEmpty, type AccountUuid, type Data, type Ref } from '@hcengineering/core'
+  import { notEmpty, type Data, type Ref } from '@hcengineering/core'
   import { getClient, isDisabled, SpacesMultiPopup } from '@hcengineering/presentation'
   import type { Board, Issue, Project } from '@hcengineering/tracker'
   import ui, { Icon, Label, showPopup } from '@hcengineering/ui'
-  import { Button, Dropdown, IconButton, Radio, SettingRow, TextArea, TextInput } from '@hcengineering/ui/kit'
+  import { Button, Dropdown, IconButton, SettingRow, TextArea, TextInput } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import { FilterConditions, getKeyLabel } from '@hcengineering/view-resources'
   import task from '@hcengineering/task'
   import { boardQuery } from '../../../boards'
   import tracker from '../../../plugin'
-  import ProjectMembersTable from '../../projects/settings/ProjectMembersTable.svelte'
   import ProjectSettingsSection from '../../projects/settings/ProjectSettingsSection.svelte'
 
   export let board: Board
@@ -103,18 +102,6 @@
     if (seq === countSeq) counts = { matched: matched.total, total: total.total }
   }
   $: void count(board)
-
-  // The board moves to the personal space of the one who switches it: the author only
-  $: isAuthor = getCurrentAccount().uuid === board.author
-
-  function addEditor (account: AccountUuid): void {
-    if (account === board.author || board.editors.includes(account)) return
-    void onChange({ editors: [...board.editors, account] })
-  }
-
-  function removeEditor (account: AccountUuid): void {
-    void onChange({ editors: board.editors.filter((a) => a !== account) })
-  }
 
   function removeProject (id: Ref<Project>): void {
     void onChange({ projects: board.projects.filter((p) => p !== id) })
@@ -222,52 +209,6 @@
         }}
       />
     </SettingRow>
-
-    <div class="divider" />
-
-    <div class="top">
-      <SettingRow kind="column" label={tracker.string.BoardVisibility}>
-        <div class="radios" role="radiogroup">
-          <Radio
-            value="all"
-            group={board.visibility}
-            name="board-visibility"
-            label={tracker.string.BoardVisibilityAllMembers}
-            disabled={!isAuthor}
-            data-id="boardVisibilityAll"
-            on:change={() => onChange({ visibility: 'all' })}
-          />
-          <div class="radio">
-            <Radio
-              value="me"
-              group={board.visibility}
-              name="board-visibility"
-              label={tracker.string.BoardVisibilityOnlyMe}
-              disabled={!isAuthor}
-              data-id="boardVisibilityMe"
-              on:change={() => onChange({ visibility: 'me' })}
-            />
-            <span class="radio-hint"><Label label={tracker.string.BoardVisibilityOnlyMeHint} /></span>
-          </div>
-        </div>
-      </SettingRow>
-    </div>
-
-    <!-- A personal board sits in the author's PersonSpace: editors could not even see it -->
-    {#if board.visibility !== 'me'}
-      <div class="editors" data-id="boardEditors">
-        <ProjectMembersTable
-          members={[board.author, ...board.editors]}
-          lockedAccount={board.author}
-          ignoreAccounts={[board.author]}
-          fixedRole={(a) => (a === board.author ? tracker.string.BoardAuthor : tracker.string.BoardEditorRole)}
-          removeLabel={ui.string.Remove}
-          addDataId="boardAddEditor"
-          onAdd={addEditor}
-          onRemove={removeEditor}
-        />
-      </div>
-    {/if}
   </div>
 </ProjectSettingsSection>
 
@@ -330,34 +271,5 @@
   .note {
     font-size: 0.75rem;
     color: var(--theme-darker-color);
-  }
-  // A table section: apart from the rows above, as sections of the project settings
-  // The last section of the page: room under the table when the page scrolls to the end
-  .editors {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    margin-top: 1rem;
-    padding-bottom: 1rem;
-  }
-  .divider {
-    width: 45rem;
-    height: 1px;
-    background-color: var(--theme-divider-color);
-  }
-  .radios {
-    display: flex;
-    flex-direction: column;
-    gap: 0.625rem;
-  }
-  .radio {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-0_25);
-  }
-  .radio-hint {
-    padding-left: calc(1rem + var(--spacing-1));
-    font-size: 0.75rem;
-    color: var(--global-secondary-TextColor);
   }
 </style>
