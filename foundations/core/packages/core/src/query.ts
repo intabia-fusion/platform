@@ -78,12 +78,13 @@ export function resultSort<T extends Doc> (
   const enums = getEnums(_class, sortOptions, hierarchy, modelDb)
   const sortFunc = (a: any, b: any): number => {
     for (const key in sortOptions) {
-      const _enum = enums[key]
+      const order = sortOptions[key]
+      const _enum = typeof order === 'object' ? undefined : enums[key]
       const aValue =
         _enum !== undefined ? getEnumValue(key, _class, hierarchy, a, _enum) : getValue(key, a, _class, hierarchy)
       const bValue =
         _enum !== undefined ? getEnumValue(key, _class, hierarchy, b, _enum) : getValue(key, b, _class, hierarchy)
-      const result = getSortingResult(aValue, bValue, sortOptions[key], key.startsWith('$lookup.'))
+      const result = getSortingResult(aValue, bValue, order, key.startsWith('$lookup.'))
       if (result !== 0) return result
     }
     return 0
@@ -114,8 +115,9 @@ function mapSortingValue (order: SortingOrder | SortingRules<any>, val: any): an
   }
 }
 
-// A missing value goes where the server puts NULL: a `$lookup` key orders it as the smallest value
-// (`NULLS LAST` in DESC), a plain column as Postgres does by default (first in DESC, last in ASC).
+// A missing value goes last for a field of the document, whatever the direction; a `$lookup` key keeps
+// following the direction, as the server orders such a key like the smallest value. A value the sorting
+// rules do not name is no value either.
 function getSortingResult (
   aValue: any,
   bValue: any,
@@ -124,21 +126,26 @@ function getSortingResult (
 ): number {
   let res = 0
   const orderOrder = typeof order === 'object' ? order.order : order
-  const missing = lookupKey ? -orderOrder : orderOrder
-  if (typeof aValue === 'undefined') {
-    return typeof bValue === 'undefined' ? 0 : missing
-  }
-  if (typeof bValue === 'undefined') {
-    return -missing
+  const missing = lookupKey ? -orderOrder : 1
+  const aMissing = aValue === undefined || aValue === null
+  const bMissing = bValue === undefined || bValue === null
+  if (aMissing || bMissing) {
+    if (aMissing && bMissing) return 0
+    return aMissing ? missing : -missing
   }
 
-  if (Array.isArray(aValue) && Array.isArray(bValue)) {
+  const aaValue = mapSortingValue(order, aValue)
+  const bbValue = mapSortingValue(order, bValue)
+  if (aaValue === undefined || bbValue === undefined) {
+    if (aaValue === undefined && bbValue === undefined) return 0
+    return aaValue === undefined ? missing : -missing
+  }
+
+  if (Array.isArray(aaValue) && Array.isArray(bbValue)) {
     res =
-      (aValue.map((it) => mapSortingValue(order, it)).sort((a, b) => (a - b) * orderOrder)[0] ?? 0) -
-      (bValue.map((it) => mapSortingValue(order, it)).sort((a, b) => (a - b) * orderOrder)[0] ?? 0)
+      (aaValue.map((it) => mapSortingValue(order, it)).sort((a, b) => (a - b) * orderOrder)[0] ?? 0) -
+      (bbValue.map((it) => mapSortingValue(order, it)).sort((a, b) => (a - b) * orderOrder)[0] ?? 0)
   } else {
-    const aaValue = mapSortingValue(order, aValue)
-    const bbValue = mapSortingValue(order, bValue)
     res = typeof aaValue === 'string' ? aaValue.localeCompare(bbValue) : aaValue - bbValue
   }
   return res * orderOrder
@@ -169,7 +176,8 @@ function getEnums<T extends Doc> (
 function getValue<T extends Doc> (key: string, obj: any, _class: Ref<Class<T>>, hierarchy: Hierarchy): any {
   const tkey = checkMixinKey(key, _class, hierarchy)
   let value = getObjectValue(tkey, obj)
-  if (typeof value === 'object' && !Array.isArray(value)) {
+
+  if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
     value = JSON.stringify(value)
   }
   return value

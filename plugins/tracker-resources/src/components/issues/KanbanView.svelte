@@ -24,6 +24,7 @@
     FindOptions,
     Lookup,
     Ref,
+    SortingQuery,
     Status,
     WithLookup
   } from '@hcengineering/core'
@@ -64,11 +65,19 @@
     themeStore,
     Icon
   } from '@hcengineering/ui'
-  import type { AttributeModel, BuildModelKey, Viewlet, ViewOptionModel, ViewOptions } from '@hcengineering/view'
+  import type {
+    AttributeModel,
+    BuildModelKey,
+    OrderOption,
+    Viewlet,
+    ViewOptionModel,
+    ViewOptions
+  } from '@hcengineering/view'
   import view from '@hcengineering/view'
   import type { SelectDirection } from '@hcengineering/view-resources'
   import {
     buildModel,
+    buildSortRules,
     enabledConfig,
     focusStore,
     getCategoryQueryNoLookup,
@@ -77,6 +86,7 @@
     getGroupByValues,
     getPresenter,
     groupBy,
+    hasSortRules,
     ListPresenter,
     ListSelectionProvider,
     noCategory,
@@ -183,7 +193,44 @@
     }
   }
 
-  $: resultOptions = { ...options, lookup, ...(orderBy !== undefined ? { sort: { [orderBy[0]]: orderBy[1] } } : {}) }
+  let sortValue: SortingQuery<DocWithRank> | undefined = undefined
+  let sortReady = true
+  let sortRequest = 0
+  let sortSignature = ''
+
+  const updateSort = reduceCalls(async function (orderBy: OrderOption | undefined, request: number) {
+    if (orderBy === undefined) return
+    let rules
+    try {
+      rules = await buildSortRules(client, _class, orderBy[0], orderBy[1], space, viewlet.descriptor)
+    } catch (err: any) {
+      console.error('Sort rules build failed', err)
+    }
+    if (request !== sortRequest) return
+    sortValue = { [orderBy[0]]: rules ?? orderBy[1] }
+    sortReady = true
+  })
+
+  $: {
+    const signature =
+      orderBy === undefined ? '' : `${_class}|${orderBy[0]}|${orderBy[1]}|${space ?? ''}|${viewlet.descriptor}`
+    if (signature !== sortSignature) {
+      sortSignature = signature
+      if (orderBy === undefined) {
+        sortValue = undefined
+        sortReady = true
+      } else if (hasSortRules(client, _class, orderBy[0])) {
+        sortRequest++
+        sortReady = false
+        void updateSort(orderBy, sortRequest)
+      } else {
+        sortValue = { [orderBy[0]]: orderBy[1] }
+        sortReady = true
+      }
+    }
+  }
+
+  $: resultOptions = { ...options, lookup, ...(sortValue !== undefined ? { sort: sortValue } : {}) }
 
   let kanbanUI: KanbanUI
   const listProvider = new ListSelectionProvider((offset: 1 | -1 | 0, of?: Doc, dir?: SelectDirection) => {
@@ -317,25 +364,27 @@
     }
   }
 
-  $: docsQuery.query(
-    _class,
-    queryNoLookup,
-    (res) => {
-      fastDocs = res
-      fastQueryIds = new Set(res.map((it) => it._id))
-      docsLoaded = true
-    },
-    { ...categoryQueryOptions, limit: 1000 }
-  )
   let docsLoaded = false
-  $: docsQuerySlow.query(
-    _class,
-    queryNoLookup,
-    (res) => {
-      slowDocs = res
-    },
-    categoryQueryOptions
-  )
+  $: if (sortReady) {
+    docsQuery.query(
+      _class,
+      queryNoLookup,
+      (res) => {
+        fastDocs = res
+        fastQueryIds = new Set(res.map((it) => it._id))
+        docsLoaded = true
+      },
+      { ...categoryQueryOptions, limit: 1000 }
+    )
+    docsQuerySlow.query(
+      _class,
+      queryNoLookup,
+      (res) => {
+        slowDocs = res
+      },
+      categoryQueryOptions
+    )
+  }
 
   $: tasks = [...fastDocs, ...slowDocs.filter((it) => !fastQueryIds.has(it._id))]
 

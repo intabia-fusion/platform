@@ -97,6 +97,7 @@
       {config}
       {configurations}
       {options}
+      {viewlet}
       {createItemDialog}
       {createItemDialogProps}
       {baseMenuClass}

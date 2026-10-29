@@ -52,6 +52,8 @@ import core, {
   shouldShowArchived,
   SortingOrder,
   type SortingQuery,
+  type SortingRules,
+  type SortQuerySelector,
   type StorageIterator,
   systemAccountUuid,
   toFindResult,
@@ -155,6 +157,14 @@ async function * createCursorGenerator (
 
 // GUEST_DOMAIN of models/guest (PublicLink only); this package cannot import the model.
 const publicLinkDomain = 'guest'
+
+// A value of a sort rule as a SQL parameter: a reference and an enum member are scalars, anything else is
+// compared by its JSON text.
+function orderValue (value: unknown): string | number | boolean | null {
+  if (value === null || value === undefined) return null
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return value
+  return JSON.stringify(value) ?? ''
+}
 
 class ValuesVariables {
   index: number = 1
@@ -1152,8 +1162,9 @@ abstract class PostgresAdapterBase implements DbAdapter {
           res.push(reverseOrder)
           continue
         }
-        // A missing joined row is no value: it goes last whichever way the join field sorts
-        const nulls = key.startsWith('$lookup') ? (val === 1 ? ' NULLS FIRST' : ' NULLS LAST') : ''
+        // A missing joined row is no value: it goes last whichever way the join field sorts. A value of a
+        // document field also goes last, whatever the direction.
+        const nulls = this.nullsOrder(_class, baseDomain, key, joins, val)
         if (attr !== undefined && NumericTypes.includes(attr.type._class)) {
           const sqlKey = this.getKey(_class, baseDomain, key, joins)
           const dir = val === 1 ? 'ASC' : 'DESC'
@@ -1178,7 +1189,10 @@ abstract class PostgresAdapterBase implements DbAdapter {
           res.push(`${this.getKey(_class, baseDomain, key, joins)} ${val === 1 ? 'ASC' : 'DESC'}${nulls}`)
         }
       } else {
-        // todo handle custom sorting
+        const order = this.buildRulesOrder(vars, _class, baseDomain, escape(_key), val, joins)
+        if (order !== '') {
+          res.push(order)
+        }
       }
     }
     if (res.length > 0) {
@@ -1186,6 +1200,53 @@ abstract class PostgresAdapterBase implements DbAdapter {
     } else {
       return ''
     }
+  }
+
+  private nullsOrder<T extends Doc>(
+    _class: Ref<Class<T>>,
+    baseDomain: string,
+    key: string,
+    joins: JoinProps[],
+    order: SortingOrder
+  ): string {
+    if (key.startsWith('$lookup')) {
+      return order === SortingOrder.Ascending ? ' NULLS FIRST' : ' NULLS LAST'
+    }
+    const sqlKey = this.getKey(_class, baseDomain, key, joins)
+    return sqlKey.includes('->') || sqlKey.includes('#>>') ? ' NULLS LAST' : ''
+  }
+
+  // `SortingRules` sorts by a value list: a case gives each known value its index. A value the list does
+  // not name, and a missing one, stays NULL - `NULLS LAST` keeps it after the known values in either direction.
+  private buildRulesOrder<T extends Doc>(
+    vars: ValuesVariables,
+    _class: Ref<Class<T>>,
+    baseDomain: string,
+    key: string,
+    rules: SortingRules<T>,
+    joins: JoinProps[]
+  ): string {
+    const sqlKey = this.getKey(_class, baseDomain, key, joins)
+    const literal = (value: unknown): string => vars.add(orderValue(value), '::text')
+    const cases: string[] = []
+    for (const rule of rules.cases ?? []) {
+      const index = Number(rule.index)
+      if (!Number.isFinite(index)) continue
+      if (rule.query === undefined || rule.query === null) {
+        cases.push(`WHEN ${sqlKey} IS NULL THEN ${index}`)
+      } else if (typeof rule.query === 'object') {
+        const selector = rule.query as SortQuerySelector<T>
+        if (selector.$in !== undefined) {
+          const list = selector.$in.filter((it) => it !== null && it !== undefined).map((it) => literal(it))
+          if (list.length > 0) cases.push(`WHEN ${sqlKey} IN (${list.join(', ')}) THEN ${index}`)
+        }
+      } else {
+        cases.push(`WHEN ${sqlKey} = ${literal(rule.query)} THEN ${index}`)
+      }
+    }
+    if (cases.length === 0) return ''
+    const dir = rules.order === SortingOrder.Ascending ? 'ASC' : 'DESC'
+    return `CASE ${cases.join(' ')} END ${dir} NULLS LAST`
   }
 
   private buildQuery<T extends Doc>(

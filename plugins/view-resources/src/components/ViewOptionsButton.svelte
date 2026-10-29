@@ -83,6 +83,17 @@
 
     config.groupBy = Array.from(new Set([...config.groupBy, ...customAttributes]))
 
+    const grouping = viewOptions.groupBy ?? []
+    const ordering = viewOptions.orderBy?.[0]
+    if (ordering !== undefined && grouping.includes(ordering)) {
+      const orderBy = config.orderBy as OrderOption[]
+      const next = orderBy.find((p) => !grouping.includes(p[0])) ?? orderBy[0]
+      if (next !== undefined && !grouping.includes(next[0])) {
+        viewOptions = { ...viewOptions, orderBy: [next[0], next[1]] as OrderOption }
+        setViewOptions(viewlet, viewOptions)
+      }
+    }
+
     showPopup(
       ViewOptionsEditor,
       { viewlet, config, viewOptions: h.clone(viewOptions) },

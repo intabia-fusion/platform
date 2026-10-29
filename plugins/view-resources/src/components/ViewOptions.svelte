@@ -1,8 +1,15 @@
 <script lang="ts">
   import { getClient } from '@hcengineering/presentation'
-  import type { DropdownIntlItem } from '@hcengineering/ui'
+  import type { IntlString } from '@hcengineering/platform'
   import { DropdownLabelsIntl, Label, Toggle } from '@hcengineering/ui'
-  import type { Viewlet, ViewOptions, ViewOptionsModel, ViewOptionModel, GroupingKey } from '@hcengineering/view'
+  import type {
+    GroupingKey,
+    OrderOption,
+    Viewlet,
+    ViewOptions,
+    ViewOptionsModel,
+    ViewOptionModel
+  } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import view from '../plugin'
   import { buildConfigLookup, canResolveAttribute, getKeyLabel } from '../utils'
@@ -28,15 +35,31 @@
   const getKey = (k: GroupingKey): string => (typeof k === 'string' ? k : k.key)
   const isHidden = (k: GroupingKey): boolean => (typeof k === 'string' ? false : (k.hidden ?? false))
 
-  const orderBy = config.orderBy
-    .filter((p) => p[0] === 'rank' || canResolveAttribute(hierarchy, viewlet.attachTo, p[0], lookup))
-    .map((p) => {
-      const key = p[0]
-      return {
-        id: key,
-        label: key === 'rank' ? view.string.Manual : getKeyLabel(client, viewlet.attachTo, key, lookup)
-      }
-    })
+  const sortItem = (key: string): { id: string, label: IntlString } => ({
+    id: key,
+    label: key === 'rank' ? view.string.Manual : getKeyLabel(client, viewlet.attachTo, key, lookup)
+  })
+
+  $: groupedKeys = new Set(viewOptions.groupBy)
+  $: orderBy = (() => {
+    const sortable = config.orderBy
+      .filter((p) => p[0] === 'rank' || canResolveAttribute(hierarchy, viewlet.attachTo, p[0], lookup))
+      .filter((p) => !groupedKeys.has(p[0]))
+
+    return (sortable.length > 0 ? sortable : config.orderBy.slice(0, 1)).map((p) => sortItem(p[0]))
+  })()
+
+  function defaultOrdering (): OrderOption | undefined {
+    return config.orderBy.find((p) => !viewOptions.groupBy.includes(p[0])) ?? config.orderBy[0]
+  }
+
+  $: if (viewOptions.orderBy?.[0] !== undefined && viewOptions.groupBy.includes(viewOptions.orderBy[0])) {
+    const next = defaultOrdering()
+    if (next !== undefined && !viewOptions.groupBy.includes(next[0])) {
+      viewOptions.orderBy = [...next] as OrderOption
+      dispatch('update', { key: 'orderBy', value: viewOptions.orderBy })
+    }
+  }
 
   function selectGrouping (value: string, i: number) {
     groups[i] = value
