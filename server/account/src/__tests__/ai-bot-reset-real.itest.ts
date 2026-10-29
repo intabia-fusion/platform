@@ -14,19 +14,15 @@
 
 /** Migration v56 on a real database, once per flavor in realDbFlavors. */
 
-import {
-  aiBotAccountEmail,
-  generateUuid,
-  SocialIdType,
-  type AccountUuid,
-  type PersonUuid,
-  type WorkspaceUuid
-} from '@hcengineering/core'
+import { generateUuid, SocialIdType, type AccountUuid, type PersonUuid, type WorkspaceUuid } from '@hcengineering/core'
 import { shutdownPostgres, type PostgresClientReference } from '@hcengineering/postgres'
 import { getMigrations } from '../collections/postgres/migrations'
 import { type PostgresAccountDB } from '../collections/postgres/postgres'
 import { createAccount } from '../utils'
 import { clearTables, openRealDb, realDbFlavors } from './realDbFlavors'
+
+// v56 ran before the rename (FUSIO-1379), so its subject is the legacy address, not the constant.
+const legacyBotEmail = 'huly.ai.bot@hc.engineering'
 
 jest.setTimeout(90000)
 
@@ -97,7 +93,7 @@ describe.each(realDbFlavors)('real-ai-bot-reset [$flavor]', ({ flavor, adminUri,
       'account',
       'person'
     ])
-    await seed(botUuid, aiBotAccountEmail)
+    await seed(botUuid, legacyBotEmail)
     await seed(userUuid, 'ai-bot-reset-user@example.com')
   })
 
@@ -113,7 +109,7 @@ describe.each(realDbFlavors)('real-ai-bot-reset [$flavor]', ({ flavor, adminUri,
 
     expect(await passwordOf(botUuid)).toBe(false)
     expect(await accountDb.account.findOne({ uuid: botUuid })).not.toBeNull()
-    expect(await accountDb.socialId.findOne({ type: SocialIdType.EMAIL, value: aiBotAccountEmail })).not.toBeNull()
+    expect(await accountDb.socialId.findOne({ type: SocialIdType.EMAIL, value: legacyBotEmail })).not.toBeNull()
     expect(await accountDb.integrationSecret.find({ workspaceUuid: workspace })).toHaveLength(1)
     expect(await rowCount('otp')).toBe(1)
   })

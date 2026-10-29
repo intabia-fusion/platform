@@ -22,7 +22,7 @@ jest.mock('../config', () => ({
     source: 'platform@intabia.ru',
     mode: 'queue',
     port: 1025,
-    blockedRecipients: new Set(['huly.ai.bot@hc.engineering'])
+    blockedRecipients: new Set(['ai.bot@platform'])
   }
 }))
 
@@ -36,7 +36,7 @@ import { MailClient } from '../mail'
 // eslint-disable-next-line import/first
 import { withoutBlockedRecipients } from '../utils'
 
-const bot = 'huly.ai.bot@hc.engineering'
+const bot = 'ai.bot@platform'
 const blocked = new Set([bot])
 
 describe('withoutBlockedRecipients', () => {
