@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import core, { type AccountUuid, type Doc, type PersonId, type Ref } from '@hcengineering/core'
+import core, { MeasureMetricsContext, type AccountUuid, type Doc, type PersonId, type Ref } from '@hcengineering/core'
 import notification, { type PushCallData, type PushData, type PushSubscription } from '@hcengineering/notification'
 import webpush from 'web-push'
 
@@ -78,6 +78,8 @@ const fcm = subscription('sub-fcm', 'fcm://token-f')
 const rustore = subscription('sub-rustore', 'rustore://token-r')
 
 const data: PushData = { tag: 'notify-1', title: 'Ann', body: 'is calling you' }
+// Spans are a no-op here: the delivery code only needs a context to hang them on.
+const ctx = new MeasureMetricsContext('test', {})
 const call = (expiresAt: number): PushCallData => ({
   inviteId: 'invite-1' as Ref<Doc>,
   callerName: 'Ann',
@@ -91,7 +93,7 @@ describe('call push routing', () => {
   })
 
   it('never sends a chat push to a VoIP token, and keeps the banner for the rest', async () => {
-    await sendPushToSubscription([web, apns, voip, fcm], data)
+    await sendPushToSubscription(ctx, [web, apns, voip, fcm], data)
 
     expect(sendApnsVoip).not.toHaveBeenCalled()
     expect(sendApns).toHaveBeenCalledWith('token-a', data)
@@ -114,7 +116,7 @@ describe('call push routing', () => {
 
   it('rings over VoIP and data-only Android pushes, leaves the plain iPhone token silent, the browser as before', async () => {
     const live = call(Date.now() + 45_000)
-    await sendPushToSubscription([web, apns, voip, fcm, rustore], data, live)
+    await sendPushToSubscription(ctx, [web, apns, voip, fcm, rustore], data, live)
 
     expect(sendApnsVoip).toHaveBeenCalledWith('token-v', data, live)
     expect(sendApns).not.toHaveBeenCalled()
@@ -125,14 +127,14 @@ describe('call push routing', () => {
   })
 
   it('keeps the banner on an iPhone that has no VoIP token yet', async () => {
-    await sendPushToSubscription([apns, fcm], data, call(Date.now() + 45_000))
+    await sendPushToSubscription(ctx, [apns, fcm], data, call(Date.now() + 45_000))
 
     expect(sendApns).toHaveBeenCalledWith('token-a', data)
     expect(sendFcmCall).toHaveBeenCalled()
   })
 
   it('rings nothing for a call already over: banners only, nothing on VoIP', async () => {
-    await sendPushToSubscription([apns, voip, fcm], data, call(Date.now() - 1))
+    await sendPushToSubscription(ctx, [apns, voip, fcm], data, call(Date.now() - 1))
 
     expect(sendApnsVoip).not.toHaveBeenCalled()
     expect(sendFcmCall).not.toHaveBeenCalled()
@@ -143,7 +145,7 @@ describe('call push routing', () => {
   it('falls back to the banner when VoIP delivery fails', async () => {
     ;(sendApnsVoip as jest.Mock).mockResolvedValueOnce(Delivery.Error)
     const live = call(Date.now() + 45_000)
-    await sendPushToSubscription([apns, voip], data, live)
+    await sendPushToSubscription(ctx, [apns, voip], data, live)
 
     expect(sendApnsVoip).toHaveBeenCalledWith('token-v', data, live)
     expect(sendApns).toHaveBeenCalledWith('token-a', data)
@@ -152,14 +154,14 @@ describe('call push routing', () => {
   it('falls back to the banner when the VoIP token is dead', async () => {
     ;(sendApnsVoip as jest.Mock).mockResolvedValueOnce(Delivery.Gone)
 
-    expect(await sendPushToSubscription([apns, voip], data, call(Date.now() + 45_000))).toEqual(['sub-voip'])
+    expect(await sendPushToSubscription(ctx, [apns, voip], data, call(Date.now() + 45_000))).toEqual(['sub-voip'])
     expect(sendApns).toHaveBeenCalledWith('token-a', data)
   })
 
   it('reports a dead VoIP token', async () => {
     ;(sendApnsVoip as jest.Mock).mockResolvedValueOnce(Delivery.Gone)
 
-    expect(await sendPushToSubscription([voip], data, call(Date.now() + 45_000))).toEqual(['sub-voip'])
+    expect(await sendPushToSubscription(ctx, [voip], data, call(Date.now() + 45_000))).toEqual(['sub-voip'])
   })
 
   it('cancels on every native token but VoIP, and not in the browser', async () => {
