@@ -1,6 +1,7 @@
 <!--
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021, 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -21,6 +22,7 @@
 
   import Label from './internal/Label.svelte'
   import login from '../plugin'
+  import { LoginEvents } from '../analytics'
   import { getPasswordValidationRules } from '../validations'
   import { goTo } from '../utils'
   import Form from './Form.svelte'
@@ -149,7 +151,19 @@
 </script>
 
 {#if step === OtpLoginSteps.Email}
-  <Form bind:this={form} {caption} {subtitle} {status} {fields} {object} {action} {proceedDisabled} withProviders>
+  <Form
+    bind:this={form}
+    {caption}
+    {subtitle}
+    {status}
+    {fields}
+    {object}
+    {action}
+    {proceedDisabled}
+    withProviders
+    submitEvent={LoginEvents.SignUpSubmitAttempt}
+    submitEventParams={{ method: useOTP ? 'otp' : 'email' }}
+  >
     <div slot="after-fields" class="form-row" let:submitAttempted>
       {#if useOTP}
         <label class="check-label">
