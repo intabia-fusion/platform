@@ -1347,9 +1347,13 @@
                                 class="drop-target"
                                 class:drag-over={dragOverDropTarget === target.id}
                                 data-drop-target={target.id}
-                                on:dragover={(event) => { dropTargetDragOver(event, target) }}
+                                on:dragover={(event) => {
+                                  dropTargetDragOver(event, target)
+                                }}
                                 on:dragleave={leaveDropTarget}
-                                on:drop={(event) => { dropTargetDrop(event, state, target, swimLane) }}
+                                on:drop={(event) => {
+                                  dropTargetDrop(event, state, target, swimLane)
+                                }}
                               >
                                 <div class="drop-target-label">
                                   <slot name="dropTarget" {state} {target} {dragCard} />
@@ -1561,9 +1565,13 @@
                           class="drop-target"
                           class:drag-over={dragOverDropTarget === target.id}
                           data-drop-target={target.id}
-                          on:dragover={(event) => { dropTargetDragOver(event, target) }}
+                          on:dragover={(event) => {
+                            dropTargetDragOver(event, target)
+                          }}
                           on:dragleave={leaveDropTarget}
-                          on:drop={(event) => { dropTargetDrop(event, state, target) }}
+                          on:drop={(event) => {
+                            dropTargetDrop(event, state, target)
+                          }}
                         >
                           <div class="drop-target-label">
                             <slot name="dropTarget" {state} {target} {dragCard} />
