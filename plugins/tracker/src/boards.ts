@@ -188,7 +188,8 @@ export function resolveCardDensity (
   board: CardDensity | undefined,
   legacyCompact: boolean = false
 ): CardDensity {
-  if (isCardDensity(user)) return user
+  // TODO: Disable fow now
+  // if (isCardDensity(user)) return user
   if (legacyCompact) return 'compact'
   return board ?? defaultCardDensity
 }

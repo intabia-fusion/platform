@@ -98,20 +98,20 @@ export const issuesOptions = (kanban: boolean): ViewOptionsModel => ({
             ],
             label: tracker.string.SwimLaneBy
           },
-          {
-            key: 'density',
-            type: 'slider' as const,
-            // Not a step: the board decides until the user moves the slider
-            defaultValue: 'default',
-            defaultLabel: tracker.string.DensityDefault,
-            values: [
-              { id: 'detailed', label: tracker.string.DensityDetailed },
-              { id: 'normal', label: tracker.string.DensityNormal },
-              { id: 'compact', label: tracker.string.DensityCompact },
-              { id: 'dense', label: tracker.string.DensityDense }
-            ],
-            label: tracker.string.CardDensity
-          }
+          // {
+          //   key: 'density',
+          //   type: 'slider' as const,
+          //   // Not a step: the board decides until the user moves the slider
+          //   defaultValue: 'default',
+          //   defaultLabel: tracker.string.DensityDefault,
+          //   values: [
+          //     { id: 'detailed', label: tracker.string.DensityDetailed },
+          //     { id: 'normal', label: tracker.string.DensityNormal },
+          //     { id: 'compact', label: tracker.string.DensityCompact },
+          //     { id: 'dense', label: tracker.string.DensityDense }
+          //   ],
+          //   label: tracker.string.CardDensity
+          // }
         ]
       : [])
   ]
