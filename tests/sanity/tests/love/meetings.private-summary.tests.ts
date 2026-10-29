@@ -18,7 +18,17 @@
 import { expect, test } from '@playwright/test'
 import { getClient as getAccountClient } from '@hcengineering/account-client'
 import { getWorkspaceToken, loadServerConfig } from '@hcengineering/api-client'
-import { type Class, type Doc, generateId, type Ref, type Space, systemAccountUuid } from '@hcengineering/core'
+import {
+  aiBotAccountEmail,
+  buildSocialIdString,
+  type Class,
+  type Doc,
+  generateId,
+  type Ref,
+  type Space,
+  SocialIdType,
+  systemAccountUuid
+} from '@hcengineering/core'
 import { generateToken } from '@hcengineering/server-token'
 import love, { MeetingStatus, RecordingState, TranscriptionState, type MeetingMinutes } from '@hcengineering/love'
 import { PlatformURI, PlatformUserThird } from '../utils'
@@ -26,7 +36,7 @@ import { getMeetingsUser, getPlatformToken, getSystemRestClient } from './meetin
 
 const MEETINGS_WS = 'meetings-ws'
 const CHAT_MESSAGE = 'chunter:class:ChatMessage' as Ref<Class<Doc>>
-const AI_BOT_EMAIL_KEY = 'email:huly.ai.bot@hc.engineering'
+const AI_BOT_EMAIL_KEY = buildSocialIdString({ type: SocialIdType.EMAIL, value: aiBotAccountEmail })
 
 const baseUrl = (): string => (PlatformURI ?? 'http://localhost:8083').replace(/\/$/, '')
 
