@@ -186,7 +186,7 @@ test.describe('task boards', () => {
         }
       }
     ])
-    await board.releaseAboveBoard(board.card(doing))
+    await board.releaseAboveBoard(board.column('queue'))
   })
 
   test('a drop on a landing spot sets exactly that status', async ({ page }) => {
