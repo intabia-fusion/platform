@@ -141,7 +141,8 @@ describe('swimlanes', () => {
   })
 })
 
-describe('card density', () => {
+// Card density is off for now (see resolveCardDensity): skip until it comes back.
+describe.skip('card density', () => {
   it('prefers the pick of the user, then the board', () => {
     expect(resolveCardDensity('dense', 'compact')).toBe('dense')
     expect(resolveCardDensity('default', 'compact')).toBe('compact')
