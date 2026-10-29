@@ -13,14 +13,15 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Class, Doc, DocumentQuery, FindOptions, Ref, RefTo, Space } from '@hcengineering/core'
-  import core, { getObjectValue, RateLimiter, mergeQueries } from '@hcengineering/core'
+  import type { Class, Doc, DocumentQuery, FindOptions, Ref, RefTo, Space, SortingQuery } from '@hcengineering/core'
+  import core, { getObjectValue, RateLimiter, mergeQueries, type SortingOrder } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import { createQuery, getClient, reduceCalls } from '@hcengineering/presentation'
   import type { AnyComponent, AnySvelteComponent } from '@hcengineering/ui'
   import type { BuildModelKey, ViewOptionModel, ViewOptions, Viewlet } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import type { SelectionFocusProvider } from '../../selection'
+  import { buildSortRules, hasSortRules } from '../../sortRules'
   import { buildConfigLookup, isRefAttribute } from '../../utils'
   import { getResultOptions, getResultQuery } from '../../viewOptions'
   import ListCategories from './ListCategories.svelte'
@@ -38,6 +39,7 @@
   export let createItemLabel: IntlString | undefined = undefined
   export let createItemEvent: string | undefined = undefined
   export let viewOptionsConfig: ViewOptionModel[] | undefined = undefined
+  export let viewlet: Viewlet | undefined = undefined
   export let viewOptions: ViewOptions
   export let flatHeaders = false
   export let disableHeader = false
@@ -60,6 +62,48 @@
 
   $: orderBy = viewOptions.orderBy
 
+  let sortValue: SortingQuery<Doc> | undefined = undefined
+  let sortReady = true
+  let sortRequest = 0
+  let sortSignature = ''
+
+  const updateSort = reduceCalls(async function (
+    orderBy: [string, SortingOrder] | undefined,
+    space: Ref<Space> | undefined,
+    request: number
+  ) {
+    if (orderBy === undefined) return
+    let rules
+    try {
+      rules = await buildSortRules(client, _class, orderBy[0], orderBy[1], space, viewlet?.descriptor)
+    } catch (err: any) {
+      // A failed build keeps the raw order: the list must load anyway.
+      console.error('Sort rules build failed', err)
+    }
+    if (request !== sortRequest) return
+    sortValue = { [orderBy[0]]: rules ?? orderBy[1] }
+    sortReady = true
+  })
+
+  $: {
+    const signature =
+      orderBy === undefined ? '' : `${_class}|${orderBy[0]}|${orderBy[1]}|${space ?? ''}|${viewlet?.descriptor ?? ''}`
+    if (signature !== sortSignature) {
+      sortSignature = signature
+      if (orderBy === undefined) {
+        sortValue = undefined
+        sortReady = true
+      } else if (hasSortRules(client, _class, orderBy[0])) {
+        sortRequest++
+        sortReady = false
+        void updateSort(orderBy, space, sortRequest)
+      } else {
+        sortValue = { [orderBy[0]]: orderBy[1] }
+        sortReady = true
+      }
+    }
+  }
+
   const docsQuery = createQuery()
   let docsLoaded = false
   let noCategories = false
@@ -71,7 +115,7 @@
   $: resultOptions = {
     ...configOptions,
     ...(Object.keys(lookup).length > 0 ? { lookup } : {}),
-    ...(orderBy !== undefined ? { sort: { [orderBy[0]]: orderBy[1] } } : {})
+    ...(sortValue !== undefined ? { sort: sortValue } : {})
   }
 
   const updateOptions = reduceCalls(async function (options: FindOptions<Doc> | undefined, viewOptions: ViewOptions) {
@@ -102,18 +146,20 @@
     }
   }
 
-  $: docsQuery.query(
-    _class,
-    queryNoLookup,
-    (res) => {
-      fastDocs = res
-      fastQueryIds = new Set(res.map((it) => it._id))
-      docsLoaded = true
-    },
-    { ...categoryQueryOptions, limit: 1000 }
-  )
+  $: if (sortReady) {
+    docsQuery.query(
+      _class,
+      queryNoLookup,
+      (res) => {
+        fastDocs = res
+        fastQueryIds = new Set(res.map((it) => it._id))
+        docsLoaded = true
+      },
+      { ...categoryQueryOptions, limit: 1000 }
+    )
+  }
 
-  $: if (fastDocs.length === 1000 && queryNoLookup.$search == null) {
+  $: if (sortReady && fastDocs.length === 1000 && queryNoLookup.$search == null) {
     docsQuerySlow.query(
       _class,
       queryNoLookup,
