@@ -764,8 +764,9 @@ export function createModel (builder: Builder): void {
         },
         {
           key: 'modifiedOn',
-          presenter: tracker.component.ModificationDatePresenter,
-          displayProps: { key: 'submodified', fixed: 'left', dividerBefore: true }
+          presenter: tracker.component.TimestampLabel,
+          displayProps: { key: 'submodified', fixed: 'left', dividerBefore: true },
+          props: { label: tracker.string.ModificationDate }
         },
         {
           key: '',
