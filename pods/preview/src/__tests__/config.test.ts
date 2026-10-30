@@ -21,13 +21,16 @@ const MAX_TIMEOUT = 2147483647
 // the config reads the environment once, at import
 async function load (env: Record<string, string> = {}): Promise<Config> {
   jest.resetModules()
-  Object.assign(process.env, { SECRET: 'secret' }, env)
+  Object.assign(process.env, { SECRET: 'secret', ACCOUNTS_URL: 'http://account' }, env)
   return (await import('../config')).default
 }
 
 describe('video config', () => {
   afterEach(() => {
     delete process.env.SECRET
+    delete process.env.ACCOUNTS_URL
+    delete process.env.AUTH_ALLOW_CACHE_MS
+    delete process.env.AUTH_DENY_CACHE_MS
     delete process.env.FFMPEG_TIMEOUT
     delete process.env.VIDEO_CONCURRENCY
     delete process.env.VIDEO_HEAD_TAIL_SIZE

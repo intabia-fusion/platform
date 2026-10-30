@@ -14,8 +14,9 @@
 //
 
 import { Analytics } from '@hcengineering/analytics'
-import { MeasureMetricsContext } from '@hcengineering/core'
+import { MeasureMetricsContext, type PersonUuid, type WorkspaceUuid } from '@hcengineering/core'
 import { buildStorageFromConfig } from '@hcengineering/server-storage'
+import { generateToken } from '@hcengineering/server-token'
 import { spawn } from 'child_process'
 import { EventEmitter } from 'events'
 import { get as httpGet, type Server } from 'http'
@@ -39,12 +40,19 @@ jest.mock('../utils/sharp', () => ({
 
 const spawnMock = spawn as unknown as jest.Mock
 
-const WS = '85da8aa0-7334-41bc-b69f-5f05ce88483c'
+const WS = '85da8aa0-7334-41bc-b69f-5f05ce88483c' as WorkspaceUuid
+const OTHER_WS = '87a386a9-e662-42fa-8b64-89b1c249999a' as WorkspaceUuid
+const ACCOUNT = '59eec4ec-c916-47a2-b19c-1fe156e07c87' as PersonUuid
+// signed with the default secret, the one decodeToken falls back to without metadata
+const TOKEN = generateToken(ACCOUNT, WS)
 
 const config = {
   Port: 0,
   Secret: 'secret',
   ServiceID: 'preview',
+  AccountsUrl: 'http://account',
+  AuthAllowCacheMs: 60_000,
+  AuthDenyCacheMs: 1_000,
   Cache: { enabled: false, cachePath: undefined, cacheSize: undefined, gcInterval: undefined },
   MaxBlobSize: 1024 * 1024,
   Video: { concurrency: 2, timeout: 60 * 1000, headTailSize: 5 * 1024 * 1024 },
@@ -53,10 +61,15 @@ const config = {
 }
 
 // http.get sends the path as it is: fetch would resolve "." and ".." before the request
-async function request (server: Server, path: string): Promise<{ status: number, body: string }> {
+async function request (
+  server: Server,
+  path: string,
+  token: string | null = TOKEN
+): Promise<{ status: number, body: string }> {
   const { port } = server.address() as AddressInfo
+  const headers = token === null ? undefined : { authorization: `Bearer ${token}` }
   return await new Promise((resolve, reject) => {
-    httpGet({ host: '127.0.0.1', port, path }, (res) => {
+    httpGet({ host: '127.0.0.1', port, path, headers }, (res) => {
       let body = ''
       res.on('data', (chunk) => {
         body += chunk
@@ -144,6 +157,26 @@ describe('preview routes', () => {
 
     expect(response.status).toBe(200)
     expect(stat).toHaveBeenCalledWith(expect.anything(), { uuid: WS }, '%2e')
+  })
+
+  it('refuses a request without a token', async () => {
+    const metadata = await request(server, `/metadata/${WS}/blob`, null)
+    const image = await request(server, `/image/width=64/${WS}/blob`, null)
+
+    expect(metadata.status).toBe(401)
+    expect(image.status).toBe(401)
+    expect(stat).not.toHaveBeenCalled()
+  })
+
+  it('refuses a token of another workspace', async () => {
+    const foreign = generateToken(ACCOUNT, OTHER_WS)
+
+    const metadata = await request(server, `/metadata/${WS}/blob`, foreign)
+    const image = await request(server, `/image/width=64/${WS}/blob`, foreign)
+
+    expect(metadata.status).toBe(401)
+    expect(image.status).toBe(401)
+    expect(stat).not.toHaveBeenCalled()
   })
 
   describe('a blob that ffmpeg fails on', () => {
