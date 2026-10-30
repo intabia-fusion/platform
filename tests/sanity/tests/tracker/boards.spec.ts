@@ -195,8 +195,7 @@ test.describe('task boards', () => {
     const id = await createIssue(client, ctx, { title: `${titlePrefix}spot-drop`, status: 'In Progress' })
     await boards.open(boardId)
     await board.dropCardOnDropTarget(id, 'queue', statusId('Todo'))
-    const issue = await client.findOne(tracker.class.Issue, { _id: id })
-    expect(issue?.status).toBe(statusId('Todo'))
+    await expect.poll(async () => (await client.findOne(tracker.class.Issue, { _id: id }))?.status).toBe(statusId('Todo'))
   })
 
   test('the board opens from the navigator', async ({ page }) => {
