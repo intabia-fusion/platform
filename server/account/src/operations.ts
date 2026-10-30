@@ -135,6 +135,7 @@ import {
   getEndpointInfo,
   getFrontUrl,
   getInviteEmail,
+  getInviteSender,
   getPersonName,
   getRegions,
   getRolePower,
@@ -936,11 +937,17 @@ export async function sendInvite (
   verifyAllowedRole(callerRole, role, extra)
 
   const inviteLink = await createInviteLink(ctx, db, branding, token, params)
-  const inviteEmail = await getInviteEmail(branding, email, inviteLink, workspace, expHours ?? 48, false)
+  const sender = await getInviteSender(db, account, callerRole, branding?.lastNameFirst === 'true')
+  const inviteEmail = await getInviteEmail(branding, email, inviteLink, workspace, expHours ?? 48, false, sender)
 
   await sendEmail(inviteEmail, ctx)
 
-  ctx.info('Invite has been sent', { to: inviteEmail.to, workspaceUuid: workspace.uuid, workspaceName: workspace.name })
+  ctx.info('Invite has been sent', {
+    to: inviteEmail.to,
+    workspaceUuid: workspace.uuid,
+    workspaceName: workspace.name,
+    account
+  })
 }
 
 export async function createAccessLink (
@@ -1196,13 +1203,15 @@ export async function resendInvite (
   const front = getFrontUrl(branding)
   const link = concatLink(front, `/login/join?inviteId=${inviteId}`)
 
-  const inviteEmail = await getInviteEmail(branding, email, link, workspace, expHours, true)
+  const sender = await getInviteSender(db, account, callerRole, branding?.lastNameFirst === 'true')
+  const inviteEmail = await getInviteEmail(branding, email, link, workspace, expHours, true, sender)
   await sendEmail(inviteEmail, ctx)
 
   ctx.info('Invite has been resent', {
     to: inviteEmail.to,
     workspaceUuid: workspace.uuid,
-    workspaceName: workspace.name
+    workspaceName: workspace.name,
+    account
   })
 }
 

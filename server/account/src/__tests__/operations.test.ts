@@ -26,7 +26,7 @@ import {
   type AccountUuid,
   systemAccountUuid
 } from '@hcengineering/core'
-import platform, { PlatformError, Status, Severity, getMetadata } from '@hcengineering/platform'
+import platform, { PlatformError, Status, Severity, getMetadata, translate } from '@hcengineering/platform'
 import { decodeToken, decodeTokenVerbose } from '@hcengineering/server-token'
 
 import * as utils from '../utils'
@@ -388,6 +388,31 @@ describe('account operations', () => {
           role: AccountRole.User,
           expiresOn: expect.any(Number)
         })
+      )
+    })
+
+    test('should tell the recipient who invited them', async () => {
+      ;(mockDb.account.findOne as jest.Mock).mockResolvedValue(mockAccount)
+      ;(mockDb.workspace.findOne as jest.Mock).mockResolvedValue(mockWorkspace)
+      ;(mockDb.getWorkspaceRole as jest.Mock).mockResolvedValue(AccountRole.Maintainer)
+      ;(mockDb.invite.insertOne as jest.Mock).mockResolvedValue('new-invite-id')
+      ;(mockDb.person.findOne as jest.Mock).mockResolvedValue({ firstName: 'Ivan', lastName: 'Petrov' })
+      ;(mockDb.socialId.find as jest.Mock).mockResolvedValue([
+        { type: SocialIdType.EMAIL, value: 'ivan@example.com', verifiedOn: Date.now() }
+      ])
+
+      await sendInvite(mockCtx, mockDb, mockBranding, mockToken, {
+        email: mockEmail,
+        role: AccountRole.User
+      })
+
+      expect(translate).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          senderName: 'Ivan Petrov',
+          senderDetails: expect.stringContaining('ivan@example.com')
+        }),
+        undefined
       )
     })
 
