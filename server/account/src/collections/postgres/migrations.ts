@@ -14,8 +14,14 @@
 // limitations under the License.
 //
 
-import { aiBotAccountEmail, readOnlyGuestAccountUuid } from '@hcengineering/core'
+import { readOnlyGuestAccountUuid } from '@hcengineering/core'
 import { type DBFlavor } from '../../types'
+
+// Frozen address literals of the ai-bot email social id. A migration's text must never change with
+// the constant in core: v56 cleans credentials of the old address, v57 moves it to the new one.
+// Reading aiBotAccountEmail here would silently rewrite both, so the two are spelled out.
+const AI_BOT_EMAIL_LEGACY = 'huly.ai.bot@hc.engineering'
+const AI_BOT_EMAIL_RENAMED = 'ai.bot@platform'
 
 // Type definitions for different database flavors.
 // The keys match the DBFlavor type ('postgres' and 'cockroach').
@@ -123,7 +129,8 @@ export function getMigrations (ns: string, flavor: DBFlavor): [string, string][]
     getV53Migration(ns, flavor),
     getV54Migration(ns, flavor),
     getV55Migration(ns, flavor),
-    getV56Migration(ns)
+    getV56Migration(ns),
+    getV57Migration(ns)
   ]
 }
 
@@ -1371,7 +1378,7 @@ function getV55Migration (ns: string, flavor: DBFlavor): [string, string] {
 }
 
 function getV56Migration (ns: string): [string, string] {
-  const botSocialIds = `SELECT _id FROM ${ns}.social_id WHERE type = 'email' AND value = '${aiBotAccountEmail}'`
+  const botSocialIds = `SELECT _id FROM ${ns}.social_id WHERE type = 'email' AND value = '${AI_BOT_EMAIL_LEGACY}'`
   return [
     'account_db_v56_ai_bot_credentials_reset',
     /* The bot holds no password, code or key: the service signs its own token. Whatever the row
@@ -1379,13 +1386,33 @@ function getV56Migration (ns: string): [string, string] {
        'webhook' is apiKeyKind. DML only: no DDL in the same batch. */
     `
     DELETE FROM ${ns}.account_passwords
-    WHERE account_uuid IN (SELECT person_uuid FROM ${ns}.social_id WHERE type = 'email' AND value = '${aiBotAccountEmail}');
+    WHERE account_uuid IN (SELECT person_uuid FROM ${ns}.social_id WHERE type = 'email' AND value = '${AI_BOT_EMAIL_LEGACY}');
 
     DELETE FROM ${ns}.integration_secrets
     WHERE kind = 'webhook' AND social_id IN (${botSocialIds});
 
     DELETE FROM ${ns}.otp
     WHERE social_id IN (${botSocialIds});
+    `
+  ]
+}
+
+function getV57Migration (ns: string): [string, string] {
+  return [
+    'account_db_v57_ai_bot_email_rename',
+    /* FUSIO-1379: the bot's email is its identity, so the rename is a data change, not a code one.
+       `key` is a generated column and recomputes itself, and `_id` is independent of the value, so
+       every createdBy/modifiedBy, mention and integration secret keeps resolving.
+       NOT EXISTS keeps the upgrade alive when a real account already owns the new address: the bot
+       then stays on the old one (the reason is visible in the data, SQL cannot log it).
+       DML only: no DDL in the same batch. */
+    `
+    UPDATE ${ns}.social_id
+       SET value = '${AI_BOT_EMAIL_RENAMED}'
+     WHERE type = 'email' AND value = '${AI_BOT_EMAIL_LEGACY}'
+       AND NOT EXISTS (
+         SELECT 1 FROM ${ns}.social_id WHERE type = 'email' AND value = '${AI_BOT_EMAIL_RENAMED}'
+       );
     `
   ]
 }

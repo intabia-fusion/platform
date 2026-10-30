@@ -13,7 +13,6 @@
 // limitations under the License.
 //
 
-import { aiBotAccountEmail } from '@hcengineering/core'
 import { getMigrations } from '../collections/postgres/migrations'
 
 const ns = 'global_account'
@@ -236,7 +235,32 @@ describe.each(['postgres', 'cockroach'] as const)('getMigrations - v56 ai bot cr
   it('only deletes, and matches the bot email social id by type and value', () => {
     expect(ddl.match(/DELETE FROM/g)).toHaveLength(3)
     expect(ddl).toContain(`${ns}.account_passwords`)
-    expect(ddl).toContain(`type = 'email' AND value = '${aiBotAccountEmail}'`)
+    // Frozen on purpose: the address v56 ran against is not the current aiBotAccountEmail.
+    expect(ddl).toContain("type = 'email' AND value = 'huly.ai.bot@hc.engineering'")
+    expect(ddl).not.toContain('ai.bot@platform')
     expect(ddl).not.toMatch(/ALTER TABLE|CREATE |DROP |UPDATE |INSERT INTO/i)
+  })
+})
+
+describe.each(['postgres', 'cockroach'] as const)('getMigrations - v57 ai bot email rename [%s]', (flavor) => {
+  const migrations = getMigrations(ns, flavor)
+  const ids = migrations.map(([id]) => id)
+  const sql = migrations.find(([id]) => id === 'account_db_v57_ai_bot_email_rename')?.[1] ?? ''
+
+  it('registers the migration once, after v56', () => {
+    expect(ids.filter((id) => id === 'account_db_v57_ai_bot_email_rename')).toHaveLength(1)
+    expect(ids.indexOf('account_db_v57_ai_bot_email_rename')).toBeGreaterThan(
+      ids.indexOf('account_db_v56_ai_bot_credentials_reset')
+    )
+  })
+
+  it('renames the bot email social id and leaves everything else alone', () => {
+    expect(sql.match(/UPDATE/g)).toHaveLength(1)
+    expect(sql).toContain(`UPDATE ${ns}.social_id`)
+    expect(sql).toContain("type = 'email' AND value = 'huly.ai.bot@hc.engineering'")
+    expect(sql).toMatch(/SET value = 'ai\.bot@platform'/)
+    // Guard against a real account already holding the new address: nothing to rename then.
+    expect(sql).toContain('NOT EXISTS')
+    expect(sql).not.toMatch(/ALTER TABLE|CREATE |DROP |DELETE FROM|INSERT INTO/i)
   })
 })
