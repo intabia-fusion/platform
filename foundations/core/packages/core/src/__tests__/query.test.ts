@@ -97,17 +97,46 @@ describe('resultSort', () => {
     expect(ids(asc)).toEqual(['none', 'old', 'new'])
   })
 
-  it('puts a missing plain value first in DESC and last in ASC, as Postgres orders NULL by default', () => {
+  it('puts a missing plain value last whatever the direction, as the server orders NULL of a field', () => {
     const items = (): any[] => [
       { _id: 'b', _class: core.class.Space, modifiedOn: 1, name: 'b' },
       { _id: 'none', _class: core.class.Space, modifiedOn: 1 },
+      { _id: 'unset', _class: core.class.Space, modifiedOn: 1, name: null },
       { _id: 'a', _class: core.class.Space, modifiedOn: 1, name: 'a' }
     ]
     const desc = items()
     resultSort(desc, { name: SortingOrder.Descending } as any, core.class.Space, hierarchy, {} as any)
-    expect(ids(desc)).toEqual(['none', 'b', 'a'])
+    expect(ids(desc).slice(0, 2)).toEqual(['b', 'a'])
+    expect(ids(desc).slice(2).sort()).toEqual(['none', 'unset'])
     const asc = items()
     resultSort(asc, { name: SortingOrder.Ascending } as any, core.class.Space, hierarchy, {} as any)
-    expect(ids(asc)).toEqual(['a', 'b', 'none'])
+    expect(ids(asc).slice(0, 2)).toEqual(['a', 'b'])
+    expect(ids(asc).slice(2).sort()).toEqual(['none', 'unset'])
+  })
+
+  it('sorts by rules and keeps a value the rules do not name last whatever the direction', () => {
+    const rules = (order: SortingOrder): any => ({
+      order,
+      cases: [
+        { query: 'urgent', index: 0 },
+        { query: 'high', index: 1 },
+        { query: 'low', index: 2 }
+      ]
+    })
+    const items = (): any[] => [
+      { _id: 'low', _class: core.class.Space, modifiedOn: 1, name: 'low' },
+      { _id: 'other', _class: core.class.Space, modifiedOn: 1, name: 'other' },
+      { _id: 'none', _class: core.class.Space, modifiedOn: 1 },
+      { _id: 'urgent', _class: core.class.Space, modifiedOn: 1, name: 'urgent' },
+      { _id: 'high', _class: core.class.Space, modifiedOn: 1, name: 'high' }
+    ]
+    const asc = items()
+    resultSort(asc, { name: rules(SortingOrder.Ascending) }, core.class.Space, hierarchy, {} as any)
+    expect(ids(asc).slice(0, 3)).toEqual(['urgent', 'high', 'low'])
+    expect(ids(asc).slice(3).sort()).toEqual(['none', 'other'])
+    const desc = items()
+    resultSort(desc, { name: rules(SortingOrder.Descending) }, core.class.Space, hierarchy, {} as any)
+    expect(ids(desc).slice(0, 3)).toEqual(['low', 'high', 'urgent'])
+    expect(ids(desc).slice(3).sort()).toEqual(['none', 'other'])
   })
 })

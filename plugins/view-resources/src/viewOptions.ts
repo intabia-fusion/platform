@@ -16,6 +16,7 @@ import {
   type ViewQueryOption,
   type DropdownViewOption,
   type Groupping,
+  type OrderOption,
   type ToggleViewOption,
   type ViewOptionModel,
   type ViewOptions,
@@ -58,14 +59,24 @@ function makeViewOptionsKey (viewlet: Viewlet, variant?: string, ignoreViewletKe
 }
 
 export function setViewOptions (viewlet: Viewlet, options: ViewOptions): void {
-  const normalizedOptions = {
-    ...options,
-    groupBy: normalizeGroupBy(options.groupBy)
-  }
+  const normalizedOptions = normalizeOrdering(options, viewlet.viewOptions)
 
   const key = makeViewOptionsKey(viewlet, viewlet.variant)
   localStorage.setItem(key, JSON.stringify(normalizedOptions))
   setStore(key, normalizedOptions)
+}
+
+function findDefaultOrdering (model: ViewOptionsModel | undefined, groupBy: string[]): OrderOption | undefined {
+  const orderBy = model?.orderBy ?? []
+  const ordering = orderBy.find((p) => !groupBy.includes(p[0])) ?? orderBy[0]
+  return ordering !== undefined ? ([...ordering] as OrderOption) : undefined
+}
+
+function normalizeOrdering (options: ViewOptions, model?: ViewOptionsModel): ViewOptions {
+  const groupBy = normalizeGroupBy(options.groupBy)
+  const ordering = options.orderBy?.[0]
+  const next = ordering !== undefined && groupBy.includes(ordering) ? findDefaultOrdering(model, groupBy) : undefined
+  return next !== undefined ? { ...options, groupBy, orderBy: next } : { ...options, groupBy }
 }
 
 function setStore (key: string, options: ViewOptions): void {
@@ -122,7 +133,7 @@ export function getDefaults (viewOptions?: ViewOptionsModel): ViewOptions {
 
   const res: ViewOptions = {
     groupBy: [firstGroupByKey],
-    orderBy: viewOptions.orderBy?.[0] ?? defaultOptions.orderBy
+    orderBy: findDefaultOrdering(viewOptions, [firstGroupByKey]) ?? ([...defaultOptions.orderBy] as OrderOption)
   }
   for (const opt of viewOptions.other) {
     res[opt.key] = opt.defaultValue
