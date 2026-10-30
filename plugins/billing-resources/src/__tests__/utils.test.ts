@@ -60,6 +60,9 @@ jest.mock('@hcengineering/account-client', () => {
     getClient: jest.fn(),
     SubscriptionStatus,
     SubscriptionType,
+    // Mirrors the real helper: the module is mocked wholesale, and the provider stamps both flags.
+    isCheckoutDraft: (sub: any): boolean =>
+      sub?.providerData?.pending === true || sub?.providerData?.draft === true,
     grantsPlan: (sub: any): boolean => {
       if (sub == null) return false
       if (sub.status === 'past_due' && sub.providerData?.pending === true) return false
@@ -283,5 +286,70 @@ describe('checkWorkspaceLimits — banner tier selection', () => {
     const call = jest.mocked(setSubscriptionState).mock.calls[0]
     expect(call[0]).toBeUndefined()
     expect(call[5]).toBe(newer)
+  })
+
+  // FUSIO-1279, the second half: with nothing granting a plan, the banner reads the workspace's own
+  // plan state (an expired trial -> the free fallback). A newer checkout draft is not a plan state.
+  it('a newer pending draft does not hide the expired trial that drives the free/overdue badge', async () => {
+    const expiredTrial = tier({
+      id: 'trial',
+      status: SubscriptionStatus.Trialing,
+      plan: 'trial',
+      trialEnd: Date.now() - DAY,
+      createdOn: 100
+    })
+    const draft = tier({
+      id: 'draft',
+      status: SubscriptionStatus.PastDue,
+      plan: 'max',
+      createdOn: 200,
+      providerData: { pending: true }
+    })
+    ;(getAccountClientRaw as unknown as jest.Mock).mockReturnValue(fakeAccountClient([expiredTrial, draft]))
+
+    await checkWorkspaceLimits()
+
+    const call = jest.mocked(setSubscriptionState).mock.calls[0]
+    // The expired trial grants nothing (the workspace runs on free)...
+    expect(call[0]).toBeUndefined()
+    // ...but it is still the tier that says so, not the draft created on top of it.
+    expect(call[5]).toBe(expiredTrial)
+  })
+
+  it('a newer closed draft does not hide the expired trial either', async () => {
+    const expiredTrial = tier({
+      id: 'trial',
+      status: SubscriptionStatus.Trialing,
+      plan: 'trial',
+      trialEnd: Date.now() - DAY,
+      createdOn: 100
+    })
+    const closedDraft = tier({
+      id: 'draft',
+      status: SubscriptionStatus.Canceled,
+      plan: 'max',
+      createdOn: 200,
+      providerData: { pending: false, draft: true }
+    })
+    ;(getAccountClientRaw as unknown as jest.Mock).mockReturnValue(fakeAccountClient([expiredTrial, closedDraft]))
+
+    await checkWorkspaceLimits()
+
+    expect(jest.mocked(setSubscriptionState).mock.calls[0][5]).toBe(expiredTrial)
+  })
+
+  it('a draft on its own is never the banner tier', async () => {
+    const draft = tier({
+      id: 'draft',
+      status: SubscriptionStatus.PastDue,
+      plan: 'max',
+      createdOn: 100,
+      providerData: { pending: true }
+    })
+    ;(getAccountClientRaw as unknown as jest.Mock).mockReturnValue(fakeAccountClient([draft]))
+
+    await checkWorkspaceLimits()
+
+    expect(jest.mocked(setSubscriptionState).mock.calls[0][5]).toBeUndefined()
   })
 })

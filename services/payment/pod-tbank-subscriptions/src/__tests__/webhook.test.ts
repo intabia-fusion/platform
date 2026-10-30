@@ -233,6 +233,8 @@ describe('processWebhook (consumer)', () => {
     const activated = storage.upsert.mock.calls.find((c: any[]) => c[0].status === SubscriptionStatus.Active)
     expect(activated).toBeDefined()
     expect(activated[0].providerData.rebillId).toBe('reb_final')
+    // Paid: the row stops being a checkout draft (the banner filter keys off this flag).
+    expect(activated[0].providerData.draft).toBe(false)
     expect(storage.releaseCheckout).toHaveBeenCalled()
   })
 
@@ -375,7 +377,7 @@ describe('processWebhook (consumer)', () => {
     expect(storage.upsert).toHaveBeenCalledTimes(1)
     const saved = storage.upsert.mock.calls[0][0]
     expect(saved.status).toBe(SubscriptionStatus.Canceled)
-    expect(saved.providerData).toMatchObject({ pending: false, status: 'REJECTED' })
+    expect(saved.providerData).toMatchObject({ pending: false, status: 'REJECTED', draft: true })
     expect(storage.getAccountContact).not.toHaveBeenCalled()
     expect(storage.releaseCheckout).toHaveBeenCalledWith('pay_1')
   })
@@ -385,6 +387,75 @@ describe('processWebhook (consumer)', () => {
       ...activeSub,
       status: SubscriptionStatus.Canceled,
       providerData: { ...activeSub.providerData, status: 'REJECTED', pending: false }
+    })
+    await processWebhook(
+      newCtx(),
+      baseConfig,
+      makeTbank(true),
+      storage,
+      { PaymentId: 'pay_1', Status: 'REJECTED', Amount: 49900 },
+      true
+    )
+    expect(storage.upsert).not.toHaveBeenCalled()
+    expect(storage.releaseCheckout).toHaveBeenCalledWith('pay_1')
+  })
+
+  // A draft closed by cancelPendingCheckout / DEADLINE_EXPIRED / cleanup is Canceled with
+  // providerData.status 'ABANDONED'; a late terminal webhook for the same payment must leave it
+  // closed. As PastDue (pending:false) it would grant its plan forever: there is no rebillId, so the
+  // scheduler never retries it and the grace sweep (retryAttempt >= MAX) never retires it.
+  // No draft marker here: rows closed before the marker existed must be safe too.
+  test.each([
+    ['a late REJECTED after Cancel closed the link (ABANDONED)', 'REJECTED'],
+    ['a late REFUNDED on the closed draft', 'REFUNDED'],
+    ['a late REVERSED on the closed draft', 'REVERSED']
+  ])('%s -> stays Canceled, no upsert', async (_name, status) => {
+    const storage = makeStorage({
+      ...activeSub,
+      status: SubscriptionStatus.Canceled,
+      providerData: { ...activeSub.providerData, status: 'ABANDONED', pending: false }
+    })
+    await processWebhook(
+      newCtx(),
+      baseConfig,
+      makeTbank(true),
+      storage,
+      { PaymentId: 'pay_1', Status: status, Amount: 49900 },
+      true
+    )
+    expect(storage.upsert).not.toHaveBeenCalled()
+    expect(storage.getAccountContact).not.toHaveBeenCalled()
+    expect(storage.releaseCheckout).toHaveBeenCalledWith('pay_1')
+  })
+
+  // A canceled/expired subscription is terminal even with money on it: buildCanceledSubscriptionData
+  // keeps rebillId, so PastDue would hand the plan back and let the scheduler charge a user who
+  // opted out (and a PLAN_CHANGE would leave two plan-granting tiers).
+  test.each(['REFUNDED', 'REVERSED', 'REJECTED'])('%s on a canceled paid sub -> no revival', async (status) => {
+    const storage = makeStorage({
+      ...activeSub,
+      status: SubscriptionStatus.Canceled,
+      providerData: { ...activeSub.providerData, status: 'CANCELED', pending: false }
+    })
+    await processWebhook(
+      newCtx(),
+      baseConfig,
+      makeTbank(true),
+      storage,
+      { PaymentId: 'pay_1', Status: status, Amount: 49900 },
+      true
+    )
+    expect(storage.upsert).not.toHaveBeenCalled()
+    expect(storage.getAccountContact).not.toHaveBeenCalled()
+    expect(storage.releaseCheckout).toHaveBeenCalledWith('pay_1')
+  })
+
+  // ReadOnly means grace is over: a late failure must not restore access.
+  test('a late REJECTED on a ReadOnly sub -> no upsert', async () => {
+    const storage = makeStorage({
+      ...activeSub,
+      status: SubscriptionStatus.ReadOnly,
+      providerData: { ...activeSub.providerData, status: 'GRACE_EXPIRED', pending: false, retryAttempt: 3 }
     })
     await processWebhook(
       newCtx(),
@@ -410,6 +481,26 @@ describe('processWebhook (consumer)', () => {
     )
     expect(storage.upsert).not.toHaveBeenCalled()
     expect(storage.releaseCheckout).toHaveBeenCalledWith('pay_1')
+  })
+
+  test('DEADLINE_EXPIRED on a pending draft -> Canceled and marked as a draft', async () => {
+    const storage = makeStorage({
+      ...activeSub,
+      status: SubscriptionStatus.PastDue,
+      providerData: { ...activeSub.providerData, pending: true }
+    })
+    await processWebhook(
+      newCtx(),
+      baseConfig,
+      makeTbank(true),
+      storage,
+      { PaymentId: 'pay_1', Status: 'DEADLINE_EXPIRED', Amount: 49900 },
+      true
+    )
+    expect(storage.upsert).toHaveBeenCalledTimes(1)
+    const saved = storage.upsert.mock.calls[0][0]
+    expect(saved.status).toBe(SubscriptionStatus.Canceled)
+    expect(saved.providerData).toMatchObject({ pending: false, status: 'ABANDONED', draft: true })
   })
 
   // The AUTHORIZED -> CONFIRMED pair the DEMO terminal sends: the hold is only recorded, and the

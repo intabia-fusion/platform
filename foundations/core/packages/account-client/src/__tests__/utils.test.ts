@@ -14,7 +14,7 @@
 //
 
 import { AccountRole, type AccountUuid, configUserAccountUuid, systemAccountUuid } from '@hcengineering/core'
-import { isNetworkError, grantsPlan, makePlanKey, memberOccupiesSeat } from '../utils'
+import { isNetworkError, grantsPlan, isCheckoutDraft, makePlanKey, memberOccupiesSeat } from '../utils'
 import { SubscriptionStatus, SubscriptionType } from '../types'
 
 describe('isNetworkError', () => {
@@ -333,6 +333,23 @@ describe('grantsPlan', () => {
     const day = 24 * 3600 * 1000
     expect(grantsPlan({ status: SubscriptionStatus.Trialing, trialEnd: Date.now() + day } as any)).toBe(true)
     expect(grantsPlan({ status: SubscriptionStatus.Trialing, trialEnd: Date.now() - day } as any)).toBe(false)
+  })
+})
+
+describe('isCheckoutDraft', () => {
+  it('marks an open draft (pending) whatever its status', () => {
+    expect(isCheckoutDraft({ providerData: { pending: true } } as any)).toBe(true)
+    expect(isCheckoutDraft({ providerData: { pending: true, draft: true } } as any)).toBe(true)
+  })
+
+  it('keeps the mark on a closed draft', () => {
+    expect(isCheckoutDraft({ providerData: { pending: false, draft: true } } as any)).toBe(true)
+  })
+
+  it('is false for a real subscription, a missing providerData or undefined', () => {
+    expect(isCheckoutDraft({ providerData: { pending: false, draft: false, rebillId: 'reb' } } as any)).toBe(false)
+    expect(isCheckoutDraft({ providerData: undefined } as any)).toBe(false)
+    expect(isCheckoutDraft(undefined)).toBe(false)
   })
 })
 
