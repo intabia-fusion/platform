@@ -41,50 +41,50 @@ describe('YandexMetrikaProvider signup goals', () => {
   it('reports a click on the enabled signup button as signup_click', () => {
     const { provider, ym } = setup()
 
-    provider.handleEvent('signup.submitAttempt', { blocked: false, reason: '', via: 'click', method: 'otp' })
+    provider.handleEvent('signup.submitAttempt', { via: 'click', method: 'otp' })
 
     expect(ym).toHaveBeenCalledWith(COUNTER_ID, 'reachGoal', 'signup_click', {
       method: 'otp',
-      invite: false,
-      via: 'click'
+      via: 'click',
+      invite: false
     })
   })
 
   it('reports Enter as an attempt as well', () => {
     const { provider, ym } = setup()
 
-    provider.handleEvent('signup.submitAttempt', { blocked: false, reason: '', via: 'enter', method: 'otp' })
+    provider.handleEvent('signup.submitAttempt', { via: 'enter', method: 'otp' })
 
     expect(ym).toHaveBeenCalledWith(COUNTER_ID, 'reachGoal', 'signup_click', {
       method: 'otp',
-      invite: false,
-      via: 'enter'
+      via: 'enter',
+      invite: false
     })
   })
 
   it('reports a click on a disabled button as signup_click_blocked with the reason', () => {
     const { provider, ym } = setup()
 
-    provider.handleEvent('signup.submitAttempt', { blocked: true, reason: 'consents', via: 'click', method: 'email' })
+    provider.handleEvent('signup.submitAttempt', { reason: 'consents', via: 'click', method: 'email' })
 
     expect(ym).toHaveBeenCalledWith(COUNTER_ID, 'reachGoal', 'signup_click_blocked', {
       method: 'email',
-      invite: false,
       via: 'click',
-      reason: 'consents'
+      reason: 'consents',
+      invite: false
     })
   })
 
   it('marks attempts coming from an invite link', () => {
     const { provider, ym } = setup('/login/join')
 
-    provider.handleEvent('signup.submitAttempt', { blocked: true, reason: 'invalid', via: 'enter', method: 'otp' })
+    provider.handleEvent('signup.submitAttempt', { reason: 'invalid', via: 'enter', method: 'otp' })
 
     expect(ym).toHaveBeenCalledWith(COUNTER_ID, 'reachGoal', 'signup_click_blocked', {
       method: 'otp',
-      invite: true,
       via: 'enter',
-      reason: 'invalid'
+      reason: 'invalid',
+      invite: true
     })
   })
 

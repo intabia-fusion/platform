@@ -162,18 +162,13 @@ export class YandexMetrikaProvider implements AnalyticProvider {
       window.ym(this.counterId, 'reachGoal', 'signup_submit', { method, invite: isInvite })
     }
 
-    // 2) Attempt to submit the signup form: a click (also on the disabled button) or Enter.
+    // 2) Attempt to submit the signup form: `reason` is present only when the press hit an inert button.
     if (event === 'signup.submitAttempt') {
-      const goal = params?.blocked === true ? 'signup_click_blocked' : 'signup_click'
-      const goalParams: Record<string, any> = {
-        method: params?.method ?? '',
-        invite: window.location.pathname.includes('/join'),
-        via: params?.via ?? ''
-      }
-      if (params?.reason !== undefined && params.reason !== '') {
-        goalParams.reason = params.reason
-      }
-      window.ym(this.counterId, 'reachGoal', goal, goalParams)
+      const goal = params?.reason !== undefined ? 'signup_click_blocked' : 'signup_click'
+      window.ym(this.counterId, 'reachGoal', goal, {
+        ...params,
+        invite: window.location.pathname.includes('/join')
+      })
     }
 
     // 3) Created space

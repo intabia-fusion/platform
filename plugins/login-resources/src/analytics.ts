@@ -19,7 +19,7 @@ export const LoginEvents = {
   SignUpOtp: 'signup.viaOtp',
   SignUpGoogle: 'signup.viaGoogle',
   SignUpGithub: 'signup.viaGitHub',
-  // Attempt to submit the form: click or Enter; `blocked` means the press hit an inert button (`reason`: consents|invalid).
+  // Attempt to submit the form: click or Enter. `reason` is set only when the press hit an inert button (consents|invalid).
   SignUpSubmitAttempt: 'signup.submitAttempt',
 
   LoginPassword: 'login.viaPassword',
