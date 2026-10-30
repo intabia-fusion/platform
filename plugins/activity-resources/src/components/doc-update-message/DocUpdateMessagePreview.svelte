@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -29,7 +30,7 @@
   import { createEventDispatcher } from 'svelte'
   import { buildRemovedDoc, checkIsObjectRemoved } from '@hcengineering/view-resources'
 
-  import { getAttributeModel, getCollectionAttribute } from '../../activityMessagesUtils'
+  import { getAttributeModel, getCollectionAttribute, getMessageObjectQueryClass } from '../../activityMessagesUtils'
   import BaseMessagePreview from '../activity-message/BaseMessagePreview.svelte'
   import DocUpdateMessageContent from './DocUpdateMessageContent.svelte'
   import DocUpdateMessageAttributes from './DocUpdateMessageAttributes.svelte'
@@ -58,16 +59,17 @@
     .findAllSync(activity.class.DocUpdateMessageViewlet, { action: value.action, objectClass: value.objectClass })
 
   $: collectionAttribute = getCollectionAttribute(hierarchy, value.attachedToClass, value.updateCollection)
-  $: clazz = hierarchy.getClass(value.objectClass)
+  $: clazz = hierarchy.findClass(value.objectClass) ?? hierarchy.findClass(value.attachedToClass)
+  $: objectQueryClass = getMessageObjectQueryClass(hierarchy, value)
 
-  $: objectName = (collectionAttribute?.type as Collection<AttachedDoc>)?.itemLabel ?? clazz.label
+  $: objectName = (collectionAttribute?.type as Collection<AttachedDoc>)?.itemLabel ?? clazz?.label
   $: collectionName = collectionAttribute?.label
 
   $: void getAttributeModel(client, value.attributeUpdates, value.objectClass).then((model) => {
     attributeModel = model
   })
 
-  $: void (viewlet?.component && loadObject(value.objectId, value.objectClass, doc))
+  $: void (viewlet?.component && loadObject(value.objectId, objectQueryClass, doc))
 
   async function loadObject (_id: Ref<Doc>, _class: Ref<Class<Doc>>, doc?: Doc): Promise<void> {
     if (doc?._id === _id) {
@@ -75,7 +77,7 @@
       return
     }
 
-    const isObjectRemoved = await checkIsObjectRemoved(client, _id, client.getHierarchy().getParentClass(_class))
+    const isObjectRemoved = await checkIsObjectRemoved(client, _id, _class)
 
     if (isObjectRemoved) {
       object = await buildRemovedDoc(client, _id, _class)
@@ -122,7 +124,7 @@
         {viewlet}
         {objectName}
         {collectionName}
-        objectIcon={collectionAttribute?.icon ?? clazz.icon}
+        objectIcon={collectionAttribute?.icon ?? clazz?.icon}
         preview
       />
     {:else if value.attributeUpdates && attributeModel}
