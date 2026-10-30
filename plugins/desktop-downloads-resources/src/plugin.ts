@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -27,6 +28,12 @@ export default mergeIds(desktopDownloadsId, desktopDownloads, {
     Cancelled: '' as IntlString,
     Interrupted: '' as IntlString,
     Paused: '' as IntlString,
-    Progressing: '' as IntlString
+    Progressing: '' as IntlString,
+    ShowInFolder: '' as IntlString,
+    OpenFile: '' as IntlString,
+    Open: '' as IntlString,
+    FileMissing: '' as IntlString,
+    OpenFailed: '' as IntlString,
+    OpenExecutable: '' as IntlString
   }
 })
