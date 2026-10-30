@@ -116,27 +116,19 @@
   // Mirrors the button's disabled condition so analytics and UI cannot drift apart.
   $: submitDisabled = proceedDisabled || (status.severity !== Severity.OK && status.severity !== Severity.ERROR)
 
-  function reportBlockedPress (via: 'click' | 'enter'): void {
+  function reportAttempt (via: 'click' | 'enter', reason?: 'consents' | 'invalid'): void {
     if (submitEvent === undefined) return
-    // A press while the request is in flight is impatience, not a dead button.
-    if (inAction) return
-
-    let reason = ''
-    if (proceedDisabled) {
-      reason = 'consents'
-    } else if (via === 'click' && submitDisabled) {
-      // A click on a disabled button is a dead end; Enter still submits while the button is disabled.
-      reason = 'invalid'
-    }
-    if (reason === '') return
-
-    Analytics.handleEvent(submitEvent, { ...submitEventParams, blocked: true, reason, via })
+    const params: Record<string, any> = { ...submitEventParams, via }
+    if (reason !== undefined) params.reason = reason
+    Analytics.handleEvent(submitEvent, params)
   }
 
-  // Reported where the request is actually started, so every submit has its click goal.
-  function reportSubmit (via: 'click' | 'enter'): void {
-    if (submitEvent === undefined) return
-    Analytics.handleEvent(submitEvent, { ...submitEventParams, blocked: false, reason: '', via })
+  // A press that cannot submit: Enter still submits while the button is disabled, so only a click is blocked by invalid fields.
+  function reportBlockedPress (via: 'click' | 'enter'): void {
+    // A press while the request is in flight is impatience, not a dead button.
+    if (inAction) return
+    const reason = proceedDisabled ? 'consents' : via === 'click' && submitDisabled ? 'invalid' : undefined
+    if (reason !== undefined) reportAttempt(via, reason)
   }
 
   function performAction (action: Action, via: 'click' | 'enter'): void {
@@ -147,7 +139,8 @@
       return
     }
 
-    reportSubmit(via)
+    // Reported where the request is actually started, so every submit has its click goal.
+    reportAttempt(via)
 
     for (const field of fields) {
       trim(field.name)
@@ -155,6 +148,15 @@
     inAction = true
     void action.func().finally(() => {
       inAction = false
+    })
+  }
+
+  function submit (via: 'click' | 'enter'): void {
+    if (inAction) return
+    void validate($themeStore.language).then((res) => {
+      if (res) {
+        performAction(action, via)
+      }
     })
   }
   onMount(() => (ignoreInitialValidation = false))
@@ -214,13 +216,7 @@
       if (!evt.repeat) {
         reportBlockedPress('enter')
       }
-      if (!inAction) {
-        void validate($themeStore.language).then((res) => {
-          if (res) {
-            performAction(action, 'enter')
-          }
-        })
-      }
+      submit('enter')
     }
   }}
 >
@@ -272,12 +268,12 @@
       <StatusControl {status} />
     </div>
 
-    <!-- Catches clicks the disabled button swallows (`pointer-events: none`); keyboard handled by keydown. -->
+    <!-- |capture: read the form state at press time, before the button handler starts the request. -->
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div
       class="form-row send"
-      on:click={() => {
+      on:click|capture={() => {
         reportBlockedPress('click')
       }}
     >
@@ -291,13 +287,7 @@
         disabled={submitDisabled}
         on:click={(e) => {
           e.preventDefault()
-          if (!inAction) {
-            void validate($themeStore.language).then((res) => {
-              if (res) {
-                performAction(action, 'click')
-              }
-            })
-          }
+          submit('click')
         }}
       />
     </div>
