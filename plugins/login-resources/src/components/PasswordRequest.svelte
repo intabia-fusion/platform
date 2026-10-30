@@ -14,6 +14,7 @@
 -->
 <script lang="ts">
   import { OK, Severity, Status } from '@hcengineering/platform'
+  import { MAX_EMAIL_LENGTH } from '@hcengineering/account-client'
   import { MessageBox } from '@hcengineering/presentation'
 
   import { showPopup } from '@hcengineering/ui'
@@ -25,7 +26,15 @@
 
   export let signUpDisabled = false
 
-  const fields = [{ id: 'email', name: 'username', i18n: login.string.Email, inputmode: 'email' as const }]
+  const fields = [
+    {
+      id: 'email',
+      name: 'username',
+      i18n: login.string.Email,
+      inputmode: 'email' as const,
+      maxLength: MAX_EMAIL_LENGTH
+    }
+  ]
   const object = {
     username: ''
   }

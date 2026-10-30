@@ -481,6 +481,18 @@ export function normalizePhone (phone: string): string {
   return digits === '' ? '' : `+${digits}`
 }
 
+/**
+ * Refuses a value longer than the limit the login form accepts, so an API caller cannot store what
+ * the UI could never send. `BadRequest` and not silence: cutting a name on the server would save a
+ * different value than the one the caller sees in its own response.
+ */
+export function checkFieldLength (ctx: MeasureContext, field: string, value: string, max: number): void {
+  if (value.length > max) {
+    ctx.warn('Field is too long', { field, max, length: value.length })
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, { field, max }))
+  }
+}
+
 export function isEmail (email: string): boolean {
   // RFC 5322 compliant email regex
   const EMAIL_REGEX =

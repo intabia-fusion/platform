@@ -15,7 +15,7 @@
 -->
 <script lang="ts">
   import { type IntlString, OK, Severity, Status } from '@hcengineering/platform'
-  import type { LoginInfo } from '@hcengineering/account-client'
+  import { type LoginInfo, MAX_EMAIL_LENGTH, MAX_PERSON_NAME_LENGTH } from '@hcengineering/account-client'
   import { logIn } from '@hcengineering/workbench'
   import { signupStore } from '@hcengineering/analytics-providers'
 
@@ -29,7 +29,7 @@
   import OtpForm from './OtpForm.svelte'
   import { onMount, onDestroy } from 'svelte'
   import ConsentCheckboxes from './ConsentCheckboxes.svelte'
-  import { fetchMetadataLocalStorage, setMetadataLocalStorage } from '@hcengineering/ui'
+  import { readAuthEmail, saveAuthEmail } from '../utils'
 
   export let signUpDisabled = false
   export let localLoginHidden = false
@@ -48,9 +48,15 @@
 
   $: {
     fields = [
-      { id: 'given-name', name: 'first', i18n: login.string.FirstName },
-      { id: 'family-name', name: 'last', i18n: login.string.LastName },
-      { id: 'email', name: 'username', i18n: login.string.Email, inputmode: 'email' },
+      { id: 'given-name', name: 'first', i18n: login.string.FirstName, maxLength: MAX_PERSON_NAME_LENGTH },
+      { id: 'family-name', name: 'last', i18n: login.string.LastName, maxLength: MAX_PERSON_NAME_LENGTH },
+      {
+        id: 'email',
+        name: 'username',
+        i18n: login.string.Email,
+        inputmode: 'email',
+        maxLength: MAX_EMAIL_LENGTH
+      },
       { id: 'phone-number', name: 'phone', i18n: login.string.PhoneNumber, optional: true, inputmode: 'tel' }
     ]
 
@@ -75,7 +81,7 @@
   const object = {
     first: '',
     last: '',
-    username: fetchMetadataLocalStorage(login.metadata.AuthEmail) ?? '',
+    username: readAuthEmail(),
     password: '',
     password2: '',
     phone: ''
@@ -112,7 +118,7 @@
         status = loginStatus
 
         if (result != null) {
-          setMetadataLocalStorage(login.metadata.AuthEmail, null)
+          saveAuthEmail(null)
         }
 
         if (onSignUp !== undefined) {
@@ -144,7 +150,7 @@
   $: proceedDisabled = !agreedPersonalData || !agreedRules
 
   onDestroy(() => {
-    setMetadataLocalStorage(login.metadata.AuthEmail, object.username ?? '')
+    saveAuthEmail(object.username ?? '')
   })
 </script>
 

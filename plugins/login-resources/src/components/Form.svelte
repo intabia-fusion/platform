@@ -65,6 +65,13 @@
         })
         return false
       }
+      if (f.maxLength !== undefined && typeof v === 'string' && v.length > f.maxLength) {
+        status = new Status(Severity.INFO, login.status.FieldTooLong, {
+          field: await translate(field.i18n, {}, language),
+          count: f.maxLength
+        })
+        return false
+      }
       if (f.id !== undefined) {
         const sameFields = fields.filter((f) => f.id === field.id)
         for (const field of sameFields) {
@@ -217,6 +224,7 @@
           name={field.idOverride ?? field.id}
           password={field.password}
           inputmode={field.inputmode}
+          maxLength={field.maxLength}
           disabled={inAction || field.disabled}
           bind:value={object[field.name]}
           on:input={() => {

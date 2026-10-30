@@ -27,6 +27,7 @@ import {
   systemAccountUuid
 } from '@hcengineering/core'
 import platform, { PlatformError, Status, Severity, getMetadata, translate } from '@hcengineering/platform'
+import { MAX_EMAIL_LENGTH, MAX_PERSON_NAME_LENGTH } from '@hcengineering/account-client'
 import { decodeToken, decodeTokenVerbose } from '@hcengineering/server-token'
 
 import * as utils from '../utils'
@@ -49,6 +50,7 @@ import {
   restorePassword,
   requestPasswordReset,
   changePassword,
+  changeUsername,
   getPerson,
   getSocialIds,
   getAccountInfo,
@@ -1885,6 +1887,36 @@ describe('account operations', () => {
         expect(utils.getWorkspaceJoinInfo).not.toHaveBeenCalled()
         expect(utils.signUpByEmail).not.toHaveBeenCalled()
       })
+
+      test('should refuse a name or email longer than the limit', async () => {
+        jest.spyOn(utils, 'cleanEmail').mockImplementation((value: string) => value.toLowerCase().trim())
+        jest.spyOn(utils, 'getWorkspaceJoinInfo')
+        jest.spyOn(utils, 'signUpByEmail')
+        ;(getMetadata as jest.Mock).mockReturnValue(undefined)
+        ;(decodeToken as jest.Mock).mockReturnValue({ account: mockAccountId })
+
+        const tooLongName = 'a'.repeat(MAX_PERSON_NAME_LENGTH + 1)
+        const joinParams = {
+          email: mockEmail,
+          password: mockPassword,
+          first: mockFirstName,
+          inviteId: 'invite-id',
+          workspaceUrl: ''
+        }
+
+        for (const testCase of [
+          { ...joinParams, first: tooLongName },
+          { ...joinParams, last: tooLongName },
+          { ...joinParams, email: `${'a'.repeat(MAX_EMAIL_LENGTH)}@mail.ru` }
+        ]) {
+          await expect(signUpJoin(mockCtx, mockDb, mockBranding, mockToken, testCase)).rejects.toMatchObject({
+            status: { code: platform.status.BadRequest }
+          })
+        }
+
+        expect(utils.getWorkspaceJoinInfo).not.toHaveBeenCalled()
+        expect(utils.signUpByEmail).not.toHaveBeenCalled()
+      })
     })
 
     describe('signUp', () => {
@@ -2048,6 +2080,27 @@ describe('account operations', () => {
             new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
           )
         }
+      })
+
+      test('should refuse a name or email longer than the limit', async () => {
+        mockSignUpDeps(true)
+        jest.spyOn(utils, 'cleanEmail').mockImplementation((value: string) => value.toLowerCase().trim())
+        ;(decodeToken as jest.Mock).mockReturnValue({ account: mockAccountId })
+
+        const tooLongName = 'a'.repeat(MAX_PERSON_NAME_LENGTH + 1)
+        const testCases = [
+          { ...signUpParams, firstName: tooLongName },
+          { ...signUpParams, lastName: tooLongName },
+          { ...signUpParams, email: `${'a'.repeat(MAX_EMAIL_LENGTH)}@mail.ru` }
+        ]
+
+        for (const testCase of testCases) {
+          await expect(signUp(mockCtx, mockDb, mockBranding, mockToken, testCase as any)).rejects.toMatchObject({
+            status: { code: platform.status.BadRequest }
+          })
+        }
+
+        expect(utils.signUpByEmail).not.toHaveBeenCalled()
       })
     })
 
@@ -2286,6 +2339,40 @@ describe('account operations', () => {
             new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
           )
         }
+      })
+
+      test('should refuse a name or email longer than the limit', async () => {
+        jest.spyOn(utils, 'cleanEmail').mockImplementation((value: string) => value.toLowerCase().trim())
+
+        const tooLongName = 'a'.repeat(MAX_PERSON_NAME_LENGTH + 1)
+        const testCases = [
+          { email: mockEmail, firstName: tooLongName },
+          { email: mockEmail, firstName: mockFirstName, lastName: tooLongName },
+          { email: `${'a'.repeat(MAX_EMAIL_LENGTH)}@mail.ru`, firstName: mockFirstName }
+        ]
+
+        for (const testCase of testCases) {
+          await expect(signUpOtp(mockCtx, mockDb, mockBranding, mockToken, testCase as any)).rejects.toMatchObject({
+            status: { code: platform.status.BadRequest }
+          })
+        }
+
+        expect(mockDb.person.insertOne).not.toHaveBeenCalled()
+      })
+    })
+
+    describe('changeUsername', () => {
+      test('should refuse a name longer than the limit', async () => {
+        ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: mockAccountId })
+
+        const tooLongName = 'a'.repeat(MAX_PERSON_NAME_LENGTH + 1)
+        for (const params of [{ first: tooLongName }, { first: mockFirstName, last: tooLongName }]) {
+          await expect(changeUsername(mockCtx, mockDb, mockBranding, mockToken, params)).rejects.toMatchObject({
+            status: { code: platform.status.BadRequest }
+          })
+        }
+
+        expect(mockDb.person.update).not.toHaveBeenCalled()
       })
     })
 

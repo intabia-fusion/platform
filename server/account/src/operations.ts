@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 import { Analytics } from '@hcengineering/analytics'
-import type { PasswordPolicy } from '@hcengineering/account-client'
+import { MAX_EMAIL_LENGTH, MAX_PERSON_NAME_LENGTH, type PasswordPolicy } from '@hcengineering/account-client'
 import {
   type AccountInfo,
   AccountRole,
@@ -114,6 +114,7 @@ import {
   addSocialIdBase,
   assignableRoles,
   checkInvite,
+  checkFieldLength,
   checkPasswordAging,
   cleanEmail,
   confirmEmail,
@@ -395,6 +396,10 @@ export async function signUp (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
   }
 
+  checkFieldLength(ctx, 'email', cleanEmail(email), MAX_EMAIL_LENGTH)
+  checkFieldLength(ctx, 'firstName', firstName, MAX_PERSON_NAME_LENGTH)
+  checkFieldLength(ctx, 'lastName', lastName ?? '', MAX_PERSON_NAME_LENGTH)
+
   const systemToken = isSystemToken(token)
 
   if (!systemToken && getMetadata(accountPlugin.metadata.AllowSkipOtpPasswordSignUp) !== true) {
@@ -460,6 +465,9 @@ export async function signUpOtp (
 
   // Note: can support OTP based on any other social logins later
   const normalizedEmail = cleanEmail(email)
+  checkFieldLength(ctx, 'email', normalizedEmail, MAX_EMAIL_LENGTH)
+  checkFieldLength(ctx, 'firstName', firstName, MAX_PERSON_NAME_LENGTH)
+  checkFieldLength(ctx, 'lastName', lastName ?? '', MAX_PERSON_NAME_LENGTH)
   ensureNotAiBot(normalizedEmail)
   const normalizedPhone = phone !== undefined && phone !== '' ? normalizePhone(phone) : ''
   // A phone is never verified, so claiming exclusive ownership of it would block re-signup forever.
@@ -1546,6 +1554,10 @@ export async function signUpJoin (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
   }
 
+  checkFieldLength(ctx, 'email', cleanEmail(email), MAX_EMAIL_LENGTH)
+  checkFieldLength(ctx, 'firstName', first, MAX_PERSON_NAME_LENGTH)
+  checkFieldLength(ctx, 'lastName', last ?? '', MAX_PERSON_NAME_LENGTH)
+
   const systemToken = isSystemToken(token)
 
   if (!systemToken && getMetadata(accountPlugin.metadata.AllowSkipOtpPasswordSignUp) !== true) {
@@ -1885,6 +1897,9 @@ export async function changeUsername (
   if (first == null || first === '') {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
   }
+
+  checkFieldLength(ctx, 'firstName', first, MAX_PERSON_NAME_LENGTH)
+  checkFieldLength(ctx, 'lastName', last ?? '', MAX_PERSON_NAME_LENGTH)
 
   const { account } = decodeTokenVerbose(ctx, token)
 

@@ -25,6 +25,7 @@
   export let name: string | undefined = undefined
   export let disabled: boolean = false
   export let inputmode: 'email' | 'tel' | undefined = undefined
+  export let maxLength: number | undefined = undefined
 </script>
 
 <div class="editbox{error ? ' error' : ''}" style={width ? 'width: ' + width : ''}>
@@ -35,6 +36,7 @@
       {id}
       {name}
       bind:value
+      maxlength={maxLength}
       on:blur
       on:change
       on:keyup
@@ -53,6 +55,7 @@
       {id}
       {name}
       bind:value
+      maxlength={maxLength}
       on:blur
       on:change
       on:keyup
@@ -71,6 +74,7 @@
       {id}
       {name}
       bind:value
+      maxlength={maxLength}
       on:blur
       on:change
       on:keyup
@@ -88,6 +92,7 @@
       {id}
       {name}
       bind:value
+      maxlength={maxLength}
       on:blur
       on:change
       on:keyup
