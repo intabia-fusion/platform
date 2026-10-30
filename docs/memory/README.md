@@ -44,6 +44,7 @@
 - [billing_dev_stand_quirks.md](billing_dev_stand_quirks.md) - Billing dev stand quirks
 - [billing_mail_layout.md](billing_mail_layout.md) - Письма подписок: свой макет по образцу OTP, PRODUCT_NAME
 - [tbank_api_spec.md](tbank_api_spec.md) - T-Bank Acquiring API - особенности реализации
+- [trial-banner-checkout-draft.md](trial-banner-checkout-draft.md) - плашка триала пропадала из-за черновика чекаута; REJECTED по черновику -> Canceled
 
 ## Аккаунты и вход - [auth-onboarding.md](../features/auth-onboarding.md)
 

@@ -37,6 +37,7 @@ import {
   loadPricing,
   resolvePerSeatAmount,
   isPendingFirstPayment,
+  isFailedRenewal,
   nextPeriodEnd,
   formatTbankDueDate,
   orderFingerprint,
@@ -309,7 +310,14 @@ async function cancelPendingCheckout (
     await storage.upsert({
       ...oldDraft,
       status: SubscriptionStatus.Canceled,
-      providerData: { ...oldDraft.providerData, modifiedAt: Date.now(), status: 'ABANDONED', pending: false }
+      providerData: {
+        ...oldDraft.providerData,
+        modifiedAt: Date.now(),
+        status: 'ABANDONED',
+        pending: false,
+        // Kept onto the closed row: a draft is never a plan state (see isCheckoutDraft).
+        draft: true
+      }
     })
   }
   await storage.releaseCheckout(paymentId)
@@ -1218,17 +1226,41 @@ export async function processWebhook (
     typedNotification.Status === 'REFUNDED'
   ) {
     // Idempotency: at-least-once delivery (and consumer retry) re-delivers the same terminal webhook.
-    // Once we've recorded this exact status on a non-pending PastDue sub, re-applying only resets
-    // retryAfter and risks a duplicate notify — skip it. releaseCheckout below stays (idempotent).
-    const alreadyApplied =
+    // Once this exact status is recorded on a PastDue sub (still in grace), re-applying would only
+    // reset retryAfter — skip it. releaseCheckout below stays (idempotent).
+    const alreadyApplied = sub !== null && isFailedRenewal(sub) && sub.providerData?.status === typedNotification.Status
+    if (sub !== null && isPendingFirstPayment(sub)) {
+      // Failed first payment: the draft never became a subscription. PastDue would grant its plan
+      // with nothing behind it to charge, so close it like an abandoned checkout.
+      await storage.upsert({
+        ...sub,
+        status: SubscriptionStatus.Canceled,
+        // draft: pre-marker pending drafts closed here must still be recognisable as drafts.
+        providerData: {
+          ...sub.providerData,
+          modifiedAt: Date.now(),
+          status: typedNotification.Status,
+          pending: false,
+          draft: true
+        }
+      })
+      ctx.info('TBank first payment failed, pending draft closed', {
+        subId: sub.id,
+        paymentId: typedNotification.PaymentId,
+        status: typedNotification.Status
+      })
+    } else if (
       sub !== null &&
-      sub.status === SubscriptionStatus.PastDue &&
-      sub.providerData?.pending !== true &&
-      sub.providerData?.status === typedNotification.Status
-    if (sub !== null && !alreadyApplied) {
+      !alreadyApplied &&
+      // Only a paid subscription can lose a payment: Active (a renewal charge failed, or a refund hit
+      // the settled charge), or PastDue still in grace (a retry failed -> refresh the dunning window).
+      // Canceled/ReadOnly are terminal and must never be revived: a closed checkout draft has no
+      // rebillId, so PastDue would grant its plan with nothing left to charge or expire it, and a
+      // canceled paid tier keeps its rebillId, so the scheduler would bill a user who opted out (a
+      // PLAN_CHANGE would even leave two plan-granting tiers behind).
+      (sub.status === SubscriptionStatus.Active || isFailedRenewal(sub))
+    ) {
       // Notify only when an active subscription fails (real renewal/charge failure).
-      // Excludes: repeated webhooks on an already-past_due sub, the pending first-payment draft
-      // (past_due + pending:true), and late REVERSED/REFUNDED on canceled/expired subscriptions.
       const wasActive = sub.status === SubscriptionStatus.Active
       // Mark as PastDue instead of canceling — keeps card and rebillId for retry
       const now = Date.now()
@@ -1268,7 +1300,14 @@ export async function processWebhook (
       await storage.upsert({
         ...sub,
         status: SubscriptionStatus.Canceled,
-        providerData: { ...sub.providerData, modifiedAt: now, status: 'ABANDONED', pending: false }
+        providerData: {
+          ...sub.providerData,
+          modifiedAt: now,
+          status: 'ABANDONED',
+          pending: false,
+          // Kept onto the closed row: a draft is never a plan state (see isCheckoutDraft).
+          draft: true
+        }
       })
       ctx.info('TBank checkout link expired/canceled, pending draft abandoned', {
         subId: sub.id,
@@ -1319,6 +1358,10 @@ function buildSubscriptionData (
       customerKey,
       terminalKey,
       pending: true,
+      // Checkout draft: no money has moved for this link yet, so it is not a plan state. Billing and
+      // the banner skip a draft when choosing the tier that defines the plan (see isCheckoutDraft);
+      // it stays set when the draft is closed unpaid and is cleared by the CONFIRMED activation.
+      draft: true,
       // Intent that opened this checkout — the webhook and any later cancel reuse it in the ledger.
       actionId,
       // Seats purchased for a per-seat plan. undefined for flat plans.
@@ -1373,6 +1416,8 @@ function buildSubscriptionDataFromWebhook (
       terminalKey: notification.TerminalKey,
       status: notification.Status,
       pending: false,
+      // Paid: this row is a real subscription now, not a checkout draft (see isCheckoutDraft).
+      draft: false,
       // Successful payment clears retry state, so a later failure starts a fresh grace cycle
       // (matches buildRenewedSubscription / manual retry success). Without this a sub recovered
       // from ReadOnly would keep retryAttempt>=MAX and skip straight back to ReadOnly on next fail.

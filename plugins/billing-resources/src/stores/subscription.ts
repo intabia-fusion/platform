@@ -95,8 +95,9 @@ export function setSubscriptionState (
   workspaceInfo?: WorkspaceInfoWithStatus | undefined,
   packageSubscription?: SubscriptionData | undefined,
   pkg?: PackageItem | undefined,
-  // The current (latest) tier subscription regardless of status — used to decide payment/free state.
-  // A granting `subscription` may be undefined when the tier is canceled, but the banner still needs it.
+  // The current tier regardless of status — used to decide payment/free state. A granting
+  // `subscription` may be undefined when the tier is canceled, but the banner still needs it.
+  // Checkout drafts never land here: they are not a plan state.
   statusTier?: SubscriptionData | undefined,
   aiPackageSubscription?: SubscriptionData | undefined,
   aiPkg?: PackageItem | undefined
