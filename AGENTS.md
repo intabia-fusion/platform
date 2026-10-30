@@ -19,6 +19,13 @@ TypeScript/Svelte 4 monorepo. pnpm workspaces, Node 24 (`.nvmrc`; engines accept
 
 Projects sit 2-3 levels deep, each with its own `package.json`.
 
+## Agent skills
+
+Общие навыки находятся в `.agents/skills/<name>/SKILL.md`. `.claude/skills` - относительный симлинк на этот каталог.
+Codex и pi читают `.agents/skills`; для других агентов подключайте этот каталог поддерживаемым ими способом.
+Не создавайте отдельные копии инструкций для каждого агента. Инструменты и модели выбирайте из доступных в текущей сессии.
+Навыки работы с планами находятся в `../foundation-tasks/.agents/skills`; их пользовательские ссылки устанавливает `../foundation-tasks/scripts/install-skills.sh`.
+
 ## Where features live
 
 Before searching the code for a feature, open the feature map [`docs/features/README.md`](docs/features/README.md): one file per product area (tracker, chat, meetings, documents/QMS, AI, billing, ...) with the packages, data model, main flows with files and symbols, and a "where to look if you need to..." list. How the pieces fit together (plugin layers, client -> transactor -> DB path, pods and services): [`docs/architecture.md`](docs/architecture.md).
