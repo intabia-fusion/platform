@@ -50,8 +50,14 @@ export class TrackerNavigationMenuPage extends CommonPage {
   createProjectButton = (): Locator => this.buttonCreateProject().locator('#tree-projects')
 
   async pressCreateProjectButton (): Promise<void> {
-    await this.buttonCreateProject().hover()
-    await this.createProjectButton().click()
+    const form = this.page.locator('form[data-id="project-create-wizard"]')
+    await retry(async () => {
+      if (await form.isVisible()) return
+      await this.page.mouse.move(0, 0)
+      await this.buttonCreateProject().hover({ timeout: 2000 })
+      await this.createProjectButton().click({ timeout: 2000 })
+      await expect(form).toBeVisible({ timeout: 2000 })
+    })
   }
 
   async checkProjectExist (projectName: string): Promise<void> {
