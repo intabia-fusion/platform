@@ -63,6 +63,7 @@
     meetingScheduledDate?: Timestamp
     meetingEnd?: Timestamp
     roomFound: boolean
+    canStart?: boolean
     title: string
   } | null = null
   let resolving = false
@@ -140,6 +141,16 @@
     })
 
     if (nonGuestCount === 0) {
+      // A link that may start the meeting makes the guest the host of an empty room: waiting alone
+      // is the expected state there, not a mistake. Without that right the guest leaves as before.
+      if (guestInfo?.canStart === true) {
+        if (guestOnlyTimeout !== undefined) {
+          console.log('[GuestMeetingApp] Meeting may be started by the link, keeping the guest alone')
+          clearTimeout(guestOnlyTimeout)
+          guestOnlyTimeout = undefined
+        }
+        return
+      }
       // Only guests present (any number, including just self), start timeout
       if (guestOnlyTimeout === undefined) {
         console.log('[GuestMeetingApp] Only guests detected (no regular users), starting leave timeout')
@@ -437,37 +448,7 @@
         />
       </div>
     {/if}
-    {#if guestInfo?.meetingStatus === MeetingStatus.Finished}
-      <div class="center">
-        <div class="message flex flex-col justify-center">
-          <div class="flex flex-row-center justify-center fs-title mb-2">
-            <Label label={love.string.Meeting} />
-            <div class="p-1">{guestInfo.title ?? ''}</div>
-            <Label label={love.string.Finished} />
-          </div>
-        </div>
-      </div>
-    {:else if guestInfo?.meetingStatus === MeetingStatus.Scheduled}
-      <div class="center">
-        <div class="message flex flex-col items-center">
-          <div class="flex flex-col flex-row-center">
-            <div class="flex flex-row-center">
-              <Label label={love.string.Meeting} />
-              <div class="p-1">{guestInfo.title ?? ''}</div>
-            </div>
-            <div class="ml-2 flex flex-row-center">
-              <Label label={love.string.ScheduledIn} />
-              {#if durValue > 0}
-                <span class="p-1 duration">
-                  {duration}
-                </span>
-              {/if}
-            </div>
-          </div>
-          <Label label={love.string.WaitForHost} />
-        </div>
-      </div>
-    {:else if errorMessage}
+    {#if errorMessage}
       <div class="center" role="alert">
         <div class="message"><Label label={errorMessage} /></div>
         <div class="actions">
@@ -499,14 +480,29 @@
       {:else if guestInfo != null}
         <div>
           <div class="flex flex-col justify-center fs-title mb-2">
-            {#if guestInfo.workspaceUrl !== ''}
-              <div class="message flex flex-row-center justify-center">
-                <Label label={love.string.Meeting} />
-                <div class="p-1">
-                  {guestInfo.title ?? ''}
-                </div>
+            <div class="message flex flex-row-center justify-center">
+              <Label label={love.string.Meeting} />
+              <div class="p-1">
+                {guestInfo.title ?? ''}
+              </div>
+              {#if guestInfo.workspaceUrl !== ''}
                 -
                 <div class="p-1">{guestInfo.workspaceUrl}</div>
+              {/if}
+            </div>
+            {#if guestInfo.meetingStatus === MeetingStatus.Finished}
+              <div class="message flex flex-row-center justify-center">
+                <Label label={love.string.Finished} />
+              </div>
+            {:else if guestInfo.meetingStatus === MeetingStatus.Scheduled && durValue > 0}
+              <div class="message flex flex-row-center justify-center">
+                <Label label={love.string.ScheduledIn} />
+                <span class="p-1 duration">{duration}</span>
+              </div>
+            {/if}
+            {#if guestInfo.canStart === false && guestInfo.meetingStatus !== MeetingStatus.Active}
+              <div class="message flex flex-row-center justify-center">
+                <Label label={love.string.WaitForHost} />
               </div>
             {/if}
             {#if resolveError}

@@ -112,6 +112,7 @@
     "Finished": "Bitti",
     "Pending": "Beklemede",
     "StartWithRecording": "Kayıtla başla",
+    "StartOnLink": "Bağlantıya sahip herkes başlatabilir",
     "StartPrivate": "Özel başlat",
     "RecordingState": "Kayıt durumu",
     "RecordingNotStarted": "Başlanmadı",

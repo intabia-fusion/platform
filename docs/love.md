@@ -303,8 +303,10 @@ UI: `OutgoingInvitePopup`, `IncomingInvitePopup`, `InviteButton` (лейблы `
 
 ### 8.3 Эндпоинты (`services/love/src/guests.ts`)
 
-- `/guestInfo` -> `{meetingId, workspace, workspaceUrl, now, meetingScheduledDate, meetingEnd, title, meetingStatus, roomFound}`.
-- `/guestJoin`: `Scheduled` -> 403 "Meeting has not started yet"; `Finished` -> 403 "Meeting has already finished"; нет LiveKit-комнаты -> 404; иначе `ensurePersonByName` (`addGuestEmployee: true`) и выдача токена.
+- `/guestInfo` -> `{meetingId, workspace, workspaceUrl, now, meetingScheduledDate, meetingEnd, title, meetingStatus, roomFound, canStart}`.
+- `/guestJoin` -> `{token, roomName, person}`. Тело: `{token, firstName, lastName, personToken?}`. `firstName`/`lastName` обязательны, без них 400 `Please enter your first and last name`. `personToken` необязателен: если клиент его не прислал, сервер выводит `guest-link:<sha256(meetingId : имя)>` - повторный вход с тем же именем по той же ссылке даёт ту же персону, без 500 `Failed to create guest identity`. Разные люди с одинаковым именем на одной встрече при этом сливаются, а один гость в разных встречах получает разные персоны; штатный клиент всегда шлёт свой `personToken` из `localStorage` и на этот путь не попадает.
+- Гостевой лобби и вход: `GuestMeetingApp.svelte` опрашивает `/guestInfo` по тикеру. Если в комнате только гости, гость выходит через `GUEST_ONLY_TIMEOUT_MS` (30 с) — кроме случая `canStart: true` (у встречи включён `startOnLink` или она уже идёт): тогда гость считается начавшим встречу и ждёт остальных, иначе ссылка выглядела бы неначавшейся. (`WorkspaceClient.restartMeeting`: `status: Active`, сброс `meetingEnd`, `transcriptionState`/`recordingState` в `NotStarted`) только если на встрече включён `MeetingMinutes.startOnLink` - тумблер «Начинать по ссылке может любой» в карточке встречи, доступен владельцу; иначе прежние 403. Отсутствующая LiveKit-комната создаётся так же, как в `/getToken`; затем `ensurePersonByName` (`addGuestEmployee: true`) и выдача токена. `meetingId` не меняется, комната пересоздаётся по требованию.
+- `/getToken`: владелец встречи (`owners`) или владелец workspace (`AccountRole.Owner`) может стартовать `Scheduled`-встречу вне окна расписания - токен выдаётся, статус переводится в `Active`. Для остальных поведение прежнее (вне окна встречу не предлагает клиент, `Finished` - 409).
 
 ---
 

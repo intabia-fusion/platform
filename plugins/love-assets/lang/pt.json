@@ -112,6 +112,7 @@
     "Finished": "Finalizado",
     "Pending": "Pendente",
     "StartWithRecording": "Começar com gravação",
+    "StartOnLink": "Qualquer pessoa com o link pode iniciar",
     "StartPrivate": "Começar privado",
     "RecordingState": "Estado de gravação",
     "RecordingNotStarted": "Não iniciado",

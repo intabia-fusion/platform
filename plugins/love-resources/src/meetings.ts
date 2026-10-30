@@ -374,7 +374,16 @@ async function findJoinableScheduled (room: Room): Promise<MeetingMinutes | unde
     roomId: room._id,
     status: MeetingStatus.Scheduled
   })
-  return scheduled.find((it) => isScheduledJoinable(it))
+  if (scheduled.length === 0) return undefined
+  const me = getCurrentAccount()
+  const isWorkspaceOwner = me.role === AccountRole.Owner
+  return scheduled.find(
+    (it) =>
+      isScheduledJoinable(it) ||
+      it.startOnLink === true ||
+      isWorkspaceOwner ||
+      (it.owners ?? []).includes(me.uuid)
+  )
 }
 
 async function createMeetingDocument (room: Room): Promise<{ meeting: MeetingMinutes, created: boolean }> {

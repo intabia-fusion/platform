@@ -112,6 +112,7 @@
     "Finished": "已完成",
     "Pending": "待处理",
     "StartWithRecording": "开始录制",
+    "StartOnLink": "任何拥有链接的人都可以开始",
     "StartPrivate": "开始私人会议",
     "RecordingState": "录制状态",
     "RecordingNotStarted": "未开始",

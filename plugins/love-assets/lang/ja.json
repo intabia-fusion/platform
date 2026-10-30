@@ -112,6 +112,7 @@
     "Finished": "終了",
     "Pending": "保留中",
     "StartWithRecording": "録画を開始する",
+    "StartOnLink": "リンクを知っている人は誰でも開始できます",
     "StartPrivate": "プライベートで開始",
     "RecordingState": "録画状態",
     "RecordingNotStarted": "なし",

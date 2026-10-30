@@ -111,6 +111,7 @@
     "Finished": "Finished",
     "Pending": "Pending",
     "StartWithRecording": "Start with recording",
+    "StartOnLink": "Anyone with the link can start",
     "StartPrivate": "Start private",
     "RecordingState": "Recording state",
     "RecordingNotStarted": "Not started",

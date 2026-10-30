@@ -69,6 +69,17 @@
   // Check if current user is owner of the meeting
   $: isOwner = object.owners?.includes(currentAccount.uuid) ?? false
 
+  let togglingStartOnLink = false
+  async function toggleStartOnLink (): Promise<void> {
+    if (togglingStartOnLink) return
+    togglingStartOnLink = true
+    try {
+      await client.update(object, { startOnLink: object.startOnLink !== true })
+    } finally {
+      togglingStartOnLink = false
+    }
+  }
+
   // Content of a private space is readable only by members, even for the workspace owner.
   $: isOutsider = object.private && !object.members.includes(currentAccount.uuid)
 
@@ -176,6 +187,14 @@
           on:click={togglePrivate}
           data-id="meeting-toggle-private"
           loading={togglingPrivate}
+        />
+        <Button
+          label={love.string.StartOnLink}
+          size="large"
+          kind={object.startOnLink === true ? 'primary' : 'secondary'}
+          on:click={toggleStartOnLink}
+          data-id="meeting-toggle-start-on-link"
+          loading={togglingStartOnLink}
         />
       {/if}
       {#if showConnectionButton(object, hasPendingJoinInThisSession || $connectingToMeeting, $lkSessionConnected, currentAccount.role)}

@@ -252,6 +252,9 @@ export class TMeetingMinutes extends TSpace implements MeetingMinutes, Todoable 
   @ReadOnly()
   roomId?: Ref<Room>
 
+  @Prop(TypeBoolean(), love.string.StartOnLink)
+  startOnLink?: boolean
+
   @Prop(TypeAny(love.component.MeetingMinutesStatusPresenter, love.string.Status), love.string.Status, {
     editor: love.component.MeetingMinutesStatusPresenter
   })

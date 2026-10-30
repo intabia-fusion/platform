@@ -203,6 +203,9 @@ export interface MeetingMinutes extends Space {
   /** Reference to the room where meeting takes place (optional, for navigation) */
   roomId?: Ref<Room>
 
+  /** Anyone holding the guest link may start the meeting, not only its owners. */
+  startOnLink?: boolean
+
   language: RoomLanguage
 
   // If defined, should start with recording

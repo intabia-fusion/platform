@@ -391,16 +391,14 @@ export const main = async (): Promise<void> => {
       if (accountUuid !== systemAccountUuid) {
         const wsClient = await WorkspaceClient.create(workspaceId, ctx)
         const meetingDoc = await wsClient.findMeetingById(meetingId)
-        // A token for a Finished meeting recreates its LiveKit room, and the client ends up
-        // connected to a room the `meetings` store filters out - no UI state at all.
-        if (meetingDoc?.status === MeetingStatus.Finished) {
-          ctx.warn('Token requested for a finished meeting', { meetingId, account: accountUuid })
-          res.status(409).send({ error: 'Meeting is finished' })
-          return
-        }
-        if (meetingDoc !== undefined && meetingDoc.private && !meetingDoc.members.includes(accountUuid)) {
-          // Owners bypass private-meeting membership; rechecked here in case the client's self-add races or fails.
-          let isWorkspaceOwner = false
+        const isMeetingOwner = (meetingDoc?.owners ?? []).includes(accountUuid)
+        const needsOwnerRole =
+          (!isMeetingOwner && meetingDoc?.status === MeetingStatus.Scheduled) ||
+          (meetingDoc !== undefined && meetingDoc.private && !meetingDoc.members.includes(accountUuid))
+        let isWorkspaceOwner = false
+        if (needsOwnerRole) {
+          // Owners bypass private-meeting membership and may start a meeting outside its window;
+          // rechecked here in case the client's self-add races or fails.
           try {
             const wsLoginInfo = await getAccountClient(token).getLoginInfoByToken()
             isWorkspaceOwner = isWorkspaceLoginInfo(wsLoginInfo) && wsLoginInfo.role === AccountRole.Owner
@@ -410,6 +408,18 @@ export const main = async (): Promise<void> => {
               account: accountUuid
             })
           }
+        }
+        // A token for a Finished meeting recreates its LiveKit room, and the client ends up
+        // connected to a room the `meetings` store filters out - no UI state at all.
+        if (meetingDoc?.status === MeetingStatus.Finished) {
+          ctx.warn('Token requested for a finished meeting', { meetingId, account: accountUuid })
+          res.status(409).send({ error: 'Meeting is finished' })
+          return
+        }
+        if (meetingDoc?.status === MeetingStatus.Scheduled && (isMeetingOwner || isWorkspaceOwner)) {
+          await wsClient.restartMeeting(meetingId)
+        }
+        if (meetingDoc !== undefined && meetingDoc.private && !meetingDoc.members.includes(accountUuid)) {
           if (!isWorkspaceOwner) {
             ctx.warn('Access denied to private meeting', { meetingId, account: accountUuid })
             res.status(403).send({ error: 'Access denied to private meeting' })

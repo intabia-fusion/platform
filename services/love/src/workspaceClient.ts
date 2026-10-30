@@ -227,6 +227,27 @@ export class WorkspaceClient {
     this.ctx.info('Activated meeting', { meeting: meeting._id })
   }
 
+  async restartMeeting (ref: Ref<MeetingMinutes>): Promise<boolean> {
+    if (ref === undefined) return false
+
+    const meeting = await this.client.findOne(love.class.MeetingMinutes, { _id: ref })
+    if (meeting === undefined) {
+      this.ctx.error('Meeting not found', { _id: ref })
+      return false
+    }
+    if (meeting.status === MeetingStatus.Active) return true
+
+    const was = meeting.status
+    await this.client.update(meeting, {
+      status: MeetingStatus.Active,
+      meetingEnd: undefined,
+      transcriptionState: TranscriptionState.NotStarted,
+      recordingState: RecordingState.NotStarted
+    })
+    this.ctx.info('Restarted meeting', { meeting: meeting._id, was })
+    return true
+  }
+
   /** Mark meeting as finished and clean up all ParticipantInfo entries for it. */
   async finishMeeting (ref: Ref<MeetingMinutes>, meetingEnd?: number): Promise<void> {
     if (ref === undefined) return

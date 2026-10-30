@@ -86,6 +86,7 @@ const love = plugin(loveId, {
     Finished: '' as IntlString,
     Pending: '' as IntlString,
     StartWithRecording: '' as IntlString,
+    StartOnLink: '' as IntlString,
     StartPrivate: '' as IntlString,
     RecordingState: '' as IntlString,
     RecordingNotStarted: '' as IntlString,

@@ -112,6 +112,7 @@
     "Finished": "Завершено",
     "Pending": "Ожидание",
     "StartWithRecording": "Начинать с записью",
+    "StartOnLink": "Начинать по ссылке может любой",
     "StartPrivate": "Начинать приватно",
     "RecordingState": "Статус записи",
     "RecordingNotStarted": "Не начато",

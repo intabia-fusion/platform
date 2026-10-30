@@ -6,8 +6,8 @@ import {
   type WorkspaceUuid,
   concatLink
 } from '@hcengineering/core'
-import { MeetingMinutes, MeetingStatus, ParticipantMetadata } from '@hcengineering/love'
-import { RoomServiceClient } from 'livekit-server-sdk'
+import { MeetingMinutes, MeetingStatus, ParticipantMetadata, RoomMetadata } from '@hcengineering/love'
+import { RoomAgentDispatch, RoomServiceClient } from 'livekit-server-sdk'
 import { WorkspaceClient } from './workspaceClient'
 import { isWorkspaceLoginInfo, WorkspaceLoginInfo } from '@hcengineering/account-client'
 import { decodeToken, generateToken, Token } from '@hcengineering/server-token'
@@ -16,11 +16,17 @@ import { Request, Response } from 'express'
 import { createToken, decodeMeetingToken, extractToken, getRoomName } from './utils'
 import { getAccountClient } from '@hcengineering/server-client'
 import { combineName } from '@hcengineering/contact'
-import { createHmac } from 'crypto'
+import { createHash, createHmac } from 'crypto'
 
 // Guest links go to anyone. A key derived from the LiveKit secret never equals SECRET,
 // so a link is no platform token even when both secrets are configured the same.
 const guestTokenSecret = createHmac('sha256', config.ApiSecret).update('love-guest-token').digest('hex')
+
+function deriveGuestPersonToken (meetingId: string, firstName: string, lastName: string): string {
+  const name = `${firstName.trim().toLowerCase()}:${lastName.trim().toLowerCase()}`
+  const hash = createHash('sha256').update(`${meetingId}:${name}`).digest('hex').slice(0, 32)
+  return `guest-link:${hash}`
+}
 
 function decodeGuestToken (token: string): Token {
   try {
@@ -162,7 +168,8 @@ export class GuestManager {
         meetingEnd: meetingDoc.meetingEnd,
         title: meetingDoc.name,
         meetingStatus,
-        roomFound
+        roomFound,
+        canStart: meetingDoc.status === MeetingStatus.Active || meetingDoc.startOnLink === true
       })
     } catch (e) {
       console.error(e)
@@ -178,6 +185,16 @@ export class GuestManager {
 
     if (typeof guestToken !== 'string') {
       res.status(400).send()
+      return
+    }
+
+    if (
+      typeof firstName !== 'string' ||
+      firstName.trim() === '' ||
+      typeof lastName !== 'string' ||
+      lastName.trim() === ''
+    ) {
+      res.status(400).send({ error: 'Please enter your first and last name' })
       return
     }
 
@@ -198,6 +215,15 @@ export class GuestManager {
         res.status(400).send({ error: 'Invalid token payload' })
         return
       }
+
+      const guestPersonToken =
+        typeof personToken === 'string' && personToken.trim() !== ''
+          ? personToken
+          : deriveGuestPersonToken(meetingId, firstName, lastName)
+      if (guestPersonToken !== personToken) {
+        this.ctx.warn('[guestJoin] No personToken from client, derived one from the link', { meetingId, guestPersonToken })
+      }
+
       // Resolve or create a Person for this guest (so webhook and ui can reliably reference a Person)
       const wsClient = await WorkspaceClient.create(workspace, this.ctx)
 
@@ -209,33 +235,41 @@ export class GuestManager {
 
       const roomName = getRoomName(workspace, meetingId)
 
-      const isActive = meetingDoc.status === MeetingStatus.Active
-
-      if (meetingDoc.status === MeetingStatus.Scheduled && !isActive) {
-        res.status(403).send({
-          error: 'Meeting has not started yet.'
-        })
-        return
+      if (meetingDoc.status === MeetingStatus.Scheduled || meetingDoc.status === MeetingStatus.Finished) {
+        if (meetingDoc.startOnLink !== true) {
+          res.status(403).send({
+            error:
+              meetingDoc.status === MeetingStatus.Finished
+                ? 'Meeting has already finished.'
+                : 'Meeting has not started yet.'
+          })
+          return
+        }
+        const started = await wsClient.restartMeeting(meetingId)
+        if (!started) {
+          res.status(500).send({ error: 'Failed to start the meeting' })
+          return
+        }
       }
 
-      if (meetingDoc.status === MeetingStatus.Finished) {
-        res.status(403).send({
-          error: 'Meeting has already finished.'
-        })
-        return
-      }
-
-      // Ensure LiveKit room exists
       const room = await this.roomClient.listRooms([roomName])
       if (room === undefined || room.length === 0) {
-        this.ctx.info('No room found guest join, not possible to join', { roomName })
-        res.status(404).send({
-          error: 'Meeting room not found.'
-        })
-        return
+        this.ctx.info('No room found, creating room for the guest link', { roomName })
+        try {
+          await this.roomClient.createRoom({
+            metadata: JSON.stringify({ workspaceId: workspace as WorkspaceUuid, meetingId } satisfies RoomMetadata),
+            departureTimeout: config.DepartureTimeoutSec,
+            name: roomName,
+            agents: config.Agents.map((it) => new RoomAgentDispatch({ agentName: it }))
+          })
+        } catch (err: any) {
+          this.ctx.error('[guestJoin] Failed to create room', { roomName, error: err?.message ?? String(err) })
+          res.status(500).send({ error: 'Failed to start the meeting' })
+          return
+        }
       }
       // Try finding an existing person by name to avoid duplicates
-      const personRef = await wsClient.ensurePersonByName(personToken, firstName, lastName)
+      const personRef = await wsClient.ensurePersonByName(guestPersonToken, firstName, lastName)
 
       if (personRef === undefined) {
         // Repeated failures while creating a Person - do not fallback to ephemeral identity.
