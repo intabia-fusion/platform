@@ -15,7 +15,7 @@
 <script lang="ts">
   import { ActivityExtension as ActivityExtensionComponent } from '@hcengineering/activity-resources'
   import type { Class, Doc, Ref } from '@hcengineering/core'
-  import type { ActivityExtension } from '@hcengineering/activity'
+  import type { ActivityExtension, ActivityMessage } from '@hcengineering/activity'
   import activity from '@hcengineering/activity'
   import { getClient } from '@hcengineering/presentation'
   import type { AnySvelteComponent } from '@hcengineering/ui'
@@ -26,16 +26,20 @@
   import { isLimited } from '@hcengineering/billing-resources'
   import billing from '@hcengineering/billing'
 
+  import type { ChatTarget } from '../utils'
   import { getChannelName, getObjectIcon } from '../utils'
   import chunter from '../plugin'
   import { Analytics } from '@hcengineering/analytics'
 
-  export let object: Doc
+  export let target: ChatTarget
+  export let parentMessage: ActivityMessage | undefined = undefined
   export let readonly = false
 
-  $: isDirect = object?._class === chunter.class.DirectMessage
+  $: isDirect = target._class === chunter.class.DirectMessage
+  // A chat opened by a link is a `ChunterSpace` until its document tells a direct from a channel
+  $: isClassKnown = target._class !== chunter.class.ChunterSpace
   // read-only from billing: only for non-Direct channels
-  $: billingReadOnly = !isDirect && $isLimited
+  $: billingReadOnly = !isDirect && isClassKnown && $isLimited
   $: effectiveReadonly = readonly || billingReadOnly
   export let boundary: HTMLElement | undefined | null = undefined
   export let collection: string | undefined
@@ -47,7 +51,7 @@
   const hierarchy = client.getHierarchy()
 
   let extensions: ActivityExtension[] = []
-  $: extensions = getExtensions(object._class)
+  $: extensions = getExtensions(target._class)
 
   function getExtensions (_class: Ref<Class<Doc>>): ActivityExtension[] {
     try {
@@ -68,7 +72,7 @@
 
   let icon: Asset | AnySvelteComponent | undefined = undefined
 
-  $: void updateIcon(object._class)
+  $: void updateIcon(target._class)
 
   async function updateIcon (_class: Ref<Class<Doc>>): Promise<void> {
     if (isThread) {
@@ -85,12 +89,19 @@
     icon = result
   }
 
+  // Asked again only when the chat changes, not on every update of its document
+  $: targetId = target._id
+  $: targetClass = target._class
+  $: isArchivedNotice = effectiveReadonly && !billingReadOnly && !isThread
+  $: namePromise = isArchivedNotice ? getName(targetId, targetClass, $languageStore) : undefined
+
   async function getName (
-    object: Doc,
+    _id: Ref<Doc>,
+    _class: Ref<Class<Doc>>,
     lang: string
   ): Promise<{ name: string | undefined, label: IntlString | undefined }> {
-    const name = await getChannelName(object._id, object._class, object, lang)
-    const label = client.getHierarchy().getClass(object._class).label
+    const name = await getChannelName(_id, _class, undefined, lang)
+    const label = client.getHierarchy().getClass(_class).label
 
     return { name, label }
   }
@@ -101,7 +112,7 @@
     <ActivityExtensionComponent
       kind="input"
       {extensions}
-      props={{ object, boundary, collection, autofocus, withTypingInfo: true, onKeyDown }}
+      props={{ target, parentMessage, boundary, collection, autofocus, withTypingInfo: true, onKeyDown }}
     />
   </div>
 {:else}
@@ -116,10 +127,10 @@
         {#if icon}
           <Icon {icon} size="x-small" />
         {/if}
-        {#await getName(object, $languageStore) then data}
-          {#if data.name}
+        {#await namePromise then data}
+          {#if data?.name}
             {data.name}
-          {:else if data.label}
+          {:else if data?.label}
             <Label label={data.label} />
           {/if}
         {/await}

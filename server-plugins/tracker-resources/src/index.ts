@@ -85,6 +85,7 @@ const issueIdentifierPresenter: StringPresenterFn = async (doc: Doc, control: Pr
 
 export async function getIssueId (doc: Issue, control: Pick<TriggerControl, 'ctx' | 'findAll'>): Promise<string> {
   const issue = doc
+  if (issue.identifier != null && issue.identifier !== '') return issue.identifier
   const project = (await control.findAll(control.ctx, tracker.class.Project, { _id: issue.space }))[0]
   return `${project?.identifier ?? '?'}-${issue.number}`
 }

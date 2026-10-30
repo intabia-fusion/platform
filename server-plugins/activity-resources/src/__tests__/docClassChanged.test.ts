@@ -37,7 +37,15 @@ function makeControl (messages: Doc[]): TriggerControl {
   return {
     ctx: { error: jest.fn(), info: jest.fn(), newChild: jest.fn().mockReturnThis() },
     txFactory,
-    hierarchy: { isDerived: (a: any, b: any) => a === b },
+    hierarchy: {
+      isDerived: (a: any, b: any) => a === b,
+      isMixin: () => false,
+      classHierarchyMixin: () => undefined,
+      getAncestors: (_class: any) => [_class],
+      getDomain: () => 'tracker',
+      findDomain: () => 'tracker'
+    },
+    modelDb: { findAllSync: () => [] },
     findAll: jest.fn().mockImplementation(async (_ctx, _class) => {
       return _class === activity.class.ActivityMessage ? toFindResult(messages) : toFindResult([])
     })

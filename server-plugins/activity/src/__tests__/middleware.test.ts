@@ -543,4 +543,32 @@ describe('ActivityMiddleware', () => {
     await middleware.tx(ctxOf(systemAccountUuid), [remove])
     expect(passed).toEqual([remove])
   })
+
+  describe('DocPreview', () => {
+    const preview = (_class: string): Tx =>
+      ({ _id: 'tx-preview', _class, objectClass: core.class.DocPreview, objectId: 'preview-1' }) as any as Tx
+    const previewTxes = (): Tx[] => [
+      preview(core.class.TxCreateDoc),
+      preview(core.class.TxUpdateDoc),
+      preview(core.class.TxMixin),
+      preview(core.class.TxRemoveDoc)
+    ]
+
+    it('lets a trigger and the system write a preview', async () => {
+      const txes = previewTxes()
+      await middleware.tx({ contextData: { account: { uuid: alice }, isTriggerCtx: true } } as any, txes)
+      await middleware.tx(ctxOf(systemAccountUuid), txes)
+      expect(passed).toEqual([...txes, ...txes])
+    })
+
+    it('refuses every write of a preview by a user', async () => {
+      const other = factory.createTxUpdateDoc(core.class.Space, core.space.Space, channel, { name: 'x' } as any)
+      for (const tx of previewTxes()) {
+        expect((await refusal(middleware.tx(ctxOf(alice), [other, tx]))).params).toMatchObject({
+          kind: ForbiddenKind.SystemOnly
+        })
+      }
+      expect(passed).toEqual([])
+    })
+  })
 })

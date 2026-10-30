@@ -26,12 +26,15 @@
   const objectQuery = createQuery()
 
   let object: ChunterSpace | undefined = undefined
+  // The chat opens by the id at once and closes if the space turns out not to be there
+  let missing = false
 
   $: objectQuery.query(_class, { _id }, (res) => {
     object = res[0]
+    missing = res[0] == null
   })
 </script>
 
-{#if object}
-  <ChannelView {object} {autofocus} on:close />
+{#if !missing}
+  <ChannelView {_id} {_class} object={object?._id === _id ? object : undefined} {autofocus} on:close />
 {/if}

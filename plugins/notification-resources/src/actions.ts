@@ -13,16 +13,20 @@
  limitations under the License.
  */
 
+import chunter from '@hcengineering/chunter'
 import notification, { type DocNotifyContext } from '@hcengineering/notification'
 import {
   closePanel,
   getCurrentLocation,
   getEventPositionElement,
+  languageStore,
   type Location,
   locationStorageKeyId,
   navigate,
   showPopup
 } from '@hcengineering/ui'
+import { getContextTitle } from '@hcengineering/view-resources'
+import { get } from 'svelte/store'
 import { decodeObjectURI } from '@hcengineering/view'
 import core, {
   type Class,
@@ -146,7 +150,10 @@ export async function unsubscribe (context: DocNotifyContext): Promise<void> {
   const client = getClient()
   const hierarchy = client.getHierarchy()
   const isSpace = hierarchy.isDerived(context.objectClass, core.class.Space)
-  const params = { name: context.objectTitle }
+  const title = await getContextTitle(client, context, get(languageStore))
+  // In text a channel is its name with the `#` its icon draws elsewhere
+  const isChannel = hierarchy.isDerived(context.objectClass, chunter.class.Channel)
+  const params = { name: isChannel ? `#${title}` : title }
 
   showPopup(
     MessageBox,

@@ -88,6 +88,7 @@
 - [pod_log_volume.md](pod_log_volume.md) - Pod log volume: what was actually filling it
 - [postgres-reverse-lookup-sort.md](postgres-reverse-lookup-sort.md) - Postgres: sort by reverse lookup field
 - [postgres-lookup-projection.md](postgres-lookup-projection.md) - Postgres: проекция по lookup (`$lookup.<path>.<field>` в projection)
+- [doc-preview-backfill.md](doc-preview-backfill.md) - DocPreview: миграции и их порядок, классы с превью, триггеры, доступ, навигатор и шапка чата
 - [rpc-json-protocol.md](rpc-json-protocol.md) - RPC: протокол транзактора
 - [stats-slow-sql-tool.md](stats-slow-sql-tool.md) - Stats SQL analysis tools (dev/tool)
 - [transactor-workspace-memory.md](transactor-workspace-memory.md) - Память транзактора на пространство

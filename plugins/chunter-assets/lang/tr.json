@@ -237,9 +237,9 @@
     "ChannelNotificationText": "{sender} {doc} içinde bir mesaj gönderdi: \n\n {message}",
     "ChannelNotificationHtml": "<p><b>{sender}</b> {doc} içinde bir mesaj gönderdi:</p> {message} <p>{link}</p>",
     "ChannelNotificationSubject": "{doc} içinde yeni bir mesajınız var",
-    "JoinChannelNotificationText": "#{doc} kanalına eklendiniz",
-    "JoinChannelNotificationHtml": "<p><b>#{doc}</b> kanalına eklendiniz</p> <p>{link}</p>",
-    "JoinChannelNotificationSubject": "#{doc} kanalına eklendiniz",
+    "JoinChannelNotificationText": "{doc} kanalına eklendiniz",
+    "JoinChannelNotificationHtml": "<p><b>{doc}</b> kanalına eklendiniz</p> <p>{link}</p>",
+    "JoinChannelNotificationSubject": "{doc} kanalına eklendiniz",
     "ThreadNotificationText": "{sender} {doc} konusuna yanıt verdi: \n\n{message}",
     "ThreadNotificationHtml": "<p><b>{sender}</b> {doc} konusuna yanıt verdi:</p><p>{message}</p><p>{link}</p>",
     "ThreadNotificationSubject": "{doc} konusuna yeni yanıt"

@@ -10,7 +10,7 @@
 
   import { NotificationClientImpl } from '../client'
 
-  export let value: Doc | Doc[]
+  export let value: Pick<Doc, '_id' | '_class'> | Array<Pick<Doc, '_id' | '_class'>>
 
   const client = getClient()
   const dispatch = createEventDispatcher()

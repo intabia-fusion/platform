@@ -13,29 +13,33 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Class, Doc, Ref, SearchTarget, WithLookup } from '@hcengineering/core'
+  import type { Class, Doc, DocPreview, Ref, SearchTarget, WithLookup } from '@hcengineering/core'
   import core, { getCurrentAccount, reduceCalls, SortingOrder } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import type { LiveQuery } from '@hcengineering/presentation'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import type { Chat, DirectMessage } from '@hcengineering/chunter'
+  import type { Chat } from '@hcengineering/chunter'
   import type { Employee } from '@hcengineering/contact'
   import notification from '@hcengineering/notification'
+  import { previewMembers } from '@hcengineering/view-resources'
   import { createEventDispatcher, onDestroy, tick } from 'svelte'
 
   import chunter from '../../../plugin'
-  import type { ChatNavGroupModel } from '../types'
+  import { getChannelSpace } from '../../../utils'
+  import type { ChatNavEntry, ChatNavGroupModel } from '../types'
   import ChatNavSection from './ChatNavSection.svelte'
   import {
     createFakeDirectFromEmployee,
-    getDirectByAccountMap,
+    getDirectPreviewByAccountMap,
     getNavGroupClasses,
-    shouldPushObjectInNavigator
+    isPersonDirect,
+    shouldPushObjectInNavigator,
+    standInPreview
   } from '../utils'
 
   export let object: Doc | undefined
   export let chat: Chat | undefined
-  export let pinned: Chat[] = []
+  export let selectedId: Ref<Doc> | undefined
   export let model: ChatNavGroupModel
   export let search: string = ''
   export let employees: Employee[] = []
@@ -47,32 +51,31 @@
     id: string
     _class?: Ref<Class<Doc>>
     label: IntlString
-    objects: { doc: Doc, chat?: Chat }[]
+    entries: ChatNavEntry[]
     count: number
   }
 
   const client = getClient()
-
-  function lastMessageTime (chat: WithLookup<Chat> | undefined): number {
-    return chat?.$lookup?.readState?.latestMessageTimestamp ?? 0
-  }
   const hierarchy = client.getHierarchy()
-  const objectsQueryByClass = new Map<Ref<Class<Doc>>, { query: LiveQuery, limit?: number }>()
+  const queryByClass = new Map<Ref<Class<Doc>>, { query: LiveQuery, limit?: number, extra: number }>()
 
   const me = getCurrentAccount()
-  let objectsByClass = new Map<Ref<Class<Doc>>, { docs: { doc: Doc, chat: Chat }[], total: number }>()
+  let entriesByClass = new Map<Ref<Class<Doc>>, { entries: ChatNavEntry[], total: number }>()
 
   let shouldPushObject = false
   let sections: Section[] = []
 
   const fakeDirectsHistory = new Map<string, any>()
+  // One fake per person while the search lasts: the section keeps its row as is
+  const fakeDirects = new Map<string, DocPreview>()
   let lastSearch = search
   $: if (search !== lastSearch) {
     lastSearch = search
     fakeDirectsHistory.clear()
+    fakeDirects.clear()
   }
 
-  $: shouldPushObject = shouldPushObjectInNavigator(model, object, chat, Array.from(objectsByClass.keys()))
+  $: shouldPushObject = shouldPushObjectInNavigator(model, object, chat, Array.from(entriesByClass.keys()))
   $: pushObj = shouldPushObject && object != null ? { object, chat } : undefined
 
   let loadedReported = false
@@ -86,18 +89,19 @@
     void tick().then(() => dispatch('loaded'))
   }
 
-  function loadObjects (model: ChatNavGroupModel, pinned: Chat[], search: string): void {
-    const classes = getNavGroupClasses(model, pinned)
+  function loadEntries (model: ChatNavGroupModel, search: string): void {
+    const classes = getNavGroupClasses(model)
     reportLoaded(classes)
 
     for (const _class of classes) {
-      const { query, limit } = objectsQueryByClass.get(_class) ?? {
+      const { query, limit, extra } = queryByClass.get(_class) ?? {
         query: createQuery(),
-        limit: model.maxSectionItems
+        limit: model.maxSectionItems,
+        extra: 0
       }
 
-      if (!objectsQueryByClass.has(_class)) {
-        objectsQueryByClass.set(_class, { query, limit })
+      if (!queryByClass.has(_class)) {
+        queryByClass.set(_class, { query, limit, extra })
       }
 
       const searchQuery =
@@ -110,42 +114,58 @@
               hidden: false
             }
 
-      const isSpace = hierarchy.isDerived(_class, core.class.Space)
       query.query(
         chunter.class.Chat,
         {
           ...model.query,
           account: me.uuid,
-          attachedToClass: { $in: hierarchy.getDescendants(_class) },
+          ...(_class !== core.class.Doc
+            ? {
+                attachedToClass: { $in: hierarchy.getDescendants(_class) },
+                '$lookup.readState.attachedToClass': { $in: hierarchy.getDescendants(_class) }
+              }
+            : {}),
           ...searchQuery,
-          ...(isSpace ? { '$lookup.attachedTo.archived': false } : {}),
-          '$lookup.attachedTo._id': { $exists: true },
-          '$lookup.readState.attachedToClass': { $in: hierarchy.getDescendants(_class) }
+          '$lookup.preview.archived': false
         },
         (res) => {
-          const docs: { doc: Doc, chat: Chat }[] = res.map((it) => ({ doc: it.$lookup?.attachedTo as Doc, chat: it }))
-          objectsByClass = objectsByClass.set(_class, { docs, total: res.total })
+          // A preview the user may not read (a project archived or left) is cut from the join: no row
+          const entries: ChatNavEntry[] = res.flatMap((chat) => {
+            const preview = chat.$lookup?.preview as DocPreview | undefined
+            return preview != null ? [{ preview, chat }] : []
+          })
+          // The cut rows still take places of the page: ask for more, doubling, while there are
+          const page = queryByClass.get(_class)
+          const cut = res.length - entries.length
+          if (page?.limit != null && entries.length < page.limit && res.length < res.total && cut > page.extra) {
+            page.extra = Math.max(cut, page.extra * 2)
+            loadEntries(model, search)
+            return
+          }
+          // A window grown for cut rows shows no more than the page
+          const shown = page?.limit != null ? entries.slice(0, page.limit) : entries
+          entriesByClass = entriesByClass.set(_class, { entries: shown, total: res.total - cut })
           answeredClasses.add(_class)
           reportLoaded(classes)
         },
         {
           total: true,
-          limit,
-          lookup: { attachedTo: _class, readState: notification.class.ReadState },
+          limit: limit != null ? limit + extra : undefined,
+          lookup: { preview: core.class.DocPreview, readState: notification.class.ReadState },
           projection: { '$lookup.readState.latestMessageTimestamp': 1, '$lookup.readState.attachedToClass': 1 },
           sort: { '$lookup.readState.latestMessageTimestamp': SortingOrder.Descending }
         }
       )
     }
 
-    for (const [classRef, query] of objectsQueryByClass.entries()) {
+    for (const [classRef, query] of queryByClass.entries()) {
       if (!classes.includes(classRef)) {
         query.query.unsubscribe()
-        objectsQueryByClass.delete(classRef)
-        objectsByClass.delete(classRef)
+        queryByClass.delete(classRef)
+        entriesByClass.delete(classRef)
       }
     }
-    objectsByClass = objectsByClass
+    entriesByClass = entriesByClass
   }
 
   const searchDebounceMs = 300
@@ -167,35 +187,52 @@
     }, searchDebounceMs)
   }
 
-  $: if (active) loadObjects(model, pinned, debouncedSearch)
+  $: if (active) loadEntries(model, debouncedSearch)
 
   onDestroy(() => {
     if (searchDebounceTimer != null) clearTimeout(searchDebounceTimer)
 
-    for (const { query } of objectsQueryByClass.values()) {
+    for (const { query } of queryByClass.values()) {
       query.unsubscribe()
     }
   })
 
+  // The open document when it is not listed: its preview, live; a stand-in for a document without one
+  const pushedQuery = createQuery()
+  let pushedPreview: DocPreview | undefined
+  $: if (pushObj != null) {
+    const { object } = pushObj
+    const space = getChannelSpace(object._class, object._id, object.space)
+    pushedQuery.query(
+      core.class.DocPreview,
+      // The space lets the query read a public one its user is not a member of
+      { objectId: object._id, objectDomain: hierarchy.getDomain(object._class), space },
+      (res) => {
+        pushedPreview = res[0] ?? standInPreview(object._id, object._class, space)
+      },
+      { limit: 1, showArchived: true }
+    )
+  } else {
+    pushedQuery.unsubscribe()
+    pushedPreview = undefined
+  }
+
   const getSections = reduceCalls(
     async (
-      objectsByClass: Map<Ref<Class<Doc>>, { docs: { doc: Doc, chat: Chat }[], total: number }>,
+      entriesByClass: Map<Ref<Class<Doc>>, { entries: ChatNavEntry[], total: number }>,
       model: ChatNavGroupModel,
       pushObject: { object: Doc, chat?: Chat } | undefined,
+      pushedPreview: DocPreview | undefined,
       employees: Employee[],
       handler: (result: Section[]) => void
     ): Promise<void> => {
       const result: Section[] = []
       if (!model.wrap) {
-        // Every class comes sorted on its own; one section of them all is sorted again.
-        const objects = Array.from(objectsByClass.values())
-          .flatMap((it) => it.docs)
-          .sort((a, b) => lastMessageTime(b.chat) - lastMessageTime(a.chat))
         result.push({
           id: model.id,
-          objects,
+          entries: Array.from(entriesByClass.values()).flatMap((it) => it.entries),
           label: model.label ?? chunter.string.Channels,
-          count: Array.from(objectsByClass.values()).reduce((sum, it) => sum + it.total, 0)
+          count: Array.from(entriesByClass.values()).reduce((sum, it) => sum + it.total, 0)
         })
 
         handler(result)
@@ -204,66 +241,67 @@
 
       let isObjectPushed = false
 
-      const docIds = new Set(objectsByClass.values().flatMap((it) => it.docs.map((o) => o.doc._id)))
+      const docIds = new Set(entriesByClass.values().flatMap((it) => it.entries.map((o) => o.preview.objectId)))
       if (pushObject != null && docIds.has(pushObject?.object._id)) {
         isObjectPushed = true
       }
+      const pushed: ChatNavEntry | undefined =
+        pushObject != null && !isObjectPushed && pushedPreview?.objectId === pushObject.object._id
+          ? { preview: pushedPreview, chat: pushObject.chat }
+          : undefined
 
-      for (const [_class, { docs, total }] of objectsByClass.entries()) {
+      for (const [_class, { entries, total }] of entriesByClass.entries()) {
         const clazz = hierarchy.getClass(_class)
-        const sectionObjects: { doc: Doc, chat?: Chat }[] = [...docs]
+        const sectionEntries: ChatNavEntry[] = [...entries]
 
-        if (!isObjectPushed && _class === pushObject?.object._class) {
+        if (!isObjectPushed && pushed != null && _class === pushObject?.object._class) {
           isObjectPushed = true
-          sectionObjects.push({ doc: pushObject.object, chat: pushObject.chat })
+          sectionEntries.push(pushed)
         }
 
         if (model.id === 'direct' && _class === chunter.class.DirectMessage) {
-          for (const it of sectionObjects) {
-            const direct = it.doc as DirectMessage
-            if (direct.type !== 'person') continue
-            const other = direct.members.find((m) => m !== me.uuid) ?? direct.members.find((m) => m === me.uuid)
-            if (other != null) {
-              const historySource = fakeDirectsHistory.get(other)
-              if (historySource != null) {
-                ;(direct as WithLookup<DirectMessage>).$source = historySource
-                if (it.chat != null) {
-                  const chat = it.chat as WithLookup<Chat>
-                  chat.$source = historySource
-                }
+          for (const it of sectionEntries) {
+            if (!isPersonDirect(it.preview)) continue
+            const other = (previewMembers(it.preview) ?? []).find((m) => m !== me.uuid) ?? me.uuid
+            const historySource = fakeDirectsHistory.get(other)
+            if (historySource != null) {
+              ;(it.preview as WithLookup<DocPreview>).$source = historySource
+              if (it.chat != null) {
+                ;(it.chat as WithLookup<Chat>).$source = historySource
               }
             }
           }
 
-          const directByPerson = getDirectByAccountMap(sectionObjects.map((it) => it.doc as DirectMessage))
+          const directByPerson = getDirectPreviewByAccountMap(sectionEntries.map((it) => it.preview))
           for (const employee of employees) {
-            if (sectionObjects.length >= 10) break
+            if (sectionEntries.length >= 10) break
             if (employee.personUuid == null) continue
             const direct = directByPerson.get(employee.personUuid)
             if (direct != null) continue
-            const fakeDirect = createFakeDirectFromEmployee(employee)
+            const fakeDirect = fakeDirects.get(employee.personUuid) ?? createFakeDirectFromEmployee(employee)
             if (fakeDirect == null) continue
+            fakeDirects.set(employee.personUuid, fakeDirect)
             fakeDirectsHistory.set(employee.personUuid, (employee as WithLookup<Employee>).$source)
-            sectionObjects.push({ doc: fakeDirect, chat: undefined })
+            sectionEntries.push({ preview: fakeDirect })
           }
         }
 
         result.push({
           id: _class,
           _class,
-          objects: sectionObjects,
+          entries: sectionEntries,
           label: clazz.pluralLabel ?? clazz.label,
-          count: sectionObjects.length > docs.length ? total + 1 : total
+          count: sectionEntries.length > entries.length ? total + 1 : total
         })
       }
 
-      if (!isObjectPushed && pushObject !== undefined) {
+      if (!isObjectPushed && pushed != null && pushObject != null) {
         const clazz = hierarchy.getClass(pushObject.object._class)
 
         result.push({
           id: pushObject.object._id,
           _class: pushObject.object._class,
-          objects: [{ doc: pushObject.object, chat: pushObject.chat }],
+          entries: [pushed],
           label: clazz.pluralLabel ?? clazz.label,
           count: 1
         })
@@ -273,18 +311,18 @@
     }
   )
 
-  $: void getSections(objectsByClass, model, pushObj, employees, (res) => {
+  $: void getSections(entriesByClass, model, pushObj, pushedPreview, employees, (res) => {
     sections = res
   })
 </script>
 
 {#each sections as section (section.id)}
-  {#if section.objects.length > 0 || model.showEmpty}
+  {#if section.entries.length > 0 || model.showEmpty}
     <ChatNavSection
       id={section.id}
       _class={section._class ?? core.class.Doc}
-      objects={section.objects}
-      objectId={object?._id}
+      entries={section.entries}
+      objectId={selectedId}
       header={section.label}
       actions={model.actionsFn()}
       createAction={model.createAction}
@@ -292,10 +330,10 @@
       itemsCount={section.count}
       on:show-more={() => {
         if (section._class !== undefined) {
-          const query = objectsQueryByClass.get(section._class)
+          const query = queryByClass.get(section._class)
           if (query?.limit != null) {
             query.limit += 50
-            loadObjects(model, pinned, search)
+            loadEntries(model, search)
           }
         }
       }}

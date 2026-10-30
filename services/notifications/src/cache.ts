@@ -18,6 +18,7 @@ import core, {
   Class,
   Collaborator,
   Doc,
+  DocPreview,
   DocumentQuery,
   getClassCollaborators,
   groupByArray,
@@ -46,6 +47,7 @@ import notification, {
 } from '@hcengineering/notification'
 import contact, { Employee, Person, PersonSpace, SocialIdentity, SocialIdentityRef } from '@hcengineering/contact'
 import { Receiver, Sender } from '@hcengineering/server-notification'
+import { hasPreview } from '@hcengineering/server-activity'
 import { LRUCache } from 'lru-cache'
 
 import { Client, EmployeeInfo, NotificationSettings, SocialIdentityInfo } from './types'
@@ -98,6 +100,17 @@ class WorkspaceCache {
   /** General document cache. */
   private readonly documentsCache = new LRUCache<Ref<Doc>, Doc>({
     max: 1000
+  })
+
+  /** Preview ids by `<domain>:<id>` of the document, dropped when the preview is removed. */
+  private readonly previewsByDocCache = new LRUCache<string, Ref<DocPreview>>({
+    max: 1000
+  })
+
+  /** Documents found without a preview, asked again after a while rather than on every notification. */
+  private readonly missingPreviewsCache = new LRUCache<string, true>({
+    max: 1000,
+    ttl: 60 * 1000
   })
 
   /** Caches read state settings for documents. */
@@ -379,6 +392,29 @@ class WorkspaceCache {
     }
 
     return space
+  }
+
+  // By domain and id: the class of a document may change
+  public async getDocPreviewId (objectId: Ref<Doc>, objectClass: Ref<Class<Doc>>): Promise<Ref<DocPreview> | undefined> {
+    const { hierarchy, model } = this.client
+    const _class = hierarchy.getBaseClass(objectClass)
+    if (!hasPreview({ hierarchy, modelDb: model }, _class)) return undefined
+    const objectDomain = hierarchy.getDomain(_class)
+    const key = `${objectDomain}:${objectId}`
+    const cached = this.previewsByDocCache.get(key)
+    if (cached != null || this.missingPreviewsCache.has(key)) return cached
+    const preview = await this.client.findOne<DocPreview>(
+      core.class.DocPreview,
+      { objectId, objectDomain },
+      { projection: { _id: 1 } }
+    )
+    if (preview != null) {
+      this.previewsByDocCache.set(key, preview._id)
+    } else {
+      this.missingPreviewsCache.set(key, true)
+      this.ctx.warn('document without a preview', { objectId, objectClass })
+    }
+    return preview?._id
   }
 
   /**
@@ -751,6 +787,13 @@ class WorkspaceCache {
   private txRemoveDoc (tx: TxRemoveDoc<Doc>): void {
     this.documentsCache.delete(tx.objectId)
     const { hierarchy } = this.client
+
+    if (tx.objectClass === core.class.DocPreview) {
+      // A preview made anew (a migration, a backfill) has a new id
+      const keys = [...this.previewsByDocCache.entries()].filter(([, id]) => id === tx.objectId).map(([key]) => key)
+      for (const key of keys) this.previewsByDocCache.delete(key)
+      return
+    }
 
     if (hierarchy.isDerived(tx.objectClass, core.class.Collaborator)) {
       this.removeCollaborator(tx)

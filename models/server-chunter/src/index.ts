@@ -59,6 +59,11 @@ export function createModel (builder: Builder): void {
     personalized: true
   })
 
+  builder.mixin(chunter.class.DirectMessage, core.class.Class, serverActivity.mixin.PropsPresenter, {
+    presenter: serverChunter.function.DirectPropsPresenter,
+    triggerFields: ['members', 'type', 'name']
+  })
+
   builder.mixin<Class<Doc>, ObjectDDParticipant>(
     chunter.class.ChatMessage,
     core.class.Class,
@@ -103,6 +108,14 @@ export function createModel (builder: Builder): void {
     trigger: serverChunter.trigger.OnCollaboratorRemoved,
     txMatch: {
       objectClass: core.class.Collaborator,
+      _class: core.class.TxRemoveDoc
+    },
+    isAsync: true
+  })
+
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverChunter.trigger.OnChatDocRemoved,
+    txMatch: {
       _class: core.class.TxRemoveDoc
     },
     isAsync: true

@@ -12,20 +12,20 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import ui, { CheckBox, Component, Label, showPopup, Spinner } from '@hcengineering/ui'
+  import ui, { CheckBox, Component, Label, languageStore, showPopup, Spinner } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import type { DocNotifyContext } from '@hcengineering/notification'
   import notification from '@hcengineering/notification'
   import { getClient } from '@hcengineering/presentation'
   import view from '@hcengineering/view'
-  import { Menu } from '@hcengineering/view-resources'
+  import { contextPreview, Menu, previewTitle } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
+  import type { WithLookup } from '@hcengineering/core'
   import { AccountRole, getCurrentAccount } from '@hcengineering/core'
-  import chunter from '@hcengineering/chunter'
 
   import NotifyContextIcon from './NotifyContextIcon.svelte'
 
-  export let value: DocNotifyContext
+  export let value: WithLookup<DocNotifyContext>
   export let isClearing = false
 
   const account = getCurrentAccount()
@@ -63,11 +63,13 @@
   async function checkContext (): Promise<void> {
     dispatch('clear')
   }
-  $: identifier = value.objectIdentifier
-  $: title =
-    hierarchy.isDerived(value.objectClass, chunter.class.Channel) && value.objectTitle.startsWith('#')
-      ? value.objectTitle.slice(1)
-      : value.objectTitle
+  $: previewStore = contextPreview(value)
+  $: preview = $previewStore
+
+  $: identifier = preview?.identifier
+  // The label is drawn before the title, so a title-less preview stays empty here
+  $: titleStore = previewTitle(client, preview, $languageStore, false)
+  $: title = $titleStore
 </script>
 
 <div class="header">
@@ -79,7 +81,7 @@
       {#if identifier}
         {identifier}
       {:else}
-        <Label label={value.objectLabel ?? hierarchy.getClass(value.objectClass).label} />
+        <Label label={preview?.label ?? hierarchy.getClass(preview?.objectClass ?? value.objectClass).label} />
       {/if}
       <span class="title overflow-label clear-mins" {title}>
         {title}

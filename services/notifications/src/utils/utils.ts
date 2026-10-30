@@ -37,16 +37,7 @@ export {
   isMuted,
   getCreateContextTx
 } from './context'
-export {
-  getDocTitle,
-  getPushGroup,
-  getDocIdentifier,
-  getDocUrl,
-  getDocLabel,
-  getDocIcon,
-  getObjectDisplayData,
-  getBaseDisplayParams
-} from './display'
+export { getDocTitle, getPushGroup, getDocIdentifier, getDocUrl, getContextRefs, getBaseDisplayParams } from './display'
 export { emptyResult, getResultTxes, isEmptyResult, getNotifiedUsers, getEmptyTxCache } from './result'
 export {
   getWorkspaceInfo,

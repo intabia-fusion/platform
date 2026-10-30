@@ -23,6 +23,7 @@ import core, {
   type Ref,
   type Class,
   type Doc,
+  type DocPreview,
   type Space,
   type WithLookup
 } from '@hcengineering/core'
@@ -31,6 +32,7 @@ import { readNotifyContext } from '@hcengineering/notification-resources'
 import { getClient } from '@hcengineering/presentation'
 import { type Action, showPopup } from '@hcengineering/ui'
 import view from '@hcengineering/view'
+import { previewMembers } from '@hcengineering/view-resources'
 import { type SpecialNavModel } from '@hcengineering/workbench'
 import activity from '@hcengineering/activity'
 
@@ -279,10 +281,7 @@ function filterClasses (classes: Array<Ref<Class<Doc>>>): Array<Ref<Class<Doc>>>
   return res
 }
 
-export function getNavGroupClasses (model: ChatNavGroupModel, pinned: Chat[]): Array<Ref<Class<Doc>>> {
-  if (model.id === 'starred') {
-    return Array.from(new Set(pinned.map((it) => it.attachedToClass)))
-  }
+export function getNavGroupClasses (model: ChatNavGroupModel): Array<Ref<Class<Doc>>> {
   if (model._class != null) return [model._class]
 
   const client = getClient()
@@ -334,68 +333,90 @@ export function shouldPushObjectInNavigator (
   return !classes.some((c) => hierarchy.isDerived(object._class, c))
 }
 
-export function createFakeDirectFromEmployee (employee: WithLookup<Employee>): WithLookup<DirectMessage> | undefined {
+export function createFakeDirectFromEmployee (employee: WithLookup<Employee>): WithLookup<DocPreview> | undefined {
   if (employee.personUuid == null) return
   const me = getCurrentAccount()
+  const objectId = `@fake-${employee._id}` as Ref<Doc>
+  const members = Array.from(new Set([employee.personUuid, me.uuid]))
   return {
-    _id: `@fake-${employee._id}` as Ref<DirectMessage>,
-    _class: chunter.class.DirectMessage,
+    _id: objectId as unknown as Ref<DocPreview>,
+    _class: core.class.DocPreview,
     space: core.space.Space,
-    members: Array.from(new Set([employee.personUuid, me.uuid])),
-    type: 'person',
-    name: '',
-    private: true,
-    description: '',
+    objectId,
+    objectClass: chunter.class.DirectMessage,
+    objectDomain: getClient().getHierarchy().getDomain(chunter.class.DirectMessage),
+    title: '',
+    label: chunter.string.Direct,
+    icon: { props: { members } },
     archived: false,
+    props: { members, type: 'person' },
     modifiedBy: me.primarySocialId,
     modifiedOn: Date.now(),
     $source: employee.$source
   }
 }
 
-export function isFakeDirect (direct: Doc): direct is DirectMessage {
-  return direct._class === chunter.class.DirectMessage && direct._id.startsWith('@fake-')
+// What stands in for a missing preview: the document shows under the label of its class.
+export function standInPreview (objectId: Ref<Doc>, objectClass: Ref<Class<Doc>>, space: Ref<Space>): DocPreview {
+  return {
+    _id: `@stand-in-${objectId}` as Ref<DocPreview>,
+    _class: core.class.DocPreview,
+    space,
+    objectId,
+    objectClass,
+    objectDomain: getClient().getHierarchy().getDomain(objectClass),
+    title: '',
+    archived: false,
+    modifiedBy: getCurrentAccount().primarySocialId,
+    modifiedOn: 0
+  }
 }
 
-export async function createRealDirectFromFake (fake: DirectMessage): Promise<DirectMessage | undefined> {
+export function isFakeDirect (preview: DocPreview): boolean {
+  return preview.objectClass === chunter.class.DirectMessage && preview.objectId.startsWith('@fake-')
+}
+
+export async function createRealDirectFromFake (fake: DocPreview): Promise<DirectMessage | undefined> {
   const client = getClient()
-  const _id = await createDirect(client, fake.members)
+  const _id = await createDirect(client, previewMembers(fake) ?? [])
   if (_id == null) return
 
   return await client.findOne(chunter.class.DirectMessage, { _id })
 }
 
-export function getDirectByAccountMap (directs: DirectMessage[]): Map<AccountUuid, DirectMessage> {
+export function isPersonDirect (preview: DocPreview): boolean {
+  return preview.objectClass === chunter.class.DirectMessage && preview.props?.type === 'person'
+}
+
+// The other side of a person-to-person direct; the account itself in the chat with oneself.
+function directCompanion (members: AccountUuid[]): AccountUuid | undefined {
   const me = getCurrentAccount()
-  const map = new Map<AccountUuid, DirectMessage>()
+  return members.find((m) => m !== me.uuid) ?? members.find((m) => m === me.uuid)
+}
 
+function byCompanion<T> (directs: T[], membersOf: (it: T) => AccountUuid[] | undefined): Map<AccountUuid, T> {
+  const map = new Map<AccountUuid, T>()
   for (const it of directs) {
-    if (it.type !== 'person') continue
-
-    const other = it.members.find((m) => m !== me.uuid)
-
-    if (other == null) {
-      if (it.members.includes(me.uuid)) {
-        map.set(me.uuid, it)
-      }
-      continue
-    }
-
-    map.set(other, it)
+    const members = membersOf(it)
+    if (members == null) continue
+    const other = directCompanion(members)
+    if (other != null) map.set(other, it)
   }
-
   return map
 }
 
+export function getDirectByAccountMap (directs: DirectMessage[]): Map<AccountUuid, DirectMessage> {
+  return byCompanion(directs, (it) => (it.type === 'person' ? it.members : undefined))
+}
+
+export function getDirectPreviewByAccountMap (directs: DocPreview[]): Map<AccountUuid, DocPreview> {
+  return byCompanion(directs, (it) => (isPersonDirect(it) ? previewMembers(it) : undefined))
+}
+
 export function getChatNavItemKey (item: ChatNavItemModel): string {
-  const doc = item.object
-  if (doc._class === chunter.class.DirectMessage) {
-    const direct = doc as DirectMessage
-    if (direct.type === 'person') {
-      const me = getCurrentAccount()
-      const other = direct.members.find((m) => m !== me?.uuid) ?? me?.uuid
-      if (other != null) return `direct-${other}`
-    }
+  if (isPersonDirect(item.preview)) {
+    const other = directCompanion(previewMembers(item.preview) ?? [])
+    if (other != null) return `direct-${other}`
   }
   return item.id
 }

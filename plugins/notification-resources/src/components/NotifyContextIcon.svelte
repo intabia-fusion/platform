@@ -13,36 +13,35 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { DocNotifyContext } from '@hcengineering/notification'
-  import type { IconSize } from '@hcengineering/ui'
-  import { Icon, Component } from '@hcengineering/ui'
-  import { getClient, IconWithEmoji } from '@hcengineering/presentation'
-  import { classIcon } from '@hcengineering/view-resources'
-  import view from '@hcengineering/view'
+  import activity from '@hcengineering/activity'
   import chunter from '@hcengineering/chunter'
+  import type { WithLookup } from '@hcengineering/core'
+  import type { DocNotifyContext } from '@hcengineering/notification'
+  import { getClient } from '@hcengineering/presentation'
+  import type { IconSize } from '@hcengineering/ui'
+  import { Icon } from '@hcengineering/ui'
+  import { classIcon, contextPreview, PreviewIcon } from '@hcengineering/view-resources'
 
   import NotifyMarker from './NotifyMarker.svelte'
 
-  export let value: DocNotifyContext
+  export let value: WithLookup<DocNotifyContext>
   export let size: IconSize = 'medium'
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
 
-  $: iconMixin = hierarchy.classHierarchyMixin(value.objectClass, view.mixin.ObjectIcon)
+  // A thread keeps the icon of its message class; a document is drawn from its preview
+  $: isThread = hierarchy.isDerived(value.objectClass, activity.class.ActivityMessage)
+
+  $: previewStore = isThread ? undefined : contextPreview(value)
+  $: preview = $previewStore
 </script>
 
 <div class="container">
-  {#if iconMixin}
-    <Component
-      is={iconMixin.component}
-      props={{ ...value.objectIcon?.props, asset: value.objectIcon?.asset, emoji: value.objectIcon?.emoji, size }}
-      showLoading={false}
-    />
-  {:else if value.objectIcon?.emoji}
-    <IconWithEmoji icon={value.objectIcon.emoji} {size} />
+  {#if isThread || preview == null}
+    <Icon icon={classIcon(client, value.objectClass) ?? chunter.icon.Thread} {size} />
   {:else}
-    <Icon icon={value.objectIcon?.asset ?? classIcon(client, value.objectClass) ?? chunter.icon.Thread} {size} />
+    <PreviewIcon value={preview} {size} fallback={chunter.icon.Thread} />
   {/if}
 
   <div class="notifyMarker">

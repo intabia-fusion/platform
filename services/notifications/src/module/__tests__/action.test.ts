@@ -33,7 +33,7 @@ import {
 } from '../action'
 import { emptyResult } from '../../utils/result'
 import { pushNotification } from '../notification'
-import { getBaseDisplayParams, getEmptyTxCache, getObjectDisplayData } from '../../utils/utils'
+import { getBaseDisplayParams, getEmptyTxCache, getContextRefs } from '../../utils/utils'
 
 jest.mock('../../config', () => ({
   __esModule: true,
@@ -48,7 +48,7 @@ jest.mock('../../utils/utils', () => {
     getAllowedProviders: jest.fn(),
     getBaseDisplayParams: jest.fn(),
     getEmptyTxCache: jest.fn(),
-    getObjectDisplayData: jest.fn()
+    getContextRefs: jest.fn()
   }
 })
 
@@ -691,6 +691,7 @@ describe('handleCreateNotificationAction', () => {
   }
   let mockCache: {
     getDoc: jest.Mock
+    getDocPreviewId: jest.Mock
     getReceivers: jest.Mock
     getSettings: jest.Mock
     getContext: jest.Mock
@@ -729,6 +730,7 @@ describe('handleCreateNotificationAction', () => {
     mockClient = { ctx: { warn: jest.fn() }, findOne: jest.fn(), branding: undefined }
     mockCache = {
       getDoc: jest.fn().mockResolvedValue({ _id: 'doc-1', _class: 'love:class:MeetingMinutes', space: 'space-1' }),
+      getDocPreviewId: jest.fn().mockResolvedValue('preview-1'),
       getReceivers: jest.fn(),
       getSettings: jest.fn().mockResolvedValue({}),
       getContext: jest.fn().mockResolvedValue(undefined),
@@ -738,7 +740,7 @@ describe('handleCreateNotificationAction', () => {
     result = emptyResult()
     jest.clearAllMocks()
     ;(getBaseDisplayParams as jest.Mock).mockResolvedValue({ intlParams: {}, intlParamsNotLocalized: {} })
-    ;(getObjectDisplayData as jest.Mock).mockResolvedValue({})
+    ;(getContextRefs as jest.Mock).mockResolvedValue({ preview: 'preview-1' })
     ;(getEmptyTxCache as jest.Mock).mockReturnValue({})
     ;(pushNotification as jest.Mock).mockResolvedValue(undefined)
   })

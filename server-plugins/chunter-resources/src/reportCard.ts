@@ -220,7 +220,8 @@ async function chatOf (
   const _class = thread !== undefined ? thread.objectClass : message.attachedToClass
   const chat = (await control.findAll(ctx, _class, { _id }, { limit: 1 }))[0]
   const name = chat !== undefined ? await getDocTitle(control, chat) : undefined
-  return { _id, _class, name: name ?? '' }
+  const shown = name != null && hierarchy.isDerived(_class, chunter.class.Channel) ? `#${name}` : name
+  return { _id, _class, name: shown ?? '' }
 }
 
 async function attachmentNames (doc: ChatMessage, control: TriggerControl): Promise<string[]> {

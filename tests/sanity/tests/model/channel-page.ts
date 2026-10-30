@@ -53,6 +53,11 @@ export class ChannelPage extends CommonPage {
   readonly chooseChannel = (channel: string): Locator =>
     this.page.locator('div.antiPanel-navigator').getByRole('button', { name: channel })
 
+  // A document opened from the chat takes the place of the conversation, not a panel over the app
+  readonly docPanel = (title: string): Locator => this.page.locator('.hulyComponent .popupPanel', { hasText: title })
+  readonly overlayPanel = (): Locator => this.page.locator('.panel-instance .popupPanel')
+  readonly navigator = (): Locator => this.page.locator('div.antiPanel-navigator')
+
   readonly openedChannelHeader = (channel: string): Locator =>
     this.page.locator('.hulyHeader-container .hulyHeader-titleGroup').filter({ hasText: channel }).first()
 

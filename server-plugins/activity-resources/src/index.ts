@@ -26,14 +26,15 @@ import core, {
   type TxUpdateDoc
 } from '@hcengineering/core'
 import type { TriggerControl } from '@hcengineering/server-core'
+import { findPreviewsByDoc, hasPreview } from '@hcengineering/server-activity'
 
 import { ReferenceTrigger } from './references'
+import { FieldsIconPresenter, OnDocCreated, OnDocPreviewMoved, OnDocUpdated } from './preview'
 
 async function OnDocRemoved (txes: TxCUD<Doc>[], control: TriggerControl): Promise<Tx[]> {
+  const removed = txes.filter((tx) => tx._class === core.class.TxRemoveDoc)
   const result: Tx[] = []
-  for (const tx of txes) {
-    if (tx._class !== core.class.TxRemoveDoc) continue
-
+  for (const tx of removed) {
     const activityDocMixin = control.hierarchy.classHierarchyMixin(tx.objectClass, activity.mixin.ActivityDoc)
     if (activityDocMixin === undefined) continue
 
@@ -49,6 +50,14 @@ async function OnDocRemoved (txes: TxCUD<Doc>[], control: TriggerControl): Promi
     )
   }
   return result
+}
+
+// A bulk removal (a calendar disconnect) brings many documents at once
+async function OnDocPreviewRemoved (txes: TxCUD<Doc>[], control: TriggerControl): Promise<Tx[]> {
+  const docs = txes.filter((tx) => hasPreview(control, tx.objectClass))
+  if (docs.length === 0) return []
+  const previews = await findPreviewsByDoc(control, docs, { projection: { _id: 1, _class: 1, space: 1, objectId: 1 } })
+  return Array.from(previews.values(), (it) => control.txFactory.createTxRemoveDoc(it._class, it.space, it._id))
 }
 
 // Bookmarks belong to every user who saved the message, not only to the one removing it.
@@ -116,14 +125,22 @@ export async function OnDocClassChanged (txes: TxCUD<Doc>[], control: TriggerCon
 }
 
 export * from './references'
+export * from './preview'
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({
   trigger: {
     ReferenceTrigger,
+    OnDocCreated,
+    OnDocUpdated,
+    OnDocPreviewMoved,
     OnDocRemoved,
+    OnDocPreviewRemoved,
     OnDocClassChanged,
     OnActivityMessageRemoved,
     OnAppletRemoved
+  },
+  function: {
+    FieldsIconPresenter
   }
 })

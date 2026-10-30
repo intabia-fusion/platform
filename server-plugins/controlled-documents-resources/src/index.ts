@@ -393,6 +393,9 @@ function getDocumentLinkId (doc: Document): string {
   return `${slug}---${doc._id}`
 }
 
+const DocumentIdentifierPresenter: StringPresenterFn<Document> = async (doc: Document): Promise<string | undefined> =>
+  doc.code !== '' ? doc.code : undefined
+
 const ControlledDocumentUrlPresenter: StringPresenterFn<ControlledDocument> = async (
   doc: ControlledDocument,
   control: PresenterControl
@@ -449,6 +452,7 @@ export default async () => ({
   },
   function: {
     ControlledDocumentUrlPresenter,
+    DocumentIdentifierPresenter,
     CoAuthorsTypeMatch
   }
 })

@@ -177,6 +177,7 @@ export { default as ObjectBoxPopup } from './components/ObjectBoxPopup.svelte'
 export { default as ObjectPresenter } from './components/ObjectPresenter.svelte'
 export { default as ObjectSearchBox } from './components/ObjectSearchBox.svelte'
 export { default as ParentsNavigator } from './components/ParentsNavigator.svelte'
+export { default as PreviewIcon } from './components/PreviewIcon.svelte'
 export { default as PersonIdPresenter } from './components/PersonIdPresenter.svelte'
 export { default as RelationsEditor } from './components/RelationsEditor.svelte'
 export { default as SpaceTypeSelector } from './components/SpaceTypeSelector.svelte'
@@ -209,6 +210,7 @@ export * from './status'
 export * from './utils'
 export * from './permissions'
 export * from './savedViews'
+export * from './preview'
 export {
   buildCategoryReferenceLookups,
   buildModel,

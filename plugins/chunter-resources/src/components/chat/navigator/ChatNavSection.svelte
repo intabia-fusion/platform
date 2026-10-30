@@ -15,31 +15,30 @@
 <script lang="ts">
   import { deepEqual } from 'fast-equals'
   import contact from '@hcengineering/contact'
-  import type { Class, Doc, Ref, WithLookup } from '@hcengineering/core'
+  import type { Class, Doc, DocPreview, Ref, WithLookup } from '@hcengineering/core'
   import core, { reduceCalls } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
-  import { getResource, translate } from '@hcengineering/platform'
-  import { getClient, isSpace } from '@hcengineering/presentation'
-  import type { Action, AnySvelteComponent, IconSize } from '@hcengineering/ui'
+  import { translate } from '@hcengineering/platform'
+  import { getClient } from '@hcengineering/presentation'
+  import type { Action } from '@hcengineering/ui'
   import ui, { Icon, languageStore, Menu, NavGroup, showPopup } from '@hcengineering/ui'
   import { Button } from '@hcengineering/ui/kit'
-  import view from '@hcengineering/view'
-  import { getDocIdentifier } from '@hcengineering/view-resources'
+  import { getPreviewIcon, getPreviewTitle, previewMembers } from '@hcengineering/view-resources'
+  import { employeeByAccountStore } from '@hcengineering/contact-resources'
   import { NotificationClientImpl, NotifyMarker } from '@hcengineering/notification-resources'
   import type { Chat } from '@hcengineering/chunter'
   import { getUnreadMessageCount } from '@hcengineering/notification'
   import { createEventDispatcher } from 'svelte'
 
   import chunter from '../../../plugin'
-  import { getChannelName, getObjectIcon } from '../../../utils'
   import { getChatNavItemKey } from '../utils'
-  import type { ChatNavItemModel } from '../types'
+  import type { ChatNavEntry, ChatNavItemModel } from '../types'
   import ChatNavItem from './ChatNavItem.svelte'
 
   export let id: string
   export let _class: Ref<Class<Doc>> = core.class.Doc
   export let header: IntlString
-  export let objects: { doc: Doc, chat?: Chat }[]
+  export let entries: ChatNavEntry[]
   export let itemsCount: number
   export let showEmpty: boolean = false
   export let actions: Action[] = []
@@ -60,24 +59,25 @@
 
   // A collapsed section shows the unread total of the documents it lists, from the shared unread
   // store. Not by class: a starred channel lives in another section, hidden and archived ones in none.
-  $: sectionIds = new Set(objects.map(({ doc }) => doc._id))
+  $: sectionIds = new Set(entries.map(({ preview }) => preview.objectId))
   $: count = isOpen
     ? 0
     : getUnreadMessageCount(Array.from($unreadByDoc.values()).filter((it) => sectionIds.has(it.objectId)))
 
   $: void getChatNavItems(
-    objects,
+    entries,
     (res) => {
       items = res
     },
-    $languageStore
+    $languageStore,
+    $employeeByAccountStore
   )
 
   function getScore (i: ChatNavItemModel): number {
     const score = (i.chat as WithLookup<Chat>)?.$source?.$score
     if (score != null) return score
 
-    return (i.object as WithLookup<Doc>)?.$source?.$score ?? 0
+    return (i.preview as WithLookup<DocPreview>)?.$source?.$score ?? 0
   }
 
   $: (() => {
@@ -99,52 +99,74 @@
   })()
   $: canShowMore = itemsCount > items.length
 
+  // Rebuilt only on a change of its preview, chat or language (a direct's names also when people load)
+  interface Built {
+    entry: ChatNavEntry
+    lang: string
+    people: unknown
+    item: ChatNavItemModel
+  }
+  let built = new Map<Ref<Doc>, Built>()
+
   const getChatNavItems = reduceCalls(
     async (
-      objects: { doc: Doc, chat?: Chat }[],
+      entries: ChatNavEntry[],
       handler: (items: ChatNavItemModel[]) => void,
-      lang: string
+      lang: string,
+      people: unknown
     ): Promise<void> => {
-      const items: ChatNavItemModel[] = []
-
-      for (const { doc, chat } of objects) {
-        const { _class } = doc
-        const iconMixin = hierarchy.classHierarchyMixin(_class, view.mixin.ObjectIcon)
-        const titleIntl = client.getHierarchy().getClass(_class).label
-
-        const isPerson = hierarchy.isDerived(_class, contact.class.Person)
-        const isDocChat = !hierarchy.isDerived(_class, chunter.class.ChunterSpace)
-        const isDirect = hierarchy.isDerived(_class, chunter.class.DirectMessage)
-
-        const iconSize: IconSize = isDirect || isPerson ? 'x-small' : 'small'
-
-        let icon: AnySvelteComponent | undefined = undefined
-
-        if (iconMixin?.component != null) {
-          icon = await getResource(iconMixin.component)
-        }
-
-        const showIdentifier = isDocChat && !isPerson
-        const identifier = showIdentifier ? await getDocIdentifier(client, doc._id, doc._class, doc) : undefined
-        const name = (await getChannelName(doc._id, doc._class, doc, lang)) ?? (await translate(titleIntl, {}, lang))
-
-        items.push({
-          id: doc._id,
-          object: doc,
-          chat,
-          identifier,
-          title: name,
-          subTitle: isSpace(doc) && doc.archived ? `(${await translate(core.string.Archived, {}, lang)})` : undefined,
-          icon: icon ?? getObjectIcon(_class),
-          iconProps: { showStatus: true },
-          iconSize,
-          withIconBackground: !isDirect && !isPerson
+      const archived = `(${await translate(core.string.Archived, {}, lang)})`
+      const next = new Map<Ref<Doc>, Built>()
+      const items: ChatNavItemModel[] = await Promise.all(
+        entries.map(async (entry) => {
+          const { preview, chat } = entry
+          const prev = built.get(preview.objectId)
+          const peopleOf = previewMembers(preview) != null ? people : undefined
+          if (
+            prev?.entry.preview === preview &&
+            prev.entry.chat === chat &&
+            prev.lang === lang &&
+            prev.people === peopleOf
+          ) {
+            next.set(preview.objectId, prev)
+            return prev.item
+          }
+          const item = await buildItem(preview, chat, lang, archived)
+          next.set(preview.objectId, { entry, lang, people: peopleOf, item })
+          return item
         })
-      }
-
+      )
+      built = next
       handler(items)
     }
   )
+
+  async function buildItem (
+    preview: DocPreview,
+    chat: Chat | undefined,
+    lang: string,
+    archived: string
+  ): Promise<ChatNavItemModel> {
+    const _class = preview.objectClass
+    const isPerson = hierarchy.isDerived(_class, contact.class.Person)
+    const isDocChat = !hierarchy.isDerived(_class, chunter.class.ChunterSpace)
+    const isDirect = hierarchy.isDerived(_class, chunter.class.DirectMessage)
+    const [title, icon] = await Promise.all([
+      getPreviewTitle(client, preview, lang),
+      getPreviewIcon(client, preview, isDirect || isPerson ? { showStatus: true } : {})
+    ])
+    return {
+      id: preview.objectId,
+      preview,
+      chat,
+      identifier: isDocChat && !isPerson ? preview.identifier : undefined,
+      title,
+      subTitle: preview.archived ? archived : undefined,
+      ...icon,
+      iconSize: isDirect || isPerson ? 'x-small' : 'small',
+      withIconBackground: !isDirect && !isPerson
+    }
+  }
 
   function onShowMore (): void {
     dispatcher('show-more')

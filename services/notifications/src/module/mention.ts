@@ -47,7 +47,7 @@ import { Client, MentionResult, NotifyProviders, Result, TxCache } from '../type
 import Cache from '../cache'
 import {
   getBaseDisplayParams,
-  getObjectDisplayData,
+  getContextRefs,
   getMode,
   getTxNotifyProviders,
   isMuted,
@@ -89,7 +89,7 @@ export async function handleMention (
       ...mention.notification
     }
 
-    const objectDisplayData = await getObjectDisplayData(client, cache, txCache, doc, mention.receiver.account)
+    const contextRefs = await getContextRefs(client, cache, doc)
     const pushSubscriptions = await cache.getPushSubscriptions(mention.receiver.account)
     const messageId = mentionNotification.messageId
     let unreadMsg: UnreadMessage | undefined
@@ -115,9 +115,9 @@ export async function handleMention (
       objectSpace: doc.space,
       group: getPushGroup(client, message),
       notification: mentionNotification,
-      intl: await getMentionIntl(client, txCache, type, doc, message, mention, sender, mention.receiver.language),
+      intl: await getMentionIntl(client, txCache, type, doc, message, mention, sender, mention.receiver),
       notifyProviders: mention.notifyProviders,
-      objectDisplayData,
+      contextRefs,
       pushSubscriptions,
       settings: await cache.getSettings(),
       markup: mention.markup
@@ -501,7 +501,7 @@ async function getMentionIntl (
   message: ActivityMessage | undefined,
   mention: MentionResult,
   sender: Sender,
-  receiverLang: string
+  receiver: Pick<Receiver, 'account' | 'language'>
 ): Promise<NotificationIntl> {
   const { intlParams, intlParamsNotLocalized = {} } = await getBaseDisplayParams(
     client,
@@ -509,7 +509,7 @@ async function getMentionIntl (
     type,
     doc,
     sender,
-    receiverLang
+    receiver
   )
 
   intlParams.message = truncateMessage(markupToText(message?.message ?? mention.notification.markup ?? ''))

@@ -18,7 +18,7 @@ import activity, { type ActivityMessage } from '@hcengineering/activity'
 import { isActivityMessageClass, messageInFocus } from '@hcengineering/activity-resources'
 import { Analytics } from '@hcengineering/analytics'
 import chunter, { type ThreadMessage } from '@hcengineering/chunter'
-import { type Class, type Doc, type Ref } from '@hcengineering/core'
+import { type Class, type Doc, type Ref, type WithLookup } from '@hcengineering/core'
 import {
   type DocNotifyContext,
   notificationId,
@@ -37,7 +37,7 @@ import {
   type ResolvedLocation
 } from '@hcengineering/ui'
 import view, { decodeObjectURI, encodeObjectURI, type LinkIdProvider } from '@hcengineering/view'
-import { getObjectLinkId, parseLinkId } from '@hcengineering/view-resources'
+import { getContextPreview, getObjectLinkId, parseLinkId } from '@hcengineering/view-resources'
 import workbench, { type Application, type LocationData } from '@hcengineering/workbench'
 
 // Chat spaces go by their link id alone, as in the chat (`<name>-<id>`); other docs as `<id>|<class>`.
@@ -59,11 +59,13 @@ export function decodeInboxURI (value: string | undefined): [Ref<Doc>, Ref<Class
 export async function resolveInboxObjectClass (
   _id: Ref<Doc>,
   _class: Ref<Class<Doc>>,
-  context?: DocNotifyContext
+  context?: WithLookup<DocNotifyContext>
 ): Promise<Ref<Class<Doc>>> {
   if (_class !== chunter.class.ChunterSpace) return _class
   if (context?.objectId === _id) return context.objectClass
-  if (context?.parentObjectId === _id && context.parentObjectClass !== undefined) return context.parentObjectClass
+  // A thread's context previews its parent document
+  const preview = context != null ? await getContextPreview(context) : undefined
+  if (preview?.objectId === _id) return preview.objectClass
   const doc = await getClient().findOne(_class, { _id }, { projection: { _id: 1, _class: 1 } })
   return doc?._class ?? _class
 }

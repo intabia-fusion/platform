@@ -38,7 +38,12 @@ const ALICE_SPACE = 'person-space-alice' as Ref<Space>
 
 const txFactory = new TxFactory('test-account' as any)
 
-// Alice has a person space; `channel-1` has its read state, `doc-old` has none yet.
+// Both documents have a preview; only `channel-1` has a read state
+const previews = [
+  { _id: 'preview-1', objectId: CHANNEL, objectDomain: 'space' },
+  { _id: 'preview-old', objectId: OLD_DOC, objectDomain: 'space' }
+]
+
 function makeControl (): TriggerControl {
   return {
     ctx: { error: jest.fn(), info: jest.fn(), warn: jest.fn(), newChild: jest.fn().mockReturnThis() },
@@ -55,6 +60,7 @@ function makeControl (): TriggerControl {
       toFindResult((_class === contact.class.PersonSpace ? [{ _id: ALICE_SPACE, account: ALICE }] : []) as any)
     ),
     findAll: jest.fn(async (_ctx: unknown, _class: Ref<Class<Doc>>) => {
+      if (_class === core.class.DocPreview) return toFindResult(previews as any)
       if (_class === notification.class.ReadState) {
         return toFindResult([{ _id: 'state-1', attachedTo: CHANNEL, attachedToClass: chunter.class.Channel }] as any)
       }
@@ -80,7 +86,7 @@ describe('OnCollaboratorAdded', () => {
   const trigger = async (control: TriggerControl, txes: TxCreateDoc<Doc>[]): Promise<any[]> =>
     await (await plugin()).trigger.OnCollaboratorAdded(txes as any, control)
 
-  it('creates the chat with the read state of the document', async () => {
+  it('creates the chat with the preview and the read state of the document', async () => {
     const control = makeControl()
     const res = await trigger(control, [collaboratorTx(CHANNEL)])
 
@@ -95,15 +101,20 @@ describe('OnCollaboratorAdded', () => {
       pinned: false,
       hidden: false,
       collection: 'chats',
+      preview: 'preview-1',
       readState: 'state-1'
     })
-    // One query for the whole batch.
-    expect((control.findAll as jest.Mock).mock.calls.map((it) => it[1])).toEqual([notification.class.ReadState])
+    // One query per class for the whole batch.
+    expect((control.findAll as jest.Mock).mock.calls.map((it) => it[1])).toEqual([
+      core.class.DocPreview,
+      notification.class.ReadState
+    ])
   })
 
   it('makes the read state of a document from before them, once per document, and says so', async () => {
     const control = makeControl()
     ;(control.findAll as jest.Mock).mockImplementation(async (_ctx: unknown, _class: Ref<Class<Doc>>, query: any) => {
+      if (_class === core.class.DocPreview) return toFindResult(previews as any)
       if (_class === notification.class.ReadState) {
         return toFindResult([{ _id: 'state-1', attachedTo: CHANNEL, attachedToClass: chunter.class.Channel }] as any)
       }
@@ -137,9 +148,13 @@ describe('OnCollaboratorAdded', () => {
     )
   })
 
+  // Previews only: no read state, no messages.
+  const previewsOnly = async (_ctx: unknown, _class: Ref<Class<Doc>>): Promise<any> =>
+    toFindResult(_class === core.class.DocPreview ? (previews as any) : [])
+
   it('gives a document without messages a read state at time zero', async () => {
     const control = makeControl()
-    ;(control.findAll as jest.Mock).mockResolvedValue(toFindResult([]))
+    ;(control.findAll as jest.Mock).mockImplementation(previewsOnly)
     const res = await trigger(control, [collaboratorTx(OLD_DOC)])
 
     expect(res).toHaveLength(1)
@@ -158,6 +173,7 @@ describe('OnCollaboratorAdded', () => {
     ;(control.apply as jest.Mock).mockRejectedValue(new Error('duplicate key'))
     let asked = 0
     ;(control.findAll as jest.Mock).mockImplementation(async (_ctx: unknown, _class: Ref<Class<Doc>>) => {
+      if (_class === core.class.DocPreview) return toFindResult(previews as any)
       if (_class === notification.class.ReadState) {
         // Nothing on the first look, the other trigger's state on the second
         asked++
@@ -175,7 +191,7 @@ describe('OnCollaboratorAdded', () => {
   it('still makes the chat, without a read state, when none can be had', async () => {
     const control = makeControl()
     ;(control.apply as jest.Mock).mockRejectedValue(new Error('down'))
-    ;(control.findAll as jest.Mock).mockResolvedValue(toFindResult([]))
+    ;(control.findAll as jest.Mock).mockImplementation(previewsOnly)
     const res = await trigger(control, [collaboratorTx(OLD_DOC)])
 
     expect(res).toHaveLength(1)
@@ -184,6 +200,23 @@ describe('OnCollaboratorAdded', () => {
       'read state could not be made, the chat gets none',
       expect.objectContaining({ attachedTo: OLD_DOC })
     )
+  })
+
+  it('skips a document it cannot find and says so, making it no read state', async () => {
+    const control = makeControl()
+    ;(control.findAll as jest.Mock).mockImplementation(async (_ctx: unknown, _class: Ref<Class<Doc>>) =>
+      toFindResult(_class === core.class.DocPreview ? (previews.slice(0, 1) as any) : [])
+    )
+    const res = await trigger(control, [collaboratorTx(OLD_DOC), collaboratorTx(CHANNEL)])
+
+    expect(res).toHaveLength(1)
+    expect((res[0] as TxCreateDoc<Chat>).attributes.attachedTo).toBe(CHANNEL)
+    expect(control.ctx.error).toHaveBeenCalledWith(
+      'chat skipped: the document has no preview',
+      expect.objectContaining({ attachedTo: OLD_DOC })
+    )
+    // The read state of the skipped document is not made either; the channel gets its own.
+    expect((control.apply as jest.Mock).mock.calls).toHaveLength(1)
   })
 
   it('queries nothing for collaborators of documents without activity', async () => {

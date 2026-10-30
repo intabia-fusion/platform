@@ -38,7 +38,9 @@ import {
   type MigrationClient,
   type MigrationUpgradeClient,
   type MigrationDocumentQuery,
-  type MigrateUpdate
+  type MigrateUpdate,
+  createEach,
+  updateEach
 } from '@hcengineering/model'
 import activity, { migrateMessagesSpace, DOMAIN_ACTIVITY, DOMAIN_REACTION } from '@hcengineering/model-activity'
 import { getAllAccounts } from '@hcengineering/contact'
@@ -445,55 +447,6 @@ async function attempt<T> (
     client.logger.error(what, { ...data, err })
     return undefined
   }
-}
-
-// A write resolves to nothing, so its outcome is whether it threw.
-async function written (
-  client: MigrationClient,
-  what: string,
-  data: object,
-  fn: () => Promise<unknown>
-): Promise<boolean> {
-  try {
-    await fn()
-    return true
-  } catch (err: any) {
-    client.logger.error(what, { ...data, err })
-    return false
-  }
-}
-
-// A batch write fails as a whole on one bad row: then the rows go one by one, each on its own.
-async function createEach<T extends Doc> (client: MigrationClient, domain: Domain, docs: T[]): Promise<number> {
-  if (docs.length === 0) return 0
-  if (
-    await written(client, 'batch create failed, retrying one by one', { domain }, () => client.create(domain, docs))
-  ) {
-    return docs.length
-  }
-  let done = 0
-  for (const doc of docs) {
-    if (await written(client, 'create failed', { domain, _id: doc._id }, () => client.create(domain, doc))) done++
-  }
-  return done
-}
-
-async function updateEach<T extends Doc> (
-  client: MigrationClient,
-  domain: Domain,
-  updates: { filter: MigrationDocumentQuery<T>, update: MigrateUpdate<T> }[]
-): Promise<number> {
-  if (updates.length === 0) return 0
-  if (
-    await written(client, 'bulk update failed, retrying one by one', { domain }, () => client.bulk(domain, updates))
-  ) {
-    return updates.length
-  }
-  let done = 0
-  for (const { filter, update } of updates) {
-    if (await written(client, 'update failed', { domain, filter }, () => client.update(domain, filter, update))) done++
-  }
-  return done
 }
 
 // A document is its domain and id: an id repeats across domains, a class may change.

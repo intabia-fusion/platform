@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import contact from '@hcengineering/contact'
+import contact, { getName } from '@hcengineering/contact'
 import core, {
   concatLink,
   Doc,
@@ -26,12 +26,12 @@ import core, {
   TxUpdateDoc
 } from '@hcengineering/core'
 import { getMetadata } from '@hcengineering/platform'
-import recruit, { Applicant, recruitId, Vacancy } from '@hcengineering/recruit'
+import recruit, { Applicant, recruitId, Review, Vacancy } from '@hcengineering/recruit'
 import serverCore, { TriggerControl } from '@hcengineering/server-core'
 import { workbenchId } from '@hcengineering/workbench'
 import { StringPresenterFn, PresenterControl } from '@hcengineering/server-activity'
 
-function getSequenceId (doc: Vacancy | Applicant, hierarchy: Hierarchy): string {
+function getSequenceId (doc: Vacancy | Applicant | Review, hierarchy: Hierarchy): string {
   let clazz = hierarchy.getClass(doc._class)
   let label = clazz.shortLabel
   while (label === undefined && clazz.extends !== undefined) {
@@ -84,6 +84,22 @@ const applicationIdentifierPresenter: StringPresenterFn = async (
   return getSequenceId(applicant, control.hierarchy)
 }
 
+// The talent's name, as the client titles an application.
+const applicationTitlePresenter: StringPresenterFn = async (doc: Doc, control: PresenterControl): Promise<string> => {
+  const applicant = doc as Applicant
+  const [person] = await control.findAll(control.ctx, contact.class.Person, { _id: applicant.attachedTo }, { limit: 1 })
+  return person != null ? getName(control.hierarchy, person, control.branding?.lastNameFirst) : ''
+}
+
+const reviewIdentifierPresenter: StringPresenterFn = async (doc: Doc, control: PresenterControl): Promise<string> => {
+  return getSequenceId(doc as Review, control.hierarchy)
+}
+
+// Its own title: the event's presenter would name the talent it is attached to.
+const reviewTitlePresenter: StringPresenterFn = async (doc: Doc): Promise<string> => {
+  return (doc as Review).title
+}
+
 /**
  * @public
  */
@@ -113,6 +129,9 @@ export default async () => ({
     VacancyIdentifierPresenter: vacancyIdentifierPresenter,
     ApplicationUrlPresenter: applicationUrlPresenter,
     ApplicationIdentifierPresenter: applicationIdentifierPresenter,
+    ApplicationTitlePresenter: applicationTitlePresenter,
+    ReviewIdentifierPresenter: reviewIdentifierPresenter,
+    ReviewTitlePresenter: reviewTitlePresenter,
     LinkIdProvider: linkIdProvider
   },
   trigger: {

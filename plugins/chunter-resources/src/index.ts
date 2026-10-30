@@ -114,6 +114,7 @@ export { default as ChatMessagePopup } from './components/chat-message/ChatMessa
 export { default as ChatMessagesPresenter } from './components/chat-message/ChatMessagesPresenter.svelte'
 export { default as Header } from './components/Header.svelte'
 export { default as ThreadView } from './components/threads/ThreadView.svelte'
+export { getChatTarget, type ChatTarget } from './utils'
 
 export async function ArchiveChannel (channel: Channel, evt: any, props?: { afterArchive?: () => void }): Promise<void> {
   showPopup(MessageBox, {

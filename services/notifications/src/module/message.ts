@@ -52,7 +52,7 @@ import { hasUnreadMessage } from '../utils/context'
 import {
   getBaseDisplayParams,
   getCollaboratorAccounts,
-  getObjectDisplayData,
+  getContextRefs,
   getNotificationsByMessage,
   getMessageNotifyProviders,
   getMode,
@@ -464,7 +464,7 @@ async function handleUpdateMessage (
   for (const context of threadContexts) {
     result.updateContextTx.push(
       client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, {
-        object: toNotificationMessage(message, client.hierarchy)
+        message: toNotificationMessage(message, client.hierarchy)
       })
     )
   }
@@ -588,16 +588,17 @@ async function getMessageIntl (
   message: ActivityMessage,
   applets: AppletSnapshot[],
   sender: Sender,
-  receiverLang: string
+  receiver: Pick<Receiver, 'account' | 'language'>
 ): Promise<NotificationIntl> {
   const { hierarchy } = client
+  const receiverLang = receiver.language
   const { intlParams, intlParamsNotLocalized = {} } = await getBaseDisplayParams(
     client,
     txCache,
     type,
     doc,
     sender,
-    receiverLang
+    receiver
   )
 
   if (type.notificationMessage != null) {
@@ -679,10 +680,15 @@ export async function addUnreadMessage (
         unreadMessages: unreadMessage
       }
     }
+    // A context made before its document had a preview gets the ref with its next message, as with a notification
+    if (context.preview == null) {
+      const { preview } = await getContextRefs(client, cache, doc)
+      if (preview != null) operations.preview = preview
+    }
     const updateTx = client.txFactory.createTxUpdateDoc(context._class, context.space, context._id, operations)
     result.updateContextTx.push(updateTx)
   } else {
-    const objectDisplayData = await getObjectDisplayData(client, cache, txCache, doc, receiver.account)
+    const contextRefs = await getContextRefs(client, cache, doc)
     const createTx = getCreateContextTx(
       generateId(),
       doc._id,
@@ -691,7 +697,7 @@ export async function addUnreadMessage (
       receiver,
       result,
       client.txFactory,
-      objectDisplayData
+      contextRefs
     )
     createTx.attributes.unreadMessages = [unreadMessage]
     createTx.attributes.unreadCount = isUnreadMessageChunk(unreadMessage)
@@ -719,8 +725,8 @@ async function pushNotification (
   applets: AppletSnapshot[],
   alreadyRead: boolean
 ): Promise<void> {
-  const content = await getMessageIntl(client, txCache, type, doc, message, applets, sender, receiver.language)
-  const objectDisplayData = await getObjectDisplayData(client, cache, txCache, doc, receiver.account)
+  const content = await getMessageIntl(client, txCache, type, doc, message, applets, sender, receiver)
+  const contextRefs = await getContextRefs(client, cache, doc)
   const pushSubscriptions = await cache.getPushSubscriptions(receiver.account)
   const settings = await cache.getSettings()
   await _pushNotification(client, txCache, result, context, {
@@ -736,7 +742,7 @@ async function pushNotification (
     objectClass: doc._class,
     objectSpace: doc.space,
     group: getPushGroup(client, message),
-    objectDisplayData,
+    contextRefs,
     notification: {
       id: message._id,
       type: 'message',

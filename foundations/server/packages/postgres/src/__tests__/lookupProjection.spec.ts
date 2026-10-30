@@ -301,9 +301,9 @@ describe('lookup projection', () => {
       )
       expect(sql).toContain(`${direct.toAlias}."latestMessageTimestamp"`)
       expect(sql).not.toContain(`${direct.toAlias}."data"`)
-      expect(sql).toContain(
-        `jsonb_build_object('title', ${second.toAlias}."data"->'title') as "${second.toAlias}_data"`
-      )
+      // `title` is a column of the preview table, so no jsonb payload is selected for the join.
+      expect(sql).toContain(`${second.toAlias}."title" as "${second.toAlias}_title"`)
+      expect(sql).not.toContain(`${second.toAlias}."data"`)
       expect(sql).not.toContain(`${second.toAlias}."modifiedOn"`)
       // Each join starts with its own _id: that is what parseLookupColumns counts joins by.
       expect(sql.indexOf(`${direct.toAlias}."_id" as`)).toBeLessThan(sql.indexOf(`${second.toAlias}."_id" as`))
