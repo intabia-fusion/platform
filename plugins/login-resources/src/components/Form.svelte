@@ -24,6 +24,7 @@
   import StatusControl from './StatusControl.svelte'
 
   import { onMount } from 'svelte'
+  import { Analytics } from '@hcengineering/analytics'
   import type { BottomAction } from '..'
   import { loginTheme } from '..'
   import { makeSequential } from '../mutex'
@@ -52,6 +53,9 @@
   export let signUpDisabled = false
   export let isLoading: boolean = false
   export let proceedDisabled: boolean = false
+  // Optional analytics event for every submit attempt; disabled-button clicks are caught on the wrapper.
+  export let submitEvent: string | undefined = undefined
+  export let submitEventParams: Record<string, any> = {}
 
   const validate = makeSequential(async function validateAsync (language: string): Promise<boolean> {
     if (ignoreInitialValidation || isLoading) return true
@@ -109,7 +113,25 @@
   let inAction = false
   let submitAttempted = false
 
-  function performAction (action: Action): void {
+  // Mirrors the button's disabled condition so analytics and UI cannot drift apart.
+  $: submitDisabled = proceedDisabled || (status.severity !== Severity.OK && status.severity !== Severity.ERROR)
+
+  function reportAttempt (via: 'click' | 'enter', reason?: 'consents' | 'invalid'): void {
+    if (submitEvent === undefined) return
+    const params: Record<string, any> = { ...submitEventParams, via }
+    if (reason !== undefined) params.reason = reason
+    Analytics.handleEvent(submitEvent, params)
+  }
+
+  // A press that cannot submit: Enter still submits while the button is disabled, so only a click is blocked by invalid fields.
+  function reportBlockedPress (via: 'click' | 'enter'): void {
+    // A press while the request is in flight is impatience, not a dead button.
+    if (inAction) return
+    const reason = proceedDisabled ? 'consents' : via === 'click' && submitDisabled ? 'invalid' : undefined
+    if (reason !== undefined) reportAttempt(via, reason)
+  }
+
+  function performAction (action: Action, via: 'click' | 'enter'): void {
     if (inAction) return
     // Enter submits the form even while the button is disabled.
     if (proceedDisabled) {
@@ -117,12 +139,24 @@
       return
     }
 
+    // Reported where the request is actually started, so every submit has its click goal.
+    reportAttempt(via)
+
     for (const field of fields) {
       trim(field.name)
     }
     inAction = true
     void action.func().finally(() => {
       inAction = false
+    })
+  }
+
+  function submit (via: 'click' | 'enter'): void {
+    if (inAction) return
+    void validate($themeStore.language).then((res) => {
+      if (res) {
+        performAction(action, via)
+      }
     })
   }
   onMount(() => (ignoreInitialValidation = false))
@@ -179,13 +213,10 @@
     if (evt.key === 'Enter') {
       evt.preventDefault()
       evt.stopPropagation()
-      if (!inAction) {
-        void validate($themeStore.language).then((res) => {
-          if (res) {
-            performAction(action)
-          }
-        })
+      if (!evt.repeat) {
+        reportBlockedPress('enter')
       }
+      submit('enter')
     }
   }}
 >
@@ -237,7 +268,15 @@
       <StatusControl {status} />
     </div>
 
-    <div class="form-row send">
+    <!-- |capture: read the form state at press time, before the button handler starts the request. -->
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
+    <div
+      class="form-row send"
+      on:click|capture={() => {
+        reportBlockedPress('click')
+      }}
+    >
       <FormButton
         label={action.i18n}
         kind="contrast"
@@ -245,16 +284,10 @@
         size="x-large"
         width="100%"
         loading={inAction}
-        disabled={proceedDisabled || (status.severity !== Severity.OK && status.severity !== Severity.ERROR)}
+        disabled={submitDisabled}
         on:click={(e) => {
           e.preventDefault()
-          if (!inAction) {
-            void validate($themeStore.language).then((res) => {
-              if (res) {
-                performAction(action)
-              }
-            })
-          }
+          submit('click')
         }}
       />
     </div>
