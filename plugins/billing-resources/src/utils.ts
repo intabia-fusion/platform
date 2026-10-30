@@ -27,6 +27,7 @@ import {
   type SubscriptionData,
   SubscriptionType,
   grantsPlan,
+  isCheckoutDraft,
   GUEST_ROLES
 } from '@hcengineering/account-client'
 import { getClient as getBillingClientRaw, type BillingClient } from '@hcengineering/billing-client'
@@ -169,12 +170,13 @@ export async function checkWorkspaceLimits (): Promise<void> {
     const subscriptions = await accountClient.getSubscriptions(currentWorkspace(), false)
     const subscription = subscriptions.find((p) => p.type === SubscriptionType.Tier && grantsPlan(p))
     const activePackages = subscriptions.filter((p) => p.type === SubscriptionType.Package && grantsPlan(p))
-    // Drives the payment/free/trial banner. The granting tier wins: a newer checkout draft (pending or
-    // failed) must not hide a live trial. Without one, the latest tier regardless of status (canceled).
+    // Drives the payment/free/trial banner. The granting tier wins: a newer checkout draft must not
+    // hide a live trial. Without one, the latest tier that is not a draft — an expired trial or a
+    // canceled tier still says which plan state the workspace is in while a draft says nothing.
     const statusTier =
       subscription ??
       subscriptions
-        .filter((p) => p.type === SubscriptionType.Tier)
+        .filter((p) => p.type === SubscriptionType.Tier && !isCheckoutDraft(p))
         .sort((a, b) => (b.createdOn ?? 0) - (a.createdOn ?? 0))[0]
     const config = await getPlanConfig()
     const plan = subscription != null ? (config.plans[subscription.plan] ?? null) : null
