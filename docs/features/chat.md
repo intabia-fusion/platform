@@ -132,6 +132,7 @@
 - **Секции и сортировка.** `chatNavGroupModels` (запрос с `lookup.readState` и серверной сортировкой в ChatNavGroup), `deferred` для activity. - plugins/chunter-resources/src/components/chat/utils.ts; navigator/{ChatNavigator,ChatNavGroup,ChatNavSection,ChatNavItem}.svelte.
 - **Бейджи.** Число `unreadMessagesCount`, цвет по `notifiedMessagesCount`, маркер приложения `ShowNotifyMarkerFn` + `showChatBadge`, счётчик Threads `unreadThreadsCountStore`. - navigator/ChatNavItem.svelte; plugins/chunter-resources/src/index.ts; stores.ts.
 - **Скрытые и закреплённые чаты.** `Chat.hidden/pinned`, auto-unhide (`ChunterMiddleware`), auto-hide (`syncChat`).
+- **Кто печатает.** Строка канала или директа показывает на иконке кит-`TypingIndicator`, подсказка на иконке - имена. Все строки читают один store `typingByObject` (presence-resources/src/typing.ts): одна подписка на `pulse.class.TypingIndicator` без своих `socialIds`. Известное: при непрерывном наборе индикатор гаснет примерно раз в 4 с - `setTyping` делает пустой `diffUpdate`, транзакции нет, и TTL (3 с) истекает. - plugins/chunter-resources/src/components/chat/navigator/ChatNavItem.svelte, NavItem.svelte.
 
 ### Опросы (апплеты)
 
@@ -278,6 +279,7 @@
 | Секции и сортировка | communication/chat-activity, communication/sending-messages | communication/chat-activity, communication/sending-messages | partial | 0.8.60 | не описан порядок секций (по времени последнего сообщения) и отложенная подгрузка секции активности |
 | Бейджи | communication/sending-messages | communication/sending-messages | partial | 0.8.60 | не описан отдельный счётчик непрочитанных Threads |
 | Скрытые и закреплённые чаты | communication/sending-messages | communication/sending-messages | ok | 0.8.60 | |
+| Кто печатает | - | - | plan | - | |
 | Опция воркспейса, по умолчанию выключена | - | - | off | - | не документируем |
 | Действие "Пожаловаться" | - | - | off | - | не документируем |
 | Доставка владельцам | - | - | internal | - | |

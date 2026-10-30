@@ -23,10 +23,13 @@
   import { NotificationClientImpl, MutePopup } from '@hcengineering/notification-resources'
   import { createEventDispatcher } from 'svelte'
   import view from '@hcengineering/view'
-  import type { Doc, Space } from '@hcengineering/core'
+  import type { Doc, PersonId, Space } from '@hcengineering/core'
   import { getCurrentAccount } from '@hcengineering/core'
   import type { Channel, Chat } from '@hcengineering/chunter'
   import workbench from '@hcengineering/workbench'
+  import { getName } from '@hcengineering/contact'
+  import { getPersonsByPersonIds } from '@hcengineering/contact-resources'
+  import { typingByObject } from '@hcengineering/presence-resources'
 
   import NavItem from './NavItem.svelte'
   import type { ChatNavItemModel } from '../types'
@@ -53,6 +56,32 @@
   $: void notificationClient.loadDocSetting(item.object._id)
   $: setting = $settingByDocStore.get(item.object._id) ?? undefined
   $: count = unread?.unreadMessagesCount ?? 0
+
+  const maxTypingNames = 3
+
+  let typingTooltip: string | undefined = undefined
+
+  $: typers = $typingByObject.get(item.id) ?? []
+  $: void updateTypingTooltip(typers, $languageStore)
+
+  async function updateTypingTooltip (ids: PersonId[], lang: string): Promise<void> {
+    if (ids.length === 0) {
+      typingTooltip = undefined
+      return
+    }
+    const persons = await getPersonsByPersonIds(ids)
+    const names = Array.from(persons.values())
+      .map((person) => getName(hierarchy, person))
+      .sort((name1, name2) => name1.localeCompare(name2))
+    const parts = [names.slice(0, maxTypingNames).join(', ')]
+    if (names.length > maxTypingNames) {
+      parts.push(await translate(chunter.string.AndMore, { count: names.length - maxTypingNames }, lang))
+    }
+    parts.push(await translate(chunter.string.IsTyping, { count: names.length }, lang))
+    // A newer set of typers may have arrived while the names loaded.
+    if (ids !== typers) return
+    typingTooltip = names.length > 0 ? parts.join(' ') : undefined
+  }
 
   $: void getActions(item.object, item.chat).then((res) => {
     actions = res
@@ -224,6 +253,8 @@
   {type}
   muted={setting?.mode === 'mute'}
   {pressed}
+  typing={typers.length > 0}
+  {typingTooltip}
   on:click={() => {
     const select = { chat: item.chat, object: item.object }
     dispatch('select', select)
