@@ -1,5 +1,6 @@
 {
   "status": {
+    "FieldTooLong": "Поле {field} не должно быть длиннее {count} символов",
     "RequiredField": "Требуется заполнить {field}",
     "FieldsDoNotMatch": "{field} не совпадает {field2}",
     "ConnectingToServer": "Подключение к серверу....",

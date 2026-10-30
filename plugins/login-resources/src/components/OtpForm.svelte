@@ -14,7 +14,7 @@
 -->
 
 <script lang="ts">
-  import ui, { deviceOptionsStore as deviceInfo, TimeLeft, setMetadataLocalStorage, Icon } from '@hcengineering/ui'
+  import ui, { deviceOptionsStore as deviceInfo, TimeLeft, Icon } from '@hcengineering/ui'
   import { OK, Severity, Status } from '@hcengineering/platform'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import type { Timestamp } from '@hcengineering/core'
@@ -26,6 +26,7 @@
   import type { BottomAction } from '../index'
   import { doLoginNavigate, doValidateOtp, OtpLoginSteps, loginOtp, signUpOtp } from '../index'
   import login from '../plugin'
+  import { saveAuthEmail } from '../utils'
   import BottomActionComponent from './BottomAction.svelte'
   import StatusControl from './StatusControl.svelte'
 
@@ -75,7 +76,7 @@
     status = loginStatus
 
     if (result != null) {
-      setMetadataLocalStorage(login.metadata.AuthEmail, null)
+      saveAuthEmail(null)
     }
 
     if (onLogin !== undefined) {

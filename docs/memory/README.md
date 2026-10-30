@@ -49,6 +49,7 @@
 ## Аккаунты и вход - [auth-onboarding.md](../features/auth-onboarding.md)
 
 - [account_db_migrations.md](account_db_migrations.md) - Account DB migrations
+- [auth-email-storage.md](auth-email-storage.md) - AuthEmail: почему читается напрямую из localStorage, а не через fetchMetadataLocalStorage
 - [admin_plugin_refactor.md](admin_plugin_refactor.md) - Admin plugin gotchas
 - [deferred-deletion.md](deferred-deletion.md) - Отложенное удаление пространств и аккаунтов
 
