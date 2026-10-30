@@ -61,8 +61,7 @@ jest.mock('@hcengineering/account-client', () => {
     SubscriptionStatus,
     SubscriptionType,
     // Mirrors the real helper: the module is mocked wholesale, and the provider stamps both flags.
-    isCheckoutDraft: (sub: any): boolean =>
-      sub?.providerData?.pending === true || sub?.providerData?.draft === true,
+    isCheckoutDraft: (sub: any): boolean => sub?.providerData?.pending === true || sub?.providerData?.draft === true,
     grantsPlan: (sub: any): boolean => {
       if (sub == null) return false
       if (sub.status === 'past_due' && sub.providerData?.pending === true) return false

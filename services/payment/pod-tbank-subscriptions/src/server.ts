@@ -1228,8 +1228,7 @@ export async function processWebhook (
     // Idempotency: at-least-once delivery (and consumer retry) re-delivers the same terminal webhook.
     // Once this exact status is recorded on a PastDue sub (still in grace), re-applying would only
     // reset retryAfter — skip it. releaseCheckout below stays (idempotent).
-    const alreadyApplied =
-      sub !== null && isFailedRenewal(sub) && sub.providerData?.status === typedNotification.Status
+    const alreadyApplied = sub !== null && isFailedRenewal(sub) && sub.providerData?.status === typedNotification.Status
     if (sub !== null && isPendingFirstPayment(sub)) {
       // Failed first payment: the draft never became a subscription. PastDue would grant its plan
       // with nothing behind it to charge, so close it like an abandoned checkout.
