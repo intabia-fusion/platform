@@ -111,6 +111,7 @@
     "SetDueDate": "Fälligkeitsdatum setzen...",
     "ChangeDueDate": "Fälligkeitsdatum ändern...",
     "ModificationDate": "Aktualisiert am {value}",
+    "CreationDate": "Erstellt am {value}",
     "Project": "Projekt",
     "Issue": "Aufgabe",
     "SubIssue": "Unteraufgabe",

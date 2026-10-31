@@ -65,7 +65,6 @@ import IssueStatusPresenter from './components/issues/IssueStatusPresenter.svelt
 import IssuesView from './components/issues/IssuesView.svelte'
 import KanbanView from './components/issues/KanbanView.svelte'
 import { KanbanSwimLaneActions } from '@hcengineering/kanban'
-import ModificationDatePresenter from './components/issues/ModificationDatePresenter.svelte'
 import NotificationIssuePresenter from './components/issues/NotificationIssuePresenter.svelte'
 import PriorityEditor from './components/issues/PriorityEditor.svelte'
 import SubtaskSection from './components/subtasks/SubtaskSection.svelte'
@@ -468,7 +467,6 @@ export default async (): Promise<Resources> => ({
     ComponentRefPresenter,
     ComponentTitlePresenter,
     TitlePresenter,
-    ModificationDatePresenter,
     PriorityPresenter,
     PriorityEditor,
     PriorityInlineEditor,

@@ -111,6 +111,7 @@
     "SetDueDate": "期日を設定…",
     "ChangeDueDate": "期日を変更…",
     "ModificationDate": "更新日 {value}",
+    "CreationDate": "作成日 {value}",
     "Project": "プロジェクト",
     "Issue": "イシュー",
     "SubIssue": "子イシュー",

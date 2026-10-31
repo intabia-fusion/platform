@@ -111,6 +111,7 @@
     "SetDueDate": "Set due date…",
     "ChangeDueDate": "Change due date…",
     "ModificationDate": "Updated {value}",
+    "CreationDate": "Created {value}",
     "Project": "Project",
     "Issue": "Issue",
     "SubIssue": "Sub-issue",

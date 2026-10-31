@@ -36,6 +36,7 @@ import ColorsPopup from './components/ColorsPopup.svelte'
 import DateEditor from './components/DateEditor.svelte'
 import DatePresenter from './components/DatePresenter.svelte'
 import DateTimePresenter from './components/DateTimePresenter.svelte'
+import TimestampLabel from './components/TimestampLabel.svelte'
 import DocAttributeBar from './components/DocAttributeBar.svelte'
 import ClassSettingButton from './components/ClassSettingButton.svelte'
 import DocNavLink from './components/DocNavLink.svelte'
@@ -311,6 +312,7 @@ export default async (): Promise<Resources> => ({
     DateEditor,
     DatePresenter,
     DateTimePresenter,
+    TimestampLabel,
     RolePresenter,
     ObjectPresenter,
     EditDoc,

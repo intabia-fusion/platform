@@ -209,6 +209,7 @@ const view = plugin(viewId, {
     ForbiddenNotification: '' as AnyComponent,
     DatePresenter: '' as AnyComponent,
     DateEditor: '' as AnyComponent,
+    TimestampLabel: '' as AnyComponent,
     SidebarPreviewWidget: '' as AnyComponent
   },
   ids: {

@@ -111,6 +111,7 @@
     "SetDueDate": "Establecer fecha de vencimiento...",
     "ChangeDueDate": "Cambiar fecha de vencimiento...",
     "ModificationDate": "Actualizado {value}",
+    "CreationDate": "Creado {value}",
     "Project": "Proyecto",
     "Issue": "Tarea",
     "SubIssue": "Subtarea",

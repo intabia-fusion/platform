@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,13 +14,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import type { IntlString } from '@hcengineering/platform'
   import { tooltip } from '@hcengineering/ui'
-  import tracker from '../../plugin'
 
   export let value: number
+  /** Tooltip text with a `{value}` placeholder for the full date, e.g. "Created {value}". */
+  export let label: IntlString
 
-  $: shortModificationDate = new Date(value).toLocaleString('default', { month: 'short', day: 'numeric' })
-  $: fullModificationDate = new Date(value).toLocaleString('default', {
+  // A list column shows the calendar day, not "8 days ago": the exact moment is in the tooltip.
+  $: shortDate = new Date(value).toLocaleString('default', { month: 'short', day: 'numeric' })
+  $: fullDate = new Date(value).toLocaleString('default', {
     minute: '2-digit',
     hour: 'numeric',
     day: '2-digit',
@@ -29,17 +33,17 @@
 </script>
 
 <div
-  class="modificationDateLabel"
+  class="timestampLabel"
   use:tooltip={{
-    label: tracker.string.ModificationDate,
-    props: { value: fullModificationDate }
+    label,
+    props: { value: fullDate }
   }}
 >
-  {shortModificationDate}
+  {shortDate}
 </div>
 
 <style lang="scss">
-  .modificationDateLabel {
+  .timestampLabel {
     overflow: hidden;
     min-width: min-content;
     white-space: nowrap;

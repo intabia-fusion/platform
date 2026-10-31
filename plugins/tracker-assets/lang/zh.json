@@ -111,6 +111,7 @@
     "SetDueDate": "设置截止日期…",
     "ChangeDueDate": "更改截止日期…",
     "ModificationDate": "更新于 {value}",
+    "CreationDate": "创建于 {value}",
     "Project": "项目",
     "Issue": "问题",
     "SubIssue": "子问题",
