@@ -133,7 +133,7 @@
 
 ## Связанные документы
 
-- [features/tracker.md](features/tracker.md) - карта трекера, раздел «Views (list/kanban)».
+- [features/tracker-issues.md](features/tracker-issues.md) - представления списка и канбана.
 
 ## Один порядок на тип проекта
 

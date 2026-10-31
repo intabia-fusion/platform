@@ -358,6 +358,100 @@ describe('Kanban column collapse', () => {
     expect(columnOrder()).toEqual(['todo', 'stack'])
   })
 
+  it('shows the landing spots of a column while a card is held over it', async () => {
+    const groups = board({ todo: cards('t', 1, 'todo'), doing: cards('d', 1, 'doing') })
+    await mount(
+      legacyProps(groups, {
+        dropTargets: new Map([['doing', [{ id: 'a' }, { id: 'b' }]]])
+      })
+    )
+    await flush()
+
+    fire(cardEl('t00'), 'dragstart')
+    await settle()
+    // No spots while the card is still over its own column.
+    expect(q('[data-id="kanban-drop-targets"]')).toHaveLength(0)
+
+    fire(column('doing'), 'dragover')
+    await settle()
+    const spots = q('[data-drop-target]', column('doing'))
+    expect(spots.map((e) => e.getAttribute('data-drop-target'))).toEqual(['a', 'b'])
+  })
+
+  it('a drop on a landing spot passes its id to getUpdateProps', async () => {
+    const updates: Array<[string, string]> = []
+    const groups = board({ todo: cards('t', 1, 'todo'), doing: cards('d', 1, 'doing') })
+    await mount(
+      legacyProps(groups, {
+        dropTargets: new Map([['doing', [{ id: 'a' }, { id: 'b' }]]]),
+        getUpdateProps: (_doc: unknown, state: string, dropTargetId?: string) => {
+          updates.push([state, dropTargetId ?? ''])
+          return { status: dropTargetId ?? state }
+        }
+      })
+    )
+    await flush()
+
+    fire(cardEl('t00'), 'dragstart')
+    await settle()
+    fire(column('doing'), 'dragover')
+    await settle()
+    fire(one('[data-drop-target="b"]', column('doing')), 'drop')
+    await settle()
+
+    expect(updates).toContainEqual(['doing', 'b'])
+    expect(fakeClient.update).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ status: 'b' }))
+  })
+
+  it('shows the spots of the column the card starts in', async () => {
+    const groups = board({ doing: cards('d', 1, 'doing') })
+    await mount(
+      legacyProps(groups, {
+        dropTargets: new Map([['doing', [{ id: 'a' }, { id: 'b' }]]])
+      })
+    )
+    await flush()
+
+    fire(cardEl('d00'), 'dragstart')
+    await settle()
+    // No spots until the drag is under way, so dragstart does not reflow the column.
+    expect(q('[data-id="kanban-drop-targets"]')).toHaveLength(0)
+
+    fire(column('doing'), 'dragover')
+    await settle()
+    // A card dragged inside its own multi-status column sees the spots too.
+    expect(q('[data-id="kanban-drop-targets"] [data-drop-target]', column('doing'))).toHaveLength(2)
+  })
+
+  it('the dragged card stands in the landing spot under the pointer', async () => {
+    const groups = board({ todo: cards('t', 1, 'todo'), doing: cards('d', 1, 'doing') })
+    await mount(
+      legacyProps(groups, {
+        dropTargets: new Map([['doing', [{ id: 'a' }, { id: 'b' }]]])
+      })
+    )
+    await flush()
+
+    fire(cardEl('t00'), 'dragstart')
+    await settle()
+    fire(column('doing'), 'dragover')
+    await settle()
+    // Spots show: the card is out of the column's card list, in a spot only when aimed at.
+    const slot = one('[data-drop-target="a"]', column('doing'))
+    const inList = (): string[] =>
+      q('[data-test="card-body"]', column('doing'))
+        .filter((e) => e.closest('.drop-targets') === null)
+        .map((e) => e.textContent ?? '')
+    expect(inList()).not.toContain('t00')
+    expect(q('[data-test="card-body"]', slot)).toHaveLength(0)
+
+    fire(slot, 'dragover')
+    await settle()
+    // The card stands in the slot and stays out of the column's card list.
+    expect(q('[data-test="card-body"]', slot).map((e) => e.textContent)).toEqual(['t00'])
+    expect(inList()).not.toContain('t00')
+  })
+
   it('a card dropped on a collapsed column in swim lane mode moves there and the column stays collapsed', async () => {
     const groups = board({ todo: [card('a1', 'todo', 'A')], done: [card('a2', 'done', 'A')] })
     await mount(swimProps(groups, [lane('A')], { controlKey: 'viewlet' }))
@@ -1469,6 +1563,56 @@ describe('Kanban swim lanes', () => {
       expect(onMoveCommit).toHaveBeenCalledWith('a1', update)
     })
 
+    it('shows full-form spots in a swim lane cell and stands the card in the hovered one', async () => {
+      await dragBoard({ dropTargets: new Map([['done', [{ id: 'x' }, { id: 'y' }]]]) })
+
+      fire(cardEl('a1'), 'dragstart')
+      await settle()
+      fire(cell('A', 'done'), 'dragover')
+      await settle()
+      // The spots show: the card is out of the cell's card list, in a spot only when aimed at.
+      const slot = one('[data-drop-target="x"]', cell('A', 'done'))
+      expect(cardIds(cell('A', 'done'))).not.toContain('a1')
+      expect(q('[data-test="card-body"]', slot)).toHaveLength(0)
+
+      fire(slot, 'dragover')
+      await settle()
+      // The card stands in the spot and stays out of the cell's card list.
+      expect(q('[data-test="card-body"]', slot).map((e) => e.textContent)).toEqual(['a1'])
+      expect(cardIds(cell('A', 'done'))).not.toContain('a1')
+    })
+
+    it('keeps a card in its lane when the other lane has no update for it', async () => {
+      await dragBoard({ getSwimLaneUpdateProps: () => undefined })
+
+      fire(cardEl('a1'), 'dragstart')
+      await settle()
+      fire(cell('B', 'done'), 'dragover')
+      await settle()
+      expect(cardIds(cell('B', 'done'))).not.toContain('a1')
+      fire(cell('B', 'done'), 'drop')
+      await settle()
+
+      expect(fakeClient.update).not.toHaveBeenCalled()
+      expect(fakeClient.diffUpdate).not.toHaveBeenCalled()
+    })
+
+    it('moves a card between columns of its lane when the other lanes have no update for it', async () => {
+      await dragBoard({ getSwimLaneUpdateProps: () => undefined })
+
+      fire(cardEl('a1'), 'dragstart')
+      await settle()
+      fire(cell('A', 'done'), 'dragover')
+      await settle()
+      fire(cell('A', 'done'), 'drop')
+      await settle()
+
+      expect(fakeClient.update).toHaveBeenCalledTimes(1)
+      const [, update] = fakeClient.update.mock.calls[0] as [Card, Record<string, string>]
+      expect(update.status).toBe('done')
+      expect(update).not.toHaveProperty('lane')
+    })
+
     it('moving across lanes and columns updates the status too', async () => {
       await dragBoard()
 
@@ -1645,5 +1789,64 @@ describe('Kanban select', () => {
     component.select(1, groups.todo[0], 'vertical')
 
     expect(seen).toEqual(['c1'])
+  })
+})
+
+describe('Kanban WIP limit in swim lane mode', () => {
+  const states = ['s0', 's1', 's2', 's3', 's4']
+  const laneIds = Array.from({ length: 12 }, (_, i) => `L${i}`)
+
+  function laneBoard (): Record<string, Card[]> {
+    const groups: Record<string, Card[]> = {}
+    states.forEach((s, si) => {
+      groups[s] = laneIds.flatMap((l) => cards(`${s}${l}-`, 10 + si, s, l))
+    })
+    return groups
+  }
+
+  it('reads the card count of a column once per column, not once per cell', async () => {
+    const groups = laneBoard()
+    const reads = vi.fn((g: Record<string, Item[]>, c: string) => g[c])
+    const overLimit = vi.fn((_state: string, count: number) => count > 150)
+    const props = swimProps(groups, laneIds.map(lane), { getGroupByValues: reads })
+
+    await mount(props)
+    await flush()
+    const baseline = reads.mock.calls.length
+    mounted.forEach((c) => {
+      c.$destroy()
+    })
+    mounted = []
+    parent.innerHTML = ''
+    reads.mockClear()
+
+    await mount({ ...props, overLimit })
+    await flush()
+
+    // Column s1 has 12 * 11 = 132 cards, s2 144, s3 156, s4 168: only s3 and s4 are over 150.
+    const red = q('[data-id="kanban-swimlane-cell"].over-limit').map((e) => e.dataset.state)
+    expect(new Set(red)).toEqual(new Set(['s3', 's4']))
+    expect(red).toHaveLength(laneIds.length * 2)
+    expect(overLimit).toHaveBeenCalledWith('s4', 168)
+    expect(overLimit).toHaveBeenCalledWith('s0', 120)
+    // The check may add one read per column, a recount per cell adds one per cell (60) per render.
+    const extra = reads.mock.calls.length - baseline
+    expect(extra).toBeLessThanOrEqual(states.length * 2)
+  })
+})
+
+describe('Kanban card modern mode', () => {
+  it('marks the card container modern only in modern mode, so the scoped styles can tell the modes apart', async () => {
+    await mount(legacyProps(board({ todo: cards('m', 2, 'todo') }), { modern: true }))
+    await flush()
+    expect(q('.card-container.modern').length).toBeGreaterThan(0)
+
+    document.body.innerHTML = ''
+    parent = document.createElement('div')
+    document.body.appendChild(parent)
+    await mount(legacyProps(board({ todo: cards('n', 2, 'todo') })))
+    await flush()
+    expect(cardEls().length).toBeGreaterThan(0)
+    expect(q('.card-container.modern')).toHaveLength(0)
   })
 })

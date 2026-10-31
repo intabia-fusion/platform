@@ -69,7 +69,7 @@
 
 ### Workbench
 
-- **Виджеты сайдбара (Fixed/Flexible/Configurable).** Панель `WidgetsBar.svelte` + попап `AddWidgetsPopup.svelte` управляют включением через `WidgetPreference`. - `models/workbench/src/index.ts`, `plugins/workbench-resources/src/components/sidebar/widgets/`.
+- **Виджеты сайдбара (Fixed/Flexible/Configurable).** В полном экране явное открытие вкладки показывает сайдбар, включая повторное открытие той же карточки через Space (`sidebarOpenSequence`, `createWidgetTab`, `openWidgetTab`). Панель `WidgetsBar.svelte` + попап `AddWidgetsPopup.svelte` управляют включением через `WidgetPreference`. - `models/workbench/src/index.ts`, `plugins/workbench-resources/src/components/sidebar/widgets/`.
 - **Три состояния вкладки виджета** (preview/kept/pinned), детерминированные id по объекту. - `plugins/workbench-resources/src/sidebar.ts`, см. `docs/memory/sidebar-widget-tabs.md`.
 - **Вкладки воркбенча на аккаунт** (`WorkbenchTab`) с pin/unpin/close. - `WorkbenchTabs.svelte`, `WorkbenchTabPresenter.svelte`, actions `PinTab`/`UnpinTab`/`CloseTab`/`CloseCurrentTab` (`models/workbench/src/index.ts`).
 - **Видимость приложений и меню выбора воркспейса.** `AppSwitcher.svelte` импортирован в `Workbench.svelte`, но нигде не рендерится - мёртвый код. Реальный путь переключения видимости приложений (скрыть/показать через `HiddenApplication`, `hideApplication`/`showApplication`) - категория настроек "Настройки бокового меню" (`SidebarMenuSettings.svelte`, группа `settings-account`, `setting.ids.SidebarMenuSettings`). Клик по логотипу воркспейса открывает `SelectWorkspaceMenu` для перехода между воркспейсами, в которых состоит пользователь. - `SidebarMenuSettings.svelte`, `SelectWorkspaceMenu.svelte`, `plugins/workbench-resources/src/utils.ts` (`hideApplication`/`showApplication`), `models/workbench/src/index.ts` (`THiddenApplication`), `models/setting/src/index.ts` (категория `sidebarMenu`).
@@ -132,7 +132,7 @@
 
 | Фича | ru | en | Статус | Сверено | Расхождение |
 | --- | --- | --- | --- | --- | --- |
-| Виджеты сайдбара (Fixed/Flexible/Configurable) | getting-started/learn-the-basics, communication/sending-messages | getting-started/learn-the-basics, communication/sending-messages | partial | 0.8.60 | страница показывает только значки Планировщика/Офиса (Fixed) и закреплённые чаты (Flexible) в правой панели, без названий типов; кнопка добавления виджета (`AddWidgetsPopup`) на проде недостижима (нет ни одного Configurable-виджета), описывать её не нужно |
+| Виджеты сайдбара (Fixed/Flexible/Configurable) | getting-started/learn-the-basics, communication/sending-messages | getting-started/learn-the-basics, communication/sending-messages | stale | 0.8.60 | явное открытие вкладки показывает сайдбар в полном экране; страница показывает только значки Планировщика/Офиса (Fixed) и закреплённые чаты (Flexible) в правой панели, без названий типов; кнопка добавления виджета (`AddWidgetsPopup`) на проде недостижима (нет ни одного Configurable-виджета), описывать её не нужно |
 | Три состояния вкладки виджета | - | - | plan | - | отложено |
 | Вкладки воркбенча на аккаунт | getting-started/learn-the-basics | getting-started/learn-the-basics | partial | 0.8.60 | закрепление и закрытие вкладок страница не описывает |
 | Видимость приложений и меню выбора воркспейса | advanced-settings/main-menu | - | no-en | 0.8.60 | |

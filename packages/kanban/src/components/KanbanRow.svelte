@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -31,6 +32,7 @@
   export let loaded: IdMap<DocWithRank>
   export let limit: number
   export let onShowMore: () => void
+  export let modern: boolean = false
 
   export let cardDragOver: (evt: CardDragEvent, object: Item) => void
   export let cardDrop: (evt: CardDragEvent, object: Item) => void
@@ -78,7 +80,8 @@
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div
       bind:this={stateRefs[i]}
-      class="p-1 flex-no-shrink border-radius-1 clear-mins"
+      class="flex-no-shrink border-radius-1 clear-mins"
+      class:p-1={!modern}
       on:dragover|preventDefault={(evt) => {
         cardDragOver(evt, object)
       }}
@@ -88,6 +91,7 @@
     >
       <div
         class="card-container"
+        class:modern
         data-id="kanban-card"
         data-card-id={object._id}
         class:selection={selection !== undefined ? objects[selection]?._id === object._id : false}
@@ -117,9 +121,12 @@
   {/if}
 {/each}
 {#if hasMoreToShow}
-  <div class="p-1 flex-no-shrink clear-mins" data-id="kanban-show-more">
-    <div class="card-container flex-center flex-row-center p-4 gap-2 no-word-wrap">
-      <span class="caption-color">{visibleObjects.length}</span> <span>/</span><span>{stateObjects.length}</span>
+  <div class="flex-no-shrink clear-mins" class:p-1={!modern} data-id="kanban-show-more">
+    <!-- Wraps in a narrow column: the counter and the button do not fit a board column on one line -->
+    <div class="card-container show-more flex-center flex-row-center p-4 gap-2 no-word-wrap">
+      <span class="flex-row-center gap-2">
+        <span class="caption-color">{visibleObjects.length}</span><span>/</span><span>{stateObjects.length}</span>
+      </span>
       <Button
         size="small"
         icon={ui.icon.DotsHorizontal}
@@ -132,10 +139,27 @@
 {/if}
 
 <style lang="scss">
+  .show-more {
+    flex-wrap: wrap;
+  }
   .card-container {
     background-color: var(--theme-kanban-card-bg-color);
     border: 1px solid var(--theme-kanban-card-border);
     border-radius: 0.25rem;
+
+    &.modern {
+      background-color: var(--theme-popup-color);
+      border: 1px solid var(--theme-divider-color);
+      border-radius: 0.5rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    }
+
+    // Mouse and keyboard focus look the same, as a hovered file card of the drive: a brand tinted border
+    // and a deeper shadow, the background stays
+    &.modern.selection {
+      border-color: color-mix(in srgb, var(--button-brand-BackgroundColor) 30%, var(--global-ui-BorderColor));
+      box-shadow: 0 0.125rem 0.375rem color-mix(in srgb, var(--global-popover-ShadowColor) 65%, transparent);
+    }
 
     &.checked {
       background-color: var(--highlight-select);
@@ -150,10 +174,9 @@
       /* Use accent-aware edit border and inset box-shadow so the animated border uses
          the same accent token that the theme provides (avoids abrupt color jumps). */
       box-shadow: inset 0 0 1px 1px var(--primary-edit-border-color, var(--primary-button-default));
-
-      &:hover {
-        background-color: var(--highlight-hover);
-      }
+    }
+    &.selection:not(.modern):hover {
+      background-color: var(--highlight-hover);
     }
     &.checked.selection:hover {
       background-color: var(--highlight-select-hover);

@@ -69,19 +69,12 @@ function watchErrors (page: Page): string[] {
   return errors
 }
 
-/** Opens the "Office" sidebar widget (`love.ids.LoveWidget`, a WidgetType.Fixed) - the only
- *  place that renders `FloorPreview` with `configurable`, i.e. with the per-floor delete icon.
- *  Reached the same way as `AddRoomPopup`'s calendar-widget counterpart: `AppItem`'s root button
- *  id is `'app-' + label`, `label` here being the untranslated `love.string.Office` id. */
+// Only the Office sidebar widget renders FloorPreview with per-floor delete buttons.
 async function openOfficeWidget (page: Page): Promise<void> {
-  // Not the bare workbench root: this account's WorkbenchTab is shared with the other tests in
-  // this file, so a bare `/workbench/sanity-ws` can restore an earlier test's *full* Office app
-  // tab instead of landing on a neutral page - from there the widget icon has nothing useful to
-  // toggle and the floor accordion this test needs never renders. Tracker is never the Office app.
+  // The bare workbench root can restore another test's Office tab for this shared account.
   await (await page.goto(`${PlatformURI}/workbench/${SANITY_WS}/tracker`))?.finished()
-  // Two matches: the main WidgetsBar rail and the expanded sidebar's own copy - the rail one
-  // is always present and is not inside `#sidebar`.
-  await page.locator('[id="app-love\\:string\\:Office"]').first().click()
+  // The main Office application has the same button id as the sidebar widget.
+  await page.locator('#sidebar [id="app-love\\:string\\:Office"]').click()
 }
 
 test.describe('Rage click: love (office)', () => {
@@ -192,7 +185,7 @@ test.describe('Rage click: love (office)', () => {
       // The rail icon toggles the widget: if it was already open (state restored for this shared
       // account), the first click closes it. Click again until the floor list shows.
       await expect(async () => {
-        if (!(await item.isVisible())) await page.locator('[id="app-love\\:string\\:Office"]').first().click()
+        if (!(await item.isVisible())) await page.locator('#sidebar [id="app-love\\:string\\:Office"]').click()
         await expect(item).toBeVisible({ timeout: 3000 })
       }).toPass({ timeout: 15000 })
       // The delete icon only renders for an empty floor (rooms.length === 0, true here) and is

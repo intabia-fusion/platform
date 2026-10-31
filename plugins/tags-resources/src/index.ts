@@ -1,4 +1,5 @@
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -42,7 +43,7 @@ import TagsFilterPresenter from './components/TagsFilterPresenter.svelte'
 import DocTagsEditor from './components/DocTagsEditor.svelte'
 
 export * from './utils'
-export { WeightPopup, TagElement, selectedTagElements, TagElementPresenter }
+export { WeightPopup, TagElement, selectedTagElements, TagElementPresenter, TagReferencePresenter }
 export async function tagsInResult (filter: Filter, onUpdate: () => void): Promise<ObjQueryType<any>> {
   const result = await getRefs(filter, onUpdate)
   return { $in: result }

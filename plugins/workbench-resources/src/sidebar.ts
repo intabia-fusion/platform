@@ -52,6 +52,8 @@ export function getDefaultSidebarState (): SidebarState {
   }
 }
 
+export const sidebarOpenSequence = writable(0)
+
 export const sidebarStore = writable<SidebarState>(getDefaultSidebarState())
 
 locationWorkspaceStore.subscribe((workspace) => {
@@ -232,6 +234,7 @@ export function openWidgetTab (widget: Ref<Widget>, tab: string): void {
   if (newTab === undefined) return
 
   widgetsState.set(widget, { ...widgetState, tab })
+  sidebarOpenSequence.update((value) => value + 1)
   Analytics.handleEvent(WorkbenchEvents.SidebarOpenWidget, { widget, tab: newTab?.name })
   sidebarStore.set({
     ...state,
@@ -272,6 +275,7 @@ export function createWidgetTab (widget: Widget, tab: WidgetTab): void {
     tab: tab.id
   })
 
+  sidebarOpenSequence.update((value) => value + 1)
   Analytics.handleEvent(WorkbenchEvents.SidebarOpenWidget, { widget: widget._id, tab: tab.name })
   sidebarStore.set({
     ...state,

@@ -55,6 +55,8 @@ export interface SelectButtonProps extends ButtonAttributes {
   justify?: SelectButtonJustify
   /** A long value wraps onto more lines; the button grows from its size's height. */
   wrap?: boolean
+  /** A value of a form: with `secondary` takes the fill and border of the text fields (`--input-*`) instead of a button's. */
+  field?: boolean
   disabled?: boolean
   loading?: boolean
   tooltip?: LabelAndProps

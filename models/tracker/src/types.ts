@@ -1,5 +1,6 @@
 //
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -29,7 +30,8 @@ import {
   type RolesAssignment,
   type Role,
   type CollectionSize,
-  type AccountUuid
+  type AccountUuid,
+  type SortingOrder
 } from '@hcengineering/core'
 import {
   ArrOf,
@@ -57,6 +59,17 @@ import { getEmbeddedLabel, type IntlString } from '@hcengineering/platform'
 import tags, { type TagElement } from '@hcengineering/tags'
 import time, { type ToDo, type WorkSlot } from '@hcengineering/time'
 import {
+  type Board,
+  type BoardColorRule,
+  type BoardColumn,
+  type BoardCondition,
+  type BoardPreference,
+  type BoardQuickFilter,
+  type BoardSwimlane,
+  type BoardSwimLaneField,
+  type BoardVisibility,
+  type CardDensity,
+  type CardField,
   type ProjectTargetPreference,
   type Component,
   type Issue,
@@ -464,3 +477,45 @@ export class TClassicProjectTypeData extends TProject implements RolesAssignment
 @Model(tracker.class.IssueTaskType, tracker.class.Issue)
 @UX(tracker.string.ClassicIssue, tracker.icon.Issue, 'TSK', 'title', undefined, tracker.string.ClassicIssues, 'title')
 export class TIssueTaskType extends TIssue {}
+
+@Model(tracker.class.Board, core.class.Doc, DOMAIN_TRACKER)
+@UX(tracker.string.TaskBoard, tracker.icon.Issues, undefined, 'title')
+export class TBoard extends TDoc implements Board {
+  @Prop(TypeString(), tracker.string.BoardTitle)
+  title!: string
+
+  description?: string
+
+  @Prop(ArrOf(TypeRef(tracker.class.Project)), tracker.string.Projects)
+  projects!: Ref<Project>[]
+
+  visibility!: BoardVisibility
+
+  author!: AccountUuid
+
+  editors!: AccountUuid[]
+
+  filter!: BoardCondition
+
+  columns!: BoardColumn[]
+
+  swimlanes!: BoardSwimlane[]
+
+  swimLaneBy?: BoardSwimLaneField | null
+
+  quickFilters!: BoardQuickFilter[]
+
+  colorRules!: BoardColorRule[]
+
+  density!: CardDensity
+
+  cardFields?: CardField[]
+
+  orderBy?: [string, SortingOrder]
+}
+
+@Model(tracker.class.BoardPreference, preference.class.Preference)
+export class TBoardPreference extends TPreference implements BoardPreference {
+  @Prop(TypeRef(tracker.class.Board), tracker.string.TaskBoard)
+  declare attachedTo: Ref<Board>
+}

@@ -18,15 +18,20 @@
   // Condition as in the filter bar: attribute, operator, value
   export let attribute: string
   export let operator: string
-  export let value: string
+  // Without a value the slot holds icons or avatars
+  export let value: string | undefined = undefined
   // A condition of a settings table has no remove cross
   export let plain: boolean = false
+  // Tinted chip of board settings: one block without dividers
+  export let condition: boolean = false
 </script>
 
-<div class="kit-filter-chip">
+<div class="kit-filter-chip" class:condition>
   <span class="part">{attribute}</span>
   <span class="part dark">{operator}</span>
-  <span class="part last">{value}</span>
+  <span class="part last"
+    >{#if value !== undefined}{value}{:else}<slot />{/if}</span
+  >
   {#if !plain}<span class="remove"><Icon name="x" size={12} color="var(--theme-darker-color)" /></span>{/if}
 </div>
 
@@ -55,6 +60,22 @@
     }
     &.last {
       border-right: none;
+    }
+  }
+  .condition {
+    height: 2rem;
+    padding: 0.125rem;
+    font-size: 0.875rem;
+    border: none;
+    border-radius: 0.25rem;
+    background-color: color-mix(in srgb, var(--primary-edit-border-color) 10%, transparent);
+
+    .part {
+      gap: 0.25rem;
+      padding: 0 0.375rem 0 0.5rem;
+      background: none;
+      border-right: none;
+      border-radius: 0.25rem;
     }
   }
   .remove {

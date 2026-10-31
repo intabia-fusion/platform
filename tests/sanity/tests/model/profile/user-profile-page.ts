@@ -17,7 +17,8 @@ export class UserProfilePage {
   leaveWorkspaceConfirmButton = (): Locator => this.page.getByRole('button', { name: 'Ok', exact: true })
   accountDissabledMessage = (): Locator => this.page.getByRole('heading')
   changeAccount = (): Locator => this.page.getByRole('link', { name: 'Change account' })
-  settings = (): Locator => this.page.getByRole('button', { name: 'Settings' })
+  // exact: the project settings gear of the tracker is also a "... settings" button
+  settings = (): Locator => this.page.getByRole('button', { name: 'Settings', exact: true })
   configure = (): Locator => this.page.getByRole('button', { name: 'Configure' })
   accountSettings = (): Locator => this.page.getByRole('button', { name: 'Account settings' })
   userAvatarMenu = (): Locator => this.page.locator('.mr-8 > .cursor-pointer')

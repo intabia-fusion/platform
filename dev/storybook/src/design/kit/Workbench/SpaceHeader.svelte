@@ -53,6 +53,7 @@
     <div class="actions">
       <slot name="actions" />
       <Button size="small" icon="kit/DotsHorizontal" />
+      <slot name="end" />
     </div>
   </div>
   <div class="row bottom">

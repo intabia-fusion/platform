@@ -2,6 +2,9 @@
 // Imported from the hand-edited fusio-1613.pen by dev/pen/import.mjs; the density samples of the Card tab are kit.IssueCard.
 
 await kit.page('Board settings')
+// A condition as in the product: the tinted chip with icons or avatars as values and a separate "+"
+const prio = (...levels) => levels.map((l) => kit.PriorityIcon(l))
+const addValue = () => kit.IconButton('plus', { kind: 'ghost', size: 'extra-small', name: 'Add value' })
 {
   const { main } = kit.Workbench('Настройка доски - Основное', 0, 0, {
     tab: 'Настройки доски',
@@ -25,13 +28,14 @@ await kit.page('Board settings')
   const contentBox2 = kit.SettingsLayout(main, {
     back: 'К доске',
     title: 'Настройки доски',
+    tabsWidth: 232,
     tabs: [
       ['Основное', 'gear'],
+      ['Участники и доступ', 'users'],
       ['Колонки', 'board'],
       ['Дорожки', 'timeline'],
       ['Быстрые фильтры', 'star'],
-      ['Цвета карточек', 'milestone'],
-      ['Карточка', 'check']
+      ['Цвета карточек', 'milestone']
     ],
     tab: 'Основное',
     close: true,
@@ -47,8 +51,9 @@ await kit.page('Board settings')
     ]
   })
   kit.add(contentBox2, kit.SectionTitle('Основное', 'Какие задачи попадают на доску и кто может её менять.', 720))
-  kit.add(contentBox2, kit.FormRow('Название', kit.Input({ w: 420, value: 'Основная доска' })))
-  kit.add(contentBox2, kit.FormRow(
+  kit.add(contentBox2, kit.SettingRow('Название', kit.TextInput({ w: 420, value: 'Основная доска' }), { kind: 'column' }))
+  kit.add(contentBox2, kit.SettingRow('Описание', kit.TextArea({ rows: 2, w: 420, placeholder: 'Добавить описание...' }), { kind: 'column' }))
+  kit.add(contentBox2, kit.SettingRow(
     'Проекты',
     kit.add(
       kit.row('projects', 6),
@@ -56,16 +61,16 @@ await kit.page('Board settings')
       kit.Chip([kit.icon('board', undefined, 14), kit.text('Маркетинг · MKT', { size: 13 })]),
       kit.Button({ kind: 'tertiary', size: 'extra-small', label: 'Добавить', icon: 'plus' })
     ),
-    { hint: 'Задачи из нескольких проектов на одной доске' }
+    { hint: 'Задачи из нескольких проектов на одной доске', kind: 'column', alignTop: true }
   ))
-  kit.add(contentBox2, kit.FormRow(
+  kit.add(contentBox2, kit.SettingRow(
     'Фильтр доски',
     kit.add(
       kit.col('filter block', 8),
       kit.add(
         kit.box('filters', { w: 480, dir: 'row', gap: 6, wrap: true, vs: 'auto' }),
-        kit.FilterChip('Приоритет', 'из', 'Urgent, High, Medium, Low'),
-        kit.FilterChip('Статус', 'не', 'Archived'),
+        kit.FilterChip('Приоритет', 'один из', prio('low', 'medium', 'high', 'urgent'), { condition: true }),
+        kit.FilterChip('Статус', 'не равен', kit.StatusIcon('won'), { condition: true }),
         kit.Button({ kind: 'ghost', size: 'extra-small', label: 'Условие', icon: 'plus' })
       ),
       kit.text(
@@ -73,43 +78,97 @@ await kit.page('Board settings')
         { size: 12, color: T('theme-darker-color') }
       )
     ),
-    { hint: 'Условия объединяются через «И», как в фильтре списка задач', alignTop: true }
+    { hint: 'Условия объединяются через «И», как в фильтре списка задач', kind: 'column', alignTop: true }
   ))
-  kit.add(contentBox2, kit.FormRow(
-    'Скрывать выполненные старше',
-    kit.Input({ w: 200, value: '2 недели', menu: true }),
-    { hint: 'Колонки категории «Выполнено»' }
-  ))
-  kit.add(contentBox2, kit.FormRow('Порядок карточек', kit.Input({ w: 200, value: 'Ручной порядок', menu: true })))
-  const divider = kit.box('divider', { w: 720, h: 1, fill: T('theme-divider-color') })
-  kit.add(contentBox2, divider)
-  kit.add(contentBox2, kit.FormRow(
+  kit.add(contentBox2, kit.SettingRow('Порядок карточек', kit.Dropdown({ values: ['Пользовательский'], kind: 'secondary' }), { kind: 'column' }))
+}
+{
+  const { main } = kit.Workbench('Настройка доски - Участники и доступ', 2020, 0, {
+    tab: 'Настройки доски',
+    nav: [
+      { item: 'My issues', icon: 'timeline' },
+      { item: 'All issues', icon: 'check' },
+      { item: 'Доски', icon: 'board', selected: true },
+      { item: 'Тестирование', indent: true },
+      { item: 'Мой спринт', indent: true },
+      { group: 'Your projects', add: true },
+      { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
+      { item: 'Issues', icon: 'check', indent: true },
+      { item: 'Components', icon: 'component', indent: true },
+      { item: 'Milestones', icon: 'milestone', indent: true },
+      { space: 'Маркетинг', icon: 'kit/HouseFill', color: 'Porpoise' },
+      { item: 'Issues', icon: 'check', indent: true },
+      { item: 'Components', icon: 'component', indent: true },
+      { item: 'Milestones', icon: 'milestone', indent: true }
+    ]
+  })
+  const contentBox2 = kit.SettingsLayout(main, {
+    back: 'К доске',
+    title: 'Настройки доски',
+    tabsWidth: 232,
+    tabs: [
+      ['Основное', 'gear'],
+      ['Участники и доступ', 'users'],
+      ['Колонки', 'board'],
+      ['Дорожки', 'timeline'],
+      ['Быстрые фильтры', 'star'],
+      ['Цвета карточек', 'milestone']
+    ],
+    tab: 'Участники и доступ',
+    close: true,
+    actions: [
+      kit.Button({
+        kind: 'ghost',
+        size: 'small',
+        label: 'Основная доска',
+        icon: 'board',
+        menu: true,
+        name: 'Board in settings'
+      })
+    ]
+  })
+  kit.add(contentBox2, kit.SectionTitle('Участники и доступ'))
+  kit.add(contentBox2, kit.SettingRow(
     'Видимость',
     kit.add(
       kit.col('vis', 10),
-      kit.Radio(true, 'Все участники проекта'),
-      kit.Radio(false, 'Только я', 'Личная доска, видна в «Мои доски»')
+      kit.Radio(true, 'Видно всем'),
+      kit.Radio(false, 'Только я', 'Личная доска, видна только вам')
     ),
-    { alignTop: true }
+    { kind: 'column', alignTop: true }
   ))
-  kit.add(contentBox2, kit.FormRow(
-    'Автор',
-    kit.add(kit.row('author', 6), kit.Avatar('СА', 'Sky', 24), kit.text('Анна Смирнова')),
-    { hint: 'Может менять настройки доски' }
-  ))
-  kit.add(contentBox2, kit.FormRow(
-    'Могут править',
+  kit.add(contentBox2, kit.add(
+    kit.col('board members', 12, { w: 760, pad: [16, 0, 16, 0] }),
     kit.add(
-      kit.row('editors', 12),
-      kit.add(kit.row('editor', 6), kit.Avatar('КМ', 'Grass', 24), kit.text('Мария Козлова')),
-      kit.add(kit.row('editor', 6), kit.Avatar('ПИ', 'Watermelon', 24), kit.text('Иван Петров')),
-      kit.Button({ kind: 'tertiary', size: 'extra-small', label: 'Добавить', icon: 'plus' })
+      kit.box('members head', { w: 760, h: 32, dir: 'row', align: 'center', justify: 'space-between' }),
+      kit.text('Участники · 3', { weight: 600, color: T('theme-caption-color') }),
+      kit.Button({ kind: 'secondary', size: 'small', label: 'Добавить участника', icon: 'plus' })
     ),
-    { hint: 'Остальные могут пользоваться доской или создать свою' }
+    kit.Table(
+      [{ title: 'Сотрудник', w: 504 }, { title: 'Роль', w: 200 }, { title: '', w: 56 }],
+      [
+        [
+          kit.add(kit.row('person', 8), kit.Avatar('СА', 'Sky', 24), kit.text('Анна Смирнова')),
+          'Автор',
+          ''
+        ],
+        [
+          kit.add(kit.row('person', 8), kit.Avatar('КМ', 'Grass', 24), kit.text('Мария Козлова')),
+          'Может править',
+          kit.IconButton('more', { kind: 'ghost', size: 'extra-small', name: 'Удалить участника' })
+        ],
+        [
+          kit.add(kit.row('person', 8), kit.Avatar('ПИ', 'Watermelon', 24), kit.text('Иван Петров')),
+          'Может править',
+          kit.IconButton('more', { kind: 'ghost', size: 'extra-small', name: 'Удалить участника' })
+        ]
+      ],
+      { name: 'Board members table' }
+    )
   ))
 }
 {
-  const { main } = kit.Workbench('Настройка доски - Колонки', 2020, 0, {
+  const { main } = kit.Workbench('Настройка доски - Колонки', 0, 1200, {
     tab: 'Настройки доски',
     nav: [
       { item: 'My issues', icon: 'timeline' },
@@ -131,13 +190,14 @@ await kit.page('Board settings')
   const contentBox = kit.SettingsLayout(main, {
     back: 'К доске',
     title: 'Настройки доски',
+    tabsWidth: 232,
     tabs: [
       ['Основное', 'gear'],
+      ['Участники и доступ', 'users'],
       ['Колонки', 'board'],
       ['Дорожки', 'timeline'],
       ['Быстрые фильтры', 'star'],
-      ['Цвета карточек', 'milestone'],
-      ['Карточка', 'check']
+      ['Цвета карточек', 'milestone']
     ],
     tab: 'Колонки',
     close: true,
@@ -154,13 +214,12 @@ await kit.page('Board settings')
   })
   kit.add(contentBox, kit.SectionTitle(
     'Колонки',
-    'Колонка объединяет один или несколько статусов. Перетащите статус в колонку, чтобы задачи в нём появились на доске. Открытые статусы без колонки на доске не видны, закрытые без колонки (Done, Released) уходят с доски по замыслу.',
+    'Колонка объединяет один или несколько статусов. Перетащите статус в колонку, чтобы задачи в нём появились на доске. Открытые статусы без колонки на доске не видны, закрытые без колонки уходят с доски по замыслу.',
     1218
   ))
   kit.add(contentBox, kit.add(
     kit.box('options', { w: 1218, h: 32, dir: 'row', gap: 32, align: 'center' }),
     kit.Toggle(true, 'WIP-лимиты'),
-    kit.Toggle(false, 'Дни в колонке на карточке'),
     kit.Button({ kind: 'secondary', size: 'small', label: 'Добавить колонку', icon: 'plus' })
   ))
   const dropTarget = kit.box(
@@ -237,20 +296,6 @@ await kit.page('Board settings')
       kit.add(
         kit.box('WIP', { w: 206, h: 28, dir: 'row', gap: 6, align: 'center' }),
         kit.add(
-          kit.box('мин', {
-            w: 100,
-            h: 28,
-            dir: 'row',
-            gap: 6,
-            pad: [0, 8, 0, 8],
-            align: 'center',
-            fill: T('input-BackgroundColor'),
-            radius: 6
-          }),
-          kit.text('мин', { size: 12, color: T('theme-darker-color') }),
-          kit.text('—', { size: 13, color: T('theme-darker-color') })
-        ),
-        kit.add(
           kit.box('макс', {
             w: 100,
             h: 28,
@@ -265,7 +310,7 @@ await kit.page('Board settings')
           kit.text('—', { size: 13, color: T('theme-darker-color') })
         )
       ),
-      kit.text('1 статус · 4 задач', { size: 12, color: T('theme-dark-color') }),
+      kit.text('1 статус · 4 задачи', { size: 12, color: T('theme-dark-color') }),
       kit.StatusChip('Backlog', 'backlog', {
         drag: true,
         count: 4,
@@ -299,20 +344,6 @@ await kit.page('Board settings')
       ),
       kit.add(
         kit.box('WIP', { w: 206, h: 28, dir: 'row', gap: 6, align: 'center' }),
-        kit.add(
-          kit.box('мин', {
-            w: 100,
-            h: 28,
-            dir: 'row',
-            gap: 6,
-            pad: [0, 8, 0, 8],
-            align: 'center',
-            fill: T('input-BackgroundColor'),
-            radius: 6
-          }),
-          kit.text('мин', { size: 12, color: T('theme-darker-color') }),
-          kit.text('—', { size: 13, color: T('theme-darker-color') })
-        ),
         kit.add(
           kit.box('макс', {
             w: 100,
@@ -382,20 +413,6 @@ await kit.page('Board settings')
       kit.add(
         kit.box('WIP', { w: 206, h: 28, dir: 'row', gap: 6, align: 'center' }),
         kit.add(
-          kit.box('мин', {
-            w: 100,
-            h: 28,
-            dir: 'row',
-            gap: 6,
-            pad: [0, 8, 0, 8],
-            align: 'center',
-            fill: T('input-BackgroundColor'),
-            radius: 6
-          }),
-          kit.text('мин', { size: 12, color: T('theme-darker-color') }),
-          kit.text('—', { size: 13, color: T('theme-darker-color') })
-        ),
-        kit.add(
           kit.box('макс', {
             w: 100,
             h: 28,
@@ -410,15 +427,11 @@ await kit.page('Board settings')
           kit.text('—', { size: 13, color: T('theme-darker-color') })
         )
       ),
-      kit.text('1 статус · 1 задач', { size: 12, color: T('theme-dark-color') }),
-      kit.StatusChip('On Hold', 'todo', {
-        drag: true,
-        count: 1,
+      kit.text('0 статусов · 0 задач', { size: 12, color: T('theme-dark-color') }),
+      kit.text('Колонка скрыта на доске, пока в нее не добавлен статус', {
         w: 206,
-        h: 32,
-        fill: T('theme-popup-color'),
-        stroke: T('theme-button-border'),
-        size: 13
+        size: 12,
+        color: T('theme-dark-color')
       })
     ),
     kit.add(
@@ -445,20 +458,6 @@ await kit.page('Board settings')
       kit.add(
         kit.box('WIP', { w: 206, h: 28, dir: 'row', gap: 6, align: 'center' }),
         kit.add(
-          kit.box('мин', {
-            w: 100,
-            h: 28,
-            dir: 'row',
-            gap: 6,
-            pad: [0, 8, 0, 8],
-            align: 'center',
-            fill: T('input-BackgroundColor'),
-            radius: 6
-          }),
-          kit.text('мин', { size: 12, color: T('theme-darker-color') }),
-          kit.text('—', { size: 13, color: T('theme-darker-color') })
-        ),
-        kit.add(
           kit.box('макс', {
             w: 100,
             h: 28,
@@ -473,7 +472,7 @@ await kit.page('Board settings')
           kit.text('8', { size: 13 })
         )
       ),
-      kit.text('6 статуса · 10 задач', { size: 12, color: T('theme-dark-color') }),
+      kit.text('6 статусов · 10 задач', { size: 12, color: T('theme-dark-color') }),
       kit.StatusChip('In Progress', 'active', {
         drag: true,
         count: 6,
@@ -530,13 +529,10 @@ await kit.page('Board settings')
       })
     )
   ))
-  kit.add(contentBox, kit.text(
-    'Колонок всего 10. Показаны первые 4, остальные справа: Peer Review, Ready for QA, Acceptance, Merge queue, Release candidate, Done',
-    { size: 12, color: T('theme-darker-color') }
-  ))
+
 }
 {
-  const { main } = kit.Workbench('Настройка доски - Дорожки', 0, 1200, {
+  const { main } = kit.Workbench('Настройка доски - Дорожки', 2020, 1200, {
     tab: 'Настройки доски',
     nav: [
       { item: 'My issues', icon: 'timeline' },
@@ -558,13 +554,14 @@ await kit.page('Board settings')
   const contentBox3 = kit.SettingsLayout(main, {
     back: 'К доске',
     title: 'Настройки доски',
+    tabsWidth: 232,
     tabs: [
       ['Основное', 'gear'],
+      ['Участники и доступ', 'users'],
       ['Колонки', 'board'],
       ['Дорожки', 'timeline'],
       ['Быстрые фильтры', 'star'],
-      ['Цвета карточек', 'milestone'],
-      ['Карточка', 'check']
+      ['Цвета карточек', 'milestone']
     ],
     tab: 'Дорожки',
     close: true,
@@ -587,74 +584,12 @@ await kit.page('Board settings')
   kit.add(contentBox3, kit.add(
     kit.box('Swimlane by', { w: 720, dir: 'column', gap: 12, vs: 'auto' }),
     kit.Radio(false, 'Нет'),
-    kit.Radio(false, 'Исполнитель'),
-    kit.Radio(false, 'Приоритет'),
-    kit.Radio(false, 'Компонент · Веха · Родительская задача'),
-    kit.Radio(true, 'По фильтрам', 'Задача попадает в первую подходящую дорожку')
+    kit.add(kit.row('field lane', 12), kit.Radio(true, 'По полю'), kit.Dropdown({ values: ['Исполнитель'], kind: 'secondary' }))
   ))
-  const spacer = kit.box('spacer', { w: 1, h: 1 })
-  kit.add(contentBox3, kit.Table(
-    [{ title: 'Дорожка', w: 240 }, { title: 'Условие', w: 922 }, { title: '', w: 56 }],
-    [
-      [
-        kit.add(
-          kit.row('name', 8),
-          kit.icon('drag', T('theme-darker-color')),
-          kit.text('Внеочередные', { weight: 500 })
-        ),
-        kit.add(kit.row('c', 6), kit.FilterChip('Приоритет', '=', 'Urgent', { plain: true })),
-        kit.IconButton('trash', { kind: 'ghost', size: 'extra-small' })
-      ],
-      [
-        kit.add(
-          kit.row('name', 8),
-          kit.icon('drag', T('theme-darker-color')),
-          kit.text('Ждут ревью дольше 3 дней', { weight: 500 })
-        ),
-        kit.add(
-          kit.row('c', 6),
-          kit.FilterChip('Статус', '=', 'Peer Review', { plain: true }),
-          kit.FilterChip('В статусе', '>', '3 дн.', { plain: true })
-        ),
-        kit.IconButton('trash', { kind: 'ghost', size: 'extra-small' })
-      ],
-      [
-        kit.add(
-          kit.row('name', 8),
-          kit.icon('drag', T('theme-trans-color')),
-          kit.text('Все остальные', { weight: 500 })
-        ),
-        kit.text('всё, что не попало выше', { size: 13, color: T('theme-darker-color') }),
-        spacer
-      ]
-    ],
-    { name: 'Swimlanes table' }
-  ))
-  kit.add(contentBox3, kit.Button({ kind: 'secondary', size: 'small', label: 'Добавить дорожку', icon: 'plus' }))
-  kit.add(contentBox3, kit.add(
-    kit.box('Lane example', {
-      w: 720,
-      dir: 'column',
-      gap: 6,
-      pad: [14, 16, 14, 16],
-      vs: 'auto',
-      fill: T('theme-list-row-color'),
-      radius: 8
-    }),
-    kit.text('Пример: APP-6 «Интеграция с платёжным провайдером», приоритет Urgent', { size: 13, weight: 600 }),
-    kit.text('1. Внеочередные: условие выполнено, задача идёт в эту дорожку', { size: 13 }),
-    kit.text(
-      '2. Ждут ревью дольше 3 дней: не проверяется, дорожка уже найдена',
-      { size: 13, color: T('theme-darker-color') }
-    ),
-    kit.text(
-      '3. Все остальные: сюда попадают задачи, не подошедшие ни под одно условие выше',
-      { size: 13, color: T('theme-darker-color') }
-    )
-  ))
+
 }
 {
-  const { main } = kit.Workbench('Настройка доски - Быстрые фильтры', 2020, 1200, {
+  const { main } = kit.Workbench('Настройка доски - Быстрые фильтры', 0, 2400, {
     tab: 'Настройки доски',
     nav: [
       { item: 'My issues', icon: 'timeline' },
@@ -676,13 +611,14 @@ await kit.page('Board settings')
   const contentBox4 = kit.SettingsLayout(main, {
     back: 'К доске',
     title: 'Настройки доски',
+    tabsWidth: 232,
     tabs: [
       ['Основное', 'gear'],
+      ['Участники и доступ', 'users'],
       ['Колонки', 'board'],
       ['Дорожки', 'timeline'],
       ['Быстрые фильтры', 'star'],
-      ['Цвета карточек', 'milestone'],
-      ['Карточка', 'check']
+      ['Цвета карточек', 'milestone']
     ],
     tab: 'Быстрые фильтры',
     close: true,
@@ -702,73 +638,30 @@ await kit.page('Board settings')
     'Кнопки над доской. Несколько включённых фильтров объединяются через «И».',
     720
   ))
+  const drag = (name) => kit.add(kit.row('name', 8), kit.icon('drag', T('theme-darker-color')), kit.text(name, { weight: 500 }))
+  const quick = (name, attr, op, value) => [
+    drag(name),
+    kit.add(kit.row('c', 6), kit.FilterChip(attr, op, value, { plain: true, condition: true }), addValue()),
+    kit.IconButton('trash', { kind: 'ghost', size: 'extra-small' })
+  ]
   kit.add(contentBox4, kit.Table(
+    [{ title: 'Название', w: 200 }, { title: 'Условие', w: 962 }, { title: '', w: 56 }],
     [
-      { title: 'Название', w: 200 },
-      { title: 'Условие', w: 852 },
-      { title: 'Над доской', w: 110 },
-      { title: '', w: 56 }
-    ],
-    [
-      [
-        kit.add(
-          kit.row('name', 8),
-          kit.icon('drag', T('theme-darker-color')),
-          kit.text('Только мои', { weight: 500 })
-        ),
-        kit.add(kit.row('c', 6), kit.FilterChip('Исполнитель', '=', 'Я', { plain: true })),
-        kit.Toggle(true),
-        kit.IconButton('trash', { kind: 'ghost', size: 'extra-small' })
-      ],
-      [
-        kit.add(
-          kit.row('name', 8),
-          kit.icon('drag', T('theme-darker-color')),
-          kit.text('Разработка', { weight: 500 })
-        ),
-        kit.add(kit.row('c', 6), kit.FilterChip('Исполнитель', 'из', 'И. Петров, М. Козлова', { plain: true })),
-        kit.Toggle(true),
-        kit.IconButton('trash', { kind: 'ghost', size: 'extra-small' })
-      ],
-      [
-        kit.add(
-          kit.row('name', 8),
-          kit.icon('drag', T('theme-darker-color')),
-          kit.text('Тестирование', { weight: 500 })
-        ),
-        kit.add(kit.row('c', 6), kit.FilterChip('Исполнитель', '=', 'О. Васильев', { plain: true })),
-        kit.Toggle(true),
-        kit.IconButton('trash', { kind: 'ghost', size: 'extra-small' })
-      ],
-      [
-        kit.add(kit.row('name', 8), kit.icon('drag', T('theme-darker-color')), kit.text('iOS', { weight: 500 })),
-        kit.add(kit.row('c', 6), kit.FilterChip('Компонент', '=', 'iOS', { plain: true })),
-        kit.Toggle(true),
-        kit.IconButton('trash', { kind: 'ghost', size: 'extra-small' })
-      ],
-      [
-        kit.add(kit.row('name', 8), kit.icon('drag', T('theme-darker-color')), kit.text('Срочные', { weight: 500 })),
-        kit.add(kit.row('c', 6), kit.FilterChip('Приоритет', '=', 'Urgent', { plain: true })),
-        kit.Toggle(true),
-        kit.IconButton('trash', { kind: 'ghost', size: 'extra-small' })
-      ],
-      [
-        kit.add(kit.row('name', 8), kit.icon('drag', T('theme-darker-color')), kit.text('Блокеры', { weight: 500 })),
-        kit.add(kit.row('c', 6), kit.FilterChip('Связь', '=', 'блокирует', { plain: true })),
-        kit.Toggle(true),
-        kit.IconButton('trash', { kind: 'ghost', size: 'extra-small' })
-      ]
+      quick('Только мои', 'Исполнитель', 'равен', kit.Avatar('СА', 'Sky', 24)),
+      quick('Разработка', 'Исполнитель', 'один из', [kit.Avatar('ПИ', 'Watermelon', 24), kit.Avatar('КМ', 'Grass', 24)]),
+      quick('Тестирование', 'Исполнитель', 'равен', kit.Avatar('ВО', 'Crocodile', 24)),
+      quick('iOS', 'Компонент', 'равен', 'iOS'),
+      quick('Срочные', 'Приоритет', 'равен', prio('urgent'))
     ],
     { name: 'Quick filters table' }
   ))
   kit.add(contentBox4, kit.add(
     kit.row('actions', 8),
-    kit.Button({ kind: 'secondary', size: 'small', label: 'Быстрый фильтр', icon: 'plus' }),
-    kit.Button({ kind: 'ghost', size: 'small', label: 'Из сохранённых фильтров', icon: 'star', menu: true })
+    kit.Button({ kind: 'secondary', size: 'small', label: 'Быстрый фильтр', icon: 'plus' })
   ))
 }
 {
-  const { main } = kit.Workbench('Настройка доски - Цвета карточек', 0, 2400, {
+  const { main } = kit.Workbench('Настройка доски - Цвета карточек', 2020, 2400, {
     tab: 'Настройки доски',
     nav: [
       { item: 'My issues', icon: 'timeline' },
@@ -790,13 +683,14 @@ await kit.page('Board settings')
   const contentBox5 = kit.SettingsLayout(main, {
     back: 'К доске',
     title: 'Настройки доски',
+    tabsWidth: 232,
     tabs: [
       ['Основное', 'gear'],
+      ['Участники и доступ', 'users'],
       ['Колонки', 'board'],
       ['Дорожки', 'timeline'],
       ['Быстрые фильтры', 'star'],
-      ['Цвета карточек', 'milestone'],
-      ['Карточка', 'check']
+      ['Цвета карточек', 'milestone']
     ],
     tab: 'Цвета карточек',
     close: true,
@@ -816,11 +710,6 @@ await kit.page('Board settings')
     'Рамка карточки окрашивается по первому подходящему правилу. Цвет заголовка колонки от этой настройки не зависит: его задаёт категория статусов, а красным колонка выделяется при превышении WIP-лимита.',
     720
   ))
-  kit.add(contentBox5, kit.FormRow(
-    'Цвет по',
-    kit.Input({ w: 240, value: 'Правилам', menu: true }),
-    { hint: 'Нет · Приоритет · Тип задачи · Правилам' }
-  ))
   kit.add(contentBox5, kit.Table(
     [{ title: 'Цвет', w: 90 }, { title: 'Условие', w: 1072 }, { title: '', w: 56 }],
     [
@@ -828,8 +717,8 @@ await kit.page('Board settings')
         kit.add(kit.row('c', 6), kit.icon('drag', T('theme-darker-color')), kit.Swatch(P('Orange'))),
         kit.add(
           kit.row('c', 6),
-          kit.FilterChip('Статус', '=', 'Ready for QA', { plain: true }),
-          kit.FilterChip('В статусе', '>', '5 дн.', { plain: true })
+          kit.FilterChip('Статус', 'равен', [kit.StatusIcon('active'), kit.text('Ready for QA', { size: 14 })], { plain: true, condition: true }),
+          addValue()
         ),
         kit.IconButton('trash', { kind: 'ghost', size: 'extra-small' })
       ],
@@ -837,8 +726,8 @@ await kit.page('Board settings')
         kit.add(kit.row('c', 6), kit.icon('drag', T('theme-darker-color')), kit.Swatch(P('Firework'))),
         kit.add(
           kit.row('c', 6),
-          kit.FilterChip('Статус', '=', 'Peer Review', { plain: true }),
-          kit.FilterChip('В статусе', '>', '3 дн.', { plain: true })
+          kit.FilterChip('Статус', 'равен', [kit.StatusIcon('active'), kit.text('Peer Review', { size: 14 })], { plain: true, condition: true }),
+          addValue()
         ),
         kit.IconButton('trash', { kind: 'ghost', size: 'extra-small' })
       ]
@@ -875,169 +764,5 @@ await kit.page('Board settings')
     )
   ))
 }
-{
-  const { main } = kit.Workbench('Настройка доски - Карточка', 2020, 2400, {
-    tab: 'Настройки доски',
-    nav: [
-      { item: 'My issues', icon: 'timeline' },
-      { item: 'All issues', icon: 'check' },
-      { item: 'Доски', icon: 'board', selected: true },
-      { item: 'Тестирование', indent: true },
-      { item: 'Мой спринт', indent: true },
-      { group: 'Your projects', add: true },
-      { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
-      { item: 'Issues', icon: 'check', indent: true },
-      { item: 'Components', icon: 'component', indent: true },
-      { item: 'Milestones', icon: 'milestone', indent: true },
-      { space: 'Маркетинг', icon: 'kit/HouseFill', color: 'Porpoise' },
-      { item: 'Issues', icon: 'check', indent: true },
-      { item: 'Components', icon: 'component', indent: true },
-      { item: 'Milestones', icon: 'milestone', indent: true }
-    ]
-  })
-  const contentBox6 = kit.SettingsLayout(main, {
-    back: 'К доске',
-    title: 'Настройки доски',
-    tabs: [
-      ['Основное', 'gear'],
-      ['Колонки', 'board'],
-      ['Дорожки', 'timeline'],
-      ['Быстрые фильтры', 'star'],
-      ['Цвета карточек', 'milestone'],
-      ['Карточка', 'check']
-    ],
-    tab: 'Карточка',
-    close: true,
-    actions: [
-      kit.Button({
-        kind: 'ghost',
-        size: 'small',
-        label: 'Основная доска',
-        icon: 'board',
-        menu: true,
-        name: 'Board in settings'
-      })
-    ]
-  })
-  kit.add(contentBox6, kit.SectionTitle(
-    'Карточка',
-    'Поля на карточке для всех, кто открывает доску. Тот же набор, что в настройке вида канбана (viewlet IssueKanban).',
-    720
-  ))
-  const spacer2 = kit.box('spacer', { w: 10, h: 8 })
-  const densityCard = {
-    id: 'APP-3',
-    cat: 'active',
-    title: 'Push-уведомления о статусе заказа',
-    assignee: ['ПИ', 'Watermelon'],
-    priority: 'high',
-    sub: '1/2',
-    component: 'iOS',
-    milestone: 'Релиз 1.0',
-    labels: [['срочно', 'Pink']],
-    est: '13h'
-  }
-  const detailedCard = kit.IssueCard({ ...densityCard, density: 'detailed' })
-  const normalCard = kit.IssueCard({ ...densityCard, density: 'normal', sub: undefined, milestone: undefined, accent: T('theme-toggle-on-bg-color') })
-  const compactCard = kit.IssueCard({ ...densityCard, density: 'compact', sub: undefined, milestone: undefined })
-  const denseCard = kit.IssueCard({ ...densityCard, density: 'dense' })
-  kit.add(contentBox6, kit.add(
-    kit.box('body', { w: 1015, dir: 'row', gap: 48, vs: 'auto' }),
-    kit.add(
-      kit.col('fields', 12),
-      kit.Checkbox(true, 'Приоритет'),
-      kit.Checkbox(true, 'Подзадачи'),
-      kit.Checkbox(true, 'Срок'),
-      kit.Checkbox(true, 'Компонент'),
-      kit.Checkbox(true, 'Веха'),
-      kit.Checkbox(true, 'Метки'),
-      kit.Checkbox(true, 'Оценка'),
-      kit.Checkbox(true, 'Вложения'),
-      kit.Checkbox(true, 'Комментарии'),
-      kit.Checkbox(false, 'Родительская задача'),
-      kit.Checkbox(false, 'Дни в колонке'),
-      spacer2
-    ),
-    kit.add(
-      kit.box('preview', { w: 540, dir: 'column', gap: 8, vs: 'auto', clip: false }),
-      kit.text(
-        'Плотность карточек: выберите вариант, выбранный обведён',
-        { size: 12, color: T('theme-darker-color'), name: 'Пример' }
-      ),
-      kit.add(
-        kit.col('levels', 16, { clip: false }),
-        kit.add(
-          kit.row('row 1', 16, { align: 'start', clip: false }),
-          kit.add(
-            kit.box('level 1. Подробно', { w: 250, dir: 'column', gap: 8, vs: 'auto', clip: false }),
-            kit.text('1. Подробно', { size: 13, weight: 600 }),
-            kit.add(
-              kit.box('column', {
-                w: 250,
-                dir: 'column',
-                pad: [8, 8, 8, 8],
-                vs: 'auto',
-                fill: T('theme-kanban-card-bg-color'),
-                radius: 8,
-                clip: false
-              }),
-              detailedCard
-            )
-          ),
-          kit.add(
-            kit.box('level 2. Обычно', { w: 250, dir: 'column', gap: 8, vs: 'auto', clip: false }),
-            kit.text('2. Обычно', { size: 13, weight: 600 }),
-            kit.add(
-              kit.box('column', {
-                w: 250,
-                dir: 'column',
-                pad: [8, 8, 8, 8],
-                vs: 'auto',
-                fill: T('theme-kanban-card-bg-color'),
-                radius: 8,
-                clip: false
-              }),
-              normalCard
-            )
-          )
-        ),
-        kit.add(
-          kit.row('row 2', 16, { align: 'start', clip: false }),
-          kit.add(
-            kit.box('level 3. Компактно', { w: 250, dir: 'column', gap: 8, vs: 'auto', clip: false }),
-            kit.text('3. Компактно', { size: 13, weight: 600 }),
-            kit.add(
-              kit.box('column', {
-                w: 250,
-                dir: 'column',
-                pad: [8, 8, 8, 8],
-                vs: 'auto',
-                fill: T('theme-kanban-card-bg-color'),
-                radius: 8,
-                clip: false
-              }),
-              compactCard
-            )
-          ),
-          kit.add(
-            kit.box('level 4. Плотно', { w: 250, dir: 'column', gap: 8, vs: 'auto', clip: false }),
-            kit.text('4. Плотно', { size: 13, weight: 600 }),
-            kit.add(
-              kit.box('column', {
-                w: 250,
-                dir: 'column',
-                pad: [8, 8, 8, 8],
-                vs: 'auto',
-                fill: T('theme-kanban-card-bg-color'),
-                radius: 8,
-                clip: false
-              }),
-              denseCard
-            )
-          )
-        )
-      )
-    )
-  ))
-}
+
 await kit.settle()

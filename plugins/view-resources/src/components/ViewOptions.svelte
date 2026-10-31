@@ -2,11 +2,12 @@
   import { getClient } from '@hcengineering/presentation'
   import type { DropdownIntlItem } from '@hcengineering/ui'
   import { DropdownLabelsIntl, Label, Toggle } from '@hcengineering/ui'
+  import { Slider } from '@hcengineering/ui/kit'
   import type { Viewlet, ViewOptions, ViewOptionsModel, ViewOptionModel, GroupingKey } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import view from '../plugin'
   import { buildConfigLookup, canResolveAttribute, getKeyLabel } from '../utils'
-  import { isDropdownType, isToggleType, noCategory, MAX_GROUPING_DEPTH } from '../viewOptions'
+  import { isDropdownType, isSliderType, isToggleType, noCategory, MAX_GROUPING_DEPTH } from '../viewOptions'
   import { SortingOrder } from '@hcengineering/core'
 
   export let viewlet: Viewlet
@@ -151,7 +152,7 @@
         if (isToggleType(model)) changeToggle(model)
       }}
     >
-      <span class="overflow-label"><Label label={model.label} /></span>
+      <span class="overflow-label" id={`viewOption-label-${model.key}`}><Label label={model.label} /></span>
       {#if isToggleType(model)}
         <Toggle
           on={viewOptions[model.key] ?? model.defaultValue}
@@ -178,9 +179,42 @@
             dispatch('update', { key: model.key, value: e.detail })
           }}
         />
+      {:else if isSliderType(model)}
+        {@const index = model.values.findIndex((v) => v.id === (viewOptions[model.key] ?? model.defaultValue))}
+        <div class="slider" data-id={`viewOption-${model.key}`}>
+          <Slider
+            value={Math.max(index, 0)}
+            min={0}
+            max={model.values.length - 1}
+            step={1}
+            size="small"
+            aria-labelledby={`viewOption-label-${model.key}`}
+            on:change={(e) => {
+              viewOptions[model.key] = model.values[e.detail].id
+              dispatch('update', { key: model.key, value: viewOptions[model.key] })
+            }}
+          />
+          <span class="slider-caption">
+            <Label label={index >= 0 ? model.values[index].label : (model.defaultLabel ?? model.label)} />
+          </span>
+        </div>
       {/if}
     </div>
   {/each}
   <slot name="extra" />
   <div class="antiCard-menu__spacer" />
 </div>
+
+<style lang="scss">
+  .slider {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-0_5);
+    width: 10rem;
+  }
+  .slider-caption {
+    font-size: 0.75rem;
+    color: var(--global-secondary-TextColor);
+  }
+</style>

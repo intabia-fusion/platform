@@ -13,26 +13,32 @@
 -->
 <script lang="ts">
   import type { Doc, DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
-  import { isOwnerOrMaintainer } from '@hcengineering/core'
+  import { getCurrentAccount, isOwnerOrMaintainer } from '@hcengineering/core'
   import type { Asset, IntlString } from '@hcengineering/platform'
   import { translateCB } from '@hcengineering/platform'
   import { ComponentExtensions, getClient } from '@hcengineering/presentation'
-  import type { Issue, Project } from '@hcengineering/tracker'
-  import { TrackerEvents } from '@hcengineering/tracker'
+  import type { Board, Issue, Project } from '@hcengineering/tracker'
+  import { TrackerEvents, canEditBoard } from '@hcengineering/tracker'
   import type { IModeSelector } from '@hcengineering/ui'
   import ui, { BlankView, type DropdownIntlItem, showPopup, themeStore } from '@hcengineering/ui'
   import { columnControlStore } from '@hcengineering/kanban'
-  import { MenuButton } from '@hcengineering/ui/kit'
+  import { setContext } from 'svelte'
+  import { writable } from 'svelte/store'
+  import { IconButton, MenuButton } from '@hcengineering/ui/kit'
   import type { ViewOptions, Viewlet } from '@hcengineering/view'
   import view from '@hcengineering/view'
   import {
     FilterBar,
     filterStore,
+    getDefaults,
+    getViewOptions,
+    viewOptionStore,
     selectionStore,
     setViewOptions,
     SpaceHeader,
     ViewletContentView,
-    ViewletSettingButton
+    ViewletSettingButton,
+    canEditSpace
   } from '@hcengineering/view-resources'
   import task, { type Project as TaskProject } from '@hcengineering/task'
   import { ProjectTypeSettingsLink, TaskTypeDiagramPopup, taskTypeStore } from '@hcengineering/task-resources'
@@ -41,6 +47,8 @@
 
   import tracker from '../../plugin'
   import CreateIssue from '../CreateIssue.svelte'
+  import { openProjectSettings } from '../../projectSettings'
+  import { boardContextKey, boardLocation } from '../../boards'
   import { activeProjects, exportIssuesToCSV } from '../../utils'
   import IssueStatistics from '../milestones/IssueStatistics.svelte'
 
@@ -50,10 +58,21 @@
   export let label: string = ''
   export let icon: Asset | undefined = undefined
   export let modeSelectorProps: IModeSelector | undefined = undefined
+  // A board turns the kanban into the board's columns, lanes and colors
+  export let board: Board | undefined = undefined
+  // A board in place of the project issues: picking a viewlet closes it
+
+  const boardStore = writable<Board | undefined>(board)
+  $: boardStore.set(board)
+  setContext(boardContextKey, boardStore)
 
   export let viewlet: WithLookup<Viewlet> | undefined = undefined
   const viewlets: WithLookup<Viewlet>[] | undefined = undefined
   let viewOptions: ViewOptions | undefined
+  // A board has no view options button: its header shows the density slider only, the rest is in its settings
+  $: if (board !== undefined && viewlet !== undefined) {
+    viewOptions = getViewOptions(viewlet, $viewOptionStore, getDefaults(viewlet.viewOptions))
+  }
 
   let search = ''
   let searchQuery: DocumentQuery<Issue> = { ...query }
@@ -72,6 +91,7 @@
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
+
   $: currentProject = space ? ($activeProjects.get(space as Ref<Project>) as ProjectWorkflow | undefined) : undefined
   $: workflowsMap =
     currentProject && hierarchy.hasMixin(currentProject, workflow.mixin.ProjectWorkflow)
@@ -84,6 +104,15 @@
   $: hasTaskTypes = currentTaskTypes.length > 0
   $: noTaskTypes = currentProject !== undefined && $taskTypeStore.size > 0 && !hasTaskTypes
 
+  $: projectRef = space as Ref<Project> | undefined
+  let canEditProject = false
+  // Depends on the project itself: on a reload the space is known before the project is loaded
+  async function checkCanEditProject (project: ProjectWorkflow | undefined): Promise<void> {
+    const can = project !== undefined && (await canEditSpace(project))
+    if (project === currentProject) canEditProject = can
+  }
+  $: void checkCanEditProject(currentProject)
+
   // Same check as the project type editor in settings
   const canConfigureTypes = isOwnerOrMaintainer()
 
@@ -92,11 +121,15 @@
   const EXPORT_CSV_ITEM_ID = 'export-scv'
   const MERGE_BY_CATEGORY_ITEM_ID = 'merge-columns-by-category'
   const RESET_MERGE_ITEM_ID = 'reset-merged-columns'
+  const BOARD_SETTINGS_ITEM_ID = 'board-settings'
 
   // Column merging of the board shown for this viewlet; only a kanban registers it.
   $: columnControls = viewlet != null ? $columnControlStore.get(viewlet._id) : undefined
 
   $: menuItems = [
+    ...(board !== undefined && canEditBoard(board, getCurrentAccount().uuid)
+      ? [{ id: BOARD_SETTINGS_ITEM_ID, label: tracker.string.BoardSettings, icon: view.icon.Setting }]
+      : []),
     ...(hasWorkflow
       ? [
           {
@@ -167,6 +200,8 @@
       columnControls?.mergeByGroup()
     } else if (action === RESET_MERGE_ITEM_ID) {
       columnControls?.resetMerge()
+    } else if (action === BOARD_SETTINGS_ITEM_ID && board !== undefined) {
+      boardLocation(board._id, true)
     }
   }
 
@@ -205,6 +240,10 @@
   bind:search
   showLabelSelector={$$slots.label_selector}
   viewletQuery={{ attachTo: tracker.class.Issue, variant: { $exists: false } }}
+  defaultViewletDescriptor={board !== undefined ? tracker.viewlet.Kanban : undefined}
+  hideViewlets={board !== undefined}
+  searchFirst={board !== undefined}
+  adaptive={board !== undefined ? 'disabled' : undefined}
   {viewlets}
   {label}
   {space}
@@ -212,7 +251,11 @@
   {modeSelectorProps}
 >
   <svelte:fragment slot="header-tools">
-    <ViewletSettingButton bind:viewOptions bind:viewlet />
+    <!-- Made with the viewlet known: made before, its binding writes its empty viewlet over the one
+         a cached viewlet query sets while the header mounts, and the button stays empty -->
+    {#if viewlet !== undefined && board === undefined}
+      <ViewletSettingButton bind:viewOptions bind:viewlet />
+    {/if}
   </svelte:fragment>
 
   <svelte:fragment slot="label_selector">
@@ -223,16 +266,34 @@
     <slot name="type_selector" {viewlet} />
   </svelte:fragment>
 
+  <svelte:fragment slot="afterSearch">
+    <slot name="afterSearch" />
+  </svelte:fragment>
+
   <svelte:fragment slot="actions">
+    <slot name="board_actions" {viewlet} {viewOptions} />
     {#if menuItems.length > 0}
       <MenuButton
-        icon={ui.icon.DotsHorizontal}
+        data-id="btnIssuesMenu"
+        icon={board !== undefined ? ui.icon.DotsVertical : ui.icon.DotsHorizontal}
         kind="secondary"
         size="small"
         noSelection
         tooltip={{ label: view.string.MoreActions }}
         items={menuItems}
         on:selected={handleMenuSelected}
+      />
+    {/if}
+    {#if canEditProject && space !== undefined}
+      <IconButton
+        data-id="btnProjectSettings"
+        icon={view.icon.Setting}
+        kind="secondary"
+        size="small"
+        tooltip={{ label: tracker.string.ProjectSettings }}
+        on:click={() => {
+          if (projectRef !== undefined) openProjectSettings(projectRef)
+        }}
       />
     {/if}
     <ComponentExtensions

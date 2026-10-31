@@ -89,6 +89,7 @@ import ArrayFilter from './components/filter/ArrayFilter.svelte'
 import DateFilter from './components/filter/DateFilter.svelte'
 import DateFilterPresenter from './components/filter/DateFilterPresenter.svelte'
 import FilterBar from './components/filter/FilterBar.svelte'
+import FilterConditions from './components/filter/FilterConditions.svelte'
 import FilterTypePopup from './components/filter/FilterTypePopup.svelte'
 import ObjectFilter from './components/filter/ObjectFilter.svelte'
 import PersonIdFilter from './components/filter/PersonIdFilter.svelte'
@@ -249,6 +250,7 @@ export {
   EditDoc,
   EnumEditor,
   FilterBar,
+  FilterConditions,
   HTMLPresenter,
   HyperlinkEditor,
   IconPicker,

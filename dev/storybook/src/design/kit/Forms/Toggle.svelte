@@ -13,25 +13,29 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  // Switch of the product Toggle (36x20) with an optional label
-  import { Toggle } from '@hcengineering/ui'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { Toggle } from '@hcengineering/ui/kit'
+  import type { ToggleKind, ToggleLabelPosition, ToggleSize } from '@hcengineering/ui/kit'
 
   export let on: boolean = false
   export let label: string | undefined = undefined
+  export let size: ToggleSize | undefined = undefined
+  export let kind: ToggleKind | undefined = undefined
+  export let description: string | undefined = undefined
+  export let labelPosition: ToggleLabelPosition | undefined = undefined
+  export let disabled: boolean = false
 </script>
 
-<div class="kit-toggle">
-  <Toggle {on} />
-  {#if label !== undefined}<span class="label">{label}</span>{/if}
-</div>
-
-<style lang="scss">
-  .kit-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  .label {
-    color: var(--theme-caption-color);
-  }
-</style>
+{#if label !== undefined}
+  <Toggle
+    checked={on}
+    {size}
+    {kind}
+    {labelPosition}
+    {disabled}
+    label={getEmbeddedLabel(label)}
+    description={description !== undefined ? getEmbeddedLabel(description) : undefined}
+  />
+{:else}
+  <Toggle checked={on} {size} {kind} {disabled} aria-label="Toggle" />
+{/if}

@@ -16,6 +16,8 @@ import type { Meta, StoryObj } from '@storybook/svelte'
 
 import FormRowDemo from '../demo/FormRowDemo.svelte'
 import GridRowDemo from '../demo/GridRowDemo.svelte'
+import SectionDemo from '../demo/SectionDemo.svelte'
+import SettingRowDemo from '../demo/SettingRowDemo.svelte'
 import SettingsDemo from '../demo/SettingsDemo.svelte'
 import SectionTitle from './SectionTitle.svelte'
 import Table from './Table.svelte'
@@ -101,5 +103,35 @@ export const GridRowStates: Story = sections([
     component: GridRowDemo,
     rows: [{ title: 'form rows', props: {} }],
     columns: [{ title: '', props: {} }]
+  }
+])
+
+export const SettingRowStates: Story = sections([
+  {
+    title: 'SettingRow',
+    component: SettingRowDemo,
+    rows: [
+      { title: 'toggle', props: { control: 'toggle' } },
+      { title: 'hint', props: { control: 'toggle', hint: 'Visible to members only' } },
+      { title: 'input', props: { control: 'input', label: 'Name' } },
+      { title: 'stacked', props: { control: 'area', label: 'Description', stacked: true } },
+      { title: 'details', props: { control: 'input', label: 'Owners', details: true } }
+    ],
+    columns: [{ title: '', props: { width: 560 } }]
+  }
+])
+
+export const SectionStates: Story = sections([
+  {
+    title: 'Section',
+    component: SectionDemo,
+    rows: [
+      { title: 'level 2', props: {} },
+      { title: 'icon', props: { icon: 'kit/Gear' } },
+      { title: 'actions', props: { actions: true } },
+      { title: 'level 3', props: { level: 3 } },
+      { title: 'level 4', props: { level: 4 } }
+    ],
+    columns: [{ title: '', props: { width: 480 } }]
   }
 ])

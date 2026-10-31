@@ -17,9 +17,18 @@ const fs = require('fs')
 const path = require('path')
 const exec = require('child_process').exec
 
+function fail(reason) {
+  if (process.env.CI) {
+    console.error(`show_version: ${reason}`)
+    process.exit(1)
+  }
+}
+
 function main() {
   exec('git describe --tags --abbrev=0 --match="v*"', (err, stdout) => {
     if (err !== null) {
+      // A CI build with the fallback ships a model no client accepts ("0.6.0 => x.y.z" on the stand)
+      fail(`no v* tag reachable from HEAD (shallow clone or tags not pushed): ${err.message.trim()}`)
       console.log('"0.6.0"')
       return
     }
@@ -29,6 +38,7 @@ function main() {
       const versionFilePath = path.resolve(__dirname, 'version.txt')
       version = fs.readFileSync(versionFilePath, 'utf8').trim()
     } catch (error) {
+      fail(`cannot read version.txt: ${error.message}`)
       version = '"0.6.0"'
     }
 

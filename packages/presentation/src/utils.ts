@@ -93,7 +93,8 @@ let pipeline: PresentationPipeline
 export type TxListener = (tx: Tx[]) => void
 const txListeners: TxListener[] = []
 
-const alwaysDisabled: string[] = ['relation', 'caldav']
+// Not ready: board settings without a model field, and anything that needs time in status
+const alwaysDisabled: string[] = ['relation', 'caldav', 'tracker-board-next', 'tracker-issue-stats']
 
 /**
  * @public

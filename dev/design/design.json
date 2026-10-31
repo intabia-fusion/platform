@@ -65,6 +65,9 @@
       "build": [
         [
           "screens/fusio-1621/01-project-settings.js"
+        ],
+        [
+          "screens/fusio-1621/02-create-project.js"
         ]
       ]
     },
@@ -128,6 +131,22 @@
         [
           "screens/current/_login.js",
           "screens/current/login-workspaces.js"
+        ],
+        [
+          "screens/current/_page-create-project.js",
+          "screens/fusio-1621/02-create-project.js"
+        ],
+        [
+          "screens/current/_page-board-card-states.js",
+          "screens/fusio-1613/_data.js",
+          "screens/fusio-1613/_board.js",
+          "screens/fusio-1613/02f-board-card-states.js"
+        ],
+        [
+          "screens/current/_page-project-boards.js",
+          "screens/fusio-1613/_data.js",
+          "screens/fusio-1613/_board.js",
+          "screens/fusio-1613/02g-project-boards.js"
         ]
       ]
     }

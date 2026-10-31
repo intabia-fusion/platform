@@ -38,19 +38,17 @@ test.describe('Tracker tests', () => {
   })
 
   test('save-view-options-board', async ({ page }) => {
-    const panels = ['Issues', 'Active', 'Backlog']
     const commonTrackerPage = new CommonTrackerPage(page)
     await navigate(page)
 
-    await doSaveViewTest(panels, commonTrackerPage, ViewletSelectors.Board)
+    await doSaveViewTest(commonTrackerPage, ViewletSelectors.Board)
   })
 
   test('save-view-options-table', async ({ page }) => {
-    const panels = ['Issues', 'Active', 'Backlog']
     const commonTrackerPage = new CommonTrackerPage(page)
     await navigate(page)
 
-    await doSaveViewTest(panels, commonTrackerPage, ViewletSelectors.Table)
+    await doSaveViewTest(commonTrackerPage, ViewletSelectors.Table)
   })
 
   test('my-issues', async ({ page }) => {
@@ -109,8 +107,12 @@ test.describe('Tracker tests', () => {
 
   test('report-time-from-main-view', async ({ page }) => {
     const issuesPage = new IssuesPage(page)
+    const navigationMenu = new TrackerNavigationMenuPage(page)
     await navigate(page)
-    await issuesPage.navigateToIssues()
+    // `text="Issues"` now matches every project's Issues link; open Default and switch to the table
+    // viewlet - only it renders `.estimation-container`, which this test reports time through.
+    await navigationMenu.openIssuesForProject('Default')
+    await page.click(ViewletSelectors.Table)
     const values = [2, 4, 6, 8]
     const assignee = 'Chen Rosamund'
     const status = 'In Progress'
@@ -129,7 +131,8 @@ test.describe('Tracker tests', () => {
       const random = Math.floor(Math.random() * values.length)
       const time = values[random]
       count += time
-      await page.click('text="Issues"')
+      await navigationMenu.openIssuesForProject('Default')
+      await page.click(ViewletSelectors.Table)
       const issuesPage = new IssuesPage(page)
       await issuesPage.clickModelSelectorAll()
       await issuesPage.clickModelSelectorAll()
@@ -233,11 +236,14 @@ test.describe('Tracker tests', () => {
     })
   })
 })
-async function doSaveViewTest (
-  panels: string[],
-  commonTrackerPage: CommonTrackerPage,
-  viewletSelector: ViewletSelectors
-): Promise<void> {
+async function doSaveViewTest (commonTrackerPage: CommonTrackerPage, viewletSelector: ViewletSelectors): Promise<void> {
+  const { page } = commonTrackerPage
+  // Projects of other tests may sort above Default, so its Issues link is taken by the project name
+  const panels = [
+    new TrackerNavigationMenuPage(page).issuesLinkForProject('Default'),
+    page.locator('text="Active"'),
+    page.locator('text="Backlog"')
+  ]
   for (const panel of panels) {
     await commonTrackerPage.selectPanelAndViewlet(panel, viewletSelector)
     await commonTrackerPage.openViewOptionsAndSelectAssignee()

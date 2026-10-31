@@ -1,5 +1,6 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -82,6 +83,8 @@ import TitlePresenter from './components/issues/TitlePresenter.svelte'
 import ParentIssuePresenter from './components/issues/ParentIssuePresenter.svelte'
 import ParentIssueSelector from './components/issues/ParentIssueSelector.svelte'
 import LabelsView from './components/LabelsView.svelte'
+import BoardPage from './components/boards/BoardPage.svelte'
+import BoardsNav from './components/boards/BoardsNav.svelte'
 import EditMilestone from './components/milestones/EditMilestone.svelte'
 import MilestoneDatePresenter from './components/milestones/MilestoneDatePresenter.svelte'
 import MyIssues from './components/myissues/MyIssues.svelte'
@@ -174,6 +177,9 @@ import IssueStatistics from './components/milestones/IssueStatistics.svelte'
 import MilestoneFilter from './components/milestones/MilestoneFilter.svelte'
 import MilestoneRefPresenter from './components/milestones/MilestoneRefPresenter.svelte'
 import CreateProject from './components/projects/CreateProject.svelte'
+import ProjectSettings from './components/projects/settings/ProjectSettings.svelte'
+import { deleteProject } from './projectActions'
+import { openProjectSettings } from './projectSettings'
 import ProjectPresenter from './components/projects/ProjectPresenter.svelte'
 import ProjectSpacePresenter from './components/projects/ProjectSpacePresenter.svelte'
 
@@ -280,7 +286,7 @@ async function editWorkflowStatuses (project: Project): Promise<void> {
 
 async function editProject (project: Project | undefined): Promise<void> {
   if (project !== undefined) {
-    showPopup(CreateProject, { project })
+    openProjectSettings(project._id)
   }
 }
 
@@ -328,35 +334,6 @@ async function deleteIssue (issue: Issue | Issue[]): Promise<void> {
       }
     }
   })
-}
-
-async function deleteProject (project: Project | undefined): Promise<void> {
-  if (project !== undefined) {
-    const client = getClient()
-
-    if (project.archived) {
-      // Clean project and all issues
-      showPopup(MessageBox, {
-        label: tracker.string.DeleteProject,
-        labelProps: { name: project.name },
-        message: tracker.string.DeleteProjectConfirm,
-        action: async () => {
-          const client = getClient()
-          await client.remove(project)
-        }
-      })
-    } else {
-      const anyIssue = await client.findOne(tracker.class.Issue, { space: project._id })
-      showPopup(MessageBox, {
-        label: tracker.string.ArchiveProjectName,
-        labelProps: { name: project.name },
-        message: anyIssue !== undefined ? tracker.string.ProjectHasIssues : tracker.string.ArchiveProjectConfirm,
-        action: async () => {
-          await client.update(project, { archived: true })
-        }
-      })
-    }
-  }
 }
 
 async function moveAndDeleteMilestones (
@@ -514,6 +491,7 @@ export default async (): Promise<Resources> => ({
     EditIssueTemplate,
     TemplateEstimationEditor,
     CreateProject,
+    ProjectSettings,
     ProjectPresenter,
     ProjectSpacePresenter,
     IssueStatistics,
@@ -542,6 +520,8 @@ export default async (): Promise<Resources> => ({
     IssueExtra,
     IssueStatusPresenter,
     LabelsView,
+    BoardPage,
+    BoardsNav,
     ParentIssuePresenter,
     ParentIssueSelector,
     TimeSpendReportList,
