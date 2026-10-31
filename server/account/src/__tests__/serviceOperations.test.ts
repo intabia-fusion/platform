@@ -1756,6 +1756,9 @@ describe('upsertSubscription - AI package token grant', () => {
         find: jest.fn().mockResolvedValue([]),
         insertOne: jest.fn(),
         update: jest.fn()
+      },
+      workspace: {
+        findOne: jest.fn().mockResolvedValue({ uuid: workspaceUuid, region: '' })
       }
     }
 
@@ -1763,7 +1766,7 @@ describe('upsertSubscription - AI package token grant', () => {
     ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ extra: { service: 'payment' } })
 
     mockProducer = { send: jest.fn() }
-    ;(getMetadata as jest.Mock).mockReturnValue(mockProducer)
+    ;(getMetadata as jest.Mock).mockReturnValue({ getProducer: () => mockProducer })
   })
 
   afterAll(() => {
@@ -1907,6 +1910,9 @@ describe('upsertSubscription - tier plan changed event', () => {
         find: jest.fn().mockResolvedValue([]),
         insertOne: jest.fn(),
         update: jest.fn()
+      },
+      workspace: {
+        findOne: jest.fn().mockResolvedValue({ uuid: workspaceUuid, region: '' })
       }
     }
 
@@ -1914,7 +1920,7 @@ describe('upsertSubscription - tier plan changed event', () => {
     ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ extra: { service: 'payment' } })
 
     mockProducer = { send: jest.fn() }
-    ;(getMetadata as jest.Mock).mockReturnValue(mockProducer)
+    ;(getMetadata as jest.Mock).mockReturnValue({ getProducer: () => mockProducer })
   })
 
   afterAll(() => {

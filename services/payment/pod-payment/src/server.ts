@@ -159,7 +159,9 @@ export async function createServer (
     quantity?: number
   ) => Promise<void>,
   // Publishes customer mail to the platform notification queue. Undefined disables all mail.
-  sendMail?: MailSender
+  sendMail?: MailSender,
+  // Readiness for the k8s probe; undefined means ready once listening.
+  isReady?: () => boolean
 ): Promise<{
   app: Express
   ensureInitialSubscription: (workspace: WorkspaceUuid) => Promise<void>
@@ -265,6 +267,10 @@ export async function createServer (
       return { plans: {}, packages: {}, purchasables: {} }
     }
   })()
+
+  app.get('/api/v1/ready', (_req, res) => {
+    res.status(isReady === undefined || isReady() ? 200 : 503).end()
+  })
 
   app.get('/api/v1/plan-config', planConfigRateLimiter, (req, res) => {
     res.json(planConfig)
