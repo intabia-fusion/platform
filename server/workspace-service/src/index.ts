@@ -185,9 +185,10 @@ export function serveWorkspaceAccount (
       measureCtx.error('failed to start', { err })
     })
 
-  const close = (): void => {
+  const close = async (): Promise<void> => {
     canceled = true
-    void queue.shutdown()
+    worker.wakeup()
+    await queue.shutdown()
     onClose?.()
   }
 
@@ -198,7 +199,13 @@ export function serveWorkspaceAccount (
   process.on('unhandledRejection', (reason, promise) => {
     measureCtx.error('Unhandled Rejection at:', { reason, promise })
   })
-  process.on('SIGINT', close)
-  process.on('SIGTERM', close)
-  process.on('exit', close)
+  process.on('SIGINT', () => {
+    void close()
+  })
+  process.on('SIGTERM', () => {
+    void close()
+  })
+  process.on('exit', () => {
+    void close()
+  })
 }

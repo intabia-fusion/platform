@@ -136,6 +136,7 @@ export class WorkspaceWorker {
   // Called by the queue consumer when account signals new pending work; resolves doSleep early.
   wakeup: () => void = () => {}
   defaultWakeup: () => void = () => {}
+  private wakeupPending = false
 
   lastActivity: number = Date.now()
   private backoffIdx = 0
@@ -156,6 +157,7 @@ export class WorkspaceWorker {
 
   async start (ctx: MeasureContext, opt: WorkspaceOptions, isCanceled: () => boolean): Promise<void> {
     this.defaultWakeup = () => {
+      this.wakeupPending = true
       ctx.info("I'm busy", { version: this.version, region: this.region })
     }
     this.wakeup = this.defaultWakeup
@@ -746,6 +748,11 @@ export class WorkspaceWorker {
   }
 
   private async doSleep (ctx: MeasureContext, opt: WorkspaceOptions): Promise<void> {
+    if (this.wakeupPending) {
+      this.wakeupPending = false
+      this.noteActivity()
+      return
+    }
     await new Promise<void>((resolve) => {
       // sleep with backoff until the next poll, or until a wakeup event
       // add jitter to avoid simultaneous requests from multiple workspace services

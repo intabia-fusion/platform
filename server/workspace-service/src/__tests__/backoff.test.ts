@@ -43,6 +43,8 @@ jest.mock('@hcengineering/server-storage', () => ({
   storageConfigFromEnv: jest.fn()
 }))
 jest.mock('@hcengineering/server-client', () => ({
+  __esModule: true,
+  default: { metadata: { Endpoint: '', UserAgent: '' } },
   getTransactorEndpoint: jest.fn(),
   withRetryConnUntilSuccess: jest.fn((f: any) => f),
   withRetryConnUntilTimeout: jest.fn()
@@ -51,9 +53,13 @@ jest.mock('@hcengineering/account-client', () => ({
   getClient: jest.fn()
 }))
 jest.mock('@hcengineering/server-token', () => ({
+  __esModule: true,
+  default: { metadata: { Secret: '', Service: '' } },
   generateToken: jest.fn().mockReturnValue('token')
 }))
 jest.mock('@hcengineering/server-tool', () => ({
+  __esModule: true,
+  default: { metadata: { InitWorkspace: '', InitRepoDir: '' } },
   FileModelLogger: jest.fn(),
   prepareTools: jest.fn()
 }))
@@ -205,5 +211,95 @@ describe('WorkspaceWorker main loop sleep/wakeup', () => {
     expect(getPendingWorkspace).toHaveBeenCalledTimes(2)
 
     await stop()
+  })
+
+  it('re-polls when wakeup arrives while the pending request is finishing', async () => {
+    const { getClient } = jest.requireMock('@hcengineering/account-client')
+    const worker = createWorker()
+    const getPendingWorkspace = jest
+      .fn()
+      .mockImplementationOnce(async () => {
+        worker.wakeup()
+        return null
+      })
+      .mockResolvedValue(null)
+    getClient.mockReturnValue({
+      workerHandshake: jest.fn().mockResolvedValue(undefined),
+      getPendingWorkspace
+    })
+
+    let canceled = false
+    const done = worker.start(loopCtx, opt, () => canceled)
+    await jest.advanceTimersByTimeAsync(0)
+
+    expect(getPendingWorkspace).toHaveBeenCalledTimes(2)
+
+    canceled = true
+    worker.wakeup()
+    await jest.advanceTimersByTimeAsync(0)
+    await done
+  })
+})
+
+describe('workspace service shutdown', () => {
+  it('wakes the worker and waits for queue shutdown', async () => {
+    const originalEnv = process.env
+    const events = ['uncaughtException', 'unhandledRejection', 'SIGINT', 'SIGTERM', 'exit'] as const
+    const previousListeners = new Map<string, Set<unknown>>(
+      events.map((event) => [event, new Set(process.listeners(event as any))])
+    )
+    let wakeup: jest.Mock | undefined
+    const start = jest.spyOn(WorkspaceWorker.prototype, 'start').mockImplementation(async function (
+      this: WorkspaceWorker
+    ) {
+      this.wakeup = jest.fn()
+      wakeup = this.wakeup as jest.Mock
+    })
+    let finishShutdown: () => void = () => {}
+    const shutdown = jest.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          finishShutdown = resolve
+        })
+    )
+    const queue = {
+      getProducer: jest.fn().mockReturnValue({}),
+      createConsumer: jest.fn(),
+      shutdown
+    }
+    const onClose = jest.fn()
+
+    try {
+      process.env = {
+        ...originalEnv,
+        ACCOUNTS_URL: 'http://account',
+        ACCOUNTS_DB_URL: 'postgres',
+        SERVER_SECRET: 'secret'
+      }
+      const { serveWorkspaceAccount } = jest.requireActual('../index')
+      const serveCtx = { ...ctx, newChild: jest.fn(() => ctx) }
+      serveWorkspaceAccount(serveCtx, queue, { major: 0, minor: 7, patch: 0 }, [], [], {}, onClose)
+      const close = process
+        .listeners('SIGTERM')
+        .find((listener) => previousListeners.get('SIGTERM')?.has(listener) !== true)
+      expect(close).toBeDefined()
+
+      const closing = close?.('SIGTERM') as unknown as Promise<void>
+      expect(wakeup).toHaveBeenCalledTimes(1)
+      expect(shutdown).toHaveBeenCalledTimes(1)
+      expect(onClose).not.toHaveBeenCalled()
+
+      finishShutdown()
+      await closing
+      expect(onClose).toHaveBeenCalledTimes(1)
+    } finally {
+      start.mockRestore()
+      process.env = originalEnv
+      for (const event of events) {
+        for (const listener of process.listeners(event as any)) {
+          if (previousListeners.get(event)?.has(listener) !== true) { process.removeListener(event as any, listener as any) }
+        }
+      }
+    }
   })
 })
