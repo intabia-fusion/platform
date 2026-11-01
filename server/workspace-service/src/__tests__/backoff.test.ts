@@ -297,7 +297,9 @@ describe('workspace service shutdown', () => {
       process.env = originalEnv
       for (const event of events) {
         for (const listener of process.listeners(event as any)) {
-          if (previousListeners.get(event)?.has(listener) !== true) { process.removeListener(event as any, listener as any) }
+          if (previousListeners.get(event)?.has(listener) !== true) {
+            process.removeListener(event as any, listener as any)
+          }
         }
       }
     }

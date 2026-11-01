@@ -21,20 +21,22 @@ const ctx = new MeasureMetricsContext('test', {})
 
 function setup (rows: Array<{ accountUuid: string, workspaceUuid: string, hasUnread: boolean }>): {
   db: any
-  producer: any
+  queue: any
   sent: any[]
 } {
   const sent: any[] = []
   const db = {
     batchWorkspaceBadgeStatuses: jest.fn(async () => {}),
-    accountWorkspaceBadgeStatus: { find: jest.fn(async () => rows) }
+    accountWorkspaceBadgeStatus: { find: jest.fn(async () => rows) },
+    workspace: { find: jest.fn(async () => rows.map((row) => ({ uuid: row.workspaceUuid, region: '' }))) }
   }
   const producer = {
     send: jest.fn(async (_ctx: unknown, _ws: string, msgs: any[]) => {
       sent.push(...msgs)
     })
   }
-  return { db, producer, sent }
+  const queue = { getProducer: jest.fn(() => producer) }
+  return { db, queue, sent }
 }
 
 const statusChanged = (user: string, workspace: string, hasUnread: boolean): any => ({
@@ -48,7 +50,7 @@ describe('handlePresenceBatch', () => {
   })
 
   it('stores the last flag of a user and workspace in the batch and sends all of their flags', async () => {
-    const { db, producer, sent } = setup([
+    const { db, queue, sent } = setup([
       { accountUuid: 'acc', workspaceUuid: 'ws-1', hasUnread: false },
       { accountUuid: 'acc', workspaceUuid: 'ws-2', hasUnread: true }
     ])
@@ -57,7 +59,7 @@ describe('handlePresenceBatch', () => {
       ctx,
       [statusChanged('acc', 'ws-1', true), statusChanged('acc', 'ws-1', false)],
       Promise.resolve([db, () => {}]),
-      producer
+      queue
     )
 
     expect(db.batchWorkspaceBadgeStatuses).toHaveBeenCalledWith([
@@ -71,7 +73,7 @@ describe('handlePresenceBatch', () => {
   it('stamps the notification with the moment before the read, not after', async () => {
     let now = 1000
     jest.spyOn(Date, 'now').mockImplementation(() => now)
-    const { db, producer, sent } = setup([{ accountUuid: 'acc', workspaceUuid: 'ws-1', hasUnread: true }])
+    const { db, queue, sent } = setup([{ accountUuid: 'acc', workspaceUuid: 'ws-1', hasUnread: true }])
     // A slow read: a snapshot taken by another replica meanwhile must look newer than this one.
     db.accountWorkspaceBadgeStatus.find.mockImplementation(async () => {
       now = 5000
@@ -82,7 +84,7 @@ describe('handlePresenceBatch', () => {
       ctx,
       [{ workspace: 'ws-1', value: { type: QueueUserEvent.login, user: 'acc' } } as any],
       Promise.resolve([db, () => {}]),
-      producer
+      queue
     )
 
     expect(sent[0].tx.modifiedOn).toBe(1000)
