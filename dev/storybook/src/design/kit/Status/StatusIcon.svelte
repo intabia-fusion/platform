@@ -19,6 +19,7 @@
   import IconCompleted from '../../../../../../plugins/task-resources/src/components/icons/IconCompleted.svelte'
   import IconStarted from '../../../../../../plugins/task-resources/src/components/icons/IconStarted.svelte'
   import IconUnstarted from '../../../../../../plugins/task-resources/src/components/icons/IconUnstarted.svelte'
+  import { demo } from '../../demo'
   import { categoryColor, paletteIndex } from '../palette'
   import type { Status } from '../types'
 
@@ -32,11 +33,18 @@
     won: IconCompleted,
     lost: IconCanceled
   }
+  $: projectStatuses = demo.en.statuses.filter((item) => item.category === status.category)
+  $: index = projectStatuses.findIndex((item) => item.name === status.name) + 1
+  $: count = projectStatuses.length + 1
   $: fill = paletteIndex(status.color ?? categoryColor[status.category])
 </script>
 
 <span class="kit-status-icon">
-  <Icon icon={icons[status.category]} {size} iconProps={{ fill }} />
+  <Icon
+    icon={icons[status.category]}
+    {size}
+    iconProps={status.category === 'active' ? { fill, index, count } : { fill }}
+  />
 </span>
 
 <style>

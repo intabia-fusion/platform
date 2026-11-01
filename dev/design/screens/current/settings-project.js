@@ -347,7 +347,7 @@ await kit.page('Project settings')
           fill: T('theme-list-row-color'),
           radius: 6
         }),
-        kit.StatusIcon('active'),
+        kit.StatusIcon('active', 14, undefined, 'In Progress'),
         kit.text('In Progress')
       )
     ),

@@ -717,7 +717,7 @@ const addValue = () => kit.IconButton('plus', { kind: 'ghost', size: 'extra-smal
         kit.add(kit.row('c', 6), kit.icon('drag', T('theme-darker-color')), kit.Swatch(P('Orange'))),
         kit.add(
           kit.row('c', 6),
-          kit.FilterChip('Статус', 'равен', [kit.StatusIcon('active'), kit.text('Ready for QA', { size: 14 })], { plain: true, condition: true }),
+          kit.FilterChip('Статус', 'равен', [kit.StatusIcon('active', 14, undefined, 'Ready for QA'), kit.text('Ready for QA', { size: 14 })], { plain: true, condition: true }),
           addValue()
         ),
         kit.IconButton('trash', { kind: 'ghost', size: 'extra-small' })
@@ -726,7 +726,7 @@ const addValue = () => kit.IconButton('plus', { kind: 'ghost', size: 'extra-smal
         kit.add(kit.row('c', 6), kit.icon('drag', T('theme-darker-color')), kit.Swatch(P('Firework'))),
         kit.add(
           kit.row('c', 6),
-          kit.FilterChip('Статус', 'равен', [kit.StatusIcon('active'), kit.text('Peer Review', { size: 14 })], { plain: true, condition: true }),
+          kit.FilterChip('Статус', 'равен', [kit.StatusIcon('active', 14, undefined, 'Peer Review'), kit.text('Peer Review', { size: 14 })], { plain: true, condition: true }),
           addValue()
         ),
         kit.IconButton('trash', { kind: 'ghost', size: 'extra-small' })
@@ -741,6 +741,7 @@ const addValue = () => kit.IconButton('plus', { kind: 'ghost', size: 'extra-smal
     kit.IssueCard(
       {
         id: 'APP-29',
+        statusName: DEMO.ru.projects.flatMap((project) => project.issues).find((issue) => issue.id === 'APP-29').status,
         cat: 'active',
         title: 'Ссылки на товар из внешних источников',
         assignee: ['КМ', 'Grass'],
@@ -753,6 +754,7 @@ const addValue = () => kit.IconButton('plus', { kind: 'ghost', size: 'extra-smal
     kit.IssueCard(
       {
         id: 'APP-27',
+        statusName: DEMO.ru.projects.flatMap((project) => project.issues).find((issue) => issue.id === 'APP-27').status,
         cat: 'active',
         title: 'Проверка количества товара в корзине',
         assignee: ['ПИ', 'Watermelon'],

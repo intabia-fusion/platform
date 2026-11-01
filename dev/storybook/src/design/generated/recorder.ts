@@ -221,7 +221,11 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
   const toColumn = (name: string, cat: string, count: number, o: Record<string, any>): Record<string, any> =>
     clean({
       name,
-      status: clean({ category: cat, color: o.color }),
+      status: clean({
+        category: cat,
+        color: o.color,
+        name: o.statuses === undefined ? name : o.statuses.length === 1 ? o.statuses[0][0] : undefined
+      }),
       count,
       limit: o.limit,
       over: o.over,
@@ -241,8 +245,8 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
       pressed: o.pressed
     })
   kit.IconButton = (icon: string, o: Record<string, any> = {}) => kit.Button({ ...o, icon, label: undefined })
-  kit.StatusIcon = (cat: string, _size?: number, palette?: string) =>
-    node('StatusIcon', 'StatusIcon/' + cat, { status: clean({ category: cat, color: palette }) })
+  kit.StatusIcon = (cat: string, _size?: number, palette?: string, name?: string) =>
+    node('StatusIcon', 'StatusIcon/' + cat, { status: clean({ category: cat, color: palette, name }) })
   kit.PriorityIcon = (level: string) => node('PriorityIcon', 'PriorityIcon/' + level, { priority: level })
   kit.Avatar = (initials: string, color = 'Blueberry', size = 20, round = false) =>
     node('Avatar', 'Avatar/' + size, { person: person(initials, color), size, round: round || undefined })
@@ -540,7 +544,7 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
   const toGroup = (g: Record<string, any>): Record<string, any> =>
     clean({
       name: g.name,
-      status: clean({ category: g.cat, color: g.color }),
+      status: clean({ category: g.cat, color: g.color, name: g.name }),
       estimation: g.estimation,
       issues: g.issues?.map(toIssue)
     })

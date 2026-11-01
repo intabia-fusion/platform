@@ -58,6 +58,15 @@ export const StatusIconStates: Story = sections([
       title: color,
       props: { status: { category: 'active', color } }
     }))
+  },
+  {
+    title: 'StatusIcon - shared project order in every view',
+    component: StatusIcon,
+    rows: [{ title: 'active', props: {} }],
+    columns: ['In Progress', 'Development', 'Verification', 'Unknown status'].map((name) => ({
+      title: name,
+      props: { status: status(name, 'active') }
+    }))
   }
 ])
 
