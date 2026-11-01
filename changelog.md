@@ -2,6 +2,17 @@
 
 Changelog.
 
+## [0.8.64] - 2026-11-01
+
+* 🚀 FEATURES: · FUSIO-1621: Add configurable boards and redesign project creation and settings ([#626](https://github.com/hcengineering/platform/issues/626)) · FUSIO-1677: Add document previews and open documents inside chat ([#642](https://github.com/hcengineering/platform/issues/642)) · Show typing indicators in the chat navigator ([#643](https://github.com/hcengineering/platform/issues/643)) · FUSIO-1012: Include sender details in workspace invitation emails ([#640](https://github.com/hcengineering/platform/issues/640))
+* 🐛 BUG FIXES: · FUSIO-1569: Preserve historical activity entries when changing issue type ([#630](https://github.com/hcengineering/platform/issues/630)) · FUSIO-1629: Validate name and email length during registration ([#647](https://github.com/hcengineering/platform/issues/647))
+* 🧩 OTHER: · Wait for loaded tabs in the rage-click test ([#648](https://github.com/hcengineering/platform/issues/648))
+
+## [0.8.63] - 2026-10-30
+
+* 🐛 BUG FIXES: · FUSIO-1526: Enforce password policy on the server ([#611](https://github.com/hcengineering/platform/issues/611)) · FUSIO-1584: Prevent repeated asynchronous button actions ([#582](https://github.com/hcengineering/platform/issues/582)) · FUSIO-1618: Apply template subtasks after attaching an image ([#629](https://github.com/hcengineering/platform/issues/629))
+* 🧩 OTHER: · FUSIO-1081: Trace push notification delivery and delays ([#638](https://github.com/hcengineering/platform/issues/638))
+
 ## [0.8.62] - 2026-10-28
 
 * 🚀 FEATURES: · Applets and polls in chat ([#628](https://github.com/hcengineering/platform/issues/628)) · FUSIO-1434, FUSIO-1027, FUSIO-1388, FUSIO-1589: Attachments browser and redesign ([#621](https://github.com/hcengineering/platform/issues/621)) · FUSIO-1594: Auto documentation ([#620](https://github.com/hcengineering/platform/issues/620)) · FUSIO-1594: Mail fixes and disabled features handling ([#631](https://github.com/hcengineering/platform/issues/631))
