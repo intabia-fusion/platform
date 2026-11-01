@@ -36,6 +36,7 @@ test.describe('Rage click: workbench tabs', () => {
 
     // The tab bar carries leftover tabs from earlier runs on this shared account; read a settled
     // baseline instead of a raw count that can change under us while the list is still loading.
+    await expect(tabs.first()).toBeVisible()
     const before = await waitStable(count, { stableFor: 1000, interval: 200, timeout: 10000 })
 
     await rageClick(addButton)
