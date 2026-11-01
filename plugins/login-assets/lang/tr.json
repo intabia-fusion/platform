@@ -1,5 +1,6 @@
 {
   "status": {
+    "FieldTooLong": "{field} alanı en fazla {count} karakter olabilir",
     "RequiredField": "Gerekli alan {field}",
     "FieldsDoNotMatch": "{field}, {field2} ile eşleşmiyor",
     "ConnectingToServer": "Sunucuya bağlanılıyor....",

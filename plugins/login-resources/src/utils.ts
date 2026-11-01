@@ -66,6 +66,14 @@ import { type Pages } from './index'
 import login from './plugin'
 import { mapPasswordPolicyStatus } from './validations'
 
+export function readAuthEmail (): string {
+  return localStorage.getItem(login.metadata.AuthEmail) ?? ''
+}
+
+export function saveAuthEmail (value: string | null): void {
+  setMetadataLocalStorage(login.metadata.AuthEmail, value)
+}
+
 /**
  * Constructs an account client.
  * @param token - The token to use for authentication. If not provided, the token from the metadata will be used. If null, no token will be used.

@@ -21,9 +21,12 @@
     Icon,
     Menu,
     showPopup,
-    NavItem
+    NavItem,
+    tooltip
   } from '@hcengineering/ui'
+  import { TypingIndicator } from '@hcengineering/ui/kit'
   import { NotifyMarker } from '@hcengineering/notification-resources'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
   import type { Asset, IntlString } from '@hcengineering/platform'
   import notification from '@hcengineering/notification'
 
@@ -44,6 +47,8 @@
   export let type: 'type-link' | 'type-tag' | 'type-anchor-link' | 'type-object' = 'type-link'
   export let muted: boolean = false
   export let pressed = false
+  export let typing: boolean | undefined = undefined
+  export let typingTooltip: string | undefined = undefined
 
   let menuOpened = false
   let inlineActions: Action[] = []
@@ -89,6 +94,22 @@
   on:click
   on:contextmenu
 >
+  <svelte:fragment slot="icon">
+    {#if icon !== undefined}
+      {#if typing === undefined}
+        <Icon {icon} size={iconSize} {iconProps} />
+      {:else}
+        <TypingIndicator {typing}>
+          <span
+            class="typing-anchor"
+            use:tooltip={typingTooltip !== undefined ? { label: getEmbeddedLabel(typingTooltip) } : undefined}
+          >
+            <Icon {icon} size={iconSize} {iconProps} />
+          </span>
+        </TypingIndicator>
+      {/if}
+    {/if}
+  </svelte:fragment>
   <svelte:fragment slot="afterTitle">
     {#if muted}
       <span class="icon">
@@ -141,6 +162,16 @@
       color: var(--global-primary-TextColor);
       background-color: var(--global-ui-highlight-BackgroundColor);
     }
+  }
+
+  // Plate-sized, so the mark sits on the plate corner; the centred plate lets it over its 1px border.
+  .typing-anchor {
+    display: flex;
+    flex-shrink: 0;
+    justify-content: center;
+    align-items: center;
+    width: var(--global-extra-small-Size);
+    height: var(--global-extra-small-Size);
   }
 
   .icon {

@@ -152,7 +152,7 @@ After the command completes, read the exported image to show it to the user:
 pen --out design.pen --prompt "..." --export design.png --export-scale 2
 ```
 
-Then use the Read tool on the exported PNG — it will render visually since you're a multimodal model.
+Then use an available image-viewing tool on the exported PNG and show the result to the user.
 
 Always show the image to the user after creating it. This is the whole point — they want to see the visual.
 

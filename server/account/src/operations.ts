@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 import { Analytics } from '@hcengineering/analytics'
-import type { PasswordPolicy } from '@hcengineering/account-client'
+import { MAX_EMAIL_LENGTH, MAX_PERSON_NAME_LENGTH, type PasswordPolicy } from '@hcengineering/account-client'
 import {
   type AccountInfo,
   AccountRole,
@@ -114,6 +114,7 @@ import {
   addSocialIdBase,
   assignableRoles,
   checkInvite,
+  checkFieldLength,
   checkPasswordAging,
   cleanEmail,
   confirmEmail,
@@ -135,6 +136,7 @@ import {
   getEndpointInfo,
   getFrontUrl,
   getInviteEmail,
+  getInviteSender,
   getPersonName,
   getRegions,
   getRolePower,
@@ -394,6 +396,10 @@ export async function signUp (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
   }
 
+  checkFieldLength(ctx, 'email', cleanEmail(email), MAX_EMAIL_LENGTH)
+  checkFieldLength(ctx, 'firstName', firstName, MAX_PERSON_NAME_LENGTH)
+  checkFieldLength(ctx, 'lastName', lastName ?? '', MAX_PERSON_NAME_LENGTH)
+
   const systemToken = isSystemToken(token)
 
   if (!systemToken && getMetadata(accountPlugin.metadata.AllowSkipOtpPasswordSignUp) !== true) {
@@ -459,6 +465,9 @@ export async function signUpOtp (
 
   // Note: can support OTP based on any other social logins later
   const normalizedEmail = cleanEmail(email)
+  checkFieldLength(ctx, 'email', normalizedEmail, MAX_EMAIL_LENGTH)
+  checkFieldLength(ctx, 'firstName', firstName, MAX_PERSON_NAME_LENGTH)
+  checkFieldLength(ctx, 'lastName', lastName ?? '', MAX_PERSON_NAME_LENGTH)
   ensureNotAiBot(normalizedEmail)
   const normalizedPhone = phone !== undefined && phone !== '' ? normalizePhone(phone) : ''
   // A phone is never verified, so claiming exclusive ownership of it would block re-signup forever.
@@ -936,11 +945,17 @@ export async function sendInvite (
   verifyAllowedRole(callerRole, role, extra)
 
   const inviteLink = await createInviteLink(ctx, db, branding, token, params)
-  const inviteEmail = await getInviteEmail(branding, email, inviteLink, workspace, expHours ?? 48, false)
+  const sender = await getInviteSender(db, account, callerRole, branding?.lastNameFirst === 'true')
+  const inviteEmail = await getInviteEmail(branding, email, inviteLink, workspace, expHours ?? 48, false, sender)
 
   await sendEmail(inviteEmail, ctx)
 
-  ctx.info('Invite has been sent', { to: inviteEmail.to, workspaceUuid: workspace.uuid, workspaceName: workspace.name })
+  ctx.info('Invite has been sent', {
+    to: inviteEmail.to,
+    workspaceUuid: workspace.uuid,
+    workspaceName: workspace.name,
+    account
+  })
 }
 
 export async function createAccessLink (
@@ -1196,13 +1211,15 @@ export async function resendInvite (
   const front = getFrontUrl(branding)
   const link = concatLink(front, `/login/join?inviteId=${inviteId}`)
 
-  const inviteEmail = await getInviteEmail(branding, email, link, workspace, expHours, true)
+  const sender = await getInviteSender(db, account, callerRole, branding?.lastNameFirst === 'true')
+  const inviteEmail = await getInviteEmail(branding, email, link, workspace, expHours, true, sender)
   await sendEmail(inviteEmail, ctx)
 
   ctx.info('Invite has been resent', {
     to: inviteEmail.to,
     workspaceUuid: workspace.uuid,
-    workspaceName: workspace.name
+    workspaceName: workspace.name,
+    account
   })
 }
 
@@ -1536,6 +1553,10 @@ export async function signUpJoin (
   if (password == null || password === '' || first == null || first === '') {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
   }
+
+  checkFieldLength(ctx, 'email', cleanEmail(email), MAX_EMAIL_LENGTH)
+  checkFieldLength(ctx, 'firstName', first, MAX_PERSON_NAME_LENGTH)
+  checkFieldLength(ctx, 'lastName', last ?? '', MAX_PERSON_NAME_LENGTH)
 
   const systemToken = isSystemToken(token)
 
@@ -1876,6 +1897,9 @@ export async function changeUsername (
   if (first == null || first === '') {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
   }
+
+  checkFieldLength(ctx, 'firstName', first, MAX_PERSON_NAME_LENGTH)
+  checkFieldLength(ctx, 'lastName', last ?? '', MAX_PERSON_NAME_LENGTH)
 
   const { account } = decodeTokenVerbose(ctx, token)
 

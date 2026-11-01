@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import { type IntlString, OK, Severity, Status } from '@hcengineering/platform'
-  import type { LoginInfo } from '@hcengineering/account-client'
+  import { type LoginInfo, MAX_EMAIL_LENGTH } from '@hcengineering/account-client'
 
   import { doLogin, doLoginNavigate, goTo } from '../utils'
   import Form from './Form.svelte'
@@ -22,7 +22,7 @@
   import { recoveryAction } from '../actions'
   import type { BottomAction } from '../index'
   import login from '../plugin'
-  import { fetchMetadataLocalStorage, setMetadataLocalStorage } from '@hcengineering/ui'
+  import { readAuthEmail, saveAuthEmail } from '../utils'
   import { onDestroy } from 'svelte'
 
   export let navigateUrl: string | undefined = undefined
@@ -40,6 +40,7 @@
       name: 'username',
       i18n: login.string.Email,
       inputmode: 'email' as const,
+      maxLength: MAX_EMAIL_LENGTH,
       disabled: email !== undefined && email !== ''
     },
     {
@@ -51,7 +52,7 @@
   ]
 
   const object = {
-    username: email ?? fetchMetadataLocalStorage(login.metadata.AuthEmail) ?? '',
+    username: email ?? readAuthEmail(),
     password: ''
   }
 
@@ -72,7 +73,7 @@
         status = loginStatus
 
         if (result != null) {
-          setMetadataLocalStorage(login.metadata.AuthEmail, null)
+          saveAuthEmail(null)
         }
 
         if (onLogin !== undefined) {
@@ -93,7 +94,7 @@
   }
 
   onDestroy(() => {
-    setMetadataLocalStorage(login.metadata.AuthEmail, object.username ?? '')
+    saveAuthEmail(object.username ?? '')
   })
 </script>
 

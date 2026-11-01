@@ -1,5 +1,6 @@
 {
   "status": {
+    "FieldTooLong": "Pole {field} nesmí být delší než {count} znaků",
     "RequiredField": "Povinné pole {field}",
     "FieldsDoNotMatch": "{field} se neshoduje s {field2}",
     "ConnectingToServer": "Připojování k serveru....",

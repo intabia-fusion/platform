@@ -13,10 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License
 
-import { type PersonId, type Ref, type Space } from '@hcengineering/core'
+import { getCurrentAccount, type PersonId, type Ref, type Space } from '@hcengineering/core'
 import { type IntlString } from '@hcengineering/platform'
 import { createQuery, getClient } from '@hcengineering/presentation'
 import pulse, { type TypingIndicator } from '@hcengineering/pulse'
+import { readable, type Readable } from 'svelte/store'
 
 export interface TypingInfo {
   socialId: PersonId
@@ -74,6 +75,24 @@ export function typing (node: HTMLElement, params: TypingActionParams): any {
     }
   }
 }
+
+/** Who types where, without the current account: object id to the social ids typing in it. */
+export const typingByObject: Readable<Map<string, PersonId[]>> = readable(new Map(), (set) => {
+  // One query for every subscriber: a row per chat would be a query per row.
+  const query = createQuery(true)
+  const me = new Set(getCurrentAccount().socialIds)
+  query.query(pulse.class.TypingIndicator, {}, (result) => {
+    const next = new Map<string, PersonId[]>()
+    for (const doc of result) {
+      if (me.has(doc.socialId)) continue
+      next.set(doc.objectId, [...(next.get(doc.objectId) ?? []), doc.socialId])
+    }
+    set(next)
+  })
+  return () => {
+    query.unsubscribe()
+  }
+})
 
 export async function setTyping (
   socialId: PersonId,

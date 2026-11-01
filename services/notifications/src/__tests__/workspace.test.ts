@@ -57,13 +57,20 @@ describe('isTransientError', () => {
   })
 })
 
+// The service wraps its steps in ctx.with: a test context has to run the operation and pass itself on.
+function testCtx (): any {
+  const ctx: any = { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
+  ctx.with = jest.fn(async (_name: string, _params: any, op: (c: any) => any) => await op(ctx))
+  return ctx
+}
+
 // Workspace's constructor is private only at the type level.
 // Object.create(Workspace.prototype) builds a bare instance we hand-fill for applyResult.
 describe('Workspace.applyResult (private, exercised via a bare instance)', () => {
   function makeInstance (overrides: { tx?: jest.Mock, send?: jest.Mock, schedule?: jest.Mock }): any {
     const instance: any = Object.create((Workspace as any).prototype)
     instance.inProgress = new Set()
-    instance.ctx = { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
+    instance.ctx = testCtx()
     instance.cache = { tx: jest.fn(), resetContexts: jest.fn(), getCachedContext: jest.fn() }
     instance.client = { findOne: jest.fn() }
     instance.producer = { send: overrides.send ?? jest.fn().mockResolvedValue(undefined) }
@@ -180,7 +187,7 @@ describe('Workspace.applyResult: the time machine', () => {
     const schedule = jest.fn().mockResolvedValue(undefined)
     const instance: any = Object.create((Workspace as any).prototype)
     instance.inProgress = new Set()
-    instance.ctx = { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
+    instance.ctx = testCtx()
     instance.cache = { tx: jest.fn(), resetContexts: jest.fn() }
     instance.producer = { send: jest.fn().mockResolvedValue(undefined) }
     instance.timeMachine = { send: schedule }
@@ -200,7 +207,7 @@ describe('Workspace.applyResult: the time machine', () => {
     try {
       const instance: any = Object.create((Workspace as any).prototype)
       instance.inProgress = new Set()
-      instance.ctx = { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
+      instance.ctx = testCtx()
       instance.cache = { tx: jest.fn(), resetContexts: jest.fn() }
       instance.producer = { send: jest.fn().mockResolvedValue(undefined) }
       instance.timeMachine = { send: jest.fn().mockRejectedValue(new Error('broker down')) }
@@ -250,7 +257,7 @@ describe('Workspace.releaseHeld', () => {
     const instance: any = Object.create((Workspace as any).prototype)
     instance.inProgress = new Set()
     instance.released = new Map()
-    instance.ctx = { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
+    instance.ctx = testCtx()
     instance.ws = { uuid: 'ws-1' }
     instance.pipeline = { findAll: jest.fn().mockResolvedValue(states) }
     instance.producer = { send: jest.fn().mockResolvedValue(undefined) }
@@ -316,7 +323,7 @@ describe('Workspace.close', () => {
     instance.inProgress = new Set()
     const order: string[] = []
     let release: () => void = () => {}
-    instance.ctx = { error: jest.fn() }
+    instance.ctx = testCtx()
     instance.pipeline = { close: jest.fn(async () => order.push('pipeline closed')) }
     instance.pendingPush = { flushAll: jest.fn(async () => order.push('held pushes flushed')) }
     instance.processTx = async () => {
@@ -399,7 +406,7 @@ describe('Workspace.releaseHeldPushes (private, exercised via a bare instance)',
       isDerived: (a: string, b: string) => a === b
     }
     instance.model = { addTxes: jest.fn() }
-    instance.ctx = { error: jest.fn() }
+    instance.ctx = testCtx()
     await instance.processTx({ _class: core.class.TxRemoveDoc, objectClass: core.class.UserStatus, objectId: 'us-1' })
     expect(instance.pendingPush.flushByAccount).toHaveBeenCalledWith('acc-1')
   })
@@ -477,7 +484,7 @@ describe('Workspace holds the native pushes of an applied batch (bare instance)'
   function bare (): any {
     const instance: any = Object.create((Workspace as any).prototype)
     instance.inProgress = new Set()
-    instance.ctx = { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
+    instance.ctx = testCtx()
     instance.cache = { tx: jest.fn(), resetContexts: jest.fn() }
     instance.producer = { send: jest.fn().mockResolvedValue(undefined) }
     instance.timeMachine = { send: jest.fn().mockResolvedValue(undefined) }
@@ -537,7 +544,7 @@ describe('Workspace.processTx: read all (bare instance)', () => {
   function bare (): any {
     const instance: any = Object.create((Workspace as any).prototype)
     instance.inProgress = new Set()
-    instance.ctx = { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
+    instance.ctx = testCtx()
     instance.hierarchy = { findDomain: () => 'transient', isDerived: (a: string, b: string) => a === b }
     instance.model = { addTxes: jest.fn() }
     instance.cache = {
@@ -646,7 +653,7 @@ describe('Workspace.processTx: read all (bare instance)', () => {
 describe('Workspace client: transient docs come from the transactor (bare instance)', () => {
   function makeInstance (): any {
     const instance: any = Object.create((Workspace as any).prototype)
-    instance.ctx = { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
+    instance.ctx = testCtx()
     instance.hierarchy = {
       findDomain: jest.fn((cls) => (cls === core.class.UserStatus ? DOMAIN_TRANSIENT : 'notification'))
     }

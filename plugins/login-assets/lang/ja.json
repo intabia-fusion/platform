@@ -1,5 +1,6 @@
 {
   "status": {
+    "FieldTooLong": "{field}は{count}文字以内で入力してください",
     "RequiredField": "必須フィールド {field}",
     "FieldsDoNotMatch": "{field} が {field2} と一致しません",
     "ConnectingToServer": "サーバーに接続中....",
