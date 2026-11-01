@@ -28,3 +28,9 @@
 ## Почта и OTP на стендах
 
 Почта (account -> redpanda -> mail_server -> mailpit) работает, но nodemailer отбрасывает адрес без `@` ("No recipients defined") - OTP для логинов `admin`/`user1` не доходил. Seed поэтому создаёт `admin@admin`, `user1@user1`, `user2@user2` (`ci_deploy.sh`). `isEmail` в `server/account/src/utils.ts` требует точку в домене (regex `(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+...`), но проверяет только операции с почтовыми ящиками (`operations.ts`), не логин.
+
+## Версия модели и теги в GitLab
+
+- `common/scripts/show_version.js` отдаёт `version.txt`, только если `git describe --tags --match "v*"` находит тег; иначе раньше молча печатал `"0.6.0"`. GitLab клонирует с `GIT_DEPTH: 300`, и если свежие `v*` теги туда не запушены (2026-10-26: последний там `v0.8.0`, 491 коммит назад), `get-model` транзактора собирает `model.json` с версией 0.6.0. Стенд после деплоя показывает "Подготовка рабочего пространства для новой версии... 0.6.0 => 0.8.15" (`connect.ts`: версия модели воркспейса не равна `MODEL_VERSION` фронта), хотя workspace-сервис обновил воркспейсы до 0.8.15.
+- Теперь при `CI` скрипт и `getVersionFromScript` в `common/scripts/esbuild.js` падают вместо подстановки 0.6.0. Лечится пушем тегов: `git push intabia_local --tags`.
+- Проверка на стенде: `grep -o '"major":[0-9]*,"minor":[0-9]*,"patch":[0-9]*' /usr/src/app/model.json` в контейнере транзактора.

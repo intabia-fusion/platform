@@ -2,7 +2,24 @@
 
 > Сверено с кодом: коммит 39ae47eb6f, 2026-09-23.
 
-Issue-трекер платформы: проекты (`Project`), задачи (`Issue`) с иерархией подзадач, приоритетами, статусами, оценкой и учётом времени, компонентами и вехами (`Milestone`). Поверх задач работает общий движок типов задач и статусов (`task`), конечный автомат переходов статусов (`workflow`), представления list/kanban (`view`) и теги-метки (`tags`). Сущности: `Issue`, `Project`, `Component`, `Milestone`, `IssueTemplate`, `TimeSpendReport`, `TaskType`, `Workflow`.
+Проекты (`Project`) объединяют задачи (`Issue`), компоненты (`Component`) и вехи (`Milestone`). `task` задаёт типы задач и статусы, `workflow` проверяет переходы, `view` строит представления, `tags` связывает метки с задачами.
+
+
+## Подробные карты
+
+| Документ | Содержание |
+| --- | --- |
+| [Задачи, время и представления](tracker-issues.md) | Issue, подзадачи, связи, шаблоны, отчёты времени, списки, канбан, поиск, фильтры и метки |
+| [Доски задач](tracker-boards.md) | Board, колонки, дорожки, карточки, настройки, доступ, навигация и создание |
+| [Проекты, типы задач и workflow](tracker-projects-workflow.md) | Создание и настройки проектов, компоненты, вехи, TaskType, статусы, правила переходов и импорт |
+
+## Общая архитектура
+
+- `Issue` наследует `Task`; `Project` определяет пространство задач и значения по умолчанию.
+- Модели регистрируют классы, представления и действия; resources-пакеты реализуют UI, серверные пакеты проверяют транзакции и пересчитывают данные.
+- `WorkflowMiddleware` проверяет переходы статуса; `BoardMiddleware` после него проверяет запись досок.
+- `OnIssueUpdate` обновляет учёт времени, `reduceChildInfoTree` агрегирует дерево подзадач.
+- Назначение исполнителя или Active/ToDo у Issue создаёт `ToDo`; `WorkSlot` зеркалится в `TimeSpendReport`. Закрытие `ToDo` не меняет статус Issue.
 
 ## Где код
 
@@ -12,7 +29,7 @@ Issue-трекер платформы: проекты (`Project`), задачи 
 | tracker | `plugins/tracker/src` | Типы/enum'ы, shared-хелпер `CreateIssue`, `duration.ts`, `splitReportedTime`/`reduceChildInfoTree` |
 | tracker-resources | `plugins/tracker-resources/src` | UI: список/канбан задач, диалоги создания/редактирования, time tracking |
 | tracker-assets | `plugins/tracker-assets/lang` | Локализация |
-| server-tracker | `server-plugins/tracker/src` | Типы серверного плагина (презентеры, link-провайдеры) |
+| server-tracker | `server-plugins/tracker/src` | Типы серверного плагина (презентеры, link-провайдеры), `BoardMiddleware` (права на запись досок) |
 | server-tracker-resources | `server-plugins/tracker-resources/src` | Триггеры `OnIssueUpdate`/`OnComponentRemove`/`OnProjectRemove` |
 | model-task | `models/task/src` | Базовый `Task`, `TaskType`, `TaskTypeDescriptor`, категории статусов |
 | task | `plugins/task/src` | Типы + `transfer/` (экспорт/импорт TaskType) |
@@ -36,186 +53,8 @@ Issue-трекер платформы: проекты (`Project`), задачи 
 | server-tags, server-tags-resources | `server-plugins/tags*` | Триггеры на удаление тегов/ссылок |
 | model-card, card, card-resources | `models/card`, `plugins/card*` | Отдельная generic-модель "карточек" (`Card`/`MasterTag`/`Tag`) - трекер её не импортирует; основной текст карточки в поиске - `content` (`contentField`, `models/server-card`) |
 
-## Модель данных
-
-| Класс | Смысл | Файл |
-| --- | --- | --- |
-| `TIssue` | Задача, `extends TTask`; `title`/`description` (FullText), `status`, `priority`, `assignee`, `component`, `milestone`, `estimation`/`remainingTime`/`reportedTime`, `subIssues`/`parents`/`childInfo` (денормализованное дерево), `blockedBy`/`relations`, `labels: Collection<TagReference>`, `template?`, `todos` (hidden, коллекция `ToDo`) | `models/tracker/src/types.ts` |
-| `TTask` (база) | `status`, `kind` (ReadOnly, ссылка на `TaskType`), `number`, `assignee`, `dueDate`, `rank` (lexorank), `labels`, `comments`, `attachments`, `isDone`, `identifier` | `models/task/src/index.ts` |
-| `TProject` | `identifier` (FullText, префикс `PROJECT-N`), `sequence`, `defaultIssueStatus`, `defaultAssignee`, `defaultTimeReportDay`, `relatedIssueTargets` | `models/tracker/src/types.ts` |
-| `TComponent` | `label`, `description`, `lead`; агрегация по лидеру | `models/tracker/src/types.ts` |
-| `TMilestone` | `label`, `status: MilestoneStatus`, `targetDate` | `models/tracker/src/types.ts` |
-| `TIssueTemplate` | Шаблон задачи: поля `IssueTemplateData` + `children: IssueTemplateChild[]` (дерево) | `models/tracker/src/types.ts` |
-| `TTimeSpendReport` | Запись времени: `attachedTo`, `employee`, `date`, `value`, `description`, `workslot?: Ref<WorkSlot>` (hidden, зеркалит слот планировщика) | `models/tracker/src/types.ts` |
-| `TRelatedIssueTarget` | Маппинг проект-проект для связей issues: `rule: RelatedClassRule \| RelatedSpaceRule` | `models/tracker/src/types.ts` |
-| `TaskType` | `name`, `parent: Ref<ProjectType>`, `isRootTaskType`, `allowAnyParent`, `allowedAsChildOf`, `ofClass`, `targetClass`, `statuses`, `statusClass`, `statusCategories` | `models/task/src/index.ts` |
-| `TaskTypeDescriptor` | `statusCategoriesFunc`, `defaultStatusesFunc`, `allowCreate` | `models/task/src/index.ts` |
-| `Workflow`/`WorkflowTransition` | Конечный автомат статусов на пару "тип проекта + тип задачи"; переход: `from`/`to`/`rank`+ 3 вида правил | `models/workflow/src/index.ts` |
-| `TTagCategory`/`TTagElement`/`TTagReference` | Категория меток / метка / привязка метки к документу (используется как `Issue.labels`) | `models/tags/src/index.ts` |
-
-`IssuePriority` (`NoPriority/Urgent/High/Medium/Low`), `MilestoneStatus` (`Planned/InProgress/Completed/Canceled`), `TimeReportDayType` (`CurrentWorkDay/PreviousWorkDay`), `IssuesGrouping`/`IssuesOrdering` - `plugins/tracker/src/index.ts`.
-
-Классический тип задачи `tracker.taskTypes.Issue` ("Classic Issue", root, `allowAnyParent`) и статусы Backlog/Todo/In Progress/Done/Canceled (категории UnStarted/ToDo/Active/Won/Lost) заданы статически в `defineSpaceType` - `models/tracker/src/index.ts`, список статусов `classicIssueTaskStatuses` - `models/tracker/src/index.ts`.
-
-## Как работает
-
-1. **Создание задачи.** Диалог `CreateIssue.svelte` (`tracker.component.CreateIssue`) собирает `IssueDraft` (`plugins/tracker/src/index.ts`, включает `assistConversation?: Ref<Doc>` - возврат к незавершённому драфту восстанавливает и диалог с AI-ассистентом). Общий хелпер `tracker.function.CreateIssue(client, project, NewIssue) -> CreatedIssue` (`plugins/tracker/src/index.ts`) даёт другим плагинам создавать issues без зависимости от `tracker-resources`.
-2. **Переход статуса под workflow.** Любой CUD на `Task`/`Issue` проходит через `WorkflowMiddleware.tx` (`server-plugins/workflow/src/middleware.ts`): проверка `InitialStatusNotAllowed`/`ForbiddenTransition`/`SelfTransitionNotAllowed`/`TransitionConflict` (`hasSelfTransition`/`getTransitionConflict` - `plugins/workflow/src/utils.ts`), затем исполнение серверных валидаторов/пост-функций правила перехода. Ошибки задачи уходят со `StatusOptions.display = StatusDisplay.Notification` и заголовком `options.title` и показываются тостом на 10 с (`addStatusNotification` - `packages/ui/src/utils.ts`); сервер кладёт id задачи, статусов и подписи полей в `params.refs`, а тост `WorkflowErrorNotification` (`plugins/workflow-resources`) по коду ошибки собирает текст из своих строк и компонентов: статус с иконкой, номер задачи ссылкой, поле жирным. Серверный текст ошибки остаётся для статус-бара, когда тосты выключены. Повтор той же ошибки по той же задаче заменяет тост (`StatusOptions.group`). Ошибки настроек переходов остаются в статус-баре.
-3. **Учёт времени: TimeSpendReport -> Issue.reportedTime.** `OnIssueUpdate` (`server-plugins/tracker-resources/src/index.ts`) ловит CUD на `TimeSpendReport`, `doTimeReportUpdate` инкрементально пересчитывает `reportedTime`; `remainingTime` и суммарная оценка дерева считаются через `reduceChildInfoTree` (`plugins/tracker/src/index.ts`, bottom-up по `childInfo`, оценка родителя = max(своя, сумма по дереву), legacy flat-фоллбэк для старых данных без `parentId`).
-4. **ToDo/WorkSlot <-> TimeSpendReport (FUSIO-38).** Назначение исполнителя или перевод Issue в Active/ToDo создаёт `ToDo` планировщика (`createIssueHandler`/`getCreateToDoTx`, `server-plugins/time-resources/src/index.ts`); обратной связи "закрыл ToDo -> сдвинулся статус Issue" больше нет. `OnWorkSlotCreate/Update/Remove` создают/пересчитывают/удаляют `TimeSpendReport` 1:1 через поле `TimeSpendReport.workslot`. Подробности переезда/переназначения - `docs/memory/planner-todo-issue-decoupling.md` и `../features/planner-calendar.md`.
-5. **Kanban: группировка и drag/drop.** `KanbanView.svelte` (`plugins/tracker-resources/src/components/issues/KanbanView.svelte`) рендерит `IssueKanban` viewlet (`tracker.viewlet.IssueKanban` - `models/tracker/src/viewlets.ts`); `swimLaneBy` (none/assignee/priority/component/milestone/status/attachedTo/space) и `compactMode` - опции `issuesOptions(true)` (`models/tracker/src/viewlets.ts`); перетаскивание меняет `rank` (lexorank) карточки. Порядок дорожек: пустая дорожка первой, дальше функция сортировки поля через `sortSwimLaneValues` (`plugins/tracker-resources/src/utils.ts`: статусы, приоритеты, вехи, исполнитель по имени - `personSort` в `plugins/contact-resources/src/utils.ts`), без неё - `orderSwimLanes` (`plugins/tracker-resources/src/swimLanes.ts`) по метке компонента, имени сотрудника или id.
-   - **Загрузка карточек.** Группы строятся по запросам с проекцией (`docsQuery`, `docsQuerySlow` - `KanbanView.svelte`), а полные карточки грузит один живой запрос на дорожку (без дорожек - на колонку) только за теми карточками, которые ячейка показывает в пределах лимита, дальше - кнопка "Показать больше". Лимиты (`SWIM_CELL_LIMIT`, `COLUMN_LIMIT`) и состав id запроса задаёт `collectVisibleGroups` (`packages/kanban/src/visibleGroups.ts`), сами запросы ведёт `syncLaneQueries` (`packages/kanban/src/components/Kanban.svelte`). Дорожка шлёт запрос, когда подходит к области просмотра (`lazyObserver`, `seenLanes`); свёрнутая колонка не грузит ничего.
-   - **Сворачивание колонок.** Кнопка в заголовке ("Свернуть колонку") убирает колонку в стопку в конце доски (`toggleColumn` - `Kanban.svelte`), клик по заголовку свёрнутой колонки возвращает её. Карточку можно бросить на колонку в стопке, колонка остаётся свёрнутой.
-   - **Объединение колонок.** Несколько статусов объединяются в одну колонку кнопкой "Объединить колонки" в заголовке: во всплывающем списке клик добавляет колонку или убирает (`showMergePopup` - `KanbanView.svelte`, `buildColumns`/`toggleMerge` - `packages/kanban/src/board.ts`). Это только настройка вида. Объединённая колонка не принимает карточки, но карточку из неё перетащить можно (`isBlocked`, `cardState` - `Kanban.svelte`). В заголовке видны два статуса, остальные - `+N` (`MERGED_NAMES` - `KanbanView.svelte`).
-   - **Меню "..." в шапке вида задач** (`menuItems` - `IssuesView.svelte`). "Объединить колонки по категориям" (при группировке по статусу) собирает статусы одной категории в одну колонку; пункт виден, только если на доске есть категория с несколькими статусами, которые ещё не объединены так же (`canMergeByGroup` - `Kanban.svelte`). "Сбросить объединение колонок" (когда есть объединённые колонки) снимает объединение. Раскрытый список статусов в заголовке объединённой колонки растёт до `min(20rem, 40vh)` и дальше прокручивается, не заходя на карточки. Доска отдаёт эти действия через `columnControlStore` (`packages/kanban/src/swimlane.ts`).
-   - **Хранение.** Свёрнутые и объединённые колонки лежат в `localStorage` на viewlet и группировку (`kanban-column-collapsed-*`, `kanban-column-merged-*`; `loadCollapsed`/`loadMerged` - `packages/kanban/src/board.ts`). Viewlet `tracker.viewlet.IssueKanban` - один документ модели на все проекты, поэтому настройка общая для проектов.
-6. **Экспорт/импорт конфигурации workflow.** `plugins/workflow/src/transfer/export.ts` сериализует статусы/переходы/правила в `WorkflowConfig` с токенами `$status:`/`$taskType:`/`$screen:`/`$attr:` (`resolver.ts`); `compatibility.ts` строит отчёт совместимости (матчинг статусов/атрибутов/ экранов); `import.ts` атомарно применяет конфиг к целевому проекту.
-
-## Фичи
-
-### Issue и связи
-- **Дерево подзадач.** `subIssues`/`parents`/`childInfo` денормализованы инкрементальными `$push`/`$pull`, без полного пересчёта дерева при каждом изменении. - `models/tracker/src/types.ts`.
-- **Связи между issues.** `blockedBy`/`relations` (Blocks/Blocked by/Related to), кросс-проектная настройка целей через `RelatedIssueTarget` и действие `EditRelatedTargets`. - `models/tracker/src/types.ts`, `models/tracker/src/actions.ts`.
-- **AI-ассистент при создании.** Расширения `CreateIssueAssist`/`CreateIssueHeaderActions` в шапке диалога создания; `IssueDraft.assistConversation` хранит корень диалога. - `plugins/tracker/src/index.ts`.
-- **Шаблоны задач.** `IssueTemplate` с деревом `children: IssueTemplateChild[]`; создание задачи из шаблона перезаписывает поля значениями шаблона. - `models/tracker/src/types.ts`.
-- **Копирование ID, названия, ссылки и описания задачи.** Подменю "Копировать" действий над задачей: `CopyIssueId` (`textProvider: tracker.function.GetIssueId`), `CopyIssueTitle` (`GetIssueTitle`), `CopyIssueLink` (label `tracker.string.CopyIssueUrl`, оверрайдит `view.action.CopyLink`), `CopyIssueMarkdown` (копирует поле `description` в markdown через общий `view.actionImpl.CopyDocumentMarkdown`); для выборки нескольких задач отдельное действие `CopyAsMarkdownTable` (`view.actionImpl.CopyAsMarkdownTable`, `input: 'selection'`). - `models/tracker/src/actions.ts`.
-- **Шапка и меню открытой задачи.** Заголовок урезается только при нехватке места (`watchTitle` меряет ширину): сначала сворачивается цепочка родителей, потом скрывается проект, потом цепочка целиком. В шапке: ИИ, сводка реакций, ссылка, «В сайдбар» (контурная иконка `view.icon.Sidebar`, та же в меню и в шапках документа и `EditDoc`), «Ещё», панель свойств (подсказка «Свойства»). На узком экране (`mobileAdaptive`) остаются только номер задачи, «Ещё» и панель свойств: расширения шапки не рисуются, а их действия режима `header` идут первой группой меню (`withHeaderActions` у `showMenu`). Меню задачи одно для панели, списка и канбана: раскладка задана в модели mixin `view.mixin.ActionMenu` на `tracker.class.Issue` (`defineIssueMenu` в models/tracker/src/actions.ts), view `Menu` берёт её по классу объекта, если вызывающий код не передал свой `layout` (по группам: id действий и подменю): открытие (открыть, новая вкладка, боковая панель; в панели «Открыть» исключён), работа с задачей (Изменить ▸, время), структура (подзадача, Родительская задача ▸, Связи ▸ с «Новой связанной задачей»), поделиться (Копировать ▸, публичная ссылка, печать), «Настройки типа задачи» (ссылка со стрелкой ↗: `link` + `opensPage` у пункта ui `Menu`, cmd-клик открывает новую вкладку), редкие действия над задачей целиком (перенос в проект, дубль) в группе `remove` перед удалением; действия вне `layout` идут в своей группе после перечисленных. Ширина текста - кнопка, видимая всегда, в правом поле контента на уровне первой строки; при смене режима не двигается (`maxWidthToggle="gutter"` у `Panel`). Панель атрибутов всегда показывает все примеси класса, переключателя дополнительных свойств нет. Кнопки боковой панели отделены от действий разделителем (ui `Panel`). Разделители меню стоят между группами раскладки. - plugins/tracker-resources/src/components/issues/edit/EditIssue.svelte, `ControlPanel.svelte`; plugins/view-resources/src/components/Menu.svelte; plugins/tracker-resources/src/components/RelationsPopup.svelte; packages/panel/src/components/MaxWidthToggle.svelte; models/tracker/src/actions.ts.
-
-### Time tracking
-- **Оценка/факт/остаток.** `estimation` (ручная), `reportedTime` (авто, триггер), `remainingTime` (readOnly, `reduceChildInfoTree`). - `plugins/tracker/src/index.ts`.
-- **Разбивка "потрачено/запланировано".** `splitReportedTime` - конец слота-отчёта восстанавливается как `date + value`, идущий слот делится пропорционально; для самих слотов планировщика есть аналог `splitEventsDuration` в `plugins/time-resources/src/utils.ts`. - `plugins/tracker/src/index.ts`.
-- **Диалог отчёта.** `TimeSpendReportPopup` (действие `T`), быстрые кнопки часов, выбор сотрудника, `TimeReportDayType` (Current/Previous Work Day). - `plugins/tracker-resources/src/components/issues/timereport/`.
-- **UI оценки.** `EstimationEditor`/`EstimationPopup`/`EstimationStatsPresenter`/ `SubIssuesEstimations`/`TimeSpendReportList`/`ReportedTimeEditor` - круговой прогресс, список отчётов по саб-issues, календарь "люди x дни". - `plugins/tracker-resources/src/components/issues/timereport/`.
-- **Формат длительности.** `parseDuration`/`formatDuration`/`formatDurationCompact` (алиасы единиц по языку m/h/d/w), `durationFormatHint`; ноль показывается как `0h`. - `plugins/tracker/src/duration.ts`.
-
-### Task types и статусы
-- **Иерархия типов задач.** `TaskType.allowedAsChildOf`/`allowAnyParent`/`isRootTaskType`; диаграмма `TaskTypesDiagram` в настройках проекта. - `models/task/src/index.ts`.
-- **Редактор иерархии типа.** Секция `TaskTypeHierarchySection`: цепочка чипов (предки только для чтения, редактируемая строка родителей с `x` и `+`, текущий тип, редактируемая строка дочерних типов: запись идёт в `allowedAsChildOf` дочернего типа; если `x` убирает последнего существующего родителя у не корневого дочернего типа, `MessageBox` сначала просит подтверждение), "Любой тип задачи" = `allowAnyParent` со всеми id; обход предков по уровням - `getAncestorLevels`, признак "тип нельзя создать нигде" (не корневой и нет существующего родителя, id удалённых типов в `allowedAsChildOf` не считаются) - `cannotBeCreated`, оба в `plugins/task-resources/src/hierarchy.ts`. - `plugins/task-resources/src/components/taskTypes/`.
-- **Тип задачи по умолчанию.** `ProjectTypeDescriptor.defaultTaskType` (`{ descriptor, name }`, у трекера - `tracker.descriptors.Issue`, "Classic Issue"): `CreateProjectType` создаёт в новом типе проекта такой тип задачи через `createDefaultTaskType` с базовыми статусами дескриптора (`defaultStatusesFunc`), как кнопка "+" в настройках. Проект без типов задач показывает `BlankView` со ссылкой в настройки, `TaskKindSelector` - кнопку "Нет типов задач" с пояснением; ссылка `ProjectTypeSettingsLink` (task-resources) только для owner/maintainer. - `plugins/task/src/utils.ts`, `plugins/task-resources/src/components/projectTypes/CreateProjectType.svelte`, `plugins/tracker-resources/src/components/issues/IssuesView.svelte`.
-- **5 категорий статусов.** UnStarted/ToDo/Active/Won/Lost, классические статусы Issue Backlog/ Todo/In Progress/Done/Canceled. - `models/task/src/index.ts`, `models/tracker/src/index.ts`.
-- **Смена типа задачи.** Действие `ChangeTaskType`; освобождает переход workflow при смене `kind` (см. `server-plugins/workflow/src/middleware.ts`). История активности неизменяема: запись о создании и другие старые записи сохраняют тип на момент события, документ ищется по родительскому классу (см. `../memory/activity-history-class.md`). - `models/tracker/src/actions.ts`.
-- **Экспорт/импорт TaskType.** Режимы `single`/`hierarchy` (`getConnectedTaskTypes` - связная компонента по `allowedAsChildOf`), дедуп enum'ов, ремап parent-child. - `plugins/task/src/transfer/`.
-
-### Workflow
-- **Уникальность статусов в типе проекта.** Ключ `statusKey` (атрибут + имя без пробелов по краям, без регистра); `resolveStatusReuse` решает при создании/переименовании: тот же ключ и категория - переиспользуется существующий `Status`, другая категория - отказ с именем и категорией существующего статуса (`CreateStatePopup`), иначе новый документ. Переименование обновляет `Status.name` на месте, если статус не определён моделью (id без `:`, у модельных вида `tracker:status:Backlog`) и другие типы проектов его не используют (`canRenameStatusInPlace`); иначе (`renameStatusByMerge`, `plugins/task-resources/src/statusRename.ts`) новый статус ставится сразу после старого в нужных типах задач (`placeStatusAfter`; `createStatusAtomic` с `exclude` не даёт старому статусу совпасть с собой по имени, поэтому смена одного регистра тоже даёт новый статус), и серверное слияние старого в новый (`statusMergeDomain`, область `taskTypes` - эти типы задач) переносит задачи, переходы и правила workflow, умолчание проекта и порядок; отказ слияния, которое ничего не записало, убирает размещение и созданный статус, конфликты показываются в панели статуса. Переиспользование существующего статуса при наличии задач блокируется (`getStatusNameBlock`): вместо него кнопка слияния. Тем же правилом пользуются `createProjectType`/`updateProjectType`/`createDefaultTaskType` и `CreateTaskType` (`createProjectTypeStates`); при конфликте категории импорт добавляет к имени название категории. Раздел "Statuses" в настройках типа проекта (`ProjectTypeStatusesSectionEditor.svelte`) строится на `StatesProjectEditor.svelte`: статусы по категориям, перетаскивание внутри категории пишет `ProjectType.statusOrder`, справа числа задач (один запрос, до 5000 задач) и воркфлоу, дубли одной категории с кнопкой "Объединить", кнопка "+" создаёт статус без типа задачи. Клик открывает `CreateStatePopup` в режиме типа проекта (без `taskType`): таблицы типов задач с числом задач и воркфлоу, где статус участвует (`StatusUsageTables.svelte`; числа задач Maintainer и выше берёт из запроса `statusUsageDomain` по всем пространствам, остальные - запросом на тип задач по видимым); при имени существующего статуса той же категории показывается подсказка о переиспользовании. Блок "Не привязаны к типам проектов" - `Status` того же атрибута, которого нет ни в `ProjectType.statuses`, ни в `TaskType.statuses` (`getOrphanStatuses`): добавить в тип проекта (при совпадении имени - объединение) или удалить (у статуса модели, id с `:`, кнопки удаления нет: его документ не удаляется).
-- **Статус без типа задачи.** `ProjectStatus.taskType` необязателен: запись без него - статус типа проекта, который не использует ни один тип задач. `calculateStatuses` сохраняет такие записи и переводит в них статус, вышедший из последнего типа задач; `OnTaskTypeRemove` вычёркивает удалённый тип из `ProjectType.tasks` и пересчитывает `statuses` тем же `calculateStatuses`. Добавление такого статуса: `createStatusAtomic` без размещений (`projectOnly`).
-- **Удаление статуса из типа проекта.** `deleteProjectTypeStatus` (`plugins/task-resources/src/statusDelete.ts`) решает по запросу `statusUsageDomain` (`getStatusUsage`; сервер считает все пространства, клиентский `findAll` не видит архивные и чужие): задачи типа проекта (сумма `byKind`), проекты с этим статусом по умолчанию (`projects`) и workflow, где он начальный, участвует в переходе или перечислен в правилах `SubtaskStatus`/`ParentStatus` (`loadWorkflowUsage`). Ничего нет - подтверждение и `removeStatusFromType` (запись типа проекта, `statusOrder`, типы задач; документ `Status` остаётся, если его определяет модель, на него ссылаются другие типы проектов или типы задач, workflow этого типа проекта, или есть задачи в любом пространстве); иначе `DeleteStateConfirmationPopup` (с числами сервера) просит статус-приёмник, затем `MergeStatusesConfirm` и серверное слияние `statusMergeDomain` с `transfer: true`: другая категория и источник вне типа проекта допустимы. Удаление статуса из одного типа задач (`CreateStatePopup`) - то же слияние с `taskTypes: [этот тип задач]`. - `plugins/task/src/statusMerge.ts`, `server-plugins/task/src/statusMergeOps.ts`.
-- `plugins/task/src/utils.ts`, `plugins/task-resources/src/components/state/CreateStatePopup.svelte`.
-- **Правила перехода.** Validators (`FieldRequired`, `SubtaskStatus`, `ParentStatus`), Requests (`ScreenRequest`), Post-functions (`UpdateFieldValue`, `ClearFieldValue`) - единая форма `WorkflowRuleConfig`. - `plugins/workflow/src/schema/`.
-- **Статусы подзадач/родителя.** `SubtaskStatus`/`ParentStatus` задают по каждому типу задачи разрешённые статусы и/или категории статусов (`TaskStatusesProps`: `statuses`, `categories`); тип без своей настройки, в том числе добавленный позже, проверяется по `defaultCategories`. - `plugins/workflow/src/validators.ts`, экспорт/импорт - `plugins/workflow/src/transfer/statusRules.ts`: строка ищется по имени типа задачи только в целевом типе проекта, статус - по имени среди статусов своего типа, отсутствующий заменяется категорией из `WorkflowConfig.ruleStatuses`, если у типа есть статусы этой категории, а строка типа задачи самого workflow следует сопоставлению статусов мастера, всё потерянное мастер импорта показывает предупреждениями.
-- **36 функций-трансформов значений** (строковые/числовые/даты/конверсии/агрегаты) для `UpdateFieldValue`. - `models/workflow/src/functions.ts`.
-- **Конфликты переходов.** `findTransitionConflict`/`hasSelfTransition`/`getTransitionConflict`. - `plugins/workflow/src/utils.ts`.
-- **Каскадное удаление.** `OnWorkflowDelete`/`OnTaskTypeDelete`/`OnStatusDelete`/`OnScreenDelete`/`OnAttributeDelete`. - `server-plugins/workflow-resources/src/WorkflowTrigger.ts`. `OnAttributeDelete` снимает удалённый атрибут с экранов (`ScreenField`) и вычищает его из `props.fields` правил переходов, правило без полей удаляется (`stripAttributeFromRules` - `plugins/workflow/src/utils.ts`). Попап удаления атрибута заранее показывает затронутые экраны и workflow с переходами - `plugins/workflow-resources/src/components/AttributeUsages.svelte`, зарегистрирован как `setting.class.AttributeUsageProvider` в `models/workflow/src/index.ts`.
-- **Создание workflow и его экранов перехода.** `CreateWorkflow.svelte` создаёт workflow (`createWorkflow(client, type._id, taskTypeId, name)`) для выбранного типа задачи в типе проекта; `ProjectTypeWorkflowsSectionEditor.svelte` - раздел настроек типа проекта со списком его workflow и импортом конфигурации (`ImportWorkflowPopup`). `ProjectTypeScreensSectionEditor.svelte` - раздел со списком "экранов" (класс `Screen`/`TScreen` - `models/workflow/src/types.ts`), создаются через `CreateScreen.svelte`: экран - форма валидации перед переходом, привязанная к типу задачи (`targetClass`) внутри типа проекта. Это UI поверх уже описанных в этом файле правил `WorkflowRuleConfig`/`ScreenRequest`. - `plugins/workflow-resources/src/components/{CreateWorkflow.svelte,ProjectTypeWorkflowsSectionEditor.svelte,ProjectTypeScreensSectionEditor.svelte}`.
-- **Экспорт/импорт workflow-конфигурации.** Токены `$status:`/`$taskType:`/`$screen:`/`$attr:`, `NameResolver` (минимальный ref при коллизии имён), отчёт совместимости статусов/атрибутов/экранов. - `plugins/workflow/src/transfer/` (`export.ts`, `import.ts`, `compatibility.ts`, `resolver.ts`, `statusRules.ts`, `validation.ts`, `utils.ts`, `types.ts`, `index.ts`).
-
-### Views (list/kanban)
-- **Навигатор "Мои задачи" / "Все задачи".** Два специала верхнего уровня трекера: "Мои задачи" (`tracker.string.MyIssues`, `tracker.component.MyIssues`) с вкладками `assigned`/`active`/`backlog`/`created`/`subscribed`, и "Все задачи" (`tracker.string.AllIssues`, `tracker.component.Issues`) с вкладками `all`/`active`/`backlog`. - `models/tracker/src/index.ts` (специалы `opt.myIssuesId`/`opt.allIssuesId`, их `componentProps.config`).
-- **Viewlet'ы трекера.** `IssueList` (список с priority/identifier/status/kind/title/labels/ Milestone/Component/dueDate/reportedTime/estimation/assignee), `IssueKanban`, `SubIssues`/`ParentIssues`, `MilestoneIssuesList`, `ComponentIssuesList`. - `models/tracker/src/viewlets.ts`.
-- **Группировка/сортировка.** `issuesOptions(kanban)`: groupBy status/kind/assignee/priority/space/ component/milestone/attachedTo/createdBy/modifiedBy/estimation/remainingTime/reportedTime; для kanban - `swimLaneBy` (8 значений) + `compactMode`. - `models/tracker/src/viewlets.ts`.
-- **Порядок групп по статусу.** `issueStatusSort` (`plugins/tracker-resources/src/utils.ts`): категория (`listIssueStatusOrder` для списка, `listIssueKanbanStatusOrder` для kanban) -> порядок типа проекта: `ProjectType.statusOrder`, если задан, затем слитый порядок типов задач (`mergeStatusOrder`: порядок `TaskType.statuses` каждого типа сохраняется, общий статус идёт после всех своих предшественников; типы в порядке экрана настроек, по имени, `getOrderedTaskTypes`; ранги собирает `getProjectStatusRank`) -> имя; компаратор `statusOrderComparator` - `plugins/task/src/utils.ts`.
-- **Опции показа.** `shouldShowSubIssues`, `shouldShowAll`, `hideArchived`. - `models/tracker/src/viewlets.ts`.
-- **Пустой список задач.** `IssuesView` передаёт `emptyState` (`BlankViewProps`) через `ViewletContentView`; `ListView` и `KanbanView` трекера показывают `BlankView`, когда документы загружены и групп нет (`empty` из `ListCategories`/`List`): "No issues yet" или "Nothing found" при фильтре/поиске. - `plugins/tracker-resources/src/components/issues/IssuesView.svelte`, `plugins/view-resources/src/components/list/ListView.svelte`, `plugins/tracker-resources/src/components/issues/KanbanView.svelte`.
-- **Поиск в списке задач.** Строка поиска `IssuesView` ищет только по заголовку, идентификатору и описанию: `$searchIn: ['title', 'identifier', 'content']`, где описание - `contentField` поисковика `Issue` (`models/server-tracker/src/index.ts`). Метки, комментарии и вложения не ищутся, для них есть фильтры. Порядок - выбранная сортировка вида, поиск только отбирает задачи. Откат - убрать `$searchIn` в `IssuesView`. - `plugins/tracker-resources/src/components/issues/IssuesView.svelte`, `foundations/server/packages/elastic/src/adapter.ts` (`searchTargetFields`).
-- **Фильтр по статусу.** `StatusFilter` внутри проекта предлагает статусы всех типов задач его типа проекта (`getProjectType`), без проекта - типов проектов, где пользователь участник. Попап статуса задачи показывает только статусы её типа, доступные по workflow, поэтому списки не совпадают. - `plugins/task-resources/src/components/StatusFilter.svelte`, `plugins/task-resources/src/index.ts`.
-- **Сохранённые представления и их порядок.** «Save as» создаёт `FilteredView` (`attachedTo` - alias приложения); блок «Фильтрованные отображения» показывает только те, где `users` содержит текущего пользователя. Порядок хранится отдельно у каждого пользователя в `FilteredViewPreference` (`attachedTo` - alias, `views` - массив id): `DOMAIN_PREFERENCE` приватный, поэтому перетаскивание одного пользователя не меняет список у остальных. Перетаскивание - `SortableList`, новые представления встают в конец. - `plugins/view-resources/src/components/filter/FilterSave.svelte`, `plugins/workbench-resources/src/components/SavedView.svelte`, `plugins/view-resources/src/savedViews.ts`, `models/view/src/index.ts`.
-- **Фильтр по типу задачи.** Строки попапа рисует `TaskTypeFilterItem`: сначала имя типа задачи, затем серым (`--theme-dark-color`) через `·` имя типа проекта иконкой - вместо общей подписи "тип проекта / тип задачи". Префикс - `ProjectType.name` (`TaskType.parent`), а не имя проекта: один тип проекта обслуживает несколько проектов. Попап шире прочих объектных фильтров (`.selectPopup.max-width-24`). Компонент попапа подставлен через `view.mixin.AttributeFilter` на `task.class.TaskType`, поэтому так выглядят все фильтры по `Ref<TaskType>`; общий `TaskTypePresenter` и подпись выбранных значений не меняются. - `models/task/src/index.ts`, `plugins/task-resources/src/components/taskTypes/TaskTypeFilter.svelte`, `TaskTypeFilterItem.svelte`.
-- **Пустые группы/колонки статусов.** `showEmptyGroups` передаёт `space` вида в `GetAllValuesFunc`; `getAllStates` берёт статусы только типов задач этого типа проекта и пересчитывает группы при изменении этих типов задач (`watchTaskTypes`; пересчёт ждёт, пока `taskTypeStore`/`statusStore` получат то же изменение, иначе показывалось предыдущее состояние). - `plugins/view-resources/src/viewOptions.ts`, `plugins/task-resources/src/index.ts`.
-
-### Проекты, компоненты, вехи
-- **Раздел "Метки" в навигаторе.** Специал `labelsId` (`tracker.component.LabelsView`) оборачивает `tags.component.TagsView` и показывает все `TagElement` класса `Issue` по всему workspace, с созданием новой метки (`createItemLabel: tracker.string.AddLabel`); клик по метке (`onTag`) переходит в "Все задачи" и ставит фильтр по этой метке (`setFilterTag`). - `models/tracker/src/index.ts` (специал `opt.labelsId`), `plugins/tracker-resources/src/components/LabelsView.svelte`.
-- **Управление проектом: создание, редактирование, архивирование, удаление.** Создание - диалог `tracker.component.CreateProject` (`createComponent` у спейса `projects`, кнопка `+`/пункт `addSpaceLabel: tracker.string.CreateProject`). Действие `EditProject` видно по `view.function.CanEditSpace`. Удаление - два действия на одном `actionImpl.DeleteProject` с разными `query`/`visibilityTester`: "Архивировать" (label `workbench.string.Archive`, видно при `archived: false`, `CanArchiveSpace`) под id `DeleteProject`, и повторное удаление уже архивированного проекта (label `workbench.string.Delete`, видно при `archived: true`, `CanDeleteSpace`) под отдельным id `DeleteProjectClean`. - `models/tracker/src/actions.ts`, `models/tracker/src/index.ts`.
-- **Дефолтный проект.** `tracker.project.DefaultProject` (`identifier: 'TSK'`, `autoJoin: true`) создаётся миграцией `create-defaults`, только если не удалён пользователем. - `models/tracker/src/migration.ts`.
-- **Запрет создания проектов.** Permission `ForbidCreateProject` - `forbid`-правило на `TxCreateDoc`/`Project` уровня workspace. - `models/tracker/src/permissions.ts`.
-- **Компоненты.** Агрегация/группировка по названию компонента без учёта регистра (`label.toLowerCase().trim()`; одноимённые компоненты разных проектов объединяются в одну группу), `lead` в агрегации не используется. - `plugins/tracker-resources/src/component.ts` (`CreateComponentAggregationManager`, `GrouppingComponentManager`), `models/tracker/src/index.ts`.
-- **Вехи.** `SetMilestone` (`S+P`), `DeleteMilestone` (`Meta+Backspace`, с переносом задач). - `models/tracker/src/actions.ts`.
-
-## Пользовательская документация
-
-| Фича | ru | en | Статус | Сверено | Расхождение |
-| --- | --- | --- | --- | --- | --- |
-| Дерево подзадач | task-tracking/creating-issues | task-tracking/creating-issues | partial | 0.8.60 | не описано создание подзадачи из уже существующей (действие «Добавить подзадачу»), только указание родителя при создании |
-| Связи между issues | task-tracking/related-issues, people-contacts/connecting-tasks | task-tracking/related-issues, people-contacts/connecting-tasks | ok | 0.8.60 | |
-| AI-ассистент при создании | - | - | plan | - | |
-| Шаблоны задач | task-tracking/issue-templates | task-tracking/issue-templates | ok | 0.8.60 | |
-| Копирование ID, названия, ссылки и описания задачи | - | - | plan | - | |
-| Шапка и меню открытой задачи | - | - | plan | - | |
-| Оценка/факт/остаток | task-tracking/creating-issues | task-tracking/creating-issues | partial | 0.8.60 | описана только «Оценка» (estimation), факт (reportedTime) и остаток (remainingTime) не упомянуты |
-| Разбивка "потрачено/запланировано" | task-tracking/time-reports | - | partial | 0.8.60 | механика splitReportedTime (разбивка часов слота-отчёта) на странице не описана |
-| Диалог отчёта | task-tracking/time-reports, task-tracking/task-management | - | partial | 0.8.60 | не описан выбор сотрудника и быстрые кнопки часов (например «До 8ч») в форме списания |
-| UI оценки | task-tracking/time-reports | - | partial | 0.8.60 | страница описывает только список отчётов (TimeSpendReportList, вид «Отчеты по времени») и только период «Неделя» (без «2 недели»/«Месяц»); EstimationEditor/EstimationPopup/SubIssuesEstimations (оценка в карточке задачи) не описаны |
-| Формат длительности | task-tracking/time-reports | - | partial | 0.8.60 | показан только пример «4ч», без недель/дней/минут и составных значений вида «2ч 30м» |
-| Иерархия типов задач | - | - | plan | - | |
-| Редактор иерархии типа | - | - | plan | - | |
-| Тип задачи по умолчанию | advanced-settings/task-types | advanced-settings/task-types | ok | 0.8.61 | |
-| 5 категорий статусов | advanced-settings/task-types, workflow/create-statuses | advanced-settings/task-types | ok | 0.8.61 | |
-| Смена типа задачи | - | - | plan | - | |
-| Экспорт/импорт TaskType | - | - | plan | - | |
-| Уникальность статусов в типе проекта | - | - | internal | - | |
-| Статус без типа задачи | - | - | internal | - | |
-| Удаление статуса из типа проекта | workflow/create-statuses | - | partial | 0.8.60 | описано только простое удаление (иконки удалить/копировать), не показан сценарий с проверкой использования и слиянием статусов |
-| Правила перехода | workflow/create-rules-transitions | - | no-en | 0.8.60 | |
-| Статусы подзадач/родителя | workflow/create-rules-transitions | - | partial | 0.8.60 | не упомянут выбор по категории статуса, только по конкретному статусу для каждого типа задачи |
-| 36 функций-трансформов значений | - | - | plan | - | |
-| Конфликты переходов | workflow/create-rules-transitions | - | no-en | 0.8.60 | |
-| Каскадное удаление | - | - | plan | - | |
-| Экспорт/импорт workflow-конфигурации | workflow/create-rules-transitions | - | partial | 0.8.60 | импорт упомянут (раздел "Воркфлоу" типа проекта, из файла или буфера обмена), сам процесс (выбор файла, проверка совместимости) не раскрыт |
-| Создание workflow и его экранов перехода | workflow/create-workflow, workflow/create-screens, workflow/add-workflow, workflow/defining-workflow | - | no-en | 0.8.61 | |
-| Навигатор "Мои задачи" / "Все задачи" | task-tracking/issue-collaborators | task-tracking/issue-collaborators | partial | 0.8.60 | описана только вкладка «Отслеживаемые» в «Моих задачах»; остальные вкладки и отдельный раздел «Все задачи» с его вкладками не раскрыты |
-| Viewlet'ы трекера | task-tracking/viewing-issues | task-tracking/viewing-issues | partial | 0.8.60 | описаны только список и канбан, остальные viewlet'ы (подзадачи, этапы, компоненты, отчёты по времени) не упомянуты |
-| Группировка/сортировка | task-tracking/viewing-issues | task-tracking/viewing-issues | ok | 0.8.60 | |
-| Порядок групп по статусу | - | - | plan | - | |
-| Опции показа | task-tracking/viewing-issues | task-tracking/viewing-issues | ok | 0.8.60 | |
-| Пустой список задач | - | - | plan | - | |
-| Поиск в списке задач | task-tracking/viewing-issues | task-tracking/viewing-issues | partial | 0.8.60 | не указано, что поиск ищет только по заголовку/идентификатору/описанию, а не по меткам и комментариям |
-| Фильтр по статусу | task-tracking/viewing-issues | task-tracking/viewing-issues | partial | 0.8.60 | не описано, что список статусов в фильтре (все статусы типа проекта) может отличаться от списка в попапе статуса конкретной задачи |
-| Сохранённые представления и их порядок | - | - | plan | - | |
-| Пустые группы/колонки статусов | - | - | plan | - | |
-| Раздел "Метки" в навигаторе | task-tracking/labels | task-tracking/labels | ok | 0.8.60 | |
-| Управление проектом: создание, редактирование, архивирование, удаление | task-tracking/creating-projects | task-tracking/creating-projects | partial | 0.8.60 | не описаны архивирование и удаление проекта |
-| Дефолтный проект | - | - | plan | - | |
-| Запрет создания проектов | - | - | plan | - | |
-| Компоненты | task-tracking/components | task-tracking/components | partial | 0.8.60 | не описано объединение одноимённых компонентов разных проектов при группировке/фильтре (агрегация идёт по названию компонента без учёта регистра, а не по руководителю) |
-| Вехи | task-tracking/milestones | task-tracking/milestones | ok | 0.8.60 | |
-
-## Куда смотреть, если нужно...
-
-- Добавить поле в Issue -> `models/tracker/src/types.ts` (`TIssue`) + интерфейс `Issue` в `plugins/tracker/src/index.ts`.
-- Изменить пересчёт `reportedTime`/`remainingTime` -> `server-plugins/tracker-resources/src/index.ts` (`OnIssueUpdate`, `doTimeReportUpdate`) и `reduceChildInfoTree` (`plugins/tracker/src/index.ts`).
-- Поменять разбивку "потрачено/запланировано" -> `splitReportedTime` (`plugins/tracker/src/index.ts`).
-- Добавить/поменять правило workflow (validator/request/post-function) -> `plugins/workflow/src/schema/` + сервер `server-plugins/workflow/src/middleware.ts`.
-- Добавить функцию-трансформ значения для `UpdateFieldValue` -> `models/workflow/src/functions.ts`.
-- Какие поля можно выбрать источником значения `UpdateFieldValue` -> `isAttributeCompatible` / `SOURCE_ONLY_FIELDS` в `plugins/workflow-resources/src/components/postFunctions/editors/update-field/utils.ts`; приведение значения к типу поля на сервере -> `resolveValue` в `server-plugins/workflow-resources/src/post-functions/evaluator.ts`.
-- Изменить статусы по умолчанию классического Issue -> `classicIssueTaskStatuses` (`models/tracker/src/index.ts`) + `defineSpaceType`.
-- Добавить действие над Issue (хоткей/попап) -> `models/tracker/src/actions.ts`.
-- Изменить viewlet/колонки списка/канбана -> `models/tracker/src/viewlets.ts`.
-- Поменять группировку/сортировку/swim lanes -> `issuesOptions` (`models/tracker/src/viewlets.ts`).
-- Поменять, по чему ищет строка поиска задач -> `$searchIn` в `IssuesView.svelte`; поля индекса за каждым значением -> `searchTargetFields` (`foundations/server/packages/elastic/src/adapter.ts`), основной текст класса -> `contentField` его `SearchPresenter`.
-- Изменить экспорт/импорт конфигурации workflow -> `plugins/workflow/src/transfer/` (`export.ts`/`import.ts`/`compatibility.ts`).
-- Добавить в правило новое место, где хранится ссылка на атрибут -> `stripAttributeFromRules` (`plugins/workflow/src/utils.ts`): по ней триггер `OnAttributeDelete` чистит правила, а попап удаления атрибута ищет затронутые workflow.
-- Изменить иерархию/наследование типов задач -> `models/task/src/index.ts` (`TTaskType`) + `plugins/task/src/transfer/` (перенос между проектами).
-- Поправить формат длительности (`2h 30m`) -> `plugins/tracker/src/duration.ts`.
-
-## Настройки и конфигурация
-
-- Permission `tracker.permission.ForbidCreateProject` - запрет создания проектов на уровне workspace (`models/tracker/src/permissions.ts`).
-- Мод. `core.mixin.TxAccessLevel: Maintainer` на `Workflow`/`WorkflowTransition` - редактировать workflow может только Maintainer+ (`models/workflow/src/index.ts`).
-- `Project.defaultTimeReportDay` (`CurrentWorkDay`/`PreviousWorkDay`) - настройка проекта, влияет на диалог `TimeSpendReportPopup`.
-
-## Тесты
-
-- Unit (jest): `plugins/tracker/src/__tests__/duration.test.ts`, `childInfoTree.test.ts`, `splitReportedTime.test.ts`; `plugins/tracker-resources/src/__tests__/taskTypeChange.test.ts`; `server-plugins/tracker-resources/src/__tests__/trigger.test.ts`; `server-plugins/time-resources/src/__tests__/{reassign,workslotReport,statusDecoupling}.test.ts`.
-- Workflow: `plugins/workflow/src/__tests__/{utils,validators}.test.ts` + `__tests__/transfer/{compatibility,export,import,resolver,utils}.test.ts`; `plugins/task/src/__tests__/transfer/{attributes,export,hierarchy,import}.test.ts`; `server-plugins/workflow/src/__tests__/middleware.test.ts`.
-- Sanity (Playwright): `tests/sanity/tests/tracker/` (`tracker.spec.ts`, `kanban.spec.ts`, `filter.spec.ts`, `subissues.spec.ts`, `template.spec.ts`, `milestone.spec.ts`, `related-issues.spec.ts`, `relations.spec.ts`, `labels.spec.ts`, `component.spec.ts`, `projects.spec.ts`, и др.), page-объекты в `tests/sanity/tests/model/tracker/`.
-
 ## Связанные документы
 
-- [../time-tracking.md](../time-tracking.md) - модель данных и UI учёта времени на Issue (estimation/reportedTime/remainingTime, childInfo-агрегация).
-- [../status-order.md](../status-order.md) - порядок статусов при группировке по статусу: категории, слияние порядков типов задач, примеры.
-- [../time-tracking-examples.md](../time-tracking-examples.md) - разбор кейсов агрегации дерева оценок.
-- [../workflow.md](../workflow.md) - покрытие тестами фичи Workflow (jest/Playwright/ручные сценарии).
-- [../memory/workflow-tests.md](../memory/workflow-tests.md) - заметки по тестам workflow.
-- [../memory/fulltext_search_fields.md](../memory/fulltext_search_fields.md) - раскладка текста в индексе, `$searchIn`, `$filter`.
-- [../memory/planner-todo-issue-decoupling.md](../memory/planner-todo-issue-decoupling.md) - FUSIO-38, развязка ToDo/Issue, переназначение исполнителя, `TimeSpendReport.workslot`.
-- [../memory/activity-history-class.md](../memory/activity-history-class.md) - класс записи активности неизменяем: смена типа задачи не переписывает историю, документ ищется по родительскому классу.
-- [planner-calendar.md](planner-calendar.md) - Планировщик (`ToDo`/`WorkSlot`), Team Planner, календарь - смежная система, откуда приходят time-report'ы по слотам.
+- [../architecture.md](../architecture.md) - слои плагина и путь запроса.
+- [planner-calendar.md](planner-calendar.md) - планировщик и календарь.
+- [cards.md](cards.md) - отдельная generic-модель Card, которую трекер не импортирует.

@@ -29,7 +29,8 @@ await kit.page('Project settings')
       ['Основное', 'gear'],
       ['Участники и доступ', 'users'],
       ['Задачи', 'check'],
-      ['Статусы и workflow', 'timeline'],
+      ['Статусы', 'timeline'],
+      ['Workflow', 'timeline'],
       ['Архив', 'trash']
     ],
     tab: 'Основное',
@@ -162,7 +163,8 @@ await kit.page('Project settings')
       ['Основное', 'gear'],
       ['Участники и доступ', 'users'],
       ['Задачи', 'check'],
-      ['Статусы и workflow', 'timeline'],
+      ['Статусы', 'timeline'],
+      ['Workflow', 'timeline'],
       ['Архив', 'trash']
     ],
     tab: 'Участники и доступ',
@@ -236,7 +238,8 @@ await kit.page('Project settings')
       ['Основное', 'gear'],
       ['Участники и доступ', 'users'],
       ['Задачи', 'check'],
-      ['Статусы и workflow', 'timeline'],
+      ['Статусы', 'timeline'],
+      ['Workflow', 'timeline'],
       ['Архив', 'trash']
     ],
     tab: 'Задачи',
@@ -254,7 +257,7 @@ await kit.page('Project settings')
   ))
 }
 {
-  const { main } = kit.Workbench('Настройки проекта - Статусы и workflow', 2020, 1200, {
+  const { main } = kit.Workbench('Настройки проекта - Статусы', 2020, 1200, {
     tab: 'Настройки проекта',
     nav: [
       { item: 'My issues', icon: 'timeline' },
@@ -280,14 +283,15 @@ await kit.page('Project settings')
       ['Основное', 'gear'],
       ['Участники и доступ', 'users'],
       ['Задачи', 'check'],
-      ['Статусы и workflow', 'timeline'],
+      ['Статусы', 'timeline'],
+      ['Workflow', 'timeline'],
       ['Архив', 'trash']
     ],
-    tab: 'Статусы и workflow',
+    tab: 'Статусы',
     close: true
   })
   kit.add(contentBox10, kit.SectionTitle(
-    'Статусы и workflow',
+    'Статусы',
     'Статусы задаются типом проекта «Default» и общие для всех его проектов. Доски группируют эти статусы в колонки.',
     760
   ))
@@ -386,9 +390,50 @@ await kit.page('Project settings')
   ))
   kit.add(contentBox10, kit.add(
     kit.row('actions', 8),
-    kit.Button({ kind: 'secondary', size: 'small', label: 'Изменить статусы в типе проекта', icon: 'gear' }),
-    kit.Button({ kind: 'ghost', size: 'small', label: 'Workflow mapping', icon: 'timeline' })
+    kit.Button({ kind: 'secondary', size: 'small', label: 'Изменить статусы в типе проекта', icon: 'gear' })
   ))
+}
+{
+  const { main } = kit.Workbench('Настройки проекта - Workflow', 0, 3600, {
+    tab: 'Настройки проекта',
+    nav: [
+      { item: 'My issues', icon: 'timeline' },
+      { item: 'All issues', icon: 'check' },
+      { item: 'Доски', icon: 'board' },
+      { item: 'Тестирование', indent: true },
+      { item: 'Мой спринт', indent: true },
+      { group: 'Your projects', add: true },
+      { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
+      { item: 'Issues', icon: 'check', indent: true },
+      { item: 'Components', icon: 'component', indent: true },
+      { item: 'Milestones', icon: 'milestone', indent: true },
+      { space: 'Маркетинг', icon: 'kit/HouseFill', color: 'Porpoise' },
+      { item: 'Issues', icon: 'check', indent: true },
+      { item: 'Components', icon: 'component', indent: true },
+      { item: 'Milestones', icon: 'milestone', indent: true }
+    ]
+  })
+  const contentBox10 = kit.SettingsLayout(main, {
+    back: 'К проекту',
+    title: 'Настройки проекта',
+    tabs: [
+      ['Основное', 'gear'],
+      ['Участники и доступ', 'users'],
+      ['Задачи', 'check'],
+      ['Статусы', 'timeline'],
+      ['Workflow', 'timeline'],
+      ['Архив', 'trash']
+    ],
+    tab: 'Workflow',
+    close: true
+  })
+  kit.add(contentBox10, kit.SectionTitle(
+    'Workflow',
+    'Какой workflow управляет переходами статусов для каждого типа задач. Изменения применяются сразу.',
+    760
+  ))
+  kit.add(contentBox10, kit.FormRow('Задача', kit.SelectButton({ label: 'Без workflow', field: true, chevron: true, w: 240 })))
+  kit.add(contentBox10, kit.Button({ kind: 'secondary', size: 'small', label: 'Настроить workflow', icon: 'gear' }))
 }
 {
   const { main } = kit.Workbench('Настройки проекта - Архив', 0, 2400, {
@@ -417,7 +462,8 @@ await kit.page('Project settings')
       ['Основное', 'gear'],
       ['Участники и доступ', 'users'],
       ['Задачи', 'check'],
-      ['Статусы и workflow', 'timeline'],
+      ['Статусы', 'timeline'],
+      ['Workflow', 'timeline'],
       ['Архив', 'trash']
     ],
     tab: 'Архив',
@@ -461,7 +507,8 @@ await kit.page('Project settings')
       ['Основное', 'gear'],
       ['Участники и доступ', 'users'],
       ['Задачи', 'check'],
-      ['Статусы и workflow', 'timeline'],
+      ['Статусы', 'timeline'],
+      ['Workflow', 'timeline'],
       ['Архив', 'trash']
     ],
     tab: 'Задачи',

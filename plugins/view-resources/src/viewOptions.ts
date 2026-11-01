@@ -15,6 +15,7 @@ import {
   type ViewOptionsOption,
   type ViewQueryOption,
   type DropdownViewOption,
+  type SliderViewOption,
   type Groupping,
   type ToggleViewOption,
   type ViewOptionModel,
@@ -44,6 +45,10 @@ export function isToggleType (viewOption: ViewOptionModel): viewOption is Toggle
 
 export function isDropdownType (viewOption: ViewOptionModel): viewOption is DropdownViewOption {
   return viewOption.type === 'dropdown'
+}
+
+export function isSliderType (viewOption: ViewOptionModel): viewOption is SliderViewOption {
+  return viewOption.type === 'slider'
 }
 
 function makeViewOptionsKey (viewlet: Viewlet, variant?: string, ignoreViewletKey = false): string {

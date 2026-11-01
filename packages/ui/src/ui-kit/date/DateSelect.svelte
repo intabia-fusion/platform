@@ -99,6 +99,7 @@
     bind:element
     {...$$restProps}
     {empty}
+    field
     placeholder={resolvedPlaceholder}
     icon={icon ?? (shownTone === 'overdue' ? ui.icon.CalendarX : ui.icon.Calendar)}
     {iconSize}
@@ -116,13 +117,9 @@
 
 <style lang="scss">
   // No box of its own: the button stays the grid item of the place, as with `fullWidth`.
-  // A date is a value of a form, so its button takes the field fill, as DateInput; tokens inherit through `contents`.
+  // A date is a value of a form, so its button takes the field fill (`field`), as DateInput.
   .date-select {
     display: contents;
-    --kit-button-secondary-BackgroundColor: var(--input-BackgroundColor);
-    --kit-button-secondary-hover-BackgroundColor: var(--input-hover-BackgroundColor);
-    --kit-button-secondary-active-BackgroundColor: var(--input-hover-BackgroundColor);
-    --kit-button-secondary-BorderColor: var(--input-BorderColor, transparent);
   }
   .date-select--warning :global(.select-button__icon) {
     color: var(--theme-warning-color);

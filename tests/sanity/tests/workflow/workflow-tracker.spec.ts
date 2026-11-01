@@ -18,6 +18,7 @@ import { SettingsPage } from '../model/settings-page'
 import { IssuesDetailsPage } from '../model/tracker/issues-details-page'
 import { IssuesPage } from '../model/tracker/issues-page'
 import { NewProjectPage } from '../model/tracker/new-project-page'
+import { ProjectSettingsPage } from '../model/tracker/project-settings-page'
 import { TrackerNavigationMenuPage } from '../model/tracker/tracker-navigation-menu-page'
 import { ProjectWorkflowsPage, WorkflowPage } from '../model/workflow-page'
 import { createAccountAndWorkspace, generateId, generateTestData, setTestOptions } from '../utils'
@@ -32,6 +33,7 @@ test.describe('Workflow in tracker', () => {
   let projectWorkflows: ProjectWorkflowsPage
   let navigation: TrackerNavigationMenuPage
   let newProject: NewProjectPage
+  let projectSettings: ProjectSettingsPage
   let issues: IssuesPage
   let issueDetails: IssuesDetailsPage
 
@@ -55,6 +57,7 @@ test.describe('Workflow in tracker', () => {
     projectWorkflows = new ProjectWorkflowsPage(page)
     navigation = new TrackerNavigationMenuPage(page)
     newProject = new NewProjectPage(page)
+    projectSettings = new ProjectSettingsPage(page)
     issues = new IssuesPage(page)
     issueDetails = new IssuesDetailsPage(page)
 
@@ -73,39 +76,41 @@ test.describe('Workflow in tracker', () => {
     await page.close()
   })
 
-  test('the new project modal offers workflow configuration for a custom type', async () => {
+  test('the new project wizard offers workflows of a custom type on its last step', async () => {
     await issues.clickOnApplicationButton()
     await navigation.pressCreateProjectButton()
-    await newProject.projectTypeButton().click()
-    await newProject.selectMenuItem(page, typeName)
-    await expect(projectWorkflows.configureButton()).toBeVisible()
+    await newProject.selectType(typeName)
+    await newProject.inputTitle().fill(projectName)
+    await newProject.inputIdentifier().fill(projectId)
+    await newProject.goToStep('workflow')
+    await expect(projectWorkflows.mappingDropdown('Classic Issue')).toBeVisible()
+    // The wizard does not lead out of the dialog: no button into the project type
+    await expect(newProject.root().locator('[data-id="btnConfigureWorkflows"]')).toHaveCount(0)
   })
 
-  test('shows no configured label before a workflow is picked', async () => {
-    await expect(projectWorkflows.configuredLabel()).toHaveCount(0)
+  test('shows no workflow before one is picked', async () => {
+    await expect(projectWorkflows.mappingDropdown('Classic Issue')).toContainText('Not selected')
   })
 
   test('binds a workflow to the task type', async () => {
     await projectWorkflows.setWorkflow('Classic Issue', workflowName)
-    await expect(projectWorkflows.configuredLabel()).toBeVisible()
   })
 
   test('creates the project with the mapping', async () => {
-    await newProject.inputTitle().fill(projectName)
-    await newProject.inputIdentifier().fill(projectId)
     await newProject.buttonCreateProject().click()
+    await expect(newProject.root()).toBeHidden()
     await navigation.checkProjectExist(projectName)
   })
 
-  test('keeps the mapping when the project is reopened for editing', async () => {
-    // The project appears in the navigator before its workflow mixin lands; CreateProject
-    // reads the mapping once at mount, so waiting never helps a too-early dialog - reopen it.
+  test('keeps the mapping in the project settings', async () => {
+    // The project appears in the navigator before its workflow mixin lands; the settings read the
+    // mixin live, so reopening the page is only needed when it opened too early.
     await expect(async () => {
-      await page.keyboard.press('Escape')
       await navigation.makeActionWithProject(projectName, 'Edit project')
-      await expect(projectWorkflows.configuredLabel()).toBeVisible({ timeout: 3000 })
+      await projectSettings.openSection('workflow')
+      await expect(projectWorkflows.mappingDropdown('Classic Issue')).toContainText(workflowName, { timeout: 3000 })
     }).toPass({ intervals: retryIntervals, timeout: 30000 })
-    await page.keyboard.press('Escape')
+    await projectSettings.buttonBack().click()
   })
 
   test('creates an issue in the guarded project', async () => {
@@ -142,11 +147,7 @@ test.describe('Workflow in tracker', () => {
 
   test('creates a project of the same type without a workflow', async () => {
     await navigation.pressCreateProjectButton()
-    await newProject.projectTypeButton().click()
-    await newProject.selectMenuItem(page, typeName)
-    await newProject.inputTitle().fill(freeProjectName)
-    await newProject.inputIdentifier().fill(freeProjectId)
-    await newProject.buttonCreateProject().click()
+    await newProject.createNewProject({ type: typeName, title: freeProjectName, identifier: freeProjectId })
     await navigation.checkProjectExist(freeProjectName)
   })
 

@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -31,6 +32,8 @@
   export let onChange: (e: Filter) => void
   export let nestedFrom: KeyFilter | undefined = undefined
   export let viewOptions: ViewOptions | undefined = undefined
+  // Attributes the caller does not offer at the top level, e.g. a key it already fixes elsewhere
+  export let hiddenKeys: string[] = []
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
@@ -124,7 +127,7 @@
     if (nestedFrom !== undefined) {
       res = await getNestedTypes(nestedFrom)
     } else {
-      res = await getOwnTypes(_class)
+      res = (await getOwnTypes(_class)).filter((p) => !hiddenKeys.includes(p.key))
     }
     // Sections first, then 'top' / no group / 'bottom' inside a section
     const rank = (p: KeyFilter): number =>

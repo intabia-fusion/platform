@@ -44,6 +44,15 @@ export interface SwimLane {
 
 /**
  * @public
+ * A landing spot inside a kanban cell during drag. `id` is opaque to the kanban: the host renders
+ * the spot and gets it back in `getUpdateProps` on drop, so it can set the exact target value.
+ */
+export interface DropTarget {
+  id: string
+}
+
+/**
+ * @public
  * Query fragment to filter items that belong to a specific swim lane.
  */
 export type SwimLaneQuery = DocumentQuery<DocWithRank>

@@ -49,6 +49,8 @@ function getVersionFromScript(scriptPath) {
     const absoluteScriptPath = path.resolve(SCRIPT_DIR, scriptPath)
     return execSync(`node "${absoluteScriptPath}"`).toString().trim()
   } catch (error) {
+    // Without the define the bundle falls back to version 0.6.0, so CI stops here
+    if (process.env.CI) throw error
     console.warn(`Failed to get version from ${scriptPath}:`, error.message)
     return ''
   }

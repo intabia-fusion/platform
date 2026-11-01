@@ -273,7 +273,7 @@ function flagDiff (def, path, env) {
   setAt(alt, path, !cur)
   let s
   try { s = env.kit[def.call.fn](...alt) } catch { return null }
-  const shape = def.call.fn === 'Workbench' || def.call.fn === 'LoginPage' ? s.frame : def.call.fn === 'Modal' ? s.modal : s
+  const shape = def.call.fn === 'Workbench' || def.call.fn === 'LoginPage' ? s.frame : def.call.fn === 'Modal' || def.call.fn === 'WizardDialog' ? s.modal : s
   const diff = (pj) => {
     const ops = new Map()
     if (!env.fit(def.tpl, pj, [], ops, true, { cost: 0 })) return null

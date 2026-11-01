@@ -265,7 +265,8 @@ export function isPopupPosAlignment (x: any): x is PopupPosAlignment {
 
 export type PopupAlignment = PopupPosAlignment | PopupPositionElement | null
 
-export type TooltipAlignment = 'top' | 'bottom' | 'left' | 'right'
+// 'bottom-end': below the target, right edges aligned
+export type TooltipAlignment = 'top' | 'bottom' | 'bottom-end' | 'left' | 'right'
 export type VerticalAlignment = 'top' | 'bottom'
 export type HorizontalAlignment = 'left' | 'right'
 

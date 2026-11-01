@@ -120,6 +120,17 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
     CATEGORY: { backlog: 'Cloud', todo: 'Porpoise', active: 'Cerulean', won: 'Grass', lost: 'Coin' }
   }
 
+  // Advance widths of IBM Plex Sans (the product font) per 100px for ASCII 32..126, measured on the stand;
+  // Kept consistent with dev/design/kit/40-tracker.js for screen scripts shared with Penpot.
+  const PLEX = [
+    24, 28, 42, 71, 60, 93, 69, 24, 34, 34, 45, 60, 27, 40, 27, 38, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 29, 29, 60,
+    60, 60, 48, 89, 64, 65, 62, 67, 58, 56, 70, 71, 40, 51, 63, 50, 81, 71, 71, 61, 71, 64, 58, 57, 68, 61, 89, 61, 59,
+    58, 32, 38, 32, 60, 57, 60, 53, 58, 50, 58, 55, 32, 53, 57, 25, 25, 53, 27, 87, 57, 56, 58, 58, 37, 49, 35, 57, 49,
+    77, 51, 50, 46, 34, 31, 34, 60
+  ]
+  kit.textWidth = (s: string, size: number) =>
+    Math.ceil(([...String(s)].reduce((sum, ch) => sum + (PLEX[ch.charCodeAt(0) - 32] ?? 55), 0) * size) / 100)
+
   // ---- Primitives -------------------------------------------------------------
   kit.box = (name: string, o: Record<string, any> = {}) =>
     node(
@@ -141,7 +152,9 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
         wrap: o.wrap,
         hs: o.hs,
         vs: o.vs,
-        clip: o.clip
+        clip: o.clip,
+        opacity: o.opacity,
+        rot: o.rot
       },
       o.w ?? 10,
       o.h ?? 10
@@ -243,6 +256,7 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
       count: o.count,
       draggable: o.drag,
       block: o.w !== undefined ? true : undefined,
+      pill: o.pill,
       width: o.w
     })
   kit.Input = (o: Record<string, any> = {}) => {
@@ -258,16 +272,222 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
       lines: o.h !== undefined && o.h > 40 ? Math.round((o.h - 8) / 24) : undefined
     })
   }
-  kit.Checkbox = (checked: boolean, label?: string) => node('Checkbox', 'Checkbox', { checked, label })
-  kit.Toggle = (on: boolean, label?: string) => node('Toggle', 'Toggle', { on, label })
-  kit.Radio = (on: boolean, label: string, hint?: string) => node('Radio', 'Radio ' + label, { on, label, hint })
+  kit.Checkbox = (checked: boolean, label?: string, o: Record<string, any> = {}) =>
+    node('Checkbox', 'Checkbox', {
+      checked,
+      label,
+      indeterminate: o.indeterminate,
+      size: o.size,
+      kind: o.kind,
+      shape: o.shape,
+      disabled: o.disabled,
+      error: o.error
+    })
+  kit.Toggle = (on: boolean, label?: string, o: Record<string, any> = {}) =>
+    node('Toggle', 'Toggle', {
+      on,
+      label,
+      size: o.size,
+      kind: o.kind,
+      description: o.description,
+      labelPosition: o.labelPosition,
+      disabled: o.disabled
+    })
+  kit.Radio = (on: boolean, label: string, hint?: string, o: Record<string, any> = {}) =>
+    node('Radio', 'Radio ' + label, { on, label, hint, size: o.size, kind: o.kind, disabled: o.disabled })
   kit.Menu = (items: any[], o: Record<string, any> = {}) =>
     node('Menu', o.name ?? 'Menu', { items: items.map((it) => (it === '-' ? { divider: true } : it)), width: o.w })
+  kit.TextInput = (o: Record<string, any> = {}) =>
+    node('TextInput', 'TextInput', {
+      kind: o.kind,
+      size: o.size,
+      value: o.value,
+      placeholder: o.placeholder,
+      label: o.label,
+      icon: o.icon,
+      clearable: o.clearable,
+      error: o.error,
+      disabled: o.disabled,
+      heading: o.heading,
+      width: o.w
+    })
+  kit.TextArea = (o: Record<string, any> = {}) =>
+    node('TextArea', 'TextArea', {
+      kind: o.kind,
+      size: o.size,
+      value: o.value,
+      placeholder: o.placeholder,
+      rows: o.rows,
+      error: o.error,
+      disabled: o.disabled,
+      width: o.w
+    })
+  kit.SelectButton = (o: Record<string, any> = {}) =>
+    node('SelectButton', 'SelectButton', {
+      kind: o.kind,
+      size: o.size,
+      label: o.label,
+      placeholder: o.placeholder,
+      icon: o.icon,
+      chevron: o.chevron,
+      pressed: o.pressed,
+      disabled: o.disabled,
+      field: o.field,
+      width: o.w
+    })
+  kit.Dropdown = (o: Record<string, any> = {}) =>
+    node('Dropdown', 'Dropdown', {
+      values: o.values,
+      placeholder: o.placeholder,
+      icon: o.icon,
+      kind: o.kind,
+      size: o.size,
+      chevron: o.chevron,
+      width: o.w
+    })
+  kit.SearchInput = (o: Record<string, any> = {}) =>
+    node('SearchInput', 'SearchInput', {
+      kind: o.kind,
+      size: o.size,
+      value: o.value,
+      placeholder: o.placeholder,
+      collapsed: o.collapsed,
+      width: o.w
+    })
+  kit.SettingRow = (label: string, control: any, o: Record<string, any> = {}) => {
+    const n = node('SettingRow', 'SettingRow ' + label, {
+      label,
+      hint: o.hint,
+      stacked: o.stacked,
+      alignTop: o.alignTop,
+      kind: o.kind,
+      fullWidth: o.fill,
+      width: o.w
+    })
+    kit.add(n, control)
+    for (const d of flat([o.details ?? []])) n.children.push(inSlot(d, 'details'))
+    return n
+  }
+  kit.Section = (label: string, kids: any, o: Record<string, any> = {}) => {
+    const n = node('Section', 'Section ' + label, { label, icon: o.icon, level: o.level, width: o.w })
+    kit.add(n, kids)
+    for (const a of flat([o.actions ?? []])) n.children.push(inSlot(a, 'actions'))
+    return n
+  }
+  kit.Callout = (text: string, o: Record<string, any> = {}) => {
+    const n = node('Callout', 'Callout/' + (o.tone ?? 'info'), { text, tone: o.tone, title: o.title, width: o.w })
+    for (const a of flat([o.actions ?? []])) n.children.push(inSlot(a, 'actions'))
+    return n
+  }
+  kit.KitStatusIcon = (tone: string, o: Record<string, any> = {}) =>
+    node('KitStatusIcon', 'KitStatusIcon/' + tone, { tone, kind: o.kind, size: o.size, dot: o.dot })
+  kit.Steps = (items: string[], selected?: number, _o: Record<string, any> = {}) =>
+    node('Steps', 'Steps', { items, selected })
+  kit.EmptyState = (label: string, o: Record<string, any> = {}) =>
+    node('EmptyState', 'EmptyState ' + label, {
+      label,
+      description: o.description,
+      icon: o.icon,
+      size: o.size,
+      kind: o.kind,
+      action: o.action,
+      width: o.w,
+      height: o.h
+    })
+  kit.KitChip = (label: string, o: Record<string, any> = {}) =>
+    node('KitChip', 'KitChip ' + label, {
+      label,
+      kind: o.kind,
+      tone: o.tone,
+      size: o.size,
+      color: col(o.color),
+      icon: o.icon,
+      removable: o.removable
+    })
+  kit.Dialog = (title: string, kids: any, o: Record<string, any> = {}) =>
+    kit.add(
+      node(
+        'Dialog',
+        'Dialog ' + title,
+        {
+          title,
+          width: o.w,
+          submitLabel: o.submitLabel,
+          cancelLabel: o.cancelLabel,
+          submitKind: o.submitKind,
+          canSubmit: o.canSubmit,
+          footer: o.footer
+        },
+        o.w ?? 600,
+        o.h ?? 400
+      ),
+      kids
+    )
+  kit.KitWizardDialog = (title: string, steps: string[], selected: number, kids: any, o: Record<string, any> = {}) =>
+    kit.add(
+      node(
+        'KitWizardDialog',
+        'KitWizardDialog ' + title,
+        {
+          title,
+          steps,
+          selected,
+          width: o.w,
+          submitLabel: o.submitLabel,
+          canProceed: o.canProceed,
+          canSubmit: o.canSubmit,
+          earlySubmit: o.earlySubmit
+        },
+        o.w ?? 896,
+        o.h ?? 600
+      ),
+      kids
+    )
+  kit.Tabs = (items: any[], selected?: string, o: Record<string, any> = {}) =>
+    node('Tabs', 'Tabs', { items, selected, size: o.size })
+  kit.SegmentedControl = (items: any[], selected?: string, o: Record<string, any> = {}) =>
+    node('SegmentedControl', 'SegmentedControl', { items, selected, size: o.size, iconOnly: o.iconOnly })
+  kit.ButtonGroup = (items: any[], selected?: string, o: Record<string, any> = {}) =>
+    node('ButtonGroup', 'ButtonGroup', { items, selected, kind: o.kind, size: o.size })
+  kit.KitNavItem = (label: string, o: Record<string, any> = {}) =>
+    node('KitNavItem', 'KitNavItem ' + label, {
+      label,
+      icon: o.icon,
+      count: o.count,
+      selected: o.selected,
+      level: o.level,
+      kind: o.kind,
+      expandable: o.expandable,
+      open: o.open,
+      description: o.description,
+      identifier: o.identifier,
+      width: o.w
+    })
+  kit.KitNavGroup = (label: string, o: Record<string, any> = {}) =>
+    node('KitNavGroup', 'KitNavGroup ' + label, {
+      label,
+      icon: o.icon,
+      kind: o.kind,
+      expandable: o.expandable,
+      open: o.open,
+      divider: o.divider,
+      selected: o.selected,
+      width: o.w
+    })
+  kit.Breadcrumbs = (items: any[], _o: Record<string, any> = {}) => node('Breadcrumbs', 'Breadcrumbs', { items })
   kit.Notice = (text: string, kind = 'warning', o: Record<string, any> = {}) =>
     node('Notice', 'Notice/' + kind, { text, kind, pill: o.pill, block: o.w !== undefined ? true : undefined })
   kit.QuickFilter = (label: string, on?: boolean) => node('QuickFilter', 'QuickFilter/' + label, { label, on })
-  kit.FilterChip = (attribute: string, operator: string, value: string, o: Record<string, any> = {}) =>
-    node('FilterChip', 'FilterChip/' + attribute, { attribute, operator, value, plain: o.plain })
+  kit.FilterChip = (attribute: string, operator: string, value: any, o: Record<string, any> = {}) => {
+    const chip = node('FilterChip', 'FilterChip/' + attribute, {
+      attribute,
+      operator,
+      value: typeof value === 'string' ? value : undefined,
+      plain: o.plain,
+      condition: o.condition
+    })
+    return typeof value === 'string' ? chip : kit.add(chip, value)
+  }
   kit.Swatch = (color: any, size?: number) => node('Swatch', 'Swatch', { color: col(color), size })
   kit.SectionTitle = (title: string, hint?: string) => node('SectionTitle', 'Section ' + title, { title, hint })
   kit.FormRow = (label: string, control: any, o: Record<string, any> = {}) =>
@@ -280,7 +500,15 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
   kit.ColumnHeader = (name: string, cat: string, count: number, _w: number, o: Record<string, any> = {}) =>
     node('ColumnHeader', 'ColumnHeader ' + name, { column: toColumn(name, cat, count, o) })
   kit.IssueCard = (d: Record<string, any>) =>
-    node('IssueCard', 'IssueCard ' + d.id, { issue: toIssue(d), density: d.density })
+    node('IssueCard', 'IssueCard ' + d.id, {
+      issue: toIssue(d),
+      density: d.density,
+      hover: d.hover,
+      dragged: d.dragged,
+      lifted: d.lifted,
+      focus: d.focus,
+      productIcons: d.productIcons
+    })
   kit.IssuePage = (d: Record<string, any>, w = 1515, h = 967) =>
     node(
       'IssuePage',
@@ -404,6 +632,7 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
     })
     if (o.titleNode !== undefined) n.children.push(inSlot(o.titleNode, 'title'))
     for (const a of flat([o.actions ?? []])) n.children.push(inSlot(a, 'actions'))
+    for (const a of flat([o.end ?? []])) n.children.push(inSlot(a, 'end'))
     for (const f of flat([o.filters ?? []])) n.children.push(inSlot(f, 'filters'))
     main.children.push(n)
     return 113
@@ -423,7 +652,8 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
         iconSize: o.iconSize,
         label: o.label,
         disabled: o.disabled,
-        menu: o.menu
+        menu: o.menu,
+        iconRight: o.iconRight
       }),
       o.content ?? []
     )
@@ -437,6 +667,18 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
   // The modal is its own body: content is added to the returned node
   kit.Modal = (title: string, o: Record<string, any> = {}) => {
     const modal = node('Modal', 'Modal ' + title, { title, okLabel: o.okLabel }, o.w ?? 600, o.h ?? 400)
+    return { modal, body: modal }
+  }
+  kit.WizardBar = (steps: string[], step: number, o: Record<string, any> = {}) =>
+    node('WizardBar', 'WizardBar', { steps, step }, o.w ?? 184, 10)
+  kit.WizardDialog = (title: string, steps: string[], step: number, o: Record<string, any> = {}) => {
+    const modal = node(
+      'WizardDialog',
+      'WizardDialog ' + title,
+      { title, steps, step, width: o.w, back: o.back, next: o.next, submit: o.submit, canProceed: o.canProceed },
+      o.w ?? 896,
+      o.h ?? 600
+    )
     return { modal, body: modal }
   }
   kit.DateSeparator = (label: string, w = 100) => node('DateSeparator', 'Date ' + label, { label }, w, 33)
@@ -462,6 +704,7 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
       title: o.title ?? '',
       close: o.close,
       tabs: o.tabs,
+      tabsWidth: o.tabsWidth,
       tab: o.tab,
       subtabs: o.subtabs,
       subtab: o.subtab

@@ -80,6 +80,7 @@ import { ChunterMiddleware } from '@hcengineering/server-chunter'
 import { NotificationMiddleware } from '@hcengineering/server-notification'
 import { TaskMiddleware } from '@hcengineering/server-task'
 import { WorkflowMiddleware } from '@hcengineering/server-workflow'
+import { BoardMiddleware } from '@hcengineering/server-tracker'
 import { DriveMiddleware } from '@hcengineering/server-drive-resources'
 import { ActivityMiddleware } from '@hcengineering/server-activity'
 
@@ -191,6 +192,7 @@ export function createServerPipeline (
       IdentifierMiddleware.create, // After ApplyTx
       RatingMiddleware.create, // Rating editing restrictions
       WorkflowMiddleware.create, // Workflow editing restrictions
+      BoardMiddleware.create, // Board edit rights and personal boards
       DriveMiddleware.create, // The folder a move leaves, for the folder counts
       TransientMiddleware.create,
       ChunterMiddleware.create,

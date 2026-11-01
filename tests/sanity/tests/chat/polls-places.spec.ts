@@ -198,7 +198,18 @@ test.describe('Poll placement tests', () => {
     await forwardTo(page, question, target.name)
     await openChannel(page, target)
     const forwarded = page.locator('.forwarded-message:not([inert] *)').filter({ hasText: question })
-    await expect(forwarded).toBeVisible()
+    try {
+      await expect(forwarded).toBeVisible()
+    } catch (error) {
+      const messages = await chat.me.client
+        .findAll('chunter:class:ChatMessage' as Ref<Class<AttachedDoc>>, { attachedTo: target._id })
+        .catch((readError) => ({ error: String(readError) }))
+      await test.info().attach('forwarded-poll-messages', {
+        body: JSON.stringify({ sourceMessage: sent.message, target: target._id, messages }, null, 2),
+        contentType: 'application/json'
+      })
+      throw error
+    }
     await forwarded.getByRole('radio', { name: 'Sushi' }).click()
     await expect(forwarded.locator('.poll-option__result').first()).toBeVisible()
 

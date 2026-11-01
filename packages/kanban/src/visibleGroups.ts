@@ -38,6 +38,9 @@ export interface VisibleGroupsInput {
   // stateKey of collapsed columns: they show no cards.
   collapsedColumns?: Set<string>
   cellLimits: Map<string, number>
+  // Limits of a cell nobody expanded yet; COLUMN_LIMIT and SWIM_CELL_LIMIT when absent
+  columnLimit?: number
+  swimCellLimit?: number
   swimLaneMode: boolean
   // Lanes not built yet: the board shows columns for a moment, they must not query.
   lanesPending: boolean
@@ -62,7 +65,7 @@ export function collectVisibleGroups (input: VisibleGroupsInput): Map<string, Ar
   if (!input.swimLaneMode) {
     for (const category of categories) {
       const key = cellKey('', category)
-      const docs = values(category).slice(0, input.cellLimits.get(key) ?? COLUMN_LIMIT)
+      const docs = values(category).slice(0, input.cellLimits.get(key) ?? input.columnLimit ?? COLUMN_LIMIT)
       groups.set(key, new Set(docs.map((doc) => doc._id)))
     }
     return result()
@@ -83,7 +86,9 @@ export function collectVisibleGroups (input: VisibleGroupsInput): Map<string, Ar
       if (laneId === undefined || ids === undefined || input.collapsed.has(laneId)) continue
       const count = perLane.get(laneId) ?? 0
       perLane.set(laneId, count + 1)
-      if (count < (input.cellLimits.get(cellKey(laneId, category)) ?? SWIM_CELL_LIMIT)) ids.add(doc._id)
+      if (count < (input.cellLimits.get(cellKey(laneId, category)) ?? input.swimCellLimit ?? SWIM_CELL_LIMIT)) {
+        ids.add(doc._id)
+      }
     }
   }
   return result()

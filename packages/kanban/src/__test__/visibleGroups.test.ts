@@ -117,6 +117,12 @@ describe('collectVisibleGroups', () => {
     expect(shifted.get(cellKey('', 'review'))).toHaveLength(COLUMN_LIMIT)
   })
 
+  it('takes the initial limit of a column from the input', () => {
+    const groupByDocs = { todo: cards('t', 25) }
+    const groups = collectVisibleGroups(input(groupByDocs, { categories: ['todo'], columnLimit: 20 }))
+    expect(groups.get(cellKey('', 'todo'))).toHaveLength(20)
+  })
+
   it('skips collapsed columns in both layouts', () => {
     const groupByDocs = { todo: [card('a', 'L1')], done: [card('b', 'L1')] }
     const collapsedColumns = new Set(['done'])

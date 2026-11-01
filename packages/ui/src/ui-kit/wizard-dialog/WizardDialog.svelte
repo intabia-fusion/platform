@@ -37,6 +37,7 @@
   export let canProceed: boolean = true
   export let canSubmit: boolean = true
   export let submitLabel: IntlString = ui.string.Submit
+  export let earlySubmit: boolean = false
   export let loading: boolean = false
   export let width: DialogWidth | undefined = undefined
 
@@ -68,8 +69,11 @@
     const focused = document.activeElement
     selected = step.id
     await tick()
-    // Back disappears on the first step and Next turns into the submit on the last: focus goes to the main button.
-    if (focused instanceof HTMLElement && !focused.isConnected) (isLast ? submitButton : nextButton)?.focus()
+    // Back turns disabled on the first step and Next turns into the submit on the last: focus goes to the main button.
+    if (focused instanceof HTMLElement && (!focused.isConnected || (focused as HTMLButtonElement).disabled)) {
+      const main = isLast ? submitButton : nextButton
+      main?.focus()
+    }
   }
 
   /** For the popup host, as at `Dialog`: a prevented `cancel` keeps the wizard open. */
@@ -109,25 +113,42 @@
   </div>
 
   <svelte:fragment slot="footerStart">
-    {#if index > 0}
+    <slot name="footerStart" />
+  </svelte:fragment>
+
+  <!-- Back, Next and the submit stand together on the right; with earlySubmit the submit is there on every step. -->
+  <svelte:fragment slot="footerActions">
+    <!-- Back and Next share one width, so the pair does not jump between steps -->
+    <div class="wizard__nav">
+      <!-- Disabled on the first step, not hidden: the buttons keep their places -->
       <Button
         kind="secondary"
         size="medium"
         icon={ui.icon.ArrowLeft}
         label={ui.string.Back}
-        disabled={loading}
+        disabled={loading || index === 0}
         on:click={() => {
           void go(index - 1)
         }}
       />
-    {/if}
-    <slot name="footerStart" />
-  </svelte:fragment>
-
-  <svelte:fragment slot="footerActions">
-    {#if isLast}
+      {#if !isLast}
+        <Button
+          kind="brand"
+          size="medium"
+          label={ui.string.NextStep}
+          disabled={!canProceed || loading}
+          bind:element={nextButton}
+          on:click={() => {
+            void go(index + 1)
+          }}
+        >
+          <Icon icon={ui.icon.ArrowRight} size="small" />
+        </Button>
+      {/if}
+    </div>
+    {#if isLast || earlySubmit}
       <Button
-        kind="positive"
+        kind={isLast ? 'positive' : 'secondary'}
         size="medium"
         label={submitLabel}
         disabled={!canSubmit}
@@ -135,19 +156,6 @@
         bind:element={submitButton}
         on:click={() => dispatch('submit', null)}
       />
-    {:else}
-      <Button
-        kind="brand"
-        size="medium"
-        label={ui.string.NextStep}
-        disabled={!canProceed || loading}
-        bind:element={nextButton}
-        on:click={() => {
-          void go(index + 1)
-        }}
-      >
-        <Icon icon={ui.icon.ArrowRight} size="small" />
-      </Button>
     {/if}
   </svelte:fragment>
 </Dialog>
@@ -170,6 +178,20 @@
 
   .wizard__steps-list {
     padding: var(--spacing-3) var(--spacing-2) var(--spacing-3) var(--spacing-3);
+  }
+
+  .wizard__nav {
+    display: grid;
+    grid-auto-columns: 1fr;
+    grid-auto-flow: column;
+    gap: var(--spacing-1);
+
+    // One width on every step too: the pair shows alone on the first and the last step
+    :global(button) {
+      justify-content: center;
+      width: 100%;
+      min-width: 7.5rem;
+    }
   }
 
   .wizard__body {

@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -15,13 +16,12 @@
 <script lang="ts">
   import type { Class, Doc, DocumentQuery, Ref, Space } from '@hcengineering/core'
   import { getCurrentAccount } from '@hcengineering/core'
-  import { getResource } from '@hcengineering/platform'
   import { getClient, reduceCalls } from '@hcengineering/presentation'
   import ui, { Button, eventToHTMLElement, getCurrentLocation, showPopup } from '@hcengineering/ui'
   import type { Filter, FilteredView, ViewOptions, Viewlet } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
 
-  import { filterStore, removeFilter, selectedFilterStore, updateFilter } from '../../filter'
+  import { filterStore, filtersToQuery, removeFilter, selectedFilterStore, updateFilter } from '../../filter'
   import view from '../../plugin'
   import { activeViewlet, getActiveViewletId, makeViewletKey } from '../../utils'
   import { getViewOptions, viewOptionStore } from '../../viewOptions'
@@ -86,67 +86,9 @@
   }
 
   const makeQuery = reduceCalls(async (query: DocumentQuery<Doc>, filters: Filter[]): Promise<void> => {
-    const newQuery = hierarchy.clone(query)
-    for (let i = 0; i < filters.length; i++) {
-      const filter = filters[i]
-      const mode = await client.findOne(view.class.FilterMode, { _id: filter.mode })
-      if (mode === undefined) continue
-      const result = await getResource(mode.result)
-      const newValue = await result(filter, () => {
-        void makeQuery(query, filters)
-      })
-
-      if (Object.keys(newValue).length === 0) continue
-
-      let filterKey = filter.key.key
-
-      const attr = client.getHierarchy().getAttribute(filter.key._class, filter.key.key)
-      if (client.getHierarchy().isMixin(attr.attributeOf)) {
-        filterKey = attr.attributeOf + '.' + filter.key.key
-      }
-
-      if (newQuery[filterKey] === null || newQuery[filterKey] === undefined) {
-        newQuery[filterKey] = newValue
-      } else {
-        let merged = false
-        for (const key in newValue) {
-          if (newQuery[filterKey][key] === undefined) {
-            if (key === '$in' && typeof newQuery[filterKey] === 'string') {
-              newQuery[filterKey] = { $in: newValue[key].filter((p: any) => p === newQuery[filterKey]) }
-            } else {
-              newQuery[filterKey][key] = newValue[key]
-            }
-            merged = true
-            continue
-          }
-          if (key === '$in') {
-            newQuery[filterKey][key] = newQuery[filterKey][key].filter((p: any) => newValue[key].includes(p))
-            merged = true
-            continue
-          }
-          if (key === '$nin') {
-            newQuery[filterKey][key] = [...newQuery[filterKey][key], ...newValue[key]]
-            merged = true
-            continue
-          }
-          if (key === '$lt') {
-            newQuery[filterKey][key] =
-              newQuery[filterKey][key] < newValue[key] ? newQuery[filterKey][key] : newValue[key]
-            merged = true
-            continue
-          }
-          if (key === '$gt') {
-            newQuery[filterKey][key] =
-              newQuery[filterKey][key] > newValue[key] ? newQuery[filterKey][key] : newValue[key]
-            merged = true
-            continue
-          }
-        }
-        if (!merged) {
-          Object.assign(newQuery[filterKey], newValue)
-        }
-      }
-    }
+    const newQuery = await filtersToQuery(client, query, filters, () => {
+      void makeQuery(query, filters)
+    })
     dispatch('change', newQuery)
   })
 

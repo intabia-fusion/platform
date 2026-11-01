@@ -27,7 +27,7 @@ import workbench from '@hcengineering/model-workbench'
 import converter from '@hcengineering/converter'
 import notification, { type MessageNotificationType } from '@hcengineering/notification'
 import setting from '@hcengineering/setting'
-import pluginState, { trackerId } from '@hcengineering/tracker'
+import pluginState, { projectSettingsId, trackerId } from '@hcengineering/tracker'
 
 import type { TaskStatusFactory } from '@hcengineering/task'
 import { PaletteColorIndexes } from '@hcengineering/ui/src/colors'
@@ -46,6 +46,8 @@ import {
   TMilestone,
   TProject,
   TProjectTargetPreference,
+  TBoard,
+  TBoardPreference,
   TRelatedIssueTarget,
   TTimeSpendReport,
   TTypeEstimation,
@@ -332,6 +334,7 @@ function defineApplication (
       hidden: false,
       locationResolver: tracker.resolver.Location,
       navigatorModel: {
+        sections: [tracker.component.BoardsNav],
         specials: [
           {
             id: opt.myIssuesId,
@@ -366,6 +369,13 @@ function defineApplication (
                 ['backlog', tracker.string.Backlog, {}]
               ]
             }
+          },
+          {
+            id: 'boards',
+            hidden: true,
+            label: tracker.string.TaskBoards,
+            icon: tracker.icon.Issues,
+            component: tracker.component.BoardPage
           },
           {
             id: 'all-projects',
@@ -433,6 +443,12 @@ function defineApplication (
                 label: tracker.string.IssueTemplates,
                 icon: tracker.icon.IssueTemplates,
                 component: tracker.component.IssueTemplates
+              },
+              {
+                id: projectSettingsId,
+                label: tracker.string.ProjectSettings,
+                icon: view.icon.Setting,
+                component: tracker.component.ProjectSettings
               }
             ]
           }
@@ -460,7 +476,9 @@ export function createModel (builder: Builder): void {
     TRelatedIssueTarget,
     TTypeEstimation,
     TTypeRemainingTime,
-    TProjectTargetPreference
+    TProjectTargetPreference,
+    TBoard,
+    TBoardPreference
   )
 
   builder.mixin(tracker.class.Project, core.class.Class, activity.mixin.ActivityDoc, {})

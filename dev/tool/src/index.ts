@@ -1250,21 +1250,31 @@ export function buildToolProgram (prepareTools: PrepareTools, extendProgram?: (p
         'planner data, for stable user-documentation screenshots'
     )
     .option('--dir <dir>', 'Unified Format directory', resolve(__dirname, '../../../tests/demo-ws'))
+    .option(
+      '--design <dir>',
+      'dev/design/demo/<lang> with the statuses, issues and boards of the mockups, "none" to skip (default: ru, en for a dir ending in -en)'
+    )
     .option('--accounts <emails>', 'comma-separated login emails, need exactly 4', 'demo1,demo2,demo3,demo4')
     .option('--password <password>', 'password for the accounts', '1234')
     .option('--url <url>', 'platform base url', process.env.PLATFORM_URL ?? 'http://localhost:8083')
-    .action(async (workspace: string, opt: { dir: string, accounts: string, password: string, url: string }) => {
-      await generateDemoData({
-        workspace,
-        platformUrl: opt.url,
-        dir: opt.dir,
-        accountEmails: opt.accounts
-          .split(',')
-          .map((s) => s.trim())
-          .filter((s) => s.length > 0),
-        password: opt.password
-      })
-    })
+    .action(
+      async (
+        workspace: string,
+        opt: { dir: string, design?: string, accounts: string, password: string, url: string }
+      ) => {
+        await generateDemoData({
+          workspace,
+          platformUrl: opt.url,
+          dir: opt.dir,
+          designDir: opt.design,
+          accountEmails: opt.accounts
+            .split(',')
+            .map((s) => s.trim())
+            .filter((s) => s.length > 0),
+          password: opt.password
+        })
+      }
+    )
 
   program
     .command('decode-token <token>')

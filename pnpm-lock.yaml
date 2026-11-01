@@ -37054,6 +37054,9 @@ importers:
 
   server-plugins/tracker:
     dependencies:
+      '@hcengineering/contact':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/contact
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
@@ -37069,6 +37072,9 @@ importers:
       '@hcengineering/server-notification':
         specifier: workspace:^0.7.0
         version: link:../notification
+      '@hcengineering/tracker':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/tracker
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19

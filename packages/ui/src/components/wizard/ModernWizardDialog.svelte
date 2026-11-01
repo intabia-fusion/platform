@@ -97,20 +97,35 @@
   </div>
 
   <div slot="footerExtra" class="footerExtra">
-    {#if hasBack}
+    <slot name="footerMessage" />
+  </div>
+
+  <!-- Back, Next and the submit together on the right; Back and Next share one width -->
+  <div slot="footerButtons" class="footerButtons">
+    <div class="nav">
+      <!-- Disabled on the first step, not hidden: the buttons keep their places -->
       <Button
         kind="regular"
         size="large"
         label={ui.string.Back}
         icon={ui.icon.ArrowLeft}
         on:click={handleBack}
+        disabled={!hasBack}
         {loading}
       />
-    {/if}
-    <slot name="footerMessage" />
-  </div>
-
-  <div slot="footerButtons">
+      {#if hasNext}
+        <Button
+          kind="primary"
+          size="large"
+          label={ui.string.NextStep}
+          iconRight={ui.icon.ArrowRight}
+          iconRightProps={{ size: 'small' }}
+          {loading}
+          disabled={!canProceed}
+          on:click={handleNext}
+        />
+      {/if}
+    </div>
     {#if hasSubmit}
       <Button
         kind="positive"
@@ -119,18 +134,6 @@
         disabled={!canSubmit}
         {loading}
         on:click={handleSubmit}
-      />
-    {/if}
-    {#if hasNext}
-      <Button
-        kind="primary"
-        size="large"
-        label={ui.string.NextStep}
-        iconRight={ui.icon.ArrowRight}
-        iconRightProps={{ size: 'small' }}
-        {loading}
-        disabled={!canProceed}
-        on:click={handleNext}
       />
     {/if}
   </div>
@@ -159,6 +162,24 @@
 
   .contentBody {
     padding: 1.5rem;
+  }
+
+  .footerButtons {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .nav {
+    display: grid;
+    grid-auto-columns: 1fr;
+    grid-auto-flow: column;
+    gap: 0.75rem;
+
+    :global(button) {
+      justify-content: center;
+      width: 100%;
+      min-width: 8.5rem;
+    }
   }
 
   .footerExtra {

@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022, 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -145,13 +146,14 @@
   }
 
   let menuSelection: boolean = false
+  $: shownSpecials = specials.filter((s) => s.hidden !== true)
 </script>
 
 {#if model}
   <Scroller shrink>
     {#if model.specials}
-      {#each specials as special, row}
-        {#if row > 0 && specials[row].position !== specials[row - 1].position}
+      {#each shownSpecials as special, row}
+        {#if row > 0 && shownSpecials[row].position !== shownSpecials[row - 1].position}
           <TreeSeparator line />
         {/if}
         {#await checkIsDisabled(special) then disabled}
@@ -169,6 +171,10 @@
       {/each}
     {/if}
     <div class="min-h-3 flex-no-shrink" />
+
+    {#each model.sections ?? [] as section}
+      <Component is={section} props={{ currentSpace, currentSpecial, currentFragment }} />
+    {/each}
 
     <SavedView alias={currentApplication?.alias} on:select={(res) => (menuSelection = res.detail)} />
     {#if starred.length > 0 && !model.hideStarred}

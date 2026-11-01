@@ -36,8 +36,8 @@ export const Canvas: StoryObj = {
   render: () => ({ Component: CanvasView, props: { group, page } })
 }
 export const Frame1: Story = { name: 'Настройка доски - Основное', args: { group, page, frame: 0 } }
-export const Frame2: Story = { name: 'Настройка доски - Колонки', args: { group, page, frame: 1 } }
-export const Frame3: Story = { name: 'Настройка доски - Дорожки', args: { group, page, frame: 2 } }
-export const Frame4: Story = { name: 'Настройка доски - Быстрые фильтры', args: { group, page, frame: 3 } }
-export const Frame5: Story = { name: 'Настройка доски - Цвета карточек', args: { group, page, frame: 4 } }
-export const Frame6: Story = { name: 'Настройка доски - Карточка', args: { group, page, frame: 5 } }
+export const Frame2: Story = { name: 'Настройка доски - Участники и доступ', args: { group, page, frame: 1 } }
+export const Frame3: Story = { name: 'Настройка доски - Колонки', args: { group, page, frame: 2 } }
+export const Frame4: Story = { name: 'Настройка доски - Дорожки', args: { group, page, frame: 3 } }
+export const Frame5: Story = { name: 'Настройка доски - Быстрые фильтры', args: { group, page, frame: 4 } }
+export const Frame6: Story = { name: 'Настройка доски - Цвета карточек', args: { group, page, frame: 5 } }

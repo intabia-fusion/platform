@@ -4,7 +4,7 @@
   import { ModeSelector, SearchInput, Header, Breadcrumb } from '@hcengineering/ui'
   import type { Asset } from '@hcengineering/platform'
   import { ComponentExtensions, getClient } from '@hcengineering/presentation'
-  import type { Viewlet } from '@hcengineering/view'
+  import type { Viewlet, ViewletDescriptor } from '@hcengineering/view'
   import view, { type ViewletViewAction } from '@hcengineering/view'
   import { getViewletSpecialActions } from '../viewletUtils'
   import ViewletSelector from './ViewletSelector.svelte'
@@ -22,6 +22,12 @@
   export let modeSelectorProps: IModeSelector | undefined = undefined
   export let adaptive: HeaderAdaptive = 'doubleRow'
   export let resultQuery: DocumentQuery<Doc> = {}
+  // The viewlet shown until the user picks another one
+  export let defaultViewletDescriptor: Ref<ViewletDescriptor> | undefined = undefined
+  // The view shows only the default viewlet, without the switcher
+  export let hideViewlets: boolean = false
+  // Search, filter and `afterSearch` open the row in place of the title (single-row header only)
+  export let searchFirst: boolean = false
 
   let scroller: HTMLElement
 
@@ -35,13 +41,27 @@
   overflowExtra
   hideActions={!$$slots.actions}
   hideExtra={!$$slots.extra && modeSelectorProps === undefined}
+  hideSearch={searchFirst}
 >
   <svelte:fragment slot="beforeTitle">
-    <ViewletSelector bind:viewlet bind:viewlets ignoreFragment viewletQuery={viewletQuery ?? { attachTo: _class }} />
+    <ViewletSelector
+      bind:viewlet
+      bind:viewlets
+      ignoreFragment
+      viewletQuery={viewletQuery ?? { attachTo: _class }}
+      {defaultViewletDescriptor}
+      hidden={hideViewlets}
+    />
     <slot name="header-tools" />
   </svelte:fragment>
 
-  {#if showLabelSelector}
+  {#if searchFirst}
+    <div class="search-first">
+      <SearchInput bind:value={search} collapsed />
+      <FilterButton {_class} {space} />
+      <slot name="afterSearch" />
+    </div>
+  {:else if showLabelSelector}
     <slot name="label_selector" />
   {:else if label}
     <Breadcrumb {icon} title={label} size="large" isCurrent />
@@ -53,6 +73,8 @@
   {/if}
 
   <svelte:fragment slot="search">
+    <!-- A double-row header lays the search group out row-reverse: this slot shows last -->
+    <slot name="afterSearch" />
     <SearchInput bind:value={search} collapsed />
     <FilterButton {_class} {space} />
   </svelte:fragment>
@@ -87,3 +109,12 @@
     {/if}
   </svelte:fragment>
 </Header>
+
+<style lang="scss">
+  .search-first {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-0_5);
+    min-width: 0;
+  }
+</style>

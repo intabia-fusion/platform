@@ -142,14 +142,16 @@ host.instantiate = (s, parentLayout, top) => {
 // Tag the kit functions that are library components, library/ui-kit.js names and defines them
 for (const fn of ['Button', 'Switcher', 'Menu', 'Input', 'Checkbox', 'Radio', 'Toggle', 'StatusChip', 'Count', 'Notice', 'Chip', 'QuickFilter', 'FilterChip', 'Swatch',
   'IssueCard', 'ColumnHeader', 'KanbanColumn', 'SectionTitle', 'FormRow', 'Table', 'NavItem', 'NavGroupHeader', 'NavSpaceHeader',
-  'TopBar', 'AppRail', 'Sidebar', 'Navigator', 'Workbench', 'Label', 'ClassicButton', 'Modal', 'EditBox', 'GridRow', 'NavCaption',
+  'TopBar', 'AppRail', 'Sidebar', 'Navigator', 'Workbench', 'Label', 'ClassicButton', 'Modal', 'WizardDialog', 'EditBox', 'GridRow', 'NavCaption',
   'DateSeparator', 'NewMarker', 'Message', 'MessageInput', 'IssueRow', 'IssueGroup', 'IssueList', 'IssuePage', 'NewIssuePopup',
   'LoginPage', 'LoginCard', 'LoginForm', 'LoginTabs', 'LoginTitle', 'LoginField', 'LoginStatus', 'LoginButton', 'LoginIcon', 'LoginProviders', 'LoginCheckbox',
-  'LoginLinks', 'LoginAction', 'LoginOtpHeader', 'LoginCode', 'LoginWorkspace', 'LoginBackTitle']) {
+  'LoginLinks', 'LoginAction', 'LoginOtpHeader', 'LoginCode', 'LoginWorkspace', 'LoginBackTitle',
+  'TextInput', 'TextArea', 'SelectButton', 'SettingRow', 'Section', 'Callout', 'KitStatusIcon', 'Steps', 'EmptyState', 'KitChip',
+  'Dialog', 'KitWizardDialog', 'Tabs', 'SegmentedControl', 'ButtonGroup', 'KitNavItem', 'KitNavGroup', 'Breadcrumbs']) {
   const f = kit[fn]
   const tagged = (...a) => {
     const r = f(...a)
-    const s = fn === 'Workbench' || fn === 'LoginPage' ? r.frame : fn === 'Modal' ? r.modal : r
+    const s = fn === 'Workbench' || fn === 'LoginPage' ? r.frame : fn === 'Modal' || fn === 'WizardDialog' ? r.modal : r
     s.comp = fn
     // The call that made the shape: import.mjs reads the library samples back from it
     s.call = { fn, args: a }

@@ -50,6 +50,22 @@ kit.PriorityIcon = (level, inline = false) => {
   return kit.pen({ type: 'frame', name: 'PriorityIcon/' + level, layout: 'none', width: 14, height: 14, children: kids })
 }
 
+// ui/kit StatusIcon with pen primitives: circle and glyph on the tone variables
+const penpotKitStatusIcon = kit.KitStatusIcon
+kit.KitStatusIcon = (tone, o = {}) => {
+  if (o.dot) return penpotKitStatusIcon(tone, o)
+  const size = o.size === 'medium' ? 20 : 16
+  const k = size / 16
+  const [bg, glyph] = kit.statusTone(tone)
+  const outline = o.kind === 'outline'
+  const line = colorOf(TM(bg, 60))
+  const circle = outline
+    ? { type: 'ellipse', name: 'circle', x: k, y: k, width: 14 * k, height: 14 * k, stroke: line, strokeWidth: 1.25 * k, strokeAlignment: 'center' }
+    : { type: 'ellipse', name: 'circle', x: k, y: k, width: 14 * k, height: 14 * k, fill: colorOf(bg) }
+  const mark = shape('glyph', kit.STATUS_GLYPHS[tone], size, { viewBox: [0, 0, 16, 16], fill: outline ? line : colorOf(glyph) })
+  return kit.pen({ type: 'frame', name: 'KitStatusIcon/' + tone, layout: 'none', width: size, height: size, children: [circle, mark] })
+}
+
 // The 20px avatars come from the library; other sizes are the same instance resized
 kit.Avatar = (initials, paletteName = 'Blueberry', size = 20, round = false) => fillRef('People/Avatar', {
   name: 'Avatar/' + size, width: size, height: size, cornerRadius: round ? size / 2 : Math.round(size * 0.2), fill: colorOf(P(paletteName)),

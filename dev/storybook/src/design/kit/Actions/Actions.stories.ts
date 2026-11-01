@@ -16,10 +16,17 @@ import type { Meta, StoryObj } from '@storybook/svelte'
 import { axis } from '../../../helpers/matrix'
 
 import Button from './Button.svelte'
+import ButtonGroup from './ButtonGroup.svelte'
 import ClassicButton from './ClassicButton.svelte'
 import Modal from './Modal.svelte'
+import WizardBar from './WizardBar.svelte'
+import WizardDialog from './WizardDialog.svelte'
+import DialogDemo from '../demo/DialogDemo.svelte'
 import MenuDemo from '../demo/MenuDemo.svelte'
+import WizardDemo from '../demo/WizardDemo.svelte'
+import SegmentedControl from './SegmentedControl.svelte'
 import Switcher from './Switcher.svelte'
+import Tabs from './Tabs.svelte'
 import FramedSections from '../FramedSections.svelte'
 
 const meta: Meta = {
@@ -97,6 +104,17 @@ export const MenuStates: Story = sections([
             { label: 'Create board', icon: 'plus', accent: true }
           ]
         }
+      },
+      {
+        title: 'description, color',
+        props: {
+          items: [
+            { label: 'All messages', description: 'Every new message and reply', selected: true },
+            { label: 'Only mentions', description: 'When someone mentions you' },
+            { label: 'Offer', color: 'Orange' },
+            { label: 'Done', color: 'Grass' }
+          ]
+        }
       }
     ],
     columns: [{ title: '', props: { label: 'Boards', width: 300 } }]
@@ -107,7 +125,7 @@ export const ClassicButtonStates: Story = sections([
   {
     title: 'ClassicButton - kinds and sizes',
     component: ClassicButton,
-    rows: axis('kind', ['regular', 'primary', 'dangerous', 'ghost']),
+    rows: axis('kind', ['regular', 'primary', 'positive', 'dangerous', 'ghost']),
     columns: axis('size', ['small', 'medium', 'large']),
     props: { label: 'Button' }
   },
@@ -119,6 +137,7 @@ export const ClassicButtonStates: Story = sections([
       { title: 'icon', props: { icon: 'kit/PencilLine' } },
       { title: 'icon and label', props: { icon: 'kit/PersonCircle', label: 'Assignee' } },
       { title: 'menu', props: { label: 'Owner', menu: true } },
+      { title: 'icon after label', props: { label: 'Next', iconRight: 'kit/ArrowRight' } },
       { title: 'disabled', props: { label: 'Owner', disabled: true } }
     ],
     props: { size: 'medium' }
@@ -131,5 +150,136 @@ export const ModalStates: Story = sections([
     component: Modal,
     rows: [{ title: 'dialog', props: { title: 'Edit project' } }],
     columns: [{ title: '', props: {} }]
+  }
+])
+
+const wizardSteps = ['Basics', 'Members and access', 'Issues', 'Workflow']
+
+export const WizardStates: Story = sections([
+  {
+    title: 'WizardBar',
+    component: WizardBar,
+    rows: wizardSteps.map((_, i) => ({ title: `step ${i + 1}`, props: { step: i } })),
+    columns: [{ title: '', props: { steps: wizardSteps } }]
+  },
+  {
+    title: 'WizardDialog',
+    component: WizardDialog,
+    rows: [
+      { title: 'first step', props: { step: 0 } },
+      { title: 'next disabled', props: { step: 0, canProceed: false } },
+      { title: 'middle step', props: { step: 1 } },
+      { title: 'last step', props: { step: 3 } }
+    ],
+    columns: [{ title: '', props: { title: 'Create project', steps: wizardSteps } }]
+  }
+])
+
+export const DialogStates: Story = sections([
+  {
+    title: 'Dialog - widths',
+    component: DialogDemo,
+    rows: axis('width', [400, 480, 600]),
+    columns: [{ title: '', props: { submitLabel: 'Archive' } }]
+  },
+  {
+    title: 'Dialog - footer',
+    component: DialogDemo,
+    rows: [
+      { title: 'cancel + submit', props: {} },
+      { title: 'canSubmit false', props: { canSubmit: false } },
+      { title: 'submitKind negative', props: { submitKind: 'negative', submitLabel: 'Archive' } },
+      { title: 'own labels', props: { submitLabel: 'Save', cancelLabel: 'Discard' } },
+      { title: 'footer false', props: { footer: false } }
+    ],
+    columns: [{ title: 'small', props: { width: 480 } }]
+  }
+])
+
+export const KitWizardDialogStates: Story = sections([
+  {
+    title: 'WizardDialog (product)',
+    component: WizardDemo,
+    rows: [
+      { title: 'first step', props: { selected: 0 } },
+      { title: 'next blocked', props: { selected: 1, canProceed: false } },
+      { title: 'last step', props: { selected: 2, submitLabel: 'Import' } }
+    ],
+    columns: [{ title: '', props: { width: 720 } }]
+  }
+])
+
+export const TabsStates: Story = sections([
+  {
+    title: 'Tabs',
+    component: Tabs,
+    rows: axis('size', ['medium', 'small']),
+    columns: [
+      { title: 'labels', props: { items: ['Issues', 'Board', 'Milestones'], selected: 'Board' } },
+      {
+        title: 'icons',
+        props: {
+          items: [
+            ['Issues', 'kit/CheckSquare'],
+            ['Board', 'kit/Kanban']
+          ],
+          selected: 'Issues'
+        }
+      }
+    ]
+  }
+])
+
+export const SegmentedControlStates: Story = sections([
+  {
+    title: 'SegmentedControl',
+    component: SegmentedControl,
+    rows: axis('size', ['medium', 'small', 'extra-small']),
+    columns: [
+      { title: 'labels', props: { items: ['Day', 'Week', 'Month'], selected: 'Week' } },
+      { title: 'badge', props: { items: ['Monthly', ['Yearly', undefined, '-20%']], selected: 'Yearly' } },
+      {
+        title: 'icon only',
+        props: {
+          items: [
+            ['List', 'kit/BulletList'],
+            ['Board', 'kit/Kanban']
+          ],
+          selected: 'List',
+          iconOnly: true
+        }
+      }
+    ]
+  }
+])
+
+export const ButtonGroupStates: Story = sections([
+  {
+    title: 'ButtonGroup',
+    component: ButtonGroup,
+    rows: axis('kind', ['secondary', 'ghost']),
+    columns: [
+      {
+        title: 'labels',
+        props: {
+          items: [
+            ['List', 'kit/BulletList'],
+            ['Board', 'kit/Kanban']
+          ],
+          selected: 'List'
+        }
+      },
+      {
+        title: 'icon only',
+        props: {
+          items: [
+            ['', 'kit/BulletList'],
+            ['', 'kit/Kanban']
+          ],
+          selected: 'kit/Kanban'
+        }
+      },
+      { title: 'small', props: { items: ['Day', 'Week'], selected: 'Day', size: 'small' } }
+    ]
   }
 ])

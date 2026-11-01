@@ -14,3 +14,12 @@
 - Labels: `createDoc(tags.class.TagElement, core.space.Workspace, { ..., category: tags.category.NoCategory })`, then `addCollection(tags.class.TagReference, issue.space, issue._id, issue._class, 'labels', { tag, title, color })`.
 - `tracker.class.Component`/`Milestone` are created with `createDoc(class, projectId, {...})` - the project id doubles as their `space` (a `Project` is itself a `Space`).
 - A whole-workspace `pnpm install --offline` can fail on unrelated pre-existing lockfile/cache drift (e.g. missing `v8-compile-cache` metadata) unconnected to the actual change. A scoped `pnpm install --filter @hcengineering/tool...` (online) is enough after adding a workspace dependency and does not touch unrelated importers' lockfile entries beyond harmless dead-snapshot pruning.
+
+## Design demo import (dev/design/demo/<lang>)
+
+`generate-demo-data` after `enrichTracker` imports `dev/design/demo/<lang>` (`--design <dir>`, default `ru`, or `en` for a `--dir` ending in `-en`, `none` skips): `dev/tool/src/demoDesign.ts` (statuses, issues, boards, pins) and the pure converter `demoBoards.ts` (test `__tests__/demoBoards.test.ts`). Runs in-process from the built `lib` of `@hcengineering/tool`, so `pnpm build --to @hcengineering/tool` is enough, no docker image.
+
+- Statuses: `createStatusAtomic` (plugins/task) into every ProjectType of non-archived projects, placed after the last status of its category in each Issue task type; same name is reused, so a second run adds nothing. Color name -> palette index by parsing `packages/ui/src/colors.ts` (`whitePalette` order).
+- Extra issues: `WorkspaceImporter.createIssueWithSubissues` (exported from `@hcengineering/importer` for this); `NN` in the file name is the issue number, project sequence is raised to it. Existing identifiers are skipped.
+- Boards: existing title is skipped. A condition with no product form (`inStatus`, `relation`, any `gt`) drops the whole swimlane / quick filter / color rule (a partial lane would show other cards). `hint` of a swimlane is not stored. The product has no "me" operand in `BoardCondition`: it becomes the person of the first account (demo1). Priority is stored as value pairs `[[n,[n]]]` (`IssuePriority` number), status / assignee / component as refs. The rest lane (no condition) goes last, as `pickSwimlane` expects.
+- Pinned boards (`pinned: true`) get a `BoardPreference` of the first account.

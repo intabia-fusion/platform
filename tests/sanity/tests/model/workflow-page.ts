@@ -289,7 +289,7 @@ export class WorkflowPage {
   }
 }
 
-/** New/Edit project modal: the workflow mapping block added by the workflow feature. */
+/** Workflow mapping of a project: the Workflow step of the create wizard and the Workflow section of project settings. */
 export class ProjectWorkflowsPage {
   readonly page: Page
 
@@ -297,23 +297,15 @@ export class ProjectWorkflowsPage {
     this.page = page
   }
 
-  configureButton = (): Locator => this.page.locator('button[data-id="btnConfigureWorkflows"]')
-  configuredLabel = (): Locator => this.page.locator('span.workflows-status-label')
   mappingDropdown = (taskType: string): Locator => this.page.locator(`button[data-id="workflow-for-${taskType}"]`)
 
   dropdownRow = (name: string): Locator =>
     this.page.locator('div.hulyPopup-container .hulyPopup-row', { hasText: name })
 
-  saveButton = (): Locator =>
-    this.page
-      .locator('div.hulyModal-container.type-popup')
-      .locator('div.hulyModal-footer')
-      .getByRole('button', { name: 'Save', exact: true })
-
+  /** The Workflow step of the create project wizard or the Workflow section of the project settings. */
   async setWorkflow (taskType: string, workflowName: string): Promise<void> {
-    await this.configureButton().click()
     await this.mappingDropdown(taskType).click()
     await this.dropdownRow(workflowName).click()
-    await this.saveButton().click()
+    await expect(this.mappingDropdown(taskType)).toContainText(workflowName)
   }
 }

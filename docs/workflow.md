@@ -155,5 +155,5 @@ pnpm run uitest -- tests/workflow      # или dev-uitest против лока
 
 ## Связанные документы
 
-- [features/tracker.md](features/tracker.md) - архитектура Workflow/TaskType/Status внутри трекера.
+- [features/tracker-projects-workflow.md](features/tracker-projects-workflow.md) - архитектура Workflow/TaskType/Status внутри трекера.
 - [memory/workflow-tests.md](memory/workflow-tests.md) - те же факты компактно, для правки кода.

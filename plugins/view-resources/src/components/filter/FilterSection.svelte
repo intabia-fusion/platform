@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -27,6 +28,7 @@
 
   export let filter: Filter
   export let space: Ref<Space> | undefined
+  export let hideRemove: boolean = false
 
   let currentFilter = filter.nested ? filter.nested : filter
   $: currentFilter = filter.nested ? filter.nested : filter
@@ -198,15 +200,17 @@
       </button>
     {/if}
   {/await}
-  <div class="divider" />
-  <button
-    class="filter-button square hoverable"
-    on:click={() => {
-      dispatch('remove')
-    }}
-  >
-    <div class="btn-icon"><Icon icon={ui.icon.Cross} size="small" /></div>
-  </button>
+  {#if !hideRemove}
+    <div class="divider" />
+    <button
+      class="filter-button square hoverable"
+      on:click={() => {
+        dispatch('remove')
+      }}
+    >
+      <div class="btn-icon"><Icon icon={ui.icon.Cross} size="small" /></div>
+    </button>
+  {/if}
 </div>
 
 <style lang="scss">

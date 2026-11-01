@@ -35,8 +35,7 @@ const demo = JSON.parse(read('../storybook/src/design/demo/demo.generated.json')
 const q = (value) => `'${value.replaceAll('\\', '\\\\').replaceAll("'", "\\'")}'`
 const header = readFileSync(import.meta.filename, 'utf8').split('\n').slice(0, 14).join('\n')
 const out = join(generated, 'stories')
-rmSync(out, { recursive: true, force: true })
-mkdirSync(out, { recursive: true })
+const outputs = new Map()
 
 for (const file of screenFiles(read('design.json'))) {
   const rec = createRecorder(tokens)
@@ -54,7 +53,12 @@ for (const file of screenFiles(read('design.json'))) {
 }
 `
       : ''
-    const frames = page.frames.map((f, n) => `export const Frame${n + 1}: Story = { name: ${q(f.name)}, args: { group, page, frame: ${n} } }`)
+    // Wrapped as the formatter does (print width 120), so a regenerated file passes the formatting check
+    const frames = page.frames.map((f, n) => {
+      const line = `export const Frame${n + 1}: Story = { name: ${q(f.name)}, args: { group, page, frame: ${n} } }`
+      if (line.length <= 120) return line
+      return `export const Frame${n + 1}: Story = {\n  name: ${q(f.name)},\n  args: { group, page, frame: ${n} }\n}`
+    })
     const body = `${header}
 
 import type { Meta, StoryObj } from '@storybook/svelte'
@@ -76,13 +80,13 @@ type Story = StoryObj<typeof meta>
 
 ${canvas}${frames.join('\n')}
 `
-    writeFileSync(join(out, `${slug}-page-${i + 1}.stories.ts`), body)
+    outputs.set(`${slug}-page-${i + 1}.stories.ts`, body)
     console.log(`${file.title} page-${i + 1}: ${page.name} (${page.frames.length} frames)`)
   }
 
   if (!file.canvas) continue
-  writeFileSync(
-    join(out, `${slug}-canvas.stories.ts`),
+  outputs.set(
+    `${slug}-canvas.stories.ts`,
     `${header}
 
 import type { Meta, StoryObj } from '@storybook/svelte'
@@ -102,3 +106,7 @@ export const Canvas: StoryObj = { parameters: { controls: { disable: true } }, a
 `
   )
 }
+
+rmSync(out, { recursive: true, force: true })
+mkdirSync(out, { recursive: true })
+for (const [name, body] of outputs) writeFileSync(join(out, name), body)

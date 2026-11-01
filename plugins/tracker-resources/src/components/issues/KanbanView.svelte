@@ -14,7 +14,6 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { AttachmentsPresenter } from '@hcengineering/attachment-resources'
   import type {
     CategoryType,
     Class,
@@ -25,33 +24,44 @@
     Lookup,
     Ref,
     Status,
+    StatusCategory,
     WithLookup
   } from '@hcengineering/core'
-  import { generateId, getObjectValue, groupByArray, mergeQueries } from '@hcengineering/core'
-  import type { Item, SwimLane } from '@hcengineering/kanban'
+  import core, { generateId, getObjectValue, groupByArray, mergeQueries } from '@hcengineering/core'
+  import type { Item, SwimLane, DropTarget } from '@hcengineering/kanban'
   import { Kanban as KanbanUI } from '@hcengineering/kanban'
   import { employeeByIdStore } from '@hcengineering/contact-resources'
   import type { Employee } from '@hcengineering/contact'
   import { getName } from '@hcengineering/contact'
   import type { IntlString } from '@hcengineering/platform'
   import { translate } from '@hcengineering/platform'
-  import notification from '@hcengineering/notification'
   import { ActionContext, createQuery, getClient, reduceCalls } from '@hcengineering/presentation'
-  import tags from '@hcengineering/tags'
   import type { DocWithRank, TaskType, Project as TaskProject } from '@hcengineering/task'
   import task, { getStates } from '@hcengineering/task'
   import {
     getTaskKanbanResultQuery,
+    StatusCategoryIcon,
     taskTypeStore,
     typeStore,
     updateTaskKanbanCategories
   } from '@hcengineering/task-resources'
-  import type { Issue, Project } from '@hcengineering/tracker'
-  import { IssuePriority, IssuesGrouping, IssuesOrdering, reduceChildInfoTree } from '@hcengineering/tracker'
+  import type { Board, BoardColumn, Issue, Project } from '@hcengineering/tracker'
+  import {
+    IssuePriority,
+    IssuesGrouping,
+    IssuesOrdering,
+    columnCategory,
+    columnDropTargets,
+    columnStatusFor,
+    isOverLimit,
+    pickSwimlane,
+    resolveCardDensity,
+    type CardDensity,
+    type CardField
+  } from '@hcengineering/tracker'
   import type { BlankViewProps, ColorDefinition, SelectPopupValueType } from '@hcengineering/ui'
   import ui, {
     Button,
-    Component,
     defaultBackground,
     getPlatformAvatarColorForTextDef,
     getPlatformColorDef,
@@ -62,7 +72,8 @@
     Loading,
     showPopup,
     themeStore,
-    Icon
+    Icon,
+    tooltip
   } from '@hcengineering/ui'
   import type { AttributeModel, BuildModelKey, Viewlet, ViewOptionModel, ViewOptions } from '@hcengineering/view'
   import view from '@hcengineering/view'
@@ -77,22 +88,21 @@
     getGroupByValues,
     getPresenter,
     groupBy,
-    ListPresenter,
     ListSelectionProvider,
     noCategory,
     provideCategoryValues,
     provideStatusIconScope,
-    openDoc,
     setGroupByValues,
     showMenu,
     statusStore
   } from '@hcengineering/view-resources'
-  import { ChatMessagesPresenter } from '@hcengineering/chunter-resources'
   import type { ProjectWorkflow, Workflow, WorkflowTransition } from '@hcengineering/workflow'
   import workflow from '@hcengineering/workflow'
-  import { onMount } from 'svelte'
+  import { getContext, onDestroy, onMount } from 'svelte'
+  import { writable, type Readable } from 'svelte/store'
 
   import tracker from '../../plugin'
+  import { boardContextKey, ConditionMatches } from '../../boards'
   import { componentStore } from '../../component'
   import { activeProjects, IssuePriorityColor, sortSwimLaneValues } from '../../utils'
   import {
@@ -102,17 +112,11 @@
     swimLaneUpdateProps,
     UNASSIGNED_SWIM
   } from '../../swimLanes'
-  import ComponentEditor from '../components/ComponentEditor.svelte'
   import CreateIssue from '../CreateIssue.svelte'
-  import AssigneeEditor from './AssigneeEditor.svelte'
-  import DueDatePresenter from './DueDatePresenter.svelte'
-  import SubIssuesSelector from './edit/SubIssuesSelector.svelte'
-  import IssuePresenter from './IssuePresenter.svelte'
-  import ParentNamesPresenter from './ParentNamesPresenter.svelte'
-  import PriorityEditor from './PriorityEditor.svelte'
-  import StatusEditor from './StatusEditor.svelte'
-  import EstimationEditor from './timereport/EstimationEditor.svelte'
-  import MilestoneEditor from '../milestones/MilestoneEditor.svelte'
+  import IssueKanbanCard from './IssueKanbanCard.svelte'
+  import IssueStatusIcon from './IssueStatusIcon.svelte'
+  import BoardColumnStatuses from '../boards/BoardColumnStatuses.svelte'
+  import BoardConditionHint from '../boards/BoardConditionHint.svelte'
 
   const _class = tracker.class.Issue
   export let space: Ref<Project> | undefined = undefined
@@ -125,11 +129,31 @@
   export let options: FindOptions<DocWithRank> | undefined = undefined
   export let emptyState: BlankViewProps | undefined = undefined
 
-  $: requestedGroupByKey = (viewOptions.groupBy[0] ?? noCategory) as IssuesGrouping
+  // Set by a board page: the board's columns replace the grouping by status
+  const boardStore: Readable<Board | undefined> = getContext(boardContextKey) ?? writable(undefined)
+  $: board = $boardStore
+
+  $: requestedGroupByKey = (
+    board !== undefined ? IssuesGrouping.Status : (viewOptions.groupBy[0] ?? noCategory)
+  ) as IssuesGrouping
   // Set together with categories: columns of the old grouping under a new key query {space: 0}.
   let groupByKey = (viewOptions.groupBy[0] ?? noCategory) as IssuesGrouping
-  $: orderBy = viewOptions.orderBy
-  $: compactMode = viewOptions.compactMode === true
+  // A board sorts its cards itself ("Card order" of its settings), the first order of the viewlet by default
+  $: orderBy = board !== undefined ? (board.orderBy ?? viewlet.viewOptions?.orderBy[0]) : viewOptions.orderBy
+  $: density = resolveCardDensity(viewOptions.density, board?.density, viewOptions.compactMode === true)
+  // Paddings of the grid shrink with the cards; 'detailed' keeps the defaults of the kanban
+  const densityGrid: Record<CardDensity, { inset: string, padding: string, headerGap: string } | undefined> = {
+    detailed: undefined,
+    normal: { inset: '0.75rem', padding: '1.25rem', headerGap: '0.875rem' },
+    compact: { inset: '0.5rem', padding: '1rem', headerGap: '0.75rem' },
+    dense: { inset: '0.375rem', padding: '0.75rem', headerGap: '0.5rem' }
+  }
+  $: grid = densityGrid[density]
+  // Fields a board picked win over the view config; the parent has no config key and shows unless the board hides it
+  $: cardFieldShown = (field: CardField): boolean =>
+    board?.cardFields !== undefined
+      ? board.cardFields.includes(field)
+      : field === 'parent' || enabledConfig(config, field)
 
   let customAttrModels: AttributeModel[] = []
   const buildCustomAttrModels = reduceCalls(async function (cfg: (string | BuildModelKey)[]): Promise<void> {
@@ -158,7 +182,7 @@
 
   $: dontUpdateRank = orderBy ? orderBy[0] !== IssuesOrdering.Manual : false
 
-  $: currentSpace = space ?? tracker.project.DefaultProject
+  $: currentSpace = space ?? board?.projects[0] ?? tracker.project.DefaultProject
   let currentProject: Project | undefined
   $: currentProject = $activeProjects.get(currentSpace)
 
@@ -173,6 +197,11 @@
 
   function toIssue (object: any): WithLookup<Issue> {
     return object as WithLookup<Issue>
+  }
+
+  // Status a landing spot names, for its icon and label.
+  function dropTargetStatus (target: DropTarget): Status | undefined {
+    return $statusStore.byId.get(target.id as Ref<Status>)
   }
 
   const lookup: Lookup<Issue> = {
@@ -302,7 +331,8 @@
 
   let fastQueryIds = new Set<Ref<DocWithRank>>()
 
-  $: swimLaneBy = (viewOptions.swimLaneBy as string) ?? 'none'
+  // A board has no lanes option in the view options: only the board sets its lanes
+  $: swimLaneBy = board !== undefined ? (board.swimLaneBy ?? 'none') : ((viewOptions.swimLaneBy as string) ?? 'none')
 
   let categoryQueryOptions: Partial<FindOptions<DocWithRank>>
   $: categoryQueryOptions = {
@@ -312,7 +342,12 @@
       _id: 1,
       _class: 1,
       rank: 1,
-      ...getCategoryQueryProjection(client.getHierarchy(), _class, queryNoLookup, viewOptions.groupBy),
+      ...getCategoryQueryProjection(
+        client.getHierarchy(),
+        _class,
+        queryNoLookup,
+        board !== undefined ? [IssuesGrouping.Status] : viewOptions.groupBy
+      ),
       ...(swimLaneBy !== 'none' && swimLaneBy !== '' ? { [swimLaneBy]: 1 } : {})
     }
   }
@@ -400,6 +435,23 @@
     )
   }
 
+  // Columns of a board are rebuilt only when their statuses change: new categories rerender the board.
+  let boardColumnsKey = ''
+  $: if (board !== undefined) {
+    const key = JSON.stringify(board.columns.map((c) => [c.id, c.statuses]))
+    if (key !== boardColumnsKey) {
+      boardColumnsKey = key
+      groupByKey = IssuesGrouping.Status
+      headerComponent = undefined
+      categories = board.columns.filter((column) => column.statuses.length > 0).map(columnCategory)
+      loadCategories = false
+    }
+  }
+
+  function boardColumn (state: CategoryType): BoardColumn | undefined {
+    return typeof state === 'object' ? board?.columns.find((c) => c.id === state.name) : undefined
+  }
+
   const updateCategories = reduceCalls(async function (
     key: IssuesGrouping,
     space: Ref<Project> | undefined,
@@ -407,6 +459,7 @@
     viewOptions: ViewOptions,
     viewOptionsConfig: ViewOptionModel[] | undefined
   ): Promise<void> {
+    if (board !== undefined) return
     const res = await updateTaskKanbanCategories(
       client,
       viewlet,
@@ -438,7 +491,47 @@
 
   const fullFilled: Record<string, boolean> = {}
 
-  const getUpdateProps = (doc: Doc, category: CategoryType): DocumentUpdate<Item> | undefined => {
+  // Statuses each dragged issue may take, by the workflow: a board column picks one of them on a drop
+  const allowedByDoc = new Map<Ref<Doc>, Ref<Status>[] | undefined>()
+
+  // Landing spots per board column for the dragged issue, so the kanban reveals a spot per status.
+  // Computed eagerly on drag start; the kanban only shows them while a card is held over a column.
+  let dropTargets = new Map<string, DropTarget[]>()
+
+  function buildDropTargets (board: Board, doc: Doc, allowed: Ref<Status>[] | undefined): Map<string, DropTarget[]> {
+    const result = new Map<string, DropTarget[]>()
+    const issue = toIssue(doc)
+    for (const column of board.columns) {
+      const statuses = columnDropTargets(column, issue.status, allowed)
+      if (statuses.length > 1) {
+        result.set(
+          column.id,
+          statuses.map((s) => ({ id: s }))
+        )
+      }
+    }
+    return result
+  }
+
+  const getUpdateProps = (
+    doc: Doc,
+    category: CategoryType,
+    dropTargetId?: string
+  ): DocumentUpdate<Item> | undefined => {
+    if (board !== undefined) {
+      const column = boardColumn(category)
+      if (column === undefined) return undefined
+      const current = toIssue(doc).status
+      const allowed = allowedByDoc.get(doc._id)
+      // A landing spot names the exact status; otherwise the first status the column allows.
+      const status =
+        dropTargetId !== undefined
+          ? columnDropTargets(column, current, allowed).includes(dropTargetId as Ref<Status>)
+            ? (dropTargetId as Ref<Status>)
+            : undefined
+          : columnStatusFor(column, current, allowed)
+      return status === undefined ? undefined : { [groupByKey]: status, space: doc.space }
+    }
     const groupValue =
       typeof category === 'object' ? category.values.find((it) => it.space === doc.space)?._id : category
     if (groupValue === undefined) {
@@ -448,6 +541,77 @@
       [groupByKey]: groupValue,
       space: doc.space
     }
+  }
+
+  // Conditions of the board lanes and card colors: ids of the issues that fit each, from live queries.
+  let matchesVersion = 0
+  const laneMatches = new ConditionMatches(() => {
+    matchesVersion++
+  })
+  const colorMatches = new ConditionMatches(() => {
+    matchesVersion++
+  })
+  onDestroy(() => {
+    laneMatches.destroy()
+    colorMatches.destroy()
+  })
+  $: boardScope = board !== undefined ? { space: { $in: board.projects } } : {}
+  // The last lane takes the rest and has no condition of its own
+  $: void laneMatches.sync(
+    client,
+    (board?.swimlanes ?? []).slice(0, -1).map((l) => ({ id: l.id, condition: l.condition })),
+    boardScope
+  )
+  $: void colorMatches.sync(
+    client,
+    (board?.colorRules ?? []).map((r) => ({ id: r.id, condition: r.condition })),
+    boardScope
+  )
+  $: boardLanes = board !== undefined && swimLaneBy === 'none' && board.swimlanes.length > 0
+  $: if (boardLanes && board !== undefined) {
+    void matchesVersion
+    swimLanesBy = 'board'
+    swimLanePresenter = undefined
+    swimLanes = laneMatches.ready ? board.swimlanes.map((l) => ({ _id: l.id, title: l.title, value: l.id })) : []
+  }
+
+  function cardAccent (doc: Doc, _version: number, dark: boolean): ColorDefinition | undefined {
+    const rule = board?.colorRules.find((r) => colorMatches.has(r.id, doc._id))
+    return rule !== undefined ? getPlatformColorDef(rule.color, dark) : undefined
+  }
+
+  // Status counts of the column: shown on hover over its title
+  // The statuses of a board column open by a click: a hover popup got in the way of the cards
+  function openColumnStatuses (e: MouseEvent, column: BoardColumn | undefined): void {
+    showPopup(BoardColumnStatuses, { statuses: columnStatuses(column, tasks) }, e.currentTarget as HTMLElement)
+  }
+
+  function columnStatuses (column: BoardColumn | undefined, docs: DocWithRank[]): { status: Status, count: number }[] {
+    return (column?.statuses ?? []).flatMap((id) => {
+      const status = $statusStore.byId.get(id)
+      return status !== undefined
+        ? [{ status, count: docs.filter((d) => (d as DocWithRank & { status?: Ref<Status> }).status === id).length }]
+        : []
+    })
+  }
+
+  // The color of a column is the color of its category: a column may have no statuses at all.
+  let statusCategoryDocs = new Map<Ref<StatusCategory>, StatusCategory>()
+  createQuery().query(core.class.StatusCategory, {}, (res) => {
+    statusCategoryDocs = new Map(res.map((c) => [c._id, c]))
+  })
+  function columnColor (
+    column: BoardColumn | undefined,
+    dark: boolean,
+    cats: typeof statusCategoryDocs
+  ): ColorDefinition {
+    const category = column !== undefined ? cats.get(column.category) : undefined
+    return getPlatformColorDef(category?.color ?? 0, dark)
+  }
+
+  // The last lane takes the rest: it has no condition to show
+  function laneCondition (laneId: string): string {
+    return board?.swimlanes.slice(0, -1).find((l) => l.id === laneId)?.condition ?? ''
   }
 
   // SwimLane support (generic by attribute name).
@@ -507,9 +671,12 @@
     swimLanes = ordered
   }
 
-  $: void orderLanes(swimLaneBy, buildGenericLanes(swimLaneBy, effectiveTasks))
+  $: if (!boardLanes) void orderLanes(swimLaneBy, buildGenericLanes(swimLaneBy, effectiveTasks))
 
   function getSwimLaneOfDoc (doc: Doc): string | undefined {
+    if (swimLanesBy === 'board') {
+      return pickSwimlane(board?.swimlanes.map((l) => ({ id: l.id })) ?? [], (l) => laneMatches.has(l.id, doc._id))?.id
+    }
     if (swimLanesBy === 'none' || swimLanesBy === '') return undefined
     const raw = getObjectValue(swimLanesBy, doc)
     return normalizeSwimValue(swimLanesBy, raw, $componentStore).key
@@ -559,22 +726,11 @@
     return undefined
   }
 
-  $: swimLaneStorageKey = viewlet?._id != null ? `${String(viewlet._id)}-${swimLaneBy}` : undefined
-
-  async function shouldShowFooter (
-    config: (string | BuildModelKey)[],
-    reports: number,
-    estimations: number,
-    issue: WithLookup<Issue>
-  ): Promise<boolean> {
-    if (enabledConfig(config, 'estimation') && (reports > 0 || estimations > 0)) return true
-    if (enabledConfig(config, 'comments')) {
-      if ((issue.comments ?? 0) > 0) return true
-      if ((issue.$lookup?.attachedTo?.comments ?? 0) > 0) return true
-    }
-    if (enabledConfig(config, 'attachments') && (issue.attachments ?? 0) > 0) return true
-    return false
-  }
+  $: swimLaneStorageKey = boardLanes
+    ? `board-${String(board?._id)}-lanes`
+    : viewlet?._id != null
+      ? `${String(viewlet._id)}-${swimLaneBy}`
+      : undefined
 
   async function getWorkflowTransitions (
     spaceId: Ref<Project>,
@@ -602,8 +758,53 @@
     return (wfDoc?.$lookup?.transitions ?? []) as WorkflowTransition[]
   }
 
+  // Statuses the issue may move to: its task type statuses narrowed by the workflow of the project.
+  async function allowedStatuses (issue: Issue): Promise<Ref<Status>[] | undefined> {
+    if (issue.kind != null) {
+      const taskType =
+        $taskTypeStore.get(issue.kind) ?? (await client.findOne(task.class.TaskType, { _id: issue.kind }))
+      if (taskType?.statuses != null && taskType.statuses.length > 0) {
+        if (issue.space != null) {
+          const transitions = await getWorkflowTransitions(issue.space, issue.kind)
+          if (transitions != null) {
+            const allowed = new Set<string>()
+            if (issue.status != null) {
+              allowed.add(issue.status)
+            }
+            for (const t of transitions) {
+              if (t.from == null || t.from.length === 0 || (issue.status != null && t.from.includes(issue.status))) {
+                allowed.add(t.to)
+              }
+            }
+            return taskType.statuses.filter((s) => allowed.has(s))
+          }
+        }
+        return taskType.statuses
+      }
+    }
+
+    if (issue.space != null) {
+      const space = await client.findOne(tracker.class.Project, { _id: issue.space })
+      if (space != null) {
+        return getStates(space, $typeStore, $statusStore.byId).map(({ _id }) => _id)
+      }
+    }
+    return undefined
+  }
+
   const getAvailableCategories = async (doc: Doc): Promise<CategoryType[]> => {
     const issue = toIssue(doc)
+
+    if (board !== undefined) {
+      const currentBoard = board
+      const allowed = await allowedStatuses(issue)
+      allowedByDoc.set(doc._id, allowed)
+      dropTargets = buildDropTargets(currentBoard, doc, allowed)
+      return categories.filter((c) => {
+        const statuses = boardColumn(c)?.statuses ?? []
+        return statuses.includes(issue.status) || allowed === undefined || statuses.some((s) => allowed.includes(s))
+      })
+    }
 
     if ([IssuesGrouping.Component, IssuesGrouping.Milestone].includes(groupByKey)) {
       const availableCategories = []
@@ -628,35 +829,8 @@
     }
 
     if (groupByKey === IssuesGrouping.Status) {
-      if (issue.kind != null) {
-        const taskType =
-          $taskTypeStore.get(issue.kind) ?? (await client.findOne(task.class.TaskType, { _id: issue.kind }))
-        if (taskType?.statuses != null && taskType.statuses.length > 0) {
-          if (issue.space != null) {
-            const transitions = await getWorkflowTransitions(issue.space, issue.kind)
-            if (transitions != null) {
-              const allowed = new Set<string>()
-              if (issue.status != null) {
-                allowed.add(issue.status)
-              }
-              for (const t of transitions) {
-                if (t.from == null || t.from.length === 0 || (issue.status != null && t.from.includes(issue.status))) {
-                  allowed.add(t.to)
-                }
-              }
-              return taskType.statuses.filter((s) => allowed.has(s))
-            }
-          }
-          return taskType.statuses
-        }
-      }
-
-      if (issue.space != null) {
-        const space = await client.findOne(tracker.class.Project, { _id: issue.space })
-        if (space != null) {
-          return getStates(space, $typeStore, $statusStore.byId).map(({ _id }) => _id)
-        }
-      }
+      const statuses = await allowedStatuses(issue)
+      if (statuses !== undefined) return statuses
     }
 
     return categories
@@ -679,6 +853,12 @@
   <!-- svelte-ignore a11y-no-static-element-interactions -->
   <KanbanUI
     bind:this={kanbanUI}
+    limitScale={density === 'dense' ? 2 : 1}
+    overLimit={board !== undefined ? (state, count) => isOverLimit(count, boardColumn(state)?.limit) : undefined}
+    --kanban-column-inset={grid?.inset}
+    --kanban-padding-top={grid?.padding}
+    --kanban-padding-x={grid?.padding}
+    --kanban-header-gap={grid?.headerGap}
     {categories}
     {dontUpdateRank}
     {orderBy}
@@ -696,6 +876,7 @@
       groupByKey === noCategory ? tasks : getGroupByValues(groupByDocs, category)}
     {setGroupByValues}
     {getUpdateProps}
+    {dropTargets}
     {groupByDocs}
     {groupByKey}
     on:obj-focus={(evt) => {
@@ -703,15 +884,15 @@
     }}
     {getAvailableCategories}
     {swimLanes}
-    swimLaneKey={swimLaneBy !== 'none' ? swimLaneBy : undefined}
+    swimLaneKey={swimLaneBy !== 'none' ? swimLaneBy : boardLanes ? 'board' : undefined}
     {getSwimLaneOfDoc}
     {getSwimLaneDocId}
     {getSwimLaneUpdateProps}
     {getSwimLaneHeaderStyle}
     getCategoryGroup={groupByKey === 'status' ? statusCategory : undefined}
-    compact={compactMode}
+    modern
     storageKey={swimLaneStorageKey}
-    controlKey={viewlet?._id != null ? String(viewlet._id) : undefined}
+    controlKey={board !== undefined ? `board-${board._id}` : viewlet?._id != null ? String(viewlet._id) : undefined}
     selection={listProvider.current($focusStore)}
     checked={$selection ?? []}
     on:check={(evt) => {
@@ -743,10 +924,17 @@
           />
         {/if}
         <span class="swimlane-count">{count}</span>
+        {#if swimLanesBy === 'board'}
+          <BoardConditionHint condition={laneCondition(swimLane._id)} />
+        {/if}
       </div>
     </svelte:fragment>
     <svelte:fragment slot="header" let:state let:count let:index let:collapsed let:toggle let:members let:merge>
-      {@const color = accentColors.get(`${index}${$themeStore.dark}${groupByKey}`)}
+      {@const column = boardColumn(state)}
+      {@const color =
+        board !== undefined
+          ? columnColor(column, $themeStore.dark, statusCategoryDocs)
+          : accentColors.get(`${index}${$themeStore.dark}${groupByKey}`)}
       {@const headerBGColor = color?.background ?? defaultBackground($themeStore.dark)}
       <!-- svelte-ignore a11y-click-events-have-key-events -->
       <!-- svelte-ignore a11y-no-static-element-interactions -->
@@ -755,8 +943,12 @@
         class="header flex-between"
         class:merged={members.length > 1}
         class:collapsed
-        on:click={() => {
+        use:tooltip={board !== undefined && !collapsed
+          ? { label: tracker.string.ColumnStatusesHint, direction: 'top' }
+          : undefined}
+        on:click={(e) => {
           if (collapsed) toggle()
+          else if (board !== undefined) openColumnStatuses(e, column)
         }}
       >
         <div class="flex-row-center gap-1 flex-grow clear-mins">
@@ -768,7 +960,15 @@
               class:merged-names={members.length > 1}
               style:color={color?.title ?? 'var(--theme-caption-color)'}
             >
-              {#if groupByKey === noCategory}
+              {#if board !== undefined}
+                <span class="column-title">
+                  <StatusCategoryIcon
+                    value={column !== undefined ? statusCategoryDocs.get(column.category) : undefined}
+                    size="small"
+                  />
+                  <span class="overflow-label">{column?.title ?? ''}</span>
+                </span>
+              {:else if groupByKey === noCategory}
                 <Label label={view.string.NoGrouping} />
               {:else if headerComponent}
                 {#each expandedHeaders.has(String(state)) ? members : members.slice(0, MERGED_NAMES) as member, mi}
@@ -808,8 +1008,13 @@
           <span class="counter ml-1">
             {count}
           </span>
+          {#if column?.limit !== undefined && column.limit > 0}
+            <span class="limit ml-1" class:over={isOverLimit(count, column.limit)} data-id="kanban-wip-limit">
+              / {column.limit}
+            </span>
+          {/if}
         </div>
-        {#if !collapsed}
+        {#if !collapsed && board === undefined}
           <div class="tools flex-row-center flex-no-shrink gap-1">
             <Button
               icon={ui.icon.ChevronRight}
@@ -838,156 +1043,25 @@
       </div>
     </svelte:fragment>
     <svelte:fragment slot="card" let:object>
-      {@const issue = toIssue(object)}
-      {@const issueId = object._id}
-      {@const treeResult = reduceChildInfoTree(issue.childInfo ?? [], issue.estimation, issue.reportedTime)}
-      {@const reports = treeResult.totalReportedTime}
-      {@const estimations = treeResult.totalEstimation}
-      {#key issueId}
-        <div
-          class="tracker-card"
-          class:compact={compactMode}
-          on:click={() => {
-            void openDoc(client.getHierarchy(), issue)
-          }}
-        >
-          <div class="card-header flex-between">
-            <div class="flex-row-center text-sm min-w-0">
-              <div class="mr-1 flex-no-shrink">
-                <StatusEditor value={issue} kind="list" isEditable={false} />
-              </div>
-              <div class="flex-no-shrink">
-                <IssuePresenter value={issue} />
-              </div>
-              {#if !compactMode}
-                <ParentNamesPresenter value={issue} />
-              {/if}
-            </div>
-            <div class="flex-row-center gap-2 reverse flex-no-shrink">
-              <Component is={notification.component.NotificationPresenter} props={{ value: object }} />
-              <AssigneeEditor object={issue} avatarSize="card" shouldShowName={false} />
-            </div>
-          </div>
-          <div
-            class="card-content caption-color"
-            class:text-md={!compactMode}
-            class:text-sm={compactMode}
-            class:lines-limit-2={!compactMode}
-          >
-            {object.title}
-          </div>
-          <div class="card-labels meta">
-            {#if enabledConfig(config, 'priority') && (!compactMode || issue.priority !== IssuePriority.NoPriority)}
-              <PriorityEditor value={issue} isEditable={true} kind="link-bordered" size="small" justify="center" />
-            {/if}
-            {#if enabledConfig(config, 'subIssues') && issue && issue.subIssues > 0}
-              <SubIssuesSelector value={issue} {currentProject} size="small" />
-            {/if}
-            {#each customAttrModels as attrModel (attrModel.key)}
-              <ListPresenter
-                docObject={issue}
-                attributeModel={attrModel}
-                value={getObjectValue(attrModel.key, issue)}
-                onChange={undefined}
-                props={{}}
-                hideDivider={true}
-                compactMode={true}
-                customStyle="square"
-              />
-            {/each}
-            {#if enabledConfig(config, 'dueDate') && (!compactMode || issue.dueDate != null)}
-              <DueDatePresenter value={issue} size="small" kind="link-bordered" />
-            {/if}
-            {#if compactMode}
-              {#if enabledConfig(config, 'estimation') && (estimations > 0 || reports > 0)}
-                <EstimationEditor kind="link-bordered" size="small" value={issue} />
-              {/if}
-              {#if enabledConfig(config, 'attachments') && (object.attachments ?? 0) > 0}
-                <AttachmentsPresenter value={object.attachments} {object} kind="link-bordered" size="small" />
-              {/if}
-              {#if enabledConfig(config, 'comments') && (object.comments ?? 0) > 0}
-                <ChatMessagesPresenter value={object.comments} {object} kind="link-bordered" size="small" />
-              {/if}
-              {#if enabledConfig(config, 'comments') && (object.$lookup?.attachedTo?.comments ?? 0) > 0}
-                <ChatMessagesPresenter
-                  object={object.$lookup?.attachedTo}
-                  value={object.$lookup?.attachedTo?.comments}
-                  withInput={false}
-                  kind="link-bordered"
-                  size="small"
-                />
-              {/if}
-            {:else}
-              {#if enabledConfig(config, 'component')}
-                <div class:icon-only={issue.component == null}>
-                  <ComponentEditor
-                    value={issue}
-                    {space}
-                    isEditable={true}
-                    kind="link-bordered"
-                    size="small"
-                    justify="center"
-                  />
-                </div>
-              {/if}
-              {#if enabledConfig(config, 'milestone')}
-                <div class:icon-only={issue.milestone == null}>
-                  <MilestoneEditor
-                    value={issue}
-                    {space}
-                    isEditable={true}
-                    kind="link-bordered"
-                    size="small"
-                    maxWidth="7rem"
-                    justify="center"
-                  />
-                </div>
-              {/if}
-            {/if}
-          </div>
-          {#if !compactMode && enabledConfig(config, 'labels')}
-            <div class="card-labels labels">
-              <Component
-                is={tags.component.LabelsPresenter}
-                props={{
-                  value: issue.labels,
-                  object: issue,
-                  checkFilled: fullFilled[issueId],
-                  kind: 'link',
-                  compression: true
-                }}
-                on:change={(res) => {
-                  if (res.detail.full) fullFilled[issueId] = true
-                }}
-              />
-            </div>
-          {/if}
-          {#if !compactMode}
-            {#await shouldShowFooter(config, reports, estimations, object) then withFooter}
-              {#if withFooter}
-                <div class="card-footer flex-between">
-                  {#if enabledConfig(config, 'estimation')}
-                    <EstimationEditor kind="list" size="small" value={issue} />
-                  {/if}
-                  <div class="flex-row-center gap-3 reverse">
-                    {#if enabledConfig(config, 'attachments') && (object.attachments ?? 0) > 0}
-                      <AttachmentsPresenter value={object.attachments} {object} />
-                    {/if}
-                    <ChatMessagesPresenter value={object.comments} {object} />
-                    <ChatMessagesPresenter
-                      object={object.$lookup?.attachedTo}
-                      value={object.$lookup?.attachedTo?.comments}
-                      withInput={false}
-                    />
-                  </div>
-                </div>
-              {:else}
-                <div class="min-h-4 max-h-4 h-4" />
-              {/if}
-            {/await}
-          {/if}
-        </div>
+      {#key object._id}
+        <IssueKanbanCard
+          issue={toIssue(object)}
+          {density}
+          shown={cardFieldShown}
+          {customAttrModels}
+          accent={cardAccent(object, matchesVersion, $themeStore.dark)?.color}
+          {space}
+          {currentProject}
+          {fullFilled}
+        />
       {/key}
+    </svelte:fragment>
+    <svelte:fragment slot="dropTarget" let:target let:dragCard>
+      {@const status = dropTargetStatus(target)}
+      {#if status !== undefined}
+        <IssueStatusIcon value={status} size="small" space={toIssue(dragCard).space} />
+        <span class="drop-target-name">{status.name}</span>
+      {/if}
     </svelte:fragment>
   </KanbanUI>
 {/if}
@@ -1006,17 +1080,17 @@
   }
   .swimlane-count {
     color: var(--theme-dark-color);
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
     padding: 0 0.375rem;
     background: var(--theme-button-hovered);
-    border-radius: 0.5rem;
+    border-radius: 0.625rem;
     line-height: 1.25rem;
   }
   .header {
-    margin: 0 0.75rem 0.5rem;
-    // Headers of a row stretch to the tallest one; their content stays at the top.
-    align-items: flex-start;
-    padding: 0.375rem 0.5rem 0 1.25rem;
+    margin: 0 var(--kanban-col-inset, 0.75rem) var(--kanban-header-gap, 1.0625rem);
+    // Headers of a row stretch to the tallest one; their text sits at the middle of the height.
+    align-items: center;
+    padding: 0 0.5rem 0 1.25rem;
     min-height: 2.5rem;
     position: relative;
     border: 1px solid var(--theme-divider-color);
@@ -1024,6 +1098,22 @@
 
     .counter {
       color: var(--theme-dark-color);
+    }
+    .column-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      min-width: 0;
+      font-weight: 500;
+      pointer-events: auto;
+    }
+    // Only the limit turns red, the fill of the header stays
+    .limit {
+      color: var(--theme-darker-color);
+
+      &.over {
+        color: var(--theme-state-negative-color);
+      }
     }
     // Shown over the header on hover: hidden buttons must not take the names' width.
     .tools {
@@ -1047,7 +1137,8 @@
     &.merged {
       // In the column's flex layout the header would shrink and the names spill over the cards.
       flex-shrink: 0;
-      padding-bottom: 0.375rem;
+      align-items: flex-start;
+      padding: 0.375rem 0.5rem 0.375rem 1.25rem;
 
       & > div {
         align-items: flex-start;
@@ -1087,87 +1178,10 @@
       }
     }
   }
-  .tracker-card {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    min-height: 6.5rem;
-    border-radius: 0.25rem;
-
-    &.compact {
-      min-height: 0;
-
-      .card-content {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      .card-header {
-        padding: 0.375rem 0.5rem 0;
-      }
-      .card-content {
-        margin: 0.125rem 0.5rem;
-        line-height: 1.15rem;
-      }
-      .card-labels {
-        margin: 0.125rem 0.375rem 0.375rem 0.5rem;
-        gap: 0.25rem;
-
-        &.meta {
-          flex-wrap: wrap;
-        }
-      }
-    }
-
-    .card-header {
-      padding: 0.75rem 1rem 0;
-    }
-    .card-content {
-      margin: 0.5rem 1rem;
-    }
-    /* Global styles in components.scss */
-    .card-labels {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.25rem;
-      margin: 0 0.75rem 0 1rem;
-      min-width: 0;
-
-      &.meta {
-        flex-wrap: wrap;
-        gap: 0.375rem;
-      }
-
-      :global(.icon-only span.label.nowrap),
-      :global(.icon-only button.iconL > span.label) {
-        display: none;
-      }
-      :global(.icon-only button) {
-        padding: 0 0.375rem !important;
-        width: auto !important;
-      }
-      :global(.icon-only .flex-presenter) {
-        margin: 0;
-      }
-      :global(.icon-only .icon),
-      :global(.icon-only .btn-icon) {
-        margin: 0 !important;
-      }
-
-      &.labels {
-        overflow: hidden;
-        flex-shrink: 1;
-        margin: 0 1rem;
-        width: calc(100% - 2rem);
-        border-radius: 0 0.24rem 0.24rem 0;
-      }
-    }
-    .card-footer {
-      margin-top: 1rem;
-      padding: 0.75rem 1rem;
-      background-color: var(--theme-kanban-card-footer);
-      border-radius: 0 0 0.25rem 0.25rem;
-    }
+  .drop-target-name {
+    min-width: 0;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--theme-content-color);
   }
 </style>

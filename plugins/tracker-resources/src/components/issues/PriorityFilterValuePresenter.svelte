@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -29,8 +30,10 @@
   }
 
   let icons: Asset[] = []
-  $: icons = Array.from(value.values())
-    .map((p) => p[0])
+  // A stored condition may hold anything: unknown priorities are skipped, not thrown on
+  $: icons = Array.from(value?.values() ?? [])
+    .map((p) => (Array.isArray(p) ? p[0] : p) as IssuePriority)
+    .filter((p) => issuePriorities[p] !== undefined)
     .sort((a, b) => order[a] - order[b])
     .map((p) => issuePriorities[p].icon)
 </script>

@@ -173,7 +173,7 @@
             else if (rectAnchor.left > docWidth - docWidth / 5) dir = 'left'
             else if (rectAnchor.top < tooltipHTMLToCheck.clientHeight) dir = 'bottom'
             else dir = 'top'
-          } else dir = $tooltip.direction
+          } else dir = $tooltip.direction === 'bottom-end' ? 'bottom' : $tooltip.direction
 
           if (dir === 'right') {
             const maxWidth = Math.min(docWidth / 2, docWidth - rectAnchor.right, MAX_TOOLTIP_WIDTH)
@@ -198,9 +198,14 @@
             }
 
             options.top = `calc(${rectAnchor.bottom}px + .5rem)`
-            options.left = left + 'px'
-            options.maxWidth = `calc(${Math.min(maxWidth * 2, MAX_TOOLTIP_WIDTH)}px - 1.5rem)`
-            options.transform = 'translateX(-50%)'
+            if ($tooltip.direction === 'bottom-end') {
+              options.right = `${docWidth - rectAnchor.right}px`
+              options.maxWidth = `min(${MAX_TOOLTIP_WIDTH}px, ${rectAnchor.right}px)`
+            } else {
+              options.left = left + 'px'
+              options.maxWidth = `calc(${Math.min(maxWidth * 2, MAX_TOOLTIP_WIDTH)}px - 1.5rem)`
+              options.transform = 'translateX(-50%)'
+            }
           } else if (dir === 'top') {
             const left = rectAnchor.x + rectAnchor.width / 2
             const maxWidth = Math.min(left, docWidth - left)

@@ -274,6 +274,7 @@ kit.Switcher = (items, selected, o = {}) => {
 
 // Header of a space view (view-resources SpaceHeader, hulyHeader doubleRow); returns content top.
 // o: view (list|board) title titleIcon titleNode actions[] filters[] tabs[] tab
+// o.end: controls after the "..." button (project settings gear)
 kit.SpaceHeader = (main, o = {}) => {
   const w = main.width
   const secondary = (icon) => kit.add(kit.box('button ' + icon, { w: 32, h: 32, dir: 'row', align: 'center', justify: 'center', radius: 6, fill: T('button-secondary-BackgroundColor'), stroke: T('button-secondary-BorderColor') }), kit.icon(icon, T('theme-caption-color')))
@@ -288,7 +289,7 @@ kit.SpaceHeader = (main, o = {}) => {
     kit.add(l, kit.spacer(12, 1), crumb)
   }
   const r = kit.row('right', 8)
-  kit.add(r, o.actions || [], secondary('kit/DotsHorizontal'))
+  kit.add(r, o.actions || [], secondary('kit/DotsHorizontal'), o.end || [])
   kit.add(row, l, r)
   kit.at(main, row, 17, 12)
   kit.at(main, kit.box('divider', { w: w - 34, h: 1, fill: T('theme-divider-color') }), 17, 56)

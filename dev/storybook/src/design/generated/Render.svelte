@@ -16,12 +16,24 @@
   // Draws a tree recorded from the Penpot screen scripts: kit components as visual components, primitives as flex divs.
   import Button from '../kit/Actions/Button.svelte'
   import Menu from '../kit/Actions/Menu.svelte'
+  import ButtonGroup from '../kit/Actions/ButtonGroup.svelte'
+  import Dialog from '../kit/Actions/Dialog.svelte'
+  import KitWizardDialog from '../kit/Actions/KitWizardDialog.svelte'
+  import SegmentedControl from '../kit/Actions/SegmentedControl.svelte'
+  import Tabs from '../kit/Actions/Tabs.svelte'
   import ClassicButton from '../kit/Actions/ClassicButton.svelte'
   import Modal from '../kit/Actions/Modal.svelte'
+  import WizardBar from '../kit/Actions/WizardBar.svelte'
+  import WizardDialog from '../kit/Actions/WizardDialog.svelte'
   import Checkbox from '../kit/Forms/Checkbox.svelte'
   import EditBox from '../kit/Forms/EditBox.svelte'
   import Input from '../kit/Forms/Input.svelte'
+  import Dropdown from '../kit/Forms/Dropdown.svelte'
   import Radio from '../kit/Forms/Radio.svelte'
+  import SearchInput from '../kit/Forms/SearchInput.svelte'
+  import SelectButton from '../kit/Forms/SelectButton.svelte'
+  import TextArea from '../kit/Forms/TextArea.svelte'
+  import TextInput from '../kit/Forms/TextInput.svelte'
   import Toggle from '../kit/Forms/Toggle.svelte'
   import Icon from '../kit/Icon.svelte'
   import LoginAction from '../kit/Login/LoginAction.svelte'
@@ -48,15 +60,22 @@
   import FormRow from '../kit/Settings/FormRow.svelte'
   import GridRow from '../kit/Settings/GridRow.svelte'
   import SectionTitle from '../kit/Settings/SectionTitle.svelte'
+  import Section from '../kit/Settings/Section.svelte'
+  import SettingRow from '../kit/Settings/SettingRow.svelte'
   import SettingsLayout from '../kit/Settings/SettingsLayout.svelte'
   import Table from '../kit/Settings/Table.svelte'
   import Count from '../kit/Status/Count.svelte'
+  import Callout from '../kit/Status/Callout.svelte'
+  import EmptyState from '../kit/Status/EmptyState.svelte'
+  import KitStatusIcon from '../kit/Status/KitStatusIcon.svelte'
+  import Steps from '../kit/Status/Steps.svelte'
   import Notice from '../kit/Status/Notice.svelte'
   import PriorityIcon from '../kit/Status/PriorityIcon.svelte'
   import StatusChip from '../kit/Status/StatusChip.svelte'
   import StatusIcon from '../kit/Status/StatusIcon.svelte'
   import Chip from '../kit/TagsAndFilters/Chip.svelte'
   import FilterChip from '../kit/TagsAndFilters/FilterChip.svelte'
+  import KitChip from '../kit/TagsAndFilters/KitChip.svelte'
   import QuickFilter from '../kit/TagsAndFilters/QuickFilter.svelte'
   import Swatch from '../kit/TagsAndFilters/Swatch.svelte'
   import Tag from '../kit/TagsAndFilters/Tag.svelte'
@@ -69,6 +88,9 @@
   import IssueRow from '../kit/Tracker/IssueRow.svelte'
   import KanbanColumn from '../kit/Tracker/KanbanColumn.svelte'
   import AppRail from '../kit/Workbench/AppRail.svelte'
+  import Breadcrumbs from '../kit/Workbench/Breadcrumbs.svelte'
+  import KitNavGroup from '../kit/Workbench/KitNavGroup.svelte'
+  import KitNavItem from '../kit/Workbench/KitNavItem.svelte'
   import Navigator from '../kit/Workbench/Navigator.svelte'
   import PanelHeader from '../kit/Workbench/PanelHeader.svelte'
   import Sidebar from '../kit/Workbench/Sidebar.svelte'
@@ -124,6 +146,8 @@
     if (p.stroke !== undefined) s.push(`border:${p.strokeW ?? 1}px ${p.strokeStyle ?? 'solid'} ${p.stroke}`)
     if (p.radius !== undefined) s.push(`border-radius:${p.radius}px`)
     if (p.clip !== false) s.push('overflow:hidden')
+    if (p.opacity !== undefined) s.push(`opacity:${p.opacity}`)
+    if (p.rot !== undefined) s.push(`transform:rotate(${p.rot}deg)`)
     s.push(...fillStyle(p, parent))
     if (shadows !== undefined) s.push(`box-shadow:${shadows.map(shadow).join(',')}`)
     return s.join(';')
@@ -236,6 +260,9 @@
     <svelte:fragment slot="actions"
       >{#each kids('actions') as child (child.id)}<svelte:self node={child} />{/each}</svelte:fragment
     >
+    <svelte:fragment slot="end"
+      >{#each kids('end') as child (child.id)}<svelte:self node={child} />{/each}</svelte:fragment
+    >
     <svelte:fragment slot="filters"
       >{#each kids('filters') as child (child.id)}<svelte:self node={child} />{/each}</svelte:fragment
     >
@@ -250,6 +277,12 @@
   <Modal {...p}
     >{#each node.children as child (child.id)}<svelte:self node={child} />{/each}</Modal
   >
+{:else if node.c === 'WizardDialog'}
+  <WizardDialog {...p}
+    >{#each node.children as child (child.id)}<svelte:self node={child} />{/each}</WizardDialog
+  >
+{:else if node.c === 'WizardBar'}
+  <WizardBar {...p} />
 {:else if node.c === 'DateSeparator'}
   <DateSeparator {...p} />
 {:else if node.c === 'NewMarker'}
@@ -306,6 +339,82 @@
   <Radio {...p} />
 {:else if node.c === 'Toggle'}
   <Toggle {...p} />
+{:else if node.c === 'TextInput'}
+  <TextInput {...p} />
+{:else if node.c === 'TextArea'}
+  <TextArea {...p} />
+{:else if node.c === 'SelectButton'}
+  <SelectButton {...p} />
+{:else if node.c === 'Dropdown'}
+  <Dropdown {...p} />
+{:else if node.c === 'SearchInput'}
+  <SearchInput {...p} />
+{:else if node.c === 'SettingRow'}
+  {#if kids('details').length > 0}
+    <SettingRow {...p}>
+      {#each kids(undefined) as child (child.id)}<svelte:self node={child} />{/each}
+      <svelte:fragment slot="details"
+        >{#each kids('details') as child (child.id)}<svelte:self node={child} />{/each}</svelte:fragment
+      >
+    </SettingRow>
+  {:else}
+    <SettingRow {...p}
+      >{#each kids(undefined) as child (child.id)}<svelte:self node={child} />{/each}</SettingRow
+    >
+  {/if}
+{:else if node.c === 'Section'}
+  {#if kids('actions').length > 0}
+    <Section {...p}>
+      {#each kids(undefined) as child (child.id)}<svelte:self node={child} />{/each}
+      <svelte:fragment slot="actions"
+        >{#each kids('actions') as child (child.id)}<svelte:self node={child} />{/each}</svelte:fragment
+      >
+    </Section>
+  {:else}
+    <Section {...p}
+      >{#each kids(undefined) as child (child.id)}<svelte:self node={child} />{/each}</Section
+    >
+  {/if}
+{:else if node.c === 'Callout'}
+  {#if kids('actions').length > 0}
+    <Callout {...p}>
+      <svelte:fragment slot="actions"
+        >{#each kids('actions') as child (child.id)}<svelte:self node={child} />{/each}</svelte:fragment
+      >
+    </Callout>
+  {:else}
+    <Callout {...p} />
+  {/if}
+{:else if node.c === 'KitStatusIcon'}
+  <KitStatusIcon {...p} />
+{:else if node.c === 'Steps'}
+  <Steps {...p} />
+{:else if node.c === 'EmptyState'}
+  <EmptyState {...p} />
+{:else if node.c === 'KitChip'}
+  <KitChip {...p} />
+{:else if node.c === 'Dialog'}
+  <Dialog {...p}
+    >{#each node.children as child (child.id)}<svelte:self node={child} />{/each}</Dialog
+  >
+{:else if node.c === 'KitWizardDialog'}
+  <KitWizardDialog {...p}
+    >{#each node.children as child (child.id)}<svelte:self node={child} />{/each}</KitWizardDialog
+  >
+{:else if node.c === 'Tabs'}
+  <Tabs {...p} />
+{:else if node.c === 'SegmentedControl'}
+  <SegmentedControl {...p} />
+{:else if node.c === 'ButtonGroup'}
+  <ButtonGroup {...p} />
+{:else if node.c === 'KitNavItem'}
+  <KitNavItem {...p} />
+{:else if node.c === 'KitNavGroup'}
+  <KitNavGroup {...p}
+    >{#each node.children as child (child.id)}<svelte:self node={child} />{/each}</KitNavGroup
+  >
+{:else if node.c === 'Breadcrumbs'}
+  <Breadcrumbs {...p} />
 {:else if node.c === 'Avatar'}
   <Avatar {...p} />
 {:else if node.c === 'SectionTitle'}
@@ -321,7 +430,9 @@
 {:else if node.c === 'StatusIcon'}
   <StatusIcon {...p} />
 {:else if node.c === 'FilterChip'}
-  <FilterChip {...p} />
+  <FilterChip {...p}
+    >{#each node.children as child (child.id)}<svelte:self node={child} />{/each}</FilterChip
+  >
 {:else if node.c === 'QuickFilter'}
   <QuickFilter {...p} />
 {:else if node.c === 'Swatch'}

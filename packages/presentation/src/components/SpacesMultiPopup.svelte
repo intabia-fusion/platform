@@ -1,6 +1,7 @@
 <!--
 // Copyright © 2020 Anticrm Platform Contributors.
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -71,7 +72,8 @@
     if (isSelected(space)) {
       selectedSpaces = selectedSpaces.filter((s) => s !== space._id)
     } else {
-      selectedSpaces.push(space._id)
+      // Not a push: the caller's array (a board's projects) changed in place hides the change from its queries
+      selectedSpaces = [...selectedSpaces, space._id]
     }
     spaces = spaces
     dispatch('update', selectedSpaces)

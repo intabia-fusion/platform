@@ -21,6 +21,7 @@
 
   export let title: string
   export let back: string | undefined = undefined
+  export let tabsWidth: number = 240
   export let close: boolean = false
   export let tabs: Array<[string, IconName?]> = []
   export let tab: string | undefined = undefined
@@ -43,7 +44,7 @@
     </div>
   </div>
   <div class="body">
-    <div class="tabs">
+    <div class="tabs" style:width="{tabsWidth}px">
       {#each tabs as [label, icon]}
         <div class="tab" class:selected={label === tab}>
           {#if icon !== undefined}<Icon name={icon} />{/if}
@@ -106,7 +107,6 @@
     gap: 0.125rem;
     flex-shrink: 0;
     box-sizing: border-box;
-    width: 14.5rem;
     padding: 1rem 0.75rem;
     border-right: 1px solid var(--theme-divider-color);
   }

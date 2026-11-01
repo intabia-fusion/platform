@@ -13,76 +13,60 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import Icon from '../Icon.svelte'
+  // The product Menu shown as a static surface; `hover` of an entry is not drawn, the Menu has no hover prop
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { Menu } from '@hcengineering/ui/kit'
+  import type { MenuItem } from '@hcengineering/ui/kit'
+  import { kitIcon } from '../kitIcon'
+  import { paletteIndex } from '../palette'
   import type { MenuEntry } from '../types'
+  import MenuRow from '../demo/MenuRow.svelte'
 
   export let items: MenuEntry[]
   export let width: number = 260
+
+  function convert (entries: MenuEntry[]): { rows: MenuItem[], selected: string[] } {
+    const rows: MenuItem[] = []
+    const selected: string[] = []
+    let heading: string | undefined
+    let divider = false
+    for (const entry of entries) {
+      if (entry.divider === true) {
+        divider = true
+        continue
+      }
+      if (entry.header !== undefined) {
+        heading = entry.header
+        continue
+      }
+      const id = `i${rows.length}`
+      const label = entry.label ?? ''
+      const custom = entry.hint !== undefined || entry.accent === true
+      rows.push({
+        id,
+        label: getEmbeddedLabel(label),
+        icon: kitIcon(entry.icon),
+        color: entry.color !== undefined ? paletteIndex(entry.color) : undefined,
+        description: !custom && entry.description !== undefined ? getEmbeddedLabel(entry.description) : undefined,
+        heading: heading !== undefined ? getEmbeddedLabel(heading) : undefined,
+        divider: divider || undefined,
+        component: custom ? MenuRow : undefined,
+        componentProps: custom
+          ? { label, description: entry.description, hint: entry.hint, accent: entry.accent === true }
+          : undefined
+      })
+      if (entry.selected === true) selected.push(id)
+      heading = undefined
+      divider = false
+    }
+    return { rows, selected }
+  }
+
+  let rows: MenuItem[] = []
+  let selected: string[] = []
+  $: ({ rows, selected } = convert(items))
 </script>
 
-<div class="kit-menu" style:width="{width}px">
-  {#each items as item}
-    {#if item.divider === true}
-      <div class="divider" />
-    {:else if item.header !== undefined}
-      <div class="header">{item.header}</div>
-    {:else}
-      <div class="item" class:hover={item.hover} class:accent={item.accent}>
-        {#if item.icon !== undefined}<Icon name={item.icon} />{/if}
-        <span class="label">{item.label}</span>
-        {#if item.hint !== undefined}<span class="hint">{item.hint}</span>{/if}
-        {#if item.selected === true}<Icon name="tick" color="var(--theme-popup-checkicon)" />{/if}
-      </div>
-    {/if}
-  {/each}
+<div style:width="{width}px">
+  <Menu items={rows} {selected} minWidth="{width}px" autofocus={false} />
 </div>
-
-<style lang="scss">
-  .kit-menu {
-    display: flex;
-    flex-direction: column;
-    gap: 0.125rem;
-    padding: 0.375rem;
-    box-sizing: border-box;
-    background-color: var(--theme-popup-color);
-    border: 1px solid var(--theme-popup-divider);
-    border-radius: 0.5rem;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  }
-  .divider {
-    height: 1px;
-    margin: 0.125rem 0;
-    background-color: var(--theme-divider-color);
-  }
-  .header {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.6875rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    color: var(--theme-darker-color);
-  }
-  .item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    height: 2rem;
-    padding: 0 0.5rem;
-    border-radius: 0.25rem;
-    color: var(--theme-dark-color);
-
-    .label {
-      flex: 1;
-      color: var(--theme-caption-color);
-    }
-    .hint {
-      font-size: 0.75rem;
-      color: var(--theme-darker-color);
-    }
-    &.hover {
-      background-color: var(--theme-popup-hover);
-    }
-    &.accent .label {
-      color: var(--primary-button-default);
-    }
-  }
-</style>

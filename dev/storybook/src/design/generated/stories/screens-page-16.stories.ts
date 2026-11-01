@@ -1,0 +1,68 @@
+//
+// Copyright © 2026 Intabia Fusion.
+//
+// Licensed under the Eclipse Public License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License. You may
+// obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+import type { Meta, StoryObj } from '@storybook/svelte'
+
+import CanvasView from '../Canvas.svelte'
+import Screen from '../Screen.svelte'
+
+const group = 'Screens'
+const page = 'Tracker create project'
+
+const meta = {
+  title: 'Tracker create project',
+  component: Screen,
+  tags: ['!autodocs', 'screen'],
+  parameters: { layout: 'fullscreen' }
+} satisfies Meta<Screen>
+
+export default meta
+type Story = StoryObj<typeof meta>
+
+export const Canvas: StoryObj = {
+  parameters: { controls: { disable: true } },
+  render: () => ({ Component: CanvasView, props: { group, page } })
+}
+export const Frame1: Story = { name: 'Создание проекта - Шаг 1. Основное', args: { group, page, frame: 0 } }
+export const Frame2: Story = {
+  name: 'Создание проекта - Шаг 1. Ошибка идентификатора',
+  args: { group, page, frame: 1 }
+}
+export const Frame3: Story = { name: 'Создание проекта - Шаг 2. Участники и доступ', args: { group, page, frame: 2 } }
+export const Frame4: Story = { name: 'Создание проекта - Шаг 3. Задачи', args: { group, page, frame: 3 } }
+export const Frame5: Story = { name: 'Создание проекта - Шаг 4. Workflow', args: { group, page, frame: 4 } }
+export const Frame6: Story = {
+  name: 'Создание проекта - Шаг 4. Workflow - у типа нет workflow',
+  args: { group, page, frame: 5 }
+}
+export const Frame7: Story = { name: 'Создание проекта - Шаг 5. Сводка', args: { group, page, frame: 6 } }
+export const Frame8: Story = { name: 'Создание проекта на основе - Шаг 1. Основное', args: { group, page, frame: 7 } }
+export const Frame9: Story = {
+  name: 'Создание проекта на основе - Шаг 1. Выбор проекта-основы',
+  args: { group, page, frame: 8 }
+}
+export const Frame10: Story = {
+  name: 'Создание проекта на основе - Шаг 2. Что взять из основы',
+  args: { group, page, frame: 9 }
+}
+export const Frame11: Story = {
+  name: 'Создание проекта на основе - Шаг 2. У основы нет шаблонов и workflow',
+  args: { group, page, frame: 10 }
+}
+export const Frame12: Story = {
+  name: 'Создание проекта на основе - Шаг 3. Участники из основы',
+  args: { group, page, frame: 11 }
+}
+export const Frame13: Story = { name: 'Создание проекта на основе - Шаг 6. Сводка', args: { group, page, frame: 12 } }

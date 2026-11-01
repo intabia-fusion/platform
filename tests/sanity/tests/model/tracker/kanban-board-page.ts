@@ -193,6 +193,35 @@ export class KanbanBoardPage extends CommonTrackerPage {
     await this.dragPointer(this.card(cardId), target)
   }
 
+  // Holds the card over a column of a board, revealing its landing spots, and drops it on the spot
+  // that sets `dropTargetId`. The spots show only while the card is over the column, so the drop is
+  // aimed at the spot after the column's dragover, not before it.
+  async dropCardOnDropTarget (cardId: string, targetState: string, dropTargetId: string): Promise<void> {
+    await this.revealCard(cardId)
+    await this.ensureVisible(this.card(cardId))
+    await this.grabCard(this.card(cardId))
+    try {
+      await this.hoverHeld(this.column(targetState))
+      const spot = this.page.locator(
+        `[data-id="kanban-column"][data-state="${targetState}"] [data-drop-target="${dropTargetId}"]`
+      )
+      await expect(spot).toBeVisible({ timeout: 5000 })
+      const box = await spot.boundingBox()
+      if (box === null) throw new Error(`landing spot ${dropTargetId} has no bounding box`)
+      const x = box.x + box.width / 2
+      const y = box.y + box.height / 2
+      // Nudge on the spot so its dragover fires before the release, as dragPointer does for a column.
+      await this.page.mouse.move(x, y, { steps: 5 })
+      await this.page.mouse.move(x + 2, y + 2)
+      await this.page.mouse.move(x, y)
+      await this.page.waitForTimeout(150)
+      await this.page.mouse.up()
+      await this.moveOn({ x, y })
+    } finally {
+      await this.page.mouse.up()
+    }
+  }
+
   async dragCardToSwimLaneCell (cardId: string, laneId: string, targetState: string): Promise<void> {
     await this.revealCard(cardId)
     await this.ensureVisible(this.card(cardId))

@@ -6,7 +6,8 @@ const cw = 234
 const shownColumns = [1, 2, 3, 4, 5, 9]
 const unit = (n) => pl(n, 'задача', 'задачи', 'задач')
 
-function boardView (title, x, y) {
+// o.cell(cards, col, lane): a custom lane cell, o.column(col): extra options of a column box (state frames of 02f)
+function boardView (title, x, y, o = {}) {
   const { frame, main } = kit.Workbench(title, x, y, { tab: BOARD.main.title, nav: projectNav('main') })
   const selector = kit.Button({ kind: 'ghost', size: 'small', icon: 'board', label: BOARD.main.title, menu: true, name: 'Board selector' })
   const top = kit.SpaceHeader(main, {
@@ -16,7 +17,7 @@ function boardView (title, x, y) {
       kit.Notice(noColumn, 'warning', { pill: true }),
       kit.Button({ kind: 'ghost', size: 'medium', icon: 'gear', label: 'Настройки доски', name: 'Board settings' })
     ],
-    filters: [kit.box('sep', { w: 1, h: 20, fill: T('theme-divider-color') }), BOARD.main.quickFilters.map((q, i) => kit.QuickFilter(q.title, i === 2))],
+    filters: [kit.box('sep', { w: 1, h: 20, fill: T('theme-divider-color') }), BOARD.main.quickFilters.filter((q) => q.filter.every((f) => f.field !== 'relation')).map((q, i) => kit.QuickFilter(q.title, i === 2))],
     tabs: []
   })
 
@@ -30,7 +31,7 @@ function boardView (title, x, y) {
   const board = kit.box('Board', { w: main.width, h: main.height - top, dir: 'column', gap: 8, pad: [12, 16, 0, 16] })
   const hdr = kit.box('Column headers', { w: bw, h: 10, dir: 'row', gap: 12, vs: 'auto' })
   for (const col of cols) {
-    const c = kit.box('Column ' + col.name, { w: cw, h: 10, dir: 'column', gap: 6, vs: 'auto' })
+    const c = kit.box('Column ' + col.name, { w: cw, h: 10, dir: 'column', gap: 6, vs: 'auto', ...o.column?.(col) })
     kit.add(hdr, kit.add(c, kit.ColumnHeader(col.name, col.cat, col.count, cw, col)))
   }
   kit.add(board, hdr)
@@ -39,9 +40,9 @@ function boardView (title, x, y) {
     kit.add(lh, kit.icon('chevronD'), kit.text(lane.name, { size: 14, weight: 600 }), kit.Count(lane.count))
     if (lane.hint) kit.add(lh, kit.text(lane.hint, { size: 12, color: T('theme-darker-color') }))
     const row = kit.box('Lane cells', { w: bw, h: 10, dir: 'row', gap: 12, vs: 'auto' })
-    for (const cards of lane.cards) {
-      const cell = kit.box('cell', { w: cw, h: 40, dir: 'column', gap: 8, vs: 'auto' })
-      kit.add(row, kit.add(cell, cards.map((d) => kit.IssueCard(d, cw))))
+    for (const [n, cards] of lane.cards.entries()) {
+      const cell = o.cell?.(cards, cols[n], lane) ?? kit.add(kit.box('cell', { w: cw, h: 40, dir: 'column', gap: 8, vs: 'auto' }), cards.map((d) => kit.IssueCard(d, cw)))
+      kit.add(row, cell)
     }
     kit.add(board, lh, row)
   }
@@ -54,9 +55,9 @@ function boardView (title, x, y) {
   kit.add(legend, kit.text('Цвета', { size: 12, weight: 600, color: T('theme-dark-color') }),
     kit.add(kit.row('header categories', 4), catSwatch('todo'), catSwatch('active'), catSwatch('won'), kit.text('заголовок колонки - категория её статусов', { size: 12, color: T('theme-dark-color') })))
   for (const c of cols.filter((it) => it.over)) kit.add(legend, item(kit.Swatch(T('theme-state-negative-background-color'), 14), `${c.name}: превышен WIP-лимит (${c.count} из ${c.limit})`))
-  for (const r of BOARD.main.colorRules) kit.add(legend, item(kit.Swatch(P(r.color), 14), `рамка карточки: ${r.filter[0].value[0]} дольше ${r.filter[1].value[0].replace(' дн.', ' дней')}`))
+  for (const r of BOARD.main.colorRules) kit.add(legend, item(kit.Swatch(P(r.color), 14), `рамка карточки: статус ${r.filter[0].value[0]}`))
   kit.at(main, legend, 16, main.height - 44)
-  return { frame, main, selector }
+  return { frame, main, selector, top }
 }
 
 const tipBox = (text, w) => {

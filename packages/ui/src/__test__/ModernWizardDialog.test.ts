@@ -72,9 +72,9 @@ describe('ModernWizardDialog', () => {
     expect(host.querySelectorAll('.circle')).toHaveLength(3)
   })
 
-  it('shows only Next on the first step', async () => {
+  it('shows Next and a disabled Back on the first step', async () => {
     const { host } = await mount({ selectedStep: 'a' })
-    expect(buttonByLabel(host, ui.string.Back)).toBeUndefined()
+    expect(buttonByLabel(host, ui.string.Back)?.disabled).toBe(true)
     expect(buttonByLabel(host, ui.string.NextStep)).not.toBeUndefined()
     expect(buttonByLabel(host, SUBMIT_LABEL)).toBeUndefined()
   })
@@ -95,9 +95,9 @@ describe('ModernWizardDialog', () => {
 
   // pinned behaviour, not a desired one: with no selectedStep, selectedIdx is -1, and
   // -1 < steps.length - 1 is true, so hasNext renders Next even though nothing is selected.
-  it('shows Next (not Back or Submit) with no selectedStep', async () => {
+  it('shows Next and a disabled Back (no Submit) with no selectedStep', async () => {
     const { host } = await mount({ selectedStep: '' })
-    expect(buttonByLabel(host, ui.string.Back)).toBeUndefined()
+    expect(buttonByLabel(host, ui.string.Back)?.disabled).toBe(true)
     expect(buttonByLabel(host, ui.string.NextStep)).not.toBeUndefined()
     expect(buttonByLabel(host, SUBMIT_LABEL)).toBeUndefined()
   })

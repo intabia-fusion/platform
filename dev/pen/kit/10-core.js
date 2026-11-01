@@ -103,6 +103,7 @@ kit.Shape = class {
     if (this.radii) n.cornerRadius = this.radii
     else if (this.radius) n.cornerRadius = this.radius
     if (this.effect) n.effect = this.effect
+    if (this.opacity !== undefined) n.opacity = this.opacity
     if (this.type === 'ref' && this.descendants) n.descendants = this.descendants
     if (parentLayout === 'none' || top) { n.x = this.x; n.y = this.y }
     if (this.children.length > 0) n.children = this.children.map((c) => c.toPen(this.layout))
@@ -124,9 +125,10 @@ kit.fill = (shape, c) => { shape.f = c ? colorOf(c) : null; if (shape.f === null
 kit.stroke = (shape, c, w = 1) => { shape.stroke = colorOf(c); shape.strokeW = w; return shape }
 
 // Board, optionally with flex layout.
-// o: w h fill stroke radius dir gap pad[t,r,b,l] align justify wrap hs vs clip
+// o: w h fill stroke radius dir gap pad[t,r,b,l] align justify wrap hs vs clip opacity
 kit.box = (name, o = {}) => {
   const b = new kit.Shape('frame', name)
+  if (o.opacity !== undefined) b.opacity = o.opacity
   b.w = o.w || 10
   b.h = o.h || 10
   b.layout = o.dir ? (o.dir === 'row' ? 'horizontal' : 'vertical') : 'none'

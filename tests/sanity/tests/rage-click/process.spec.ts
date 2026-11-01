@@ -198,6 +198,7 @@ test.describe('Rage click: process', () => {
     // Without the `adding` guard, 3 rapid clicks create 3 duplicate Process+State+Transition triples.
     // `add()` navigates into the created process (replacing history), so use the breadcrumb to get
     // back to the type and count what is left.
+    await expect(page.getByRole('button', { name: 'Add state', exact: true })).toBeVisible()
     await backToType.click()
     await expect(processRows).toHaveCount(initialCount + 1)
     await expect(processRows.nth(initialCount)).toHaveText('New process')
@@ -205,6 +206,7 @@ test.describe('Rage click: process', () => {
     // The button works again afterwards.
     await expect(addProcessButton).toBeEnabled()
     await addProcessButton.click()
+    await expect(page.getByRole('button', { name: 'Add state', exact: true })).toBeVisible()
     await backToType.click()
     await expect(processRows).toHaveCount(initialCount + 2)
   })

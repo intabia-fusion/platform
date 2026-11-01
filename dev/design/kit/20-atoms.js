@@ -10,6 +10,25 @@ const P = (name) => palToken(TOKENS.palette[kit.mode][name], 'pal-' + name)
 const PB = (name) => palToken(TOKENS.paletteBackground[kit.mode][name], 'palbg-' + name)
 const PT = (name) => palToken(TOKENS.paletteTitle[kit.mode][name], 'palt-' + name)
 
+// color-mix(in srgb, c pct%, c2 | transparent) of the ui/kit styles as a token of its own:
+// registered in TOKENS for both themes, so pen binds a variable and the dark theme follows
+const TM = (c, pct, c2) => {
+  const name = `${c.token}-${pct}-${c2 === undefined ? 'clear' : c2.token}`
+  const valueOf = (t, mode) => (t.startsWith('pal-') ? TOKENS.palette[mode][t.slice(4)] : TOKENS.colors[mode][t] ?? TOKENS.colors.light[t])
+  const rgba = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)).concat(h.length === 9 ? parseInt(h.slice(7), 16) / 255 : 1)
+  for (const mode of ['light', 'dark']) {
+    if (TOKENS.colors[mode][name] !== undefined) continue
+    const a = rgba(valueOf(c.token, mode))
+    const b = c2 === undefined ? [0, 0, 0, 0] : rgba(valueOf(c2.token, mode))
+    const p = pct / 100
+    const alpha = a[3] * p + b[3] * (1 - p)
+    const hex = (v) => Math.round(v).toString(16).padStart(2, '0').toUpperCase()
+    const ch = (i) => hex((a[i] * a[3] * p + b[i] * b[3] * (1 - p)) / alpha)
+    TOKENS.colors[mode][name] = '#' + ch(0) + ch(1) + ch(2) + (alpha < 1 ? hex(alpha * 255) : '')
+  }
+  return T(name)
+}
+
 // Button: kind primary|secondary|tertiary|ghost|negative, size large|medium|small|extra-small
 kit.Button = (o = {}) => {
   const kind = o.kind || 'secondary'
@@ -20,7 +39,8 @@ kit.Button = (o = {}) => {
     tertiary: { bg: null, border: null, label: T('button-tertiary-LabelColor'), icon: T('button-tertiary-icon-IconColor') },
     ghost: { bg: null, border: null, label: T('global-primary-TextColor'), icon: T('global-secondary-TextColor') },
     negative: { bg: T('button-negative-BackgroundColor'), border: T('button-negative-BorderColor'), label: T('button-negative-LabelColor'), icon: T('button-negative-IconColor') },
-    brand: { bg: T('primary-button-default'), border: null, label: '#FFFFFF', icon: '#FFFFFF' }
+    brand: { bg: T('primary-button-default'), border: null, label: '#FFFFFF', icon: '#FFFFFF' },
+    positive: { bg: T('button-positive-BackgroundColor'), border: T('button-positive-BorderColor'), label: T('button-positive-LabelColor'), icon: T('button-positive-IconColor') }
   }[kind]
   const H = { large: D('global-large-Size'), medium: D('global-medium-Size'), small: D('global-small-Size'), 'extra-small': D('global-extra-small-Size') }[size]
   const R = { large: D('medium-BorderRadius'), medium: D('medium-BorderRadius'), small: D('small-BorderRadius'), 'extra-small': D('extra-small-BorderRadius') }[size]
@@ -99,8 +119,10 @@ kit.Count = (n, o = {}) => {
 }
 
 // Status chip: icon + name, used where statuses are listed or mapped
+// o.pill: the rounded 24px chip on a popup surface, as in the statuses tooltip of a board column
 kit.StatusChip = (name, cat, o = {}) => {
-  const b = kit.box('StatusChip/' + name, { w: 10, h: o.h || 20, dir: 'row', gap: 4, pad: [0, 6, 0, 4], align: 'center', hs: o.w ? 'fix' : 'auto', radius: 4, fill: o.fill || T('theme-button-hovered'), stroke: o.stroke })
+  if (o.pill) o = { ...o, h: 24, size: 12, fill: T('theme-popup-color'), stroke: T('theme-button-border') }
+  const b = kit.box('StatusChip/' + name, { w: 10, h: o.h || 20, dir: 'row', gap: 4, pad: o.pill ? [0, 8, 0, 6] : [0, 6, 0, 4], align: 'center', hs: o.w ? 'fix' : 'auto', radius: o.pill ? 12 : 4, fill: o.fill || T('theme-button-hovered'), stroke: o.stroke })
   if (o.w) b.resize(o.w, o.h || 20)
   if (o.drag) kit.add(b, kit.icon('drag', T('theme-darker-color'), 14))
   kit.add(b, kit.StatusIcon(cat, 12), kit.text(name, { size: o.size || 11, color: T('theme-content-color') }))
@@ -108,14 +130,27 @@ kit.StatusChip = (name, cat, o = {}) => {
   return b
 }
 
-// ModeSelector / segmented tabs (IssuesView "All / Active / Backlog")
-kit.Tabs = (items, selected) => {
-  const t = kit.box('Tabs', { w: 10, h: 32, dir: 'row', pad: [2, 2, 2, 2], align: 'center', hs: 'auto', radius: 6, fill: T('theme-button-hovered') })
-  for (const it of items) {
-    const sel = it === selected
-    const b = kit.box('Tab/' + it, { w: 10, h: 28, dir: 'row', pad: [0, 12, 0, 12], align: 'center', hs: 'auto', radius: 4, fill: sel ? T('theme-popup-color') : null })
-    if (sel) kit.stroke(b, T('theme-button-border'))
-    kit.add(t, kit.add(b, kit.text(it, { size: 13, color: sel ? T('theme-caption-color') : T('theme-dark-color') })))
+// Item of a list control: 'Label' or [label, icon, badge]
+const kitItem = (it) => (Array.isArray(it) ? { label: it[0], icon: it[1], badge: it[2] } : { label: it })
+
+// ui/kit Tabs: sections of one screen, an accent line under the selected one.
+// items: label | [label, icon]; o: size(medium|small)
+kit.Tabs = (items, selected, o = {}) => {
+  const small = o.size === 'small'
+  const H = small ? D('global-medium-Size') : D('global-large-Size')
+  const t = kit.row('Tabs', small ? D('spacing-2') : D('spacing-3'), { align: 'start' })
+  for (const raw of items) {
+    const it = kitItem(raw)
+    const sel = it.label === selected
+    const tab = kit.box('tab ' + it.label, { w: 10, h: H, dir: 'column', align: 'center', justify: 'end', hs: 'auto', clip: false })
+    const c = sel ? T('global-primary-TextColor') : T('global-secondary-TextColor')
+    const content = kit.box('content', { w: 10, h: H - 2, dir: 'row', gap: D('spacing-0_75'), align: 'center', hs: 'auto' })
+    if (it.icon) kit.add(content, kit.icon(it.icon, c, 16))
+    kit.add(content, kit.text(it.label, { size: 14, weight: 500, lh: 16 / 14, color: c }))
+    const line = kit.box('underline', { w: 10, h: 2, fill: sel ? T('kit-button-primary-BackgroundColor') : null })
+    kit.add(tab, content, line)
+    line.layoutChild.horizontalSizing = 'fill'
+    kit.add(t, tab)
   }
   return t
 }
@@ -132,42 +167,94 @@ kit.Input = (o = {}) => {
   return kit.add(c, b)
 }
 
-kit.Checkbox = (checked, label) => {
-  const r = kit.row('Checkbox', 8)
-  const b = kit.box('box', { w: 16, h: 16, dir: 'row', align: 'center', justify: 'center', radius: 4, fill: checked ? T('primary-button-default') : null, stroke: checked ? null : T('theme-button-border') })
-  if (checked) kit.add(b, kit.icon('tick', '#FFFFFF', 12))
-  kit.add(r, b)
-  if (label) kit.add(r, kit.text(label, { size: 14, color: T('theme-caption-color') }))
+// Colors of a selection control (ui/kit Checkbox, Radio) by kind: fill when on, mark
+const selectorKind = (kind) => ({
+  primary: [T('selector-active-BackgroundColor'), T('selector-IconColor')],
+  brand: [T('button-brand-BackgroundColor'), T('button-accent-IconColor')],
+  positive: [T('button-positive-BackgroundColor'), T('button-positive-IconColor')],
+  negative: [T('button-negative-BackgroundColor'), T('button-negative-IconColor')],
+  neutral: [null, T('global-tertiary-TextColor')]
+}[kind || 'primary'])
+
+// ui/kit Checkbox: the border takes the kind color, a disabled one has no fill.
+// o: indeterminate size(medium|small) kind shape(round) disabled error
+kit.Checkbox = (checked, label, o = {}) => {
+  const small = o.size === 'small'
+  const box = small ? D('spacing-1_75') : D('spacing-2')
+  const line = small ? D('spacing-2') : D('spacing-2_5')
+  let [color, mark] = selectorKind(o.kind)
+  let border = color || mark
+  if (o.disabled) [color, mark, border] = [null, T('global-disabled-TextColor'), T('global-disabled-TextColor')]
+  if (o.error) border = T('global-error-TextColor')
+  const on = checked || o.indeterminate
+  const empty = o.disabled || o.kind === 'neutral' ? null : T('selector-BackgroundColor')
+  const r = kit.row('Checkbox', small ? D('spacing-0_75') : D('spacing-1'), { align: 'start' })
+  const control = kit.box('control', { w: box, h: line, dir: 'row', align: 'center' })
+  const b = kit.box('box', {
+    w: box, h: box, dir: 'row', align: 'center', justify: 'center', radius: o.shape === 'round' ? box / 2 : D('extra-small-BorderRadius'),
+    fill: on ? color : empty, stroke: on && !o.error ? color || border : border
+  })
+  if (o.indeterminate) kit.add(b, kit.box('dash', { w: Math.round(box / 2), h: 2, radius: 1, fill: mark }))
+  else if (checked) kit.add(b, kit.icon('tick', mark, Math.round(box * 0.75)))
+  kit.add(r, kit.add(control, b))
+  const font = small ? 12 : 14
+  if (label) kit.add(r, kit.text(label, { size: font, lh: line / font, color: o.disabled ? T('global-disabled-TextColor') : T('global-primary-TextColor') }))
   return r
 }
 
-kit.Toggle = (on, label) => {
-  const r = kit.row('Toggle', 8)
-  const tr = kit.box('track', { w: 36, h: 20, dir: 'row', pad: [2, 2, 2, 2], align: 'center', justify: on ? 'end' : 'start', radius: 10, fill: on ? T('theme-toggle-on-bg-color') : T('theme-toggle-bg-color') })
-  const k = penpot.createEllipse(); k.resize(16, 16); kit.fill(k, on ? T('theme-toggle-on-sw-color') : T('theme-toggle-sw-color'))
-  k.shadows = [{ style: 'drop-shadow', offsetX: 0, offsetY: 3, blur: 8, spread: 0, color: { color: '#000000', opacity: 0.15 } }]
-  kit.add(tr, k)
-  kit.add(r, tr)
-  if (label) kit.add(r, kit.text(label, { size: 14 }))
-  return r
+// ui/kit Toggle. o: size(large|medium|small|extra-small) kind(brand|primary|positive|negative) description
+// labelPosition(start: the label before the switch) disabled
+kit.Toggle = (on, label, o = {}) => {
+  const size = o.size || 'medium'
+  const [w, h, t, line] = { large: [48, 24, 14, 24], medium: [40, 20, 10, 20], small: [32, 16, 8, 20], 'extra-small': [28, 14, 6, 16] }[size]
+  const onColor = { brand: T('theme-toggle-on-bg-color'), primary: T('kit-button-primary-BackgroundColor'), positive: T('button-positive-BackgroundColor'), negative: T('button-negative-BackgroundColor') }[o.kind || 'brand']
+  const track = o.disabled ? (on ? T('global-disabled-TextColor') : T('button-disabled-BackgroundColor')) : on ? onColor : T('theme-toggle-bg-color')
+  const thumb = o.disabled && !on ? T('global-disabled-TextColor') : on ? T('theme-toggle-on-sw-color') : T('theme-toggle-sw-color')
+  const r = kit.row('Toggle', size === 'extra-small' ? D('spacing-0_75') : D('spacing-1'), { align: 'start' })
+  const control = kit.box('control', { w, h: line, dir: 'row', align: 'center' })
+  const p = (h - t) / 2
+  const tr = kit.box('track', { w, h, dir: 'row', pad: [p, p, p, p], align: 'center', justify: on ? 'end' : 'start', radius: h / 2, fill: track })
+  kit.add(control, kit.add(tr, kit.ellipse(t, thumb, 'thumb')))
+  if (!label) return kit.add(r, control)
+  const font = size === 'extra-small' ? 12 : 14
+  const text = kit.col('text', 0)
+  kit.add(text, kit.text(label, { size: font, lh: line / font, color: o.disabled ? T('global-disabled-TextColor') : T('global-primary-TextColor') }))
+  if (o.description) kit.add(text, kit.text(o.description, { size: 12, lh: 16 / 12, color: o.disabled ? T('global-disabled-TextColor') : T('global-secondary-TextColor') }))
+  return o.labelPosition === 'start' ? kit.add(r, text, control) : kit.add(r, control, text)
 }
 
-// Popup menu (ModernPopup look)
+// ui/kit Menu: rows 40 px (58 with a description), headings as a label between lines.
+// items: { label icon color(palette) description hint selected accent hover } | { header } | '-'; o: w name
 kit.Menu = (items, o = {}) => {
   const w = o.w || 260
-  const m = kit.box(o.name || 'Menu', { w, h: 10, dir: 'column', gap: 2, pad: [6, 6, 6, 6], vs: 'auto', radius: 8, fill: T('theme-popup-color'), stroke: T('theme-popup-divider') })
-  m.shadows = [{ style: 'drop-shadow', offsetX: 0, offsetY: 8, blur: 24, spread: 0, color: { color: '#000000', opacity: 0.15 } }]
+  const m = kit.box(o.name || 'Menu', { w, h: 10, dir: 'column', gap: 2, pad: [9, 9, 9, 9], vs: 'auto', radius: D('small-BorderRadius'), fill: T('theme-popup-color'), stroke: T('theme-popup-divider') })
+  m.shadows = [{ style: 'drop-shadow', offsetX: 0, offsetY: 8, blur: 12, spread: 0, color: { color: '#0E131E', opacity: 0.12 } }]
+  const rowW = w - 18
+  // With icons in the menu every row keeps the icon column
+  const withIcons = items.some((it) => it.icon || it.color)
   for (const it of items) {
-    if (it === '-') { kit.add(m, kit.divider(w - 12)); continue }
-    if (it.header) { const h = kit.box('header', { w: w - 12, h: 24, dir: 'row', pad: [0, 8, 0, 8], align: 'center' }); kit.add(m, kit.add(h, kit.text(it.header, { size: 11, weight: 500, color: T('theme-darker-color'), upper: true }))); continue }
-    const row = kit.box('item/' + it.label, { w: w - 12, h: 32, dir: 'row', gap: 8, pad: [0, 8, 0, 8], align: 'center', radius: 4, fill: it.hover ? T('theme-popup-hover') : null })
-    if (it.icon) kit.add(row, kit.icon(it.icon, T('theme-dark-color')))
-    kit.add(row, kit.text(it.label, { size: 14, color: it.accent ? T('primary-button-default') : T('theme-caption-color') }))
-    if (it.hint || it.selected) {
-      const sp = kit.box('grow', { w: 1, h: 1 }); kit.add(row, sp); sp.layoutChild.horizontalSizing = 'fill'
-      if (it.hint) kit.add(row, kit.text(it.hint, { size: 12, color: T('theme-darker-color') }))
-      if (it.selected) kit.add(row, kit.icon('tick', T('theme-popup-checkicon')))
+    if (it === '-') { kit.add(m, kit.box('divider', { w: rowW, h: 1, fill: T('theme-popup-divider') })); continue }
+    if (it.header) {
+      const h = kit.box('header', { w: rowW, h: 24, dir: 'row', gap: 8, pad: [8, 8, 4, 8], align: 'center' })
+      const line = () => kit.box('line', { w: 10, h: 1, fill: T('theme-popup-divider') })
+      const [l1, l2] = [line(), line()]
+      kit.add(h, l1, kit.text(it.header, { size: 10, weight: 500, lh: 1.2, color: T('global-tertiary-TextColor'), upper: true }), l2)
+      l1.layoutChild.horizontalSizing = 'fill'
+      l2.layoutChild.horizontalSizing = 'fill'
+      kit.add(m, h)
+      continue
     }
+    const row = kit.box('item/' + it.label, { w: rowW, h: it.description ? 58 : 40, dir: 'row', gap: 8, pad: [10, 8, 10, 8], align: it.description ? 'start' : 'center', radius: D('extra-small-BorderRadius'), fill: it.hover ? T('theme-popup-hover') : null })
+    if (it.color) kit.add(row, kit.box('swatch', { w: 14, h: 14, radius: 3, fill: P(it.color) }))
+    else if (it.icon) kit.add(row, kit.icon(it.icon, T('global-primary-TextColor')))
+    else if (withIcons) kit.add(row, kit.spacer(16, 16))
+    const labels = kit.col('labels', 2)
+    kit.add(labels, kit.text(it.label, { size: 14, lh: 20 / 14, color: it.accent ? T('primary-button-default') : T('global-primary-TextColor') }))
+    if (it.description) kit.add(labels, kit.text(it.description, { size: 12, lh: 16 / 12, color: T('global-secondary-TextColor') }))
+    kit.add(row, labels)
+    labels.layoutChild.horizontalSizing = 'fill'
+    if (it.hint) kit.add(row, kit.text(it.hint, { size: 12, lh: 20 / 12, color: T('global-secondary-TextColor') }))
+    if (it.selected) kit.add(row, kit.icon('tick', T('global-primary-TextColor')))
     kit.add(m, row)
   }
   return m

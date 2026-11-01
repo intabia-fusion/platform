@@ -51,7 +51,7 @@ kit.stroke = (shape, c, w = 1, style = 'solid') => {
 }
 
 // Board, optionally with flex layout.
-// o: w h fill stroke radius dir gap pad[t,r,b,l] align justify wrap hs vs clip
+// o: w h fill stroke radius dir gap pad[t,r,b,l] align justify wrap hs vs clip opacity rot(degrees)
 kit.box = (name, o = {}) => {
   const b = penpot.createBoard()
   b.name = name
@@ -77,6 +77,8 @@ kit.box = (name, o = {}) => {
     kit.sizing.set(b.id, [o.hs || 'fix', o.vs || 'fix'])
   }
   if (o.clip === false) b.clipContent = false
+  if (o.opacity !== undefined) b.opacity = o.opacity
+  if (o.rot) b.rotation = o.rot
   return b
 }
 

@@ -4,6 +4,32 @@
 // Screens get instances of the variant that fits (kit/95-library.js), icons come last: they are named by what is drawn above.
 host.page = []
 const def = (name, shape, o) => kit.component(name, shape, o)
+// Groups whose Storybook kit wrapper (dev/storybook/src/design/kit) renders a component of @hcengineering/ui/kit;
+// the library marks each group with it, a group missing here exists only as a drawing
+host.uikit = {
+  'Actions/Menu': 'Menu',
+  'Actions/Dialog': 'Dialog',
+  'Actions/KitWizardDialog': 'WizardDialog',
+  'Actions/Tabs': 'Tabs',
+  'Actions/SegmentedControl': 'SegmentedControl',
+  'Actions/ButtonGroup': 'ButtonGroup',
+  'Forms/Checkbox': 'Checkbox',
+  'Forms/Radio': 'Radio',
+  'Forms/Toggle': 'Toggle',
+  'Forms/SelectButton': 'SelectButton',
+  'Forms/TextInput': 'TextInput',
+  'Forms/TextArea': 'TextArea',
+  'Settings/Section': 'Section',
+  'Settings/SettingRow': 'SettingRow',
+  'Status/Callout': 'Callout',
+  'Status/EmptyState': 'EmptyState',
+  'Status/KitStatusIcon': 'StatusIcon',
+  'Status/Steps': 'Steps',
+  'TagsAndFilters/KitChip': 'Chip',
+  'Workbench/Breadcrumbs': 'Breadcrumbs',
+  'Workbench/KitNavItem': 'NavItem',
+  'Workbench/KitNavGroup': 'NavGroup'
+}
 const avatar = ['AJ', 'Blueberry']
 const widgets = ['kit/Calendar', 'kit/Bubble', 'kit/Building', 'kit/Star', 'kit/Sparkle']
 const nav = [
@@ -31,7 +57,7 @@ def('Actions/Switcher', kit.Switcher(['All', 'Active', 'Backlog'], 'Active'), { 
 def('Actions/Switcher/icons', kit.Switcher(['kit/BulletList', 'kit/Kanban'], 'kit/Kanban'), { slots: ['$root'] })
 def('Actions/Menu', kit.Menu([{ header: 'Boards' }, { label: 'Main board', icon: 'board', selected: true }, { label: 'Releases', icon: 'milestone', hint: '3' }, '-', { label: 'New board', icon: 'plus', accent: true }], { w: 260 }), { slots: ['$root'] })
 
-for (const kind of ['regular', 'primary', 'dangerous', 'ghost', 'icon']) {
+for (const kind of ['regular', 'primary', 'positive', 'dangerous', 'ghost', 'icon']) {
   for (const size of ['small', 'medium', 'large']) {
     def(`Actions/ClassicButton/${kind}/${size}`, kit.ClassicButton({ kind, size, label: 'Button', icon: 'kit/Plus', menu: true }), { hide: ['2'] })
     def(`Actions/ClassicButton/${kind}/${size}/icon`, kit.ClassicButton({ kind, size, icon: 'kit/PencilLine' }))
@@ -40,6 +66,19 @@ for (const kind of ['regular', 'primary', 'dangerous', 'ghost', 'icon']) {
 // A button with nodes of its own (status, avatar and name): the instance supplies its children
 for (const kind of ['regular', 'ghost']) def(`Actions/ClassicButton/${kind}/large/content`, kit.ClassicButton({ kind, size: 'large', content: kit.text('Content') }), { slots: ['$root'], penalty: 40 })
 def('Actions/Modal', kit.Modal('Edit project', { w: 600 }).modal, { slots: ['body'] })
+// The step bar is drawn in place (the instance supplies it); the footer differs on the first, a middle and the last step
+for (const [name, step] of [['first', 0], ['middle', 1], ['last', 3]]) {
+  def(`Actions/WizardDialog/${name}`, kit.WizardDialog('Title', ['Step', 'Step', 'Step', 'Step'], step).modal, { slots: ['steps', 'body'] })
+}
+def('Actions/Dialog', kit.Dialog('Title', [kit.text('Content')], { w: 720 }), { slots: ['body'] })
+// The steps column is drawn in place (an instance of Status/Steps); the footer differs on the first, a middle and the last step
+for (const [name, step] of [['first', 0], ['middle', 1], ['last', 3]]) {
+  def(`Actions/KitWizardDialog/${name}`, kit.KitWizardDialog('Title', ['Step', 'Step', 'Step', 'Step'], step, [kit.text('Content')]), { slots: ['steps', 'body'] })
+}
+def('Actions/Tabs', kit.Tabs(['General', 'Members'], 'General'), { slots: ['$root'] })
+def('Actions/Tabs/small', kit.Tabs(['General', 'Members'], 'General', { size: 'small' }), { slots: ['$root'] })
+for (const size of ['medium', 'small', 'extra-small']) def(`Actions/SegmentedControl/${size}`, kit.SegmentedControl(['All', 'Active'], 'All', { size }), { slots: ['$root'] })
+for (const kind of ['ghost', 'secondary']) def(`Actions/ButtonGroup/${kind}`, kit.ButtonGroup([['', 'kit/Search'], ['', 'kit/InfoCircle']], 'kit/Search', { kind }), { slots: ['$root'] })
 
 // ---- Forms ----
 def('Forms/Input', kit.Input({ w: 240, label: 'Label', icon: 'kit/PersonCircle', value: 'Value', menu: true }), { hide: ['0', '1/0', '1/2', '1/3'] })
@@ -51,6 +90,21 @@ def('Forms/Toggle/off', kit.Toggle(false, 'Label'))
 def('Forms/Radio', kit.Radio(true, 'Label', 'Hint'), { hide: ['1/1'] })
 def('Forms/Radio/off', kit.Radio(false, 'Label', 'Hint'), { hide: ['1/1'] })
 for (const kind of ['ghost-large', 'large-style', 'editbox']) def(`Forms/EditBox/${kind}`, kit.EditBox('Value', { kind, w: 256 }))
+def('Forms/Checkbox/indeterminate', kit.Checkbox(false, 'Label', { indeterminate: true }))
+// ui/kit fields: label, icon and the clear button are optional parts
+for (const kind of ['secondary', 'ghost', 'subtle']) {
+  for (const size of ['large', 'medium', 'small', 'extra-small']) {
+    def(`Forms/TextInput/${kind}/${size}`, kit.TextInput({ kind, size, label: 'Label', icon: 'kit/Search', value: 'Value', clearable: true }), { hide: ['0', '1/0', '1/3'] })
+  }
+  for (const size of ['medium', 'small']) def(`Forms/TextArea/${kind}/${size}`, kit.TextArea({ kind, size, value: 'Text' }))
+}
+for (const kind of ['secondary', 'ghost', 'primary', 'brand', 'chip']) {
+  for (const size of kind === 'secondary' || kind === 'ghost' ? ['large', 'medium', 'small', 'extra-small'] : ['small']) {
+    def(`Forms/SelectButton/${kind}/${size}`, kit.SelectButton({ kind, size, label: 'Value', icon: 'kit/Plus', chevron: true }), { hide: ['0', '2'] })
+  }
+}
+// Full width: the value at the start, the chevron at the end
+for (const size of ['medium', 'small']) def(`Forms/SelectButton/secondary/${size}/full`, kit.SelectButton({ size, label: 'Value', icon: 'kit/Plus', chevron: true, w: 240 }), { hide: ['0'] })
 
 // ---- People: avatars are drawn by kit/90-pen.js, the library holds the 20px look ----
 def('People/Avatar', kit.add(kit.box('Avatar', { w: 20, h: 20, dir: 'row', align: 'center', justify: 'center', radius: 4, fill: '#666ECC' }),
@@ -63,6 +117,16 @@ for (const level of ['urgent', 'high', 'medium', 'low', 'none']) def('Status/Pri
 def('Status/StatusChip', kit.StatusChip('In Progress', 'active', { drag: true, count: 7 }), { hide: ['0', '3'] })
 def('Status/Count', kit.Count(12))
 for (const kind of ['warning', 'info', 'negative']) def('Status/Notice/' + kind, kit.Notice('Notice text', kind))
+for (const tone of ['positive', 'negative', 'error', 'warning', 'info', 'neutral']) {
+  def('Status/KitStatusIcon/' + tone, kit.KitStatusIcon(tone))
+  def(`Status/KitStatusIcon/${tone}/outline`, kit.KitStatusIcon(tone, { kind: 'outline' }))
+}
+def('Status/KitStatusIcon/dot', kit.KitStatusIcon('positive', { dot: true }))
+for (const tone of ['info', 'positive', 'warning', 'error']) def('Status/Callout/' + tone, kit.Callout('Text', { tone, title: 'Title' }), { hide: ['1/0'] })
+def('Status/Steps', kit.Steps(['Step', 'Step', 'Step'], 1), { slots: ['$root'] })
+def('Status/EmptyState', kit.EmptyState('Title', { description: 'Description' }), { hide: ['3', '4'] })
+def('Status/EmptyState/plate', kit.EmptyState('Title', { description: 'Description', kind: 'plate' }), { hide: ['3', '4'] })
+def('Status/EmptyState/small', kit.EmptyState('Title', { size: 'small', action: 'Add' }), { hide: ['1'] })
 
 // ---- TagsAndFilters ----
 def('TagsAndFilters/Chip', kit.Chip([kit.icon('milestone', undefined, 14), kit.text('Release 1.0', { size: 13, color: T('theme-dark-color') })]), { slots: ['$root'] })
@@ -71,6 +135,10 @@ def('TagsAndFilters/QuickFilter', kit.QuickFilter('Only mine', false))
 def('TagsAndFilters/QuickFilter/on', kit.QuickFilter('Only mine', true))
 def('TagsAndFilters/FilterChip', kit.FilterChip('Priority', 'in', 'Urgent, High'))
 def('TagsAndFilters/Swatch', kit.Swatch(P('Orange')))
+for (const kind of ['tint', 'solid', 'outline', 'neutral']) {
+  for (const size of ['small', 'extra-small']) def(`TagsAndFilters/KitChip/${kind}/${size}`, kit.KitChip('Value', { kind, size, icon: 'kit/Plus', removable: true }), { hide: ['0', '2'] })
+}
+for (const tone of ['positive', 'negative', 'regular', 'ghost']) def('TagsAndFilters/KitChip/tone/' + tone, kit.KitChip('Value', { tone, icon: 'kit/Plus', removable: true }), { hide: ['0', '2'] })
 
 // ---- Tracker ----
 def('Tracker/IssueCard', kit.IssueCard(card), { hide: ['0/0/1'], slots: ['chips'] })
@@ -101,6 +169,9 @@ def('Settings/GridRow', kit.GridRow('Label', kit.EditBox('Value', { kind: 'editb
   kit.SettingsLayout(main, { back: 'Back', close: true, title: 'Settings', tabs: ['General', 'Members'], tab: 'General', subLead: kit.Button({ kind: 'ghost', size: 'small', label: 'Board', menu: true }), subtabs: ['General', 'Columns'], subtab: 'General' })
   def('Settings/SettingsLayout', main.children[0], { hide: ['4', '5'], slots: ['right', 'Settings tabs', 'Settings subtabs', 'Settings content'] })
 }
+def('Settings/SettingRow', kit.SettingRow('Label', kit.Toggle(true), { hint: true, details: [kit.KitChip('Value')] }), { hide: ['0/0/1', '1'], slots: ['control', 'details'] })
+def('Settings/SettingRow/stacked', kit.SettingRow('Label', kit.TextArea({ kind: 'ghost', w: 560, value: 'Text' }), { stacked: true, hint: true }), { hide: ['0/0/1'], slots: ['control'] })
+def('Settings/Section', kit.Section('Title', [kit.text('Content')], { icon: 'kit/Search', actions: [kit.Button({ kind: 'ghost', size: 'small', icon: 'kit/Plus' })] }), { hide: ['0/0/0'], slots: ['actions', 'content'] })
 
 // ---- Workbench ----
 def('Workbench/TopBar', kit.TopBar(1920, { tab: 'Tracker' }))
@@ -116,6 +187,14 @@ def('Workbench/NavCaption', kit.NavCaption('Channels', false, { menu: true }), {
 def('Workbench/NavCaption/highlighted', kit.NavCaption('Channels', true, { menu: true }), { hide: ['1'] })
 def('Workbench/NavGroup', kit.NavGroupHeader('Your projects', { add: true }))
 def('Workbench/NavSpace', kit.NavSpaceHeader('Mobile app', { icon: 'kit/HouseFill', color: 'Porpoise' }))
+// ui/kit navigator parts; the count of an item is optional
+def('Workbench/KitNavItem', kit.KitNavItem('Item', { icon: 'kit/Search', count: 3 }), { hide: ['3', '4', '5'] })
+def('Workbench/KitNavItem/selected', kit.KitNavItem('Item', { icon: 'kit/Search', count: 3, selected: true }), { hide: ['3', '4', '5'] })
+def('Workbench/KitNavItem/object', kit.KitNavItem('Item', { icon: 'kit/Hash', kind: 'object' }))
+def('Workbench/KitNavItem/expandable', kit.KitNavItem('Item', { icon: 'kit/Search', expandable: true }))
+def('Workbench/KitNavGroup', kit.KitNavGroup('Group', { expandable: true }))
+def('Workbench/KitNavGroup/open', kit.KitNavGroup('Group', { expandable: true, open: true, divider: true }), { hide: ['0'] })
+def('Workbench/Breadcrumbs', kit.Breadcrumbs([['Settings', 'kit/Gear'], 'Page']), { slots: ['$root'] })
 {
   const main = kit.box('Main panel', { w: 1560, h: 700 })
   kit.SpaceHeader(main, { view: 'list', title: 'Issues', titleIcon: 'kit/CheckSquare' })

@@ -205,16 +205,24 @@ registerLifts({
     if (view.node?.name && view.node.name !== 'Menu') call.args[1].name = view.node.name
     call.args[0] = slotKids(view, def, '$root').map((k) => {
       if (k.name === 'divider') return '-'
-      if (k.name === 'header') { const t = (k.children ?? [])[0]; return { header: t?.name?.toUpperCase() === t?.content ? t.name : firstText(k) } }
-      const texts = (k.children ?? []).filter((c) => c.type === 'text')
+      if (k.name === 'header') {
+        const t = (k.children ?? []).find((c) => c.type === 'text')
+        return { header: t?.name?.toUpperCase() === t?.content ? t.name : firstText(k) }
+      }
+      const kids = k.children ?? []
       const label = k.name.replace(/^item\//, '')
-      const hint = texts.find((t) => t.content !== label)
+      const labels = kids.find((c) => c.name === 'labels')?.children ?? []
       const item = { label }
-      const icon = (k.children ?? []).find((c) => c.type === 'ref' && c.name.startsWith('icon/') && c.name !== 'icon/tick')
+      const icon = kids.find((c) => c.type === 'ref' && c.name.startsWith('icon/') && c.name !== 'icon/tick')
       if (icon) item.icon = icon.name.slice(5)
+      const swatch = kids.find((c) => c.name === 'swatch')
+      if (swatch) item.color = palName(swatch.fill, env) ?? tokenOf(swatch.fill)?.replace(/^pal-/, '')
+      const description = labels.find((t) => t.type === 'text' && t.content !== label)
+      if (description) item.description = description.content
+      const hint = kids.find((c) => c.type === 'text')
       if (hint) item.hint = hint.content
       if (hasTick(k)) item.selected = true
-      if (tokenOf(texts.find((t) => t.content === label)?.fill) === 'primary-button-default') item.accent = true
+      if (tokenOf(labels.find((t) => t.content === label)?.fill) === 'primary-button-default') item.accent = true
       if (tokenOf(k.fill) === 'theme-popup-hover') item.hover = true
       return item
     })
@@ -644,6 +652,136 @@ registerLifts({
         if (row.length > 2) o.subLead = env.conv(row[0])
       } else call.content = row
     }
+  }
+})
+
+// ui/kit components (dev/design/kit/25-ui-kit.js): list controls read their items back from the children of the root slot
+const itemOf = (label, icon) => (icon === undefined ? label : [label, icon])
+const named = (k, prefix) => k.name.slice(prefix.length)
+const iconIn = (n) => {
+  const i = iconOf(n)
+  return i?.startsWith('icon/') ? i.slice(5) : i
+}
+
+registerLifts({
+  Tabs (call, view, def) {
+    const kids = slotKids(view, def, '$root').filter((k) => k.name.startsWith('tab '))
+    call.args[0] = kids.map((k) => itemOf(named(k, 'tab '), iconIn((k.children ?? [])[0] ?? {})))
+    call.args[1] = named(kids.find((k) => (k.children ?? []).some((c) => c.name === 'underline' && c.fill !== undefined)) ?? kids[0] ?? { name: 'tab ' }, 'tab ')
+  },
+
+  SegmentedControl (call, view, def) {
+    const kids = slotKids(view, def, '$root').filter((k) => k.name.startsWith('segment '))
+    call.args[0] = kids.map((k) => {
+      const texts = (k.children ?? []).filter((c) => c.type === 'text')
+      const icon = iconIn(k)
+      return texts.length > 1 ? [named(k, 'segment '), icon, texts[1].content] : itemOf(named(k, 'segment '), icon)
+    })
+    call.args[1] = named(kids.find((k) => k.fill !== undefined) ?? kids[0] ?? { name: 'segment ' }, 'segment ')
+  },
+
+  ButtonGroup (call, view, def) {
+    const kids = slotKids(view, def, '$root').filter((k) => k.name.startsWith('button '))
+    call.args[0] = kids.map((k) => {
+      const label = firstText(k)
+      return [label ?? '', iconIn(k)]
+    })
+    call.args[1] = named(kids.find((k) => tokenOf(k.fill) === 'button-selected-BackgroundColor') ?? { name: 'button ' }, 'button ') || undefined
+    // Both kinds have the same root, the stroke of the buttons tells them apart
+    call.args[2] = { ...call.args[2], kind: kids.some((k) => k.stroke !== undefined) ? 'secondary' : 'ghost' }
+  },
+
+  Breadcrumbs (call, view, def) {
+    call.args[0] = slotKids(view, def, '$root').filter((k) => k.name.startsWith('crumb ')).map((k) => itemOf(firstText(k), iconIn(k)))
+  },
+
+  Steps (call, view, def) {
+    const rows = slotKids(view, def, '$root').filter((k) => k.name.startsWith('step '))
+    const texts = rows.map((r) => (r.children ?? []).find((c) => c.type === 'text'))
+    call.args[0] = texts.map((t) => String(t?.content ?? '').replace(/^\d+\. /, ''))
+    const reached = texts.filter((t) => String(t?.fontWeight) === '500').length
+    call.args[1] = reached > 0 ? reached - 1 : undefined
+  },
+
+  SettingRow (call, view, def, env) {
+    const kids = slotKids(view, def, 'control')
+    call.args[1] = kids.length === 1 ? env.conv(kids[0]) : env.row('control', kids)
+    const o = call.args[2]
+    delete o.details
+    const da = slotAddr(def, 'details')
+    const details = slotKids(view, def, 'details')
+    if (da !== undefined && shown(view, def, da) && details.length > 0) o.details = details.map((k) => env.conv(k))
+    if (typeof view.props.width === 'number' && view.props.width !== 560) o.w = view.props.width
+    delete o.hint
+    if (shown(view, def, findAddr(def, (n) => n.type === 'ref' && n.name === 'hint'))) o.hint = true
+    if (propOf(view, '0', 'height') === 52) o.first = true
+  },
+
+  Section (call, view, def, env) {
+    const o = call.args[2]
+    call.args[1] = slotKids(view, def, 'content').map((k) => env.conv(k))
+    delete o.actions
+    const actions = slotKids(view, def, 'actions').map((k) => env.conv(k))
+    if (actions.length > 0) o.actions = actions
+    if (typeof view.props.width === 'number' && view.props.width !== 560) o.w = view.props.width
+  },
+
+  Dialog (call, view, def, env) {
+    call.args[1] = slotKids(view, def, 'body').map((k) => env.conv(k))
+    const o = call.args[2]
+    if (typeof view.props.width === 'number') o.w = view.props.width
+    // Footer buttons: Cancel, then the submit
+    const buttons = [...def.nodes].filter(([, n]) => n.type === 'ref' && /^Button\/[a-z]+\/medium$/.test(n.name)).map(([a]) => nestedCall(view, def, a, env))
+    const [cancel, submit] = buttons
+    if (cancel?.args[0]?.label && cancel.args[0].label !== 'Cancel') o.cancelLabel = cancel.args[0].label
+    if (submit?.args[0]?.label && submit.args[0].label !== 'Save') o.submitLabel = submit.args[0].label
+    if (submit?.args[0]?.kind && submit.args[0].kind !== 'brand') o.submitKind = submit.args[0].kind
+  },
+
+  KitWizardDialog (call, view, def, env) {
+    call.args[3] = slotKids(view, def, 'body').map((k) => env.conv(k))
+    const steps = nodeCall(slotKids(view, def, 'steps')[0] ?? {}, env)
+    if (steps?.fn === 'Steps') {
+      call.args[1] = steps.args[0]
+      call.args[2] = steps.args[1] ?? 0
+    }
+    const o = (call.args[4] ??= {})
+    if (typeof view.props.width === 'number') o.w = view.props.width
+    const h = propOf(view, findAddr(def, (n) => n.name === 'content'), 'height')
+    if (typeof h === 'number' && h !== 400) o.h = h
+  },
+
+  // Widths of the samples are the kit defaults: a changed one goes back into `w`
+  TextInput (call, view, def, env) {
+    const o = call.args[0]
+    const w = propOf(view, findAddr(def, (n) => n.name === 'field'), 'width')
+    if (typeof w === 'number' && w !== 240) o.w = w
+    const ta = findAddr(def, (n) => n.type === 'text' && n.content === 'Value')
+    if (tokenOf(propOf(view, ta, 'fill')) === 'global-secondary-TextColor' && o.value !== undefined) {
+      o.placeholder = o.value
+      delete o.value
+    }
+  },
+
+  TextArea (call, view) {
+    if (typeof view.props.width === 'number' && view.props.width !== 320) call.args[0].w = view.props.width
+  },
+
+  Callout (call, view) {
+    if (typeof view.props.width === 'number') (call.args[1] ??= {}).w = view.props.width
+  },
+
+  EmptyState (call, view) {
+    const o = call.args[1]
+    if (typeof view.props.width === 'number' && view.props.width !== (o.size === 'small' ? 320 : 416)) o.w = view.props.width
+    if (typeof view.props.height === 'number' && view.props.height !== 196 && o.size !== 'small') o.h = view.props.height
+  },
+
+  KitChip (call, view, def, env) {
+    const o = call.args[1]
+    // A color from data: the palette token under the tint mix (pal-Orange-14-clear)
+    const t = tokenOf(o.kind === 'outline' ? view.props.stroke : view.props.fill)
+    if (o.tone === undefined && t?.startsWith('pal-')) o.color = env.color('$§' + t.replace(/-\d+-.*$/, ''))
   }
 })
 

@@ -113,6 +113,7 @@ Two TypeScript versions are in play: packages depend on 6.0.3, which eslint, ts-
 Do NOT:
 - Run `pnpm build` without `--to` for error checking (hits unrelated broken packages).
 - Run `pnpm run format` (user handles it).
+- Run `git commit` or `git push` (the user reviews the changes first and commits them).
 
 ### Docker Workflow
 

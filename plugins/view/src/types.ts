@@ -894,9 +894,21 @@ export interface DropdownViewOption extends ViewOption {
 }
 
 /**
+ * Steps of a slider, from left to right.
  * @public
  */
-export type ViewOptionModel = ToggleViewOption | DropdownViewOption
+export interface SliderViewOption extends ViewOption {
+  type: 'slider'
+  defaultValue: string
+  values: Array<{ label: IntlString, id: string }>
+  // Caption while the value is none of the steps, e.g. a default taken from elsewhere
+  defaultLabel?: IntlString
+}
+
+/**
+ * @public
+ */
+export type ViewOptionModel = ToggleViewOption | DropdownViewOption | SliderViewOption
 
 /**
  * @public

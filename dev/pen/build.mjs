@@ -235,11 +235,16 @@ function ordered (comps, jsons) {
 
 const comps = host.components
 const jsons = comps.map((c) => c.toLib(false))
+// A frame per category, a section per group (the first two parts of the name)
 const categories = []
 for (const c of comps) {
-  const cat = c.name.split('/')[0]
-  if (!categories.some((k) => k.name === cat)) categories.push({ name: cat, names: [] })
-  categories.find((k) => k.name === cat).names.push(c.name)
+  const [cat, sub] = c.name.split('/')
+  let k = categories.find((it) => it.name === cat)
+  if (k === undefined) categories.push(k = { name: cat, groups: [] })
+  const gname = cat + '/' + (sub ?? '')
+  let g = k.groups.find((it) => it.name === gname)
+  if (g === undefined) k.groups.push(g = { name: gname, uikit: cat === 'Icon' ? undefined : (host.uikit?.[gname] ?? ''), names: [] })
+  g.names.push(c.name)
 }
 const order = ordered(comps, jsons)
 const penVersion = spawnSync(pen, ['--version'], { encoding: 'utf8' }).stdout?.trim() ?? ''
@@ -256,7 +261,7 @@ if (only === undefined || only === 'lib') {
       execute(`SetVariables(${JSON.stringify(variables())})\n` + payload([], { lib: categories }) + session),
       execute(payload(order.map((i) => jsons[i]), { into: order.map((i) => comps[i].name), out }) + session)
     ], 'ui-kit.lib.pen')
-    if (out) { collect(text, pngRoot, ['ui-kit']); rmSync(out, { recursive: true, force: true }) }
+    if (out) { collect(text, pngRoot, categories.map((k) => 'ui-kit-' + k.name)); rmSync(out, { recursive: true, force: true }) }
     remember(lib, libInputs)
     console.log(`library: ${comps.length} components in ${categories.length} categories`)
   }
