@@ -24,7 +24,7 @@
   import presentation, { MessageBox, createQuery, getClient } from '@hcengineering/presentation'
   import { ClassAttributes, clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
   import type { ProjectType, TaskType } from '@hcengineering/task'
-  import task, { calculateStatuses, findStatusAttr } from '@hcengineering/task'
+  import task, { calculateStatuses, findStatusAttr, hasTaskTypeStatusOrderMismatch } from '@hcengineering/task'
   import ui, {
     Icon,
     NavItem,
@@ -40,7 +40,7 @@
     resolvePaletteColor,
     showPopup
   } from '@hcengineering/ui'
-  import { Button, IconButton } from '@hcengineering/ui/kit'
+  import { Button, Callout, IconButton } from '@hcengineering/ui/kit'
   import { IconPicker, deleteObjects, statusStore } from '@hcengineering/view-resources'
   import setting from '@hcengineering/setting'
   import workflow from '@hcengineering/workflow'
@@ -80,6 +80,8 @@
   $: color = resolvePaletteColor(taskType?.color)
   $: descriptor = client.getModel().findAllSync(task.class.TaskTypeDescriptor, { _id: taskType?.descriptor })
   $: states = (taskType?.statuses.map((p) => $statusStore.byId.get(p)).filter((p) => p !== undefined) as Status[]) ?? []
+
+  $: statusOrderMismatch = hasTaskTypeStatusOrderMismatch(spaceType, taskType, $taskTypeStore, $statusStore.byId)
 
   let tasksCounter: number = 0
   let loading: boolean = true
@@ -379,6 +381,9 @@
                 />
               </div>
             </div>
+            {#if statusOrderMismatch}
+              <Callout tone="warning" label={plugin.string.TaskTypeStatusOrderWarning} />
+            {/if}
             <StatesProjectEditor
               {taskType}
               type={spaceType}

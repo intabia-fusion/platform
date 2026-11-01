@@ -1,5 +1,9 @@
 {
   "string": {
+    "TaskTypeStatusOrderWarning": "Die Reihenfolge der Status weicht von der des Projekttyps ab. Sie können diese Reihenfolge beibehalten, aber die Füllung der Statussymbole richtet sich nach der Reihenfolge des Projekttyps.",
+    "ExportSingleTaskTypeDescription": "Nur die Konfiguration dieses Aufgabentyps exportieren (einschließlich aller Status und Attribute)",
+    "ParentOf": "Übergeordnet",
+    "ChildOf": "Teilaufgabe",
     "Description": "Beschreibung",
     "DescriptionPlaceholder": "Beschreibung",
     "ShortDescription": "Kurzbeschreibung",

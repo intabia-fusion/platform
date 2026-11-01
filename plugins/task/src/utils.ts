@@ -272,6 +272,24 @@ export function getStatusIconPosition (
   return { index: unique.indexOf(statusId) + 1, count: unique.length + 1 }
 }
 
+export function hasTaskTypeStatusOrderMismatch (
+  type: ProjectType,
+  taskType: Pick<TaskType, 'statuses'> | undefined,
+  taskTypes: IdMap<TaskType>,
+  statuses: IdMap<Status>
+): boolean {
+  const rank = getProjectStatusRank([type], taskTypes)
+  const previous = new Map<Ref<StatusCategory>, number>()
+  for (const id of taskType?.statuses ?? []) {
+    const category = statuses.get(id)?.category
+    const position = rank.get(id)
+    if (category === undefined || position === undefined) continue
+    if (position < (previous.get(category) ?? -1)) return true
+    previous.set(category, position)
+  }
+  return false
+}
+
 /**
  * @public
  * Position of a status among the statuses of its category in the order of one task type (`TaskType.statuses`),
