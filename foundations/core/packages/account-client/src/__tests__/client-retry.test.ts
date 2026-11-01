@@ -15,6 +15,7 @@
 
 import platform, { PlatformError } from '@hcengineering/platform'
 import { getClient } from '../client'
+import { RateLimitError } from '../rateLimit'
 
 describe('AccountClient network retries', () => {
   const realFetch = globalThis.fetch
@@ -44,6 +45,29 @@ describe('AccountClient network retries', () => {
 
     expect(fetchMock.mock.calls.length).toBeGreaterThan(1)
   })
+
+  it.each(['Rate limit', JSON.stringify({ error: { code: 'rate-limit' } })])(
+    'reports HTTP 429 without retrying or parsing its body: %s',
+    async (body) => {
+      const fetchMock = jest.fn(
+        async () =>
+          new Response(body, {
+            status: 429,
+            headers: { 'Retry-After-ms': '1250', 'Retry-After': '1' }
+          })
+      )
+      globalThis.fetch = fetchMock
+
+      const error = await getClient('http://accounts.test')
+        .getRegionInfo()
+        .catch((err) => err)
+
+      expect(error).toBeInstanceOf(RateLimitError)
+      expect(error).toBeInstanceOf(PlatformError)
+      expect(error.retryAfterMs).toBe(1250)
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+    }
+  )
 
   it('reports an unavailable service when a proxy answers with a non-JSON page', async () => {
     globalThis.fetch = jest.fn(

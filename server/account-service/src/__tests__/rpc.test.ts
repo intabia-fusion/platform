@@ -155,6 +155,26 @@ describe('account rpc dispatch', () => {
     expect(statuses).toContain(429)
     expect(mockLogin).toHaveBeenCalledTimes(served)
 
+    const limited = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Origin: 'https://app.example.com' },
+      body: JSON.stringify({ id: 1, method: 'login', params: {} })
+    })
+    expect(limited.status).toBe(429)
+    expect(limited.headers.get('Access-Control-Allow-Origin')).toBe('https://app.example.com')
+    const exposed = limited.headers.get('Access-Control-Expose-Headers')?.toLowerCase().split(/,\s*/)
+    for (const header of [
+      'retry-after',
+      'retry-after-ms',
+      'x-ratelimit-limit',
+      'x-ratelimit-remaining',
+      'x-ratelimit-reset'
+    ]) {
+      expect(exposed).toContain(header)
+      expect(limited.headers.get(header)).not.toBeNull()
+    }
+    await limited.text()
+
     const viaArray = await call({ id: 1, method: ['login'], params: {} })
     expect(viaArray.status).toBe(400)
     expect(mockLogin).toHaveBeenCalledTimes(served)
