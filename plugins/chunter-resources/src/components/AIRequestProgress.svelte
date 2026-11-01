@@ -14,11 +14,11 @@
 -->
 <script lang="ts">
   import aiBot, { type AIRequest } from '@hcengineering/ai-bot'
-  import type { Doc } from '@hcengineering/core'
+  import type { Doc, Ref } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import ui, { Button } from '@hcengineering/ui'
 
-  export let object: Doc
+  export let objectId: Ref<Doc>
 
   const client = getClient()
   const query = createQuery()
@@ -27,7 +27,7 @@
 
   $: query.query(
     aiBot.class.AIRequest,
-    { objectId: object._id, status: 'processing' },
+    { objectId, status: 'processing' },
     (res) => {
       request = res[0]
     },

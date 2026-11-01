@@ -237,9 +237,9 @@
     "ChannelNotificationText": "{sender}が{doc}にメッセージを送信しました: \n\n {message}",
     "ChannelNotificationHtml": "<p><b>{sender}</b>が{doc}にメッセージを送信しました:</p> {message} <p>{link}</p>",
     "ChannelNotificationSubject": "{doc}に新しいメッセージがあります",
-    "JoinChannelNotificationText": "#{doc}に追加されました",
-    "JoinChannelNotificationHtml": "<p><b>#{doc}</b>に追加されました</p> <p>{link}</p>",
-    "JoinChannelNotificationSubject": "#{doc}に追加されました",
+    "JoinChannelNotificationText": "{doc}に追加されました",
+    "JoinChannelNotificationHtml": "<p><b>{doc}</b>に追加されました</p> <p>{link}</p>",
+    "JoinChannelNotificationSubject": "{doc}に追加されました",
     "ThreadNotificationText": "{sender}が{doc}に返信しました: \n\n{message}",
     "ThreadNotificationHtml": "<p><b>{sender}</b>が{doc}に返信しました:</p><p>{message}</p><p>{link}</p>",
     "ThreadNotificationSubject": "{doc}への新しい返信"

@@ -1097,6 +1097,7 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
         const availableForOwner = owner && isSpace
         const availableSpace = isSpace && allowedSpaces.has(val._id as Ref<Space>)
         const availableDoc = !isSpace && allowedSpaces.has(val.space)
+        // TODO: a guest collaborating on a document in a closed space (QMS) loses its joined DocPreview, so the inbox and chat show no title
         if (!availableForOwner && !availableSpace && !availableDoc) {
           // allow attached lookups for guests when collaborator security is enabled
           // do not check if collaborator of the doc because it's being checked on the storage (DB) level

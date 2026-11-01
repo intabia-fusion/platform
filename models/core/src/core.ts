@@ -1,5 +1,6 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -24,6 +25,8 @@ import {
   type ClassCollaborators,
   type ClassifierKind,
   type Collaborator,
+  type DocPreview,
+  type DocPreviewIcon,
   type Collection,
   type Configuration,
   type ConfigurationElement,
@@ -32,6 +35,7 @@ import {
   type Domain,
   DOMAIN_BLOB,
   DOMAIN_COLLABORATOR,
+  DOMAIN_DOC_PREVIEW,
   DOMAIN_CONFIGURATION,
   DOMAIN_MIGRATION,
   DOMAIN_MODEL,
@@ -444,6 +448,19 @@ export class TClassCollaborators extends TDoc implements ClassCollaborators<Doc>
 @Model(core.class.Collaborator, core.class.Doc, DOMAIN_COLLABORATOR)
 export class TCollaborator extends TAttachedDoc implements Collaborator {
   collaborator!: AccountUuid
+}
+
+@Model(core.class.DocPreview, core.class.Doc, DOMAIN_DOC_PREVIEW)
+export class TDocPreview extends TDoc implements DocPreview {
+  objectId!: Ref<Doc>
+  objectClass!: Ref<Class<Doc>>
+  objectDomain!: Domain
+  title!: string
+  identifier?: string
+  label?: IntlString
+  icon?: DocPreviewIcon
+  archived!: boolean
+  props?: Record<string, any>
 }
 
 @MMixin(core.mixin.VersionableClass, core.class.Class)

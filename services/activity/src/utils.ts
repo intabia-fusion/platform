@@ -46,6 +46,7 @@ import activity, {
 import { getResource, type IntlString, translate } from '@hcengineering/platform'
 import { isEmptyMarkup, markupToText } from '@hcengineering/text-core'
 import serverActivity, {
+  getTitleKey,
   type IdentifierPresenter,
   type TitlePresenter,
   type UrlPresenter
@@ -145,9 +146,9 @@ export async function getDocTitle (client: Client, doc: Doc): Promise<string | u
     })
   }
 
-  const clazz = client.hierarchy.getClass(doc._class)
-  if (clazz.titleKey != null) {
-    return (doc as any)[clazz.titleKey] ?? undefined
+  const titleKey = getTitleKey(client.hierarchy, doc._class)
+  if (titleKey != null) {
+    return (doc as any)[titleKey] ?? undefined
   }
 }
 

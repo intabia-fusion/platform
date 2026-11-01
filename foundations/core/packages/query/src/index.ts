@@ -868,6 +868,11 @@ export class LiveQuery implements WithTx, Client {
     if (q.result instanceof Promise) {
       q.result = await q.result
     }
+    // A joined field the query filters by lets documents in or out: only the server knows which
+    if (this.touchedLookupWays(Object.keys(q.query), lookup, tx).length > 0) {
+      await this.refresh(q)
+      return
+    }
     const needCallback = await this.processLookupUpdateDoc(q.result, lookup, tx, q.options?.projection)
 
     if (needCallback) {

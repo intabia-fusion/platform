@@ -125,9 +125,12 @@
     })
   )
 
-  $: if (doc !== undefined && value?.attachedTo === doc._id) {
+  // Only the inline link shows the document: a message in a chat never loads it
+  $: if (!inline || value == null) {
+    object = undefined
+  } else if (value.attachedTo === doc?._id) {
     object = doc
-  } else if (value !== undefined) {
+  } else {
     void client.findOne(value.attachedToClass, { _id: value.attachedTo }).then((result) => {
       object = result
     })
@@ -359,16 +362,16 @@
           {/if}
           <AttachmentDocList {value} {attachments} imageSize={attachmentImageSize} {videoPreload} {isOwn} />
           <AppletsList {value} readonly={contentReadonly} />
-          <ForwardedMessagePresenter parent={value} {object} readonly={contentReadonly} />
+          <ForwardedMessagePresenter parent={value} object={doc} readonly={contentReadonly} />
         </div>
-      {:else if object}
+      {:else}
         <ChatMessageInput
           bind:this={refInput}
           chatMessage={value}
           shouldSaveDraft={false}
           focusIndex={1000}
           autofocus
-          {object}
+          target={{ _id: value.attachedTo, _class: value.attachedToClass, space: value.space }}
           on:submit={() => {
             editingMessageStore.set(undefined)
           }}

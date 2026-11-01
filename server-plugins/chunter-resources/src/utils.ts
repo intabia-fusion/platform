@@ -8,12 +8,13 @@ import {
   PresenterControl,
   PresenterOptions,
   IconPresenterFn,
+  PropsPresenterFn,
   Icon,
   IntlStringPresenterFn
 } from '@hcengineering/server-activity'
 import { encodeObjectURI } from '@hcengineering/view'
 import serverCore from '@hcengineering/server-core'
-import { getMetadata, IntlString, translate } from '@hcengineering/platform'
+import { getMetadata, IntlString } from '@hcengineering/platform'
 import { workbenchId } from '@hcengineering/workbench'
 import contact, { formatName, Person } from '@hcengineering/contact'
 
@@ -52,7 +53,7 @@ export const JoinChannelTypeMatch: TypeMatchFunc = (
 }
 
 export const ChannelTitlePresenter: StringPresenterFn<Channel> = async (doc: Channel): Promise<string> => {
-  return `#${doc.name}`
+  return doc.name
 }
 
 export const DirectTitlePresenter: StringPresenterFn<DirectMessage> = async (
@@ -60,14 +61,7 @@ export const DirectTitlePresenter: StringPresenterFn<DirectMessage> = async (
   control: PresenterControl,
   options?: PresenterOptions
 ): Promise<string | undefined> => {
-  const { account } = options ?? {}
-  return account == null
-    ? await translate(
-      doc.type === 'person' ? chunter.string.Direct : chunter.string.GroupChat,
-      {},
-      control.branding?.defaultLanguage
-    )
-    : await buildDirectName(doc, control, account)
+  return await buildDirectName(doc, control, options?.account)
 }
 
 export const DirectLabelPresenter: IntlStringPresenterFn<DirectMessage> = async (
@@ -75,6 +69,13 @@ export const DirectLabelPresenter: IntlStringPresenterFn<DirectMessage> = async 
 ): Promise<IntlString> => {
   return doc.type === 'person' ? chunter.string.Direct : chunter.string.GroupChat
 }
+
+// The client builds the title per viewer: from the members, or the name of a group of more than two
+export const DirectPropsPresenter: PropsPresenterFn<DirectMessage> = async (doc: DirectMessage) => ({
+  members: doc.members,
+  type: doc.type,
+  name: doc.name
+})
 
 export const ChannelUrlPresenter: StringPresenterFn<ChunterSpace> = async (
   doc: ChunterSpace,
@@ -102,26 +103,23 @@ export const DirectIconPresenter: IconPresenterFn<DirectMessage> = async (
   return { asset: clazz?.icon, props: { members } }
 }
 
+// Without a viewer the direct is named by everyone in it, for a viewer by the others
 async function buildDirectName (
   direct: DirectMessage,
   control: PresenterControl,
-  account: AccountUuid
+  account: AccountUuid | undefined
 ): Promise<string> {
   const members = direct.members ?? []
-
-  if (direct.type === 'person') {
-    const companion = members.find((m) => m !== account) ?? members[0]
-    const companionPerson = (await control.findAll(control.ctx, contact.class.Person, { personUuid: companion }))[0]
-    if (companionPerson === undefined) return ''
-    return formatName(companionPerson.name, control.branding?.lastNameFirst) ?? ''
-  } else {
-    if (direct.name.trim().length > 0) {
-      return direct.name
-    }
-    const persons = await control.findAll<Person>(control.ctx, contact.class.Person, {
-      personUuid: { $in: members.filter((m) => m !== account) }
-    })
-
-    return persons.map((p) => formatName(p.name, control.branding?.lastNameFirst)).join(', ')
-  }
+  // As the client does: a rename writes every member into the name, a group of two is called by the other one
+  if (direct.type !== 'person' && members.length > 2 && direct.name.trim().length > 0) return direct.name
+  const others = members.filter((m) => m !== account)
+  // A direct with oneself is called by oneself
+  const shown = others.length > 0 ? others : members
+  const persons = await control.findAll<Person>(control.ctx, contact.class.Person, { personUuid: { $in: shown } })
+  const byUuid = new Map(persons.map((p) => [p.personUuid, p]))
+  return shown
+    .map((m) => byUuid.get(m))
+    .filter((p): p is Person => p != null)
+    .map((p) => formatName(p.name, control.branding?.lastNameFirst))
+    .join(', ')
 }

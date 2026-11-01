@@ -41,6 +41,7 @@ import {
   type AccountUuid,
   type Class,
   type Doc,
+  type DocPreview,
   type Domain,
   IndexKind,
   type Ref,
@@ -149,5 +150,6 @@ export class TChat extends TAttachedDoc implements Chat {
   account!: AccountUuid
   pinned!: boolean
   hidden!: boolean
+  preview?: Ref<DocPreview>
   readState?: Ref<ReadState>
 }

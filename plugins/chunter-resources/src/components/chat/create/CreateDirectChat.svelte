@@ -18,13 +18,12 @@
   import contact from '@hcengineering/contact'
   import type { AccountUuid, Ref } from '@hcengineering/core'
   import { notEmpty, getCurrentAccount } from '@hcengineering/core'
-  import { employeeByIdStore, SelectUsersPopup } from '@hcengineering/contact-resources'
+  import { employeeByIdStore, getParticipantsName, SelectUsersPopup } from '@hcengineering/contact-resources'
   import presentation, { getClient } from '@hcengineering/presentation'
   import { Modal, showPopup } from '@hcengineering/ui'
   import { createDirect } from '@hcengineering/chunter'
 
   import chunter from '../../../plugin'
-  import { buildDmName } from '../../../utils'
   import ChannelMembers from '../../ChannelMembers.svelte'
   import { openChunterSpace } from '../../../navigation'
 
@@ -43,7 +42,7 @@
   })
 
   async function loadDmName (accs: AccountUuid[]): Promise<string> {
-    return await buildDmName(client, '', accs)
+    return await getParticipantsName(client, '', accs)
   }
 
   async function createDirectMessage (): Promise<void> {

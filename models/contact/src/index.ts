@@ -167,7 +167,7 @@ export class TContact extends TDoc implements Contact {
 }
 
 @Model(contact.class.Channel, core.class.AttachedDoc, DOMAIN_CHANNEL)
-@UX(contact.string.Channel, contact.icon.Person)
+@UX(contact.string.Channel, contact.icon.Person, undefined, undefined, undefined, undefined, 'value')
 export class TChannel extends TAttachedDoc implements Channel {
   @Prop(TypeRef(contact.class.ChannelProvider), contact.string.ChannelProvider)
   @Index(IndexKind.Indexed)

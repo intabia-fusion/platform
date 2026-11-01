@@ -64,13 +64,6 @@ export function createModel (builder: Builder): void {
   })
 
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {
-    trigger: serverNotification.trigger.OnDocUpdate,
-    txMatch: {
-      _class: core.class.TxUpdateDoc
-    }
-  })
-
-  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
     trigger: serverNotification.trigger.OnEmployeeDeactivate,
     isAsync: true,
     txMatch: {
@@ -107,6 +100,14 @@ export function createModel (builder: Builder): void {
 
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {
     trigger: serverNotification.trigger.OnDocSpaceChanged,
+    txMatch: {
+      _class: core.class.TxUpdateDoc
+    },
+    isAsync: true
+  })
+
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverNotification.trigger.OnSpaceAccessChanged,
     txMatch: {
       _class: core.class.TxUpdateDoc
     },

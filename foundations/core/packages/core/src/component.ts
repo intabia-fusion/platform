@@ -29,6 +29,7 @@ import type {
   ClassCollaborators,
   ClassPermission,
   Collaborator,
+  DocPreview,
   Collection,
   Configuration,
   ConfigurationElement,
@@ -185,7 +186,8 @@ export default plugin(coreId, {
     Sequence: '' as Ref<Class<Sequence>>,
     CustomSequence: '' as Ref<Class<CustomSequence>>,
     ClassCollaborators: '' as Ref<Class<ClassCollaborators<Doc>>>,
-    Collaborator: '' as Ref<Class<Collaborator>>
+    Collaborator: '' as Ref<Class<Collaborator>>,
+    DocPreview: '' as Ref<Class<DocPreview>>
   },
   icon: {
     TypeString: '' as Asset,

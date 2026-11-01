@@ -237,9 +237,9 @@
     "ChannelNotificationText": "{sender} отправил(а) сообщение в {doc}: \n\n {message}",
     "ChannelNotificationHtml": "<p><b>{sender}</b> отправил(а) сообщение в {doc}:</p> {message} <p>{link}</p>",
     "ChannelNotificationSubject": "У вас новое сообщение в {doc}",
-    "JoinChannelNotificationText": "Вас добавили в #{doc}",
-    "JoinChannelNotificationHtml": "<p>Вас добавили в <b>#{doc}</b></p> <p>{link}</p>",
-    "JoinChannelNotificationSubject": "Вас добавили в #{doc}",
+    "JoinChannelNotificationText": "Вас добавили в {doc}",
+    "JoinChannelNotificationHtml": "<p>Вас добавили в <b>{doc}</b></p> <p>{link}</p>",
+    "JoinChannelNotificationSubject": "Вас добавили в {doc}",
     "ThreadNotificationText": "{sender} ответил(а) на {doc}: \n\n{message}",
     "ThreadNotificationHtml": "<p><b>{sender}</b> ответил(а) на {doc}:</p><p>{message}</p><p>{link}</p>",
     "ThreadNotificationSubject": "Новый ответ на {doc}"

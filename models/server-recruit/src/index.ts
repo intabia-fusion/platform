@@ -38,6 +38,21 @@ export function createModel (builder: Builder): void {
     triggerFields: ['number']
   })
 
+  builder.mixin(recruit.class.Applicant, core.class.Class, serverActivity.mixin.TitlePresenter, {
+    presenter: serverRecruit.function.ApplicationTitlePresenter,
+    triggerFields: ['attachedTo']
+  })
+
+  builder.mixin(recruit.class.Review, core.class.Class, serverActivity.mixin.TitlePresenter, {
+    presenter: serverRecruit.function.ReviewTitlePresenter,
+    triggerFields: ['title']
+  })
+
+  builder.mixin(recruit.class.Review, core.class.Class, serverActivity.mixin.IdentifierPresenter, {
+    presenter: serverRecruit.function.ReviewIdentifierPresenter,
+    triggerFields: ['number']
+  })
+
   builder.mixin(recruit.class.Vacancy, core.class.Class, serverActivity.mixin.UrlPresenter, {
     presenter: serverRecruit.function.VacancyUrlPresenter
   })

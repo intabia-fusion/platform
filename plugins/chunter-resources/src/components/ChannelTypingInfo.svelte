@@ -14,7 +14,7 @@
 -->
 <script lang="ts">
   import chunter from '@hcengineering/chunter'
-  import { type Doc, type PersonId, getCurrentAccount } from '@hcengineering/core'
+  import { type Doc, type PersonId, type Ref, getCurrentAccount } from '@hcengineering/core'
   import { getName } from '@hcengineering/contact'
   import { getPersonsByPersonIds } from '@hcengineering/contact-resources'
   import type { IntlString } from '@hcengineering/platform'
@@ -22,7 +22,7 @@
   import { Label } from '@hcengineering/ui'
   import { type TypingInfo, typing } from '@hcengineering/presence-resources'
 
-  export let object: Doc
+  export let objectId: Ref<Doc>
 
   const maxTypingPersons = 3
   const acc = getCurrentAccount()
@@ -90,7 +90,7 @@
   data-id="channel-typing-info"
   use:typing={{
     socialId: acc.primarySocialId,
-    objectId: object._id,
+    objectId,
     onTyping: handleTyping
   }}
 >

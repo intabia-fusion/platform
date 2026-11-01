@@ -17,6 +17,8 @@ import { type Asset, IntlString, type Resource } from '@hcengineering/platform'
 import {
   Class,
   Doc,
+  DocPreview,
+  PreviewSnapshot,
   PersonId,
   Ref,
   AccountUuid,
@@ -229,22 +231,11 @@ export interface DocNotifyContext<T extends Doc = Doc> extends Doc<PersonSpace> 
   objectId: Ref<T>
   objectClass: Ref<Class<T>>
   objectSpace: Ref<Space>
-
-  // Data to display object in inbox without requests
-  objectTitle: string
-  objectIdentifier?: string
-  objectLabel?: IntlString
-  objectIcon?: { asset?: Asset, emoji?: number | number[], props?: Record<string, any> }
-  // Used for threads only to show message
-  object?: Partial<T>
-
-  // Parent Context (e.g. for threads/attached to a main object)
-  parentObjectId?: Ref<Doc>
-  parentObjectClass?: Ref<Class<Doc>>
-  parentObjectTitle?: string
-  parentObjectIdentifier?: string
-  parentObjectLabel?: IntlString
-  parentObjectIcon?: { asset?: Asset, emoji?: number | number[], props?: Record<string, any> }
+  // A thread shows its parent document's preview and its own message
+  preview?: Ref<DocPreview>
+  // The preview as it was when the user lost access to it: drawn instead of the one no longer readable
+  previewSnapshot?: PreviewSnapshot
+  message?: NotificationMessage
 
   lastNotify: Timestamp
   latestNotifications: ContextNotification[] // store n latest notifications to show in inbox

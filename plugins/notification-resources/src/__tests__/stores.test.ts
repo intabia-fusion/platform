@@ -14,7 +14,7 @@
 //
 
 import { get } from 'svelte/store'
-import { SortingOrder } from '@hcengineering/core'
+import core, { SortingOrder } from '@hcengineering/core'
 import notification, { type DocNotifyContext } from '@hcengineering/notification'
 
 const mockAccount = { uuid: 'acc-me' as any }
@@ -24,7 +24,11 @@ jest.mock('@hcengineering/core', () => ({
   default: {
     space: { Workspace: 'core:space:Workspace' },
     // Referenced at module scope by @hcengineering/notification's utils.ts (textAttributeTypes).
-    class: { TypeMarkup: 'core:class:TypeMarkup', TypeCollaborativeDoc: 'core:class:TypeCollaborativeDoc' }
+    class: {
+      TypeMarkup: 'core:class:TypeMarkup',
+      TypeCollaborativeDoc: 'core:class:TypeCollaborativeDoc',
+      DocPreview: 'core:class:DocPreview'
+    }
   },
   SortingOrder: { Ascending: 1, Descending: -1 },
   getCurrentAccount: jest.fn(() => mockAccount)
@@ -93,7 +97,9 @@ describe('updateInboxContexts', () => {
     // modifiedOn); mixed projection is inclusion-only, dropping every other field.
     expect(options).toEqual({
       sort: { lastNotify: SortingOrder.Descending },
-      limit: 26
+      limit: 26,
+      lookup: { preview: core.class.DocPreview },
+      showArchived: true
     })
   })
 

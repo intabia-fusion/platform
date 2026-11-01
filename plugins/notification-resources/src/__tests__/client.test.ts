@@ -32,7 +32,8 @@ jest.mock('@hcengineering/core', () => ({
     class: {
       TxCreateDoc: 'core:class:TxCreateDoc',
       TxUpdateDoc: 'core:class:TxUpdateDoc',
-      TxRemoveDoc: 'core:class:TxRemoveDoc'
+      TxRemoveDoc: 'core:class:TxRemoveDoc',
+      DocPreview: 'core:class:DocPreview'
     },
     space: { Tx: 'core:space:Tx' }
   },
@@ -152,7 +153,7 @@ function makeContext (overrides: Partial<DocNotifyContext> = {}): DocNotifyConte
     objectId: 'doc1' as any,
     objectClass: 'tracker:class:Issue' as any,
     objectSpace: 'space1' as any,
-    objectTitle: 'Issue 1',
+    preview: 'preview1' as any,
     lastNotify: 100,
     latestNotifications: [],
     unreadReactions: [],
@@ -358,10 +359,11 @@ describe('NotificationClientImpl', () => {
       const [r1, r2] = await Promise.all([client.getContextById('ctxA' as any), client.getContextById('ctxB' as any)])
 
       expect(findAllMock).toHaveBeenCalledTimes(1)
-      expect(findAllMock).toHaveBeenCalledWith(notification.class.DocNotifyContext, {
-        _id: { $in: ['ctxA', 'ctxB'] },
-        user: 'acc-me'
-      })
+      expect(findAllMock).toHaveBeenCalledWith(
+        notification.class.DocNotifyContext,
+        { _id: { $in: ['ctxA', 'ctxB'] }, user: 'acc-me' },
+        { lookup: { preview: core.class.DocPreview }, showArchived: true }
+      )
       expect(r1).toEqual(ctxA)
       expect(r2).toEqual(ctxB)
 
@@ -447,7 +449,7 @@ describe('NotificationClientImpl', () => {
           objectId: context.objectId,
           objectClass: context.objectClass,
           objectSpace: context.objectSpace,
-          objectTitle: context.objectTitle,
+          preview: context.preview,
           lastNotify: context.lastNotify,
           latestNotifications: context.latestNotifications,
           unreadReactions: context.unreadReactions,

@@ -23,7 +23,6 @@ import core, {
   DocumentQuery,
   FindOptions,
   FindResult,
-  Domain,
   Hierarchy,
   Ref,
   Timestamp,
@@ -58,6 +57,7 @@ import {
   getPersonsBySocialIds,
   getPersonSpaces
 } from '@hcengineering/server-contact'
+import { findPreviewsByDoc, previewKey } from '@hcengineering/server-activity'
 import { TriggerControl } from '@hcengineering/server-core'
 import { OnContentReport, OnReportedMessageRemoved } from './report'
 
@@ -67,6 +67,7 @@ import {
   ChannelUrlPresenter,
   DirectIconPresenter,
   DirectLabelPresenter,
+  DirectPropsPresenter,
   DirectTitlePresenter,
   JoinChannelTypeMatch
 } from './utils'
@@ -484,14 +485,18 @@ async function OnCollaboratorAdded (txes: TxCreateDoc<Collaborator>[], control: 
     .filter((it) => control.hierarchy.classHierarchyMixin(it.attachedToClass, activity.mixin.ActivityDoc) != null)
   if (collaborators.length === 0) return res
 
-  const refKey = (domain: Domain, id: Ref<Doc>): string => `${domain}:${id}`
+  const previewByDoc = await findPreviewsByDoc(
+    control,
+    collaborators.map((it) => ({ objectClass: it.attachedToClass, objectId: it.attachedTo })),
+    { projection: { _id: 1, objectId: 1 } }
+  )
   const readStates = await control.findAll(control.ctx, notification.class.ReadState, {
     attachedTo: { $in: Array.from(new Set(collaborators.map((it) => it.attachedTo))) }
   })
   const readStateByDoc = new Map<string, Ref<ReadState>>()
   for (const it of readStates) {
     const domain = hierarchy.findDomain(it.attachedToClass)
-    if (domain !== undefined) readStateByDoc.set(refKey(domain, it.attachedTo), it._id)
+    if (domain != null) readStateByDoc.set(previewKey(domain, it.attachedTo), it._id)
   }
 
   for (const collaborator of collaborators) {
@@ -499,7 +504,15 @@ async function OnCollaboratorAdded (txes: TxCreateDoc<Collaborator>[], control: 
     if (space == null) continue
     const domain = hierarchy.findDomain(collaborator.attachedToClass)
     if (domain == null) continue
-    const key = refKey(domain, collaborator.attachedTo)
+    const key = previewKey(domain, collaborator.attachedTo)
+    const preview = previewByDoc.get(key)?._id
+    if (preview == null) {
+      control.ctx.error('chat skipped: the document has no preview', {
+        attachedTo: collaborator.attachedTo,
+        attachedToClass: collaborator.attachedToClass
+      })
+      continue
+    }
     let readState = readStateByDoc.get(key)
     if (readState === undefined) {
       readState = await makeReadState(control, collaborator)
@@ -513,6 +526,7 @@ async function OnCollaboratorAdded (txes: TxCreateDoc<Collaborator>[], control: 
       pinned: false,
       hidden: false,
       collection: 'chats',
+      preview,
       ...(readState !== undefined ? { readState } : {})
     })
     res.push(
@@ -556,6 +570,29 @@ async function OnCollaboratorRemoved (txes: TxRemoveDoc<Collaborator>[], control
   }
 
   return res
+}
+
+// The chats of a removed document go with it, for every account: nothing would open them.
+async function OnChatDocRemoved (txes: TxRemoveDoc<Doc>[], control: TriggerControl): Promise<Tx[]> {
+  const { hierarchy } = control
+  const removed = txes.filter((tx) => hierarchy.classHierarchyMixin(tx.objectClass, activity.mixin.ActivityDoc) != null)
+  if (removed.length === 0) return []
+  const domainOf = new Map(removed.map((tx) => [tx.objectId, hierarchy.getDomain(tx.objectClass)]))
+  const chats = await control.findAll(control.ctx, chunter.class.Chat, {
+    attachedTo: { $in: Array.from(domainOf.keys()) }
+  })
+  // An id may repeat in another domain: the chat names the class of its document
+  return chats
+    .filter((chat) => hierarchy.findDomain(chat.attachedToClass) === domainOf.get(chat.attachedTo))
+    .map((chat) =>
+      control.txFactory.createTxCollectionCUD(
+        chat.attachedToClass,
+        chat.attachedTo,
+        chat.space,
+        'chats',
+        control.txFactory.createTxRemoveDoc(chat._class, chat.space, chat._id)
+      )
+    )
 }
 
 export async function OnChannelJoin (txes: TxUpdateDoc<Channel>[], control: TriggerControl): Promise<Tx[]> {
@@ -626,6 +663,7 @@ export default async () => ({
     OnUserStatus,
     OnCollaboratorAdded,
     OnCollaboratorRemoved,
+    OnChatDocRemoved,
     OnPersonNameChanged,
     OnChannelJoin
   },
@@ -639,6 +677,7 @@ export default async () => ({
     ChatSearchTitleProvider,
     ChannelIconPresenter,
     DirectIconPresenter,
+    DirectPropsPresenter,
     ChatMessageSearchTitleProvider,
     ChatMessageSearchFacets
   }

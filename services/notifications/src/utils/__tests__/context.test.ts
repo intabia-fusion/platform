@@ -51,7 +51,7 @@ import core, {
   TxUpdateDoc,
   DocumentUpdate
 } from '@hcengineering/core'
-import { ObjectDisplayData, Client } from '../../types'
+import { ContextRefs, Client } from '../../types'
 import { Receiver } from '@hcengineering/server-notification'
 import type Cache from '../../cache'
 
@@ -384,12 +384,7 @@ describe('context utils', () => {
           account: 'receiver-acc' as AccountUuid,
           space: 'receiver-space' as Ref<Space>
         } as unknown as Receiver
-        const display = {
-          objectTitle: 'Title',
-          objectIdentifier: 'ID-1',
-          objectIcon: 'icon-ref',
-          objectLabel: 'label-ref'
-        } as unknown as ObjectDisplayData
+        const refs = { preview: 'preview-1' } as unknown as ContextRefs
 
         const tx = getCreateContextTx(
           'new-ctx-id' as Ref<DocNotifyContext>,
@@ -399,14 +394,14 @@ describe('context utils', () => {
           receiver,
           result,
           mockFactory as unknown as TxFactory,
-          display
+          refs
         )
 
         expect(mockFactory.createTxCreateDoc).toHaveBeenCalledWith(
           expect.anything(), // DocNotifyContext class ref
           'receiver-space',
           {
-            ...display,
+            ...refs,
             user: 'receiver-acc' as AccountUuid,
             objectId: 'doc-1',
             objectClass: 'DocClass',

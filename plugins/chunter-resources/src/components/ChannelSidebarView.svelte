@@ -22,6 +22,8 @@
   import { updateTabData } from '@hcengineering/workbench-resources'
 
   import Channel from './Channel.svelte'
+  import { getChatTarget } from '../utils'
+  import { isArchived } from './chat/utils'
   import { closeThreadInSidebarChannel } from '../navigation'
   import { ThreadView } from '../index'
   import ChannelHeader from './ChannelHeader.svelte'
@@ -86,7 +88,14 @@
       on:close
     />
     {#key object._id}
-      <Channel {object} syncLocation={false} freeze={threadId !== undefined} {selectedMessageId} />
+      <Channel
+        target={getChatTarget(object)}
+        {object}
+        readonly={isArchived(object)}
+        syncLocation={false}
+        freeze={threadId != null}
+        {selectedMessageId}
+      />
     {/key}
   </div>
 {/if}

@@ -26,6 +26,7 @@
   import ThreadParentMessage from './ThreadParentPresenter.svelte'
   import ReverseChannelScrollView from '../ReverseChannelScrollView.svelte'
   import { ChatViewport } from '../../chatViewport'
+  import { getChatTarget } from '../../utils'
 
   export let selectedMessageId: Ref<ActivityMessage> | undefined = undefined
   export let message: ActivityMessage
@@ -83,8 +84,9 @@
   {#if chatViewport !== undefined && channel !== undefined}
     <ReverseChannelScrollView
       bind:selectedMessageId
+      target={getChatTarget(message)}
       object={message}
-      {channel}
+      {readonly}
       viewport={chatViewport}
       {autofocus}
       fullHeight={false}

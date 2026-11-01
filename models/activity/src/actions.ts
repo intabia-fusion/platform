@@ -31,9 +31,6 @@ export function buildActions (builder: Builder): void {
       icon: activity.icon.Bookmark,
       input: 'focus',
       inline: true,
-      actionProps: {
-        size: 'x-small'
-      },
       category: activity.category.Activity,
       target: activity.class.ActivityMessage,
       visibilityTester: activity.function.CanSaveForLater,

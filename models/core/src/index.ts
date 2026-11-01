@@ -43,6 +43,7 @@ import {
   TClass,
   TClassCollaborators,
   TCollaborator,
+  TDocPreview,
   TCollection,
   TConfiguration,
   TConfigurationElement,
@@ -194,6 +195,7 @@ export function createModel (builder: Builder): void {
     TTransientConfiguration,
     TClassCollaborators,
     TCollaborator,
+    TDocPreview,
     TVersionableClass,
     TTTransientTTL
   )

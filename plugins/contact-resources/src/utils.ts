@@ -53,6 +53,7 @@ import {
   type SocialIdentity
 } from '@hcengineering/contact'
 import core, {
+  systemAccountUuid,
   AccountRole,
   type AccountUuid,
   type AggregateValue,
@@ -410,6 +411,46 @@ export const employeeByPersonIdStore = writable<Map<PersonId, Employee>>(new Map
  * [string (social key) => Employee] mapping
  */
 export const employeeBySocialKeyStore = writable<Map<string, Employee>>(new Map())
+
+// A named group keeps its title, otherwise the others' names; a chat with oneself is the own name
+export async function getParticipantsName (client: Client, title: string, accounts: AccountUuid[]): Promise<string> {
+  if (accounts.length === 0 || (accounts.length > 2 && title.trim().length > 0)) {
+    return title
+  }
+
+  const me = getCurrentEmployee()
+  const hierarchy = client.getHierarchy()
+  const employeeByAccount = get(employeeByAccountStore)
+
+  // Non-employees (bots, guests, deactivated) are not in the store: one query for all of them
+  const missing = accounts.filter((acc) => acc !== systemAccountUuid && employeeByAccount.get(acc) == null)
+  const personByAccount = new Map<AccountUuid, Person>()
+  if (missing.length > 0) {
+    for (const person of await client.findAll(contact.class.Person, { personUuid: { $in: missing } })) {
+      if (person.personUuid != null) personByAccount.set(person.personUuid as AccountUuid, person)
+    }
+  }
+
+  const names: string[] = []
+  const processed = new Set<Ref<Person>>()
+  let myName = ''
+  for (const acc of accounts) {
+    if (acc === systemAccountUuid) {
+      names.push(await translate(core.string.System, {}))
+      continue
+    }
+    const person = employeeByAccount.get(acc) ?? personByAccount.get(acc)
+    if (person == null || processed.has(person._id)) continue
+    processed.add(person._id)
+    if (me === person._id) {
+      myName = getName(hierarchy, person)
+    } else {
+      names.push(getName(hierarchy, person))
+    }
+  }
+
+  return names.length > 0 ? names.join(', ') : myName
+}
 
 /**
  * [AccountUuid => Person] mapping

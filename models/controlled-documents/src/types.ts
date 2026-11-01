@@ -371,7 +371,7 @@ export class TDocumentAttachment extends TAttachment implements DocumentAttachme
 }
 
 @Model(documents.class.DocumentCategory, core.class.Doc, DOMAIN_DOCUMENTS)
-@UX(documents.string.Category)
+@UX(documents.string.Category, undefined, undefined, undefined, undefined, undefined, 'title')
 export class TDocumentCategory extends TDoc implements DocumentCategory {
   @Prop(TypeRef(core.class.TypedSpace), core.string.Space)
   @Index(IndexKind.Indexed)

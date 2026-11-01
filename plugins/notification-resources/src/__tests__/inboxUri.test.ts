@@ -14,7 +14,7 @@
 //
 
 import chunter from '@hcengineering/chunter'
-import type { Class, Doc, Ref } from '@hcengineering/core'
+import type { Class, Doc, Ref, WithLookup } from '@hcengineering/core'
 import type { DocNotifyContext } from '@hcengineering/notification'
 
 const findOne = jest.fn()
@@ -30,7 +30,10 @@ jest.mock('@hcengineering/presentation', () => ({
   })
 }))
 jest.mock('@hcengineering/activity-resources', () => ({}))
-jest.mock('@hcengineering/view-resources', () => ({}))
+jest.mock('@hcengineering/view-resources', () => ({
+  // The joined preview only, as the real one answers for a context that came with the join
+  getContextPreview: async (context: any) => context.$lookup?.preview
+}))
 jest.mock('@hcengineering/ui', () => ({}))
 
 // eslint-disable-next-line import/first
@@ -39,8 +42,8 @@ import { decodeInboxURI, encodeInboxURI, resolveInboxObjectClass } from '../util
 const channel = 'general-6ab563cdad9fa7c25f0b4f94' as Ref<Doc>
 const issueClass = 'tracker:class:Issue' as Ref<Class<Doc>>
 
-function context (data: Partial<DocNotifyContext>): DocNotifyContext {
-  return data as DocNotifyContext
+function context (data: Partial<WithLookup<DocNotifyContext>>): WithLookup<DocNotifyContext> {
+  return data as WithLookup<DocNotifyContext>
 }
 
 describe('inbox links', () => {
@@ -75,7 +78,10 @@ describe('inbox links', () => {
       await resolveInboxObjectClass(
         _id,
         chunter.class.ChunterSpace,
-        context({ objectId: 'thread' as Ref<Doc>, parentObjectId: _id, parentObjectClass: chunter.class.DirectMessage })
+        context({
+          objectId: 'thread' as Ref<Doc>,
+          $lookup: { preview: { objectId: _id, objectClass: chunter.class.DirectMessage } as any }
+        })
       )
     ).toBe(chunter.class.DirectMessage)
     expect(findOne).not.toHaveBeenCalled()

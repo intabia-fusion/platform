@@ -50,10 +50,24 @@ export type IconPresenterFn<T extends Doc = Doc> = (
   options?: PresenterOptions
 ) => Promise<Icon>
 
+export type PropsPresenterFn<T extends Doc = Doc> = (
+  doc: T,
+  control: PresenterControl
+) => Promise<Record<string, any> | undefined>
+
+// A class shown neither in the chat nor in the inbox; a class with activity has a chat and keeps its preview anyway
+export type NoPreview<T extends Doc = Doc> = Class<T>
+
 export interface TitlePresenter<T extends Doc = Doc> extends Class<T> {
   presenter: Resource<StringPresenterFn<T>>
   triggerFields: string[]
   personalized?: boolean
+}
+
+// What a preview carries for its class beyond the shared fields (`DocPreview.props`)
+export interface PropsPresenter<T extends Doc = Doc> extends Class<T> {
+  presenter: Resource<PropsPresenterFn<T>>
+  triggerFields: string[]
 }
 
 export interface LabelPresenter<T extends Doc = Doc> extends Class<T> {

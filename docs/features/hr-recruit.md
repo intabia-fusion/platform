@@ -52,8 +52,8 @@
 | `TVacancy extends TProject` | Вакансия = проект трекера: `fullDescription` (коллаборативный документ, FullText), `attachments`, `dueTo`, `location`, `company: Ref<Organization>`, `comments`, `number`, `polls` | `models/recruit/src/types.ts` |
 | `TCandidate` | Mixin на `contact.class.Person`: `title`, `applications`, `onsite`/`remote`, `source`, `skills` (Collection TagReference), `reviews`, `vacancyMatch`, `polls` | `models/recruit/src/types.ts` |
 | `TVacancyList` | Mixin на `contact.class.Organization`, поле `vacancies` | `models/recruit/src/types.ts` |
-| `TApplicant extends TTask` | Отклик: `attachedTo` = Candidate (readonly), `space` = Vacancy, `startDate`, `assignee` (рекрутер), `status` (собственный атрибут `recruit.attribute.State`), `polls` | `models/recruit/src/types.ts` |
-| `TReview extends calendar.class.Event` | Собеседование: `number`, `verdict`, `application: Ref<Applicant>`, `company`, `opinions` | `models/recruit/src/types.ts` |
+| `TApplicant extends TTask` | Отклик: `attachedTo` = Candidate (readonly), `space` = Vacancy, `startDate`, `assignee` (рекрутер), `status` (собственный атрибут `recruit.attribute.State`), `polls`. Серверный заголовок (`ApplicationTitlePresenter`, models/server-recruit) - имя кандидата, как клиентский `AppTitleProvider`: им подписан чат отклика в навигаторе и уведомления; переименование кандидата превью отклика не обновляет | `models/recruit/src/types.ts` |
+| `TReview extends calendar.class.Event` | Собеседование: `number`, `verdict`, `application: Ref<Applicant>`, `company`, `opinions`. Серверные заголовок (`title`, а не кандидат, как у события) и идентификатор (`RVE-<number>`) - `ReviewTitlePresenter`/`ReviewIdentifierPresenter`, как клиентские провайдеры | `models/recruit/src/types.ts` |
 | `TOpinion` | AttachedDoc к Review: `number`, `description` (markup), `value`, `attachments`, `comments` | `models/recruit/src/types.ts` |
 | `TApplicantTaskType` | Конкретный класс корневого task type Applicant (механизм "task type как класс") | `models/recruit/src/types.ts` |
 
