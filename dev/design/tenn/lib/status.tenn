@@ -1,108 +1,91 @@
 entry "../../../../PlatformDesign.tenn"
 item "§ StatusIcon" {
-	auto-layout abs; width 246; height 82; border-color #0000000f; corner-radius 8; pos 0 0
+	auto-layout abs; width 62; height 82; border-color #0000000f; corner-radius 8; pos 0 0
 	item title { title StatusIcon; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ PriorityIcon" {
-	auto-layout abs; width 246; height 82; border-color #0000000f; corner-radius 8; pos 294 0
+	auto-layout abs; width 62; height 82; border-color #0000000f; corner-radius 8; pos 110 0
 	item title { title PriorityIcon; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ StatusChip" {
-	auto-layout abs; width 143; height 88; border-color #0000000f; corner-radius 8; pos 588 0
+	auto-layout abs; width 143; height 88; border-color #0000000f; corner-radius 8; pos 220 0
 	item title { title StatusChip; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ Count" {
-	auto-layout abs; width 78; height 88; border-color #0000000f; corner-radius 8; pos 779 0
+	auto-layout abs; width 78; height 88; border-color #0000000f; corner-radius 8; pos 411 0
 	item title { title Count; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ Notice" {
-	auto-layout abs; width 460; height 96; border-color #0000000f; corner-radius 8; pos 905 0
+	auto-layout abs; width 188; height 96; border-color #0000000f; corner-radius 8; pos 537 0
 	item title { title Notice; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
-item "StatusIcon/backlog" {
-	auto-layout abs; width 14; height 14; pos 24 -44
+item StatusIcon {
+	export let category = active; auto-layout abs; width 14; height 14; pos 24 -44
+	styles { category one-of backlog todo active won lost }
 	item ring {
+		width 12; height 12; corner-radius 6; line-width 1.5; pos 1 -1; hidden ${category === "backlog"}
+		border-color ${category === "todo" ? "#758595" : category === "active" ? "#5195d7" : category === "won" ? "#83af12" : "#939395"}
+	}
+	item wedge { width 14; height 14; path "M7 7L7 3A4 4 0 0 1 11 7Z"; view-box 0 0 14 14; color #5195d7; hidden ${category !== "active"} }
+	item disc {
+		width 12; height 12; corner-radius 6; pos 1 -1; hidden ${category !== "won" && category !== "lost"}; color ${category === "won" ? "#83af12" : "#939395"}
+	}
+	item check { width 14; height 14; path "M4 7.2L6.2 9.4L10 5"; view-box 0 0 14 14; border-color #ffffff; line-width 1.5; hidden ${category !== "won"} }
+	item cross { width 14; height 14; path "M5 5L9 9M9 5L5 9"; view-box 0 0 14 14; border-color #ffffff; line-width 1.5; hidden ${category !== "lost"} }
+	item segments {
 		width 14; height 14
 		path "M7.00 1.00A6 6 0 0 1 7.55 1.03M10.53 2.15A6 6 0 0 1 10.96 2.49M12.71 5.15A6 6 0 0 1 12.85 5.68M12.71 8.85A6 6 0 0 1 12.51 9.37M10.53 11.85A6 6 0 0 1 10.06 12.16M7.00 13.00A6 6 0 0 1 6.45 12.97M3.47 11.85A6 6 0 0 1 3.04 11.51M1.29 8.85A6 6 0 0 1 1.15 8.32M1.29 5.15A6 6 0 0 1 1.49 4.63M3.47 2.15A6 6 0 0 1 3.94 1.84"
-		view-box 0 0 14 14; border-color #a1a1a1; line-width 1.5
+		view-box 0 0 14 14; border-color #a1a1a1; line-width 1.5; hidden ${category !== "backlog"}
 	}
 }
-item "StatusIcon/todo" {
-	auto-layout abs; width 14; height 14; pos 70 -44
-	item ring { width 12; height 12; corner-radius 6; border-color #758595; line-width 1.5; pos 1 -1 }
-}
-item "StatusIcon/active" {
-	auto-layout abs; width 14; height 14; pos 116 -44
-	item ring { width 12; height 12; corner-radius 6; border-color #5195d7; line-width 1.5; pos 1 -1 }
-	item wedge { width 14; height 14; path "M7 7L7 3A4 4 0 0 1 11 7Z"; view-box 0 0 14 14; color #5195d7 }
-}
-item "StatusIcon/won" {
-	auto-layout abs; width 14; height 14; pos 162 -44
-	item ring { width 12; height 12; corner-radius 6; border-color #83af12; line-width 1.5; pos 1 -1 }
-	item disc { width 12; height 12; corner-radius 6; color #83af12; pos 1 -1 }
-	item check { width 14; height 14; path "M4 7.2L6.2 9.4L10 5"; view-box 0 0 14 14; border-color #ffffff; line-width 1.5 }
-}
-item "StatusIcon/lost" {
-	auto-layout abs; width 14; height 14; pos 208 -44
-	item ring { width 12; height 12; corner-radius 6; border-color #939395; line-width 1.5; pos 1 -1 }
-	item disc { width 12; height 12; corner-radius 6; color #939395; pos 1 -1 }
-	item cross { width 14; height 14; path "M5 5L9 9M9 5L5 9"; view-box 0 0 14 14; border-color #ffffff; line-width 1.5 }
-}
-item "PriorityIcon/urgent" {
-	auto-layout abs; width 14; height 14; pos 318 -44
-	item box { width 12; height 12; color #d27540; corner-radius 3; pos 1 -1 }
-	item stem { width 1.6; height 4.5; color #ffffff; pos 6.2 -3.5 }
-	item dot { width 1.6; height 1.6; color #ffffff; pos 6.2 -9 }
-}
-item "PriorityIcon/high" {
-	auto-layout abs; width 14; height 14; pos 364 -44
-	item bar { width 2.4; height 3; color #d29840; corner-radius 0.6; pos 2 -9 }
-	item "bar 2" { width 2.4; height 6; color #d29840; corner-radius 0.6; pos 6 -6 }
-	item "bar 3" { width 2.4; height 9; color #d29840; corner-radius 0.6; pos 10 -3 }
-}
-item "PriorityIcon/medium" {
-	auto-layout abs; width 14; height 14; pos 410 -44
-	item bar { width 2.4; height 3; color #167b82; corner-radius 0.6; pos 2 -9 }
-	item "bar 2" { width 2.4; height 6; color #167b82; corner-radius 0.6; pos 6 -6 }
-	item "bar 3" { width 2.4; height 9; color #000000; opacity 0.3; corner-radius 0.6; pos 10 -3 }
-}
-item "PriorityIcon/low" {
-	auto-layout abs; width 14; height 14; pos 456 -44
-	item bar { width 2.4; height 3; color #a1a1a1; corner-radius 0.6; pos 2 -9 }
-	item "bar 2" { width 2.4; height 6; color #000000; opacity 0.3; corner-radius 0.6; pos 6 -6 }
-	item "bar 3" { width 2.4; height 9; color #000000; opacity 0.3; corner-radius 0.6; pos 10 -3 }
-}
-item "PriorityIcon/none" {
-	auto-layout abs; width 14; height 14; pos 502 -44
-	item dash { width 8; height 1.2; color #000000; opacity 0.6; pos 3 -6.4 }
+item PriorityIcon {
+	export let priority = high; auto-layout abs; width 14; height 14; pos 134 -44
+	styles { priority one-of urgent high medium low none }
+	item bar {
+		width 2.4; height 3; corner-radius 0.6; pos 2 -9; hidden ${priority === "urgent" || priority === "none"}
+		color ${priority === "high" ? "#d29840" : priority === "medium" ? "#167b82" : "#a1a1a1"}
+	}
+	item "bar 2" {
+		width 2.4; height 6; corner-radius 0.6; pos 6 -6; hidden ${priority === "urgent" || priority === "none"}
+		color ${priority === "high" ? "#d29840" : priority === "medium" ? "#167b82" : "#000000"}; opacity ${priority === "low" ? 0.3 : 1}
+	}
+	item "bar 3" {
+		width 2.4; height 9; corner-radius 0.6; pos 10 -3; hidden ${priority === "urgent" || priority === "none"}
+		color ${priority === "high" ? "#d29840" : "#000000"}; opacity ${priority === "high" ? 1 : 0.3}
+	}
+	item box { width 12; height 12; color #d27540; corner-radius 3; pos 1 -1; hidden ${priority !== "urgent"} }
+	item stem { width 1.6; height 4.5; color #ffffff; pos 6.2 -3.5; hidden ${priority !== "urgent"} }
+	item dot { width 1.6; height 1.6; color #ffffff; pos 6.2 -9; hidden ${priority !== "urgent"} }
+	item dash { width 8; height 1.2; color #000000; opacity 0.6; pos 3 -6.4; hidden ${priority !== "none"} }
 }
 item StatusChip {
-	auto-layout row; gap 4; padding 0 6 0 4; align center; height 20; clip yes; color #f0f0f0; corner-radius 4; pos 612 -44
-	use Icon.drag as "icon/drag" { hidden yes; width 14; height 14; border-color #00000066; line-width 1.14 }
-	item "_StatusIcon/active" {
+	export let label = "In Progress"; export let count = ""; export let draggable = false; auto-layout row; gap 4; padding 0 6 0 4; align center; height 20
+	clip yes; color #f0f0f0; corner-radius 4; pos 244 -44
+	use Icon.drag as "icon/drag" { width 14; height 14; border-color #00000066; line-width 1.14; hidden ${!(draggable === "true")} }
+	item "StatusIcon/active" {
 		auto-layout abs; width 12; height 12
 		item ring { width 10; height 10; corner-radius 5; border-color #5195d7; line-width 1.5; pos 1 -1 }
 		item wedge { width 12; height 12; path "M6 6L6 3A3 3 0 0 1 9 6Z"; view-box 0 0 12 12; color #5195d7 }
 	}
-	item "In Progress" { title "In Progress"; font-size 11; line-height 14; font-family "IBM Plex Sans"; layout left; text-color #000000cc }
-	item _7 { hidden yes; title "7"; font-size 11; line-height 14; font-family "IBM Plex Sans"; layout left; text-color #00000066 }
+	item "In Progress" { font-size 11; line-height 14; font-family "IBM Plex Sans"; layout left; text-color #000000cc; title ${label} }
+	item _7 { font-size 11; line-height 14; font-family "IBM Plex Sans"; layout left; text-color #00000066; title ${count}; hidden ${count === ""} }
 }
 item Count {
-	auto-layout row; padding 0 6; align center; height 20; clip yes; color #f0f0f0; corner-radius 10; pos 803 -44
-	item _12 { title "12"; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #00000099 }
+	export let value = 12; auto-layout row; padding 0 6; align center; height 20; clip yes; color #f0f0f0; corner-radius 10; pos 435 -44
+	item _12 { font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #00000099; title ${value} }
 }
-item "Notice/warning" {
-	auto-layout row; gap 8; padding 6 10; align center; clip yes; color #d298401f; border-color #d2984066; corner-radius 6; pos 929 -44
-	use Icon.warn as "icon/warn" { border-color #8a5300; line-width 1 }
-	item "Notice text" { title "Notice text"; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #8a5300 }
-}
-item "Notice/info" {
-	auto-layout row; gap 8; padding 6 10; align center; clip yes; color #3070dc1a; border-color #3070dc26; corner-radius 6; pos 1077 -44
-	use Icon.eye as "icon/eye" { border-color #3070dc; line-width 1 }
-	item "Notice text" { title "Notice text"; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #3070dc }
-}
-item "Notice/negative" {
-	auto-layout row; gap 8; padding 6 10; align center; clip yes; color #cb4b4226; border-color #cb4b4226; corner-radius 6; pos 1225 -44
-	use Icon.warn as "icon/warn" { border-color #cb4b42; line-width 1 }
-	item "Notice text" { title "Notice text"; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #cb4b42 }
+item Notice {
+	export let text = "Notice text"; export let kind = warning; export let pill = false; export let block = false; auto-layout row; gap 8; padding 6 10
+	align center; clip yes; color #d298401f; border-color #d2984066; corner-radius 6; width ${(block === "true") ? "fill" : "hug"}
+	use-style ${kind} ${(pill === "true") ? "pill" : ""}; pos 561 -44
+	styles {
+		kind one-of warning info negative
+		warning { color #d298401f; border-color #d2984066; text-color #8a5300 }
+		info { color #3070dc1a; border-color #3070dc26; text-color #3070dc }
+		negative { color #cb4b4226; border-color #cb4b4226; text-color #cb4b42 }
+		pill { corner-radius 14 }
+	}
+	use Icon.warn as "icon/warn" { line-width 1; hidden ${kind === "info"} }
+	item "Notice text" { font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; title ${text} }
+	use Icon.eye as "icon/eye" { line-width 1; hidden ${kind !== "info"} }
 }

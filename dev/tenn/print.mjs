@@ -14,7 +14,7 @@
 //
 
 // Constructors of the arguments and properties of a command, and the printer. A command is
-// { kind: item|use|at|replace|slot|slotfill|element|mount, name, path, as, props: [{ name, args }], kids: [command] }.
+// { kind: item|use|at|replace|slot|slotfill|element|mount|styles|style|animation|keyframe, name, path, as, props: [{ name, args }], kids: [command] }.
 const fnum = (v) => (v === 0 ? '0' : String(+v.toFixed(6)))
 const A = (s, q = false) => ({ s: String(s), q })
 export const num = (v) => A(fnum(v))
@@ -43,6 +43,9 @@ function toCmds (c) {
   else if (c.kind === 'slot' || c.kind === 'slotfill') head = c.name ? `slot ${c.name}` : 'slot'
   else if (c.kind === 'element') head = `element ${nameArg(c.name)}`
   else if (c.kind === 'mount') head = `element ${nameArg(c.name)} --from-file ${quote(c.file)}`
+  else if (c.kind === 'styles') head = 'styles'
+  else if (c.kind === 'style' || c.kind === 'keyframe') head = c.name
+  else if (c.kind === 'animation') head = `animation ${nameArg(c.name)}`
   else throw new Error(c.kind)
   return { head, plain, blocks }
 }

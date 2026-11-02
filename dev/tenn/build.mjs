@@ -16,8 +16,10 @@
 
 // Design as code for Tenniarb: runs the screen scripts of dev/design (listed in dev/design/design.json) and the library
 // definitions on the kit, and writes the library, the application files, the design task files and PlatformDesign.tenn. See README.md.
-// Usage: node dev/tenn/build.mjs [lib|screens] [--file <part of a design.json name or of an application name>] [--out <dir>] [--root <dir>] [--theme light] [--no-check]
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+// Usage: node dev/tenn/build.mjs [lib|screens] [--file <part of a design.json name or of an application name>] [--out <dir>] [--root <dir>] [--theme light] [--no-check] [--force]
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
+import { tmpdir } from 'node:os'
 import { basename, dirname, join, relative, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { here, repo, TOKENS, DEMO, buildIcons, kitSource, AsyncFunction, newHost } from './env.mjs'
@@ -32,6 +34,7 @@ const args = process.argv.slice(2)
 const flag = (name) => (args.indexOf(name) >= 0 ? (args.splice(args.indexOf(name), 1), true) : false)
 const option = (name) => (args.indexOf(name) >= 0 ? args.splice(args.indexOf(name), 2)[1] : undefined)
 const noCheck = flag('--no-check')
+const force = flag('--force')
 const designPath = resolve(option('--design') ?? join(repo, 'dev/design/design.json'))
 const fileArg = option('--file')
 const outDir = resolve(option('--out') ?? join(repo, 'dev/design/tenn'))
@@ -78,11 +81,29 @@ const written = []
 const libs = emitter.libs
 // A part (library, application or task file) mounts no library: it names `entry`, the document that does
 const entryPath = join(rootDir, 'PlatformDesign.tenn')
+const statePath = join(here, '.state.json')
+const sha = (data) => createHash('sha1').update(data).digest('hex')
+let state = {}
+try { state = JSON.parse(readFileSync(statePath, 'utf8')) } catch {}
+let stateChanged = false
 const write = (dir, rel, text, isEntry = false) => {
   const file = join(dir, rel)
   mkdirSync(dirname(file), { recursive: true })
   const body = isEntry ? text : `entry "${relative(dirname(file), entryPath).split('\\').join('/')}"\n${text}`
-  writeFileSync(file, body)
+  const previous = existsSync(file) ? readFileSync(file) : undefined
+  if (!isEntry && !force && previous !== undefined) {
+    const rec = state[file]
+    if ((rec !== undefined && sha(previous) !== rec.out) || (rec === undefined && !previous.equals(Buffer.from(body)))) {
+      written.push(file)
+      console.log(`${relative(repo, file)}: skipped, manual changes (use --force to overwrite)`)
+      return
+    }
+  }
+  if (previous === undefined || !previous.equals(Buffer.from(body))) writeFileSync(file, body)
+  if (!isEntry && !file.startsWith(tmpdir())) {
+    state[file] = { out: sha(body) }
+    stateChanged = true
+  }
   written.push(file)
   console.log(`${relative(repo, file)}: ${(Buffer.byteLength(body) / 1024).toFixed(0)} KB`)
 }
@@ -109,17 +130,46 @@ if (only === undefined || only === 'screens') {
     console.log(`  ${f.name}: ${[...pagesOf.get(f)].map(([p, fr]) => `${p} (${fr.length})`).join(', ')}`)
   }
 }
-// The root document: the libraries, the applications (application > category > screens), the design tasks at the end
+// The root document keeps hand-added library and task mounts while the generated mounts are refreshed.
 const rel = (file) => relative(rootDir, join(outDir, file)).split('\\').join('/')
 const mount = (name, file) => ({ kind: 'mount', name, file: rel(file) })
+const mountKey = (m) => m.name + '\0' + m.file
+const libraryMounts = libs.map((l) => mount(l.name, l.file))
+const appMounts = apps.map((a) => mount(a.name, appFile(a.name)))
+const taskMounts = taskFiles.map((f) => mount(f.name, tennName(f) + '.tenn'))
+const knownMounts = new Set([...libraryMounts, ...appMounts, ...taskMounts].map(mountKey))
+const manual = { root: [], libraries: [], tasks: [] }
+let inLibraries = false
+let inTasks = false
+if (existsSync(entryPath)) {
+  for (const line of readFileSync(entryPath, 'utf8').split('\n')) {
+    if (line === 'element Libraries {') inLibraries = true
+    if (line === 'element Tasks {') inTasks = true
+    const m = line.match(/^(\t*)element\s+("[^"]*"|\S+)\s+--from-file\s+"([^"]+)"\s*$/)
+    if (m && !knownMounts.has(mountKey({ name: m[2].startsWith('"') ? JSON.parse(m[2]) : m[2], file: m[3] }))) {
+      const item = { kind: 'mount', name: m[2].startsWith('"') ? JSON.parse(m[2]) : m[2], file: m[3] }
+      if (inTasks) manual.tasks.push(item)
+      else if (inLibraries) manual.libraries.push(item)
+      else if (m[1].length === 0) manual.root.push(item)
+    }
+    if (line === '}') {
+      inLibraries = false
+      inTasks = false
+    }
+  }
+}
 const rootCmds = [
-  ...libs.map((l) => mount(l.name, l.file)),
-  ...apps.map((a) => mount(a.name, appFile(a.name))),
-  { kind: 'element', name: 'Tasks', kids: taskFiles.map((f) => mount(f.name, tennName(f) + '.tenn')) }
+  { kind: 'element', name: 'Libraries', kids: [...libraryMounts, ...manual.libraries, ...manual.root] },
+  ...appMounts,
+  { kind: 'element', name: 'Tasks', kids: [...taskMounts, ...manual.tasks] }
 ]
 const rootText = []
 for (const c of rootCmds) printCmd(c, 0, rootText)
 write(rootDir, 'PlatformDesign.tenn', rootText.join('\n') + '\n', true)
+if (stateChanged) {
+  for (const file of Object.keys(state)) if (!existsSync(file)) delete state[file]
+  writeFileSync(statePath, JSON.stringify(state, null, 2) + '\n')
+}
 const tEmit = Date.now() - t1
 
 const stat = Object.entries(host.stats ?? {}).map(([k, v]) => `${k} ${v.instances}/${v.drawn}`).join(', ')

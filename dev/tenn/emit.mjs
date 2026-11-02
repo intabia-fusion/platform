@@ -223,8 +223,8 @@ export function createEmitter (host, TOKENS, mode) {
     const seen = new Set()
     for (const k of node.children ?? []) {
       let name = String(k.name ?? k.type)
-      // A first path segment equal to a category or to an item of the same category would capture a use (spec 5a.2)
-      if (/^\d/.test(normalize(name)) || CATS.has(normalize(name)) || taken.has(normalize(name))) name = '_' + name
+      // A reference named like a category or a sibling component would capture its path (spec 5a.2)
+      if (/^\d/.test(normalize(name)) || CATS.has(normalize(name)) || (k.type === 'ref' && taken.has(normalize(name)))) name = '_' + name
       let n = name
       for (let i = 2; seen.has(normalize(n)); i++) n = name + ' ' + i
       seen.add(normalize(n))
@@ -246,9 +246,10 @@ export function createEmitter (host, TOKENS, mode) {
     for (const k of node.children ?? []) slotNames(k, taken)
   }
   // Every definition is built before any is renamed: the template of a variant is cached on its first use
-  const defs = host.components.map((c) => ({ name: c.name, json: c.toLib(false) }))
+  const defs = host.components.map((c) => ({ name: c.name, json: c.toLib(false), lib: c.lib ?? {} }))
   const itemKeys = new Map() // category -> normalized item names, the first segment of a use inside its file
   for (const d of defs) {
+    if (d.lib.alias) continue
     const cat = d.name.split('/')[0]
     if (!itemKeys.has(cat)) itemKeys.set(cat, new Set())
     itemKeys.get(cat).add(normalize(itemName(d.name)))
@@ -266,11 +267,16 @@ export function createEmitter (host, TOKENS, mode) {
   // the name of one), else the category file being written: its own items by name, a category of its library by
   // Category.item (the library file mounts them), another library by its name.
   let home = null
+  const canonical = (name) => {
+    const lib = comps.get(name)?.lib
+    return lib?.alias ? lib.target ?? name.split('/').slice(0, 2).join('/') : name
+  }
   const compPath = (name) => {
+    name = canonical(name)
     const cat = name.split('/')[0]
     const item = normalize(itemName(name))
     const lib = libOf(cat)
-    const inLib = isFlat(lib) ? `${lib.name}.${item}` : `${lib.name}.${normalize(cat)}.${item}`
+    const inLib = isFlat(lib) ? `Libraries.${lib.name}.${item}` : `Libraries.${lib.name}.${normalize(cat)}.${item}`
     if (home === null) return inLib
     if (cat === home) return item
     if (libOf(home) === lib) return `${normalize(cat)}.${item}`
@@ -305,14 +311,18 @@ export function createEmitter (host, TOKENS, mode) {
     for (const i of path) n = n.children[i]
     return n
   }
+  const valueArg = (v) => typeof v === 'number' ? num(v) : typeof v === 'string' ? str(v) : word(String(v))
   function useCmd (m, ctx) {
-    const comp = comps.get(m.ref)
-    if (!comp) throw new Error('unknown component ' + m.ref)
+    const variant = comps.get(m.ref)
+    if (!variant) throw new Error('unknown component ' + m.ref)
+    const comp = comps.get(canonical(m.ref))
+    if (!comp) throw new Error('unknown canonical component ' + canonical(m.ref))
     const root = comp.json
     const rootProps = { ...m }
-    for (const k of ['type', 'ref', 'name', 'descendants', 'children', 'x', 'y', 'reusable', 'enabled', 'metadata']) delete rootProps[k]
+    for (const k of ['type', 'ref', 'name', 'descendants', 'children', 'x', 'y', 'reusable', 'enabled', 'metadata', 'params']) delete rootProps[k]
     for (const k of Object.keys(rootProps)) if (JSON.stringify(rootProps[k]) === JSON.stringify(root[k])) delete rootProps[k]
-    const props_ = [...hiddenProp(m, false), ...props(rootProps, root.type, { explicit: true, eff: { ...root, ...rootProps } }), ...posProps(m, ctx, ctx.top)]
+    const params = [...Object.entries(m.params ?? {}), ...Object.entries(variant.lib.alias || {})].map(([k, v]) => P(k, valueArg(v)))
+    const props_ = [...params, ...hiddenProp(m, false), ...props(rootProps, root.type, { explicit: true, eff: { ...root, ...rootProps } }), ...posProps(m, ctx, ctx.top)]
     const block = []
     if (Array.isArray(m.children)) block.push(...fillCmds(root, m.children, true))
     const fills = []
@@ -398,15 +408,83 @@ export function createEmitter (host, TOKENS, mode) {
   const GRID = { cols: 2, w: 2040, h: 1200 }
 
   // ---------- library: one command tree per category ----------
+  const libArg = (v, name) => {
+    if (typeof v === 'number') return num(v)
+    if (typeof v === 'boolean') return word(String(v))
+    if (typeof v === 'string' && v.startsWith('${')) return word(v)
+    if (typeof v === 'string' && /color/i.test(name) && (v.startsWith('$') || v.startsWith('#'))) return word(colorOf(v))
+    return typeof v === 'string' ? str(v) : word(String(v))
+  }
+  const libProp = (name, v) => name === 'animation' && typeof v === 'string'
+    ? P(name, ...v.split(' ').map(word))
+    : P(name, ...(Array.isArray(v) ? v : [v]).map((x) => libArg(x, name)))
+  const styleCmd = (name, def) => ({
+    kind: 'style', name,
+    props: Object.entries(def).filter(([k]) => k !== 'kids').map(([k, v]) => libProp(k, v)),
+    kids: Object.entries(def.kids ?? {}).map(([k, v]) => styleCmd(k, v))
+  })
+  const expressionKids = (cmd) => (cmd.kids ?? []).flatMap((c) => c.kind === 'slot' || c.kind === 'slotfill' ? expressionKids(c) : [c])
+  function expressionAt (cmd, path) {
+    if (path === '$root') return cmd
+    let at = cmd
+    for (const seg of path.split('.')) {
+      const key = seg.replace(/^_/, '')
+      at = expressionKids(at).find((c) => normalize(c.name ?? c.as).replace(/^_/, '') === key)
+      if (!at) throw new Error(`no expression target ${path}`)
+    }
+    return at
+  }
   function libItem (c) {
     let cmd
-  try { cmd = itemCmd(c.json, { top: false, parentAbs: false, layout: false }) } catch (e) { throw new Error(c.name + ': ' + e.message) }
+    try { cmd = itemCmd(c.json, { top: false, parentAbs: false, layout: false }) } catch (e) { throw new Error(c.name + ': ' + e.message) }
     cmd.name = itemName(c.name)
+    const applyExpr = (path, props) => {
+      const at = expressionAt(cmd, path)
+      for (const [name, value] of Object.entries(props)) {
+        if (value !== null && typeof value === 'object' && !Array.isArray(value)) applyExpr(path === '$root' ? name : path + '.' + name, value)
+        else {
+          at.props = at.props.filter((p) => p.name !== name)
+          let expression = value
+          if (typeof expression === 'string' && expression.startsWith('${')) {
+            for (const [param, def] of Object.entries(c.lib.params ?? {})) {
+              if (typeof def !== 'boolean') continue
+              expression = expression
+                .replace(new RegExp(`!${param}\\b`, 'g'), `!(${param} === "true")`)
+                .replace(new RegExp(`\\b${param}(?=\\s*\\?)`, 'g'), `(${param} === "true")`)
+                .replace(new RegExp(`(\\|\\||&&)\\s*${param}\\b`, 'g'), `$1 (${param} === "true")`)
+            }
+          }
+          if (expression !== null) at.props.push(libProp(name, expression))
+        }
+      }
+    }
+    for (const [path, props] of Object.entries(c.lib.expr ?? {})) applyExpr(path, props)
+    const params = Object.entries(c.lib.params ?? {}).map(([k, v]) => P('export', word('let'), word(k), word('='), valueArg(v)))
+    cmd.props.unshift(...params)
+    if (c.lib.element) {
+      const inner = { ...cmd, kind: 'item', name: 'Catalog', props: cmd.props.filter((p) => p.name !== 'pos') }
+      cmd = { kind: 'element', name: cmd.name, props: [P('kind', word('Screen')), ...cmd.props.filter((p) => p.name === 'pos')], kids: [inner] }
+    }
+    for (const [name, frames] of Object.entries(c.lib.animations ?? {})) {
+      cmd.kids.unshift({
+        kind: 'animation', name, props: [],
+        kids: Object.entries(frames).map(([frame, props]) => ({ kind: 'keyframe', name: frame, props: Object.entries(props).map(([k, v]) => libProp(k, v)), kids: [] }))
+      })
+    }
+    const styles = Object.entries(c.lib.styles ?? {})
+    if (styles.length > 0) {
+      cmd.kids.unshift({
+        kind: 'styles',
+        props: styles.filter(([, v]) => Array.isArray(v)).map(([k, v]) => libProp(k, v)),
+        kids: styles.filter(([, v]) => !Array.isArray(v)).map(([k, v]) => styleCmd(k, v))
+      })
+    }
     return cmd
   }
 
   const categories = new Map()
   for (const c of comps.values()) {
+    if (c.lib.alias) continue
     const cat = c.name.split('/')[0]
     if (!categories.has(cat)) categories.set(cat, [])
     categories.get(cat).push(c)

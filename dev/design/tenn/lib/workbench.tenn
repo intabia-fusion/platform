@@ -16,23 +16,23 @@ item "§ Navigator" {
 	item title { title Navigator; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ NavItem" {
-	auto-layout abs; width 1164; height 100; border-color #0000000f; corner-radius 8; pos 688 -1160
+	auto-layout abs; width 590; height 100; border-color #0000000f; corner-radius 8; pos 688 -1160
 	item title { title NavItem; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ NavCaption" {
-	auto-layout abs; width 244; height 88; border-color #0000000f; corner-radius 8; pos 1900 -1160
+	auto-layout abs; width 130; height 88; border-color #0000000f; corner-radius 8; pos 1326 -1160
 	item title { title NavCaption; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ NavGroup" {
-	auto-layout abs; width 327; height 110; border-color #0000000f; corner-radius 8; pos 0 -2320
+	auto-layout abs; width 327; height 110; border-color #0000000f; corner-radius 8; pos 1504 -1160
 	item title { title NavGroup; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ NavSpace" {
-	auto-layout abs; width 327; height 100; border-color #0000000f; corner-radius 8; pos 375 -2320
+	auto-layout abs; width 327; height 100; border-color #0000000f; corner-radius 8; pos 1879 -1160
 	item title { title NavSpace; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ SpaceHeader" {
-	auto-layout abs; width 1608; height 181; border-color #0000000f; corner-radius 8; pos 750 -2320
+	auto-layout abs; width 1608; height 181; border-color #0000000f; corner-radius 8; pos 0 -2320
 	item title { title SpaceHeader; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ PanelHeader" {
@@ -50,24 +50,24 @@ item TopBar {
 		item bar { auto-layout abs; width 20; height 4; clip yes; color #3c41491a; corner-radius 2; pos 4 -4 }
 		item "bar 2" { auto-layout abs; width 20; height 4; clip yes; color #3c41491a; corner-radius 2; pos 4 -10 }
 	}
-	use ui_kit.Icon.kit_Search as "icon/kit/Search" { color #00000099; pos 1629 -10 }
-	use ui_kit.Icon.kit_Camera as "icon/kit/Camera" { color #00000099; pos 1659 -10 }
-	use ui_kit.Icon.recorder_dot as "icon/recorder/dot" { color #000000cc; pos 1687 -10 }
-	use ui_kit.Icon.recorder_Rec as "icon/recorder/Rec" { width 22; height 10; color #000000cc; pos 1703 -13 }
+	use Libraries.ui_kit.Icon.kit_Search as "icon/kit/Search" { color #00000099; pos 1629 -10 }
+	use Libraries.ui_kit.Icon.kit_Camera as "icon/kit/Camera" { color #00000099; pos 1659 -10 }
+	use Libraries.ui_kit.Icon.recorder_dot as "icon/recorder/dot" { color #000000cc; pos 1687 -10 }
+	use Libraries.ui_kit.Icon.recorder_Rec as "icon/recorder/Rec" { width 22; height 10; color #000000cc; pos 1703 -13 }
 	item Novosibirsk { title Novosibirsk; font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; text-color #000000cc; pos 1743 -9 }
 	item "_16:56" { title "16:56"; font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; text-color #000000cc; pos 1817 -9 }
-	use ui_kit.Icon.kit_Wifi as "icon/kit/Wifi" { color #05a05c; pos 1868 -10 }
-	use ui_kit.Icon.kit_Gear as "icon/kit/Gear" { color #00000099; pos 1898 -10 }
+	use Libraries.ui_kit.Icon.kit_Wifi as "icon/kit/Wifi" { color #05a05c; pos 1868 -10 }
+	use Libraries.ui_kit.Icon.kit_Gear as "icon/kit/Gear" { color #00000099; pos 1898 -10 }
 	item tabs {
 		auto-layout row; gap 8; align center; pos 8 -4
 		item tab {
 			auto-layout row; gap 8; padding 0 8; align center; height 28; clip yes; color #f0f4ff; border-color #e6eaff; corner-radius 4
-			use ui_kit.Icon.kit_CheckSquare as "icon/kit/CheckSquare" { width 12; height 12; color #000000cc }
+			use Libraries.ui_kit.Icon.kit_CheckSquare as "icon/kit/CheckSquare" { width 12; height 12; color #000000cc }
 			item Tracker { title Tracker; font-size 12; line-height 18; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #000000cc }
 		}
 		item "new tab" {
 			auto-layout row; align center; justify center; width 24; height 24; clip yes; corner-radius 4
-			use ui_kit.Icon.kit_Plus as "icon/kit/Plus" { color #6b3ad3 }
+			use Libraries.ui_kit.Icon.kit_Plus as "icon/kit/Plus" { color #6b3ad3 }
 		}
 	}
 }
@@ -80,89 +80,89 @@ item AppRail {
 	item Ellipse { width 8; height 8; corner-radius 4; color #cb4b42; pos 48 -12 }
 	item menu {
 		auto-layout row; align center; justify center; width 32; height 32; clip yes; corner-radius 4; pos 18 -56
-		use ui_kit.Icon.kit_Equals as "icon/kit/Equals" { width 20; height 20; color #7f7f7f }
+		use Libraries.ui_kit.Icon.kit_Equals as "icon/kit/Equals" { width 20; height 20; color #7f7f7f }
 	}
 	item "AppItem kit/Bell" {
 		auto-layout abs; width 36; height 36; corner-radius 4; pos 16 -104
-		use ui_kit.Icon.kit_Bell as "icon/kit/Bell" { width 20; height 20; color #7f7f7f; pos 8 -8 }
+		use Libraries.ui_kit.Icon.kit_Bell as "icon/kit/Bell" { width 20; height 20; color #7f7f7f; pos 8 -8 }
 		item Ellipse { width 7; height 7; corner-radius 3.5; color #cb4b42; pos 22 -19 }
 	}
 	item "AppItem kit/Bubble" {
 		auto-layout abs; width 36; height 36; corner-radius 4; pos 16 -148
-		use ui_kit.Icon.kit_Bubble as "icon/kit/Bubble" { width 20; height 20; color #7f7f7f; pos 8 -8 }
+		use Libraries.ui_kit.Icon.kit_Bubble as "icon/kit/Bubble" { width 20; height 20; color #7f7f7f; pos 8 -8 }
 		item Ellipse { width 7; height 7; corner-radius 3.5; color #cb4b42; pos 22 -19 }
 	}
 	item "AppItem kit/Calendar" {
 		auto-layout abs; width 36; height 36; corner-radius 4; pos 16 -188
-		use ui_kit.Icon.kit_Calendar as "icon/kit/Calendar" { width 20; height 20; color #7f7f7f; pos 8 -8 }
+		use Libraries.ui_kit.Icon.kit_Calendar as "icon/kit/Calendar" { width 20; height 20; color #7f7f7f; pos 8 -8 }
 	}
 	item "AppItem kit/Building" {
 		auto-layout abs; width 36; height 36; corner-radius 4; pos 16 -228
-		use ui_kit.Icon.kit_Building as "icon/kit/Building" { width 20; height 20; color #7f7f7f; pos 8 -8 }
+		use Libraries.ui_kit.Icon.kit_Building as "icon/kit/Building" { width 20; height 20; color #7f7f7f; pos 8 -8 }
 	}
 	item divider { auto-layout abs; width 36; height 1; clip yes; color #0000001a; pos 16 -276 }
 	item "AppItem kit/PanelRight" {
 		auto-layout abs; width 36; height 36; corner-radius 4; pos 16 -289
-		use ui_kit.Icon.kit_PanelRight as "icon/kit/PanelRight" { width 20; height 20; color #7f7f7f; pos 8 -8 }
+		use Libraries.ui_kit.Icon.kit_PanelRight as "icon/kit/PanelRight" { width 20; height 20; color #7f7f7f; pos 8 -8 }
 	}
 	item "AppItem kit/PersonCircle" {
 		auto-layout abs; width 36; height 36; corner-radius 4; pos 16 -329
-		use ui_kit.Icon.kit_PersonCircle as "icon/kit/PersonCircle" { width 20; height 20; color #7f7f7f; pos 8 -8 }
+		use Libraries.ui_kit.Icon.kit_PersonCircle as "icon/kit/PersonCircle" { width 20; height 20; color #7f7f7f; pos 8 -8 }
 	}
 	item "AppItem kit/PersonSearch" {
 		auto-layout abs; width 36; height 36; corner-radius 4; pos 16 -369
-		use ui_kit.Icon.kit_PersonSearch as "icon/kit/PersonSearch" { width 20; height 20; color #7f7f7f; pos 8 -8 }
+		use Libraries.ui_kit.Icon.kit_PersonSearch as "icon/kit/PersonSearch" { width 20; height 20; color #7f7f7f; pos 8 -8 }
 	}
 	item "AppItem kit/Funnel" {
 		auto-layout abs; width 36; height 36; corner-radius 4; pos 16 -409
-		use ui_kit.Icon.kit_Funnel as "icon/kit/Funnel" { width 20; height 20; color #7f7f7f; pos 8 -8 }
+		use Libraries.ui_kit.Icon.kit_Funnel as "icon/kit/Funnel" { width 20; height 20; color #7f7f7f; pos 8 -8 }
 	}
 	item "AppItem kit/Archive" {
 		auto-layout abs; width 36; height 36; corner-radius 4; pos 16 -449
-		use ui_kit.Icon.kit_Archive as "icon/kit/Archive" { width 20; height 20; color #7f7f7f; pos 8 -8 }
+		use Libraries.ui_kit.Icon.kit_Archive as "icon/kit/Archive" { width 20; height 20; color #7f7f7f; pos 8 -8 }
 	}
 	item "AppItem kit/PersonRefresh" {
 		auto-layout abs; width 36; height 36; corner-radius 4; pos 16 -489
-		use ui_kit.Icon.kit_PersonRefresh as "icon/kit/PersonRefresh" { width 20; height 20; color #7f7f7f; pos 8 -8 }
+		use Libraries.ui_kit.Icon.kit_PersonRefresh as "icon/kit/PersonRefresh" { width 20; height 20; color #7f7f7f; pos 8 -8 }
 	}
 	item "AppItem kit/CheckSquare" {
 		auto-layout abs; width 36; height 36; color #e6e6e6; border-color #00000017; corner-radius 4; pos 16 -529
-		use ui_kit.Icon.kit_CheckSquare as "icon/kit/CheckSquare" { width 20; height 20; color #000000; pos 8 -8 }
+		use Libraries.ui_kit.Icon.kit_CheckSquare as "icon/kit/CheckSquare" { width 20; height 20; color #000000; pos 8 -8 }
 	}
 	item "AppItem kit/Document" {
 		auto-layout abs; width 36; height 36; corner-radius 4; pos 16 -569
-		use ui_kit.Icon.kit_Document as "icon/kit/Document" { width 20; height 20; color #7f7f7f; pos 8 -8 }
+		use Libraries.ui_kit.Icon.kit_Document as "icon/kit/Document" { width 20; height 20; color #7f7f7f; pos 8 -8 }
 	}
 	item "AppItem kit/Lightning" {
 		auto-layout abs; width 36; height 36; corner-radius 4; pos 16 -609
-		use ui_kit.Icon.kit_Lightning as "icon/kit/Lightning" { width 20; height 20; color #7f7f7f; pos 8 -8 }
+		use Libraries.ui_kit.Icon.kit_Lightning as "icon/kit/Lightning" { width 20; height 20; color #7f7f7f; pos 8 -8 }
 	}
 	item "AppItem kit/CloudTree" {
 		auto-layout abs; width 36; height 36; corner-radius 4; pos 16 -649
-		use ui_kit.Icon.kit_CloudTree as "icon/kit/CloudTree" { width 20; height 20; color #7f7f7f; pos 8 -8 }
+		use Libraries.ui_kit.Icon.kit_CloudTree as "icon/kit/CloudTree" { width 20; height 20; color #7f7f7f; pos 8 -8 }
 	}
 	item "AppItem kit/Clipboard" {
 		auto-layout abs; width 36; height 36; corner-radius 4; pos 16 -689
-		use ui_kit.Icon.kit_Clipboard as "icon/kit/Clipboard" { width 20; height 20; color #7f7f7f; pos 8 -8 }
+		use Libraries.ui_kit.Icon.kit_Clipboard as "icon/kit/Clipboard" { width 20; height 20; color #7f7f7f; pos 8 -8 }
 	}
 	item "AppItem kit/GraduationCap" {
 		auto-layout abs; width 36; height 36; corner-radius 4; pos 16 -729
-		use ui_kit.Icon.kit_GraduationCap as "icon/kit/GraduationCap" { width 20; height 20; color #7f7f7f; pos 8 -8 }
+		use Libraries.ui_kit.Icon.kit_GraduationCap as "icon/kit/GraduationCap" { width 20; height 20; color #7f7f7f; pos 8 -8 }
 	}
 	item "AppItem kit/Cube" {
 		auto-layout abs; width 36; height 36; corner-radius 4; pos 16 -769
-		use ui_kit.Icon.kit_Cube as "icon/kit/Cube" { width 20; height 20; color #7f7f7f; pos 8 -8 }
+		use Libraries.ui_kit.Icon.kit_Cube as "icon/kit/Cube" { width 20; height 20; color #7f7f7f; pos 8 -8 }
 	}
 	item "AppItem kit/Hierarchy" {
 		auto-layout abs; width 36; height 36; corner-radius 4; pos 16 -809
-		use ui_kit.Icon.kit_Hierarchy as "icon/kit/Hierarchy" { width 20; height 20; color #7f7f7f; pos 8 -8 }
+		use Libraries.ui_kit.Icon.kit_Hierarchy as "icon/kit/Hierarchy" { width 20; height 20; color #7f7f7f; pos 8 -8 }
 	}
 	item "AppItem kit/PencilLine" {
 		auto-layout abs; width 36; height 36; corner-radius 4; pos 16 -849
-		use ui_kit.Icon.kit_PencilLine as "icon/kit/PencilLine" { width 20; height 20; color #7f7f7f; pos 8 -8 }
+		use Libraries.ui_kit.Icon.kit_PencilLine as "icon/kit/PencilLine" { width 20; height 20; color #7f7f7f; pos 8 -8 }
 	}
 	item "divider 2" { auto-layout abs; width 32; height 1; clip yes; color #0000001a; pos 18 -967 }
-	use ui_kit.People.Avatar as "Avatar/32" {
+	use Libraries.ui_kit.People.Avatar as "Avatar/32" {
 		width 32; height 32; corner-radius 6; pos 18 -996
 		at initials { title AJ; font-size 13; line-height 16 }
 	}
@@ -172,23 +172,23 @@ item Sidebar {
 	auto-layout abs; width 57; height 1044; clip yes; color #fbfbfc; corner-radius 0 8 8 0; pos 2204 -44
 	item "widget kit/Calendar" {
 		auto-layout row; align center; justify center; width 28; height 28; clip yes; corner-radius 4; pos 14 -16
-		use ui_kit.Icon.kit_Calendar as "icon/kit/Calendar" { color #7f7f7f }
+		use Libraries.ui_kit.Icon.kit_Calendar as "icon/kit/Calendar" { color #7f7f7f }
 	}
 	item "widget kit/Bubble" {
 		auto-layout row; align center; justify center; width 28; height 28; clip yes; corner-radius 4; pos 14 -60
-		use ui_kit.Icon.kit_Bubble as "icon/kit/Bubble" { color #7f7f7f }
+		use Libraries.ui_kit.Icon.kit_Bubble as "icon/kit/Bubble" { color #7f7f7f }
 	}
 	item "widget kit/Building" {
 		auto-layout row; align center; justify center; width 28; height 28; clip yes; corner-radius 4; pos 14 -104
-		use ui_kit.Icon.kit_Building as "icon/kit/Building" { color #7f7f7f }
+		use Libraries.ui_kit.Icon.kit_Building as "icon/kit/Building" { color #7f7f7f }
 	}
 	item "widget kit/Star" {
 		auto-layout row; align center; justify center; width 28; height 28; clip yes; corner-radius 4; pos 14 -148
-		use ui_kit.Icon.kit_Star as "icon/kit/Star" { color #7f7f7f }
+		use Libraries.ui_kit.Icon.kit_Star as "icon/kit/Star" { color #7f7f7f }
 	}
 	item "widget kit/Sparkle" {
 		hidden yes; auto-layout row; align center; justify center; width 28; height 28; clip yes; corner-radius 4; pos 14 -192
-		use ui_kit.Icon.kit_Sparkle as "icon/kit/Sparkle" { color #7f7f7f }
+		use Libraries.ui_kit.Icon.kit_Sparkle as "icon/kit/Sparkle" { color #7f7f7f }
 	}
 }
 item Navigator {
@@ -197,12 +197,12 @@ item Navigator {
 	item Tracker { title Tracker; font-size 20; line-height 24; font-family "IBM Plex Sans"; font-weight 700; layout left; text-color #0f121a; pos 21 -22 }
 	item New {
 		auto-layout row; gap 6; padding 0 12; align center; width 227; height 32; clip yes; color #cf13a2; corner-radius 4 0 0 4; pos 13 -68
-		use ui_kit.Icon.kit_Plus as "icon/kit/Plus" { color #ffffff }
+		use Libraries.ui_kit.Icon.kit_Plus as "icon/kit/Plus" { color #ffffff }
 		item "New issue" { title "New issue"; font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; text-color #ffffff }
 	}
 	item "New menu" {
 		auto-layout row; align center; justify center; width 28; height 32; clip yes; color #cf13a2; corner-radius 0 4 4 0; pos 240 -68
-		use ui_kit.Icon.kit_ChevronDown as "icon/kit/ChevronDown" { color #ffffff }
+		use Libraries.ui_kit.Icon.kit_ChevronDown as "icon/kit/ChevronDown" { color #ffffff }
 	}
 	item divider { auto-layout abs; width 1; height 20; clip yes; color #ffffff; pos 239 -74 }
 	item items {
@@ -211,7 +211,7 @@ item Navigator {
 			use NavItem as "NavItem/My issues" {
 				pos 13 -112
 				replace icon_kit_CheckSquare {
-					use ui_kit.Icon.kit_Crosshair as "icon/kit/Crosshair" { color #0f121a }
+					use Libraries.ui_kit.Icon.kit_Crosshair as "icon/kit/Crosshair" { color #0f121a }
 				}
 				at Issues { title "My issues" }
 			}
@@ -223,11 +223,11 @@ item Navigator {
 			item "divider 2" { auto-layout abs; width 279; height 1; clip yes; color #0000001a; pos 1 -213 }
 			use NavGroup as "NavGroup Your projects" { pos 0 -213 }
 			use NavSpace as "NavSpace Mobile app" { pos 0 -258 }
-			use NavItem_selected as "NavItem/Issues" { padding 0 8 0 32; pos 13 -294 }
+			use NavItem as "NavItem/Issues" { selected true; padding 0 8 0 32; pos 13 -294 }
 			use NavItem as "NavItem/Components" {
 				padding 0 8 0 32; pos 13 -326
 				replace icon_kit_CheckSquare {
-					use ui_kit.Icon.kit_Diamond as "icon/kit/Diamond" { color #0f121a }
+					use Libraries.ui_kit.Icon.kit_Diamond as "icon/kit/Diamond" { color #0f121a }
 				}
 				at Issues { title Components }
 			}
@@ -239,16 +239,16 @@ item "Navigator/tools" {
 	auto-layout abs; width 280; height 1044; clip yes; color #fbfbfc; pos 336 -1204
 	item border { auto-layout abs; width 1; height 1044; clip yes; color #0000000f }
 	item Chat { title Chat; font-size 20; line-height 24; font-family "IBM Plex Sans"; font-weight 700; layout left; text-color #0f121a; pos 21 -16 }
-	use ui_kit.Actions.Button as "Button/ghost/small" { kind tertiary; size small; shape icon;
-		pos 200 -12
-		replace icon_gear {
-			use ui_kit.Icon.kit_Search as "icon/kit/Search" { color #5a667e }
+	use Libraries.ui_kit.Actions.Button as "Button/ghost/small" {
+		kind tertiary; size small; shape icon; pos 200 -12
+		replace icon_kit_Plus {
+			use Libraries.ui_kit.Icon.kit_Search as "icon/kit/Search" { color #5a667e }
 		}
 	}
-	use ui_kit.Actions.Button as "Button/tertiary/small" { kind tertiary; size small; shape icon;
-		pos 236 -12
-		replace icon_gear {
-			use ui_kit.Icon.kit_PencilLine as "icon/kit/PencilLine" { color #6b3ad3 }
+	use Libraries.ui_kit.Actions.Button as "Button/tertiary/small" {
+		kind tertiary; size small; shape icon; pos 236 -12
+		replace icon_kit_Plus {
+			use Libraries.ui_kit.Icon.kit_PencilLine as "icon/kit/PencilLine" { color #6b3ad3 }
 		}
 	}
 	item items {
@@ -257,7 +257,7 @@ item "Navigator/tools" {
 			use NavItem as "NavItem/My issues" {
 				pos 13 -56
 				replace icon_kit_CheckSquare {
-					use ui_kit.Icon.kit_Crosshair as "icon/kit/Crosshair" { color #0f121a }
+					use Libraries.ui_kit.Icon.kit_Crosshair as "icon/kit/Crosshair" { color #0f121a }
 				}
 				at Issues { title "My issues" }
 			}
@@ -269,11 +269,11 @@ item "Navigator/tools" {
 			item "divider 2" { auto-layout abs; width 279; height 1; clip yes; color #0000001a; pos 1 -157 }
 			use NavGroup as "NavGroup Your projects" { pos 0 -157 }
 			use NavSpace as "NavSpace Mobile app" { pos 0 -202 }
-			use NavItem_selected as "NavItem/Issues" { padding 0 8 0 32; pos 13 -238 }
+			use NavItem as "NavItem/Issues" { selected true; padding 0 8 0 32; pos 13 -238 }
 			use NavItem as "NavItem/Components" {
 				padding 0 8 0 32; pos 13 -270
 				replace icon_kit_CheckSquare {
-					use ui_kit.Icon.kit_Diamond as "icon/kit/Diamond" { color #0f121a }
+					use Libraries.ui_kit.Icon.kit_Diamond as "icon/kit/Diamond" { color #0f121a }
 				}
 				at Issues { title Components }
 			}
@@ -282,112 +282,111 @@ item "Navigator/tools" {
 	}
 }
 item NavItem {
-	auto-layout row; gap 8; padding 0 8 0 10; align center; width 255; height 32; clip yes; corner-radius 6; pos 712 -1204
-	use ui_kit.Icon.kit_CheckSquare as "icon/kit/CheckSquare" { color #0f121a }
-	item Issues { title Issues; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #0f121a }
-	item grow { hidden yes; auto-layout abs; width fill; height 1; clip yes }
-	item _3 { hidden yes; title "3"; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #7b879e }
-}
-item "NavItem/selected" {
-	auto-layout row; gap 8; padding 0 8 0 10; align center; width 255; height 32; clip yes; color #a5bdff26; corner-radius 6; pos 999 -1204
-	use ui_kit.Icon.kit_CheckSquare as "icon/kit/CheckSquare" { color #cf13a2 }
-	item Issues { title Issues; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #cf13a2 }
-	item grow { hidden yes; auto-layout abs; width fill; height 1; clip yes }
-	item _3 { hidden yes; title "3"; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #7b879e }
+	export let label = Issues; export let count = ""; export let selected = false; auto-layout row; gap 8; padding 0 8 0 10; align center; width 255; height 32
+	clip yes; corner-radius 6; use-style ${(selected === "true") ? "selected" : ""}; pos 712 -1204
+	styles {
+		selected { color #a5bdff26 }
+	}
+	use Libraries.ui_kit.Icon.kit_CheckSquare as "icon/kit/CheckSquare" { color ${(selected === "true") ? "#cf13a2" : "#0f121a"} }
+	item Issues {
+		font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; title ${label}; text-color ${(selected === "true") ? "#cf13a2" : "#0f121a"}
+	}
+	item grow { auto-layout abs; width fill; height 1; clip yes; hidden ${count === ""} }
+	item _3 { font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #7b879e; title ${count}; hidden ${count === ""} }
 }
 item "NavItem/object" {
-	auto-layout row; gap 6; padding 0 4; align center; width 255; height 32; clip yes; corner-radius 6; pos 1286 -1204
+	export let label = general; export let selected = false; auto-layout row; gap 6; padding 0 4; align center; width 255; height 32; clip yes; corner-radius 6
+	use-style ${(selected === "true") ? "selected" : ""}; pos 999 -1204
+	styles {
+		selected { color #a5bdff26 }
+	}
 	item tile {
 		auto-layout row; align center; justify center; width 24; height 24; clip yes; color #1530720d; corner-radius 4
-		use ui_kit.Icon.kit_Hash as "icon/kit/Hash" { color #0f121a }
+		use Libraries.ui_kit.Icon.kit_Hash as "icon/kit/Hash" { color ${(selected === "true") ? "#cf13a2" : "#0f121a"} }
 	}
-	item general { title general; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #0f121a }
-}
-item "NavItem/object/selected" {
-	auto-layout row; gap 6; padding 0 4; align center; width 255; height 32; clip yes; color #a5bdff26; corner-radius 6; pos 1573 -1204
-	item tile {
-		auto-layout row; align center; justify center; width 24; height 24; clip yes; color #1530720d; corner-radius 4
-		use ui_kit.Icon.kit_Hash as "icon/kit/Hash" { color #cf13a2 }
+	item general {
+		font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; title ${label}; text-color ${(selected === "true") ? "#cf13a2" : "#0f121a"}
 	}
-	item general { title general; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #cf13a2 }
 }
 item NavCaption {
-	auto-layout row; gap 4; padding 0 4; align center; height 20; clip yes; corner-radius 4; pos 1924 -1204
-	item Channels { title CHANNELS; font-size 12; line-height 16; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #7b879e }
-	use ui_kit.Icon.kit_CaretDownFill as "icon/kit/CaretDownFill" { hidden yes; width 14; height 14; color #7b879e }
-}
-item "NavCaption/highlighted" {
-	auto-layout row; gap 4; padding 0 4; align center; height 20; clip yes; color #1530720d; corner-radius 4; pos 2038 -1204
-	item Channels { title CHANNELS; font-size 12; line-height 16; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #5a667e }
-	use ui_kit.Icon.kit_CaretDownFill as "icon/kit/CaretDownFill" { hidden yes; width 14; height 14; color #5a667e }
+	export let label = CHANNELS; export let highlighted = false; export let menu = false; auto-layout row; gap 4; padding 0 4; align center; height 20; clip yes
+	corner-radius 4; use-style ${(highlighted === "true") ? "highlighted" : ""}; pos 1350 -1204
+	styles {
+		highlighted { color #1530720d }
+	}
+	item Channels {
+		font-size 12; line-height 16; font-family "IBM Plex Sans"; font-weight 500; layout left; title ${label}
+		text-color ${(highlighted === "true") ? "#5a667e" : "#7b879e"}
+	}
+	use Libraries.ui_kit.Icon.kit_CaretDownFill as "icon/kit/CaretDownFill" { width 14; height 14; color #7b879e; hidden ${!(menu === "true")} }
 }
 item NavGroup {
-	auto-layout abs; width 279; height 42; clip yes; pos 24 -2364
+	export let label = "YOUR PROJECTS"; export let add = true; auto-layout abs; width 279; height 42; clip yes; pos 1528 -1204
 	item chevron {
 		auto-layout row; align center; justify center; width 20; height 20; clip yes; corner-radius 4; pos 18 -11
-		use ui_kit.Icon.kit_CaretDownFill as "icon/kit/CaretDownFill" { color #7b879e }
+		use Libraries.ui_kit.Icon.kit_CaretDownFill as "icon/kit/CaretDownFill" { color #7b879e }
 	}
 	item label {
 		auto-layout row; padding 0 4; align center; height 20; clip yes; color #1530720d; corner-radius 4; pos 40 -11
-		item "Your projects" { title "YOUR PROJECTS"; font-size 12; line-height 16; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #5a667e }
+		item "Your projects" { font-size 12; line-height 16; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #5a667e; title ${label} }
 	}
 	item add {
-		auto-layout row; align center; justify center; width 24; height 24; clip yes; corner-radius 4; pos 237 -9
-		use ui_kit.Icon.kit_Plus as "icon/kit/Plus" { color #6b3ad3 }
+		auto-layout row; align center; justify center; width 24; height 24; clip yes; corner-radius 4; pos 237 -9; hidden ${!(add === "true")}
+		use Libraries.ui_kit.Icon.kit_Plus as "icon/kit/Plus" { color #6b3ad3 }
 	}
 }
 item NavSpace {
-	auto-layout abs; width 279; height 32; clip yes; pos 399 -2364
+	export let label = "MOBILE APP"; auto-layout abs; width 279; height 32; clip yes; pos 1903 -1204
 	item label {
 		auto-layout row; gap 6; padding 0 6 0 0; align center; height 24; clip yes; color #1530720d; corner-radius 4; pos 16 -4
 		item icon {
 			auto-layout row; align center; justify center; width 24; height 24; clip yes; color #00000014; border-color #1530720d; corner-radius 4
-			use ui_kit.Icon.kit_HouseFill as "icon/kit/HouseFill" { color #758595 }
+			use Libraries.ui_kit.Icon.kit_HouseFill as "icon/kit/HouseFill" { color #758595 }
 		}
-		item "Mobile app" { title "MOBILE APP"; font-size 12; line-height 16; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #5a667e }
+		item "Mobile app" { font-size 12; line-height 16; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #5a667e; title ${label} }
 	}
 	item more {
 		auto-layout row; align center; justify center; width 24; height 24; clip yes; corner-radius 4; pos 237 -4
-		use ui_kit.Icon.kit_DotsHorizontal as "icon/kit/DotsHorizontal" { color #6b3ad3 }
+		use Libraries.ui_kit.Icon.kit_DotsHorizontal as "icon/kit/DotsHorizontal" { color #6b3ad3 }
 	}
 }
 item SpaceHeader {
-	auto-layout abs; width 1560; height 113; pos 774 -2364
+	auto-layout abs; width 1560; height 113; pos 24 -2364
 	item "Header row" {
 		auto-layout row; gap 4; align center; justify space-between; width 1526; height 32; clip yes; pos 17 -12
 		item left {
 			auto-layout row; gap 4; align center; clip yes
 			slot left {
-				use ui_kit.Actions.Switcher as ViewletSelector {
+				use Libraries.ui_kit.Actions.Switcher as ViewletSelector {
 					slot content {
 						item "element kit/BulletList" {
 							auto-layout row; align center; justify center; width 32; height 32; clip yes; color #a5bdff40; corner-radius 6
-							use ui_kit.Icon.kit_BulletList as "icon/kit/BulletList" { color #0f121a }
+							use Libraries.ui_kit.Icon.kit_BulletList as "icon/kit/BulletList" { color #0f121a }
 						}
 						item "element kit/Kanban" {
 							auto-layout row; align center; justify center; width 32; height 32; clip yes; corner-radius 6
-							use ui_kit.Icon.kit_Kanban as "icon/kit/Kanban" { color #3c4149 }
+							use Libraries.ui_kit.Icon.kit_Kanban as "icon/kit/Kanban" { color #3c4149 }
 						}
 						item "element kit/CircleHalfFill" {
 							auto-layout row; align center; justify center; width 32; height 32; clip yes; corner-radius 6
-							use ui_kit.Icon.kit_CircleHalfFill as "icon/kit/CircleHalfFill" { color #3c4149 }
+							use Libraries.ui_kit.Icon.kit_CircleHalfFill as "icon/kit/CircleHalfFill" { color #3c4149 }
 						}
 					}
 				}
 				item "button kit/ArrowUpLines" {
 					auto-layout row; align center; justify center; width 32; height 32; clip yes; color #1725470d; border-color #1725471a; corner-radius 6
-					use ui_kit.Icon.kit_ArrowUpLines as "icon/kit/ArrowUpLines" { color #000000 }
+					use Libraries.ui_kit.Icon.kit_ArrowUpLines as "icon/kit/ArrowUpLines" { color #000000 }
 				}
 				item "button kit/SlidersHorizontal" {
 					auto-layout row; align center; justify center; width 32; height 32; clip yes; color #1725470d; border-color #1725471a; corner-radius 6
-					use ui_kit.Icon.kit_SlidersHorizontal as "icon/kit/SlidersHorizontal" { color #000000 }
+					use Libraries.ui_kit.Icon.kit_SlidersHorizontal as "icon/kit/SlidersHorizontal" { color #000000 }
 				}
 				item spacer { auto-layout abs; width 12; height 1; clip yes }
 				item Breadcrumb {
 					auto-layout row; gap 6; align center; clip yes
 					item avatar {
 						auto-layout row; align center; justify center; width 24; height 24; clip yes; color #1530720d; corner-radius 4
-						use ui_kit.Icon.kit_CheckSquare as "icon/kit/CheckSquare" { color #5a667e }
+						use Libraries.ui_kit.Icon.kit_CheckSquare as "icon/kit/CheckSquare" { color #5a667e }
 					}
 					item Issues { title Issues; font-size 16; line-height 20; font-family "IBM Plex Sans"; font-weight 700; layout left; text-color #5a667e }
 				}
@@ -398,7 +397,7 @@ item SpaceHeader {
 			slot right {
 				item "button kit/DotsHorizontal" {
 					auto-layout row; align center; justify center; width 32; height 32; clip yes; color #1725470d; border-color #1725471a; corner-radius 6
-					use ui_kit.Icon.kit_DotsHorizontal as "icon/kit/DotsHorizontal" { color #000000 }
+					use Libraries.ui_kit.Icon.kit_DotsHorizontal as "icon/kit/DotsHorizontal" { color #000000 }
 				}
 			}
 		}
@@ -411,16 +410,16 @@ item SpaceHeader {
 			slot filters {
 				item Filter {
 					auto-layout row; gap 6; padding 0 12; align center; height 32; clip yes; color #6b3ad31a; border-color #00000017; corner-radius 6
-					use ui_kit.Icon.kit_Funnel as "icon/kit/Funnel" { color #000000cc }
+					use Libraries.ui_kit.Icon.kit_Funnel as "icon/kit/Funnel" { color #000000cc }
 					item Filter { title Filter; font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; text-color #000000cc }
 				}
 				item Search {
 					auto-layout row; align center; justify center; width 32; height 32; clip yes; color #6b3ad31a; border-color #00000017; corner-radius 6
-					use ui_kit.Icon.kit_Search as "icon/kit/Search" { color #0f121a }
+					use Libraries.ui_kit.Icon.kit_Search as "icon/kit/Search" { color #0f121a }
 				}
 			}
 		}
-		use ui_kit.Actions.Switcher as "Mode tabs" {
+		use Libraries.ui_kit.Actions.Switcher as "Mode tabs" {
 			slot content {
 				item "element All" {
 					auto-layout row; padding 0 12; align center; justify center; height 32; clip yes; color #a5bdff40; corner-radius 6
@@ -440,23 +439,24 @@ item SpaceHeader {
 	item "divider 2" { auto-layout abs; width 1558; height 1; clip yes; color #0000000f; pos 1 -112 }
 }
 item PanelHeader {
-	auto-layout abs; width 1200; height 57; pos 24 -2593
+	export let title = Members; auto-layout abs; width 1200; height 57; pos 24 -2593
 	item "Panel header" {
 		auto-layout row; padding 0 16; align center; justify space-between; width 1200; height 56; clip yes
 		item Breadcrumb {
 			auto-layout row; gap 6; padding 0 8; align center; height 29; clip yes
 			item avatar {
 				auto-layout row; align center; justify center; width 24; height 24; clip yes; color #1530720d; corner-radius 4
-				use ui_kit.Icon.kit_People as "icon/kit/People" { color #5a667e }
+				use Libraries.ui_kit.Icon.kit_People as "icon/kit/People" { color #5a667e }
 			}
-			item Members { title Members; font-size 16; line-height 21; font-family "IBM Plex Sans"; font-weight 700; layout left; text-color #5a667e }
+			item Members { font-size 16; line-height 21; font-family "IBM Plex Sans"; font-weight 700; layout left; text-color #5a667e; title ${title} }
 		}
 		item actions {
 			auto-layout row; gap 8; align center; clip yes
 			slot actions {
-				use ui_kit.Actions.ClassicButton as "ClassicButton/icon/medium" { kind ghost; size medium; shape icon;
-					replace icon_kit_PencilLine {
-						use ui_kit.Icon.kit_Search as "icon/kit/Search" { color #00000099 }
+				use Libraries.ui_kit.Actions.ClassicButton as "ClassicButton/icon/medium" {
+					kind ghost; size medium; shape icon
+					replace icon_kit_Plus {
+						use Libraries.ui_kit.Icon.kit_Search as "icon/kit/Search" { color #00000099 }
 					}
 				}
 			}
@@ -465,16 +465,16 @@ item PanelHeader {
 	item divider { auto-layout abs; width 1200; height 1; clip yes; color #0000000f; pos 0 -56 }
 }
 item "PanelHeader/divided" {
-	auto-layout abs; width 1200; height 57; pos 24 -2682
+	export let title = Members; auto-layout abs; width 1200; height 57; pos 24 -2682
 	item "Panel header" {
 		auto-layout row; padding 0 16; align center; justify space-between; width 1200; height 56; clip yes
 		item Breadcrumb {
 			auto-layout row; gap 6; padding 0 8; align center; height 29; clip yes
 			item avatar {
 				auto-layout row; align center; justify center; width 24; height 24; clip yes; color #1530720d; corner-radius 4
-				use ui_kit.Icon.kit_People as "icon/kit/People" { color #5a667e }
+				use Libraries.ui_kit.Icon.kit_People as "icon/kit/People" { color #5a667e }
 			}
-			item Members { title Members; font-size 16; line-height 21; font-family "IBM Plex Sans"; font-weight 700; layout left; text-color #5a667e }
+			item Members { font-size 16; line-height 21; font-family "IBM Plex Sans"; font-weight 700; layout left; text-color #5a667e; title ${title} }
 		}
 		item right {
 			auto-layout row; gap 16; align center; clip yes
@@ -482,9 +482,10 @@ item "PanelHeader/divided" {
 			item actions {
 				auto-layout row; gap 8; align center; clip yes
 				slot actions {
-					use ui_kit.Actions.ClassicButton as "ClassicButton/icon/medium" { kind ghost; size medium; shape icon;
-						replace icon_kit_PencilLine {
-							use ui_kit.Icon.kit_Search as "icon/kit/Search" { color #00000099 }
+					use Libraries.ui_kit.Actions.ClassicButton as "ClassicButton/icon/medium" {
+						kind ghost; size medium; shape icon
+						replace icon_kit_Plus {
+							use Libraries.ui_kit.Icon.kit_Search as "icon/kit/Search" { color #00000099 }
 						}
 					}
 				}
@@ -504,7 +505,7 @@ item Workbench {
 			use NavItem as "NavItem/My issues" {
 				pos 13 -112
 				replace icon_kit_CheckSquare {
-					use ui_kit.Icon.kit_Crosshair as "icon/kit/Crosshair" { color #0f121a }
+					use Libraries.ui_kit.Icon.kit_Crosshair as "icon/kit/Crosshair" { color #0f121a }
 				}
 				at Issues { title "My issues" }
 			}
@@ -516,11 +517,11 @@ item Workbench {
 			item divider { auto-layout abs; width 279; height 1; clip yes; color #0000001a; pos 1 -213 }
 			use NavGroup as "NavGroup Your projects" { pos 0 -213 }
 			use NavSpace as "NavSpace Mobile app" { pos 0 -258 }
-			use NavItem_selected as "NavItem/Issues" { padding 0 8 0 32; pos 13 -294 }
+			use NavItem as "NavItem/Issues" { selected true; padding 0 8 0 32; pos 13 -294 }
 			use NavItem as "NavItem/Components" {
 				padding 0 8 0 32; pos 13 -326
 				replace icon_kit_CheckSquare {
-					use ui_kit.Icon.kit_Diamond as "icon/kit/Diamond" { color #0f121a }
+					use Libraries.ui_kit.Icon.kit_Diamond as "icon/kit/Diamond" { color #0f121a }
 				}
 				at Issues { title Components }
 			}
@@ -534,13 +535,13 @@ item Workbench {
 	use Sidebar as _Sidebar {
 		pos 1863 -36
 		replace widget_kit_Bubble.icon_kit_Bubble {
-			use ui_kit.Icon.kit_Building as "icon/kit/Building" { color #7f7f7f }
+			use Libraries.ui_kit.Icon.kit_Building as "icon/kit/Building" { color #7f7f7f }
 		}
 		replace widget_kit_Building.icon_kit_Building {
-			use ui_kit.Icon.kit_Star as "icon/kit/Star" { color #7f7f7f }
+			use Libraries.ui_kit.Icon.kit_Star as "icon/kit/Star" { color #7f7f7f }
 		}
 		replace widget_kit_Star.icon_kit_Star {
-			use ui_kit.Icon.kit_Sparkle as "icon/kit/Sparkle" { color #7f7f7f }
+			use Libraries.ui_kit.Icon.kit_Sparkle as "icon/kit/Sparkle" { color #7f7f7f }
 		}
 	}
 }
@@ -555,7 +556,7 @@ item "Workbench/with side panel" {
 			use NavItem as "NavItem/My issues" {
 				pos 13 -112
 				replace icon_kit_CheckSquare {
-					use ui_kit.Icon.kit_Crosshair as "icon/kit/Crosshair" { color #0f121a }
+					use Libraries.ui_kit.Icon.kit_Crosshair as "icon/kit/Crosshair" { color #0f121a }
 				}
 				at Issues { title "My issues" }
 			}
@@ -567,11 +568,11 @@ item "Workbench/with side panel" {
 			item divider { auto-layout abs; width 279; height 1; clip yes; color #0000001a; pos 1 -213 }
 			use NavGroup as "NavGroup Your projects" { pos 0 -213 }
 			use NavSpace as "NavSpace Mobile app" { pos 0 -258 }
-			use NavItem_selected as "NavItem/Issues" { padding 0 8 0 32; pos 13 -294 }
+			use NavItem as "NavItem/Issues" { selected true; padding 0 8 0 32; pos 13 -294 }
 			use NavItem as "NavItem/Components" {
 				padding 0 8 0 32; pos 13 -326
 				replace icon_kit_CheckSquare {
-					use ui_kit.Icon.kit_Diamond as "icon/kit/Diamond" { color #0f121a }
+					use Libraries.ui_kit.Icon.kit_Diamond as "icon/kit/Diamond" { color #0f121a }
 				}
 				at Issues { title Components }
 			}
@@ -605,7 +606,7 @@ item "Workbench/with overlay" {
 			use NavItem as "NavItem/My issues" {
 				pos 13 -112
 				replace icon_kit_CheckSquare {
-					use ui_kit.Icon.kit_Crosshair as "icon/kit/Crosshair" { color #0f121a }
+					use Libraries.ui_kit.Icon.kit_Crosshair as "icon/kit/Crosshair" { color #0f121a }
 				}
 				at Issues { title "My issues" }
 			}
@@ -617,11 +618,11 @@ item "Workbench/with overlay" {
 			item divider { auto-layout abs; width 279; height 1; clip yes; color #0000001a; pos 1 -213 }
 			use NavGroup as "NavGroup Your projects" { pos 0 -213 }
 			use NavSpace as "NavSpace Mobile app" { pos 0 -258 }
-			use NavItem_selected as "NavItem/Issues" { padding 0 8 0 32; pos 13 -294 }
+			use NavItem as "NavItem/Issues" { selected true; padding 0 8 0 32; pos 13 -294 }
 			use NavItem as "NavItem/Components" {
 				padding 0 8 0 32; pos 13 -326
 				replace icon_kit_CheckSquare {
-					use ui_kit.Icon.kit_Diamond as "icon/kit/Diamond" { color #0f121a }
+					use Libraries.ui_kit.Icon.kit_Diamond as "icon/kit/Diamond" { color #0f121a }
 				}
 				at Issues { title Components }
 			}
@@ -635,13 +636,13 @@ item "Workbench/with overlay" {
 	use Sidebar as _Sidebar {
 		pos 1863 -36
 		replace widget_kit_Bubble.icon_kit_Bubble {
-			use ui_kit.Icon.kit_Building as "icon/kit/Building" { color #7f7f7f }
+			use Libraries.ui_kit.Icon.kit_Building as "icon/kit/Building" { color #7f7f7f }
 		}
 		replace widget_kit_Building.icon_kit_Building {
-			use ui_kit.Icon.kit_Star as "icon/kit/Star" { color #7f7f7f }
+			use Libraries.ui_kit.Icon.kit_Star as "icon/kit/Star" { color #7f7f7f }
 		}
 		replace widget_kit_Star.icon_kit_Star {
-			use ui_kit.Icon.kit_Sparkle as "icon/kit/Sparkle" { color #7f7f7f }
+			use Libraries.ui_kit.Icon.kit_Sparkle as "icon/kit/Sparkle" { color #7f7f7f }
 		}
 	}
 	item overlay {

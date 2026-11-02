@@ -16,55 +16,55 @@ item "§ LoginTabs" {
 	item title { title LoginTabs; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ LoginTitle" {
-	auto-layout abs; width 872; height 123; border-color #0000000f; corner-radius 8; pos 0 -1382
+	auto-layout abs; width 444; height 123; border-color #0000000f; corner-radius 8; pos 1604 -1196
 	item title { title LoginTitle; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ LoginField" {
-	auto-layout abs; width 444; height 120; border-color #0000000f; corner-radius 8; pos 920 -1382
+	auto-layout abs; width 444; height 120; border-color #0000000f; corner-radius 8; pos 0 -1382
 	item title { title LoginField; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ LoginStatus" {
-	auto-layout abs; width 872; height 126; border-color #0000000f; corner-radius 8; pos 1412 -1382
+	auto-layout abs; width 444; height 126; border-color #0000000f; corner-radius 8; pos 492 -1382
 	item title { title LoginStatus; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ LoginButton" {
-	auto-layout abs; width 1300; height 212; border-color #0000000f; corner-radius 8; pos 0 -1556
+	auto-layout abs; width 444; height 124; border-color #0000000f; corner-radius 8; pos 984 -1382
 	item title { title LoginButton; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ LoginIcon" {
-	auto-layout abs; width 208; height 100; border-color #0000000f; corner-radius 8; pos 1348 -1556
+	auto-layout abs; width 208; height 100; border-color #0000000f; corner-radius 8; pos 1476 -1382
 	item title { title LoginIcon; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ LoginProviders" {
-	auto-layout abs; width 444; height 140; border-color #0000000f; corner-radius 8; pos 1604 -1556
+	auto-layout abs; width 444; height 140; border-color #0000000f; corner-radius 8; pos 1732 -1382
 	item title { title LoginProviders; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ LoginCheckbox" {
-	auto-layout abs; width 872; height 92; border-color #0000000f; corner-radius 8; pos 0 -1816
+	auto-layout abs; width 444; height 92; border-color #0000000f; corner-radius 8; pos 0 -1570
 	item title { title LoginCheckbox; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ LoginLinks" {
-	auto-layout abs; width 444; height 85; border-color #0000000f; corner-radius 8; pos 920 -1816
+	auto-layout abs; width 444; height 85; border-color #0000000f; corner-radius 8; pos 492 -1570
 	item title { title LoginLinks; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ LoginAction" {
-	auto-layout abs; width 508; height 87; border-color #0000000f; corner-radius 8; pos 1412 -1816
+	auto-layout abs; width 508; height 87; border-color #0000000f; corner-radius 8; pos 984 -1570
 	item title { title LoginAction; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ LoginOtpHeader" {
-	auto-layout abs; width 460; height 132; border-color #0000000f; corner-radius 8; pos 0 -1956
+	auto-layout abs; width 460; height 132; border-color #0000000f; corner-radius 8; pos 1540 -1570
 	item title { title LoginOtpHeader; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ LoginCode" {
-	auto-layout abs; width 460; height 146; border-color #0000000f; corner-radius 8; pos 508 -1956
+	auto-layout abs; width 460; height 146; border-color #0000000f; corner-radius 8; pos 0 -1750
 	item title { title LoginCode; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ LoginWorkspace" {
-	auto-layout abs; width 476; height 137; border-color #0000000f; corner-radius 8; pos 1016 -1956
+	auto-layout abs; width 476; height 137; border-color #0000000f; corner-radius 8; pos 508 -1750
 	item title { title LoginWorkspace; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ LoginBackTitle" {
-	auto-layout abs; width 476; height 112; border-color #0000000f; corner-radius 8; pos 1540 -1956
+	auto-layout abs; width 476; height 112; border-color #0000000f; corner-radius 8; pos 1032 -1750
 	item title { title LoginBackTitle; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item LoginPage {
@@ -142,7 +142,7 @@ item LoginPage {
 			}
 		}
 	}
-	use workbench.TopBar as "Top bar" {
+	use Libraries.workbench.TopBar as "Top bar" {
 		at limits { hidden yes }
 		at icon_kit_Search { hidden yes }
 		at icon_kit_Camera { hidden yes }
@@ -160,10 +160,10 @@ item LoginForm {
 	slot content
 }
 item LoginTabs {
-	auto-layout column; align center; width 396; clip yes; pos 1136 -1240
+	export let heading = Platform; export let width = 396; auto-layout column; align center; clip yes; width ${width}; pos 1136 -1240
 	item heading {
 		auto-layout row; align center; justify center; width 396; height 36; clip yes
-		item Platform { title Platform; font-size 28; line-height 36; font-family "IBM Plex Sans"; layout left; text-color #000061 }
+		item Platform { font-size 28; line-height 36; font-family "IBM Plex Sans"; layout left; text-color #000061; title ${heading} }
 	}
 	item tabs {
 		auto-layout row; gap 28; justify center; width 396; height 34; clip yes
@@ -180,61 +180,50 @@ item LoginTabs {
 	}
 }
 item LoginTitle {
-	auto-layout column; width 396; clip yes; pos 24 -1426
-	item Title { title Title; font-size 28; line-height 36; font-family "IBM Plex Sans"; font-weight 700; layout left; text-color #333333 }
-}
-item "LoginTitle/subtitle" {
-	auto-layout column; width 396; clip yes; pos 452 -1426
-	item Subtitle { title Subtitle; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #201240 }
-	item Title { title Title; font-size 28; line-height 36; font-family "IBM Plex Sans"; font-weight 700; layout left; text-color #333333 }
+	export let text = Title; export let subtitle = ""; auto-layout column; width 396; clip yes; pos 1628 -1240
+	item Subtitle { font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #201240; title ${subtitle}; hidden ${subtitle === ""} }
+	item Title { font-size 28; line-height 36; font-family "IBM Plex Sans"; font-weight 700; layout left; text-color #333333; title ${text} }
 }
 item LoginField {
-	auto-layout abs; width 396; height 52; clip yes; color #f3e5f5; border-color #e5e7eb; corner-radius 12; pos 944 -1426
-	item Label { title Label; font-size 12; line-height 16; font-family "IBM Plex Sans"; layout left; text-color #333333cc; pos 21 -9 }
-	item Value { title Value; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #201240; pos 21 -24 }
+	export let label = Label; export let value = Value; export let password = false; export let error = false; export let width = 396; auto-layout abs; height 52
+	clip yes; color #f3e5f5; border-color #e5e7eb; corner-radius 12; width ${width}; use-style ${(error === "true") ? "error" : ""}; pos 24 -1426
+	styles {
+		error { border-color #ee7a7a }
+	}
+	item Label { font-size 12; line-height 16; font-family "IBM Plex Sans"; layout left; text-color #333333cc; pos 21 -9; title ${label} }
+	item Value {
+		font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #201240; pos 21 -24; title ${(password === "true") ? "********" : value}
+	}
 }
 item LoginStatus {
-	auto-layout column; padding 16 0 0 0; width 396; clip yes; pos 1436 -1426
+	export let text = Message; export let kind = info; auto-layout column; padding 16 0 0 0; width 396; clip yes; pos 516 -1426
+	styles { kind one-of info error }
 	item message {
-		auto-layout row; gap 8; padding 12 16; width 396; clip yes; color #ffffff; border-color #e5e7eb; corner-radius 8
+		auto-layout row; gap 8; padding 12 16; width 396; clip yes; color #ffffff; corner-radius 8; border-color ${kind === "error" ? "#ee7a7a99" : "#e5e7eb"}
 		item icon {
 			auto-layout column; padding 2 0 0 0; width 16; height 18; clip yes
-			use ui_kit.Icon.kit_InfoCircle as "icon/kit/InfoCircle" { color #201240 }
+			use Libraries.ui_kit.Icon.kit_InfoCircle as "icon/kit/InfoCircle" { color ${kind === "error" ? "#ee7a7a" : "#201240"} }
 		}
-		item Message { title Message; font-size 12; line-height 18; font-family "IBM Plex Sans"; layout left; width 338; text-color #201240 }
+		item Message {
+			font-size 12; line-height 18; font-family "IBM Plex Sans"; layout left; width 338; title ${text}; text-color ${kind === "error" ? "#ee7a7a" : "#201240"}
+		}
 	}
 }
-item "LoginStatus/error" {
-	auto-layout column; padding 16 0 0 0; width 396; clip yes; pos 1864 -1426
-	item message {
-		auto-layout row; gap 8; padding 12 16; width 396; clip yes; color #ffffff; border-color #ee7a7a99; corner-radius 8
-		item icon {
-			auto-layout column; padding 2 0 0 0; width 16; height 18; clip yes
-			use ui_kit.Icon.kit_InfoCircle as "icon/kit/InfoCircle" { color #ee7a7a }
-		}
-		item Message { title Message; font-size 12; line-height 18; font-family "IBM Plex Sans"; layout left; width 338; text-color #ee7a7a }
+item LoginButton {
+	export let label = Button; export let kind = primary; export let disabled = false; auto-layout row; gap 8; padding 0 24; align center; justify center
+	width 396; height 56; clip yes; color #cf13a2; corner-radius 8; use-style ${(disabled === "true") ? "disabled" : kind}; pos 1008 -1426
+	styles {
+		kind one-of primary default provider
+		primary { color #cf13a2; border-color none; text-color #ffffff }
+		default { color #ffffff; border-color #e5e7eb; text-color #201240 }
+		provider { color #07040f; border-color none; text-color #ffffff }
+		disabled { color #f3eafb; border-color none; text-color #9ca3af }
 	}
-}
-item "LoginButton/primary" {
-	auto-layout row; gap 8; padding 0 24; align center; justify center; width 396; height 56; clip yes; color #cf13a2; corner-radius 8; pos 24 -1600
-	item Button { title Button; font-size 16; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; text-color #ffffff }
-}
-item "LoginButton/default" {
-	auto-layout row; gap 8; padding 0 24; align center; justify center; width 396; height 56; clip yes; color #ffffff; border-color #e5e7eb; corner-radius 8
-	pos 452 -1600
-	item Button { title Button; font-size 16; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; text-color #201240 }
-}
-item "LoginButton/primary/disabled" {
-	auto-layout row; gap 8; padding 0 24; align center; justify center; width 396; height 56; clip yes; color #f3eafb; corner-radius 8; pos 880 -1600
-	item Button { title Button; font-size 16; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; text-color #9ca3af }
-}
-item "LoginButton/provider" {
-	auto-layout row; gap 8; padding 0 24; align center; justify center; width 396; height 56; clip yes; color #07040f; corner-radius 8; pos 24 -1688
-	use LoginIcon_google as "icon/google"
-	item Button { title Button; font-size 16; line-height 16; font-family "IBM Plex Sans"; layout left; text-color #ffffff }
+	use LoginIcon_google as "icon/google" { hidden ${kind !== "provider" || (disabled === "true")} }
+	item Button { font-size 16; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; title ${label} }
 }
 item "LoginIcon/google" {
-	auto-layout abs; width 32; height 32; pos 1372 -1600
+	auto-layout abs; width 32; height 32; pos 1500 -1426
 	item "path 1" {
 		width 32; height 32
 		path "M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"
@@ -257,7 +246,7 @@ item "LoginIcon/google" {
 	}
 }
 item "LoginIcon/github" {
-	auto-layout abs; width 32; height 32; pos 1436 -1600
+	auto-layout abs; width 32; height 32; pos 1564 -1426
 	item "path 1" {
 		width 32; height 32
 		path "M36,12c13.255,0,24,10.745,24,24c0,10.656-6.948,19.685-16.559,22.818c0.003-0.009,0.007-0.022,0.007-0.022s-1.62-0.759-1.586-2.114c0.038-1.491,0-4.971,0-6.248c0-2.193-1.388-3.747-1.388-3.747s10.884,0.122,10.884-11.491c0-4.481-2.342-6.812-2.342-6.812s1.23-4.784-0.426-6.812c-1.856-0.2-5.18,1.774-6.6,2.697c0,0-2.25-0.922-5.991-0.922c-3.742,0-5.991,0.922-5.991,0.922c-1.419-0.922-4.744-2.897-6.6-2.697c-1.656,2.029-0.426,6.812-0.426,6.812s-2.342,2.332-2.342,6.812c0,11.613,10.884,11.491,10.884,11.491s-1.097,1.239-1.336,3.061c-0.76,0.258-1.877,0.576-2.78,0.576c-2.362,0-4.159-2.296-4.817-3.358c-0.649-1.048-1.98-1.927-3.221-1.927c-0.817,0-1.216,0.409-1.216,0.876s1.146,0.793,1.902,1.659c1.594,1.826,1.565,5.933,7.245,5.933c0.617,0,1.876-0.152,2.823-0.279c-0.006,1.293-0.007,2.657,0.013,3.454c0.034,1.355-1.586,2.114-1.586,2.114s0.004,0.013,0.007,0.022C18.948,55.685,12,46.656,12,36C12,22.745,22.745,12,36,12z"
@@ -265,7 +254,7 @@ item "LoginIcon/github" {
 	}
 }
 item "LoginIcon/openid" {
-	auto-layout abs; width 32; height 32; pos 1500 -1600
+	auto-layout abs; width 32; height 32; pos 1628 -1426
 	item "path 1" {
 		width 32; height 32; path "M64,0H448A64,64 0 0 1 512,64V448A64,64 0 0 1 448,512H64A64,64 0 0 1 0,448V64A64,64 0 0 1 64,0Z"; view-box 0 0 512 512
 		color #f68423
@@ -277,16 +266,16 @@ item "LoginIcon/openid" {
 	}
 }
 item LoginProviders {
-	auto-layout column; gap 16; padding 16 0 0 0; width 396; clip yes; pos 1628 -1600
+	auto-layout column; gap 16; padding 16 0 0 0; width 396; clip yes; pos 1756 -1426
 	slot content {
 		item row {
 			auto-layout row; gap 16; width 396; height 56; clip yes
-			use LoginButton_provider as "Button Sign in with Google" {
-				width 190
+			use LoginButton as "Button Sign in with Google" {
+				kind provider; width 190
 				at Button { title "Sign in with Google" }
 			}
-			use LoginButton_provider as "Button Sign in with GitHub" {
-				width 190
+			use LoginButton as "Button Sign in with GitHub" {
+				kind provider; width 190
 				replace icon_google {
 					use LoginIcon_github as "icon/github"
 				}
@@ -296,28 +285,19 @@ item LoginProviders {
 	}
 }
 item LoginCheckbox {
-	auto-layout row; gap 11; padding 0 0 0 4; width 396; clip yes; pos 24 -1860
+	export let checked = true; export let label = Label; export let invalid = false; auto-layout row; gap 11; padding 0 0 0 4; width 396; clip yes; pos 24 -1614
 	item "box holder" {
 		auto-layout column; padding 3 0 0 0; width 18; height 24; clip yes
 		item box {
-			auto-layout row; align center; justify center; width 18; height 18; clip yes; color #cf13a2; border-color #cf13a2; line-width 2; corner-radius 3.2
-			use ui_kit.Icon.tick as "icon/tick" { width 12; height 12; border-color #ffffff; line-width 0.98 }
+			auto-layout row; align center; justify center; width 18; height 18; clip yes; line-width 2; corner-radius 3.2
+			color ${(checked === "true") ? "#cf13a2" : "#ffffff"}; border-color ${(invalid === "true") ? "#ee7a7a" : (checked === "true") ? "#cf13a2" : "#00000066"}
+			use Libraries.ui_kit.Icon.tick as "icon/tick" { width 12; height 12; border-color #ffffff; line-width 0.98; hidden ${!(checked === "true")} }
 		}
 	}
-	item Label { title Label; font-size 15.2; line-height 20; font-family "IBM Plex Sans"; layout left; width 363; text-color #201240 }
-}
-item "LoginCheckbox/empty" {
-	auto-layout row; gap 11; padding 0 0 0 4; width 396; clip yes; pos 452 -1860
-	item "box holder" {
-		auto-layout column; padding 3 0 0 0; width 18; height 24; clip yes
-		item box {
-			auto-layout row; align center; justify center; width 18; height 18; clip yes; color #ffffff; border-color #00000066; line-width 2; corner-radius 3.2
-		}
-	}
-	item Label { title Label; font-size 15.2; line-height 20; font-family "IBM Plex Sans"; layout left; width 363; text-color #201240 }
+	item Label { font-size 15.2; line-height 20; font-family "IBM Plex Sans"; layout left; width 363; text-color #201240; title ${label} }
 }
 item LoginLinks {
-	auto-layout column; align center; width 396; clip yes; pos 944 -1860
+	auto-layout column; align center; width 396; clip yes; pos 516 -1614
 	slot content {
 		item "link row" {
 			auto-layout row; gap 3; align center; justify center; width 396; clip yes; wrap yes; line-gap 3
@@ -327,63 +307,65 @@ item LoginLinks {
 	}
 }
 item LoginAction {
-	auto-layout row; align center; justify center; width 460; height 18.5; clip yes; pos 1436 -1860
-	item Action { title Action; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #6e48ce }
+	export let text = Action; auto-layout row; align center; justify center; width 460; height 18.5; clip yes; pos 1008 -1614
+	item Action { font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #6e48ce; title ${text} }
 }
 item LoginOtpHeader {
-	auto-layout column; gap 8; width 412; clip yes; pos 24 -2000
+	export let title = "Enter the code"; export let sent = "We sent the code to"; export let email = "name@example.com"; auto-layout column; gap 8; width 412
+	clip yes; pos 1564 -1614
 	item "title row" {
 		auto-layout row; align center; justify center; width 412; height 36
 		item back {
 			auto-layout row; align center; justify center; width 36; height 36; clip yes; corner-radius 8
-			use ui_kit.Icon.kit_ChevronLeftLarge as "icon/kit/ChevronLeftLarge" { color #201240 }
+			use Libraries.ui_kit.Icon.kit_ChevronLeftLarge as "icon/kit/ChevronLeftLarge" { color #201240 }
 		}
-		item "Enter the code" { title "Enter the code"; font-size 28; line-height 36; font-family "IBM Plex Sans"; font-weight 700; layout left; text-color #000061 }
+		item "Enter the code" { font-size 28; line-height 36; font-family "IBM Plex Sans"; font-weight 700; layout left; text-color #000061; title ${title} }
 	}
 	item description {
 		auto-layout row; gap 8; align center; justify center; width 412; height 20; clip yes
-		item "We sent the code to" { title "We sent the code to"; font-size 16; line-height 21; font-family "IBM Plex Sans"; layout left; text-color #333333 }
-		item "name@example.com" { title "name@example.com"; font-size 16; line-height 21; font-family "IBM Plex Sans"; layout left; text-color #000061 }
+		item "We sent the code to" { font-size 16; line-height 21; font-family "IBM Plex Sans"; layout left; text-color #333333; title ${sent} }
+		item "name@example.com" { font-size 16; line-height 21; font-family "IBM Plex Sans"; layout left; text-color #000061; title ${email} }
 	}
 }
 item LoginCode {
-	auto-layout row; gap 6.4; align center; width 412; height 78; clip yes; pos 532 -2000
+	export let digits = "123456"; auto-layout row; gap 6.4; align center; width 412; height 78; clip yes; pos 24 -1794
 	item "digit 1" {
 		auto-layout row; align center; justify center; width 60; height 78; clip yes; color #f3e5f5; border-color #00000017; corner-radius 12
-		item _1 { title "1"; font-size 32; line-height 42; font-family "IBM Plex Sans"; layout left; text-color #201240 }
+		item _1 { font-size 32; line-height 42; font-family "IBM Plex Sans"; layout left; text-color #201240; title ${digits[0]} }
 	}
 	item "digit 2" {
 		auto-layout row; align center; justify center; width 60; height 78; clip yes; color #f3e5f5; border-color #00000017; corner-radius 12
-		item _2 { title "2"; font-size 32; line-height 42; font-family "IBM Plex Sans"; layout left; text-color #201240 }
+		item _2 { font-size 32; line-height 42; font-family "IBM Plex Sans"; layout left; text-color #201240; title ${digits[1]} }
 	}
 	item "digit 3" {
 		auto-layout row; align center; justify center; width 60; height 78; clip yes; color #f3e5f5; border-color #00000017; corner-radius 12
-		item _3 { title "3"; font-size 32; line-height 42; font-family "IBM Plex Sans"; layout left; text-color #201240 }
+		item _3 { font-size 32; line-height 42; font-family "IBM Plex Sans"; layout left; text-color #201240; title ${digits[2]} }
 	}
 	item separator { auto-layout abs; width 12; height 1; clip yes; color #e5e7eb }
 	item "digit 4" {
 		auto-layout row; align center; justify center; width 60; height 78; clip yes; color #f3e5f5; border-color #00000017; corner-radius 12
-		item _4 { title "4"; font-size 32; line-height 42; font-family "IBM Plex Sans"; layout left; text-color #201240 }
+		item _4 { font-size 32; line-height 42; font-family "IBM Plex Sans"; layout left; text-color #201240; title ${digits[3]} }
 	}
 	item "digit 5" {
 		auto-layout row; align center; justify center; width 60; height 78; clip yes; color #f3e5f5; border-color #00000017; corner-radius 12
-		item _5 { title "5"; font-size 32; line-height 42; font-family "IBM Plex Sans"; layout left; text-color #201240 }
+		item _5 { font-size 32; line-height 42; font-family "IBM Plex Sans"; layout left; text-color #201240; title ${digits[4]} }
 	}
 	item "digit 6" {
 		auto-layout row; align center; justify center; width 60; height 78; clip yes; color #f3e5f5; border-color #00000017; corner-radius 12
-		item _6 { title "6"; font-size 32; line-height 42; font-family "IBM Plex Sans"; layout left; text-color #201240 }
+		item _6 { font-size 32; line-height 42; font-family "IBM Plex Sans"; layout left; text-color #201240; title ${digits[5]} }
 	}
 }
 item LoginWorkspace {
-	auto-layout column; padding 16; align center; width 428; clip yes; color #6b3ad31a; border-color #00000017; corner-radius 16; pos 1040 -2000
-	item Workspace { title Workspace; font-size 14; line-height 18; font-family "IBM Plex Sans"; font-weight 600; layout left; text-color #201240 }
-	item "last visit 2 days ago" { title "last visit 2 days ago"; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #201240 }
+	export let name = Workspace; export let note = "last visit 2 days ago"; export let width = 428; auto-layout column; padding 16; align center; clip yes
+	color #6b3ad31a; border-color #00000017; corner-radius 16; width ${width}; pos 532 -1794
+	item Workspace { font-size 14; line-height 18; font-family "IBM Plex Sans"; font-weight 600; layout left; text-color #201240; title ${name} }
+	item "last visit 2 days ago" { font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #201240; title ${note} }
 }
 item LoginBackTitle {
-	auto-layout row; gap 8; align center; width 428; height 44; clip yes; pos 1564 -2000
+	export let title = Title; export let width = 428; auto-layout row; gap 8; align center; height 44; clip yes; width ${width}; pos 1056 -1794
 	item back {
 		auto-layout row; align center; justify center; width 48; height 44; clip yes; corner-radius 8
-		use ui_kit.Icon.kit_ChevronLeftLarge as "icon/kit/ChevronLeftLarge" { color #201240 }
+		use Libraries.ui_kit.Icon.kit_ChevronLeftLarge as "icon/kit/ChevronLeftLarge" { color #201240 }
 	}
-	item Title { title Title; font-size 24; line-height 31; font-family "IBM Plex Sans"; font-weight 600; layout left; text-color #000061 }
+	item Title { font-size 24; line-height 31; font-family "IBM Plex Sans"; font-weight 600; layout left; text-color #000061; title ${title} }
 }

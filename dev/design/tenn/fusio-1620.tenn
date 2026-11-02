@@ -1,7 +1,118 @@
 entry "../../../PlatformDesign.tenn"
 
+
+
+
+
+
+
+element "0 Маршрут входа" {
+  item Screen {
+    auto-layout column; width 1920; height 1080; padding 56; gap 24; color #f7f7fa
+    item Header {
+      auto-layout column; width fill; gap 8
+      item Title { title "Вход и первый запуск"; font-size 30; font-weight 600; line-height 38; layout left }
+      item Subtitle { title "Пользователь попадает в личный профиль или сразу в пространство в зависимости от способа входа"; font-size 15; line-height 22; text-color #5c6470; layout left }
+    }
+    item Routes {
+      auto-layout column; width fill; height fill; gap 20
+      item Sign_in {
+        auto-layout row; width fill; height fill; padding 24; gap 16; align center; color #ffffff; border-color #00000014; corner-radius 12
+        item Route_label {
+          auto-layout column; width 220; gap 6
+          item Number { title "01"; font-size 12; font-weight 600; line-height 16; text-color #8c267d; layout left }
+          item Title { title "Обычный вход"; font-size 18; font-weight 600; line-height 24; layout left }
+          item Hint { title "У пользователя уже есть аккаунт"; width 200; font-size 13; line-height 18; text-color #7f7f7f; layout left }
+        }
+        item Login_card {
+          auto-layout column; width fill; height fill; padding 20; gap 8; justify center; color #f8f5fa; corner-radius 10
+          item Step { title "ВХОД"; font-size 11; font-weight 600; line-height 14; text-color #8c267d; layout left }
+          item Title { title "Email или GitHub"; font-size 17; font-weight 600; line-height 23; layout left }
+          item Text { title "Вход в существующий аккаунт"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+        }
+        item Arrow_1 { title ">"; width 24; font-size 24; text-color #a3a3ad }
+        item Profile_card {
+          auto-layout column; width fill; height fill; padding 20; gap 8; justify center; color #f8f5fa; corner-radius 10
+          item Step { title "ЛИЧНЫЙ КАБИНЕТ"; font-size 11; font-weight 600; line-height 14; text-color #8c267d; layout left }
+          item Title { title "Профиль и пространства"; font-size 17; font-weight 600; line-height 23; layout left }
+          item Text { title "Личные данные и доступные пространства"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+        }
+        item Arrow_2 { title ">"; width 24; font-size 24; text-color #a3a3ad }
+        item Workspace_card {
+          auto-layout column; width fill; height fill; padding 20; gap 8; justify center; color #efdcf2; corner-radius 10
+          item Step { title "РАБОТА"; font-size 11; font-weight 600; line-height 14; text-color #7d1f70; layout left }
+          item Title { title "Выбранное пространство"; font-size 17; font-weight 600; line-height 23; layout left }
+          item Text { title "Переход в рабочий интерфейс"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+        }
+      }
+      item Registration {
+        auto-layout row; width fill; height fill; padding 24; gap 16; align center; color #ffffff; border-color #00000014; corner-radius 12
+        item Route_label {
+          auto-layout column; width 220; gap 6
+          item Number { title "02"; font-size 12; font-weight 600; line-height 16; text-color #8c267d; layout left }
+          item Title { title "Регистрация"; font-size 18; font-weight 600; line-height 24; layout left }
+          item Hint { title "Первый вход нового пользователя"; width 200; font-size 13; line-height 18; text-color #7f7f7f; layout left }
+        }
+        item Signup_card {
+          auto-layout column; width fill; height fill; padding 20; gap 8; justify center; color #f8f5fa; corner-radius 10
+          item Step { title "РЕГИСТРАЦИЯ"; font-size 11; font-weight 600; line-height 14; text-color #8c267d; layout left }
+          item Title { title "Создание аккаунта"; font-size 17; font-weight 600; line-height 23; layout left }
+          item Text { title "Email, имя и пароль"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+        }
+        item Arrow_1 { title ">"; width 24; font-size 24; text-color #a3a3ad }
+        item Profile_card {
+          auto-layout column; width fill; height fill; padding 20; gap 8; justify center; color #f8f5fa; corner-radius 10
+          item Step { title "ПЕРВЫЙ ШАГ"; font-size 11; font-weight 600; line-height 14; text-color #8c267d; layout left }
+          item Title { title "Пустой профиль"; font-size 17; font-weight 600; line-height 23; layout left }
+          item Text { title "Заполнение личных данных"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+        }
+        item Arrow_2 { title ">"; width 24; font-size 24; text-color #a3a3ad }
+        item Workspace_card {
+          auto-layout column; width fill; height fill; padding 20; gap 8; justify center; color #efdcf2; corner-radius 10
+          item Step { title "ВТОРОЙ ШАГ"; font-size 11; font-weight 600; line-height 14; text-color #7d1f70; layout left }
+          item Title { title "Первое пространство"; font-size 17; font-weight 600; line-height 23; layout left }
+          item Text { title "Создание пространства и вход в него"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+        }
+      }
+      item Invitation {
+        auto-layout row; width fill; height fill; padding 24; gap 16; align center; color #ffffff; border-color #00000014; corner-radius 12
+        item Route_label {
+          auto-layout column; width 220; gap 6
+          item Number { title "03"; font-size 12; font-weight 600; line-height 16; text-color #8c267d; layout left }
+          item Title { title "Ссылка на пространство"; font-size 18; font-weight 600; line-height 24; layout left }
+          item Hint { title "Приглашение или прямая ссылка"; width 200; font-size 13; line-height 18; text-color #7f7f7f; layout left }
+        }
+        item Link_card {
+          auto-layout column; width fill; height fill; padding 20; gap 8; justify center; color #f8f5fa; corner-radius 10
+          item Step { title "ССЫЛКА"; font-size 11; font-weight 600; line-height 14; text-color #8c267d; layout left }
+          item Title { title "Открытие приглашения"; font-size 17; font-weight 600; line-height 23; layout left }
+          item Text { title "Вход или регистрация при необходимости"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+        }
+        item Arrow_1 { title ">"; width 24; font-size 24; text-color #a3a3ad }
+        item Workspace_card {
+          auto-layout column; width fill; height fill; padding 20; gap 8; justify center; color #efdcf2; corner-radius 10
+          item Step { title "СРАЗУ В РАБОТУ"; font-size 11; font-weight 600; line-height 14; text-color #7d1f70; layout left }
+          item Title { title "Пространство из ссылки"; font-size 17; font-weight 600; line-height 23; layout left }
+          item Text { title "Личный кабинет не перехватывает переход"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+        }
+        item Arrow_2 { title ">"; width 24; font-size 24; text-color #a3a3ad }
+        item Profile_card {
+          auto-layout column; width fill; height fill; padding 20; gap 8; justify center; color #f8f5fa; corner-radius 10
+          item Step { title "ПО ЗАПРОСУ"; font-size 11; font-weight 600; line-height 14; text-color #8c267d; layout left }
+          item Title { title "Меню аккаунта"; font-size 17; font-weight 600; line-height 23; layout left }
+          item Text { title "Переход в профиль из рабочего интерфейса"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+        }
+      }
+    }
+    item Note {
+      auto-layout row; width fill; padding 16 20; gap 12; align center; color #efdcf2; corner-radius 10
+      use Libraries.ui_kit.Icon.kit_Person as Icon { width 20; height 20; color #7d1f70 }
+      item Text { title "Личный профиль и подписки принадлежат аккаунту, а не отдельному пространству"; width fill; font-size 14; line-height 20; text-color #7d1f70; layout left }
+    }
+  }
+}
 element "1 Пространства" {
-  use profile_kit.ProfilePage as Screen {
+  use Libraries.profile_kit.ProfilePage as Screen {
     at Cabinet.Sidebar.navigation.Workspaces { color #efdcf2; text-color #7d1f70 }
     slot header {
       item Header_text {
@@ -10,7 +121,7 @@ element "1 Пространства" {
         item Subtitle { title "Рабочие пространства и приглашения"; font-size 13; line-height 18; text-color #7f7f7f; layout left }
       }
       item grow { width fill }
-      use ui_kit.Actions.Button as Create {
+      use Libraries.ui_kit.Actions.Button as Create {
         kind primary
         size medium
         at Button { title "Создать пространство" }
@@ -21,11 +132,11 @@ element "1 Пространства" {
       item Section_title { title "Ваши пространства"; font-size 15; font-weight 600; line-height 20; layout left }
       item Workspace_list {
         auto-layout column; width fill; color #ffffff; border-color #00000014; corner-radius 10; clip yes
-        use profile_kit.WorkspaceRow as Platform { width fill; name "Intabia Platform"; mark "IP"; role "Владелец"; visit "Сегодня, 16:42" }
+        use Libraries.profile_kit.WorkspaceRow as Platform { width fill; name "Intabia Platform"; mark "IP"; role "Владелец"; visit "Сегодня, 16:42" }
         item divider { width fill; height 1; color #0000000f }
-        use profile_kit.WorkspaceRow as Marketing { width fill; name "Маркетинг"; mark "М"; role "Участник"; visit "Вчера" }
+        use Libraries.profile_kit.WorkspaceRow as Marketing { width fill; name "Маркетинг"; mark "М"; role "Участник"; visit "Вчера" }
         item divider_2 { width fill; height 1; color #0000000f }
-        use profile_kit.WorkspaceRow as Personal { width fill; name "Личное"; mark "Л"; role "Владелец"; visit "28 октября" }
+        use Libraries.profile_kit.WorkspaceRow as Personal { width fill; name "Личное"; mark "Л"; role "Владелец"; visit "28 октября" }
       }
       item Invitations {
         auto-layout column; width fill; padding 20; gap 12; color #f8f5fa; border-color #d9b9d8; corner-radius 10
@@ -37,14 +148,14 @@ element "1 Пространства" {
             item Name { title "Design Team"; font-size 14; font-weight 500; line-height 20; layout left }
             item From { title "Мария Орлова приглашает вас как участника"; font-size 13; line-height 18; text-color #5c6470; layout left }
           }
-          use ui_kit.Actions.Button as Decline {
+          use Libraries.ui_kit.Actions.Button as Decline {
             kind secondary
             size medium
             at Button { title "Отклонить" }
             at icon_kit_Plus { hidden yes }
             at icon_chevronD { hidden yes }
           }
-          use ui_kit.Actions.Button as Accept {
+          use Libraries.ui_kit.Actions.Button as Accept {
             kind primary
             size medium
             at Button { title "Принять" }
@@ -56,9 +167,8 @@ element "1 Пространства" {
     }
   }
 }
-
 element "2 Пространства - пусто" {
-  use profile_kit.ProfilePage as Screen {
+  use Libraries.profile_kit.ProfilePage as Screen {
     at Cabinet.Sidebar.navigation.Workspaces { color #efdcf2; text-color #7d1f70 }
     slot header {
       item Header_text {
@@ -72,11 +182,11 @@ element "2 Пространства - пусто" {
         auto-layout column; width fill; height fill; align center; justify center; gap 16
         item Empty_icon {
           auto-layout row; width 72; height 72; align center; justify center; color #efdcf2; corner-radius 20
-          use ui_kit.Icon.kit_Building as Icon { width 32; height 32; color #8c267d }
+          use Libraries.ui_kit.Icon.kit_Building as Icon { width 32; height 32; color #8c267d }
         }
         item Empty_title { title "Создайте первое пространство"; font-size 22; font-weight 600; line-height 28 }
         item Empty_text { title "В пространстве можно вести задачи, общаться с командой и хранить документы."; width 460; font-size 14; line-height 21; text-color #5c6470 }
-        use ui_kit.Actions.Button as Create {
+        use Libraries.ui_kit.Actions.Button as Create {
           kind primary
           size large
           at Button { title "Создать пространство" }
@@ -87,9 +197,8 @@ element "2 Пространства - пусто" {
     }
   }
 }
-
 element "3 Подписки" {
-  use profile_kit.ProfilePage as Screen {
+  use Libraries.profile_kit.ProfilePage as Screen {
     at Cabinet.Sidebar.navigation.Subscriptions { color #efdcf2; text-color #7d1f70 }
     slot header {
       item Header_text {
@@ -99,7 +208,7 @@ element "3 Подписки" {
       }
     }
     slot content {
-      use profile_kit.ServiceCard as MCP { width fill;
+      use Libraries.profile_kit.ServiceCard as MCP { width fill;
         title "MCP-сервер Intabia"
         description "Подключите задачи, документы и чаты платформы к AI-агентам по протоколу MCP. Один доступ действует во всех ваших пространствах."
         status "Подключено до 2 ноября 2027"
@@ -108,9 +217,9 @@ element "3 Подписки" {
         slot details {
           item Connection {
             auto-layout row; width fill; padding 12 16; gap 12; align center; color #f7f7fa; corner-radius 8
-            use ui_kit.Icon.kit_Key as Icon { width 16; height 16; color #5c6470 }
+            use Libraries.ui_kit.Icon.kit_Key as Icon { width 16; height 16; color #5c6470 }
             item Token { title "Персональный токен  ••••••••  7K2F"; width fill; font-size 13; line-height 18; layout left }
-            use ui_kit.Actions.Button as Copy {
+            use Libraries.ui_kit.Actions.Button as Copy {
               kind secondary
               size small
               at Button { title "Скопировать" }
@@ -120,7 +229,7 @@ element "3 Подписки" {
           }
         }
       }
-      use profile_kit.ServiceCard as Tenniarb { width fill;
+      use Libraries.profile_kit.ServiceCard as Tenniarb { width fill;
         title "Tenniarb Pro"
         description "Лицензия на расширенные возможности редактора: совместная работа, версии макетов и экспорт проектов."
         status "Лицензия активна до 18 сентября 2027"
@@ -131,7 +240,7 @@ element "3 Подписки" {
             auto-layout row; width fill; padding 12 16; gap 12; align center; color #f7f7fa; corner-radius 8
             item Key_label { title "Ключ лицензии"; font-size 13; line-height 18; text-color #7f7f7f }
             item Key { title "TENN-••••-••••-9Q4M"; width fill; font-size 13; line-height 18; layout left }
-            use ui_kit.Actions.Button as Show {
+            use Libraries.ui_kit.Actions.Button as Show {
               kind secondary
               size small
               at Button { title "Показать" }
@@ -141,7 +250,7 @@ element "3 Подписки" {
           }
         }
       }
-      use profile_kit.ServiceCard as MCP_available { width fill;
+      use Libraries.profile_kit.ServiceCard as MCP_available { width fill;
         title "Дополнительные AI-токены"
         description "Персональный пакет для сервисов Intabia, которым нужен доступ к языковым моделям."
         status "Не подключено"
@@ -150,9 +259,8 @@ element "3 Подписки" {
     }
   }
 }
-
 element "4 Профиль" {
-  use profile_kit.ProfilePage as Screen {
+  use Libraries.profile_kit.ProfilePage as Screen {
     at Cabinet.Sidebar.navigation.Profile { color #efdcf2; text-color #7d1f70 }
     slot header {
       item Header_text {
@@ -161,7 +269,7 @@ element "4 Профиль" {
         item Subtitle { title "Так вас видят другие пользователи платформы"; font-size 13; line-height 18; text-color #7f7f7f; layout left }
       }
       item grow { width fill }
-      use ui_kit.Actions.Button as Edit {
+      use Libraries.ui_kit.Actions.Button as Edit {
         kind secondary
         size medium
         at Button { title "Редактировать" }
@@ -172,7 +280,7 @@ element "4 Профиль" {
     slot content {
       item Public_card {
         auto-layout row; width fill; padding 24; gap 20; align center; color #f8f5fa; corner-radius 10
-        use ui_kit.People.Avatar as Avatar { width 72; height 72; at initials { title "АС"; font-size 24 } }
+        use Libraries.ui_kit.People.Avatar as Avatar { width 72; height 72; at initials { title "АС"; font-size 24 } }
         item Public_text {
           auto-layout column; width fill; gap 6
           item Name { title "Алекс Смирнов"; font-size 22; font-weight 600; line-height 28; layout left }
@@ -186,22 +294,21 @@ element "4 Профиль" {
       }
       item Fields {
         auto-layout column; width fill; color #ffffff; border-color #00000014; corner-radius 10; padding 4 20
-        use profile_kit.ProfileField as Name { width fill; label "Имя"; value "Алекс Смирнов" }
+        use Libraries.profile_kit.ProfileField as Name { width fill; label "Имя"; value "Алекс Смирнов" }
         item divider { width fill; height 1; color #0000000f }
-        use profile_kit.ProfileField as Username { width fill; label "Имя пользователя"; value "@alex" }
+        use Libraries.profile_kit.ProfileField as Username { width fill; label "Имя пользователя"; value "@alex" }
         item divider_2 { width fill; height 1; color #0000000f }
-        use profile_kit.ProfileField as Email { width fill; label "Email"; value "alex@example.com" }
+        use Libraries.profile_kit.ProfileField as Email { width fill; label "Email"; value "alex@example.com" }
         item divider_3 { width fill; height 1; color #0000000f }
-        use profile_kit.ProfileField as City { width fill; label "Город"; value "Новосибирск" }
+        use Libraries.profile_kit.ProfileField as City { width fill; label "Город"; value "Новосибирск" }
         item divider_4 { width fill; height 1; color #0000000f }
-        use profile_kit.ProfileField as Country { width fill; label "Страна"; value "Россия" }
+        use Libraries.profile_kit.ProfileField as Country { width fill; label "Страна"; value "Россия" }
       }
     }
   }
 }
-
 element "5 Безопасность" {
-  use profile_kit.ProfilePage as Screen {
+  use Libraries.profile_kit.ProfilePage as Screen {
     at Cabinet.Sidebar.navigation.Security { color #efdcf2; text-color #7d1f70 }
     slot header {
       item Header_text {
@@ -216,9 +323,9 @@ element "5 Безопасность" {
         item Section_title { title "Способы входа"; font-size 15; font-weight 600; line-height 20; layout left }
         item Login_methods {
           auto-layout column; width fill; padding 4 20; color #ffffff; border-color #00000014; corner-radius 10
-          use profile_kit.ProfileField as Email { width fill; label "Email"; value "alex@example.com" }
+          use Libraries.profile_kit.ProfileField as Email { width fill; label "Email"; value "alex@example.com" }
           item divider { width fill; height 1; color #0000000f }
-          use profile_kit.ProfileField as Github { width fill; label "GitHub"; value "alex-smirnov" }
+          use Libraries.profile_kit.ProfileField as Github { width fill; label "GitHub"; value "alex-smirnov" }
         }
       }
       item Password {
@@ -228,7 +335,7 @@ element "5 Безопасность" {
           item Title { title "Пароль"; font-size 15; font-weight 600; line-height 20; layout left }
           item Hint { title "Изменён 14 августа 2026"; font-size 13; line-height 18; text-color #7f7f7f; layout left }
         }
-        use ui_kit.Actions.Button as Change {
+        use Libraries.ui_kit.Actions.Button as Change {
         kind secondary
         size medium
           at Button { title "Изменить пароль" }
@@ -246,12 +353,381 @@ element "5 Безопасность" {
             item Title { title "Удалить аккаунт"; font-size 14; font-weight 500; line-height 20; layout left }
             item Hint { title "Профиль и личные подписки будут удалены. Пространства останутся у их владельцев."; font-size 13; line-height 18; text-color #7f7f7f; layout left }
           }
-          use ui_kit.Actions.Button as Delete {
+          use Libraries.ui_kit.Actions.Button as Delete {
             kind negative
             size medium
             at Button { title "Удалить аккаунт" }
             at icon_kit_Plus { hidden yes }
             at icon_chevronD { hidden yes }
+          }
+        }
+      }
+    }
+  }
+}
+element "6 Меню аккаунта" {
+  item Screen {
+    auto-layout abs; width 1920; height 1080; clip yes; color #ffffff
+    use Libraries.workbench.Workbench as Workbench { pos 0 0 }
+    use Libraries.ui_kit.Actions.Menu as Account_menu {
+      width 304; pos 16 -600
+      slot content {
+        item Header {
+          auto-layout row; width fill; height 64; padding 8; gap 12; align center
+          use Libraries.ui_kit.People.Avatar as Avatar { width 40; height 40; corner-radius 8; at initials { title "АС"; font-size 14; line-height 18 } }
+          item Account {
+            auto-layout column; width fill; gap 3
+            item Name { title "Алекс Смирнов"; font-size 14; font-weight 600; line-height 18; layout left }
+            item Email { title "alex@example.com"; font-size 12; line-height 16; text-color #7f7f7f; layout left }
+          }
+        }
+        item divider { width fill; height 1; color #0000000f }
+        item Settings {
+          auto-layout row; width fill; height 40; padding 0 10; gap 10; align center; corner-radius 5
+          use Libraries.ui_kit.Icon.kit_Gear as Icon { width 18; height 18; color #5c6470 }
+          item Label { title "Настройки"; width fill; font-size 14; line-height 18; layout left }
+        }
+        item Invite {
+          auto-layout row; width fill; height 40; padding 0 10; gap 10; align center; corner-radius 5
+          use Libraries.ui_kit.Icon.kit_PersonPlus as Icon { width 18; height 18; color #5c6470 }
+          item Label { title "Пригласить людей"; width fill; font-size 14; line-height 18; layout left }
+        }
+        item Profile {
+          auto-layout row; width fill; height 40; padding 0 10; gap 10; align center; color #efdcf2; corner-radius 5
+          use Libraries.ui_kit.Icon.kit_Person as Icon { width 18; height 18; color #7d1f70 }
+          item Label { title "Перейти в профиль"; width fill; font-size 14; font-weight 500; line-height 18; text-color #7d1f70; layout left }
+        }
+        item divider_2 { width fill; height 1; color #0000000f }
+        item Help {
+          auto-layout row; width fill; height 40; padding 0 10; gap 10; align center; corner-radius 5
+          use Libraries.ui_kit.Icon.kit_NotebookQuestion as Icon { width 18; height 18; color #5c6470 }
+          item Label { title "Помощь"; width fill; font-size 14; line-height 18; layout left }
+        }
+        item Download {
+          auto-layout row; width fill; height 40; padding 0 10; gap 10; align center; corner-radius 5
+          use Libraries.ui_kit.Icon.kit_ArrowOut as Icon { width 18; height 18; color #5c6470 }
+          item Label { title "Загрузить приложение"; width fill; font-size 14; line-height 18; layout left }
+        }
+        item Logout {
+          auto-layout row; width fill; height 40; padding 0 10; gap 10; align center; corner-radius 5
+          use Libraries.ui_kit.Icon.kit_ArrowOut as Icon { width 18; height 18; color #9e342a }
+          item Label { title "Выйти"; width fill; font-size 14; line-height 18; text-color #9e342a; layout left }
+        }
+      }
+    }
+  }
+}
+
+element "7 Обновить план" {
+  item Screen {
+    auto-layout abs; width 1920; height 1080; clip yes; color #ffffff
+    use Libraries.workbench.Workbench as Workbench { pos 0 0 }
+    item Scrim { auto-layout abs; width 1920; height 1080; color #15102259; pos 0 0 }
+    item Dialog {
+      auto-layout column; width 1660; height 960; color #ffffff; corner-radius 16; clip yes; shadow 0 -16 48 #00000026; pos 130 -60
+      item Dialog_header {
+        auto-layout row; width fill; height 72; padding 0 32; gap 16; align center
+        item Title { title "Обновить план"; width fill; font-size 24; font-weight 500; line-height 30; layout left }
+        use Libraries.ui_kit.Icon.kit_Cross as Close { width 22; height 22; color #5c6470 }
+      }
+      item divider { width fill; height 1; color #00000012 }
+      item Body {
+        auto-layout column; width fill; height fill; padding 24 32; gap 18
+        item Active_title { title "Активный тариф"; font-size 16; font-weight 600; line-height 22; layout left }
+        item Active_card {
+          auto-layout row; width fill; height 300; padding 22; gap 24; color #ffffff; border-color #00000014; corner-radius 12
+          item Plan_info {
+            auto-layout column; width fill; gap 14
+            item Plan_title {
+              auto-layout row; width fill; gap 16; align center
+              item Name {
+                auto-layout row; width fill; gap 12; align center
+                item Label { title "Старт"; font-size 19; font-weight 600; line-height 24; layout left }
+                item Active {
+                  auto-layout row; padding 4 9; color #e7f4ed; corner-radius 12
+                  item Label { title "Активен"; font-size 12; line-height 16; text-color #26815c }
+                }
+              }
+              item Price { title "0 ₽ в месяц"; font-size 20; font-weight 600; line-height 26 }
+            }
+            item Description { title "Соло-предприниматели и команды до 5 человек"; width fill; font-size 14; line-height 20; text-color #5c6470; layout left }
+            item Features {
+              auto-layout column; width fill; gap 9
+              item Feature_1 {
+                auto-layout row; width fill; gap 9; align center
+                use Libraries.ui_kit.Icon.kit_CheckSquare as Icon { width 16; height 16; color #3c4149 }
+                item Text { title "Доски и Kanban"; font-size 13; line-height 18; layout left }
+              }
+              item Feature_2 {
+                auto-layout row; width fill; gap 9; align center
+                use Libraries.ui_kit.Icon.kit_CheckSquare as Icon { width 16; height 16; color #3c4149 }
+                item Text { title "Документы и базы знаний"; font-size 13; line-height 18; layout left }
+              }
+              item Feature_3 {
+                auto-layout row; width fill; gap 9; align center
+                use Libraries.ui_kit.Icon.kit_CheckSquare as Icon { width 16; height 16; color #3c4149 }
+                item Text { title "Чат, треды и сквозные уведомления"; font-size 13; line-height 18; layout left }
+              }
+              item Feature_4 {
+                auto-layout row; width fill; gap 9; align center
+                use Libraries.ui_kit.Icon.kit_CheckSquare as Icon { width 16; height 16; color #3c4149 }
+                item Text { title "Календарь и планировщик созвонов"; font-size 13; line-height 18; layout left }
+              }
+              item Feature_5 {
+                auto-layout row; width fill; gap 9; align center
+                use Libraries.ui_kit.Icon.kit_CheckSquare as Icon { width 16; height 16; color #3c4149 }
+                item Text { title "Видеоконференции с записью"; font-size 13; line-height 18; layout left }
+              }
+            }
+          }
+          item vertical_divider { width 1; height fill; color #00000012 }
+          item Usage {
+            auto-layout column; width 600; gap 8
+            item Title { title "Использование"; font-size 16; font-weight 600; line-height 20; layout left }
+            item Storage {
+              auto-layout column; width fill; gap 6
+              item Row {
+                auto-layout row; width fill
+                item Label { title "Хранилище"; width fill; font-size 13; line-height 18; layout left }
+                item Value { title "229 КБ из 10 ГБ"; font-size 13; line-height 18; text-color #5c6470 }
+              }
+              item Bar { auto-layout row; width fill; height 6; color #ececf1; corner-radius 3; clip yes; item Value { width 4; height fill; color #8bb34a } }
+            }
+            item Meetings {
+              auto-layout column; width fill; gap 6
+              item Row {
+                auto-layout row; width fill
+                item Label { title "Время встреч"; width fill; font-size 13; line-height 18; layout left }
+                item Value { title "33 мин, без лимита"; font-size 13; line-height 18; text-color #5c6470 }
+              }
+              item Bar { auto-layout row; width fill; height 6; color #ececf1; corner-radius 3 }
+            }
+            item Members {
+              auto-layout column; width fill; gap 6
+              item Row {
+                auto-layout row; width fill
+                item Label { title "Участники"; width fill; font-size 13; line-height 18; layout left }
+                item Value { title "1 из 5"; font-size 13; line-height 18; text-color #5c6470 }
+              }
+              item Bar { auto-layout row; width fill; height 6; color #ececf1; corner-radius 3; clip yes; item Value { width 116; height fill; color #8bb34a } }
+            }
+            item Tokens {
+              auto-layout column; width fill; gap 6
+              item Row {
+                auto-layout row; width fill
+                item Label { title "Доступно"; width fill; font-size 13; line-height 18; layout left }
+                item Value { title "99.7K"; font-size 13; line-height 18; text-color #5c6470 }
+              }
+              item Bar { auto-layout row; width fill; height 6; color #ececf1; corner-radius 3; clip yes; item Value { width 4; height fill; color #8bb34a } }
+            }
+            item Token_month {
+              auto-layout row; width fill
+              item Label { title "Токены ИИ (месяц)"; width fill; font-size 12; line-height 17; text-color #5c6470; layout left }
+              item Value { title "273 / 100K"; font-size 12; line-height 17; text-color #5c6470 }
+            }
+            item Reset { title "сброс в эту минуту"; font-size 12; line-height 16; text-color #7f7f7f; layout left }
+          }
+        }
+        item Support_panel {
+          auto-layout row; width fill; padding 16 18; gap 14; align center; color #f8f5fa; border-color #d9b9d8; corner-radius 10
+          item Panel_icon {
+            auto-layout row; width 40; height 40; align center; justify center; color #efdcf2; corner-radius 10
+            use Libraries.ui_kit.Icon.kit_Sparkle as Icon { width 20; height 20; color #8c267d }
+          }
+          item Panel_text {
+            auto-layout column; width fill; gap 4
+            item Title { title "Вы уже 4 месяца на бесплатном тарифе"; font-size 15; font-weight 600; line-height 20; layout left }
+            item Text { title "Ресурсов примерно на 1 800 ₽. Если Intabia полезна, поддержите проект."; font-size 13; line-height 18; text-color #5c6470; layout left }
+          }
+          item Optional { title "по желанию"; font-size 12; line-height 16; text-color #7f7f7f }
+          use Libraries.ui_kit.Actions.Button as Support {
+            kind primary
+            size medium
+            at Button { title "Поддержать проект" }
+            at icon_kit_Plus { hidden yes }
+            at icon_chevronD { hidden yes }
+          }
+        }
+        item Plans_header {
+          auto-layout row; width fill; gap 16; align center
+          item Title { title "Все тарифы"; width fill; font-size 16; font-weight 600; line-height 22; layout left }
+          item Switcher {
+            auto-layout row; padding 4; gap 4; color #f1f1f5; corner-radius 8
+            item Month { auto-layout row; padding 6 12; color #e4e4ec; corner-radius 6; item Label { title "Месяц"; font-size 13; line-height 18 } }
+            item Year { auto-layout row; padding 6 12; item Label { title "Год -15%"; font-size 13; line-height 18; text-color #5c6470 } }
+          }
+        }
+        item Plan_cards {
+          auto-layout row; width fill; height 210; gap 16
+          item Start {
+            auto-layout column; width fill; padding 18; gap 10; color #e8f2fc; border-color #0000000f; corner-radius 12
+            item Title { title "Старт"; font-size 18; font-weight 600; line-height 24; layout left }
+            item Price { title "Бесплатно"; font-size 23; font-weight 600; line-height 29; layout left }
+            item Description { title "Соло-предприниматели и команды до 5 человек"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+            item grow { height fill }
+            item Current {
+              auto-layout row; padding 5 10; color #ffffffa8; corner-radius 12
+              item Label { title "Текущий план"; font-size 12; line-height 16; text-color #26815c }
+            }
+          }
+          item Business {
+            auto-layout column; width fill; padding 18; gap 10; color #efebfa; border-color #0000000f; corner-radius 12
+            item Title { title "Бизнес"; font-size 18; font-weight 600; line-height 24; layout left }
+            item Price { title "499 ₽ в месяц"; font-size 23; font-weight 600; line-height 29; layout left }
+            item Description { title "Стартапы и IT-команды, которым нужны AI и масштабирование"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+            item grow { height fill }
+            use Libraries.ui_kit.Actions.Button as Action {
+              kind secondary
+              size small
+              at Button { title "Перейти" }
+              at icon_kit_Plus { hidden yes }
+              at icon_chevronD { hidden yes }
+            }
+          }
+          item Enterprise {
+            auto-layout column; width fill; padding 18; gap 10; color #f6eee8; border-color #0000000f; corner-radius 12
+            item Title { title "Корпорация"; font-size 18; font-weight 600; line-height 24; layout left }
+            item Price { title "По запросу"; font-size 23; font-weight 600; line-height 29; layout left }
+            item Description { title "Крупный бизнес и работа во внутреннем контуре"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+            item grow { height fill }
+            use Libraries.ui_kit.Actions.Button as Action {
+              kind secondary
+              size small
+              at Button { title "Связаться" }
+              at icon_kit_Plus { hidden yes }
+              at icon_chevronD { hidden yes }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+element "8 Использование - popup" {
+  item Screen {
+    auto-layout abs; width 1920; height 1080; clip yes; color #ffffff
+    use Libraries.workbench.Workbench as Workbench { pos 0 0 }
+    item Free_badge {
+      auto-layout row; padding 6 12; gap 8; align center; color #f1edf8; border-color #e3d9ef; corner-radius 7; pos 1410 -6
+      use Libraries.ui_kit.Icon.kit_Receipt as Icon { width 16; height 16; color #6f5b91 }
+      item Label { title "Бесплатный тариф"; font-size 13; line-height 17; text-color #514361 }
+    }
+    item Usage_popup {
+      auto-layout column; width 430; padding 18; gap 14; color #ffffff; border-color #00000012; corner-radius 12; shadow 0 -10 30 #00000024; pos 1282 -49
+      item Title { title "Использование"; font-size 18; font-weight 600; line-height 24; layout left }
+      item Storage {
+        auto-layout column; width fill; gap 7
+        item Row {
+          auto-layout row; width fill
+          item Label { title "Хранилище"; width fill; font-size 14; line-height 19; layout left }
+          item Value { title "229 КБ из 10 ГБ"; font-size 13; line-height 19; text-color #5c6470 }
+        }
+        item Bar { auto-layout row; width fill; height 6; color #ececf1; corner-radius 3; clip yes; item Value { width 4; height fill; color #8bb34a } }
+      }
+      item Tokens {
+        auto-layout column; width fill; gap 7
+        item Row {
+          auto-layout row; width fill
+          item Label { title "Доступно"; width fill; font-size 14; line-height 19; layout left }
+          item Value { title "99.7K"; font-size 13; line-height 19; text-color #5c6470 }
+        }
+        item Bar { auto-layout row; width fill; height 6; color #ececf1; corner-radius 3; clip yes; item Value { width 4; height fill; color #8bb34a } }
+      }
+      item Token_month {
+        auto-layout row; width fill
+        item Label { title "Токены ИИ (месяц)"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+        item Value { title "273 / 100K"; font-size 13; line-height 18; text-color #5c6470 }
+      }
+      item Reset { title "сброс в эту минуту"; font-size 12; line-height 16; text-color #7f7f7f; layout left }
+      item divider { width fill; height 1; color #0000000f }
+      item Support {
+        auto-layout column; width fill; padding 12; gap 8; color #f8f5fa; border-color #d9b9d8; corner-radius 8
+        item Title { title "4 месяца на бесплатном тарифе"; font-size 13; font-weight 600; line-height 18; layout left }
+        item Text { title "Ресурсов примерно на 1 800 ₽. Если Intabia полезна, поддержите проект."; width fill; font-size 12; line-height 17; text-color #5c6470; layout left }
+        use Libraries.ui_kit.Actions.Button as Action {
+          kind primary
+          size small
+          at Button { title "Поддержать проект" }
+          at icon_kit_Plus { hidden yes }
+          at icon_chevronD { hidden yes }
+        }
+        item Note { title "Это не счёт, поддержка по желанию"; font-size 11; line-height 15; text-color #7f7f7f; layout left }
+      }
+    }
+  }
+}
+
+element "9 Панель поддержки" {
+  item Screen {
+    auto-layout abs; width 1920; height 1080; clip yes; color #ffffff
+    use Libraries.workbench.Workbench as Workbench {
+      pos -0 -1
+      slot Main_panel {
+        item Workspace {
+          auto-layout abs; width 1515; height 1044; color #ffffff
+          item Header {
+            auto-layout row; width 1435; height 56; gap 20; align center; pos 40 -28
+            item Title { title "Мои задачи"; width fill; font-size 26; font-weight 600; line-height 32; layout left }
+            use Libraries.ui_kit.Actions.Button as Create {
+              kind primary
+              size medium
+              at Button { title "Новая задача" }
+              at icon_chevronD { hidden yes }
+            }
+          }
+          item Table {
+            auto-layout column; width 1435; color #ffffff; border-color #00000014; corner-radius 10; clip yes; pos 40 -108
+            item Table_header {
+              auto-layout row; width fill; height 44; padding 0 20; gap 16; align center; color #f7f7fa
+              item Id { title "ЗАДАЧА"; width 90; font-size 11; font-weight 600; line-height 14; text-color #7f7f7f; layout left }
+              item Name { title "НАЗВАНИЕ"; width fill; font-size 11; font-weight 600; line-height 14; text-color #7f7f7f; layout left }
+              item Status { title "СТАТУС"; width 140; font-size 11; font-weight 600; line-height 14; text-color #7f7f7f; layout left }
+              item Assignee { title "ИСПОЛНИТЕЛЬ"; width 160; font-size 11; font-weight 600; line-height 14; text-color #7f7f7f; layout left }
+            }
+            item Task_1 {
+              auto-layout row; width fill; height 58; padding 0 20; gap 16; align center
+              item Id { title "FUSIO-1620"; width 90; font-size 13; line-height 18; text-color #7f7f7f; layout left }
+              item Name { title "Глобальный профиль пользователя"; width fill; font-size 14; line-height 20; layout left }
+              item Status { title "В работе"; width 140; font-size 13; line-height 18; text-color #7d1f70; layout left }
+              item Assignee { title "Алекс Смирнов"; width 160; font-size 13; line-height 18; text-color #5c6470; layout left }
+            }
+            item divider { width fill; height 1; color #0000000f }
+            item Task_2 {
+              auto-layout row; width fill; height 58; padding 0 20; gap 16; align center
+              item Id { title "FUSIO-1621"; width 90; font-size 13; line-height 18; text-color #7f7f7f; layout left }
+              item Name { title "Настройки проекта"; width fill; font-size 14; line-height 20; layout left }
+              item Status { title "Запланировано"; width 140; font-size 13; line-height 18; text-color #5c6470; layout left }
+              item Assignee { title "Мария Орлова"; width 160; font-size 13; line-height 18; text-color #5c6470; layout left }
+            }
+            item divider_2 { width fill; height 1; color #0000000f }
+            item Task_3 {
+              auto-layout row; width fill; height 58; padding 0 20; gap 16; align center
+              item Id { title "FUSIO-1613"; width 90; font-size 13; line-height 18; text-color #7f7f7f; layout left }
+              item Name { title "Доски задач"; width fill; font-size 14; line-height 20; layout left }
+              item Status { title "Готово"; width 140; font-size 13; line-height 18; text-color #26815c; layout left }
+              item Assignee { title "Алекс Смирнов"; width 160; font-size 13; line-height 18; text-color #5c6470; layout left }
+            }
+          }
+          item Support_panel {
+            auto-layout row; width 800; padding 16 18; gap 14; align center; color #f8f5fa; border-color #d9b9d8; corner-radius 12; shadow 0 -6 20 #00000014; pos 265 -946
+            item Panel_icon {
+              auto-layout row; width 40; height 40; align center; justify center; color #efdcf2; corner-radius 10
+              use Libraries.ui_kit.Icon.kit_Sparkle as Icon { width 20; height 20; color #8c267d }
+            }
+            item Panel_text {
+              auto-layout column; width fill; gap 4
+              item Title { title "Вы уже 4 месяца на бесплатном плане"; font-size 14; font-weight 600; line-height 18; layout left }
+              item Text { title "Ресурсов примерно на 1 800 ₽. Если Intabia полезна, поддержите проект."; font-size 12; line-height 17; text-color #5c6470; layout left }
+            }
+            use Libraries.ui_kit.Actions.Button as Support {
+              kind primary
+              size small
+              at Button { title "Поддержать проект" }
+              at icon_kit_Plus { hidden yes }
+              at icon_chevronD { hidden yes }
+            }
+            use Libraries.ui_kit.Icon.kit_Cross as Close { width 16; height 16; color #7f7f7f }
           }
         }
       }

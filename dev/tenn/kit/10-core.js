@@ -119,6 +119,7 @@ kit.node = (node) => {
   if (typeof node.height === 'number') s.h = node.height
   return s
 }
+kit.pen = kit.node
 
 // Dashed strokes are not emitted: the stroke stays solid
 kit.fill = (shape, c) => { shape.f = c ? colorOf(c) : null; if (shape.f === null) delete shape.f; return shape }
@@ -210,5 +211,5 @@ kit.page = async (name, o = {}) => {
   return host.page
 }
 
-// o: hide[] index paths of parts that are off in the library look; slots[] names of containers whose children the instance supplies ('$root' = the component itself)
+// o: hide[] and slots[] as in toLib; params/styles/expr/animations describe a canonical component; alias maps a seed variant to its parameters, target overrides the canonical name; element emits a screen catalogue
 kit.component = (name, s, o = {}) => { s.name = name; s.reusable = true; s.lib = o; host.components.push(s); return s }

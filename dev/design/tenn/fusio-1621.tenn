@@ -1,94 +1,94 @@
 entry "../../../PlatformDesign.tenn"
 element "1 Настройки проекта" {
-	use workbench.Workbench as "Настройки проекта - Основное" {
+	use Libraries.workbench.Workbench as "Настройки проекта - Основное" {
 		pos 0 0
 		replace Top_bar {
-			use workbench.TopBar as "Top bar" {
+			use Libraries.workbench.TopBar as "Top bar" {
 				at tabs.tab.Tracker { title "Настройки проекта" }
 			}
 		}
 		replace _Navigator {
-			use workbench.Navigator as Navigator {
+			use Libraries.workbench.Navigator as Navigator {
 				pos 68 -36
 				slot items {
-					use workbench.NavItem as "NavItem/My issues" {
+					use Libraries.workbench.NavItem as "NavItem/My issues" {
 						pos 13 -112
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.timeline as "icon/timeline" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.timeline as "icon/timeline" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title "My issues" }
 					}
-					use workbench.NavItem as "NavItem/All issues" {
+					use Libraries.workbench.NavItem as "NavItem/All issues" {
 						pos 13 -144
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title "All issues" }
 					}
-					use workbench.NavItem as "NavItem/Доски" {
+					use Libraries.workbench.NavItem as "NavItem/Доски" {
 						pos 13 -176
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.board as "icon/board" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.board as "icon/board" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Доски }
 					}
-					use workbench.NavItem as "NavItem/Тестирование" {
+					use Libraries.workbench.NavItem as "NavItem/Тестирование" {
 						padding 0 8 0 32; pos 13 -208
 						at icon_kit_CheckSquare { hidden yes }
 						at Issues { title Тестирование }
 					}
-					use workbench.NavItem as "NavItem/Мой спринт" {
+					use Libraries.workbench.NavItem as "NavItem/Мой спринт" {
 						padding 0 8 0 32; pos 13 -240
 						at icon_kit_CheckSquare { hidden yes }
 						at Issues { title "Мой спринт" }
 					}
 					item divider { auto-layout abs; width 279; height 1; clip yes; color #0000001a; pos 1 -284 }
-					use workbench.NavGroup as "NavGroup Your projects" { pos 0 -284 }
-					use workbench.NavSpace as "NavSpace Мобильное приложение" {
+					use Libraries.workbench.NavGroup as "NavGroup Your projects" { pos 0 -284 }
+					use Libraries.workbench.NavSpace as "NavSpace Мобильное приложение" {
 						pos 0 -329
 						at label.Mobile_app { title "МОБИЛЬНОЕ ПРИЛОЖЕНИЕ" }
 					}
-					use workbench.NavItem as "NavItem/Issues" {
+					use Libraries.workbench.NavItem as "NavItem/Issues" {
 						padding 0 8 0 32; pos 13 -365
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
 						}
 					}
-					use workbench.NavItem as "NavItem/Components" {
+					use Libraries.workbench.NavItem as "NavItem/Components" {
 						padding 0 8 0 32; pos 13 -397
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.component as "icon/component" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.component as "icon/component" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Components }
 					}
-					use workbench.NavItem as "NavItem/Milestones" {
+					use Libraries.workbench.NavItem as "NavItem/Milestones" {
 						padding 0 8 0 32; pos 13 -429
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.milestone as "icon/milestone" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.milestone as "icon/milestone" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Milestones }
 					}
-					use workbench.NavSpace as "NavSpace Маркетинг" {
+					use Libraries.workbench.NavSpace as "NavSpace Маркетинг" {
 						pos 0 -457
 						at label.Mobile_app { title МАРКЕТИНГ }
 					}
-					use workbench.NavItem as "NavItem/Issues" {
+					use Libraries.workbench.NavItem as "NavItem/Issues" {
 						padding 0 8 0 32; pos 13 -493
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
 						}
 					}
-					use workbench.NavItem as "NavItem/Components" {
+					use Libraries.workbench.NavItem as "NavItem/Components" {
 						padding 0 8 0 32; pos 13 -525
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.component as "icon/component" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.component as "icon/component" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Components }
 					}
-					use workbench.NavItem as "NavItem/Milestones" {
+					use Libraries.workbench.NavItem as "NavItem/Milestones" {
 						padding 0 8 0 32; pos 13 -557
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.milestone as "icon/milestone" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.milestone as "icon/milestone" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Milestones }
 					}
@@ -97,13 +97,14 @@ element "1 Настройки проекта" {
 			}
 		}
 		slot Main_panel {
-			use settings_kit.SettingsLayout as Settings {
+			use Libraries.settings_kit.SettingsLayout as Settings {
 				width 1515; height 1044
 				at Settings_header { width 1515 }
 				replace Settings_header.left.Button_ghost_small {
-					use ui_kit.Actions.Button as "Button/ghost/small" { kind ghost; size small;
+					use Libraries.ui_kit.Actions.Button as "Button/ghost/small" {
+						kind ghost; size small
 						replace icon_kit_Plus {
-							use ui_kit.Icon.chevronL as "icon/chevronL" { border-color #5a667e; line-width 1 }
+							use Libraries.ui_kit.Icon.chevronL as "icon/chevronL" { border-color #5a667e; line-width 1 }
 						}
 						at Button { title "К проекту" }
 					}
@@ -115,127 +116,128 @@ element "1 Настройки проекта" {
 				at Settings_subtabs { hidden no; auto-layout column; gap 16; padding 24 32; align start; width 1282; height 987 }
 				at Settings_content { hidden yes }
 				slot right {
-					use ui_kit.Actions.Button as "Close settings" { kind tertiary; size small; shape icon;
-						replace icon_gear {
-							use ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
+					use Libraries.ui_kit.Actions.Button as "Close settings" {
+						kind tertiary; size small; shape icon
+						replace icon_kit_Plus {
+							use Libraries.ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
 					}
 				}
 				slot Settings_tabs {
-					use workbench.NavItem_selected as "NavItem/Основное" {
-						width 208
+					use Libraries.workbench.NavItem as "NavItem/Основное" {
+						selected true; width 208
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.gear as "icon/gear" { border-color #cf13a2; line-width 1 }
+							use Libraries.ui_kit.Icon.gear as "icon/gear" { border-color #cf13a2; line-width 1 }
 						}
 						at Issues { title Основное }
 					}
-					use workbench.NavItem as "NavItem/Участники и доступ" {
+					use Libraries.workbench.NavItem as "NavItem/Участники и доступ" {
 						width 208
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.users as "icon/users" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.users as "icon/users" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title "Участники и доступ" }
 					}
-					use workbench.NavItem as "NavItem/Задачи" {
+					use Libraries.workbench.NavItem as "NavItem/Задачи" {
 						width 208
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Задачи }
 					}
-					use workbench.NavItem as "NavItem/Статусы и workflow" {
+					use Libraries.workbench.NavItem as "NavItem/Статусы и workflow" {
 						width 208
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.timeline as "icon/timeline" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.timeline as "icon/timeline" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title "Статусы и workflow" }
 					}
-					use workbench.NavItem as "NavItem/Архив" {
+					use Libraries.workbench.NavItem as "NavItem/Архив" {
 						width 208
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.trash as "icon/trash" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.trash as "icon/trash" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Архив }
 					}
 				}
 				slot Settings_subtabs {
-					use settings_kit.SectionTitle as "Section Основное" {
+					use Libraries.settings_kit.SectionTitle as "Section Основное" {
 						at Title { title Основное }
 						at Hint_of_the_section { hidden no; title "Изменения сохраняются сразу."; width 720 }
 					}
-					use settings_kit.FormRow as "Row Тип проекта" {
+					use Libraries.settings_kit.FormRow as "Row Тип проекта" {
 						at label.Label { title "Тип проекта" }
 						at label.Hint { hidden no; title "Статусы и типы задач берутся из типа" }
 						slot control {
 							item type {
 								auto-layout row; gap 8; align center; clip yes
-								use ui_kit.TagsAndFilters.Chip as Chip {
+								use Libraries.ui_kit.TagsAndFilters.Chip as Chip {
 									slot content {
-										use ui_kit.Status.StatusIcon_backlog as "Status/StatusIcon/backlog"
+										use Libraries.ui_kit.Status.StatusIcon as "Status/StatusIcon/backlog" { category backlog }
 										item Default { title Default; font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; auto-layout row; text-color #00000099 }
 									}
 								}
-								use ui_kit.Actions.Button as "Button/tertiary/extra-small" { kind tertiary; size extra-small;
+								use Libraries.ui_kit.Actions.Button as "Button/tertiary/extra-small" {
+									kind tertiary; size extra-small
 									at icon_kit_Plus { hidden yes }
 									at Button { title "Открыть тип проекта" }
 								}
 							}
 						}
 					}
-					use settings_kit.FormRow as "Row Название" {
+					use Libraries.settings_kit.FormRow as "Row Название" {
 						at label.Label { title Название }
 						slot control {
-							use ui_kit.Forms.Input as Input {
+							use Libraries.ui_kit.Forms.Input as Input {
 								at field { width 420 }
 								at field.Value { title "Мобильное приложение" }
 							}
 						}
 					}
-					use settings_kit.FormRow as "Row Идентификатор" {
+					use Libraries.settings_kit.FormRow as "Row Идентификатор" {
 						at label.Label { title Идентификатор }
 						at label.Hint { hidden no; title "Префикс номеров задач: APP-6" }
 						slot control {
-							use ui_kit.Forms.Input as Input {
+							use Libraries.ui_kit.Forms.Input as Input {
 								at field { width 160 }
 								at field.Value { title APP }
 							}
 						}
 					}
-					use settings_kit.FormRow as "Row Описание" {
+					use Libraries.settings_kit.FormRow as "Row Описание" {
 						at label.Label { title Описание }
 						slot control {
-							use ui_kit.Forms.Input_multiline as Input {
+							use Libraries.ui_kit.Forms.Input as Input {
+								layout multiline
 								at field { width 420 }
-								at field.Long_value_that_wraps_to_the_next_line {
-									title "Разработка мобильного приложения компании «Демо» для iOS и Android: каталог товаров, личный кабинет, push-уведомления и оплата."; width 400
-								}
+								at field.icon_kit_PersonCircle { width 400 }
 							}
 						}
 					}
-					use settings_kit.FormRow as "Row Иконка" {
+					use Libraries.settings_kit.FormRow as "Row Иконка" {
 						at label.Label { title Иконка }
 						slot control {
 							item icons {
 								auto-layout row; gap 6; align center; clip yes
 								item icon {
 									auto-layout row; align center; justify center; width 32; height 32; clip yes; color #f0f0f0; border-color #cf13a2; corner-radius 6
-									use ui_kit.Icon.board as "icon/board" { border-color #00000099; line-width 1 }
+									use Libraries.ui_kit.Icon.board as "icon/board" { border-color #00000099; line-width 1 }
 								}
 								item icon {
 									auto-layout row; align center; justify center; width 32; height 32; clip yes; border-color #00000017; corner-radius 6
-									use ui_kit.Icon.star as "icon/star" { border-color #00000099; line-width 1 }
+									use Libraries.ui_kit.Icon.star as "icon/star" { border-color #00000099; line-width 1 }
 								}
 								item icon {
 									auto-layout row; align center; justify center; width 32; height 32; clip yes; border-color #00000017; corner-radius 6
-									use ui_kit.Icon.component as "icon/component" { border-color #00000099; line-width 1 }
+									use Libraries.ui_kit.Icon.component as "icon/component" { border-color #00000099; line-width 1 }
 								}
 								item icon {
 									auto-layout row; align center; justify center; width 32; height 32; clip yes; border-color #00000017; corner-radius 6
-									use ui_kit.Icon.milestone as "icon/milestone" { border-color #00000099; line-width 1 }
+									use Libraries.ui_kit.Icon.milestone as "icon/milestone" { border-color #00000099; line-width 1 }
 								}
 								item icon {
 									auto-layout row; align center; justify center; width 32; height 32; clip yes; border-color #00000017; corner-radius 6
-									use ui_kit.Icon.users as "icon/users" { border-color #00000099; line-width 1 }
+									use Libraries.ui_kit.Icon.users as "icon/users" { border-color #00000099; line-width 1 }
 								}
 							}
 						}
@@ -244,95 +246,95 @@ element "1 Настройки проекта" {
 			}
 		}
 	}
-	use workbench.Workbench as "Настройки проекта - Участники и доступ" {
+	use Libraries.workbench.Workbench as "Настройки проекта - Участники и доступ" {
 		pos 2020 0
 		replace Top_bar {
-			use workbench.TopBar as "Top bar" {
+			use Libraries.workbench.TopBar as "Top bar" {
 				at tabs.tab.Tracker { title "Настройки проекта" }
 			}
 		}
 		replace _Navigator {
-			use workbench.Navigator as Navigator {
+			use Libraries.workbench.Navigator as Navigator {
 				pos 68 -36
 				slot items {
-					use workbench.NavItem as "NavItem/My issues" {
+					use Libraries.workbench.NavItem as "NavItem/My issues" {
 						pos 13 -112
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.timeline as "icon/timeline" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.timeline as "icon/timeline" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title "My issues" }
 					}
-					use workbench.NavItem as "NavItem/All issues" {
+					use Libraries.workbench.NavItem as "NavItem/All issues" {
 						pos 13 -144
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title "All issues" }
 					}
-					use workbench.NavItem as "NavItem/Доски" {
+					use Libraries.workbench.NavItem as "NavItem/Доски" {
 						pos 13 -176
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.board as "icon/board" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.board as "icon/board" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Доски }
 					}
-					use workbench.NavItem as "NavItem/Тестирование" {
+					use Libraries.workbench.NavItem as "NavItem/Тестирование" {
 						padding 0 8 0 32; pos 13 -208
 						at icon_kit_CheckSquare { hidden yes }
 						at Issues { title Тестирование }
 					}
-					use workbench.NavItem as "NavItem/Мой спринт" {
+					use Libraries.workbench.NavItem as "NavItem/Мой спринт" {
 						padding 0 8 0 32; pos 13 -240
 						at icon_kit_CheckSquare { hidden yes }
 						at Issues { title "Мой спринт" }
 					}
 					item divider { auto-layout abs; width 279; height 1; clip yes; color #0000001a; pos 1 -284 }
-					use workbench.NavGroup as "NavGroup Your projects" { pos 0 -284 }
-					use workbench.NavSpace as "NavSpace Мобильное приложение" {
+					use Libraries.workbench.NavGroup as "NavGroup Your projects" { pos 0 -284 }
+					use Libraries.workbench.NavSpace as "NavSpace Мобильное приложение" {
 						pos 0 -329
 						at label.Mobile_app { title "МОБИЛЬНОЕ ПРИЛОЖЕНИЕ" }
 					}
-					use workbench.NavItem as "NavItem/Issues" {
+					use Libraries.workbench.NavItem as "NavItem/Issues" {
 						padding 0 8 0 32; pos 13 -365
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
 						}
 					}
-					use workbench.NavItem as "NavItem/Components" {
+					use Libraries.workbench.NavItem as "NavItem/Components" {
 						padding 0 8 0 32; pos 13 -397
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.component as "icon/component" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.component as "icon/component" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Components }
 					}
-					use workbench.NavItem as "NavItem/Milestones" {
+					use Libraries.workbench.NavItem as "NavItem/Milestones" {
 						padding 0 8 0 32; pos 13 -429
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.milestone as "icon/milestone" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.milestone as "icon/milestone" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Milestones }
 					}
-					use workbench.NavSpace as "NavSpace Маркетинг" {
+					use Libraries.workbench.NavSpace as "NavSpace Маркетинг" {
 						pos 0 -457
 						at label.Mobile_app { title МАРКЕТИНГ }
 					}
-					use workbench.NavItem as "NavItem/Issues" {
+					use Libraries.workbench.NavItem as "NavItem/Issues" {
 						padding 0 8 0 32; pos 13 -493
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
 						}
 					}
-					use workbench.NavItem as "NavItem/Components" {
+					use Libraries.workbench.NavItem as "NavItem/Components" {
 						padding 0 8 0 32; pos 13 -525
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.component as "icon/component" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.component as "icon/component" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Components }
 					}
-					use workbench.NavItem as "NavItem/Milestones" {
+					use Libraries.workbench.NavItem as "NavItem/Milestones" {
 						padding 0 8 0 32; pos 13 -557
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.milestone as "icon/milestone" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.milestone as "icon/milestone" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Milestones }
 					}
@@ -341,13 +343,14 @@ element "1 Настройки проекта" {
 			}
 		}
 		slot Main_panel {
-			use settings_kit.SettingsLayout as Settings {
+			use Libraries.settings_kit.SettingsLayout as Settings {
 				width 1515; height 1044
 				at Settings_header { width 1515 }
 				replace Settings_header.left.Button_ghost_small {
-					use ui_kit.Actions.Button as "Button/ghost/small" { kind ghost; size small;
+					use Libraries.ui_kit.Actions.Button as "Button/ghost/small" {
+						kind ghost; size small
 						replace icon_kit_Plus {
-							use ui_kit.Icon.chevronL as "icon/chevronL" { border-color #5a667e; line-width 1 }
+							use Libraries.ui_kit.Icon.chevronL as "icon/chevronL" { border-color #5a667e; line-width 1 }
 						}
 						at Button { title "К проекту" }
 					}
@@ -359,68 +362,71 @@ element "1 Настройки проекта" {
 				at Settings_subtabs { hidden no; auto-layout column; gap 16; padding 24 32; align start; width 1282; height 987 }
 				at Settings_content { hidden yes }
 				slot right {
-					use ui_kit.Actions.Button as "Close settings" { kind tertiary; size small; shape icon;
-						replace icon_gear {
-							use ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
+					use Libraries.ui_kit.Actions.Button as "Close settings" {
+						kind tertiary; size small; shape icon
+						replace icon_kit_Plus {
+							use Libraries.ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
 					}
 				}
 				slot Settings_tabs {
-					use workbench.NavItem as "NavItem/Основное" {
+					use Libraries.workbench.NavItem as "NavItem/Основное" {
 						width 208
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.gear as "icon/gear" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.gear as "icon/gear" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Основное }
 					}
-					use workbench.NavItem_selected as "NavItem/Участники и доступ" {
-						width 208
+					use Libraries.workbench.NavItem as "NavItem/Участники и доступ" {
+						selected true; width 208
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.users as "icon/users" { border-color #cf13a2; line-width 1 }
+							use Libraries.ui_kit.Icon.users as "icon/users" { border-color #cf13a2; line-width 1 }
 						}
 						at Issues { title "Участники и доступ" }
 					}
-					use workbench.NavItem as "NavItem/Задачи" {
+					use Libraries.workbench.NavItem as "NavItem/Задачи" {
 						width 208
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Задачи }
 					}
-					use workbench.NavItem as "NavItem/Статусы и workflow" {
+					use Libraries.workbench.NavItem as "NavItem/Статусы и workflow" {
 						width 208
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.timeline as "icon/timeline" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.timeline as "icon/timeline" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title "Статусы и workflow" }
 					}
-					use workbench.NavItem as "NavItem/Архив" {
+					use Libraries.workbench.NavItem as "NavItem/Архив" {
 						width 208
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.trash as "icon/trash" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.trash as "icon/trash" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Архив }
 					}
 				}
 				slot Settings_subtabs {
-					use settings_kit.SectionTitle as "Section Участники и доступ" {
+					use Libraries.settings_kit.SectionTitle as "Section Участники и доступ" {
 						at Title { title "Участники и доступ" }
 						at Hint_of_the_section { hidden no; title "Кто видит проект и кто может его настраивать."; width 720 }
 					}
-					use settings_kit.FormRow as "Row Приватный проект" {
+					use Libraries.settings_kit.FormRow as "Row Приватный проект" {
 						at label.Label { title "Приватный проект" }
 						at label.Hint { hidden no; title "Видят только участники" }
 						slot control {
-							use ui_kit.Forms.Toggle_off as Toggle {
+							use Libraries.ui_kit.Forms.Toggle as Toggle {
+								on false
 								at Label { hidden yes }
 							}
 						}
 					}
-					use settings_kit.FormRow as "Row Автовступление" {
+					use Libraries.settings_kit.FormRow as "Row Автовступление" {
 						at label.Label { title Автовступление }
 						at label.Hint { hidden no; title "Новые сотрудники становятся участниками автоматически" }
 						slot control {
-							use ui_kit.Forms.Toggle_off as Toggle {
+							use Libraries.ui_kit.Forms.Toggle as Toggle {
+								on false
 								at Label { hidden yes }
 							}
 						}
@@ -429,14 +435,15 @@ element "1 Настройки проекта" {
 					item "members head" {
 						auto-layout row; align center; justify space-between; width 760; height 32; clip yes
 						item "Участники · 4" { title "Участники · 4"; font-size 14; line-height 18; font-family "IBM Plex Sans"; font-weight 600; layout left }
-						use ui_kit.Actions.Button as "Button/secondary/small" { kind secondary; size small;
+						use Libraries.ui_kit.Actions.Button as "Button/secondary/small" {
+							kind secondary; size small
 							replace icon_kit_Plus {
-								use ui_kit.Icon.plus as "icon/plus" { border-color #000000; line-width 1 }
+								use Libraries.ui_kit.Icon.plus as "icon/plus" { border-color #000000; line-width 1 }
 							}
 							at Button { title "Добавить участника" }
 						}
 					}
-					use settings_kit.Table as "Members table" {
+					use Libraries.settings_kit.Table as "Members table" {
 						width 1218
 						at head { width 1218 }
 						at body { width 1218 }
@@ -462,7 +469,7 @@ element "1 Настройки проекта" {
 									auto-layout row; gap 6; padding 6 12; align center; width 962; clip yes; wrap yes; line-gap 6
 									item person {
 										auto-layout row; gap 8; align center; clip yes
-										use ui_kit.People.Avatar as "Avatar/24" {
+										use Libraries.ui_kit.People.Avatar as "Avatar/24" {
 											width 24; height 24; color #4ca6ee; corner-radius 5
 											at initials { title СА; font-size 10; line-height 13 }
 										}
@@ -471,7 +478,7 @@ element "1 Настройки проекта" {
 								}
 								item td {
 									auto-layout row; gap 6; padding 6 12; align center; width 200; clip yes; wrap yes; line-gap 6
-									use ui_kit.Forms.Input as Input {
+									use Libraries.ui_kit.Forms.Input as Input {
 										at field { width 160 }
 										at field.Value { title Владелец }
 										at field.grow { hidden no }
@@ -480,9 +487,10 @@ element "1 Настройки проекта" {
 								}
 								item td {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
-									use ui_kit.Actions.Button as "IconButton/more" { kind tertiary; size extra-small; shape icon;
-										replace icon_gear {
-											use ui_kit.Icon.more as "icon/more" { border-color #5a667e; line-width 1 }
+									use Libraries.ui_kit.Actions.Button as "IconButton/more" {
+										kind tertiary; size extra-small; shape icon
+										replace icon_kit_Plus {
+											use Libraries.ui_kit.Icon.more as "icon/more" { border-color #5a667e; line-width 1 }
 										}
 									}
 								}
@@ -494,7 +502,7 @@ element "1 Настройки проекта" {
 									auto-layout row; gap 6; padding 6 12; align center; width 962; clip yes; wrap yes; line-gap 6
 									item person {
 										auto-layout row; gap 8; align center; clip yes
-										use ui_kit.People.Avatar as "Avatar/24" {
+										use Libraries.ui_kit.People.Avatar as "Avatar/24" {
 											width 24; height 24; color #83af12; corner-radius 5
 											at initials { title КМ; font-size 10; line-height 13 }
 										}
@@ -503,7 +511,7 @@ element "1 Настройки проекта" {
 								}
 								item td {
 									auto-layout row; gap 6; padding 6 12; align center; width 200; clip yes; wrap yes; line-gap 6
-									use ui_kit.Forms.Input as Input {
+									use Libraries.ui_kit.Forms.Input as Input {
 										at field { width 160 }
 										at field.Value { title Участник }
 										at field.grow { hidden no }
@@ -512,9 +520,10 @@ element "1 Настройки проекта" {
 								}
 								item td {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
-									use ui_kit.Actions.Button as "IconButton/more" { kind tertiary; size extra-small; shape icon;
-										replace icon_gear {
-											use ui_kit.Icon.more as "icon/more" { border-color #5a667e; line-width 1 }
+									use Libraries.ui_kit.Actions.Button as "IconButton/more" {
+										kind tertiary; size extra-small; shape icon
+										replace icon_kit_Plus {
+											use Libraries.ui_kit.Icon.more as "icon/more" { border-color #5a667e; line-width 1 }
 										}
 									}
 								}
@@ -526,7 +535,7 @@ element "1 Настройки проекта" {
 									auto-layout row; gap 6; padding 6 12; align center; width 962; clip yes; wrap yes; line-gap 6
 									item person {
 										auto-layout row; gap 8; align center; clip yes
-										use ui_kit.People.Avatar as "Avatar/24" {
+										use Libraries.ui_kit.People.Avatar as "Avatar/24" {
 											width 24; height 24; color #db877d; corner-radius 5
 											at initials { title ПИ; font-size 10; line-height 13 }
 										}
@@ -535,7 +544,7 @@ element "1 Настройки проекта" {
 								}
 								item td {
 									auto-layout row; gap 6; padding 6 12; align center; width 200; clip yes; wrap yes; line-gap 6
-									use ui_kit.Forms.Input as Input {
+									use Libraries.ui_kit.Forms.Input as Input {
 										at field { width 160 }
 										at field.Value { title Участник }
 										at field.grow { hidden no }
@@ -544,9 +553,10 @@ element "1 Настройки проекта" {
 								}
 								item td {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
-									use ui_kit.Actions.Button as "IconButton/more" { kind tertiary; size extra-small; shape icon;
-										replace icon_gear {
-											use ui_kit.Icon.more as "icon/more" { border-color #5a667e; line-width 1 }
+									use Libraries.ui_kit.Actions.Button as "IconButton/more" {
+										kind tertiary; size extra-small; shape icon
+										replace icon_kit_Plus {
+											use Libraries.ui_kit.Icon.more as "icon/more" { border-color #5a667e; line-width 1 }
 										}
 									}
 								}
@@ -558,7 +568,7 @@ element "1 Настройки проекта" {
 									auto-layout row; gap 6; padding 6 12; align center; width 962; clip yes; wrap yes; line-gap 6
 									item person {
 										auto-layout row; gap 8; align center; clip yes
-										use ui_kit.People.Avatar as "Avatar/24" {
+										use Libraries.ui_kit.People.Avatar as "Avatar/24" {
 											width 24; height 24; color #709a3f; corner-radius 5
 											at initials { title ВО; font-size 10; line-height 13 }
 										}
@@ -567,7 +577,7 @@ element "1 Настройки проекта" {
 								}
 								item td {
 									auto-layout row; gap 6; padding 6 12; align center; width 200; clip yes; wrap yes; line-gap 6
-									use ui_kit.Forms.Input as Input {
+									use Libraries.ui_kit.Forms.Input as Input {
 										at field { width 160 }
 										at field.Value { title Участник }
 										at field.grow { hidden no }
@@ -576,9 +586,10 @@ element "1 Настройки проекта" {
 								}
 								item td {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
-									use ui_kit.Actions.Button as "IconButton/more" { kind tertiary; size extra-small; shape icon;
-										replace icon_gear {
-											use ui_kit.Icon.more as "icon/more" { border-color #5a667e; line-width 1 }
+									use Libraries.ui_kit.Actions.Button as "IconButton/more" {
+										kind tertiary; size extra-small; shape icon
+										replace icon_kit_Plus {
+											use Libraries.ui_kit.Icon.more as "icon/more" { border-color #5a667e; line-width 1 }
 										}
 									}
 								}
@@ -589,95 +600,95 @@ element "1 Настройки проекта" {
 			}
 		}
 	}
-	use workbench.Workbench as "Настройки проекта - Задачи" {
+	use Libraries.workbench.Workbench as "Настройки проекта - Задачи" {
 		pos 0 -1200
 		replace Top_bar {
-			use workbench.TopBar as "Top bar" {
+			use Libraries.workbench.TopBar as "Top bar" {
 				at tabs.tab.Tracker { title "Настройки проекта" }
 			}
 		}
 		replace _Navigator {
-			use workbench.Navigator as Navigator {
+			use Libraries.workbench.Navigator as Navigator {
 				pos 68 -36
 				slot items {
-					use workbench.NavItem as "NavItem/My issues" {
+					use Libraries.workbench.NavItem as "NavItem/My issues" {
 						pos 13 -112
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.timeline as "icon/timeline" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.timeline as "icon/timeline" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title "My issues" }
 					}
-					use workbench.NavItem as "NavItem/All issues" {
+					use Libraries.workbench.NavItem as "NavItem/All issues" {
 						pos 13 -144
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title "All issues" }
 					}
-					use workbench.NavItem as "NavItem/Доски" {
+					use Libraries.workbench.NavItem as "NavItem/Доски" {
 						pos 13 -176
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.board as "icon/board" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.board as "icon/board" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Доски }
 					}
-					use workbench.NavItem as "NavItem/Тестирование" {
+					use Libraries.workbench.NavItem as "NavItem/Тестирование" {
 						padding 0 8 0 32; pos 13 -208
 						at icon_kit_CheckSquare { hidden yes }
 						at Issues { title Тестирование }
 					}
-					use workbench.NavItem as "NavItem/Мой спринт" {
+					use Libraries.workbench.NavItem as "NavItem/Мой спринт" {
 						padding 0 8 0 32; pos 13 -240
 						at icon_kit_CheckSquare { hidden yes }
 						at Issues { title "Мой спринт" }
 					}
 					item divider { auto-layout abs; width 279; height 1; clip yes; color #0000001a; pos 1 -284 }
-					use workbench.NavGroup as "NavGroup Your projects" { pos 0 -284 }
-					use workbench.NavSpace as "NavSpace Мобильное приложение" {
+					use Libraries.workbench.NavGroup as "NavGroup Your projects" { pos 0 -284 }
+					use Libraries.workbench.NavSpace as "NavSpace Мобильное приложение" {
 						pos 0 -329
 						at label.Mobile_app { title "МОБИЛЬНОЕ ПРИЛОЖЕНИЕ" }
 					}
-					use workbench.NavItem as "NavItem/Issues" {
+					use Libraries.workbench.NavItem as "NavItem/Issues" {
 						padding 0 8 0 32; pos 13 -365
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
 						}
 					}
-					use workbench.NavItem as "NavItem/Components" {
+					use Libraries.workbench.NavItem as "NavItem/Components" {
 						padding 0 8 0 32; pos 13 -397
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.component as "icon/component" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.component as "icon/component" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Components }
 					}
-					use workbench.NavItem as "NavItem/Milestones" {
+					use Libraries.workbench.NavItem as "NavItem/Milestones" {
 						padding 0 8 0 32; pos 13 -429
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.milestone as "icon/milestone" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.milestone as "icon/milestone" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Milestones }
 					}
-					use workbench.NavSpace as "NavSpace Маркетинг" {
+					use Libraries.workbench.NavSpace as "NavSpace Маркетинг" {
 						pos 0 -457
 						at label.Mobile_app { title МАРКЕТИНГ }
 					}
-					use workbench.NavItem as "NavItem/Issues" {
+					use Libraries.workbench.NavItem as "NavItem/Issues" {
 						padding 0 8 0 32; pos 13 -493
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
 						}
 					}
-					use workbench.NavItem as "NavItem/Components" {
+					use Libraries.workbench.NavItem as "NavItem/Components" {
 						padding 0 8 0 32; pos 13 -525
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.component as "icon/component" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.component as "icon/component" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Components }
 					}
-					use workbench.NavItem as "NavItem/Milestones" {
+					use Libraries.workbench.NavItem as "NavItem/Milestones" {
 						padding 0 8 0 32; pos 13 -557
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.milestone as "icon/milestone" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.milestone as "icon/milestone" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Milestones }
 					}
@@ -686,13 +697,14 @@ element "1 Настройки проекта" {
 			}
 		}
 		slot Main_panel {
-			use settings_kit.SettingsLayout as Settings {
+			use Libraries.settings_kit.SettingsLayout as Settings {
 				width 1515; height 1044
 				at Settings_header { width 1515 }
 				replace Settings_header.left.Button_ghost_small {
-					use ui_kit.Actions.Button as "Button/ghost/small" { kind ghost; size small;
+					use Libraries.ui_kit.Actions.Button as "Button/ghost/small" {
+						kind ghost; size small
 						replace icon_kit_Plus {
-							use ui_kit.Icon.chevronL as "icon/chevronL" { border-color #5a667e; line-width 1 }
+							use Libraries.ui_kit.Icon.chevronL as "icon/chevronL" { border-color #5a667e; line-width 1 }
 						}
 						at Button { title "К проекту" }
 					}
@@ -704,58 +716,59 @@ element "1 Настройки проекта" {
 				at Settings_subtabs { hidden no; auto-layout column; gap 16; padding 24 32; align start; width 1282; height 987 }
 				at Settings_content { hidden yes }
 				slot right {
-					use ui_kit.Actions.Button as "Close settings" { kind tertiary; size small; shape icon;
-						replace icon_gear {
-							use ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
+					use Libraries.ui_kit.Actions.Button as "Close settings" {
+						kind tertiary; size small; shape icon
+						replace icon_kit_Plus {
+							use Libraries.ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
 					}
 				}
 				slot Settings_tabs {
-					use workbench.NavItem as "NavItem/Основное" {
+					use Libraries.workbench.NavItem as "NavItem/Основное" {
 						width 208
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.gear as "icon/gear" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.gear as "icon/gear" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Основное }
 					}
-					use workbench.NavItem as "NavItem/Участники и доступ" {
+					use Libraries.workbench.NavItem as "NavItem/Участники и доступ" {
 						width 208
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.users as "icon/users" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.users as "icon/users" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title "Участники и доступ" }
 					}
-					use workbench.NavItem_selected as "NavItem/Задачи" {
-						width 208
+					use Libraries.workbench.NavItem as "NavItem/Задачи" {
+						selected true; width 208
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.check as "icon/check" { border-color #cf13a2; line-width 1 }
+							use Libraries.ui_kit.Icon.check as "icon/check" { border-color #cf13a2; line-width 1 }
 						}
 						at Issues { title Задачи }
 					}
-					use workbench.NavItem as "NavItem/Статусы и workflow" {
+					use Libraries.workbench.NavItem as "NavItem/Статусы и workflow" {
 						width 208
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.timeline as "icon/timeline" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.timeline as "icon/timeline" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title "Статусы и workflow" }
 					}
-					use workbench.NavItem as "NavItem/Архив" {
+					use Libraries.workbench.NavItem as "NavItem/Архив" {
 						width 208
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.trash as "icon/trash" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.trash as "icon/trash" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Архив }
 					}
 				}
 				slot Settings_subtabs {
-					use settings_kit.SectionTitle as "Section Задачи" {
+					use Libraries.settings_kit.SectionTitle as "Section Задачи" {
 						at Title { title Задачи }
 						at Hint_of_the_section { hidden no; title "Значения для новых задач проекта."; width 720 }
 					}
-					use settings_kit.FormRow as "Row Исполнитель по умолчанию" {
+					use Libraries.settings_kit.FormRow as "Row Исполнитель по умолчанию" {
 						at label.Label { title "Исполнитель по умолчанию" }
 						slot control {
-							use ui_kit.Forms.Input as Input {
+							use Libraries.ui_kit.Forms.Input as Input {
 								at field.icon_kit_PersonCircle { hidden no }
 								at field.Value { title "Не назначен" }
 								at field.grow { hidden no }
@@ -763,22 +776,22 @@ element "1 Настройки проекта" {
 							}
 						}
 					}
-					use settings_kit.FormRow as "Row Статус по умолчанию" {
+					use Libraries.settings_kit.FormRow as "Row Статус по умолчанию" {
 						at label.Label { title "Статус по умолчанию" }
 						slot control {
-							use ui_kit.Forms.Input as Input {
+							use Libraries.ui_kit.Forms.Input as Input {
 								at field.Value { title Todo }
 								at field.grow { hidden no }
 								at field.icon_chevronD { hidden no }
 							}
 						}
 					}
-					use settings_kit.FormRow as "Row Шаблоны задач" {
+					use Libraries.settings_kit.FormRow as "Row Шаблоны задач" {
 						at label.Label { title "Шаблоны задач" }
 						slot control {
-							use ui_kit.Forms.Input as Input {
+							use Libraries.ui_kit.Forms.Input as Input {
 								replace field.icon_kit_PersonCircle {
-									use ui_kit.Icon.kit_Layout as "icon/kit/Layout" { color #00000099 }
+									use Libraries.ui_kit.Icon.kit_Layout as "icon/kit/Layout" { color #00000099 }
 								}
 								at field.Value { title "Открыть шаблоны (3)" }
 							}
@@ -788,95 +801,95 @@ element "1 Настройки проекта" {
 			}
 		}
 	}
-	use workbench.Workbench as "Настройки проекта - Статусы и workflow" {
+	use Libraries.workbench.Workbench as "Настройки проекта - Статусы и workflow" {
 		pos 2020 -1200
 		replace Top_bar {
-			use workbench.TopBar as "Top bar" {
+			use Libraries.workbench.TopBar as "Top bar" {
 				at tabs.tab.Tracker { title "Настройки проекта" }
 			}
 		}
 		replace _Navigator {
-			use workbench.Navigator as Navigator {
+			use Libraries.workbench.Navigator as Navigator {
 				pos 68 -36
 				slot items {
-					use workbench.NavItem as "NavItem/My issues" {
+					use Libraries.workbench.NavItem as "NavItem/My issues" {
 						pos 13 -112
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.timeline as "icon/timeline" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.timeline as "icon/timeline" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title "My issues" }
 					}
-					use workbench.NavItem as "NavItem/All issues" {
+					use Libraries.workbench.NavItem as "NavItem/All issues" {
 						pos 13 -144
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title "All issues" }
 					}
-					use workbench.NavItem as "NavItem/Доски" {
+					use Libraries.workbench.NavItem as "NavItem/Доски" {
 						pos 13 -176
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.board as "icon/board" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.board as "icon/board" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Доски }
 					}
-					use workbench.NavItem as "NavItem/Тестирование" {
+					use Libraries.workbench.NavItem as "NavItem/Тестирование" {
 						padding 0 8 0 32; pos 13 -208
 						at icon_kit_CheckSquare { hidden yes }
 						at Issues { title Тестирование }
 					}
-					use workbench.NavItem as "NavItem/Мой спринт" {
+					use Libraries.workbench.NavItem as "NavItem/Мой спринт" {
 						padding 0 8 0 32; pos 13 -240
 						at icon_kit_CheckSquare { hidden yes }
 						at Issues { title "Мой спринт" }
 					}
 					item divider { auto-layout abs; width 279; height 1; clip yes; color #0000001a; pos 1 -284 }
-					use workbench.NavGroup as "NavGroup Your projects" { pos 0 -284 }
-					use workbench.NavSpace as "NavSpace Мобильное приложение" {
+					use Libraries.workbench.NavGroup as "NavGroup Your projects" { pos 0 -284 }
+					use Libraries.workbench.NavSpace as "NavSpace Мобильное приложение" {
 						pos 0 -329
 						at label.Mobile_app { title "МОБИЛЬНОЕ ПРИЛОЖЕНИЕ" }
 					}
-					use workbench.NavItem as "NavItem/Issues" {
+					use Libraries.workbench.NavItem as "NavItem/Issues" {
 						padding 0 8 0 32; pos 13 -365
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
 						}
 					}
-					use workbench.NavItem as "NavItem/Components" {
+					use Libraries.workbench.NavItem as "NavItem/Components" {
 						padding 0 8 0 32; pos 13 -397
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.component as "icon/component" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.component as "icon/component" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Components }
 					}
-					use workbench.NavItem as "NavItem/Milestones" {
+					use Libraries.workbench.NavItem as "NavItem/Milestones" {
 						padding 0 8 0 32; pos 13 -429
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.milestone as "icon/milestone" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.milestone as "icon/milestone" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Milestones }
 					}
-					use workbench.NavSpace as "NavSpace Маркетинг" {
+					use Libraries.workbench.NavSpace as "NavSpace Маркетинг" {
 						pos 0 -457
 						at label.Mobile_app { title МАРКЕТИНГ }
 					}
-					use workbench.NavItem as "NavItem/Issues" {
+					use Libraries.workbench.NavItem as "NavItem/Issues" {
 						padding 0 8 0 32; pos 13 -493
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
 						}
 					}
-					use workbench.NavItem as "NavItem/Components" {
+					use Libraries.workbench.NavItem as "NavItem/Components" {
 						padding 0 8 0 32; pos 13 -525
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.component as "icon/component" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.component as "icon/component" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Components }
 					}
-					use workbench.NavItem as "NavItem/Milestones" {
+					use Libraries.workbench.NavItem as "NavItem/Milestones" {
 						padding 0 8 0 32; pos 13 -557
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.milestone as "icon/milestone" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.milestone as "icon/milestone" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Milestones }
 					}
@@ -885,13 +898,14 @@ element "1 Настройки проекта" {
 			}
 		}
 		slot Main_panel {
-			use settings_kit.SettingsLayout as Settings {
+			use Libraries.settings_kit.SettingsLayout as Settings {
 				width 1515; height 1044
 				at Settings_header { width 1515 }
 				replace Settings_header.left.Button_ghost_small {
-					use ui_kit.Actions.Button as "Button/ghost/small" { kind ghost; size small;
+					use Libraries.ui_kit.Actions.Button as "Button/ghost/small" {
+						kind ghost; size small
 						replace icon_kit_Plus {
-							use ui_kit.Icon.chevronL as "icon/chevronL" { border-color #5a667e; line-width 1 }
+							use Libraries.ui_kit.Icon.chevronL as "icon/chevronL" { border-color #5a667e; line-width 1 }
 						}
 						at Button { title "К проекту" }
 					}
@@ -903,51 +917,52 @@ element "1 Настройки проекта" {
 				at Settings_subtabs { hidden no; auto-layout column; gap 16; padding 24 32; align start; width 1282; height 987 }
 				at Settings_content { hidden yes }
 				slot right {
-					use ui_kit.Actions.Button as "Close settings" { kind tertiary; size small; shape icon;
-						replace icon_gear {
-							use ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
+					use Libraries.ui_kit.Actions.Button as "Close settings" {
+						kind tertiary; size small; shape icon
+						replace icon_kit_Plus {
+							use Libraries.ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
 					}
 				}
 				slot Settings_tabs {
-					use workbench.NavItem as "NavItem/Основное" {
+					use Libraries.workbench.NavItem as "NavItem/Основное" {
 						width 208
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.gear as "icon/gear" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.gear as "icon/gear" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Основное }
 					}
-					use workbench.NavItem as "NavItem/Участники и доступ" {
+					use Libraries.workbench.NavItem as "NavItem/Участники и доступ" {
 						width 208
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.users as "icon/users" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.users as "icon/users" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title "Участники и доступ" }
 					}
-					use workbench.NavItem as "NavItem/Задачи" {
+					use Libraries.workbench.NavItem as "NavItem/Задачи" {
 						width 208
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Задачи }
 					}
-					use workbench.NavItem_selected as "NavItem/Статусы и workflow" {
-						width 208
+					use Libraries.workbench.NavItem as "NavItem/Статусы и workflow" {
+						selected true; width 208
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.timeline as "icon/timeline" { border-color #cf13a2; line-width 1 }
+							use Libraries.ui_kit.Icon.timeline as "icon/timeline" { border-color #cf13a2; line-width 1 }
 						}
 						at Issues { title "Статусы и workflow" }
 					}
-					use workbench.NavItem as "NavItem/Архив" {
+					use Libraries.workbench.NavItem as "NavItem/Архив" {
 						width 208
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.trash as "icon/trash" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.trash as "icon/trash" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Архив }
 					}
 				}
 				slot Settings_subtabs {
-					use settings_kit.SectionTitle as "Section Статусы и workflow" {
+					use Libraries.settings_kit.SectionTitle as "Section Статусы и workflow" {
 						at Title { title "Статусы и workflow" }
 						at Hint_of_the_section {
 							hidden no; title "Статусы задаются типом проекта «Default» и общие для всех его проектов. Доски группируют эти статусы в колонки."; width 760
@@ -960,7 +975,7 @@ element "1 Настройки проекта" {
 							item Бэклог { title БЭКЛОГ; font-size 12; line-height 15; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #00000099 }
 							item "status Backlog" {
 								auto-layout row; gap 8; padding 0 12; align center; width 760; height 36; clip yes; color #f7f7f8; corner-radius 6
-								use ui_kit.Status.StatusIcon_backlog as "Status/StatusIcon/backlog"
+								use Libraries.ui_kit.Status.StatusIcon as "Status/StatusIcon/backlog" { category backlog }
 								item Backlog { title Backlog; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left }
 							}
 						}
@@ -971,7 +986,7 @@ element "1 Настройки проекта" {
 							}
 							item "status Todo" {
 								auto-layout row; gap 8; padding 0 12; align center; width 760; height 36; clip yes; color #f7f7f8; corner-radius 6
-								use ui_kit.Status.StatusIcon_todo as "Status/StatusIcon/todo"
+								use Libraries.ui_kit.Status.StatusIcon as "Status/StatusIcon/todo" { category todo }
 								item Todo { title Todo; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left }
 							}
 						}
@@ -980,7 +995,7 @@ element "1 Настройки проекта" {
 							item "В работе" { title "В РАБОТЕ"; font-size 12; line-height 15; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #00000099 }
 							item "status In Progress" {
 								auto-layout row; gap 8; padding 0 12; align center; width 760; height 36; clip yes; color #f7f7f8; corner-radius 6
-								use ui_kit.Status.StatusIcon_active as "Status/StatusIcon/active"
+								use Libraries.ui_kit.Status.StatusIcon as "Status/StatusIcon/active" { category active }
 								item "In Progress" { title "In Progress"; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left }
 							}
 						}
@@ -989,7 +1004,7 @@ element "1 Настройки проекта" {
 							item Выполнено { title ВЫПОЛНЕНО; font-size 12; line-height 15; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #00000099 }
 							item "status Done" {
 								auto-layout row; gap 8; padding 0 12; align center; width 760; height 36; clip yes; color #f7f7f8; corner-radius 6
-								use ui_kit.Status.StatusIcon_won as "Status/StatusIcon/won"
+								use Libraries.ui_kit.Status.StatusIcon as "Status/StatusIcon/won" { category won }
 								item Done { title Done; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left }
 							}
 						}
@@ -998,22 +1013,24 @@ element "1 Настройки проекта" {
 							item Отменено { title ОТМЕНЕНО; font-size 12; line-height 15; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #00000099 }
 							item "status Canceled" {
 								auto-layout row; gap 8; padding 0 12; align center; width 760; height 36; clip yes; color #f7f7f8; corner-radius 6
-								use ui_kit.Status.StatusIcon_lost as "Status/StatusIcon/lost"
+								use Libraries.ui_kit.Status.StatusIcon as "Status/StatusIcon/lost" { category lost }
 								item Canceled { title Canceled; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left }
 							}
 						}
 					}
 					item actions {
 						auto-layout row; gap 8; align center; clip yes
-						use ui_kit.Actions.Button as "Button/secondary/small" { kind secondary; size small;
+						use Libraries.ui_kit.Actions.Button as "Button/secondary/small" {
+							kind secondary; size small
 							replace icon_kit_Plus {
-								use ui_kit.Icon.gear as "icon/gear" { border-color #000000; line-width 1 }
+								use Libraries.ui_kit.Icon.gear as "icon/gear" { border-color #000000; line-width 1 }
 							}
 							at Button { title "Изменить статусы в типе проекта" }
 						}
-						use ui_kit.Actions.Button as "Button/ghost/small" { kind ghost; size small;
+						use Libraries.ui_kit.Actions.Button as "Button/ghost/small" {
+							kind ghost; size small
 							replace icon_kit_Plus {
-								use ui_kit.Icon.timeline as "icon/timeline" { border-color #5a667e; line-width 1 }
+								use Libraries.ui_kit.Icon.timeline as "icon/timeline" { border-color #5a667e; line-width 1 }
 							}
 							at Button { title "Workflow mapping" }
 						}
@@ -1022,95 +1039,95 @@ element "1 Настройки проекта" {
 			}
 		}
 	}
-	use workbench.Workbench as "Настройки проекта - Архив" {
+	use Libraries.workbench.Workbench as "Настройки проекта - Архив" {
 		pos 0 -2400
 		replace Top_bar {
-			use workbench.TopBar as "Top bar" {
+			use Libraries.workbench.TopBar as "Top bar" {
 				at tabs.tab.Tracker { title "Настройки проекта" }
 			}
 		}
 		replace _Navigator {
-			use workbench.Navigator as Navigator {
+			use Libraries.workbench.Navigator as Navigator {
 				pos 68 -36
 				slot items {
-					use workbench.NavItem as "NavItem/My issues" {
+					use Libraries.workbench.NavItem as "NavItem/My issues" {
 						pos 13 -112
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.timeline as "icon/timeline" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.timeline as "icon/timeline" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title "My issues" }
 					}
-					use workbench.NavItem as "NavItem/All issues" {
+					use Libraries.workbench.NavItem as "NavItem/All issues" {
 						pos 13 -144
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title "All issues" }
 					}
-					use workbench.NavItem as "NavItem/Доски" {
+					use Libraries.workbench.NavItem as "NavItem/Доски" {
 						pos 13 -176
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.board as "icon/board" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.board as "icon/board" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Доски }
 					}
-					use workbench.NavItem as "NavItem/Тестирование" {
+					use Libraries.workbench.NavItem as "NavItem/Тестирование" {
 						padding 0 8 0 32; pos 13 -208
 						at icon_kit_CheckSquare { hidden yes }
 						at Issues { title Тестирование }
 					}
-					use workbench.NavItem as "NavItem/Мой спринт" {
+					use Libraries.workbench.NavItem as "NavItem/Мой спринт" {
 						padding 0 8 0 32; pos 13 -240
 						at icon_kit_CheckSquare { hidden yes }
 						at Issues { title "Мой спринт" }
 					}
 					item divider { auto-layout abs; width 279; height 1; clip yes; color #0000001a; pos 1 -284 }
-					use workbench.NavGroup as "NavGroup Your projects" { pos 0 -284 }
-					use workbench.NavSpace as "NavSpace Мобильное приложение" {
+					use Libraries.workbench.NavGroup as "NavGroup Your projects" { pos 0 -284 }
+					use Libraries.workbench.NavSpace as "NavSpace Мобильное приложение" {
 						pos 0 -329
 						at label.Mobile_app { title "МОБИЛЬНОЕ ПРИЛОЖЕНИЕ" }
 					}
-					use workbench.NavItem as "NavItem/Issues" {
+					use Libraries.workbench.NavItem as "NavItem/Issues" {
 						padding 0 8 0 32; pos 13 -365
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
 						}
 					}
-					use workbench.NavItem as "NavItem/Components" {
+					use Libraries.workbench.NavItem as "NavItem/Components" {
 						padding 0 8 0 32; pos 13 -397
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.component as "icon/component" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.component as "icon/component" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Components }
 					}
-					use workbench.NavItem as "NavItem/Milestones" {
+					use Libraries.workbench.NavItem as "NavItem/Milestones" {
 						padding 0 8 0 32; pos 13 -429
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.milestone as "icon/milestone" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.milestone as "icon/milestone" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Milestones }
 					}
-					use workbench.NavSpace as "NavSpace Маркетинг" {
+					use Libraries.workbench.NavSpace as "NavSpace Маркетинг" {
 						pos 0 -457
 						at label.Mobile_app { title МАРКЕТИНГ }
 					}
-					use workbench.NavItem as "NavItem/Issues" {
+					use Libraries.workbench.NavItem as "NavItem/Issues" {
 						padding 0 8 0 32; pos 13 -493
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
 						}
 					}
-					use workbench.NavItem as "NavItem/Components" {
+					use Libraries.workbench.NavItem as "NavItem/Components" {
 						padding 0 8 0 32; pos 13 -525
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.component as "icon/component" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.component as "icon/component" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Components }
 					}
-					use workbench.NavItem as "NavItem/Milestones" {
+					use Libraries.workbench.NavItem as "NavItem/Milestones" {
 						padding 0 8 0 32; pos 13 -557
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.milestone as "icon/milestone" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.milestone as "icon/milestone" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Milestones }
 					}
@@ -1119,13 +1136,14 @@ element "1 Настройки проекта" {
 			}
 		}
 		slot Main_panel {
-			use settings_kit.SettingsLayout as Settings {
+			use Libraries.settings_kit.SettingsLayout as Settings {
 				width 1515; height 1044
 				at Settings_header { width 1515 }
 				replace Settings_header.left.Button_ghost_small {
-					use ui_kit.Actions.Button as "Button/ghost/small" { kind ghost; size small;
+					use Libraries.ui_kit.Actions.Button as "Button/ghost/small" {
+						kind ghost; size small
 						replace icon_kit_Plus {
-							use ui_kit.Icon.chevronL as "icon/chevronL" { border-color #5a667e; line-width 1 }
+							use Libraries.ui_kit.Icon.chevronL as "icon/chevronL" { border-color #5a667e; line-width 1 }
 						}
 						at Button { title "К проекту" }
 					}
@@ -1137,61 +1155,63 @@ element "1 Настройки проекта" {
 				at Settings_subtabs { hidden no; auto-layout column; gap 16; padding 24 32; align start; width 1282; height 987 }
 				at Settings_content { hidden yes }
 				slot right {
-					use ui_kit.Actions.Button as "Close settings" { kind tertiary; size small; shape icon;
-						replace icon_gear {
-							use ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
+					use Libraries.ui_kit.Actions.Button as "Close settings" {
+						kind tertiary; size small; shape icon
+						replace icon_kit_Plus {
+							use Libraries.ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
 					}
 				}
 				slot Settings_tabs {
-					use workbench.NavItem as "NavItem/Основное" {
+					use Libraries.workbench.NavItem as "NavItem/Основное" {
 						width 208
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.gear as "icon/gear" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.gear as "icon/gear" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Основное }
 					}
-					use workbench.NavItem as "NavItem/Участники и доступ" {
+					use Libraries.workbench.NavItem as "NavItem/Участники и доступ" {
 						width 208
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.users as "icon/users" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.users as "icon/users" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title "Участники и доступ" }
 					}
-					use workbench.NavItem as "NavItem/Задачи" {
+					use Libraries.workbench.NavItem as "NavItem/Задачи" {
 						width 208
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Задачи }
 					}
-					use workbench.NavItem as "NavItem/Статусы и workflow" {
+					use Libraries.workbench.NavItem as "NavItem/Статусы и workflow" {
 						width 208
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.timeline as "icon/timeline" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.timeline as "icon/timeline" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title "Статусы и workflow" }
 					}
-					use workbench.NavItem_selected as "NavItem/Архив" {
-						width 208
+					use Libraries.workbench.NavItem as "NavItem/Архив" {
+						selected true; width 208
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.trash as "icon/trash" { border-color #cf13a2; line-width 1 }
+							use Libraries.ui_kit.Icon.trash as "icon/trash" { border-color #cf13a2; line-width 1 }
 						}
 						at Issues { title Архив }
 					}
 				}
 				slot Settings_subtabs {
-					use settings_kit.SectionTitle as "Section Архив" {
+					use Libraries.settings_kit.SectionTitle as "Section Архив" {
 						at Title { title Архив }
 						at Hint_of_the_section { hidden no; title "Архивный проект скрыт из навигации, задачи остаются доступны по ссылке и в поиске."; width 720 }
 					}
-					use ui_kit.Status.Notice_info as "Notice/info" {
-						width 720
+					use Libraries.ui_kit.Status.Notice as "Notice/info" {
+						kind info; width 720
 						at Notice_text { title "Проект можно вернуть из архива в «All projects»."; width 676 }
 					}
-					use ui_kit.Actions.Button as "Button/negative/small" { kind negative; size small;
+					use Libraries.ui_kit.Actions.Button as "Button/negative/small" {
+						kind negative; size small
 						replace icon_kit_Plus {
-							use ui_kit.Icon.trash as "icon/trash" { border-color #ffffff; line-width 1 }
+							use Libraries.ui_kit.Icon.trash as "icon/trash" { border-color #ffffff; line-width 1 }
 						}
 						at Button { title "Архивировать проект" }
 					}
@@ -1199,95 +1219,95 @@ element "1 Настройки проекта" {
 			}
 		}
 	}
-	use workbench.Workbench_with_side_panel as "Настройки проекта - Задачи, чат справа" {
+	use Libraries.workbench.Workbench_with_side_panel as "Настройки проекта - Задачи, чат справа" {
 		pos 2020 -2400
 		replace Top_bar {
-			use workbench.TopBar as "Top bar" {
+			use Libraries.workbench.TopBar as "Top bar" {
 				at tabs.tab.Tracker { title "Настройки проекта" }
 			}
 		}
 		replace _Navigator {
-			use workbench.Navigator as Navigator {
+			use Libraries.workbench.Navigator as Navigator {
 				pos 68 -36
 				slot items {
-					use workbench.NavItem as "NavItem/My issues" {
+					use Libraries.workbench.NavItem as "NavItem/My issues" {
 						pos 13 -112
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.timeline as "icon/timeline" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.timeline as "icon/timeline" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title "My issues" }
 					}
-					use workbench.NavItem as "NavItem/All issues" {
+					use Libraries.workbench.NavItem as "NavItem/All issues" {
 						pos 13 -144
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title "All issues" }
 					}
-					use workbench.NavItem as "NavItem/Доски" {
+					use Libraries.workbench.NavItem as "NavItem/Доски" {
 						pos 13 -176
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.board as "icon/board" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.board as "icon/board" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Доски }
 					}
-					use workbench.NavItem as "NavItem/Тестирование" {
+					use Libraries.workbench.NavItem as "NavItem/Тестирование" {
 						padding 0 8 0 32; pos 13 -208
 						at icon_kit_CheckSquare { hidden yes }
 						at Issues { title Тестирование }
 					}
-					use workbench.NavItem as "NavItem/Мой спринт" {
+					use Libraries.workbench.NavItem as "NavItem/Мой спринт" {
 						padding 0 8 0 32; pos 13 -240
 						at icon_kit_CheckSquare { hidden yes }
 						at Issues { title "Мой спринт" }
 					}
 					item divider { auto-layout abs; width 279; height 1; clip yes; color #0000001a; pos 1 -284 }
-					use workbench.NavGroup as "NavGroup Your projects" { pos 0 -284 }
-					use workbench.NavSpace as "NavSpace Мобильное приложение" {
+					use Libraries.workbench.NavGroup as "NavGroup Your projects" { pos 0 -284 }
+					use Libraries.workbench.NavSpace as "NavSpace Мобильное приложение" {
 						pos 0 -329
 						at label.Mobile_app { title "МОБИЛЬНОЕ ПРИЛОЖЕНИЕ" }
 					}
-					use workbench.NavItem as "NavItem/Issues" {
+					use Libraries.workbench.NavItem as "NavItem/Issues" {
 						padding 0 8 0 32; pos 13 -365
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
 						}
 					}
-					use workbench.NavItem as "NavItem/Components" {
+					use Libraries.workbench.NavItem as "NavItem/Components" {
 						padding 0 8 0 32; pos 13 -397
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.component as "icon/component" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.component as "icon/component" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Components }
 					}
-					use workbench.NavItem as "NavItem/Milestones" {
+					use Libraries.workbench.NavItem as "NavItem/Milestones" {
 						padding 0 8 0 32; pos 13 -429
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.milestone as "icon/milestone" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.milestone as "icon/milestone" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Milestones }
 					}
-					use workbench.NavSpace as "NavSpace Маркетинг" {
+					use Libraries.workbench.NavSpace as "NavSpace Маркетинг" {
 						pos 0 -457
 						at label.Mobile_app { title МАРКЕТИНГ }
 					}
-					use workbench.NavItem as "NavItem/Issues" {
+					use Libraries.workbench.NavItem as "NavItem/Issues" {
 						padding 0 8 0 32; pos 13 -493
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.check as "icon/check" { border-color #0f121a; line-width 1 }
 						}
 					}
-					use workbench.NavItem as "NavItem/Components" {
+					use Libraries.workbench.NavItem as "NavItem/Components" {
 						padding 0 8 0 32; pos 13 -525
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.component as "icon/component" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.component as "icon/component" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Components }
 					}
-					use workbench.NavItem as "NavItem/Milestones" {
+					use Libraries.workbench.NavItem as "NavItem/Milestones" {
 						padding 0 8 0 32; pos 13 -557
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.milestone as "icon/milestone" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.milestone as "icon/milestone" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Milestones }
 					}
@@ -1296,13 +1316,14 @@ element "1 Настройки проекта" {
 			}
 		}
 		slot Main_panel {
-			use settings_kit.SettingsLayout as Settings {
+			use Libraries.settings_kit.SettingsLayout as Settings {
 				width 1115; height 1044
 				at Settings_header { width 1115 }
 				replace Settings_header.left.Button_ghost_small {
-					use ui_kit.Actions.Button as "Button/ghost/small" { kind ghost; size small;
+					use Libraries.ui_kit.Actions.Button as "Button/ghost/small" {
+						kind ghost; size small
 						replace icon_kit_Plus {
-							use ui_kit.Icon.chevronL as "icon/chevronL" { border-color #5a667e; line-width 1 }
+							use Libraries.ui_kit.Icon.chevronL as "icon/chevronL" { border-color #5a667e; line-width 1 }
 						}
 						at Button { title "К проекту" }
 					}
@@ -1314,59 +1335,60 @@ element "1 Настройки проекта" {
 				at Settings_subtabs { hidden no; auto-layout column; gap 16; padding 24 32; align start; width 882; height 987 }
 				at Settings_content { hidden yes }
 				slot right {
-					use ui_kit.Actions.Button as "Close settings" { kind tertiary; size small; shape icon;
-						replace icon_gear {
-							use ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
+					use Libraries.ui_kit.Actions.Button as "Close settings" {
+						kind tertiary; size small; shape icon
+						replace icon_kit_Plus {
+							use Libraries.ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
 					}
 				}
 				slot Settings_tabs {
-					use workbench.NavItem as "NavItem/Основное" {
+					use Libraries.workbench.NavItem as "NavItem/Основное" {
 						width 208
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.gear as "icon/gear" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.gear as "icon/gear" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Основное }
 					}
-					use workbench.NavItem as "NavItem/Участники и доступ" {
+					use Libraries.workbench.NavItem as "NavItem/Участники и доступ" {
 						width 208
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.users as "icon/users" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.users as "icon/users" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title "Участники и доступ" }
 					}
-					use workbench.NavItem_selected as "NavItem/Задачи" {
-						width 208
+					use Libraries.workbench.NavItem as "NavItem/Задачи" {
+						selected true; width 208
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.check as "icon/check" { border-color #cf13a2; line-width 1 }
+							use Libraries.ui_kit.Icon.check as "icon/check" { border-color #cf13a2; line-width 1 }
 						}
 						at Issues { title Задачи }
 					}
-					use workbench.NavItem as "NavItem/Статусы и workflow" {
+					use Libraries.workbench.NavItem as "NavItem/Статусы и workflow" {
 						width 208
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.timeline as "icon/timeline" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.timeline as "icon/timeline" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title "Статусы и workflow" }
 					}
-					use workbench.NavItem as "NavItem/Архив" {
+					use Libraries.workbench.NavItem as "NavItem/Архив" {
 						width 208
 						replace icon_kit_CheckSquare {
-							use ui_kit.Icon.trash as "icon/trash" { border-color #0f121a; line-width 1 }
+							use Libraries.ui_kit.Icon.trash as "icon/trash" { border-color #0f121a; line-width 1 }
 						}
 						at Issues { title Архив }
 					}
 				}
 				slot Settings_subtabs {
-					use settings_kit.SectionTitle as "Section Задачи" {
+					use Libraries.settings_kit.SectionTitle as "Section Задачи" {
 						at Title { title Задачи }
 						at Hint_of_the_section { hidden no; title "Значения для новых задач проекта."; width 560 }
 					}
-					use settings_kit.FormRow as "Row Исполнитель по умолчанию" {
+					use Libraries.settings_kit.FormRow as "Row Исполнитель по умолчанию" {
 						width 560
 						at label.Label { title "Исполнитель по умолчанию" }
 						slot control {
-							use ui_kit.Forms.Input as Input {
+							use Libraries.ui_kit.Forms.Input as Input {
 								at field.icon_kit_PersonCircle { hidden no }
 								at field.Value { title "Не назначен" }
 								at field.grow { hidden no }
@@ -1374,11 +1396,11 @@ element "1 Настройки проекта" {
 							}
 						}
 					}
-					use settings_kit.FormRow as "Row Статус по умолчанию" {
+					use Libraries.settings_kit.FormRow as "Row Статус по умолчанию" {
 						width 560
 						at label.Label { title "Статус по умолчанию" }
 						slot control {
-							use ui_kit.Forms.Input as Input {
+							use Libraries.ui_kit.Forms.Input as Input {
 								at field.Value { title Todo }
 								at field.grow { hidden no }
 								at field.icon_chevronD { hidden no }
@@ -1393,14 +1415,15 @@ element "1 Настройки проекта" {
 				auto-layout row; padding 0 16; align center; justify space-between; width 400; height 56; clip yes
 				item title {
 					auto-layout row; gap 8; align center; clip yes
-					use ui_kit.Icon.kit_Bubble as "icon/kit/Bubble" { color #000000 }
+					use Libraries.ui_kit.Icon.kit_Bubble as "icon/kit/Bubble" { color #000000 }
 					item "Чат · Мобильное приложение" {
 						title "Чат · Мобильное приложение"; font-size 14; line-height 18; font-family "IBM Plex Sans"; font-weight 600; layout left
 					}
 				}
-				use ui_kit.Actions.Button as "Close chat" { kind tertiary; size small; shape icon;
-					replace icon_gear {
-						use ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
+				use Libraries.ui_kit.Actions.Button as "Close chat" {
+					kind tertiary; size small; shape icon
+					replace icon_kit_Plus {
+						use Libraries.ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 					}
 				}
 			}
@@ -1409,7 +1432,7 @@ element "1 Настройки проекта" {
 				auto-layout column; gap 16; padding 16; width 400; clip yes; pos 0 -57
 				item message {
 					auto-layout row; gap 10; width 368; clip yes
-					use ui_kit.People.Avatar as "Avatar/32" {
+					use Libraries.ui_kit.People.Avatar as "Avatar/32" {
 						width 32; height 32; color #4ca6ee; corner-radius 6
 						at initials { title СА; font-size 13; line-height 16 }
 					}
@@ -1427,7 +1450,7 @@ element "1 Настройки проекта" {
 				}
 				item message {
 					auto-layout row; gap 10; width 368; clip yes
-					use ui_kit.People.Avatar as "Avatar/32" {
+					use Libraries.ui_kit.People.Avatar as "Avatar/32" {
 						width 32; height 32; color #83af12; corner-radius 6
 						at initials { title КМ; font-size 13; line-height 16 }
 					}
@@ -1445,7 +1468,7 @@ element "1 Настройки проекта" {
 				}
 				item message {
 					auto-layout row; gap 10; width 368; clip yes
-					use ui_kit.People.Avatar as "Avatar/32" {
+					use Libraries.ui_kit.People.Avatar as "Avatar/32" {
 						width 32; height 32; color #db877d; corner-radius 6
 						at initials { title ПИ; font-size 13; line-height 16 }
 					}

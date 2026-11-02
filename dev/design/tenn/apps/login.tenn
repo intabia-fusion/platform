@@ -69,36 +69,34 @@ element "Sign in" {
 		}
 		item "Card slot" {
 			auto-layout row; align center; justify center; width 1920; height 1080
-			use login_kit.LoginCard as "Login card" {
+			use Libraries.login_kit.LoginCard as "Login card" {
 				slot content {
-					use login_kit.LoginForm as "Login form" {
+					use Libraries.login_kit.LoginForm as "Login form" {
 						slot content {
-							use login_kit.LoginTabs as Tabs {
+							use Libraries.login_kit.LoginTabs as Tabs {
 								at heading.Platform { title "Интабия Платформа" }
 								at tabs.Tab_Sign_up.Sign_up { title Регистрация }
 								at tabs.Tab_Log_In.Log_In { title Вход }
 							}
 							item form {
 								auto-layout column; gap 24; padding 24 0 0 0; width 396; clip yes
-								use login_kit.LoginField as "Field Email" {
+								use Libraries.login_kit.LoginField as "Field Email" {
 									at Label { title Email; pos 21 -17 }
 									at Value { hidden yes }
 								}
-								use login_kit.LoginField as "Field Пароль" {
+								use Libraries.login_kit.LoginField as "Field Пароль" {
 									at Label { title Пароль; pos 21 -17 }
 									at Value { hidden yes }
 								}
-								use login_kit.LoginStatus as Status {
+								use Libraries.login_kit.LoginStatus as Status {
 									at message.Message { title "Требуется заполнить Email" }
 								}
-								use login_kit.LoginButton_primary_disabled as "Button Вход" {
-									at Button { title Вход }
-								}
+								use Libraries.login_kit.LoginButton as "Button Вход" { kind primary; disabled true }
 							}
 							item spacer { auto-layout abs; width 396; height 16; clip yes }
 							item footer {
 								auto-layout column; padding 28 0 0 0; width 396; clip yes
-								use login_kit.LoginLinks as Links {
+								use Libraries.login_kit.LoginLinks as Links {
 									slot content {
 										item "link row" {
 											auto-layout row; gap 3; align center; justify center; width 396; clip yes; wrap yes; line-gap 3
@@ -110,13 +108,13 @@ element "Sign in" {
 							}
 						}
 					}
-					use login_kit.LoginAction as Action {
+					use Libraries.login_kit.LoginAction as Action {
 						at Action { title "Войти с кодом" }
 					}
 				}
 			}
 		}
-		use workbench.TopBar as "Top bar" {
+		use Libraries.workbench.TopBar as "Top bar" {
 			at limits { hidden yes }
 			at icon_kit_Search { hidden yes }
 			at icon_kit_Camera { hidden yes }
@@ -194,36 +192,34 @@ element "Sign in" {
 		}
 		item "Card slot" {
 			auto-layout row; align center; justify center; width 1920; height 1080
-			use login_kit.LoginCard as "Login card" {
+			use Libraries.login_kit.LoginCard as "Login card" {
 				slot content {
-					use login_kit.LoginForm as "Login form" {
+					use Libraries.login_kit.LoginForm as "Login form" {
 						slot content {
-							use login_kit.LoginTabs as Tabs {
+							use Libraries.login_kit.LoginTabs as Tabs {
 								at heading.Platform { title "Интабия Платформа" }
 								at tabs.Tab_Sign_up.Sign_up { title Регистрация }
 								at tabs.Tab_Log_In.Log_In { title Вход }
 							}
 							item form {
 								auto-layout column; gap 24; padding 24 0 0 0; width 396; clip yes
-								use login_kit.LoginField as "Field Email" {
+								use Libraries.login_kit.LoginField as "Field Email" {
 									at Label { title Email }
 									at Value { title demo1 }
 								}
-								use login_kit.LoginField as "Field Пароль" {
+								use Libraries.login_kit.LoginField as "Field Пароль" {
 									at Label { title Пароль }
 									at Value { title "••••••••" }
 								}
-								use login_kit.LoginStatus as Status {
+								use Libraries.login_kit.LoginStatus as Status {
 									at message { hidden yes }
 								}
-								use login_kit.LoginButton_primary as "Button Вход" {
-									at Button { title Вход }
-								}
+								use Libraries.login_kit.LoginButton as "Button Вход" { kind primary }
 							}
 							item spacer { auto-layout abs; width 396; height 16; clip yes }
 							item footer {
 								auto-layout column; padding 28 0 0 0; width 396; clip yes
-								use login_kit.LoginLinks as Links {
+								use Libraries.login_kit.LoginLinks as Links {
 									slot content {
 										item "link row" {
 											auto-layout row; gap 3; align center; justify center; width 396; clip yes; wrap yes; line-gap 3
@@ -235,13 +231,13 @@ element "Sign in" {
 							}
 						}
 					}
-					use login_kit.LoginAction as Action {
+					use Libraries.login_kit.LoginAction as Action {
 						at Action { title "Войти с кодом" }
 					}
 				}
 			}
 		}
-		use workbench.TopBar as "Top bar" {
+		use Libraries.workbench.TopBar as "Top bar" {
 			at limits { hidden yes }
 			at icon_kit_Search { hidden yes }
 			at icon_kit_Camera { hidden yes }
@@ -319,37 +315,36 @@ element "Sign in" {
 		}
 		item "Card slot" {
 			auto-layout row; align center; justify center; width 1920; height 1080
-			use login_kit.LoginCard as "Login card" {
+			use Libraries.login_kit.LoginCard as "Login card" {
 				slot content {
-					use login_kit.LoginForm as "Login form" {
+					use Libraries.login_kit.LoginForm as "Login form" {
 						slot content {
-							use login_kit.LoginTabs as Tabs {
+							use Libraries.login_kit.LoginTabs as Tabs {
 								at heading.Platform { title "Интабия Платформа" }
 								at tabs.Tab_Sign_up.Sign_up { title Регистрация }
 								at tabs.Tab_Log_In.Log_In { title Вход }
 							}
 							item form {
 								auto-layout column; gap 24; padding 24 0 0 0; width 396; clip yes
-								use login_kit.LoginField as "Field Email" {
+								use Libraries.login_kit.LoginField as "Field Email" {
 									at Label { title Email }
 									at Value { title demo1 }
 								}
-								use login_kit.LoginField as "Field Пароль" {
+								use Libraries.login_kit.LoginField as "Field Пароль" {
 									border-color #ee7a7a99; line-width 1
 									at Label { title Пароль }
 									at Value { title "••••••••" }
 								}
-								use login_kit.LoginStatus_error as Status {
+								use Libraries.login_kit.LoginStatus as Status {
+									kind error
 									at message.Message { title "Неверный пароль" }
 								}
-								use login_kit.LoginButton_primary as "Button Вход" {
-									at Button { title Вход }
-								}
+								use Libraries.login_kit.LoginButton as "Button Вход" { kind primary }
 							}
 							item spacer { auto-layout abs; width 396; height 16; clip yes }
 							item footer {
 								auto-layout column; padding 28 0 0 0; width 396; clip yes
-								use login_kit.LoginLinks as Links {
+								use Libraries.login_kit.LoginLinks as Links {
 									slot content {
 										item "link row" {
 											auto-layout row; gap 3; align center; justify center; width 396; clip yes; wrap yes; line-gap 3
@@ -361,13 +356,13 @@ element "Sign in" {
 							}
 						}
 					}
-					use login_kit.LoginAction as Action {
+					use Libraries.login_kit.LoginAction as Action {
 						at Action { title "Войти с кодом" }
 					}
 				}
 			}
 		}
-		use workbench.TopBar as "Top bar" {
+		use Libraries.workbench.TopBar as "Top bar" {
 			at limits { hidden yes }
 			at icon_kit_Search { hidden yes }
 			at icon_kit_Camera { hidden yes }
@@ -445,33 +440,31 @@ element "Sign in" {
 		}
 		item "Card slot" {
 			auto-layout row; align center; justify center; width 1920; height 1080
-			use login_kit.LoginCard as "Login card" {
+			use Libraries.login_kit.LoginCard as "Login card" {
 				slot content {
-					use login_kit.LoginForm as "Login form" {
+					use Libraries.login_kit.LoginForm as "Login form" {
 						slot content {
-							use login_kit.LoginTabs as Tabs {
+							use Libraries.login_kit.LoginTabs as Tabs {
 								at heading.Platform { title "Интабия Платформа" }
 								at tabs.Tab_Sign_up.Sign_up { title Регистрация }
 								at tabs.Tab_Log_In.Log_In { title Вход }
 							}
 							item form {
 								auto-layout column; gap 24; padding 24 0 0 0; width 396; clip yes
-								use login_kit.LoginField as "Field Email" {
+								use Libraries.login_kit.LoginField as "Field Email" {
 									at Label { title Email }
 									at Value { title demo1 }
 								}
-								use login_kit.LoginField as "Field Пароль" {
+								use Libraries.login_kit.LoginField as "Field Пароль" {
 									at Label { title Пароль }
 									at Value { title "••••••••" }
 								}
-								use login_kit.LoginStatus as Status {
+								use Libraries.login_kit.LoginStatus as Status {
 									at message { hidden yes }
 								}
-								use login_kit.LoginButton_primary as "Button Вход" {
-									at Button { title Вход }
-								}
+								use Libraries.login_kit.LoginButton as "Button Вход" { kind primary }
 							}
-							use login_kit.LoginProviders as Providers {
+							use Libraries.login_kit.LoginProviders as Providers {
 								slot content {
 									item row {
 										auto-layout row; gap 16; width 396; height 56; clip yes
@@ -519,7 +512,7 @@ element "Sign in" {
 							}
 							item footer {
 								auto-layout column; padding 28 0 0 0; width 396; clip yes
-								use login_kit.LoginLinks as Links {
+								use Libraries.login_kit.LoginLinks as Links {
 									slot content {
 										item "link row" {
 											auto-layout row; gap 3; align center; justify center; width 396; clip yes; wrap yes; line-gap 3
@@ -531,13 +524,13 @@ element "Sign in" {
 							}
 						}
 					}
-					use login_kit.LoginAction as Action {
+					use Libraries.login_kit.LoginAction as Action {
 						at Action { title "Войти с кодом" }
 					}
 				}
 			}
 		}
-		use workbench.TopBar as "Top bar" {
+		use Libraries.workbench.TopBar as "Top bar" {
 			at limits { hidden yes }
 			at icon_kit_Search { hidden yes }
 			at icon_kit_Camera { hidden yes }
@@ -615,38 +608,36 @@ element "Sign in" {
 		}
 		item "Card slot" {
 			auto-layout row; align center; justify center; width 1920; height 1080
-			use login_kit.LoginCard as "Login card" {
+			use Libraries.login_kit.LoginCard as "Login card" {
 				slot content {
-					use login_kit.LoginForm as "Login form" {
+					use Libraries.login_kit.LoginForm as "Login form" {
 						slot content {
-							use login_kit.LoginTabs as Tabs {
+							use Libraries.login_kit.LoginTabs as Tabs {
 								at heading.Platform { title "Интабия Платформа" }
 								at tabs.Tab_Sign_up.Sign_up { title Регистрация }
 								at tabs.Tab_Log_In.Log_In { title Вход }
 							}
 							item form {
 								auto-layout column; gap 24; padding 24 0 0 0; width 396; clip yes
-								use login_kit.LoginField as "Field Email" {
+								use Libraries.login_kit.LoginField as "Field Email" {
 									at Label { title Email; pos 21 -17 }
 									at Value { hidden yes }
 								}
-								use login_kit.LoginStatus as Status {
+								use Libraries.login_kit.LoginStatus as Status {
 									at message.Message { title "Требуется заполнить Email" }
 								}
-								use login_kit.LoginButton_primary_disabled as "Button Вход" {
-									at Button { title Вход }
-								}
+								use Libraries.login_kit.LoginButton as "Button Вход" { kind primary; disabled true }
 							}
 							item spacer { auto-layout abs; width 396; height 16; clip yes }
 						}
 					}
-					use login_kit.LoginAction as Action {
+					use Libraries.login_kit.LoginAction as Action {
 						at Action { title "Войти с паролем" }
 					}
 				}
 			}
 		}
-		use workbench.TopBar as "Top bar" {
+		use Libraries.workbench.TopBar as "Top bar" {
 			at limits { hidden yes }
 			at icon_kit_Search { hidden yes }
 			at icon_kit_Camera { hidden yes }
@@ -724,19 +715,19 @@ element "Sign in" {
 		}
 		item "Card slot" {
 			auto-layout row; align center; justify center; width 1920; height 1080
-			use login_kit.LoginCard as "Login card" {
+			use Libraries.login_kit.LoginCard as "Login card" {
 				slot content {
-					use login_kit.LoginForm as "Login form" {
+					use Libraries.login_kit.LoginForm as "Login form" {
 						padding 16 24
 						slot content {
-							use login_kit.LoginOtpHeader as Header {
+							use Libraries.login_kit.LoginOtpHeader as Header {
 								at title_row.Enter_the_code { title "Введите код" }
 								at description.We_sent_the_code_to { title "Мы отправили код на" }
 								at description.name_example_com { title demo1 }
 							}
 							item body {
 								auto-layout column; padding 24 0 0 0; width 412; clip yes
-								use login_kit.LoginCode as Code {
+								use Libraries.login_kit.LoginCode as Code {
 									at digit_1._1 { title "4" }
 									at digit_2._2 { title "8" }
 									at digit_3._3 { title "2" }
@@ -758,7 +749,7 @@ element "Sign in" {
 				}
 			}
 		}
-		use workbench.TopBar as "Top bar" {
+		use Libraries.workbench.TopBar as "Top bar" {
 			at limits { hidden yes }
 			at icon_kit_Search { hidden yes }
 			at icon_kit_Camera { hidden yes }
@@ -836,12 +827,12 @@ element "Sign in" {
 		}
 		item "Card slot" {
 			auto-layout row; align center; justify center; width 1920; height 1080
-			use login_kit.LoginCard as "Login card" {
+			use Libraries.login_kit.LoginCard as "Login card" {
 				slot content {
-					use login_kit.LoginForm as "Login form" {
+					use Libraries.login_kit.LoginForm as "Login form" {
 						padding 64 80
 						slot content {
-							use login_kit.LoginTabs as Tabs {
+							use Libraries.login_kit.LoginTabs as Tabs {
 								width 300
 								at heading { hidden yes }
 								at tabs { width 300 }
@@ -849,7 +840,7 @@ element "Sign in" {
 								at tabs.Tab_Sign_up.underline { color #cf13a2 }
 								at tabs.Tab_Log_In { hidden yes }
 							}
-							use login_kit.LoginProviders as Providers {
+							use Libraries.login_kit.LoginProviders as Providers {
 								width 300
 								slot content {
 									item row {
@@ -901,7 +892,7 @@ element "Sign in" {
 				}
 			}
 		}
-		use workbench.TopBar as "Top bar" {
+		use Libraries.workbench.TopBar as "Top bar" {
 			at limits { hidden yes }
 			at icon_kit_Search { hidden yes }
 			at icon_kit_Camera { hidden yes }
@@ -981,11 +972,11 @@ element "Sign up" {
 		}
 		item "Card slot" {
 			auto-layout row; align center; justify center; width 1920; height 1080
-			use login_kit.LoginCard as "Login card" {
+			use Libraries.login_kit.LoginCard as "Login card" {
 				slot content {
-					use login_kit.LoginForm as "Login form" {
+					use Libraries.login_kit.LoginForm as "Login form" {
 						slot content {
-							use login_kit.LoginTabs as Tabs {
+							use Libraries.login_kit.LoginTabs as Tabs {
 								at heading.Platform { title "Интабия Платформа" }
 								at tabs.Tab_Sign_up.Sign_up { title Регистрация; font-weight 600 }
 								at tabs.Tab_Sign_up.underline { color #cf13a2 }
@@ -994,45 +985,45 @@ element "Sign up" {
 							}
 							item form {
 								auto-layout column; gap 24; padding 24 0 0 0; width 396; clip yes
-								use login_kit.LoginField as "Field Имя" {
+								use Libraries.login_kit.LoginField as "Field Имя" {
 									at Label { title Имя; pos 21 -17 }
 									at Value { hidden yes }
 								}
-								use login_kit.LoginField as "Field Фамилия" {
+								use Libraries.login_kit.LoginField as "Field Фамилия" {
 									at Label { title Фамилия; pos 21 -17 }
 									at Value { hidden yes }
 								}
-								use login_kit.LoginField as "Field Email" {
+								use Libraries.login_kit.LoginField as "Field Email" {
 									at Label { title Email; pos 21 -17 }
 									at Value { hidden yes }
 								}
-								use login_kit.LoginField as "Field Номер телефона" {
+								use Libraries.login_kit.LoginField as "Field Номер телефона" {
 									at Label { title "Номер телефона"; pos 21 -17 }
 									at Value { hidden yes }
 								}
-								use login_kit.LoginField as "Field Пароль" {
+								use Libraries.login_kit.LoginField as "Field Пароль" {
 									at Label { title Пароль; pos 21 -17 }
 									at Value { hidden yes }
 								}
-								use login_kit.LoginField as "Field Повторите пароль" {
+								use Libraries.login_kit.LoginField as "Field Повторите пароль" {
 									at Label { title "Повторите пароль"; pos 21 -17 }
 									at Value { hidden yes }
 								}
 								item consents {
 									auto-layout column; gap 8; padding 0 0 8 0; width 396; clip yes
-									use login_kit.LoginCheckbox_empty as "Check Я даю Согласие на обрабо" {
+									use Libraries.login_kit.LoginCheckbox as "Check Я даю Согласие на обрабо" {
+										checked false
 										at Label { title "Я даю Согласие на обработку персональных данных" }
 									}
-									use login_kit.LoginCheckbox_empty as "Check Я согласен с Лицензионны" {
+									use Libraries.login_kit.LoginCheckbox as "Check Я согласен с Лицензионны" {
+										checked false
 										at Label { title "Я согласен с Лицензионным договором, Пользовательским соглашением, Политикой конфиденциальности" }
 									}
 								}
-								use login_kit.LoginStatus as Status {
+								use Libraries.login_kit.LoginStatus as Status {
 									at message.Message { title "Требуется заполнить Имя" }
 								}
-								use login_kit.LoginButton_primary_disabled as "Button Зарегистрироваться" {
-									at Button { title Зарегистрироваться }
-								}
+								use Libraries.login_kit.LoginButton as "Button Зарегистрироваться" { kind primary; disabled true }
 							}
 							item spacer { auto-layout abs; width 396; height 16; clip yes }
 						}
@@ -1040,7 +1031,7 @@ element "Sign up" {
 				}
 			}
 		}
-		use workbench.TopBar as "Top bar" {
+		use Libraries.workbench.TopBar as "Top bar" {
 			at limits { hidden yes }
 			at icon_kit_Search { hidden yes }
 			at icon_kit_Camera { hidden yes }
@@ -1118,11 +1109,11 @@ element "Sign up" {
 		}
 		item "Card slot" {
 			auto-layout row; align center; justify center; width 1920; height 1080
-			use login_kit.LoginCard as "Login card" {
+			use Libraries.login_kit.LoginCard as "Login card" {
 				slot content {
-					use login_kit.LoginForm as "Login form" {
+					use Libraries.login_kit.LoginForm as "Login form" {
 						slot content {
-							use login_kit.LoginTabs as Tabs {
+							use Libraries.login_kit.LoginTabs as Tabs {
 								at heading.Platform { title "Интабия Платформа" }
 								at tabs.Tab_Sign_up.Sign_up { title Регистрация; font-weight 600 }
 								at tabs.Tab_Sign_up.underline { color #cf13a2 }
@@ -1131,45 +1122,43 @@ element "Sign up" {
 							}
 							item form {
 								auto-layout column; gap 24; padding 24 0 0 0; width 396; clip yes
-								use login_kit.LoginField as "Field Имя" {
+								use Libraries.login_kit.LoginField as "Field Имя" {
 									at Label { title Имя }
 									at Value { title Анна }
 								}
-								use login_kit.LoginField as "Field Фамилия" {
+								use Libraries.login_kit.LoginField as "Field Фамилия" {
 									at Label { title Фамилия }
 									at Value { title Смирнова }
 								}
-								use login_kit.LoginField as "Field Email" {
+								use Libraries.login_kit.LoginField as "Field Email" {
 									at Label { title Email }
 									at Value { title demo1 }
 								}
-								use login_kit.LoginField as "Field Номер телефона" {
+								use Libraries.login_kit.LoginField as "Field Номер телефона" {
 									at Label { title "Номер телефона" }
 									at Value { title "+7-900-123-45-67" }
 								}
-								use login_kit.LoginField as "Field Пароль" {
+								use Libraries.login_kit.LoginField as "Field Пароль" {
 									at Label { title Пароль }
 									at Value { title "••••••••" }
 								}
-								use login_kit.LoginField as "Field Повторите пароль" {
+								use Libraries.login_kit.LoginField as "Field Повторите пароль" {
 									at Label { title "Повторите пароль" }
 									at Value { title "••••••••" }
 								}
 								item consents {
 									auto-layout column; gap 8; padding 0 0 8 0; width 396; clip yes
-									use login_kit.LoginCheckbox as "Check Я даю Согласие на обрабо" {
+									use Libraries.login_kit.LoginCheckbox as "Check Я даю Согласие на обрабо" {
 										at Label { title "Я даю Согласие на обработку персональных данных" }
 									}
-									use login_kit.LoginCheckbox as "Check Я согласен с Лицензионны" {
+									use Libraries.login_kit.LoginCheckbox as "Check Я согласен с Лицензионны" {
 										at Label { title "Я согласен с Лицензионным договором, Пользовательским соглашением, Политикой конфиденциальности" }
 									}
 								}
-								use login_kit.LoginStatus as Status {
+								use Libraries.login_kit.LoginStatus as Status {
 									at message { hidden yes }
 								}
-								use login_kit.LoginButton_primary as "Button Зарегистрироваться" {
-									at Button { title Зарегистрироваться }
-								}
+								use Libraries.login_kit.LoginButton as "Button Зарегистрироваться" { kind primary }
 							}
 							item spacer { auto-layout abs; width 396; height 16; clip yes }
 						}
@@ -1177,7 +1166,7 @@ element "Sign up" {
 				}
 			}
 		}
-		use workbench.TopBar as "Top bar" {
+		use Libraries.workbench.TopBar as "Top bar" {
 			at limits { hidden yes }
 			at icon_kit_Search { hidden yes }
 			at icon_kit_Camera { hidden yes }
@@ -1255,11 +1244,11 @@ element "Sign up" {
 		}
 		item "Card slot" {
 			auto-layout row; align center; justify center; width 1920; height 1080
-			use login_kit.LoginCard as "Login card" {
+			use Libraries.login_kit.LoginCard as "Login card" {
 				slot content {
-					use login_kit.LoginForm as "Login form" {
+					use Libraries.login_kit.LoginForm as "Login form" {
 						slot content {
-							use login_kit.LoginTabs as Tabs {
+							use Libraries.login_kit.LoginTabs as Tabs {
 								at heading.Platform { title "Интабия Платформа" }
 								at tabs.Tab_Sign_up.Sign_up { title Регистрация; font-weight 600 }
 								at tabs.Tab_Sign_up.underline { color #cf13a2 }
@@ -1268,40 +1257,41 @@ element "Sign up" {
 							}
 							item form {
 								auto-layout column; gap 24; padding 24 0 0 0; width 396; clip yes
-								use login_kit.LoginField as "Field Имя" {
+								use Libraries.login_kit.LoginField as "Field Имя" {
 									at Label { title Имя }
 									at Value { title Анна }
 								}
-								use login_kit.LoginField as "Field Фамилия" {
+								use Libraries.login_kit.LoginField as "Field Фамилия" {
 									at Label { title Фамилия }
 									at Value { title Смирнова }
 								}
-								use login_kit.LoginField as "Field Email" {
+								use Libraries.login_kit.LoginField as "Field Email" {
 									at Label { title Email }
 									at Value { title demo1 }
 								}
-								use login_kit.LoginField as "Field Номер телефона" {
+								use Libraries.login_kit.LoginField as "Field Номер телефона" {
 									at Label { title "Номер телефона" }
 									at Value { title "+7-900-123-45-67" }
 								}
 								item consents {
 									auto-layout column; gap 8; padding 0 0 8 0; width 396; clip yes
-									use login_kit.LoginCheckbox_empty as "Check Установить пароль сейчас" {
+									use Libraries.login_kit.LoginCheckbox as "Check Установить пароль сейчас" {
+										checked false
 										at Label { title "Установить пароль сейчас" }
 									}
-									use login_kit.LoginCheckbox_empty as "Check Я даю Согласие на обрабо" {
+									use Libraries.login_kit.LoginCheckbox as "Check Я даю Согласие на обрабо" {
+										checked false
 										at Label { title "Я даю Согласие на обработку персональных данных" }
 									}
-									use login_kit.LoginCheckbox_empty as "Check Я согласен с Лицензионны" {
+									use Libraries.login_kit.LoginCheckbox as "Check Я согласен с Лицензионны" {
+										checked false
 										at Label { title "Я согласен с Лицензионным договором, Пользовательским соглашением, Политикой конфиденциальности" }
 									}
 								}
-								use login_kit.LoginStatus as Status {
+								use Libraries.login_kit.LoginStatus as Status {
 									at message.Message { title "Требуется заполнить Имя" }
 								}
-								use login_kit.LoginButton_primary_disabled as "Button Зарегистрироваться" {
-									at Button { title Зарегистрироваться }
-								}
+								use Libraries.login_kit.LoginButton as "Button Зарегистрироваться" { kind primary; disabled true }
 							}
 							item spacer { auto-layout abs; width 396; height 16; clip yes }
 						}
@@ -1309,7 +1299,7 @@ element "Sign up" {
 				}
 			}
 		}
-		use workbench.TopBar as "Top bar" {
+		use Libraries.workbench.TopBar as "Top bar" {
 			at limits { hidden yes }
 			at icon_kit_Search { hidden yes }
 			at icon_kit_Camera { hidden yes }
@@ -1387,9 +1377,9 @@ element "Sign up" {
 		}
 		item "Card slot" {
 			auto-layout row; align center; justify center; width 1920; height 1080
-			use login_kit.LoginCard as "Login card" {
+			use Libraries.login_kit.LoginCard as "Login card" {
 				slot content {
-					use login_kit.LoginForm as "Login form" {
+					use Libraries.login_kit.LoginForm as "Login form" {
 						padding 58.6 40 40 40
 						slot content {
 							item message {
@@ -1408,7 +1398,7 @@ element "Sign up" {
 				}
 			}
 		}
-		use workbench.TopBar as "Top bar" {
+		use Libraries.workbench.TopBar as "Top bar" {
 			at limits { hidden yes }
 			at icon_kit_Search { hidden yes }
 			at icon_kit_Camera { hidden yes }
@@ -1486,11 +1476,11 @@ element "Sign up" {
 		}
 		item "Card slot" {
 			auto-layout row; align center; justify center; width 1920; height 1080
-			use login_kit.LoginCard as "Login card" {
+			use Libraries.login_kit.LoginCard as "Login card" {
 				slot content {
-					use login_kit.LoginForm as "Login form" {
+					use Libraries.login_kit.LoginForm as "Login form" {
 						slot content {
-							use login_kit.LoginTitle_subtitle as Title {
+							use Libraries.login_kit.LoginTitle as Title {
 								at Subtitle { title "Анна Смирнова" }
 								at Title { title "Регистрация завершена" }
 							}
@@ -1500,16 +1490,14 @@ element "Sign up" {
 									title "Создайте собственное пространство или попросите у владельца существующего пространства ссылку на доступ."; font-size 14; line-height 18
 									font-family "IBM Plex Sans"; layout left; width 396; text-color #201240
 								}
-								use login_kit.LoginStatus as Status {
+								use Libraries.login_kit.LoginStatus as Status {
 									at message { hidden yes }
 								}
-								use login_kit.LoginButton_primary as "Button Создать рабочее пространство" {
-									at Button { title "Создать рабочее пространство" }
-								}
+								use Libraries.login_kit.LoginButton as "Button Создать рабочее пространство" { kind primary }
 							}
 							item footer {
 								auto-layout column; padding 28 0 0 0; width 396; clip yes
-								use login_kit.LoginLinks as Links {
+								use Libraries.login_kit.LoginLinks as Links {
 									slot content {
 										item "link row" {
 											auto-layout row; gap 3; align center; justify center; width 396; clip yes; wrap yes; line-gap 3
@@ -1528,7 +1516,7 @@ element "Sign up" {
 				}
 			}
 		}
-		use workbench.TopBar as "Top bar" {
+		use Libraries.workbench.TopBar as "Top bar" {
 			at limits { hidden yes }
 			at icon_kit_Search { hidden yes }
 			at icon_kit_Camera { hidden yes }
@@ -1608,29 +1596,28 @@ element "Password recovery" {
 		}
 		item "Card slot" {
 			auto-layout row; align center; justify center; width 1920; height 1080
-			use login_kit.LoginCard as "Login card" {
+			use Libraries.login_kit.LoginCard as "Login card" {
 				slot content {
-					use login_kit.LoginForm as "Login form" {
+					use Libraries.login_kit.LoginForm as "Login form" {
 						slot content {
-							use login_kit.LoginTitle as Title {
-								at Title { title "Восстановление пароля" }
+							use Libraries.login_kit.LoginTitle as Title {
+								at Subtitle { title "Восстановление пароля"; font-size 28; line-height 36; font-weight 700; text-color #333333 }
+								at Title { hidden yes }
 							}
 							item form {
 								auto-layout column; gap 24; padding 24 0 0 0; width 396; clip yes
-								use login_kit.LoginField as "Field Email" {
+								use Libraries.login_kit.LoginField as "Field Email" {
 									at Label { title Email; pos 21 -17 }
 									at Value { hidden yes }
 								}
-								use login_kit.LoginStatus as Status {
+								use Libraries.login_kit.LoginStatus as Status {
 									at message.Message { title "Требуется заполнить Email" }
 								}
-								use login_kit.LoginButton_primary_disabled as "Button Восстановить" {
-									at Button { title Восстановить }
-								}
+								use Libraries.login_kit.LoginButton as "Button Восстановить" { kind primary; disabled true }
 							}
 							item footer {
 								auto-layout column; padding 28 0 0 0; width 396; clip yes
-								use login_kit.LoginLinks as Links {
+								use Libraries.login_kit.LoginLinks as Links {
 									slot content {
 										item "link row" {
 											auto-layout row; gap 3; align center; justify center; width 396; clip yes; wrap yes; line-gap 3
@@ -1652,7 +1639,7 @@ element "Password recovery" {
 				}
 			}
 		}
-		use workbench.TopBar as "Top bar" {
+		use Libraries.workbench.TopBar as "Top bar" {
 			at limits { hidden yes }
 			at icon_kit_Search { hidden yes }
 			at icon_kit_Camera { hidden yes }
@@ -1730,36 +1717,35 @@ element "Password recovery" {
 		}
 		item "Card slot" {
 			auto-layout row; align center; justify center; width 1920; height 1080
-			use login_kit.LoginCard as "Login card" {
+			use Libraries.login_kit.LoginCard as "Login card" {
 				slot content {
-					use login_kit.LoginForm as "Login form" {
+					use Libraries.login_kit.LoginForm as "Login form" {
 						slot content {
-							use login_kit.LoginTitle as Title {
-								at Title { title "Восстановление пароля" }
+							use Libraries.login_kit.LoginTitle as Title {
+								at Subtitle { title "Восстановление пароля"; font-size 28; line-height 36; font-weight 700; text-color #333333 }
+								at Title { hidden yes }
 							}
 							item form {
 								auto-layout column; gap 24; padding 24 0 0 0; width 396; clip yes
-								use login_kit.LoginField as "Field Пароль" {
+								use Libraries.login_kit.LoginField as "Field Пароль" {
 									at Label { title Пароль; pos 21 -17 }
 									at Value { hidden yes }
 								}
-								use login_kit.LoginField as "Field Повторите пароль" {
+								use Libraries.login_kit.LoginField as "Field Повторите пароль" {
 									at Label { title "Повторите пароль"; pos 21 -17 }
 									at Value { hidden yes }
 								}
-								use login_kit.LoginStatus as Status {
+								use Libraries.login_kit.LoginStatus as Status {
 									at message.Message { title "Требуется заполнить Пароль" }
 								}
-								use login_kit.LoginButton_primary_disabled as "Button Восстановить" {
-									at Button { title Восстановить }
-								}
+								use Libraries.login_kit.LoginButton as "Button Восстановить" { kind primary; disabled true }
 							}
 						}
 					}
 				}
 			}
 		}
-		use workbench.TopBar as "Top bar" {
+		use Libraries.workbench.TopBar as "Top bar" {
 			at limits { hidden yes }
 			at icon_kit_Search { hidden yes }
 			at icon_kit_Camera { hidden yes }
@@ -1837,40 +1823,39 @@ element "Password recovery" {
 		}
 		item "Card slot" {
 			auto-layout row; align center; justify center; width 1920; height 1080
-			use login_kit.LoginCard as "Login card" {
+			use Libraries.login_kit.LoginCard as "Login card" {
 				slot content {
-					use login_kit.LoginForm as "Login form" {
+					use Libraries.login_kit.LoginForm as "Login form" {
 						slot content {
-							use login_kit.LoginTitle as Title {
-								at Title { title "Изменить пароль" }
+							use Libraries.login_kit.LoginTitle as Title {
+								at Subtitle { title "Изменить пароль"; font-size 28; line-height 36; font-weight 700; text-color #333333 }
+								at Title { hidden yes }
 							}
 							item form {
 								auto-layout column; gap 24; padding 24 0 0 0; width 396; clip yes
-								use login_kit.LoginField as "Field Текущий пароль" {
+								use Libraries.login_kit.LoginField as "Field Текущий пароль" {
 									at Label { title "Текущий пароль"; pos 21 -17 }
 									at Value { hidden yes }
 								}
-								use login_kit.LoginField as "Field Новый пароль" {
+								use Libraries.login_kit.LoginField as "Field Новый пароль" {
 									at Label { title "Новый пароль"; pos 21 -17 }
 									at Value { hidden yes }
 								}
-								use login_kit.LoginField as "Field Повторите новый пароль" {
+								use Libraries.login_kit.LoginField as "Field Повторите новый пароль" {
 									at Label { title "Повторите новый пароль"; pos 21 -17 }
 									at Value { hidden yes }
 								}
-								use login_kit.LoginStatus as Status {
+								use Libraries.login_kit.LoginStatus as Status {
 									at message.Message { title "Требуется заполнить Текущий пароль" }
 								}
-								use login_kit.LoginButton_primary_disabled as "Button Изменить пароль" {
-									at Button { title "Изменить пароль" }
-								}
+								use Libraries.login_kit.LoginButton as "Button Изменить пароль" { kind primary; disabled true }
 							}
 						}
 					}
 				}
 			}
 		}
-		use workbench.TopBar as "Top bar" {
+		use Libraries.workbench.TopBar as "Top bar" {
 			at limits { hidden yes }
 			at icon_kit_Search { hidden yes }
 			at icon_kit_Camera { hidden yes }
@@ -1950,9 +1935,9 @@ element "Link confirmation" {
 		}
 		item "Card slot" {
 			auto-layout row; align center; justify center; width 1920; height 1080
-			use login_kit.LoginCard as "Login card" {
+			use Libraries.login_kit.LoginCard as "Login card" {
 				slot content {
-					use login_kit.LoginForm as "Login form" {
+					use Libraries.login_kit.LoginForm as "Login form" {
 						padding 40
 						slot content {
 							item message {
@@ -1966,7 +1951,7 @@ element "Link confirmation" {
 				}
 			}
 		}
-		use workbench.TopBar as "Top bar" {
+		use Libraries.workbench.TopBar as "Top bar" {
 			at limits { hidden yes }
 			at icon_kit_Search { hidden yes }
 			at icon_kit_Camera { hidden yes }
@@ -2044,28 +2029,27 @@ element "Link confirmation" {
 		}
 		item "Card slot" {
 			auto-layout row; align center; justify center; width 1920; height 1080
-			use login_kit.LoginCard as "Login card" {
+			use Libraries.login_kit.LoginCard as "Login card" {
 				slot content {
-					use login_kit.LoginForm as "Login form" {
+					use Libraries.login_kit.LoginForm as "Login form" {
 						slot content {
-							use login_kit.LoginTitle as Title {
-								at Title { title "Вы уже зарегистрированы в платформе" }
+							use Libraries.login_kit.LoginTitle as Title {
+								at Subtitle { title "Вы уже зарегистрированы в платформе"; font-size 28; line-height 36; font-weight 700; text-color #333333 }
+								at Title { hidden yes }
 							}
 							item form {
 								auto-layout column; gap 24; padding 24 0 0 0; width 396; clip yes
-								use login_kit.LoginStatus as Status {
+								use Libraries.login_kit.LoginStatus as Status {
 									at message { hidden yes }
 								}
-								use login_kit.LoginButton_primary as "Button Продолжить" {
-									at Button { title Продолжить }
-								}
+								use Libraries.login_kit.LoginButton as "Button Продолжить" { kind primary }
 							}
 						}
 					}
 				}
 			}
 		}
-		use workbench.TopBar as "Top bar" {
+		use Libraries.workbench.TopBar as "Top bar" {
 			at limits { hidden yes }
 			at icon_kit_Search { hidden yes }
 			at icon_kit_Camera { hidden yes }
@@ -2143,28 +2127,27 @@ element "Link confirmation" {
 		}
 		item "Card slot" {
 			auto-layout row; align center; justify center; width 1920; height 1080
-			use login_kit.LoginCard as "Login card" {
+			use Libraries.login_kit.LoginCard as "Login card" {
 				slot content {
-					use login_kit.LoginForm as "Login form" {
+					use Libraries.login_kit.LoginForm as "Login form" {
 						slot content {
-							use login_kit.LoginTitle as Title {
-								at Title { title "Ссылка недействительна" }
+							use Libraries.login_kit.LoginTitle as Title {
+								at Subtitle { title "Ссылка недействительна"; font-size 28; line-height 36; font-weight 700; text-color #333333 }
+								at Title { hidden yes }
 							}
 							item form {
 								auto-layout column; gap 24; padding 24 0 0 0; width 396; clip yes
-								use login_kit.LoginStatus as Status {
+								use Libraries.login_kit.LoginStatus as Status {
 									at message { hidden yes }
 								}
-								use login_kit.LoginButton_primary as "Button Вход" {
-									at Button { title Вход }
-								}
+								use Libraries.login_kit.LoginButton as "Button Вход" { kind primary }
 							}
 						}
 					}
 				}
 			}
 		}
-		use workbench.TopBar as "Top bar" {
+		use Libraries.workbench.TopBar as "Top bar" {
 			at limits { hidden yes }
 			at icon_kit_Search { hidden yes }
 			at icon_kit_Camera { hidden yes }
@@ -2242,28 +2225,27 @@ element "Link confirmation" {
 		}
 		item "Card slot" {
 			auto-layout row; align center; justify center; width 1920; height 1080
-			use login_kit.LoginCard as "Login card" {
+			use Libraries.login_kit.LoginCard as "Login card" {
 				slot content {
-					use login_kit.LoginForm as "Login form" {
+					use Libraries.login_kit.LoginForm as "Login form" {
 						slot content {
-							use login_kit.LoginTitle as Title {
-								at Title { title "Вход в аккаунт" }
+							use Libraries.login_kit.LoginTitle as Title {
+								at Subtitle { title "Вход в аккаунт"; font-size 28; line-height 36; font-weight 700; text-color #333333 }
+								at Title { hidden yes }
 							}
 							item form {
 								auto-layout column; gap 24; padding 24 0 0 0; width 396; clip yes
-								use login_kit.LoginStatus as Status {
+								use Libraries.login_kit.LoginStatus as Status {
 									at message { hidden yes }
 								}
-								use login_kit.LoginButton_primary as "Button Вход" {
-									at Button { title Вход }
-								}
+								use Libraries.login_kit.LoginButton as "Button Вход" { kind primary }
 							}
 						}
 					}
 				}
 			}
 		}
-		use workbench.TopBar as "Top bar" {
+		use Libraries.workbench.TopBar as "Top bar" {
 			at limits { hidden yes }
 			at icon_kit_Search { hidden yes }
 			at icon_kit_Camera { hidden yes }
@@ -2341,36 +2323,35 @@ element "Link confirmation" {
 		}
 		item "Card slot" {
 			auto-layout row; align center; justify center; width 1920; height 1080
-			use login_kit.LoginCard as "Login card" {
+			use Libraries.login_kit.LoginCard as "Login card" {
 				slot content {
-					use login_kit.LoginForm as "Login form" {
+					use Libraries.login_kit.LoginForm as "Login form" {
 						slot content {
-							use login_kit.LoginTitle as Title {
-								at Title { title "Как вас зовут?" }
+							use Libraries.login_kit.LoginTitle as Title {
+								at Subtitle { title "Как вас зовут?"; font-size 28; line-height 36; font-weight 700; text-color #333333 }
+								at Title { hidden yes }
 							}
 							item form {
 								auto-layout column; gap 24; padding 24 0 0 0; width 396; clip yes
-								use login_kit.LoginField as "Field Имя" {
+								use Libraries.login_kit.LoginField as "Field Имя" {
 									at Label { title Имя }
 									at Value { title Анна }
 								}
-								use login_kit.LoginField as "Field Фамилия" {
+								use Libraries.login_kit.LoginField as "Field Фамилия" {
 									at Label { title Фамилия; pos 21 -17 }
 									at Value { hidden yes }
 								}
-								use login_kit.LoginStatus as Status {
+								use Libraries.login_kit.LoginStatus as Status {
 									at message { hidden yes }
 								}
-								use login_kit.LoginButton_primary as "Button Продолжить" {
-									at Button { title Продолжить }
-								}
+								use Libraries.login_kit.LoginButton as "Button Продолжить" { kind primary }
 							}
 						}
 					}
 				}
 			}
 		}
-		use workbench.TopBar as "Top bar" {
+		use Libraries.workbench.TopBar as "Top bar" {
 			at limits { hidden yes }
 			at icon_kit_Search { hidden yes }
 			at icon_kit_Camera { hidden yes }
@@ -2450,12 +2431,12 @@ element Workspaces {
 		}
 		item "Card slot" {
 			auto-layout row; align center; justify center; width 1920; height 1080
-			use login_kit.LoginCard as "Login card" {
+			use Libraries.login_kit.LoginCard as "Login card" {
 				slot content {
-					use login_kit.LoginForm as "Login form" {
+					use Libraries.login_kit.LoginForm as "Login form" {
 						padding 16
 						slot content {
-							use login_kit.LoginBackTitle as "Back title" {
+							use Libraries.login_kit.LoginBackTitle as "Back title" {
 								at Title { title "Выбрать рабочее пространство" }
 							}
 							item person {
@@ -2467,14 +2448,14 @@ element Workspaces {
 							item spacer { auto-layout abs; width 428; height 20; clip yes }
 							item workspaces {
 								auto-layout column; padding 2 0 14 0; width 428; clip yes
-								use login_kit.LoginWorkspace as "Workspace demo-ws" {
+								use Libraries.login_kit.LoginWorkspace as "Workspace demo-ws" {
 									at Workspace { title demo-ws }
 									at last_visit_2_days_ago { title "(2 days)" }
 								}
 							}
 							item footer {
 								auto-layout column; padding 56 0 0 0; width 428; clip yes
-								use login_kit.LoginLinks as Links {
+								use Libraries.login_kit.LoginLinks as Links {
 									align start; width 428
 									slot content {
 										item "link row" {
@@ -2503,7 +2484,7 @@ element Workspaces {
 				}
 			}
 		}
-		use workbench.TopBar as "Top bar" {
+		use Libraries.workbench.TopBar as "Top bar" {
 			at limits { hidden yes }
 			at icon_kit_Search { hidden yes }
 			at icon_kit_Camera { hidden yes }
@@ -2581,12 +2562,12 @@ element Workspaces {
 		}
 		item "Card slot" {
 			auto-layout row; align center; justify center; width 1920; height 1080
-			use login_kit.LoginCard as "Login card" {
+			use Libraries.login_kit.LoginCard as "Login card" {
 				slot content {
-					use login_kit.LoginForm as "Login form" {
+					use Libraries.login_kit.LoginForm as "Login form" {
 						padding 16
 						slot content {
-							use login_kit.LoginBackTitle as "Back title" {
+							use Libraries.login_kit.LoginBackTitle as "Back title" {
 								at Title { title "Выбрать рабочее пространство" }
 							}
 							item person {
@@ -2597,13 +2578,10 @@ element Workspaces {
 							}
 							item spacer { auto-layout abs; width 428; height 20; clip yes }
 							item workspaces { auto-layout column; padding 2 0; width 428; clip yes }
-							use login_kit.LoginButton_primary as "Button Создать рабочее пространство" {
-								width 428
-								at Button { title "Создать рабочее пространство" }
-							}
+							use Libraries.login_kit.LoginButton as "Button Создать рабочее пространство" { kind primary; width 428 }
 							item footer {
 								auto-layout column; padding 56 0 0 0; width 428; clip yes
-								use login_kit.LoginLinks as Links {
+								use Libraries.login_kit.LoginLinks as Links {
 									align start; width 428
 									slot content {
 										item "link row" {
@@ -2623,7 +2601,7 @@ element Workspaces {
 				}
 			}
 		}
-		use workbench.TopBar as "Top bar" {
+		use Libraries.workbench.TopBar as "Top bar" {
 			at limits { hidden yes }
 			at icon_kit_Search { hidden yes }
 			at icon_kit_Camera { hidden yes }
@@ -2701,30 +2679,28 @@ element Workspaces {
 		}
 		item "Card slot" {
 			auto-layout row; align center; justify center; width 1920; height 1080
-			use login_kit.LoginCard as "Login card" {
+			use Libraries.login_kit.LoginCard as "Login card" {
 				slot content {
-					use login_kit.LoginForm as "Login form" {
+					use Libraries.login_kit.LoginForm as "Login form" {
 						slot content {
-							use login_kit.LoginTitle_subtitle as Title {
+							use Libraries.login_kit.LoginTitle as Title {
 								at Subtitle { title "Анна Смирнова" }
 								at Title { title "Создать рабочее пространство" }
 							}
 							item form {
 								auto-layout column; gap 24; padding 24 0 0 0; width 396; clip yes
-								use login_kit.LoginField as "Field Рабочее пространство" {
+								use Libraries.login_kit.LoginField as "Field Рабочее пространство" {
 									at Label { title "Рабочее пространство"; pos 21 -17 }
 									at Value { hidden yes }
 								}
-								use login_kit.LoginStatus as Status {
+								use Libraries.login_kit.LoginStatus as Status {
 									at message.Message { title "Требуется заполнить Рабочее пространство" }
 								}
-								use login_kit.LoginButton_primary_disabled as "Button Создать рабочее пространство" {
-									at Button { title "Создать рабочее пространство" }
-								}
+								use Libraries.login_kit.LoginButton as "Button Создать рабочее пространство" { kind primary; disabled true }
 							}
 							item footer {
 								auto-layout column; padding 28 0 0 0; width 396; clip yes
-								use login_kit.LoginLinks as Links {
+								use Libraries.login_kit.LoginLinks as Links {
 									slot content {
 										item "link row" {
 											auto-layout row; gap 3; align center; justify center; width 396; clip yes; wrap yes; line-gap 3
@@ -2743,7 +2719,7 @@ element Workspaces {
 				}
 			}
 		}
-		use workbench.TopBar as "Top bar" {
+		use Libraries.workbench.TopBar as "Top bar" {
 			at limits { hidden yes }
 			at icon_kit_Search { hidden yes }
 			at icon_kit_Camera { hidden yes }
@@ -2823,9 +2799,9 @@ element Invitations {
 		}
 		item "Card slot" {
 			auto-layout row; align center; justify center; width 1920; height 1080
-			use login_kit.LoginCard as "Login card" {
+			use Libraries.login_kit.LoginCard as "Login card" {
 				slot content {
-					use login_kit.LoginForm as "Login form" {
+					use Libraries.login_kit.LoginForm as "Login form" {
 						slot content {
 							item invitation {
 								auto-layout column; align center; width 396; clip yes
@@ -2838,18 +2814,9 @@ element Invitations {
 								}
 								item actions {
 									auto-layout column; gap 12; padding 16 0 0 0; width 300; clip yes
-									use login_kit.LoginButton_primary as "Button Присоединиться как Анна Смирнова" {
-										width 300
-										at Button { title "Присоединиться как Анна Смирнова" }
-									}
-									use login_kit.LoginButton_default as "Button Создать новый аккаунт" {
-										width 300
-										at Button { title "Создать новый аккаунт" }
-									}
-									use login_kit.LoginButton_default as "Button Присоединиться с существующим аккаунтом" {
-										width 300
-										at Button { title "Присоединиться с существующим аккаунтом" }
-									}
+									use Libraries.login_kit.LoginButton as "Button Присоединиться как Анна Смирнова" { kind primary; width 300 }
+									use Libraries.login_kit.LoginButton as "Button Создать новый аккаунт" { kind default; width 300 }
+									use Libraries.login_kit.LoginButton as "Button Присоединиться с существующим аккаунтом" { kind default; width 300 }
 								}
 							}
 						}
@@ -2857,7 +2824,7 @@ element Invitations {
 				}
 			}
 		}
-		use workbench.TopBar as "Top bar" {
+		use Libraries.workbench.TopBar as "Top bar" {
 			at limits { hidden yes }
 			at icon_kit_Search { hidden yes }
 			at icon_kit_Camera { hidden yes }
@@ -2935,7 +2902,7 @@ element Invitations {
 		}
 		item "Card slot" {
 			auto-layout row; align center; justify center; width 1920; height 1080
-			use login_kit.LoginCard as "Login card" {
+			use Libraries.login_kit.LoginCard as "Login card" {
 				slot content {
 					item "back row" {
 						auto-layout row; padding 8; align center; width 460; height 60; clip yes
@@ -2944,48 +2911,49 @@ element Invitations {
 							item Назад { title Назад; font-size 15.2; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #201240 }
 						}
 					}
-					use login_kit.LoginForm as "Login form" {
+					use Libraries.login_kit.LoginForm as "Login form" {
 						slot content {
-							use login_kit.LoginTitle_subtitle as Title {
+							use Libraries.login_kit.LoginTitle as Title {
 								at Subtitle { title demo-ws }
 								at Title { title "Зарегистрироваться и присоединиться" }
 							}
 							item form {
 								auto-layout column; gap 24; padding 24 0 0 0; width 396; clip yes
-								use login_kit.LoginField as "Field Имя" {
+								use Libraries.login_kit.LoginField as "Field Имя" {
 									at Label { title Имя; pos 21 -17 }
 									at Value { hidden yes }
 								}
-								use login_kit.LoginField as "Field Фамилия" {
+								use Libraries.login_kit.LoginField as "Field Фамилия" {
 									at Label { title Фамилия; pos 21 -17 }
 									at Value { hidden yes }
 								}
-								use login_kit.LoginField as "Field Email" {
+								use Libraries.login_kit.LoginField as "Field Email" {
 									at Label { title Email; pos 21 -17 }
 									at Value { hidden yes }
 								}
-								use login_kit.LoginField as "Field Номер телефона" {
+								use Libraries.login_kit.LoginField as "Field Номер телефона" {
 									at Label { title "Номер телефона"; pos 21 -17 }
 									at Value { hidden yes }
 								}
 								item consents {
 									auto-layout column; gap 8; padding 0 0 8 0; width 396; clip yes
-									use login_kit.LoginCheckbox_empty as "Check Установить пароль сейчас" {
+									use Libraries.login_kit.LoginCheckbox as "Check Установить пароль сейчас" {
+										checked false
 										at Label { title "Установить пароль сейчас" }
 									}
-									use login_kit.LoginCheckbox_empty as "Check Я даю Согласие на обрабо" {
+									use Libraries.login_kit.LoginCheckbox as "Check Я даю Согласие на обрабо" {
+										checked false
 										at Label { title "Я даю Согласие на обработку персональных данных" }
 									}
-									use login_kit.LoginCheckbox_empty as "Check Я согласен с Лицензионны" {
+									use Libraries.login_kit.LoginCheckbox as "Check Я согласен с Лицензионны" {
+										checked false
 										at Label { title "Я согласен с Лицензионным договором, Пользовательским соглашением, Политикой конфиденциальности" }
 									}
 								}
-								use login_kit.LoginStatus as Status {
+								use Libraries.login_kit.LoginStatus as Status {
 									at message.Message { title "Требуется заполнить Имя" }
 								}
-								use login_kit.LoginButton_primary_disabled as "Button Зарегистрироваться и присоединиться" {
-									at Button { title "Зарегистрироваться и присоединиться" }
-								}
+								use Libraries.login_kit.LoginButton as "Button Зарегистрироваться и присоединиться" { kind primary; disabled true }
 							}
 							item spacer { auto-layout abs; width 396; height 16; clip yes }
 						}
@@ -2993,7 +2961,7 @@ element Invitations {
 				}
 			}
 		}
-		use workbench.TopBar as "Top bar" {
+		use Libraries.workbench.TopBar as "Top bar" {
 			at limits { hidden yes }
 			at icon_kit_Search { hidden yes }
 			at icon_kit_Camera { hidden yes }
@@ -3071,9 +3039,9 @@ element Invitations {
 		}
 		item "Card slot" {
 			auto-layout row; align center; justify center; width 1920; height 1080
-			use login_kit.LoginCard as "Login card" {
+			use Libraries.login_kit.LoginCard as "Login card" {
 				slot content {
-					use login_kit.LoginForm as "Login form" {
+					use Libraries.login_kit.LoginForm as "Login form" {
 						slot content {
 							item invitation {
 								auto-layout column; gap 8; align center; width 396; clip yes
@@ -3090,7 +3058,7 @@ element Invitations {
 				}
 			}
 		}
-		use workbench.TopBar as "Top bar" {
+		use Libraries.workbench.TopBar as "Top bar" {
 			at limits { hidden yes }
 			at icon_kit_Search { hidden yes }
 			at icon_kit_Camera { hidden yes }
@@ -3168,9 +3136,9 @@ element Invitations {
 		}
 		item "Card slot" {
 			auto-layout row; align center; justify center; width 1920; height 1080
-			use login_kit.LoginCard as "Login card" {
+			use Libraries.login_kit.LoginCard as "Login card" {
 				slot content {
-					use login_kit.LoginForm as "Login form" {
+					use Libraries.login_kit.LoginForm as "Login form" {
 						slot content {
 							item invitation {
 								auto-layout column; gap 8; align center; width 396; clip yes
@@ -3187,7 +3155,7 @@ element Invitations {
 				}
 			}
 		}
-		use workbench.TopBar as "Top bar" {
+		use Libraries.workbench.TopBar as "Top bar" {
 			at limits { hidden yes }
 			at icon_kit_Search { hidden yes }
 			at icon_kit_Camera { hidden yes }
@@ -3265,7 +3233,7 @@ element Invitations {
 		}
 		item "Card slot" {
 			auto-layout row; align center; justify center; width 1920; height 1080
-			use login_kit.LoginCard as "Login card" {
+			use Libraries.login_kit.LoginCard as "Login card" {
 				slot content {
 					item processing {
 						auto-layout column; gap 16; padding 16 0; align center; width 460; clip yes
@@ -3277,7 +3245,7 @@ element Invitations {
 				}
 			}
 		}
-		use workbench.TopBar as "Top bar" {
+		use Libraries.workbench.TopBar as "Top bar" {
 			at limits { hidden yes }
 			at icon_kit_Search { hidden yes }
 			at icon_kit_Camera { hidden yes }

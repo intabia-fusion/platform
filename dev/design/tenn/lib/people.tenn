@@ -1,13 +1,16 @@
 entry "../../../../PlatformDesign.tenn"
 item "§ Avatar" {
-	auto-layout abs; width 120; height 88; border-color #0000000f; corner-radius 8; pos 0 0
+	auto-layout abs; width 68; height 88; border-color #0000000f; corner-radius 8; pos 0 0
 	item title { title Avatar; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item Avatar {
-	auto-layout row; align center; justify center; width 20; height 20; clip yes; color #666ecc; corner-radius 4; pos 24 -44
-	item initials { title AJ; font-size 8; line-height 10; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #ffffff }
-}
-item "Avatar/empty" {
-	auto-layout row; align center; justify center; width 20; height 20; clip yes; color #6b3ad31a; corner-radius 4; pos 76 -44
-	use Icon.kit_PersonCircle as "icon/kit/PersonCircle" { width 12; height 12; color #00000099 }
+	export let initials = AJ; export let empty = false; auto-layout row; align center; justify center; width 20; height 20; clip yes; color #666ecc
+	corner-radius 4; use-style ${(empty === "true") ? "empty" : ""}; pos 24 -44
+	styles {
+		empty { color #6b3ad31a }
+	}
+	item initials {
+		font-size 8; line-height 10; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #ffffff; title ${initials}; hidden ${empty}
+	}
+	use Icon.kit_PersonCircle as "icon/kit/PersonCircle" { width 12; height 12; color #00000099; hidden ${!(empty === "true")} }
 }

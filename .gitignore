@@ -2,6 +2,7 @@
 lib/
 # The Tenniarb design library is source, not build output.
 !dev/design/tenn/lib/
+dev/tenn/.state.json
 _api-extractor-temp/
 temp/
 .idea
