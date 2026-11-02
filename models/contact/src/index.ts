@@ -1,6 +1,7 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -951,7 +952,7 @@ export function createModel (builder: Builder): void {
   })
 
   builder.mixin(core.class.TypeAccountUuid, core.class.Class, view.mixin.AttributePresenter, {
-    presenter: view.component.PersonIdPresenter,
+    presenter: view.component.AccountUuidPresenter,
     arrayPresenter: contact.component.AccountArrayEditor
   })
 

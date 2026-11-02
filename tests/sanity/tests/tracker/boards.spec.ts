@@ -422,6 +422,7 @@ test.describe('task boards', () => {
     await expect(table.getByRole('columnheader')).toHaveText(['', 'Name', 'Owner', 'Visibility', 'More actions'])
     const row = boards.catalogRow(id)
     await expect(row.getByRole('cell')).toHaveCount(5)
+    await expect(row.getByRole('cell').nth(2)).not.toBeEmpty()
     await row.locator('[data-id="boardCatalogSettings"]').click()
     await expect(page).toHaveURL(boards.boardUrl(id, true))
     await expect(boards.settings()).toBeVisible()
@@ -477,12 +478,21 @@ test.describe('task boards', () => {
       await expect.poll(async () => (await content.boundingBox())?.height ?? 0).toBeGreaterThan(100)
       for (const control of [input, boards.settingsSwitcher(), boards.share()]) {
         await expect(control).toBeVisible()
-        const bounds = await control.boundingBox()
-        expect(bounds).not.toBeNull()
-        expect(bounds?.x ?? -1).toBeGreaterThanOrEqual(0)
-        expect(bounds?.y ?? -1).toBeGreaterThanOrEqual(0)
-        expect(bounds === null ? Infinity : bounds.x + bounds.width, control.toString()).toBeLessThanOrEqual(420)
-        expect(bounds === null ? Infinity : bounds.y + bounds.height).toBeLessThanOrEqual(800)
+        await expect
+          .poll(
+            async () => {
+              const bounds = await control.boundingBox()
+              return (
+                bounds !== null &&
+                bounds.x >= 0 &&
+                bounds.y >= 0 &&
+                bounds.x + bounds.width <= 420 &&
+                bounds.y + bounds.height <= 800
+              )
+            },
+            { message: control.toString() }
+          )
+          .toBe(true)
       }
       expect(await content.evaluate((element) => element.scrollWidth <= element.clientWidth + 1)).toBe(true)
       await input.fill(`${titlePrefix}board narrow`)

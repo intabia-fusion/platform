@@ -205,7 +205,10 @@ test.describe('board settings', () => {
     const bar = page.locator('[data-id="boardColumnsScroll"] .bar-horizontal')
     await expect(bar).toBeVisible()
     await expect(bar).toHaveCSS('opacity', '1')
-    await unplaced.locator('[data-id="boardStatus"]', { hasText: 'Canceled' }).dragTo(last)
+    await last.scrollIntoViewIfNeeded()
+    await unplaced.locator('[data-id="boardStatus"]', { hasText: 'Canceled' }).dragTo(last, {
+      targetPosition: { x: 100, y: 30 }
+    })
     await expect
       .poll(async () => (await client.findOne(tracker.class.Board, { _id: id }))?.columns.at(-1)?.statuses)
       .toContain(statusId('Cancelled'))

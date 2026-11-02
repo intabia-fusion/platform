@@ -203,6 +203,7 @@ const view = plugin(viewId, {
     SearchSelector: '' as AnyComponent,
     FoldersBrowser: '' as AnyComponent,
     PersonIdPresenter: '' as AnyComponent,
+    AccountUuidPresenter: '' as AnyComponent,
     PersonIdFilter: '' as AnyComponent,
     RolePresenter: '' as AnyComponent,
     ReadOnlyNotification: '' as AnyComponent,

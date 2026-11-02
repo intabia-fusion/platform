@@ -81,7 +81,7 @@
         />
         <Button
           data-id={navigation.has(board._id) ? 'boardRemoveFromNavigation' : 'boardAddToNavigation'}
-          kind="secondary"
+          kind={navigation.has(board._id) ? 'secondary' : 'primary'}
           size="small"
           disabled={!navigationReady}
           loading={updatingNavigation}
