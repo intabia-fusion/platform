@@ -19,6 +19,11 @@ import { type ParticipantInfo, type UserMeetingInvite } from '@hcengineering/lov
 
 jest.mock('svelte/store', () => require('./svelteStoreDouble'))
 
+jest.mock('../liveKitClient', () => {
+  const { writable } = require('svelte/store')
+  return { lkSessionConnected: writable(false) }
+})
+
 jest.mock('@hcengineering/contact', () => ({
   getCurrentEmployee: jest.fn(() => 'person-me'),
   getCurrentEmployeeSpace: jest.fn(() => 'space-1')

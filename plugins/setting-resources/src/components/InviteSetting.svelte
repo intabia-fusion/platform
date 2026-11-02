@@ -87,6 +87,7 @@
         size="medium"
         kind="primary"
         loading={saving}
+        disabled={existingInviteSettings === undefined}
         on:click={() => setInviteSettings()}
       />
     </div>

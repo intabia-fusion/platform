@@ -177,7 +177,8 @@ onClient(() => {
   const infoPromise = new Promise<void>((resolve) =>
     statusQuery.query(love.class.ParticipantInfo, {}, async (res) => {
       allInfos.set(res)
-      infos.set(await filterParticipantInfo(res))
+      const filtered = await filterParticipantInfo(res)
+      if (get(allInfos) === res) infos.set(filtered)
       resolve()
     })
   )

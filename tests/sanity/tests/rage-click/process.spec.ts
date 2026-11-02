@@ -168,8 +168,8 @@ test.describe('Rage click: process', () => {
 
     const addTabButton = page.getByRole('button', { name: '+ Add Tab', exact: true })
     const tabEditors = page.locator('div.hulyTableAttr-container.editor')
-    // Usually 0, but under load a fresh screen can still be settling its own query; read whatever
-    // it actually is rather than assume, and check deltas from there.
+    // A fresh screen has a default "General" tab; wait for its query before counting additions.
+    await expect(tabEditors).toHaveCount(1)
     const initialCount = await tabEditors.count()
 
     await rageClick(addTabButton)
