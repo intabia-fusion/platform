@@ -37,9 +37,9 @@ import { registerPrivacyTests } from './meetings.privacy.tests'
 import { registerPrivateSummaryTests } from './meetings.private-summary.tests'
 import { registerRageClickTests } from './meetings.rage-click.tests'
 import { registerRecordingTests } from './meetings.recording.tests'
+import { registerPermanentMeetingTests } from './meetings.permanent.tests'
+import { registerRecurringTests } from './meetings.recurring.tests'
 import { registerScenariosTests } from './meetings.scenarios.tests'
-import { registerScheduledConnectTests } from './meetings.scheduled-connect.tests'
-import { registerScheduledLinksTests } from './meetings.scheduled-links.tests'
 import { registerSessionTests } from './meetings.session.tests'
 import { registerStartTests } from './meetings.start.tests'
 import { registerTransactorRestartTests } from './meetings.transactor-restart.tests'
@@ -76,13 +76,13 @@ test.describe('love (meetings) — suite', () => {
   registerBidirectionalLoopTests()
   registerRefreshReconnectTests()
   registerGuestTests()
-  registerScheduledLinksTests()
   registerHostRefreshTests()
-  registerScheduledConnectTests()
   registerFinishedTokenTests()
   registerPrivateSummaryTests()
   registerTransactorRestartTests()
   registerRecordingTests()
+  registerRecurringTests()
+  registerPermanentMeetingTests()
   registerMultiTabTests()
   registerRageClickTests()
 })

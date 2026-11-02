@@ -15,7 +15,7 @@
 
 import { Event } from '@hcengineering/calendar'
 import { MeasureContext, PersonId, Ref, WorkspaceUuid } from '@hcengineering/core'
-import { MeetingEventLink, Room } from '@hcengineering/love'
+import { MeetingEventLink } from '@hcengineering/love'
 import { MeetingNotificationType } from '../notification'
 import { eventCreated, eventUpdated, eventDeleted, eventMixin } from '../handlers'
 import * as notification from '../notification'
@@ -23,7 +23,6 @@ import * as notification from '../notification'
 const ws = 'workspace-id' as WorkspaceUuid
 const meetingHost = 'meeting-host' as PersonId
 const meetingGuest = 'meeting-guest' as PersonId
-const room = 'room-id' as Ref<Room>
 const ctx = {
   error: jest.fn(),
   info: jest.fn()
@@ -57,7 +56,7 @@ jest.mock('../utils', () => {
     ...actual,
     ...actual.default,
     isMeeting: jest.fn((ws: WorkspaceUuid, event: Event): Promise<boolean> => {
-      return Promise.resolve((event as any as MeetingEventLink).room !== undefined)
+      return Promise.resolve((event as any as MeetingEventLink).private !== undefined)
     })
   }
 })
@@ -93,7 +92,7 @@ describe('queue message handlers', () => {
     test('there should be notification when host creates meeting for guest', async () => {
       // This happens when the host adds a new participant to the existing meeting
       // A new event which is already a meeting is created for the new participant
-      const event = eventFor(meetingGuest, { room })
+      const event = eventFor(meetingGuest, { private: true })
 
       await eventCreated(ctx, ws, { event, modifiedBy: meetingHost })
 
@@ -103,7 +102,7 @@ describe('queue message handlers', () => {
     test('there should not be notification when host creates meeting for guest in the past', async () => {
       // This happens when the host adds a new participant to the existing meeting
       // A new event which is already a meeting is created for the new participant
-      const event = eventFor(meetingGuest, { room, date: pastDate() })
+      const event = eventFor(meetingGuest, { private: true, date: pastDate() })
 
       await eventCreated(ctx, ws, { event, modifiedBy: meetingHost })
 
@@ -129,7 +128,7 @@ describe('queue message handlers', () => {
     })
 
     test('there should be notification when host updates meeting for guest', async () => {
-      const event = eventFor(meetingGuest, { room })
+      const event = eventFor(meetingGuest, { private: true })
 
       await eventUpdated(ctx, ws, { event, modifiedBy: meetingHost, changes: { date: Date.now() } })
 
@@ -143,7 +142,7 @@ describe('queue message handlers', () => {
     })
 
     test('there should be notification when host updates meeting for guest in the past', async () => {
-      const event = eventFor(meetingGuest, { room, date: pastDate() })
+      const event = eventFor(meetingGuest, { private: true, date: pastDate() })
 
       await eventUpdated(ctx, ws, { event, modifiedBy: meetingHost, changes: { date: Date.now() } })
 
@@ -151,7 +150,7 @@ describe('queue message handlers', () => {
     })
 
     test('there should not be notification when host updates meeting for himself', async () => {
-      const event = eventFor(meetingHost, { room })
+      const event = eventFor(meetingHost, { private: true })
 
       await eventUpdated(ctx, ws, { event, modifiedBy: meetingHost, changes: { date: Date.now() } })
 
@@ -177,7 +176,7 @@ describe('queue message handlers', () => {
     })
 
     test('there should be notification when host deletes meeting for guest', async () => {
-      const event = eventFor(meetingGuest, { room })
+      const event = eventFor(meetingGuest, { private: true })
 
       await eventDeleted(ctx, ws, { event, modifiedBy: meetingHost })
 
@@ -185,7 +184,7 @@ describe('queue message handlers', () => {
     })
 
     test('there should not be notification when host deletes meeting for guest in the past', async () => {
-      const event = eventFor(meetingGuest, { room, date: pastDate() })
+      const event = eventFor(meetingGuest, { private: true, date: pastDate() })
 
       await eventDeleted(ctx, ws, { event, modifiedBy: meetingHost })
 
@@ -193,7 +192,7 @@ describe('queue message handlers', () => {
     })
 
     test('there should not be notification when host deletes meeting for himself', async () => {
-      const event = eventFor(meetingHost, { room })
+      const event = eventFor(meetingHost, { private: true })
 
       await eventDeleted(ctx, ws, { event, modifiedBy: meetingHost })
 
@@ -205,7 +204,7 @@ describe('queue message handlers', () => {
     test('there should not be notification when event not created before mixin', async () => {
       const event = eventFor(meetingGuest)
 
-      await eventMixin(ctx, ws, { event, modifiedBy: meetingHost, changes: { room } })
+      await eventMixin(ctx, ws, { event, modifiedBy: meetingHost, changes: { private: true } })
 
       expect(createNotificationSpy).not.toHaveBeenCalled()
     })
@@ -214,8 +213,8 @@ describe('queue message handlers', () => {
       const event0 = eventFor(meetingGuest)
       await eventCreated(ctx, ws, { event: event0, modifiedBy: meetingHost })
 
-      const event = eventFor(meetingGuest, { room })
-      await eventMixin(ctx, ws, { event, modifiedBy: meetingHost, changes: { room } })
+      const event = eventFor(meetingGuest, { private: true })
+      await eventMixin(ctx, ws, { event, modifiedBy: meetingHost, changes: { private: true } })
 
       expect(createNotificationSpy).toHaveBeenCalledWith(ctx, ws, MeetingNotificationType.Scheduled, event, meetingHost)
     })
@@ -224,8 +223,8 @@ describe('queue message handlers', () => {
       const event0 = eventFor(meetingHost)
       await eventCreated(ctx, ws, { event: event0, modifiedBy: meetingHost })
 
-      const event = eventFor(meetingHost, { room })
-      await eventMixin(ctx, ws, { event, modifiedBy: meetingHost, changes: { room } })
+      const event = eventFor(meetingHost, { private: true })
+      await eventMixin(ctx, ws, { event, modifiedBy: meetingHost, changes: { private: true } })
 
       expect(createNotificationSpy).not.toHaveBeenCalled()
     })

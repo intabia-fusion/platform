@@ -16,10 +16,11 @@
   import type { Contact, Person } from '@hcengineering/contact'
   import type { Ref } from '@hcengineering/core'
   import type { Floor as FloorType, Office, Room } from '@hcengineering/love'
-  import { isOffice } from '@hcengineering/love'
+  import love, { isOffice } from '@hcengineering/love'
+  import { SpecialView } from '@hcengineering/workbench-resources'
   import { deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
   import { onDestroy } from 'svelte'
-  import { activeFloor, ensureOfficeDetailsLoaded, floors, rooms, selectedFloor } from '../stores'
+  import { currentFloor, ensureOfficeDetailsLoaded, officeView, rooms } from '../stores'
 
   import Floor from './Floor.svelte'
   import FloorConfigure from './FloorConfigure.svelte'
@@ -30,8 +31,7 @@
     return rooms.filter((p) => p.floor === floor)
   }
 
-  let floor = $selectedFloor ?? ($activeFloor === '' ? $floors[0]?._id : $activeFloor)
-  $: floor = $selectedFloor ?? ($activeFloor === '' ? $floors[0]?._id : $activeFloor)
+  $: floor = $currentFloor
   let configure: boolean = false
   let replacedPanel: HTMLElement
 
@@ -45,7 +45,17 @@
 </script>
 
 <div class="antiPanel-component filledNav" bind:this={replacedPanel}>
-  {#if configure}
+  {#if $officeView === 'meetings'}
+    <SpecialView _class={love.mixin.MeetingEventLink} label={love.string.Meetings} icon={love.icon.Cam} />
+  {:else if $officeView === 'permanent'}
+    <SpecialView
+      _class={love.class.PermanentMeeting}
+      label={love.string.PermanentMeetings}
+      icon={love.icon.MeetingMinutes}
+      createLabel={love.string.NewMeeting}
+      createComponent={love.component.CreatePermanentMeetingPopup}
+    />
+  {:else if configure}
     <FloorConfigure
       rooms={getRooms($rooms, floor)}
       {floor}

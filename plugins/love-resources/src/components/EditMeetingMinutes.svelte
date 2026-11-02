@@ -51,12 +51,12 @@
     currentName = object.name
   }
 
-  async function changeName (): Promise<void> {
+  async function changeName(): Promise<void> {
     await client.diffUpdate(object, { name: newName })
   }
 
   let togglingPrivate = false
-  async function togglePrivate (): Promise<void> {
+  async function togglePrivate(): Promise<void> {
     if (togglingPrivate) return
     togglingPrivate = true
     try {
@@ -68,17 +68,6 @@
 
   // Check if current user is owner of the meeting
   $: isOwner = object.owners?.includes(currentAccount.uuid) ?? false
-
-  let togglingStartOnLink = false
-  async function toggleStartOnLink (): Promise<void> {
-    if (togglingStartOnLink) return
-    togglingStartOnLink = true
-    try {
-      await client.update(object, { startOnLink: object.startOnLink !== true })
-    } finally {
-      togglingStartOnLink = false
-    }
-  }
 
   // Content of a private space is readable only by members, even for the workspace owner.
   $: isOutsider = object.private && !object.members.includes(currentAccount.uuid)
@@ -97,7 +86,7 @@
   })
 
   let joining = false
-  async function join (): Promise<void> {
+  async function join(): Promise<void> {
     if (joining) return
     joining = true
     try {
@@ -112,13 +101,13 @@
   $: hasPendingJoinInThisSession =
     $myConnectingSessionId !== null && $myConnectingSessionId === currentSessionId && $lkIsConnecting
 
-  async function connect (): Promise<void> {
+  async function connect(): Promise<void> {
     if ($connectingToMeeting) return
     await joinMeeting(object)
   }
 
   let leavingRoom = false
-  async function handleLeaveRoom (): Promise<void> {
+  async function handleLeaveRoom(): Promise<void> {
     if (leavingRoom) return
     leavingRoom = true
     try {
@@ -128,9 +117,7 @@
     }
   }
 
-  $: connectLabel = object.status !== MeetingStatus.Scheduled ? love.string.JoinMeeting : love.string.StartMeeting
-
-  function showConnectionButton (
+  function showConnectionButton(
     object: MeetingMinutes,
     connecting: boolean,
     isConnected: boolean,
@@ -151,7 +138,7 @@
     return true
   }
 
-  function getInfo (mm: Ref<MeetingMinutes>, info: ParticipantInfo[]): ParticipantInfo[] {
+  function getInfo(mm: Ref<MeetingMinutes>, info: ParticipantInfo[]): ParticipantInfo[] {
     return info.filter((p) => p.meeting === mm)
   }
 
@@ -188,18 +175,10 @@
           data-id="meeting-toggle-private"
           loading={togglingPrivate}
         />
-        <Button
-          label={love.string.StartOnLink}
-          size="large"
-          kind={object.startOnLink === true ? 'primary' : 'secondary'}
-          on:click={toggleStartOnLink}
-          data-id="meeting-toggle-start-on-link"
-          loading={togglingStartOnLink}
-        />
       {/if}
       {#if showConnectionButton(object, hasPendingJoinInThisSession || $connectingToMeeting, $lkSessionConnected, currentAccount.role)}
         <Button
-          label={connectLabel}
+          label={love.string.JoinMeeting}
           size="large"
           kind="primary"
           on:click={connect}

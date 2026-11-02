@@ -38,6 +38,10 @@ jest.mock('@hcengineering/contact-resources', () => ({
 // factory below.
 const mockQueryInstances: Array<{ query: jest.Mock, unsubscribe: jest.Mock }> = []
 
+jest.mock('@hcengineering/ui', () => {
+  const { writable } = require('svelte/store')
+  return { location: writable({ path: [] }) }
+})
 jest.mock('@hcengineering/presentation', () => ({
   __esModule: true,
   default: { metadata: { Token: 'presentation:metadata:Token' } },

@@ -13,22 +13,39 @@
 // limitations under the License.
 //
 import type { Class, Doc, Ref } from '@hcengineering/core'
-import { connectTracker } from './TrackerApi'
 
-// Specs book widget hours that outlive the stand's series; titles are unique per test. The base
-// class also returns ReccuringEvent.
-// Ids as strings: the suite does not depend on the calendar package.
-const eventClass = 'calendar:class:Event' as Ref<Class<Doc>>
+import { connectTracker } from './TrackerApi'
+import { PlatformUser, PlatformUserSecond, PlatformWs } from '../utils'
+
+// Literal class ref: the calendar plugin is not a test-package dependency. Recurring events
+// derive from it, so one findAll covers them too.
+const eventClass = 'calendar:class:Event' as Ref<Class<Doc & { title: string }>>
 
 export async function deleteEventsByTitle (title: string, user?: string): Promise<number> {
   const { client } = await connectTracker(undefined, user)
   try {
-    const events = await client.findAll(eventClass, { title } as any)
+    const events = await client.findAll(eventClass, { title })
     for (const event of events) {
       await client.remove(event)
     }
     return events.length
   } finally {
     await client.close()
+  }
+}
+
+/**
+ * Drops the events left by earlier runs of a calendar spec, in both accounts it uses. The widget
+ * shows one day, so ~20 leftover hours leave `clickFreeCellInWidget` with no free cell at all.
+ * Prefixes must belong to the calling spec: the calendar specs run in parallel on separate workers.
+ */
+export async function dropStaleCalendarEvents (titlePrefixes: string[]): Promise<void> {
+  for (const user of [PlatformUser, PlatformUserSecond]) {
+    const { client } = await connectTracker(PlatformWs, user)
+    for (const event of await client.findAll(eventClass, {})) {
+      if (titlePrefixes.some((prefix) => (event.title ?? '').startsWith(prefix))) {
+        await client.remove(event)
+      }
+    }
   }
 }

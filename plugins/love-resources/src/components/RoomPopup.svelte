@@ -17,7 +17,7 @@
   import { UserInfo, getPersonByPersonRef } from '@hcengineering/contact-resources'
   import type { Class, Doc, Ref } from '@hcengineering/core'
   import type { Location } from '@hcengineering/ui'
-  import ui, { Scroller, location, navigate, panelstore } from '@hcengineering/ui'
+  import ui, { Scroller, getCurrentLocation, location, navigate, panelstore } from '@hcengineering/ui'
   import { Button } from '@hcengineering/ui/kit'
   import type { MeetingMinutes, ParticipantInfo, Room } from '@hcengineering/love'
   import { loveId } from '@hcengineering/love'
@@ -48,7 +48,7 @@
   $: isPrivateMeeting = hasParticipants && meeting === undefined
 
   const client = getClient()
-  async function getPerson (info: ParticipantInfo | undefined): Promise<Person | null> {
+  async function getPerson(info: ParticipantInfo | undefined): Promise<Person | null> {
     if (info === undefined) {
       return null
     }
@@ -65,7 +65,7 @@
 
   const dispatch = createEventDispatcher()
 
-  async function connect (): Promise<void> {
+  async function connect(): Promise<void> {
     if ($connectingToMeeting) return
     if (meeting !== undefined) {
       await createMeeting(room, meeting)
@@ -73,20 +73,28 @@
     dispatch('close')
   }
 
-  async function backOrOpen (): Promise<void> {
+  async function backOrOpen(): Promise<void> {
     const meeting = $meetings.find((m) => m._id === meetingId)
     if (meeting !== undefined) {
       const hierarchy = client.getHierarchy()
       const panelComponent = hierarchy.classHierarchyMixin(meeting._class as Ref<Class<Doc>>, view.mixin.ObjectPanel)
       const comp = panelComponent?.component ?? view.component.EditDoc
+      const current = getCurrentLocation()
       const loc = await getObjectLinkFragment(hierarchy, meeting, {}, comp)
       loc.path[2] = loveId
-      loc.path.length = 3
+      // Keep the navigator segment: the room popup floats over the office, so the selection the
+      // user made in `path[3]` must survive going back to the meeting document.
+      if (current.path[2] === loveId && current.path[3] !== undefined) {
+        loc.path[3] = current.path[3]
+        loc.path.length = 4
+      } else {
+        loc.path.length = 3
+      }
       navigate(loc)
     }
   }
 
-  function canGoBack (joined: boolean, location: Location, meetingMinutesId?: Ref<MeetingMinutes>): boolean {
+  function canGoBack(joined: boolean, location: Location, meetingMinutesId?: Ref<MeetingMinutes>): boolean {
     if (!joined) return false
     if (location.path[2] !== loveId) return true
     if (meetingMinutesId === undefined) return false

@@ -29,6 +29,9 @@
 
   function changeIsMeeting (val: boolean): void {
     $state.isMeeting = val
+    if (val && $state.room === undefined) {
+      $state.room = $myOffice?._id
+    }
   }
 
   let isMeeting = false
@@ -54,9 +57,6 @@
     on:click={() => {
       isMeeting = !isMeeting
       changeIsMeeting(isMeeting)
-      if (isMeeting && $state.room === undefined) {
-        $state.room = $myOffice?._id
-      }
     }}
   />
 </div>

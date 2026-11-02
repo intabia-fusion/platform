@@ -16,15 +16,14 @@
   import type { Ref, WithLookup } from '@hcengineering/core'
   import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
   import type { Floor, Room } from '@hcengineering/love'
-  import ui, { Component, DropdownLabels, eventToHTMLElement, Header, showPopup } from '@hcengineering/ui'
+  import { Component, Header, IconEdit } from '@hcengineering/ui'
   import { Button } from '@hcengineering/ui/kit'
   import type { Viewlet, ViewletPreference } from '@hcengineering/view'
   import { ViewletSelector } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
 
   import lovePlg from '../plugin'
-  import { ensureOfficeDetailsLoaded, floors, selectedFloor } from '../stores'
-  import AddRoomPopup from './AddRoomPopup.svelte'
+  import { ensureOfficeDetailsLoaded, floors } from '../stores'
 
   export let rooms: Room[] = []
   export let floor: Ref<Floor>
@@ -37,64 +36,20 @@
   let preference: ViewletPreference | undefined
   let loading = false
 
-  let selected = $floors.filter((fl) => fl._id === floor)[0]
-  $: selected = $floors.filter((fl) => fl._id === floor)[0]
+  $: selected = $floors.find((fl) => fl._id === floor)
 
-  const me = getCurrentAccount()
-
-  let editable: boolean = false
-  $: editable = hasAccountRole(me, AccountRole.Maintainer)
-  // A meeting needs a room, and adding one is a per-meeting action, not office layout editing.
-  $: canAddRoom = hasAccountRole(me, AccountRole.User)
-
-  let items = $floors.map((p) => {
-    return { id: p._id, label: p.name }
-  })
-  $: items = $floors.map((p) => {
-    return { id: p._id, label: p.name }
-  })
-
-  function changeFloor (event: CustomEvent<Ref<Floor>>) {
-    if (event.detail) {
-      selectedFloor.set(event.detail)
-    }
-  }
-
-  function openAddRoom (event: MouseEvent | TouchEvent): void {
-    showPopup(AddRoomPopup, { floor }, eventToHTMLElement(event))
-  }
+  const editable = hasAccountRole(getCurrentAccount(), AccountRole.Maintainer)
 </script>
 
 <div class="hulyComponent">
   <Header adaptive="disabled">
-    <DropdownLabels
-      {items}
-      selected={selected?._id}
-      size="large"
-      kind="ghost"
-      enableSearch={false}
-      autoSelect={false}
-      on:selected={changeFloor}
-    />
+    <span class="fs-title overflow-label">{selected?.name ?? ''}</span>
     <svelte:fragment slot="beforeTitle">
       <ViewletSelector bind:viewlet bind:preference bind:loading viewletQuery={{ attachTo: lovePlg.class.Floor }} />
     </svelte:fragment>
     <svelte:fragment slot="actions">
-      {#if canAddRoom}
-        <Button
-          icon={ui.icon.Plus}
-          label={lovePlg.string.AddRoom}
-          size="small"
-          on:click={openAddRoom}
-        />
-      {/if}
       {#if editable}
-        <Button
-          icon={ui.icon.PencilLine}
-          label={lovePlg.string.EditOffice}
-          size="small"
-          on:click={() => dispatch('configure')}
-        />
+        <Button icon={IconEdit} label={lovePlg.string.EditOffice} size="small" on:click={() => dispatch('configure')} />
       {/if}
     </svelte:fragment>
   </Header>

@@ -18,13 +18,7 @@ import { expect, test, type Page } from '@playwright/test'
 import type { AccountUuid, Ref, Space, TxOperations } from '@hcengineering/core'
 import calendar, { AccessLevel, generateEventId, type Event, type Calendar } from '@hcengineering/calendar'
 import contact from '@hcengineering/contact'
-import love, {
-  MeetingStatus,
-  RecordingState,
-  TranscriptionState,
-  type MeetingMinutes,
-  type Room
-} from '@hcengineering/love'
+import love, { RoomType, defaultMeetingAccess, type Room } from '@hcengineering/love'
 import { generateId as generateCoreId } from '@hcengineering/core'
 
 import { connectTracker } from '../API/TrackerApi'
@@ -57,7 +51,7 @@ const IGNORED_ERROR = /billing|limitsindicator|tokenwindow|failed to load resour
 
 /** Collects console/page errors so a rage click's extra (blocked-by-the-guard) calls - a second
  *  `disconnect()`, a second join attempt - surface as a concrete failure instead of a flaky UI read. */
-function watchErrors (page: Page): string[] {
+function watchErrors(page: Page): string[] {
   const errors: string[] = []
   page.on('pageerror', (err) => {
     if (!IGNORED_ERROR.test(err.message)) errors.push(err.message)
@@ -70,7 +64,7 @@ function watchErrors (page: Page): string[] {
 
 /** Copied from meetings.invite.tests.ts (read-only reference) - picks a teammate by last name in
  *  the invite picker and confirms. */
-async function inviteByLastName (page: Page, lastName: string): Promise<void> {
+async function inviteByLastName(page: Page, lastName: string): Promise<void> {
   await page.locator('[data-id="invite-button"]').first().click()
   const popup = page.locator('.hulyModal-container').last()
   const search = popup.getByPlaceholder(/Search/i)
@@ -96,7 +90,7 @@ async function inviteByLastName (page: Page, lastName: string): Promise<void> {
 }
 
 /** Copied from meetings.invite.tests.ts (read-only reference). */
-async function openIncomingInvitePopup (page: Page): Promise<void> {
+async function openIncomingInvitePopup(page: Page): Promise<void> {
   const btn = page.locator('[data-id="incoming-invite-trigger"]')
   await expect(btn).toBeVisible({ timeout: 15000 })
   await btn.click()
@@ -104,7 +98,7 @@ async function openIncomingInvitePopup (page: Page): Promise<void> {
 
 /** Copied from meetings.knock-office.tests.ts (read-only reference): personal offices render with
  *  an empty `data-id="room-"`, so the owner connects through their own office card. */
-async function connectToOwnOffice (page: Page): Promise<void> {
+async function connectToOwnOffice(page: Page): Promise<void> {
   const office = page.locator('div.floorGrid-room.myOffice').first()
   await expect(office).toBeVisible({ timeout: 15000 })
   const avatarCell = office.locator('.floorGrid-room__field').first()
@@ -125,7 +119,7 @@ async function connectToOwnOffice (page: Page): Promise<void> {
 /** Counts outgoing `TxUpdateDoc`/`TxMixin` frames that touch `objectId` and set `opKey`.
  *  `diffUpdate` never goes through `apply()`, so the frames from `trackTxFrames` need no
  *  further unwrapping here. */
-function countMatchingTx (frames: TxFrame[], objectId: string, opKey: string): number {
+function countMatchingTx(frames: TxFrame[], objectId: string, opKey: string): number {
   let count = 0
   for (const tx of frames) {
     const ops = tx.operations ?? (tx as any).attributes
@@ -134,18 +128,17 @@ function countMatchingTx (frames: TxFrame[], objectId: string, opKey: string): n
   return count
 }
 
-// --- EditMeetingData setup: a calendar event linked to a MeetingMinutes via the
-// love.mixin.MeetingEventLink mixin (plugins/love-resources/src/utils.ts `createMeeting`,
-// the real post-create hook for "Schedule Meeting", read as the reference for the doc shapes). ---
+// --- EditMeetingData setup: a calendar event carrying the love.mixin.MeetingEventLink mixin.
+// Since FUSIO-1307 the meeting lives on the master event and the session is created by the love
+// service on the first join, so no `MeetingMinutes` document is written here. ---
 interface ScheduledMeetingSetup {
   client: TxOperations
   eventId: Ref<Event>
   eventTitle: string
-  meetingId: Ref<MeetingMinutes>
   personSpace: Ref<Space>
 }
 
-async function getUserCalendar (client: TxOperations, accountUuid: AccountUuid): Promise<Ref<Calendar>> {
+async function getUserCalendar(client: TxOperations, accountUuid: AccountUuid): Promise<Ref<Calendar>> {
   // Server trigger creates exactly this id on first login (server-plugins/calendar-resources).
   const direct = `${accountUuid}_calendar` as Ref<Calendar>
   const found = await client.findOne(calendar.class.Calendar, { _id: direct })
@@ -155,7 +148,7 @@ async function getUserCalendar (client: TxOperations, accountUuid: AccountUuid):
   return any._id
 }
 
-async function createScheduledMeetingEvent (roomName: string, status: MeetingStatus): Promise<ScheduledMeetingSetup> {
+async function createScheduledMeetingEvent(roomName: string): Promise<ScheduledMeetingSetup> {
   const { client, workspaceToken } = await connectTracker(MEETINGS_WS, PlatformUserSecond)
   const accountUuid = workspaceToken.info.account
   const employee = await client.findOne(contact.mixin.Employee, { personUuid: accountUuid })
@@ -198,40 +191,20 @@ async function createScheduledMeetingEvent (roomName: string, status: MeetingSta
     eventId
   )
 
-  const meetingId: Ref<MeetingMinutes> = generateCoreId()
-  await client.createDoc(
-    love.class.MeetingMinutes,
-    meetingId as unknown as Ref<Space>,
-    {
-      name: eventTitle,
-      description: '',
-      private: room.startPrivate ?? false,
-      archived: false,
-      members: [accountUuid],
-      owners: [accountUuid],
-      descriptionRef: null,
-      summary: null,
-      roomId: room._id,
-      status,
-      language: room.language ?? 'en',
-      recordingState: RecordingState.NotStarted,
-      transcriptionState: TranscriptionState.NotStarted,
-      startWithRecording: room.startWithRecording ?? false,
-      startWithTranscription: room.startWithTranscription ?? false,
-      meetingScheduledDate: now
-    },
-    meetingId
-  )
-
   await client.createMixin(eventId, calendar.class.Event, personSpace._id, love.mixin.MeetingEventLink, {
-    room: room._id,
-    meetingId
+    type: RoomType.Video,
+    linkVersion: 1,
+    meetingAccess: defaultMeetingAccess,
+    private: room.startPrivate ?? false,
+    language: room.language ?? 'en',
+    startWithRecording: room.startWithRecording ?? false,
+    startWithTranscription: room.startWithTranscription ?? false
   })
 
-  return { client, eventId, eventTitle, meetingId, personSpace: personSpace._id }
+  return { client, eventId, eventTitle, personSpace: personSpace._id }
 }
 
-async function cleanupScheduledMeetingEvent (setup: ScheduledMeetingSetup): Promise<void> {
+async function cleanupScheduledMeetingEvent(setup: ScheduledMeetingSetup): Promise<void> {
   try {
     await setup.client.removeCollection(
       calendar.class.Event,
@@ -244,17 +217,12 @@ async function cleanupScheduledMeetingEvent (setup: ScheduledMeetingSetup): Prom
   } catch {
     // Best-effort.
   }
-  try {
-    await setup.client.removeDoc(love.class.MeetingMinutes, setup.meetingId as unknown as Ref<Space>, setup.meetingId)
-  } catch {
-    // Best-effort.
-  }
   await setup.client.close()
 }
 
 /** Calendar's month view (Day.svelte) renders each event as a `.event` cell with its title;
  *  clicking it opens EditEvent as a `content` panel, which is where EditMeetingData mounts. */
-async function openCalendarEventPanel (page: Page, eventTitle: string): Promise<void> {
+async function openCalendarEventPanel(page: Page, eventTitle: string): Promise<void> {
   // Calendar has no standalone app/URL route - it is a Fixed WidgetsBar widget
   // (models/calendar/src/index.ts `calendar.ids.CalendarWidget`), opened the same way as Love's
   // own Office widget: `AppItem`'s root button id is `'app-' + label` (packages/workbench-
@@ -271,7 +239,7 @@ async function openCalendarEventPanel (page: Page, eventTitle: string): Promise<
 
 // Registered from meetings.all.spec.ts: run serially with the other meeting tests, which share
 // these users and offices - a separate spec file ran in a parallel worker and broke both.
-export function registerRageClickTests (): void {
+export function registerRageClickTests(): void {
   test.describe('Rage click: love meetings', () => {
     test.beforeEach(async () => {
       await waitForActiveMeetingsToFinish()
@@ -596,7 +564,7 @@ export function registerRageClickTests (): void {
 
     test('EditMeetingData "Start Meeting" joins once (rage click)', async ({ browser }) => {
       test.setTimeout(60000)
-      const setup = await createScheduledMeetingEvent('Meeting Room 1', MeetingStatus.Scheduled)
+      const setup = await createScheduledMeetingEvent('Meeting Room 1')
       // A fresh context, not the shared `loveWindow`: that window carries a reconnect-to-meeting
       // anchor (`love.activeMeeting` in sessionStorage) from earlier meeting tests in this file,
       // and `reconnectToCurrentMeeting` (plugins/love-resources/src/meetings.ts) silently navigates
@@ -626,7 +594,7 @@ export function registerRageClickTests (): void {
 
     test('EditMeetingData "End Meeting" ends once (rage click)', async ({ browser }) => {
       test.setTimeout(60000)
-      const setup = await createScheduledMeetingEvent('Meeting Room 2', MeetingStatus.Scheduled)
+      const setup = await createScheduledMeetingEvent('Meeting Room 2')
       const ctx = await browser.newContext({ storageState: '.auth/storageSecond.json' })
       const page = await ctx.newPage()
       const errors = watchErrors(page)
@@ -655,36 +623,6 @@ export function registerRageClickTests (): void {
         await ctx.close()
         await cleanupScheduledMeetingEvent(setup)
         await waitForActiveMeetingsToFinish()
-      }
-    })
-
-    test('EditMeetingData reset sends one tx, not three (wire)', async ({ browser }) => {
-      test.setTimeout(60000)
-      // Reset only needs `meetingDoc.status === Finished`; written directly, no LiveKit session
-      // needed (unlike Start/End above) - the same stale-read diffUpdate shape as the privacy
-      // toggle, so "once" is only observable on the wire (see `enableJsonProtocol` above).
-      const setup = await createScheduledMeetingEvent('Meeting Room 1', MeetingStatus.Finished)
-      const ctx = await browser.newContext({ storageState: '.auth/storageSecond.json' })
-      const page = await ctx.newPage()
-      await enableJsonProtocol(page)
-      const tx = trackTxFrames(page)
-
-      try {
-        await openCalendarEventPanel(page, setup.eventTitle)
-        const resetBtn = page.locator('div.flex-col.mt-2').getByRole('button')
-        await expect(resetBtn).toBeVisible({ timeout: 15000 })
-        tx.frames.length = 0
-
-        await rageClick(resetBtn)
-
-        await expect.poll(() => countMatchingTx(tx.frames, setup.meetingId, 'status')).toBeGreaterThanOrEqual(1)
-        await page.waitForTimeout(500)
-        const txCount = countMatchingTx(tx.frames, setup.meetingId, 'status')
-        expect(txCount, `expected exactly one "status" tx, frames: ${JSON.stringify(tx.frames)}`).toBe(1)
-      } finally {
-        await page.close()
-        await ctx.close()
-        await cleanupScheduledMeetingEvent(setup)
       }
     })
   })
