@@ -13,7 +13,7 @@ export class TrackerNavigationMenuPage extends CommonPage {
   yoursProjectsMenuSelector = '#navGroup-tree-projects'
   starredProjectsMenuSelector = '#navGroup-tree-stared'
 
-  buttonCreateProject = (): Locator => this.page.locator(this.yoursProjectsMenuSelector).locator('xpath=../button[1]')
+  buttonCreateProject = (): Locator => this.page.getByRole('button', { name: 'Create project', exact: true })
   buttonProjectsParent = (): Locator => this.page.locator('button.hulyNavGroup-header span')
   // The href carries the project id, not its name: only the Default project id contains its name
   templateLinkForProject = (projectName: string): Locator =>
@@ -41,13 +41,15 @@ export class TrackerNavigationMenuPage extends CommonPage {
   newIssue = (): Locator => this.page.locator('button', { hasText: 'New issue' })
   myIssues = (): Locator => this.page.getByRole('link', { name: 'My issues', exact: true })
   allIssues = (): Locator => this.page.getByRole('link', { name: 'All issues', exact: true })
-  allProjects = (): Locator => this.page.getByRole('link', { name: 'All projects' })
+  allProjects = (): Locator =>
+    this.page.locator('.hulyNavGroup-header').getByRole('button', { name: 'All projects', exact: true })
+
   issues = (): Locator => this.page.getByRole('link', { name: 'Issues', exact: true })
   components = (): Locator => this.page.getByRole('link', { name: 'Components' })
   milestone = (): Locator => this.page.getByRole('link', { name: 'Milestones' })
   templates = (): Locator => this.page.getByRole('link', { name: 'Templates' })
 
-  createProjectButton = (): Locator => this.buttonCreateProject().locator('#tree-projects')
+  createProjectButton = (): Locator => this.buttonCreateProject()
 
   async pressCreateProjectButton (): Promise<void> {
     const form = this.page.locator('form[data-id="project-create-wizard"]')

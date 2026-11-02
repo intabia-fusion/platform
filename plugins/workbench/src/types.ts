@@ -141,6 +141,7 @@ export interface SpacesNavModel {
   addSpaceLabel?: IntlString
   createComponent?: AnyComponent
   icon?: Asset
+  catalog?: { id: string, label: IntlString, icon: Asset }
 
   // Child special items.
   specials?: SpecialNavModel[]

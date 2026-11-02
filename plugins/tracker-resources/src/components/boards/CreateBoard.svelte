@@ -20,10 +20,26 @@
   import { typeStore } from '@hcengineering/task-resources'
   import type { Board, BoardColumn, BoardVisibility, Issue, Project } from '@hcengineering/tracker'
   import ui, { Icon, Label, Scroller, resolvedLocationStore, showPopup } from '@hcengineering/ui'
-  import { Button, Chip, IconButton, Radio, SettingRow, TextArea, TextInput, WizardDialog } from '@hcengineering/ui/kit'
+  import {
+    Button,
+    Chip,
+    IconButton,
+    Toggle,
+    SettingRow,
+    TextArea,
+    TextInput,
+    WizardDialog
+  } from '@hcengineering/ui/kit'
   import { FilterConditions, statusStore } from '@hcengineering/view-resources'
   import { createEventDispatcher, onMount } from 'svelte'
-  import { boardLocation, boardQuery, createBoard, reportBoardError } from '../../boards'
+  import {
+    boardLocation,
+    boardQuery,
+    createBoard,
+    ensureBoardNavigation,
+    setBoardInNavigation,
+    reportBoardError
+  } from '../../boards'
   import tracker from '../../plugin'
   import { activeProjects } from '../../utils'
   import ProjectMembersTable from '../projects/settings/ProjectMembersTable.svelte'
@@ -107,15 +123,16 @@
 
   // One empty column: the user drags the statuses of the projects into it
   let columns: BoardColumn[] = []
+  let warnOnClosedStatuses = false
   onMount(async () => {
     const columnTitle = await translate(tracker.string.MyColumn, {})
     columns = [{ id: generateId(), title: columnTitle, category: task.statusCategory.UnStarted, statuses: [] }]
   })
-  $: draft = { projects: selected, columns }
+  $: draft = { projects: selected, columns, warnOnClosedStatuses }
 
-  async function onColumns (patch: Partial<Pick<Board, 'columns'>>): Promise<void> {
-    if (patch.columns === undefined) return
-    columns = patch.columns
+  async function onColumns (patch: Partial<Pick<Board, 'columns' | 'warnOnClosedStatuses'>>): Promise<void> {
+    if (patch.columns !== undefined) columns = patch.columns
+    if (patch.warnOnClosedStatuses !== undefined) warnOnClosedStatuses = patch.warnOnClosedStatuses
   }
 
   $: canProceed = title.trim() !== '' && selected.length > 0
@@ -125,6 +142,7 @@
     if (!canSubmit) return
     isSaving = true
     try {
+      await ensureBoardNavigation(client, await client.findAll(tracker.class.Board, {}))
       const text = description.trim()
       const id = await createBoard(client, {
         title: title.trim(),
@@ -134,10 +152,12 @@
         // Editors picked before switching to a personal board would hold no rights there
         editors: visibility === 'me' ? [] : editors,
         filter,
-        columns
+        columns,
+        warnOnClosedStatuses
       })
       dispatch('close')
       boardLocation(id)
+      await setBoardInNavigation(client, id, true)
     } catch (err) {
       reportBoardError(err)
     } finally {
@@ -225,24 +245,15 @@
           </SettingRow>
 
           <SettingRow kind="column" label={tracker.string.BoardVisibility}>
-            <div class="radios" role="radiogroup">
-              <Radio
-                value="all"
-                group={visibility}
-                name="board-create-visibility"
-                label={tracker.string.BoardVisibilityAllMembers}
-                data-id="board-create-visibility-all"
-                on:change={() => (visibility = 'all')}
-              />
-              <Radio
-                value="me"
-                group={visibility}
-                name="board-create-visibility"
-                label={tracker.string.BoardVisibilityOnlyMe}
-                data-id="board-create-visibility-me"
-                on:change={() => (visibility = 'me')}
-              />
-            </div>
+            <Toggle
+              checked={visibility === 'me'}
+              label={tracker.string.BoardPersonal}
+              description={tracker.string.BoardVisibilityOnlyMeHint}
+              data-id="board-create-visibility-me"
+              on:change={(event) => {
+                visibility = event.detail ? 'me' : 'all'
+              }}
+            />
           </SettingRow>
 
           <div class="filter-row">
@@ -346,11 +357,6 @@
     background-color: var(--theme-link-button-color);
     border: 1px solid var(--theme-button-border);
     border-radius: 0.375rem;
-  }
-  .radios {
-    display: flex;
-    flex-direction: column;
-    gap: 0.625rem;
   }
   // The label line is as tall as the add button, so the count starts where the hint does
   .filter-row :global(.setting-row__main) {

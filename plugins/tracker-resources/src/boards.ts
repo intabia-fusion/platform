@@ -16,6 +16,7 @@
 import { getCurrentEmployeeSpace } from '@hcengineering/contact'
 import core, {
   getCurrentAccount,
+  concatLink,
   mergeQueries,
   type AccountUuid,
   type Data,
@@ -26,17 +27,19 @@ import core, {
   type Status,
   type TxOperations
 } from '@hcengineering/core'
-import { setPlatformStatus, unknownError } from '@hcengineering/platform'
-import { createQuery, type LiveQuery } from '@hcengineering/presentation'
+import { getMetadata, setPlatformStatus, unknownError } from '@hcengineering/platform'
+import presentation, { copyTextToClipboard, createQuery, MessageBox, type LiveQuery } from '@hcengineering/presentation'
 import {
   defaultCardDensity,
+  isBoardAvailable,
   type Board,
   type BoardColumn,
+  type BoardNavigationPreference,
   type BoardVisibility,
   type Issue,
   type Project
 } from '@hcengineering/tracker'
-import { getCurrentResolvedLocation, navigate } from '@hcengineering/ui'
+import { getCurrentResolvedLocation, locationToUrl, navigate, showPopup } from '@hcengineering/ui'
 import tracker from './plugin'
 import { filtersToQuery, parseFilters } from '@hcengineering/view-resources'
 
@@ -170,6 +173,7 @@ export interface NewBoardData {
   editors: AccountUuid[]
   filter: string
   columns: BoardColumn[]
+  warnOnClosedStatuses?: boolean
 }
 
 // A personal board lives in its author's private PersonSpace, so the server hides it from the others.
@@ -205,6 +209,66 @@ export async function togglePinned (client: TxOperations, board: Ref<Board>): Pr
   const current = await client.findOne(tracker.class.BoardPreference, { attachedTo: board })
   if (current !== undefined) await client.remove(current)
   else await client.createDoc(tracker.class.BoardPreference, core.space.Workspace, { attachedTo: board })
+}
+
+export const boardNavigationAttachedTo = 'tracker:boards-navigation'
+
+export function boardNavigationId (): Ref<BoardNavigationPreference> {
+  return `${boardNavigationAttachedTo}:${getCurrentAccount().uuid}` as Ref<BoardNavigationPreference>
+}
+
+export async function ensureBoardNavigation (client: TxOperations, boards: Board[]): Promise<void> {
+  const id = boardNavigationId()
+  if ((await client.findOne(tracker.class.BoardNavigationPreference, { _id: id })) !== undefined) return
+  const operations = client.apply(id)
+  operations.notMatch(tracker.class.BoardNavigationPreference, { _id: id })
+  await operations.createDoc(
+    tracker.class.BoardNavigationPreference,
+    core.space.Workspace,
+    {
+      attachedTo: boardNavigationAttachedTo,
+      boards: boards.filter((board) => isBoardAvailable(board, getCurrentAccount().uuid)).map((board) => board._id)
+    },
+    id
+  )
+  await operations.commit()
+}
+
+export async function setBoardInNavigation (client: TxOperations, board: Ref<Board>, visible: boolean): Promise<void> {
+  const id = boardNavigationId()
+  if (visible) {
+    const operations = client.apply(id)
+    operations.notMatch(tracker.class.BoardNavigationPreference, { _id: id, boards: { $in: [board] } })
+    await operations.updateDoc(tracker.class.BoardNavigationPreference, core.space.Workspace, id, {
+      $push: { boards: board }
+    })
+    await operations.commit()
+    return
+  }
+  await client.updateDoc(tracker.class.BoardNavigationPreference, core.space.Workspace, id, {
+    $pull: { boards: board }
+  })
+  const pinned = await client.findOne(tracker.class.BoardPreference, { attachedTo: board })
+  if (pinned !== undefined) await client.remove(pinned)
+}
+
+export async function shareBoard (board: Board): Promise<void> {
+  const location = getCurrentResolvedLocation()
+  location.path = [...location.path.slice(0, 3), 'boards', board._id]
+  location.query = undefined
+  location.fragment = undefined
+  const frontUrl = getMetadata(presentation.metadata.FrontUrl) ?? window.location.origin
+  const copy = async (): Promise<void> => {
+    await copyTextToClipboard(concatLink(frontUrl, locationToUrl(location)))
+  }
+  if (board.visibility === 'me') {
+    showPopup(MessageBox, {
+      label: tracker.string.ShareBoard,
+      message: tracker.string.PersonalBoardShareHint,
+      okLabel: presentation.string.CopyLink,
+      action: copy
+    })
+  } else await copy()
 }
 
 interface PendingEdit {

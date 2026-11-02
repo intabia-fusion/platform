@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -37,7 +38,7 @@
   import EstimationEditor from './EstimationEditor.svelte'
   import SubIssueTemplates from '../subtasks/SubtaskSection.svelte'
 
-  export let space: Ref<Project>
+  export let space: Ref<Project> | undefined = undefined
   export let priority: IssuePriority = IssuePriority.NoPriority
   export let assignee: Ref<Person> | null = null
   export let component: Ref<ComponentType> | null = $activeComponent ?? null
@@ -73,18 +74,33 @@
 
   $: _space = space
 
-  $: canSave = getTitle(object.title ?? '').length > 0
+  let previousProject = space
+  $: clearProjectFields(_space)
+
+  function clearProjectFields (project: Ref<Project> | undefined): void {
+    if (project === previousProject) return
+    previousProject = project
+    kind = undefined
+    object = {
+      ...object,
+      component: null,
+      milestone: null,
+      children: object.children.map((child) => ({ ...child, component: null, milestone: null, kind: undefined }))
+    }
+  }
+
+  $: canSave = currentProject !== undefined && currentProject._id === _space && getTitle(object.title ?? '').length > 0
 
   function getTitle (value: string) {
     return value.trim()
   }
 
   export function canClose (): boolean {
-    return !canSave
+    return getTitle(object.title ?? '').length === 0
   }
 
   async function createIssueTemplate () {
-    if (!canSave) {
+    if (!canSave || _space === undefined) {
       return
     }
 
@@ -131,9 +147,14 @@
   let currentProject: Project | undefined
   const spaceQuery = createQuery()
   $: if (_space !== undefined) {
-    spaceQuery.query(tracker.class.Project, { _id: _space }, (res) => {
-      currentProject = res[0]
-    })
+    spaceQuery.query(
+      tracker.class.Project,
+      { _id: _space },
+      (res) => {
+        currentProject = res[0]
+      },
+      { showArchived: true }
+    )
   } else {
     spaceQuery.unsubscribe()
     currentProject = undefined
@@ -154,19 +175,25 @@
   on:changeContent
 >
   <svelte:fragment slot="header">
-    <SpaceSelector
-      _class={tracker.class.Project}
-      label={tracker.string.Project}
-      bind:space={_space}
-      on:object={(evt) => {
-        currentProject = evt.detail ?? undefined
-      }}
-      readonly={true}
-      kind="regular"
-      size="large"
-      component={ProjectPresenter}
-      defaultIcon={tracker.icon.Home}
-    />
+    {#if space !== undefined}
+      <div data-id="template-project-context">
+        <ProjectPresenter value={currentProject} openIssues={false} />
+      </div>
+    {:else}
+      <SpaceSelector
+        _class={tracker.class.Project}
+        label={tracker.string.Project}
+        bind:space={_space}
+        on:object={(evt) => {
+          currentProject = evt.detail ?? undefined
+        }}
+        readonly={false}
+        kind="regular"
+        size="large"
+        component={ProjectPresenter}
+        defaultIcon={tracker.icon.Home}
+      />
+    {/if}
   </svelte:fragment>
   <svelte:fragment slot="title" let:label>
     <div class="flex-row-center gap-2 pt-1 pb-1 pr-1">
@@ -190,14 +217,16 @@
     bind:content={object.description}
     placeholder={tracker.string.IssueDescriptionPlaceholder}
   />
-  <SubIssueTemplates
-    bind:children={object.children}
-    component={object.component}
-    milestone={object.milestone}
-    project={_space}
-    maxHeight="limited"
-    on:create-issue={({ detail }) => (object.children = [...object.children, detail])}
-  />
+  {#if _space !== undefined}
+    <SubIssueTemplates
+      bind:children={object.children}
+      component={object.component}
+      milestone={object.milestone}
+      project={_space}
+      maxHeight="limited"
+      on:create-issue={({ detail }) => (object.children = [...object.children, detail])}
+    />
+  {/if}
   <svelte:fragment slot="pool">
     <PriorityEditor
       value={object}
@@ -209,7 +238,7 @@
       on:change={({ detail }) => (object.priority = detail)}
     />
     <AssigneeEditor
-      object={{ ...object, space }}
+      object={{ ...object, space: _space }}
       kind="regular"
       size="large"
       on:change={({ detail }) => (object.assignee = detail)}
@@ -233,7 +262,7 @@
     />
     <EstimationEditor kind="regular" size="large" value={object} />
     <ComponentSelector
-      {space}
+      space={_space}
       value={object.component}
       onChange={handleComponentIdChanged}
       isEditable={true}
@@ -241,7 +270,7 @@
       size="large"
     />
     <MilestoneSelector
-      {space}
+      space={_space}
       value={object.milestone}
       onChange={handleMilestoneIdChanged}
       kind="regular"

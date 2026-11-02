@@ -160,12 +160,12 @@ await kit.page(typeof PAGE_NAME === 'string' ? PAGE_NAME : '2. Создание 
       ],
       { name: 'Workflow mapping' }
     ),
-    kit.text('Workflow настраиваются в типе проекта, раздел Workflow; после создания проекта выбор можно поменять в настройках проекта.', { size: 13, color: T('theme-dark-color'), w: bodyW })
+    kit.text('Workflow создаются в настройках типа проекта. После создания проекта выбор можно изменить в его настройках, раздел "Workflow".', { size: 13, color: T('theme-dark-color'), w: bodyW })
   ])
 
   wizard('Создание проекта - Шаг 4. Workflow - у типа нет workflow', 2020, 2400, 3, [
     kit.Callout(
-      'У типа проекта «Default» пока нет workflow. Workflow настраиваются в типе проекта, раздел Workflow; после создания проекта их можно выбрать в настройках проекта, раздел Workflow.',
+      'В типе "Default" пока нет workflow. Создайте его в настройках типа, затем выберите в настройках проекта, раздел "Workflow".',
       { w: bodyW }
     )
   ])

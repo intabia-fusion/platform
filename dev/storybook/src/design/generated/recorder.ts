@@ -714,6 +714,7 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
       subtab: o.subtab
     })
     for (const a of flat([o.actions ?? []])) n.children.push(inSlot(a, 'actions'))
+    for (const a of flat([o.titleActions ?? []])) n.children.push(inSlot(a, 'titleActions'))
     if (o.subLead !== undefined) n.children.push(inSlot(o.subLead, 'subLead'))
     const top = o.subtabs !== undefined ? 106 : 57
     const content = slot('content', main.width - 233, main.height - top)

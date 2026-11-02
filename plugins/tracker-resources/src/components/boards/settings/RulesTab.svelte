@@ -33,7 +33,7 @@
   import { onDestroy } from 'svelte'
   import ui, { eventToHTMLElement, getPlatformColorDef, Icon, Label, showPopup, themeStore } from '@hcengineering/ui'
   import { Button, Dropdown, IconButton, Radio, SettingRow, Toggle } from '@hcengineering/ui/kit'
-  import { ColorsPopup, FilterConditions } from '@hcengineering/view-resources'
+  import { ColorsPopup, FilterConditions, parseFilters } from '@hcengineering/view-resources'
   import { boardQuery, ConditionMatches } from '../../../boards'
   import tracker from '../../../plugin'
   import IssueKanbanCard from '../../issues/IssueKanbanCard.svelte'
@@ -52,12 +52,26 @@
     return 'title' in rule
   }
 
-  $: rules = board[kind] as Rule[]
+  let colorDraft: BoardColorRule | undefined
+  let draftBoard = board._id
+  $: if (draftBoard !== board._id) {
+    draftBoard = board._id
+    colorDraft = undefined
+  }
+  $: colorRules = board.colorRules.filter((rule) => parseFilters(rule.condition).length > 0)
+  $: rules =
+    kind === 'colorRules' ? [...colorRules, ...(colorDraft !== undefined ? [colorDraft] : [])] : (board[kind] as Rule[])
   // The last lane takes everything the lanes above did not
   $: editable = kind === 'swimlanes' ? rules.slice(0, -1) : rules
   $: rest = kind === 'swimlanes' ? (rules[rules.length - 1] as BoardSwimlane | undefined) : undefined
 
   function save (next: Rule[]): void {
+    if (kind === 'colorRules') {
+      const colors = next as BoardColorRule[]
+      colorDraft = colors.find((rule) => parseFilters(rule.condition).length === 0)
+      next = colors.filter((rule) => parseFilters(rule.condition).length > 0)
+      if (JSON.stringify(next) === JSON.stringify(board.colorRules)) return
+    }
     const patch: Partial<Data<Board>> = {}
     Object.assign(patch, { [kind]: next })
     void onChange(patch)
@@ -72,7 +86,7 @@
     } else if (kind === 'quickFilters') {
       save([...rules, { id: generateId(), title: await translate(tracker.string.NewQuickFilter, {}), condition: '' }])
     } else {
-      save([...rules, { id: generateId(), color: 0, condition: '' }])
+      if (colorDraft === undefined) colorDraft = { id: generateId(), color: 0, condition: '' }
     }
   }
 
@@ -209,7 +223,7 @@
   $: if (kind === 'colorRules') {
     void syncMatches(
       colorMatches,
-      board.colorRules.map((r) => ({ id: r.id, condition: r.condition }))
+      colorRules.map((r) => ({ id: r.id, condition: r.condition }))
     )
   } else if (boardNext && kind === 'swimlanes') {
     void syncMatches(
@@ -223,7 +237,7 @@
   async function loadSamples (_version: number): Promise<void> {
     if (!colorMatches.ready) return
     const seq = ++sampleSeq
-    const ids = pickRuleSamples(board.colorRules, (r) => colorMatches.ids.get(r))
+    const ids = pickRuleSamples(colorRules, (r) => colorMatches.ids.get(r))
     const found = await client.findAll(
       tracker.class.Issue,
       { _id: { $in: [...ids.values()].filter((id): id is Ref<Issue> => id !== undefined) as Array<Ref<Issue>> } },
@@ -469,6 +483,7 @@
         size="small"
         icon={ui.icon.Plus}
         label={addLabel}
+        disabled={kind === 'colorRules' && colorDraft !== undefined}
         data-id="boardAddRule"
         on:click={add}
       />
@@ -500,10 +515,10 @@
       </div>
     {/if}
 
-    {#if kind === 'colorRules' && board.colorRules.length > 0}
+    {#if kind === 'colorRules' && colorRules.length > 0}
       <span class="example-caption"><Label label={tracker.string.ColorExample} /></span>
       <div class="samples" data-id="boardColorExample">
-        {#each board.colorRules as rule (rule.id)}
+        {#each colorRules as rule (rule.id)}
           {@const sample = samples.get(rule.id)}
           {@const accent = getPlatformColorDef(rule.color, $themeStore.dark).color}
           {#if sample !== undefined}
@@ -685,6 +700,7 @@
   }
   .samples {
     display: flex;
+    align-items: flex-start;
     flex-wrap: wrap;
     gap: 0.75rem;
   }
@@ -701,6 +717,7 @@
     &.none {
       display: flex;
       align-items: center;
+      min-height: 4rem;
       padding: 0.75rem 0.875rem;
       font-size: 0.75rem;
       color: var(--theme-darker-color);

@@ -151,6 +151,7 @@ export interface Board extends Doc {
   editors: AccountUuid[]
   filter: BoardCondition
   columns: BoardColumn[]
+  warnOnClosedStatuses?: boolean
   swimlanes: BoardSwimlane[]
   // Lanes by a field win over `swimlanes`; not set or null: lanes by conditions, or none
   swimLaneBy?: BoardSwimLaneField | null
@@ -170,6 +171,10 @@ export interface Board extends Doc {
  */
 export interface BoardPreference extends Preference {
   attachedTo: Ref<Board>
+}
+
+export interface BoardNavigationPreference extends Preference {
+  boards: Ref<Board>[]
 }
 
 const openCategories = new Set<Ref<StatusCategory>>([
@@ -244,10 +249,17 @@ export function columnIndexByStatus (columns: Pick<BoardColumn, 'statuses'>[]): 
 // Closed ones may stay out by design.
 export function statusesWithoutColumn<T extends Pick<Status, '_id' | 'category'>> (
   columns: Pick<BoardColumn, 'statuses'>[],
-  statuses: T[]
+  statuses: T[],
+  includeClosed: boolean = false
 ): T[] {
   const placed = columnIndexByStatus(columns)
-  return statuses.filter((s) => s.category !== undefined && openCategories.has(s.category) && !placed.has(s._id))
+  return statuses.filter(
+    (s) =>
+      s.category !== undefined &&
+      (openCategories.has(s.category) ||
+        (includeClosed && (s.category === task.statusCategory.Won || s.category === task.statusCategory.Lost))) &&
+      !placed.has(s._id)
+  )
 }
 
 export function isOverLimit (count: number, limit: number | undefined): boolean {

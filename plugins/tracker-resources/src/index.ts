@@ -84,6 +84,7 @@ import ParentIssuePresenter from './components/issues/ParentIssuePresenter.svelt
 import ParentIssueSelector from './components/issues/ParentIssueSelector.svelte'
 import LabelsView from './components/LabelsView.svelte'
 import BoardPage from './components/boards/BoardPage.svelte'
+import BoardCatalogPresenter from './components/boards/BoardCatalogPresenter.svelte'
 import BoardsNav from './components/boards/BoardsNav.svelte'
 import EditMilestone from './components/milestones/EditMilestone.svelte'
 import MilestoneDatePresenter from './components/milestones/MilestoneDatePresenter.svelte'
@@ -521,6 +522,7 @@ export default async (): Promise<Resources> => ({
     IssueStatusPresenter,
     LabelsView,
     BoardPage,
+    BoardCatalogPresenter,
     BoardsNav,
     ParentIssuePresenter,
     ParentIssueSelector,

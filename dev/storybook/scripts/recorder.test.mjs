@@ -20,12 +20,26 @@ import { join } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { test } from 'node:test'
+import { createRequire } from 'node:module'
 
 import { createRecorder } from '../src/design/generated/recorder.ts'
 import { screenFiles } from '../src/design/generated/entries.ts'
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), 'utf8')
 const tokens = read('../../design/kit/00-tokens.generated.js')
+
+test('the board catalog compiles with the production Svelte DOM compiler', async () => {
+  const require = createRequire(new URL('../../../plugins/tracker-resources/package.json', import.meta.url))
+  const { compile, preprocess } = require('svelte/compiler')
+  const sveltePreprocess = require('svelte-preprocess')
+  for (const component of ['BoardPage', 'BoardCatalogPresenter']) {
+    const filename = fileURLToPath(new URL(`../../../plugins/tracker-resources/src/components/boards/${component}.svelte`, import.meta.url))
+    const processed = await preprocess(readFileSync(filename, 'utf8'), sveltePreprocess({
+      typescript: { compilerOptions: { verbatimModuleSyntax: true } }
+    }), { filename })
+    assert.doesNotThrow(() => compile(processed.code, { filename, generate: 'dom', css: 'external' }))
+  }
+})
 
 test('recorder measures text like the Penpot kit, including Cyrillic and missing glyphs', async () => {
   const source = read('../../design/kit/40-tracker.js')
@@ -137,4 +151,57 @@ test('current screens preserve the status of every active demo issue', async () 
     }
   }
   assert.ok(checked > 0)
+})
+
+test('board settings place the board selector before the title and keep sharing in actions', async () => {
+  const recorder = createRecorder(tokens)
+  await recorder.run({
+    tokens,
+    demo: JSON.parse(read('../src/design/demo/demo.generated.json')),
+    scripts: [{
+      path: 'screens/current/tracker-board-settings.js',
+      source: read('../../design/screens/current/tracker-board-settings.js')
+    }]
+  })
+  const pending = recorder.pages.flatMap((page) => page.frames)
+  let checked = 0
+  while (pending.length > 0) {
+    const node = pending.pop()
+    pending.push(...node.children)
+    if (node.c !== 'SettingsLayout') continue
+    const leading = node.children.filter((child) => child.slot === 'titleActions')
+    const actions = node.children.filter((child) => child.slot === 'actions')
+    assert.equal(leading.length, 1)
+    assert.equal(leading[0].props.label, 'Основная доска')
+    assert.equal(actions.some((child) => child.props.label === 'Основная доска'), false)
+    assert.equal(actions.some((child) => child.props.label === 'Поделиться'), true)
+    checked++
+  }
+  assert.equal(checked, 6)
+})
+
+test('current tracker sidebars retain catalog actions beside creation buttons', async () => {
+  const demo = JSON.parse(read('../src/design/demo/demo.generated.json'))
+  let checked = 0
+  for (const file of ['tracker-board-settings.js', 'settings-project.js', 'tracker-boards.js']) {
+    const recorder = createRecorder(tokens)
+    await recorder.run({
+      tokens,
+      demo,
+      scripts: [{ path: `screens/current/${file}`, source: read(`../../design/screens/current/${file}`) }]
+    })
+    for (const frame of recorder.pages.flatMap((page) => page.frames)) {
+      if (frame.name.startsWith('Стало -')) continue
+      const entries = frame.props.nav.entries
+      for (const [group, label] of [['Доски', 'Все доски'], ['Проекты', 'Все проекты']]) {
+        const section = entries.find((entry) => entry.group === group)
+        assert.ok(section, `${frame.name}: ${group}`)
+        assert.equal(section.add, true)
+        assert.deepEqual(section.catalog, { label, icon: 'kit/BulletList' })
+      }
+      assert.equal(entries.some((entry) => entry.item === 'Доски'), false)
+      checked++
+    }
+  }
+  assert.equal(checked, 18)
 })

@@ -48,7 +48,7 @@
   import tracker from '../../plugin'
   import CreateIssue from '../CreateIssue.svelte'
   import { openProjectSettings } from '../../projectSettings'
-  import { boardContextKey, boardLocation } from '../../boards'
+  import { boardContextKey, boardLocation, reportBoardError, shareBoard } from '../../boards'
   import { activeProjects, exportIssuesToCSV } from '../../utils'
   import IssueStatistics from '../milestones/IssueStatistics.svelte'
 
@@ -122,11 +122,15 @@
   const MERGE_BY_CATEGORY_ITEM_ID = 'merge-columns-by-category'
   const RESET_MERGE_ITEM_ID = 'reset-merged-columns'
   const BOARD_SETTINGS_ITEM_ID = 'board-settings'
+  const BOARD_SHARE_ITEM_ID = 'board-share'
 
   // Column merging of the board shown for this viewlet; only a kanban registers it.
   $: columnControls = viewlet != null ? $columnControlStore.get(viewlet._id) : undefined
 
   $: menuItems = [
+    ...(board !== undefined
+      ? [{ id: BOARD_SHARE_ITEM_ID, label: tracker.string.ShareBoard, icon: view.icon.CopyLink }]
+      : []),
     ...(board !== undefined && canEditBoard(board, getCurrentAccount().uuid)
       ? [{ id: BOARD_SETTINGS_ITEM_ID, label: tracker.string.BoardSettings, icon: view.icon.Setting }]
       : []),
@@ -202,6 +206,8 @@
       columnControls?.resetMerge()
     } else if (action === BOARD_SETTINGS_ITEM_ID && board !== undefined) {
       boardLocation(board._id, true)
+    } else if (action === BOARD_SHARE_ITEM_ID && board !== undefined) {
+      void shareBoard(board).catch(reportBoardError)
     }
   }
 

@@ -48,6 +48,7 @@ import {
   TProjectTargetPreference,
   TBoard,
   TBoardPreference,
+  TBoardNavigationPreference,
   TRelatedIssueTarget,
   TTimeSpendReport,
   TTypeEstimation,
@@ -379,6 +380,7 @@ function defineApplication (
           },
           {
             id: 'all-projects',
+            hidden: true,
             component: workbench.component.SpecialView,
             icon: view.icon.List,
             accessLevel: AccountRole.User,
@@ -390,6 +392,14 @@ function defineApplication (
               icon: view.icon.List,
               label: tracker.string.AllProjects
             }
+          },
+          {
+            id: 'all-templates',
+            component: tracker.component.IssueTemplates,
+            icon: tracker.icon.IssueTemplates,
+            accessLevel: AccountRole.User,
+            label: tracker.string.IssueTemplates,
+            position: 'bottom'
           },
           {
             id: opt.labelsId,
@@ -404,6 +414,7 @@ function defineApplication (
         spaces: [
           {
             id: 'projects',
+            catalog: { id: 'all-projects', label: tracker.string.AllProjects, icon: view.icon.List },
             label: tracker.string.Projects,
             spaceClass: tracker.class.Project,
             addSpaceLabel: tracker.string.CreateProject,
@@ -478,7 +489,8 @@ export function createModel (builder: Builder): void {
     TTypeRemainingTime,
     TProjectTargetPreference,
     TBoard,
-    TBoardPreference
+    TBoardPreference,
+    TBoardNavigationPreference
   )
 
   builder.mixin(tracker.class.Project, core.class.Class, activity.mixin.ActivityDoc, {})

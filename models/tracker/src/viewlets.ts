@@ -20,7 +20,7 @@ import { type Builder } from '@hcengineering/model'
 import core from '@hcengineering/model-core'
 import presentation from '@hcengineering/model-presentation'
 import task from '@hcengineering/model-task'
-import view, { showColorsViewOption } from '@hcengineering/model-view'
+import view, { createAttributePresenter, showColorsViewOption } from '@hcengineering/model-view'
 import tags from '@hcengineering/tags'
 import { type ViewOptionModel, type BuildModelKey, type ViewOptionsModel } from '@hcengineering/view'
 import tracker from './plugin'
@@ -261,6 +261,66 @@ export function issueConfig (
 }
 
 export function defineViewlets (builder: Builder): void {
+  builder.createDoc(
+    core.class.Enum,
+    core.space.Model,
+    {
+      name: 'BoardVisibility',
+      enumValues: ['all', 'me']
+    },
+    tracker.enum.BoardVisibility
+  )
+  createAttributePresenter(
+    builder,
+    tracker.component.BoardCatalogPresenter,
+    tracker.class.Board,
+    'visibility',
+    'attribute'
+  )
+  builder.mixin(tracker.class.Board, core.class.Class, view.mixin.ClassFilters, {
+    filters: ['title', 'author', 'visibility']
+  })
+  builder.createDoc(
+    view.class.Viewlet,
+    core.space.Model,
+    {
+      attachTo: tracker.class.Board,
+      descriptor: view.viewlet.Table,
+      props: { readonly: true },
+      viewOptions: {
+        groupBy: [],
+        orderBy: [
+          ['title', SortingOrder.Ascending],
+          ['author', SortingOrder.Ascending],
+          ['visibility', SortingOrder.Ascending],
+          ['modifiedOn', SortingOrder.Descending],
+          ['createdOn', SortingOrder.Descending]
+        ],
+        other: []
+      },
+      configOptions: { hiddenKeys: ['title'], sortable: true },
+      config: [
+        {
+          key: '',
+          label: tracker.string.Name,
+          sortingKey: 'title',
+          presenter: tracker.component.BoardCatalogPresenter,
+          props: { field: 'title' },
+          displayProps: { key: 'title' }
+        },
+        'author',
+        'visibility',
+        {
+          key: '',
+          label: view.string.MoreActions,
+          presenter: tracker.component.BoardCatalogPresenter,
+          props: { field: 'actions' },
+          displayProps: { key: 'actions', fixed: 'right', dividerBefore: true }
+        }
+      ]
+    },
+    tracker.viewlet.BoardList
+  )
   builder.createDoc(
     view.class.ViewletDescriptor,
     core.space.Model,

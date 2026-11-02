@@ -224,7 +224,8 @@
     align-items: flex-start;
   }
   .field.wide {
-    width: 26.25rem;
+    width: min(26.25rem, 100%);
+    min-width: 0;
   }
   .chips {
     display: flex;
@@ -245,7 +246,9 @@
     align-items: center;
     gap: 0.25rem;
     box-sizing: border-box;
-    height: 1.75rem;
+    min-height: 1.75rem;
+    max-width: 100%;
+    overflow-wrap: anywhere;
     padding: 0 0.375rem;
     font-size: 0.8125rem;
     color: var(--theme-dark-color);

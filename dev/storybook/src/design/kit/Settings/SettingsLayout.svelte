@@ -36,6 +36,7 @@
         <Button kind="ghost" size="small" icon="chevronL" label={back} />
         <div class="sep" />
       {/if}
+      <slot name="titleActions" />
       <span class="title">{title}</span>
     </div>
     <div class="right">

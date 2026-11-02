@@ -34,7 +34,7 @@
   } from '@hcengineering/view-resources'
   import { fullscreenStore } from '@hcengineering/workbench-resources'
   import { onDestroy } from 'svelte'
-  import { boardLocation, boardQuery } from '../../boards'
+  import { boardLocation, boardQuery, reportBoardError, setBoardInNavigation, shareBoard } from '../../boards'
   import tracker from '../../plugin'
   import IssuesView from '../issues/IssuesView.svelte'
   import BoardQuickFilters from './BoardQuickFilters.svelte'
@@ -43,6 +43,11 @@
   // Board issues with the board header: no title, the navigator shows the board; its settings are in the header menu
   export let board: Board
   export let canEdit: boolean
+  export let inNavigation: boolean
+  export let navigationReady: boolean
+
+  let sharing = false
+  let updatingNavigation = false
 
   const client = getClient()
   // tracker-board-next: the density slider is not ready for users yet
@@ -129,7 +134,8 @@
   // Open statuses of the board projects that no column lists: their issues are not on the board
   $: uncovered = statusesWithoutColumn(
     board.columns,
-    [...statusProjects.keys()].map((id) => $statusStore.byId.get(id)).filter((s): s is Status => s !== undefined)
+    [...statusProjects.keys()].map((id) => $statusStore.byId.get(id)).filter((s): s is Status => s !== undefined),
+    board.warnOnClosedStatuses
   )
 
   const uncoveredQuery = createQuery()
@@ -236,6 +242,41 @@
 {#if query !== undefined}
   <IssuesView {query} {board} space={undefined}>
     <svelte:fragment slot="board_actions" let:viewlet let:viewOptions>
+      {#if !inNavigation}
+        <Button
+          data-id="boardAddToNavigation"
+          kind="secondary"
+          size="small"
+          disabled={!navigationReady}
+          loading={updatingNavigation}
+          label={tracker.string.AddBoardToNavigation}
+          on:click={() => {
+            if (updatingNavigation) return
+            updatingNavigation = true
+            void setBoardInNavigation(client, board._id, true)
+              .catch(reportBoardError)
+              .finally(() => {
+                updatingNavigation = false
+              })
+          }}
+        />
+      {/if}
+      <Button
+        data-id="boardShare"
+        kind="ghost"
+        size="small"
+        label={tracker.string.ShareBoard}
+        loading={sharing}
+        on:click={() => {
+          if (sharing) return
+          sharing = true
+          void shareBoard(board)
+            .catch(reportBoardError)
+            .finally(() => {
+              sharing = false
+            })
+        }}
+      />
       {#if uncovered.length > 0}
         <button type="button" class="uncovered" data-id="boardUncovered" on:click={openUncovered}>
           <svg class="uncovered-icon" viewBox="0 0 16 16" aria-hidden="true">

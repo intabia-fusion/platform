@@ -13,6 +13,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import { getResource } from '@hcengineering/platform'
+  import { getClient } from '@hcengineering/presentation'
   import type { Project } from '@hcengineering/tracker'
   import { canArchiveSpace } from '@hcengineering/view-resources'
   import { Button, Callout } from '@hcengineering/ui/kit'
@@ -23,6 +25,7 @@
   import ProjectSettingsSection from './ProjectSettingsSection.svelte'
 
   export let project: Project
+  let pending = false
 </script>
 
 <ProjectSettingsSection
@@ -30,18 +33,34 @@
   description={tracker.string.ProjectSettingsArchiveDescription}
 >
   <div class="flex-col flex-gap-4 archive" data-id="project-settings-archive">
-    <Callout tone="info" label={tracker.string.ProjectSettingsArchiveNotice} />
+    <Callout
+      tone="info"
+      label={project.archived ? tracker.string.ProjectArchivedChip : tracker.string.ProjectSettingsArchiveNotice}
+    />
     {#await canArchiveSpace(project) then allowed}
       <Button
-        data-id="btnArchiveProject"
-        kind="negative"
+        data-id={project.archived ? 'btnRestoreProject' : 'btnArchiveProject'}
+        kind={project.archived ? 'secondary' : 'negative'}
         size="small"
-        icon={view.icon.Delete}
+        icon={project.archived ? view.icon.Archive : view.icon.Delete}
         iconSize="small"
-        label={tracker.string.ArchiveProject}
+        label={project.archived ? view.string.UnArchive : tracker.string.ArchiveProject}
         disabled={!allowed}
+        loading={pending}
         on:click={async () => {
-          await deleteProject(project)
+          if (pending) return
+          pending = true
+          try {
+            if (project.archived) {
+              const action = getClient().getModel().getObject(view.action.UnArchive)
+              const restore = await getResource(action.action)
+              await restore(project)
+            } else {
+              await deleteProject(project)
+            }
+          } finally {
+            pending = false
+          }
         }}
       />
     {/await}

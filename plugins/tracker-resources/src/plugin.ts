@@ -49,6 +49,18 @@ export default mergeIds(trackerId, tracker, {
     IssueCategory: '' as Ref<ObjectSearchCategory>
   },
   string: {
+    WarnOnClosedStatuses: '' as IntlString,
+    WarnOnClosedStatusesHint: '' as IntlString,
+    AllBoards: '' as IntlString,
+    AddBoardToNavigation: '' as IntlString,
+    RemoveBoardFromNavigation: '' as IntlString,
+    ShareBoard: '' as IntlString,
+    PersonalBoardShareHint: '' as IntlString,
+    BoardCatalogAllOwners: '' as IntlString,
+    BoardCatalogAllVisibility: '' as IntlString,
+    BoardCatalogPersonal: '' as IntlString,
+    BoardSearch: '' as IntlString,
+    BoardPersonal: '' as IntlString,
     DensityDefault: '' as IntlString,
     BoardProjects: '' as IntlString,
     DeleteBoard: '' as IntlString,

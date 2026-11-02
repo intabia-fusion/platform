@@ -25,7 +25,23 @@ export class BoardsPage {
   }
 
   navSection = (): Locator => this.page.locator('#navGroup-tree-boards')
-  navItems = (): Locator => this.page.locator('[data-id="boardsNav"]')
+  navItems = (): Locator => this.navSection()
+  navItem = (title: string): Locator => this.navItems().getByRole('button', { name: title, exact: true })
+  catalogButton = (): Locator =>
+    this.page.locator('.hulyNavGroup-header').getByRole('button', { name: 'All boards', exact: true })
+
+  catalog = (): Locator => this.page.locator('[data-id="boardCatalog"]')
+  catalogRow = (id: string): Locator =>
+    this.catalog().locator('.antiTable-body__row', {
+      has: this.page.locator(`[data-board-id="${id}"]`)
+    })
+
+  catalogSearch = (): Locator => this.catalog().locator('.searchInput-wrapper input')
+  addToNavigation = (): Locator => this.page.locator('[data-id="boardAddToNavigation"]')
+  share = (): Locator => this.page.locator('[data-id="boardShare"]')
+  settingsSwitcher = (): Locator => this.page.locator('[data-id="boardSettingsSwitcher"]')
+  settingsDelete = (): Locator => this.page.locator('[data-id="boardSettingsDelete"]')
+  personalToggle = (): Locator => this.page.locator('input[data-id="boardVisibilityMe"]')
   columns = (): Locator => this.page.locator('[data-id="kanban-column"]')
   wipLimit = (): Locator => this.page.locator('[data-id="kanban-wip-limit"]')
   // Board settings are an item of the header menu
@@ -112,9 +128,7 @@ export class BoardsPage {
   // The plus of the "Boards" section opens the creation wizard; the title is enough to create.
   // The plus sits in the section header: the section content is absent while it is collapsed or empty
   async openCreateWizard (): Promise<void> {
-    // The tools of the header show on hover
-    await this.page.locator('.hulyNavGroup-header', { has: this.page.locator('#tree-boards') }).hover()
-    await this.page.locator('#tree-boards').click()
+    await this.page.getByRole('button', { name: 'Create board', exact: true }).click()
     await expect(this.createWizard()).toBeVisible()
   }
 

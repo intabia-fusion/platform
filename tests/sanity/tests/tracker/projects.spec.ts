@@ -8,7 +8,7 @@ import { AllProjectsPage } from '../model/tracker/all-projects-page'
 import { generateProjectId } from './tracker.utils'
 import { TemplatePage } from '../model/tracker/templates-page'
 import { connectTracker, findProjectByName } from '../API/TrackerApi'
-import tracker, { IssuePriority } from '@hcengineering/tracker'
+import tracker, { IssuePriority, type Project } from '@hcengineering/tracker'
 import contact, { AvatarType, type Person } from '@hcengineering/contact'
 import { systemAccountUuid, type AccountUuid, type Ref } from '@hcengineering/core'
 import { randomUUID } from 'node:crypto'
@@ -232,14 +232,20 @@ test.describe('Tracker Projects tests', () => {
       const employees = await client.findAll(contact.mixin.Employee, { personUuid: { $in: members } })
       await testInfo.attach('FUSIO-1681-member-fixture', {
         contentType: 'application/json',
-        body: JSON.stringify({
-          source: { id: source._id, members: storedSource?.members, owners: storedSource?.owners },
-          expectedRows: expectedRows.map((row) => ({
-            ...row,
-            persons: people.filter((person) => person.personUuid === row.account).map((person) => person._id),
-            employees: employees.filter((employee) => employee.personUuid === row.account).map((employee) => employee._id)
-          }))
-        }, null, 2)
+        body: JSON.stringify(
+          {
+            source: { id: source._id, members: storedSource?.members, owners: storedSource?.owners },
+            expectedRows: expectedRows.map((row) => ({
+              ...row,
+              persons: people.filter((person) => person.personUuid === row.account).map((person) => person._id),
+              employees: employees
+                .filter((employee) => employee.personUuid === row.account)
+                .map((employee) => employee._id)
+            }))
+          },
+          null,
+          2
+        )
       })
       expect(people.filter((person) => person.personUuid === personAccount)).toHaveLength(1)
       expect(employees.filter((employee) => employee.personUuid === personAccount)).toHaveLength(0)
@@ -266,14 +272,18 @@ test.describe('Tracker Projects tests', () => {
         const summary = row.owner ? newProjectPage.summaryOwners() : newProjectPage.summaryMembers()
         await expect(summary).toContainText(row.label)
         expect((await summary.innerText()).split(row.label)).toHaveLength(2)
-        await expect(row.owner ? newProjectPage.summaryMembers() : newProjectPage.summaryOwners()).not.toContainText(row.label)
+        await expect(row.owner ? newProjectPage.summaryMembers() : newProjectPage.summaryOwners()).not.toContainText(
+          row.label
+        )
       }
       await newProjectPage.buttonCreateProject().click()
       await expect(newProjectPage.root()).toBeHidden()
-      await expect.poll(async () => {
-        const project = await findProjectByName(client, copyName)
-        return { members: project?.members, owners: project?.owners }
-      }).toEqual({ members, owners })
+      await expect
+        .poll(async () => {
+          const project = await findProjectByName(client, copyName)
+          return { members: project?.members, owners: project?.owners }
+        })
+        .toEqual({ members, owners })
 
       await trackerNavigationMenuPage.openIssuesForProject(copyName)
       await projectSettingsPage.openFromProject()
@@ -284,14 +294,20 @@ test.describe('Tracker Projects tests', () => {
 
       for (const role of ['Member', 'Owner', 'Member']) {
         await projectSettingsPage.setMemberRoles(personName, [role])
-        await expect(projectSettingsPage.memberRow(personName).locator('[data-id="project-member-roles"]')).toHaveText(role)
+        await expect(projectSettingsPage.memberRow(personName).locator('[data-id="project-member-roles"]')).toHaveText(
+          role
+        )
         const expectedOwners = role === 'Owner' ? owners : [creator]
-        await expect.poll(async () => {
-          const project = await findProjectByName(client, copyName)
-          return { members: project?.members, owners: project?.owners }
-        }).toEqual({ members, owners: expectedOwners })
+        await expect
+          .poll(async () => {
+            const project = await findProjectByName(client, copyName)
+            return { members: project?.members, owners: project?.owners }
+          })
+          .toEqual({ members, owners: expectedOwners })
         await page.reload()
-        await expect(projectSettingsPage.memberRow(personName).locator('[data-id="project-member-roles"]')).toHaveText(role)
+        await expect(projectSettingsPage.memberRow(personName).locator('[data-id="project-member-roles"]')).toHaveText(
+          role
+        )
         await expect(projectSettingsPage.root().locator('[data-id="project-settings-member"]')).toHaveCount(4)
       }
     } finally {
@@ -391,6 +407,101 @@ test.describe('Tracker Projects tests', () => {
     })
   })
 
+  test('FUSIO-1682: archived project keeps its template context and can be restored', async ({ page }, testInfo) => {
+    const identifier = generateProjectId()
+    const title = `ArchivedSettings-${identifier}`
+    const templateTitle = `ArchivedTemplate-${identifier}`
+    const { client } = await connectTracker()
+    let project: Project | undefined
+    const templates = new TemplatePage(page)
+    try {
+      await trackerNavigationMenuPage.pressCreateProjectButton()
+      await newProjectPage.createNewProject({ title, identifier })
+      project = await findProjectByName(client, title)
+      if (project === undefined) throw new Error(`Project "${title}" not found`)
+      await client.updateDoc(tracker.class.Project, project.space, project._id, { archived: true })
+      const settings = `${PlatformURI}/workbench/sanity-ws/tracker/${project._id}/project-settings`
+      await page.goto(`${settings}?section=issues`)
+      await expect(page.locator('[data-id="project-settings-title"]')).toContainText(title)
+      await expect(page.locator('[data-id="project-archived"]')).toBeVisible()
+      await page.locator('[data-id="btnOpenIssueTemplates"]').click()
+      await expect(page.locator('[data-id="templatesBackToSettings"]')).toBeVisible()
+      await templates.buttonNewTemplate().click()
+      await expect(page.locator('[data-id="template-project-context"]')).toContainText(title)
+      await templates.inputIssueTitle().fill(templateTitle)
+      await templates.buttonSaveTemplate().click()
+      const projectId = project._id
+      await expect
+        .poll(async () => {
+          return (await client.findOne(tracker.class.IssueTemplate, { title: templateTitle }, { showArchived: true }))
+            ?.space
+        })
+        .toBe(projectId)
+      await testInfo.attach('archived-template-project', {
+        contentType: 'application/json',
+        body: JSON.stringify({
+          project: projectId,
+          archived: true,
+          template: await client.findOne(tracker.class.IssueTemplate, { space: projectId, title: templateTitle })
+        })
+      })
+      await page.locator('[data-id="templatesBackToSettings"]').click()
+      await expect(page).toHaveURL(`${settings}?section=issues`)
+      await page.goto(`${PlatformURI}/workbench/sanity-ws/tracker/all-templates`)
+      await expect(templates.directTemplateLocator(templateTitle)).toBeVisible()
+      await page.goto(`${settings}?section=archive`)
+      await expect(page.locator('[data-id="btnArchiveProject"]')).toHaveCount(0)
+      await page.locator('[data-id="btnRestoreProject"]').click()
+      await page.locator('.msgbox-container').getByRole('button', { name: 'Ok', exact: true }).click()
+      await expect.poll(async () => (await findProjectByName(client, title))?.archived).toBe(false)
+      await expect(page.locator('[data-id="project-archived"]')).toHaveCount(0)
+    } finally {
+      try {
+        if (project !== undefined) {
+          for (const template of await client.findAll(tracker.class.IssueTemplate, { space: project._id })) {
+            await client.removeDoc(template._class, template.space, template._id)
+          }
+          await client.removeDoc(project._class, project.space, project._id)
+        }
+      } finally {
+        await client.close()
+      }
+    }
+  })
+
+  test('FUSIO-1683: Russian project labels distinguish the archive action and section', async ({ page }) => {
+    const identifier = generateProjectId()
+    const title = `ArchiveLabels-${identifier}`
+    const { client } = await connectTracker()
+    let project: Project | undefined
+    try {
+      await trackerNavigationMenuPage.pressCreateProjectButton()
+      await newProjectPage.createNewProject({ title, identifier })
+      project = await findProjectByName(client, title)
+      if (project === undefined) throw new Error(`Project "${title}" not found`)
+      await page.evaluate(() => {
+        localStorage.setItem('lang', 'ru')
+      })
+      await page.goto(`${PlatformURI}/workbench/sanity-ws/tracker/${project._id}/project-settings?section=archive`)
+      await expect(projectSettingsPage.navItem('archive')).toHaveText('Архивация')
+      await expect(projectSettingsPage.buttonArchive()).toHaveText('Архивировать проект')
+      const row = trackerNavigationMenuPage.buttonProjectsParent().filter({ hasText: title })
+      await row.hover()
+      await row.locator('xpath=../..').locator('div[class*="tools"] button').click()
+      await expect(page.getByText('Архивировать', { exact: true })).toBeVisible()
+    } finally {
+      try {
+        if (project !== undefined) await client.removeDoc(project._class, project.space, project._id)
+      } finally {
+        await client.close()
+        await page.evaluate(() => {
+          localStorage.setItem('lang', 'en')
+        })
+        await page.reload()
+      }
+    }
+  })
+
   test('User can edit project', async () => {
     const projectId = generateProjectId()
 
@@ -419,7 +530,7 @@ test.describe('Tracker Projects tests', () => {
     })
 
     await test.step('User opens project settings from the menu', async () => {
-      await trackerNavigationMenuPage.makeActionWithProject(editProjectData.title, 'Edit project')
+      await trackerNavigationMenuPage.makeActionWithProject(editProjectData.title, 'Project settings')
       await expect(projectSettingsPage.root()).toBeVisible()
       await projectSettingsPage.checkGeneral(editProjectData)
       await projectSettingsPage.checkIssueDefaults(editProjectData)
@@ -435,7 +546,7 @@ test.describe('Tracker Projects tests', () => {
 
     await test.step('User sees the saved values after reopening the settings', async () => {
       await projectSettingsPage.buttonBack().click()
-      await trackerNavigationMenuPage.makeActionWithProject(updateProjectData.title, 'Edit project')
+      await trackerNavigationMenuPage.makeActionWithProject(updateProjectData.title, 'Project settings')
       await projectSettingsPage.checkGeneral(updateProjectData)
       await projectSettingsPage.checkIssueDefaults(updateProjectData)
     })

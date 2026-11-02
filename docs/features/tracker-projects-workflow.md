@@ -155,19 +155,21 @@ Validators (`FieldRequired`, `SubtaskStatus`, `ParentStatus`), Requests (`Screen
 
 - Вход: шестерёнка `IssuesView` по `canEditSpace`; действие `EditProject` по `view.function.CanEditSpace`, `editProject` -> `openProjectSettings`.
 - Выход: "К проекту" или крестик (`closeProjectSettings`). Без права редактирования адрес перенаправляет на задачи проекта.
+- Шапка каждого раздела показывает название проекта; архивный проект дополнительно помечен плашкой.
+- Шаблоны, открытые из раздела "Задачи", возвращают в настройки того же проекта; создание шаблона сохраняет выбранный архивный проект без подмены активным. Общий каталог использует `IssueTemplates` без `currentSpace`, проектный каталог фильтрует по `space`. При смене проекта в новом шаблоне компонент, этап и тип задачи сбрасываются у шаблона и подзадач, включая открытый черновик подзадачи; текст сохраняется.
 - Сохранение сразу, без кнопки "Сохранить". Загрузка по id с `showArchived: true` позволяет настраивать архивные проекты. Архивирование открытого активного проекта возвращает к списку.
 
 | Раздел (`components/projects/settings`) | Содержание |
 | --- | --- |
-| Основное | Тип только для чтения со ссылкой в настройки типа; название; идентификатор только для чтения с подсказкой "следующий номер"; описание, иконка |
+| Основное | Название первым полем; тип только для чтения со ссылкой в настройки типа; идентификатор только для чтения с подсказкой "следующий номер"; описание, иконка |
 | Участники и доступ | Приватность, владельцы, участники, роли типа; `isAccessValid` отклоняет недопустимое изменение с подсказкой |
 | Задачи | Исполнитель и статус по умолчанию, ссылка на шаблоны |
-| Статусы и workflow | Статусы типа проекта по категориям только для чтения; ссылки в тип проекта и Workflow; привязка workflow к типам задач через `ProjectWorkflow` |
-| Архив | `deleteProject` из `projectActions.ts` |
+| Статусы и workflow | Статусы типа проекта по категориям только для чтения; ссылка в тип проекта; привязка workflow к типам задач через `ProjectWorkflow` |
+| Архивация | Архивирование через `deleteProject` из `projectActions.ts`; восстановление архивного проекта через зарегистрированное действие `view.action.UnArchive` с проверкой `canArchiveSpace` |
 
 - Поля: `SettingRow kind="column"`, `SelectButton field`, `TextInput`, `TextArea`, `Toggle`; архивная плашка - `Callout`. Раздел открывает попапы исполнителя, статуса, ролей и workflow.
 - Owner/maintainer видят "Настроить workflow" (`workflows`, `openProjectType(type, 'workflows')`) и открытие редактора выбранного workflow (`openProjectTypeWorkflow`).
-- Оба действия удаления используют `actionImpl.DeleteProject`, но разные `query`/`visibilityTester`: `DeleteProject` - архивирование (`workbench.string.Archive`, `archived: false`, `CanArchiveSpace`); `DeleteProjectClean` - удаление архивного (`workbench.string.Delete`, `archived: true`, `CanDeleteSpace`).
+- Оба действия удаления используют `actionImpl.DeleteProject`, но разные `query`/`visibilityTester`: `DeleteProject` - архивирование (`view.string.Archive`, `archived: false`, `CanArchiveSpace`); `DeleteProjectClean` - удаление архивного (`workbench.string.Delete`, `archived: true`, `CanDeleteSpace`).
 
 Файлы: `models/tracker/src/actions.ts`, `models/tracker/src/index.ts`, `plugins/tracker-resources/src/{projectSettings.ts,projectSettingsLogic.ts,projectCopyLogic.ts,projectActions.ts}`, `components/projects/{CreateProject,ProjectBasePopup,ProjectBaseItem}.svelte`.
 
@@ -207,7 +209,7 @@ Permission `ForbidCreateProject` - `forbid`-правило на `TxCreateDoc`/`P
 | Каскадное удаление | - | - | plan | - | |
 | Экспорт/импорт workflow-конфигурации | workflow/create-rules-transitions | - | partial | 0.8.60 | импорт упомянут (раздел "Воркфлоу" типа проекта, из файла или буфера обмена), сам процесс (выбор файла, проверка совместимости) не раскрыт |
 | Создание workflow и его экранов перехода | workflow/create-workflow, workflow/create-screens, workflow/add-workflow, workflow/defining-workflow | - | no-en | 0.8.61 | |
-| Управление проектом: создание, настройки, архивирование, удаление | task-tracking/creating-projects | task-tracking/creating-projects | stale | 0.8.60 | редактирование проекта переехало из окна на страницу настроек с разделами (вход шестерёнкой из шапки), не описаны архивирование и удаление проекта; создание проекта стало мастером из пяти шагов (основное, участники и доступ, задачи, workflow, сводка); не описано создание проекта на основе другого (выбор основы, шаг «Что взять из основы»), множественный выбор ролей с пунктом "Участник" |
+| Управление проектом: создание, настройки, архивирование, удаление | task-tracking/creating-projects | task-tracking/creating-projects | stale | 0.8.60 | редактирование проекта переехало из окна на страницу настроек с разделами (вход шестерёнкой из шапки), не описаны архивирование и удаление проекта; создание проекта стало мастером из пяти шагов (основное, участники и доступ, задачи, workflow, сводка); не описано создание проекта на основе другого (выбор основы, шаг «Что взять из основы»), множественный выбор ролей с пунктом "Участник"; не описаны возврат из шаблонов в настройки проекта, общий каталог шаблонов и восстановление из архива; действие меню называется "Архивировать", раздел настроек - "Архивация" |
 | Дефолтный проект | - | - | plan | - | |
 | Запрет создания проектов | - | - | plan | - | |
 | Компоненты | task-tracking/components | task-tracking/components | partial | 0.8.60 | не описано объединение одноимённых компонентов разных проектов при группировке/фильтре (агрегация идёт по названию компонента без учёта регистра, а не по руководителю) |

@@ -98,7 +98,7 @@ export type NavEntry =
   | { item: string, icon?: IconName, selected?: boolean, indent?: boolean, count?: string | number, object?: boolean }
   | { divider: true, tight?: boolean }
   | { caption: string, chevron?: boolean, menu?: boolean, compact?: boolean, noDivider?: boolean }
-  | { group: string, add?: boolean }
+  | { group: string, add?: boolean, catalog?: { label: string, icon: IconName } }
   | { space: string, icon?: IconName, color?: string }
 
 export interface FilterCondition {

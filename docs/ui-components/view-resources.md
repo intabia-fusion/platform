@@ -124,9 +124,9 @@
 | DocsNavigator.svelte | Список ссылок на документы | elements, maxWidth | both |
 | ClassAttributeBar.svelte | Панель кастомных атрибутов класса объекта | object, _class, to, ignoreKeys | import |
 | DocAttributeBar.svelte | Панель атрибутов документа по всем миксинам | object, mixins, ignoreKeys | import |
-| navigator/TreeElement.svelte | Базовый элемент дерева навигации | _id, icon, label, actions | import |
+| navigator/TreeElement.svelte | Базовый элемент дерева навигации | _id, icon, label, actions; слот `headerActions` всегда виден в заголовке группы | import |
 | navigator/TreeItem.svelte | Лист дерева навигации | _id, icon, label, actions | import |
-| navigator/TreeNode.svelte | Узел-секция дерева навигации, группа | _id, title, actions, collapsed | import |
+| navigator/TreeNode.svelte | Узел-секция дерева навигации, группа | _id, title, actions, collapsed; слот `headerActions` для постоянных кнопок заголовка | import |
 | folders/FoldersBrowser.svelte | Браузер иерархии папок по parent/title | _class, query, titleKey, parentKey | both |
 | folders/FolderTreeLevel.svelte | Один уровень рекурсивного дерева папок | folders, folderById, descendants, level | internal |
 | masterDetail/MasterDetailBrowser.svelte | Layout master-detail: список и деталь | masterComponent, detailComponent, query | view.component.MasterDetailBrowser |

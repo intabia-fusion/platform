@@ -16,7 +16,7 @@ import { createRestClient } from '@hcengineering/api-client'
 import contact from '@hcengineering/contact'
 import core, { generateId, type AccountUuid, type Ref, type TxOperations } from '@hcengineering/core'
 import task from '@hcengineering/task'
-import tracker, { type Board, type IssueStatus, type Project } from '@hcengineering/tracker'
+import tracker, { cardDensities, type Board, type IssueStatus, type Project } from '@hcengineering/tracker'
 import { expect, test, type Locator } from '../fixtures'
 import {
   connectTracker,
@@ -169,16 +169,64 @@ test.describe('board settings', () => {
     expect((await client.findOne(tracker.class.Board, { _id: id }))?.columns).toEqual(columns)
   })
 
-  test('visibility reads "Visible to everyone" and "Only me" with the hint', async ({ page }) => {
+  test('unplaced statuses stay fixed while top-aligned columns scroll horizontally', async ({ page }) => {
+    const board = await client.findOne(tracker.class.Board, { _id: boardId })
+    if (board === undefined) throw new Error('no board')
+    const { _id, _class, space, modifiedOn, modifiedBy, createdOn, createdBy, ...data } = board
+    const id = await client.createDoc(tracker.class.Board, core.space.Workspace, {
+      ...data,
+      title: `${titlePrefix}columns-scroll`,
+      columns: [
+        ...board.columns,
+        ...Array.from({ length: 6 }, (_, index) => ({
+          id: `empty-${index}`,
+          title: `Empty ${index}`,
+          category: task.statusCategory.ToDo,
+          statuses: []
+        }))
+      ]
+    })
+    const boards = new BoardsPage(page)
+    await page.setViewportSize({ width: 1280, height: 800 })
+    await page.goto(boards.boardUrl(id, true, 'columns'))
+    const unplaced = page.locator('[data-id="boardUnplacedStatuses"]')
+    await expect(unplaced).toBeVisible()
+    const before = await unplaced.boundingBox()
+    const scroll = page.locator('[data-id="boardColumnsScroll"] .scroll')
+    await scroll.evaluate((element) => {
+      element.scrollLeft = element.scrollWidth
+    })
+    await expect.poll(async () => await scroll.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0)
+    expect(await unplaced.boundingBox()).toEqual(before)
+    const last = boards.settingsColumn().last()
+    await expect(last).toBeInViewport()
+    expect((await last.boundingBox())?.y).toBeCloseTo(before?.y ?? 0, 0)
+    await page.mouse.move(0, 0)
+    const bar = page.locator('[data-id="boardColumnsScroll"] .bar-horizontal')
+    await expect(bar).toBeVisible()
+    await expect(bar).toHaveCSS('opacity', '1')
+    await unplaced.locator('[data-id="boardStatus"]', { hasText: 'Canceled' }).dragTo(last)
+    await expect
+      .poll(async () => (await client.findOne(tracker.class.Board, { _id: id }))?.columns.at(-1)?.statuses)
+      .toContain(statusId('Cancelled'))
+  })
+
+  test('the personal board toggle shows its label and hint and saves visibility', async ({ page }) => {
     const boards = new BoardsPage(page)
     await openTab(boards, 'general')
-    await expect(boards.radio('boardVisibilityAll')).toHaveCount(0)
+    await expect(boards.personalToggle()).toHaveCount(0)
     await expect(page.locator('[data-id="boardEditors"]')).toHaveCount(0)
     await page.locator('[data-id="boardSettingsTab-members"]').click()
-    await expect(boards.radio('boardVisibilityAll')).toHaveText(/^\s*Visible to everyone\s*$/)
-    await expect(boards.radio('boardVisibilityMe')).toHaveText(/^\s*Only me\s*$/)
+    await expect(boards.personalToggle()).not.toBeChecked()
+    await expect(page.locator('[data-id="boardSettingsMembers"]')).toContainText('Personal board')
     await expect(page.locator('[data-id="boardSettingsMembers"]')).toContainText('A personal board, only you see it')
     await expect(page.locator('[data-id="boardSettingsMembers"]')).not.toContainText('All project members')
+    await boards.personalToggle().check()
+    await expect(boards.personalToggle()).toBeChecked()
+    await expect.poll(async () => (await client.findOne(tracker.class.Board, { _id: boardId }))?.visibility).toBe('me')
+    await boards.personalToggle().uncheck()
+    await expect(boards.personalToggle()).not.toBeChecked()
+    await expect.poll(async () => (await client.findOne(tracker.class.Board, { _id: boardId }))?.visibility).toBe('all')
   })
 
   test('a project picked in the popup shows at once, without reopening the settings', async ({ page }) => {
@@ -223,11 +271,14 @@ test.describe('board settings', () => {
     // The author row and the editor row
     await expect(rows).toHaveCount(2)
     await expect(rows.first().locator('[data-id="project-member-menu"]')).toHaveCount(0)
-    await expect(rows.nth(1)).toContainText('Can edit')
-    await boards.radio('boardVisibilityMe').click()
+    await expect(rows.first()).toContainText('Owner')
+    await expect(rows.nth(1)).toContainText('Editor')
+    await boards.personalToggle().check()
+    await expect(boards.personalToggle()).toBeChecked()
     await expect(page.locator('[data-id="boardEditors"]')).toHaveCount(0)
     await expect.poll(async () => (await client.findOne(tracker.class.Board, { _id: id }))?.visibility).toBe('me')
-    await boards.radio('boardVisibilityAll').click()
+    await boards.personalToggle().uncheck()
+    await expect(boards.personalToggle()).not.toBeChecked()
     await expect(rows).toHaveCount(2)
     await expect.poll(async () => (await client.findOne(tracker.class.Board, { _id: id }))?.visibility).toBe('all')
     await rows.nth(1).locator('[data-id="project-member-menu"]').click()
@@ -282,7 +333,7 @@ test.describe('board settings', () => {
 
   test('colors: the example shows a card with the border of each rule that has an issue, and says so for the rest', async ({
     page
-  }) => {
+  }, testInfo) => {
     const boards = new BoardsPage(page)
     await openTab(boards, 'colorRules')
     const example = page.locator('[data-id="boardColorExample"]')
@@ -294,6 +345,72 @@ test.describe('board settings', () => {
     await expect(example.locator('[data-id="boardColorSampleNone"]')).toContainText(
       'No issue of the board fits this rule'
     )
+    try {
+      for (const density of cardDensities) {
+        await client.updateDoc(tracker.class.Board, core.space.Workspace, boardId, { density })
+        await expect(example.locator(`.tracker-card[data-density="${density}"]`)).toHaveCount(2)
+        await expect
+          .poll(
+            async () =>
+              await example.locator('[data-id="boardColorSample"]').evaluateAll((samples) =>
+                samples.every((sample) => {
+                  const card = sample.querySelector('.tracker-card')
+                  return (
+                    card !== null &&
+                    Math.abs(sample.getBoundingClientRect().height - card.getBoundingClientRect().height - 2) <= 1
+                  )
+                })
+              )
+          )
+          .toBe(true)
+        const empty = await example.locator('[data-id="boardColorSampleNone"]').boundingBox()
+        expect(empty?.height).toBeCloseTo(64, 0)
+        await testInfo.attach(`color-preview-${density}`, {
+          body: await example.screenshot(),
+          contentType: 'image/png'
+        })
+      }
+    } finally {
+      await client.updateDoc(tracker.class.Board, core.space.Workspace, boardId, { density: 'normal' })
+    }
+  })
+
+  test('FUSIO-1683 color rules keep one empty draft and discard it on reload', async ({ page }) => {
+    const board = await client.findOne(tracker.class.Board, { _id: boardId })
+    if (board === undefined) throw new Error('no board')
+    const { _id, _class, space, modifiedOn, modifiedBy, createdOn, createdBy, ...data } = board
+    const stored = [...board.colorRules, { id: 'legacy-empty', color: 0, condition: '' }]
+    const id = await client.createDoc(tracker.class.Board, core.space.Workspace, {
+      ...data,
+      title: `${titlePrefix}color-draft`,
+      colorRules: stored
+    })
+    const boards = new BoardsPage(page)
+    await page.goto(boards.boardUrl(id, true, 'colorRules'))
+    const rows = boards.settingsTab('colorRules').locator('[data-id="boardRule"]')
+    const add = page.locator('[data-id="boardAddRule"]')
+    await expect(rows).toHaveCount(3)
+    await add.click()
+    await expect(rows).toHaveCount(4)
+    await expect(add).toBeDisabled()
+    expect((await client.findOne(tracker.class.Board, { _id: id }))?.colorRules).toEqual(stored)
+    await page.reload()
+    await expect(rows).toHaveCount(3)
+    await expect(add).toBeEnabled()
+    await add.click()
+    await rows.first().locator('.filter-section button.square').click()
+    await expect(rows).toHaveCount(3)
+    await expect(add).toBeDisabled()
+    await expect
+      .poll(async () => (await client.findOne(tracker.class.Board, { _id: id }))?.colorRules)
+      .toEqual(board.colorRules.slice(1))
+    await page.reload()
+    await expect(rows).toHaveCount(2)
+    await expect(add).toBeEnabled()
+    await add.click()
+    await rows.last().locator('[data-id="boardRemoveRule"]').click()
+    await expect(rows).toHaveCount(2)
+    await expect(add).toBeEnabled()
   })
 
   test('controls without a model field are absent while the flags are off', async ({ page }) => {

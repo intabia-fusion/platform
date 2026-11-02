@@ -19,11 +19,10 @@
   import { ProjectTypeStatusesSectionEditor, typeStore } from '@hcengineering/task-resources'
   import { Button } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
-  import workflow from '@hcengineering/workflow'
   import type { Project } from '@hcengineering/tracker'
 
   import tracker from '../../../plugin'
-  import { openProjectSection, openProjectType } from '../../../projectSettings'
+  import { openProjectType } from '../../../projectSettings'
   import ProjectSettingsSection from './ProjectSettingsSection.svelte'
 
   export let project: Project
@@ -61,15 +60,5 @@
         }}
       />
     {/if}
-    <Button
-      kind="ghost"
-      size="small"
-      icon={workflow.icon.Workflow}
-      iconSize="small"
-      label={tracker.string.ProjectSettingsWorkflow}
-      on:click={() => {
-        openProjectSection('workflow')
-      }}
-    />
   </div>
 </ProjectSettingsSection>

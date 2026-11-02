@@ -23,6 +23,7 @@ import {
   CollectionSize,
   Data,
   Doc,
+  type Enum,
   Markup,
   type TxOperations,
   Mixin,
@@ -49,7 +50,7 @@ import {
 } from '@hcengineering/task'
 import { AnyComponent, ComponentExtensionId, Location, ResolvedLocation } from '@hcengineering/ui'
 import { Action, ActionCategory, IconProps } from '@hcengineering/view'
-import type { Board, BoardPreference } from './boards'
+import type { Board, BoardNavigationPreference, BoardPreference } from './boards'
 
 export * from './analytics'
 export * from './boards'
@@ -539,6 +540,7 @@ const pluginState = plugin(trackerId, {
     ProjectTargetPreference: '' as Ref<Class<ProjectTargetPreference>>,
     Board: '' as Ref<Class<Board>>,
     BoardPreference: '' as Ref<Class<BoardPreference>>,
+    BoardNavigationPreference: '' as Ref<Class<BoardNavigationPreference>>,
     IssueTaskType: '' as Ref<Class<Issue>>
   },
   mixin: {
@@ -549,6 +551,9 @@ const pluginState = plugin(trackerId, {
     IssueDraft: '',
     IssueDraftChild: '',
     ClassingProjectType: '' as Ref<ProjectType>
+  },
+  enum: {
+    BoardVisibility: '' as Ref<Enum>
   },
   status: {
     Backlog: '' as Ref<Status>,
@@ -569,6 +574,7 @@ const pluginState = plugin(trackerId, {
     RelatedIssueTemplates: '' as AnyComponent,
     EditIssue: '' as AnyComponent,
     CreateIssue: '' as AnyComponent,
+    BoardCatalogPresenter: '' as AnyComponent,
     ProjectPresenter: '' as AnyComponent,
     CreateIssueTemplate: '' as AnyComponent,
     CreateProject: '' as AnyComponent,

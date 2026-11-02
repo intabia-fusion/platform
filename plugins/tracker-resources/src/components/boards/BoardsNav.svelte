@@ -13,14 +13,37 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getCurrentAccount, type Doc, type Ref, type Space } from '@hcengineering/core'
+  import { getCurrentAccount, type Ref, type Space } from '@hcengineering/core'
   import { createQuery, getClient, MessageBox } from '@hcengineering/presentation'
-  import { canEditBoard, isBoardAvailable, sortBoards, type Board } from '@hcengineering/tracker'
+  import {
+    canEditBoard,
+    isBoardAvailable,
+    sortBoards,
+    type Board,
+    type BoardNavigationPreference
+  } from '@hcengineering/tracker'
   import task from '@hcengineering/task'
-  import ui, { Icon, resolvedLocationStore, showPopup, type Action } from '@hcengineering/ui'
+  import ui, {
+    Icon,
+    getCurrentResolvedLocation,
+    navigate,
+    resolvedLocationStore,
+    showPopup,
+    type Action
+  } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import { TreeItem, TreeNode } from '@hcengineering/view-resources'
-  import { boardLocation, canDeleteBoard, togglePinned } from '../../boards'
+  import {
+    boardLocation,
+    boardNavigationId,
+    canDeleteBoard,
+    ensureBoardNavigation,
+    reportBoardError,
+    setBoardInNavigation,
+    shareBoard,
+    togglePinned
+  } from '../../boards'
   import tracker from '../../plugin'
   import CreateBoard from './CreateBoard.svelte'
 
@@ -35,28 +58,43 @@
 
   let boards: Board[] = []
   let pinned = new Set<Ref<Board>>()
+  let navigation: BoardNavigationPreference | undefined
   createQuery().query(tracker.class.Board, {}, (res) => {
     boards = res.filter((b) => isBoardAvailable(b, account))
+    void ensureBoardNavigation(client, res).catch(reportBoardError)
   })
   createQuery().query(tracker.class.BoardPreference, {}, (res) => {
     pinned = new Set(res.map((p) => p.attachedTo))
   })
 
-  $: shown = sortBoards(boards, pinned)
+  createQuery().query(tracker.class.BoardNavigationPreference, { _id: boardNavigationId() }, (res) => {
+    navigation = res[0]
+  })
+
+  $: shown = sortBoards(
+    boards.filter((board) => navigation?.boards.includes(board._id)),
+    pinned
+  )
   $: selectedId =
     $resolvedLocationStore.path[3] === 'boards' ? ($resolvedLocationStore.path[4] as Ref<Board>) : undefined
   $: selected = shown.find((b) => b._id === selectedId)
 
-  const addBoard: Action = {
-    label: tracker.string.CreateBoard,
-    icon: ui.icon.Plus,
-    action: async (_id: Ref<Doc>): Promise<void> => {
-      showPopup(CreateBoard, {}, 'top')
-    }
-  }
-
   async function boardActions (board: Board): Promise<Action[]> {
     const result: Action[] = [
+      {
+        label: tracker.string.ShareBoard,
+        icon: view.icon.CopyLink,
+        action: async () => {
+          await shareBoard(board)
+        }
+      },
+      {
+        label: tracker.string.RemoveBoardFromNavigation,
+        icon: view.icon.Delete,
+        action: async () => {
+          await setBoardInNavigation(client, board._id, false)
+        }
+      },
       {
         label: pinned.has(board._id) ? tracker.string.UnpinBoard : tracker.string.PinBoard,
         icon: view.icon.Pin,
@@ -96,12 +134,37 @@
 <TreeNode
   _id="tree-boards"
   label={tracker.string.TaskBoards}
-  actions={async () => [addBoard]}
   highlighted={selected !== undefined}
   isFold
   empty={shown.length === 0}
   visible={selected !== undefined}
 >
+  <svelte:fragment slot="headerActions">
+    <IconButton
+      icon={ui.icon.Plus}
+      size="extra-small"
+      kind="tertiary"
+      tooltip={{ label: tracker.string.CreateBoard, direction: 'top' }}
+      on:click={(event) => {
+        event.stopPropagation()
+        showPopup(CreateBoard, {}, 'top')
+      }}
+    />
+    <IconButton
+      icon={view.icon.List}
+      size="extra-small"
+      kind="tertiary"
+      tooltip={{ label: tracker.string.AllBoards, direction: 'top' }}
+      on:click={(event) => {
+        event.stopPropagation()
+        const loc = getCurrentResolvedLocation()
+        loc.path = [...loc.path.slice(0, 3), 'boards']
+        loc.query = undefined
+        loc.fragment = undefined
+        navigate(loc)
+      }}
+    />
+  </svelte:fragment>
   <div class="boards" data-id="boardsNav">
     {#each shown as board (board._id)}
       <TreeItem

@@ -18,7 +18,12 @@
   import contact, { getName, type Employee, type Person } from '@hcengineering/contact'
   import type { AccountUuid, Data, Ref, Role, RolesAssignment } from '@hcengineering/core'
   import core, { generateId, getCurrentAccount, notEmpty, SortingOrder, systemAccountUuid } from '@hcengineering/core'
-  import { EmployeePresenter, PersonPresenter, employeeByIdStore, employeeRefByAccountUuidStore } from '@hcengineering/contact-resources'
+  import {
+    EmployeePresenter,
+    PersonPresenter,
+    employeeByIdStore,
+    employeeRefByAccountUuidStore
+  } from '@hcengineering/contact-resources'
   import { getEmbeddedLabel, type Asset, type IntlString } from '@hcengineering/platform'
   import presentation, { createQuery, getClient, MessageBox } from '@hcengineering/presentation'
   import type { Project as TaskProject, ProjectType, TaskType } from '@hcengineering/task'
@@ -62,7 +67,13 @@
     type BaseSettings,
     type CopyOptions
   } from '../../projectCopyLogic'
-  import { applyRoles, isAccessValid, mergeOwners, missingMemberAccounts, removeFromRoles } from '../../projectSettingsLogic'
+  import {
+    applyRoles,
+    isAccessValid,
+    mergeOwners,
+    missingMemberAccounts,
+    removeFromRoles
+  } from '../../projectSettingsLogic'
   import ProjectBaseItem from './ProjectBaseItem.svelte'
   import ProjectBasePopup from './ProjectBasePopup.svelte'
   import ProjectAssigneeSelect from './settings/ProjectAssigneeSelect.svelte'

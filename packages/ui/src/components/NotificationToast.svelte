@@ -1,6 +1,7 @@
 <!--
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -69,7 +70,7 @@
   </div>
 
   {#if $$slots.buttons}
-    <div class="flex-between gap-2">
+    <div class="buttons flex-between gap-2">
       <slot name="buttons" />
     </div>
   {/if}
@@ -82,8 +83,10 @@
     flex-direction: column;
     margin: 0.75rem;
     padding: 0.75rem;
-    min-width: 25rem;
-    max-width: 35rem;
+    box-sizing: border-box;
+    width: 25rem;
+    min-width: 0;
+    max-width: calc(100vw - 1.5rem);
     min-height: 7rem;
     color: var(--theme-caption-color);
     background-color: var(--theme-popup-color);
@@ -107,6 +110,16 @@
     .content {
       flex-grow: 1;
       margin: 1rem 0 1.25rem;
+      overflow-wrap: anywhere;
+    }
+
+    .buttons {
+      flex-wrap: wrap;
+
+      :global(> *) {
+        flex-shrink: 0;
+        max-width: 100%;
+      }
     }
   }
 </style>
