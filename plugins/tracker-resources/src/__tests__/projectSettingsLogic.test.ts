@@ -13,13 +13,15 @@
 // limitations under the License.
 //
 
-import type { AccountUuid, Ref, Role } from '@hcengineering/core'
+import { systemAccountUuid, type AccountUuid, type Ref, type Role } from '@hcengineering/core'
 import {
   addMemberOps,
   applyRoles,
   changedRoles,
   isAccessValid,
   mergeOwners,
+  MEMBER_ROLE,
+  missingMemberAccounts,
   ownerChangeOps,
   OWNER_ROLE,
   removeFromRoles,
@@ -49,6 +51,14 @@ describe('project access', () => {
   })
 })
 
+describe('missingMemberAccounts', () => {
+  it('looks up non-employees once and keeps unknown accounts without mutating membership', () => {
+    const members = [acc('employee'), acc('guest'), acc('unknown'), acc('guest'), systemAccountUuid]
+    expect(missingMemberAccounts(members, new Map([[acc('employee'), 'employee-ref']]))).toEqual(['guest', 'unknown'])
+    expect(members).toEqual(['employee', 'guest', 'unknown', 'guest', systemAccountUuid])
+  })
+})
+
 describe('removeFromRoles', () => {
   it('removes members from every role and keeps empty roles', () => {
     const role1 = 'r1' as Ref<Role>
@@ -67,7 +77,7 @@ describe('member roles', () => {
   it('lists the owner entry first and then the held roles', () => {
     expect(rowRoles(acc('a'), [acc('a')], assignment)).toEqual([OWNER_ROLE, 'r1'])
     expect(rowRoles(acc('b'), [acc('a')], assignment)).toEqual(['r1'])
-    expect(rowRoles(acc('c'), [], assignment)).toEqual([])
+    expect(rowRoles(acc('c'), [], assignment)).toEqual([MEMBER_ROLE])
   })
 
   it('applies a selection to owners and roles of one member only', () => {
@@ -82,6 +92,20 @@ describe('member roles', () => {
       owners: ['a'],
       assignment: { r1: ['a'] }
     })
+  })
+
+  it('selecting Member removes ownership and type roles without changing other members', () => {
+    const res = applyRoles(acc('a'), [MEMBER_ROLE], [acc('a'), acc('b')], assignment)
+    expect(res.owners).toEqual(['b'])
+    expect(res.assignment[r1]).toEqual(['b'])
+    expect(res.assignment[r2]).toBeUndefined()
+    expect(res.assignment).not.toHaveProperty(MEMBER_ROLE)
+    expect(rowRoles(acc('a'), res.owners, res.assignment)).toEqual([MEMBER_ROLE])
+  })
+
+  it('keeps multiple selected type roles together with ownership', () => {
+    const res = applyRoles(acc('a'), [OWNER_ROLE, 'r1', 'r2'], [acc('b')], assignment)
+    expect(rowRoles(acc('a'), res.owners, res.assignment)).toEqual([OWNER_ROLE, 'r1', 'r2'])
   })
 
   it('drops the owner entry and keeps unheld roles as they are', () => {
@@ -116,6 +140,13 @@ describe('access operators', () => {
 
   it('demotes an owner with $pull from owners', () => {
     expect(ownerChangeOps(acc('a'), true, false, [acc('a')])).toEqual({ $pull: { owners: { $in: ['a'] } } })
+  })
+
+  it('demotes an owner outside members to a member in the same update', () => {
+    expect(ownerChangeOps(acc('a'), true, false, [acc('b')])).toEqual({
+      $pull: { owners: { $in: ['a'] } },
+      $push: { members: 'a' }
+    })
   })
 
   it('sends nothing when ownership is unchanged', () => {

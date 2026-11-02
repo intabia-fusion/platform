@@ -14,6 +14,8 @@ const authFileSecond = path.join(__dirname, '../../.auth/storageSecond.json')
 const authFileThird = path.join(__dirname, '../../.auth/storageThird.json')
 
 async function authenticate (page: Page, user: string, password: string): Promise<void> {
+  // The stand may default to Russian; login and the suite use English selectors.
+  await page.addInitScript(() => localStorage.setItem('lang', 'en'))
   const loginPage = new LoginPage(page)
   await (await page.goto(`${PlatformURI}`))?.finished()
   await loginPage.login(user, password)

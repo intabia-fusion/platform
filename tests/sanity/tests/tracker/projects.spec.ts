@@ -9,6 +9,9 @@ import { generateProjectId } from './tracker.utils'
 import { TemplatePage } from '../model/tracker/templates-page'
 import { connectTracker, findProjectByName } from '../API/TrackerApi'
 import tracker, { IssuePriority } from '@hcengineering/tracker'
+import contact, { AvatarType, type Person } from '@hcengineering/contact'
+import { systemAccountUuid, type AccountUuid, type Ref } from '@hcengineering/core'
+import { randomUUID } from 'node:crypto'
 
 test.use({
   storageState: PlatformSetting
@@ -92,7 +95,8 @@ test.describe('Tracker Projects tests', () => {
     await test.step('The creator cannot remove themselves or drop the owner role', async () => {
       await newProjectPage.buttonBack().click()
       await expect(newProjectPage.step('members')).toBeVisible()
-      const own = newProjectPage.root().locator('[data-id="project-settings-member"]', { hasText: 'Appleseed John' })
+      const own = newProjectPage.root().locator('[data-id="project-settings-member"]')
+      await expect(own).toHaveCount(1)
       await expect(newProjectPage.memberRoles(own)).toBeDisabled()
       await expect(newProjectPage.memberMenu(own)).toBeDisabled()
     })
@@ -115,7 +119,7 @@ test.describe('Tracker Projects tests', () => {
     const base: NewProject = { title: `BaseProject-${baseId}`, identifier: baseId }
     const copyId = generateProjectId()
     const copy: NewProject = { title: `CopyProject-${copyId}`, identifier: copyId }
-    const member = 'Chen Rosamund'
+    const member = 'Rosamund'
     const templates = ['Bug report', 'New page', 'Weekly report'].map((it) => `${it}-${baseId}`)
     const templatePage = new TemplatePage(page)
 
@@ -184,6 +188,131 @@ test.describe('Tracker Projects tests', () => {
       await projectSettingsPage.openSection('members')
       await expect(projectSettingsPage.memberRow(member)).toBeVisible()
     })
+  })
+
+  test('FUSIO-1681: copied members without Employee stay visible and roles persist', async ({ page }, testInfo) => {
+    const sourceId = generateProjectId()
+    const sourceName = `MemberSource-${sourceId}`
+    const copyId = generateProjectId()
+    const copyName = `MemberCopy-${copyId}`
+    const personAccount = randomUUID() as AccountUuid
+    const unknownAccount = randomUUID() as AccountUuid
+    const personName = `Regression-${sourceId}`
+    const { client } = await test.step('Connect tracker API for the member fixture', async () => await connectTracker())
+    let personId: Ref<Person> | undefined
+
+    try {
+      personId = await test.step('Create a Person without Employee through the API', async () => {
+        return await client.createDoc(contact.class.Person, contact.space.Contacts, {
+          name: personName,
+          personUuid: personAccount,
+          avatarType: AvatarType.COLOR
+        })
+      })
+      await test.step('Create the isolated source project', async () => {
+        await trackerNavigationMenuPage.pressCreateProjectButton()
+        await newProjectPage.createNewProject({ title: sourceName, identifier: sourceId })
+      })
+      const source = await findProjectByName(client, sourceName)
+      if (source === undefined) throw new Error(`Project "${sourceName}" not found`)
+      const creator = source.owners?.[0]
+      if (creator === undefined) throw new Error('The source project has no creator owner')
+      const members = [creator, personAccount, systemAccountUuid, unknownAccount]
+      const owners = [creator, personAccount]
+      await client.updateDoc(tracker.class.Project, source.space, source._id, { members, owners })
+
+      const expectedRows = [
+        { account: creator, label: 'Appleseed', owner: true },
+        { account: personAccount, label: personName, owner: true },
+        { account: systemAccountUuid, label: 'System', owner: false },
+        { account: unknownAccount, label: unknownAccount, owner: false }
+      ]
+      const storedSource = await findProjectByName(client, sourceName)
+      const people = await client.findAll(contact.class.Person, { personUuid: { $in: members } })
+      const employees = await client.findAll(contact.mixin.Employee, { personUuid: { $in: members } })
+      await testInfo.attach('FUSIO-1681-member-fixture', {
+        contentType: 'application/json',
+        body: JSON.stringify({
+          source: { id: source._id, members: storedSource?.members, owners: storedSource?.owners },
+          expectedRows: expectedRows.map((row) => ({
+            ...row,
+            persons: people.filter((person) => person.personUuid === row.account).map((person) => person._id),
+            employees: employees.filter((employee) => employee.personUuid === row.account).map((employee) => employee._id)
+          }))
+        }, null, 2)
+      })
+      expect(people.filter((person) => person.personUuid === personAccount)).toHaveLength(1)
+      expect(employees.filter((employee) => employee.personUuid === personAccount)).toHaveLength(0)
+      expect(people.filter((person) => person.personUuid === unknownAccount)).toHaveLength(0)
+      expect(storedSource?.members).toEqual(members)
+      expect(storedSource?.owners).toEqual(owners)
+
+      await trackerNavigationMenuPage.pressCreateProjectButton()
+      await newProjectPage.chooseBase(sourceName)
+      await newProjectPage.inputTitle().fill(copyName)
+      await newProjectPage.inputIdentifier().fill(copyId)
+      await newProjectPage.goToStep('members')
+      await expect(newProjectPage.root().locator('[data-id="project-settings-member"]')).toHaveCount(4)
+      await expect(newProjectPage.step('members').locator('.members-title')).toHaveText('Members · 4')
+      for (const row of expectedRows) {
+        await expect(newProjectPage.memberRow(row.label)).toHaveCount(1)
+        await expect(newProjectPage.memberRow(row.label).locator('.cell.person')).toContainText(row.label)
+      }
+
+      await newProjectPage.goToStep('summary')
+      await expect(newProjectPage.summaryOwners()).toContainText('Owners (2)')
+      await expect(newProjectPage.summaryMembers()).toContainText('Members (2)')
+      for (const row of expectedRows) {
+        const summary = row.owner ? newProjectPage.summaryOwners() : newProjectPage.summaryMembers()
+        await expect(summary).toContainText(row.label)
+        expect((await summary.innerText()).split(row.label)).toHaveLength(2)
+        await expect(row.owner ? newProjectPage.summaryMembers() : newProjectPage.summaryOwners()).not.toContainText(row.label)
+      }
+      await newProjectPage.buttonCreateProject().click()
+      await expect(newProjectPage.root()).toBeHidden()
+      await expect.poll(async () => {
+        const project = await findProjectByName(client, copyName)
+        return { members: project?.members, owners: project?.owners }
+      }).toEqual({ members, owners })
+
+      await trackerNavigationMenuPage.openIssuesForProject(copyName)
+      await projectSettingsPage.openFromProject()
+      await projectSettingsPage.openSection('members')
+      await expect(projectSettingsPage.root().locator('[data-id="project-settings-member"]')).toHaveCount(4)
+      await expect(projectSettingsPage.root().locator('.members-title')).toHaveText('Members · 4')
+      for (const row of expectedRows) await expect(projectSettingsPage.memberRow(row.label)).toHaveCount(1)
+
+      for (const role of ['Member', 'Owner', 'Member']) {
+        await projectSettingsPage.setMemberRoles(personName, [role])
+        await expect(projectSettingsPage.memberRow(personName).locator('[data-id="project-member-roles"]')).toHaveText(role)
+        const expectedOwners = role === 'Owner' ? owners : [creator]
+        await expect.poll(async () => {
+          const project = await findProjectByName(client, copyName)
+          return { members: project?.members, owners: project?.owners }
+        }).toEqual({ members, owners: expectedOwners })
+        await page.reload()
+        await expect(projectSettingsPage.memberRow(personName).locator('[data-id="project-member-roles"]')).toHaveText(role)
+        await expect(projectSettingsPage.root().locator('[data-id="project-settings-member"]')).toHaveCount(4)
+      }
+    } finally {
+      try {
+        if (await newProjectPage.root().isVisible()) await newProjectPage.buttonClose().click()
+        for (const name of [copyName, sourceName]) {
+          const project = await findProjectByName(client, name)
+          if (project !== undefined) await client.removeDoc(tracker.class.Project, project.space, project._id)
+        }
+        if (personId !== undefined) {
+          const person = await client.findOne(contact.class.Person, { _id: personId })
+          if (person?.profile !== undefined) {
+            const profile = await client.findOne(contact.class.UserProfile, { _id: person.profile })
+            if (profile !== undefined) await client.removeDoc(profile._class, profile.space, profile._id)
+          }
+          await client.removeDoc(contact.class.Person, contact.space.Contacts, personId)
+        }
+      } finally {
+        await client.close()
+      }
+    }
   })
 
   test('User can create a project based on an archived one with its components', async ({ page }) => {
@@ -358,7 +487,7 @@ test.describe('Tracker Projects tests', () => {
   test('User can add a member and make them an owner in settings', async () => {
     const projectId = generateProjectId()
     const data: NewProject = { title: `OwnerProject-${projectId}`, identifier: projectId }
-    const member = 'Chen Rosamund'
+    const member = 'Rosamund'
 
     await trackerNavigationMenuPage.pressCreateProjectButton()
     await newProjectPage.createNewProject(data)

@@ -98,7 +98,7 @@
 
   async function changeRoles (account: AccountUuid, selected: string[]): Promise<void> {
     const next = applyRoles(account, selected, owners, assignment)
-    const members = mergeOwners(project.members, next.owners)
+    const members = mergeOwners([...project.members, account], next.owners)
     if (!isAccessValid(project.private, members, next.owners)) {
       rejected = true
       resetKey++
