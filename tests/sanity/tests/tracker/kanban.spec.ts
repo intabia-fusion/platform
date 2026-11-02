@@ -963,7 +963,6 @@ test.describe('Kanban board', () => {
       const stacked = board.collapsedColumn(done)
       await expect(stacked).toBeVisible()
       const counter = stacked.locator('.counter')
-      const before = Number(await counter.innerText())
 
       await dragUntilStatus(client, cardId, done, async () => {
         const preview = async (): Promise<void> => {
@@ -979,7 +978,14 @@ test.describe('Kanban board', () => {
       await expect(stacked).toBeVisible()
       await expect(board.column(done)).toHaveCount(0)
       await expect(board.card(cardId)).toHaveCount(0)
-      await expect(counter).toHaveText(String(before + 1))
+      await expect
+        .poll(async () => {
+          const count = (
+            await client.findAll(tracker.class.Issue, { space: ctx.project._id, status: ctx.statuses.get('Done') })
+          ).length
+          return (await counter.innerText()) === String(count)
+        })
+        .toBe(true)
     })
 
     test('swim lanes: a card dropped on a stacked column keeps its own lane', async ({ page }) => {

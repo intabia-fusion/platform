@@ -78,7 +78,8 @@ test.describe('Rage click: admin billing', () => {
     // 'mock'/'mock-model' is the stand's mock AI provider (AiModelRegistry) - safe to top up.
     const providerId = 'mock'
     const model = 'mock-model'
-    const baseline = 1000
+    // This shared pool counts mock usage from the whole hour, including earlier suite runs.
+    const baseline = 1_000_000_000
     // Deterministic baseline, independent of whatever earlier runs left behind.
     await request.post(`${BILLING_URL}/api/v1/admin/pools`, {
       headers: getAdminHeaders(),
