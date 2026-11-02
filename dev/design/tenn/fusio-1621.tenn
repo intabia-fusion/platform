@@ -101,7 +101,7 @@ element "1 Настройки проекта" {
 				width 1515; height 1044
 				at Settings_header { width 1515 }
 				replace Settings_header.left.Button_ghost_small {
-					use ui_kit.Actions.Button_ghost_small as "Button/ghost/small" {
+					use ui_kit.Actions.Button as "Button/ghost/small" { kind ghost; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.chevronL as "icon/chevronL" { border-color #5a667e; line-width 1 }
 						}
@@ -115,7 +115,7 @@ element "1 Настройки проекта" {
 				at Settings_subtabs { hidden no; auto-layout column; gap 16; padding 24 32; align start; width 1282; height 987 }
 				at Settings_content { hidden yes }
 				slot right {
-					use ui_kit.Actions.Button_tertiary_small_icon as "Close settings" {
+					use ui_kit.Actions.Button as "Close settings" { kind tertiary; size small; shape icon;
 						replace icon_gear {
 							use ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
@@ -175,7 +175,7 @@ element "1 Настройки проекта" {
 										item Default { title Default; font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; auto-layout row; text-color #00000099 }
 									}
 								}
-								use ui_kit.Actions.Button_tertiary_extra_small as "Button/tertiary/extra-small" {
+								use ui_kit.Actions.Button as "Button/tertiary/extra-small" { kind tertiary; size extra-small;
 									at icon_kit_Plus { hidden yes }
 									at Button { title "Открыть тип проекта" }
 								}
@@ -345,7 +345,7 @@ element "1 Настройки проекта" {
 				width 1515; height 1044
 				at Settings_header { width 1515 }
 				replace Settings_header.left.Button_ghost_small {
-					use ui_kit.Actions.Button_ghost_small as "Button/ghost/small" {
+					use ui_kit.Actions.Button as "Button/ghost/small" { kind ghost; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.chevronL as "icon/chevronL" { border-color #5a667e; line-width 1 }
 						}
@@ -359,7 +359,7 @@ element "1 Настройки проекта" {
 				at Settings_subtabs { hidden no; auto-layout column; gap 16; padding 24 32; align start; width 1282; height 987 }
 				at Settings_content { hidden yes }
 				slot right {
-					use ui_kit.Actions.Button_tertiary_small_icon as "Close settings" {
+					use ui_kit.Actions.Button as "Close settings" { kind tertiary; size small; shape icon;
 						replace icon_gear {
 							use ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
@@ -429,7 +429,7 @@ element "1 Настройки проекта" {
 					item "members head" {
 						auto-layout row; align center; justify space-between; width 760; height 32; clip yes
 						item "Участники · 4" { title "Участники · 4"; font-size 14; line-height 18; font-family "IBM Plex Sans"; font-weight 600; layout left }
-						use ui_kit.Actions.Button_secondary_small as "Button/secondary/small" {
+						use ui_kit.Actions.Button as "Button/secondary/small" { kind secondary; size small;
 							replace icon_kit_Plus {
 								use ui_kit.Icon.plus as "icon/plus" { border-color #000000; line-width 1 }
 							}
@@ -480,7 +480,7 @@ element "1 Настройки проекта" {
 								}
 								item td {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
-									use ui_kit.Actions.Button_tertiary_extra_small_icon as "IconButton/more" {
+									use ui_kit.Actions.Button as "IconButton/more" { kind tertiary; size extra-small; shape icon;
 										replace icon_gear {
 											use ui_kit.Icon.more as "icon/more" { border-color #5a667e; line-width 1 }
 										}
@@ -512,7 +512,7 @@ element "1 Настройки проекта" {
 								}
 								item td {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
-									use ui_kit.Actions.Button_tertiary_extra_small_icon as "IconButton/more" {
+									use ui_kit.Actions.Button as "IconButton/more" { kind tertiary; size extra-small; shape icon;
 										replace icon_gear {
 											use ui_kit.Icon.more as "icon/more" { border-color #5a667e; line-width 1 }
 										}
@@ -544,7 +544,7 @@ element "1 Настройки проекта" {
 								}
 								item td {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
-									use ui_kit.Actions.Button_tertiary_extra_small_icon as "IconButton/more" {
+									use ui_kit.Actions.Button as "IconButton/more" { kind tertiary; size extra-small; shape icon;
 										replace icon_gear {
 											use ui_kit.Icon.more as "icon/more" { border-color #5a667e; line-width 1 }
 										}
@@ -576,7 +576,7 @@ element "1 Настройки проекта" {
 								}
 								item td {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
-									use ui_kit.Actions.Button_tertiary_extra_small_icon as "IconButton/more" {
+									use ui_kit.Actions.Button as "IconButton/more" { kind tertiary; size extra-small; shape icon;
 										replace icon_gear {
 											use ui_kit.Icon.more as "icon/more" { border-color #5a667e; line-width 1 }
 										}
@@ -690,7 +690,7 @@ element "1 Настройки проекта" {
 				width 1515; height 1044
 				at Settings_header { width 1515 }
 				replace Settings_header.left.Button_ghost_small {
-					use ui_kit.Actions.Button_ghost_small as "Button/ghost/small" {
+					use ui_kit.Actions.Button as "Button/ghost/small" { kind ghost; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.chevronL as "icon/chevronL" { border-color #5a667e; line-width 1 }
 						}
@@ -704,7 +704,7 @@ element "1 Настройки проекта" {
 				at Settings_subtabs { hidden no; auto-layout column; gap 16; padding 24 32; align start; width 1282; height 987 }
 				at Settings_content { hidden yes }
 				slot right {
-					use ui_kit.Actions.Button_tertiary_small_icon as "Close settings" {
+					use ui_kit.Actions.Button as "Close settings" { kind tertiary; size small; shape icon;
 						replace icon_gear {
 							use ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
@@ -889,7 +889,7 @@ element "1 Настройки проекта" {
 				width 1515; height 1044
 				at Settings_header { width 1515 }
 				replace Settings_header.left.Button_ghost_small {
-					use ui_kit.Actions.Button_ghost_small as "Button/ghost/small" {
+					use ui_kit.Actions.Button as "Button/ghost/small" { kind ghost; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.chevronL as "icon/chevronL" { border-color #5a667e; line-width 1 }
 						}
@@ -903,7 +903,7 @@ element "1 Настройки проекта" {
 				at Settings_subtabs { hidden no; auto-layout column; gap 16; padding 24 32; align start; width 1282; height 987 }
 				at Settings_content { hidden yes }
 				slot right {
-					use ui_kit.Actions.Button_tertiary_small_icon as "Close settings" {
+					use ui_kit.Actions.Button as "Close settings" { kind tertiary; size small; shape icon;
 						replace icon_gear {
 							use ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
@@ -1005,13 +1005,13 @@ element "1 Настройки проекта" {
 					}
 					item actions {
 						auto-layout row; gap 8; align center; clip yes
-						use ui_kit.Actions.Button_secondary_small as "Button/secondary/small" {
+						use ui_kit.Actions.Button as "Button/secondary/small" { kind secondary; size small;
 							replace icon_kit_Plus {
 								use ui_kit.Icon.gear as "icon/gear" { border-color #000000; line-width 1 }
 							}
 							at Button { title "Изменить статусы в типе проекта" }
 						}
-						use ui_kit.Actions.Button_ghost_small as "Button/ghost/small" {
+						use ui_kit.Actions.Button as "Button/ghost/small" { kind ghost; size small;
 							replace icon_kit_Plus {
 								use ui_kit.Icon.timeline as "icon/timeline" { border-color #5a667e; line-width 1 }
 							}
@@ -1123,7 +1123,7 @@ element "1 Настройки проекта" {
 				width 1515; height 1044
 				at Settings_header { width 1515 }
 				replace Settings_header.left.Button_ghost_small {
-					use ui_kit.Actions.Button_ghost_small as "Button/ghost/small" {
+					use ui_kit.Actions.Button as "Button/ghost/small" { kind ghost; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.chevronL as "icon/chevronL" { border-color #5a667e; line-width 1 }
 						}
@@ -1137,7 +1137,7 @@ element "1 Настройки проекта" {
 				at Settings_subtabs { hidden no; auto-layout column; gap 16; padding 24 32; align start; width 1282; height 987 }
 				at Settings_content { hidden yes }
 				slot right {
-					use ui_kit.Actions.Button_tertiary_small_icon as "Close settings" {
+					use ui_kit.Actions.Button as "Close settings" { kind tertiary; size small; shape icon;
 						replace icon_gear {
 							use ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
@@ -1189,7 +1189,7 @@ element "1 Настройки проекта" {
 						width 720
 						at Notice_text { title "Проект можно вернуть из архива в «All projects»."; width 676 }
 					}
-					use ui_kit.Actions.Button_negative_small as "Button/negative/small" {
+					use ui_kit.Actions.Button as "Button/negative/small" { kind negative; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.trash as "icon/trash" { border-color #ffffff; line-width 1 }
 						}
@@ -1300,7 +1300,7 @@ element "1 Настройки проекта" {
 				width 1115; height 1044
 				at Settings_header { width 1115 }
 				replace Settings_header.left.Button_ghost_small {
-					use ui_kit.Actions.Button_ghost_small as "Button/ghost/small" {
+					use ui_kit.Actions.Button as "Button/ghost/small" { kind ghost; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.chevronL as "icon/chevronL" { border-color #5a667e; line-width 1 }
 						}
@@ -1314,7 +1314,7 @@ element "1 Настройки проекта" {
 				at Settings_subtabs { hidden no; auto-layout column; gap 16; padding 24 32; align start; width 882; height 987 }
 				at Settings_content { hidden yes }
 				slot right {
-					use ui_kit.Actions.Button_tertiary_small_icon as "Close settings" {
+					use ui_kit.Actions.Button as "Close settings" { kind tertiary; size small; shape icon;
 						replace icon_gear {
 							use ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
@@ -1398,7 +1398,7 @@ element "1 Настройки проекта" {
 						title "Чат · Мобильное приложение"; font-size 14; line-height 18; font-family "IBM Plex Sans"; font-weight 600; layout left
 					}
 				}
-				use ui_kit.Actions.Button_tertiary_small_icon as "Close chat" {
+				use ui_kit.Actions.Button as "Close chat" { kind tertiary; size small; shape icon;
 					replace icon_gear {
 						use ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 					}

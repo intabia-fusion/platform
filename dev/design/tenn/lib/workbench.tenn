@@ -239,13 +239,13 @@ item "Navigator/tools" {
 	auto-layout abs; width 280; height 1044; clip yes; color #fbfbfc; pos 336 -1204
 	item border { auto-layout abs; width 1; height 1044; clip yes; color #0000000f }
 	item Chat { title Chat; font-size 20; line-height 24; font-family "IBM Plex Sans"; font-weight 700; layout left; text-color #0f121a; pos 21 -16 }
-	use ui_kit.Actions.Button_tertiary_small_icon as "Button/ghost/small" {
+	use ui_kit.Actions.Button as "Button/ghost/small" { kind tertiary; size small; shape icon;
 		pos 200 -12
 		replace icon_gear {
 			use ui_kit.Icon.kit_Search as "icon/kit/Search" { color #5a667e }
 		}
 	}
-	use ui_kit.Actions.Button_tertiary_small_icon as "Button/tertiary/small" {
+	use ui_kit.Actions.Button as "Button/tertiary/small" { kind tertiary; size small; shape icon;
 		pos 236 -12
 		replace icon_gear {
 			use ui_kit.Icon.kit_PencilLine as "icon/kit/PencilLine" { color #6b3ad3 }
@@ -454,7 +454,7 @@ item PanelHeader {
 		item actions {
 			auto-layout row; gap 8; align center; clip yes
 			slot actions {
-				use ui_kit.Actions.ClassicButton_ghost_medium_icon as "ClassicButton/icon/medium" {
+				use ui_kit.Actions.ClassicButton as "ClassicButton/icon/medium" { kind ghost; size medium; shape icon;
 					replace icon_kit_PencilLine {
 						use ui_kit.Icon.kit_Search as "icon/kit/Search" { color #00000099 }
 					}
@@ -482,7 +482,7 @@ item "PanelHeader/divided" {
 			item actions {
 				auto-layout row; gap 8; align center; clip yes
 				slot actions {
-					use ui_kit.Actions.ClassicButton_ghost_medium_icon as "ClassicButton/icon/medium" {
+					use ui_kit.Actions.ClassicButton as "ClassicButton/icon/medium" { kind ghost; size medium; shape icon;
 						replace icon_kit_PencilLine {
 							use ui_kit.Icon.kit_Search as "icon/kit/Search" { color #00000099 }
 						}

@@ -14,7 +14,7 @@
 //
 
 // Libraries mounted once by PlatformDesign.tenn (the entry document); everything else finds them by name.
-// A library of several categories is a file that mounts one file per category: ui_kit.Actions.Button_primary_medium.
+// A library of several categories is a file that mounts one file per category: ui_kit.Actions.Button.
 // A library of one category is that category file itself, without the category level: workbench.TopBar.
 // Dependencies point down this list: base components first, the shell, then what is built from them.
 // build fails on a category of library/ui-kit.js that is not listed here.

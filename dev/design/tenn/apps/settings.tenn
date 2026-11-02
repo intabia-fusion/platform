@@ -233,7 +233,7 @@ element Workspace {
 						use ui_kit.Forms.EditBox_ghost_large as EditBox {
 							at Value { title sanity-ws }
 						}
-						use ui_kit.Actions.ClassicButton_ghost_small_icon as "ClassicButton/ghost/small"
+						use ui_kit.Actions.ClassicButton as "ClassicButton/ghost/small" { kind ghost; size small; shape icon }
 					}
 				}
 				item "Section Password aging rule" {
@@ -258,7 +258,7 @@ element Workspace {
 					item row {
 						auto-layout row; gap 16; align center; clip yes
 						item "Start of the week" { title "Start of the week"; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #3c4149 }
-						use ui_kit.Actions.ClassicButton_regular_medium as "ClassicButton/regular/medium" {
+						use ui_kit.Actions.ClassicButton as "ClassicButton/regular/medium" { kind regular; size medium;
 							gap 6
 							at icon_kit_Plus { hidden yes }
 							at Button { title "System Setup (monday)" }
@@ -270,7 +270,7 @@ element Workspace {
 					item "Access control" {
 						title "Access control"; font-size 16; line-height 21; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #3c4149
 					}
-					use ui_kit.Actions.ClassicButton_regular_medium as "ClassicButton/regular/medium" {
+					use ui_kit.Actions.ClassicButton as "ClassicButton/regular/medium" { kind regular; size medium;
 						gap 6
 						at icon_kit_Plus { hidden yes }
 						at Button { title "Disable role-based access control" }
@@ -287,7 +287,7 @@ element Workspace {
 							title "Grants users ability to import documents into the workspace"; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left
 							text-color #3c4149
 						}
-						use ui_kit.Actions.ClassicButton_regular_large as "ClassicButton/regular/large" {
+						use ui_kit.Actions.ClassicButton as "ClassicButton/regular/large" { kind regular; size large;
 							gap 6
 							replace icon_kit_Plus {
 								use ui_kit.Icon.kit_People as "icon/kit/People" { color #00000099 }
@@ -312,7 +312,7 @@ element Workspace {
 				item "Section Danger zone" {
 					auto-layout column; gap 16; padding 24 0 0 0; width 1024; clip yes
 					item "Danger zone" { title "Danger zone"; font-size 16; line-height 21; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #3c4149 }
-					use ui_kit.Actions.ClassicButton_dangerous_medium as "ClassicButton/dangerous/medium" {
+					use ui_kit.Actions.ClassicButton as "ClassicButton/dangerous/medium" { kind dangerous; size medium;
 						gap 6
 						at icon_kit_Plus { hidden yes }
 						at Button { title "Delete workspace" }
@@ -548,7 +548,7 @@ element Workspace {
 						}
 						item "Anna Smith" { title "Anna Smith"; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left }
 					}
-					use ui_kit.Actions.ClassicButton_ghost_medium as "ClassicButton/primary/medium" {
+					use ui_kit.Actions.ClassicButton as "ClassicButton/primary/medium" { kind ghost; size medium;
 						color #cf13a21f
 						at icon_kit_Plus { hidden yes }
 						at Button { title Owner; text-color #000000 }
@@ -565,7 +565,7 @@ element Workspace {
 						}
 						item "Maria Cole" { title "Maria Cole"; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left }
 					}
-					use ui_kit.Actions.ClassicButton_primary_medium as "ClassicButton/primary/medium" {
+					use ui_kit.Actions.ClassicButton as "ClassicButton/primary/medium" { kind primary; size medium;
 						at icon_kit_Plus { hidden yes }
 						at Button { title Owner }
 						at icon_kit_CaretDownFill { hidden no }

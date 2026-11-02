@@ -105,7 +105,7 @@ item SettingsLayout {
 		auto-layout row; padding 0 16; align center; justify space-between; width 1200; height 56; clip yes
 		item left {
 			auto-layout row; gap 8; align center; clip yes
-			use ui_kit.Actions.Button_ghost_small as "Button/ghost/small" {
+			use ui_kit.Actions.Button as "Button/ghost/small" { kind ghost; size small;
 				replace icon_kit_Plus {
 					use ui_kit.Icon.chevronL as "icon/chevronL" { border-color #5a667e; line-width 1 }
 				}
@@ -117,7 +117,7 @@ item SettingsLayout {
 		item right {
 			auto-layout row; gap 8; align center; clip yes
 			slot right {
-				use ui_kit.Actions.Button_tertiary_small_icon as "Close settings" {
+				use ui_kit.Actions.Button as "Close settings" { kind tertiary; size small; shape icon;
 					replace icon_gear {
 						use ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 					}
@@ -145,7 +145,7 @@ item SettingsLayout {
 	item "Settings subtabs" {
 		hidden yes; auto-layout row; gap 12; padding 0 32; align center; width 967; height 48; clip yes; pos 233 -57
 		slot Settings_subtabs {
-			use ui_kit.Actions.Button_ghost_small as "Button/ghost/small" {
+			use ui_kit.Actions.Button as "Button/ghost/small" { kind ghost; size small;
 				at icon_kit_Plus { hidden yes }
 				at Button { title Board }
 				at icon_chevronD { hidden no }

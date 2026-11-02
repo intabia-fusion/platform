@@ -2125,7 +2125,7 @@ element Boards {
 						use ui_kit.Icon.kit_SlidersHorizontal as "icon/kit/SlidersHorizontal" { color #000000 }
 					}
 					item spacer { auto-layout abs; width 12; height 1; clip yes }
-					use ui_kit.Actions.Button_ghost_small as "Board selector" {
+					use ui_kit.Actions.Button as "Board selector" { kind ghost; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.board as "icon/board" { border-color #5a667e; line-width 1 }
 						}
@@ -2138,7 +2138,7 @@ element Boards {
 						corner-radius 14
 						at Notice_text { title "1 статус без колонки · 1 задача не видна" }
 					}
-					use ui_kit.Actions.Button_ghost_medium as "Board settings" {
+					use ui_kit.Actions.Button as "Board settings" { kind ghost; size medium;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.gear as "icon/gear" { border-color #5a667e; line-width 1 }
 						}
@@ -2841,7 +2841,7 @@ element Boards {
 						use ui_kit.Icon.kit_SlidersHorizontal as "icon/kit/SlidersHorizontal" { color #000000 }
 					}
 					item spacer { auto-layout abs; width 12; height 1; clip yes }
-					use ui_kit.Actions.Button_ghost_small as "Board selector" {
+					use ui_kit.Actions.Button as "Board selector" { kind ghost; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.board as "icon/board" { border-color #5a667e; line-width 1 }
 						}
@@ -2854,7 +2854,7 @@ element Boards {
 						corner-radius 14
 						at Notice_text { title "1 статус без колонки · 1 задача не видна" }
 					}
-					use ui_kit.Actions.Button_ghost_medium as "Board settings" {
+					use ui_kit.Actions.Button as "Board settings" { kind ghost; size medium;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.gear as "icon/gear" { border-color #5a667e; line-width 1 }
 						}
@@ -3569,7 +3569,7 @@ element Boards {
 						use ui_kit.Icon.kit_SlidersHorizontal as "icon/kit/SlidersHorizontal" { color #000000 }
 					}
 					item spacer { auto-layout abs; width 12; height 1; clip yes }
-					use ui_kit.Actions.Button_ghost_small as "Board selector" {
+					use ui_kit.Actions.Button as "Board selector" { kind ghost; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.board as "icon/board" { border-color #5a667e; line-width 1 }
 						}
@@ -3582,7 +3582,7 @@ element Boards {
 						corner-radius 14
 						at Notice_text { title "1 статус без колонки · 1 задача не видна" }
 					}
-					use ui_kit.Actions.Button_ghost_medium as "Board settings" {
+					use ui_kit.Actions.Button as "Board settings" { kind ghost; size medium;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.gear as "icon/gear" { border-color #5a667e; line-width 1 }
 						}
@@ -4240,7 +4240,7 @@ element Boards {
 						use ui_kit.Icon.kit_SlidersHorizontal as "icon/kit/SlidersHorizontal" { color #000000 }
 					}
 					item spacer { auto-layout abs; width 12; height 1; clip yes }
-					use ui_kit.Actions.Button_ghost_small as "Board selector" {
+					use ui_kit.Actions.Button as "Board selector" { kind ghost; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.board as "icon/board" { border-color #5a667e; line-width 1 }
 						}
@@ -4253,7 +4253,7 @@ element Boards {
 						corner-radius 14
 						at Notice_text { title "1 статус без колонки · 1 задача не видна" }
 					}
-					use ui_kit.Actions.Button_ghost_medium as "Board settings" {
+					use ui_kit.Actions.Button as "Board settings" { kind ghost; size medium;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.gear as "icon/gear" { border-color #5a667e; line-width 1 }
 						}
@@ -4794,13 +4794,13 @@ element Boards {
 				}
 				item actions {
 					auto-layout row; gap 8; align center; clip yes
-					use ui_kit.Actions.Button_secondary_small as "Button/secondary/small" {
+					use ui_kit.Actions.Button as "Button/secondary/small" { kind secondary; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.list as "icon/list" { border-color #000000; line-width 1 }
 						}
 						at Button { title "Показать задачи" }
 					}
-					use ui_kit.Actions.Button_primary_small as "Button/primary/small" {
+					use ui_kit.Actions.Button as "Button/primary/small" { kind primary; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.plus as "icon/plus" { border-color #ffffff; line-width 1 }
 						}
@@ -4940,7 +4940,7 @@ element Boards {
 						use ui_kit.Icon.kit_SlidersHorizontal as "icon/kit/SlidersHorizontal" { color #000000 }
 					}
 					item spacer { auto-layout abs; width 12; height 1; clip yes }
-					use ui_kit.Actions.Button_ghost_small as "Board selector" {
+					use ui_kit.Actions.Button as "Board selector" { kind ghost; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.board as "icon/board" { border-color #5a667e; line-width 1 }
 						}
@@ -4953,7 +4953,7 @@ element Boards {
 						corner-radius 14
 						at Notice_text { title "1 статус без колонки · 1 задача не видна" }
 					}
-					use ui_kit.Actions.Button_ghost_medium as "Board settings" {
+					use ui_kit.Actions.Button as "Board settings" { kind ghost; size medium;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.gear as "icon/gear" { border-color #5a667e; line-width 1 }
 						}
@@ -5656,7 +5656,7 @@ element "Board settings" {
 				width 1515; height 1044
 				at Settings_header { width 1515 }
 				replace Settings_header.left.Button_ghost_small {
-					use ui_kit.Actions.Button_ghost_small as "Button/ghost/small" {
+					use ui_kit.Actions.Button as "Button/ghost/small" { kind ghost; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.chevronL as "icon/chevronL" { border-color #5a667e; line-width 1 }
 						}
@@ -5670,14 +5670,14 @@ element "Board settings" {
 				at Settings_subtabs { hidden no; auto-layout column; gap 16; padding 24 32; align start; width 1282; height 987 }
 				at Settings_content { hidden yes }
 				slot right {
-					use ui_kit.Actions.Button_ghost_small as "Board in settings" {
+					use ui_kit.Actions.Button as "Board in settings" { kind ghost; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.board as "icon/board" { border-color #5a667e; line-width 1 }
 						}
 						at Button { title "Основная доска" }
 						at icon_chevronD { hidden no }
 					}
-					use ui_kit.Actions.Button_tertiary_small_icon as "Close settings" {
+					use ui_kit.Actions.Button as "Close settings" { kind tertiary; size small; shape icon;
 						replace icon_gear {
 							use ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
@@ -5761,7 +5761,7 @@ element "Board settings" {
 										item "Маркетинг · MKT" { title "Маркетинг · MKT"; font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; auto-layout row }
 									}
 								}
-								use ui_kit.Actions.Button_tertiary_extra_small as "Button/tertiary/extra-small" {
+								use ui_kit.Actions.Button as "Button/tertiary/extra-small" { kind tertiary; size extra-small;
 									replace icon_kit_Plus {
 										use ui_kit.Icon.plus as "icon/plus" { border-color #6b3ad3; line-width 1 }
 									}
@@ -5789,7 +5789,7 @@ element "Board settings" {
 										at part_2.in { title не }
 										at part_3.Urgent__High { title Archived }
 									}
-									use ui_kit.Actions.Button_ghost_extra_small as "Button/ghost/extra-small" {
+									use ui_kit.Actions.Button as "Button/ghost/extra-small" { kind ghost; size extra-small;
 										replace icon_kit_Plus {
 											use ui_kit.Icon.plus as "icon/plus" { border-color #5a667e; line-width 1 }
 										}
@@ -5879,7 +5879,7 @@ element "Board settings" {
 									}
 									item "Иван Петров" { title "Иван Петров"; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left }
 								}
-								use ui_kit.Actions.Button_tertiary_extra_small as "Button/tertiary/extra-small" {
+								use ui_kit.Actions.Button as "Button/tertiary/extra-small" { kind tertiary; size extra-small;
 									replace icon_kit_Plus {
 										use ui_kit.Icon.plus as "icon/plus" { border-color #6b3ad3; line-width 1 }
 									}
@@ -5993,7 +5993,7 @@ element "Board settings" {
 				width 1515; height 1044
 				at Settings_header { width 1515 }
 				replace Settings_header.left.Button_ghost_small {
-					use ui_kit.Actions.Button_ghost_small as "Button/ghost/small" {
+					use ui_kit.Actions.Button as "Button/ghost/small" { kind ghost; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.chevronL as "icon/chevronL" { border-color #5a667e; line-width 1 }
 						}
@@ -6007,14 +6007,14 @@ element "Board settings" {
 				at Settings_subtabs { hidden no; auto-layout column; gap 16; padding 24 32; align start; width 1282; height 987 }
 				at Settings_content { hidden yes }
 				slot right {
-					use ui_kit.Actions.Button_ghost_small as "Board in settings" {
+					use ui_kit.Actions.Button as "Board in settings" { kind ghost; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.board as "icon/board" { border-color #5a667e; line-width 1 }
 						}
 						at Button { title "Основная доска" }
 						at icon_chevronD { hidden no }
 					}
-					use ui_kit.Actions.Button_tertiary_small_icon as "Close settings" {
+					use ui_kit.Actions.Button as "Close settings" { kind tertiary; size small; shape icon;
 						replace icon_gear {
 							use ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
@@ -6081,7 +6081,7 @@ element "Board settings" {
 						use ui_kit.Forms.Toggle_off as Toggle {
 							at Label { title "Дни в колонке на карточке" }
 						}
-						use ui_kit.Actions.Button_secondary_small as "Button/secondary/small" {
+						use ui_kit.Actions.Button as "Button/secondary/small" { kind secondary; size small;
 							replace icon_kit_Plus {
 								use ui_kit.Icon.plus as "icon/plus" { border-color #000000; line-width 1 }
 							}
@@ -6127,7 +6127,7 @@ element "Board settings" {
 									auto-layout row; padding 0 8; align center; width 130; height 32; clip yes; corner-radius 6
 									item Backlog { title Backlog; font-size 14; line-height 18; font-family "IBM Plex Sans"; font-weight 600; layout left }
 								}
-								use ui_kit.Actions.Button_tertiary_extra_small_icon as "IconButton/more" {
+								use ui_kit.Actions.Button as "IconButton/more" { kind tertiary; size extra-small; shape icon;
 									replace icon_gear {
 										use ui_kit.Icon.more as "icon/more" { border-color #5a667e; line-width 1 }
 									}
@@ -6174,7 +6174,7 @@ element "Board settings" {
 									auto-layout row; padding 0 8; align center; width 130; height 32; clip yes; corner-radius 6
 									item "To Do" { title "To Do"; font-size 14; line-height 18; font-family "IBM Plex Sans"; font-weight 600; layout left }
 								}
-								use ui_kit.Actions.Button_tertiary_extra_small_icon as "IconButton/more" {
+								use ui_kit.Actions.Button as "IconButton/more" { kind tertiary; size extra-small; shape icon;
 									replace icon_gear {
 										use ui_kit.Icon.more as "icon/more" { border-color #5a667e; line-width 1 }
 									}
@@ -6242,7 +6242,7 @@ element "Board settings" {
 									auto-layout row; padding 0 8; align center; width 130; height 32; clip yes; corner-radius 6
 									item "On Hold" { title "On Hold"; font-size 14; line-height 18; font-family "IBM Plex Sans"; font-weight 600; layout left }
 								}
-								use ui_kit.Actions.Button_tertiary_extra_small_icon as "IconButton/more" {
+								use ui_kit.Actions.Button as "IconButton/more" { kind tertiary; size extra-small; shape icon;
 									replace icon_gear {
 										use ui_kit.Icon.more as "icon/more" { border-color #5a667e; line-width 1 }
 									}
@@ -6285,7 +6285,7 @@ element "Board settings" {
 									auto-layout row; padding 0 8; align center; width 130; height 32; clip yes; corner-radius 6
 									item "In Progress" { title "In Progress"; font-size 14; line-height 18; font-family "IBM Plex Sans"; font-weight 600; layout left }
 								}
-								use ui_kit.Actions.Button_tertiary_extra_small_icon as "IconButton/more" {
+								use ui_kit.Actions.Button as "IconButton/more" { kind tertiary; size extra-small; shape icon;
 									replace icon_gear {
 										use ui_kit.Icon.more as "icon/more" { border-color #5a667e; line-width 1 }
 									}
@@ -6496,7 +6496,7 @@ element "Board settings" {
 				width 1515; height 1044
 				at Settings_header { width 1515 }
 				replace Settings_header.left.Button_ghost_small {
-					use ui_kit.Actions.Button_ghost_small as "Button/ghost/small" {
+					use ui_kit.Actions.Button as "Button/ghost/small" { kind ghost; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.chevronL as "icon/chevronL" { border-color #5a667e; line-width 1 }
 						}
@@ -6510,14 +6510,14 @@ element "Board settings" {
 				at Settings_subtabs { hidden no; auto-layout column; gap 16; padding 24 32; align start; width 1282; height 987 }
 				at Settings_content { hidden yes }
 				slot right {
-					use ui_kit.Actions.Button_ghost_small as "Board in settings" {
+					use ui_kit.Actions.Button as "Board in settings" { kind ghost; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.board as "icon/board" { border-color #5a667e; line-width 1 }
 						}
 						at Button { title "Основная доска" }
 						at icon_chevronD { hidden no }
 					}
-					use ui_kit.Actions.Button_tertiary_small_icon as "Close settings" {
+					use ui_kit.Actions.Button as "Close settings" { kind tertiary; size small; shape icon;
 						replace icon_gear {
 							use ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
@@ -6637,7 +6637,7 @@ element "Board settings" {
 								}
 								item td {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
-									use ui_kit.Actions.Button_tertiary_extra_small_icon as "IconButton/trash" {
+									use ui_kit.Actions.Button as "IconButton/trash" { kind tertiary; size extra-small; shape icon;
 										replace icon_gear {
 											use ui_kit.Icon.trash as "icon/trash" { border-color #5a667e; line-width 1 }
 										}
@@ -6677,7 +6677,7 @@ element "Board settings" {
 								}
 								item td {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
-									use ui_kit.Actions.Button_tertiary_extra_small_icon as "IconButton/trash" {
+									use ui_kit.Actions.Button as "IconButton/trash" { kind tertiary; size extra-small; shape icon;
 										replace icon_gear {
 											use ui_kit.Icon.trash as "icon/trash" { border-color #5a667e; line-width 1 }
 										}
@@ -6708,7 +6708,7 @@ element "Board settings" {
 							}
 						}
 					}
-					use ui_kit.Actions.Button_secondary_small as "Button/secondary/small" {
+					use ui_kit.Actions.Button as "Button/secondary/small" { kind secondary; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.plus as "icon/plus" { border-color #000000; line-width 1 }
 						}
@@ -6837,7 +6837,7 @@ element "Board settings" {
 				width 1515; height 1044
 				at Settings_header { width 1515 }
 				replace Settings_header.left.Button_ghost_small {
-					use ui_kit.Actions.Button_ghost_small as "Button/ghost/small" {
+					use ui_kit.Actions.Button as "Button/ghost/small" { kind ghost; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.chevronL as "icon/chevronL" { border-color #5a667e; line-width 1 }
 						}
@@ -6851,14 +6851,14 @@ element "Board settings" {
 				at Settings_subtabs { hidden no; auto-layout column; gap 16; padding 24 32; align start; width 1282; height 987 }
 				at Settings_content { hidden yes }
 				slot right {
-					use ui_kit.Actions.Button_ghost_small as "Board in settings" {
+					use ui_kit.Actions.Button as "Board in settings" { kind ghost; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.board as "icon/board" { border-color #5a667e; line-width 1 }
 						}
 						at Button { title "Основная доска" }
 						at icon_chevronD { hidden no }
 					}
-					use ui_kit.Actions.Button_tertiary_small_icon as "Close settings" {
+					use ui_kit.Actions.Button as "Close settings" { kind tertiary; size small; shape icon;
 						replace icon_gear {
 							use ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
@@ -6967,7 +6967,7 @@ element "Board settings" {
 								}
 								item td {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
-									use ui_kit.Actions.Button_tertiary_extra_small_icon as "IconButton/trash" {
+									use ui_kit.Actions.Button as "IconButton/trash" { kind tertiary; size extra-small; shape icon;
 										replace icon_gear {
 											use ui_kit.Icon.trash as "icon/trash" { border-color #5a667e; line-width 1 }
 										}
@@ -7005,7 +7005,7 @@ element "Board settings" {
 								}
 								item td {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
-									use ui_kit.Actions.Button_tertiary_extra_small_icon as "IconButton/trash" {
+									use ui_kit.Actions.Button as "IconButton/trash" { kind tertiary; size extra-small; shape icon;
 										replace icon_gear {
 											use ui_kit.Icon.trash as "icon/trash" { border-color #5a667e; line-width 1 }
 										}
@@ -7043,7 +7043,7 @@ element "Board settings" {
 								}
 								item td {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
-									use ui_kit.Actions.Button_tertiary_extra_small_icon as "IconButton/trash" {
+									use ui_kit.Actions.Button as "IconButton/trash" { kind tertiary; size extra-small; shape icon;
 										replace icon_gear {
 											use ui_kit.Icon.trash as "icon/trash" { border-color #5a667e; line-width 1 }
 										}
@@ -7081,7 +7081,7 @@ element "Board settings" {
 								}
 								item td {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
-									use ui_kit.Actions.Button_tertiary_extra_small_icon as "IconButton/trash" {
+									use ui_kit.Actions.Button as "IconButton/trash" { kind tertiary; size extra-small; shape icon;
 										replace icon_gear {
 											use ui_kit.Icon.trash as "icon/trash" { border-color #5a667e; line-width 1 }
 										}
@@ -7119,7 +7119,7 @@ element "Board settings" {
 								}
 								item td {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
-									use ui_kit.Actions.Button_tertiary_extra_small_icon as "IconButton/trash" {
+									use ui_kit.Actions.Button as "IconButton/trash" { kind tertiary; size extra-small; shape icon;
 										replace icon_gear {
 											use ui_kit.Icon.trash as "icon/trash" { border-color #5a667e; line-width 1 }
 										}
@@ -7157,7 +7157,7 @@ element "Board settings" {
 								}
 								item td {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
-									use ui_kit.Actions.Button_tertiary_extra_small_icon as "IconButton/trash" {
+									use ui_kit.Actions.Button as "IconButton/trash" { kind tertiary; size extra-small; shape icon;
 										replace icon_gear {
 											use ui_kit.Icon.trash as "icon/trash" { border-color #5a667e; line-width 1 }
 										}
@@ -7168,13 +7168,13 @@ element "Board settings" {
 					}
 					item actions {
 						auto-layout row; gap 8; align center; clip yes
-						use ui_kit.Actions.Button_secondary_small as "Button/secondary/small" {
+						use ui_kit.Actions.Button as "Button/secondary/small" { kind secondary; size small;
 							replace icon_kit_Plus {
 								use ui_kit.Icon.plus as "icon/plus" { border-color #000000; line-width 1 }
 							}
 							at Button { title "Быстрый фильтр" }
 						}
-						use ui_kit.Actions.Button_ghost_small as "Button/ghost/small" {
+						use ui_kit.Actions.Button as "Button/ghost/small" { kind ghost; size small;
 							replace icon_kit_Plus {
 								use ui_kit.Icon.star as "icon/star" { border-color #5a667e; line-width 1 }
 							}
@@ -7287,7 +7287,7 @@ element "Board settings" {
 				width 1515; height 1044
 				at Settings_header { width 1515 }
 				replace Settings_header.left.Button_ghost_small {
-					use ui_kit.Actions.Button_ghost_small as "Button/ghost/small" {
+					use ui_kit.Actions.Button as "Button/ghost/small" { kind ghost; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.chevronL as "icon/chevronL" { border-color #5a667e; line-width 1 }
 						}
@@ -7301,14 +7301,14 @@ element "Board settings" {
 				at Settings_subtabs { hidden no; auto-layout column; gap 16; padding 24 32; align start; width 1282; height 987 }
 				at Settings_content { hidden yes }
 				slot right {
-					use ui_kit.Actions.Button_ghost_small as "Board in settings" {
+					use ui_kit.Actions.Button as "Board in settings" { kind ghost; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.board as "icon/board" { border-color #5a667e; line-width 1 }
 						}
 						at Button { title "Основная доска" }
 						at icon_chevronD { hidden no }
 					}
-					use ui_kit.Actions.Button_tertiary_small_icon as "Close settings" {
+					use ui_kit.Actions.Button as "Close settings" { kind tertiary; size small; shape icon;
 						replace icon_gear {
 							use ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
@@ -7428,7 +7428,7 @@ element "Board settings" {
 								}
 								item td {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
-									use ui_kit.Actions.Button_tertiary_extra_small_icon as "IconButton/trash" {
+									use ui_kit.Actions.Button as "IconButton/trash" { kind tertiary; size extra-small; shape icon;
 										replace icon_gear {
 											use ui_kit.Icon.trash as "icon/trash" { border-color #5a667e; line-width 1 }
 										}
@@ -7466,7 +7466,7 @@ element "Board settings" {
 								}
 								item td {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
-									use ui_kit.Actions.Button_tertiary_extra_small_icon as "IconButton/trash" {
+									use ui_kit.Actions.Button as "IconButton/trash" { kind tertiary; size extra-small; shape icon;
 										replace icon_gear {
 											use ui_kit.Icon.trash as "icon/trash" { border-color #5a667e; line-width 1 }
 										}
@@ -7475,7 +7475,7 @@ element "Board settings" {
 							}
 						}
 					}
-					use ui_kit.Actions.Button_secondary_small as "Button/secondary/small" {
+					use ui_kit.Actions.Button as "Button/secondary/small" { kind secondary; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.plus as "icon/plus" { border-color #000000; line-width 1 }
 						}
@@ -7642,7 +7642,7 @@ element "Board settings" {
 				width 1515; height 1044
 				at Settings_header { width 1515 }
 				replace Settings_header.left.Button_ghost_small {
-					use ui_kit.Actions.Button_ghost_small as "Button/ghost/small" {
+					use ui_kit.Actions.Button as "Button/ghost/small" { kind ghost; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.chevronL as "icon/chevronL" { border-color #5a667e; line-width 1 }
 						}
@@ -7656,14 +7656,14 @@ element "Board settings" {
 				at Settings_subtabs { hidden no; auto-layout column; gap 16; padding 24 32; align start; width 1282; height 987 }
 				at Settings_content { hidden yes }
 				slot right {
-					use ui_kit.Actions.Button_ghost_small as "Board in settings" {
+					use ui_kit.Actions.Button as "Board in settings" { kind ghost; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.board as "icon/board" { border-color #5a667e; line-width 1 }
 						}
 						at Button { title "Основная доска" }
 						at icon_chevronD { hidden no }
 					}
-					use ui_kit.Actions.Button_tertiary_small_icon as "Close settings" {
+					use ui_kit.Actions.Button as "Close settings" { kind tertiary; size small; shape icon;
 						replace icon_gear {
 							use ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
@@ -12436,7 +12436,7 @@ element "Project settings" {
 				width 1515; height 1044
 				at Settings_header { width 1515 }
 				replace Settings_header.left.Button_ghost_small {
-					use ui_kit.Actions.Button_ghost_small as "Button/ghost/small" {
+					use ui_kit.Actions.Button as "Button/ghost/small" { kind ghost; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.chevronL as "icon/chevronL" { border-color #5a667e; line-width 1 }
 						}
@@ -12450,7 +12450,7 @@ element "Project settings" {
 				at Settings_subtabs { hidden no; auto-layout column; gap 16; padding 24 32; align start; width 1282; height 987 }
 				at Settings_content { hidden yes }
 				slot right {
-					use ui_kit.Actions.Button_tertiary_small_icon as "Close settings" {
+					use ui_kit.Actions.Button as "Close settings" { kind tertiary; size small; shape icon;
 						replace icon_gear {
 							use ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
@@ -12510,7 +12510,7 @@ element "Project settings" {
 										item Default { title Default; font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; auto-layout row; text-color #00000099 }
 									}
 								}
-								use ui_kit.Actions.Button_tertiary_extra_small as "Button/tertiary/extra-small" {
+								use ui_kit.Actions.Button as "Button/tertiary/extra-small" { kind tertiary; size extra-small;
 									at icon_kit_Plus { hidden yes }
 									at Button { title "Открыть тип проекта" }
 								}
@@ -12680,7 +12680,7 @@ element "Project settings" {
 				width 1515; height 1044
 				at Settings_header { width 1515 }
 				replace Settings_header.left.Button_ghost_small {
-					use ui_kit.Actions.Button_ghost_small as "Button/ghost/small" {
+					use ui_kit.Actions.Button as "Button/ghost/small" { kind ghost; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.chevronL as "icon/chevronL" { border-color #5a667e; line-width 1 }
 						}
@@ -12694,7 +12694,7 @@ element "Project settings" {
 				at Settings_subtabs { hidden no; auto-layout column; gap 16; padding 24 32; align start; width 1282; height 987 }
 				at Settings_content { hidden yes }
 				slot right {
-					use ui_kit.Actions.Button_tertiary_small_icon as "Close settings" {
+					use ui_kit.Actions.Button as "Close settings" { kind tertiary; size small; shape icon;
 						replace icon_gear {
 							use ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
@@ -12764,7 +12764,7 @@ element "Project settings" {
 					item "members head" {
 						auto-layout row; align center; justify space-between; width 760; height 32; clip yes
 						item "Участники · 4" { title "Участники · 4"; font-size 14; line-height 18; font-family "IBM Plex Sans"; font-weight 600; layout left }
-						use ui_kit.Actions.Button_secondary_small as "Button/secondary/small" {
+						use ui_kit.Actions.Button as "Button/secondary/small" { kind secondary; size small;
 							replace icon_kit_Plus {
 								use ui_kit.Icon.plus as "icon/plus" { border-color #000000; line-width 1 }
 							}
@@ -12815,7 +12815,7 @@ element "Project settings" {
 								}
 								item td {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
-									use ui_kit.Actions.Button_tertiary_extra_small_icon as "IconButton/more" {
+									use ui_kit.Actions.Button as "IconButton/more" { kind tertiary; size extra-small; shape icon;
 										replace icon_gear {
 											use ui_kit.Icon.more as "icon/more" { border-color #5a667e; line-width 1 }
 										}
@@ -12847,7 +12847,7 @@ element "Project settings" {
 								}
 								item td {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
-									use ui_kit.Actions.Button_tertiary_extra_small_icon as "IconButton/more" {
+									use ui_kit.Actions.Button as "IconButton/more" { kind tertiary; size extra-small; shape icon;
 										replace icon_gear {
 											use ui_kit.Icon.more as "icon/more" { border-color #5a667e; line-width 1 }
 										}
@@ -12879,7 +12879,7 @@ element "Project settings" {
 								}
 								item td {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
-									use ui_kit.Actions.Button_tertiary_extra_small_icon as "IconButton/more" {
+									use ui_kit.Actions.Button as "IconButton/more" { kind tertiary; size extra-small; shape icon;
 										replace icon_gear {
 											use ui_kit.Icon.more as "icon/more" { border-color #5a667e; line-width 1 }
 										}
@@ -12911,7 +12911,7 @@ element "Project settings" {
 								}
 								item td {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
-									use ui_kit.Actions.Button_tertiary_extra_small_icon as "IconButton/more" {
+									use ui_kit.Actions.Button as "IconButton/more" { kind tertiary; size extra-small; shape icon;
 										replace icon_gear {
 											use ui_kit.Icon.more as "icon/more" { border-color #5a667e; line-width 1 }
 										}
@@ -13025,7 +13025,7 @@ element "Project settings" {
 				width 1515; height 1044
 				at Settings_header { width 1515 }
 				replace Settings_header.left.Button_ghost_small {
-					use ui_kit.Actions.Button_ghost_small as "Button/ghost/small" {
+					use ui_kit.Actions.Button as "Button/ghost/small" { kind ghost; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.chevronL as "icon/chevronL" { border-color #5a667e; line-width 1 }
 						}
@@ -13039,7 +13039,7 @@ element "Project settings" {
 				at Settings_subtabs { hidden no; auto-layout column; gap 16; padding 24 32; align start; width 1282; height 987 }
 				at Settings_content { hidden yes }
 				slot right {
-					use ui_kit.Actions.Button_tertiary_small_icon as "Close settings" {
+					use ui_kit.Actions.Button as "Close settings" { kind tertiary; size small; shape icon;
 						replace icon_gear {
 							use ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
@@ -13224,7 +13224,7 @@ element "Project settings" {
 				width 1115; height 1044
 				at Settings_header { width 1115 }
 				replace Settings_header.left.Button_ghost_small {
-					use ui_kit.Actions.Button_ghost_small as "Button/ghost/small" {
+					use ui_kit.Actions.Button as "Button/ghost/small" { kind ghost; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.chevronL as "icon/chevronL" { border-color #5a667e; line-width 1 }
 						}
@@ -13238,7 +13238,7 @@ element "Project settings" {
 				at Settings_subtabs { hidden no; auto-layout column; gap 16; padding 24 32; align start; width 882; height 987 }
 				at Settings_content { hidden yes }
 				slot right {
-					use ui_kit.Actions.Button_tertiary_small_icon as "Close settings" {
+					use ui_kit.Actions.Button as "Close settings" { kind tertiary; size small; shape icon;
 						replace icon_gear {
 							use ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
@@ -13322,7 +13322,7 @@ element "Project settings" {
 						title "Чат · Мобильное приложение"; font-size 14; line-height 18; font-family "IBM Plex Sans"; font-weight 600; layout left
 					}
 				}
-				use ui_kit.Actions.Button_tertiary_small_icon as "Close chat" {
+				use ui_kit.Actions.Button as "Close chat" { kind tertiary; size small; shape icon;
 					replace icon_gear {
 						use ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 					}
@@ -13493,7 +13493,7 @@ element "Project settings" {
 				width 1515; height 1044
 				at Settings_header { width 1515 }
 				replace Settings_header.left.Button_ghost_small {
-					use ui_kit.Actions.Button_ghost_small as "Button/ghost/small" {
+					use ui_kit.Actions.Button as "Button/ghost/small" { kind ghost; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.chevronL as "icon/chevronL" { border-color #5a667e; line-width 1 }
 						}
@@ -13507,7 +13507,7 @@ element "Project settings" {
 				at Settings_subtabs { hidden no; auto-layout column; gap 16; padding 24 32; align start; width 1282; height 987 }
 				at Settings_content { hidden yes }
 				slot right {
-					use ui_kit.Actions.Button_tertiary_small_icon as "Close settings" {
+					use ui_kit.Actions.Button as "Close settings" { kind tertiary; size small; shape icon;
 						replace icon_gear {
 							use ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
@@ -13609,13 +13609,13 @@ element "Project settings" {
 					}
 					item actions {
 						auto-layout row; gap 8; align center; clip yes
-						use ui_kit.Actions.Button_secondary_small as "Button/secondary/small" {
+						use ui_kit.Actions.Button as "Button/secondary/small" { kind secondary; size small;
 							replace icon_kit_Plus {
 								use ui_kit.Icon.gear as "icon/gear" { border-color #000000; line-width 1 }
 							}
 							at Button { title "Изменить статусы в типе проекта" }
 						}
-						use ui_kit.Actions.Button_ghost_small as "Button/ghost/small" {
+						use ui_kit.Actions.Button as "Button/ghost/small" { kind ghost; size small;
 							replace icon_kit_Plus {
 								use ui_kit.Icon.timeline as "icon/timeline" { border-color #5a667e; line-width 1 }
 							}
@@ -13727,7 +13727,7 @@ element "Project settings" {
 				width 1515; height 1044
 				at Settings_header { width 1515 }
 				replace Settings_header.left.Button_ghost_small {
-					use ui_kit.Actions.Button_ghost_small as "Button/ghost/small" {
+					use ui_kit.Actions.Button as "Button/ghost/small" { kind ghost; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.chevronL as "icon/chevronL" { border-color #5a667e; line-width 1 }
 						}
@@ -13741,7 +13741,7 @@ element "Project settings" {
 				at Settings_subtabs { hidden no; auto-layout column; gap 16; padding 24 32; align start; width 1282; height 987 }
 				at Settings_content { hidden yes }
 				slot right {
-					use ui_kit.Actions.Button_tertiary_small_icon as "Close settings" {
+					use ui_kit.Actions.Button as "Close settings" { kind tertiary; size small; shape icon;
 						replace icon_gear {
 							use ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
@@ -13793,7 +13793,7 @@ element "Project settings" {
 						width 720
 						at Notice_text { title "Проект можно вернуть из архива в «All projects»."; width 676 }
 					}
-					use ui_kit.Actions.Button_negative_small as "Button/negative/small" {
+					use ui_kit.Actions.Button as "Button/negative/small" { kind negative; size small;
 						replace icon_kit_Plus {
 							use ui_kit.Icon.trash as "icon/trash" { border-color #ffffff; line-width 1 }
 						}

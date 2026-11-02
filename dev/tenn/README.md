@@ -36,7 +36,7 @@ Every file but `PlatformDesign.tenn` starts with `entry "<path to PlatformDesign
 
 | Library (name in PlatformDesign) | Categories | Path of a component |
 |---|---|---|
-| `ui_kit` | `Actions`, `Forms`, `People`, `Status`, `TagsAndFilters`, `Icon`: base components and icons | `ui_kit.Actions.Button_primary_medium`, `ui_kit.Icon.tick` |
+| `ui_kit` | `Actions`, `Forms`, `People`, `Status`, `TagsAndFilters`, `Icon`: base components and icons | `ui_kit.Actions.Button`, `ui_kit.Icon.tick` |
 | `workbench` | `Workbench`: shell, top bar, app rail, navigator, nav items, space and panel headers | `workbench.TopBar`, `workbench.Workbench` |
 | `settings_kit` | `Settings`: section title, form and grid rows, table, settings layout | `settings_kit.FormRow` |
 | `tracker_kit` | `Tracker`: issue cards, kanban column, issue rows and groups, issue page | `tracker_kit.IssueCard` |
@@ -53,7 +53,7 @@ The screens come from the file `Intabia Screens` of `design.json` (`screens/curr
 
 The design tasks (`FUSIO-1613`, `FUSIO-1621`, the other screen files of `design.json`) are not part of the structure: they are kept as files under the element `Tasks` at the end of `PlatformDesign.tenn`. Their screens are the earlier state of what `Intabia Screens` holds as accepted (boards, board settings, project settings), so the same screen exists twice, the accepted one in its application.
 
-The frames `Status bar`, `Application rail`, `Navigator`, `Widget bar` and `Space header` of the Workbench page are samples of `workbench.TopBar`, `AppRail`, `Navigator`, `Sidebar` and `SpaceHeader`: they are not screens and are not drawn in the application (`LIBRARY_PARTS` in `apps.mjs`). Paths stay `ui_kit.<Category>.<Item>`, for example `use ui_kit.Actions.Button_primary_medium as "Save"`.
+The frames `Status bar`, `Application rail`, `Navigator`, `Widget bar` and `Space header` of the Workbench page are samples of `workbench.TopBar`, `AppRail`, `Navigator`, `Sidebar` and `SpaceHeader`: they are not screens and are not drawn in the application (`LIBRARY_PARTS` in `apps.mjs`). Paths stay `ui_kit.<Category>.<Item>`, for example `use ui_kit.Actions.Button as Save { label "Save"; kind primary; size medium }`.
 
 Library layout (`catalogue.mjs`): a category canvas holds one framed section per group, the group being a component without its variant (`Forms/Toggle` and `Forms/Toggle/off` are the group `Toggle`, `Actions/Button/primary/medium` is `Button`). The section is an `item "§ <Group>"` with a border and the group name as its title; the variants sit inside it, packed on shelves by their size (wrapping at 1500 px, 32 px apart, 24 px padding, 44 px for the title), and the sections are packed on shelves of the category (wrapping at 2400 px, 48 px apart). Order is the order of `library/ui-kit.js`, positions depend only on the kit data, so a diff stays local to what changed.
 
@@ -98,7 +98,7 @@ Not expressed, counted in the build output (`not expressed in .tenn`): stroke al
 
 ## Add a component
 
-The library is the source: add or change a component in Tenniarb, in `dev/design/tenn/lib/<category>.tenn` (an `item`, variants as `Name_variant`, optional parts `hidden`, containers with variable content as `slot`), and use it in screens with `use <library>.<Category>.<Item> as ...` (`<library>.<Item>` for a library of one category).
+The library is the source: add or change a component in Tenniarb, in `dev/design/tenn/lib/<category>.tenn` (an `item` with `export let` parameters and `styles`, optional parts `hidden`, containers with variable content as `slot`), and use it in screens with `use <library>.<Category>.<Item> as ...` (`<library>.<Item>` for a library of one category), passing parameters by name. Legacy variants keep the `Name_variant` naming until they are converted.
 
 To seed it from the scripts instead (the library is regenerated, hand edits of the files are lost):
 

@@ -2,7 +2,7 @@ entry "../../../PlatformDesign.tenn"
 
 element "1 Пространства" {
   use profile_kit.ProfilePage as Screen {
-    at Cabinet.Sidebar.navigation.Workspaces.NavItem { color #efdcf2; text-color #7d1f70 }
+    at Cabinet.Sidebar.navigation.Workspaces { color #efdcf2; text-color #7d1f70 }
     slot header {
       item Header_text {
         auto-layout column; gap 4
@@ -10,7 +10,9 @@ element "1 Пространства" {
         item Subtitle { title "Рабочие пространства и приглашения"; font-size 13; line-height 18; text-color #7f7f7f; layout left }
       }
       item grow { width fill }
-      use ui_kit.Actions.Button_primary_medium as Create {
+      use ui_kit.Actions.Button as Create {
+        kind primary
+        size medium
         at Button { title "Создать пространство" }
         at icon_chevronD { hidden yes }
       }
@@ -35,12 +37,16 @@ element "1 Пространства" {
             item Name { title "Design Team"; font-size 14; font-weight 500; line-height 20; layout left }
             item From { title "Мария Орлова приглашает вас как участника"; font-size 13; line-height 18; text-color #5c6470; layout left }
           }
-          use ui_kit.Actions.Button_secondary_medium as Decline {
+          use ui_kit.Actions.Button as Decline {
+            kind secondary
+            size medium
             at Button { title "Отклонить" }
             at icon_kit_Plus { hidden yes }
             at icon_chevronD { hidden yes }
           }
-          use ui_kit.Actions.Button_primary_medium as Accept {
+          use ui_kit.Actions.Button as Accept {
+            kind primary
+            size medium
             at Button { title "Принять" }
             at icon_kit_Plus { hidden yes }
             at icon_chevronD { hidden yes }
@@ -53,7 +59,7 @@ element "1 Пространства" {
 
 element "2 Пространства - пусто" {
   use profile_kit.ProfilePage as Screen {
-    at Cabinet.Sidebar.navigation.Workspaces.NavItem { color #efdcf2; text-color #7d1f70 }
+    at Cabinet.Sidebar.navigation.Workspaces { color #efdcf2; text-color #7d1f70 }
     slot header {
       item Header_text {
         auto-layout column; gap 4
@@ -70,7 +76,9 @@ element "2 Пространства - пусто" {
         }
         item Empty_title { title "Создайте первое пространство"; font-size 22; font-weight 600; line-height 28 }
         item Empty_text { title "В пространстве можно вести задачи, общаться с командой и хранить документы."; width 460; font-size 14; line-height 21; text-color #5c6470 }
-        use ui_kit.Actions.Button_primary_large as Create {
+        use ui_kit.Actions.Button as Create {
+          kind primary
+          size large
           at Button { title "Создать пространство" }
           at icon_chevronD { hidden yes }
         }
@@ -82,7 +90,7 @@ element "2 Пространства - пусто" {
 
 element "3 Подписки" {
   use profile_kit.ProfilePage as Screen {
-    at Cabinet.Sidebar.navigation.Subscriptions.NavItem { color #efdcf2; text-color #7d1f70 }
+    at Cabinet.Sidebar.navigation.Subscriptions { color #efdcf2; text-color #7d1f70 }
     slot header {
       item Header_text {
         auto-layout column; gap 4
@@ -102,7 +110,9 @@ element "3 Подписки" {
             auto-layout row; width fill; padding 12 16; gap 12; align center; color #f7f7fa; corner-radius 8
             use ui_kit.Icon.kit_Key as Icon { width 16; height 16; color #5c6470 }
             item Token { title "Персональный токен  ••••••••  7K2F"; width fill; font-size 13; line-height 18; layout left }
-            use ui_kit.Actions.Button_secondary_small as Copy {
+            use ui_kit.Actions.Button as Copy {
+              kind secondary
+              size small
               at Button { title "Скопировать" }
               at icon_kit_Plus { hidden yes }
               at icon_chevronD { hidden yes }
@@ -121,7 +131,9 @@ element "3 Подписки" {
             auto-layout row; width fill; padding 12 16; gap 12; align center; color #f7f7fa; corner-radius 8
             item Key_label { title "Ключ лицензии"; font-size 13; line-height 18; text-color #7f7f7f }
             item Key { title "TENN-••••-••••-9Q4M"; width fill; font-size 13; line-height 18; layout left }
-            use ui_kit.Actions.Button_secondary_small as Show {
+            use ui_kit.Actions.Button as Show {
+              kind secondary
+              size small
               at Button { title "Показать" }
               at icon_kit_Plus { hidden yes }
               at icon_chevronD { hidden yes }
@@ -141,7 +153,7 @@ element "3 Подписки" {
 
 element "4 Профиль" {
   use profile_kit.ProfilePage as Screen {
-    at Cabinet.Sidebar.navigation.Profile.NavItem { color #efdcf2; text-color #7d1f70 }
+    at Cabinet.Sidebar.navigation.Profile { color #efdcf2; text-color #7d1f70 }
     slot header {
       item Header_text {
         auto-layout column; gap 4
@@ -149,7 +161,9 @@ element "4 Профиль" {
         item Subtitle { title "Так вас видят другие пользователи платформы"; font-size 13; line-height 18; text-color #7f7f7f; layout left }
       }
       item grow { width fill }
-      use ui_kit.Actions.Button_secondary_medium as Edit {
+      use ui_kit.Actions.Button as Edit {
+        kind secondary
+        size medium
         at Button { title "Редактировать" }
         at icon_kit_Plus { hidden yes }
         at icon_chevronD { hidden yes }
@@ -188,7 +202,7 @@ element "4 Профиль" {
 
 element "5 Безопасность" {
   use profile_kit.ProfilePage as Screen {
-    at Cabinet.Sidebar.navigation.Security.NavItem { color #efdcf2; text-color #7d1f70 }
+    at Cabinet.Sidebar.navigation.Security { color #efdcf2; text-color #7d1f70 }
     slot header {
       item Header_text {
         auto-layout column; gap 4
@@ -214,7 +228,9 @@ element "5 Безопасность" {
           item Title { title "Пароль"; font-size 15; font-weight 600; line-height 20; layout left }
           item Hint { title "Изменён 14 августа 2026"; font-size 13; line-height 18; text-color #7f7f7f; layout left }
         }
-        use ui_kit.Actions.Button_secondary_medium as Change {
+        use ui_kit.Actions.Button as Change {
+        kind secondary
+        size medium
           at Button { title "Изменить пароль" }
           at icon_kit_Plus { hidden yes }
           at icon_chevronD { hidden yes }
@@ -230,7 +246,9 @@ element "5 Безопасность" {
             item Title { title "Удалить аккаунт"; font-size 14; font-weight 500; line-height 20; layout left }
             item Hint { title "Профиль и личные подписки будут удалены. Пространства останутся у их владельцев."; font-size 13; line-height 18; text-color #7f7f7f; layout left }
           }
-          use ui_kit.Actions.Button_negative_medium as Delete {
+          use ui_kit.Actions.Button as Delete {
+            kind negative
+            size medium
             at Button { title "Удалить аккаунт" }
             at icon_kit_Plus { hidden yes }
             at icon_chevronD { hidden yes }

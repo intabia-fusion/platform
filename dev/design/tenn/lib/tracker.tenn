@@ -202,7 +202,7 @@ item ColumnHeader {
 		item _6 { title "6"; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #00000099 }
 		item "/ 8" { hidden yes; title "/ 8"; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #00000066 }
 	}
-	use ui_kit.Actions.Button_secondary_extra_small as ColumnAction {
+	use ui_kit.Actions.Button as ColumnAction { kind secondary; size extra-small;
 		hidden yes
 		replace icon_kit_Plus {
 			use ui_kit.Icon.milestone as "icon/milestone" { border-color #000000; line-width 1 }
@@ -211,17 +211,17 @@ item ColumnHeader {
 	}
 	item "tools (hover)" {
 		hidden yes; auto-layout row; gap 4; align center; clip yes
-		use ui_kit.Actions.Button_tertiary_small_icon as "IconButton/chevronR" {
+		use ui_kit.Actions.Button as "IconButton/chevronR" { kind tertiary; size small; shape icon;
 			replace icon_gear {
 				use ui_kit.Icon.chevronR as "icon/chevronR" { border-color #5a667e; line-width 1 }
 			}
 		}
-		use ui_kit.Actions.Button_tertiary_small_icon as "IconButton/merge" {
+		use ui_kit.Actions.Button as "IconButton/merge" { kind tertiary; size small; shape icon;
 			replace icon_gear {
 				use ui_kit.Icon.merge as "icon/merge" { border-color #5a667e; line-width 1 }
 			}
 		}
-		use ui_kit.Actions.Button_tertiary_small_icon as "IconButton/plus" {
+		use ui_kit.Actions.Button as "IconButton/plus" { kind tertiary; size small; shape icon;
 			replace icon_gear {
 				use ui_kit.Icon.plus as "icon/plus" { border-color #5a667e; line-width 1 }
 			}

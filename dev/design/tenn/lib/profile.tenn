@@ -1,6 +1,6 @@
 entry "../../../../PlatformDesign.tenn"
 
-element ProfileNavItem {
+item ProfileNavItem {
   export let label = "Раздел"
   export let kind = default
   styles {
@@ -8,14 +8,12 @@ element ProfileNavItem {
     selected { color #efdcf2; text-color #7d1f70 }
     kind one-of default selected
   }
-  item NavItem {
   auto-layout row; width 216; height 40; padding 0 12; gap 12; align center; corner-radius 6
   use-style ${kind}
   slot icon {
     use ui_kit.Icon.kit_Person as Icon { width 16; height 16; color #5c6470 }
   }
   item Label { title ${label}; font-size 14; line-height 20; layout left }
-  }
 }
 
 item ProfilePage {
@@ -70,12 +68,11 @@ item ProfilePage {
   }
 }
 
-element WorkspaceRow {
+item WorkspaceRow {
   export let name = "Рабочее пространство"
   export let mark = "Р"
   export let role = "Владелец"
   export let visit = "Сегодня"
-  item Row {
   auto-layout row; width 800; height 68; padding 0 20; gap 14; align center
   item Mark {
     auto-layout row; width 36; height 36; align center; justify center; color #efdcf2; corner-radius 8
@@ -85,10 +82,9 @@ element WorkspaceRow {
   item Role { title ${role}; width 120; font-size 13; line-height 18; layout left; text-color #5c6470 }
   item Visit { title ${visit}; width 150; font-size 13; line-height 18; layout left; text-color #7f7f7f }
   use ui_kit.Icon.kit_ChevronRightLarge as Open { width 16; height 16; color #7f7f7f }
-  }
 }
 
-element ServiceCard {
+item ServiceCard {
   export let title = "Сервис"
   export let description = "Описание сервиса"
   export let status = "Не подключён"
@@ -99,7 +95,6 @@ element ServiceCard {
     active { Status { text-color #26815c } }
     kind one-of available active
   }
-  item Card {
   auto-layout column; width 800; padding 24; gap 18; color #ffffff; border-color #00000014; corner-radius 10
   item Service_head {
     auto-layout row; width fill; gap 16; align center
@@ -112,23 +107,21 @@ element ServiceCard {
       item Title { title ${title}; font-size 17; font-weight 600; line-height 22; layout left }
       item Status { title ${status}; font-size 12; line-height 16; layout left }
     }
-    use ui_kit.Actions.Button_secondary_medium as Action {
-      at Button { title ${action} }
+    use ui_kit.Actions.Button as Action {
+      label ${action}
+      kind secondary
+      size medium
       at icon_kit_Plus { hidden yes }
-      at icon_chevronD { hidden yes }
     }
   }
   item Description { title ${description}; width fill; font-size 13; line-height 19; layout left; text-color #5c6470 }
   slot details
-  }
 }
 
-element ProfileField {
+item ProfileField {
   export let label = "Поле"
   export let value = "Значение"
-  item Field {
   auto-layout row; width 800; min-height 44; padding 10 0; gap 24; align center
   item Label { title ${label}; width 160; font-size 13; line-height 18; layout left; text-color #7f7f7f }
   item Value { title ${value}; width fill; font-size 14; line-height 20; layout left }
-  }
 }
