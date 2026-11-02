@@ -1,0 +1,134 @@
+entry "../../../../PlatformDesign.tenn"
+
+element ProfileNavItem {
+  export let label = "Раздел"
+  export let kind = default
+  styles {
+    default { color #00000000; text-color #3c4149 }
+    selected { color #efdcf2; text-color #7d1f70 }
+    kind one-of default selected
+  }
+  item NavItem {
+  auto-layout row; width 216; height 40; padding 0 12; gap 12; align center; corner-radius 6
+  use-style ${kind}
+  slot icon {
+    use ui_kit.Icon.kit_Person as Icon { width 16; height 16; color #5c6470 }
+  }
+  item Label { title ${label}; font-size 14; line-height 20; layout left }
+  }
+}
+
+item ProfilePage {
+  auto-layout abs; width 1920; height 1080; clip yes
+  use login_kit.LoginPage as Page {
+    pos 0 0
+    at Card_slot { hidden yes }
+  }
+  item Cabinet {
+        auto-layout row; width 1180; height 720; pos 370 -180; color #ffffff; corner-radius 12; clip yes; shadow 0 12 40 #00000026
+        item Sidebar {
+          auto-layout column; width 248; height fill; padding 24 16 20 16; gap 8; color #f7f7fa
+          item Account {
+            auto-layout row; width fill; padding 0 8 16 8; gap 12; align center
+            use ui_kit.People.Avatar as Avatar { width 40; height 40; at initials { title "АС"; font-size 14 } }
+            item Account_text {
+              auto-layout column; gap 2
+              item Name { title "Алекс Смирнов"; font-size 14; font-weight 600; line-height 18; layout left }
+              item Email { title "alex@example.com"; font-size 12; line-height 16; text-color #7f7f7f; layout left }
+            }
+          }
+          slot navigation {
+            use ProfileNavItem as Profile { label "Профиль" }
+            use ProfileNavItem as Workspaces { label "Пространства"; slot icon { use ui_kit.Icon.kit_Building as Icon { width 16; height 16; color #5c6470 } } }
+            use ProfileNavItem as Subscriptions { label "Подписки"; slot icon { use ui_kit.Icon.kit_Receipt as Icon { width 16; height 16; color #5c6470 } } }
+            use ProfileNavItem as Security { label "Безопасность"; slot icon { use ui_kit.Icon.kit_Key as Icon { width 16; height 16; color #5c6470 } } }
+          }
+          item grow { height fill }
+          use ProfileNavItem as Sign_out {
+            label "Выйти"
+            slot icon { use ui_kit.Icon.kit_ArrowOut as Icon { width 16; height 16; color #5c6470 } }
+          }
+        }
+        item Main {
+          auto-layout column; width fill; height fill
+          item Header {
+            auto-layout row; width fill; height 88; padding 0 32; gap 16; align center
+            slot header {
+              item Header_text {
+                auto-layout column; gap 4
+                item Title { title "Профиль"; font-size 24; font-weight 600; line-height 30; layout left }
+                item Subtitle { title "Публичная информация и настройки аккаунта"; font-size 13; line-height 18; text-color #7f7f7f; layout left }
+              }
+            }
+          }
+          item divider { width fill; height 1; color #00000012 }
+          item Content {
+            auto-layout column; width fill; height fill; padding 28 32; gap 24
+            slot content
+          }
+    }
+  }
+}
+
+element WorkspaceRow {
+  export let name = "Рабочее пространство"
+  export let mark = "Р"
+  export let role = "Владелец"
+  export let visit = "Сегодня"
+  item Row {
+  auto-layout row; width 800; height 68; padding 0 20; gap 14; align center
+  item Mark {
+    auto-layout row; width 36; height 36; align center; justify center; color #efdcf2; corner-radius 8
+    item Letter { title ${mark}; font-size 15; font-weight 600; text-color #8c267d }
+  }
+  item Name { title ${name}; width fill; font-size 14; font-weight 500; line-height 20; layout left }
+  item Role { title ${role}; width 120; font-size 13; line-height 18; layout left; text-color #5c6470 }
+  item Visit { title ${visit}; width 150; font-size 13; line-height 18; layout left; text-color #7f7f7f }
+  use ui_kit.Icon.kit_ChevronRightLarge as Open { width 16; height 16; color #7f7f7f }
+  }
+}
+
+element ServiceCard {
+  export let title = "Сервис"
+  export let description = "Описание сервиса"
+  export let status = "Не подключён"
+  export let action = "Подключить"
+  export let kind = available
+  styles {
+    available { Status { text-color #7f7f7f } }
+    active { Status { text-color #26815c } }
+    kind one-of available active
+  }
+  item Card {
+  auto-layout column; width 800; padding 24; gap 18; color #ffffff; border-color #00000014; corner-radius 10
+  item Service_head {
+    auto-layout row; width fill; gap 16; align center
+    item Service_icon {
+      auto-layout row; width 44; height 44; align center; justify center; color #efdcf2; corner-radius 10
+      use ui_kit.Icon.kit_CloudTree as Icon { width 22; height 22; color #8c267d }
+    }
+    item Service_text {
+      auto-layout column; width fill; gap 4
+      item Title { title ${title}; font-size 17; font-weight 600; line-height 22; layout left }
+      item Status { title ${status}; font-size 12; line-height 16; layout left }
+    }
+    use ui_kit.Actions.Button_secondary_medium as Action {
+      at Button { title ${action} }
+      at icon_kit_Plus { hidden yes }
+      at icon_chevronD { hidden yes }
+    }
+  }
+  item Description { title ${description}; width fill; font-size 13; line-height 19; layout left; text-color #5c6470 }
+  slot details
+  }
+}
+
+element ProfileField {
+  export let label = "Поле"
+  export let value = "Значение"
+  item Field {
+  auto-layout row; width 800; min-height 44; padding 10 0; gap 24; align center
+  item Label { title ${label}; width 160; font-size 13; line-height 18; layout left; text-color #7f7f7f }
+  item Value { title ${value}; width fill; font-size 14; line-height 20; layout left }
+  }
+}

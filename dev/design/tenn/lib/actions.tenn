@@ -72,7 +72,7 @@ item "Button/secondary/large/icon" {
 item "Button/secondary/medium" {
 	auto-layout row; gap 8; padding 0 16; align center; justify center; height 40; clip yes; color #1725470d; border-color #1725471a; corner-radius 8; pos 1036 -44
 	use Icon.kit_Plus as "icon/kit/Plus" { color #000000 }
-	item Button { title Button; font-size 14; line-height 16; font-family "IBM Plex Sans"; font-weight 500; layout left }
+	item Button { title Button; font-size 14; line-height 16; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #0f121a }
 	use Icon.chevronD as "icon/chevronD" { hidden yes; width 14; height 14; border-color #000000; line-width 1.14 }
 }
 item "Button/secondary/medium/icon" {
@@ -82,7 +82,7 @@ item "Button/secondary/medium/icon" {
 item "Button/secondary/small" {
 	auto-layout row; gap 4; padding 0 8; align center; justify center; height 32; clip yes; color #1725470d; border-color #1725471a; corner-radius 6; pos 1248 -44
 	use Icon.kit_Plus as "icon/kit/Plus" { color #000000 }
-	item Button { title Button; font-size 14; line-height 16; font-family "IBM Plex Sans"; font-weight 500; layout left }
+	item Button { title Button; font-size 14; line-height 16; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #0f121a }
 	use Icon.chevronD as "icon/chevronD" { hidden yes; width 14; height 14; border-color #000000; line-width 1.14 }
 }
 item "Button/secondary/small/icon" {

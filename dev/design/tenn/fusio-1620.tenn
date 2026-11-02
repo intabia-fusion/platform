@@ -1,0 +1,242 @@
+entry "../../../PlatformDesign.tenn"
+
+element "1 Пространства" {
+  use profile_kit.ProfilePage as Screen {
+    at Cabinet.Sidebar.navigation.Workspaces.NavItem { color #efdcf2; text-color #7d1f70 }
+    slot header {
+      item Header_text {
+        auto-layout column; gap 4
+        item Title { title "Пространства"; font-size 24; font-weight 600; line-height 30; layout left }
+        item Subtitle { title "Рабочие пространства и приглашения"; font-size 13; line-height 18; text-color #7f7f7f; layout left }
+      }
+      item grow { width fill }
+      use ui_kit.Actions.Button_primary_medium as Create {
+        at Button { title "Создать пространство" }
+        at icon_chevronD { hidden yes }
+      }
+    }
+    slot content {
+      item Section_title { title "Ваши пространства"; font-size 15; font-weight 600; line-height 20; layout left }
+      item Workspace_list {
+        auto-layout column; width fill; color #ffffff; border-color #00000014; corner-radius 10; clip yes
+        use profile_kit.WorkspaceRow as Platform { width fill; name "Intabia Platform"; mark "IP"; role "Владелец"; visit "Сегодня, 16:42" }
+        item divider { width fill; height 1; color #0000000f }
+        use profile_kit.WorkspaceRow as Marketing { width fill; name "Маркетинг"; mark "М"; role "Участник"; visit "Вчера" }
+        item divider_2 { width fill; height 1; color #0000000f }
+        use profile_kit.WorkspaceRow as Personal { width fill; name "Личное"; mark "Л"; role "Владелец"; visit "28 октября" }
+      }
+      item Invitations {
+        auto-layout column; width fill; padding 20; gap 12; color #f8f5fa; border-color #d9b9d8; corner-radius 10
+        item Invitation_title { title "Приглашения"; font-size 15; font-weight 600; line-height 20; layout left }
+        item Invitation_row {
+          auto-layout row; width fill; gap 16; align center
+          item Invitation_text {
+            auto-layout column; width fill; gap 4
+            item Name { title "Design Team"; font-size 14; font-weight 500; line-height 20; layout left }
+            item From { title "Мария Орлова приглашает вас как участника"; font-size 13; line-height 18; text-color #5c6470; layout left }
+          }
+          use ui_kit.Actions.Button_secondary_medium as Decline {
+            at Button { title "Отклонить" }
+            at icon_kit_Plus { hidden yes }
+            at icon_chevronD { hidden yes }
+          }
+          use ui_kit.Actions.Button_primary_medium as Accept {
+            at Button { title "Принять" }
+            at icon_kit_Plus { hidden yes }
+            at icon_chevronD { hidden yes }
+          }
+        }
+      }
+    }
+  }
+}
+
+element "2 Пространства - пусто" {
+  use profile_kit.ProfilePage as Screen {
+    at Cabinet.Sidebar.navigation.Workspaces.NavItem { color #efdcf2; text-color #7d1f70 }
+    slot header {
+      item Header_text {
+        auto-layout column; gap 4
+        item Title { title "Пространства"; font-size 24; font-weight 600; line-height 30; layout left }
+        item Subtitle { title "Здесь живут ваши проекты, документы и команды"; font-size 13; line-height 18; text-color #7f7f7f; layout left }
+      }
+    }
+    slot content {
+      item Empty {
+        auto-layout column; width fill; height fill; align center; justify center; gap 16
+        item Empty_icon {
+          auto-layout row; width 72; height 72; align center; justify center; color #efdcf2; corner-radius 20
+          use ui_kit.Icon.kit_Building as Icon { width 32; height 32; color #8c267d }
+        }
+        item Empty_title { title "Создайте первое пространство"; font-size 22; font-weight 600; line-height 28 }
+        item Empty_text { title "В пространстве можно вести задачи, общаться с командой и хранить документы."; width 460; font-size 14; line-height 21; text-color #5c6470 }
+        use ui_kit.Actions.Button_primary_large as Create {
+          at Button { title "Создать пространство" }
+          at icon_chevronD { hidden yes }
+        }
+        item Empty_hint { title "Позже вы сможете пригласить команду и подключить сервисы"; font-size 12; line-height 17; text-color #7f7f7f }
+      }
+    }
+  }
+}
+
+element "3 Подписки" {
+  use profile_kit.ProfilePage as Screen {
+    at Cabinet.Sidebar.navigation.Subscriptions.NavItem { color #efdcf2; text-color #7d1f70 }
+    slot header {
+      item Header_text {
+        auto-layout column; gap 4
+        item Title { title "Подписки"; font-size 24; font-weight 600; line-height 30; layout left }
+        item Subtitle { title "Личные сервисы и лицензии, доступные во всех пространствах"; font-size 13; line-height 18; text-color #7f7f7f; layout left }
+      }
+    }
+    slot content {
+      use profile_kit.ServiceCard as MCP { width fill;
+        title "MCP-сервер Intabia"
+        description "Подключите задачи, документы и чаты платформы к AI-агентам по протоколу MCP. Один доступ действует во всех ваших пространствах."
+        status "Подключено до 2 ноября 2027"
+        action "Настроить"
+        kind active
+        slot details {
+          item Connection {
+            auto-layout row; width fill; padding 12 16; gap 12; align center; color #f7f7fa; corner-radius 8
+            use ui_kit.Icon.kit_Key as Icon { width 16; height 16; color #5c6470 }
+            item Token { title "Персональный токен  ••••••••  7K2F"; width fill; font-size 13; line-height 18; layout left }
+            use ui_kit.Actions.Button_secondary_small as Copy {
+              at Button { title "Скопировать" }
+              at icon_kit_Plus { hidden yes }
+              at icon_chevronD { hidden yes }
+            }
+          }
+        }
+      }
+      use profile_kit.ServiceCard as Tenniarb { width fill;
+        title "Tenniarb Pro"
+        description "Лицензия на расширенные возможности редактора: совместная работа, версии макетов и экспорт проектов."
+        status "Лицензия активна до 18 сентября 2027"
+        action "Скачать"
+        kind active
+        slot details {
+          item License {
+            auto-layout row; width fill; padding 12 16; gap 12; align center; color #f7f7fa; corner-radius 8
+            item Key_label { title "Ключ лицензии"; font-size 13; line-height 18; text-color #7f7f7f }
+            item Key { title "TENN-••••-••••-9Q4M"; width fill; font-size 13; line-height 18; layout left }
+            use ui_kit.Actions.Button_secondary_small as Show {
+              at Button { title "Показать" }
+              at icon_kit_Plus { hidden yes }
+              at icon_chevronD { hidden yes }
+            }
+          }
+        }
+      }
+      use profile_kit.ServiceCard as MCP_available { width fill;
+        title "Дополнительные AI-токены"
+        description "Персональный пакет для сервисов Intabia, которым нужен доступ к языковым моделям."
+        status "Не подключено"
+        action "Подключить"
+      }
+    }
+  }
+}
+
+element "4 Профиль" {
+  use profile_kit.ProfilePage as Screen {
+    at Cabinet.Sidebar.navigation.Profile.NavItem { color #efdcf2; text-color #7d1f70 }
+    slot header {
+      item Header_text {
+        auto-layout column; gap 4
+        item Title { title "Профиль"; font-size 24; font-weight 600; line-height 30; layout left }
+        item Subtitle { title "Так вас видят другие пользователи платформы"; font-size 13; line-height 18; text-color #7f7f7f; layout left }
+      }
+      item grow { width fill }
+      use ui_kit.Actions.Button_secondary_medium as Edit {
+        at Button { title "Редактировать" }
+        at icon_kit_Plus { hidden yes }
+        at icon_chevronD { hidden yes }
+      }
+    }
+    slot content {
+      item Public_card {
+        auto-layout row; width fill; padding 24; gap 20; align center; color #f8f5fa; corner-radius 10
+        use ui_kit.People.Avatar as Avatar { width 72; height 72; at initials { title "АС"; font-size 24 } }
+        item Public_text {
+          auto-layout column; width fill; gap 6
+          item Name { title "Алекс Смирнов"; font-size 22; font-weight 600; line-height 28; layout left }
+          item Bio { title "Продуктовый дизайнер. Интерфейсы, дизайн-системы и прототипирование."; font-size 14; line-height 20; layout left; text-color #5c6470 }
+          item Place { title "Новосибирск, Россия"; font-size 13; line-height 18; layout left; text-color #7f7f7f }
+        }
+        item Public_badge {
+          auto-layout row; padding 5 10; color #e7f4ed; corner-radius 12
+          item Label { title "Публичный"; font-size 12; line-height 16; text-color #26815c }
+        }
+      }
+      item Fields {
+        auto-layout column; width fill; color #ffffff; border-color #00000014; corner-radius 10; padding 4 20
+        use profile_kit.ProfileField as Name { width fill; label "Имя"; value "Алекс Смирнов" }
+        item divider { width fill; height 1; color #0000000f }
+        use profile_kit.ProfileField as Username { width fill; label "Имя пользователя"; value "@alex" }
+        item divider_2 { width fill; height 1; color #0000000f }
+        use profile_kit.ProfileField as Email { width fill; label "Email"; value "alex@example.com" }
+        item divider_3 { width fill; height 1; color #0000000f }
+        use profile_kit.ProfileField as City { width fill; label "Город"; value "Новосибирск" }
+        item divider_4 { width fill; height 1; color #0000000f }
+        use profile_kit.ProfileField as Country { width fill; label "Страна"; value "Россия" }
+      }
+    }
+  }
+}
+
+element "5 Безопасность" {
+  use profile_kit.ProfilePage as Screen {
+    at Cabinet.Sidebar.navigation.Security.NavItem { color #efdcf2; text-color #7d1f70 }
+    slot header {
+      item Header_text {
+        auto-layout column; gap 4
+        item Title { title "Безопасность"; font-size 24; font-weight 600; line-height 30; layout left }
+        item Subtitle { title "Способы входа и действия с аккаунтом"; font-size 13; line-height 18; text-color #7f7f7f; layout left }
+      }
+    }
+    slot content {
+      item Section {
+        auto-layout column; width fill; gap 12
+        item Section_title { title "Способы входа"; font-size 15; font-weight 600; line-height 20; layout left }
+        item Login_methods {
+          auto-layout column; width fill; padding 4 20; color #ffffff; border-color #00000014; corner-radius 10
+          use profile_kit.ProfileField as Email { width fill; label "Email"; value "alex@example.com" }
+          item divider { width fill; height 1; color #0000000f }
+          use profile_kit.ProfileField as Github { width fill; label "GitHub"; value "alex-smirnov" }
+        }
+      }
+      item Password {
+        auto-layout row; width fill; padding 18 20; gap 20; align center; color #ffffff; border-color #00000014; corner-radius 10
+        item Password_text {
+          auto-layout column; width fill; gap 4
+          item Title { title "Пароль"; font-size 15; font-weight 600; line-height 20; layout left }
+          item Hint { title "Изменён 14 августа 2026"; font-size 13; line-height 18; text-color #7f7f7f; layout left }
+        }
+        use ui_kit.Actions.Button_secondary_medium as Change {
+          at Button { title "Изменить пароль" }
+          at icon_kit_Plus { hidden yes }
+          at icon_chevronD { hidden yes }
+        }
+      }
+      item Danger {
+        auto-layout column; width fill; padding 20; gap 14; color #fff8f7; border-color #efc3bd; corner-radius 10
+        item Danger_title { title "Опасная зона"; font-size 15; font-weight 600; line-height 20; layout left; text-color #9e342a }
+        item Danger_row {
+          auto-layout row; width fill; gap 20; align center
+          item Danger_text {
+            auto-layout column; width fill; gap 4
+            item Title { title "Удалить аккаунт"; font-size 14; font-weight 500; line-height 20; layout left }
+            item Hint { title "Профиль и личные подписки будут удалены. Пространства останутся у их владельцев."; font-size 13; line-height 18; text-color #7f7f7f; layout left }
+          }
+          use ui_kit.Actions.Button_negative_medium as Delete {
+            at Button { title "Удалить аккаунт" }
+            at icon_kit_Plus { hidden yes }
+            at icon_chevronD { hidden yes }
+          }
+        }
+      }
+    }
+  }
+}
