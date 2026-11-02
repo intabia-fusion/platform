@@ -277,6 +277,7 @@ export function defineViewlets (builder: Builder): void {
     'visibility',
     'attribute'
   )
+  createAttributePresenter(builder, view.component.AccountUuidPresenter, tracker.class.Board, 'author', 'attribute')
   builder.mixin(tracker.class.Board, core.class.Class, view.mixin.ClassFilters, {
     filters: ['title', 'author', 'visibility']
   })

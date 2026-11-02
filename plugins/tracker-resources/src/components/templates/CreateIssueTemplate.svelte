@@ -80,6 +80,7 @@
   function clearProjectFields (project: Ref<Project> | undefined): void {
     if (project === previousProject) return
     previousProject = project
+    currentProject = undefined
     kind = undefined
     object = {
       ...object,

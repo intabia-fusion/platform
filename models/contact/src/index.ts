@@ -952,7 +952,7 @@ export function createModel (builder: Builder): void {
   })
 
   builder.mixin(core.class.TypeAccountUuid, core.class.Class, view.mixin.AttributePresenter, {
-    presenter: view.component.AccountUuidPresenter,
+    presenter: view.component.PersonIdPresenter,
     arrayPresenter: contact.component.AccountArrayEditor
   })
 
