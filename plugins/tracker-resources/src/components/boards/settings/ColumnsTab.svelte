@@ -18,7 +18,7 @@
   import { getClient, isDisabled } from '@hcengineering/presentation'
   import task from '@hcengineering/task'
   import { statusesWithoutColumn, type Board, type BoardColumn } from '@hcengineering/tracker'
-  import ui, { getEventPositionElement, Icon, Label, Menu, showPopup } from '@hcengineering/ui'
+  import ui, { getEventPositionElement, Icon, Label, Menu, Scroller, showPopup } from '@hcengineering/ui'
   import { Button, Callout, IconButton, Toggle } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import { statusStore } from '@hcengineering/view-resources'
@@ -28,7 +28,7 @@
   import ProjectSettingsSection from '../../projects/settings/ProjectSettingsSection.svelte'
 
   // Reads only the columns and the projects, so a wizard may pass a draft
-  export let board: Pick<Board, 'columns' | 'projects'>
+  export let board: Pick<Board, 'columns' | 'projects' | 'warnOnClosedStatuses'>
   // Statuses of the board projects
   export let statuses: Status[]
   export let onChange: (patch: Partial<Data<Board>>) => Promise<void>
@@ -45,7 +45,7 @@
   $: byId = $statusStore.byId
   $: placed = new Set(board.columns.flatMap((c) => c.statuses))
   $: unplaced = statuses.filter((s) => !placed.has(s._id))
-  $: open = new Set(statusesWithoutColumn(board.columns, statuses).map((s) => s._id))
+  $: open = new Set(statusesWithoutColumn(board.columns, statuses, board.warnOnClosedStatuses).map((s) => s._id))
 
   // Issues of the board projects per status, the board filter aside
   let counts = new Map<Ref<Status>, number>()
@@ -203,6 +203,16 @@
           />
         {/if}
       {/if}
+      <Toggle
+        kind="brand"
+        checked={board.warnOnClosedStatuses ?? false}
+        label={tracker.string.WarnOnClosedStatuses}
+        tooltip={{ label: tracker.string.WarnOnClosedStatusesHint }}
+        data-id="boardWarnOnClosedStatuses"
+        on:change={(e) => {
+          void onChange({ warnOnClosedStatuses: e.detail })
+        }}
+      />
       <Button
         kind="secondary"
         size="small"
@@ -253,118 +263,126 @@
         <div class="drop-zone"><Label label={tracker.string.DropStatusToRemove} /></div>
       </div>
 
-      {#each board.columns as column, i (column.id)}
-        {@const first = byId.get(column.statuses[0])}
-        {@const issues = column.statuses.reduce((sum, id) => sum + (counts.get(id) ?? 0), 0)}
-        <div
-          class="column"
-          class:over={over === column.id && dragged !== undefined}
-          data-id="boardColumn"
-          role="list"
-          on:dragover|preventDefault={() => {
-            over = column.id
-          }}
-          on:drop|preventDefault={() => {
-            drop(column.id, i)
-          }}
-        >
-          <div class="head">
-            <span
-              class="grip handle"
-              draggable="true"
-              role="button"
-              tabindex="-1"
-              on:dragstart={(e) => {
-                e.dataTransfer?.setData('text/plain', column.id)
-                dragged = { kind: 'column', index: i }
+      <div class="columns-scroll" data-id="boardColumnsScroll">
+        <Scroller horizontal contentDirection="horizontal" align="start" stickedScrollBars>
+          {#each board.columns as column, i (column.id)}
+            {@const first = byId.get(column.statuses[0])}
+            {@const issues = column.statuses.reduce((sum, id) => sum + (counts.get(id) ?? 0), 0)}
+            <div
+              class="column"
+              class:over={over === column.id && dragged !== undefined}
+              data-id="boardColumn"
+              role="list"
+              on:dragover|preventDefault={() => {
+                over = column.id
               }}
-              on:dragend={endDrag}
+              on:drop|preventDefault={() => {
+                drop(column.id, i)
+              }}
             >
-              <Icon icon={ui.icon.GripVertical} size="small" />
-            </span>
-            {#if first !== undefined}
-              <IssueStatusIcon value={first} size="small" />
-            {/if}
-            <input
-              class="name"
-              value={column.title}
-              placeholder={column.title}
-              on:change={(e) => {
-                setTitle(column, e.currentTarget.value)
-              }}
-            />
-            <IconButton
-              icon={ui.icon.DotsHorizontal}
-              kind="ghost"
-              size="extra-small"
-              tooltip={{ label: ui.string.MoreOptions }}
-              data-id="boardColumnMenu"
-              on:click={(e) => {
-                showColumnMenu(e, i)
-              }}
-            />
-          </div>
-          {#if wip && !compact}
-            <div class="wips">
-              <!-- tracker-board-next: BoardColumn has no min limit field -->
-              {#if boardNext}
-                <label class="wip">
-                  <span class="wip-label"><Label label={tracker.string.WipMin} /></span>
-                  <input type="number" min="1" placeholder="—" data-id="boardWipMin" />
-                </label>
-              {/if}
-              <label class="wip">
-                <span class="wip-label"><Label label={tracker.string.WipMax} /></span>
-                <input
-                  type="number"
-                  min="1"
-                  placeholder="—"
-                  value={column.limit ?? ''}
-                  on:change={(e) => {
-                    setLimit(column, e.currentTarget.value)
-                  }}
-                />
-              </label>
-            </div>
-          {/if}
-          {#if !compact}
-            <span class="summary">
-              <Label label={tracker.string.BoardColumnSummary} params={{ statuses: column.statuses.length, issues }} />
-            </span>
-          {/if}
-          {#if column.statuses.length === 0}
-            <span class="summary" data-id="boardColumnHidden">
-              <Label label={tracker.string.BoardColumnHidden} />
-            </span>
-          {/if}
-          <div class="statuses">
-            {#each column.statuses as id (id)}
-              {@const status = byId.get(id)}
-              {#if status !== undefined}
-                <div
-                  class="status"
+              <div class="head">
+                <span
+                  class="grip handle"
                   draggable="true"
-                  role="listitem"
-                  data-id="boardStatus"
+                  role="button"
+                  tabindex="-1"
                   on:dragstart={(e) => {
-                    e.dataTransfer?.setData('text/plain', status._id)
-                    dragged = { kind: 'status', id: status._id }
+                    e.dataTransfer?.setData('text/plain', column.id)
+                    dragged = { kind: 'column', index: i }
                   }}
                   on:dragend={endDrag}
                 >
-                  <span class="grip"><Icon icon={ui.icon.GripVertical} size="small" /></span>
-                  <IssueStatusIcon value={status} size="x-small" />
-                  <span class="status-name">{status.name}</span>
-                  <span class="count">{counts.get(id) ?? ''}</span>
+                  <Icon icon={ui.icon.GripVertical} size="small" />
+                </span>
+                {#if first !== undefined}
+                  <IssueStatusIcon value={first} size="small" />
+                {/if}
+                <input
+                  class="name"
+                  value={column.title}
+                  on:change={(e) => {
+                    const title = e.currentTarget.value.trim()
+                    e.currentTarget.value = title === '' ? column.title : title
+                    setTitle(column, title)
+                  }}
+                />
+                <IconButton
+                  icon={ui.icon.DotsHorizontal}
+                  kind="ghost"
+                  size="extra-small"
+                  tooltip={{ label: ui.string.MoreOptions }}
+                  data-id="boardColumnMenu"
+                  on:click={(e) => {
+                    showColumnMenu(e, i)
+                  }}
+                />
+              </div>
+              {#if wip && !compact}
+                <div class="wips">
+                  <!-- tracker-board-next: BoardColumn has no min limit field -->
+                  {#if boardNext}
+                    <label class="wip">
+                      <span class="wip-label"><Label label={tracker.string.WipMin} /></span>
+                      <input type="number" min="1" placeholder="—" data-id="boardWipMin" />
+                    </label>
+                  {/if}
+                  <label class="wip">
+                    <span class="wip-label"><Label label={tracker.string.WipMax} /></span>
+                    <input
+                      type="number"
+                      min="1"
+                      placeholder="—"
+                      value={column.limit ?? ''}
+                      on:change={(e) => {
+                        setLimit(column, e.currentTarget.value)
+                      }}
+                    />
+                  </label>
                 </div>
               {/if}
-            {/each}
-          </div>
-          {#if over === column.id && dragged?.kind === 'status' && !column.statuses.includes(dragged.id)}
-            <div class="drop-target" />
-          {/if}
-        </div>
-      {/each}
+              {#if !compact}
+                <span class="summary">
+                  <Label
+                    label={tracker.string.BoardColumnSummary}
+                    params={{ statuses: column.statuses.length, issues }}
+                  />
+                </span>
+              {/if}
+              {#if column.statuses.length === 0}
+                <span class="summary" data-id="boardColumnHidden">
+                  <Label label={tracker.string.BoardColumnHidden} />
+                </span>
+              {/if}
+              <div class="statuses">
+                {#each column.statuses as id (id)}
+                  {@const status = byId.get(id)}
+                  {#if status !== undefined}
+                    <div
+                      class="status"
+                      draggable="true"
+                      role="listitem"
+                      data-id="boardStatus"
+                      on:dragstart={(e) => {
+                        e.dataTransfer?.setData('text/plain', status._id)
+                        dragged = { kind: 'status', id: status._id }
+                      }}
+                      on:dragend={endDrag}
+                    >
+                      <span class="grip"><Icon icon={ui.icon.GripVertical} size="small" /></span>
+                      <IssueStatusIcon value={status} size="x-small" />
+                      <span class="status-name">{status.name}</span>
+                      <span class="count">{counts.get(id) ?? ''}</span>
+                    </div>
+                  {/if}
+                {/each}
+              </div>
+              {#if over === column.id && dragged?.kind === 'status' && !column.statuses.includes(dragged.id)}
+                <div class="drop-target" />
+              {/if}
+            </div>
+          {/each}
+        </Scroller>
+      </div>
     </div>
   </div>
 </ProjectSettingsSection>
@@ -379,7 +397,8 @@
   .options {
     display: flex;
     align-items: center;
-    gap: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem 2rem;
     min-height: 2rem;
   }
   .editor {
@@ -388,9 +407,28 @@
     gap: 0.75rem;
     min-height: 35rem;
     padding: 0.75rem;
-    overflow-x: auto;
+    min-width: 0;
+    box-sizing: border-box;
+    height: min(40rem, 65vh);
     background-color: var(--theme-list-row-color);
     border-radius: 0.5rem;
+  }
+  .columns-scroll {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+
+    :global(.box) {
+      box-sizing: border-box;
+      gap: 0.75rem;
+      padding-bottom: 0.75rem;
+    }
+    .column {
+      height: 100%;
+    }
+    :global(.bar-horizontal) {
+      opacity: 1 !important;
+    }
   }
   .column {
     display: flex;
@@ -399,6 +437,7 @@
     gap: 0.5rem;
     box-sizing: border-box;
     width: 14.125rem;
+    min-height: 0;
     padding: 0.625rem;
     background-color: var(--theme-popup-color);
     border: 1px solid var(--theme-divider-color);
@@ -424,6 +463,9 @@
     height: 2rem;
   }
   .statuses {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -495,6 +537,7 @@
     color: var(--theme-dark-color);
   }
   .status {
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     gap: 0.25rem;

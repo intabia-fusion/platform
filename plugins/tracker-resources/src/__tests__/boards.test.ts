@@ -15,17 +15,42 @@
 
 import core, { setCurrentAccount, type Ref, type TxOperations } from '@hcengineering/core'
 import type { Board, Project } from '@hcengineering/tracker'
-import { getCurrentResolvedLocation, navigate } from '@hcengineering/ui'
+import { getCurrentResolvedLocation, locationToUrl, navigate, showPopup } from '@hcengineering/ui'
 import { filtersToQuery } from '@hcengineering/view-resources'
-import { createQuery } from '@hcengineering/presentation'
+import { copyTextToClipboard, createQuery, MessageBox } from '@hcengineering/presentation'
 import task from '@hcengineering/task'
-import { boardLocation, boardQuery, ConditionMatches, createBoard, togglePinned, updateBoard } from '../boards'
+import {
+  boardLocation,
+  boardQuery,
+  ConditionMatches,
+  createBoard,
+  togglePinned,
+  updateBoard,
+  boardNavigationId,
+  ensureBoardNavigation,
+  setBoardInNavigation,
+  shareBoard
+} from '../boards'
 import tracker from '../plugin'
 
 // The module imports UI packages that need a browser; only these calls are used
 jest.mock('@hcengineering/contact', () => ({ getCurrentEmployeeSpace: () => 'anna-space' }))
-jest.mock('@hcengineering/presentation', () => ({ createQuery: jest.fn() }))
-jest.mock('@hcengineering/ui', () => ({ getCurrentResolvedLocation: jest.fn(), navigate: jest.fn() }))
+jest.mock('@hcengineering/presentation', () => ({
+  __esModule: true,
+  default: {
+    metadata: { FrontUrl: 'presentation:metadata:FrontUrl' },
+    string: { CopyLink: 'presentation:string:CopyLink' }
+  },
+  copyTextToClipboard: jest.fn(),
+  createQuery: jest.fn(),
+  MessageBox: 'message-box'
+}))
+jest.mock('@hcengineering/ui', () => ({
+  getCurrentResolvedLocation: jest.fn(),
+  locationToUrl: jest.fn(),
+  navigate: jest.fn(),
+  showPopup: jest.fn()
+}))
 jest.mock('@hcengineering/view-resources', () => ({
   filtersToQuery: jest.fn(),
   // Conditions in these tests are JSON arrays of {q}, the parsed form is enough for the mock
@@ -348,5 +373,113 @@ describe('ConditionMatches', () => {
     matches.destroy()
     expect(lives[0].unsubscribe).toHaveBeenCalled()
     expect(matches.has('a', ref('i1'))).toBe(false)
+  })
+})
+
+describe('board navigation', () => {
+  it('initializes the existing accessible list atomically, without private boards of others', async () => {
+    const operations = {
+      notMatch: jest.fn(),
+      createDoc: jest.fn(),
+      commit: jest.fn(async () => ({ result: true }))
+    }
+    const client = stub<TxOperations>({ findOne: jest.fn(async () => undefined), apply: () => operations })
+    await ensureBoardNavigation(client, [
+      makeBoard({ _id: ref('shared'), visibility: 'all', author: ref('bob') }),
+      makeBoard({ _id: ref('mine'), visibility: 'me', author: ref('anna') }),
+      makeBoard({ _id: ref('private'), visibility: 'me', author: ref('bob') })
+    ])
+    expect(operations.notMatch).toHaveBeenCalledWith(tracker.class.BoardNavigationPreference, {
+      _id: boardNavigationId()
+    })
+    expect(operations.createDoc).toHaveBeenCalledWith(
+      tracker.class.BoardNavigationPreference,
+      core.space.Workspace,
+      { attachedTo: 'tracker:boards-navigation', boards: ['shared', 'mine'] },
+      boardNavigationId()
+    )
+  })
+
+  it('does not add newly discovered shared boards to an initialized list', async () => {
+    const apply = jest.fn()
+    const client = stub<TxOperations>({ findOne: async () => ({ boards: ['old'] }), apply })
+    await ensureBoardNavigation(client, [makeBoard({ visibility: 'all' })])
+    expect(apply).not.toHaveBeenCalled()
+  })
+
+  it('adds only the requested board with an atomic duplicate guard', async () => {
+    const operations = { notMatch: jest.fn(), updateDoc: jest.fn(), commit: jest.fn() }
+    await setBoardInNavigation(stub<TxOperations>({ apply: () => operations }), ref('b1'), true)
+    expect(operations.notMatch).toHaveBeenCalledWith(tracker.class.BoardNavigationPreference, {
+      _id: boardNavigationId(),
+      boards: { $in: ['b1'] }
+    })
+    expect(operations.updateDoc).toHaveBeenCalledWith(
+      tracker.class.BoardNavigationPreference,
+      core.space.Workspace,
+      boardNavigationId(),
+      { $push: { boards: 'b1' } }
+    )
+    expect(operations.commit).toHaveBeenCalledTimes(1)
+  })
+
+  it('hides without replacing concurrent additions, and removes the old pin', async () => {
+    const pin = { _id: 'pin' }
+    const updateDoc = jest.fn()
+    const remove = jest.fn()
+    const client = stub<TxOperations>({ updateDoc, remove, findOne: async () => pin })
+    await setBoardInNavigation(client, ref('b1'), false)
+    expect(updateDoc).toHaveBeenCalledWith(
+      tracker.class.BoardNavigationPreference,
+      core.space.Workspace,
+      boardNavigationId(),
+      { $pull: { boards: 'b1' } }
+    )
+    expect(remove).toHaveBeenCalledWith(pin)
+  })
+})
+
+describe('shareBoard', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    ;(globalThis as any).window = { location: { origin: 'https://example.test' } }
+    ;(getCurrentResolvedLocation as jest.Mock).mockReturnValue({
+      path: ['workbench', 'workspace', 'tracker', 'boards', 'old', 'settings'],
+      query: { tab: 'members' },
+      fragment: 'old'
+    })
+    ;(locationToUrl as jest.Mock).mockReturnValue('/workbench/workspace/tracker/boards/b1')
+  })
+
+  afterEach(() => {
+    delete (globalThis as any).window
+  })
+
+  it('copies a direct board URL without changing location or visibility', async () => {
+    const board = makeBoard({ visibility: 'all' })
+    await shareBoard(board)
+    expect(locationToUrl).toHaveBeenCalledWith({
+      path: ['workbench', 'workspace', 'tracker', 'boards', 'b1'],
+      query: undefined,
+      fragment: undefined
+    })
+    expect(copyTextToClipboard).toHaveBeenCalledWith('https://example.test/workbench/workspace/tracker/boards/b1')
+    expect(navigate).not.toHaveBeenCalled()
+    expect(board.visibility).toBe('all')
+  })
+
+  it('explains private access before copying a personal board URL', async () => {
+    const board = makeBoard({ visibility: 'me' })
+    await shareBoard(board)
+    expect(copyTextToClipboard).not.toHaveBeenCalled()
+    expect(showPopup).toHaveBeenCalledWith(
+      MessageBox,
+      expect.objectContaining({
+        message: tracker.string.PersonalBoardShareHint
+      })
+    )
+    await (showPopup as jest.Mock).mock.calls[0][1].action()
+    expect(copyTextToClipboard).toHaveBeenCalledTimes(1)
+    expect(board.visibility).toBe('me')
   })
 })

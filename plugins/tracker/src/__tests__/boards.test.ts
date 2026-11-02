@@ -100,7 +100,7 @@ describe('columns', () => {
     expect(index.get(id('done'))).toBeUndefined()
   })
 
-  it('warns about open statuses only', () => {
+  it('warns about open statuses only by default', () => {
     const statuses = [
       status('todo', task.statusCategory.ToDo),
       status('review', task.statusCategory.Active),
@@ -110,6 +110,16 @@ describe('columns', () => {
     ]
     const missing = statusesWithoutColumn(columns, statuses).map((s) => s._id)
     expect(missing).toEqual(['review', 'backlog'])
+    expect(statusesWithoutColumn(columns, statuses, false).map((s) => s._id)).toEqual(missing)
+    expect(statusesWithoutColumn(columns, statuses, true).map((s) => s._id)).toEqual([
+      'review',
+      'backlog',
+      'done',
+      'canceled'
+    ])
+    expect(statusesWithoutColumn([{ statuses: [id<Status>('done')] }], statuses, true).map((s) => s._id)).not.toContain(
+      'done'
+    )
   })
 })
 
@@ -221,7 +231,9 @@ describe('board helpers edge cases', () => {
   })
 
   it('does not warn about a status without a category', () => {
-    expect(statusesWithoutColumn([], [{ _id: id<Status>('x'), category: undefined }])).toEqual([])
+    const statuses = [{ _id: id<Status>('x'), category: undefined }]
+    expect(statusesWithoutColumn([], statuses)).toEqual([])
+    expect(statusesWithoutColumn([], statuses, true)).toEqual([])
   })
 
   it('takes only known card densities', () => {

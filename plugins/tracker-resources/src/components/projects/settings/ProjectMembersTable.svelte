@@ -13,16 +13,17 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import contact from '@hcengineering/contact'
+  import contact, { type Person } from '@hcengineering/contact'
   import {
     employeeByIdStore,
     employeeRefByAccountUuidStore,
     EmployeePresenter,
+    PersonPresenter,
     UsersPopup
   } from '@hcengineering/contact-resources'
   import type { AccountUuid, Doc, Role, RolesAssignment } from '@hcengineering/core'
-  import { notEmpty } from '@hcengineering/core'
-  import { getClient } from '@hcengineering/presentation'
+  import core, { notEmpty, systemAccountUuid } from '@hcengineering/core'
+  import { createQuery, getClient } from '@hcengineering/presentation'
   import { getEmbeddedLabel, translate, type IntlString } from '@hcengineering/platform'
   import ui, {
     getEventPositionElement,
@@ -39,7 +40,7 @@
   import view from '@hcengineering/view'
 
   import tracker from '../../../plugin'
-  import { mergeOwners, OWNER_ROLE, rowRoles } from '../../../projectSettingsLogic'
+  import { mergeOwners, MEMBER_ROLE, missingMemberAccounts, OWNER_ROLE, rowRoles } from '../../../projectSettingsLogic'
 
   // The place keeps the members (saved or of a project being created) and validates every change
   export let members: AccountUuid[]
@@ -64,10 +65,28 @@
 
   $: rows = mergeOwners(members, owners)
 
+  let otherPeople: Person[] = []
+  const peopleQuery = createQuery()
+  $: missingAccounts = missingMemberAccounts(rows, $employeeRefByAccountUuidStore)
+  $: if (missingAccounts.length > 0) {
+    peopleQuery.query(contact.class.Person, { personUuid: { $in: missingAccounts } }, (res) => {
+      otherPeople = res
+    })
+  } else {
+    peopleQuery.unsubscribe()
+    otherPeople = []
+  }
+  $: peopleByAccount = new Map(otherPeople.map((person) => [person.personUuid, person]))
+
   let roleItems: DropdownTextItem[] = []
   async function updateRoleItems (roles: Role[], lang: string): Promise<void> {
     const owner = await translate(tracker.string.ProjectSettingsOwnerRole, {}, lang)
-    roleItems = [{ id: OWNER_ROLE, label: owner }, ...roles.map((it) => ({ id: it._id, label: it.name }))]
+    const member = await translate(tracker.string.ProjectSettingsMemberRole, {}, lang)
+    roleItems = [
+      { id: MEMBER_ROLE, label: member, exclusive: true },
+      { id: OWNER_ROLE, label: owner },
+      ...roles.map((it) => ({ id: it._id, label: it.name }))
+    ]
   }
   $: void updateRoleItems(roles, $languageStore)
 
@@ -179,10 +198,17 @@
       {#key resetKey}
         {#each rows as account (account)}
           {@const ref = $employeeRefByAccountUuidStore.get(account)}
+          {@const person = peopleByAccount.get(account)}
           {@const roles = roleLabel(account, roleItems, owners, assignment)}
           <div class="members-row" data-id="project-settings-member">
             <div class="cell person">
-              <EmployeePresenter value={ref} avatarSize="small" showPopup={false} />
+              {#if ref !== undefined}
+                <EmployeePresenter value={ref} avatarSize="small" showPopup={false} />
+              {:else if person !== undefined}
+                <PersonPresenter value={person} avatarSize="small" clickable={false} />
+              {:else}
+                <Label label={account === systemAccountUuid ? core.string.System : getEmbeddedLabel(account)} />
+              {/if}
             </div>
             <div class="cell role">
               {#if fixedRole !== undefined}

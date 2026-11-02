@@ -15,10 +15,15 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
   import { Analytics } from '@hcengineering/analytics'
-  import { getName, type Employee } from '@hcengineering/contact'
+  import contact, { getName, type Employee, type Person } from '@hcengineering/contact'
   import type { AccountUuid, Data, Ref, Role, RolesAssignment } from '@hcengineering/core'
-  import core, { generateId, getCurrentAccount, notEmpty, SortingOrder } from '@hcengineering/core'
-  import { EmployeePresenter, employeeByIdStore, employeeRefByAccountUuidStore } from '@hcengineering/contact-resources'
+  import core, { generateId, getCurrentAccount, notEmpty, SortingOrder, systemAccountUuid } from '@hcengineering/core'
+  import {
+    EmployeePresenter,
+    PersonPresenter,
+    employeeByIdStore,
+    employeeRefByAccountUuidStore
+  } from '@hcengineering/contact-resources'
   import { getEmbeddedLabel, type Asset, type IntlString } from '@hcengineering/platform'
   import presentation, { createQuery, getClient, MessageBox } from '@hcengineering/presentation'
   import type { Project as TaskProject, ProjectType, TaskType } from '@hcengineering/task'
@@ -62,7 +67,13 @@
     type BaseSettings,
     type CopyOptions
   } from '../../projectCopyLogic'
-  import { applyRoles, isAccessValid, mergeOwners, removeFromRoles } from '../../projectSettingsLogic'
+  import {
+    applyRoles,
+    isAccessValid,
+    mergeOwners,
+    missingMemberAccounts,
+    removeFromRoles
+  } from '../../projectSettingsLogic'
   import ProjectBaseItem from './ProjectBaseItem.svelte'
   import ProjectBasePopup from './ProjectBasePopup.svelte'
   import ProjectAssigneeSelect from './settings/ProjectAssigneeSelect.svelte'
@@ -581,6 +592,19 @@
     close(projectId)
   }
 
+  let otherPeople: Person[] = []
+  const peopleQuery = createQuery()
+  $: missingAccounts = missingMemberAccounts(mergeOwners(members, owners), $employeeRefByAccountUuidStore)
+  $: if (step === 'summary' && missingAccounts.length > 0) {
+    peopleQuery.query(contact.class.Person, { personUuid: { $in: missingAccounts } }, (res) => {
+      otherPeople = res
+    })
+  } else {
+    peopleQuery.unsubscribe()
+    otherPeople = []
+  }
+  $: peopleByAccount = new Map(otherPeople.map((person) => [person.personUuid, person]))
+
   // Summary: owners and the other members, as they will be stored
   $: summaryLists = [
     { id: 'owners', label: tracker.string.ProjectWizardOwnersCount, accounts: owners },
@@ -1097,11 +1121,15 @@
                 <Label label={list.label} params={{ count: list.accounts.length }} />
               </span>
               {#each list.accounts as account (account)}
-                <EmployeePresenter
-                  value={$employeeRefByAccountUuidStore.get(account)}
-                  avatarSize="small"
-                  showPopup={false}
-                />
+                {@const ref = $employeeRefByAccountUuidStore.get(account)}
+                {@const person = peopleByAccount.get(account)}
+                {#if ref !== undefined}
+                  <EmployeePresenter value={ref} avatarSize="small" showPopup={false} />
+                {:else if person !== undefined}
+                  <PersonPresenter value={person} avatarSize="small" clickable={false} />
+                {:else}
+                  <Label label={account === systemAccountUuid ? core.string.System : getEmbeddedLabel(account)} />
+                {/if}
               {/each}
             </div>
           {/each}

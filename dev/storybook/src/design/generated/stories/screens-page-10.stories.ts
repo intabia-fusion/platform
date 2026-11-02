@@ -40,5 +40,5 @@ export const Frame2: Story = { name: 'Настройки проекта - Уча
 export const Frame3: Story = { name: 'Настройки проекта - Задачи', args: { group, page, frame: 2 } }
 export const Frame4: Story = { name: 'Настройки проекта - Статусы', args: { group, page, frame: 3 } }
 export const Frame5: Story = { name: 'Настройки проекта - Workflow', args: { group, page, frame: 4 } }
-export const Frame6: Story = { name: 'Настройки проекта - Архив', args: { group, page, frame: 5 } }
+export const Frame6: Story = { name: 'Настройки проекта - Архивация', args: { group, page, frame: 5 } }
 export const Frame7: Story = { name: 'Настройки проекта - Задачи, чат справа', args: { group, page, frame: 6 } }

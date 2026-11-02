@@ -105,6 +105,12 @@
     />
     <div class="hulyHeader-divider" />
     <span class="title"><Label label={tracker.string.ProjectSettings} /></span>
+    {#if project !== undefined}
+      <span class="project-name" data-id="project-settings-title" title={project.name}>{project.name}</span>
+      {#if project.archived}
+        <span class="archived" data-id="project-archived"><Label label={tracker.string.ProjectArchivedChip} /></span>
+      {/if}
+    {/if}
     <svelte:fragment slot="actions">
       <IconButton
         data-id="btnCloseProjectSettings"
@@ -156,6 +162,20 @@
 </div>
 
 <style lang="scss">
+  .project-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .archived {
+    flex-shrink: 0;
+    color: var(--theme-dark-color);
+    font-size: 0.8125rem;
+  }
+  .content {
+    min-width: 0;
+  }
   .title {
     font-size: 1rem;
     font-weight: 600;
@@ -171,5 +191,17 @@
     width: 15rem;
     padding-top: var(--spacing-1);
     border-right: 1px solid var(--theme-divider-color);
+  }
+  @media (max-width: 700px) {
+    .columns {
+      flex-direction: column;
+    }
+    .nav {
+      width: 100%;
+      max-height: 10rem;
+      overflow: auto;
+      border-right: 0;
+      border-bottom: 1px solid var(--theme-divider-color);
+    }
   }
 </style>

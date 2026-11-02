@@ -1,4 +1,4 @@
-// Board settings page of the tracker (FUSIO-1613, accepted), one frame per tab.
+// Board settings page of the tracker (FUSIO-1683), one frame per tab.
 // Imported from the hand-edited fusio-1613.pen by dev/pen/import.mjs; the density samples of the Card tab are kit.IssueCard.
 
 await kit.page('Board settings')
@@ -11,10 +11,11 @@ const addValue = () => kit.IconButton('plus', { kind: 'ghost', size: 'extra-smal
     nav: [
       { item: 'My issues', icon: 'timeline' },
       { item: 'All issues', icon: 'check' },
-      { item: 'Доски', icon: 'board', selected: true },
-      { item: 'Тестирование', indent: true },
-      { item: 'Мой спринт', indent: true },
-      { group: 'Your projects', add: true },
+      { group: 'Доски', add: true, catalog: { label: 'Все доски', icon: 'kit/BulletList' } },
+      { item: 'Основная доска', icon: 'board', selected: true },
+      { item: 'Тестирование', icon: 'board' },
+      { item: 'Мой спринт', icon: 'board' },
+      { group: 'Проекты', add: true, catalog: { label: 'Все проекты', icon: 'kit/BulletList' } },
       { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
@@ -39,7 +40,7 @@ const addValue = () => kit.IconButton('plus', { kind: 'ghost', size: 'extra-smal
     ],
     tab: 'Основное',
     close: true,
-    actions: [
+    titleActions: [
       kit.Button({
         kind: 'ghost',
         size: 'small',
@@ -48,6 +49,10 @@ const addValue = () => kit.IconButton('plus', { kind: 'ghost', size: 'extra-smal
         menu: true,
         name: 'Board in settings'
       })
+    ],
+    actions: [
+      kit.Button({ kind: 'ghost', size: 'small', label: 'Поделиться' }),
+      kit.IconButton('trash', { kind: 'ghost', size: 'small', name: 'Delete board' })
     ]
   })
   kit.add(contentBox2, kit.SectionTitle('Основное', 'Какие задачи попадают на доску и кто может её менять.', 720))
@@ -88,10 +93,11 @@ const addValue = () => kit.IconButton('plus', { kind: 'ghost', size: 'extra-smal
     nav: [
       { item: 'My issues', icon: 'timeline' },
       { item: 'All issues', icon: 'check' },
-      { item: 'Доски', icon: 'board', selected: true },
-      { item: 'Тестирование', indent: true },
-      { item: 'Мой спринт', indent: true },
-      { group: 'Your projects', add: true },
+      { group: 'Доски', add: true, catalog: { label: 'Все доски', icon: 'kit/BulletList' } },
+      { item: 'Основная доска', icon: 'board', selected: true },
+      { item: 'Тестирование', icon: 'board' },
+      { item: 'Мой спринт', icon: 'board' },
+      { group: 'Проекты', add: true, catalog: { label: 'Все проекты', icon: 'kit/BulletList' } },
       { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
@@ -116,7 +122,7 @@ const addValue = () => kit.IconButton('plus', { kind: 'ghost', size: 'extra-smal
     ],
     tab: 'Участники и доступ',
     close: true,
-    actions: [
+    titleActions: [
       kit.Button({
         kind: 'ghost',
         size: 'small',
@@ -125,6 +131,10 @@ const addValue = () => kit.IconButton('plus', { kind: 'ghost', size: 'extra-smal
         menu: true,
         name: 'Board in settings'
       })
+    ],
+    actions: [
+      kit.Button({ kind: 'ghost', size: 'small', label: 'Поделиться' }),
+      kit.IconButton('trash', { kind: 'ghost', size: 'small', name: 'Delete board' })
     ]
   })
   kit.add(contentBox2, kit.SectionTitle('Участники и доступ'))
@@ -132,8 +142,7 @@ const addValue = () => kit.IconButton('plus', { kind: 'ghost', size: 'extra-smal
     'Видимость',
     kit.add(
       kit.col('vis', 10),
-      kit.Radio(true, 'Видно всем'),
-      kit.Radio(false, 'Только я', 'Личная доска, видна только вам')
+      kit.Toggle(false, 'Личная доска', { description: 'Доступна только вам' })
     ),
     { kind: 'column', alignTop: true }
   ))
@@ -149,17 +158,17 @@ const addValue = () => kit.IconButton('plus', { kind: 'ghost', size: 'extra-smal
       [
         [
           kit.add(kit.row('person', 8), kit.Avatar('СА', 'Sky', 24), kit.text('Анна Смирнова')),
-          'Автор',
+          'Владелец',
           ''
         ],
         [
           kit.add(kit.row('person', 8), kit.Avatar('КМ', 'Grass', 24), kit.text('Мария Козлова')),
-          'Может править',
+          'Редактор',
           kit.IconButton('more', { kind: 'ghost', size: 'extra-small', name: 'Удалить участника' })
         ],
         [
           kit.add(kit.row('person', 8), kit.Avatar('ПИ', 'Watermelon', 24), kit.text('Иван Петров')),
-          'Может править',
+          'Редактор',
           kit.IconButton('more', { kind: 'ghost', size: 'extra-small', name: 'Удалить участника' })
         ]
       ],
@@ -173,10 +182,11 @@ const addValue = () => kit.IconButton('plus', { kind: 'ghost', size: 'extra-smal
     nav: [
       { item: 'My issues', icon: 'timeline' },
       { item: 'All issues', icon: 'check' },
-      { item: 'Доски', icon: 'board', selected: true },
-      { item: 'Тестирование', indent: true },
-      { item: 'Мой спринт', indent: true },
-      { group: 'Your projects', add: true },
+      { group: 'Доски', add: true, catalog: { label: 'Все доски', icon: 'kit/BulletList' } },
+      { item: 'Основная доска', icon: 'board', selected: true },
+      { item: 'Тестирование', icon: 'board' },
+      { item: 'Мой спринт', icon: 'board' },
+      { group: 'Проекты', add: true, catalog: { label: 'Все проекты', icon: 'kit/BulletList' } },
       { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
@@ -201,7 +211,7 @@ const addValue = () => kit.IconButton('plus', { kind: 'ghost', size: 'extra-smal
     ],
     tab: 'Колонки',
     close: true,
-    actions: [
+    titleActions: [
       kit.Button({
         kind: 'ghost',
         size: 'small',
@@ -210,16 +220,21 @@ const addValue = () => kit.IconButton('plus', { kind: 'ghost', size: 'extra-smal
         menu: true,
         name: 'Board in settings'
       })
+    ],
+    actions: [
+      kit.Button({ kind: 'ghost', size: 'small', label: 'Поделиться' }),
+      kit.IconButton('trash', { kind: 'ghost', size: 'small', name: 'Delete board' })
     ]
   })
   kit.add(contentBox, kit.SectionTitle(
     'Колонки',
-    'Колонка объединяет один или несколько статусов. Перетащите статус в колонку, чтобы задачи в нём появились на доске. Открытые статусы без колонки на доске не видны, закрытые без колонки уходят с доски по замыслу.',
+    'Распределите статусы проектов по колонкам. Колонки без статусов скрыты на доске. По умолчанию предупреждение о скрытых задачах учитывает только незавершенные статусы. Учет завершенных и отмененных статусов можно включить.',
     1218
   ))
   kit.add(contentBox, kit.add(
     kit.box('options', { w: 1218, h: 32, dir: 'row', gap: 32, align: 'center' }),
     kit.Toggle(true, 'WIP-лимиты'),
+    kit.Toggle(false, 'Предупреждать о завершенных статусах без колонки'),
     kit.Button({ kind: 'secondary', size: 'small', label: 'Добавить колонку', icon: 'plus' })
   ))
   const dropTarget = kit.box(
@@ -537,10 +552,11 @@ const addValue = () => kit.IconButton('plus', { kind: 'ghost', size: 'extra-smal
     nav: [
       { item: 'My issues', icon: 'timeline' },
       { item: 'All issues', icon: 'check' },
-      { item: 'Доски', icon: 'board', selected: true },
-      { item: 'Тестирование', indent: true },
-      { item: 'Мой спринт', indent: true },
-      { group: 'Your projects', add: true },
+      { group: 'Доски', add: true, catalog: { label: 'Все доски', icon: 'kit/BulletList' } },
+      { item: 'Основная доска', icon: 'board', selected: true },
+      { item: 'Тестирование', icon: 'board' },
+      { item: 'Мой спринт', icon: 'board' },
+      { group: 'Проекты', add: true, catalog: { label: 'Все проекты', icon: 'kit/BulletList' } },
       { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
@@ -565,7 +581,7 @@ const addValue = () => kit.IconButton('plus', { kind: 'ghost', size: 'extra-smal
     ],
     tab: 'Дорожки',
     close: true,
-    actions: [
+    titleActions: [
       kit.Button({
         kind: 'ghost',
         size: 'small',
@@ -574,6 +590,10 @@ const addValue = () => kit.IconButton('plus', { kind: 'ghost', size: 'extra-smal
         menu: true,
         name: 'Board in settings'
       })
+    ],
+    actions: [
+      kit.Button({ kind: 'ghost', size: 'small', label: 'Поделиться' }),
+      kit.IconButton('trash', { kind: 'ghost', size: 'small', name: 'Delete board' })
     ]
   })
   kit.add(contentBox3, kit.SectionTitle(
@@ -594,10 +614,11 @@ const addValue = () => kit.IconButton('plus', { kind: 'ghost', size: 'extra-smal
     nav: [
       { item: 'My issues', icon: 'timeline' },
       { item: 'All issues', icon: 'check' },
-      { item: 'Доски', icon: 'board', selected: true },
-      { item: 'Тестирование', indent: true },
-      { item: 'Мой спринт', indent: true },
-      { group: 'Your projects', add: true },
+      { group: 'Доски', add: true, catalog: { label: 'Все доски', icon: 'kit/BulletList' } },
+      { item: 'Основная доска', icon: 'board', selected: true },
+      { item: 'Тестирование', icon: 'board' },
+      { item: 'Мой спринт', icon: 'board' },
+      { group: 'Проекты', add: true, catalog: { label: 'Все проекты', icon: 'kit/BulletList' } },
       { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
@@ -622,7 +643,7 @@ const addValue = () => kit.IconButton('plus', { kind: 'ghost', size: 'extra-smal
     ],
     tab: 'Быстрые фильтры',
     close: true,
-    actions: [
+    titleActions: [
       kit.Button({
         kind: 'ghost',
         size: 'small',
@@ -631,6 +652,10 @@ const addValue = () => kit.IconButton('plus', { kind: 'ghost', size: 'extra-smal
         menu: true,
         name: 'Board in settings'
       })
+    ],
+    actions: [
+      kit.Button({ kind: 'ghost', size: 'small', label: 'Поделиться' }),
+      kit.IconButton('trash', { kind: 'ghost', size: 'small', name: 'Delete board' })
     ]
   })
   kit.add(contentBox4, kit.SectionTitle(
@@ -666,10 +691,11 @@ const addValue = () => kit.IconButton('plus', { kind: 'ghost', size: 'extra-smal
     nav: [
       { item: 'My issues', icon: 'timeline' },
       { item: 'All issues', icon: 'check' },
-      { item: 'Доски', icon: 'board', selected: true },
-      { item: 'Тестирование', indent: true },
-      { item: 'Мой спринт', indent: true },
-      { group: 'Your projects', add: true },
+      { group: 'Доски', add: true, catalog: { label: 'Все доски', icon: 'kit/BulletList' } },
+      { item: 'Основная доска', icon: 'board', selected: true },
+      { item: 'Тестирование', icon: 'board' },
+      { item: 'Мой спринт', icon: 'board' },
+      { group: 'Проекты', add: true, catalog: { label: 'Все проекты', icon: 'kit/BulletList' } },
       { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
@@ -694,7 +720,7 @@ const addValue = () => kit.IconButton('plus', { kind: 'ghost', size: 'extra-smal
     ],
     tab: 'Цвета карточек',
     close: true,
-    actions: [
+    titleActions: [
       kit.Button({
         kind: 'ghost',
         size: 'small',
@@ -703,6 +729,10 @@ const addValue = () => kit.IconButton('plus', { kind: 'ghost', size: 'extra-smal
         menu: true,
         name: 'Board in settings'
       })
+    ],
+    actions: [
+      kit.Button({ kind: 'ghost', size: 'small', label: 'Поделиться' }),
+      kit.IconButton('trash', { kind: 'ghost', size: 'small', name: 'Delete board' })
     ]
   })
   kit.add(contentBox5, kit.SectionTitle(

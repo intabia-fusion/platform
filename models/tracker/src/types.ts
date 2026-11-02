@@ -43,6 +43,8 @@ import {
   Activity,
   Prop,
   ReadOnly,
+  TypeAccountUuid,
+  TypeEnum,
   TypeCollaborativeDoc,
   TypeDate,
   TypeMarkup,
@@ -64,6 +66,7 @@ import {
   type BoardColumn,
   type BoardCondition,
   type BoardPreference,
+  type BoardNavigationPreference,
   type BoardQuickFilter,
   type BoardSwimlane,
   type BoardSwimLaneField,
@@ -482,6 +485,7 @@ export class TIssueTaskType extends TIssue {}
 @UX(tracker.string.TaskBoard, tracker.icon.Issues, undefined, 'title')
 export class TBoard extends TDoc implements Board {
   @Prop(TypeString(), tracker.string.BoardTitle)
+  @Index(IndexKind.FullText)
   title!: string
 
   description?: string
@@ -489,8 +493,12 @@ export class TBoard extends TDoc implements Board {
   @Prop(ArrOf(TypeRef(tracker.class.Project)), tracker.string.Projects)
   projects!: Ref<Project>[]
 
+  @Prop(TypeEnum(tracker.enum.BoardVisibility), tracker.string.BoardVisibility)
+  @ReadOnly()
   visibility!: BoardVisibility
 
+  @Prop(TypeAccountUuid(), tracker.string.BoardAuthor)
+  @ReadOnly()
   author!: AccountUuid
 
   editors!: AccountUuid[]
@@ -498,6 +506,8 @@ export class TBoard extends TDoc implements Board {
   filter!: BoardCondition
 
   columns!: BoardColumn[]
+
+  warnOnClosedStatuses?: boolean
 
   swimlanes!: BoardSwimlane[]
 
@@ -518,4 +528,9 @@ export class TBoard extends TDoc implements Board {
 export class TBoardPreference extends TPreference implements BoardPreference {
   @Prop(TypeRef(tracker.class.Board), tracker.string.TaskBoard)
   declare attachedTo: Ref<Board>
+}
+
+@Model(tracker.class.BoardNavigationPreference, preference.class.Preference)
+export class TBoardNavigationPreference extends TPreference implements BoardNavigationPreference {
+  boards!: Ref<Board>[]
 }

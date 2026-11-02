@@ -71,9 +71,22 @@
 </script>
 
 <ProjectSettingsSection title={tracker.string.ProjectSettingsGeneral} description={tracker.string.SavedAutomatically}>
-  <div class="flex-col flex-gap-4" data-id="project-settings-general">
+  <div class="flex-col flex-gap-4 w-full" data-id="project-settings-general">
+    <SettingRow kind="column" label={tracker.string.ProjectSettingsName} let:labelId>
+      <div class="field wide">
+        <TextInput
+          id="project-title"
+          bind:value={name}
+          placeholder={tracker.string.ProjectTitlePlaceholder}
+          aria-labelledby={labelId}
+          fullWidth
+          on:change={saveName}
+        />
+      </div>
+    </SettingRow>
+
     <SettingRow kind="column" label={task.string.ProjectType} hint={tracker.string.ProjectTypeHint}>
-      <div class="flex-row-center flex-gap-2">
+      <div class="flex-row-center flex-wrap flex-gap-2">
         <span class="type-chip" data-id="project-type">
           <Icon icon={task.icon.ManageTemplates} size="small" />
           {typeName}
@@ -88,19 +101,6 @@
             }}
           />
         {/if}
-      </div>
-    </SettingRow>
-
-    <SettingRow kind="column" label={tracker.string.ProjectSettingsName} let:labelId>
-      <div class="field wide">
-        <TextInput
-          id="project-title"
-          bind:value={name}
-          placeholder={tracker.string.ProjectTitlePlaceholder}
-          aria-labelledby={labelId}
-          fullWidth
-          on:change={saveName}
-        />
       </div>
     </SettingRow>
 
@@ -144,6 +144,7 @@
 
 <style lang="scss">
   .field {
+    max-width: 100%;
     &.narrow {
       width: 10rem;
     }

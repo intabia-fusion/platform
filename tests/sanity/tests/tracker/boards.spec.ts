@@ -20,6 +20,7 @@ import tracker, {
   cardFields,
   IssuePriority,
   type Board,
+  type BoardNavigationPreference,
   type CardField,
   type IssueStatus,
   type Project
@@ -31,11 +32,12 @@ import {
   deleteIssuesByTitlePrefix,
   findProjectByName,
   getProjectContext,
-  type ProjectContext
+  type ProjectContext,
+  type StatusName
 } from '../API/TrackerApi'
 import { BoardsPage } from '../model/tracker/boards-page'
 import { KanbanBoardPage } from '../model/tracker/kanban-board-page'
-import { getSecondPage, PlatformSetting, PlatformURI } from '../utils'
+import { getSecondPage, PlatformSetting, PlatformURI, PlatformUserSecond } from '../utils'
 import { ViewletSelectors } from './tracker.utils'
 
 test.use({ storageState: PlatformSetting })
@@ -50,6 +52,7 @@ test.describe('task boards', () => {
   let project: Project | undefined
   let boardId: Ref<Board>
   let author: AccountUuid
+  let originalNavigation: BoardNavigationPreference | undefined
   const titlePrefix = `boards-spec-${generateId()}-`
 
   const readBoardById = async (id: Ref<Board>): Promise<Board | undefined> =>
@@ -74,8 +77,7 @@ test.describe('task boards', () => {
       ...patch
     })
 
-  const statusId = (name: 'Backlog' | 'Todo' | 'In Progress' | 'Cancelled'): Ref<IssueStatus> =>
-    ctx.statuses.get(name) as Ref<IssueStatus>
+  const statusId = (name: StatusName): Ref<IssueStatus> => ctx.statuses.get(name) as Ref<IssueStatus>
 
   // The JSON of a "Status is ..." condition, as the settings editor stores it
   const statusCondition = (...statuses: Array<Ref<IssueStatus>>): string => {
@@ -106,6 +108,9 @@ test.describe('task boards', () => {
     author = (
       await createRestClient(workspaceToken.endpoint, workspaceToken.workspaceId, workspaceToken.token).getAccount()
     ).uuid
+    originalNavigation = await client.findOne(tracker.class.BoardNavigationPreference, {
+      attachedTo: 'tracker:boards-navigation'
+    })
     project = await findProjectByName(client, 'Second Project')
     if (project === undefined) return
     ctx = await getProjectContext(client, project._id)
@@ -152,6 +157,13 @@ test.describe('task boards', () => {
         await client.remove(pref)
       }
       await client.remove(board)
+    }
+    const navigation = await client.findOne(tracker.class.BoardNavigationPreference, {
+      attachedTo: 'tracker:boards-navigation'
+    })
+    if (navigation !== undefined) {
+      if (originalNavigation === undefined) await client.remove(navigation)
+      else await client.update(navigation, { boards: originalNavigation.boards })
     }
     await deleteIssuesByTitlePrefix(client, titlePrefix)
   })
@@ -203,10 +215,300 @@ test.describe('task boards', () => {
   test('the board opens from the navigator', async ({ page }) => {
     await (await page.goto(`${PlatformURI}/workbench/sanity-ws/tracker`))?.finished()
     const boards = new BoardsPage(page)
+    const navigation = await client.findOne(tracker.class.BoardNavigationPreference, {
+      attachedTo: 'tracker:boards-navigation'
+    })
+    expect(navigation).toBeDefined()
+    await client.update(navigation as BoardNavigationPreference, {
+      boards: navigation?.boards.filter((id) => id !== boardId) ?? []
+    })
+    await boards.catalogButton().click()
+    await boards.catalogRow(boardId).locator('[data-id="boardAddToNavigation"]').click()
     await expect(boards.navItems()).toContainText(`${titlePrefix}board`)
     await boards.navItems().getByText(`${titlePrefix}board`).click()
     await expect(page).toHaveURL(new RegExp(`/tracker/boards/${boardId}`))
     await expect(boards.columns().first()).toBeVisible()
+  })
+
+  test('navigator header actions keep their positions on hover and creation precedes the catalog', async ({ page }) => {
+    const boards = new BoardsPage(page)
+    await boards.open(boardId)
+    await boards.catalogButton().click()
+    await expect(boards.catalog()).toBeVisible()
+    for (const [createName, catalogName] of [
+      ['Create board', 'All boards'],
+      ['Create project', 'All projects']
+    ]) {
+      const headers = page.locator('.hulyNavGroup-header')
+      const create = headers.getByRole('button', { name: createName, exact: true })
+      const catalog = headers.getByRole('button', { name: catalogName, exact: true })
+      await page.mouse.move(0, 0)
+      const before = [await create.boundingBox(), await catalog.boundingBox()]
+      expect(before[0]).not.toBeNull()
+      expect(before[1]).not.toBeNull()
+      expect(before[0]?.x).toBeLessThan(before[1]?.x ?? 0)
+      await catalog.hover()
+      expect([await create.boundingBox(), await catalog.boundingBox()]).toEqual(before)
+    }
+  })
+
+  test('the catalog and create buttons stay keyboard accessible in collapsed and empty sections', async ({ page }) => {
+    const boards = new BoardsPage(page)
+    await boards.open(boardId)
+    await boards.catalogButton().click()
+    await expect(boards.catalog()).toBeVisible()
+    const header = boards.catalogButton().locator('xpath=ancestor::button[contains(@class, "hulyNavGroup-header")]')
+    if ((await header.getAttribute('class'))?.includes('isOpen') === true) {
+      await header.click({ position: { x: 4, y: 4 } })
+    }
+    await expect(header).not.toHaveClass(/isOpen/)
+    await boards.catalogButton().focus()
+    await page.keyboard.press('Enter')
+    await expect(boards.catalog()).toBeVisible()
+
+    const navigation = await client.findOne(tracker.class.BoardNavigationPreference, {
+      attachedTo: 'tracker:boards-navigation'
+    })
+    expect(navigation).toBeDefined()
+    const previous = navigation?.boards ?? []
+    try {
+      await client.update(navigation as BoardNavigationPreference, { boards: [] })
+      await expect(boards.navItems()).toHaveCount(0)
+      await expect(boards.catalogButton()).toBeVisible()
+      const create = page.getByRole('button', { name: 'Create board', exact: true })
+      await expect(create).toBeVisible()
+      await create.focus()
+      await page.keyboard.press('Enter')
+      await expect(boards.createWizard()).toBeVisible()
+    } finally {
+      await client.update(navigation as BoardNavigationPreference, { boards: previous })
+    }
+  })
+
+  test('a new global board stays in the catalog until explicitly added, and hiding keeps it open', async ({ page }) => {
+    const boards = new BoardsPage(page)
+    await boards.open(boardId)
+    await expect
+      .poll(
+        async () =>
+          await client.findOne(tracker.class.BoardNavigationPreference, {
+            attachedTo: 'tracker:boards-navigation'
+          })
+      )
+      .toBeDefined()
+    const id = await makeBoard('catalog-only', {
+      columns: [{ id: 'queue', title: 'Queue', category: task.statusCategory.ToDo, statuses: [statusId('Todo')] }]
+    })
+    await boards.catalogButton().click()
+    await expect(boards.catalogRow(id)).toBeVisible()
+    await expect(boards.navItem(`${titlePrefix}catalog-only`)).toHaveCount(0)
+    await boards.catalog().locator('.searchInput-wrapper').click()
+    await boards.catalogSearch().fill(`${titlePrefix}catalog-only`)
+    await expect(boards.catalog().locator('.antiTable-body__row')).toHaveCount(1)
+
+    await boards.open(id)
+    await expect(boards.addToNavigation()).toBeVisible()
+    await expect(boards.navItem(`${titlePrefix}catalog-only`)).toHaveCount(0)
+    await page.reload()
+    await expect(boards.addToNavigation()).toBeVisible()
+    const navigation = await client.findOne(tracker.class.BoardNavigationPreference, {
+      attachedTo: 'tracker:boards-navigation'
+    })
+    expect(navigation?.boards).not.toContain(id)
+    await boards.addToNavigation().click()
+    await expect(boards.addToNavigation()).toHaveCount(0)
+    const row = boards.navItem(`${titlePrefix}catalog-only`)
+    await expect(row).toBeVisible()
+    await client.createDoc(tracker.class.BoardPreference, core.space.Workspace, { attachedTo: id })
+    await row.hover()
+    await row.getByRole('button', { name: 'More actions', exact: true }).click()
+    await page.locator('.antiPopup').getByRole('button', { name: 'Remove from my boards', exact: true }).click()
+    await expect(row).toHaveCount(0)
+    await expect(page).toHaveURL(boards.boardUrl(id))
+    await expect(boards.columns()).toHaveCount(1)
+    await expect(boards.addToNavigation()).toBeVisible()
+    await expect
+      .poll(async () => await client.findOne(tracker.class.BoardPreference, { attachedTo: id }))
+      .toBeUndefined()
+    await expect
+      .poll(async () =>
+        (
+          await client.findOne(tracker.class.BoardNavigationPreference, {
+            attachedTo: 'tracker:boards-navigation'
+          })
+        )?.boards.includes(id)
+      )
+      .toBe(false)
+  })
+
+  test('sharing copies the direct board link from the board and catalog', async ({ page, context }) => {
+    const boards = new BoardsPage(page)
+    await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: new URL(PlatformURI).origin })
+    await boards.open(boardId)
+    await boards.share().click()
+    await expect
+      .poll(async () => await page.evaluate(async () => await navigator.clipboard.readText()))
+      .toBe(boards.boardUrl(boardId))
+    await boards.catalogButton().click()
+    await page.evaluate(async () => {
+      await navigator.clipboard.writeText('previous clipboard value')
+    })
+    await boards.catalogRow(boardId).locator('[data-id="boardShare"]').click()
+    await expect
+      .poll(async () => await page.evaluate(async () => await navigator.clipboard.readText()))
+      .toBe(boards.boardUrl(boardId))
+  })
+
+  test('task type selections in the board wizard update one condition', async ({ page }) => {
+    const boards = new BoardsPage(page)
+    const errors: string[] = []
+    page.on('pageerror', (error) => errors.push(error.message))
+    await boards.open(boardId)
+    await page.getByRole('button', { name: 'Create board', exact: true }).click()
+    await page.locator('#board-create-title').fill(`${titlePrefix}filter-draft`)
+    await boards.createWizard().locator('[data-id="filterConditionsAdd"]').click()
+    await page.locator('.selectPopup').getByRole('button', { name: 'Task type', exact: true }).click()
+    const option = page.locator('.selectPopup .menu-item').first()
+    const conditions = boards.createWizard().locator('.filter-section')
+    for (const count of [1, 0, 1]) {
+      await option.click()
+      await expect(conditions).toContainText(`${count} state`)
+      await expect(conditions).toHaveCount(1)
+    }
+    await page.keyboard.press('Escape')
+    await boards.createNext().click()
+    await boards.createWizard().getByRole('button', { name: 'Back', exact: true }).click()
+    await expect(conditions).toHaveCount(1)
+    await expect(conditions).toContainText('1 state')
+    expect(errors).toEqual([])
+  })
+
+  test('adding columns in the board wizard reveals the horizontal scrollbar', async ({ page }) => {
+    const boards = new BoardsPage(page)
+    await page.setViewportSize({ width: 1280, height: 800 })
+    await boards.open(boardId)
+    await page.getByRole('button', { name: 'Create board', exact: true }).click()
+    await page.locator('#board-create-title').fill(`${titlePrefix}columns-draft`)
+    await boards.createNext().click()
+    await boards.createNext().click()
+    const wrapper = boards.createWizard().locator('[data-id="boardColumnsScroll"]')
+    const scroll = wrapper.locator('.scroll')
+    await expect(scroll).toBeVisible()
+    await expect(wrapper.locator('.bar-horizontal')).toHaveCount(0)
+    const unplaced = boards.createWizard().locator('[data-id="boardUnplacedStatuses"]')
+    const before = await unplaced.boundingBox()
+    for (let index = 0; index < 6; index++) {
+      await boards.createWizard().locator('[data-id="boardAddColumn"]').click()
+    }
+    await page.mouse.move(0, 0)
+    await expect(wrapper.locator('.bar-horizontal')).toBeVisible()
+    await expect(wrapper.locator('.bar-horizontal')).toHaveCSS('opacity', '1')
+    await scroll.evaluate((element) => {
+      element.scrollLeft = element.scrollWidth
+    })
+    await expect.poll(async () => await scroll.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0)
+    expect(await unplaced.boundingBox()).toEqual(before)
+    const last = boards.createWizard().locator('[data-id="boardColumn"]').last()
+    expect((await last.boundingBox())?.y).toBeCloseTo(before?.y ?? 0, 0)
+  })
+
+  test('the board catalog is a table and settings follow author and editor rights', async ({ page, browser }) => {
+    const id = await makeBoard('catalog-settings')
+    const boards = new BoardsPage(page)
+    await boards.open(boardId)
+    await boards.catalogButton().click()
+    const table = boards.catalog().getByRole('table')
+    await expect(table).toBeVisible()
+    await expect(table.getByRole('columnheader')).toHaveText(['', 'Name', 'Owner', 'Visibility', 'More actions'])
+    const row = boards.catalogRow(id)
+    await expect(row.getByRole('cell')).toHaveCount(5)
+    await expect(row.getByRole('cell').nth(2)).not.toBeEmpty()
+    await row.locator('[data-id="boardCatalogSettings"]').click()
+    await expect(page).toHaveURL(boards.boardUrl(id, true))
+    await expect(boards.settings()).toBeVisible()
+
+    using second = await getSecondPage(browser)
+    const boards2 = new BoardsPage(second.page)
+    const connection = await connectTracker(undefined, PlatformUserSecond)
+    try {
+      const { workspaceToken } = connection
+      const editor = (
+        await createRestClient(workspaceToken.endpoint, workspaceToken.workspaceId, workspaceToken.token).getAccount()
+      ).uuid
+      await second.page.goto(`${PlatformURI}/workbench/sanity-ws/tracker/boards`)
+      const row2 = boards2.catalogRow(id)
+      await expect(row2).toBeVisible()
+      await expect(row2.locator('[data-id="boardCatalogSettings"]')).toHaveCount(0)
+      await expect(row2.locator('[data-id="boardShare"]')).toBeVisible()
+      await client.updateDoc(tracker.class.Board, core.space.Workspace, id, { editors: [editor] })
+      await row2.locator('[data-id="boardCatalogSettings"]').click()
+      await expect(second.page).toHaveURL(boards2.boardUrl(id, true))
+      await expect(boards2.settings()).toBeVisible()
+      await boards2.catalogButton().click()
+      await client.updateDoc(tracker.class.Board, core.space.Workspace, id, { editors: [] })
+      await expect(row2.locator('[data-id="boardCatalogSettings"]')).toHaveCount(0)
+    } finally {
+      await connection.client.close()
+    }
+  })
+
+  test('settings keep the selector left, usable fields at narrow width, and deletion owner only', async ({
+    page,
+    browser
+  }) => {
+    const boards = new BoardsPage(page)
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto(boards.boardUrl(boardId, true))
+    await expect(boards.settingsGeneral()).toBeVisible()
+    await expect(boards.settingsDelete()).toBeVisible()
+    const selector = await boards.settingsSwitcher().boundingBox()
+    const title = await boards.settings().locator('.hulyHeader-container .title').boundingBox()
+    expect(selector).not.toBeNull()
+    expect(title).not.toBeNull()
+    expect((selector?.x ?? 0) + (selector?.width ?? 0)).toBeLessThanOrEqual(title?.x ?? 0)
+    try {
+      await page.setViewportSize({ width: 420, height: 800 })
+      const input = boards.settingsGeneral().locator('#board-title')
+      const description = boards.settingsGeneral().locator('#board-description')
+      await expect(input).toBeVisible()
+      await expect(description).toBeVisible()
+      await expect.poll(async () => (await input.boundingBox())?.width ?? 0).toBeGreaterThanOrEqual(200)
+      await expect.poll(async () => (await description.boundingBox())?.width ?? 0).toBeGreaterThanOrEqual(200)
+      const content = boards.settings().locator('.content')
+      await expect.poll(async () => (await content.boundingBox())?.height ?? 0).toBeGreaterThan(100)
+      for (const control of [input, boards.settingsSwitcher(), boards.share()]) {
+        await expect(control).toBeVisible()
+        await expect
+          .poll(
+            async () => {
+              const bounds = await control.boundingBox()
+              return (
+                bounds !== null &&
+                bounds.x >= 0 &&
+                bounds.y >= 0 &&
+                bounds.x + bounds.width <= 420 &&
+                bounds.y + bounds.height <= 800
+              )
+            },
+            { message: control.toString() }
+          )
+          .toBe(true)
+      }
+      expect(await content.evaluate((element) => element.scrollWidth <= element.clientWidth + 1)).toBe(true)
+      await input.fill(`${titlePrefix}board narrow`)
+      await input.blur()
+      await expect.poll(async () => (await readBoard())?.title).toBe(`${titlePrefix}board narrow`)
+    } finally {
+      const board = await readBoard()
+      if (board !== undefined) await client.update(board, { title: `${titlePrefix}board` })
+      await page.setViewportSize({ width: 1440, height: 900 })
+    }
+    using second = await getSecondPage(browser)
+    const boards2 = new BoardsPage(second.page)
+    await second.page.goto(boards2.boardUrl(boardId, true))
+    await expect(boards2.settings()).toBeVisible()
+    await expect(boards2.settingsDelete()).toHaveCount(0)
+    await expect(boards2.share()).toBeVisible()
   })
 
   test('closing an issue opened from a board keeps the board', async ({ page }) => {
@@ -218,7 +520,7 @@ test.describe('task boards', () => {
     await expect(page.locator('#btnPClose')).toHaveCount(0)
     await expect(page).toHaveURL(new RegExp(`/tracker/boards/${boardId}$`))
     await expect(boards.columns()).toHaveCount(2)
-    await expect(page.getByText('Board not found')).toHaveCount(0)
+    await expect(page.getByText('Board unavailable or deleted')).toHaveCount(0)
   })
 
   test('a board project the user cannot see gets its own chip', async ({ page }) => {
@@ -304,7 +606,9 @@ test.describe('task boards', () => {
     await expect(page.locator('[data-id="boardDensity"]')).toHaveCount(0)
   })
 
-  test('a board is created by the wizard with one empty column of the current project and opens', async ({ page }) => {
+  test('FUSIO-1683 a board is created by the wizard with one empty column and its closed warning preference', async ({
+    page
+  }) => {
     // Inside a project the board takes it
     await (await page.goto(`${PlatformURI}/workbench/sanity-ws/tracker/${project?._id}/issues`))?.finished()
     const boards = new BoardsPage(page)
@@ -321,12 +625,15 @@ test.describe('task boards', () => {
     )
     await expect(page.locator('[data-id="board-create-editors"]')).toHaveCount(0)
     await boards.createFooter().getByRole('button', { name: 'Back', exact: true }).click()
-    await page.locator('[data-id="board-create-visibility-all"]').click()
+    await page.locator('[data-id="board-create-visibility-me"]').click()
     // A team board: the editors step, then the columns
     await boards.createNext().click()
     await expect(page.locator('[data-id="board-create-editors"]')).toBeVisible()
     await boards.createNext().click()
     await expect(page.locator('[data-id="boardStatus"]').first()).toBeVisible()
+    const closedWarning = page.locator('input[data-id="boardWarnOnClosedStatuses"]')
+    await expect(closedWarning).not.toBeChecked()
+    await closedWarning.setChecked(true)
     await boards.createSubmit().click()
     await expect(page).toHaveURL(/\/tracker\/boards\/[^/]+$/)
 
@@ -334,6 +641,7 @@ test.describe('task boards', () => {
     await expect.poll(async () => (await readBoardById(created))?.description).toBe('Board made by the wizard')
     const board = await readBoardById(created)
     expect(board?.projects).toEqual([project?._id])
+    expect(board?.warnOnClosedStatuses).toBe(true)
     // The statuses wait in "Statuses without a column" until the user drags them
     expect(board?.columns.map((c) => [c.title, c.statuses])).toEqual([['My column', []]])
     await expect(boards.columns()).toHaveCount(0)
@@ -541,18 +849,36 @@ test.describe('task boards', () => {
       .toEqual(cardFields.filter((f) => !['priority', 'dueDate', 'labels'].includes(f)))
   })
 
-  // Goes through the navigator section "Boards": needs the build with the fixed navigator model
   test('a board of another user leaves the navigator when it becomes personal', async ({ page, browser }) => {
     const id = await makeBoard('nav-visibility')
+    const secondConnection = await connectTracker(undefined, PlatformUserSecond)
+    const secondClient = secondConnection.client
+    const previous = await secondClient.findOne(tracker.class.BoardNavigationPreference, {
+      attachedTo: 'tracker:boards-navigation'
+    })
     using second = await getSecondPage(browser)
     const boards = new BoardsPage(page)
     const boards2 = new BoardsPage(second.page)
-    await (await second.page.goto(`${PlatformURI}/workbench/sanity-ws/tracker`))?.finished()
-    await expect(boards2.navItems()).toContainText(`${titlePrefix}nav-visibility`)
+    try {
+      await second.page.goto(`${PlatformURI}/workbench/sanity-ws/tracker/boards`)
+      await boards2.catalogRow(id).locator('[data-id="boardAddToNavigation"]').click()
+      await expect(boards2.navItems()).toContainText(`${titlePrefix}nav-visibility`)
 
-    await (await page.goto(boards.boardUrl(id, true, 'members')))?.finished()
-    await boards.radio('boardVisibilityMe').click()
-    await expect(boards2.navItems()).not.toContainText(`${titlePrefix}nav-visibility`)
+      await page.goto(boards.boardUrl(id, true, 'members'))
+      await boards.personalToggle().setChecked(true)
+      await expect(boards2.navItem(`${titlePrefix}nav-visibility`)).toHaveCount(0)
+      await expect(boards2.catalogRow(id)).toHaveCount(0)
+      await second.page.goto(boards2.boardUrl(id))
+      await expect(second.page.getByText('Board unavailable or deleted', { exact: true })).toBeVisible()
+    } finally {
+      const navigation = await secondClient.findOne(tracker.class.BoardNavigationPreference, {
+        attachedTo: 'tracker:boards-navigation'
+      })
+      if (navigation !== undefined) {
+        if (previous === undefined) await secondClient.remove(navigation)
+        else await secondClient.update(navigation, { boards: previous.boards })
+      }
+    }
   })
 
   test('a quick filter narrows the cards and a second click takes it off', async ({ page }) => {
@@ -585,6 +911,83 @@ test.describe('task boards', () => {
     await expect(boards.quickFilter('Todo only')).toHaveAttribute('aria-pressed', 'false')
     await expect(card('backlog')).toBeVisible()
     await expect(card('doing')).toBeVisible()
+  })
+
+  test('FUSIO-1683 an empty column title restores the saved value after blur', async ({ page }) => {
+    const id = await makeBoard('restore-column-title', {
+      columns: [{ id: 'queue', title: 'Saved queue', category: task.statusCategory.ToDo, statuses: [statusId('Todo')] }]
+    })
+    const boards = new BoardsPage(page)
+    await page.goto(boards.boardUrl(id, true, 'columns'))
+    const input = boards.settingsColumn().locator('input.name')
+    await expect(input).toHaveValue('Saved queue')
+    await input.fill('   ')
+    await input.blur()
+    await expect(input).toHaveValue('Saved queue')
+    await expect(input).not.toHaveAttribute('placeholder')
+    expect(await input.evaluate((element) => element.matches(':placeholder-shown'))).toBe(false)
+    expect((await readBoardById(id))?.columns[0].title).toBe('Saved queue')
+    await page.reload()
+    await expect(input).toHaveValue('Saved queue')
+  })
+
+  test('FUSIO-1683 closed status warnings are optional and persist without moving statuses', async ({ page }) => {
+    await createIssue(client, ctx, { title: `${titlePrefix}closed-warning-done`, status: 'Done' })
+    await createIssue(client, ctx, { title: `${titlePrefix}closed-warning-cancelled`, status: 'Cancelled' })
+    const taskTypes = await client.findAll(task.class.TaskType, { parent: ctx.project.type })
+    const statuses = await client.findAll(tracker.class.IssueStatus, {
+      _id: { $in: taskTypes.flatMap((type) => type.statuses) }
+    })
+    const closed = statuses.filter(
+      (status) => status.category === task.statusCategory.Won || status.category === task.statusCategory.Lost
+    )
+    const columns = [
+      {
+        id: 'open',
+        title: 'Open',
+        category: task.statusCategory.Active,
+        statuses: statuses.filter((status) => !closed.includes(status)).map((status) => status._id)
+      }
+    ]
+    const id = await makeBoard('closed-warning', { columns })
+    const hidden = await client.findAll(tracker.class.Issue, {
+      space: project?._id,
+      status: { $in: closed.map((status) => status._id) }
+    })
+    expect(hidden.length).toBeGreaterThanOrEqual(2)
+    const boards = new BoardsPage(page)
+    await boards.open(id)
+    await expect(boards.uncovered()).toHaveCount(0)
+    expect((await readBoardById(id))?.warnOnClosedStatuses).toBeUndefined()
+
+    await page.goto(boards.boardUrl(id, true, 'columns'))
+    const toggle = page.locator('input[data-id="boardWarnOnClosedStatuses"]')
+    await expect(toggle).not.toBeChecked()
+    await toggle.setChecked(true)
+    await expect.poll(async () => (await readBoardById(id))?.warnOnClosedStatuses).toBe(true)
+    await page.reload()
+    await expect(toggle).toBeChecked()
+    expect((await readBoardById(id))?.columns).toEqual(columns)
+    await boards.open(id)
+    await expect(boards.uncovered()).toContainText(`${closed.length} statuses without a column`)
+    await expect(boards.uncovered()).toContainText(`${hidden.length} issues are not visible`)
+    await boards.uncovered().click()
+    const rows = boards.uncoveredPopup().locator('.status')
+    await expect(rows).toHaveCount(closed.length)
+    for (const status of closed) {
+      await expect(rows.filter({ hasText: status.name }).locator('.count')).toHaveText(
+        String(hidden.filter((issue) => issue.status === status._id).length)
+      )
+    }
+
+    await page.goto(boards.boardUrl(id, true, 'columns'))
+    await toggle.setChecked(false)
+    await expect.poll(async () => (await readBoardById(id))?.warnOnClosedStatuses).toBe(false)
+    await page.reload()
+    await expect(toggle).not.toBeChecked()
+    expect((await readBoardById(id))?.columns).toEqual(columns)
+    await boards.open(id)
+    await expect(boards.uncovered()).toHaveCount(0)
   })
 
   test('statuses without a column raise a warning with a popup that leads on', async ({ page }) => {
@@ -633,13 +1036,17 @@ test.describe('task boards', () => {
     await boards2.open(id)
 
     await (await page.goto(boards.boardUrl(id, true, 'members')))?.finished()
-    await boards.radio('boardVisibilityMe').click()
+    await boards.personalToggle().setChecked(true)
     await expect.poll(async () => (await readBoardById(id))?.visibility).toBe('me')
     // The viewer lives on: the board leaves the page of the second user without a reload
     await expect(boards2.columns()).toHaveCount(0)
-    await expect(second.page.getByText('Board not found')).toBeVisible()
+    await expect(second.page.getByText('Board unavailable or deleted')).toBeVisible()
 
-    await boards.radio('boardVisibilityAll').click()
+    await boards.catalogButton().click()
+    await expect(boards.catalogRow(id).locator('[data-id="boardPersonal"]')).toHaveText('Personal board')
+    await page.goto(boards.boardUrl(id, true, 'members'))
+
+    await boards.personalToggle().setChecked(false)
     await expect.poll(async () => (await readBoardById(id))?.visibility).toBe('all')
     // BoardMiddleware tells every session to reload boards: the board comes back without a reload
     await expect(boards2.columns().first()).toBeVisible({ timeout: 15000 })

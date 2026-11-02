@@ -307,6 +307,9 @@
   {/if}
 {:else if node.c === 'SettingsLayout'}
   <SettingsLayout {...p}>
+    <svelte:fragment slot="titleActions"
+      >{#each kids('titleActions') as child (child.id)}<svelte:self node={child} />{/each}</svelte:fragment
+    >
     <svelte:fragment slot="actions"
       >{#each kids('actions') as child (child.id)}<svelte:self node={child} />{/each}</svelte:fragment
     >

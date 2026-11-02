@@ -48,6 +48,9 @@ test.describe('Workflow in tracker', () => {
 
   test.beforeAll(async ({ browser }) => {
     page = await browser.newPage()
+    await page.addInitScript(() => {
+      localStorage.setItem('lang', 'en')
+    })
     await createAccountAndWorkspace(page, page.request, generateTestData())
     await setTestOptions(page)
     await page.reload()
@@ -106,7 +109,7 @@ test.describe('Workflow in tracker', () => {
     // The project appears in the navigator before its workflow mixin lands; the settings read the
     // mixin live, so reopening the page is only needed when it opened too early.
     await expect(async () => {
-      await navigation.makeActionWithProject(projectName, 'Edit project')
+      await navigation.makeActionWithProject(projectName, 'Project settings')
       await projectSettings.openSection('workflow')
       await expect(projectWorkflows.mappingDropdown('Classic Issue')).toContainText(workflowName, { timeout: 3000 })
     }).toPass({ intervals: retryIntervals, timeout: 30000 })

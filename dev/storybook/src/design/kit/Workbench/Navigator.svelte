@@ -113,7 +113,7 @@
       {:else if 'divider' in entry}
         <div class="antiNav-divider line" style:margin-bottom={entry.tight === true ? '0.5rem' : undefined} />
       {:else if 'group' in entry}
-        <div class="inset"><NavGroup label={entry.group} add={entry.add} /></div>
+        <div class="inset"><NavGroup label={entry.group} add={entry.add} catalog={entry.catalog} /></div>
       {:else if 'space' in entry}
         <div class="inset"><NavSpace label={entry.space} icon={entry.icon} color={entry.color} /></div>
       {:else if 'item' in entry}

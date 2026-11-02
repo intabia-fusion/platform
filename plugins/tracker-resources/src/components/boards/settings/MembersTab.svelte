@@ -15,8 +15,8 @@
 <script lang="ts">
   import { getCurrentAccount, type AccountUuid, type Data } from '@hcengineering/core'
   import type { Board } from '@hcengineering/tracker'
-  import ui, { Label } from '@hcengineering/ui'
-  import { Radio, SettingRow } from '@hcengineering/ui/kit'
+  import ui from '@hcengineering/ui'
+  import { Toggle, SettingRow } from '@hcengineering/ui/kit'
   import tracker from '../../../plugin'
   import ProjectMembersTable from '../../projects/settings/ProjectMembersTable.svelte'
   import ProjectSettingsSection from '../../projects/settings/ProjectSettingsSection.svelte'
@@ -41,29 +41,14 @@
   <div class="rows" data-id="boardSettingsMembers">
     <div class="top">
       <SettingRow kind="column" label={tracker.string.BoardVisibility}>
-        <div class="radios" role="radiogroup">
-          <Radio
-            value="all"
-            group={board.visibility}
-            name="board-visibility"
-            label={tracker.string.BoardVisibilityAllMembers}
-            disabled={!isAuthor}
-            data-id="boardVisibilityAll"
-            on:change={() => onChange({ visibility: 'all' })}
-          />
-          <div class="radio">
-            <Radio
-              value="me"
-              group={board.visibility}
-              name="board-visibility"
-              label={tracker.string.BoardVisibilityOnlyMe}
-              disabled={!isAuthor}
-              data-id="boardVisibilityMe"
-              on:change={() => onChange({ visibility: 'me' })}
-            />
-            <span class="radio-hint"><Label label={tracker.string.BoardVisibilityOnlyMeHint} /></span>
-          </div>
-        </div>
+        <Toggle
+          checked={board.visibility === 'me'}
+          label={tracker.string.BoardPersonal}
+          description={tracker.string.BoardVisibilityOnlyMeHint}
+          disabled={!isAuthor}
+          data-id="boardVisibilityMe"
+          on:change={(event) => onChange({ visibility: event.detail ? 'me' : 'all' })}
+        />
       </SettingRow>
     </div>
 
@@ -104,20 +89,5 @@
     gap: 0.75rem;
     margin-top: 1rem;
     padding-bottom: 1rem;
-  }
-  .radios {
-    display: flex;
-    flex-direction: column;
-    gap: 0.625rem;
-  }
-  .radio {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-0_25);
-  }
-  .radio-hint {
-    padding-left: calc(1rem + var(--spacing-1));
-    font-size: 0.75rem;
-    color: var(--global-secondary-TextColor);
   }
 </style>

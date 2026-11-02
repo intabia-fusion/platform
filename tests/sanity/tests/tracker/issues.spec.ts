@@ -7,7 +7,7 @@ import { TrackerNavigationMenuPage } from '../model/tracker/tracker-navigation-m
 import { prepareNewIssueWithOpenByApiStep, prepareNewIssueWithOpenStep } from './common-steps'
 import { IssueCommentPopup } from '../model/tracker/issue-comment-popup'
 import { TEST_ESTIMATIONS } from './tracker.utils'
-import { readStoredCommentCount } from '../API/TrackerApi'
+import { connectTracker, deleteIssuesByTitlePrefix, readStoredCommentCount } from '../API/TrackerApi'
 import { retry } from '../retry'
 
 test.use({
@@ -47,6 +47,86 @@ test.describe('Tracker issue tests', () => {
 
     await prepareNewIssueWithOpenStep(page, newIssue)
     await issuesDetailsPage.checkIssue(newIssue)
+  })
+
+  test('FUSIO-1683: created issue toasts keep their width and show readable titles and actions', async ({ page }) => {
+    const prefix = `FUSIO-1683-toast-${generateId()}-`
+    const titles = [
+      prefix + 'Short',
+      prefix + 'Long issue title with spaces '.repeat(5).trimEnd(),
+      prefix + 'W'.repeat(160)
+    ]
+    const widths = new Map<number, number>()
+    const viewport = page.viewportSize()
+    const timeout = await page.evaluate(() => localStorage.getItem('#platform.notification.timeout'))
+    await issuesPage.notificationTimeoutSetting('60000')
+    try {
+      await issuesPage.linkSidebarAll().click()
+      await issuesPage.clickModelSelectorAll()
+      for (const title of titles) {
+        await page.setViewportSize({ width: 1280, height: 900 })
+        await issuesPage.createNewIssue({ title, description: '', projectName: 'Default' }, false)
+        const toast = page.locator('.notifyPopup').filter({ has: page.locator('.issue-title', { hasText: title }) })
+        await expect(toast).toBeVisible()
+        await expect(toast.locator('.issue-title')).toHaveAttribute('title', title)
+        await expect(toast.locator('.issue-title')).toHaveText(title)
+        await expect(toast.getByRole('button', { name: 'View issue', exact: true })).toBeVisible()
+        await expect(toast.getByRole('button', { name: 'Copy issue URL', exact: true })).toBeVisible()
+        for (const width of [1280, 360, 320]) {
+          await page.setViewportSize({ width, height: 900 })
+          await expect(async () => {
+            const geometry = await toast.evaluate((node) => {
+              const bounds = node.getBoundingClientRect()
+              const title = node.querySelector('.issue-title') as HTMLElement
+              const titleStyle = getComputedStyle(title)
+              const measuredLineHeight = parseFloat(titleStyle.lineHeight)
+              const lineHeight = Number.isNaN(measuredLineHeight)
+                ? parseFloat(titleStyle.fontSize) * 1.5
+                : measuredLineHeight
+              return {
+                width: bounds.width,
+                left: bounds.left,
+                right: bounds.right,
+                inside: bounds.left >= 0 && bounds.right <= window.innerWidth,
+                titleHeight: title.getBoundingClientRect().height,
+                lineHeight,
+                actions: [...node.querySelectorAll('.buttons button')].every((button) => {
+                  const rect = button.getBoundingClientRect()
+                  const label = button.querySelector('.label') as HTMLElement
+                  return (
+                    rect.width > 0 &&
+                    rect.left >= bounds.left &&
+                    rect.right <= bounds.right &&
+                    button.scrollWidth <= button.clientWidth &&
+                    label.scrollWidth <= label.clientWidth
+                  )
+                })
+              }
+            })
+            expect(geometry.inside, JSON.stringify({ width, geometry })).toBe(true)
+            expect(geometry.actions).toBe(true)
+            expect(geometry.titleHeight).toBeLessThanOrEqual(geometry.lineHeight * 2 + 1)
+            if (title !== titles[0]) expect(geometry.titleHeight).toBeGreaterThan(geometry.lineHeight)
+            if (widths.has(width)) expect(geometry.width).toBeCloseTo(widths.get(width) as number, 0)
+            else widths.set(width, geometry.width)
+          }).toPass()
+        }
+        await toast.locator('[data-id="btnNotifyClose"]').click()
+        await expect(toast).toHaveCount(0)
+      }
+    } finally {
+      await page.evaluate((timeout) => {
+        if (timeout === null) localStorage.removeItem('#platform.notification.timeout')
+        else localStorage.setItem('#platform.notification.timeout', timeout)
+      }, timeout)
+      if (viewport !== null) await page.setViewportSize(viewport)
+      const { client } = await connectTracker()
+      try {
+        await deleteIssuesByTitlePrefix(client, prefix)
+      } finally {
+        await client.close()
+      }
+    }
   })
 
   test('Edit an issue', async ({ page }) => {

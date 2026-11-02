@@ -13,11 +13,19 @@
 // limitations under the License.
 //
 
-import type { AccountUuid, Ref, Role, RolesAssignment } from '@hcengineering/core'
+import { systemAccountUuid, type AccountUuid, type Ref, type Role, type RolesAssignment } from '@hcengineering/core'
 
 /** Owners are always members. */
 export function mergeOwners (members: AccountUuid[], owners: AccountUuid[]): AccountUuid[] {
   return Array.from(new Set([...members, ...owners]))
+}
+
+/** Accounts outside the employee index need a Person lookup; the system has its own label. */
+export function missingMemberAccounts (
+  accounts: AccountUuid[],
+  employees: ReadonlyMap<AccountUuid, unknown>
+): AccountUuid[] {
+  return Array.from(new Set(accounts)).filter((account) => account !== systemAccountUuid && !employees.has(account))
 }
 
 /** A project needs an owner; a private one also needs a member and an owner among its members. */
@@ -38,13 +46,15 @@ export function removeFromRoles (assignment: RolesAssignment, removed: AccountUu
 
 /** Id of the owner entry next to the project type roles in a member's role list. */
 export const OWNER_ROLE = 'owner'
+export const MEMBER_ROLE = 'member'
 
 /** Role list ids of one member: the owner entry plus the type roles the member holds. */
 export function rowRoles (account: AccountUuid, owners: AccountUuid[], assignment: RolesAssignment): string[] {
   const held = Object.entries(assignment)
     .filter(([, accounts]) => accounts?.includes(account) === true)
     .map(([role]) => role)
-  return owners.includes(account) ? [OWNER_ROLE, ...held] : held
+  if (owners.includes(account)) return [OWNER_ROLE, ...held]
+  return held.length > 0 ? held : [MEMBER_ROLE]
 }
 
 /** Owners and role assignment after the member's role list was replaced with `selected`. */
@@ -54,10 +64,11 @@ export function applyRoles (
   owners: AccountUuid[],
   assignment: RolesAssignment
 ): { owners: AccountUuid[], assignment: RolesAssignment } {
+  if (selected.includes(MEMBER_ROLE)) selected = []
   const others = owners.filter((it) => it !== account)
   const nextAssignment: RolesAssignment = {}
   for (const role of new Set([...Object.keys(assignment), ...selected])) {
-    if (role === OWNER_ROLE) continue
+    if (role === OWNER_ROLE || role === MEMBER_ROLE) continue
     const accounts = assignment[role as Ref<Role>]
     const rest = (accounts ?? []).filter((it) => it !== account)
     nextAssignment[role as Ref<Role>] = selected.includes(role)
@@ -94,7 +105,12 @@ export function ownerChangeOps (
   members: AccountUuid[]
 ): AccessOps | undefined {
   if (wasOwner === isOwner) return undefined
-  if (!isOwner) return { $pull: { owners: { $in: [account] } } }
+  if (!isOwner) {
+    return {
+      $pull: { owners: { $in: [account] } },
+      ...(members.includes(account) ? {} : { $push: { members: account } })
+    }
+  }
   return { $push: { owners: account, ...(members.includes(account) ? {} : { members: account }) } }
 }
 

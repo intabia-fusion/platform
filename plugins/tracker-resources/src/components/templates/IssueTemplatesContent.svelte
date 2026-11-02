@@ -40,7 +40,7 @@
     props={{
       _class: tracker.class.IssueTemplate,
       config: preference?.config ?? viewlet.config,
-      options: viewlet.options,
+      options: space === undefined ? { ...viewlet.options, showArchived: true } : viewlet.options,
       createItemDialog,
       createItemLabel,
       viewOptions,

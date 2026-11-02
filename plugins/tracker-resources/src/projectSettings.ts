@@ -23,13 +23,13 @@ import type { Workflow } from '@hcengineering/workflow'
 const issuesSpecialId = 'issues'
 const templatesSpecialId = 'templates'
 
-function openProjectSpecial (project: Ref<Project>, special: string): void {
+function openProjectSpecial (project: Ref<Project>, special: string, query?: Record<string, string>): void {
   const loc = getCurrentLocation()
   loc.path[2] = trackerId
   loc.path[3] = project
   loc.path[4] = special
   loc.path.length = 5
-  loc.query = undefined
+  loc.query = query
   loc.fragment = undefined
   navigate(loc)
 }
@@ -50,7 +50,7 @@ export function closeProjectSettings (project: Ref<Project>): void {
 }
 
 export function openProjectTemplates (project: Ref<Project>): void {
-  openProjectSpecial(project, templatesSpecialId)
+  openProjectSpecial(project, templatesSpecialId, { fromProjectSettings: 'issues' })
 }
 
 // Same target as ProjectTypeSettingsLink, for buttons styled by the settings page itself;

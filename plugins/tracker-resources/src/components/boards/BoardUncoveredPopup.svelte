@@ -16,7 +16,7 @@
   import type { Ref, Status } from '@hcengineering/core'
   import type { ProjectType } from '@hcengineering/task'
   import type { Project } from '@hcengineering/tracker'
-  import ui, { Label } from '@hcengineering/ui'
+  import ui, { Label, Scroller } from '@hcengineering/ui'
   import { Button } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
@@ -37,13 +37,17 @@
 <div class="popup" data-id="boardUncoveredPopup">
   <span class="title"><Label label={tracker.string.StatusesWithoutColumnTitle} /></span>
   <span class="text"><Label label={tracker.string.StatusesWithoutColumnText} /></span>
-  {#each statuses as { status, project, projectType, count } (status._id)}
-    <div class="status">
-      <IssueStatusIcon value={status} space={project} {projectType} size="x-small" />
-      <span class="name">{status.name}</span>
-      <span class="count">{count}</span>
+  <Scroller shrink noStretch>
+    <div class="statuses">
+      {#each statuses as { status, project, projectType, count } (status._id)}
+        <div class="status">
+          <IssueStatusIcon value={status} space={project} {projectType} size="x-small" />
+          <span class="name">{status.name}</span>
+          <span class="count">{count}</span>
+        </div>
+      {/each}
     </div>
-  {/each}
+  </Scroller>
   <div class="actions">
     <Button
       kind="secondary"
@@ -79,11 +83,18 @@
     gap: 0.625rem;
     box-sizing: border-box;
     width: 23.75rem;
+    max-height: calc(100dvh - 2rem);
+    min-height: 0;
     padding: var(--spacing-2);
     background-color: var(--theme-popup-color);
     border: 1px solid var(--theme-popup-divider);
     border-radius: var(--medium-BorderRadius);
     box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.15);
+  }
+  .title,
+  .text,
+  .actions {
+    flex-shrink: 0;
   }
   .title {
     font-weight: 600;
@@ -94,6 +105,11 @@
     font-size: 0.8125rem;
     line-height: 1.25;
     color: var(--theme-dark-color);
+  }
+  .statuses {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
   }
   .status {
     display: flex;

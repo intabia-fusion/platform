@@ -96,7 +96,7 @@
   title={tracker.string.ProjectSettingsIssues}
   description={tracker.string.ProjectSettingsIssuesDescription}
 >
-  <div class="flex-col flex-gap-4" data-id="project-settings-issues">
+  <div class="flex-col flex-gap-4 w-full" data-id="project-settings-issues">
     <SettingRow kind="column" label={tracker.string.ProjectSettingsDefaultAssignee}>
       <div class="field">
         <ProjectAssigneeSelect value={assignee} onChange={setAssignee} />
@@ -134,6 +134,7 @@
 
 <style lang="scss">
   .field {
+    max-width: 100%;
     width: 15rem;
   }
 </style>

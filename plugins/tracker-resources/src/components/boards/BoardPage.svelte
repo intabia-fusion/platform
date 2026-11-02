@@ -15,11 +15,13 @@
 <script lang="ts">
   import type { Ref, Space } from '@hcengineering/core'
   import { getCurrentAccount } from '@hcengineering/core'
-  import { createQuery } from '@hcengineering/presentation'
+  import { createQuery, getClient } from '@hcengineering/presentation'
   import type { Board } from '@hcengineering/tracker'
-  import { canEditBoard, isBoardAvailable, pickDefaultBoard } from '@hcengineering/tracker'
-  import { BlankView, resolvedLocationStore } from '@hcengineering/ui'
-  import { boardLocation } from '../../boards'
+  import { canEditBoard, isBoardAvailable } from '@hcengineering/tracker'
+  import { BlankView, Component, resolvedLocationStore } from '@hcengineering/ui'
+  import workbench from '@hcengineering/workbench'
+  import view from '@hcengineering/view'
+  import { boardNavigationId, ensureBoardNavigation, reportBoardError } from '../../boards'
   import tracker from '../../plugin'
   import BoardSettings from './BoardSettings.svelte'
   import BoardView from './BoardView.svelte'
@@ -28,39 +30,52 @@
   export let currentSpace: Ref<Space> | undefined = undefined
   void currentSpace
 
+  const client = getClient()
+  let navigationReady = false
   const account = getCurrentAccount().uuid
 
   let boards: Board[] = []
   let loaded = false
-  let pinned = new Set<Ref<Board>>()
+  let navigation = new Set<Ref<Board>>()
 
   createQuery().query(tracker.class.Board, {}, (res) => {
     boards = res.filter((b) => isBoardAvailable(b, account))
     loaded = true
+    void ensureBoardNavigation(client, boards)
+      .then(() => {
+        navigationReady = true
+      })
+      .catch(reportBoardError)
   })
-  createQuery().query(tracker.class.BoardPreference, {}, (res) => {
-    pinned = new Set(res.map((p) => p.attachedTo))
+  createQuery().query(tracker.class.BoardNavigationPreference, { _id: boardNavigationId() }, (res) => {
+    navigation = new Set(res[0]?.boards ?? [])
   })
 
   $: boardId = $resolvedLocationStore.path[4] as Ref<Board> | undefined
   $: settingsOpen = $resolvedLocationStore.path[5] === 'settings'
   $: board = boards.find((b) => b._id === boardId)
 
-  // Without a board in the path the first one the user can see opens.
-  // The page sees the location of the next view before it unmounts: only `boards` itself redirects.
-  $: onBoards = $resolvedLocationStore.path[3] === 'boards'
-  $: if (loaded && onBoards && boardId === undefined) {
-    const first = pickDefaultBoard(boards, undefined, account, pinned)
-    if (first !== undefined) boardLocation(first._id)
-  }
-
   $: canEdit = board !== undefined && canEditBoard(board, account)
 </script>
 
-{#if board !== undefined && settingsOpen}
-  <BoardSettings {board} {boards} {canEdit} />
+{#if loaded && boardId === undefined}
+  <div class="hulyComponent" data-id="boardCatalog">
+    <Component
+      is={workbench.component.SpecialView}
+      props={{
+        _class: tracker.class.Board,
+        label: tracker.string.AllBoards,
+        icon: view.icon.List,
+        descriptors: [view.viewlet.Table],
+        defaultViewletDescriptor: view.viewlet.Table,
+        baseQuery: { _id: { $in: boards.map((item) => item._id) } }
+      }}
+    />
+  </div>
+{:else if board !== undefined && settingsOpen}
+  <BoardSettings {board} {boards} {canEdit} inNavigation={navigation.has(board._id)} {navigationReady} />
 {:else if board !== undefined}
-  <BoardView {board} {canEdit} />
+  <BoardView {board} {canEdit} inNavigation={navigation.has(board._id)} {navigationReady} />
 {:else if loaded}
   <div class="flex-col-center flex-grow">
     <BlankView

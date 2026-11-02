@@ -1,13 +1,13 @@
 // Settings layout inside the main panel: header with back link, vertical tabs, content column.
 
-// o: back title tabs[] tab actions[] close (X button at the right); subtabs[] subtab subLead (a second level of
+// o: back title titleActions[] tabs[] tab actions[] close (X button at the right); subtabs[] subtab subLead (a second level of
 // tabs above the content); returns content board (flex column) to fill
 kit.SettingsLayout = (main, o = {}) => {
   const w = main.width
   const head = kit.box('Settings header', { w, h: 56, dir: 'row', pad: [0, 16, 0, 16], align: 'center', justify: 'space-between' })
   const l = kit.row('left', 8)
   if (o.back) kit.add(l, kit.Button({ kind: 'ghost', size: 'small', icon: 'chevronL', label: o.back }), kit.box('sep', { w: 1, h: 20, fill: T('theme-divider-color') }))
-  kit.add(l, kit.text(o.title || '', { size: 16, weight: 600 }))
+  kit.add(l, o.titleActions || [], kit.text(o.title || '', { size: 16, weight: 600 }))
   kit.add(head, l, kit.add(kit.row('right', 8), o.actions || [], o.close ? kit.IconButton('x', { kind: 'ghost', size: 'small', name: 'Close settings' }) : []))
   kit.at(main, head, 0, 0)
   kit.at(main, kit.divider(w), 0, 56)

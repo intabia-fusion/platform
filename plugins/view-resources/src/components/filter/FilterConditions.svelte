@@ -69,7 +69,12 @@
         // Indexes key the live queries of nested filters: conditions of different rows must not collide.
         index: Math.floor(Math.random() * 1_000_000_000) + 1,
         onChange: (f: Filter) => {
-          filters.push(f)
+          const existing = filters.findIndex((filter) => filter.index === f.index)
+          if (existing === -1) {
+            filters.push(f)
+          } else {
+            filters[existing] = f
+          }
           emit()
         }
       },

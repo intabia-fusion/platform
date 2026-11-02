@@ -130,6 +130,7 @@
 
 <style lang="scss">
   .field {
+    max-width: 100%;
     width: 15rem;
   }
 </style>

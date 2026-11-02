@@ -105,13 +105,14 @@ kit.NavItem = (label, o = {}) => {
   return it
 }
 
-// Group header of the navigator (hulyNavGroup): chevron, label pill, optional "+" button
+// Group header of the navigator (hulyNavGroup): chevron, label pill, optional catalog and "+" buttons
 kit.NavGroupHeader = (label, o = {}) => {
   const h = kit.box('NavGroup ' + label, { w: 279, h: 42, pad: [0, 0, 0, 0] })
   kit.at(h, kit.add(kit.box('chevron', { w: 20, h: 20, dir: 'row', align: 'center', justify: 'center', radius: 4 }), kit.icon('kit/CaretDownFill', T('global-tertiary-TextColor'))), 18, 11)
   const pill = kit.box('label', { w: 10, h: 20, dir: 'row', pad: [0, 4, 0, 4], align: 'center', hs: 'auto', radius: 4, fill: T('global-ui-BackgroundColor') })
   kit.at(h, kit.add(pill, kit.text(label, { size: 12, weight: 500, lh: 1.33, upper: true, color: T('global-secondary-TextColor') })), 40, 11)
-  if (o.add) kit.at(h, kit.add(kit.box('add', { w: 24, h: 24, dir: 'row', align: 'center', justify: 'center', radius: 4 }), kit.icon('kit/Plus', T('button-tertiary-IconColor'))), 237, 9)
+  if (o.add) kit.at(h, kit.add(kit.box('add', { w: 24, h: 24, dir: 'row', align: 'center', justify: 'center', radius: 4 }), kit.icon('kit/Plus', T('button-tertiary-IconColor'))), o.catalog ? 209 : 237, 9)
+  if (o.catalog) kit.at(h, kit.IconButton(o.catalog.icon, { kind: 'tertiary', size: 'extra-small', name: o.catalog.label }), 237, 9)
   return h
 }
 
@@ -136,7 +137,7 @@ kit.NavCaption = (label, highlighted, o = {}) => {
 }
 
 // Navigator panel. o.nav items: { item, icon, selected, indent, count } | { divider } |
-// { group, add } | { caption, chevron, menu } | { space, icon, color }; o.footer: [{ item, icon }] under the footer line;
+// { group, add, catalog: { label, icon } } | { caption, chevron, menu } | { space, icon, color }; o.footer: [{ item, icon }] under the footer line;
 // o.tools: icon names of the buttons right of the title
 kit.Navigator = (h, o = {}) => {
   const nav = kit.box('Navigator', { w: NAV_W, h, fill: T('theme-navpanel-color') })

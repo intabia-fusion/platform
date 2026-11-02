@@ -23,6 +23,7 @@
 
 - Диалог `CreateIssue.svelte` (`tracker.component.CreateIssue`) собирает `IssueDraft` (`plugins/tracker/src/index.ts`, включает `assistConversation?: Ref<Doc>` - возврат к драфту восстанавливает диалог с AI-ассистентом).
 - Общий хелпер `tracker.function.CreateIssue(client, project, NewIssue) -> CreatedIssue` (`plugins/tracker/src/index.ts`) создаёт задачи из других плагинов без зависимости от `tracker-resources`.
+- Уведомление `IssueNotification.svelte` показывает название задачи максимум в две строки; полный текст доступен через `title`. Общий `NotificationToast.svelte` имеет ширину 25rem с ограничением по экрану; кнопки переносятся при нехватке места.
 
 ### Учёт времени: TimeSpendReport -> Issue.reportedTime
 
@@ -195,6 +196,7 @@
 | Дерево подзадач | task-tracking/creating-issues | task-tracking/creating-issues | partial | 0.8.60 | не описано создание подзадачи из уже существующей (действие «Добавить подзадачу»), только указание родителя при создании |
 | Связи между issues | task-tracking/related-issues, people-contacts/connecting-tasks | task-tracking/related-issues, people-contacts/connecting-tasks | ok | 0.8.60 | |
 | AI-ассистент при создании | - | - | plan | - | |
+| Уведомление о создании задачи | - | - | plan | - | |
 | Шаблоны задач | task-tracking/issue-templates | task-tracking/issue-templates | ok | 0.8.60 | |
 | Копирование ID, названия, ссылки и описания задачи | - | - | plan | - | |
 | Шапка и меню открытой задачи | - | - | plan | - | |

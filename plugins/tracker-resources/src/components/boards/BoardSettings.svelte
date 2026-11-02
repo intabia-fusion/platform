@@ -14,17 +14,32 @@
 -->
 <script lang="ts">
   import contact from '@hcengineering/contact'
-  import type { Data, Ref } from '@hcengineering/core'
+  import { getCurrentAccount, type Data, type Ref } from '@hcengineering/core'
   import { getEmbeddedLabel, type Asset, type IntlString } from '@hcengineering/platform'
-  import { createQuery, getClient, isDisabled } from '@hcengineering/presentation'
+  import { createQuery, getClient, isDisabled, MessageBox } from '@hcengineering/presentation'
   import task, { getStates } from '@hcengineering/task'
   import { typeStore } from '@hcengineering/task-resources'
   import type { Board, Project } from '@hcengineering/tracker'
-  import ui, { BlankView, Header, Label, NavItem, Scroller, getCurrentResolvedLocation } from '@hcengineering/ui'
+  import ui, {
+    BlankView,
+    Header,
+    Label,
+    NavItem,
+    Scroller,
+    getCurrentResolvedLocation,
+    showPopup
+  } from '@hcengineering/ui'
   import { Button, Dropdown, IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import { statusStore } from '@hcengineering/view-resources'
-  import { BoardEditor, boardLocation, reportBoardError } from '../../boards'
+  import {
+    BoardEditor,
+    boardLocation,
+    canDeleteBoard,
+    reportBoardError,
+    setBoardInNavigation,
+    shareBoard
+  } from '../../boards'
   import tracker from '../../plugin'
   import CardTab from './settings/CardTab.svelte'
   import ColumnsTab from './settings/ColumnsTab.svelte'
@@ -35,6 +50,11 @@
   export let board: Board
   export let boards: Board[]
   export let canEdit: boolean
+  export let inNavigation: boolean
+  export let navigationReady: boolean
+
+  let sharing = false
+  let updatingNavigation = false
 
   const client = getClient()
 
@@ -109,19 +129,72 @@
       on:click={back}
     />
     <div class="hulyHeader-divider" />
+    <Dropdown
+      data-id="boardSettingsSwitcher"
+      kind="ghost"
+      size="small"
+      icon={task.icon.Kanban}
+      items={boardItems}
+      selected={current._id}
+      on:selected={(e) => {
+        switchBoard(e.detail)
+      }}
+    />
     <span class="title"><Label label={tracker.string.BoardSettings} /></span>
     <svelte:fragment slot="actions">
-      <Dropdown
-        data-id="boardSettingsSwitcher"
+      {#if !inNavigation}
+        <Button
+          data-id="boardAddToNavigation"
+          kind="secondary"
+          size="small"
+          disabled={!navigationReady}
+          loading={updatingNavigation}
+          label={tracker.string.AddBoardToNavigation}
+          on:click={() => {
+            if (updatingNavigation) return
+            updatingNavigation = true
+            void setBoardInNavigation(client, board._id, true)
+              .catch(reportBoardError)
+              .finally(() => {
+                updatingNavigation = false
+              })
+          }}
+        />
+      {/if}
+      <Button
+        data-id="boardShare"
         kind="ghost"
         size="small"
-        icon={task.icon.Kanban}
-        items={boardItems}
-        selected={current._id}
-        on:selected={(e) => {
-          switchBoard(e.detail)
+        label={tracker.string.ShareBoard}
+        loading={sharing}
+        on:click={() => {
+          if (sharing) return
+          sharing = true
+          void shareBoard(board)
+            .catch(reportBoardError)
+            .finally(() => {
+              sharing = false
+            })
         }}
       />
+      {#if canDeleteBoard(board, getCurrentAccount().uuid)}
+        <IconButton
+          data-id="boardSettingsDelete"
+          kind="ghost"
+          size="small"
+          icon={ui.icon.Trash}
+          tooltip={{ label: tracker.string.DeleteBoard }}
+          on:click={() => {
+            showPopup(MessageBox, {
+              label: tracker.string.DeleteBoard,
+              message: tracker.string.DeleteBoardConfirm,
+              action: async () => {
+                await client.remove(board)
+              }
+            })
+          }}
+        />
+      {/if}
       <IconButton
         data-id="boardSettingsClose"
         kind="ghost"
@@ -153,7 +226,7 @@
         {/each}
       </div>
       <div class="hulyComponent-content__column content">
-        <Scroller padding="1.5rem 2rem">
+        <Scroller padding="var(--board-settings-padding, 1.5rem 2rem)">
           {#if tab === 'general'}
             <GeneralTab board={current} {projects} {onChange} />
           {:else if tab === 'members'}
@@ -193,5 +266,77 @@
     width: 14.5rem;
     padding-top: var(--spacing-1);
     border-right: 1px solid var(--theme-divider-color);
+  }
+
+  .content {
+    min-width: 0;
+    flex: 1;
+  }
+  .board-settings {
+    min-width: 0;
+    container-type: inline-size;
+  }
+  .columns {
+    min-height: 0;
+  }
+  @container (max-width: 42rem) {
+    .columns {
+      flex-direction: column;
+    }
+    .nav {
+      flex-direction: row;
+      height: auto;
+      width: 100%;
+      overflow-x: scroll;
+      scrollbar-width: auto;
+      scrollbar-gutter: stable;
+      border-right: 0;
+      border-bottom: 1px solid var(--theme-divider-color);
+    }
+    .navItem {
+      flex-shrink: 0;
+    }
+    .content {
+      --board-settings-padding: 1rem;
+      min-height: 0;
+      height: auto;
+    }
+    .board-settings .content :global(.setting-row--column .setting-row__main) {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .board-settings .content :global(.setting-row--column .setting-row__caption),
+    .board-settings .content :global(.setting-row--column .setting-row__control) {
+      width: 100%;
+    }
+    .board-settings :global(.hulyHeader-container) {
+      flex-shrink: 0;
+      flex-wrap: wrap;
+      gap: var(--spacing-1);
+      padding-block: var(--spacing-1);
+      overflow: visible;
+    }
+    .board-settings :global(.hulyHeader-titleGroup),
+    .board-settings :global(.hulyHeader-buttonsGroup.actions) {
+      flex-wrap: wrap;
+      flex-basis: 100%;
+    }
+    .board-settings :global(.hulyHeader-titleGroup > *),
+    .board-settings :global(.hulyHeader-buttonsGroup.actions > *) {
+      max-width: 100%;
+    }
+    .title {
+      overflow-wrap: anywhere;
+    }
+  }
+  .content :global(.section),
+  .content :global(.rows),
+  .content :global(.setting-row) {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .content :global(.setting-row__label),
+  .content :global(.description) {
+    overflow-wrap: anywhere;
   }
 </style>
