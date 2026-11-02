@@ -17,13 +17,7 @@
   import type { Project } from '@hcengineering/tracker'
   import { getCategoryValues, statusStore } from '@hcengineering/view-resources'
   import StatusPresenter from './StatusPresenter.svelte'
-  import {
-    activeProjects,
-    getSuffixes,
-    selectedTaskTypeStore,
-    taskTypeStore,
-    typeStore
-  } from '@hcengineering/task-resources'
+  import { activeProjects, getSuffixes, taskTypeStore, typeStore } from '@hcengineering/task-resources'
 
   export let value: Ref<Status> | undefined
   export let space: Ref<Project>
@@ -44,14 +38,4 @@
       : undefined
 </script>
 
-<StatusPresenter
-  {space}
-  value={statusValue}
-  {size}
-  {kind}
-  {colorInherit}
-  {accent}
-  {nameSuffix}
-  on:accent-color
-  taskType={$selectedTaskTypeStore}
-/>
+<StatusPresenter {space} value={statusValue} {size} {kind} {colorInherit} {accent} {nameSuffix} on:accent-color />

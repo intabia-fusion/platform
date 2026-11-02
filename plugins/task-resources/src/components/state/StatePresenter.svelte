@@ -20,12 +20,7 @@
   import { getEmbeddedLabel, type Asset } from '@hcengineering/platform'
   import { IconWithEmoji, getClient, reduceCalls } from '@hcengineering/presentation'
   import type { Project, ProjectType, TaskType } from '@hcengineering/task'
-  import task, {
-    getSingleQueryKind,
-    getSingleStatusTaskType,
-    getStatusIconPosition,
-    getTaskTypeStatusIconPosition
-  } from '@hcengineering/task'
+  import task, { getStatusIconPosition } from '@hcengineering/task'
   import type { ColorDefinition, IconSize } from '@hcengineering/ui'
   import {
     Icon,
@@ -36,14 +31,13 @@
     tooltip
   } from '@hcengineering/ui'
   import view from '@hcengineering/view'
-  import { getCategoryValues, getStatusIconScope, statusStore } from '@hcengineering/view-resources'
+  import { statusStore } from '@hcengineering/view-resources'
   import { createEventDispatcher, onMount } from 'svelte'
   import { selectedTypeStore, taskTypeStore, typeStore } from '../..'
   import IconBacklog from '../icons/IconBacklog.svelte'
   import IconCanceled from '../icons/IconCanceled.svelte'
   import IconCompleted from '../icons/IconCompleted.svelte'
   import IconStarted from '../icons/IconStarted.svelte'
-  import IconStartedRing from '../icons/IconStartedRing.svelte'
   import IconUnstarted from '../icons/IconUnstarted.svelte'
 
   export let value: Status | undefined
@@ -57,7 +51,7 @@
   export let accent: boolean = false
   export let shrink: number = 1
   export let space: Ref<Project> | undefined = undefined
-  export let projectType: Ref<ProjectType> | undefined = $selectedTypeStore
+  export let projectType: Ref<ProjectType> | undefined = undefined
   export let taskType: Ref<TaskType> | undefined = undefined
   export let size: IconSize = 'small'
   export let kind: 'table-attrs' | undefined = undefined
@@ -67,9 +61,15 @@
   const dispatch = createEventDispatcher()
 
   let type: ProjectType | undefined = undefined
+  let typeRequest = 0
   let category: StatusCategory | undefined
 
-  $: void getType(space, projectType, $typeStore)
+  $: taskProjectType = taskType !== undefined ? $taskTypeStore.get(taskType)?.parent : undefined
+  $: void getType(
+    space,
+    projectType ?? (space === undefined ? (taskProjectType ?? $selectedTypeStore) : undefined),
+    $typeStore
+  )
 
   const client = getClient()
 
@@ -78,6 +78,7 @@
     projectType: Ref<ProjectType> | undefined,
     types: IdMap<ProjectType>
   ): Promise<ProjectType | undefined> {
+    const request = ++typeRequest
     if (projectType !== undefined) {
       type = types.get(projectType)
       return
@@ -87,6 +88,7 @@
       return
     }
     const _space = await client.findOne(task.class.Project, { _id: space })
+    if (request !== typeRequest) return
     if (_space === undefined) {
       type = undefined
       return
@@ -117,30 +119,10 @@
     [task.statusCategory.Lost]: IconCanceled
   }
 
-  // Lists and kanbans mixing task types show the project-wide position as a ring
-  const iconScope = getStatusIconScope()
-  const categoryValues = getCategoryValues()
-
-  $: scopeStatusIds = ($categoryValues ?? []).filter((it): it is Ref<Status> => typeof it === 'string')
-  // ProjectType.statusOrder orders the groups, TaskType.statuses would draw another order
-  $: scopeTaskType =
-    iconScope === undefined
-      ? taskType
-      : type?.statusOrder !== undefined
-        ? undefined
-        : (getSingleQueryKind($iconScope?.kind) ?? getSingleStatusTaskType(type, $taskTypeStore, scopeStatusIds))
-  $: taskTypePosition =
-    value !== undefined && scopeTaskType !== undefined
-      ? getTaskTypeStatusIconPosition($taskTypeStore.get(scopeTaskType), $statusStore.byId, value._id)
-      : undefined
-  $: projectMode = taskTypePosition === undefined
   $: position =
-    taskTypePosition ??
-    (value !== undefined ? getStatusIconPosition(type, $taskTypeStore, $statusStore.byId, value._id) : undefined)
+    value !== undefined ? getStatusIconPosition(type, $taskTypeStore, $statusStore.byId, value._id) : undefined
   $: index = position?.index ?? 0
   $: count = position?.count ?? 1
-  // Index 0 means no position (unknown project type or status): a ring would be empty
-  $: activeIcon = projectMode && index > 0 ? IconStartedRing : IconStarted
 
   $: emojiIcon = projectState?.icon === view.ids.IconWithEmoji
   $: icon = emojiIcon ? IconWithEmoji : projectState?.icon
@@ -168,7 +150,7 @@
         <Icon {icon} {size} {iconProps} />
       {:else if category?._id === task.statusCategory.Active}
         <Icon
-          icon={activeIcon}
+          icon={IconStarted}
           {size}
           iconProps={{
             index,
@@ -206,7 +188,7 @@
             <Icon {icon} {size} iconProps={{ icon: projectState?.color ?? value?.color ?? category?.color }} />
           {:else if category?._id === task.statusCategory.Active}
             <Icon
-              icon={activeIcon}
+              icon={IconStarted}
               {size}
               iconProps={{
                 index,

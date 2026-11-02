@@ -61,12 +61,20 @@ kit.IconButton = (icon, o = {}) => kit.Button({ ...o, icon, label: undefined, na
 // Status icon by category: backlog (UnStarted) | todo (ToDo) | active | won | lost;
 // palette overrides the category color for statuses with their own color
 kit.CATEGORY = { backlog: 'Cloud', todo: 'Porpoise', active: 'Cerulean', won: 'Grass', lost: 'Coin' }
-kit.StatusIcon = (cat, size = 14, palette) => {
+kit.StatusIcon = (cat, size = 14, palette, name) => {
   const c = P(palette || kit.CATEGORY[cat])
+  if (cat === 'active') {
+    const statuses = DEMO.en.statuses.filter((status) => status.category === cat)
+    const index = statuses.findIndex((status) => status.name === name) + 1
+    const count = statuses.length + 1
+    const angle = index > 0 ? (2 * Math.PI * index) / count : Math.PI
+    const large = index > 0 ? (index > (count - 1) / 2 ? 1 : 0) : 1
+    const sector = `M 9 9 L 18 9 A 9 9 0 ${large} 1 ${Math.cos(angle - 0.01) * 9 + 9} ${Math.sin(angle - 0.01) * 9 + 9} Z`
+    return kit.svg(`<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 32 32" fill="${c}"><g transform="rotate(-90 16 16)"><path fill-rule="evenodd" d="M16 2a14 14 0 1 1 0 28a14 14 0 0 1 0-28zm0 2a12 12 0 1 0 0 24a12 12 0 0 0 0-24z"/><path d="${sector}" transform="translate(7,7)"/></g></svg>`, 'StatusIcon/' + cat)
+  }
   const r = size / 2 - 1
   const m = size / 2
   let inner = ''
-  if (cat === 'active') inner = `<path d="M${m} ${m} L${m} 3 A${r - 2} ${r - 2} 0 0 1 ${size - 3} ${m} Z" fill="${c}"/>`
   if (cat === 'won') inner = `<circle cx="${m}" cy="${m}" r="${r}" fill="${c}"/><path d="M${m - 3} ${m + 0.2} L${m - 0.8} ${m + 2.4} L${m + 3} ${m - 2}" stroke="#fff" stroke-width="1.5" fill="none"/>`
   if (cat === 'lost') inner = `<circle cx="${m}" cy="${m}" r="${r}" fill="${c}"/><path d="M${m - 2} ${m - 2} L${m + 2} ${m + 2} M${m + 2} ${m - 2} L${m - 2} ${m + 2}" stroke="#fff" stroke-width="1.5"/>`
   const dash = cat === 'backlog' ? 'stroke-dasharray="2 1.6"' : ''
@@ -125,7 +133,7 @@ kit.StatusChip = (name, cat, o = {}) => {
   const b = kit.box('StatusChip/' + name, { w: 10, h: o.h || 20, dir: 'row', gap: 4, pad: o.pill ? [0, 8, 0, 6] : [0, 6, 0, 4], align: 'center', hs: o.w ? 'fix' : 'auto', radius: o.pill ? 12 : 4, fill: o.fill || T('theme-button-hovered'), stroke: o.stroke })
   if (o.w) b.resize(o.w, o.h || 20)
   if (o.drag) kit.add(b, kit.icon('drag', T('theme-darker-color'), 14))
-  kit.add(b, kit.StatusIcon(cat, 12), kit.text(name, { size: o.size || 11, color: T('theme-content-color') }))
+  kit.add(b, kit.StatusIcon(cat, 12, undefined, name), kit.text(name, { size: o.size || 11, color: T('theme-content-color') }))
   if (o.count !== undefined) kit.add(b, kit.text(String(o.count), { size: o.size || 11, color: T('theme-darker-color') }))
   return b
 }

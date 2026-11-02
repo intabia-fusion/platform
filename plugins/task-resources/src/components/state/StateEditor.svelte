@@ -21,7 +21,6 @@
   import { statusStore } from '@hcengineering/view-resources'
   import StatePresenter from './StatePresenter.svelte'
   import StatesPopup from './StatesPopup.svelte'
-  import { selectedTaskTypeStore, selectedTypeStore } from '../../index'
 
   export let value: Ref<Status>
   export let space: Ref<Project>
@@ -52,16 +51,7 @@
 </script>
 
 {#if kind === 'list' || kind === 'list-header'}
-  <StatePresenter
-    value={state}
-    {space}
-    {shouldShowName}
-    {disabled}
-    shouldShowTooltip
-    on:click={handleClick}
-    taskType={$selectedTaskTypeStore}
-    projectType={$selectedTypeStore}
-  />
+  <StatePresenter value={state} {space} {shouldShowName} {disabled} shouldShowTooltip on:click={handleClick} />
 {:else}
   <Button {kind} {size} {width} {justify} {shrink} {disabled} on:click={handleClick}>
     <svelte:fragment slot="content">

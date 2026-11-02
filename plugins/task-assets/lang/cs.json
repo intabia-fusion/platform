@@ -1,5 +1,9 @@
 {
   "string": {
+    "TaskTypeStatusOrderWarning": "Pořadí stavů se liší od typu projektu. Toto pořadí můžete zachovat, ale vyplnění ikon stavů se řídí pořadím typu projektu.",
+    "ExportSingleTaskTypeDescription": "Exportovat konfiguraci pouze tohoto typu úkolu (včetně všech stavů a atributů)",
+    "ParentOf": "Rodič",
+    "ChildOf": "Podúkol",
     "Description": "Popis",
     "DescriptionPlaceholder": "Popis",
     "ShortDescription": "Krátký popis",

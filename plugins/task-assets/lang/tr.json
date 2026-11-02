@@ -1,5 +1,9 @@
 {
   "string": {
+    "TaskTypeStatusOrderWarning": "Durumların sırası, proje tipindeki sıradan farklıdır. Bu sırayı koruyabilirsiniz, ancak durum simgelerinin dolgusu proje tipindeki sıraya göre belirlenir.",
+    "ExportSingleTaskTypeDescription": "Yalnızca bu görev türünün yapılandırmasını dışa aktar (tüm durumlar ve nitelikler dahil)",
+    "ParentOf": "Üst görev",
+    "ChildOf": "Alt görev",
     "Description": "Açıklama",
     "DescriptionPlaceholder": "Açıklama",
     "ShortDescription": "Kısa açıklama",

@@ -18,6 +18,7 @@ import { type IdMap, type Ref, type Status, type StatusCategory } from '@hcengin
 import task, { type ProjectType, type TaskType } from '../index'
 import {
   getOrderedTaskTypes,
+  hasTaskTypeStatusOrderMismatch,
   getSingleQueryKind,
   getSingleStatusTaskType,
   getStatusCategoryOrder,
@@ -83,6 +84,27 @@ describe('getStatusIconPosition', () => {
     )
     expect(sorted).toEqual(['todo', 'review', 'done'])
     expect(byIcon).toEqual(sorted)
+  })
+})
+
+describe('hasTaskTypeStatusOrderMismatch', () => {
+  it('warns for a reordered subset without changing its order or the project icons', () => {
+    const project = { ...type, statusOrder: [ref('todo'), ref('review'), ref('done')] }
+    const reordered = tt('subset', 'Subset', ['done', 'todo'])
+    expect(hasTaskTypeStatusOrderMismatch(project, reordered, taskTypes, statuses)).toBe(true)
+    expect(reordered.statuses).toEqual(['done', 'todo'])
+    expect(getStatusIconPosition(project, taskTypes, statuses, ref('done'))).toEqual({ index: 3, count: 4 })
+    expect(hasTaskTypeStatusOrderMismatch(project, tt('subset', 'Subset', ['todo', 'done']), taskTypes, statuses)).toBe(
+      false
+    )
+  })
+
+  it('compares only the relative order within each category, using the project fallback', () => {
+    expect(hasTaskTypeStatusOrderMismatch(type, b, taskTypes, statuses)).toBe(true)
+    expect(
+      hasTaskTypeStatusOrderMismatch(type, tt('mixed', 'Mixed', ['closed', 'todo', 'done']), taskTypes, statuses)
+    ).toBe(false)
+    expect(hasTaskTypeStatusOrderMismatch(type, undefined, taskTypes, statuses)).toBe(false)
   })
 })
 

@@ -47,6 +47,7 @@ await kit.page(typeof PAGE_NAME === 'string' ? PAGE_NAME : '2. Создание 
         return {
           id: i.id,
           cat: st.category,
+          statusName: i.status,
           title: i.title,
           priority: i.priority,
           ...(p !== undefined ? { assignee: [p.initials, p.color] } : {}),

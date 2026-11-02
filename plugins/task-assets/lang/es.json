@@ -1,5 +1,9 @@
 {
   "string": {
+    "TaskTypeStatusOrderWarning": "El orden de los estados difiere del tipo de proyecto. Puede mantener este orden, pero el relleno de los iconos de estado sigue el orden del tipo de proyecto.",
+    "ExportSingleTaskTypeDescription": "Exportar la configuración solo de este tipo de tarea (con todos los estados y atributos)",
+    "ParentOf": "Padre",
+    "ChildOf": "Subtarea",
     "Description": "Descripción",
     "DescriptionPlaceholder": "Descripción",
     "ShortDescription": "Descripción corta",

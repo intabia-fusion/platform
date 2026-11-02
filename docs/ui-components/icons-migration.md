@@ -30,7 +30,7 @@
 - Иконки с логикой остаются компонентами поверх символов кита: статусы task (`IconBacklog`, `IconUnstarted`,
   `IconStarted`, `IconCompleted`, `IconCanceled` - цвет палитры по номеру, сектор прогресса), time `Priority`,
   rating `StarMark` (золото, анимация), `ConnectionStatus`, controlled-documents `DocumentIcon` (на него ссылается модель).
-  `IconStartedRing`, view `UpDown` и desktop-downloads `DownloadProgress` (кольцо прогресса толще линии кита) нарисованы
+  View `UpDown` и desktop-downloads `DownloadProgress` (кольцо прогресса толще линии кита) нарисованы
   на сетке 32 своим svg.
 - svg, собранный в DOM-коде (`drawing.ts`, декорации таблиц и codeblock text-editor, `PlatformIcon` логина), ссылается на
   символ кита через `<use href="${getMetadata(ui.icon.X)}">`. Исключение - значок в подписи диаграммы `TaskTypeDiagram`:

@@ -18,9 +18,7 @@ import collected, { type PlatformIcon } from 'virtual:platform-icons'
 // Components whose shape comes from props: their markup drawn for 2 of 3 steps, as the drafts are.
 const SAMPLES: Record<string, string> = {
   'plugins/task-resources/src/components/icons/IconStarted.svelte#IconStarted':
-    '<svg fill="currentColor" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><g transform="rotate(-90 16 16)"><path fill-rule="evenodd" d="M16 2a14 14 0 1 1 0 28a14 14 0 0 1 0-28zm0 2a12 12 0 1 0 0 24a12 12 0 0 0 0-24z"/><path d="M 9 9 L 18 9 A 9 9 0 1 1 0 9.09 Z" transform="translate(7,7)"/></g></svg>',
-  'plugins/task-resources/src/components/icons/IconStartedRing.svelte#IconStartedRing':
-    '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><g transform="rotate(-90 16 16)"><path d="M 28.925 17.397 A 13 13 0 0 1 10.748 27.892" fill="none" stroke="currentColor" stroke-width="4" opacity="1"/><path d="M 8.328 26.494 A 13 13 0 0 1 8.328 5.506" fill="none" stroke="currentColor" stroke-width="4" opacity="1"/><path d="M 10.748 4.108 A 13 13 0 0 1 28.925 14.603" fill="none" stroke="currentColor" stroke-width="4" opacity="0.3"/></g></svg>'
+    '<svg fill="currentColor" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><g transform="rotate(-90 16 16)"><path fill-rule="evenodd" d="M16 2a14 14 0 1 1 0 28a14 14 0 0 1 0-28zm0 2a12 12 0 1 0 0 24a12 12 0 0 0 0-24z"/><path d="M 9 9 L 18 9 A 9 9 0 1 1 0 9.09 Z" transform="translate(7,7)"/></g></svg>'
 }
 
 const icons = collected.map((icon) => {

@@ -14,8 +14,6 @@
 
   export let count: number | undefined = undefined
   export let index: number | undefined = undefined
-  // Dashed outline instead of the solid one, marks the project-wide position
-  export let dashed: boolean = false
 
   $: color = getPlatformColorDef(fill, $themeStore.dark)
   $: dispatchAccentColor(color)
@@ -33,7 +31,7 @@
   viewBox="0 0 32 32"
   xmlns="http://www.w3.org/2000/svg"
 >
-  <use href={getMetadata(dashed ? ui.icon.CircleDashed : ui.icon.Circle)} width="32" height="32" />
+  <use href={getMetadata(ui.icon.Circle)} width="32" height="32" />
   {#if count !== undefined && index}
     <path
       d="M 9 9 L 18 9 A 9 9 0 {index > (count - 1) / 2 ? 1 : 0} 1 {Math.cos(((2 * Math.PI) / count) * index - 0.01) *

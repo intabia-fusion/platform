@@ -38,12 +38,12 @@ kit.IssueCard = (d, w = 278) => {
     let title = d.title
     while (title.length > 1 && kit.textWidth(title, 13) > room) title = title.slice(0, -1)
     if (title !== d.title) title = title.trimEnd() + '…'
-    kit.add(row, kit.StatusIcon(d.cat, 16, d.color), txt(d.id, 12, T('theme-darker-color')), txt(title, 13, T('theme-caption-color'), { name: 'title' }), avatar())
+    kit.add(row, kit.StatusIcon(d.cat, 16, d.color, d.statusName), txt(d.id, 12, T('theme-darker-color')), txt(title, 13, T('theme-caption-color'), { name: 'title' }), avatar())
     return kit.add(card, row)
   }
   if (density === 'compact') {
     const row = kit.box('title row', { w: inner, h: 20, dir: 'row', gap: 6, vs: 'auto', align: 'start' })
-    kit.add(row, kit.StatusIcon(d.cat, 16, d.color), txt(d.title, 13, T('theme-caption-color'), { weight: 500, w: inner - 16 - 20 - 12, name: 'title' }), avatar())
+    kit.add(row, kit.StatusIcon(d.cat, 16, d.color, d.statusName), txt(d.title, 13, T('theme-caption-color'), { weight: 500, w: inner - 16 - 20 - 12, name: 'title' }), avatar())
     const meta = kit.box('meta', { w: inner, h: 20, dir: 'row', gap: 8, align: 'center', hs: 'auto', vs: 'auto' })
     kit.add(meta, txt(d.id, 12, T('theme-darker-color')), kit.PriorityIcon(d.priority || 'none'))
     if (d.sub) kit.add(meta, kit.icon(ic.sub, dark, 14))
@@ -59,7 +59,7 @@ kit.IssueCard = (d, w = 278) => {
   if (d.parent) kit.add(left, txt('› ' + d.parent, 12, T('theme-darker-color'), { name: 'parent' }))
   kit.add(top, left, avatar())
   const title = kit.box('title row', { w: inner, h: 20, dir: 'row', gap: 8, vs: 'auto', align: 'start' })
-  kit.add(title, kit.StatusIcon(d.cat, 16, d.color), txt(d.title, 14, T('theme-caption-color'), { weight: 500, w: inner - 24, name: 'title' }))
+  kit.add(title, kit.StatusIcon(d.cat, 16, d.color, d.statusName), txt(d.title, 14, T('theme-caption-color'), { weight: 500, w: inner - 24, name: 'title' }))
   const chips = kit.box('chips', { w: inner, h: 20, dir: 'row', gap: 6, wrap: true, vs: 'auto', align: 'start' })
   kit.add(chips, pill('priority', kit.PriorityIcon(d.priority || 'none')))
   if (d.sub) kit.add(chips, pill('sub-issues', [kit.icon(ic.sub, dark, 14), txt(d.sub, 12, dark)]))
@@ -85,7 +85,7 @@ kit.ColumnHeader = (name, cat, count, w = 294, o = {}) => {
   const pal = kit.statusPalette(cat, o.color)
   const h = kit.box('ColumnHeader ' + name, { w, h: 40, dir: 'row', pad: [0, o.tools ? 4 : 8, 0, 20], align: 'center', justify: 'space-between', fill: PB(pal), stroke: T('theme-divider-color'), radius: 4 })
   const l = kit.row('title', 8)
-  if (cat) kit.add(l, kit.StatusIcon(cat, 14, pal))
+  if (cat) kit.add(l, kit.StatusIcon(cat, 14, pal, o.statuses === undefined ? name : o.statuses.length === 1 ? o.statuses[0][0] : undefined))
   kit.add(l, kit.text(name, { size: 14, weight: 500, color: PT(pal) }), kit.text(String(count), { size: 14, color: T('theme-dark-color') }))
   if (o.limit) kit.add(l, kit.text('/ ' + o.limit, { size: 14, color: o.over ? T('theme-state-negative-color') : T('theme-darker-color') }))
   kit.add(h, l)
@@ -161,7 +161,7 @@ kit.IssueRow = (d, w = 1481, o = {}) => {
   kit.add(row, kit.add(kit.box('check', { w: 16, h: 16, dir: 'row', radius: 4, stroke: T('theme-checkbox-border') })), kit.spacer(4, 1))
   kit.add(row, fixed('priority', 16, 16, kit.PriorityIcon(d.priority || 'none')))
   kit.add(row, fixed('id', cols.id, 18, kit.text(d.id, { size: 14, color: half })))
-  kit.add(row, kit.add(kit.box('status', { w: 30, h: 16, dir: 'row', pad: [0, 0, 0, 14] }), kit.StatusIcon(d.cat, 16, d.color)))
+  kit.add(row, kit.add(kit.box('status', { w: 30, h: 16, dir: 'row', pad: [0, 0, 0, 14] }), kit.StatusIcon(d.cat, 16, d.color, d.statusName)))
   kit.add(row, kit.text(d.title, { size: 14, color: T('theme-caption-color'), name: 'title' }))
   if (d.sub) kit.add(row, kit.Chip([kit.icon('subissues', undefined, 14), kit.text(d.sub, { size: 12, color: T('theme-content-color') })], { name: 'sub-issues' }))
   if (d.com) kit.add(row, kit.add(kit.row('comments', 3), kit.icon('comment', undefined, 14), kit.text(String(d.com), { size: 13, color: T('theme-dark-color') })))
@@ -198,7 +198,7 @@ kit.IssueGroup = (g, w = 1481, o = {}) => {
   // Rows present: the collapse arrow; no issues: a 4px dot instead
   if (g.issues.length > 0) kit.add(chev, kit.icon('kit/CaretDownFill', T('theme-caption-color'), 16))
   else kit.add(chev, kit.add(kit.box('dot', { w: 16, h: 16, dir: 'row', align: 'center', justify: 'center' }), kit.box('dot', { w: 4, h: 4, radius: 2, fill: T('theme-dark-color') })))
-  kit.add(l, chev, kit.StatusIcon(g.cat, 16, g.color))
+  kit.add(l, chev, kit.StatusIcon(g.cat, 16, g.color, g.name))
   kit.add(l, kit.spacer(8, 1), kit.text(g.name, { size: 14, weight: 500, color: title }), kit.spacer(8, 1), kit.text(String(g.issues.length), { size: 14, color: T('theme-dark-color') }))
   kit.add(head, l, kit.add(kit.box('estimation', { w: 48, h: 24, dir: 'row', pad: [0, 0, 0, 8], align: 'center' }), kit.text(g.estimation || '0h', { size: 14, color: title, name: 'estimation' })))
   kit.add(box, head)
@@ -281,7 +281,7 @@ kit.IssuePage = (d, w = 1515, h = 967) => {
   const val = (content, hh = 32) => kit.add(kit.box('value', { w: 192, h: hh, dir: 'row', gap: 8, pad: [0, 12, 0, 12], align: 'center' }), content)
   const line = (ly) => put(kit.box('divider', { w: 400, h: 1, fill: T('theme-divider-color') }), ax, ly)
   const prio = { none: 'No priority', urgent: 'Urgent', high: 'High', medium: 'Medium', low: 'Low' }[d.priority || 'none']
-  row(73, 'Status', val([kit.StatusIcon(d.cat, 16, d.color), txt(d.statusName || '', 13, T('theme-content-color'))]))
+  row(73, 'Status', val([kit.StatusIcon(d.cat, 16, d.color, d.statusName), txt(d.statusName || '', 13, T('theme-content-color'))]))
   row(109, 'Priority', val([kit.PriorityIcon(d.priority || 'none'), txt(prio, 13, T('theme-content-color'))]))
   row(145, 'Created by', val([kit.Avatar(who[0], who[1], 20), txt(who[2], 13, dark)]))
   row(181, 'Assignee', val(d.assignee ? [kit.Avatar(d.assignee[0], d.assignee[1], 20), txt(d.assignee[2] || '', 13, T('theme-content-color'))] : [kit.icon('kit/PersonCircle', dark, 16), txt('Assignee', 13, dark)]))
@@ -301,7 +301,7 @@ kit.IssuePage = (d, w = 1515, h = 967) => {
   row(693, 'Repository', val([txt('Repository', 13, T('theme-content-color')), kit.icon('kit/ChevronDown', T('theme-halfcontent-color'), 12)]))
   line(744)
   put(txt('State History:', 14, T('theme-caption-color')), ax + 32, 771)
-  put(kit.add(kit.row('state', 8), kit.StatusIcon(d.cat, 16, d.color), txt(d.statusName || '', 14, T('theme-caption-color'))), ax + 32, 807)
+  put(kit.add(kit.row('state', 8), kit.StatusIcon(d.cat, 16, d.color, d.statusName), txt(d.statusName || '', 14, T('theme-caption-color'))), ax + 32, 807)
   put(txt(d.created || '', 14, T('theme-caption-color')), ax + 190, 807)
   return page
 }
@@ -330,7 +330,7 @@ kit.NewIssuePopup = (o = {}) => {
   // Attribute pool: 36px buttons, 8px apart
   const pool = (x, y, w, name, kids) => put(btn(name, w, 36, 6, kids), x, y)
   const half = T('theme-halfcontent-color')
-  pool(24, 219, 93.5, 'status', [kit.StatusIcon(o.cat || 'backlog', 13, o.color), label(o.statusName || 'Backlog')])
+  pool(24, 219, 93.5, 'status', [kit.StatusIcon(o.cat || 'backlog', 13, o.color, o.statusName), label(o.statusName || 'Backlog')])
   pool(125.5, 219, 109.5, 'priority', [kit.PriorityIcon('none'), label('No priority')])
   pool(243, 219, 100.7, 'assignee', [kit.icon('kit/PersonCircle', dark, 16), label('Assignee', dark)])
   pool(351.7, 219, 86, 'labels', [kit.icon('kit/Tag', half, 16), label('Labels', dark)])

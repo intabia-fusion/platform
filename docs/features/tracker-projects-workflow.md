@@ -71,6 +71,7 @@ UnStarted/ToDo/Active/Won/Lost, классические статусы Issue Ba
 - Переиспользование существующего статуса при наличии задач блокируется (`getStatusNameBlock`): вместо него кнопка слияния.
 - Тем же правилом пользуются `createProjectType`/`updateProjectType`/`createDefaultTaskType` и `CreateTaskType` (`createProjectTypeStates`); при конфликте категории импорт добавляет к имени название категории.
 - Раздел "Statuses" в настройках типа проекта (`ProjectTypeStatusesSectionEditor.svelte`) строится на `StatesProjectEditor.svelte`: статусы по категориям, перетаскивание внутри категории пишет `ProjectType.statusOrder`, справа числа задач (один запрос, до 5000 задач) и воркфлоу, дубли одной категории с кнопкой "Объединить", кнопка "+" создаёт статус без типа задачи.
+- Активные статусы используют сплошной `IconStarted`: заполнение задаёт порядок типа проекта (`getStatusIconPosition`), независимо от типа задачи и контекста. Без проекта используется родительский тип выбранного типа задачи. `TaskTypeEditor` предупреждает о несовпадении относительного порядка внутри категорий (`hasTaskTypeStatusOrderMismatch`), сохраняя возможность перестановки.
 - Клик открывает `CreateStatePopup` в режиме типа проекта (без `taskType`): таблицы типов задач с числом задач и воркфлоу, где статус участвует (`StatusUsageTables.svelte`; числа задач Maintainer и выше берёт из запроса `statusUsageDomain` по всем пространствам, остальные - запросом на тип задач по видимым); при имени существующего статуса той же категории показывается подсказка о переиспользовании.
 - Блок "Не привязаны к типам проектов" - `Status` того же атрибута, которого нет ни в `ProjectType.statuses`, ни в `TaskType.statuses` (`getOrphanStatuses`): добавить в тип проекта (при совпадении имени - объединение) или удалить (у статуса модели, id с `:`, кнопки удаления нет: его документ не удаляется).
 
@@ -191,7 +192,7 @@ Permission `ForbidCreateProject` - `forbid`-правило на `TxCreateDoc`/`P
 | Иерархия типов задач | - | - | plan | - | |
 | Редактор иерархии типа | - | - | plan | - | |
 | Тип задачи по умолчанию | advanced-settings/task-types | advanced-settings/task-types | ok | 0.8.61 | |
-| 5 категорий статусов | advanced-settings/task-types, workflow/create-statuses | advanced-settings/task-types | ok | 0.8.61 | |
+| 5 категорий статусов | advanced-settings/task-types, workflow/create-statuses | advanced-settings/task-types | stale | 0.8.61 | заполнение активных иконок следует порядку типа проекта; не описано предупреждение о порядке статусов типа задачи |
 | Смена типа задачи | - | - | plan | - | |
 | Экспорт/импорт TaskType | - | - | plan | - | |
 | Уникальность статусов в типе проекта | - | - | internal | - | |

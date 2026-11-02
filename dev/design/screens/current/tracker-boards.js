@@ -1,6 +1,13 @@
 // Task boards of the tracker (FUSIO-1613, accepted): board view, board switcher, column statuses, kanban with lanes.
 // Imported from the hand-edited fusio-1613.pen by dev/pen/import.mjs; the cards are kit.IssueCard, the card density is its `density`.
 
+const boardIssueStatuses = new Map(DEMO.ru.projects.flatMap((project) => project.issues).map((issue) => [issue.id, issue.status]))
+
+const boardColumnStatuses = new Map(DEMO.ru.boards.find((board) => board.key === 'main').columns.map((column) => [
+  column.title,
+  column.statuses.map((name) => [name, DEMO.ru.statuses.find((status) => status.name === name).category])
+]))
+
 await kit.page('Task boards')
 {
   const { main } = kit.Workbench('Доска - вид', 0, 0, {
@@ -56,7 +63,7 @@ await kit.page('Task boards')
       ),
       kit.add(
         kit.box('Column In Progress', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
-        kit.ColumnHeader('In Progress', 'active', 10, 292, { limit: 8, over: true })
+        kit.ColumnHeader('In Progress', 'active', 10, 292, { limit: 8, over: true, statuses: boardColumnStatuses.get('In Progress') })
       ),
       kit.add(
         kit.box('Column Peer Review', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
@@ -122,6 +129,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-6',
+          statusName: boardIssueStatuses.get('APP-6'),
           cat: 'active',
           title: 'Интеграция с платёжным провайдером',
           assignee: ['ПИ', 'Watermelon'],
@@ -164,6 +172,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-7',
+          statusName: boardIssueStatuses.get('APP-7'),
           cat: 'won',
           title: 'Баг: краш при открытии профиля на Android 12',
           assignee: ['ВО', 'Crocodile'],
@@ -204,6 +213,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'MKT-2',
+          statusName: boardIssueStatuses.get('MKT-2'),
           cat: 'todo',
           title: 'Подготовить пресс-релиз о запуске приложения',
           assignee: ['СА', 'Sky'],
@@ -212,6 +222,7 @@ await kit.page('Task boards')
         }, 276),
         kit.IssueCard({
           id: 'MKT-5',
+          statusName: boardIssueStatuses.get('MKT-5'),
           cat: 'todo',
           title: 'Email-рассылка по базе подписчиков',
           assignee: ['СА', 'Sky'],
@@ -232,6 +243,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-22',
+          statusName: boardIssueStatuses.get('APP-22'),
           cat: 'todo',
           title: 'Поддержка Apple Pay',
           assignee: ['ПИ', 'Watermelon'],
@@ -252,6 +264,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'MKT-1',
+          statusName: boardIssueStatuses.get('MKT-1'),
           cat: 'active',
           title: 'Запуск рекламной кампании в соцсетях',
           assignee: ['СА', 'Sky'],
@@ -260,6 +273,7 @@ await kit.page('Task boards')
         }, 276),
         kit.IssueCard({
           id: 'APP-3',
+          statusName: boardIssueStatuses.get('APP-3'),
           cat: 'active',
           title: 'Push-уведомления о статусе заказа',
           assignee: ['ПИ', 'Watermelon'],
@@ -284,6 +298,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-27',
+          statusName: boardIssueStatuses.get('APP-27'),
           cat: 'active',
           title: 'Проверка количества товара в корзине',
           assignee: ['ПИ', 'Watermelon'],
@@ -293,6 +308,7 @@ await kit.page('Task boards')
         }, 276),
         kit.IssueCard({
           id: 'APP-28',
+          statusName: boardIssueStatuses.get('APP-28'),
           cat: 'active',
           title: 'Рефакторинг API-клиента',
           assignee: ['ПИ', 'Watermelon'],
@@ -314,6 +330,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-29',
+          statusName: boardIssueStatuses.get('APP-29'),
           cat: 'active',
           title: 'Ссылки на товар из внешних источников',
           assignee: ['КМ', 'Grass'],
@@ -335,13 +352,14 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'MKT-4',
+          statusName: boardIssueStatuses.get('MKT-4'),
           cat: 'won',
           title: 'Обновить лендинг на сайте',
           assignee: ['КМ', 'Grass'],
           est: '6h',
           priority: 'medium'
         }, 276),
-        kit.IssueCard({ id: 'MKT-6', cat: 'lost', title: 'Партнёрство с блогерами-техноблогерами', priority: 'low' }, 276)
+        kit.IssueCard({ id: 'MKT-6', statusName: boardIssueStatuses.get('MKT-6'), cat: 'lost', title: 'Партнёрство с блогерами-техноблогерами', priority: 'low' }, 276)
       )
     )
   ), 0, 113)
@@ -438,7 +456,7 @@ await kit.page('Task boards')
       ),
       kit.add(
         kit.box('Column In Progress', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
-        kit.ColumnHeader('In Progress', 'active', 10, 292, { limit: 8, over: true })
+        kit.ColumnHeader('In Progress', 'active', 10, 292, { limit: 8, over: true, statuses: boardColumnStatuses.get('In Progress') })
       ),
       kit.add(
         kit.box('Column Peer Review', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
@@ -504,6 +522,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-6',
+          statusName: boardIssueStatuses.get('APP-6'),
           cat: 'active',
           title: 'Интеграция с платёжным провайдером',
           assignee: ['ПИ', 'Watermelon'],
@@ -546,6 +565,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-7',
+          statusName: boardIssueStatuses.get('APP-7'),
           cat: 'won',
           title: 'Баг: краш при открытии профиля на Android 12',
           assignee: ['ВО', 'Crocodile'],
@@ -586,6 +606,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'MKT-2',
+          statusName: boardIssueStatuses.get('MKT-2'),
           cat: 'todo',
           title: 'Подготовить пресс-релиз о запуске приложения',
           assignee: ['СА', 'Sky'],
@@ -594,6 +615,7 @@ await kit.page('Task boards')
         }, 276),
         kit.IssueCard({
           id: 'MKT-5',
+          statusName: boardIssueStatuses.get('MKT-5'),
           cat: 'todo',
           title: 'Email-рассылка по базе подписчиков',
           assignee: ['СА', 'Sky'],
@@ -614,6 +636,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-22',
+          statusName: boardIssueStatuses.get('APP-22'),
           cat: 'todo',
           title: 'Поддержка Apple Pay',
           assignee: ['ПИ', 'Watermelon'],
@@ -634,6 +657,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'MKT-1',
+          statusName: boardIssueStatuses.get('MKT-1'),
           cat: 'active',
           title: 'Запуск рекламной кампании в соцсетях',
           assignee: ['СА', 'Sky'],
@@ -642,6 +666,7 @@ await kit.page('Task boards')
         }, 276),
         kit.IssueCard({
           id: 'APP-3',
+          statusName: boardIssueStatuses.get('APP-3'),
           cat: 'active',
           title: 'Push-уведомления о статусе заказа',
           assignee: ['ПИ', 'Watermelon'],
@@ -666,6 +691,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-27',
+          statusName: boardIssueStatuses.get('APP-27'),
           cat: 'active',
           title: 'Проверка количества товара в корзине',
           assignee: ['ПИ', 'Watermelon'],
@@ -675,6 +701,7 @@ await kit.page('Task boards')
         }, 276),
         kit.IssueCard({
           id: 'APP-28',
+          statusName: boardIssueStatuses.get('APP-28'),
           cat: 'active',
           title: 'Рефакторинг API-клиента',
           assignee: ['ПИ', 'Watermelon'],
@@ -696,6 +723,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-29',
+          statusName: boardIssueStatuses.get('APP-29'),
           cat: 'active',
           title: 'Ссылки на товар из внешних источников',
           assignee: ['КМ', 'Grass'],
@@ -717,13 +745,14 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'MKT-4',
+          statusName: boardIssueStatuses.get('MKT-4'),
           cat: 'won',
           title: 'Обновить лендинг на сайте',
           assignee: ['КМ', 'Grass'],
           est: '6h',
           priority: 'medium'
         }, 276),
-        kit.IssueCard({ id: 'MKT-6', cat: 'lost', title: 'Партнёрство с блогерами-техноблогерами', priority: 'low' }, 276)
+        kit.IssueCard({ id: 'MKT-6', statusName: boardIssueStatuses.get('MKT-6'), cat: 'lost', title: 'Партнёрство с блогерами-техноблогерами', priority: 'low' }, 276)
       )
     )
   ), 0, 113)
@@ -828,7 +857,7 @@ await kit.page('Task boards')
       ),
       kit.add(
         kit.box('Column In Progress', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
-        kit.ColumnHeader('In Progress', 'active', 10, 292, { limit: 8, over: true })
+        kit.ColumnHeader('In Progress', 'active', 10, 292, { limit: 8, over: true, statuses: boardColumnStatuses.get('In Progress') })
       ),
       kit.add(
         kit.box('Column Peer Review', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
@@ -894,6 +923,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-6',
+          statusName: boardIssueStatuses.get('APP-6'),
           cat: 'active',
           title: 'Интеграция с платёжным провайдером',
           assignee: ['ПИ', 'Watermelon'],
@@ -936,6 +966,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-7',
+          statusName: boardIssueStatuses.get('APP-7'),
           cat: 'won',
           title: 'Баг: краш при открытии профиля на Android 12',
           assignee: ['ВО', 'Crocodile'],
@@ -976,6 +1007,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'MKT-2',
+          statusName: boardIssueStatuses.get('MKT-2'),
           cat: 'todo',
           title: 'Подготовить пресс-релиз о запуске приложения',
           assignee: ['СА', 'Sky'],
@@ -984,6 +1016,7 @@ await kit.page('Task boards')
         }, 276),
         kit.IssueCard({
           id: 'MKT-5',
+          statusName: boardIssueStatuses.get('MKT-5'),
           cat: 'todo',
           title: 'Email-рассылка по базе подписчиков',
           assignee: ['СА', 'Sky'],
@@ -1004,6 +1037,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-22',
+          statusName: boardIssueStatuses.get('APP-22'),
           cat: 'todo',
           title: 'Поддержка Apple Pay',
           assignee: ['ПИ', 'Watermelon'],
@@ -1024,6 +1058,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'MKT-1',
+          statusName: boardIssueStatuses.get('MKT-1'),
           cat: 'active',
           title: 'Запуск рекламной кампании в соцсетях',
           assignee: ['СА', 'Sky'],
@@ -1032,6 +1067,7 @@ await kit.page('Task boards')
         }, 276),
         kit.IssueCard({
           id: 'APP-3',
+          statusName: boardIssueStatuses.get('APP-3'),
           cat: 'active',
           title: 'Push-уведомления о статусе заказа',
           assignee: ['ПИ', 'Watermelon'],
@@ -1056,6 +1092,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-27',
+          statusName: boardIssueStatuses.get('APP-27'),
           cat: 'active',
           title: 'Проверка количества товара в корзине',
           assignee: ['ПИ', 'Watermelon'],
@@ -1065,6 +1102,7 @@ await kit.page('Task boards')
         }, 276),
         kit.IssueCard({
           id: 'APP-28',
+          statusName: boardIssueStatuses.get('APP-28'),
           cat: 'active',
           title: 'Рефакторинг API-клиента',
           assignee: ['ПИ', 'Watermelon'],
@@ -1086,6 +1124,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-29',
+          statusName: boardIssueStatuses.get('APP-29'),
           cat: 'active',
           title: 'Ссылки на товар из внешних источников',
           assignee: ['КМ', 'Grass'],
@@ -1107,13 +1146,14 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'MKT-4',
+          statusName: boardIssueStatuses.get('MKT-4'),
           cat: 'won',
           title: 'Обновить лендинг на сайте',
           assignee: ['КМ', 'Grass'],
           est: '6h',
           priority: 'medium'
         }, 276),
-        kit.IssueCard({ id: 'MKT-6', cat: 'lost', title: 'Партнёрство с блогерами-техноблогерами', priority: 'low' }, 276)
+        kit.IssueCard({ id: 'MKT-6', statusName: boardIssueStatuses.get('MKT-6'), cat: 'lost', title: 'Партнёрство с блогерами-техноблогерами', priority: 'low' }, 276)
       )
     )
   ), 0, 113)
@@ -1205,7 +1245,7 @@ await kit.page('Task boards')
       ),
       kit.add(
         kit.box('Column In Progress', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
-        kit.ColumnHeader('In Progress', 'active', 10, 292, { limit: 8, over: true })
+        kit.ColumnHeader('In Progress', 'active', 10, 292, { limit: 8, over: true, statuses: boardColumnStatuses.get('In Progress') })
       ),
       kit.add(
         kit.box('Column Peer Review', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
@@ -1271,6 +1311,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-6',
+          statusName: boardIssueStatuses.get('APP-6'),
           cat: 'active',
           title: 'Интеграция с платёжным провайдером',
           assignee: ['ПИ', 'Watermelon'],
@@ -1313,6 +1354,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-7',
+          statusName: boardIssueStatuses.get('APP-7'),
           cat: 'won',
           title: 'Баг: краш при открытии профиля на Android 12',
           assignee: ['ВО', 'Crocodile'],
@@ -1353,6 +1395,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'MKT-2',
+          statusName: boardIssueStatuses.get('MKT-2'),
           cat: 'todo',
           title: 'Подготовить пресс-релиз о запуске приложения',
           assignee: ['СА', 'Sky'],
@@ -1361,6 +1404,7 @@ await kit.page('Task boards')
         }, 276),
         kit.IssueCard({
           id: 'MKT-5',
+          statusName: boardIssueStatuses.get('MKT-5'),
           cat: 'todo',
           title: 'Email-рассылка по базе подписчиков',
           assignee: ['СА', 'Sky'],
@@ -1381,6 +1425,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-22',
+          statusName: boardIssueStatuses.get('APP-22'),
           cat: 'todo',
           title: 'Поддержка Apple Pay',
           assignee: ['ПИ', 'Watermelon'],
@@ -1401,6 +1446,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'MKT-1',
+          statusName: boardIssueStatuses.get('MKT-1'),
           cat: 'active',
           title: 'Запуск рекламной кампании в соцсетях',
           assignee: ['СА', 'Sky'],
@@ -1409,6 +1455,7 @@ await kit.page('Task boards')
         }, 276),
         kit.IssueCard({
           id: 'APP-3',
+          statusName: boardIssueStatuses.get('APP-3'),
           cat: 'active',
           title: 'Push-уведомления о статусе заказа',
           assignee: ['ПИ', 'Watermelon'],
@@ -1433,6 +1480,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-27',
+          statusName: boardIssueStatuses.get('APP-27'),
           cat: 'active',
           title: 'Проверка количества товара в корзине',
           assignee: ['ПИ', 'Watermelon'],
@@ -1442,6 +1490,7 @@ await kit.page('Task boards')
         }, 276),
         kit.IssueCard({
           id: 'APP-28',
+          statusName: boardIssueStatuses.get('APP-28'),
           cat: 'active',
           title: 'Рефакторинг API-клиента',
           assignee: ['ПИ', 'Watermelon'],
@@ -1463,6 +1512,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-29',
+          statusName: boardIssueStatuses.get('APP-29'),
           cat: 'active',
           title: 'Ссылки на товар из внешних источников',
           assignee: ['КМ', 'Grass'],
@@ -1484,13 +1534,14 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'MKT-4',
+          statusName: boardIssueStatuses.get('MKT-4'),
           cat: 'won',
           title: 'Обновить лендинг на сайте',
           assignee: ['КМ', 'Grass'],
           est: '6h',
           priority: 'medium'
         }, 276),
-        kit.IssueCard({ id: 'MKT-6', cat: 'lost', title: 'Партнёрство с блогерами-техноблогерами', priority: 'low' }, 276)
+        kit.IssueCard({ id: 'MKT-6', statusName: boardIssueStatuses.get('MKT-6'), cat: 'lost', title: 'Партнёрство с блогерами-техноблогерами', priority: 'low' }, 276)
       )
     )
   ), 0, 113)
@@ -1616,7 +1667,7 @@ await kit.page('Task boards')
       ),
       kit.add(
         kit.box('Column In Progress', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
-        kit.ColumnHeader('In Progress', 'active', 10, 292, { limit: 8, over: true })
+        kit.ColumnHeader('In Progress', 'active', 10, 292, { limit: 8, over: true, statuses: boardColumnStatuses.get('In Progress') })
       ),
       kit.add(
         kit.box('Column Peer Review', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
@@ -1682,6 +1733,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-6',
+          statusName: boardIssueStatuses.get('APP-6'),
           cat: 'active',
           title: 'Интеграция с платёжным провайдером',
           assignee: ['ПИ', 'Watermelon'],
@@ -1724,6 +1776,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-7',
+          statusName: boardIssueStatuses.get('APP-7'),
           cat: 'won',
           title: 'Баг: краш при открытии профиля на Android 12',
           assignee: ['ВО', 'Crocodile'],
@@ -1764,6 +1817,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'MKT-2',
+          statusName: boardIssueStatuses.get('MKT-2'),
           cat: 'todo',
           title: 'Подготовить пресс-релиз о запуске приложения',
           assignee: ['СА', 'Sky'],
@@ -1772,6 +1826,7 @@ await kit.page('Task boards')
         }, 276),
         kit.IssueCard({
           id: 'MKT-5',
+          statusName: boardIssueStatuses.get('MKT-5'),
           cat: 'todo',
           title: 'Email-рассылка по базе подписчиков',
           assignee: ['СА', 'Sky'],
@@ -1792,6 +1847,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-22',
+          statusName: boardIssueStatuses.get('APP-22'),
           cat: 'todo',
           title: 'Поддержка Apple Pay',
           assignee: ['ПИ', 'Watermelon'],
@@ -1812,6 +1868,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'MKT-1',
+          statusName: boardIssueStatuses.get('MKT-1'),
           cat: 'active',
           title: 'Запуск рекламной кампании в соцсетях',
           assignee: ['СА', 'Sky'],
@@ -1820,6 +1877,7 @@ await kit.page('Task boards')
         }, 276),
         kit.IssueCard({
           id: 'APP-3',
+          statusName: boardIssueStatuses.get('APP-3'),
           cat: 'active',
           title: 'Push-уведомления о статусе заказа',
           assignee: ['ПИ', 'Watermelon'],
@@ -1844,6 +1902,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-27',
+          statusName: boardIssueStatuses.get('APP-27'),
           cat: 'active',
           title: 'Проверка количества товара в корзине',
           assignee: ['ПИ', 'Watermelon'],
@@ -1853,6 +1912,7 @@ await kit.page('Task boards')
         }, 276),
         kit.IssueCard({
           id: 'APP-28',
+          statusName: boardIssueStatuses.get('APP-28'),
           cat: 'active',
           title: 'Рефакторинг API-клиента',
           assignee: ['ПИ', 'Watermelon'],
@@ -1874,6 +1934,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-29',
+          statusName: boardIssueStatuses.get('APP-29'),
           cat: 'active',
           title: 'Ссылки на товар из внешних источников',
           assignee: ['КМ', 'Grass'],
@@ -1895,13 +1956,14 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'MKT-4',
+          statusName: boardIssueStatuses.get('MKT-4'),
           cat: 'won',
           title: 'Обновить лендинг на сайте',
           assignee: ['КМ', 'Grass'],
           est: '6h',
           priority: 'medium'
         }, 276),
-        kit.IssueCard({ id: 'MKT-6', cat: 'lost', title: 'Партнёрство с блогерами-техноблогерами', priority: 'low' }, 276)
+        kit.IssueCard({ id: 'MKT-6', statusName: boardIssueStatuses.get('MKT-6'), cat: 'lost', title: 'Партнёрство с блогерами-техноблогерами', priority: 'low' }, 276)
       )
     )
   ), 0, 113)
@@ -2014,6 +2076,7 @@ await kit.page('Task boards')
   const cardOf = (i, cat) => ({
     id: i.id,
     cat,
+    statusName: i.status,
     title: i.title,
     priority: i.priority,
     ...(person(i.assignee) !== undefined ? { assignee: [person(i.assignee).initials, person(i.assignee).color] } : {}),
@@ -2059,6 +2122,7 @@ await kit.page('Task boards')
   const cardOf = (i, cat) => ({
     id: i.id,
     cat,
+    statusName: i.status,
     title: i.title,
     priority: i.priority,
     ...(person(i.assignee) !== undefined ? { assignee: [person(i.assignee).initials, person(i.assignee).color] } : {}),
