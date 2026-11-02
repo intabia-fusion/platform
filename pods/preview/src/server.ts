@@ -44,7 +44,9 @@ import { TemporaryDir } from './tempdir'
 const KEEP_ALIVE_TIMEOUT = 5 // seconds
 const KEEP_ALIVE_MAX = 1000
 
-const cacheControl = 'public, max-age=31536000, immutable'
+// A thumbnail is served only after the access check, so a shared cache (CDN, proxy_cache) must
+// not keep it: the browser still caches it for a year.
+const imageCacheControl = 'private, max-age=31536000, immutable'
 const cacheControlNoCache = 'public, no-store, no-cache, must-revalidate, max-age=0'
 
 type AsyncRequestHandler = (ctx: MeasureContext, req: RequestWithAuth, res: Response) => Promise<void>
@@ -216,7 +218,7 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
 
       const { mimeType: contentType, filePath } = await service.thumbnail(ctx, workspace, name, params)
       const stream = createReadStream(filePath)
-      await writeToResponse(ctx, stream, res, { contentType, cacheControl })
+      await writeToResponse(ctx, stream, res, { contentType, cacheControl: imageCacheControl })
     })
   )
 

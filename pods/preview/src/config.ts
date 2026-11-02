@@ -38,7 +38,7 @@ export interface Config {
   AccountsUrl: string
   /** Milliseconds a positive membership answer is cached. */
   AuthAllowCacheMs: number
-  /** Milliseconds a negative answer is cached: a member added a moment ago must not wait long. */
+  /** Milliseconds a negative answer is cached: short, since a member added a moment ago must not wait. */
   AuthDenyCacheMs: number
   Cache: CacheConfig
   MaxBlobSize: number // bytes, larger blobs get no preview
@@ -86,8 +86,8 @@ const config: Config = (() => {
     Secret: process.env.SECRET,
     ServiceID: process.env.SERVICE_ID ?? 'preview',
     AccountsUrl: process.env.ACCOUNTS_URL,
-    AuthAllowCacheMs: timeoutFromEnv('AUTH_ALLOW_CACHE_MS', '60'),
-    AuthDenyCacheMs: timeoutFromEnv('AUTH_DENY_CACHE_MS', '30'),
+    AuthAllowCacheMs: timeoutFromEnv('AUTH_ALLOW_CACHE_SEC', '60'),
+    AuthDenyCacheMs: timeoutFromEnv('AUTH_DENY_CACHE_SEC', '5'),
     Cache: {
       enabled: process.env.CACHE_ENABLED !== 'false',
       cachePath: process.env.CACHE_PATH,

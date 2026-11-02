@@ -90,7 +90,6 @@ describe('withAuthorization', () => {
   // Only `next` and the request matter here; the response is never touched.
   const noResponse = {} as unknown as Response
 
-  // The decoded token is cached per header set for the whole module, so every case brings its own.
   function check (token: Token | undefined, cookie: string): jest.Mock {
     ;(extractToken as jest.Mock).mockReturnValue(token)
     const next = jest.fn()
@@ -103,61 +102,16 @@ describe('withAuthorization', () => {
     expect(check(undefined, 'no-token=a')).toHaveBeenCalledWith(expect.objectContaining({ code: 401 }))
   })
 
-  it('refuses a guest and a readonly token', () => {
+  // a preview only reads, so a guest of a public link and a readonly account are served
+  it('accepts a guest, a readonly and a regular token', () => {
     const guest = { account, extra: { guest: 'true' } } as unknown as Token
-    expect(check(guest, 'guest-token=g')).toHaveBeenCalledWith(expect.objectContaining({ code: 401 }))
+    expect(check(guest, 'guest-token=g')).toHaveBeenCalledWith()
 
     const readonly = { account, extra: { readonly: 'true' } } as unknown as Token
-    expect(check(readonly, 'readonly-token=r')).toHaveBeenCalledWith(expect.objectContaining({ code: 401 }))
-  })
+    expect(check(readonly, 'readonly-token=r')).toHaveBeenCalledWith()
 
-  it('accepts a regular token', () => {
-    const next = check({ account, extra: {} } as unknown as Token, 'regular-token=u')
-
-    expect(next).toHaveBeenCalledWith()
-  })
-})
-
-describe('token cache', () => {
-  const account = '59eec4ec-c916-47a2-b19c-1fe156e07c87'
-  const noResponse = {} as unknown as Response
-
-  function authorize (headers: Record<string, string>): jest.Mock {
-    const next = jest.fn()
-    withAuthorization({ headers } as unknown as RequestWithAuth, noResponse, next)
-    return next
-  }
-
-  beforeEach(() => {
-    ;(extractToken as jest.Mock).mockReset()
-  })
-
-  it('decodes a token once for the same cookies', () => {
-    ;(extractToken as jest.Mock).mockReturnValue({ account, extra: {} })
-    const headers = { cookie: 'cache-same-token=a' }
-
-    expect(authorize(headers)).toHaveBeenCalledWith()
-    expect(authorize(headers)).toHaveBeenCalledWith()
-    expect(extractToken).toHaveBeenCalledTimes(1)
-  })
-
-  it('decodes again when the cookies change', () => {
-    ;(extractToken as jest.Mock).mockReturnValue({ account, extra: {} })
-
-    authorize({ cookie: 'cache-first-token=a' })
-    authorize({ cookie: 'cache-second-token=b' })
-
-    expect(extractToken).toHaveBeenCalledTimes(2)
-  })
-
-  it('does not serve an expired payload from the cache', () => {
-    const expired = { account, extra: {}, exp: Math.floor(Date.now() / 1000) - 60 } as unknown as Token
-    ;(extractToken as jest.Mock).mockReturnValue(expired)
-    const headers = { cookie: 'cache-expired-token=e' }
-
-    expect(authorize(headers)).toHaveBeenCalledWith(expect.objectContaining({ code: 401 }))
-    expect(authorize(headers)).toHaveBeenCalledWith(expect.objectContaining({ code: 401 }))
-    expect(extractToken).toHaveBeenCalledTimes(2)
+    const regular = check({ account, extra: {} } as unknown as Token, 'regular-token=u')
+    expect(regular).toHaveBeenCalledWith()
   })
 })
 
@@ -213,13 +167,25 @@ describe('createWorkspaceAccess', () => {
     expect(getUserWorkspaces).not.toHaveBeenCalled()
   })
 
-  it('refuses a token carrying another workspace', () => {
+  it('refuses a guest token of another workspace without asking account', () => {
     const next = jest.fn()
 
-    access(request(userToken(otherWorkspace)), noResponse, next)
+    access(request(userToken(otherWorkspace, { guest: 'true' })), noResponse, next)
 
     expect(next).toHaveBeenCalledWith(expect.objectContaining({ code: 401 }))
     expect(getUserWorkspaces).not.toHaveBeenCalled()
+  })
+
+  // a regular token of another workspace still proves who the account is, so the list decides
+  it('asks account for a token of another workspace', async () => {
+    getUserWorkspaces.mockResolvedValue([{ uuid: otherWorkspace }])
+    const next = jest.fn()
+
+    access(request(userToken(otherWorkspace)), noResponse, next)
+    await flush()
+
+    expect(next).toHaveBeenCalledWith(expect.objectContaining({ code: 401 }))
+    expect(getUserWorkspaces).toHaveBeenCalledTimes(1)
   })
 
   it('accepts the system account and an admin', () => {
@@ -266,14 +232,72 @@ describe('createWorkspaceAccess', () => {
     expect(getUserWorkspaces).toHaveBeenCalledTimes(1)
   })
 
-  it('fails closed when account is unreachable', async () => {
-    jest.spyOn(Analytics, 'handleError').mockImplementation(() => undefined)
-    getUserWorkspaces.mockRejectedValue(new Error('account is down'))
-    const next = jest.fn()
+  // one feed is 40 images, three srcset steps each, and a restarted pod has no cache at all
+  it('asks account once for the images of one feed', async () => {
+    getUserWorkspaces.mockResolvedValue([{ uuid: workspace }])
+    const answers = [jest.fn(), jest.fn(), jest.fn()]
 
+    for (const next of answers) {
+      access(request(userToken()), noResponse, next)
+    }
+    await flush()
+
+    for (const next of answers) {
+      expect(next).toHaveBeenCalledWith()
+    }
+    expect(getUserWorkspaces).toHaveBeenCalledTimes(1)
+  })
+
+  // the list holds every workspace of the account, so the next one costs nothing
+  it('serves a second workspace of the same account from the same answer', async () => {
+    getUserWorkspaces.mockResolvedValue([{ uuid: workspace }, { uuid: otherWorkspace }])
+
+    const first = jest.fn()
+    access(request(userToken()), noResponse, first)
+    await flush()
+
+    const second = jest.fn()
+    access(request(userToken(), otherWorkspace), noResponse, second)
+
+    expect(first).toHaveBeenCalledWith()
+    expect(second).toHaveBeenCalledWith()
+    expect(getUserWorkspaces).toHaveBeenCalledTimes(1)
+  })
+
+  // a refusal is trusted only for a moment: the account may have been added since
+  it('asks account again once a refusal is older than the deny ttl', async () => {
+    const clock = jest.spyOn(Date, 'now').mockReturnValue(1_000_000)
+    getUserWorkspaces.mockResolvedValueOnce([{ uuid: otherWorkspace }])
+
+    access(request(userToken()), noResponse, jest.fn())
+    await flush()
+    expect(getUserWorkspaces).toHaveBeenCalledTimes(1)
+
+    getUserWorkspaces.mockResolvedValueOnce([{ uuid: workspace }])
+    clock.mockReturnValue(1_000_000 + 1_000)
+
+    const next = jest.fn()
     access(request(userToken()), noResponse, next)
     await flush()
 
-    expect(next).toHaveBeenCalledWith(expect.objectContaining({ code: 401 }))
+    expect(next).toHaveBeenCalledWith()
+    expect(getUserWorkspaces).toHaveBeenCalledTimes(2)
+    clock.mockRestore()
+  })
+
+  it('fails closed when account is unreachable, reporting the failure once', async () => {
+    const handled = jest.spyOn(Analytics, 'handleError').mockImplementation(() => undefined)
+    getUserWorkspaces.mockRejectedValue(new Error('account is down'))
+    const answers = [jest.fn(), jest.fn(), jest.fn()]
+
+    for (const next of answers) {
+      access(request(userToken()), noResponse, next)
+    }
+    await flush()
+
+    for (const next of answers) {
+      expect(next).toHaveBeenCalledWith(expect.objectContaining({ code: 401 }))
+    }
+    expect(handled).toHaveBeenCalledTimes(1)
   })
 })
