@@ -389,6 +389,7 @@
     min-height: 35rem;
     padding: 0.75rem;
     overflow-x: auto;
+    scrollbar-width: thin;
     background-color: var(--theme-list-row-color);
     border-radius: 0.5rem;
   }
