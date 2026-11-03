@@ -1,0 +1,129 @@
+# Example values for the platform chart.
+#
+# Только фиктивные значения для офлайн-проверки рендера:
+#   helm template fusion-example charts/platform -n fusion-example -f values.example.yaml
+# Не используйте этот файл как основу реального стенда - возьмите stands/*/values.yaml
+# или собственный файл и подставьте реальные адреса и секреты из защищённого хранилища.
+
+global:
+  namespace: fusion-example
+  version: "0.0.0-example"
+  hostUrl: example.fusion.localhost
+  imageRegistry: ""
+  # image namespace inside the registry (default "intabiafusion"):
+  # image = <imageRegistry>/<imageNamespace>/<svc>:<version>
+  imageNamespace: ""
+  imagePullPolicy: IfNotPresent
+  stand: example
+  tls:
+    caSecretName: ""
+  landingUrl: ""
+  productName: Intabia Platform Example
+  defaultLanguage: ru
+
+config:
+  queueConfig: "kafka.example.invalid:9092;-example"
+  elasticUrl: "http://elastic.example.invalid:9200"
+  backupBucket: ""
+  fulltextIndexName: ""
+  githubAppId: ""
+  githubAppName: ""
+  githubClientId: ""
+  REGION: "tst"
+  EXTERNAL_REGIONS: "--"
+  temporalUrl: ""
+  polarSucscriptionPlans: ""
+  livekitWs: ""
+  livekitProject: ""
+  sttProvider: ""
+  sttModel: ""
+  yandexMetricaId: null
+
+dbInit:
+  enabled: true
+  image: postgres:18.1
+  host: postgres.example.invalid
+  port: "5432"
+  user: platform_init
+  password: example-init-password
+  backoffLimit: 5
+
+secrets:
+  accountSecrets:
+    google_client_id: ""
+    google_client_secret: ""
+    github_client_id: ""
+    github_client_secret: ""
+  aibotSecret:
+    datalabKey: ""
+  calendarApi:
+    credentials: ""
+  gmailApi:
+    gmail_sub_topic: ""
+    credentials: ""
+  loveSecret:
+    apiKey: "example-love-api-key"
+    apiSecret: "example-love-api-secret"
+    webhookApiKey: "example-love-webhook-key"
+    webhookApiSecret: "example-love-webhook-secret"
+    s3StorageConfig: "s3|http://s3.example.invalid:9000?accessKey=exampleAccessKey&secretKey=exampleSecretKey&rootBucket=example-love-recordings"
+  signSecret:
+    certificate.p12: ""
+  platform:
+    serverSecret: "example-server-secret-not-real"
+    githubClientSecret: ""
+    githubPrivateKey: ""
+    githubWebhookSecret: ""
+    pushPublicKey: ""
+    pushPrivateKey: ""
+    apnsKeyId: ""
+    apnsTeamId: ""
+    apnsTopic: ""
+    apnsKey: ""
+    fcmServiceAccount: ""
+    rustoreProjectId: ""
+    rustoreServiceToken: ""
+    storageConfig: "datalake|http://datalake-service"
+    chunksStorageConfig: "minio|http://s3.example.invalid:9000?accessKey=exampleAccessKey&secretKey=exampleSecretKey&rootBucket=example-chunks"
+    backupConfig: "minio|http://s3.example.invalid:9000?accessKey=exampleAccessKey&secretKey=exampleSecretKey&rootBucket=example"
+    dbUrl: "postgresql://platform:example-db-password@postgres.example.invalid:5432/example?sslmode=disable"
+    dbHost: "postgres.example.invalid"
+    dbUser: "platform"
+    dbPassword: "example-db-password"
+    mailAuthToken: "example-mail-token"
+    datalakeStorageConfig: "example,eu|http://s3.example.invalid:9000?accessKey=exampleAccessKey&secretKey=exampleSecretKey&region=auto"
+    smtpMode: "queue"
+    smtpUsername: "example-smtp-user"
+    smtpPassword: "example-smtp-password"
+    smtpApiKey: ""
+    smtpPort: "465"
+    smtpHost: "smtp.example.invalid"
+    smtpFrom: "noreply@example.invalid"
+    mailHookToken: ""
+    uptraceDsn: ""
+    polarAccessToken: ""
+    polarWebhookSecret: ""
+    tbankTerminalKey: ""
+    tbankPassword: ""
+    licenseKey: ""
+    signPassword: "example-sign-password"
+    aibotApiToken: "example-aibot-api-token"
+    llmProvider: "gigachat"
+    openaiBaseUrl: ""
+    openaiModel: ""
+    openaiApiKey: ""
+    gigachatAuthKey: ""
+    gigachatScope: "GIGACHAT_API_PERS"
+    gigachatModel: "GigaChat-2"
+    gigachatBaseUrl: "https://gigachat.devices.sberbank.ru/api/v1/"
+    ndToken: ""
+    ndUrl: "https://api.neuraldeep.ru/v1"
+    sttUrl: ""
+    sttApiKey: ""
+  telegramBotApi:
+    botToken: ""
+  crmSecret:
+    amoCrmDomain: ""
+    amoCrmPipelineId: ""
+    amoCrmToken: ""
+    amoCrmResponsibleUserId: ""

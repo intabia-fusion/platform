@@ -11,7 +11,7 @@
     "build": "compile",
     "build:watch": "compile",
     "test": "echo 'run api-test' for API-tests",
-    "api-test": "jest --passWithNoTests --forceExit",
+    "api-test": "STAND_DB_FORWARD=0 bash ../../deployment/kubernetes/scripts/with-stand-env.sh api jest --passWithNoTests --forceExit",
     "format": "format src",
     "_phase:build": "compile build",
     "_phase:test": "echo 'run api-test' for API-tests",
@@ -42,7 +42,6 @@
     "@stylistic/eslint-plugin": "catalog:"
   },
   "dependencies": {
-    "testcontainers": "catalog:",
     "@hcengineering/core": "workspace:^0.7.24",
     "@hcengineering/platform": "workspace:^0.7.19",
     "@hcengineering/server-token": "workspace:^0.7.17",

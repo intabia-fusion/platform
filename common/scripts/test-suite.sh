@@ -2,8 +2,9 @@
 # Builds the workspace, then runs every test group except the Playwright suites:
 #
 #   pnpm integration [jest args]   *.itest.ts - each suite starts its own containers
-#   pnpm api-test [jest args]      images, then api-tests and backup-tests on their stand;
-#                                  jest args narrow the api-tests and skip the backup-tests
+#   pnpm api-test [jest args]      images, then api-tests and backup-tests on their
+#                                  Kubernetes stand; jest args narrow the api-tests
+#                                  and skip the backup-tests
 #   pnpm fulltest                  unit, integration, api-tests and backup-tests
 #
 # A failing group does not stop the next one. The run ends with a summary per group and the failed
@@ -38,14 +39,17 @@ if [ "$what" = integration ] || [ "$what" = full ]; then
 fi
 reports=()
 if [ "$what" = api ] || [ "$what" = full ]; then
-  ./common/scripts/docker-api.sh
+  # The api-tests leave the stand up for the backup-tests, which take it down (API_STAND=keep to
+  # keep it for another run, external to use one that is already there - untouched, so its
+  # images are not rebuilt either).
+  api_stand=${API_STAND:-}
+  [ $# -eq 0 ] && [ "$api_stand" != external ] && api_stand=keep
+  if [ "$api_stand" != external ]; then
+    ./common/scripts/docker-api.sh
+  fi
   logs="$root/api-tests/logs"
   mkdir -p "$logs"
   rm -f "$logs/api-tests.json" "$logs/backup-tests.json"
-  # The api-tests leave the stand up for the backup-tests, which take it down (API_STAND=keep to
-  # keep it for another run, external to use one that is already there).
-  api_stand=${API_STAND:-}
-  [ $# -eq 0 ] && [ "$api_stand" != external ] && api_stand=keep
   cd "$root/api-tests/api"
   reports+=("$logs/api-tests.json")
   group api-tests env API_STAND="$api_stand" pnpm run api-test "$@" --json --outputFile="$logs/api-tests.json"

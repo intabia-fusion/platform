@@ -1,0 +1,25 @@
+#
+# source: kube/fulltext/service0.yaml
+# substitutions:
+#   image tags -> :{{ .Values.global.version }}
+#   hosts -> {{ .Values.global.hostUrl }}
+#   namespace -> {{ .Values.global.namespace }}
+#
+# One Service per fulltext instance (services.fulltext.count), matching
+# templates/fulltext/fulltext.yml; transactor i reaches its region's fulltext i.
+{{- $root := . -}}
+{{- $count := int (default 1 $root.Values.services.fulltext.count) -}}
+{{- range $i := until $count }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fulltext{{ $i }}
+  namespace: '{{ $root.Values.global.namespace }}'
+spec:
+  selector:
+    app: fulltext{{ $i }}
+  ports:
+  - port: 80
+    targetPort: 4700
+{{- end }}

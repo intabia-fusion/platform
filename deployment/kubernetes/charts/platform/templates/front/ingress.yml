@@ -1,0 +1,30 @@
+# 
+# source: kube/front/ingress.yml
+# substitutions:
+#   image tags -> :{{ .Values.global.version }}
+#   hosts -> {{ .Values.global.hostUrl }}
+#   namespace -> {{ .Values.global.namespace }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    nginx.ingress.kubernetes.io/proxy_request_buffering: 'off'
+    nginx.ingress.kubernetes.io/proxy_buffering: 'off'
+    nginx.ingress.kubernetes.io/proxy-body-size: '512m'
+    nginx.ingress.kubernetes.io/client-max-body-size: '512m'
+  name: front-ingress
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: '{{ .Values.global.hostUrl }}'
+    http:
+      paths:
+      - backend:
+          service:
+            name: front
+            port:
+              number: 80
+        path: /
+        pathType: Prefix

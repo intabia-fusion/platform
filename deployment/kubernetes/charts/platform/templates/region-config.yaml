@@ -1,0 +1,63 @@
+{{- /*
+Generate region-config ConfigMap consumed by services that read REGION_CONFIG.
+Format defined in foundation/docs/region_config.md and server/account/src/region-config.ts.
+
+Single region (default): transactor/collaborator entries are auto-generated from
+.Values.services.transactor.count / .Values.services.collaborator.count.
+
+Multiple regions: define .Values.config.regions, one entry per region:
+
+  config:
+    regions:
+      - id: ""                # region id (yaml key)
+        name: Default
+        transactorService: transactor0
+        transactorPort: 3333
+        transactorPath: /_tr
+        collaboratorService: collaborator0
+        collaboratorPort: 3078
+        collaboratorPath: /_cl
+*/ -}}
+{{- $root := . -}}
+{{- $host := include "platform.publicHost" $root -}}
+{{- $region := default "" $root.Values.config.REGION -}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: region-config
+  namespace: '{{ $root.Values.global.namespace }}'
+  labels:
+    app: platform
+    chart: '{{ $root.Chart.Name }}-{{ $root.Chart.Version }}'
+    release: '{{ $root.Release.Name }}'
+data:
+  region-config.yaml: |
+    regions:
+{{- if $root.Values.config.regions }}
+{{- range $r := $root.Values.config.regions }}
+      '{{ $r.id }}':
+        name: {{ default "Default" $r.name | quote }}
+        transactors:
+          - external: wss://{{ $host }}{{ default "/_tr" $r.transactorPath }}
+            internal: ws://{{ $r.transactorService }}:{{ default 3333 $r.transactorPort }}
+        collaborators:
+          - external: wss://{{ $host }}{{ default "/_cl" $r.collaboratorPath }}
+            internal: ws://{{ $r.collaboratorService }}:{{ default 3078 $r.collaboratorPort }}
+{{- end }}
+{{ else }}
+{{- $tcount := int (default 1 $root.Values.services.transactor.count) }}
+{{- $ccount := int (default 1 $root.Values.services.collaborator.count) }}
+      '{{ $region }}':
+        name: {{ default "Default" $region | quote }}
+        transactors:
+{{- range $i := until $tcount }}
+          - external: wss://{{ $host }}/_tr{{ $i }}
+            internal: ws://transactor{{ $i }}
+{{- end }}
+        collaborators:
+{{- range $i := until $ccount }}
+          - external: wss://{{ $host }}/_cl{{ $i }}
+            internal: ws://collaborator{{ $i }}
+{{- end }}
+{{- end }}

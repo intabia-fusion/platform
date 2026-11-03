@@ -128,3 +128,6 @@ tests/sanity/step-report.ndjson
 .tmp-shots/
 coverage-stand.json
 dev/pen/.state.json
+
+# Local Kubernetes stand configuration (pnpm -w stand:configure); may contain credentials
+deployment/kubernetes/.stand/

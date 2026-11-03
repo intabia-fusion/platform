@@ -18,6 +18,7 @@ import { generateUuid, systemAccountUuid, type WorkspaceUuid } from '@hcengineer
 import { getClient as getAccountClient, type AccountClient, type PaymentOperation } from '@hcengineering/account-client'
 import { generateToken } from '@hcengineering/server-token'
 import { adminSessionClient } from './admin.fixtures'
+import { PlatformUrl } from '../env'
 
 /** Admin RPCs demand a second factor stamped within ADMIN_SESSION_TTL_SEC. */
 const adminMfaAt = (): string => String(Math.floor(Date.now() / 1000))
@@ -32,7 +33,7 @@ describe('plan-ledger', () => {
   let admin: AccountClient // admin — reads the audit
 
   beforeAll(async () => {
-    config = await loadServerConfig('http://localhost:8183')
+    config = await loadServerConfig(PlatformUrl)
     const listAdmin = getAccountClient(
       config.ACCOUNTS_URL,
       generateToken(systemAccountUuid, undefined, { admin: 'true', mfaAt: adminMfaAt() }, 'secret')

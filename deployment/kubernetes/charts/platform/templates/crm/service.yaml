@@ -1,0 +1,17 @@
+#
+# source: kube/crm/service.yaml
+# substitutions:
+#   namespace -> {{ .Values.global.namespace }}
+{{- if .Values.services.crm.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: crm
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  selector:
+    app: crm
+  ports:
+  - port: 80
+    targetPort: 3001
+{{- end }}

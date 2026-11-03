@@ -23,6 +23,28 @@ fi
 pnpm install --frozen-lockfile
 pnpm -w build
 
+# The Kubernetes stand pulls the images the build just made from the cluster
+# registry; pushing them is what a fresh front bundle reaching the pods takes.
+bash ../deployment/kubernetes/scripts/push-images.sh sanity
+
+# The suite drives the browser through the webpack dev-server proxy into the
+# stand (same wiring as uitest:k8s); it must be up before the telemetry run.
+FRONT_PORT="${STAND_FRONT_PORT:-8081}"
+bash ../deployment/kubernetes/scripts/test-front.sh > /tmp/sanity-stand-front.log 2>&1 &
+FRONT_PID=$!
+trap 'kill "$FRONT_PID" 2>/dev/null || true' EXIT
+for _ in $(seq 1 60); do
+    if curl -fsS "http://localhost:${FRONT_PORT}/" >/dev/null 2>&1; then break; fi
+    sleep 5
+done
+if ! curl -fsS "http://localhost:${FRONT_PORT}/" >/dev/null 2>&1; then
+    echo "stand front proxy did not come up on :${FRONT_PORT}; log follows" >&2
+    cat /tmp/sanity-stand-front.log >&2 || true
+    exit 1
+fi
+export LOCAL_URL="http://localhost:${FRONT_PORT}/_account/"
+export PLATFORM_URI="http://localhost:${FRONT_PORT}"
+
 FAILED=0
 SUMMARY=()
 run_suite() {
@@ -36,7 +58,9 @@ run_suite() {
         fi
         echo "=== run $i/$ITERATIONS ($label)"
         # A red run is data, not a reason to stop: the whole point is to collect several in a row.
-        (cd sanity && pnpm run uitest:telemetry --workers 5) || failed=$((failed + 1))
+        # with-stand-env resolves the canonical k8s env (BILLING_URL via the front proxy origin,
+        # MAILBOX_KAFKA_BROKER over its managed Kafka port-forward) around the telemetry run.
+        (cd sanity && bash ../../deployment/kubernetes/scripts/with-stand-env.sh sanity pnpm run uitest:telemetry --workers 5) || failed=$((failed + 1))
         stamps+=("$(ls -1t sanity/runs | head -1)")
     done
     if [ "$ITERATIONS" -gt 1 ]; then

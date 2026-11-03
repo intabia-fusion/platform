@@ -1,0 +1,153 @@
+# QMS test stand: namespace fusion-qms, host qms.fusion.localhost.
+# Playwright против этого стенда: pnpm run uitest:k8s в qms-tests/sanity
+# (см. deployment/kubernetes/README.md). Паритет compose qms-tests: без
+# payment/tbank (их не было в qms-tests/docker-compose.yaml), billing с быстрым
+# usageUpdateInterval, transactor с расширенным rate limit, sign с debug-сертификатом
+# (подпись PDF в QMS-диалогах), navigator без скрытых фич - QMS-спеки ходят в documents.
+
+global:
+  namespace: fusion-qms
+  version: latest
+  hostUrl: qms.fusion.localhost
+  imageRegistry: k3d-fusion-registry:5000
+  imagePullPolicy: Always
+  # namespace контракта ConfigMap/Secret platform-base (ставит platform-base)
+  baseNamespace: platform-base
+  # имя данных стенда (БД/bucket/постфикс/индекс): 3 символа - минимум правил S3 bucket
+  stand: qms
+  tls:
+    caSecretName: fusion-local-ca
+  landingUrl: ""
+  productName: Intabia Platform QMS
+  defaultLanguage: en
+  lastNameFirst: true
+
+config:
+  REGION: ""
+  EXTERNAL_REGIONS: "--"
+  useOtp: "false"
+  temporalUrl: ""
+  regions:
+  - id: ""
+    name: Default
+    transactorService: transactor0
+    transactorPath: /_tr0
+    collaboratorService: collaborator0
+    collaboratorPath: /_cl0
+  livekitWs: "ws://127.0.0.1:7890"
+  livekitHost: "ws://host.docker.internal:7890"
+
+dbInit:
+  enabled: true
+
+# Тот же branding, что и qms-tests/branding-test.json на compose-стенде,
+# под ключ публичного хоста стенда (dev-front подменяет его на localhost:<PORT>).
+branding: |-
+  {
+    "qms.fusion.localhost": {
+      "key": "huly",
+      "title": "Platform",
+      "protocol": "https",
+      "languages": "en,ru,pt,es,zh,fr",
+      "defaultLanguage": "en",
+      "defaultApplication": "tracker",
+      "defaultSpace": "tracker:project:DefaultProject",
+      "defaultSpecial": "issues",
+      "lastNameFirst": "true",
+      "links": [
+        {
+          "rel": "manifest",
+          "href": "/platform/site.webmanifest"
+        },
+        {
+          "rel": "icon",
+          "href": "/platform/favicon.svg",
+          "type": "image/svg+xml"
+        },
+        {
+          "rel": "shortcut icon",
+          "href": "/platform/favicon.ico",
+          "sizes": "any"
+        },
+        {
+          "rel": "apple-touch-icon",
+          "href": "/platform/icon-192.png"
+        }
+      ]
+    }
+  }
+
+secrets:
+  loveSecret:
+    apiKey: "testkey"
+    apiSecret: "testsecret_for_qms_tests_min32chars"
+    webhookApiKey: "whqmskey"
+    s3StorageConfig: "s3|http://s3.platform-base.svc.cluster.local:9000?accessKey=minioadmin&secretKey=minioadmin&rootBucket=qms-love-recordings"
+    webhookApiSecret: "whqmssecret_for_qms_tests_min32chars"
+  signSecret:
+    # debug-сертификат pod-sign (services/sign/pod-sign/debug/certificate.p12),
+    # compose-стенд мапил тот же файл. Base64 - значением в Secret как есть.
+    certificate.p12: "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"
+  platform:
+    # Compose parity: the test helpers (dev/tool) generate tokens with the
+    # hardcoded 'secret' - do not "strengthen" this per stand.
+    serverSecret: "secret"
+    mailAuthToken: "qms-mail-token"
+    aibotApiToken: "qms-aibot-api-token"
+    signPassword: "qms-sign-password"
+    smtpMode: "queue"
+    smtpHost: mailpit.platform-base.svc.cluster.local
+    smtpPort: "1025"
+    smtpFrom: noreply@qms.fusion.localhost
+
+services:
+  # compose parity (qms-tests/docker-compose.yaml): billing ran without the
+  # payment provider and tbank; keep both off
+  billing:
+    usageUpdateInterval: 600
+    extraEnv:
+    - name: ALLOW_TEST_ENDPOINTS
+      value: "true"
+  account:
+    # parity with the compose qms stand
+    passwords: none
+    adminEmails: "admin"
+    extraEnv:
+    - name: ALLOW_SKIP_OTP_PASSWORD_SIGNUP
+      value: "true"
+    - name: WORKSPACE_LIMIT_PER_USER
+      value: "100"
+    - name: AUTH_RATE_LIMIT
+      value: "100000"
+  transactor:
+    # compose parity: QMS bulk traffic bursts far above the prod per-client limit
+    rateLimitMax: 25000
+    rateLimitWindow: 1000
+    extraEnv:
+    - name: LAST_NAME_FIRST
+      value: "true"
+  front:
+    replicas: 1
+    # QMS specs drive controlled documents: the chart default hides 'documents'
+    # (and more) from the navigator - the compose stand showed everything
+    disabledFeatures: []
+  workspace:
+    replicas: 1
+    extraEnv:
+    - name: WAIT_TIMEOUT
+      value: "100"
+  sign:
+    # compose parity: подпись PDF в QMS-диалогах (debug-сертификат выше)
+    enabled: true
+  # Внимание: шаблоны этих сервисов не читают enabled, гасим репликами
+  # distro - сборка desktop-приложений, в compose dev закомментирован
+  distro:
+    replicas: 0
+  analytics:
+    replicas: 0
+  loveAgent:
+    replicas: 0
+  preview:
+    replicas: 0
+  linkPreview:
+    replicas: 0

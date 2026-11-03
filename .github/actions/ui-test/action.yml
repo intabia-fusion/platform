@@ -1,5 +1,5 @@
 name: 'UI Test'
-description: 'Run UI tests'
+description: 'Run UI tests against a compose or Kubernetes stand'
 
 inputs:
   test-folder:
@@ -26,11 +26,74 @@ inputs:
     description: 'Compose project prefix of the stand containers (sanity- or qms-)'
     required: false
     default: 'sanity-'
+  stand:
+    description: 'Kubernetes stand name (sanity|ws|api); empty runs the compose stand instead'
+    required: false
+    default: ''
+  k8s-runtime:
+    description: 'Kubernetes runtime for the stand (k3d|kind|existing)'
+    required: false
+    default: 'k3d'
+  k8s-namespace:
+    description: 'Namespace for the stand (default from deployment/kubernetes/stands/<stand>)'
+    required: false
+    default: ''
+  k8s-cleanup:
+    description: 'Cleanup after the run: none|stand|cluster (see common/scripts/ci-k8s-cleanup.sh)'
+    required: false
+    default: 'none'
 
 runs:
   using: 'composite'
   steps:
+    # ---------------------------------------------------------------- Kubernetes stands
+    - name: Setup Kubernetes tools
+      if: ${{ inputs.stand != '' }}
+      shell: bash
+      run: |
+        source ./common/scripts/ci-k8s-tools.sh
+
+    - name: Configure Kubernetes stand
+      if: ${{ inputs.stand != '' }}
+      shell: bash
+      run: |
+        stand="${{ inputs.stand }}"
+        ns="${{ inputs.k8s-namespace }}"
+        if [ -z "$ns" ]; then
+          source ./deployment/kubernetes/scripts/lib.sh
+          ns=$(stand_namespace "$stand")
+        fi
+        push_flag=--push-images
+        [ "${{ inputs.k8s-runtime }}" = existing ] && push_flag=--no-push-images
+        # Explicit flags/env win over any saved config; prepare brings the base up itself.
+        pnpm -w stand:configure --runtime "${{ inputs.k8s-runtime }}" --namespace "$ns" "$push_flag" --yes
+
+    - name: Prepare Kubernetes stand (with rate limit retry)
+      if: ${{ inputs.stand != '' }}
+      shell: bash
+      run: |
+        set -o pipefail
+        cd ./${{ inputs.test-folder }}
+        if ${{ inputs.prepare-script }} 2>&1 | tee /tmp/prepare-server.log; then
+          echo "Prepare succeeded"
+        else
+          if grep -qi "rate limit\|too many requests\|toomanyrequests\|429" /tmp/prepare-server.log; then
+            echo "Rate limit hit, logging in to Docker Hub and retrying..."
+            echo "$DOCKER_ACCESS_TOKEN" | docker login -u intabiafusion --password-stdin
+            ${{ inputs.prepare-script }}
+          else
+            echo "Prepare failed (not a rate limit issue)"
+            cat /tmp/prepare-server.log
+            exit 1
+          fi
+        fi
+      env:
+        DOCKER_ACCESS_TOKEN: ${{ inputs.docker-access-token }}
+        LIVEKIT_MODE: docker
+
+    # ---------------------------------------------------------------- compose stands
     - name: Prepare server (with rate limit retry)
+      if: ${{ inputs.stand == '' }}
       shell: bash
       run: |
         set -o pipefail
@@ -54,10 +117,37 @@ runs:
         DOCKER_ACCESS_TOKEN: ${{ inputs.docker-access-token }}
         LIVEKIT_MODE: docker
 
+    # ---------------------------------------------------------------- common
     - name: Build test package
       shell: bash
       run: |
         pnpm build --to ${{ inputs.build-package }}
+
+    # uitest:k8s drives the browser through the webpack dev-server on :8081, which proxies
+    # to the stand - build its deps (the whole client graph) first.
+    - name: Build front dev-server
+      if: ${{ inputs.stand != '' }}
+      shell: bash
+      run: |
+        pnpm build --to @hcengineering/prod --esbuild-emit
+
+    - name: Start stand front proxy
+      if: ${{ inputs.stand != '' }}
+      shell: bash
+      run: |
+        port="${STAND_FRONT_PORT:-8081}"
+        pnpm -w stand:test:front ${{ inputs.stand }} > /tmp/stand-front.log 2>&1 &
+        echo $! > /tmp/stand-front.pid
+        for _ in $(seq 1 60); do
+          if curl -fsS "http://localhost:${port}/" >/dev/null 2>&1; then
+            echo "stand front proxy is up on :${port}"
+            exit 0
+          fi
+          sleep 5
+        done
+        echo "stand front proxy did not come up on :${port}; log follows" >&2
+        cat /tmp/stand-front.log >&2 || true
+        exit 1
 
     - name: Install Playwright
       shell: bash
@@ -72,7 +162,9 @@ runs:
         cd ./${{ inputs.test-folder }}
         ./profile-start.sh
 
-    # Container load and service stats around the run; telemetry never fails the job.
+    # Host stats around the run in both modes. The docker sampler is compose-only: on
+    # Kubernetes the stand pods are not host containers, and container telemetry must not
+    # be reported as pod telemetry - pod diagnostics come from kubectl in "Store logs".
     - name: Start telemetry
       shell: bash
       run: |
@@ -81,8 +173,10 @@ runs:
         T=../../tests/sanity/telemetry
         node $T/stats.js rate --min 1 --max 10 --threshold 0.001 || true
         node $T/stats.js wipe || true
-        node $T/docker-sampler.js --out runs/ci/docker.ndjson --filter ${{ inputs.container-prefix }} &
-        echo $! > /tmp/telemetry-sampler.pid
+        if [ -z "${{ inputs.stand }}" ]; then
+          node $T/docker-sampler.js --out runs/ci/docker.ndjson --filter ${{ inputs.container-prefix }} &
+          echo $! > /tmp/telemetry-sampler.pid
+        fi
         node $T/stats.js sample --out runs/ci/stats.ndjson --interval 1000 &
         echo $! > /tmp/telemetry-stats.pid
 
@@ -90,7 +184,11 @@ runs:
       shell: bash
       run: |
         cd ./${{ inputs.test-folder }}/sanity
-        pnpm run uitest
+        if [ -n "${{ inputs.stand }}" ]; then
+          pnpm run uitest:k8s
+        else
+          pnpm run uitest
+        fi
 
     - name: Collect telemetry
       if: always()
@@ -105,8 +203,13 @@ runs:
         node $T/stats.js fetch --out runs/ci/stats.json || true
         node $T/stats.js rate --min 10 --max 300 --threshold 0.01 || true
         # Reports stay where they are - they already ship in the playwright-results artifact.
-        node $T/collect-run.js --dir runs/ci --report playwright-report.json \
-          --steps step-report.ndjson --docker runs/ci/docker.ndjson || true
+        if [ -n "${{ inputs.stand }}" ]; then
+          node $T/collect-run.js --dir runs/ci --report playwright-report.json \
+            --steps step-report.ndjson || true
+        else
+          node $T/collect-run.js --dir runs/ci --report playwright-report.json \
+            --steps step-report.ndjson --docker runs/ci/docker.ndjson || true
+        fi
         node $T/render-report.js --dir runs/ci || true
 
     # Written by the json reporter and step-reporter.ts; only tests/sanity configures both, the
@@ -158,8 +261,18 @@ runs:
         name: profiling-${{ inputs.artifact-name-suffix }}
         path: ./${{ inputs.test-folder }}/profiles
 
+    # Kubernetes: pod logs/events from the stand namespace. Compose: host container logs.
+    # Same artifact path in both modes.
+    - name: Store Kubernetes logs
+      if: ${{ always() && inputs.stand != '' }}
+      shell: bash
+      run: |
+        cd ./${{ inputs.test-folder }}/sanity
+        mkdir -p logs
+        ../../common/scripts/k8s-stand-logs.sh ${{ inputs.stand }} logs || true
+
     - name: Store docker logs
-      if: always()
+      if: ${{ always() && inputs.stand == '' }}
       shell: bash
       run: |
         cd ./${{ inputs.test-folder }}/sanity
@@ -189,5 +302,12 @@ runs:
       if: always()
       uses: actions/upload-artifact@v6
       with:
-        name: docker-logs-${{ inputs.artifact-name-suffix }}
+        name: ${{ inputs.stand != '' && 'k8s' || 'docker' }}-logs-${{ inputs.artifact-name-suffix }}
         path: ./${{ inputs.test-folder }}/sanity/logs
+
+    - name: Cleanup Kubernetes stand
+      if: ${{ always() && inputs.stand != '' }}
+      shell: bash
+      run: |
+        if [ -f /tmp/stand-front.pid ]; then kill "$(cat /tmp/stand-front.pid)" 2>/dev/null || true; fi
+        STAND_CLEANUP=${{ inputs.k8s-cleanup }} ./common/scripts/ci-k8s-cleanup.sh ${{ inputs.stand }}

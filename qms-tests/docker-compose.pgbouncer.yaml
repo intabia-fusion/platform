@@ -1,5 +1,8 @@
-# Test-only pgbouncer override.
-# Usage (from tests folder):
+# Test-only pgbouncer override. Historical: the qms compose stand
+# (docker-compose.yaml/docker-compose.purepg.yaml) was removed on 2026-11-11
+# when qms moved to the Kubernetes stand - this override has nothing to attach
+# to and is kept only as a reference for the pgbouncer config in ./pgbouncer/.
+# Usage (from tests folder, compose era):
 #   docker compose -f ../dev/docker-compose.yaml -f docker-compose.purepg.yaml -f docker-compose.pgbouncer.yaml up -d
 services:
   pgbouncer:

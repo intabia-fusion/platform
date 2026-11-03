@@ -15,9 +15,10 @@
 
 import { type ServerConfig } from '@hcengineering/api-client'
 import { getClient as getAccountClient, type AccountClient } from '@hcengineering/account-client'
+import { PlatformUrl } from '../env'
 
-export const STAND_URL = 'http://localhost:8183'
-export const TRANSACTOR_URL = `${STAND_URL}/_tr`
+export const STAND_URL = PlatformUrl
+export const TRANSACTOR_URL = process.env.TRANSACTOR_URL ?? `${STAND_URL}/_tr0`
 export const STATS_URL = `${STAND_URL}/_stats`
 export const DEV_OTP = '000000'
 /** Mailpit of the ws stand: every email the services send lands here and nowhere else. */

@@ -1,0 +1,15 @@
+# CoreDNS rewrite for in-cluster resolution of stand hosts.
+# Every <stand>.fusion.localhost query inside a pod is rewritten to the traefik
+# Service, so pods can call the stand by its external URL (services build
+# https://<hostUrl>/... links). The answer auto flag rewrites the response back
+# to the original name.
+#
+# Applied by scripts/base-up.sh:
+#   k3d - as coredns-custom ConfigMap (kube-system), imported inside the main
+#         server block by the k3s Corefile (docs.k3s.io advanced coredns);
+#   kind - inserted into the Corefile directly (kind's Corefile has no import).
+# TRAEFIK_SVC_PLACEHOLDER is rendered per runtime (traefik lives in kube-system
+# for k3d, in the traefik namespace for kind).
+#
+# This is NOT a standalone manifest - it is a Corefile fragment.
+rewrite name regex (.*)\.fusion\.localhost TRAEFIK_SVC_PLACEHOLDER answer auto

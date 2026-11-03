@@ -47,7 +47,7 @@
   } from '@hcengineering/ui'
   import { MenuButton } from '@hcengineering/ui/kit'
   import { onDestroy } from 'svelte'
-  import { workbenchId } from '@hcengineering/workbench'
+  import { logIn, workbenchId } from '@hcengineering/workbench'
   import { WorkspaceTokenInfo } from '@hcengineering/billing-resources'
   import { currencyOf } from '@hcengineering/billing'
 
@@ -204,10 +204,10 @@
       const code = await requestAdminOtpCode()
       if (code === undefined) return
       const info = await accountClient.adminImpersonate(workspace.uuid, target, code)
-      setMetadata(presentation.metadata.Token, info.token)
+      await logIn(info)
       setMetadata(presentation.metadata.WorkspaceUuid, info.workspace)
+      setMetadata(presentation.metadata.WorkspaceDataId, info.workspaceDataId)
       setMetadataLocalStorage(login.metadata.LoginEndpoint, info.endpoint)
-      setMetadataLocalStorage(login.metadata.LoginAccount, info.account)
       navigate({ path: [workbenchId, info.workspaceUrl ?? workspace.url ?? ''] })
     } catch (err) {
       console.error('Failed to open an impersonation session:', err)

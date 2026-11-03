@@ -1,0 +1,8 @@
+# Default for dev: LiveKit runs natively on the host, not in the cluster.
+config:
+  livekitWs: "ws://127.0.0.1:7880"
+  livekitHost: "ws://host.docker.internal:7880"
+
+services:
+  livekit:
+    enabled: false

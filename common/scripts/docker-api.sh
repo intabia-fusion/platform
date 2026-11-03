@@ -1,7 +1,9 @@
 #!/bin/bash
-# Images for the stand the api-tests and backup-tests run against - the services in
-# api-tests/docker-compose.yaml and nothing else. No web UI: front runs as `front-api` with an empty
-# dist/, since the api-tests only need its /config.json, and the webpack bundle is most of the build.
+# Images for the stand the api-tests and backup-tests run against - the services of the
+# Kubernetes api stand (stands/api) and nothing else. The stand scripts push them from the
+# local Docker into the cluster registry. No web UI: front is built with an empty dist/,
+# since the api-tests only need its /config.json, and the webpack bundle is most of the build.
+# The chart pulls a fixed `intabiafusion/front` name, so the same build is tagged `front` too.
 set -eo pipefail
 
 ./common/scripts/node_modules/.bin/compile-all . --parallel 4 --docker-build --esbuild-emit \
@@ -32,4 +34,7 @@ trap 'rm -rf "$ctx"' EXIT
 mkdir "$ctx/bundle" "$ctx/dist"
 cp pods/front/Dockerfile "$ctx/"
 cp pods/front/bundle/bundle.js pods/front/bundle/bundle.js.map "$ctx/bundle/"
-docker build ${DOCKER_EXTRA} -t "${DOCKER_NAMESPACE:-intabiafusion}/front-api" "$ctx"
+docker build ${DOCKER_EXTRA} \
+  -t "${DOCKER_NAMESPACE:-intabiafusion}/front-api" \
+  -t "${DOCKER_NAMESPACE:-intabiafusion}/front" \
+  "$ctx"

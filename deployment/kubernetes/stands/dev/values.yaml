@@ -1,0 +1,80 @@
+# Локальный dev-стенд платформы на k3d.
+#
+# Окружение (postgres, Kafka, S3, elastic, mailpit) ставит charts/platform-base в
+# namespace platform-base; адреса и учётки разрешаются через контракт
+# ConfigMap/Secret platform-base (lookup в чарте platform), db-init создаёт базу
+# <stand> из контракта. Образы - локальная сборка (pnpm docker:build), пушит
+# scripts/push-images.sh в registry кластера.
+#
+# Кластер, TLS и установка: pnpm -w stand:base:up && pnpm -w stand:dev:up
+# (см. deployment/kubernetes/README.md).
+
+global:
+  namespace: fusion-dev
+  version: latest
+  hostUrl: dev.fusion.localhost
+  # registry внутри кластера; deploy.sh подставляет правильный адрес per runtime
+  imageRegistry: k3d-fusion-registry:5000
+  imagePullPolicy: Always
+  # namespace контракта ConfigMap/Secret platform-base (ставит platform-base)
+  baseNamespace: platform-base
+  stand: dev
+  tls:
+    caSecretName: fusion-local-ca
+  landingUrl: ""
+  productName: Intabia Platform Dev
+  defaultLanguage: ru
+  lastNameFirst: true
+
+config:
+  REGION: pg
+  EXTERNAL_REGIONS: "--"
+  temporalUrl: ""
+  regions:
+  - id: ""
+    name: Default
+    transactorService: transactor0
+    transactorPath: /_tr0
+    collaboratorService: collaborator0
+    collaboratorPath: /_cl0
+
+dbInit:
+  enabled: true   # host/user/password берутся из контракта platform-base
+
+secrets:
+  loveSecret:
+    apiKey: "dev-love-api-key"
+    apiSecret: "dev-love-api-secret-0123456789abcdef"
+    webhookApiKey: "dev-love-webhook-key"
+    s3StorageConfig: "s3|http://s3.platform-base.svc.cluster.local:9000?accessKey=minioadmin&secretKey=minioadmin&rootBucket=dev-love-recordings"
+    webhookApiSecret: "dev-love-webhook-secret-0123456789abcdef"
+  platform:
+    serverSecret: "dev-server-secret"
+    mailAuthToken: "dev-mail-token"
+    aibotApiToken: "dev-aibot-api-token"
+    signPassword: "dev-sign-password"
+    smtpMode: "queue"
+    smtpHost: mailpit.platform-base.svc.cluster.local
+    smtpPort: "1025"
+    smtpFrom: noreply@fusion.localhost
+
+services:
+  payment:
+    enabled: true
+  # размер под laptop Docker VM; логин/работа трекера не затронуты
+  front:
+    replicas: 1
+  workspace:
+    replicas: 1
+  # Внимание: шаблоны этих сервисов не читают enabled, гасим репликами
+  # distro - сборка desktop-приложений, в compose dev закомментирован
+  distro:
+    replicas: 0
+  analytics:
+    replicas: 0
+  loveAgent:
+    replicas: 0
+  preview:
+    replicas: 0
+  linkPreview:
+    replicas: 0

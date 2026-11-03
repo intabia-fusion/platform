@@ -1,0 +1,31 @@
+# k3d cluster config for local stands. Consumed by deployment/kubernetes/scripts/base-up.sh.
+# One cluster per machine: registry, 80/443 on the load balancer, single server node.
+# Docs: deployment/kubernetes/README.md.
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+metadata:
+  name: fusion
+servers: 1
+agents: 0
+image: rancher/k3s:v1.36.4-k3s1
+ports:
+- port: 80:80
+  nodeFilters:
+  - loadbalancer
+- port: 443:443
+  nodeFilters:
+  - loadbalancer
+registries:
+  # Local registry for locally built intabiafusion/* images. Inside the cluster the
+  # registry is reachable as k3d-fusion-registry:5000 (this is global.imageRegistry
+  # in stand values); from the host it is localhost:5111 (docker push target).
+  create:
+    name: k3d-fusion-registry
+    hostPort: "5111"
+options:
+  k3s:
+    extraArgs:
+    # traefik from k3s is the ingress; nothing else of the k3s extras is needed.
+    - arg: --disable=metrics-server
+      nodeFilters:
+      - server:*

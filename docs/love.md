@@ -482,7 +482,8 @@ cd tests && ./prepare-pg.sh
 # 3. LiveKit (обязателен для join/leave тестов)
 cd dev && ./run_livekit.sh     # порт 7880, webhook http://127.0.0.1:8098/webhook
                               # ключи devkey/devkey2, конфиг dev/livekit-dev-config.yaml
-                              # на Mac host-network недоступна, LiveKit поднимается локально
+                              # для compose на Mac LiveKit поднимается локально;
+                              # kind/Podman - через stand:dev:up, см. deployment/kubernetes/README.md
 
 # 4. Тесты
 cd tests/sanity

@@ -1,74 +1,24 @@
 #!/usr/bin/env bash
 
-# Brings up the sanity stand. Docker, service health checks and workspace seeding live in
-# dev/test-base (node); this script only keeps the pieces that are host-specific: the profiling
-# overlay and the local LiveKit server.
+# Reset and seed the sanity stand in the Kubernetes cluster configured through
+# pnpm -w stand:configure (kubeconfig/context/namespace). LiveKit runs on the host.
 #
-#   ./prepare-pg.sh              # sanity workspaces only
-#   ./prepare-pg.sh --full       # + the QMS workspaces, so qms-tests run on this same stand
-#   ./prepare-pg.sh --docs       # + demo workspaces with stable data and the prod look (docker-compose.docs.yaml) for doc screenshots
-#   ./prepare-pg.sh --profile    # CPU-profile every Node pod
-#   ./prepare-pg.sh --asr        # + real transcription: oaitt container and a clisr STT worker
-#   ./prepare-pg.sh --asr-local  # + real transcription through a transcriber on the host, :9007
+#   ./prepare-pg.sh
 
 set -e
 
-STAND=sanity
-PROFILE_ARG=false
-ASR_OVERLAYS=
-DOCS_OVERLAY=
-while [ $# -gt 0 ]; do
-    case "$1" in
-        --full) STAND=full; shift ;;
-        --docs) STAND=docs; DOCS_OVERLAY=docker-compose.docs.yaml; shift ;;
-        --profile) PROFILE_ARG=true; shift ;;
-        --asr) ASR_OVERLAYS=docker-compose.asr.yaml,docker-compose.oaitt.yaml; shift ;;
-        --asr-local) ASR_OVERLAYS=docker-compose.asr.yaml; shift ;;
-        *) echo "unknown option: $1"; exit 1 ;;
-    esac
-done
-
-COMPOSE_FILES="-f docker-compose.yaml -f docker-compose.purepg.yaml -f docker-compose.pgbouncer.yaml"
-if [ -f "docker-compose.override.versions.yml" ]; then
-    COMPOSE_FILES="${COMPOSE_FILES} -f docker-compose.override.versions.yml"
+if [ $# -gt 0 ]; then
+    echo "usage: ./prepare-pg.sh"
+    exit 1
 fi
 
-# --profile: run every Node pod under V8's CPU profiler. The overlay is generated from the
-# services this compose actually has - a hardcoded list breaks whenever a branch adds or drops
-# a pod, since compose then sees a service with no image and rejects the project.
-if [ "$PROFILE_ARG" = true ] || [ "x$PROFILE" = "xtrue" ]; then
-    ./archive-report.sh
-    mkdir -p ./profiles/.old-reports
-    find ./profiles -mindepth 1 -maxdepth 1 ! -name .old-reports -exec rm -rf {} +
-    if docker compose ${COMPOSE_FILES} -p sanity config --format json |
-        node ./gen-profile-overlay.js > docker-compose.profile.yaml; then
-        export STAND_EXTRA_COMPOSE=docker-compose.profile.yaml
-    else
-        echo "Failed to generate the profiling overlay - starting without it"
-        rm -f docker-compose.profile.yaml
-        exit 1
-    fi
-    echo "Profiling enabled. Run the tests, then: ./profile-collect.sh && ./profile-report.sh"
-fi
-
-if [ -n "$ASR_OVERLAYS" ]; then
-    export STAND_EXTRA_COMPOSE="${STAND_EXTRA_COMPOSE:+${STAND_EXTRA_COMPOSE},}${ASR_OVERLAYS}"
-fi
-
-if [ -n "$DOCS_OVERLAY" ]; then
-    export STAND_EXTRA_COMPOSE="${STAND_EXTRA_COMPOSE:+${STAND_EXTRA_COMPOSE},}${DOCS_OVERLAY}"
-fi
-
-../dev/test-base/run.sh "$STAND"
+# prepare-sanity-k3s.sh exports STAND_HTTPS_PORT/LIVEKIT_* for the local
+# LiveKit started below.
+source ../deployment/kubernetes/scripts/prepare-sanity-k3s.sh
 
 # The media sanity tests need an mp4 and a docx; generate them with the stand images once the
 # stand is up, so nothing is downloaded and no host ffmpeg or libreoffice is needed.
 ./make-media-fixtures.sh
-
-if [ "x$DO_CLEAN" == 'xtrue' ]; then
-    echo 'Do docker Clean'
-    docker system prune -a -f
-fi
 
 # Start LiveKit server in background. Writes pid/log to ./.livekit/.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

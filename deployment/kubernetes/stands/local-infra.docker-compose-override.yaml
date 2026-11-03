@@ -1,0 +1,39 @@
+# Временный override для dev/docker-compose.yaml.
+#
+# Окружение под локальный k3d/kind-стенд: платформа внутри кластера ходит на
+# postgres/Kafka/S3/elastic через K8S_HOST_INTERNAL (по умолчанию host.k3d.internal),
+# поэтому override публикует minio и elastic на хост и переобъявляет advertise redpanda.
+#
+# Использование (из корня репозитория):
+#   docker compose -f dev/docker-compose.yaml \
+#     -f deployment/kubernetes/stands/local-infra.docker-compose-override.yaml \
+#     up -d postgres redpanda minio elastic-plugins elastic redis
+#
+# Этот файл уйдёт, когда будет реализован чарт platform-base (см. README.md).
+
+services:
+  redpanda:
+    command:
+      - redpanda
+      - start
+      - --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:19092
+      # Внешний advertise - имя, доступное подам k3d (host.k3d.internal -> хост).
+      - --advertise-kafka-addr internal://redpanda:9092,external://${K8S_HOST_INTERNAL:-host.k3d.internal}:19092
+      - --pandaproxy-addr internal://0.0.0.0:8082,external://0.0.0.0:18082
+      - --advertise-pandaproxy-addr internal://redpanda:8082,external://localhost:18082
+      - --schema-registry-addr internal://0.0.0.0:8081,external://0.0.0.0:18081
+      - --rpc-addr redpanda:33145
+      - --advertise-rpc-addr redpanda:33145
+      - --mode dev-container
+      - --smp 1
+      - --default-log-level=info
+      - --memory 256M
+
+  minio:
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+  elastic:
+    ports:
+      - "9200:9200"

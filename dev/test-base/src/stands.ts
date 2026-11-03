@@ -226,11 +226,13 @@ const ws: StandConfig = {
   ]
 }
 
+// QMS controlled-documents suite. Runs on the Kubernetes qms stand only
+// (deployment/kubernetes/stands/qms, prepared by qms-tests/prepare-qms.sh); the
+// Compose stand went away with qms-tests/docker-compose*.yaml, so no compose files.
 const qms: StandConfig = {
-  // Same project as `sanity`: the stands share host ports, so bringing one up takes the other down.
-  project: 'sanity',
+  project: 'qms',
   dir: 'qms-tests',
-  composeFiles: PURE_PG_COMPOSE,
+  composeFiles: [],
   env: {
     STORAGE_CONFIG: 'datalake|http://localhost:8083/_datalake',
     ACCOUNTS_URL: LOCAL_ACCOUNTS_URL,
@@ -448,8 +450,10 @@ const api: StandConfig = {
 }
 
 /**
- * `full` runs the sanity and the QMS suites against one stand: qms-tests needs a subset of the
- * services tests/ already brings up. ws-tests stays separate - it needs a second (europe) region.
+ * Kubernetes test stands are separate namespaces on one platform-base, so each
+ * suite prepares its own: sanity (tests/), ws/api (ws-tests, api-tests), qms
+ * (qms-tests/). The `docs` stand still merges into the compose sanity stand to
+ * reuse its host ports for the documentation-screenshot seed.
  * @public
  */
 export const stands: Record<string, StandConfig> = {
@@ -460,6 +464,5 @@ export const stands: Record<string, StandConfig> = {
   api,
   'ws-cockroach': wsCockroach,
   qms,
-  full: mergeStands(sanity, qms),
   docs: mergeStands(sanity, docs)
 }

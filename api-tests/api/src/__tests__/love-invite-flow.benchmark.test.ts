@@ -37,8 +37,9 @@ import core, {
 import contact, { ensureEmployee, type Person, type PersonSpace } from '@hcengineering/contact'
 import love, { type MeetingMinutes, type UserMeetingInvite } from '@hcengineering/love'
 import { generateToken } from '@hcengineering/server-token'
+import { PlatformUrl } from '../env'
 
-const PLATFORM_URL = process.env.PLATFORM_URL ?? 'http://localhost:8183'
+const PLATFORM_URL = process.env.PLATFORM_URL ?? PlatformUrl
 const WORKSPACE = 'api-tests'
 const ITERATIONS = parseInt(process.env.BENCH_INVITE_ITERATIONS ?? '20')
 // Per-iteration parallelism: 1 = sequential (manual flow); higher values fire N iterations at

@@ -346,3 +346,14 @@ Timeline of `ci_test.sh` on 10.0.2.2 (12 cores, images warm), before -> after:
 - Integration runs overlap (shared, `kafka`, `pod-fulltext`) and vitest runs beside them. Unit runs stay one after another: side by side, desktop and the shared run took 77s against 48s.
 - Under that load the elastic container takes over 60s to boot; `search.itest.ts`'s `beforeAll` had an explicit 60s timeout, now 240s.
 - `admin-gates` #11 counted every `read_accounts` audit row, and `account-blocking` lists accounts in a parallel worker - it now counts only its own actor's rows.
+
+## Kubernetes stand coverage (2026-11)
+
+- V8 flushes a pod's `NODE_V8_COVERAGE` profile only as the process exits, and an emptyDir dies
+  with the pod - `kubectl cp` between exit and deletion is a race the PVC wins. The platform chart
+  therefore mounts one `stand-coverage` PVC at `/coverage` per coverage-enabled service; the
+  teardown (`deployment/kubernetes/scripts/coverage-collect.sh`) scales all deployments to 0,
+  waits for the pods, then copies the tree out through a throwaway pod.
+- `pnpm coverage:stand` still expects `api-tests/coverage/<image-name>/`; on k8s the directory
+  name is the chart's service key (`transactor`, `ai-bot`, ...), which is what the image-name map
+  in `stand-coverage.ts` keys on.

@@ -1,0 +1,64 @@
+# 
+# source: kube/kvs/kvs.yaml
+# substitutions:
+#   image tags -> :{{ .Values.global.version }}
+#   hosts -> {{ .Values.global.hostUrl }}
+#   namespace -> {{ .Values.global.namespace }}
+{{- if .Values.services.kvs.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kvs
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  replicas: {{ .Values.services.kvs.replicas }}
+  selector:
+    matchLabels:
+      app: kvs
+  template:
+    metadata:
+      labels:
+        app: kvs
+    spec:
+      tolerations:
+      - key: node.kubernetes.io/unreachable
+        operator: Exists
+        effect: NoExecute
+        tolerationSeconds: 10
+      - key: node.kubernetes.io/not-ready
+        operator: Exists
+        effect: NoExecute
+        tolerationSeconds: 10
+      {{- if .Values.global.tls.caSecretName }}
+      volumes:
+      {{- include "platform.caVolume" $ | nindent 6 }}
+      {{- end }}
+      containers:
+      - name: app
+        image: {{ include "platform.containerImage" (dict "root" . "service" "kvs" "image" "hulykvs") }}
+        resources:
+          requests:
+            memory: '{{ .Values.services.kvs.memRequired }}M'
+          limits:
+            memory: '{{ .Values.services.kvs.memLimits }}M'
+        ports:
+        - containerPort: 8094
+        imagePullPolicy: {{ $.Values.global.imagePullPolicy | default "Always" }}
+        {{- if .Values.global.tls.caSecretName }}
+        volumeMounts:
+        {{- include "platform.caVolumeMount" $ | nindent 8 }}
+        {{- end }}
+        env:
+        {{- include "platform.extraEnv" (dict "root" $ "service" "kvs") | nindent 8 }}
+        - name: HULY_TOKEN_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: serverSecret
+        - name: HULY_DB_CONNECTION
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: dbUrl
+
+{{- end }}

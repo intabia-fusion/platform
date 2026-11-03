@@ -1,0 +1,20 @@
+# 
+# source: kube/gmail/service.yaml
+# substitutions:
+#   image tags -> :{{ .Values.global.version }}
+#   hosts -> {{ .Values.global.hostUrl }}
+#   namespace -> {{ .Values.global.namespace }}
+{{- if .Values.services.gmail.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: gmail-service
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  selector:
+    app: gmail-service
+  ports:
+  - port: 80
+    targetPort: 8087
+
+{{- end }}

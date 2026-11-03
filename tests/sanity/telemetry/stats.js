@@ -15,8 +15,10 @@ const crypto = require('crypto')
 const fs = require('fs')
 const path = require('path')
 
-// Every stand routes /_stats through its nginx on 8083; the stats port itself is not published.
-const STATS_URL = (process.env.STATS_URL ?? 'http://localhost:8083/_stats').replace(/\/$/, '')
+// Every stand routes /_stats through its front proxy (compose nginx :8083,
+// webpack dev-server on Kubernetes - same origin as PLATFORM_URI).
+const PLATFORM_ORIGIN = (process.env.PLATFORM_URI ?? 'http://localhost:8083').replace(/\/$/, '')
+const STATS_URL = (process.env.STATS_URL ?? `${PLATFORM_ORIGIN}/_stats`).replace(/\/$/, '')
 const SERVER_SECRET = process.env.SERVER_SECRET ?? 'secret'
 
 function arg (name, fallback) {

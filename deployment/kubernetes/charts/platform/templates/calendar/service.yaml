@@ -1,0 +1,20 @@
+# 
+# source: kube/calendar/service.yaml
+# substitutions:
+#   image tags -> :{{ .Values.global.version }}
+#   hosts -> {{ .Values.global.hostUrl }}
+#   namespace -> {{ .Values.global.namespace }}
+{{- if .Values.services.calendar.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: calendar-service
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  selector:
+    app: calendar-service
+  ports:
+  - port: 80
+    targetPort: 8095
+
+{{- end }}

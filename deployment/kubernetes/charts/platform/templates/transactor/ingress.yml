@@ -1,0 +1,41 @@
+{{- /*
+Generate a single Middleware `strip-transactor` that contains all transactor prefixes
+(e.g. "/_tr0", "/_tr1", ...), and a single IngressRoute `transactor-ingressroute`
+that has one route per transactor instance. Using a single middleware keeps the
+number of Traefik objects small and makes management simpler.
+*/ -}}
+{{- $root := . -}}
+{{- $count := int (default 1 $root.Values.services.transactor.count) -}}
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-transactor
+  namespace: '{{ $root.Values.global.namespace }}'
+spec:
+  stripPrefix:
+    prefixes:
+{{- range $i := until $count }}
+    - "/_tr{{ $i }}"
+{{- end }}
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: transactor-ingressroute
+  namespace: '{{ $root.Values.global.namespace }}'
+spec:
+  entryPoints:
+  - websecure
+  routes:
+{{- range $i := until $count }}
+  - match: Host(`{{ $root.Values.global.hostUrl }}`) && PathPrefix(`/_tr{{ $i }}`)
+    kind: Rule
+    services:
+    - name: {{ printf "transactor%d" $i }}
+      port: 80
+    middlewares:
+    - name: strip-transactor
+{{- end }}

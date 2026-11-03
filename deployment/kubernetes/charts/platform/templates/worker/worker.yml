@@ -1,0 +1,70 @@
+# 
+# source: kube/worker/worker.yml
+# substitutions:
+#   image tags -> :{{ .Values.global.version }}
+#   hosts -> {{ .Values.global.hostUrl }}
+#   namespace -> {{ .Values.global.namespace }}
+{{- if .Values.services.worker.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker-service
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  replicas: {{ .Values.services.worker.replicas }}
+  selector:
+    matchLabels:
+      app: worker-service
+  template:
+    metadata:
+      labels:
+        app: worker-service
+    spec:
+      tolerations:
+      - key: node.kubernetes.io/unreachable
+        operator: Exists
+        effect: NoExecute
+        tolerationSeconds: 10
+      - key: node.kubernetes.io/not-ready
+        operator: Exists
+        effect: NoExecute
+        tolerationSeconds: 10
+      {{- if or .Values.global.tls.caSecretName .Values.global.coverage.enabled }}
+      volumes:
+      {{- include "platform.caVolume" $ | nindent 6 }}
+      {{- include "platform.coverageVolume" $ | nindent 6 }}
+      {{- end }}
+      containers:
+      - name: app
+        image: {{ include "platform.containerImage" (dict "root" . "service" "worker") }}
+        resources:
+          requests:
+            memory: '{{ .Values.services.worker.memRequired }}M'
+          limits:
+            memory: '{{ .Values.services.worker.memLimits }}M'
+        imagePullPolicy: {{ $.Values.global.imagePullPolicy | default "Always" }}
+        {{- if or .Values.global.tls.caSecretName .Values.global.coverage.enabled }}
+        volumeMounts:
+        {{- include "platform.caVolumeMount" $ | nindent 8 }}
+        {{- include "platform.coverageVolumeMount" $ | nindent 8 }}
+        {{- end }}
+        env:
+        {{- include "platform.extraEnv" (dict "root" $ "service" "worker") | nindent 8 }}
+        - name: QUEUE_CONFIG
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: queueConfig
+        - name: QUEUE_REGION
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: REGION
+        - name: DB_URL
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: dbUrl
+        - name: POLL_INTERVAL
+          value: '{{ .Values.services.worker.pollInterval }}'
+{{- end }}

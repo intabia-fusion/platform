@@ -46,6 +46,8 @@ jobs:
           fetch-depth: 0
           filter: tree:0
           submodules: recursive
+      - name: Free space
+        uses: ./.github/actions/free-disk-space
       - uses: pnpm/action-setup@v5
       - uses: actions/setup-node@v6
         with:
@@ -87,8 +89,9 @@ jobs:
           path: dev/api/bundle/intabia-fusion-api-*.tgz
           if-no-files-found: error
 
-      # Server images from the bundles above (no web UI), the ws-tests stand with api-tests and
-      # backup-tests, then unit + integration under istanbul with the stand's V8 coverage folded in.
+      # Server images from the bundles above (no web UI), a Kubernetes api stand
+      # (k3d, pushed from this job's images) with api-tests and backup-tests, then
+      # unit + integration under istanbul with the stand's V8 coverage folded in.
       - name: Testing...
         run: |
           set -o pipefail
@@ -325,6 +328,7 @@ jobs:
           build-package: "@hcengineering/tests-sanity"
           artifact-name-suffix: pg
           enable-profiling: "false"
+          stand: sanity
           docker-access-token: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
   uitest-qms:
@@ -372,7 +376,7 @@ jobs:
         env:
           DOCKER_CLI_HINTS: false
           DOCKER_BUILDKIT: 1
-      # QMS tests (isolated qms-tests project)
+      # QMS tests against the qms Kubernetes stand (same conventions as uitest-pg/ws)
       - name: Run UI tests (QMS)
         uses: ./.github/actions/ui-test
         with:
@@ -380,8 +384,7 @@ jobs:
           prepare-script: ./prepare-qms.sh
           build-package: "@hcengineering/qms-tests-sanity"
           artifact-name-suffix: qms
-          container-prefix: "qms-"
-          enable-profiling: "false"
+          stand: qms
           docker-access-token: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
   uitest-workspaces:
@@ -437,6 +440,7 @@ jobs:
           prepare-script: ./prepare.sh
           build-package: "@hcengineering/tests-ws-sanity"
           artifact-name-suffix: ws
+          stand: ws
           docker-access-token: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
   docker-build:

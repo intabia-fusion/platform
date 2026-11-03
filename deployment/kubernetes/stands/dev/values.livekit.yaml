@@ -1,0 +1,8 @@
+# Optional embedded LiveKit for dev kind/Podman (STAND_LIVEKIT=embedded).
+config:
+  livekitWs: ""
+  livekitHost: "ws://livekit-api:7880"
+
+services:
+  livekit:
+    enabled: true

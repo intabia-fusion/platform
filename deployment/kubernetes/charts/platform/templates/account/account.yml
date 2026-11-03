@@ -1,0 +1,209 @@
+#
+# source: kube/account/account.yml
+# substitutions:
+#   image tags -> :{{ .Values.global.version }}
+#   hosts -> {{ .Values.global.hostUrl }}
+#   namespace -> '{{ .Values.global.namespace }}'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: account
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  replicas: {{ .Values.services.account.replicas }}
+  selector:
+    matchLabels:
+      app: account
+  template:
+    metadata:
+      labels:
+        app: account
+      annotations:
+        checksum/region-config: {{ include (print $.Template.BasePath "/region-config.yaml") . | sha256sum }}
+    spec:
+      tolerations:
+      - key: node.kubernetes.io/unreachable
+        operator: Exists
+        effect: NoExecute
+        tolerationSeconds: 10
+      - key: node.kubernetes.io/not-ready
+        operator: Exists
+        effect: NoExecute
+        tolerationSeconds: 10
+      containers:
+      - name: app
+        image: {{ include "platform.containerImage" (dict "root" . "service" "account") }}
+        command:
+        - node
+        - --max-old-space-size={{ int (div (mul .Values.services.account.memLimits 90) 100) }}
+        - bundle.js
+        resources:
+          requests:
+            memory: '{{ .Values.services.account.memRequired }}M'
+          limits:
+            memory: '{{ .Values.services.account.memLimits }}M'
+        ports:
+        - containerPort: 3000
+        imagePullPolicy: {{ $.Values.global.imagePullPolicy | default "Always" }}
+        volumeMounts:
+        {{- include "platform.caVolumeMount" $ | nindent 8 }}
+        {{- include "platform.coverageVolumeMount" $ | nindent 8 }}
+        - mountPath: /var/cfg/stage-branding.json
+          name: branding
+          subPath: branding.json
+        - mountPath: /var/cfg/region-config.yaml
+          name: region-config
+          subPath: region-config.yaml
+        env:
+        {{- include "platform.extraEnv" (dict "root" $ "service" "account") | nindent 8 }}
+        # Region names for the admin UI; empty = derive from the region-config only
+        # (compose parity for the test stands - a leftover default would offer a
+        # phantom region the account service does not know).
+        {{- with .Values.services.account.regionInfo }}
+        - name: REGION_INFO
+          value: {{ . }}
+        {{- end }}
+        - name: ADMIN_EMAILS
+          value: {{ .Values.services.account.adminEmails }}
+        - name: BILLING_EMAILS
+          value: {{ .Values.services.account.billingEmails }}
+        - name: ACCOUNT_PORT
+          value: '3000'
+        - name: PASSWORD_STRICTNESS
+          value: {{ .Values.services.account.passwords | quote }}
+        - name: DB_NS
+          value: global_account
+        - name: STATS_URL
+          value: http://stats-service
+        - name: STATS_API
+          value: http://stats-service
+        - name: DB_URL
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: dbUrl
+        - name: POSTGRES_OPTIONS
+          value: '{"connection":{"application_name":"account"},"max":5}'
+            # - name: WEB_PUSH_URL
+            #   value: http://notificator-service
+        - name: MAIL_URL
+          value: http://mail-service
+        - name: MAIL_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: mailAuthToken
+        - name: LANGUAGE
+          value: en
+        - name: PRODUCT_NAME
+          value: '{{ .Values.global.productName }}'
+        - name: QUEUE_CONFIG
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: queueConfig
+        - name: REGION
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: REGION
+        - name: FRONT_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: frontUrl
+
+        - name: REGION_CONFIG
+          value: /var/cfg/region-config.yaml
+        - name: SERVER_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: serverSecret
+        - name: ACCOUNTS_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: accountsUrl
+            # - name: GOOGLE_CLIENT_ID
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: account-secrets
+            #       key: google_client_id
+            # - name: GOOGLE_CLIENT_SECRET
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: account-secrets
+            #       key: google_client_secret
+            # - name: GITHUB_CLIENT_ID
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: account-secrets
+            #       key: github_client_id
+            # - name: GITHUB_CLIENT_SECRET
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: account-secrets
+            #       key: github_client_secret
+        - name: STORAGE_CONFIG
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: storageConfig
+        - name: BRANDING_PATH
+          value: /var/cfg/stage-branding.json
+        - name: OTP_TIME_TO_LIVE
+          value: '600'
+        - name: OTP_RETRY_DELAY
+          value: '{{ .Values.services.account.otpRetryDelay }}'
+        - name: WS_LIVENESS_DAYS
+          value: '{{ .Values.services.account.wsLivenessDays }}'
+        {{- if .Values.services.account.freePlanLimits }}
+        - name: FREE_PLAN_LIMITS
+          value: '{{ .Values.services.account.freePlanLimits }}'
+        {{- end }}
+        {{- if .Values.secrets.platform.licenseKey }}
+        # Self-host license. account is the single key holder; payment/transactor derive from it.
+        # Absent -> edition depends on the baked public key (dev if none, community if baked).
+        - name: LICENSE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: licenseKey
+        {{- end }}
+            # - name: MAILBOX_DOMAINS
+            #   value: huly.app
+            # - name: MAILBOX_MAX_COUNT_PER_ACCOUNT
+            #   value: '2'
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: platform-otel-config
+              key: OTEL_EXPORTER_OTLP_ENDPOINT
+              optional: true
+        - name: OTEL_EXPORTER_OTLP_COMPRESSION
+          valueFrom:
+            configMapKeyRef:
+              name: platform-otel-config
+              key: OTEL_EXPORTER_OTLP_COMPRESSION
+              optional: true
+        - name: OTEL_EXPORTER_OTLP_HEADERS
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: uptraceDsn
+      volumes:
+      {{- include "platform.caVolume" $ | nindent 6 }}
+      {{- include "platform.coverageVolume" $ | nindent 6 }}
+      - configMap:
+          items:
+          - key: branding.json
+            path: branding.json
+          name: branding
+        name: branding
+      - configMap:
+          items:
+          - key: region-config.yaml
+            path: region-config.yaml
+          name: region-config
+        name: region-config

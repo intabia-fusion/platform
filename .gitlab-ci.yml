@@ -102,6 +102,8 @@ workflow:
       fi
 
 # One stand per host: fixed ports. Per-host lock, not resource_group, so runners stay parallel.
+# The lock makes full cleanup safe: whatever a previous job on this host left in the local
+# Kubernetes cluster is ours to delete (the cluster name belongs to the stand scripts).
 .lock_stand:
   script:
     - |
@@ -109,8 +111,13 @@ workflow:
       echo "Waiting for the stand lock on $(hostname)..."
       flock 9
       echo "Stand lock acquired"
-    # Safe only under the lock: a previous job on this host may still own these containers.
-    - docker ps -q | xargs -r docker stop
+    # k3d/kubectl/helm/mkcert into ~/.cache, then drop any previous job's cluster - k3d only
+    # ever manages the containers of cluster `fusion` and its registry, nothing else on the host.
+    - source ./common/scripts/ci-k8s-tools.sh
+    - STAND_CLEANUP=cluster ./common/scripts/ci-k8s-cleanup.sh sanity || true
+    # Compose stands (cockroach) keep their old scoped cleanup: only this project's
+    # containers are stopped, never a neighbor job's k3d cluster.
+    - docker ps -q --filter name=^/sanity- --filter name=^/qms- --filter name=^/sanity-livekit- | xargs -r docker stop || true
 
 # Runner shells are non-interactive, so an rc file that returns early never exports nvm.
 # `nvm install` reads .nvmrc, so a freshly provisioned runner picks up the right node itself.
@@ -183,16 +190,30 @@ test:
   extends: .linux
   needs:
     - bundle
+  variables:
+    # The api stand runs in a local k3d cluster built from this checkout's images; the whole
+    # cluster is deleted at job end (ci_test.sh trap and after_script below), so a canceled
+    # job cannot poison the next one on this host.
+    STAND_CLEANUP: cluster
+    STAND_NAMESPACE: fusion-api
   before_script:
     - !reference [.linux, before_script]
     - !reference [.lock_stand, script]
     - !reference [.docker_login, script]
   script:
     - ./ci_test.sh
-  # The stand pods write coverage profiles as root; left as is, they break the next checkout on this
-  # runner. after_script also runs on cancel and timeout, where the trap in ci_test.sh may not.
+  # after_script also runs on cancel and timeout, where the trap in ci_test.sh may not. It runs
+  # without the stand lock, so it cleans only when no other job holds it - otherwise the running
+  # job's .lock_stand already dropped this cluster before its own prepare.
   after_script:
-    - docker ps -q | xargs -r docker stop >/dev/null 2>&1 || true
+    - |
+      exec 9>/tmp/foundation-stand.lock
+      if flock -n 9; then
+        source ./common/scripts/ci-k8s-tools.sh
+        STAND_CLEANUP=cluster ./common/scripts/ci-k8s-cleanup.sh api || true
+      else
+        echo "stand lock is held by a running job - skipping cleanup"
+      fi
     - |
       if [ -d "$CI_PROJECT_DIR/api-tests/coverage" ]; then
         docker run --rm -v "$CI_PROJECT_DIR/api-tests/coverage:/coverage" nginx:alpine chown -R "$(id -u):$(id -g)" /coverage || true
@@ -240,7 +261,8 @@ docker-build:
   # Playwright's globalTimeout is 78m (tests/sanity/tests/playwright.config.ts), plus the stand prepare.
   timeout: 100m
   variables:
-    # Stands pull the exact images docker-build published for this commit.
+    # Compose stands (cockroach) pull the exact images docker-build published for this
+    # commit; the Kubernetes stands (pg/workspace/qms) use STAND_VERSION/STAND_IMAGE_REGISTRY.
     DOCKER_TAG: "${CI_COMMIT_SHA}"
     DOCKER_PULL_POLICY: "missing"
   before_script:
@@ -265,6 +287,19 @@ uitest:pg:
     prepare_script: "./prepare-pg.sh"
     build_package: "@hcengineering/tests-sanity"
     enable_profiling: "false"
+    # Kubernetes stand: pulls the exact images docker-build published for this commit,
+    # nothing is built or pushed here. STAND_IMAGE_NAMESPACE passes DOCKER_NAMESPACE through
+    # (empty when unset) - ci_uitest.sh defaults it there; shell ':-' has no place in GitLab
+    # variable expansion.
+    stand: "sanity"
+    STAND_BACKEND: "k8s"
+    STAND_NAMESPACE: "fusion-sanity"
+    STAND_VERSION: "${CI_COMMIT_SHA}"
+    STAND_IMAGE_REGISTRY: "${DOCKER_REGISTRY}"
+    STAND_IMAGE_NAMESPACE: "${DOCKER_NAMESPACE}"
+    STAND_PUSH_IMAGES: "0"
+    STAND_CLEANUP: "cluster"
+    LIVEKIT_MODE: "docker"
 
 uitest:workspace:
   extends: .uitest
@@ -273,6 +308,15 @@ uitest:workspace:
     prepare_script: "./prepare.sh"
     build_package: "@hcengineering/tests-ws-sanity"
     enable_profiling: "false"
+    stand: "ws"
+    STAND_BACKEND: "k8s"
+    STAND_NAMESPACE: "fusion-ws"
+    STAND_VERSION: "${CI_COMMIT_SHA}"
+    STAND_IMAGE_REGISTRY: "${DOCKER_REGISTRY}"
+    STAND_IMAGE_NAMESPACE: "${DOCKER_NAMESPACE}"
+    STAND_PUSH_IMAGES: "0"
+    STAND_CLEANUP: "cluster"
+    LIVEKIT_MODE: "docker"
 
 uitest:qms:
   extends: .uitest
@@ -281,6 +325,18 @@ uitest:qms:
     prepare_script: "./prepare-qms.sh"
     build_package: "@hcengineering/qms-tests-sanity"
     enable_profiling: "false"
+    # Kubernetes stand, same conventions as uitest:pg/uitest:workspace: pulls the
+    # exact images docker-build published for this commit, nothing is built or
+    # pushed here.
+    stand: "qms"
+    STAND_BACKEND: "k8s"
+    STAND_NAMESPACE: "fusion-qms"
+    STAND_VERSION: "${CI_COMMIT_SHA}"
+    STAND_IMAGE_REGISTRY: "${DOCKER_REGISTRY}"
+    STAND_IMAGE_NAMESPACE: "${DOCKER_NAMESPACE}"
+    STAND_PUSH_IMAGES: "0"
+    STAND_CLEANUP: "cluster"
+    LIVEKIT_MODE: "docker"
   rules:
     - if: $CI_COMMIT_TAG
       when: never

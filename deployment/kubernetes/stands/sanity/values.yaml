@@ -1,0 +1,165 @@
+# Sanity test stand: namespace fusion-sanity, host sanity.fusion.localhost.
+# Playwright против этого стенда: PLATFORM_URI/LOCAL_URL=https://sanity.fusion.localhost
+# (см. README). Окружение - тот же platform-base, свои БД/bucket/постфикс/индекс
+# через global.stand: sanity.
+
+global:
+  namespace: fusion-sanity
+  version: latest
+  hostUrl: sanity.fusion.localhost
+  imageRegistry: k3d-fusion-registry:5000
+  imagePullPolicy: Always
+  # namespace контракта ConfigMap/Secret platform-base (ставит platform-base)
+  baseNamespace: platform-base
+  stand: sanity
+  tls:
+    caSecretName: fusion-local-ca
+  landingUrl: ""
+  productName: Intabia Platform Sanity
+  defaultLanguage: en
+  lastNameFirst: true
+
+config:
+  REGION: pg
+  EXTERNAL_REGIONS: "--"
+  useOtp: "false"
+  temporalUrl: ""
+  regions:
+  - id: ""
+    name: Default
+    transactorService: transactor0
+    transactorPath: /_tr0
+    collaboratorService: collaborator0
+    collaboratorPath: /_cl0
+  livekitWs: "ws://127.0.0.1:7890"
+  livekitHost: "ws://host.docker.internal:7890"
+
+dbInit:
+  enabled: true
+
+secrets:
+  loveSecret:
+    apiKey: "testkey"
+    apiSecret: "testsecret_for_sanity_tests_min32chars"
+    webhookApiKey: "whtestkey"
+    s3StorageConfig: "s3|http://s3.platform-base.svc.cluster.local:9000?accessKey=minioadmin&secretKey=minioadmin&rootBucket=sanity-love-recordings"
+    webhookApiSecret: "whtestsecret_for_sanity_tests_min32chars"
+  platform:
+    # Compose parity: the test helpers (tests/sanity API clients, backup harness,
+    # dev/tool) generate tokens with the hardcoded 'secret' - do not "strengthen"
+    # this per stand.
+    serverSecret: "secret"
+    mailAuthToken: "sanity-mail-token"
+    aibotApiToken: "sanity-aibot-api-token"
+    signPassword: "sanity-sign-password"
+    smtpMode: "queue"
+    smtpHost: mailpit.platform-base.svc.cluster.local
+    smtpPort: "1025"
+    smtpFrom: noreply@sanity.fusion.localhost
+
+services:
+  payment:
+    enabled: true
+    # compose parity (tests/docker-compose.yaml): plan/billing tests change
+    # subscriptions fast from one address
+    subscriptionRateLimitMax: 100000
+    extraEnv:
+    - name: PLAN_CONFIG_RATE_LIMIT_MAX
+      value: "100000"
+  tbankSubscriptions:
+    # compose parity: the in-process TBank mock backs the payment provider
+    enabled: true
+    extraEnv:
+    - name: TBANK_MOCK
+      value: "true"
+    - name: TBANK_SKIP_WEBHOOK_VERIFICATION
+      value: "true"
+  billing:
+    usageUpdateInterval: 600
+    extraEnv:
+    - name: ALLOW_TEST_ENDPOINTS
+      value: "true"
+  aibot:
+    # compose parity (tests/config-aibot.yaml): mock provider in echo mode, so the
+    # sanity ai-bot specs assert what reached the model; offline and deterministic.
+    config: |
+      llm:
+        defaultLevel: low
+        models:
+          low:
+            order: 0
+            label: Базовый
+            description: Mock (тесты)
+            tokenMultiplier: 0.1
+            displayMultiplier: 0.5
+          middle:
+            order: 10
+            label: Стандарт
+            description: Локальная модель (тесты @llm)
+            tokenMultiplier: 1.2
+            displayMultiplier: 1
+        providers:
+          - id: mock
+            provider: mock
+            concurrency: 4
+            batch: 1
+            endpointConfig:
+              echo: true
+              promptTokens: 50
+              completionTokens: 10
+            serves:
+              low:
+                model: mock-model
+                capabilities:
+                  tools: true
+                  maxContextTokens: 32768
+          - id: clisr
+            provider: clisr
+            concurrency: 1
+            batch: 1
+            endpoint: ws://aibot-clisr:4010
+            serves:
+              middle:
+                model: Base
+                capabilities:
+                  tools: true
+                  maxContextTokens: 32768
+  account:
+    passwords: none
+    # parity with the compose tests/ stand
+    freePlanLimits: '{"usersLimit":5,"storagePerUserGB":2,"tokenLimit":100000,"trafficLimitGB":0,"meetingMinutesLimit":0}'
+    extraEnv:
+    - name: ADMIN_OTP_DEV_CODE
+      value: "000000"
+    - name: ALLOW_SKIP_OTP_PASSWORD_SIGNUP
+      value: "true"
+    - name: WORKSPACE_LIMIT_PER_USER
+      value: "10000"
+    - name: AUTH_RATE_LIMIT
+      value: "100000"
+  transactor:
+    # compose parity: bulk sanity traffic bursts far above the prod per-client limit
+    rateLimitMax: 25000
+    rateLimitWindow: 1000
+    extraEnv:
+    - name: LAST_NAME_FIRST
+      value: "true"
+  front:
+    replicas: 1
+  workspace:
+    replicas: 1
+    extraEnv:
+    - name: WAIT_TIMEOUT
+      value: "100"
+  # Внимание: шаблоны этих сервисов не читают enabled, гасим репликами
+  # distro - сборка desktop-приложений, в compose dev закомментирован
+  distro:
+    replicas: 0
+  analytics:
+    replicas: 0
+  loveAgent:
+    replicas: 0
+  preview:
+    replicas: 0
+  linkPreview:
+    replicas: 0

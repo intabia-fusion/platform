@@ -35,6 +35,7 @@ import { getClient as getAccountClient, SubscriptionStatus, SubscriptionType } f
 import { ensureEmployee } from '@hcengineering/contact'
 import { generateToken } from '@hcengineering/server-token'
 import drivePlugin, { type Drive } from '@hcengineering/drive'
+import { PlatformUrl } from '../env'
 
 // Workspace api-tests-unpaid is created in prepare.sh WITHOUT a plan: this suite drives the
 // single tier subscription through active -> past_due -> active via upsertSubscription
@@ -54,7 +55,7 @@ describe('plan-unpaid', () => {
   let memberOps: TxOperations
 
   beforeAll(async () => {
-    config = await loadServerConfig('http://localhost:8183')
+    config = await loadServerConfig(PlatformUrl)
 
     owner = await login('user1')
     member = await login('user2')
@@ -66,7 +67,7 @@ describe('plan-unpaid', () => {
   }, 30000)
 
   async function login (email: string): Promise<WorkspaceToken> {
-    return await getWorkspaceToken('http://localhost:8183', { email, password: '1234', workspace: wsName }, config)
+    return await getWorkspaceToken(PlatformUrl, { email, password: '1234', workspace: wsName }, config)
   }
 
   async function ensureEmployeeFor (ws: WorkspaceToken): Promise<void> {

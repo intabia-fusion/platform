@@ -1,0 +1,11 @@
+# Local platform-base overlay: sizes that fit a laptop Docker VM.
+# Component versions are pinned in the chart values (kept in sync with
+# cluster/versions.env). Images come from public registries; nothing is built.
+postgres:
+  storage: 2Gi
+kafka:
+  storage: 4Gi
+elastic:
+  heap: 512m
+s3:
+  storage: 5Gi

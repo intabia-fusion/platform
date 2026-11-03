@@ -1,0 +1,20 @@
+# 
+# source: kube/print/service.yaml
+# substitutions:
+#   image tags -> :{{ .Values.global.version }}
+#   hosts -> {{ .Values.global.hostUrl }}
+#   namespace -> {{ .Values.global.namespace }}
+{{- if .Values.services.print.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: print-service
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  selector:
+    app: print-service
+  ports:
+  - port: 80
+    targetPort: 4005
+
+{{- end }}

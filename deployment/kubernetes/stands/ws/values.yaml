@@ -1,0 +1,145 @@
+# ws test stand: два региона (main + europe) в region-config, host ws.fusion.localhost.
+# Паритет compose ws-tests: main-регион работает на базе стенда (wstest, как и
+# account), europe - на своей базе wstesteurope (config.regions[].db чарта).
+# Европейский transactor/workspace/fulltext - инстансы 1, те же URL и постфиксы
+# данных (wstest), индекс fulltext региона - wstesteurope.
+
+global:
+  namespace: fusion-ws
+  version: latest
+  hostUrl: ws.fusion.localhost
+  imageRegistry: k3d-fusion-registry:5000
+  imagePullPolicy: Always
+  # namespace контракта ConfigMap/Secret platform-base (ставит platform-base)
+  baseNamespace: platform-base
+  # имя данных стенда (БД/bucket/постфикс/индекс): >=3 символов - правило имен S3 bucket
+  stand: wstest
+  tls:
+    caSecretName: fusion-local-ca
+  landingUrl: ""
+  productName: Intabia Platform WS
+  defaultLanguage: en
+  lastNameFirst: true
+
+config:
+  # id main-региона в region-config - пустая строка (паритет compose ws-tests)
+  REGION: ""
+  EXTERNAL_REGIONS: europe
+  temporalUrl: ""
+  regions:
+  - id: ""
+    name: America
+    transactorService: transactor0
+    transactorPath: /_tr0
+    collaboratorService: collaborator0
+    collaboratorPath: /_cl0
+  - id: europe
+    name: Europe
+    transactorService: transactor1
+    transactorPath: /_tr1
+    collaboratorService: collaborator1
+    collaboratorPath: /_cl1
+    # per-region БД европейского региона (compose region_europe)
+    db: wstesteurope
+
+dbInit:
+  enabled: true
+
+secrets:
+  loveSecret:
+    apiKey: "wstest-love-api-key"
+    apiSecret: "wstest-love-api-secret"
+    webhookApiKey: "wstest-love-webhook-key"
+    s3StorageConfig: "s3|http://s3.platform-base.svc.cluster.local:9000?accessKey=minioadmin&secretKey=minioadmin&rootBucket=wstest-love-recordings"
+    webhookApiSecret: "wstest-love-webhook-secret"
+  platform:
+    # Compose parity: the test helpers (tests/sanity API clients, backup harness,
+    # dev/tool) generate tokens with the hardcoded 'secret' - do not "strengthen"
+    # this per stand.
+    serverSecret: "secret"
+    mailAuthToken: "wstest-mail-token"
+    aibotApiToken: "ws-aibot-api-token"
+    signPassword: "wstest-sign-password"
+    smtpMode: "queue"
+    smtpHost: mailpit.platform-base.svc.cluster.local
+    smtpPort: "1025"
+    smtpFrom: noreply@ws.fusion.localhost
+
+services:
+  # compose ws/api stands do not run the payment provider at all (plan tests drive
+  # plans through billing test endpoints); keep it off, as in compose
+  billing:
+    # compose parity: fast billing-usage recompute (plan-volume), test endpoints
+    usageUpdateInterval: 600
+    extraEnv:
+    - name: ALLOW_TEST_ENDPOINTS
+      value: "true"
+  account:
+    # parity with the compose ws/api stands the suites were written against
+    passwords: none
+    adminEmails: "admin,admin2"
+    billingEmails: "billing"
+    otpRetryDelay: 1
+    # compose does not set REGION_INFO: region names come from the region-config only
+    regionInfo: ""
+    extraEnv:
+    - name: ADMIN_OTP_DEV_CODE
+      value: "000000"
+    - name: ALLOW_SKIP_OTP_PASSWORD_SIGNUP
+      value: "true"
+    - name: AUTH_RATE_LIMIT
+      value: "100000"
+    - name: WORKSPACE_LIMIT_PER_USER
+      value: "100"
+    - name: DELETION_GRACE_DAYS
+      value: "21"
+    - name: DELETION_READONLY_DAYS
+      value: "7"
+  backup:
+    # parity with compose: weekly visited-window, fast poll, production retention
+    interval: 604800
+    extraEnv:
+    - name: COOL_DOWN
+      value: "30"
+    - name: PARALLEL
+      value: "2"
+    - name: DELETED_RETENTION_DAYS
+      value: "7"
+  front:
+    replicas: 1
+    # compose parity: the ws/api UI suites expect the full navigator, nothing hidden
+    disabledFeatures: []
+  workspace:
+    # workspace0 - main (REGION ''), workspace1 - europe
+    count: 2
+    replicas: 1
+    extraEnv:
+    - name: WAIT_TIMEOUT
+      value: "100"
+    - name: LAST_NAME_FIRST
+      value: "true"
+  transactor:
+    count: 2
+    # compose parity: bulk api/ws tests burst far above the prod per-client limit
+    rateLimitMax: 25000
+    rateLimitWindow: 1000
+    extraEnv:
+    - name: LAST_NAME_FIRST
+      value: "true"
+  collaborator:
+    count: 2
+  fulltext:
+    count: 2
+    replicas: 1
+  # Внимание: шаблоны этих сервисов не читают enabled, гасим репликами
+  # distro - сборка desktop-приложений, в compose dev закомментирован
+  distro:
+    replicas: 0
+  analytics:
+    replicas: 0
+  loveAgent:
+    replicas: 0
+  preview:
+    replicas: 0
+  linkPreview:
+    replicas: 0

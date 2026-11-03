@@ -190,9 +190,9 @@ export async function waitHttp (url: string, accept: (status: number, body: stri
 /**
  * @public
  */
-export async function waitElastic (port: number): Promise<void> {
+export async function waitElastic (port: number, host = 'localhost'): Promise<void> {
   await waitHttp(
-    `http://localhost:${port}/_cluster/health`,
+    `http://${host}:${port}/_cluster/health`,
     (status, body) => status === 200 && (body.includes('"yellow"') || body.includes('"green"'))
   )
 }

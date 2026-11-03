@@ -1,0 +1,17 @@
+# 
+# source: kube/rating/service.yaml
+# substitutions:
+#   image tags -> :{{ .Values.global.version }}
+#   hosts -> {{ .Values.global.hostUrl }}
+#   namespace -> {{ .Values.global.namespace }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: rating-service
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  selector:
+    app: rating-service
+  ports:
+  - port: 80
+    targetPort: 80

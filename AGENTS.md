@@ -126,6 +126,27 @@ docker compose -f dev/docker-compose.yaml up -d aibot --force-recreate
 
 UI via `pnpm build:watch` auto-picks changes, no container restart needed.
 
+### Kubernetes stands (local dev/test)
+
+Локальные стенды на Kubernetes - два чарта (`deployment/kubernetes/charts/platform`,
+`charts/platform-base`) и команды из корня репозитория:
+
+```bash
+pnpm -w stand:base:up                  # кластер k3d + registry + TLS + platform-base
+pnpm -w stand:dev:up                   # dev-стенд на https://dev.fusion.localhost
+pnpm -w stand:dev:front                # webpack/HMR на :8080 с proxy в K8s dev; по умолчанию в Docker-контейнере fusion-dev-front (репо bind-mount, Linux node_modules + pnpm-store в named volume fusion-dev-front-node_modules). Хостовый fallback: stand:dev:front:host. Остановка: Ctrl+C или stand:dev:front:down
+pnpm -w stand:test:up [sanity|ws|api]  # тестовые стенды
+pnpm -w stand:test:front               # sanity UI на :8081, uitest:k8s
+pnpm -w stand:dev:down                 # namespace стенда, base не трогает
+pnpm -w stand:dev:pause                # все Deployments/StatefulSets dev в 0 реплик; релиз/Services/Ingress/PVC/data не тронуты; webpack-контейнер fusion-dev-front пауза не гасит
+pnpm -w stand:dev:resume               # dev-up.sh --no-push: resume после pause, реплики по values (включая 0-репликовые сервисы), без rebuild/push образов; stand:dev:up - тоже валидный resume
+pnpm -w stand:base:down                # сносит только своё (k3d/kind), existing - только с --delete-data
+```
+
+Runtime: `k3d` (default), `kind` или `existing` - первым аргументом или `STAND_RUNTIME`.
+Compose-стенды (`pnpm docker:up`) пока остаются рабочим путём; подробности и
+troubleshooting: `deployment/kubernetes/README.md`, план FUSIO-1598.
+
 ## Changelog
 
 ```bash
@@ -200,23 +221,37 @@ Keep existing copyright lines, add `Intabia Fusion` line if missing.
 
 ## Sanity tests (Playwright)
 
-Run from `tests/sanity/`. Stand must be up at `localhost:8083`. Always use `pnpm run uitest` - it wires `LOCAL_URL`, `DEV_URL` and the config.
+Run from `tests/sanity/` against the Kubernetes `sanity` stand (compose prepare is gone). Prepare and seed the stand, start the front proxy, then run `uitest:k8s` - it wires `LOCAL_URL`, `DEV_URL` via the webpack dev-server on :8081 and resolves the stand env (`NODE_EXTRA_CA_CERTS`, `ACCOUNT_DB_URL` port-forward) through `deployment/kubernetes/scripts/with-stand-env.sh`.
 
 ```bash
-cd tests/sanity
-
-pnpm run uitest                                   # full suite
-pnpm run uitest -g "<title>"                      # one test
-pnpm run uitest tests/tracker/kanban.spec.ts      # one file
-pnpm run uitest --workers=1                       # serial; sanity tests share workspace state
+cd tests
+./prepare-pg.sh                          # clean sanity stand + seed (target from stand:configure)
+pnpm -w stand:test:front                 # webpack dev-server on :8081, proxy into the stand
+cd sanity
+pnpm run uitest:k8s                                   # full suite
+pnpm run uitest:k8s -g "<title>"                      # one test
+pnpm run uitest:k8s tests/tracker/kanban.spec.ts      # one file
+pnpm run uitest:k8s --workers=1                       # serial; sanity tests share workspace state
 ```
+
+The QMS suite runs on its own Kubernetes stand (`qms`, namespace `fusion-qms`):
+
+```bash
+cd qms-tests
+./prepare-qms.sh                          # reset + seed the qms stand (target from stand:configure)
+./stand-front.sh                          # webpack dev-server on :8081 (STAND_FRONT_PORT to move it)
+cd sanity
+pnpm run uitest:k8s                       # full QMS suite
+```
+
+Between iterations `./restore-workspace.sh` re-seeds the QMS workspaces on the running stand.
 
 Flags:
 - `--workers=1` - serial. Use for love/meeting tests, they share workspace state.
 - `-g "<name>"` or append `:LINE` to the spec path to run a single test.
-- Extra playwright flags pass through `pnpm run uitest` unchanged.
+- Extra playwright flags pass through `pnpm run uitest:k8s` unchanged.
 
-Do not run bare `npx playwright test` - without `pnpm run uitest`'s env wiring and `-c ./tests/playwright.config.ts` neither dotenv nor `storageState` load, and every test fails on login with `BadRequest`.
+Do not run bare `npx playwright test` - without the `uitest:k8s` env wiring and `-c ./tests/playwright.config.ts` neither dotenv nor `storageState` load, and every test fails on login with `BadRequest`.
 
 ### Tracing and retries
 

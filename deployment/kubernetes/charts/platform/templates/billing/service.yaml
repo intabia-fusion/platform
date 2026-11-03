@@ -1,0 +1,17 @@
+# 
+# source: kube/billing/service.yaml
+# substitutions:
+#   image tags -> :{{ .Values.global.version }}
+#   hosts -> {{ .Values.global.hostUrl }}
+#   namespace -> {{ .Values.global.namespace }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: billing
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  selector:
+    app: billing
+  ports:
+  - port: 80
+    targetPort: 4090

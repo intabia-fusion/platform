@@ -37,8 +37,9 @@ import { ensureEmployee } from '@hcengineering/contact'
 import { makeRank } from '@hcengineering/rank'
 import task, { createProjectType, type ProjectType, type TaskType, type TaskTypeWithFactory } from '@hcengineering/task'
 import tracker, { IssuePriority, TimeReportDayType, type Issue, type Project } from '@hcengineering/tracker'
+import { PlatformUrl as StandPlatformUrl } from '../env'
 
-export const PlatformUrl = process.env.API_TESTS_URL ?? 'http://localhost:8183'
+export const PlatformUrl = StandPlatformUrl
 export const WorkspaceName = process.env.API_TESTS_WS ?? 'api-tests'
 
 const ctx = new MeasureMetricsContext('workflow-tests', {})

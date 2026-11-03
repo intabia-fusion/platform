@@ -31,6 +31,11 @@ const config: PlaywrightTestConfig = {
         },
         testIdAttribute: 'data-id',
         permissions: ['clipboard-read', 'clipboard-write'],
+        // The Kubernetes stand is HTTPS with a mkcert certificate (uitest:k8s): Node
+        // gets the CA through NODE_EXTRA_CA_CERTS (with-stand-env.sh), the browser
+        // through this flag - the suites run against throwaway stands, so skipping
+        // TLS verification changes no test meaning.
+        ignoreHTTPSErrors: true,
         ...devices['Desktop Chrome'],
         screenshot: 'only-on-failure',
         viewport: {

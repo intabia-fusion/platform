@@ -1,0 +1,129 @@
+#
+# source: kube/fulltext/fulltext.yml
+# substitutions:
+#   image tags -> :{{ .Values.global.version }}
+#   hosts -> {{ .Values.global.hostUrl }}
+#   namespace -> {{ .Values.global.namespace }}
+#
+# N independent fulltext Deployments (services.fulltext.count, default 1). On a
+# per-region stand instance i serves config.regions[i]: it reads that region's
+# database and indexes into its own elastic index (<stand>-<regionId>), so region
+# data stays separated exactly like in the compose ws/api stands.
+{{- $root := . -}}
+{{- $count := int (default 1 $root.Values.services.fulltext.count) -}}
+{{- $stand := include "platform.stand" $root -}}
+{{- $indexName := default $stand $root.Values.config.fulltextIndexName -}}
+{{- range $i := until $count }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fulltext{{ $i }}
+  namespace: '{{ $root.Values.global.namespace }}'
+spec:
+  replicas: {{ $root.Values.services.fulltext.replicas }}
+  selector:
+    matchLabels:
+      app: fulltext{{ $i }}
+  template:
+    metadata:
+      labels:
+        app: fulltext{{ $i }}
+    spec:
+      tolerations:
+      - key: node.kubernetes.io/unreachable
+        operator: Exists
+        effect: NoExecute
+        tolerationSeconds: 10
+      - key: node.kubernetes.io/not-ready
+        operator: Exists
+        effect: NoExecute
+        tolerationSeconds: 10
+      {{- if or $root.Values.global.tls.caSecretName $root.Values.global.coverage.enabled }}
+      volumes:
+      {{- include "platform.caVolume" $root | nindent 6 }}
+      {{- include "platform.coverageVolume" $root | nindent 6 }}
+      {{- end }}
+      containers:
+      - name: app
+        image: {{ include "platform.containerImage" (dict "root" $root "service" "fulltext") }}
+        command:
+        - node
+        - --heapsnapshot-signal=SIGUSR2
+        - --max-old-space-size={{ int (div (mul $root.Values.services.fulltext.memLimits 90) 100) }}
+        - bundle.js
+        resources:
+          requests:
+            memory: '{{ $root.Values.services.fulltext.memRequired }}M'
+          limits:
+            memory: '{{ $root.Values.services.fulltext.memLimits }}M'
+        ports:
+        - containerPort: 3500
+        imagePullPolicy: {{ $root.Values.global.imagePullPolicy | default "Always" }}
+        {{- if or $root.Values.global.tls.caSecretName $root.Values.global.coverage.enabled }}
+        volumeMounts:
+        {{- include "platform.caVolumeMount" $root | nindent 8 }}
+        {{- include "platform.coverageVolumeMount" $root | nindent 8 }}
+        {{- end }}
+        env:
+        {{- include "platform.extraEnv" (dict "root" $root "service" "fulltext") | nindent 8 }}
+        - name: SERVER_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: serverSecret
+        - name: DB_URL
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: {{ include "platform.instanceDbKey" (list $root $i) }}
+        - name: POSTGRES_OPTIONS
+          value: '{"connection":{"application_name":"fulltext"},"max":5}'
+        - name: QUEUE_CONFIG
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: queueConfig
+        - name: REGION
+          value: {{ include "platform.instanceRegion" (list $root $i) | quote }}
+        - name: FULLTEXT_DB_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: elasticUrl
+        - name: ELASTIC_INDEX_NAME
+          value: '{{- $region := include "platform.instanceRegion" (list $root $i) -}}{{- if eq $region "" -}}{{ $indexName }}{{- else -}}{{ $indexName }}-{{ $region }}{{- end -}}'
+        - name: STORAGE_CONFIG
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: storageConfig
+        - name: STATS_URL
+          value: http://stats-service
+        - name: REKONI_URL
+          value: http://rekoni-service
+        - name: ACCOUNTS_URL
+          value: http://account
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: platform-otel-config
+              key: OTEL_EXPORTER_OTLP_ENDPOINT
+              optional: true
+        - name: OTEL_EXPORTER_OTLP_COMPRESSION
+          valueFrom:
+            configMapKeyRef:
+              name: platform-otel-config
+              key: OTEL_EXPORTER_OTLP_COMPRESSION
+              optional: true
+        - name: OTEL_EXPORTER_OTLP_HEADERS
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: uptraceDsn
+        - name: HULYLAKE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: hulyLakeUrl
+{{- end }}

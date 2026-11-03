@@ -1,0 +1,20 @@
+# 
+# source: kube/caldav/service.yaml
+# substitutions:
+#   image tags -> :{{ .Values.global.version }}
+#   hosts -> {{ .Values.global.hostUrl }}
+#   namespace -> {{ .Values.global.namespace }}
+{{- if .Values.services.caldav.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: caldav
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  selector:
+    app: caldav
+  ports:
+  - port: 80
+    targetPort: 9070
+
+{{- end }}

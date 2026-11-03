@@ -24,9 +24,10 @@ import {
 } from '@hcengineering/api-client'
 import { systemAccountUuid, generateUuid, type Ref, type Blob } from '@hcengineering/core'
 import { generateToken } from '@hcengineering/server-token'
+import { PlatformUrl } from '../env'
 
 describe('storage-api-server', () => {
-  const frontUrl = 'http://localhost:8183'
+  const frontUrl = PlatformUrl
   const wsName = 'api-tests'
   let config: ServerConfig
   let apiWorkspace1: WorkspaceToken
@@ -35,7 +36,7 @@ describe('storage-api-server', () => {
     config = await loadServerConfig(frontUrl)
 
     apiWorkspace1 = await getWorkspaceToken(
-      'http://localhost:8183',
+      PlatformUrl,
       {
         email: 'user1',
         password: '1234',

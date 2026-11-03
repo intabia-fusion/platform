@@ -1,0 +1,27 @@
+{{- /*
+Shared volume for STAND_COVERAGE=true V8 coverage profiles. Every coverage-enabled
+pod mounts it at /coverage and writes /coverage/<service>; the stand teardown copies
+the tree to the host (api-tests/coverage) before taking the stand down, where
+`pnpm coverage:stand` maps profiles back onto src/ through the bundle sourcemaps.
+*/ -}}
+{{- if .Values.global.coverage.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: stand-coverage
+  namespace: '{{ .Values.global.namespace }}'
+  labels:
+    app: platform
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.global.coverage.storage | quote }}
+  {{- if .Values.global.coverage.storageClass }}
+  storageClassName: {{ .Values.global.coverage.storageClass | quote }}
+  {{- end }}
+{{- end }}
