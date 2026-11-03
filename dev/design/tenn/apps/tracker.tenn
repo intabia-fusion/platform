@@ -5698,7 +5698,7 @@ element "Board settings" {
 					}
 					use Libraries.ui_kit.Actions.Button as "Close settings" {
 						kind tertiary; size small; shape icon
-						replace icon_kit_Plus {
+						replace icon_gear {
 							use Libraries.ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
 					}
@@ -6042,7 +6042,7 @@ element "Board settings" {
 					}
 					use Libraries.ui_kit.Actions.Button as "Close settings" {
 						kind tertiary; size small; shape icon
-						replace icon_kit_Plus {
+						replace icon_gear {
 							use Libraries.ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
 					}
@@ -6158,7 +6158,7 @@ element "Board settings" {
 								}
 								use Libraries.ui_kit.Actions.Button as "IconButton/more" {
 									kind tertiary; size extra-small; shape icon
-									replace icon_kit_Plus {
+									replace icon_gear {
 										use Libraries.ui_kit.Icon.more as "icon/more" { border-color #5a667e; line-width 1 }
 									}
 								}
@@ -6206,7 +6206,7 @@ element "Board settings" {
 								}
 								use Libraries.ui_kit.Actions.Button as "IconButton/more" {
 									kind tertiary; size extra-small; shape icon
-									replace icon_kit_Plus {
+									replace icon_gear {
 										use Libraries.ui_kit.Icon.more as "icon/more" { border-color #5a667e; line-width 1 }
 									}
 								}
@@ -6275,7 +6275,7 @@ element "Board settings" {
 								}
 								use Libraries.ui_kit.Actions.Button as "IconButton/more" {
 									kind tertiary; size extra-small; shape icon
-									replace icon_kit_Plus {
+									replace icon_gear {
 										use Libraries.ui_kit.Icon.more as "icon/more" { border-color #5a667e; line-width 1 }
 									}
 								}
@@ -6319,7 +6319,7 @@ element "Board settings" {
 								}
 								use Libraries.ui_kit.Actions.Button as "IconButton/more" {
 									kind tertiary; size extra-small; shape icon
-									replace icon_kit_Plus {
+									replace icon_gear {
 										use Libraries.ui_kit.Icon.more as "icon/more" { border-color #5a667e; line-width 1 }
 									}
 								}
@@ -6554,7 +6554,7 @@ element "Board settings" {
 					}
 					use Libraries.ui_kit.Actions.Button as "Close settings" {
 						kind tertiary; size small; shape icon
-						replace icon_kit_Plus {
+						replace icon_gear {
 							use Libraries.ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
 					}
@@ -6679,7 +6679,7 @@ element "Board settings" {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
 									use Libraries.ui_kit.Actions.Button as "IconButton/trash" {
 										kind tertiary; size extra-small; shape icon
-										replace icon_kit_Plus {
+										replace icon_gear {
 											use Libraries.ui_kit.Icon.trash as "icon/trash" { border-color #5a667e; line-width 1 }
 										}
 									}
@@ -6720,7 +6720,7 @@ element "Board settings" {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
 									use Libraries.ui_kit.Actions.Button as "IconButton/trash" {
 										kind tertiary; size extra-small; shape icon
-										replace icon_kit_Plus {
+										replace icon_gear {
 											use Libraries.ui_kit.Icon.trash as "icon/trash" { border-color #5a667e; line-width 1 }
 										}
 									}
@@ -6905,7 +6905,7 @@ element "Board settings" {
 					}
 					use Libraries.ui_kit.Actions.Button as "Close settings" {
 						kind tertiary; size small; shape icon
-						replace icon_kit_Plus {
+						replace icon_gear {
 							use Libraries.ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
 					}
@@ -7015,7 +7015,7 @@ element "Board settings" {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
 									use Libraries.ui_kit.Actions.Button as "IconButton/trash" {
 										kind tertiary; size extra-small; shape icon
-										replace icon_kit_Plus {
+										replace icon_gear {
 											use Libraries.ui_kit.Icon.trash as "icon/trash" { border-color #5a667e; line-width 1 }
 										}
 									}
@@ -7054,7 +7054,7 @@ element "Board settings" {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
 									use Libraries.ui_kit.Actions.Button as "IconButton/trash" {
 										kind tertiary; size extra-small; shape icon
-										replace icon_kit_Plus {
+										replace icon_gear {
 											use Libraries.ui_kit.Icon.trash as "icon/trash" { border-color #5a667e; line-width 1 }
 										}
 									}
@@ -7093,7 +7093,7 @@ element "Board settings" {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
 									use Libraries.ui_kit.Actions.Button as "IconButton/trash" {
 										kind tertiary; size extra-small; shape icon
-										replace icon_kit_Plus {
+										replace icon_gear {
 											use Libraries.ui_kit.Icon.trash as "icon/trash" { border-color #5a667e; line-width 1 }
 										}
 									}
@@ -7132,7 +7132,7 @@ element "Board settings" {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
 									use Libraries.ui_kit.Actions.Button as "IconButton/trash" {
 										kind tertiary; size extra-small; shape icon
-										replace icon_kit_Plus {
+										replace icon_gear {
 											use Libraries.ui_kit.Icon.trash as "icon/trash" { border-color #5a667e; line-width 1 }
 										}
 									}
@@ -7171,7 +7171,7 @@ element "Board settings" {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
 									use Libraries.ui_kit.Actions.Button as "IconButton/trash" {
 										kind tertiary; size extra-small; shape icon
-										replace icon_kit_Plus {
+										replace icon_gear {
 											use Libraries.ui_kit.Icon.trash as "icon/trash" { border-color #5a667e; line-width 1 }
 										}
 									}
@@ -7210,7 +7210,7 @@ element "Board settings" {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
 									use Libraries.ui_kit.Actions.Button as "IconButton/trash" {
 										kind tertiary; size extra-small; shape icon
-										replace icon_kit_Plus {
+										replace icon_gear {
 											use Libraries.ui_kit.Icon.trash as "icon/trash" { border-color #5a667e; line-width 1 }
 										}
 									}
@@ -7366,7 +7366,7 @@ element "Board settings" {
 					}
 					use Libraries.ui_kit.Actions.Button as "Close settings" {
 						kind tertiary; size small; shape icon
-						replace icon_kit_Plus {
+						replace icon_gear {
 							use Libraries.ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
 					}
@@ -7487,7 +7487,7 @@ element "Board settings" {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
 									use Libraries.ui_kit.Actions.Button as "IconButton/trash" {
 										kind tertiary; size extra-small; shape icon
-										replace icon_kit_Plus {
+										replace icon_gear {
 											use Libraries.ui_kit.Icon.trash as "icon/trash" { border-color #5a667e; line-width 1 }
 										}
 									}
@@ -7526,7 +7526,7 @@ element "Board settings" {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
 									use Libraries.ui_kit.Actions.Button as "IconButton/trash" {
 										kind tertiary; size extra-small; shape icon
-										replace icon_kit_Plus {
+										replace icon_gear {
 											use Libraries.ui_kit.Icon.trash as "icon/trash" { border-color #5a667e; line-width 1 }
 										}
 									}
@@ -7727,7 +7727,7 @@ element "Board settings" {
 					}
 					use Libraries.ui_kit.Actions.Button as "Close settings" {
 						kind tertiary; size small; shape icon
-						replace icon_kit_Plus {
+						replace icon_gear {
 							use Libraries.ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
 					}
@@ -12518,7 +12518,7 @@ element "Project settings" {
 				slot right {
 					use Libraries.ui_kit.Actions.Button as "Close settings" {
 						kind tertiary; size small; shape icon
-						replace icon_kit_Plus {
+						replace icon_gear {
 							use Libraries.ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
 					}
@@ -12764,7 +12764,7 @@ element "Project settings" {
 				slot right {
 					use Libraries.ui_kit.Actions.Button as "Close settings" {
 						kind tertiary; size small; shape icon
-						replace icon_kit_Plus {
+						replace icon_gear {
 							use Libraries.ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
 					}
@@ -12889,7 +12889,7 @@ element "Project settings" {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
 									use Libraries.ui_kit.Actions.Button as "IconButton/more" {
 										kind tertiary; size extra-small; shape icon
-										replace icon_kit_Plus {
+										replace icon_gear {
 											use Libraries.ui_kit.Icon.more as "icon/more" { border-color #5a667e; line-width 1 }
 										}
 									}
@@ -12922,7 +12922,7 @@ element "Project settings" {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
 									use Libraries.ui_kit.Actions.Button as "IconButton/more" {
 										kind tertiary; size extra-small; shape icon
-										replace icon_kit_Plus {
+										replace icon_gear {
 											use Libraries.ui_kit.Icon.more as "icon/more" { border-color #5a667e; line-width 1 }
 										}
 									}
@@ -12955,7 +12955,7 @@ element "Project settings" {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
 									use Libraries.ui_kit.Actions.Button as "IconButton/more" {
 										kind tertiary; size extra-small; shape icon
-										replace icon_kit_Plus {
+										replace icon_gear {
 											use Libraries.ui_kit.Icon.more as "icon/more" { border-color #5a667e; line-width 1 }
 										}
 									}
@@ -12988,7 +12988,7 @@ element "Project settings" {
 									auto-layout row; gap 6; padding 6 12; align center; width 56; clip yes; wrap yes; line-gap 6
 									use Libraries.ui_kit.Actions.Button as "IconButton/more" {
 										kind tertiary; size extra-small; shape icon
-										replace icon_kit_Plus {
+										replace icon_gear {
 											use Libraries.ui_kit.Icon.more as "icon/more" { border-color #5a667e; line-width 1 }
 										}
 									}
@@ -13118,7 +13118,7 @@ element "Project settings" {
 				slot right {
 					use Libraries.ui_kit.Actions.Button as "Close settings" {
 						kind tertiary; size small; shape icon
-						replace icon_kit_Plus {
+						replace icon_gear {
 							use Libraries.ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
 					}
@@ -13319,7 +13319,7 @@ element "Project settings" {
 				slot right {
 					use Libraries.ui_kit.Actions.Button as "Close settings" {
 						kind tertiary; size small; shape icon
-						replace icon_kit_Plus {
+						replace icon_gear {
 							use Libraries.ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
 					}
@@ -13404,7 +13404,7 @@ element "Project settings" {
 				}
 				use Libraries.ui_kit.Actions.Button as "Close chat" {
 					kind tertiary; size small; shape icon
-					replace icon_kit_Plus {
+					replace icon_gear {
 						use Libraries.ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 					}
 				}
@@ -13591,7 +13591,7 @@ element "Project settings" {
 				slot right {
 					use Libraries.ui_kit.Actions.Button as "Close settings" {
 						kind tertiary; size small; shape icon
-						replace icon_kit_Plus {
+						replace icon_gear {
 							use Libraries.ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
 					}
@@ -13829,7 +13829,7 @@ element "Project settings" {
 				slot right {
 					use Libraries.ui_kit.Actions.Button as "Close settings" {
 						kind tertiary; size small; shape icon
-						replace icon_kit_Plus {
+						replace icon_gear {
 							use Libraries.ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 						}
 					}

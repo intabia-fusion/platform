@@ -676,39 +676,7 @@ element "9 Панель поддержки" {
               at icon_chevronD { hidden yes }
             }
           }
-          item Table {
-            auto-layout column; width 1435; color #ffffff; border-color #00000014; corner-radius 10; clip yes; pos 40 -108
-            item Table_header {
-              auto-layout row; width fill; height 44; padding 0 20; gap 16; align center; color #f7f7fa
-              item Id { title "ЗАДАЧА"; width 90; font-size 11; font-weight 600; line-height 14; text-color #7f7f7f; layout left }
-              item Name { title "НАЗВАНИЕ"; width fill; font-size 11; font-weight 600; line-height 14; text-color #7f7f7f; layout left }
-              item Status { title "СТАТУС"; width 140; font-size 11; font-weight 600; line-height 14; text-color #7f7f7f; layout left }
-              item Assignee { title "ИСПОЛНИТЕЛЬ"; width 160; font-size 11; font-weight 600; line-height 14; text-color #7f7f7f; layout left }
-            }
-            item Task_1 {
-              auto-layout row; width fill; height 58; padding 0 20; gap 16; align center
-              item Id { title "FUSIO-1620"; width 90; font-size 13; line-height 18; text-color #7f7f7f; layout left }
-              item Name { title "Глобальный профиль пользователя"; width fill; font-size 14; line-height 20; layout left }
-              item Status { title "В работе"; width 140; font-size 13; line-height 18; text-color #7d1f70; layout left }
-              item Assignee { title "Алекс Смирнов"; width 160; font-size 13; line-height 18; text-color #5c6470; layout left }
-            }
-            item divider { width fill; height 1; color #0000000f }
-            item Task_2 {
-              auto-layout row; width fill; height 58; padding 0 20; gap 16; align center
-              item Id { title "FUSIO-1621"; width 90; font-size 13; line-height 18; text-color #7f7f7f; layout left }
-              item Name { title "Настройки проекта"; width fill; font-size 14; line-height 20; layout left }
-              item Status { title "Запланировано"; width 140; font-size 13; line-height 18; text-color #5c6470; layout left }
-              item Assignee { title "Мария Орлова"; width 160; font-size 13; line-height 18; text-color #5c6470; layout left }
-            }
-            item divider_2 { width fill; height 1; color #0000000f }
-            item Task_3 {
-              auto-layout row; width fill; height 58; padding 0 20; gap 16; align center
-              item Id { title "FUSIO-1613"; width 90; font-size 13; line-height 18; text-color #7f7f7f; layout left }
-              item Name { title "Доски задач"; width fill; font-size 14; line-height 20; layout left }
-              item Status { title "Готово"; width 140; font-size 13; line-height 18; text-color #26815c; layout left }
-              item Assignee { title "Алекс Смирнов"; width 160; font-size 13; line-height 18; text-color #5c6470; layout left }
-            }
-          }
+          use Libraries.tracker_kit.IssueList as Table { pos 40 -108 }
           item Support_panel {
             auto-layout row; width 800; padding 16 18; gap 14; align center; color #f8f5fa; border-color #d9b9d8; corner-radius 12; shadow 0 -6 20 #00000014; pos 265 -946
             item Panel_icon {

@@ -180,19 +180,19 @@ item ColumnHeader {
 		auto-layout row; gap 4; align center; clip yes
 		use Libraries.ui_kit.Actions.Button as "IconButton/chevronR" {
 			kind tertiary; size small; shape icon
-			replace icon_kit_Plus {
+			replace icon_gear {
 				use Libraries.ui_kit.Icon.chevronR as "icon/chevronR" { border-color #5a667e; line-width 1 }
 			}
 		}
 		use Libraries.ui_kit.Actions.Button as "IconButton/merge" {
 			kind tertiary; size small; shape icon
-			replace icon_kit_Plus {
+			replace icon_gear {
 				use Libraries.ui_kit.Icon.merge as "icon/merge" { border-color #5a667e; line-width 1 }
 			}
 		}
 		use Libraries.ui_kit.Actions.Button as "IconButton/plus" {
 			kind tertiary; size small; shape icon
-			replace icon_kit_Plus {
+			replace icon_gear {
 				use Libraries.ui_kit.Icon.plus as "icon/plus" { border-color #5a667e; line-width 1 }
 			}
 		}

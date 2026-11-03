@@ -72,22 +72,14 @@ item LoginPage {
 	item "Login background" {
 		auto-layout abs; width 1920; height 1080; clip yes
 		item sky { width 1920; height 1080; color linear 180 #0b0123 0 #170134 0.33 #250932 0.66 #100118 1; pos 0 -32 }
-		item "ball top" {
-			width 1920; height 1080; path "M232.00 -10.00A125 125 0 1 0 482.00 -10.00A125 125 0 1 0 232.00 -10.00Z"; view-box 0 0 1920 1080; color #2e0f52
-		}
-		item "ball small" {
-			width 1920; height 1080; path "M1292.00 238.00A72 72 0 1 0 1436.00 238.00A72 72 0 1 0 1292.00 238.00Z"; view-box 0 0 1920 1080; color #4a2070; opacity 0.5
-		}
-		item "ball big" {
-			width 1920; height 1080; path "M1412.00 585.00A213 213 0 1 0 1838.00 585.00A213 213 0 1 0 1412.00 585.00Z"; view-box 0 0 1920 1080; color #431870
-		}
+		item "ball top" { width 250; height 250; corner-radius 125; color linear 225 #2e0f52 0 #1a0630 1; pos 232 135 }
+		item "ball small" { width 144; height 144; corner-radius 72; color linear 225 #4a2070 0 #26104a 1; opacity 0.5; pos 1292 -166 }
+		item "ball big" { width 426; height 426; corner-radius 213; color linear 225 #431870 0 #1c0636 1; pos 1412 -372 }
 		item oval {
 			width 1920; height 1080; path "M-552.07 990.40A1527.59 201.19691119691117 0 1 0 2503.11 990.40A1527.59 201.19691119691117 0 1 0 -552.07 990.40Z"
 			view-box 0 0 1920 1080; color #f5f4f5
 		}
-		item "ball left" {
-			width 1920; height 1080; path "M218.00 807.00A72 72 0 1 0 362.00 807.00A72 72 0 1 0 218.00 807.00Z"; view-box 0 0 1920 1080; color #6b1f8a
-		}
+		item "ball left" { width 144; height 144; corner-radius 72; color linear 225 #6b1f8a 0 #2d0a52 1; pos 218 -735 }
 		item "pin shadow" {
 			width 1920; height 1080; path "M1395.00 860.00A105 22 0 1 0 1605.00 860.00A105 22 0 1 0 1395.00 860.00Z"; view-box 0 0 1920 1080; color #3c1250; opacity 0.5
 		}

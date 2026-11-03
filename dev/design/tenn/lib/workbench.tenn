@@ -241,13 +241,13 @@ item "Navigator/tools" {
 	item Chat { title Chat; font-size 20; line-height 24; font-family "IBM Plex Sans"; font-weight 700; layout left; text-color #0f121a; pos 21 -16 }
 	use Libraries.ui_kit.Actions.Button as "Button/ghost/small" {
 		kind tertiary; size small; shape icon; pos 200 -12
-		replace icon_kit_Plus {
+		replace icon_gear {
 			use Libraries.ui_kit.Icon.kit_Search as "icon/kit/Search" { color #5a667e }
 		}
 	}
 	use Libraries.ui_kit.Actions.Button as "Button/tertiary/small" {
 		kind tertiary; size small; shape icon; pos 236 -12
-		replace icon_kit_Plus {
+		replace icon_gear {
 			use Libraries.ui_kit.Icon.kit_PencilLine as "icon/kit/PencilLine" { color #6b3ad3 }
 		}
 	}
@@ -455,7 +455,7 @@ item PanelHeader {
 			slot actions {
 				use Libraries.ui_kit.Actions.ClassicButton as "ClassicButton/icon/medium" {
 					kind ghost; size medium; shape icon
-					replace icon_kit_Plus {
+					replace icon_kit_PencilLine {
 						use Libraries.ui_kit.Icon.kit_Search as "icon/kit/Search" { color #00000099 }
 					}
 				}
@@ -484,7 +484,7 @@ item "PanelHeader/divided" {
 				slot actions {
 					use Libraries.ui_kit.Actions.ClassicButton as "ClassicButton/icon/medium" {
 						kind ghost; size medium; shape icon
-						replace icon_kit_Plus {
+						replace icon_kit_PencilLine {
 							use Libraries.ui_kit.Icon.kit_Search as "icon/kit/Search" { color #00000099 }
 						}
 					}

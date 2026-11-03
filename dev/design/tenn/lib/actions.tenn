@@ -38,27 +38,27 @@ item Button {
 		state one-of default hover focus disabled loading
 		primary {
 			color #6b3ad3; border-color #1725471a; text-color #ffffff
-			spinner { color #ffffff }
+			spinner { border-color #ffffff }
 		}
 		secondary {
 			color #1725470d; border-color #1725471a; text-color #0f121a
-			spinner { color #0f121a }
+			spinner { border-color #0f121a }
 		}
 		tertiary {
 			color none; border-color none; text-color #6b3ad3
-			spinner { color #6b3ad3 }
+			spinner { border-color #6b3ad3 }
 		}
 		ghost {
 			color none; border-color none; text-color #0f121a
-			spinner { color #0f121a }
+			spinner { border-color #0f121a }
 		}
 		negative {
 			color #cb4b42; border-color #d1d5de26; text-color #ffffff
-			spinner { color #ffffff }
+			spinner { border-color #ffffff }
 		}
 		brand {
 			color #cf13a2; border-color none; text-color #ffffff
-			spinner { color #ffffff }
+			spinner { border-color #ffffff }
 		}
 		large { height 48; gap 8; padding 0 16; corner-radius 8 }
 		medium { height 40; gap 8; padding 0 16; corner-radius 8 }
@@ -107,8 +107,8 @@ item Button {
 	use Icon.chevronD as "icon/chevronD" { hidden yes; width 14; height 14; border-color #ffffff; line-width 1.14 }
 	use Icon.gear as "icon/gear" { line-width 1; hidden ${shape !== "icon" || state === "loading"} }
 	item spinner {
-		width 16; height 16; path "M12 1A11 11 0 1 1 1 12L12 3A9 9 0 1 0 3 12Z"; view-box 0 0 24 24
-		color ${kind === "primary" || kind === "brand" || kind === "negative" || kind === "dangerous" ? "#ffffff" : kind === "tertiary" ? "#6b3ad3" : "#0f121a"}
+		width 16; height 16; path "M12 2a10 10 0 1 1-7.07 2.93"; view-box 0 0 24 24; line-width 2.5
+		border-color ${kind === "primary" || kind === "brand" || kind === "negative" || kind === "dangerous" ? "#ffffff" : kind === "tertiary" ? "#6b3ad3" : "#0f121a"}
 		hidden ${state !== "loading"}; animation spin 1s linear infinite
 	}
 }
@@ -260,11 +260,11 @@ item ClassicButton {
 		regular { color #6b3ad31a; border-color #00000017; text-color #000000cc }
 		primary {
 			color #cf13a2; border-color #1725471a; text-color #ffffff
-			spinner { color #ffffff }
+			spinner { border-color #ffffff }
 		}
 		dangerous {
 			color #eb5757; border-color #eb5757; text-color #ffffff
-			spinner { color #ffffff }
+			spinner { border-color #ffffff }
 		}
 		ghost { color none; border-color none; text-color #000000cc }
 		icon { color none; border-color none; text-color #000000cc }
@@ -287,8 +287,8 @@ item ClassicButton {
 	use Icon.kit_CaretDownFill as "icon/kit/CaretDownFill" { hidden yes; color #00000099 }
 	use Icon.kit_PencilLine as "icon/kit/PencilLine" { hidden ${shape !== "icon" || state === "loading"} }
 	item spinner {
-		width 16; height 16; path "M12 1A11 11 0 1 1 1 12L12 3A9 9 0 1 0 3 12Z"; view-box 0 0 24 24
-		color ${kind === "primary" || kind === "brand" || kind === "negative" || kind === "dangerous" ? "#ffffff" : kind === "tertiary" ? "#6b3ad3" : "#0f121a"}
+		width 16; height 16; path "M12 2a10 10 0 1 1-7.07 2.93"; view-box 0 0 24 24; line-width 2.5
+		border-color ${kind === "primary" || kind === "brand" || kind === "negative" || kind === "dangerous" ? "#ffffff" : kind === "tertiary" ? "#6b3ad3" : "#0f121a"}
 		hidden ${state !== "loading"}; animation spin 1s linear infinite
 	}
 }
@@ -362,7 +362,7 @@ item Modal {
 		item "Edit project" { title "EDIT PROJECT"; font-size 12; line-height 16; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #5a667e }
 		use Button as Close {
 			kind tertiary; size small; shape icon
-			replace icon_kit_Plus {
+			replace icon_gear {
 				use Icon.x as "icon/x" { border-color #6b3ad3; line-width 1 }
 			}
 		}

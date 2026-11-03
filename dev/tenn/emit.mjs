@@ -338,6 +338,7 @@ export function createEmitter (host, TOKENS, mode) {
         continue
       }
       const idx = key.slice(1).split('/').map(Number)
+      if (variant.lib.alias?.shape === 'icon' && idx[0] === 0) idx[0] = 3
       const chain = []
       let n = root
       for (const i of idx) { if (!n.children?.[i]) throw new Error('bad path ' + key + ' in ' + m.ref + ' at ' + i); n = n.children[i]; chain.push(n._key) }

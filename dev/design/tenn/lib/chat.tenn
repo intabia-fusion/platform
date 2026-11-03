@@ -89,47 +89,47 @@ item MessageInput {
 			auto-layout row; gap 6; align center; clip yes
 			use Libraries.ui_kit.Actions.ClassicButton as "ClassicButton/ghost/medium" {
 				kind ghost; size medium; shape icon
-				replace icon_kit_Plus {
+				replace icon_kit_PencilLine {
 					use Libraries.ui_kit.Icon.kit_Paperclip as "icon/kit/Paperclip" { width 20; height 20; color #000000cc }
 				}
 			}
 			use Libraries.ui_kit.Actions.ClassicButton as "ClassicButton/ghost/medium 2" {
 				kind ghost; size medium; shape icon
-				replace icon_kit_Plus {
+				replace icon_kit_PencilLine {
 					use Libraries.ui_kit.Icon.kit_Camera as "icon/kit/Camera" { width 20; height 20; color #000000cc }
 				}
 			}
 			item divider { auto-layout abs; width 1; height 24; clip yes; color #00000012 }
 			use Libraries.ui_kit.Actions.ClassicButton as "ClassicButton/ghost/medium 3" {
 				kind ghost; size medium; shape icon
-				replace icon_kit_Plus {
+				replace icon_kit_PencilLine {
 					use Libraries.ui_kit.Icon.kit_Mic as "icon/kit/Mic" { width 20; height 20; color #000000cc }
 				}
 			}
 			item "divider 2" { auto-layout abs; width 1; height 24; clip yes; color #00000012 }
 			use Libraries.ui_kit.Actions.ClassicButton as "ClassicButton/ghost/medium 4" {
 				kind ghost; size medium; shape icon
-				replace icon_kit_Plus {
+				replace icon_kit_PencilLine {
 					use Libraries.ui_kit.Icon.kit_At as "icon/kit/At" { width 20; height 20; color #000000cc }
 				}
 			}
 			use Libraries.ui_kit.Actions.ClassicButton as "ClassicButton/ghost/medium 5" {
 				kind ghost; size medium; shape icon
-				replace icon_kit_Plus {
+				replace icon_kit_PencilLine {
 					use Libraries.ui_kit.Icon.kit_Smiley as "icon/kit/Smiley" { width 20; height 20; color #000000cc }
 				}
 			}
 			item "divider 3" { auto-layout abs; width 1; height 24; clip yes; color #00000012 }
 			use Libraries.ui_kit.Actions.ClassicButton as "ClassicButton/ghost/medium 6" {
 				kind ghost; size medium; shape icon
-				replace icon_kit_Plus {
+				replace icon_kit_PencilLine {
 					use Libraries.ui_kit.Icon.kit_BubblePlus as "icon/kit/BubblePlus" { width 20; height 20; color #000000cc }
 				}
 			}
 		}
 		use Libraries.ui_kit.Actions.ClassicButton as "ClassicButton/ghost/medium" {
 			kind ghost; size medium; shape icon
-			replace icon_kit_Plus {
+			replace icon_kit_PencilLine {
 				use Libraries.ui_kit.Icon.text_editor_Send as "icon/text-editor/Send" { width 20; height 20; color #00000066 }
 			}
 		}

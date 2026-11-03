@@ -268,7 +268,7 @@ const arcPath = (cx, cy, rx, ry, deg) => {
 kit.LoginBackground = (w = 1920, h = 1080) => {
   const sy = h / 1036
   const part = (name, d, fill, o = {}) => ({ type: 'path', name, geometry: d, viewBox: [0, 0, w, h], width: w, height: h, x: 0, y: 0, fill, ...o })
-  const ball = (name, cx, cy, r, a, b, opacity) => part(name, arcPath(cx, cy, r, r, 0), grad(135, a, b), opacity === undefined ? {} : { opacity })
+  const ball = (name, cx, cy, r, a, b, opacity) => ({ type: 'ellipse', name, x: cx - r, y: cy - r, width: 2 * r, height: 2 * r, fill: grad(135, a, b), ...(opacity === undefined ? {} : { opacity }) })
   const kids = [
     { type: 'rectangle', name: 'sky', x: 0, y: 32, width: w, height: 1080, fill: { type: 'gradient', gradientType: 'linear', rotation: 180, colors: [{ color: '#0B0123', position: 0 }, { color: '#170134', position: 0.33 }, { color: '#250932', position: 0.66 }, { color: '#100118', position: 1 }] } },
     ball('ball top', 357, -10, 125, '#2E0F52', '#1A0630'),

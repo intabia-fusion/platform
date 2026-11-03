@@ -86,19 +86,19 @@ element Channels {
 				slot actions {
 					use Libraries.ui_kit.Actions.ClassicButton as "ClassicButton/icon/medium" {
 						kind ghost; size medium; shape icon
-						replace icon_kit_Plus {
+						replace icon_kit_PencilLine {
 							use Libraries.ui_kit.Icon.kit_Search as "icon/kit/Search" { color #00000099 }
 						}
 					}
 					use Libraries.ui_kit.Actions.ClassicButton as "ClassicButton/icon/medium" {
 						kind ghost; size medium; shape icon
-						replace icon_kit_Plus {
+						replace icon_kit_PencilLine {
 							use Libraries.ui_kit.Icon.kit_ArrowInSquare as "icon/kit/ArrowInSquare" { color #00000099 }
 						}
 					}
 					use Libraries.ui_kit.Actions.ClassicButton as "ClassicButton/icon/medium" {
 						kind ghost; size medium; shape icon
-						replace icon_kit_Plus {
+						replace icon_kit_PencilLine {
 							use Libraries.ui_kit.Icon.kit_Sliders as "icon/kit/Sliders" { width 20; height 20; color #00000099 }
 						}
 					}

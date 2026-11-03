@@ -47,19 +47,19 @@ const card = {
 }
 
 // ---- Actions ----
-const spinner = () => kit.node({ type: 'path', name: 'spinner', geometry: 'M12 1A11 11 0 1 1 1 12L12 3A9 9 0 1 0 3 12Z', viewBox: [0, 0, 24, 24], width: 16, height: 16, fill: colorOf(T('theme-dark-color')), enabled: false })
+const spinner = () => kit.node({ type: 'path', name: 'spinner', geometry: 'M12 2a10 10 0 1 1-7.07 2.93', viewBox: [0, 0, 24, 24], width: 16, height: 16, stroke: colorOf(T('theme-dark-color')), strokeWidth: 2.5, enabled: false })
 const button = kit.Button({ kind: 'primary', size: 'medium', label: 'Button', icon: 'kit/Plus', menu: true })
 kit.add(button, kit.icon('gear'), spinner())
 def('Actions/Button', button, {
   hide: ['2'],
   params: { label: 'Button', kind: 'primary', size: 'medium', shape: 'default', state: 'default' },
   styles: {
-    primary: { color: '$button-primary-BackgroundColor', 'border-color': '$button-primary-BorderColor', 'text-color': '#ffffff', kids: { spinner: { color: '#ffffff' } } },
-    secondary: { color: '$button-secondary-BackgroundColor', 'border-color': '$button-secondary-BorderColor', 'text-color': '#0f121a', kids: { spinner: { color: '#0f121a' } } },
-    tertiary: { color: 'none', 'border-color': 'none', 'text-color': '$button-tertiary-LabelColor', kids: { spinner: { color: '$button-tertiary-IconColor' } } },
-    ghost: { color: 'none', 'border-color': 'none', 'text-color': '#0f121a', kids: { spinner: { color: '#0f121a' } } },
-    negative: { color: '$button-negative-BackgroundColor', 'border-color': '$button-negative-BorderColor', 'text-color': '#ffffff', kids: { spinner: { color: '#ffffff' } } },
-    brand: { color: '$button-brand-BackgroundColor', 'border-color': 'none', 'text-color': '#ffffff', kids: { spinner: { color: '#ffffff' } } },
+    primary: { color: '$button-primary-BackgroundColor', 'border-color': '$button-primary-BorderColor', 'text-color': '#ffffff', kids: { spinner: { 'border-color': '#ffffff' } } },
+    secondary: { color: '$button-secondary-BackgroundColor', 'border-color': '$button-secondary-BorderColor', 'text-color': '#0f121a', kids: { spinner: { 'border-color': '#0f121a' } } },
+    tertiary: { color: 'none', 'border-color': 'none', 'text-color': '$button-tertiary-LabelColor', kids: { spinner: { 'border-color': '$button-tertiary-IconColor' } } },
+    ghost: { color: 'none', 'border-color': 'none', 'text-color': '#0f121a', kids: { spinner: { 'border-color': '#0f121a' } } },
+    negative: { color: '$button-negative-BackgroundColor', 'border-color': '$button-negative-BorderColor', 'text-color': '#ffffff', kids: { spinner: { 'border-color': '#ffffff' } } },
+    brand: { color: '$button-brand-BackgroundColor', 'border-color': 'none', 'text-color': '#ffffff', kids: { spinner: { 'border-color': '#ffffff' } } },
     large: { height: 48, gap: 8, padding: [0, 16], 'corner-radius': 8 },
     medium: { height: 40, gap: 8, padding: [0, 16], 'corner-radius': 8 },
     small: { height: 32, gap: 4, padding: [0, 8], 'corner-radius': 6 },
@@ -92,7 +92,7 @@ def('Actions/Button', button, {
     icon_kit_Plus: { color: null, hidden: '${shape === "icon" || state === "loading"}' },
     icon_gear: { 'border-color': null, hidden: '${shape !== "icon" || state === "loading"}' },
     Button: { title: '${label}', 'text-color': null, hidden: '${shape === "icon"}' },
-    spinner: { color: '${kind === "primary" || kind === "brand" || kind === "negative" || kind === "dangerous" ? "#ffffff" : kind === "tertiary" ? "#6b3ad3" : "#0f121a"}', hidden: '${state !== "loading"}', animation: 'spin 1s linear infinite' }
+    spinner: { 'border-color': '${kind === "primary" || kind === "brand" || kind === "negative" || kind === "dangerous" ? "#ffffff" : kind === "tertiary" ? "#6b3ad3" : "#0f121a"}', hidden: '${state !== "loading"}', animation: 'spin 1s linear infinite' }
   },
   animations: { spin: { from: { rotate: 0 }, to: { rotate: 360 } } }
 })
@@ -126,9 +126,9 @@ def('Actions/ClassicButton', classicButton, {
   params: { label: 'Button', kind: 'regular', size: 'medium', shape: 'default', state: 'default' },
   styles: {
     regular: { color: '#6b3ad31a', 'border-color': '#00000017', 'text-color': '#000000cc' },
-    primary: { color: '#cf13a2', 'border-color': '#1725471a', 'text-color': '#ffffff', kids: { spinner: { color: '#ffffff' } } },
-    positive: { color: '$positive-button-default', 'border-color': 'none', 'text-color': '#ffffff', kids: { spinner: { color: '#ffffff' } } },
-    dangerous: { color: '#eb5757', 'border-color': '#eb5757', 'text-color': '#ffffff', kids: { spinner: { color: '#ffffff' } } },
+    primary: { color: '#cf13a2', 'border-color': '#1725471a', 'text-color': '#ffffff', kids: { spinner: { 'border-color': '#ffffff' } } },
+    positive: { color: '$positive-button-default', 'border-color': 'none', 'text-color': '#ffffff', kids: { spinner: { 'border-color': '#ffffff' } } },
+    dangerous: { color: '#eb5757', 'border-color': '#eb5757', 'text-color': '#ffffff', kids: { spinner: { 'border-color': '#ffffff' } } },
     ghost: { color: 'none', 'border-color': 'none', 'text-color': '#000000cc' },
     icon: { color: 'none', 'border-color': 'none', 'text-color': '#000000cc' },
     small: { height: 28, 'min-width': 28 },
@@ -148,7 +148,7 @@ def('Actions/ClassicButton', classicButton, {
     icon_kit_Plus: { color: null, hidden: '${shape === "icon" || state === "loading"}' },
     icon_kit_PencilLine: { color: null, hidden: '${shape !== "icon" || state === "loading"}' },
     Button: { title: '${label}', 'text-color': null, hidden: '${shape === "icon"}' },
-    spinner: { color: '${kind === "primary" || kind === "positive" || kind === "brand" || kind === "negative" || kind === "dangerous" ? "#ffffff" : kind === "tertiary" ? "#6b3ad3" : "#0f121a"}', hidden: '${state !== "loading"}', animation: 'spin 1s linear infinite' }
+    spinner: { 'border-color': '${kind === "primary" || kind === "positive" || kind === "brand" || kind === "negative" || kind === "dangerous" ? "#ffffff" : kind === "tertiary" ? "#6b3ad3" : "#0f121a"}', hidden: '${state !== "loading"}', animation: 'spin 1s linear infinite' }
   },
   animations: { spin: { from: { rotate: 0 }, to: { rotate: 360 } } }
 })

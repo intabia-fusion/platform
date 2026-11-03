@@ -120,7 +120,7 @@ item SettingsLayout {
 			slot right {
 				use Libraries.ui_kit.Actions.Button as "Close settings" {
 					kind tertiary; size small; shape icon
-					replace icon_kit_Plus {
+					replace icon_gear {
 						use Libraries.ui_kit.Icon.x as "icon/x" { border-color #5a667e; line-width 1 }
 					}
 				}
