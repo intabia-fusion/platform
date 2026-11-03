@@ -142,6 +142,8 @@
 
 `issuesOptions(kanban)`: groupBy status/kind/assignee/priority/space/ component/milestone/attachedTo/createdBy/modifiedBy/estimation/remainingTime/reportedTime; для kanban - `swimLaneBy` (8 значений) + `compactMode`.
 
+Сортировка «Ручная» (`Manual`, `rank`) использует сохранённый порядок задач, изменяемый перетаскиванием: `ListCategory.svelte` (`plugins/view-resources/src/components/list/`) обновляет `rank` при этой сортировке; `KanbanView.svelte` трекера разрешает обновлять `rank` через `dontUpdateRank`. Подпись общего меню — `view.string.Manual` (`plugins/view-assets/lang/ru.json`), настроек доски — `tracker.string.Manual` (`plugins/tracker-assets/lang/ru.json`).
+
 #### Порядок групп по статусу
 
 `issueStatusSort` (`plugins/tracker-resources/src/utils.ts`): категория (`listIssueStatusOrder` для списка, `listIssueKanbanStatusOrder` для kanban) -> порядок типа проекта: `ProjectType.statusOrder`, если задан, затем слитый порядок типов задач (`mergeStatusOrder`: порядок `TaskType.statuses` каждого типа сохраняется, общий статус идёт после всех своих предшественников; типы в порядке экрана настроек, по имени, `getOrderedTaskTypes`; ранги собирает `getProjectStatusRank`) -> имя; компаратор `statusOrderComparator` - `plugins/task/src/utils.ts`.
@@ -207,7 +209,7 @@
 | Формат длительности | task-tracking/time-reports | - | partial | 0.8.60 | показан только пример «4ч», без недель/дней/минут и составных значений вида «2ч 30м» |
 | Навигатор "Мои задачи" / "Все задачи" | task-tracking/issue-collaborators | task-tracking/issue-collaborators | partial | 0.8.60 | описана только вкладка «Отслеживаемые» в «Моих задачах»; остальные вкладки и отдельный раздел «Все задачи» с его вкладками не раскрыты |
 | Viewlet'ы трекера | task-tracking/viewing-issues | task-tracking/viewing-issues | stale | 0.8.60 | канбан теперь работает и по доске (колонки, дорожки, цвета рамки), в описании - обычный канбан; карточка канбана в виде дизайн-кита (атрибуты пилюлями, строка «Оценка» внизу, без счётчика комментариев родителя); описаны только список и канбан, остальные viewlet'ы (подзадачи, этапы, компоненты, отчёты по времени) не упомянуты; в шапке задач проекта вместо подписи «Задачи» - доски, добавленные пользователем на панель, и меню всех досок проекта (добавить/убрать с панели, создать, настройки); доска открывается на месте вида задач проекта, выбор вида в переключателе закрывает её |
-| Группировка/сортировка | task-tracking/viewing-issues | task-tracking/viewing-issues | ok | 0.8.60 | |
+| Группировка/сортировка | task-tracking/viewing-issues | task-tracking/viewing-issues | stale | 0.8.60 | русское название сортировки «Пользовательский» заменено на «Ручная» |
 | Порядок групп по статусу | - | - | plan | - | |
 | Опции показа | task-tracking/viewing-issues | task-tracking/viewing-issues | stale | 0.8.60 | вместо переключателя «Компактно» - «Плотность карточек» из 4 вариантов |
 | Пустой список задач | - | - | plan | - | |
