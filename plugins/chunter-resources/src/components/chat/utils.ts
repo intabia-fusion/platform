@@ -37,6 +37,7 @@ import { type SpecialNavModel } from '@hcengineering/workbench'
 import activity from '@hcengineering/activity'
 
 import chunter from '../../plugin'
+import { getPinUpdate } from './navigatorRank'
 import { type ChatGroupID, type ChatNavGroupModel, type ChatNavItemModel } from './types'
 
 type SectionID = Ref<Class<Doc>> | 'starred'
@@ -99,7 +100,8 @@ export const chatNavGroupModels: ChatNavGroupModel[] = [
     query: {
       pinned: true
     },
-    _class: core.class.Doc
+    _class: core.class.Doc,
+    manualSort: true
   },
   {
     id: 'channels',
@@ -110,7 +112,8 @@ export const chatNavGroupModels: ChatNavGroupModel[] = [
     query: {
       pinned: false
     },
-    _class: chunter.class.Channel
+    _class: chunter.class.Channel,
+    manualSort: true
   },
   {
     id: 'direct',
@@ -121,7 +124,8 @@ export const chatNavGroupModels: ChatNavGroupModel[] = [
     query: {
       pinned: false
     },
-    _class: chunter.class.DirectMessage
+    _class: chunter.class.DirectMessage,
+    manualSort: true
   },
   {
     id: 'activity',
@@ -159,9 +163,15 @@ async function unpinAllChannels (): Promise<void> {
   const ops = client.apply(undefined, 'unpinAllChannels')
   try {
     for (const p of pinned) {
-      await ops.updateCollection(p._class, p.space, p._id, p.attachedTo, p.attachedToClass, 'chats', {
-        pinned: false
-      })
+      await ops.updateCollection(
+        p._class,
+        p.space,
+        p._id,
+        p.attachedTo,
+        p.attachedToClass,
+        'chats',
+        getPinUpdate(false)
+      )
     }
   } finally {
     await ops.commit()

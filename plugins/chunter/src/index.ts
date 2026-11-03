@@ -24,6 +24,7 @@ import {
   DocPreview,
   Markup,
   Mixin,
+  Rank,
   Ref,
   Space,
   Timestamp
@@ -31,6 +32,7 @@ import {
 import { MessageNotificationType, type DocNotifyContext, type ReadState } from '@hcengineering/notification'
 import type { Asset, Plugin, Resource } from '@hcengineering/platform'
 import { IntlString, plugin } from '@hcengineering/platform'
+import type { Preference } from '@hcengineering/preference'
 import type { ComponentExtensionId } from '@hcengineering/ui'
 import { AnyComponent } from '@hcengineering/ui'
 import { Action } from '@hcengineering/view'
@@ -118,6 +120,13 @@ export interface Chat extends AttachedDoc {
   hidden: boolean
   preview?: Ref<DocPreview>
   readState?: Ref<ReadState>
+  rank?: Rank
+}
+
+export type ChatNavSort = 'lastMessage' | 'name' | 'rank'
+
+export interface ChatNavSortPreference extends Preference {
+  sort: ChatNavSort
 }
 
 /**
@@ -177,7 +186,8 @@ export default plugin(chunterId, {
     ContentReportAction: '' as Ref<Class<ContentReportAction>>,
     ChatMessage: '' as Ref<Class<ChatMessage>>,
     ChatSyncInfo: '' as Ref<Class<ChatSyncInfo>>,
-    Chat: '' as Ref<Class<Chat>>
+    Chat: '' as Ref<Class<Chat>>,
+    ChatNavSortPreference: '' as Ref<Class<ChatNavSortPreference>>
   },
   mixin: {
     ObjectChatPanel: '' as Ref<Mixin<ObjectChatPanel>>

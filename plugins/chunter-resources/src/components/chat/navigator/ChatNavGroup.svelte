@@ -14,19 +14,21 @@
 -->
 <script lang="ts">
   import type { Class, Doc, DocPreview, Ref, SearchTarget, WithLookup } from '@hcengineering/core'
-  import core, { getCurrentAccount, reduceCalls, SortingOrder } from '@hcengineering/core'
+  import core, { AccountRole, getCurrentAccount, hasAccountRole, reduceCalls } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import type { LiveQuery } from '@hcengineering/presentation'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import type { Chat } from '@hcengineering/chunter'
+  import type { Chat, ChatNavSort } from '@hcengineering/chunter'
   import type { Employee } from '@hcengineering/contact'
   import notification from '@hcengineering/notification'
+  import type { Action } from '@hcengineering/ui'
   import { previewMembers } from '@hcengineering/view-resources'
   import { createEventDispatcher, onDestroy, tick } from 'svelte'
 
   import chunter from '../../../plugin'
   import { getChannelSpace } from '../../../utils'
   import type { ChatNavEntry, ChatNavGroupModel } from '../types'
+  import { chatNavSortStore, getChatNavQuerySort, getChatNavSortAction } from '../navigatorSort'
   import ChatNavSection from './ChatNavSection.svelte'
   import {
     createFakeDirectFromEmployee,
@@ -53,6 +55,8 @@
     label: IntlString
     entries: ChatNavEntry[]
     count: number
+    sort?: ChatNavSort
+    actions: Action[]
   }
 
   const client = getClient()
@@ -89,7 +93,39 @@
     void tick().then(() => dispatch('loaded'))
   }
 
-  function loadEntries (model: ChatNavGroupModel, search: string): void {
+  function getSectionSort (sorts: Record<string, ChatNavSort>, id: string): ChatNavSort {
+    const sort = sorts[id] ?? 'lastMessage'
+    return sort === 'rank' && model.manualSort !== true ? 'lastMessage' : sort
+  }
+
+  const canSort = hasAccountRole(me, AccountRole.User)
+
+  // Built once per section and mode
+  const actionsCache = new Map<string, Action[]>()
+  let actionsModel: ChatNavGroupModel | undefined
+
+  function getSectionActions (model: ChatNavGroupModel, id: string, sort?: ChatNavSort): Action[] {
+    if (actionsModel !== model) {
+      actionsCache.clear()
+      actionsModel = model
+    }
+    const key = `${id}:${sort ?? ''}`
+    const cached = actionsCache.get(key)
+    if (cached != null) return cached
+    const actions = model.actionsFn()
+    const result =
+      sort == null || !canSort
+        ? actions
+        : [
+            ...actions.filter((it) => it.group !== 'remove'),
+            getChatNavSortAction(id, sort, model.manualSort === true),
+            ...actions.filter((it) => it.group === 'remove')
+          ]
+    actionsCache.set(key, result)
+    return result
+  }
+
+  function loadEntries (model: ChatNavGroupModel, search: string, sorts: Record<string, ChatNavSort>): void {
     const classes = getNavGroupClasses(model)
     reportLoaded(classes)
 
@@ -139,7 +175,7 @@
           const cut = res.length - entries.length
           if (page?.limit != null && entries.length < page.limit && res.length < res.total && cut > page.extra) {
             page.extra = Math.max(cut, page.extra * 2)
-            loadEntries(model, search)
+            loadEntries(model, search, $chatNavSortStore ?? sorts)
             return
           }
           // A window grown for cut rows shows no more than the page
@@ -153,7 +189,7 @@
           limit: limit != null ? limit + extra : undefined,
           lookup: { preview: core.class.DocPreview, readState: notification.class.ReadState },
           projection: { '$lookup.readState.latestMessageTimestamp': 1, '$lookup.readState.attachedToClass': 1 },
-          sort: { '$lookup.readState.latestMessageTimestamp': SortingOrder.Descending }
+          sort: getChatNavQuerySort(getSectionSort(sorts, model.wrap ? _class : model.id))
         }
       )
     }
@@ -187,7 +223,7 @@
     }, searchDebounceMs)
   }
 
-  $: if (active) loadEntries(model, debouncedSearch)
+  $: if (active && $chatNavSortStore != null) loadEntries(model, debouncedSearch, $chatNavSortStore)
 
   onDestroy(() => {
     if (searchDebounceTimer != null) clearTimeout(searchDebounceTimer)
@@ -224,15 +260,19 @@
       pushObject: { object: Doc, chat?: Chat } | undefined,
       pushedPreview: DocPreview | undefined,
       employees: Employee[],
+      sorts: Record<string, ChatNavSort>,
       handler: (result: Section[]) => void
     ): Promise<void> => {
       const result: Section[] = []
       if (!model.wrap) {
+        const sort = getSectionSort(sorts, model.id)
         result.push({
           id: model.id,
           entries: Array.from(entriesByClass.values()).flatMap((it) => it.entries),
           label: model.label ?? chunter.string.Channels,
-          count: Array.from(entriesByClass.values()).reduce((sum, it) => sum + it.total, 0)
+          count: Array.from(entriesByClass.values()).reduce((sum, it) => sum + it.total, 0),
+          sort,
+          actions: getSectionActions(model, model.id, sort)
         })
 
         handler(result)
@@ -286,12 +326,15 @@
           }
         }
 
+        const sort = getSectionSort(sorts, _class)
         result.push({
           id: _class,
           _class,
           entries: sectionEntries,
           label: clazz.pluralLabel ?? clazz.label,
-          count: sectionEntries.length > entries.length ? total + 1 : total
+          count: sectionEntries.length > entries.length ? total + 1 : total,
+          sort,
+          actions: getSectionActions(model, _class, sort)
         })
       }
 
@@ -303,7 +346,8 @@
           _class: pushObject.object._class,
           entries: [pushed],
           label: clazz.pluralLabel ?? clazz.label,
-          count: 1
+          count: 1,
+          actions: getSectionActions(model, pushObject.object._id)
         })
       }
 
@@ -311,7 +355,7 @@
     }
   )
 
-  $: void getSections(entriesByClass, model, pushObj, pushedPreview, employees, (res) => {
+  $: void getSections(entriesByClass, model, pushObj, pushedPreview, employees, $chatNavSortStore ?? {}, (res) => {
     sections = res
   })
 </script>
@@ -324,7 +368,9 @@
       entries={section.entries}
       objectId={selectedId}
       header={section.label}
-      actions={model.actionsFn()}
+      actions={section.actions}
+      sort={section.sort}
+      reorderable={canSort && section.sort === 'rank' && debouncedSearch === ''}
       createAction={model.createAction}
       showEmpty={model.showEmpty}
       itemsCount={section.count}
@@ -333,7 +379,7 @@
           const query = queryByClass.get(section._class)
           if (query?.limit != null) {
             query.limit += 50
-            loadEntries(model, search)
+            loadEntries(model, search, $chatNavSortStore ?? {})
           }
         }
       }}

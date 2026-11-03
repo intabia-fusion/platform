@@ -49,6 +49,7 @@
   export let pressed = false
   export let typing: boolean | undefined = undefined
   export let typingTooltip: string | undefined = undefined
+  export let draggable: boolean = false
 
   let menuOpened = false
   let inlineActions: Action[] = []
@@ -91,6 +92,7 @@
   withBackground={withIconBackground}
   showMenu={menuOpened}
   {pressed}
+  {draggable}
   on:click
   on:contextmenu
 >
