@@ -1,0 +1,48 @@
+# External base: nothing stateful runs here. The chart only publishes the platform-base contract
+# (ConfigMap/Secret) with the addresses below, so the platform chart needs no extra wiring.
+# Credentials live in values/secrets-base.yaml, not in this file.
+postgres:
+  enabled: false
+  mode: external
+  external:
+    host: postgres.example.com
+    port: "5432"
+    user: platform
+    password: ""    # values/secrets-base.yaml
+pgbouncer:
+  enabled: false    # use the managed database's own pooler
+kafka:
+  enabled: false
+  mode: external
+  external:
+    bootstrap: kafka.example.com:9092
+s3:
+  enabled: false
+  mode: external
+  external:
+    endpoint: s3.example.com:443
+    accessKey: ""   # values/secrets-base.yaml
+    secretKey: ""
+    region: us-east-1
+    location: us-east-1
+    kind: minio
+elastic:
+  enabled: false
+  mode: external
+  external:
+    url: https://elastic.example.com:9200
+redis:
+  enabled: false
+  mode: external
+  external:
+    host: redis.example.com
+mailpit:
+  enabled: false
+livekit:
+  enabled: false
+tls:
+  enabled: false    # the cluster keeps its own TLSStore
+metrics:
+  enabled: true
+  prometheus:
+    host: ""

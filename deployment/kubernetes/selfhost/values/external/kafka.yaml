@@ -1,0 +1,5 @@
+kafka:
+  enabled: false
+  mode: external
+  external:
+    bootstrap: kafka.example.com:9092

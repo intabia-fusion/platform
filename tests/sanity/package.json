@@ -19,6 +19,7 @@
     "playwright:install": "playwright install --with-deps chromium",
     "test": "",
     "uitest": "cross-env LOCAL_URL=http://localhost:8083/_account/ DEV_URL= playwright test -c ./tests/playwright.config.ts --grep-invert \"@llm|@network\"",
+    "uitest:k8s": "cross-env LOCAL_URL=http://localhost:8081/_account/ DEV_URL= PLATFORM_URI=http://localhost:8081 bash ../../deployment/kubernetes/scripts/with-stand-env.sh sanity playwright test -c ./tests/playwright.config.ts --grep-invert \"@llm|@network\"",
     "uitest:telemetry": "telemetry/run.sh",
     "uitest:series": "telemetry/series.sh",
     "run-uitests": "cross-env LOCAL_URL=http://localhost:8083/_account/ DEV_URL= playwright test -c ./tests/playwright.config.ts --grep @llm",

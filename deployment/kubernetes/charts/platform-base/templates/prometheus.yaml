@@ -1,0 +1,117 @@
+{{- /*
+Prometheus for the local stands: it scrapes the shared OTel collector, which already carries the
+per-service metrics. No operators, no service discovery - the targets are known.
+*/}}
+{{- if .Values.metrics.enabled }}
+{{- $p := .Values.metrics.prometheus }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: '{{ .Release.Namespace }}'
+  labels:
+    app: prometheus
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+data:
+  prometheus.yml: |
+{{ include "platformBase.prometheusConfig" . | indent 4 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: '{{ .Release.Namespace }}'
+  labels:
+    app: prometheus
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+        release: '{{ .Release.Name }}'
+      annotations:
+        checksum/prometheus-config: {{ include "platformBase.prometheusConfig" . | sha256sum | quote }}
+    spec:
+      containers:
+      - name: prometheus
+        image: '{{ $p.image }}'
+        imagePullPolicy: IfNotPresent
+        args:
+        - --config.file=/etc/prometheus/prometheus.yml
+        - --storage.tsdb.path=/prometheus
+        - --storage.tsdb.retention.time={{ $p.retention }}
+        - --web.enable-lifecycle
+        ports:
+        - name: web
+          containerPort: 9090
+        resources:
+          requests:
+            memory: '{{ $p.memRequired }}Mi'
+          limits:
+            memory: '{{ $p.memLimits }}Mi'
+        readinessProbe:
+          httpGet:
+            path: /-/ready
+            port: 9090
+          initialDelaySeconds: 3
+          periodSeconds: 10
+        volumeMounts:
+        - name: config
+          mountPath: /etc/prometheus
+        - name: data
+          mountPath: /prometheus
+      volumes:
+      - name: config
+        configMap:
+          name: prometheus-config
+      - name: data
+        emptyDir:
+          sizeLimit: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: '{{ .Release.Namespace }}'
+  labels:
+    app: prometheus
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+spec:
+  type: ClusterIP
+  selector:
+    app: prometheus
+  ports:
+  - name: web
+    port: 9090
+    targetPort: 9090
+{{- if $p.host }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: prometheus
+  namespace: '{{ .Release.Namespace }}'
+  labels:
+    app: prometheus
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  - match: Host(`{{ $p.host }}`)
+    kind: Rule
+    services:
+    - name: prometheus
+      port: 9090
+{{- end }}
+{{- end }}

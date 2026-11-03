@@ -86,6 +86,10 @@ export const main = async (): Promise<void> => {
 
   // The queue is REQUIRED: provider events are durable through it and pod-payment is the single writer.
   const queue = getPlatformQueue('payment')
+  // Create before the consumer starts: a fresh stand has no topic yet, and kafkajs gives up on
+  // UNKNOWN_TOPIC_OR_PARTITION instead of retrying, so provider events (tbank drafts) would be lost.
+  await queue.createTopic(QueueTopic.Subscription, 1)
+  await queue.createTopic(QueueTopic.PaymentOperation, 1)
   const producer = queue.getProducer<QueueSubscriptionMessage>(metricsContext, QueueTopic.Subscription)
   const publish: SubscriptionPublisher = async (ctx, data, trigger, canceled) => {
     const msg =

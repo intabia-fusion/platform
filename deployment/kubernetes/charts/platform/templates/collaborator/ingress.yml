@@ -1,0 +1,39 @@
+{{- /*
+Single Middleware `strip-collaborator` containing all collaborator prefixes
+(`/_cl0`, `/_cl1`, ...) and a single IngressRoute with one route per instance.
+*/ -}}
+{{- $root := . -}}
+{{- $count := int (default 1 $root.Values.services.collaborator.count) -}}
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-collaborator
+  namespace: '{{ $root.Values.global.namespace }}'
+spec:
+  stripPrefix:
+    prefixes:
+{{- range $i := until $count }}
+    - "/_cl{{ $i }}"
+{{- end }}
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: collaborator-ingressroute
+  namespace: '{{ $root.Values.global.namespace }}'
+spec:
+  entryPoints:
+  - websecure
+  routes:
+{{- range $i := until $count }}
+  - match: Host(`{{ $root.Values.global.hostUrl }}`) && PathPrefix(`/_cl{{ $i }}`)
+    kind: Rule
+    services:
+    - name: {{ printf "collaborator%d" $i }}
+      port: 80
+    middlewares:
+    - name: strip-collaborator
+{{- end }}

@@ -1851,8 +1851,11 @@ export class PostgresAccountDB implements AccountDB {
       idx++
     }
     if (query.modes !== undefined && query.modes.length > 0) {
+      // postgres.js expands a JS array parameter into a value list ($1,$2,...), which `= ANY`
+      // cannot take: pass a Postgres array literal instead.
+      const modes = Array.isArray(query.modes) ? query.modes : String(query.modes).split(',')
       where.push(`s.mode = ANY($${idx}::text[])`)
-      values.push(query.modes)
+      values.push(`{${modes.map((it) => `"${it.trim().replaceAll('"', '')}"`).join(',')}}`)
       idx++
     }
     if (query.region !== undefined) {

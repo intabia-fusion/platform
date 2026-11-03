@@ -1,0 +1,3 @@
+# SMTP-ловушка не нужна: релей задаётся в platform values (secrets.platform.smtp*).
+mailpit:
+  enabled: false

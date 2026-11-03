@@ -25,7 +25,16 @@ export async function loadServerConfig (url: string): Promise<ServerConfig> {
   const configUrl = concatLink(url, '/config.json')
   const res = await fetch(configUrl, { keepalive: true })
   if (res.ok) {
-    return (await res.json()) as ServerConfig
+    const config = (await res.json()) as ServerConfig
+    // A dev-server config.json rewrites service URLs relative to the front origin -
+    // Node callers (sanity API helpers) cannot fetch relative URLs, absolutize them.
+    for (const key of ['ACCOUNTS_URL', 'FILES_URL', 'UPLOAD_URL'] as const) {
+      const value = config[key]
+      if (typeof value === 'string' && value.startsWith('/')) {
+        config[key] = new URL(value, url).toString()
+      }
+    }
+    return config
   }
   throw new Error('Failed to fetch config')
 }

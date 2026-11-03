@@ -37,6 +37,7 @@ Service logs for the failure window: `startTime` in the report is UTC, container
 - **A click that opens nothing.** A row being re-ordered or moved between groups is replaced under the pointer. Retry the click until the panel really shows what was asked (`openIssueByName`, `openToDoByName`, `openDocumentForTeamspace`).
 - **Save in a settings aside is async; the aside closes when it lands.** `SettingsPage.changeState` did not wait for that (`addState` did). `project-type-statuses` "a status added, renamed or deleted..." (1/622, run 20261028-140205): the rename is in place (`canRenameStatusInPlace`, same `_id`), so the row and the list header show the new name after the first `client.update` while the `_type.statuses` update is still pending. The test then clicks the renamed row - a no-op in `StatesProjectEditor.handleSelect`, the id is already `opened` - and `deleteState` clicks Delete in the old aside, which `closeIfStillOpen` then removes: "element is not stable" -> "detached", no aside for 30s. `changeState` now waits for `statusNameInput()` hidden. Checked: the three settings/status specs x8 on 6 workers, 160/160.
 - **Office app and sidebar widget share `id="app-love:string:Office"`.** Workbench navigation tests must scope app buttons to `.antiPanel-application`; a page-wide id locator fails strict mode with both buttons present (`workbench.spec.ts`, CI: all 3 attempts failed).
+- **A debounced server-side search passes on the unfiltered list.** `searchWorkspace` fills the field and immediately asserts a row visible; the row is already on screen (a fresh workspace sorts first on a NULL `last_visit`), so `WorkspaceTab`'s 300 ms debounce never lands and a locator built on the result (two `Mass Archive` group buttons on a stand with both visited and never-visited workspaces) hits two elements. After `./prepare-pg.sh` the seeded workspaces are visited today and the test's own are not: two `last_visit` buckets, and `rage-click/admin-workspaces.spec.ts` "Mass Archive on a group of one" fails deterministically.
 - **Positional selectors** (`nth-child(2)`, `.nth(1)`, `first()`) shift when surrounding data change.
 - **A faker word is not an identifier.** Its list is finite, and `getByRole(name)` matches by substring. Four flakes from this: `Save` vs `autosave`, `IntegrationAlreadyExists`, workspace url collisions, `Edit` vs a channel named `Ampeditd...`. Use `generateId()` for identifiers and `exact: true` for fixed UI labels.
 - **A non-selective filter.** `selectMenuItem` filters by the first word, so parallel workers' objects stay in the list. Match the whole name; `selectAssignee` delegates to it for that reason.
@@ -85,6 +86,13 @@ Service logs for the failure window: `startTime` in the report is UTC, container
   worker - talent names collided in `sanity-ws` (6/50). Use `generateId()`.
 - **Click a row's link, not the cell**: `tr > :has-text(name)` clicks the cell centre, which misses a short name once
   longer names widen the column (`createCandidateWithSkills` broke 3/3 after talent ids got longer).
+- **`loginByToken` added a second `account-metadata-Token`, and the server read the stale one.** The context's storage
+  state carries a *domain* cookie (`.sanity.fusion.localhost`); `addCookies({url})` creates a *host-only* one, so both
+  go out and `extractCookieToken` (`foundations/core/packages/token/src/token.ts:200`) takes the first - the older,
+  domain cookie. `selectWorkspace` then runs as the previous account: Forbidden, and the app falls back to
+  "Select workspace" (teamspace Join/Auto-join, admin-billing LargestSpaces, all via `loginByToken`). Compose passed
+  because Chrome folds `Domain=localhost` into the host-only entry; only a multi-label host shows it. Fixed by
+  clearing `account-metadata-Token*` before adding.
 
 - **`isVisible()` as "already done" is instant**: a list not rendered yet reads as gone. `deleteAttachmentToIssue` skipped the delete that way; trust absence only after the click.
 
@@ -223,7 +231,7 @@ Everything the drop checks must compare, learned over three rounds:
 
 ## love / LiveKit
 
-LiveKit runs as a **host process** (`tests/run_livekit_test.sh`, port 7890), not a container - only `sanity-livekit-egress-test-1` shows in `docker ps`. Webhooks go back through nginx (`livekit-test-config.yaml` -> `http://127.0.0.1:8083/_love/webhook`).
+LiveKit в k8s-стендах - один общий в platform-base (`livekit` + `livekit-egress`), порты медиа публикует k3d; на хосте ничего не запускается. Хостовый режим (`tests/run_livekit_test.sh`, порт 7890, egress в compose) остаётся для compose-стенда и для `kind`/`existing`, где порты нельзя добавить после создания кластера.
 
 Product defects found through these tests (details in `docs/memory/love-service-replication.md` and `love_recording_button_stuck.md`):
 
@@ -246,6 +254,10 @@ Reproducing love flakes: `--project=Love -g "<title>" --repeat-each 8 --workers 
 **Only local runs apply `tests/indexes.yaml`** (`dotest.sh:32`, `sync-indexes --apply` after `db-migrator`); CI never does, so an index dropped by a migration but still listed there breaks local runs only - keep the yaml in step with migrations.
 
 **Recreating one container breaks nginx** - it resolves upstreams at startup. `docker restart sanity-nginx-1` after any `--force-recreate`.
+
+- **Compose-era host endpoints were not wired into the k8s runners** (run 20261113-122012: 13 billing ECONNREFUSED ::1:8083, login-lock `localhost:19093` refused, calendar/love REST on :8083, ai-bot cascades). Two causes: (1) `telemetry/run.sh` hardcoded `LOCAL_URL=localhost:8083` and never set PLATFORM_URI, so `playwright.config.ts`/`.env` defaults pointed host-side REST at the compose nginx port; (2) no k8s script forwarded Kafka or set `MAILBOX_KAFKA_BROKER` - and a plain port-forward is not enough, Strimzi advertises `my-cluster-combined-0.my-cluster-kafka-brokers.platform-base.svc:9092`, unresolvable from the host. Canonical path now: `with-stand-env.sh sanity` exports PLATFORM_URI/BILLING_URL (derived from the LOCAL_URL origin when it is a localhost front proxy - playwright `request` cannot verify mkcert TLS, so HTTPS stand URLs fail from the host) and `MAILBOX_KAFKA_BROKER=localhost:19093` (K8S_KAFKA_PORT, compose parity), spawning a managed port-forward to `service/my-cluster-kafka-bootstrap` that lives as long as the wrapped command; `Mailbox.ts` pins all kafkajs connections to the loopback broker via `socketFactory`. `uitest:k8s` and `tests/dotest.sh` both wrap it; caller exports win. Host ports reachable from macOS are only 9080/8443 (serverlb), so Kafka cannot ride Traefik without TLS passthrough - port-forward + socketFactory is the deliberate ceiling.
+- **`dotest.sh` drives the stand's own front, not a dev front.** The webpack dev-server answers `/` before the bundle is compiled, so a `curl /` readiness gate passed while the run was still compiling (99s cold), and a leftover `fusion-dev-front` from a previous session made `test-front.sh` die with "already running" while the gate kept serving the stale container. dotest now builds/pushes images after `pnpm -w docker` and lets `with-stand-env.sh` resolve PLATFORM_URI/LOCAL_URL to the stand, so the run tests exactly the deployed image.
+- **The chart's `services.front.disabledFeatures` default is the prod list** (recruit, documents, products, survey, lead, training, process, gmail, integrations, contact.persons/companies, tracker.issueImport). Compose never set it, so the k8s stands silently lost those apps and every spec that clicks one (`actions`, `tags`, `workbench`, ...) failed on a missing sidebar icon. `stands/sanity` and `stands/dev` override it with an empty list; `/config.json` then shows `DISABLED_FEATURES: ""`.
 
 ## Wall time
 

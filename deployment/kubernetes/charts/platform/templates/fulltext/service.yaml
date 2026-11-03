@@ -1,0 +1,18 @@
+# source: kube/fulltext/service0.yaml; subs: version, hostUrl, namespace. One Service per fulltext
+# instance; transactor i reaches fulltext i.
+{{- $root := . -}}
+{{- $count := int (default 1 $root.Values.services.fulltext.count) -}}
+{{- range $i := until $count }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fulltext{{ $i }}
+  namespace: '{{ $root.Values.global.namespace }}'
+spec:
+  selector:
+    app: fulltext{{ $i }}
+  ports:
+  - port: 80
+    targetPort: 4700
+{{- end }}

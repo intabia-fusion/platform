@@ -1,0 +1,125 @@
+{{- /*
+Postgres through CloudNativePG: the Cluster runs one primary and one streaming replica,
+backups go to the platform S3. Helm renders Secrets before custom resources, so the
+superuser and S3 secrets exist when the operator admits the Cluster.
+*/ -}}
+{{- if and .Values.postgres.enabled (eq .Values.postgres.mode "internal") }}
+{{- $ns := .Release.Namespace }}
+{{- $backup := .Values.postgres.backup }}
+{{- if not .Values.sealedSecrets.enabled }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-superuser
+  namespace: '{{ $ns }}'
+  labels:
+    app: postgres
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+type: kubernetes.io/basic-auth
+stringData:
+  username: '{{ .Values.postgres.user }}'
+  password: '{{ .Values.postgres.password }}'
+---
+{{- if $backup.enabled }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-backup-s3
+  namespace: '{{ $ns }}'
+  labels:
+    app: postgres
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+type: Opaque
+stringData:
+  ACCESS_KEY_ID: {{ include "platformBase.s3AccessKey" . | quote }}
+  SECRET_ACCESS_KEY: {{ include "platformBase.s3SecretKey" . | quote }}
+{{- end }}
+{{- end }}
+---
+# The name stands and pgbouncer already use: the primary only, so writes never hit a replica.
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: '{{ $ns }}'
+  labels:
+    app: postgres
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+spec:
+  type: ClusterIP
+  ports:
+  - name: postgres
+    port: 5432
+    targetPort: 5432
+  selector:
+    cnpg.io/cluster: postgres
+    cnpg.io/instanceRole: primary
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: postgres
+  namespace: '{{ $ns }}'
+  labels:
+    app: postgres
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+spec:
+  instances: {{ .Values.postgres.instances }}
+  imageName: '{{ .Values.postgres.image }}'
+  # The platform connects as the superuser with a fixed password: keep the DSN unchanged.
+  enableSuperuserAccess: true
+  superuserSecret:
+    name: postgres-superuser
+  # Local stands: roll the primary without waiting for a manual kubectl cnpg promote.
+  primaryUpdateStrategy: unsupervised
+  storage:
+    size: '{{ .Values.postgres.storage }}'
+    {{- if .Values.postgres.storageClass }}
+    storageClass: '{{ .Values.postgres.storageClass }}'
+    {{- end }}
+  resources:
+{{ toYaml .Values.postgres.resources | indent 4 }}
+  postgresql:
+    parameters:
+      shared_buffers: '{{ .Values.postgres.sharedBuffers }}'
+      max_connections: '{{ .Values.postgres.maxConnections }}'
+{{- if $backup.enabled }}
+  backup:
+    retentionPolicy: '{{ $backup.retentionPolicy }}'
+    barmanObjectStore:
+      destinationPath: 's3://{{ $backup.bucket }}/'
+      endpointURL: '{{ $backup.endpointURL | default (printf "http://%s" (include "platformBase.s3Endpoint" .)) }}'
+      s3Credentials:
+        accessKeyId:
+          name: postgres-backup-s3
+          key: ACCESS_KEY_ID
+        secretAccessKey:
+          name: postgres-backup-s3
+          key: SECRET_ACCESS_KEY
+      wal:
+        compression: gzip
+      data:
+        compression: gzip
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: postgres-daily
+  namespace: '{{ $ns }}'
+  labels:
+    app: postgres
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+spec:
+  schedule: '{{ $backup.schedule }}'
+  backupOwnerReference: cluster
+  method: barmanObjectStore
+  cluster:
+    name: postgres
+{{- end }}
+{{- end }}

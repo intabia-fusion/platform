@@ -1,0 +1,5 @@
+redis:
+  enabled: false
+  mode: external
+  external:
+    host: redis.example.com

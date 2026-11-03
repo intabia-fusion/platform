@@ -1,0 +1,22 @@
+{{- /*
+Generate a Service per transactor instance.
+- Number of instances is controlled by `.Values.services.transactor.count`.
+Each service is named `transactor0`, `transactor1`, ... and selects pods with label `app: transactorN`.
+*/ -}}
+{{- $root := . -}}
+{{- $count := int (default 1 $root.Values.services.transactor.count) -}}
+{{- range $i := until $count }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ printf "transactor%d" $i }}
+  namespace: '{{ $root.Values.global.namespace }}'
+spec:
+  selector:
+    app: {{ printf "transactor%d" $i }}
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 3333
+{{- end }}

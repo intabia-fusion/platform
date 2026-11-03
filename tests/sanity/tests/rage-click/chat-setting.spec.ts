@@ -36,7 +36,10 @@ test.describe('Rage click: settings', () => {
 
     const name = `RageHook${generateId()}`
     await page.getByPlaceholder('Name').fill(name)
-    await page.getByPlaceholder('URL').fill(`http://example.com/${generateId()}`)
+    // The editor accepts an http recipient only on an http stand (see CreateWebhookEndpoint):
+    // on TLS the URL must be https, otherwise Create stays disabled.
+    const webhookScheme = new URL(PlatformURI).protocol
+    await page.getByPlaceholder('URL').fill(`${webhookScheme}//example.com/${generateId()}`)
     await page.getByRole('button', { name: 'Add all' }).click()
     await page.getByRole('button', { name: 'Create', exact: true }).click()
 

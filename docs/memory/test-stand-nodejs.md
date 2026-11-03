@@ -4,7 +4,7 @@
 
 `tests/`, `ws-tests/` and `qms-tests/` no longer seed their stands from shell. `dev/test-base` (`@hcengineering/test-base`) owns docker compose, health checks, seeding and verification; the `prepare*.sh` scripts are thin shims around `dev/test-base/run.sh <stand> [prepare|restore]`.
 
-Stands (`dev/test-base/src/stands.ts`): `sanity` (tests/, accounts admin/user1-4, workspaces sanity-ws + meetings-ws), `ws` (ws-tests/, needs a second "europe" region), `qms` (qms-tests/, a compose subset of tests/ with no payment/tbank/aibot/print/preview), `full` = `mergeStands(sanity, qms)`.
+Stands (`dev/test-base/src/stands.ts`): `sanity` (tests/, accounts admin/user1-4, workspaces sanity-ws + meetings-ws), `ws` (ws-tests/, needs a second "europe" region), `qms` (qms-tests/, Kubernetes-only since 2026-11-11 - no compose files), `docs` = `mergeStands(sanity, docs)`. The compose-era `full` = `mergeStands(sanity, qms)` was dropped with the qms compose stand.
 
 ## Why the tool runs in-process
 
@@ -32,9 +32,9 @@ Legacy `prepare-pg.sh`: 42s wall / 16s CPU. New: ~41s wall / 3.3s CPU. Wall cloc
 
 `mergeStands(base, ...others)` takes containers/env/regions from `base` and adds accounts, workspaces, post steps and cleanup paths from the others. Paths that belong to another stand (backups, `.auth` directories) are made absolute - they live next to the stand that defined them.
 
-Two things to know about merging tests/ with qms-tests/:
+Two things to know about the qms tests on their own Kubernetes stand (`qms-tests/prepare-qms.sh`, namespace `fusion-qms`):
 
-- **`.auth` must be cleaned per suite.** Leaving `qms-tests/sanity/.auth` from a previous stand sends every QMS test straight back to the login screen (the setup skips login when the storage file exists). That is why `cleanup: ['sanity/.auth']` is merged, not taken from `base`.
+- **`.auth` must be cleaned per suite.** Leaving `qms-tests/sanity/.auth` from a previous stand sends every QMS test straight back to the login screen (the setup skips login when the storage file exists). `prepare-qms.sh` removes it on every prepare.
 - **An account's name is global, not per workspace.** `assign-workspace` materialises the Employee from the account's person, so a workspace backup does not override it. `user3` cannot be `Muffin Muram` for tests/ and a different person for qms-tests/ at the same time; QMS uses its own `user_cain` login (`PLATFORM_USER_THIRD='user_cain'` in `qms-tests/sanity/.env`).
 
 `ws-tests` cannot join `full`: it needs a second (europe) region - `transactor-europe`, `workspace_europe`, `fulltext-europe` (`ws-tests/docker-compose.yaml`) - which the tests/ compose does not have.

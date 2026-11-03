@@ -1,7 +1,6 @@
 #!/bin/bash
-# Images for the stand the api-tests and backup-tests run against - the services in
-# api-tests/docker-compose.yaml and nothing else. No web UI: front runs as `front-api` with an empty
-# dist/, since the api-tests only need its /config.json, and the webpack bundle is most of the build.
+# Images for the api-tests/backup-tests stand: the services of stands/api, nothing else.
+# No web UI (empty dist/ - the tests need only /config.json); also tagged `front` for the chart.
 set -eo pipefail
 
 ./common/scripts/node_modules/.bin/compile-all . --parallel 4 --docker-build --esbuild-emit \
@@ -32,4 +31,7 @@ trap 'rm -rf "$ctx"' EXIT
 mkdir "$ctx/bundle" "$ctx/dist"
 cp pods/front/Dockerfile "$ctx/"
 cp pods/front/bundle/bundle.js pods/front/bundle/bundle.js.map "$ctx/bundle/"
-docker build ${DOCKER_EXTRA} -t "${DOCKER_NAMESPACE:-intabiafusion}/front-api" "$ctx"
+docker build ${DOCKER_EXTRA} \
+  -t "${DOCKER_NAMESPACE:-intabiafusion}/front-api" \
+  -t "${DOCKER_NAMESPACE:-intabiafusion}/front" \
+  "$ctx"

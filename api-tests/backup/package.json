@@ -9,7 +9,7 @@
     "build": "compile",
     "build:watch": "compile",
     "test": "echo 'run backup-test' for backup tests",
-    "backup-test": "jest --passWithNoTests --forceExit --runInBand",
+    "backup-test": "STAND_DB_FORWARD=0 bash ../../deployment/kubernetes/scripts/with-stand-env.sh api jest --passWithNoTests --forceExit --runInBand",
     "format": "format src",
     "_phase:build": "compile build",
     "_phase:test": "echo 'run backup-test' for backup tests",

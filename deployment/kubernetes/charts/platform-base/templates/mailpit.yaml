@@ -1,0 +1,54 @@
+{{- if .Values.mailpit.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mailpit
+  namespace: '{{ .Release.Namespace }}'
+  labels:
+    app: mailpit
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+spec:
+  type: ClusterIP
+  ports:
+  - name: smtp
+    port: 1025
+    targetPort: 1025
+  - name: ui
+    port: 8025
+    targetPort: 8025
+  selector:
+    app: mailpit
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mailpit
+  namespace: '{{ .Release.Namespace }}'
+  labels:
+    app: mailpit
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mailpit
+  template:
+    metadata:
+      labels:
+        app: mailpit
+        release: '{{ .Release.Name }}'
+    spec:
+      containers:
+      - name: mailpit
+        image: '{{ .Values.mailpit.image }}'
+        imagePullPolicy: IfNotPresent
+        # SMTP :1025 and UI :8025 are the mailpit defaults
+        ports:
+        - containerPort: 1025
+        - containerPort: 8025
+        resources:
+{{ toYaml .Values.mailpit.resources | indent 10 }}
+{{- end }}

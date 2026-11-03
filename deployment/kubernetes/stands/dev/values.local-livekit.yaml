@@ -1,0 +1,4 @@
+# kind/existing only: LiveKit runs natively on the host, the cluster has no RTC port mappings.
+config:
+  livekitWs: "ws://127.0.0.1:7880"
+  livekitHost: "ws://host.docker.internal:7880"

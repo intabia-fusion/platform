@@ -7,17 +7,52 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_FILE="$SCRIPT_DIR/livekit-dev-config.yaml"
+RUN_CONFIG_FILE="$CONFIG_FILE"
 LOG_DIR="$SCRIPT_DIR/.livekit"
 LOG_FILE="$LOG_DIR/livekit.log"
 
+if [ -n "${LIVEKIT_WEBHOOK_URL:-}" ] || [ -n "${LIVEKIT_REDIS_ADDRESS+x}" ] || [ -n "${LIVEKIT_API_KEY:-}" ]; then
+    RUN_CONFIG_FILE="$(mktemp -t livekit-dev.XXXXXX.yaml)"
+    cp "$CONFIG_FILE" "$RUN_CONFIG_FILE"
+    trap 'rm -f "$RUN_CONFIG_FILE"' EXIT
+    if [ -n "${LIVEKIT_WEBHOOK_URL:-}" ]; then
+        sed -E "s#^  urls: .*#  urls: ['$LIVEKIT_WEBHOOK_URL']#" "$CONFIG_FILE" > "$RUN_CONFIG_FILE"
+    fi
+    if [ -n "${LIVEKIT_REDIS_ADDRESS+x}" ]; then
+        if [ -z "$LIVEKIT_REDIS_ADDRESS" ]; then
+            awk '/^redis:$/ {skip=1; next} skip && /^$/ {skip=0; next} !skip {print}' \
+                "$RUN_CONFIG_FILE" > "$RUN_CONFIG_FILE.tmp"
+            mv "$RUN_CONFIG_FILE.tmp" "$RUN_CONFIG_FILE"
+        else
+            sed -E "s#^  address: .*#  address: $LIVEKIT_REDIS_ADDRESS#" \
+                "$RUN_CONFIG_FILE" > "$RUN_CONFIG_FILE.tmp"
+            mv "$RUN_CONFIG_FILE.tmp" "$RUN_CONFIG_FILE"
+        fi
+    fi
+    if [ -n "${LIVEKIT_API_KEY:-}" ]; then
+        : "${LIVEKIT_API_SECRET:?set LIVEKIT_API_SECRET}"
+        : "${LIVEKIT_WEBHOOK_API_KEY:?set LIVEKIT_WEBHOOK_API_KEY}"
+        : "${LIVEKIT_WEBHOOK_API_SECRET:?set LIVEKIT_WEBHOOK_API_SECRET}"
+        awk -v key="$LIVEKIT_API_KEY" -v secret="$LIVEKIT_API_SECRET" \
+            -v wkey="$LIVEKIT_WEBHOOK_API_KEY" -v wsecret="$LIVEKIT_WEBHOOK_API_SECRET" \
+            '/^keys:/ {print; print "  " key ": " secret; print "  " wkey ": " wsecret; skip=1; next}
+             skip && /^[^[:space:]]/ {skip=0}
+             !skip {print}' "$RUN_CONFIG_FILE" > "$RUN_CONFIG_FILE.tmp"
+        mv "$RUN_CONFIG_FILE.tmp" "$RUN_CONFIG_FILE"
+        sed -E "s#^  api_key: .*#  api_key: $LIVEKIT_WEBHOOK_API_KEY#" \
+            "$RUN_CONFIG_FILE" > "$RUN_CONFIG_FILE.tmp"
+        mv "$RUN_CONFIG_FILE.tmp" "$RUN_CONFIG_FILE"
+    fi
+fi
+
 echo "[LiveKit] Starting LiveKit server in development mode..."
-echo "[LiveKit] Config file: $CONFIG_FILE"
+echo "[LiveKit] Config file: $RUN_CONFIG_FILE"
 echo "[LiveKit] Log file: $LOG_FILE"
-echo "[LiveKit] Webhook URL: http://127.0.0.1:8098/webhook"
+echo "[LiveKit] Webhook URL: ${LIVEKIT_WEBHOOK_URL:-http://127.0.0.1:8098/webhook}"
 echo "[LiveKit] Server port: 7880"
 echo "[LiveKit] RTC UDP port: 7882"
 echo "[LiveKit] RTC TCP port: 7881"
-echo "[LiveKit] API keys: devkey, devkey2"
+echo "[LiveKit] API keys: ${LIVEKIT_API_KEY:-devkey, devkey2}"
 echo ""
 
 if [ ! -f "$CONFIG_FILE" ]; then
@@ -49,4 +84,4 @@ echo "[LiveKit] Starting server..."
 # Log to file and to the terminal. `set -o pipefail` so a livekit crash still fails
 # the script through the tee pipe.
 set -o pipefail
-livekit-server --config "$CONFIG_FILE" 2>&1 | tee "$LOG_FILE"
+livekit-server --config "$RUN_CONFIG_FILE" 2>&1 | tee "$LOG_FILE"
