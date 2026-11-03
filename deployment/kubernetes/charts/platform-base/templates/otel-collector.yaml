@@ -1,0 +1,98 @@
+{{- /*
+Shared metrics path for the local stands: services export OTLP (metrics, traces, logs) to this
+collector, and Prometheus scrapes the collector's Prometheus endpoint. Metrics only - the stand
+traffic is tiny, traces/logs are dropped so they do not fill the VM.
+*/}}
+{{- if .Values.metrics.enabled }}
+{{- $m := .Values.metrics.otelCollector }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-collector-config
+  namespace: '{{ .Release.Namespace }}'
+  labels:
+    app: otel-collector
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+data:
+  config.yaml: |
+{{ include "platformBase.otelCollectorConfig" . | indent 4 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-collector
+  namespace: '{{ .Release.Namespace }}'
+  labels:
+    app: otel-collector
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: otel-collector
+  template:
+    metadata:
+      labels:
+        app: otel-collector
+        release: '{{ .Release.Name }}'
+      annotations:
+        checksum/otel-config: {{ include "platformBase.otelCollectorConfig" . | sha256sum | quote }}
+    spec:
+      containers:
+      - name: otel-collector
+        image: '{{ $m.image }}'
+        imagePullPolicy: IfNotPresent
+        args: ["--config=/etc/otel/config.yaml"]
+        ports:
+        - name: otlp-grpc
+          containerPort: 4317
+        - name: otlp-http
+          containerPort: 4318
+        - name: prometheus
+          containerPort: 8889
+        resources:
+          requests:
+            memory: '{{ $m.memRequired }}Mi'
+          limits:
+            memory: '{{ $m.memLimits }}Mi'
+        readinessProbe:
+          tcpSocket:
+            port: 4318
+          initialDelaySeconds: 3
+          periodSeconds: 10
+        volumeMounts:
+        - name: config
+          mountPath: /etc/otel
+      volumes:
+      - name: config
+        configMap:
+          name: otel-collector-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-collector
+  namespace: '{{ .Release.Namespace }}'
+  labels:
+    app: otel-collector
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+spec:
+  type: ClusterIP
+  selector:
+    app: otel-collector
+  ports:
+  - name: otlp-grpc
+    port: 4317
+    targetPort: 4317
+  - name: otlp-http
+    port: 4318
+    targetPort: 4318
+  - name: prometheus
+    port: 8889
+    targetPort: 8889
+
+{{- end }}

@@ -1,0 +1,147 @@
+# Локальный dev-стенд платформы на k3d: окружение ставит charts/platform-base в namespace
+# platform-base, адреса/учётки - из его контракта. Образы - локальная сборка (pnpm docker:build).
+
+global:
+  namespace: fusion-dev
+  version: latest
+  hostUrl: dev.fusion.localhost
+  # registry внутри кластера; deploy.sh подставляет правильный адрес per runtime
+  imageRegistry: k3d-fusion-registry:5000
+  imagePullPolicy: Always
+  # namespace контракта ConfigMap/Secret platform-base (ставит platform-base)
+  baseNamespace: platform-base
+  stand: dev
+  tls:
+    caSecretName: fusion-local-ca
+  landingUrl: ""
+  productName: Intabia Platform Dev
+  defaultLanguage: ru
+  lastNameFirst: true
+
+config:
+  # Must match the single region id below, otherwise billing publishes pg.* topics and the
+  # create-workspace form sends a region the transactor does not serve.
+  REGION: ""
+  EXTERNAL_REGIONS: "--"
+  temporalUrl: ""
+  regions:
+  - id: ""
+    name: Default
+    transactorService: transactor0
+    transactorPath: /_tr0
+    collaboratorService: collaborator0
+    collaboratorPath: /_cl0
+  # Shared LiveKit from the platform-base contract (kind/existing: dev/values.local-livekit.yaml
+  # points at the host server). Rooms are separated by livekitProject.
+  livekitWs: ""
+  livekitHost: ""
+  livekitProject: transcription-fusion-dev
+
+dbInit:
+  enabled: true   # host/user/password берутся из контракта platform-base
+
+secrets:
+  loveSecret:
+    apiKey: "dev-love-api-key"
+    apiSecret: "dev-love-api-secret-0123456789abcdef"
+    # The shared server signs webhooks with one key; every stand's love verifies that pair.
+    webhookApiKey: "whtestkey"
+    s3StorageConfig: "s3|http://s3.platform-base.svc.cluster.local:9000?accessKey=minioadmin&secretKey=minioadmin&rootBucket=dev-love-recordings"
+    webhookApiSecret: "whtestsecret_for_sanity_tests_min32chars"
+  platform:
+    serverSecret: "dev-server-secret"
+    mailAuthToken: "dev-mail-token"
+    aibotApiToken: "dev-aibot-api-token"
+    signPassword: "dev-sign-password"
+    smtpMode: "queue"
+    smtpHost: mailpit.platform-base.svc.cluster.local
+    smtpPort: "1025"
+    smtpFrom: noreply@fusion.localhost
+
+services:
+  payment:
+    enabled: true
+  # размер под laptop Docker VM; логин/работа трекера не затронуты
+  front:
+    replicas: 1
+    # Compose parity: the chart default hides recruit/documents/products/... from
+    # the sidebar. A dev stand is for the whole product, so nothing is disabled.
+    disabledFeatures: []
+    memRequired: 96
+    memLimits: 192
+  workspace:
+    replicas: 1
+  # Замеры memory.peak (cgroup v2) на этом стенде, 24 пода в простое: 2.7 GiB текущих, 3.6 GiB пик,
+  # дефолты чарта - 7.0 GiB потолка. На ноде 11.6 GiB живут dev и sanity, потолок ужат до ~1.3x пика.
+  account:
+    memRequired: 96
+    memLimits: 192
+  rekoni:
+    memRequired: 96
+    memLimits: 192
+  notification:
+    memRequired: 96
+    memLimits: 192
+  transactor:
+    memRequired: 192
+    memLimits: 320
+  collaborator:
+    memRequired: 160
+    memLimits: 320
+  datalake:
+    memRequired: 160
+    memLimits: 320
+  notifications:
+    memRequired: 160
+    memLimits: 320
+  aibot:
+    memRequired: 192
+    memLimits: 320
+  fulltext:
+    memRequired: 128
+    memLimits: 224
+  backup:
+    memRequired: 128
+    memLimits: 224
+  backupApi:
+    memRequired: 128
+    memLimits: 224
+  payment:
+    memRequired: 128
+    memLimits: 224
+  print:
+    memRequired: 128
+    memLimits: 224
+  rating:
+    memRequired: 128
+    memLimits: 224
+  love:
+    memRequired: 128
+    memLimits: 224
+  activity:
+    memRequired: 128
+    memLimits: 224
+  billing:
+    memRequired: 128
+    memLimits: 224
+  media:
+    memRequired: 128
+    memLimits: 192
+  mail:
+    memRequired: 96
+    memLimits: 160
+  stats:
+    memRequired: 96
+    memLimits: 160
+  # Внимание: шаблоны этих сервисов не читают enabled, гасим репликами
+  # distro - сборка desktop-приложений, в compose dev закомментирован
+  distro:
+    replicas: 0
+  analytics:
+    replicas: 0
+  loveAgent:
+    replicas: 0
+  preview:
+    replicas: 0
+  linkPreview:
+    replicas: 0

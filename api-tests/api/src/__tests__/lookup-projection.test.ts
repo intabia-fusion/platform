@@ -25,8 +25,9 @@ import {
 } from '@hcengineering/api-client'
 import { generateId, SortingOrder, type Ref, type TxOperations } from '@hcengineering/core'
 import contact, { AvatarType, type Channel, type Person } from '@hcengineering/contact'
+import { PlatformUrl } from '../env'
 
-const PLATFORM_URL = process.env.PLATFORM_URL ?? 'http://localhost:8183'
+const PLATFORM_URL = process.env.PLATFORM_URL ?? PlatformUrl
 const WORKSPACE = 'api-tests'
 
 describe('lookup projection (api-tests)', () => {

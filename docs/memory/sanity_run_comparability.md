@@ -31,15 +31,11 @@
 
 Падало при этом не на переименовании, а через 30 секунд в форме issue на `.menu-item:has-text("Needs Attention")`, где причина уже не видна. Тест теперь генерирует суффикс для всех имен сразу (`Needs Attention ${suffix}`, `Under Review ${suffix}`) плюс проверяет состояние сразу после каждого переименования.
 
-## LiveKit для sanity-стенда - свой скрипт
+## LiveKit для sanity-стенда
 
-`dev/run_livekit.sh` это dev-стенд: порт 7880, ключи `devkey`/`whkey` (`dev/livekit-dev-config.yaml`), redis `127.0.0.1:6379`. Sanity-стенд ходит совсем в другое место - фронт получает `LIVEKIT_WS=ws://localhost:7890` (`tests/docker-compose.yaml`), контейнер love настроен на `ws://host.docker.internal:7890` с ключами `testkey`/`whtestkey`.
+k8s-стенд ходит в общий LiveKit и egress в platform-base, порты медиа публикует k3d (`7880/TCP`, `7881/TCP`, `7882/UDP`); на хосте ничего не запускается. Хостовый режим (`tests/run_livekit_test.sh`, порт 7890) остаётся для compose-стенда и `kind`/`existing`, где порты нельзя добавить после создания кластера.
 
-Правильный скрипт - `tests/run_livekit_test.sh` (`tests/livekit-test-config.yaml`): порт 7890, RTC 7891/7892, redis `127.0.0.1:6390` - это `sanity-redis-test-1`, тот же, который egress видит внутри compose-сети как `redis`.
-
-Симптом запуска не того инстанса: тесты, которые реально подключаются к митингу, падают на `waitConnected` (`expect(received).toBeGreaterThan(0)`, получено 0), а в логе LiveKit нет ни одной комнаты - браузер до него просто не доходит. Первые ~14 love-тестов при этом зеленые, потому что проверяют только этаж и панели.
-
-Проверка перед прогоном: `nc -z localhost 7890`.
+Симптом запуска не того инстанса (host mode): тесты, которые реально подключаются к митингу, падают на `waitConnected` (`expect(received).toBeGreaterThan(0)`, получено 0), а в логе LiveKit нет ни одной комнаты. Проверка перед прогоном: `nc -z localhost 7890`.
 
 ## Общие окна в love
 

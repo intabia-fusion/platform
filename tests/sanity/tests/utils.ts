@@ -357,6 +357,9 @@ export async function loginByToken (
   ws: WorkspaceLoginInfo,
   app?: string
 ): Promise<void> {
+  // Drop the storage state's account cookie first: it is a domain cookie and the one added below is
+  // host-only, so both would be sent and the account service reads the first - the stale identity.
+  await page.context().clearCookies({ name: /^account-metadata-Token/ })
   await page.context().addCookies([{ name: 'account-metadata-Token', value: accountToken, url: PlatformURI }])
   await page.context().addInitScript(
     ([account, endpoint]) => {

@@ -29,6 +29,8 @@ const { Configuration } = require('webpack')
 const mode = process.env.NODE_ENV || 'development'
 const prod = mode === 'production'
 const clientType = process.env.CLIENT_TYPE ?? ''
+const standConfigFile = process.env.STAND_CONFIG_FILE
+const standBrandingFile = process.env.STAND_BRANDING_FILE
 const devServer = clientType === 'dev-server'
 const devServerTest = clientType === 'dev-server-test'
 const devServerWorker = clientType === 'dev-worker'
@@ -335,6 +337,21 @@ const devFrontProxy = {
     changeOrigin: true,
     pathRewrite: { '^/rekoni/recognize': '/recognize' },
     logger: console
+  }
+}
+
+const standTarget = process.env.STAND_URL
+if (standTarget) {
+  const additionalPaths = [
+    '/_aibot', '/_backup-api', '/_caldav', '/_calendar', '/_collector', '/_crm',
+    '/_dist', '/_github', '/_lake', '/_mail-api', '/_presence', '/_pulse',
+    '/_schedule', '/_smtp', '/_telegram', '/_telegram-bot', '/_telegram-hook'
+  ]
+  for (const path of additionalPaths) {
+    devProxy[path] = { target: standTarget, changeOrigin: true, ws: true, logger: console }
+  }
+  for (const options of Object.values(devProxy)) {
+    options.target = standTarget
   }
 }
 
@@ -774,6 +791,19 @@ module.exports = [
       },
       host: '0.0.0.0',
       allowedHosts: 'all',
+      setupMiddlewares: (middlewares, server) => {
+        if (standConfigFile) {
+          server.app.get('/config.json', (req, res) => {
+            res.sendFile(standConfigFile)
+          })
+        }
+        if (standBrandingFile) {
+          server.app.get('/branding.json', (req, res) => {
+            res.sendFile(standBrandingFile)
+          })
+        }
+        return middlewares
+      },
       hot: true,
       client: {
         logging: 'info',

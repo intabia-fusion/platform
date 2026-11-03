@@ -39,6 +39,7 @@ import core, {
 import { type AccountClient, getClient as getAccountClient } from '@hcengineering/account-client'
 import { ensureEmployee } from '@hcengineering/contact'
 import { generateToken } from '@hcengineering/server-token'
+import { PlatformUrl } from '../env'
 
 describe('error-handling', () => {
   const testCtx = new MeasureMetricsContext('test', {})
@@ -48,10 +49,10 @@ describe('error-handling', () => {
   let accountClient: AccountClient
 
   beforeAll(async () => {
-    config = await loadServerConfig('http://localhost:8183')
+    config = await loadServerConfig(PlatformUrl)
 
     apiWorkspace = await getWorkspaceToken(
-      'http://localhost:8183',
+      PlatformUrl,
       {
         email: 'user3',
         password: '1234',

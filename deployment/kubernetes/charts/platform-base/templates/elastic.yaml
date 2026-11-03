@@ -1,0 +1,97 @@
+{{- if and .Values.elastic.enabled (eq .Values.elastic.mode "internal") }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: elastic
+  namespace: '{{ .Release.Namespace }}'
+  labels:
+    app: elastic
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9200
+    targetPort: 9200
+  selector:
+    app: elastic
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: elastic
+  namespace: '{{ .Release.Namespace }}'
+  labels:
+    app: elastic
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+spec:
+  serviceName: elastic
+  replicas: 1
+  selector:
+    matchLabels:
+      app: elastic
+  template:
+    metadata:
+      labels:
+        app: elastic
+        release: '{{ .Release.Name }}'
+    spec:
+      initContainers:
+      # Copy the analysis plugins from the elastic-plugins image, same pairing as
+      # compose (dev/docker-compose.yaml elastic-plugins + elastic).
+      - name: plugins
+        image: '{{ .Values.elastic.pluginsImage }}'
+        imagePullPolicy: IfNotPresent
+        command: ["sh", "-c", "mkdir -p /mnt/plugins && cp -pr /usr/share/elasticsearch/plugins/* /mnt/plugins/ 2>/dev/null || true"]
+        volumeMounts:
+        - name: plugins
+          mountPath: /mnt/plugins
+      containers:
+      - name: elastic
+        image: '{{ .Values.elastic.image }}'
+        imagePullPolicy: IfNotPresent
+        command: ["/bin/sh", "-c"]
+        args:
+        - >-
+          ./bin/elasticsearch-plugin list | grep -q analysis-icu ||
+          ./bin/elasticsearch-plugin install --batch analysis-icu;
+          exec /usr/local/bin/docker-entrypoint.sh eswrapper
+          -Ediscovery.type=single-node
+          -Expack.security.enabled=false
+          -Expack.security.http.ssl.enabled=false
+        env:
+        - name: discovery.type
+          value: single-node
+        - name: xpack.security.enabled
+          value: "false"
+        - name: xpack.security.http.ssl.enabled
+          value: "false"
+        - name: ES_JAVA_OPTS
+          value: '-Xms{{ .Values.elastic.heap }} -Xmx{{ .Values.elastic.heap }}'
+        ports:
+        - containerPort: 9200
+        resources:
+{{ toYaml .Values.elastic.resources | indent 10 }}
+        volumeMounts:
+        - name: data
+          mountPath: /usr/share/elasticsearch/data
+        - name: plugins
+          mountPath: /usr/share/elasticsearch/plugins
+      volumes:
+      # Rebuilt by the init container on every start from the elastic-plugins image.
+      - name: plugins
+        emptyDir: {}
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ReadWriteOnce]
+      {{- if .Values.elastic.storageClass }}
+      storageClassName: '{{ .Values.elastic.storageClass }}'
+      {{- end }}
+      resources:
+        requests:
+          storage: '{{ .Values.elastic.storage }}'
+{{- end }}

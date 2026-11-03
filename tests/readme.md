@@ -24,24 +24,25 @@ pnpm docker:build
 
 ### An already build version
 
+Сценарий поднятия compose-стенда (localhost:8083) с пином образов версии ушёл
+вместе с compose-backend `prepare-pg.sh`: `create-version-override.sh` и
+`reset-version.sh` остались для исторических compose-стендов, sanity-стенд
+поднимается только в Kubernetes, см. "Sanity на Kubernetes" ниже.
+
 ```bash
 ./create-version-override.sh v0.7.309 # Will create a version override file.
-./prepare-pg.sh # To prepare all stuff
 ./reset-version.sh # To go back to local build
-
-# open http://localhost:8083
 ```
 
 ### Custom image for a single service
 
-Every platform service image can be replaced through `<IMAGE_NAME>_IMAGE`, where the name is the
-image name in upper case with `-` turned into `_` (`transactor` -> `TRANSACTOR_IMAGE`,
-`rekoni-service` -> `REKONI_SERVICE_IMAGE`). Unset variables keep the default image. The version
-override file from `create-version-override.sh` pins every image and takes precedence.
-
-```bash
-TRANSACTOR_IMAGE=my-registry/transactor:dev ./prepare-pg.sh
-```
+(Исторически, для compose-стенда.) Каждый образ сервиса платформы можно было
+заменить через `<IMAGE_NAME>_IMAGE` - имя образа в верхнем регистре, `-`
+заменяется на `_` (`transactor` -> `TRANSACTOR_IMAGE`, `rekoni-service` ->
+`REKONI_SERVICE_IMAGE`). Файл версий из `create-version-override.sh` пинил все
+образы и имел приоритет. На Kubernetes-стенде выбор образов идёт через values
+стенда (`global.imageRegistry`, `global.version`) и `pnpm -w stand:push`, образ
+tool-пода - через `STAND_TOOL_IMAGE` в prepare.
 
 ### Restore to pure DB
 
@@ -75,6 +76,37 @@ cd ./sanity
 pnpm run uitest # for docker setup
 pnpm run dev-uitest # for dev setup
 ```
+
+### Sanity на Kubernetes
+
+```bash
+cd tests
+./prepare-pg.sh            # Kubernetes-стенд по умолчанию (stand:configure)
+
+# Во втором терминале, HTTP UI с proxy в стенд (порт :8081, т.к. webpack :8080 занят dev)
+pnpm -w stand:test:front
+
+# В третьем
+cd tests/sanity
+pnpm run uitest:k8s
+```
+
+Prepare работает против Kubernetes, настроенного через `pnpm -w stand:configure`
+(kubeconfig/context/namespace, runtime k3d/kind/existing), и удаляет namespace
+стенда (STAND_NAMESPACE из configure, иначе `fusion-sanity` из values) и только
+данные sanity: БД, buckets, индекс и Kafka-топики с суффиксом `-sanity`. Затем
+Helm поднимает чистый стенд, а `dev/test-base` создаёт аккаунты и восстанавливает
+дампы внутри pod `stand-tool` (удаляется по выходу prepare). Compose-сценария
+для `prepare-pg.sh` нет - Kubernetes единственный backend. Для
+`STAND_RUNTIME=existing`
+без push Docker не нужен: stand-tool берёт pullable-образ, медиа-фикстуры должны
+уже лежать в `tests/sanity/tests/files`. Опции `--full`, `--docs`,
+`--profile` и `--asr` не поддерживаются. В values sanity
+задан `useOtp: "false"`, как `USE_OTP=false` в compose. Webpack получает config и
+branding самого стенда; его порт можно сменить через `STAND_FRONT_PORT`
+(по умолчанию 8081).
+
+Smoke-проверка входа: `cd tests/sanity && pnpm run uitest:k8s tests/login.spec.ts --workers=1`.
 
 ## Debugging UI tests
 
@@ -122,12 +154,12 @@ arrives, a fact is carried across turns), not exact text.
 
 ### Real transcription (ASR)
 
-The default stand has no ASR: the `asr:` provider in `config-aibot.yaml` is off and nothing is transcribed. Two opt-in modes add a clisr STT worker (`aibot_client_asr`, `docker-compose.asr.yaml`) and turn the provider on:
-
-```bash
-./prepare-pg.sh --asr        # oaitt container (intabiafusion/oaitt-onnx, GigaAM ONNX on CPU), docker-compose.oaitt.yaml
-./prepare-pg.sh --asr-local  # a transcriber already running on the host at :9007 (override: ASR_LOCAL_URL)
-```
+The default stand has no ASR: the `asr:` provider in `config-aibot.yaml` is off
+and nothing is transcribed. Two opt-in modes add a clisr STT worker
+(`aibot_client_asr`, `docker-compose.asr.yaml`) and turn the provider on. Оба
+были частью compose-стенда (`./prepare-pg.sh --asr` /
+`--asr-local`); на Kubernetes-стенде ASR пока не поднимается - оверлеев
+`docker-compose.asr.yaml`/`docker-compose.oaitt.yaml` в prepare нет.
 
 The worker calls the OpenAI-compatible `/v1/audio/transcriptions`; its registry is `config-aibot-asr.yaml`.
 

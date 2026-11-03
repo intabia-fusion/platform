@@ -5,22 +5,19 @@ backup pipeline (same path `pods/backup` uses), not through a client API.
 
 ## Run
 
-Bring the stand up first:
+The suite manages the `api` Kubernetes stand itself (reset + seed + teardown via
+`api-tests/api/src/stand.ts`); `API_STAND` picks what a run does with it. To run
+against a stand you prepared yourself instead, take the lifecycle out of the run:
 
 ```
-cd ws-tests
-./prepare.sh
+cd api-tests/backup
+API_STAND=external pnpm run backup-test
 ```
 
-Then, from this directory:
-
-```
-pnpm run backup-test
-```
-
-Defaults target the local stand, so no exports are needed. Note the stand keeps
-workspace data and the account DB on different servers: `DB_URL` points at
-cockroach (26258), `ACCOUNT_DB_URL` at pure postgres (5533).
+Defaults target the Kubernetes api stand: `https://api.fusion.localhost` for the
+platform URLs and, for the duration of a managed run, postgres/s3/mailpit of
+`platform-base` port-forwarded to `localhost:5533` / `localhost:9102` /
+`localhost:8126`.
 
 Overridable: `DB_URL`, `ACCOUNT_DB_URL`, `ACCOUNTS_URL`, `STORAGE_CONFIG`,
 `SERVER_SECRET`, `FRONT_URL`, `BACKUP_TEST_WS` (default `api-tests`),
@@ -33,9 +30,10 @@ Overridable: `DB_URL`, `ACCOUNT_DB_URL`, `ACCOUNTS_URL`, `STORAGE_CONFIG`,
   the tests move `last_processing_time` back in the account DB rather than waiting; they call the
   cleanup directly and need no running pod.
 - `backup-service` -- the `backup` pod itself: it must pick a freshly created workspace up on its
-  own within a few minutes. Needs the pod up (it is part of `docker-compose.yaml`).
+  own within a few minutes. Needs the pod up (it is part of the `api` stand chart).
 
-The archive bucket lives in minio, published on `localhost:9102` for these tests.
+The archive bucket lives in the platform-base S3, port-forwarded to
+`localhost:9102` for these tests (`BACKUP_STORAGE_CONFIG`).
 
 Not part of `_phase:test` -- these need the full environment, so CI must run
-`backup-test` explicitly.
+them explicitly.

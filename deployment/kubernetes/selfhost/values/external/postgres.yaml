@@ -1,0 +1,13 @@
+# Postgres снаружи: internal Cluster не рендерится, контракт указывает на внешний сервер.
+# Пароль - в values/secrets-base.yaml (postgres.external.password).
+postgres:
+  enabled: false
+  mode: external
+  external:
+    host: postgres.example.com
+    port: "5432"
+    user: platform
+    password: ""
+# Если у managed Postgres свой пулер, выключи pgbouncer; иначе он пулит внешнюю базу.
+pgbouncer:
+  enabled: true

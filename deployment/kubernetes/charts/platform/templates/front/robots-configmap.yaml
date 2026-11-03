@@ -1,0 +1,11 @@
+{{- if .Values.services.front.disallowRobots }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: front-robots
+  namespace: '{{ .Values.global.namespace }}'
+data:
+  robots.txt: |
+    User-agent: *
+    Disallow: /
+{{- end }}

@@ -1,15 +1,7 @@
 #!/bin/bash
 
-# Build, bring the stand up, run the sanity suite with telemetry.
-#
-#   ./dotest.sh        # one run
-#   ./dotest.sh 10     # ten runs in a row
-#   ./dotest.sh 1 swc,esbuild,terser   # the front rebuilt with each MINIFIER in turn, one run each
-#
-# Iterations restore the workspaces between runs (./restore-pg.sh) and leave the containers up:
-# accounts and workspaces pile up in the account DB run after run, which is the point - the load
-# grows and flakes that only show up on a used stand get their chance. Look at the summary the
-# script prints at the end, or later: cd sanity && node telemetry/stability.js
+# Build, prepare the stand, run the sanity suite with telemetry against the stand's own front
+# (no dev front). Usage: ./dotest.sh [iterations] [minifier,...]; workspaces restore between runs.
 
 set -euo pipefail
 
@@ -23,20 +15,34 @@ fi
 pnpm install --frozen-lockfile
 pnpm -w build
 
+# Push after `pnpm -w docker`: it rewrites the images the stand will run.
+build_images() {
+    pnpm -w docker
+    bash ../deployment/kubernetes/scripts/push-images.sh sanity
+}
+
 FAILED=0
 SUMMARY=()
+# Reuse by default: in-place upgrade + pod restart beats a full namespace round-trip.
+# CLEAN=1 forces uninstall, deploy, seed.
+CLEAN="${CLEAN:-0}"
 run_suite() {
     local label="$1" failed=0
     local stamps=()
-    ./prepare-pg.sh
+    if [ "$CLEAN" = 1 ]; then
+        ./prepare-pg.sh
+    else
+        ./prepare-pg.sh --reuse
+    fi
     for ((i = 1; i <= ITERATIONS; i++)); do
         if [ "$i" -gt 1 ]; then
             echo "=== restore before run $i/$ITERATIONS ($label)"
             ./restore-pg.sh
         fi
         echo "=== run $i/$ITERATIONS ($label)"
-        # A red run is data, not a reason to stop: the whole point is to collect several in a row.
-        (cd sanity && pnpm run uitest:telemetry --workers 5) || failed=$((failed + 1))
+        # A red run is data, not a reason to stop: collect several in a row. with-stand-env.sh
+        # resolves the stand env (PLATFORM_URI/LOCAL_URL, BILLING_URL, MAILBOX_KAFKA_BROKER).
+        (cd sanity && bash ../../deployment/kubernetes/scripts/with-stand-env.sh sanity pnpm run uitest:telemetry --workers 5) || failed=$((failed + 1))
         stamps+=("$(ls -1t sanity/runs | head -1)")
     done
     if [ "$ITERATIONS" -gt 1 ]; then
@@ -48,14 +54,14 @@ run_suite() {
 }
 
 if [ -z "$MINIFIERS" ]; then
-    pnpm -w docker
+    build_images
     run_suite default
 else
     for m in ${MINIFIERS//,/ }; do
         echo "=== minifier $m"
-        # The build cache does not see MINIFIER: drop the front's entries so the bundle and the image are rebuilt.
+        # MINIFIER is not part of the build cache key: drop the front's entries to force a rebuild.
         rm -f ../dev/prod/.fast-build-cache.json ../pods/front/.fast-build-cache.json
-        MINIFIER="$m" pnpm -w docker
+        MINIFIER="$m" build_images
         run_suite "$m"
     done
 fi

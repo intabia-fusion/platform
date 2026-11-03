@@ -1,0 +1,190 @@
+# Sanity test stand: namespace fusion-sanity, host sanity.fusion.localhost (Playwright:
+# PLATFORM_URI/LOCAL_URL=https://sanity.fusion.localhost). Свои БД/bucket/индекс: global.stand.
+
+global:
+  namespace: fusion-sanity
+  version: latest
+  hostUrl: sanity.fusion.localhost
+  imageRegistry: k3d-fusion-registry:5000
+  imagePullPolicy: Always
+  # namespace контракта ConfigMap/Secret platform-base (ставит platform-base)
+  baseNamespace: platform-base
+  stand: sanity
+  tls:
+    caSecretName: fusion-local-ca
+  landingUrl: ""
+  productName: Intabia Platform Sanity
+  defaultLanguage: en
+  lastNameFirst: true
+
+config:
+  # Queue/topic prefix. Must match the single region id below: services that read this
+  # value directly (billing) otherwise produce pg.* topics while aibot/workspaces use
+  # the unprefixed ones, and their usage events never meet.
+  REGION: ""
+  EXTERNAL_REGIONS: "--"
+  useOtp: "false"
+  temporalUrl: ""
+  regions:
+  - id: ""
+    name: Default
+    transactorService: transactor0
+    transactorPath: /_tr0
+    collaboratorService: collaborator0
+    collaboratorPath: /_cl0
+  # Shared LiveKit from the platform-base contract: browser wss://livekit.fusion.localhost:<port>,
+  # love and agents ws://livekit-api.platform-base.svc.cluster.local:7880.
+  livekitWs: ""
+  livekitHost: ""
+  # This stand's rooms in the shared server; love drops webhook events of another projectKey.
+  livekitProject: transcription-fusion-sanity
+dbInit:
+  enabled: true
+
+secrets:
+  loveSecret:
+    apiKey: "testkey"
+    apiSecret: "testsecret_for_sanity_tests_min32chars"
+    webhookApiKey: "whtestkey"
+    s3StorageConfig: "s3|http://s3.platform-base.svc.cluster.local:9000?accessKey=minioadmin&secretKey=minioadmin&rootBucket=sanity-love-recordings"
+    webhookApiSecret: "whtestsecret_for_sanity_tests_min32chars"
+  platform:
+    # Compose parity: test helpers (tests/sanity API clients, backup harness, dev/tool) generate
+    # tokens with the hardcoded 'secret' - do not "strengthen" this per stand.
+    serverSecret: "secret"
+    mailAuthToken: "sanity-mail-token"
+    aibotApiToken: "sanity-aibot-api-token"
+    signPassword: "sanity-sign-password"
+    smtpMode: "queue"
+    smtpHost: mailpit.platform-base.svc.cluster.local
+    smtpPort: "1025"
+    smtpFrom: noreply@sanity.fusion.localhost
+
+services:
+  payment:
+    # Композный tests/plan-config.yaml: без него maxSeats 500 вместо ожидаемых тестами 10000.
+    planConfigFile: files/plan-config.test.yaml
+    enabled: true
+    # compose parity (tests/docker-compose.yaml): plan/billing tests change
+    # subscriptions fast from one address
+    subscriptionRateLimitMax: 100000
+    extraEnv:
+    - name: PLAN_CONFIG_RATE_LIMIT_MAX
+      value: "100000"
+  tbankSubscriptions:
+    # compose parity: the in-process TBank mock backs the payment provider
+    enabled: true
+    extraEnv:
+    - name: TBANK_MOCK
+      value: "true"
+    - name: TBANK_SKIP_WEBHOOK_VERIFICATION
+      value: "true"
+  billing:
+    usageUpdateInterval: 600
+    extraEnv:
+    - name: ALLOW_TEST_ENDPOINTS
+      value: "true"
+  aibot:
+    # compose parity (tests/config-aibot.yaml): mock provider in echo mode, offline and deterministic.
+    # Without it the paid gigachat provider is the only llm-router consumer: llm-mock-* has none.
+    llmProviderIds: mock
+    config: |
+      llm:
+        defaultLevel: low
+        models:
+          low:
+            order: 0
+            label: Базовый
+            description: Mock (тесты)
+            tokenMultiplier: 0.1
+            displayMultiplier: 0.5
+          middle:
+            order: 10
+            label: Стандарт
+            description: Локальная модель (тесты @llm)
+            tokenMultiplier: 1.2
+            displayMultiplier: 1
+        providers:
+          - id: mock
+            provider: mock
+            concurrency: 4
+            batch: 1
+            endpointConfig:
+              echo: true
+              promptTokens: 50
+              completionTokens: 10
+            serves:
+              low:
+                model: mock-model
+                capabilities:
+                  tools: true
+                  maxContextTokens: 32768
+          - id: clisr
+            provider: clisr
+            concurrency: 1
+            batch: 1
+            endpoint: ws://aibot-clisr:4010
+            serves:
+              middle:
+                model: Base
+                capabilities:
+                  tools: true
+                  maxContextTokens: 32768
+  account:
+    passwords: none
+    # PlatformAdmin from tests/sanity/.env; compose sets ADMIN_EMAILS=admin,<PLATFORM_ADMIN_EMAILS>.
+    adminEmails: "admin"
+    # Chart default "pg|PostgreSQL" makes the create-workspace form send region pg while the
+    # transactor serves the single '' region: the workspace then stays pending-creation forever.
+    regionInfo: ""
+    # parity with the compose tests/ stand
+    freePlanLimits: '{"usersLimit":5,"storagePerUserGB":2,"tokenLimit":100000,"trafficLimitGB":0,"meetingMinutesLimit":0}'
+    extraEnv:
+    - name: ADMIN_OTP_DEV_CODE
+      value: "000000"
+    - name: ALLOW_SKIP_OTP_PASSWORD_SIGNUP
+      value: "true"
+    - name: WORKSPACE_LIMIT_PER_USER
+      value: "10000"
+    - name: AUTH_RATE_LIMIT
+      value: "100000"
+  transactor:
+    # compose parity: bulk sanity traffic bursts far above the prod per-client limit
+    rateLimitMax: 25000
+    rateLimitWindow: 1000
+    extraEnv:
+    - name: LAST_NAME_FIRST
+      value: "true"
+  front:
+    replicas: 1
+    # Compose parity: the chart's default disabledFeatures list switches off recruit, documents,
+    # products and friends, and every spec clicking such an app fails on a missing sidebar icon.
+    disabledFeatures: []
+  workspace:
+    replicas: 1
+    extraEnv:
+    - name: WAIT_TIMEOUT
+      value: "100"
+  # Внимание: шаблоны этих сервисов не читают enabled, гасим репликами
+  # distro - сборка desktop-приложений, в compose dev закомментирован
+  distro:
+    replicas: 0
+  analytics:
+    replicas: 0
+  loveAgent:
+    replicas: 0
+  # drive/chat image tests wait for generated previews; without the pod they fail on
+  # "no available server".
+  preview:
+    replicas: 1
+  # Chromium needs the room: at 256M the PDF print never gets a WS endpoint.
+  # Chrome resolves *.localhost to 127.0.0.1 by spec (RFC 6761), so map the stand host to
+  # traefik inside the cluster; the CA is self-signed, hence the certificate flag.
+  print:
+    memRequired: 256
+    memLimits: 1024
+    extraEnv:
+    - name: PUPPETEER_ARGS
+      value: "--host-resolver-rules=MAP sanity.fusion.localhost traefik.kube-system.svc.cluster.local,--ignore-certificate-errors"
+  linkPreview:
+    replicas: 0

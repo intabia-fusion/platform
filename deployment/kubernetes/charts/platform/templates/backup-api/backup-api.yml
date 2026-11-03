@@ -1,0 +1,66 @@
+# source: kube/backup/backup-api.yml; subs: version, hostUrl, namespace
+{{- if .Values.services.backupApi.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backup-api
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  replicas: {{ .Values.services.backupApi.replicas }}
+  selector:
+    matchLabels:
+      app: backup-api
+  template:
+    metadata:
+      labels:
+        app: backup-api
+      annotations:
+        checksum/platform-env: {{ include "platform.envChecksum" . | quote }}
+    spec:
+      {{- include "platform.tolerations" . | nindent 6 }}
+      {{- if .Values.global.tls.caSecretName }}
+      volumes:
+      {{- include "platform.caVolume" $ | nindent 6 }}
+      {{- end }}
+      containers:
+      - name: app
+        image: {{ include "platform.containerImage" (dict "root" . "service" "backupApi" "image" "backup-api") }}
+        command:
+        - node
+        - bundle.js
+        {{- include "platform.resources" (dict "root" . "service" "backupApi") | nindent 8 }}
+        imagePullPolicy: {{ $.Values.global.imagePullPolicy | default "Always" }}
+        {{- if .Values.global.tls.caSecretName }}
+        volumeMounts:
+        {{- include "platform.caVolumeMount" $ | nindent 8 }}
+        {{- end }}
+        env:
+        {{- include "platform.extraEnv" (dict "root" $ "service" "backupApi") | nindent 8 }}
+        - name: ACCOUNTS_URL
+          value: http://account
+        - name: PORT
+          value: '4039'
+        - name: REGION
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: REGION
+        - name: SECRET
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: serverSecret
+        - name: STATS_URL
+          value: http://stats-service
+        - name: BUCKET_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: backupBucket
+        - name: STORAGE
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: backupConfig
+        {{- include "platform.otelEnv" . | nindent 8 }}
+{{- end }}

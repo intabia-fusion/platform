@@ -1,0 +1,3 @@
+# CoreDNS: rewrite <stand>.fusion.localhost to TRAEFIK_SVC_PLACEHOLDER (answer auto) so pods reach the
+# stand by its external URL. A Corefile fragment, not a manifest: k3d coredns-custom, kind Corefile.
+rewrite name regex (.*)\.fusion\.localhost TRAEFIK_SVC_PLACEHOLDER answer auto

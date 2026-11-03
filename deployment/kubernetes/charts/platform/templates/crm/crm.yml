@@ -1,0 +1,89 @@
+# source: kube/crm/crm.yml; subs: version, hostUrl, namespace
+{{- if .Values.services.crm.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crm
+  labels:
+    app: crm
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  replicas: {{ .Values.services.crm.replicas }}
+  selector:
+    matchLabels:
+      app: crm
+  template:
+    metadata:
+      labels:
+        app: crm
+      annotations:
+        checksum/platform-env: {{ include "platform.envChecksum" . | quote }}
+    spec:
+      {{- include "platform.tolerations" . | nindent 6 }}
+      {{- if .Values.global.tls.caSecretName }}
+      volumes:
+      {{- include "platform.caVolume" $ | nindent 6 }}
+      {{- end }}
+      containers:
+      - name: app
+        image: {{ include "platform.containerImage" (dict "root" . "service" "crm") }}
+        {{- include "platform.resources" (dict "root" . "service" "crm") | nindent 8 }}
+        ports:
+        - containerPort: 3001
+        imagePullPolicy: {{ $.Values.global.imagePullPolicy | default "Always" }}
+        {{- if .Values.global.tls.caSecretName }}
+        volumeMounts:
+        {{- include "platform.caVolumeMount" $ | nindent 8 }}
+        {{- end }}
+        env:
+        {{- include "platform.extraEnv" (dict "root" $ "service" "crm") | nindent 8 }}
+        - name: PORT
+          value: '3001'
+        - name: SERVICE_ID
+          value: crm
+        - name: ENABLE_CONSOLE
+          value: 'true'
+        - name: STATS_URL
+          value: http://stats-service
+        - name: SECRET
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: serverSecret
+        - name: QUEUE_CONFIG
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: queueConfig
+        - name: REGION
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: REGION
+        - name: QUEUE_REGION
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: REGION
+        - name: AMO_CRM_DOMAIN
+          valueFrom:
+            secretKeyRef:
+              name: crm-secret
+              key: amoCrmDomain
+        - name: AMO_CRM_PIPELINE_ID
+          valueFrom:
+            secretKeyRef:
+              name: crm-secret
+              key: amoCrmPipelineId
+        - name: AMO_CRM_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: crm-secret
+              key: amoCrmToken
+        - name: AMO_CRM_RESPONSIBLE_USER_ID
+          valueFrom:
+            secretKeyRef:
+              name: crm-secret
+              key: amoCrmResponsibleUserId
+        {{- include "platform.otelEnv" . | nindent 8 }}
+{{- end }}

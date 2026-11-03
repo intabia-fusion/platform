@@ -1,0 +1,49 @@
+# TBank webhook: TBANK_NOTIFICATION_URL = https://{hostUrl}/_payment/webhook (нейтральный путь, без
+# "tbank"); точный Path длиннее PathPrefix(`/_payment`), поэтому выше приоритет в Traefik.
+{{- if .Values.services.tbankSubscriptions.enabled }}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: tbank-webhook-path
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  replacePath:
+    path: "/api/v1/webhooks/tbank"
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: tbank-subscriptions-strip
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  stripPrefix:
+    prefixes:
+    - "/_tbank_subscriptions"
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: tbank-subscriptions-ingressroute
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  - match: Host(`{{ .Values.global.hostUrl }}`) && Path(`/_payment/webhook`)
+    kind: Rule
+    services:
+    - name: tbank-subscriptions
+      port: 80
+    middlewares:
+    - name: tbank-webhook-path
+  # Mock checkout (TBANK_MOCK=true): the service mounts /mock-checkout, so strip the prefix.
+  - match: Host(`{{ .Values.global.hostUrl }}`) && PathPrefix(`/_tbank_subscriptions`)
+    kind: Rule
+    services:
+    - name: tbank-subscriptions
+      port: 80
+    middlewares:
+    - name: tbank-subscriptions-strip
+{{- end }}
