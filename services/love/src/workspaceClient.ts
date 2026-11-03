@@ -84,7 +84,7 @@ interface MeetingTargetBase {
   /** What a link carries: the master's `eventId`, or the permanent meeting's `_id`. */
   pointer: string
   title: string
-  link?: Pick<MeetingEventLink, 'linkVersion' | 'meetingAccess'>
+  link?: Pick<MeetingEventLink, 'linkVersion' | 'meetingAccess' | 'linkId'>
   lastMeetingEnd?: Timestamp
 }
 
@@ -678,7 +678,7 @@ export class WorkspaceClient {
         meeting,
         pointer: meeting._id,
         title: meeting.name,
-        link: { linkVersion: meeting.linkVersion, meetingAccess: meeting.meetingAccess },
+        link: { linkVersion: meeting.linkVersion, meetingAccess: meeting.meetingAccess, linkId: meeting.linkId },
         lastMeetingEnd: await this.lastSessionEnd({ meeting: meeting._id })
       }
     }
@@ -722,6 +722,26 @@ export class WorkspaceClient {
         target.master.space,
         love.mixin.MeetingEventLink,
         { meetingAccess }
+      )
+    }
+  }
+
+  /**
+   * Remembers the shortId the meeting's link resolves to. The model documents `linkId` as "absent
+   * until the link is first issued", so the issuer fills it in: otherwise the field is a promise
+   * nothing keeps. A revoked link bumps `linkVersion`, and the next issuance stores the new shortId.
+   */
+  async setMeetingLinkId (target: MeetingTarget, linkId: string): Promise<void> {
+    if ((target.link?.linkId ?? '') === linkId) return
+    if (target.kind === 'meeting') {
+      await this.client.update(target.meeting, { linkId })
+    } else {
+      await this.client.updateMixin(
+        target.master._id,
+        target.master._class,
+        target.master.space,
+        love.mixin.MeetingEventLink,
+        { linkId }
       )
     }
   }

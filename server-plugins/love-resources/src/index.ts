@@ -40,6 +40,7 @@ import love, {
   LIVE_MEETING_STATUSES,
   MeetingStatus,
   type Office,
+  type PermanentMeeting,
   ParticipantInfo,
   Room,
   RoomInfo,
@@ -860,6 +861,60 @@ export async function OnEventUpdate (txes: Tx[], control: TriggerControl): Promi
   return result
 }
 
+/**
+ * A permanent meeting has no other way to be managed: an owner outside `members` cannot open its
+ * session (`/getToken` answers 403 for a private space), so removing the last owner from the member
+ * list leaves the meeting unreachable. A trigger cannot veto a transaction, so the missing owners
+ * are pushed back: the invariant holds for every client, not only for the panel that edits members.
+ * The member list is rewritten either as a whole (`members`) or by `SpaceMembers`, which pulls one
+ * account at a time (`$pull`), so both shapes are checked. The corrective transaction carries
+ * `$push`, which this trigger does not act on, so it cannot loop.
+ */
+export async function OnPermanentMeetingUpdate (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
+  const result: Tx[] = []
+
+  for (const tx of txes) {
+    if (tx._class !== core.class.TxUpdateDoc) continue
+
+    const cudTx = tx as TxUpdateDoc<PermanentMeeting>
+    if (cudTx.objectClass !== love.class.PermanentMeeting) continue
+
+    const ops = cudTx.operations as {
+      members?: AccountUuid[]
+      $pull?: { members?: AccountUuid | AccountUuid[] | { $in: AccountUuid[] } }
+    }
+    if (ops.members === undefined && ops.$pull?.members === undefined) continue
+
+    const meeting = (
+      await control.findAll(control.ctx, love.class.PermanentMeeting, { _id: cudTx.objectId }, { limit: 1 })
+    )[0]
+    if (meeting === undefined) continue
+
+    const owners = meeting.owners ?? []
+    const missing = ops.members !== undefined ? owners.filter((it) => !ops.members?.includes(it)) : []
+    if (ops.$pull?.members !== undefined) {
+      const pulled = ops.$pull.members
+      const pulledAccounts = Array.isArray(pulled) ? pulled : typeof pulled === 'object' ? pulled.$in : [pulled]
+      for (const owner of owners) {
+        if (pulledAccounts.includes(owner) && !missing.includes(owner)) missing.push(owner)
+      }
+    }
+    if (missing.length === 0) continue
+
+    control.ctx.warn('[OnPermanentMeetingUpdate] Owner is not in the members, pushed back', {
+      meeting: cudTx.objectId,
+      missing
+    })
+    result.push(
+      control.txFactory.createTxUpdateDoc(love.class.PermanentMeeting, meeting.space, meeting._id, {
+        $push: { members: { $each: missing, $position: 0 } }
+      })
+    )
+  }
+
+  return result
+}
+
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export default async () => ({
   function: {
@@ -871,6 +926,7 @@ export default async () => ({
     OnParticipantInfo,
     OnRoomInfo,
     OnUserMeetingInvite,
-    OnEventUpdate
+    OnEventUpdate,
+    OnPermanentMeetingUpdate
   }
 })

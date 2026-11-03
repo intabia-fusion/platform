@@ -56,6 +56,7 @@ import RoomsView from './components/RoomsView.svelte'
 import RoomTablePresenter from './components/RoomTablePresenter.svelte'
 import RoomListItem from './components/RoomListItem.svelte'
 import MeetingAccessAttributeEditor from './components/MeetingAccessAttributeEditor.svelte'
+import PermanentMeetingMembersEditor from './components/PermanentMeetingMembersEditor.svelte'
 import MeetingPrivateEditor from './components/MeetingPrivateEditor.svelte'
 
 import {
@@ -159,6 +160,7 @@ export default async (): Promise<Resources> => ({
     RoomTablePresenter,
     RoomListItem,
     MeetingAccessAttributeEditor,
+    PermanentMeetingMembersEditor,
     MeetingPrivateEditor
   },
   function: {

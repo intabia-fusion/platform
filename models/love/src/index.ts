@@ -382,6 +382,11 @@ export class TPermanentMeeting extends TSpace implements PermanentMeeting {
   @Prop(TypeBoolean(), love.string.StartWithTranscription)
   startWithTranscription?: boolean
 
+  // How often the meeting is held, for a permanent meeting created from the planner: the interval
+  // the planner already knows (`Schedule.meetingInterval`) is copied here, so the meeting keeps it.
+  @Prop(TypeNumber(), love.string.RepeatEvery)
+  repeatEvery?: number
+
   @Hidden()
   linkId?: string
 
@@ -1235,6 +1240,16 @@ export function createModel (builder: Builder): void {
     love.class.MeetingMinutes,
     'meetingEnd',
     'attribute'
+  )
+
+  // A permanent meeting's members are edited through its own editor: the shared one knows nothing
+  // about `owners`, and removing an owner there would leave the meeting without a manager.
+  createAttributePresenter(
+    builder,
+    love.component.PermanentMeetingMembersEditor,
+    love.class.PermanentMeeting,
+    'members',
+    'array'
   )
 
   builder.createDoc(

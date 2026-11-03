@@ -453,12 +453,14 @@ JWT-путь убрать нельзя: выданные ссылки живут
 | `{meetingId, meetingStatus, roomFound, …}` | сессия живая |
 | 404 | такой встречи нет |
 
-`POST /guestJoin` - вход:
+`POST /guestJoin` - вход. Тело: `{token, firstName, lastName, personToken?}`.
 
 1. Ключ rate-limit - ссылка + IP; 10 промахов пароля закрывают её на 15 мин.
 2. `resolveGuestLink`: `checkMeetingLink` (отзыв/истечение), затем пароль. Неверный пароль - 401, о встрече ничего не сообщается.
 3. Открывать сессию вправе только `start: 'link'`; при `members` гость ждёт, пока митинг начнёт участник.
-4. `ensurePersonByName` (`addGuestEmployee: true`) и выдача токена.
+4. `firstName`/`lastName` обязательны: без них `400 { error: 'Please enter your first and last name' }`, персона не создаётся.
+5. `personToken` необязателен. Если клиент его не прислал, сервер выводит `guest-link:<sha256(meetingId : имя)>` - повторный вход с тем же именем по той же ссылке даёт ту же персону. Разные люди с одинаковым именем на одной встрече при этом сливаются, а один гость в разных встречах получает разные персоны; штатный клиент всегда шлёт свой `personToken` из `localStorage` и на этот путь не попадает.
+6. `ensurePersonByName` (`addGuestEmployee: true`) и выдача токена: ответ `{token, roomName, person}`.
 
 ---
 

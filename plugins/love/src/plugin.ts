@@ -240,7 +240,8 @@ const love = plugin(loveId, {
     MeetingSessionsFooter: '' as AnyComponent,
     MeetingAccessEditor: '' as AnyComponent,
     CreatePermanentMeetingPopup: '' as AnyComponent,
-    MeetingPrivateEditor: '' as AnyComponent
+    MeetingPrivateEditor: '' as AnyComponent,
+    PermanentMeetingMembersEditor: '' as AnyComponent
   },
   viewlet: {
     TableMeetingMinutes: '' as Ref<Viewlet>,

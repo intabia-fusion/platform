@@ -20,13 +20,13 @@
 // Run: node scripts/generate-screens.mjs (Node 24 strips the TypeScript of the recorder itself)
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const design = join(here, '../../design')
 const generated = join(here, '../src/design/generated')
-const { createRecorder } = await import(join(generated, 'recorder.ts'))
-const { screenFiles } = await import(join(generated, 'entries.ts'))
+const { createRecorder } = await import(pathToFileURL(join(generated, 'recorder.ts')).href)
+const { screenFiles } = await import(pathToFileURL(join(generated, 'entries.ts')).href)
 
 const read = (path) => readFileSync(join(design, path), 'utf8')
 const tokens = read('kit/00-tokens.generated.js')

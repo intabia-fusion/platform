@@ -411,7 +411,14 @@ export class GuestManager {
         workspaceUrl,
         now: Date.now(),
         // A session with no LiveKit room behind it is not joinable yet - the lobby waits for it.
-        mode: meetingStatus === MeetingStatus.Finished ? 'after' : roomFound ? 'live' : 'before',
+        // A permanent meeting outlives its sessions: a finished one means the room is free again,
+        // not that the meeting is over, so the lobby shows "before" there instead of "after".
+        mode:
+          meetingStatus === MeetingStatus.Finished && meetingDoc.meeting === undefined
+            ? 'after'
+            : roomFound
+              ? 'live'
+              : 'before',
         meetingEnd: meetingDoc.meetingEnd,
         title: meetingDoc.name,
         meetingStatus,

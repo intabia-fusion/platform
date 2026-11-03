@@ -272,6 +272,9 @@ export interface PermanentMeeting extends Space {
   startWithRecording?: boolean
   startWithTranscription?: boolean
 
+  /** How often the meeting is held, in ms. Set when the meeting is created from the planner. */
+  repeatEvery?: number
+
   /** shortId of the permanent link. Absent until the link is first issued. */
   linkId?: string
   /** Bumping it revokes the previous link: new payload, new shortId. */

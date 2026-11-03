@@ -149,6 +149,7 @@ export default mergeIds(loveId, love, {
     CloseRoomNotMember: '' as IntlString,
     JoinAndCloseRoom: '' as IntlString,
     PrivateMeetingJoinHeader: '' as IntlString,
-    PrivateMeetingJoinText: '' as IntlString
+    PrivateMeetingJoinText: '' as IntlString,
+    RepeatEvery: '' as IntlString
   }
 })

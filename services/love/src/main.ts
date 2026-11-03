@@ -532,7 +532,7 @@ export const main = async (): Promise<void> => {
     const kind = req.query.kind === 'meeting' ? 'meeting' : 'event'
     const authorized = await authorizeTarget(req, res, eventId, kind)
     if (authorized === undefined) return
-    const { workspaceId, target } = authorized
+    const { workspaceId, wsClient, target } = authorized
 
     const shortId = await guestManager.createMeetingLink(
       target.pointer,
@@ -543,6 +543,15 @@ export const main = async (): Promise<void> => {
     if (shortId === null) {
       res.status(502).send({ error: 'Failed to create link' })
       return
+    }
+    try {
+      await wsClient.setMeetingLinkId(target, shortId)
+    } catch (err: any) {
+      // The link exists already - a failed bookkeeping write must not turn the handout into an error.
+      ctx.warn('[meetingLink] Failed to remember the shortId on the meeting', {
+        error: err?.message ?? String(err),
+        eventId: target.pointer
+      })
     }
     res.status(200).send({ shortId })
   })

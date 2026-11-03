@@ -130,6 +130,27 @@
           "screens/current/login-workspaces.js"
         ]
       ]
+    },
+    {
+      "name": "FUSIO-1307 Ссылка на встречу",
+      "libraries": [
+        "Intabia UI Kit"
+      ],
+      "storybook": "Meetings",
+      "build": [
+        [
+          "screens/love-meeting-link/_meeting.js",
+          "screens/love-meeting-link/01-meeting-link-popup.js"
+        ],
+        [
+          "screens/love-meeting-link/_meeting.js",
+          "screens/love-meeting-link/02-permanent-meeting.js"
+        ],
+        [
+          "screens/love-meeting-link/_meeting.js",
+          "screens/love-meeting-link/03-guest-lobby.js"
+        ]
+      ]
     }
   ]
 }

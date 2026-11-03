@@ -231,6 +231,33 @@ describe('GuestManager.handleGuestInfo', () => {
     expect(payload.roomFound).toBe(false)
   })
 
+  it('reports "after" for a finished session of a series', async () => {
+    wsClient.findMeetingById.mockResolvedValue({
+      status: MeetingStatus.Finished,
+      name: 'Test'
+    } as unknown as MeetingMinutes)
+    roomClient.listRooms.mockResolvedValue([])
+
+    const res = createMockRes()
+    await manager.handleGuestInfo(createMockReq({ token: 'guest-token' }), res)
+
+    expect(res.send.mock.calls[0][0].mode).toBe('after')
+  })
+
+  it('never reports "after" for a permanent meeting: its session ends, the meeting does not', async () => {
+    wsClient.findMeetingById.mockResolvedValue({
+      status: MeetingStatus.Finished,
+      name: 'Daily standup',
+      meeting: 'permanent-1'
+    } as unknown as MeetingMinutes)
+    roomClient.listRooms.mockResolvedValue([])
+
+    const res = createMockRes()
+    await manager.handleGuestInfo(createMockReq({ token: 'guest-token' }), res)
+
+    expect(res.send.mock.calls[0][0].mode).toBe('before')
+  })
+
   it('returns 404 when meeting is missing', async () => {
     wsClient.findMeetingById.mockResolvedValue(undefined)
     const req = createMockReq({ token: 'guest-token' })
