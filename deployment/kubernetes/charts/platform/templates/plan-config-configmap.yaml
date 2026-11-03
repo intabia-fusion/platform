@@ -1,0 +1,14 @@
+{{- /* Общий plan-config (тарифы/цены/лимиты) для payment и tbank-subscriptions.
+       Источник: files/plan-config.yaml. Монтируется как /var/cfg/plan-config.yaml. */ -}}
+{{- if or .Values.services.payment.enabled .Values.services.tbankSubscriptions.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: plan-config
+  namespace: '{{ .Values.global.namespace }}'
+  labels:
+    app: platform
+data:
+  plan-config.yaml: |-
+{{ .Files.Get "files/plan-config.yaml" | indent 4 }}
+{{- end }}

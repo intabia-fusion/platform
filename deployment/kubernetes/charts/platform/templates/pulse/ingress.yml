@@ -1,0 +1,33 @@
+#
+# source: kube/pulse/ingress.yml
+# substitutions:
+#   image tags -> :{{ .Values.global.version }}
+#   hosts -> {{ .Values.global.hostUrl }}
+#   namespace -> {{ .Values.global.namespace }}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: rewrite-pulse
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  replacePathRegex:
+    regex: "^/_pulse(.*)$"
+    replacement: "/ws$1"
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: hulypulse-ingressroute
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  - match: Host(`{{ .Values.global.hostUrl }}`) && PathPrefix(`/_pulse`)
+    kind: Rule
+    services:
+    - name: pulse-service
+      port: 80
+    middlewares:
+    - name: rewrite-pulse

@@ -1,0 +1,36 @@
+# 
+# source: kube/schedule/ingress.yml
+# substitutions:
+#   image tags -> :{{ .Values.global.version }}
+#   hosts -> {{ .Values.global.hostUrl }}
+#   namespace -> {{ .Values.global.namespace }}
+{{- if .Values.services.schedule.enabled }}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-schedule
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  stripPrefix:
+    prefixes:
+    - "/_schedule"
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: schedule-ingressroute
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  - match: Host(`{{ .Values.global.hostUrl }}`) && PathPrefix(`/_schedule`)
+    kind: Rule
+    services:
+    - name: schedule
+      port: 80
+    middlewares:
+    - name: strip-schedule
+
+{{- end }}

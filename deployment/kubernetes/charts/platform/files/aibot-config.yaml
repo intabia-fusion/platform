@@ -1,0 +1,116 @@
+# ai-bot model registry (CONFIG_PATH=/var/cfg/config.yaml).
+#
+# Only what the registry needs: everything else (accounts, secrets, storage, queue) keeps
+# coming from env in templates/aibot/aibot.yml. Values here win over env.
+#
+# ${VAR} placeholders are expanded from the pod environment at startup, so provider
+# credentials stay in platform-secret and never land in this ConfigMap.
+#
+# Rendered through `tpl`: the active LLM provider is secrets.platform.llmProvider
+# ("neuraldeep" or "gigachat").
+#
+# Schema: `models` are level classes (UI/accounting metadata), `providers[].serves` bind a
+# level to a concrete model. See services/ai-bot/pod-ai-bot/config.example.yaml.
+
+{{- $neuraldeep := eq .Values.secrets.platform.llmProvider "neuraldeep" }}
+llm:
+  defaultLevel: middle
+
+  models:
+    middle:
+      order: 10
+      label: Стандарт
+      description: {{ if $neuraldeep }}qwen3.6-unlim-xl-noreason{{ else }}GigaChat-2{{ end }} (облако)
+      tokenMultiplier: {{ if $neuraldeep }}0.1{{ else }}1.2{{ end }}
+      displayMultiplier: {{ if $neuraldeep }}0.1{{ else }}1{{ end }}
+    pro:
+      order: 20
+      label: Профи
+      description: GigaChat-2-Pro (облако)
+      tokenMultiplier: 9.24
+      displayMultiplier: 8
+    max:
+      order: 30
+      label: Максимум
+      description: GigaChat-2-Max (облако)
+      tokenMultiplier: 12
+      displayMultiplier: 10
+
+  providers:
+{{- if $neuraldeep }}
+    # neuraldeep.ru, OpenAI-compatible. Account limits: 3 parallel requests, 30 requests/min.
+    # Only parallelism is enforced here, one below the account limit; going over 30/min gets 429,
+    # which the OpenAI client retries with backoff.
+    - id: neuraldeep
+      provider: openai
+      concurrency: 2
+      batch: 1
+      endpoint: '${ND_URL}'
+      endpointConfig:
+        apiKey: '${ND_TOKEN}'
+      # Only Стандарт: a level without a provider binding does not reach the registry or the UI.
+      serves:
+        # Account tier caps the context at 46112 tokens regardless of the model.
+        middle:
+          model: qwen3.6-unlim-xl-noreason
+          capabilities:
+            tools: true
+            maxContextTokens: 46000
+            maxOutputTokens: 8000
+{{- else }}
+    - id: gigachat
+      provider: gigachat
+      # Max simultaneous in-flight requests on this pod; throughput ≈ concurrency / latency.
+      concurrency: 2
+      batch: 1
+      endpoint: https://gigachat.devices.sberbank.ru/api/v1/
+      endpointConfig:
+        credentials: '${GIGACHAT_CREDENTIALS}'
+        scope: '${GIGACHAT_SCOPE:-GIGACHAT_API_PERS}'
+      serves:
+        middle:
+          model: GigaChat-2
+          capabilities:
+            tools: true
+            maxContextTokens: 128000
+            # 4096 cut long tool calls short (finish_reason=length, empty body).
+            maxOutputTokens: 4096
+        pro:
+          model: GigaChat-2-Pro
+          capabilities:
+            tools: true
+            maxContextTokens: 128000
+            maxOutputTokens: 8192
+        max:
+          model: GigaChat-2-Max
+          capabilities:
+            tools: true
+            maxContextTokens: 128000
+            maxOutputTokens: 8192
+{{- end }}
+
+# Transcription. Served over clisr: the STT workers connect to the aibot-clisr pod as
+# MODE=client and do the actual recognition; this pod only hands them audio.
+asr:
+  defaultLevel: default
+
+  models:
+    default:
+      order: 0
+      label: Базовый
+      description: Распознавание на воркерах
+      # Billed per SECOND of audio, not per token.
+      tokenMultiplier: 1
+      displayMultiplier: 1
+
+  providers:
+    - id: clisr
+      provider: server
+      serves:
+        default:
+          model: default
+
+limits:
+  # Ceiling across levels; the pod additionally trims history to 85% of what a level leaves free.
+  maxContentTokens: 100000
+  maxHistoryRecords: 500

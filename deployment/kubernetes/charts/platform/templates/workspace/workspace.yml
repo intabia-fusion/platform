@@ -1,0 +1,167 @@
+#
+# source: kube/account/workspace0.yml
+# substitutions:
+#   image tags -> :{{ .Values.global.version }}
+#   hosts -> {{ .Values.global.hostUrl }}
+#   namespace -> {{ .Values.global.namespace }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workspace0
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  replicas: {{ .Values.services.workspace.replicas }}
+  selector:
+    matchLabels:
+      app: workspace0
+  template:
+    metadata:
+      labels:
+        app: workspace0
+    spec:
+      tolerations:
+      - key: node.kubernetes.io/unreachable
+        operator: Exists
+        effect: NoExecute
+        tolerationSeconds: 10
+      - key: node.kubernetes.io/not-ready
+        operator: Exists
+        effect: NoExecute
+        tolerationSeconds: 10
+      containers:
+      - name: app
+        image: {{ include "platform.containerImage" (dict "root" . "service" "workspace") }}
+        command:
+        - node
+        - --max-old-space-size={{ int (div (mul .Values.services.workspace.memLimits 90) 100) }}
+        - bundle.js
+        resources:
+          requests:
+            memory: '{{ .Values.services.workspace.memRequired }}M'
+          limits:
+            memory: '{{ .Values.services.workspace.memLimits }}M'
+        imagePullPolicy: {{ $.Values.global.imagePullPolicy | default "Always" }}
+        volumeMounts:
+        {{- include "platform.caVolumeMount" $ | nindent 8 }}
+        - mountPath: /var/cfg/stage-branding.json
+          name: branding
+          subPath: branding.json
+        env:
+        {{- include "platform.extraEnv" (dict "root" $ "service" "workspace") | nindent 8 }}
+        - name: WS_OPERATION
+          value: all+backup
+        - name: STATS_URL
+          value: http://stats-service
+        - name: QUEUE_CONFIG
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: queueConfig
+        - name: DB_URL
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: dbUrl
+        - name: POSTGRES_OPTIONS
+          value: '{"connection":{"application_name":"workspace"},"max":50}'
+        - name: ACCOUNTS_DB_URL
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: dbUrl
+        - name: REGION
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: REGION
+        - name: MAIL_URL
+          value: http://notificator-service
+        - name: WEB_PUSH_URL
+          value: http://notificator-service
+        - name: MAIL_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: mailAuthToken
+        - name: LANGUAGE
+          value: '{{ .Values.global.defaultLanguage }}'
+        - name: PRODUCT_NAME
+          value: '{{ .Values.global.productName }}'
+        - name: FRONT_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: frontUrl
+        - name: SERVER_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: serverSecret
+        - name: ACCOUNTS_URL
+          value: http://account
+            # - name: GOOGLE_CLIENT_ID
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: account-secrets
+            #       key: google_client_id
+            # - name: GOOGLE_CLIENT_SECRET
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: account-secrets
+            #       key: google_client_secret
+            # - name: GITHUB_CLIENT_ID
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: account-secrets
+            #       key: github_client_id
+            # - name: GITHUB_CLIENT_SECRET
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: account-secrets
+            #       key: github_client_secret
+        - name: PARALLEL
+          value: '{{ .Values.services.workspace.parallel }}'
+        - name: STORAGE_CONFIG
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: storageConfig
+        - name: BRANDING_PATH
+          value: /var/cfg/stage-branding.json
+        - name: BACKUP_STORAGE
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: backupConfig
+        - name: BACKUP_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: backupBucket
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: platform-otel-config
+              key: OTEL_EXPORTER_OTLP_ENDPOINT
+              optional: true
+        - name: OTEL_EXPORTER_OTLP_COMPRESSION
+          valueFrom:
+            configMapKeyRef:
+              name: platform-otel-config
+              key: OTEL_EXPORTER_OTLP_COMPRESSION
+              optional: true
+        - name: OTEL_EXPORTER_OTLP_HEADERS
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: uptraceDsn
+        # - name: OTEL_LOG_LEVEL
+        #   value: all
+      volumes:
+      {{- include "platform.caVolume" $ | nindent 6 }}
+      - configMap:
+          items:
+          - key: branding.json
+            path: branding.json
+          name: branding
+        name: branding

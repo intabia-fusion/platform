@@ -1,0 +1,19 @@
+# Фиктивные адреса окружения для офлайн-проверки рендера стендов:
+#   helm template fusion-dev charts/platform -f stands/dev/values.yaml -f stands/ci/render-check.yaml
+#
+# lookup контракта platform-base пуст при helm template, поэтому обязательные
+# адреса подставляются здесь явно. deploy.sh --dry-run подключает этот файл сам.
+# Не используйте для реального стенда - там адреса идут из контракта platform-base.
+dbInit:
+  host: postgres.example.invalid
+  user: postgres
+  password: postgres
+secrets:
+  platform:
+    dbUrl: "postgresql://postgres:postgres@postgres.example.invalid:5432/stand?sslmode=disable"
+    datalakeStorageConfig: "stand,eu|http://s3.example.invalid:9000?accessKey=ciAccessKey&secretKey=ciSecretKey&region=auto"
+    backupConfig: "minio|http://s3.example.invalid:9000?accessKey=ciAccessKey&secretKey=ciSecretKey&rootBucket=stand"
+    chunksStorageConfig: "minio|http://s3.example.invalid:9000?accessKey=ciAccessKey&secretKey=ciSecretKey&rootBucket=stand-chunks"
+config:
+  queueConfig: "kafka.example.invalid:9092;-stand"
+  elasticUrl: "http://elastic.example.invalid:9200"

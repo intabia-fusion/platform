@@ -1,0 +1,17 @@
+#
+# source: kube/rekoni/service.yaml
+# substitutions:
+#   image tags -> :{{ .Values.global.version }}
+#   hosts -> {{ .Values.global.hostUrl }}
+#   namespace -> {{ .Values.global.namespace }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: distro
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  selector:
+    app: distro
+  ports:
+  - port: 80
+    targetPort: 4409

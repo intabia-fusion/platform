@@ -1,0 +1,17 @@
+#
+# source: kube/fulltext/service0.yaml
+# substitutions:
+#   image tags -> :{{ .Values.global.version }}
+#   hosts -> {{ .Values.global.hostUrl }}
+#   namespace -> {{ .Values.global.namespace }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: fulltext0
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  selector:
+    app: fulltext0
+  ports:
+  - port: 80
+    targetPort: 4700

@@ -1,0 +1,21 @@
+{{- /*
+Generate a Service per collaborator instance.
+Each service is named `collaborator0`, `collaborator1`, ... and selects pods with label `app: collaboratorN`.
+*/ -}}
+{{- $root := . -}}
+{{- $count := int (default 1 $root.Values.services.collaborator.count) -}}
+{{- range $i := until $count }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ printf "collaborator%d" $i }}
+  namespace: '{{ $root.Values.global.namespace }}'
+spec:
+  selector:
+    app: {{ printf "collaborator%d" $i }}
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 3078
+{{- end }}

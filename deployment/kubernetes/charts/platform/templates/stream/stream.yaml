@@ -1,0 +1,88 @@
+#
+# source: kube/stream/stream.yaml
+# substitutions:
+#   image tags -> :{{ .Values.global.version }}
+#   hosts -> {{ .Values.global.hostUrl }}
+#   namespace -> {{ .Values.global.namespace }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stream
+  labels:
+    app: stream
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  selector:
+    matchLabels:
+      app: stream
+  template:
+    metadata:
+      labels:
+        app: stream
+    spec:
+      {{- if .Values.global.tls.caSecretName }}
+      volumes:
+      {{- include "platform.caVolume" $ | nindent 6 }}
+      {{- end }}
+      containers:
+      - name: stream
+        image: {{ include "platform.containerImage" (dict "root" . "service" "stream") }}
+        ports:
+        - containerPort: 1080
+        imagePullPolicy: {{ $.Values.global.imagePullPolicy | default "Always" }}
+        {{- if .Values.global.tls.caSecretName }}
+        volumeMounts:
+        {{- include "platform.caVolumeMount" $ | nindent 8 }}
+        {{- end }}
+        env:
+        {{- include "platform.extraEnv" (dict "root" $ "service" "stream") | nindent 8 }}
+        - name: STREAM_ENDPOINT_URL
+          value: datalake://datalake-service
+        - name: STREAM_INSECURE
+          value: 'true'
+        - name: STREAM_MAX_PARALLEL_SCALING_COUNT
+          value: '2'
+        - name: STREAM_SERVE_URL
+          value: 0.0.0.0:1080
+        - name: STREAM_LOG_LEVEL
+          value: 'debug'
+        - name: STREAM_BASE_URL
+          value: https://{{ include "platform.publicHost" . }}/_stream
+        - name: STREAM_SERVER_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: serverSecret
+        - name: STREAM_QUEUE_CONFIG
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: queueConfig
+        - name: STREAM_REGION
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: REGION
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: platform-otel-config
+              key: OTEL_EXPORTER_OTLP_ENDPOINT
+              optional: true
+        - name: OTEL_EXPORTER_OTLP_COMPRESSION
+          valueFrom:
+            configMapKeyRef:
+              name: platform-otel-config
+              key: OTEL_EXPORTER_OTLP_COMPRESSION
+              optional: true
+        - name: OTEL_EXPORTER_OTLP_HEADERS
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: uptraceDsn
+        resources:
+          requests:
+            memory: '{{ .Values.services.stream.memRequired }}M'
+          limits:
+            cpu: 100m
+            memory: '{{ .Values.services.stream.memLimits }}M'

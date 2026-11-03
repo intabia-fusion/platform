@@ -1,0 +1,44 @@
+{{- /*
+The platform-base contract: addresses and credentials of the environment, published
+for the platform chart. The platform chart resolves them via helm lookup and combines
+with its own stand name (database, bucket, kafka topic postfix, fulltext index).
+Key names are the contract between the two charts - extend by adding keys only.
+*/ -}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: platform-base
+  namespace: '{{ .Release.Namespace }}'
+  labels:
+    app: platform-base
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+data:
+  POSTGRES_HOST: {{ include "platformBase.postgresHost" . | quote }}
+  POSTGRES_PORT: {{ include "platformBase.postgresPort" . | quote }}
+  KAFKA_BOOTSTRAP: {{ include "platformBase.kafkaBootstrap" . | quote }}
+  ELASTIC_URL: {{ include "platformBase.elasticUrl" . | quote }}
+  S3_ENDPOINT: {{ include "platformBase.s3Endpoint" . | quote }}
+  S3_KIND: {{ .Values.s3.external.kind | default "minio" | quote }}
+  S3_REGION: {{ .Values.s3.external.region | default "auto" | quote }}
+  S3_LOCATION: {{ .Values.s3.external.location | default "eu" | quote }}
+  REDIS_HOST: {{ include "platformBase.redisHost" . | quote }}
+  SMTP_HOST: {{ printf "mailpit.%s.svc.cluster.local" .Release.Namespace | quote }}
+  SMTP_PORT: "1025"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: platform-base
+  namespace: '{{ .Release.Namespace }}'
+  labels:
+    app: platform-base
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+type: Opaque
+stringData:
+  POSTGRES_USER: {{ include "platformBase.postgresUser" . | quote }}
+  POSTGRES_PASSWORD: {{ include "platformBase.postgresPassword" . | quote }}
+  S3_ACCESS_KEY: {{ include "platformBase.s3AccessKey" . | quote }}
+  S3_SECRET_KEY: {{ include "platformBase.s3SecretKey" . | quote }}

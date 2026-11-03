@@ -1,0 +1,17 @@
+# 
+# source: kube/account/service.yaml
+# substitutions:
+#   image tags -> :{{ .Values.global.version }}
+#   hosts -> {{ .Values.global.hostUrl }}
+#   namespace -> {{ .Values.global.namespace }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: account
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  selector:
+    app: account
+  ports:
+  - port: 80
+    targetPort: 3000

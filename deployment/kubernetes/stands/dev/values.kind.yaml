@@ -1,0 +1,8 @@
+# Overlay stands/dev/values.yaml для kind-runtime.
+# Отличия от k3d: registry kind (localhost:5001, containerd переписывает в
+# kind-registry:5000) и имена namespace/stand, чтобы не пересекаться с k3d-стендом.
+global:
+  namespace: fusion-kind-dev
+  hostUrl: dev-kind.fusion.localhost
+  imageRegistry: localhost:5001
+  stand: dev-kind

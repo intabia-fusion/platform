@@ -1,0 +1,13 @@
+apiVersion: v2
+name: platform
+description: "Helm chart for the fusion platform. Installs the platform services from one values file. Expects postgres, Kafka, S3-compatible storage, elastic and an ingress with TLS, provided either via values or by the platform-base chart contract (ConfigMap/Secret platform-base)."
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - fusion
+  - platform
+  - helm
+maintainers:
+  - name: haiodo
+    email: haiodo@gmail.com

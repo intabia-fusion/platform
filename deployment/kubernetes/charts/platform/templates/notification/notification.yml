@@ -1,0 +1,149 @@
+#
+# source: kube/notification/notification.yml
+# substitutions:
+#   image tags -> :{{ .Values.global.version }}
+#   hosts -> {{ .Values.global.hostUrl }}
+#   namespace -> {{ .Values.global.namespace }}
+{{- if .Values.services.notification.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notificator-service
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  replicas: {{ .Values.services.notification.replicas }}
+  selector:
+    matchLabels:
+      app: notificator-service
+  template:
+    metadata:
+      labels:
+        app: notificator-service
+    spec:
+      tolerations:
+      - key: node.kubernetes.io/unreachable
+        operator: Exists
+        effect: NoExecute
+        tolerationSeconds: 10
+      - key: node.kubernetes.io/not-ready
+        operator: Exists
+        effect: NoExecute
+        tolerationSeconds: 10
+      {{- if .Values.global.tls.caSecretName }}
+      volumes:
+      {{- include "platform.caVolume" $ | nindent 6 }}
+      {{- end }}
+      containers:
+      - name: app
+        image: {{ include "platform.containerImage" (dict "root" . "service" "notification") }}
+        resources:
+          requests:
+            memory: '{{ .Values.services.notification.memRequired }}M'
+          limits:
+            memory: '{{ .Values.services.notification.memLimits }}M'
+        ports:
+        - containerPort: 8091
+        imagePullPolicy: {{ $.Values.global.imagePullPolicy | default "Always" }}
+        {{- if .Values.global.tls.caSecretName }}
+        volumeMounts:
+        {{- include "platform.caVolumeMount" $ | nindent 8 }}
+        {{- end }}
+        env:
+        {{- include "platform.extraEnv" (dict "root" $ "service" "notification") | nindent 8 }}
+        - name: SOURCE
+          value: platform@intabia.ru
+        - name: PUSH_SUBJECT
+          value: "mailto:platform@intabia.ru"
+        - name: STATS_URL
+          value: http://stats-service
+        - name: ACCOUNTS_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: accountsUrl
+        - name: SECRET
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: serverSecret
+        - name: QUEUE_CONFIG
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: queueConfig
+        - name: QUEUE_REGION
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: REGION
+        - name: PUSH_PUBLIC_KEY
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: pushPublicKey
+        - name: PUSH_PRIVATE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: pushPrivateKey
+        - name: AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: mailAuthToken
+        - name: APNS_PRODUCTION
+          value: '{{ .Values.services.notification.apnsProduction }}'
+        - name: APNS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: apnsKeyId
+        - name: APNS_TEAM_ID
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: apnsTeamId
+        - name: APNS_TOPIC
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: apnsTopic
+        - name: APNS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: apnsKey
+        - name: FCM_SERVICE_ACCOUNT
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: fcmServiceAccount
+        - name: RUSTORE_PROJECT_ID
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: rustoreProjectId
+        - name: RUSTORE_SERVICE_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: rustoreServiceToken
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: platform-otel-config
+              key: OTEL_EXPORTER_OTLP_ENDPOINT
+              optional: true
+        - name: OTEL_EXPORTER_OTLP_COMPRESSION
+          valueFrom:
+            configMapKeyRef:
+              name: platform-otel-config
+              key: OTEL_EXPORTER_OTLP_COMPRESSION
+              optional: true
+        - name: OTEL_EXPORTER_OTLP_HEADERS
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: uptraceDsn
+
+{{- end }}

@@ -1,0 +1,120 @@
+#
+# source: kube/tbank-subscriptions/tbank-subscriptions.yaml
+# TBank платёжный провайдер (internal, за payment). Порт 4042.
+{{- if .Values.services.tbankSubscriptions.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tbank-subscriptions
+  labels:
+    app: tbank-subscriptions
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  replicas: {{ .Values.services.tbankSubscriptions.replicas }}
+  selector:
+    matchLabels:
+      app: tbank-subscriptions
+  template:
+    metadata:
+      annotations:
+        checksum/plan-config: {{ .Files.Get "files/plan-config.yaml" | sha256sum }}
+      labels:
+        app: tbank-subscriptions
+    spec:
+      containers:
+      - name: tbank-subscriptions
+        image: {{ include "platform.containerImage" (dict "root" . "service" "tbankSubscriptions" "image" "tbank-subscriptions") }}
+        ports:
+        - containerPort: 4042
+        imagePullPolicy: {{ $.Values.global.imagePullPolicy | default "Always" }}
+        volumeMounts:
+        {{- include "platform.caVolumeMount" $ | nindent 8 }}
+        - mountPath: /var/cfg/plan-config.yaml
+          name: plan-config
+          subPath: plan-config.yaml
+        env:
+        {{- include "platform.extraEnv" (dict "root" $ "service" "tbankSubscriptions") | nindent 8 }}
+        - name: PORT
+          value: '4042'
+        - name: TBANK_DEBUG_LOG
+          value: 'true'
+        - name: SECRET
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: serverSecret
+        - name: ACCOUNTS_URL
+          value: http://account
+        # Без хвостового слэша: сервис строит `${FRONT_URL}/_tbank_subscriptions/...` (NotificationURL)
+        # и `${FRONT_URL}/workbench/...` (Success/FailURL).
+        - name: FRONT_URL
+          value: 'https://{{ include "platform.publicHost" . }}'
+        - name: PAYMENT_URL
+          value: http://payment
+        - name: PLAN_CONFIG
+          value: /var/cfg/plan-config.yaml
+        - name: QUEUE_CONFIG
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: queueConfig
+        - name: QUEUE_REGION
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: REGION
+        - name: TBANK_URL
+          value: '{{ .Values.services.tbankSubscriptions.url }}'
+        - name: TBANK_TAXATION
+          value: '{{ .Values.services.tbankSubscriptions.taxation }}'
+        - name: TBANK_VAT_TAX
+          value: '{{ .Values.services.tbankSubscriptions.vatTax }}'
+        - name: SUPPORT_EMAIL
+          value: '{{ .Values.services.tbankSubscriptions.supportEmail }}'
+        - name: SUPPORT_URL
+          value: '{{ .Values.services.tbankSubscriptions.supportUrl }}'
+        # Публичный URL вебхука для банка (нейтральный путь, без "tbank").
+        # Роутится ingress-ом tbank-subscriptions на /api/v1/webhooks/tbank.
+        - name: TBANK_NOTIFICATION_URL
+          value: 'https://{{ include "platform.publicHost" . }}/_payment/webhook'
+        - name: TBANK_TERMINAL_KEY
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: tbankTerminalKey
+        - name: TBANK_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: tbankPassword
+        - name: SCHEDULER_INTERVAL_MINUTES
+          value: '{{ .Values.services.tbankSubscriptions.schedulerIntervalMinutes }}'
+        - name: GRACE_PERIOD_DAYS
+          value: '{{ .Values.services.tbankSubscriptions.gracePeriodDays }}'
+        - name: MAIL_URL
+          value: http://mail-service
+        - name: MAIL_FROM
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: smtpFrom
+        - name: MAIL_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: smtpApiKey
+        {{- if .Values.services.tbankSubscriptions.billingEmails }}
+        - name: BILLING_EMAILS
+          value: '{{ .Values.services.tbankSubscriptions.billingEmails }}'
+        {{- end }}
+        resources:
+          requests:
+            memory: '{{ .Values.services.tbankSubscriptions.memRequired }}M'
+          limits:
+            memory: '{{ .Values.services.tbankSubscriptions.memLimits }}M'
+      volumes:
+      {{- include "platform.caVolume" $ | nindent 6 }}
+      - configMap:
+          name: plan-config
+        name: plan-config
+{{- end }}

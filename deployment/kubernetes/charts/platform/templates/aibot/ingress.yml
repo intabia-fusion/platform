@@ -1,0 +1,54 @@
+#
+# source: kube/aibot/ingress.yml
+#
+# /_ai    -> aibot-service (event-router): REST /levels, /translate, /summarize, /love/*
+# /_aibot -> aibot-clisr   (stt-worker):   WebSocket для внешних воркеров MODE=client
+{{- if .Values.services.aibot.enabled }}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-ai
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  stripPrefix:
+    prefixes:
+    - "/_ai"
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-aibot
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  stripPrefix:
+    prefixes:
+    - "/_aibot"
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: aibot-ingressroute
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  # Более длинный префикс объявлен первым: /_aibot не должен съедаться правилом /_ai.
+  - match: Host(`{{ .Values.global.hostUrl }}`) && PathPrefix(`/_aibot`)
+    kind: Rule
+    services:
+    - name: aibot-clisr
+      port: 80
+    middlewares:
+    - name: strip-aibot
+  - match: Host(`{{ .Values.global.hostUrl }}`) && PathPrefix(`/_ai`)
+    kind: Rule
+    services:
+    - name: aibot-service
+      port: 80
+    middlewares:
+    - name: strip-ai
+
+{{- end }}

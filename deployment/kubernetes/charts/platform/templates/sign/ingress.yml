@@ -1,0 +1,36 @@
+#
+# source: kube/sign/ingress.yml
+# substitutions:
+#   image tags -> :{{ .Values.global.version }}
+#   hosts -> {{ .Values.global.hostUrl }}
+#   namespace -> {{ .Values.global.namespace }}
+{{- if .Values.services.sign.enabled }}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-sign
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  stripPrefix:
+    prefixes:
+    - "/_sign"
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: sign-ingressroute
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  - match: Host(`{{ .Values.global.hostUrl }}`) && PathPrefix(`/_sign`)
+    kind: Rule
+    services:
+    - name: sign-service
+      port: 80
+    middlewares:
+    - name: strip-sign
+
+{{- end }}

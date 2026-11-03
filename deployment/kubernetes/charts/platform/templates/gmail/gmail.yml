@@ -1,0 +1,116 @@
+# 
+# source: kube/gmail/gmail.yml
+# substitutions:
+#   image tags -> :{{ .Values.global.version }}
+#   hosts -> {{ .Values.global.hostUrl }}
+#   namespace -> {{ .Values.global.namespace }}
+{{- if .Values.services.gmail.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gmail-service
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  replicas: {{ .Values.services.gmail.replicas }}
+  selector:
+    matchLabels:
+      app: gmail-service
+  template:
+    metadata:
+      labels:
+        app: gmail-service
+    spec:
+      tolerations:
+      - key: node.kubernetes.io/unreachable
+        operator: Exists
+        effect: NoExecute
+        tolerationSeconds: 10
+      - key: node.kubernetes.io/not-ready
+        operator: Exists
+        effect: NoExecute
+        tolerationSeconds: 10
+      {{- if .Values.global.tls.caSecretName }}
+      volumes:
+      {{- include "platform.caVolume" $ | nindent 6 }}
+      {{- end }}
+      containers:
+      - name: app
+        image: {{ include "platform.containerImage" (dict "root" . "service" "gmail") }}
+        resources:
+          requests:
+            memory: '{{ .Values.services.gmail.memRequired }}M'
+          limits:
+            memory: '{{ .Values.services.gmail.memLimits }}M'
+        ports:
+        - containerPort: 8087
+        imagePullPolicy: {{ $.Values.global.imagePullPolicy | default "Always" }}
+        {{- if .Values.global.tls.caSecretName }}
+        volumeMounts:
+        {{- include "platform.caVolumeMount" $ | nindent 8 }}
+        {{- end }}
+        env:
+        {{- include "platform.extraEnv" (dict "root" $ "service" "gmail") | nindent 8 }}
+        - name: EXTERNAL_REGIONS
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: EXTERNAL_REGIONS
+        - name: STATS_URL
+          value: http://stats-service
+        - name: WATCH_TOPIC_NAME
+          valueFrom:
+            secretKeyRef:
+              name: gmail-api
+              key: gmail_sub_topic
+        - name: Credentials
+          valueFrom:
+            secretKeyRef:
+              name: gmail-api
+              key: credentials
+        - name: ACCOUNTS_URL
+          value: http://account
+        - name: SYSTEM_EMAIL
+          value: 'anticrm@hc.engineering'
+        - name: SECRET
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: serverSecret
+        - name: STORAGE_CONFIG
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: storageConfig
+        - name: KVS_URL
+          value: http://kvs
+        - name: QUEUE_CONFIG
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: queueConfig
+        - name: QUEUE_REGION
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: REGION
+        - name: VERSION
+          value: v2
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: platform-otel-config
+              key: OTEL_EXPORTER_OTLP_ENDPOINT
+              optional: true
+        - name: OTEL_EXPORTER_OTLP_COMPRESSION
+          valueFrom:
+            configMapKeyRef:
+              name: platform-otel-config
+              key: OTEL_EXPORTER_OTLP_COMPRESSION
+              optional: true
+        - name: OTEL_EXPORTER_OTLP_HEADERS
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: uptraceDsn
+
+{{- end }}

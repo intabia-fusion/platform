@@ -1,0 +1,20 @@
+# 
+# source: kube/telegram-bot/service.yaml
+# substitutions:
+#   image tags -> :{{ .Values.global.version }}
+#   hosts -> {{ .Values.global.hostUrl }}
+#   namespace -> {{ .Values.global.namespace }}
+{{- if index .Values.services "telegram-bot" "enabled" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: telegram-bot-service
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  selector:
+    app: telegram-bot-service
+  ports:
+  - port: 80
+    targetPort: 4020
+
+{{- end }}

@@ -1,0 +1,110 @@
+#
+# source: kube/mail/mail.yml
+# substitutions:
+#   image tags -> :{{ .Values.global.version }}
+#   hosts -> {{ .Values.global.hostUrl }}
+#   namespace -> {{ .Values.global.namespace }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mail-service
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  replicas: {{ .Values.services.mail.replicas }}
+  selector:
+    matchLabels:
+      app: mail-service
+  template:
+    metadata:
+      labels:
+        app: mail-service
+    spec:
+      tolerations:
+      - key: 'node.kubernetes.io/unreachable'
+        operator: 'Exists'
+        effect: 'NoExecute'
+        tolerationSeconds: 10
+      - key: 'node.kubernetes.io/not-ready'
+        operator: 'Exists'
+        effect: 'NoExecute'
+        tolerationSeconds: 10
+      {{- if .Values.global.tls.caSecretName }}
+      volumes:
+      {{- include "platform.caVolume" $ | nindent 6 }}
+      {{- end }}
+      containers:
+      - name: app
+        image: {{ include "platform.containerImage" (dict "root" . "service" "mail") }}
+        resources:
+          requests:
+            memory: '{{ .Values.services.mail.memRequired }}M'
+          limits:
+            memory: '{{ .Values.services.mail.memLimits }}M'
+        ports:
+        - containerPort: 8097
+        imagePullPolicy: {{ $.Values.global.imagePullPolicy | default "Always" }}
+        {{- if .Values.global.tls.caSecretName }}
+        volumeMounts:
+        {{- include "platform.caVolumeMount" $ | nindent 8 }}
+        {{- end }}
+        env:
+        {{- include "platform.extraEnv" (dict "root" $ "service" "mail") | nindent 8 }}
+        - name: PORT
+          value: '8097'
+        - name: SOURCE
+          valueFrom:
+             secretKeyRef:
+              name: platform-secret
+              key: smtpFrom
+        - name: MODE
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: smtpMode
+        - name: API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: smtpApiKey
+        - name: QUEUE_CONFIG
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: queueConfig
+        - name: REGION
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: REGION
+        - name: SMTP_HOST
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: smtpHost
+        - name: SMTP_PORT
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: smtpPort
+        - name: SMTP_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: smtpUsername
+        - name: SMTP_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: smtpPassword
+        - name: ACCOUNTS_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: accountsUrl
+        - name: SECRET
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: serverSecret
+        - name: APP_NAME
+          value: '{{ .Values.global.productName }}'

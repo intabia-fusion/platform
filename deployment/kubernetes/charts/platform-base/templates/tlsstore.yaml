@@ -1,0 +1,19 @@
+{{- /*
+Default TLS for all stand hosts: the platform chart IngressRoutes carry no tls
+section, traefik serves the default certificate from this TLSStore. The referenced
+secret holds the mkcert wildcard *.fusion.localhost certificate, created by
+certs/gen.sh - never by this chart, so no keys are rendered from values.
+*/ -}}
+---
+apiVersion: traefik.io/v1alpha1
+kind: TLSStore
+metadata:
+  name: default
+  namespace: '{{ .Values.tls.traefikNamespace }}'
+  labels:
+    app: platform-base
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+spec:
+  defaultCertificate:
+    secretName: '{{ .Values.tls.certificateSecret }}'

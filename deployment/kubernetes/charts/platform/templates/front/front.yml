@@ -1,0 +1,310 @@
+#
+# source: kube/front/front.yml
+# substitutions:
+#   image tags -> :{{ .Values.global.version }}
+#   hosts -> {{ .Values.global.hostUrl }}
+#   namespace -> {{ .Values.global.namespace }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: front
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  replicas: {{ .Values.services.front.replicas }}
+  selector:
+    matchLabels:
+      app: front
+  template:
+    metadata:
+      labels:
+        app: front
+    spec:
+      tolerations:
+      - key: node.kubernetes.io/unreachable
+        operator: Exists
+        effect: NoExecute
+        tolerationSeconds: 10
+      - key: node.kubernetes.io/not-ready
+        operator: Exists
+        effect: NoExecute
+        tolerationSeconds: 10
+      containers:
+      - name: app
+        image: {{ include "platform.containerImage" (dict "root" . "service" "front") }}
+        command:
+        - node
+        - --max-old-space-size={{ int (div (mul .Values.services.front.memLimits 90) 100) }}
+        - bundle.js
+        resources:
+          requests:
+            memory: '{{ .Values.services.front.memRequired }}M'
+          limits:
+            memory: '{{ .Values.services.front.memLimits }}M'
+        ports:
+        - containerPort: 8080
+        imagePullPolicy: {{ $.Values.global.imagePullPolicy | default "Always" }}
+        volumeMounts:
+        {{- include "platform.caVolumeMount" $ | nindent 8 }}
+        - mountPath: /app/dist/platform-branding.json
+          name: branding
+          subPath: branding.json
+        {{- if .Values.services.front.disallowRobots }}
+        - mountPath: /app/dist/robots.txt
+          name: robots
+          subPath: robots.txt
+        {{- end }}
+        env:
+        {{- include "platform.extraEnv" (dict "root" $ "service" "front") | nindent 8 }}
+        - name: TITLE
+          value: Huly
+        - name: SERVER_PORT
+          value: '8080'
+        - name: ACCOUNTS_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: accountsUrl
+        - name: ACCOUNTS_URL_INTERNAL
+          value: http://account
+        - name: STATS_API
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: statsUrl
+        - name: STATS_URL
+          value: http://stats-service
+        - name: MAIL_URL
+          value: ''     # set to otp to non empty to enable OTP
+        - name: FILES_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: filesUrl
+        - name: LINK_PREVIEW_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: linkPreviewUrl
+        - name: UPLOAD_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: uploadUrl
+        - name: STREAM_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: streamUrl
+        - name: LANGUAGES
+          value: en,ru,es,pt,zh,fr,it
+        - name: GMAIL_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: gmailUrl
+        - name: CALENDAR_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: calendarUrl
+        - name: ELASTIC_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: elasticUrl
+        - name: GITHUB_APP
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: githubAppName
+        - name: GITHUB_CLIENTID
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: githubClientId
+        - name: TELEGRAM_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: telegramUrl
+        - name: REKONI_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: rekoniUrl
+        - name: SERVER_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: serverSecret
+        - name: GITHUB_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: githubUrl
+        - name: LIVEKIT_WS
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: livekitWs
+        - name: LOVE_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: loveUrl
+        - name: PUSH_PUBLIC_KEY
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: pushPublicKey
+        - name: STORAGE_CONFIG
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: storageConfig
+        - name: BRANDING_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: brandingUrl
+        - name: PRINT_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: printUrl
+        - name: SIGN_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: signUrl
+        - name: PRESENCE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: presenceUrl
+        - name: DESKTOP_UPDATES_URL
+          value: https://{{ include "platform.publicHost" . }}/_dist
+        {{- if .Values.global.landingUrl }}
+        - name: LANDING_URL
+          value: https://{{ .Values.global.landingUrl }}
+        {{- end }}
+        {{- if .Values.config.yandexMetricaId }}
+        - name: YANDEX_METRIKA_ID
+          value: {{ .Values.config.yandexMetricaId | quote }}
+        {{- end }}
+        - name: DESKTOP_UPDATES_CHANNEL
+          value: latest
+        - name: DESKTOP_UPDATES_CHANNELS
+          value: latest
+        - name: ANALYTICS_COLLECTOR_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: collectorUrl
+        - name: AI_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: aiUrl
+        - name: EXPORT_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: exportUrl
+        - name: PUBLIC_SCHEDULE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: publicScheduleUrl
+        - name: CALDAV_SERVER_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: caldavServerUrl
+        - name: COMMUNICATION_API_ENABLED
+          value: 'false'
+        - name: BACKUP_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: backupUrl
+        - name: WEBHOOK_SERVICE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: webhookServiceUrl
+        - name: BILLING_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: billingUrl
+        - name: PAYMENT_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: paymentUrl
+        - name: PREVIEW_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: previewUrl
+        - name: PULSE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: pulseUrl
+        - name: EXCLUDED_APPLICATIONS_FOR_ANONYMOUS
+          value: '["chunter", "notification", "document"]'
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: platform-otel-config
+              key: OTEL_EXPORTER_OTLP_ENDPOINT
+              optional: true
+        - name: OTEL_EXPORTER_OTLP_COMPRESSION
+          valueFrom:
+            configMapKeyRef:
+              name: platform-otel-config
+              key: OTEL_EXPORTER_OTLP_COMPRESSION
+              optional: true
+        - name: OTEL_EXPORTER_OTLP_HEADERS
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: uptraceDsn
+        - name: DATALAKE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: datalakeUrl
+        - name: HULYLAKE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: hulyLakeUrl
+        - name: DISABLED_FEATURES
+          value: {{ .Values.services.front.disabledFeatures | join "," }}
+        {{- if .Values.services.front.accentTheme }}
+        - name: ACCENT_THEME
+          value: {{ .Values.services.front.accentTheme }}
+        {{- end }}
+        {{- if .Values.services.front.loginTheme }}
+        - name: LOGIN_THEME
+          value: {{ .Values.services.front.loginTheme }}
+        {{- end }}
+      volumes:
+      {{- include "platform.caVolume" $ | nindent 6 }}
+      - configMap:
+          items:
+          - key: branding.json
+            path: branding.json
+          name: branding
+        name: branding
+      {{- if .Values.services.front.disallowRobots }}
+      - configMap:
+          items:
+          - key: robots.txt
+            path: robots.txt
+          name: front-robots
+        name: robots
+      {{- end }}

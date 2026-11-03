@@ -1,0 +1,123 @@
+{{- /*
+Create ConfigMaps from values:
+- platform-config (from .Values.config)
+- platform-otel-config (from .Values.otel)
+- branding (from .Values.branding)
+
+These templates are intentionally simple: they convert the maps in values.yaml
+into ConfigMap data entries. Use the `branding` block to provide a JSON
+branding file (branding.json) which will be mounted by pods.
+*/ -}}
+
+{{- if .Values.config }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: platform-config
+  namespace: '{{ .Values.global.namespace }}'
+  labels:
+    app: platform
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+data:
+{{- $base := include "platform.baseConfigMap" . | fromYaml }}
+{{- $stand := include "platform.stand" . }}
+{{- $queueConfig := .Values.config.queueConfig }}
+{{- if and (not $queueConfig) (get $base "KAFKA_BOOTSTRAP") }}
+  {{- $queueConfig = printf "%s;-%s" (get $base "KAFKA_BOOTSTRAP") $stand }}
+{{- end }}
+{{- if not $queueConfig }}{{ fail "platform-base: set config.queueConfig or provide ConfigMap/platform-base KAFKA_BOOTSTRAP" }}{{ end }}
+{{- $elasticUrl := .Values.config.elasticUrl | default (get $base "ELASTIC_URL") }}
+{{- if not $elasticUrl }}{{ fail "platform-base: set config.elasticUrl or provide ConfigMap/platform-base ELASTIC_URL" }}{{ end }}
+{{- $fulltextIndexName := .Values.config.fulltextIndexName | default $stand }}
+{{- $backupBucket := .Values.config.backupBucket | default $stand }}
+{{- $kafkaBootstrap := .Values.config.kafkaBootstrapServers | default (get $base "KAFKA_BOOTSTRAP") | default (first (splitList ";" $queueConfig)) }}
+{{- $defaults := dict
+    "accountsUrl" (printf "https://%s/_account/" (include "platform.publicHost" .))
+    "aiUrl" (printf "https://%s/_ai" (include "platform.publicHost" .))
+    "frontUrl" (printf "https://%s/" (include "platform.publicHost" .))
+    "gmailUrl" (printf "https://%s/_gmail/" (include "platform.publicHost" .))
+    "loveUrl" (printf "https://%s/_love/" (include "platform.publicHost" .))
+    "calendarUrl" (printf "https://%s/_calendar/" (include "platform.publicHost" .))
+    "exportUrl" (printf "https://%s/_export" (include "platform.publicHost" .))
+    "collectorUrl" (printf "https://%s/_collector" (include "platform.publicHost" .))
+    "statsUrl" (printf "https://%s/_stats" (include "platform.publicHost" .))
+    "brandingUrl" (printf "https://%s/platform-branding.json" (include "platform.publicHost" .))
+    "publicScheduleUrl" (printf "https://%s/_schedule" (include "platform.publicHost" .))
+    "caldavServerUrl" (printf "https://%s/_caldav" (include "platform.publicHost" .))
+    "calendarPushUrl" (printf "https://%s/_calendar/push" (include "platform.publicHost" .))
+    "backupUrl" (printf "https://%s/_backup-api/api/backup" (include "platform.publicHost" .))
+    "billingUrl" (printf "https://%s/_billing" (include "platform.publicHost" .))
+    "printUrl" (printf "https://%s/_print" (include "platform.publicHost" .))
+    "pulseUrl" (printf "https://%s/_pulse" (include "platform.publicHost" .))
+    "rekoniUrl" (printf "https://%s/_rekoni" (include "platform.publicHost" .))
+    "signUrl" (printf "https://%s/_sign" (include "platform.publicHost" .))
+    "paymentUrl" (printf "https://%s/_payment" (include "platform.publicHost" .))
+    "previewUrl" (printf "https://%s/_preview" (include "platform.publicHost" .))
+    "telegramBotUrl" (printf "https://%s/_telegram-bot" (include "platform.publicHost" .))
+    "telegramUrl" (printf "https://%s/_telegram" (include "platform.publicHost" .))
+    "telegramHookUrl" (printf "https://%s/_telegram-hook/" (include "platform.publicHost" .))
+    "datalakeUrl" (printf "https://%s/_datalake/" (include "platform.publicHost" .))
+    "hulyLakeUrl" (printf "https://%s/_lake/" (include "platform.publicHost" .))
+    "filesUrl" (printf "https://%s/_datalake/blob/:workspace/:blobId/:filename" (include "platform.publicHost" .))
+    "uploadUrl" (printf "https://%s/_datalake/upload/form-data/:workspace" (include "platform.publicHost" .))
+    "linkPreviewUrl" (printf "https://%s/_link-preview" (include "platform.publicHost" .))
+    "streamUrl" (printf "https://%s/_stream/recording" (include "platform.publicHost" .))
+    "presenceUrl" (printf "https://%s/_presence" (include "platform.publicHost" .))
+    "githubUrl" (printf "https://%s/_github" (include "platform.publicHost" .))
+    "webhookServiceUrl" (printf "https://%s/_webhook" (include "platform.publicHost" .))
+    "uploadConfig" (printf "signed-url|100|https://%s/_datalake/upload/signed-url/:workspace/:blobId" (include "platform.publicHost" .))
+    "previewConfig" (printf "image|https://%s/_datalake/image/fit=cover,width=:width,height=:height,dpr=:dpr/:workspace/:blobId;video|https://%s/_datalake/meta/:workspace/:blobId" (include "platform.publicHost" .) (include "platform.publicHost" .))
+
+  -}}
+{{- $cfg := merge $defaults (default dict .Values.config) -}}
+{{- $cfg = set $cfg "queueConfig" $queueConfig -}}
+{{- $cfg = set $cfg "elasticUrl" $elasticUrl -}}
+{{- $cfg = set $cfg "fulltextIndexName" $fulltextIndexName -}}
+{{- $cfg = set $cfg "backupBucket" $backupBucket -}}
+{{- $cfg = set $cfg "kafkaBootstrapServers" $kafkaBootstrap -}}
+{{- /* config.regions is a list consumed by the region-config ConfigMap, not a
+       string value - ConfigMap data must be strings, so it stays out of here. */ -}}
+{{- $cfg = omit $cfg "regions" -}}
+{{ toYaml $cfg | nindent 2 }}
+{{- end }}
+
+{{- if .Values.otel }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: platform-otel-config
+  namespace: '{{ .Values.global.namespace }}'
+  labels:
+    app: platform
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+data:
+{{- /* Empty values are omitted: services init the OTEL SDK when the endpoint
+       env is present, and an empty/invalid endpoint crashes them at startup. */ -}}
+{{- $otel := dict }}
+{{- range $k, $v := .Values.otel }}
+  {{- if and (ne $v nil) (ne (printf "%v" $v) "") }}
+    {{- $otel = set $otel $k $v }}
+  {{- end }}
+{{- end }}
+{{ toYaml $otel | nindent 2 }}
+{{- end }}
+
+{{- if .Values.branding }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: branding
+  namespace: '{{ .Values.global.namespace }}'
+  labels:
+    app: platform
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+data:
+  branding.json: |-
+{{ .Values.branding | nindent 4 }}
+{{- end }}

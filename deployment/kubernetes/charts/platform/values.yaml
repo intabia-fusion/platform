@@ -1,0 +1,506 @@
+# Values classes:
+#   global   - release-wide: images, host, stand, platform-base contract, TLS CA
+#   config   - non-secret runtime config -> ConfigMap platform-config
+#   secrets  - sensitive runtime values -> one Secret per block (platform-secret + per-integration)
+#   services - per-service deployment settings (replicas, memory, feature switches)
+#   dbInit   - pre-install Job creating the stand database
+#   branding - branding JSON -> ConfigMap branding
+#   otel     - OTEL exporter settings -> ConfigMap platform-otel-config
+
+global:
+  namespace: testing
+  version: v0.7.316
+  hostUrl: ""
+  # Public HTTPS port for browser/webhook URLs. hostUrl stays a hostname for Ingress Host().
+  publicPort: 443
+  # Registry prefix for intabiafusion/<svc> images, e.g. k3d-fusion-registry:5000.
+  # Empty = pull from Docker Hub (prod).
+  imageRegistry: ""
+  # Default for all pods; prod uses Always, local stands push mutable latest tags.
+  imagePullPolicy: Always
+  # Stand name: database, S3 bucket, kafka topic postfix, fulltext index.
+  # Empty = release name. Set per stand, e.g. "dev" / "sanity".
+  stand: ""
+  # Namespace of the platform-base ConfigMap/Secret contract. Empty = release namespace.
+  baseNamespace: ""
+  # Secret with the mkcert CA (tls.crt) mounted into pods as NODE_EXTRA_CA_CERTS.
+  # Empty = no mount (prod).
+  tls:
+    caSecretName: ""
+  landingUrl: "" # лендинг живёт в корне того же хоста, редирект из front не нужен
+  productName: Intabia Platform
+  defaultLanguage: ru
+config:
+  # Non-secret runtime config -> ConfigMap platform-config. Values left empty are
+  # resolved from the platform-base contract (ConfigMap/Secret platform-base) or
+  # from global.stand.
+  # Optional extra regions (ws/api stands). When empty, one region is generated
+  # from REGION + transactor/collaborator counts (see region-config.yaml).
+  # regions:
+  #   - id: ""
+  #     name: Default
+  #     transactorService: transactor0
+  #     transactorPort: 3333
+  #     transactorPath: /_tr
+  #     collaboratorService: collaborator0
+  #     collaboratorPort: 3078
+  #     collaboratorPath: /_cl
+  #   - id: europe ...
+  backupBucket: "" # empty = stand name
+  elasticUrl: "" # empty = platform-base contract (ELASTIC_URL)
+  fulltextIndexName: "" # empty = stand name
+  githubAppId: ""
+  githubAppName: ""
+  githubClientId: ""
+  queueConfig: "" # empty = platform-base contract (KAFKA_BOOTSTRAP + ;-<stand>)
+  REGION: "tst"
+  EXTERNAL_REGIONS: "--"
+  temporalUrl: "testing-temporal-frontend.temporal:7233"
+  polarSucscriptionPlans: ""
+  livekitWs: "wss://lkiturl"
+  livekitProject: "prj"
+  sttProvider: "openai"
+  sttModel: "whisper-v3-large"
+  yandexMetricaId: null
+dbInit:
+  # Creates the stand database before install/upgrade. Uses platform-base by default.
+  enabled: false
+  image: postgres:18.1
+  host: ""
+  port: ""
+  user: ""
+  password: ""
+  backoffLimit: 5
+branding: |-
+  {
+    "platform.local": {
+      "key": "huly",
+      "title": "Intabia Platform Testing",
+      "languages": "en,ru,pt,es,zh,fr,it,cs,de",
+      "defaultLanguage": "ru",
+      "defaultApplication": "tracker",
+      "links": [
+        {
+          "rel": "manifest",
+          "href": "/huly/site.webmanifest"
+        },
+        {
+          "rel": "icon",
+          "href": "/huly/favicon.svg",
+          "type": "image/svg+xml"
+        },
+        {
+          "rel": "shortcut icon",
+          "href": "/huly/favicon.ico",
+          "sizes": "any"
+        },
+        {
+          "rel": "apple-touch-icon",
+          "href": "/huly/icon-192.png"
+        }
+      ]
+    }
+  }
+otel:
+  # OTEL exporter settings -> ConfigMap platform-otel-config. Empty values are
+  # omitted from the ConfigMap: services init the OTEL SDK only when the
+  # endpoint env is present, and an empty/invalid URL crashes them at startup.
+  OTEL_EXPORTER_OTLP_ENDPOINT: ""
+  OTEL_EXPORTER_OTLP_COMPRESSION: "gzip"
+secrets:
+  # Sensitive runtime values. Each block becomes one Secret (see platform-secrets.yaml).
+  # platform -> Secret platform-secret: core credentials consumed via secretKeyRef by services.
+  # Renamed from secrets.anticrm: chart fails on the legacy key, migrate with
+  # yq -i '.secrets.platform = .secrets.anticrm | del(.secrets.anticrm)' <your-values>.yaml
+  accountSecrets:
+    google_client_id: ""
+    google_client_secret: ""
+    github_client_id: ""
+    github_client_secret: ""
+  aibotSecret:
+    datalabKey: ""
+  calendarApi:
+    credentials: ""
+  gmailApi:
+    gmail_sub_topic: ""
+    credentials: ""
+  loveSecret:
+    apiKey: "changeme"
+    apiSecret: "changeme"
+    webhookApiKey: "changme"
+    webhookApiSecret: "changeme"
+    s3StorageConfig: "changeme"
+  signSecret:
+    certificate.p12: ""
+  platform:
+    serverSecret: "secret" # Change me
+    githubClientSecret: ""
+    githubPrivateKey: ""
+    githubWebhookSecret: ""
+    pushPublicKey: ""
+    pushPrivateKey: ""
+    # APNs (iOS). Ключ - отдельный от App Store Connect API key: developer.apple.com
+    # -> Keys -> Apple Push Notification service. Отдаётся один раз, файлом не
+    # монтируется - тело .p8 целиком строкой, блоком |- с настоящими переводами строк.
+    apnsKeyId: ""
+    apnsTeamId: ""
+    apnsTopic: ""
+    apnsKey: ""
+    # FCM (Android): JSON service-account из Firebase Console одной строкой.
+    fcmServiceAccount: ""
+    # RuStore Push (Android без Google-сервисов): консоль RuStore -> Push-уведомления
+    # -> Проекты. Пустые значения - канал выключен, подписки rustore:// пропускаются.
+    rustoreProjectId: ""
+    rustoreServiceToken: ""
+    storageConfig: "datalake|http://datalake-service"
+    chunksStorageConfig: "" # empty = platform-base contract (S3, bucket <stand>-chunks)
+    backupConfig: "" # empty = platform-base contract (S3, bucket <stand>)
+    dbUrl: "" # empty = platform-base contract (postgresql://…@postgres/<stand>)
+    dbHost: "changeme"
+    dbUser: "changeme"
+    dbPassword: "changeme"
+    mailAuthToken: "changeme"
+    datalakeStorageConfig: "" # empty = platform-base contract (S3, bucket <stand>)
+
+    smtpMode: "queue"
+    smtpUsername: "changeme"
+    smtpPassword: "changeme"
+    smtpApiKey: "changeme"
+    smtpPort: "changeme"
+    smtpHost: "changeme"
+    smtpFrom: "noreply@intabia-platform.ru"
+    mailHookToken: ""
+    uptraceDsn: ""
+    polarAccessToken: ""
+    polarWebhookSecret: ""
+    # TBank терминал (боевые ключи из ЛК банка). DEMO-терминал, заменить на стенде.
+    tbankTerminalKey: ""
+    tbankPassword: ""
+    # Ключ лицензии self-host (base64 payload.sig из fusion-deployment/licensing/gen-license.mjs).
+    # Пусто -> редакция по вшитому публичному ключу (dev если нет, иначе community). SaaS: сюда SaaS-ключ.
+    licenseKey: ""
+    signPassword: ""
+    aibotApiToken: "" # token the aibot service checks on /_ai requests (account -> aibot)
+    # Активный LLM для ai-bot (files/aibot-config.yaml): "gigachat" | "neuraldeep".
+    llmProvider: "gigachat"
+    openaiBaseUrl: "changeme"
+    openaiModel: "changeme"
+    openaiApiKey: "changeme"
+
+    gigachatAuthKey: "changeme"
+    gigachatScope: "GIGACHAT_API_PERS"
+    gigachatModel: "GigaChat-2"
+    gigachatBaseUrl: "https://gigachat.devices.sberbank.ru/api/v1/"
+
+    ndToken: "changeme"
+    ndUrl: "https://api.neuraldeep.ru/v1"
+
+    sttUrl: "changeme"
+    sttApiKey: "changeme"
+  telegramBotApi:
+    botToken: ""
+  crmSecret:
+    amoCrmDomain: ""
+    amoCrmPipelineId: ""
+    amoCrmToken: ""
+    amoCrmResponsibleUserId: ""
+
+services:
+  # Per-service deployment settings: replicas/count, memory, enabled switches.
+  # Consumed by templates/<service>/; memory in Mi, image defaults to intabiafusion/<service>.
+  account:
+    passwords: normal
+    replicas: 1
+    memRequired: 100
+    memLimits: 128
+    regionInfo: pg|PostgreSQL
+    adminEmails: ""
+    billingEmails: ""
+    wsLivenessDays: 3
+    # Optional FREE_PLAN_LIMITS JSON override (e.g. '{"usersLimit":15,"storagePerUserGB":2}').
+    # Empty -> built-in defaults. Community license caps usersLimit regardless.
+    freePlanLimits: ""
+  workspace:
+    replicas: 2
+    parallel: 2
+    memRequired: 128
+    memLimits: 256
+  mail-worker:
+    enabled: false
+    replicas: 1
+    memRequired: 128
+    memLimits: 128
+  gmail:
+    enabled: false
+    replicas: 1
+    memRequired: 128
+    memLimits: 128
+  distro:
+    replicas: 1
+    memRequired: 128
+    memLimits: 256
+  aibot:
+    enabled: true
+    memRequired: 256
+    memLimits: 512
+    aiFirstName: Julia
+    aiLastName: AI
+    # event-router: вход от transactor + приём аудио от love. Kafka делит ai-queue (10 партиций),
+    # но каждый под подключается ко ВСЕМ воркспейсам (broadcast Up) - реплики дублируют соединения,
+    # а не делят их. Держим 1, см. foundation-tasks/aibot-router-replicas.md
+    router:
+      replicas: 1
+    # llm-router на активном провайдере (secrets.platform.llmProvider). Тонкий прокси,
+    # пропускную даёт concurrency в files/aibot-config.yaml.
+    llm:
+      replicas: 1
+    # stt-worker = clisr-приёмник. Реплика ровно одна (жёстко в шаблоне): внешние воркеры
+    # держат WebSocket к конкретному поду.
+  backup:
+    enabled: true
+    replicas: 1
+    memRequired: 128
+    memLimits: 256
+  backupApi:
+    enabled: true
+    replicas: 1
+    memRequired: 128
+    memLimits: 256
+  caldav:
+    enabled: false
+    replicas: 1
+    memRequired: 128
+    memLimits: 128
+  calendar:
+    enabled: false
+    replicas: 1
+    memRequired: 128
+    memLimits: 128
+  calendar-mailer:
+    enabled: false
+    replicas: 1
+    memRequired: 128
+    memLimits: 128
+  crm:
+    enabled: false
+    replicas: 1
+    memRequired: 128
+    memLimits: 256
+  db-migrator:
+    memRequired: 128
+    memLimits: 256
+    backoffLimit: 5
+    ttlSecondsAfterFinished: 3600
+  collaborator:
+    enabled: true
+    count: 1
+    memRequired: 256
+    memLimits: 512
+  export:
+    enabled: false
+    replicas: 1
+    memRequired: 128
+    memLimits: 128
+  fulltext:
+    enabled: true
+    replicas: 1
+    memRequired: 128
+    memLimits: 256
+  github:
+    enabled: false
+    replicas: 1
+    memRequired: 1024
+    memLimits: 1024
+  hulygun:
+    enabled: false
+    replicas: 1
+    memRequired: 256
+    memLimits: 256
+  kv:
+    enabled: false
+  kvs:
+    enabled: false
+    replicas: 1
+    memRequired: 64
+    memLimits: 64
+  mail:
+    enabled: true
+    replicas: 1
+    memRequired: 128
+    memLimits: 128
+  media:
+    enabled: true
+    replicas: 1
+    memRequired: 128
+    memLimits: 256
+  notification:
+    enabled: true
+    replicas: 1
+    memRequired: 64
+    memLimits: 128
+    # APNs endpoint: "true" - api.push.apple.com, "false" - sandbox.
+    # TestFlight и App Store подписаны distribution-профилем (aps-environment
+    # production) и ходят в прод; sandbox нужен только сборкам с dev-профилем
+    # (make ios-device / make ios-deploy-local).
+    apnsProduction: "true"
+  payment:
+    enabled: false
+    replicas: 1
+    memRequired: 128
+    memLimits: 256
+    # Платёжный провайдер: polar | tbank | stripe
+    provider: tbank
+    # Потолок изменений подписки на IP за 15 мин (пусто = дефолт 30).
+    subscriptionRateLimitMax: ""
+  # TBank платёжный провайдер (за payment, provider=tbank). По умолчанию выключен.
+  tbankSubscriptions:
+    enabled: false
+    replicas: 1
+    memRequired: 128
+    memLimits: 128
+    url: "https://securepay.tinkoff.ru"
+    schedulerIntervalMinutes: 60
+    gracePeriodDays: 7
+    # Service inbox(es) for failed-charge notifications, comma-separated. Empty = off.
+    billingEmails: "platform@intabia.ru"
+  pdf-certificate:
+    enabled: false
+  print:
+    enabled: true
+    replicas: 1
+    memRequired: 128
+    memLimits: 256
+  process:
+    enabled: false
+    replicas: 1
+    memRequired: 256
+    memLimits: 256
+  schedule:
+    enabled: false
+    replicas: 1
+    memRequired: 256
+    memLimits: 256
+  sign:
+    enabled: false
+    replicas: 1
+    memRequired: 128
+    memLimits: 128
+  stats:
+    enabled: true
+    replicas: 1
+    memRequired: 128
+    memLimits: 128
+  telegram-bot:
+    enabled: false
+    replicas: 1
+    memRequired: 128
+    memLimits: 128
+  translate:
+    enabled: false
+    replicas: 1
+    memRequired: 128
+    memLimits: 128
+  worker:
+    # Time-machine: delayed events, the only retry mechanism webhooks have.
+    # Needs platform-secret/dbUrl; creates schema time_machine.delayed_events on start.
+    enabled: false
+    replicas: 1
+    memRequired: 256
+    memLimits: 256
+    pollInterval: 20000
+    # Pin a tag independent of global.version, e.g. intabiafusion/worker:FUSIO-1151
+    image: ""
+  webhook:
+    # Incoming ingest + outgoing delivery. Without `worker.enabled` every delivery
+    # gets one attempt and no retries.
+    enabled: false
+    replicas: 1
+    memRequired: 256
+    memLimits: 512
+    # Pin a tag independent of global.version, e.g. intabiafusion/webhook:FUSIO-1151
+    image: ""
+  analytics:
+    replicas: 1
+    memRequired: 128
+    memLimits: 256
+  billing:
+    replicas: 1
+    memRequired: 128
+    memLimits: 256
+  datalake:
+    replicas: 1
+    memRequired: 256
+    memLimits: 512
+  front:
+    replicas: 2
+    memRequired: 64
+    memLimits: 128
+    loginTheme: null
+    accentTheme: null
+    disallowRobots: false
+    disabledFeatures:
+      - mail
+      - auto-translate
+      - github
+      - integration
+      - documents
+      - inventory
+      - survey
+      - lead
+      - products
+      - recruit
+      - training
+      - process
+      - gmail
+      - integrations
+      - contact.persons
+      - contact.companies
+      - tracker.issueImport
+      - contact:ids:OrganizationNotificationGroup
+      - setting:ids:SettingNotificationGroup
+  love:
+    replicas: 1
+    memRequired: 128
+    memLimits: 256
+  loveAgent:
+    replicas: 1
+    memRequired: 128
+    memLimits: 1024
+  preview:
+    replicas: 1
+    memRequired: 128
+    memLimits: 512
+  linkPreview:
+    replicas: 1
+    memRequired: 64
+    memLimits: 128
+  pulse:
+    image: intabiafusion/hulypulse:v0.7.340
+    replicas: 0
+    memRequired: 64
+    memLimits: 128
+  rating:
+    replicas: 1
+    memRequired: 128
+    memLimits: 256
+  rekoni:
+    replicas: 1
+    memRequired: 128
+    memLimits: 128
+  stream:
+    replicas: 1
+    memRequired: 256
+    memLimits: 512
+  transactor:
+    count: 1
+    memRequired: 256
+    memLimits: 512
+    rateLimitMax: 1500
+  activity:
+    replicas: 1
+    memRequired: 128
+    memLimits: 256
+  notifications:
+    replicas: 1
+    memRequired: 256
+    memLimits: 512

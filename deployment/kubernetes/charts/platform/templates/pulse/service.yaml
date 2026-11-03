@@ -1,0 +1,17 @@
+#
+# source: kube/pulse/service.yaml
+# substitutions:
+#   image tags -> :{{ .Values.global.version }}
+#   hosts -> {{ .Values.global.hostUrl }}
+#   namespace -> {{ .Values.global.namespace }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: pulse-service
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  selector:
+    app: pulse-service
+  ports:
+  - port: 80
+    targetPort: 8098

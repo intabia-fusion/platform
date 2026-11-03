@@ -126,6 +126,23 @@ docker compose -f dev/docker-compose.yaml up -d aibot --force-recreate
 
 UI via `pnpm build:watch` auto-picks changes, no container restart needed.
 
+### Kubernetes stands (local dev/test)
+
+Локальные стенды на Kubernetes - два чарта (`deployment/kubernetes/charts/platform`,
+`charts/platform-base`) и команды из корня репозитория:
+
+```bash
+pnpm -w stand:base:up                  # кластер k3d + registry + TLS + platform-base
+pnpm -w stand:dev:up                   # dev-стенд на https://dev.fusion.localhost
+pnpm -w stand:test:up [sanity|ws|api]  # тестовые стенды
+pnpm -w stand:dev:down                 # namespace стенда, base не трогает
+pnpm -w stand:base:down                # сносит только своё (k3d/kind), existing - только с --delete-data
+```
+
+Runtime: `k3d` (default), `kind` или `existing` - первым аргументом или `STAND_RUNTIME`.
+Compose-стенды (`pnpm docker:up`) пока остаются рабочим путём; подробности и
+troubleshooting: `deployment/kubernetes/README.md`, план FUSIO-1598.
+
 ## Changelog
 
 ```bash

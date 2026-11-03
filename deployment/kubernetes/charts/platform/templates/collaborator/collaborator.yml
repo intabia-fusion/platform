@@ -1,0 +1,88 @@
+{{- /*
+Generate N independent collaborator Deployments.
+- Count is taken from `.Values.services.collaborator.count`.
+Each generated Deployment uses a unique name `collaborator0`, `collaborator1`, ...
+*/ -}}
+{{- $root := . -}}
+{{- $count := int (default 1 $root.Values.services.collaborator.count) -}}
+{{- range $i := until $count }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ printf "collaborator%d" $i }}
+  namespace: '{{ $root.Values.global.namespace }}'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ printf "collaborator%d" $i }}
+  template:
+    metadata:
+      labels:
+        app: {{ printf "collaborator%d" $i }}
+    spec:
+      tolerations:
+      - key: node.kubernetes.io/unreachable
+        operator: Exists
+        effect: NoExecute
+        tolerationSeconds: 10
+      - key: node.kubernetes.io/not-ready
+        operator: Exists
+        effect: NoExecute
+        tolerationSeconds: 10
+      {{- if $root.Values.global.tls.caSecretName }}
+      volumes:
+      {{- include "platform.caVolume" $root | nindent 6 }}
+      {{- end }}
+      containers:
+      - name: app
+        image: {{ include "platform.containerImage" (dict "root" $root "service" "collaborator") }}
+        resources:
+          requests:
+            memory: '{{ $root.Values.services.collaborator.memRequired }}M'
+          limits:
+            memory: '{{ $root.Values.services.collaborator.memLimits }}M'
+        ports:
+        - containerPort: 3078
+        imagePullPolicy: {{ $.Values.global.imagePullPolicy | default "Always" }}
+        {{- if $root.Values.global.tls.caSecretName }}
+        volumeMounts:
+        {{- include "platform.caVolumeMount" $root | nindent 8 }}
+        {{- end }}
+        env:
+        {{- include "platform.extraEnv" (dict "root" $ "service" "collaborator") | nindent 8 }}
+        - name: STATS_URL
+          value: http://stats-service
+        - name: COLLABORATOR_PORT
+          value: '3078'
+        - name: SECRET
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: serverSecret
+        - name: ACCOUNTS_URL
+          value: http://account
+        - name: STORAGE_CONFIG
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: storageConfig
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: platform-otel-config
+              key: OTEL_EXPORTER_OTLP_ENDPOINT
+              optional: true
+        - name: OTEL_EXPORTER_OTLP_COMPRESSION
+          valueFrom:
+            configMapKeyRef:
+              name: platform-otel-config
+              key: OTEL_EXPORTER_OTLP_COMPRESSION
+              optional: true
+        - name: OTEL_EXPORTER_OTLP_HEADERS
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: uptraceDsn
+{{- end }}

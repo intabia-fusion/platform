@@ -1,0 +1,20 @@
+# 
+# source: kube/mail-worker/service.yaml
+# substitutions:
+#   image tags -> :{{ .Values.global.version }}
+#   hosts -> {{ .Values.global.hostUrl }}
+#   namespace -> {{ .Values.global.namespace }}
+{{- if index .Values.services "mail-worker" "enabled" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: mail-worker
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  selector:
+    app: mail-worker
+  ports:
+  - port: 80
+    targetPort: 4050
+
+{{- end }}

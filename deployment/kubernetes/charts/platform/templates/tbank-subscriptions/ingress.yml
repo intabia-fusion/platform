@@ -1,0 +1,33 @@
+#
+# TBank webhook: сервису передаётся TBANK_NOTIFICATION_URL =
+#   https://{hostUrl}/_payment/webhook (нейтральный путь, без "tbank").
+# Точный Path длиннее правила PathPrefix(`/_payment`) у payment -> выше приоритет в Traefik.
+# Наружу открыт только вебхук (остальной API — internal, payment ходит по http://tbank-subscriptions).
+{{- if .Values.services.tbankSubscriptions.enabled }}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: tbank-webhook-path
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  replacePath:
+    path: "/api/v1/webhooks/tbank"
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: tbank-subscriptions-ingressroute
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  - match: Host(`{{ .Values.global.hostUrl }}`) && Path(`/_payment/webhook`)
+    kind: Rule
+    services:
+    - name: tbank-subscriptions
+      port: 80
+    middlewares:
+    - name: tbank-webhook-path
+{{- end }}

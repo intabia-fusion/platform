@@ -1,0 +1,82 @@
+# ws test stand: два региона (main + europe) в region-config, host ws.fusion.localhost.
+#
+# Ограничение против compose ws-tests: оба региона работают на одной базе стенда
+# (dbUrl один на релиз). Отдельные базы region_main/region_europe требуют
+# расширения чарта (per-region dbUrl у transactor) - см. README, план TSK-17.
+# Постфикс топиков -stand (ws) отделяет топики этого стенда.
+
+global:
+  namespace: fusion-ws
+  version: latest
+  hostUrl: ws.fusion.localhost
+  imageRegistry: k3d-fusion-registry:5000
+  imagePullPolicy: Always
+  # namespace контракта ConfigMap/Secret platform-base (ставит platform-base)
+  baseNamespace: platform-base
+  # имя данных стенда (БД/bucket/постфикс/индекс): >=3 символов - правило имен S3 bucket
+  stand: wstest
+  tls:
+    caSecretName: fusion-local-ca
+  landingUrl: ""
+  productName: Intabia Platform WS
+  defaultLanguage: ru
+
+config:
+  REGION: main
+  EXTERNAL_REGIONS: europe
+  temporalUrl: ""
+  regions:
+  - id: ""
+    name: Main
+    transactorService: transactor0
+    transactorPath: /_tr0
+    collaboratorService: collaborator0
+    collaboratorPath: /_cl0
+  - id: europe
+    name: Europe
+    transactorService: transactor1
+    transactorPath: /_tr1
+    collaboratorService: collaborator1
+    collaboratorPath: /_cl1
+
+dbInit:
+  enabled: true
+
+secrets:
+  loveSecret:
+    apiKey: "wstest-love-api-key"
+    apiSecret: "wstest-love-api-secret"
+    webhookApiKey: "wstest-love-webhook-key"
+    s3StorageConfig: "s3|http://s3.platform-base.svc.cluster.local:9000?accessKey=minioadmin&secretKey=minioadmin&rootBucket=wstest-love-recordings"
+    webhookApiSecret: "wstest-love-webhook-secret"
+  platform:
+    serverSecret: "wstest-server-secret"
+    mailAuthToken: "wstest-mail-token"
+    aibotApiToken: "ws-aibot-api-token"
+    signPassword: "wstest-sign-password"
+    smtpMode: "queue"
+    smtpHost: mailpit.platform-base.svc.cluster.local
+    smtpPort: "1025"
+    smtpFrom: noreply@ws.fusion.localhost
+
+services:
+  front:
+    replicas: 1
+  workspace:
+    replicas: 1
+  transactor:
+    count: 2
+  collaborator:
+    count: 2
+  # Внимание: шаблоны этих сервисов не читают enabled, гасим репликами
+  # distro - сборка desktop-приложений, в compose dev закомментирован
+  distro:
+    replicas: 0
+  analytics:
+    replicas: 0
+  loveAgent:
+    replicas: 0
+  preview:
+    replicas: 0
+  linkPreview:
+    replicas: 0

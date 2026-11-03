@@ -1,0 +1,68 @@
+{{- if and .Values.postgres.enabled (eq .Values.postgres.mode "internal") }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: '{{ .Release.Namespace }}'
+  labels:
+    app: postgres
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+spec:
+  type: ClusterIP
+  ports:
+  - port: 5432
+    targetPort: 5432
+  selector:
+    app: postgres
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: '{{ .Release.Namespace }}'
+  labels:
+    app: postgres
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+        release: '{{ .Release.Name }}'
+    spec:
+      containers:
+      - name: postgres
+        image: '{{ .Values.postgres.image }}'
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_USER
+          value: '{{ .Values.postgres.user }}'
+        - name: POSTGRES_PASSWORD
+          value: '{{ .Values.postgres.password }}'
+        resources:
+{{ toYaml .Values.postgres.resources | indent 10 }}
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/postgresql
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ReadWriteOnce]
+      {{- if .Values.postgres.storageClass }}
+      storageClassName: '{{ .Values.postgres.storageClass }}'
+      {{- end }}
+      resources:
+        requests:
+          storage: '{{ .Values.postgres.storage }}'
+{{- end }}

@@ -1,0 +1,59 @@
+# api test stand (api-tests): namespace fusion-api, host api.fusion.localhost.
+
+global:
+  namespace: fusion-api
+  version: latest
+  hostUrl: api.fusion.localhost
+  imageRegistry: k3d-fusion-registry:5000
+  imagePullPolicy: Always
+  # namespace контракта ConfigMap/Secret platform-base (ставит platform-base)
+  baseNamespace: platform-base
+  stand: api
+  tls:
+    caSecretName: fusion-local-ca
+  landingUrl: ""
+  productName: Intabia Platform API
+  defaultLanguage: ru
+
+config:
+  REGION: tst
+  EXTERNAL_REGIONS: "--"
+  temporalUrl: ""
+
+dbInit:
+  enabled: true
+
+secrets:
+  loveSecret:
+    apiKey: "api-love-api-key"
+    apiSecret: "api-love-api-secret"
+    webhookApiKey: "api-love-webhook-key"
+    s3StorageConfig: "s3|http://s3.platform-base.svc.cluster.local:9000?accessKey=minioadmin&secretKey=minioadmin&rootBucket=api-love-recordings"
+    webhookApiSecret: "api-love-webhook-secret"
+  platform:
+    serverSecret: "api-server-secret"
+    mailAuthToken: "api-mail-token"
+    aibotApiToken: "api-aibot-api-token"
+    signPassword: "api-sign-password"
+    smtpMode: "queue"
+    smtpHost: mailpit.platform-base.svc.cluster.local
+    smtpPort: "1025"
+    smtpFrom: noreply@api.fusion.localhost
+
+services:
+  front:
+    replicas: 1
+  workspace:
+    replicas: 1
+  # Внимание: шаблоны этих сервисов не читают enabled, гасим репликами
+  # distro - сборка desktop-приложений, в compose dev закомментирован
+  distro:
+    replicas: 0
+  analytics:
+    replicas: 0
+  loveAgent:
+    replicas: 0
+  preview:
+    replicas: 0
+  linkPreview:
+    replicas: 0

@@ -1,0 +1,72 @@
+{{- if .Values.dbInit.enabled }}
+{{- $base := include "platform.baseConfigMap" . | fromYaml }}
+{{- $baseSecret := include "platform.baseSecret" . | fromYaml }}
+{{- $stand := include "platform.stand" . }}
+{{- $host := .Values.dbInit.host | default (get $base "POSTGRES_HOST") }}
+{{- $port := .Values.dbInit.port | default (get $base "POSTGRES_PORT") | default "5432" }}
+{{- $user := .Values.dbInit.user | default (get $baseSecret "POSTGRES_USER" | b64dec) }}
+{{- $password := .Values.dbInit.password | default (get $baseSecret "POSTGRES_PASSWORD" | b64dec) }}
+{{- if not $host }}{{ fail "db-init: set dbInit.host or provide ConfigMap/platform-base POSTGRES_HOST" }}{{ end }}
+{{- if not $user }}{{ fail "db-init: set dbInit.user or provide Secret/platform-base POSTGRES_USER" }}{{ end }}
+{{- if not $password }}{{ fail "db-init: set dbInit.password or provide Secret/platform-base POSTGRES_PASSWORD" }}{{ end }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: platform-db-init
+  namespace: '{{ .Values.global.namespace }}'
+  labels:
+    app: platform
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+type: Opaque
+data:
+  PGHOST: {{ $host | b64enc | quote }}
+  PGPORT: {{ $port | b64enc | quote }}
+  PGUSER: {{ $user | b64enc | quote }}
+  PGPASSWORD: {{ $password | b64enc | quote }}
+  PGDATABASE: {{ "postgres" | b64enc }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-init-{{ .Release.Name }}
+  namespace: '{{ .Values.global.namespace }}'
+  labels:
+    app: platform
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-4"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ .Values.dbInit.backoffLimit }}
+  template:
+    metadata:
+      labels:
+        app: db-init
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: db-init
+        image: {{ .Values.dbInit.image }}
+        imagePullPolicy: {{ .Values.global.imagePullPolicy | default "Always" }}
+        envFrom:
+        - secretRef:
+            name: platform-db-init
+        env:
+        - name: STAND_DB
+          value: {{ $stand | quote }}
+        command:
+        - sh
+        - -ec
+        - |
+          if ! psql -v ON_ERROR_STOP=1 -tAc "SELECT 1 FROM pg_database WHERE datname='$STAND_DB'" | grep -q 1; then
+            createdb "$STAND_DB"
+          fi
+{{- end }}

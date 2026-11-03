@@ -1,0 +1,62 @@
+# Sanity test stand: namespace fusion-sanity, host sanity.fusion.localhost.
+# Playwright против этого стенда: PLATFORM_URI/LOCAL_URL=https://sanity.fusion.localhost
+# (см. README). Окружение - тот же platform-base, свои БД/bucket/постфикс/индекс
+# через global.stand: sanity.
+
+global:
+  namespace: fusion-sanity
+  version: latest
+  hostUrl: sanity.fusion.localhost
+  imageRegistry: k3d-fusion-registry:5000
+  imagePullPolicy: Always
+  # namespace контракта ConfigMap/Secret platform-base (ставит platform-base)
+  baseNamespace: platform-base
+  stand: sanity
+  tls:
+    caSecretName: fusion-local-ca
+  landingUrl: ""
+  productName: Intabia Platform Sanity
+  defaultLanguage: ru
+
+config:
+  REGION: tst
+  EXTERNAL_REGIONS: "--"
+  temporalUrl: ""
+
+dbInit:
+  enabled: true
+
+secrets:
+  loveSecret:
+    apiKey: "sanity-love-api-key"
+    apiSecret: "sanity-love-api-secret"
+    webhookApiKey: "sanity-love-webhook-key"
+    s3StorageConfig: "s3|http://s3.platform-base.svc.cluster.local:9000?accessKey=minioadmin&secretKey=minioadmin&rootBucket=sanity-love-recordings"
+    webhookApiSecret: "sanity-love-webhook-secret"
+  platform:
+    serverSecret: "sanity-server-secret"
+    mailAuthToken: "sanity-mail-token"
+    aibotApiToken: "sanity-aibot-api-token"
+    signPassword: "sanity-sign-password"
+    smtpMode: "queue"
+    smtpHost: mailpit.platform-base.svc.cluster.local
+    smtpPort: "1025"
+    smtpFrom: noreply@sanity.fusion.localhost
+
+services:
+  front:
+    replicas: 1
+  workspace:
+    replicas: 1
+  # Внимание: шаблоны этих сервисов не читают enabled, гасим репликами
+  # distro - сборка desktop-приложений, в compose dev закомментирован
+  distro:
+    replicas: 0
+  analytics:
+    replicas: 0
+  loveAgent:
+    replicas: 0
+  preview:
+    replicas: 0
+  linkPreview:
+    replicas: 0

@@ -1,0 +1,13 @@
+{{- /* Реестр моделей ai-bot (llm/asr). Источник: files/aibot-config.yaml.
+       Монтируется во все роли aibot как /var/cfg/config.yaml (CONFIG_PATH).
+       Секреты в файл не попадают: ${GIGACHAT_CREDENTIALS} / ${ND_TOKEN} подставляются из env пода. */ -}}
+{{- if .Values.services.aibot.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aibot-config
+  namespace: '{{ .Values.global.namespace }}'
+data:
+  config.yaml: |-
+{{ tpl (.Files.Get "files/aibot-config.yaml") . | indent 4 }}
+{{- end }}

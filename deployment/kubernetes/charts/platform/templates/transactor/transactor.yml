@@ -1,0 +1,173 @@
+{{- /*
+Generate N independent transactor Deployments.
+- Count is taken from `.Values.services.transactor.count` (preferred).
+- If `.Values.services.transactor.count` is not set, fall back to `.Values.services.transactor.replicas` for backward compatibility.
+Each generated Deployment uses a unique name `transactor0`, `transactor1`, ... and corresponding label `app: transactorN`.
+*/ -}}
+{{- $root := . -}}
+{{- $count := int (default 1 $root.Values.services.transactor.count) -}}
+{{- range $i := until $count }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ printf "transactor%d" $i }}
+  namespace: '{{ $root.Values.global.namespace }}'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ printf "transactor%d" $i }}
+  template:
+    metadata:
+      labels:
+        app: {{ printf "transactor%d" $i }}
+    spec:
+      tolerations:
+      - key: node.kubernetes.io/unreachable
+        operator: Exists
+        effect: NoExecute
+        tolerationSeconds: 10
+      - key: node.kubernetes.io/not-ready
+        operator: Exists
+        effect: NoExecute
+        tolerationSeconds: 10
+      containers:
+      - name: app
+        image: {{ include "platform.containerImage" (dict "root" $root "service" "transactor") }}
+        command:
+        - node
+        - --heapsnapshot-signal=SIGUSR2
+        - --max-old-space-size={{ int (div (mul $root.Values.services.transactor.memLimits 90) 100) }}
+        - bundle.js
+        resources:
+          requests:
+            memory: '{{ $root.Values.services.transactor.memRequired }}M'
+          limits:
+            memory: '{{ $root.Values.services.transactor.memLimits }}M'
+        ports:
+        - containerPort: 3333
+        imagePullPolicy: {{ $.Values.global.imagePullPolicy | default "Always" }}
+        volumeMounts:
+        {{- include "platform.caVolumeMount" $ | nindent 8 }}
+        - mountPath: /var/cfg/stage-branding.json
+          name: branding
+          subPath: branding.json
+        env:
+        {{- include "platform.extraEnv" (dict "root" $ "service" "transactor") | nindent 8 }}
+        - name: TRANSACTOR_ID
+          value: '{{ printf "transactor%d" $i }}'
+        - name: SERVER_PORT
+          value: '3333'
+        - name: FRONT_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: frontUrl
+        - name: WEB_PUSH_URL
+          value: http://notificator-service
+        - name: MAIL_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: mailAuthToken
+        - name: MAIL_URL
+          value: http://mail-service
+        - name: STATS_URL
+          value: http://stats-service
+        - name: ENABLE_CONSOLE
+          value: 'true'
+        - name: ENABLE_COMPRESSION
+          value: 'true'
+        - name: QUEUE_CONFIG
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: queueConfig
+        - name: REGION
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: REGION
+        - name: DB_URL
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: dbUrl
+        - name: SERVER_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: serverSecret
+        - name: ACCOUNTS_URL
+          value: http://account
+        - name: STORAGE_CONFIG
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: storageConfig
+        - name: SUPPORT_WORKSPACE
+          value: support
+        - name: BRANDING_PATH
+          value: /var/cfg/stage-branding.json
+        - name: POSTGRES_OPTIONS
+          value: '{"connection":{"application_name":"transactor"},"max":100}'
+        - name: AI_BOT_URL
+          value: http://aibot-service
+        - name: FULLTEXT_URL
+          value: http://fulltext0
+        - name: CALENDAR_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: calendarUrl
+        - name: COMMUNICATION_TIME_LOGGING_ENABLED
+          value: 'true'
+        - name: RATE_LIMIT_MAX
+          value: '{{ $root.Values.services.transactor.rateLimitMax }}'
+        - name: COMMUNICATION_API_ENABLED
+          value: 'false'
+        - name: FILES_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: filesUrl
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: platform-otel-config
+              key: OTEL_EXPORTER_OTLP_ENDPOINT
+              optional: true
+        - name: OTEL_EXPORTER_OTLP_COMPRESSION
+          valueFrom:
+            configMapKeyRef:
+              name: platform-otel-config
+              key: OTEL_EXPORTER_OTLP_COMPRESSION
+              optional: true
+        - name: OTEL_EXPORTER_OTLP_HEADERS
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: uptraceDsn
+        - name: HULYLAKE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: hulyLakeUrl
+        livenessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 3333
+          initialDelaySeconds: 30
+          periodSeconds: 60
+          timeoutSeconds: 5
+          failureThreshold: 3
+      volumes:
+      {{- include "platform.caVolume" $ | nindent 6 }}
+      - configMap:
+          items:
+          - key: branding.json
+            path: branding.json
+          name: branding
+        name: branding
+{{- end }}

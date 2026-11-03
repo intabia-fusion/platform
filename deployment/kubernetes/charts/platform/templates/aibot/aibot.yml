@@ -1,0 +1,229 @@
+#
+# source: kube/aibot/aibot.yml
+# substitutions:
+#   image tags -> :{{ .Values.global.version }}
+#   hosts -> {{ .Values.global.hostUrl }}
+#   namespace -> {{ .Values.global.namespace }}
+#
+# Три роли одного образа (MODE), см. foundation/docs/aibot-deployment.md:
+#   aibot-service   event-router  - вход от transactor, REST (/levels,/translate,/love/*), приём аудио
+#   aibot-llm       llm-router    - выполняет запросы к LLM-провайдеру (secrets.platform.llmProvider), только Kafka
+#   aibot-clisr     stt-worker    - clisr-приёмник: внешние воркеры (MODE=client) берут у него транскрибацию
+#
+# Реестр моделей общий для всех ролей: ConfigMap aibot-config -> /var/cfg/config.yaml.
+# clisr-приёмник обязан быть в ОДНОМ экземпляре: воркеры коннектятся к конкретному поду,
+# и реплики друг о друге не знают.
+{{- define "platform.aibot.env" -}}
+- name: EXTERNAL_REGIONS
+  valueFrom:
+    configMapKeyRef:
+      name: platform-config
+      key: EXTERNAL_REGIONS
+- name: SERVER_SECRET
+  valueFrom:
+    secretKeyRef:
+      name: platform-secret
+      key: serverSecret
+- name: PORT
+  value: '4010'
+- name: CONFIG_PATH
+  value: /var/cfg/config.yaml
+- name: STATS_URL
+  value: http://stats-service
+- name: LOVE_ENDPOINT
+  value: http://love-service
+- name: ACCOUNTS_URL
+  value: http://account
+- name: SUPPORT_WORKSPACE
+  value: support
+- name: AVATAR_PATH
+  value: /usr/src/app/avatar.png
+- name: AVATAR_CONTENT_TYPE
+  value: image/png
+- name: FIRST_NAME
+  value: {{ .Values.services.aibot.aiFirstName }}
+- name: LAST_NAME
+  value: {{ .Values.services.aibot.aiLastName }}
+- name: PASSWORD
+  value: '}LxxYGl$0Kxn4oW'
+- name: QUEUE_CONFIG
+  valueFrom:
+    configMapKeyRef:
+      name: platform-config
+      key: queueConfig
+- name: REGION
+  valueFrom:
+    configMapKeyRef:
+      name: platform-config
+      key: REGION
+# Подставляется в ${GIGACHAT_CREDENTIALS} / ${GIGACHAT_SCOPE} внутри aibot-config.
+- name: GIGACHAT_CREDENTIALS
+  valueFrom:
+    secretKeyRef:
+      name: platform-secret
+      key: gigachatAuthKey
+- name: GIGACHAT_SCOPE
+  valueFrom:
+    secretKeyRef:
+      name: platform-secret
+      key: gigachatScope
+- name: GIGACHAT_TIMEOUT
+  value: '600'
+# Подставляется в ${ND_URL} / ${ND_TOKEN} внутри aibot-config (llmProvider: neuraldeep).
+- name: ND_URL
+  valueFrom:
+    secretKeyRef:
+      name: platform-secret
+      key: ndUrl
+- name: ND_TOKEN
+  valueFrom:
+    secretKeyRef:
+      name: platform-secret
+      key: ndToken
+- name: STORAGE_CONFIG
+  valueFrom:
+    secretKeyRef:
+      name: platform-secret
+      key: storageConfig
+- name: CHUNK_STORAGE_CONFIG
+  valueFrom:
+    secretKeyRef:
+      name: platform-secret
+      key: chunksStorageConfig
+- name: BILLING_URL
+  value: http://billing
+- name: API_TOKEN
+  valueFrom:
+    secretKeyRef:
+      name: platform-secret
+      key: aibotApiToken
+- name: OTEL_EXPORTER_OTLP_ENDPOINT
+  valueFrom:
+    configMapKeyRef:
+      name: platform-otel-config
+      key: OTEL_EXPORTER_OTLP_ENDPOINT
+      optional: true
+- name: OTEL_EXPORTER_OTLP_COMPRESSION
+  valueFrom:
+    configMapKeyRef:
+      name: platform-otel-config
+      key: OTEL_EXPORTER_OTLP_COMPRESSION
+      optional: true
+- name: OTEL_EXPORTER_OTLP_HEADERS
+  valueFrom:
+    secretKeyRef:
+      name: platform-secret
+      key: uptraceDsn
+{{- end }}
+
+{{- define "platform.aibot.pod" -}}
+{{- $root := .root -}}
+tolerations:
+- key: node.kubernetes.io/unreachable
+  operator: Exists
+  effect: NoExecute
+  tolerationSeconds: 10
+- key: node.kubernetes.io/not-ready
+  operator: Exists
+  effect: NoExecute
+  tolerationSeconds: 10
+containers:
+- name: app
+  image: {{ include "platform.containerImage" (dict "root" $root "service" "aibot" "image" "ai-bot") }}
+  command:
+  - node
+  - --max-old-space-size={{ int (div (mul $root.Values.services.aibot.memLimits 90) 100) }}
+  - bundle.js
+  resources:
+    requests:
+      memory: '{{ $root.Values.services.aibot.memRequired }}M'
+    limits:
+      memory: '{{ $root.Values.services.aibot.memLimits }}M'
+  ports:
+  - containerPort: 4010
+  imagePullPolicy: {{ $root.Values.global.imagePullPolicy | default "Always" }}
+  volumeMounts:
+{{ include "platform.caVolumeMount" $root | indent 2 }}
+  - mountPath: /var/cfg/config.yaml
+    name: aibot-config
+    subPath: config.yaml
+  env:
+{{ include "platform.extraEnv" (dict "root" $root "service" "aibot") | indent 2 }}
+{{ include "platform.aibot.env" $root | indent 2 }}
+  - name: MODE
+    value: {{ .mode }}
+{{- with .extraEnv }}
+{{ toYaml . | indent 2 }}
+{{- end }}
+volumes:
+{{ include "platform.caVolume" $root }}
+- configMap:
+    name: aibot-config
+  name: aibot-config
+{{- end }}
+
+{{- if .Values.services.aibot.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aibot-service
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  replicas: {{ .Values.services.aibot.router.replicas }}
+  selector:
+    matchLabels:
+      app: aibot-service
+  template:
+    metadata:
+      labels:
+        app: aibot-service
+      annotations:
+        checksum/aibot-config: {{ tpl (.Files.Get "files/aibot-config.yaml") . | sha256sum }}
+    spec:
+{{ include "platform.aibot.pod" (dict "root" . "mode" "event-router") | indent 6 }}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aibot-llm
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  # Тонкий прокси к провайдеру: пропускную даёт concurrency в реестре, не реплики.
+  # Топик llm-<provider id> создаётся с 1 партицией, вторая реплика простаивала бы.
+  replicas: {{ .Values.services.aibot.llm.replicas }}
+  selector:
+    matchLabels:
+      app: aibot-llm
+  template:
+    metadata:
+      labels:
+        app: aibot-llm
+      annotations:
+        checksum/aibot-config: {{ tpl (.Files.Get "files/aibot-config.yaml") . | sha256sum }}
+    spec:
+{{ include "platform.aibot.pod" (dict "root" . "mode" "llm-router" "extraEnv" (list (dict "name" "LLM_PROVIDER_IDS" "value" (ternary "neuraldeep" "gigachat" (eq .Values.secrets.platform.llmProvider "neuraldeep"))))) | indent 6 }}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aibot-clisr
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  # СТРОГО 1: воркеры (MODE=client) держат WebSocket к конкретному поду, раздача round-robin
+  # идёт только по его сессиям. Вторая реплика расколола бы пул воркеров.
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aibot-clisr
+  template:
+    metadata:
+      labels:
+        app: aibot-clisr
+      annotations:
+        checksum/aibot-config: {{ tpl (.Files.Get "files/aibot-config.yaml") . | sha256sum }}
+    spec:
+{{ include "platform.aibot.pod" (dict "root" . "mode" "stt-worker") | indent 6 }}
+
+{{- end }}
