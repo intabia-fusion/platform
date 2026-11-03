@@ -182,7 +182,7 @@
     lastname={object.last}
     {navigateUrl}
     loginState="signup"
-    password={object.password}
+    password={withPassword ? object.password : undefined}
     retryOn={otpRetryOn}
     onLogin={onSignUp}
     on:step={handleStep}
