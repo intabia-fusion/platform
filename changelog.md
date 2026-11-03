@@ -2,6 +2,11 @@
 
 Changelog.
 
+## [0.8.65] - 2026-11-02
+
+* 🚀 FEATURES: FUSIO-1615: Add a board catalog, personal navigation lists and board sharing ([#650](https://github.com/intabia-fusion/platform/pull/650))
+* 🐛 BUG FIXES: FUSIO-1679: Render active status icons consistently using the project status order ([#649](https://github.com/intabia-fusion/platform/pull/649)); FUSIO-1680: Restore horizontal scrolling in board creation and settings ([#650](https://github.com/intabia-fusion/platform/pull/650)); FUSIO-1681: Show unique project members and support changing owner and member roles ([#650](https://github.com/intabia-fusion/platform/pull/650)); FUSIO-1683: Fix board settings, access hints, notifications and color rule previews ([#650](https://github.com/intabia-fusion/platform/pull/650)); FUSIO-1615: Fix archived project restoration and issue template project switching ([#650](https://github.com/intabia-fusion/platform/pull/650))
+
 ## [0.8.64] - 2026-11-01
 
 * 🚀 FEATURES: · FUSIO-1621: Add configurable boards and redesign project creation and settings ([#626](https://github.com/hcengineering/platform/issues/626)) · FUSIO-1677: Add document previews and open documents inside chat ([#642](https://github.com/hcengineering/platform/issues/642)) · Show typing indicators in the chat navigator ([#643](https://github.com/hcengineering/platform/issues/643)) · FUSIO-1012: Include sender details in workspace invitation emails ([#640](https://github.com/hcengineering/platform/issues/640))
