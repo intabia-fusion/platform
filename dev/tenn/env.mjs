@@ -1,4 +1,4 @@
-// Shared by build.mjs and the tests: tokens, demo data, icons and the source of the kit. See README.md.
+// Tokens, demo data, icons and the source of the kit for the dev/tenn screen scripts and the emitter. See README.md.
 import { readFileSync, readdirSync, existsSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'

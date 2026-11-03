@@ -13,6 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import { Spinner } from '@hcengineering/ui'
   import Icon from '../Icon.svelte'
   import type { IconName } from '../types'
 
@@ -23,15 +24,28 @@
   // Dropdown chevron after the label
   export let menu: boolean = false
   export let pressed: boolean = false
+  // State visualization, confirmed against packages/ui Button (hover/focus/disabled/loading)
+  export let hover: boolean = false
+  export let focus: boolean = false
+  export let disabled: boolean = false
+  export let loading: boolean = false
 </script>
 
 <button
   type="button"
   class="kit-button {kind} {size}"
   class:pressed
+  class:hover
+  class:focus
+  class:disabled
+  class:loading
   class:icon-only={label === undefined || label === ''}
 >
-  {#if icon !== undefined}<Icon name={icon} size={16} />{/if}
+  {#if loading}
+    <Spinner size="small" />
+  {:else if icon !== undefined}
+    <Icon name={icon} size={16} />
+  {/if}
   {#if label !== undefined && label !== ''}<span class="label">{label}</span>{/if}
   {#if menu}<Icon name="chevronD" size={14} />{/if}
 </button>
@@ -100,6 +114,34 @@
       &.pressed {
         background-color: var(--button-secondary-active-BackgroundColor);
       }
+    }
+    &.hover {
+      &.primary {
+        background-color: var(--button-primary-hover-BackgroundColor);
+      }
+      &.secondary {
+        background-color: var(--button-secondary-hover-BackgroundColor);
+      }
+      &.tertiary,
+      &.ghost {
+        background-color: var(--button-tertiary-hover-BackgroundColor);
+      }
+      &.negative {
+        background-color: var(--button-negative-hover-BackgroundColor);
+      }
+      &.brand {
+        background-color: var(--button-brand-hover-BackgroundColor);
+      }
+    }
+    &.focus {
+      outline: 2px solid var(--accent-color-base, #cf13a2);
+      outline-offset: -2px;
+    }
+    &.disabled {
+      color: var(--button-disabled-LabelColor);
+      background-color: var(--button-disabled-BackgroundColor);
+      border-color: transparent;
+      cursor: default;
     }
     &.tertiary {
       color: var(--button-tertiary-LabelColor);

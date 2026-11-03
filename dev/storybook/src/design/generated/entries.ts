@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // Screen files of dev/design/design.json that have a Storybook section: the section title and the build entries.
-// Paths are relative to dev/design; every entry runs as one script, as dev/tenn/build.mjs does.
+// Paths are relative to dev/design; every entry runs as one script.
 // `canvas: true` adds one canvas of all pages: it renders every frame at once and hangs on large files.
 export interface ScreenFile {
   title: string

@@ -28,10 +28,10 @@ item "§ Modal" {
 	item title { title Modal; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item Button {
-	export let label = Button; export let kind = primary; export let size = medium; export let shape = default; export let state = default; auto-layout row; gap 8
+	export let label = Button; export let kind = primary; export let size = medium; export let shape = default; export let state = default; export let pressed = false; export let menu = false; auto-layout row; gap 8
 	padding 0 16; align center; justify center; height 40; clip yes; color #6b3ad3; border-color #1725471a; corner-radius 8
 	width ${shape === "icon" ? (size === "large" ? 48 : size === "medium" ? 40 : size === "small" ? 32 : 24) : "hug"}
-	use-style ${kind} ${size} ${shape === "icon" ? "icon-only" : ""} ${state === "hover" || state === "loading" ? kind+"-"+state : state === "default" ? "" : state}
+	use-style ${kind} ${size} ${shape === "icon" ? "icon-only" : ""} ${state === "hover" || state === "loading" ? kind+"-"+state : state === "default" ? "" : state} ${(pressed === "true" && kind === "secondary") ? "pressed" : ""}
 	pos 24 -44
 	styles {
 		kind one-of primary secondary tertiary ghost negative brand; size one-of large medium small extra-small; shape one-of default icon
@@ -97,6 +97,7 @@ item Button {
 		}
 		disabled { color #1725470d; border-color none; text-color #a1abbf }
 		focus { border-color #cf13a2; line-width 2 }
+		pressed { color #17254726 }
 	}
 	animation spin {
 		from { rotate 0 }
@@ -104,16 +105,28 @@ item Button {
 	}
 	use Icon.kit_Plus as "icon/kit/Plus" { hidden ${shape === "icon" || state === "loading"} }
 	item Button { font-size 14; line-height 16; font-family "IBM Plex Sans"; font-weight 500; layout left; title ${label}; hidden ${shape === "icon"} }
-	use Icon.chevronD as "icon/chevronD" { hidden yes; width 14; height 14; border-color #ffffff; line-width 1.14 }
+	use Icon.chevronD as "icon/chevronD" {
+		hidden ${(menu !== "true") || state === "loading"}; width 14; height 14; line-width 1.14
+		border-color ${kind === "primary" || kind === "negative" || kind === "brand" ? "#ffffff" : kind === "tertiary" ? "#6b3ad3" : "#0f121a"}
+	}
 	use Icon.gear as "icon/gear" { line-width 1; hidden ${shape !== "icon" || state === "loading"} }
 	item spinner {
-		width 16; height 16; path "M12 2a10 10 0 1 1-7.07 2.93"; view-box 0 0 24 24; line-width 2.5
-		border-color ${kind === "primary" || kind === "brand" || kind === "negative" || kind === "dangerous" ? "#ffffff" : kind === "tertiary" ? "#6b3ad3" : "#0f121a"}
+		width 16; height 16; clip yes
 		hidden ${state !== "loading"}; animation spin 1s linear infinite
+		item "arc lower" {
+			width 16; height 16; view-box 0 0 24 24
+			color ${kind === "primary" || kind === "brand" || kind === "negative" || kind === "dangerous" ? "#ffffff" : kind === "tertiary" ? "#6b3ad3" : "#0f121a"}
+			path "M12,22.5C6.2,22.5,1.5,17.8,1.5,12C1.5,6.2,6.2,1.5,12,1.5v-1C5.6,0.5,0.5,5.6,0.5,12c0,6.4,5.1,11.5,11.5,11.5V22.5z"
+		}
+		item "arc upper" {
+			width 16; height 16; view-box 0 0 24 24
+			color ${kind === "primary" || kind === "brand" || kind === "negative" || kind === "dangerous" ? "#ffffff" : kind === "tertiary" ? "#6b3ad3" : "#0f121a"}
+			path "M12,0.5v1c5.8,0,10.5,4.7,10.5,10.5c0,5.8-4.7,10.5-10.5,10.5v1c6.4,0,11.5-5.1,11.5-11.5C23.5,5.6,18.4,0.5,12,0.5z"
+		}
 	}
 }
-element ButtonCatalog {
-	kind Screen; pos 252 -44
+item ButtonCatalog {
+	pos 252 -44
 	item Catalog {
 		auto-layout column; gap 12; padding 24; clip yes; color #ffffff
 		item primary {
@@ -189,6 +202,8 @@ element ButtonCatalog {
 			use Button as focus { state focus }
 			use Button as disabled { state disabled }
 			use Button as loading { state loading }
+			use Button as pressed { kind secondary; pressed true }
+			use Button as menu { menu true }
 		}
 	}
 }
@@ -287,13 +302,22 @@ item ClassicButton {
 	use Icon.kit_CaretDownFill as "icon/kit/CaretDownFill" { hidden yes; color #00000099 }
 	use Icon.kit_PencilLine as "icon/kit/PencilLine" { hidden ${shape !== "icon" || state === "loading"} }
 	item spinner {
-		width 16; height 16; path "M12 2a10 10 0 1 1-7.07 2.93"; view-box 0 0 24 24; line-width 2.5
-		border-color ${kind === "primary" || kind === "brand" || kind === "negative" || kind === "dangerous" ? "#ffffff" : kind === "tertiary" ? "#6b3ad3" : "#0f121a"}
+		width 16; height 16; clip yes
 		hidden ${state !== "loading"}; animation spin 1s linear infinite
+		item "arc lower" {
+			width 16; height 16; view-box 0 0 24 24
+			color ${kind === "primary" || kind === "brand" || kind === "negative" || kind === "dangerous" ? "#ffffff" : kind === "tertiary" ? "#6b3ad3" : "#0f121a"}
+			path "M12,22.5C6.2,22.5,1.5,17.8,1.5,12C1.5,6.2,6.2,1.5,12,1.5v-1C5.6,0.5,0.5,5.6,0.5,12c0,6.4,5.1,11.5,11.5,11.5V22.5z"
+		}
+		item "arc upper" {
+			width 16; height 16; view-box 0 0 24 24
+			color ${kind === "primary" || kind === "brand" || kind === "negative" || kind === "dangerous" ? "#ffffff" : kind === "tertiary" ? "#6b3ad3" : "#0f121a"}
+			path "M12,0.5v1c5.8,0,10.5,4.7,10.5,10.5c0,5.8-4.7,10.5-10.5,10.5v1c6.4,0,11.5-5.1,11.5-11.5C23.5,5.6,18.4,0.5,12,0.5z"
+		}
 	}
 }
-element ClassicButtonCatalog {
-	kind Screen; pos 472 -560
+item ClassicButtonCatalog {
+	pos 472 -560
 	item Catalog {
 		auto-layout column; gap 12; padding 24; clip yes; color #ffffff
 		item regular {

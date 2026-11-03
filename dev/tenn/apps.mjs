@@ -16,7 +16,7 @@
 // Product structure of PlatformDesign.tenn: application > category > screens, by the frame names of the screen scripts.
 // The applications are those of the platform (plugins/workbench-resources, the plugins tracker, chunter, setting, login);
 // the order of screens in a category is the order of the grid, variants and the steps of a flow stay side by side.
-// build.mjs fails on a frame of SOURCE that is not listed here, so a new screen needs a decision.
+// The taxonomy lists every frame of SOURCE: one that is not listed has no place, so a new screen needs a decision.
 
 // design.json file whose pages are placed by this taxonomy; the other screen files are design tasks (FUSIO-...)
 export const SOURCE = 'Intabia Screens'

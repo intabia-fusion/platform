@@ -83,7 +83,10 @@ element "Sign in" {
 								use Libraries.login_kit.LoginStatus as Status {
 									at message.Message { title "Требуется заполнить Email" }
 								}
-								use Libraries.login_kit.LoginButton as "Button Вход" { kind primary; disabled true }
+								use Libraries.login_kit.LoginButton as "Button Вход" {
+									kind primary; disabled true
+									at Button { title Вход }
+								}
 							}
 							item spacer { auto-layout abs; width 396; height 16; clip yes }
 							item footer {
@@ -198,7 +201,10 @@ element "Sign in" {
 								use Libraries.login_kit.LoginStatus as Status {
 									at message { hidden yes }
 								}
-								use Libraries.login_kit.LoginButton as "Button Вход" { kind primary }
+								use Libraries.login_kit.LoginButton as "Button Вход" {
+									kind primary
+									at Button { title Вход }
+								}
 							}
 							item spacer { auto-layout abs; width 396; height 16; clip yes }
 							item footer {
@@ -315,7 +321,10 @@ element "Sign in" {
 									kind error
 									at message.Message { title "Неверный пароль" }
 								}
-								use Libraries.login_kit.LoginButton as "Button Вход" { kind primary }
+								use Libraries.login_kit.LoginButton as "Button Вход" {
+									kind primary
+									at Button { title Вход }
+								}
 							}
 							item spacer { auto-layout abs; width 396; height 16; clip yes }
 							item footer {
@@ -430,7 +439,10 @@ element "Sign in" {
 								use Libraries.login_kit.LoginStatus as Status {
 									at message { hidden yes }
 								}
-								use Libraries.login_kit.LoginButton as "Button Вход" { kind primary }
+								use Libraries.login_kit.LoginButton as "Button Вход" {
+									kind primary
+									at Button { title Вход }
+								}
 							}
 							use Libraries.login_kit.LoginProviders as Providers {
 								slot content {
@@ -586,7 +598,10 @@ element "Sign in" {
 								use Libraries.login_kit.LoginStatus as Status {
 									at message.Message { title "Требуется заполнить Email" }
 								}
-								use Libraries.login_kit.LoginButton as "Button Вход" { kind primary; disabled true }
+								use Libraries.login_kit.LoginButton as "Button Вход" {
+									kind primary; disabled true
+									at Button { title Вход }
+								}
 							}
 							item spacer { auto-layout abs; width 396; height 16; clip yes }
 						}
@@ -959,7 +974,10 @@ element "Sign up" {
 								use Libraries.login_kit.LoginStatus as Status {
 									at message.Message { title "Требуется заполнить Имя" }
 								}
-								use Libraries.login_kit.LoginButton as "Button Зарегистрироваться" { kind primary; disabled true }
+								use Libraries.login_kit.LoginButton as "Button Зарегистрироваться" {
+									kind primary; disabled true
+									at Button { title Зарегистрироваться }
+								}
 							}
 							item spacer { auto-layout abs; width 396; height 16; clip yes }
 						}
@@ -1086,7 +1104,10 @@ element "Sign up" {
 								use Libraries.login_kit.LoginStatus as Status {
 									at message { hidden yes }
 								}
-								use Libraries.login_kit.LoginButton as "Button Зарегистрироваться" { kind primary }
+								use Libraries.login_kit.LoginButton as "Button Зарегистрироваться" {
+									kind primary
+									at Button { title Зарегистрироваться }
+								}
 							}
 							item spacer { auto-layout abs; width 396; height 16; clip yes }
 						}
@@ -1211,7 +1232,10 @@ element "Sign up" {
 								use Libraries.login_kit.LoginStatus as Status {
 									at message.Message { title "Требуется заполнить Имя" }
 								}
-								use Libraries.login_kit.LoginButton as "Button Зарегистрироваться" { kind primary; disabled true }
+								use Libraries.login_kit.LoginButton as "Button Зарегистрироваться" {
+									kind primary; disabled true
+									at Button { title Зарегистрироваться }
+								}
 							}
 							item spacer { auto-layout abs; width 396; height 16; clip yes }
 						}
@@ -1397,7 +1421,10 @@ element "Sign up" {
 								use Libraries.login_kit.LoginStatus as Status {
 									at message { hidden yes }
 								}
-								use Libraries.login_kit.LoginButton as "Button Создать рабочее пространство" { kind primary }
+								use Libraries.login_kit.LoginButton as "Button Создать рабочее пространство" {
+									kind primary
+									at Button { title "Создать рабочее пространство" }
+								}
 							}
 							item footer {
 								auto-layout column; padding 28 0 0 0; width 396; clip yes
@@ -1509,7 +1536,10 @@ element "Password recovery" {
 								use Libraries.login_kit.LoginStatus as Status {
 									at message.Message { title "Требуется заполнить Email" }
 								}
-								use Libraries.login_kit.LoginButton as "Button Восстановить" { kind primary; disabled true }
+								use Libraries.login_kit.LoginButton as "Button Восстановить" {
+									kind primary; disabled true
+									at Button { title Восстановить }
+								}
 							}
 							item footer {
 								auto-layout column; padding 28 0 0 0; width 396; clip yes
@@ -1626,7 +1656,10 @@ element "Password recovery" {
 								use Libraries.login_kit.LoginStatus as Status {
 									at message.Message { title "Требуется заполнить Пароль" }
 								}
-								use Libraries.login_kit.LoginButton as "Button Восстановить" { kind primary; disabled true }
+								use Libraries.login_kit.LoginButton as "Button Восстановить" {
+									kind primary; disabled true
+									at Button { title Восстановить }
+								}
 							}
 						}
 					}
@@ -1728,7 +1761,10 @@ element "Password recovery" {
 								use Libraries.login_kit.LoginStatus as Status {
 									at message.Message { title "Требуется заполнить Текущий пароль" }
 								}
-								use Libraries.login_kit.LoginButton as "Button Изменить пароль" { kind primary; disabled true }
+								use Libraries.login_kit.LoginButton as "Button Изменить пароль" {
+									kind primary; disabled true
+									at Button { title "Изменить пароль" }
+								}
 							}
 						}
 					}
@@ -1906,7 +1942,10 @@ element "Link confirmation" {
 								use Libraries.login_kit.LoginStatus as Status {
 									at message { hidden yes }
 								}
-								use Libraries.login_kit.LoginButton as "Button Продолжить" { kind primary }
+								use Libraries.login_kit.LoginButton as "Button Продолжить" {
+									kind primary
+									at Button { title Продолжить }
+								}
 							}
 						}
 					}
@@ -1996,7 +2035,10 @@ element "Link confirmation" {
 								use Libraries.login_kit.LoginStatus as Status {
 									at message { hidden yes }
 								}
-								use Libraries.login_kit.LoginButton as "Button Вход" { kind primary }
+								use Libraries.login_kit.LoginButton as "Button Вход" {
+									kind primary
+									at Button { title Вход }
+								}
 							}
 						}
 					}
@@ -2086,7 +2128,10 @@ element "Link confirmation" {
 								use Libraries.login_kit.LoginStatus as Status {
 									at message { hidden yes }
 								}
-								use Libraries.login_kit.LoginButton as "Button Вход" { kind primary }
+								use Libraries.login_kit.LoginButton as "Button Вход" {
+									kind primary
+									at Button { title Вход }
+								}
 							}
 						}
 					}
@@ -2184,7 +2229,10 @@ element "Link confirmation" {
 								use Libraries.login_kit.LoginStatus as Status {
 									at message { hidden yes }
 								}
-								use Libraries.login_kit.LoginButton as "Button Продолжить" { kind primary }
+								use Libraries.login_kit.LoginButton as "Button Продолжить" {
+									kind primary
+									at Button { title Продолжить }
+								}
 							}
 						}
 					}
@@ -2402,7 +2450,10 @@ element Workspaces {
 							}
 							item spacer { auto-layout abs; width 428; height 20; clip yes }
 							item workspaces { auto-layout column; padding 2 0; width 428; clip yes }
-							use Libraries.login_kit.LoginButton as "Button Создать рабочее пространство" { kind primary; width 428 }
+							use Libraries.login_kit.LoginButton as "Button Создать рабочее пространство" {
+								kind primary; width 428
+								at Button { title "Создать рабочее пространство" }
+							}
 							item footer {
 								auto-layout column; padding 56 0 0 0; width 428; clip yes
 								use Libraries.login_kit.LoginLinks as Links {
@@ -2512,7 +2563,10 @@ element Workspaces {
 								use Libraries.login_kit.LoginStatus as Status {
 									at message.Message { title "Требуется заполнить Рабочее пространство" }
 								}
-								use Libraries.login_kit.LoginButton as "Button Создать рабочее пространство" { kind primary; disabled true }
+								use Libraries.login_kit.LoginButton as "Button Создать рабочее пространство" {
+									kind primary; disabled true
+									at Button { title "Создать рабочее пространство" }
+								}
 							}
 							item footer {
 								auto-layout column; padding 28 0 0 0; width 396; clip yes
@@ -2622,9 +2676,18 @@ element Invitations {
 								}
 								item actions {
 									auto-layout column; gap 12; padding 16 0 0 0; width 300; clip yes
-									use Libraries.login_kit.LoginButton as "Button Присоединиться как Анна Смирнова" { kind primary; width 300 }
-									use Libraries.login_kit.LoginButton as "Button Создать новый аккаунт" { kind default; width 300 }
-									use Libraries.login_kit.LoginButton as "Button Присоединиться с существующим аккаунтом" { kind default; width 300 }
+									use Libraries.login_kit.LoginButton as "Button Присоединиться как Анна Смирнова" {
+										kind primary; width 300
+										at Button { title "Присоединиться как Анна Смирнова" }
+									}
+									use Libraries.login_kit.LoginButton as "Button Создать новый аккаунт" {
+										kind default; width 300
+										at Button { title "Создать новый аккаунт" }
+									}
+									use Libraries.login_kit.LoginButton as "Button Присоединиться с существующим аккаунтом" {
+										kind default; width 300
+										at Button { title "Присоединиться с существующим аккаунтом" }
+									}
 								}
 							}
 						}
@@ -2753,7 +2816,10 @@ element Invitations {
 								use Libraries.login_kit.LoginStatus as Status {
 									at message.Message { title "Требуется заполнить Имя" }
 								}
-								use Libraries.login_kit.LoginButton as "Button Зарегистрироваться и присоединиться" { kind primary; disabled true }
+								use Libraries.login_kit.LoginButton as "Button Зарегистрироваться и присоединиться" {
+									kind primary; disabled true
+									at Button { title "Зарегистрироваться и присоединиться" }
+								}
 							}
 							item spacer { auto-layout abs; width 396; height 16; clip yes }
 						}

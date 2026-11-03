@@ -1,5 +1,5 @@
 // Kit core: shapes are plain objects that serialize to node trees, which emit.mjs turns into .tenn.
-// Runs in Node inside the script scope; `host`, `TOKENS`, `DEMO` and `ICONS` come from env.mjs and build.mjs.
+// Runs in Node inside the script scope; `host`, `TOKENS`, `DEMO` and `ICONS` come from env.mjs.
 // Node fields (fill, stroke, cornerRadius, layout, descendants, ...) are named as in the pen.dev node schema this tree was built on.
 
 const kit = {

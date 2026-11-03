@@ -320,31 +320,31 @@ item LoginOtpHeader {
 	}
 }
 item LoginCode {
-	export let digits = "123456"; auto-layout row; gap 6.4; align center; width 412; height 78; clip yes; pos 24 -1794
+	export let digits = ""; auto-layout row; gap 6.4; align center; width 412; height 78; clip yes; pos 24 -1794
 	item "digit 1" {
 		auto-layout row; align center; justify center; width 60; height 78; clip yes; color #f3e5f5; border-color #00000017; corner-radius 12
-		item _1 { font-size 32; line-height 42; font-family "IBM Plex Sans"; layout left; text-color #201240; title ${digits[0]} }
+		item _1 { font-size 32; line-height 42; font-family "IBM Plex Sans"; layout left; text-color #201240; title ${digits.length > 0 ? digits[0] : ""} }
 	}
 	item "digit 2" {
 		auto-layout row; align center; justify center; width 60; height 78; clip yes; color #f3e5f5; border-color #00000017; corner-radius 12
-		item _2 { font-size 32; line-height 42; font-family "IBM Plex Sans"; layout left; text-color #201240; title ${digits[1]} }
+		item _2 { font-size 32; line-height 42; font-family "IBM Plex Sans"; layout left; text-color #201240; title ${digits.length > 1 ? digits[1] : ""} }
 	}
 	item "digit 3" {
 		auto-layout row; align center; justify center; width 60; height 78; clip yes; color #f3e5f5; border-color #00000017; corner-radius 12
-		item _3 { font-size 32; line-height 42; font-family "IBM Plex Sans"; layout left; text-color #201240; title ${digits[2]} }
+		item _3 { font-size 32; line-height 42; font-family "IBM Plex Sans"; layout left; text-color #201240; title ${digits.length > 2 ? digits[2] : ""} }
 	}
 	item separator { auto-layout abs; width 12; height 1; clip yes; color #e5e7eb }
 	item "digit 4" {
 		auto-layout row; align center; justify center; width 60; height 78; clip yes; color #f3e5f5; border-color #00000017; corner-radius 12
-		item _4 { font-size 32; line-height 42; font-family "IBM Plex Sans"; layout left; text-color #201240; title ${digits[3]} }
+		item _4 { font-size 32; line-height 42; font-family "IBM Plex Sans"; layout left; text-color #201240; title ${digits.length > 3 ? digits[3] : ""} }
 	}
 	item "digit 5" {
 		auto-layout row; align center; justify center; width 60; height 78; clip yes; color #f3e5f5; border-color #00000017; corner-radius 12
-		item _5 { font-size 32; line-height 42; font-family "IBM Plex Sans"; layout left; text-color #201240; title ${digits[4]} }
+		item _5 { font-size 32; line-height 42; font-family "IBM Plex Sans"; layout left; text-color #201240; title ${digits.length > 4 ? digits[4] : ""} }
 	}
 	item "digit 6" {
 		auto-layout row; align center; justify center; width 60; height 78; clip yes; color #f3e5f5; border-color #00000017; corner-radius 12
-		item _6 { font-size 32; line-height 42; font-family "IBM Plex Sans"; layout left; text-color #201240; title ${digits[5]} }
+		item _6 { font-size 32; line-height 42; font-family "IBM Plex Sans"; layout left; text-color #201240; title ${digits.length > 5 ? digits[5] : ""} }
 	}
 }
 item LoginWorkspace {

@@ -1,16 +1,33 @@
 entry "../../../../PlatformDesign.tenn"
 item "§ Avatar" {
-	auto-layout abs; width 68; height 88; border-color #0000000f; corner-radius 8; pos 0 0
+	auto-layout abs; width 420; height 88; border-color #0000000f; corner-radius 8; pos 0 0
 	item title { title Avatar; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item Avatar {
-	export let initials = AJ; export let empty = false; auto-layout row; align center; justify center; width 20; height 20; clip yes; color #666ecc
-	corner-radius 4; use-style ${(empty === "true") ? "empty" : ""}; pos 24 -44
+	export let initials = AJ; export let empty = false; export let size = 20; export let status = false; export let round = false
+	auto-layout row; align center; justify center; width ${size}; height ${size}; clip yes
+	color ${(empty === "true") ? "#6b3ad31a" : "#666ecc"}
+	corner-radius ${(round === "true") ? size : 4}; use-style ${(empty === "true") ? "empty" : ""}; pos 24 -44
 	styles {
 		empty { color #6b3ad31a }
 	}
 	item initials {
-		font-size 8; line-height 10; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #ffffff; title ${initials}; hidden ${empty}
+		font-size ${size * 0.4}; line-height ${size * 0.5}; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #ffffff; title ${initials}; hidden ${empty}
 	}
-	use Icon.kit_PersonCircle as "icon/kit/PersonCircle" { width 12; height 12; color #00000099; hidden ${!(empty === "true")} }
+	use Icon.kit_PersonCircle as "icon/kit/PersonCircle" { width ${size * 0.6}; height ${size * 0.6}; color #00000099; hidden ${!(empty === "true")} }
+	item "status marker" {
+		auto-layout abs; width 10; height 10; corner-radius 5; color #05a05c; border-color #ffffff; line-width 2
+		pos ${size - 8} -2; hidden ${status !== "true"}
+	}
+}
+item "Avatar/sizes" {
+	auto-layout row; gap 8; align end; clip yes; pos 64 -44
+	use Avatar as "Avatar/24" { size 24; initials MC }
+	use Avatar as "Avatar/32" { size 32; initials MC }
+	use Avatar as "Avatar/40" { size 40; initials MC }
+}
+item "Avatar/status and round" {
+	auto-layout row; gap 8; align end; clip yes; pos 220 -44
+	use Avatar as "Avatar/status" { size 32; status true }
+	use Avatar as "Avatar/round" { size 40; round true }
 }

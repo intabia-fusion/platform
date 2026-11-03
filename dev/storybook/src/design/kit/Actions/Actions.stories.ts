@@ -66,9 +66,13 @@ export const ButtonStates: Story = sections([
   {
     title: 'Button - states',
     component: Button,
-    rows: axis('kind', ['primary', 'secondary']),
+    rows: axis('kind', kinds),
     columns: [
       { title: 'default', props: {} },
+      { title: 'hover', props: { hover: true } },
+      { title: 'focus', props: { focus: true } },
+      { title: 'disabled', props: { disabled: true } },
+      { title: 'loading', props: { loading: true } },
       { title: 'pressed', props: { pressed: true } },
       { title: 'menu', props: { menu: true } }
     ],
