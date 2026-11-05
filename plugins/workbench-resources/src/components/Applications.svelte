@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2020 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,7 +14,6 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte'
   import core, { AccountRole, getCurrentAccount, type Ref } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import { Scroller, deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
@@ -32,15 +32,11 @@
   export let direction: 'vertical' | 'horizontal' = 'vertical'
   export let customAppProps: Map<string, any> = new Map<string, any>()
 
-  const dispatch = createEventDispatcher()
-
-  function getClickHandler (app: Application, customProps: any): any {
-    return (
-      customProps.onClick ??
-      (() => {
-        if (app._id === active) dispatch('toggleNav')
-      })
-    )
+  function getClickHandler (app: Application, customProps: any): (event: MouseEvent) => void {
+    return (event) => {
+      if (app._id === active) return
+      customProps.onClick?.(event)
+    }
   }
 
   let loaded: boolean = false
