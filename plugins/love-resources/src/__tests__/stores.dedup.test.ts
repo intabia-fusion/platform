@@ -94,4 +94,31 @@ describe('filterParticipantInfo dedup by person (defect A)', () => {
     // already connected). The surviving session must not depend on array order.
     expect(oldFirst).toEqual(newFirst)
   })
+
+  it('keeps the latest participant snapshot when an older filter finishes last', async () => {
+    const love = (await import('../plugin')).default
+    const { infos } = await import('../stores')
+    const { ensureAiBotIdentityLoaded } = await import('@hcengineering/ai-bot-resources')
+    const call = mockQueryInstances
+      .flatMap((inst) => inst.query.mock.calls)
+      .find((c) => c[0] === love.class.ParticipantInfo)
+    expect(call).toBeDefined()
+    const onParticipantInfoUpdate = call?.[2] as (res: ParticipantInfo[]) => Promise<void>
+
+    let releaseOld!: () => void
+    ;(ensureAiBotIdentityLoaded as jest.Mock).mockImplementationOnce(
+      async () => {
+        await new Promise<void>((resolve) => {
+          releaseOld = resolve
+        })
+      }
+    )
+    const oldUpdate = onParticipantInfoUpdate([makeParticipantInfo('old-session')])
+    await onParticipantInfoUpdate([makeParticipantInfo('new-session')])
+    expect(get(infos).map((p) => p.sessionId)).toEqual(['new-session'])
+
+    releaseOld()
+    await oldUpdate
+    expect(get(infos).map((p) => p.sessionId)).toEqual(['new-session'])
+  })
 })
