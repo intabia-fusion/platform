@@ -1,18 +1,18 @@
 entry "../../../../PlatformDesign.tenn"
 item "§ DateSeparator" {
-	auto-layout abs; width 1561; height 101; border-color #0000000f; corner-radius 8; pos 0 0
+	auto-layout abs; width 1561; height 101; color #ffffff; border-color #0000000f; corner-radius 8; pos 0 0
 	item title { title DateSeparator; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ NewMarker" {
-	auto-layout abs; width 1561; height 84; border-color #0000000f; corner-radius 8; pos 0 -149
+	auto-layout abs; width 1561; height 84; color #ffffff; border-color #0000000f; corner-radius 8; pos 0 -149
 	item title { title NewMarker; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ Message" {
-	auto-layout abs; width 1561; height 224; border-color #0000000f; corner-radius 8; pos 0 -281
+	auto-layout abs; width 1561; height 224; color #ffffff; border-color #0000000f; corner-radius 8; pos 0 -281
 	item title { title Message; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ MessageInput" {
-	auto-layout abs; width 1529; height 156; border-color #0000000f; corner-radius 8; pos 0 -553
+	auto-layout abs; width 1529; height 156; color #ffffff; border-color #0000000f; corner-radius 8; pos 0 -553
 	item title { title MessageInput; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item DateSeparator {

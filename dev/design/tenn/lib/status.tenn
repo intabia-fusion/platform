@@ -1,22 +1,22 @@
 entry "../../../../PlatformDesign.tenn"
 item "§ StatusIcon" {
-	auto-layout abs; width 62; height 82; border-color #0000000f; corner-radius 8; pos 0 0
+	auto-layout abs; width 62; height 82; color #ffffff; border-color #0000000f; corner-radius 8; pos 0 0
 	item title { title StatusIcon; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ PriorityIcon" {
-	auto-layout abs; width 62; height 82; border-color #0000000f; corner-radius 8; pos 110 0
+	auto-layout abs; width 62; height 82; color #ffffff; border-color #0000000f; corner-radius 8; pos 110 0
 	item title { title PriorityIcon; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ StatusChip" {
-	auto-layout abs; width 143; height 88; border-color #0000000f; corner-radius 8; pos 220 0
+	auto-layout abs; width 143; height 88; color #ffffff; border-color #0000000f; corner-radius 8; pos 220 0
 	item title { title StatusChip; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ Count" {
-	auto-layout abs; width 78; height 88; border-color #0000000f; corner-radius 8; pos 411 0
+	auto-layout abs; width 78; height 88; color #ffffff; border-color #0000000f; corner-radius 8; pos 411 0
 	item title { title Count; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ Notice" {
-	auto-layout abs; width 188; height 96; border-color #0000000f; corner-radius 8; pos 537 0
+	auto-layout abs; width 188; height 96; color #ffffff; border-color #0000000f; corner-radius 8; pos 537 0
 	item title { title Notice; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item StatusIcon {

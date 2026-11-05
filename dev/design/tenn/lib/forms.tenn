@@ -1,30 +1,31 @@
 entry "../../../../PlatformDesign.tenn"
 item "§ Input" {
-	auto-layout abs; width 720; height 100; border-color #0000000f; corner-radius 8; pos 0 0
+	auto-layout abs; width 776; height 176; color #ffffff; border-color #0000000f; corner-radius 8; pos 0 0
 	item title { title Input; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ Checkbox" {
-	auto-layout abs; width 114; height 86; border-color #0000000f; corner-radius 8; pos 780 0
+	auto-layout abs; width 114; height 86; color #ffffff; border-color #0000000f; corner-radius 8; pos 780 0
 	item title { title Checkbox; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ Toggle" {
-	auto-layout abs; width 134; height 88; border-color #0000000f; corner-radius 8; pos 942 0
+	auto-layout abs; width 134; height 88; color #ffffff; border-color #0000000f; corner-radius 8; pos 942 0
 	item title { title Toggle; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ Radio" {
-	auto-layout abs; width 114; height 86; border-color #0000000f; corner-radius 8; pos 1104 0
+	auto-layout abs; width 114; height 86; color #ffffff; border-color #0000000f; corner-radius 8; pos 1104 0
 	item title { title Radio; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ EditBox" {
-	auto-layout abs; width 304; height 104; border-color #0000000f; corner-radius 8; pos 1266 0
+	auto-layout abs; width 304; height 104; color #ffffff; border-color #0000000f; corner-radius 8; pos 1266 0
 	item title { title EditBox; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item Input {
 	export let label = Label; export let value = Value; export let placeholder = ""; export let layout = single; export let icon = false; export let menu = false
 	export let error = false; export let size = medium; auto-layout column; gap 4
-	clip yes; use-style ${layout} ${size} ${(error === "true") ? "error" : ""}; pos 24 -44
+	clip yes; use-style ${layout} ${size} ${(error === "true") ? "error" : ""}; pos 24 -50
 	styles {
 		layout one-of single multiline
+		single { field { height 32; padding 0 10; align center } }
 		size one-of narrow medium wide
 		narrow { field { width 160 } }
 		wide { field { width 420 } }
@@ -38,7 +39,7 @@ item Input {
 	}
 	item Label { font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #00000099; title ${label}; hidden ${label === ""} }
 	item field {
-		auto-layout row; gap 6; padding 0 10; align center; width 240; height 32; clip yes; color #1530720d; border-color #1530720d; corner-radius 6
+		auto-layout row; gap 6; width 240; clip yes; color #1530720d; border-color #1530720d; corner-radius 6
 		use Icon.kit_PersonCircle as "icon/kit/PersonCircle" { color #00000099; hidden ${!(icon === "true")} }
 		item Value { font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color ${(value === "") ? "#556178" : "#0f121a"}; title ${(value === "") ? placeholder : value} }
 		item grow { auto-layout abs; width fill; height 1; clip yes; hidden ${!(menu === "true")} }
@@ -46,7 +47,7 @@ item Input {
 	}
 }
 item "Input/variants" {
-	auto-layout row; gap 16; align end; clip yes; pos 280 -44
+	auto-layout row; gap 16; align end; clip yes; pos 24 -110
 	use Input as "Input/narrow" { size narrow; label ""; at field.Value { title APP } }
 	use Input as "Input/error" { label ""; error true; at field.Value { title APP } }
 	use Input as "Input/placeholder" { label ""; value ""; placeholder Name }
@@ -83,7 +84,7 @@ item Radio {
 }
 item EditBox {
 	export let value = Value; export let kind = ghost-large; export let width = 256; auto-layout row; padding 0 8; align center; height 36; clip yes
-	border-color #0000000f; corner-radius 6; width ${width}; use-style ${kind}; pos 1310 -44
+	border-color #0000000f; corner-radius 6; width ${width}; use-style ${kind}; pos 1310 -50
 	styles {
 		kind one-of ghost-large large-style editbox
 		ghost-large {

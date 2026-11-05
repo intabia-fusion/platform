@@ -14,7 +14,8 @@ item ProfileNavItem {
     use Libraries.ui_kit.Icon.kit_Person as Icon { width 16; height 16; color #5c6470 }
   }
   item Label { title ${label}; font-size 14; line-height 20; layout left }
-}
+
+  pos 1960 0}
 
 item ProfilePage {
   auto-layout abs; width 1920; height 1080; clip yes
@@ -82,7 +83,8 @@ item WorkspaceRow {
   item Role { title ${role}; width 120; font-size 13; line-height 18; layout left; text-color #5c6470 }
   item Visit { title ${visit}; width 150; font-size 13; line-height 18; layout left; text-color #7f7f7f }
   use Libraries.ui_kit.Icon.kit_ChevronRightLarge as Open { width 16; height 16; color #7f7f7f }
-}
+
+  pos 1960 120}
 
 item ServiceCard {
   export let title = "Сервис"
@@ -116,7 +118,7 @@ item ServiceCard {
   }
   item Description { title ${description}; width fill; font-size 13; line-height 19; layout left; text-color #5c6470 }
   slot details
-  pos 20 134
+  pos 1960 260
 }
 
 item ProfileField {
@@ -125,4 +127,5 @@ item ProfileField {
   auto-layout row; width 800; min-height 44; padding 10 0; gap 24; align center
   item Label { title ${label}; width 160; font-size 13; line-height 18; layout left; text-color #7f7f7f }
   item Value { title ${value}; width fill; font-size 14; line-height 20; layout left }
-}
+
+  pos 1960 460}

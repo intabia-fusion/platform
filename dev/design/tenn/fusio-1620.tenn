@@ -676,7 +676,7 @@ element "9 Панель поддержки" {
               at icon_chevronD { hidden yes }
             }
           }
-          use Libraries.tracker_kit.IssueList as Table { pos 40 -108 }
+          use Libraries.tracker_kit.List.IssueList as Table { pos 40 -108 }
           item Support_panel {
             auto-layout row; width 800; padding 16 18; gap 14; align center; color #f8f5fa; border-color #d9b9d8; corner-radius 12; shadow 0 -6 20 #00000014; pos 265 -946
             item Panel_icon {

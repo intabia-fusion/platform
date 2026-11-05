@@ -1,4 +1,7 @@
 entry "../../../../PlatformDesign.tenn"
+item "§ backdrop" {
+	auto-layout abs; width 784; height 352; color #ffffff; corner-radius 8; pos -24 24
+}
 item board {
 	width 16; height 16
 	path "M3 2.5H4.5A1 1 0 0 1 5.5 3.5V12.5A1 1 0 0 1 4.5 13.5H3A1 1 0 0 1 2 12.5V3.5A1 1 0 0 1 3 2.5ZM8 2.5H9.5A1 1 0 0 1 10.5 3.5V8.5A1 1 0 0 1 9.5 9.5H8A1 1 0 0 1 7 8.5V3.5A1 1 0 0 1 8 2.5ZM12 2.5h2v5h-2z"

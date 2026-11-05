@@ -1,30 +1,163 @@
 entry "../../../../PlatformDesign.tenn"
-item "§ Button" {
-	auto-layout abs; width 180; height 108; border-color #0000000f; corner-radius 8; pos 0 0
+item Buttons {
+	auto-layout abs; width 180; height 108; color #ffffff; border-color #0000000f; corner-radius 8; pos 3 -3
 	item title { title Button; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
-item "§ ButtonCatalog" {
-	auto-layout abs; width 1208; height 468; border-color #0000000f; corner-radius 8; pos 228 0
+item "Button catalog" {
+	auto-layout abs; width 1208; height 492; color #ffffff; border-color #0000000f; corner-radius 8; pos 228 0
 	item title { title ButtonCatalog; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+	item ButtonCatalog {
+	pos 24 -44
+	item Catalog {
+		auto-layout column; gap 12; padding 24; clip yes; color #ffffff
+		item primary {
+			auto-layout row; gap 8; align center; clip yes
+			use Button as large { kind primary; size large }
+			use Button as "large icon" { kind primary; size large; shape icon }
+			use Button as medium { kind primary; size medium }
+			use Button as "medium icon" { kind primary; size medium; shape icon }
+			use Button as small { kind primary; size small }
+			use Button as "small icon" { kind primary; size small; shape icon }
+			use Button as "extra-small" { kind primary; size extra-small }
+			use Button as "extra-small icon" { kind primary; size extra-small; shape icon }
+		}
+		item secondary {
+			auto-layout row; gap 8; align center; clip yes
+			use Button as large { kind secondary; size large }
+			use Button as "large icon" { kind secondary; size large; shape icon }
+			use Button as medium { kind secondary; size medium }
+			use Button as "medium icon" { kind secondary; size medium; shape icon }
+			use Button as small { kind secondary; size small }
+			use Button as "small icon" { kind secondary; size small; shape icon }
+			use Button as "extra-small" { kind secondary; size extra-small }
+			use Button as "extra-small icon" { kind secondary; size extra-small; shape icon }
+		}
+		item tertiary {
+			auto-layout row; gap 8; align center; clip yes
+			use Button as large { kind tertiary; size large }
+			use Button as "large icon" { kind tertiary; size large; shape icon }
+			use Button as medium { kind tertiary; size medium }
+			use Button as "medium icon" { kind tertiary; size medium; shape icon }
+			use Button as small { kind tertiary; size small }
+			use Button as "small icon" { kind tertiary; size small; shape icon }
+			use Button as "extra-small" { kind tertiary; size extra-small }
+			use Button as "extra-small icon" { kind tertiary; size extra-small; shape icon }
+		}
+		item ghost {
+			auto-layout row; gap 8; align center; clip yes
+			use Button as large { kind ghost; size large }
+			use Button as "large icon" { kind ghost; size large; shape icon }
+			use Button as medium { kind ghost; size medium }
+			use Button as "medium icon" { kind ghost; size medium; shape icon }
+			use Button as small { kind ghost; size small }
+			use Button as "small icon" { kind ghost; size small; shape icon }
+			use Button as "extra-small" { kind ghost; size extra-small }
+			use Button as "extra-small icon" { kind ghost; size extra-small; shape icon }
+		}
+		item negative {
+			auto-layout row; gap 8; align center; clip yes
+			use Button as large { kind negative; size large }
+			use Button as "large icon" { kind negative; size large; shape icon }
+			use Button as medium { kind negative; size medium }
+			use Button as "medium icon" { kind negative; size medium; shape icon }
+			use Button as small { kind negative; size small }
+			use Button as "small icon" { kind negative; size small; shape icon }
+			use Button as "extra-small" { kind negative; size extra-small }
+			use Button as "extra-small icon" { kind negative; size extra-small; shape icon }
+		}
+		item brand {
+			auto-layout row; gap 8; align center; clip yes
+			use Button as large { kind brand; size large }
+			use Button as "large icon" { kind brand; size large; shape icon }
+			use Button as medium { kind brand; size medium }
+			use Button as "medium icon" { kind brand; size medium; shape icon }
+			use Button as small { kind brand; size small }
+			use Button as "small icon" { kind brand; size small; shape icon }
+			use Button as "extra-small" { kind brand; size extra-small }
+			use Button as "extra-small icon" { kind brand; size extra-small; shape icon }
+		}
+		item "Button states" {
+			auto-layout row; gap 8; align center; clip yes
+			use Button as default { state default }
+			use Button as hover { state hover }
+			use Button as focus { state focus }
+			use Button as disabled { state disabled }
+			use Button as loading { state loading }
+			use Button as pressed { kind secondary; pressed true }
+			use Button as menu { menu true }
+		}
+	}
 }
-item "§ Switcher" {
-	auto-layout abs; width 356; height 100; border-color #0000000f; corner-radius 8; pos 1484 0
+}
+item Switchers {
+	auto-layout abs; width 356; height 100; color #ffffff; border-color #0000000f; corner-radius 8; pos 1484 0
 	item title { title Switcher; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
-item "§ Menu" {
-	auto-layout abs; width 308; height 209; border-color #0000000f; corner-radius 8; pos 1888 0
+item Menus {
+	auto-layout abs; width 308; height 209; color #ffffff; border-color #0000000f; corner-radius 8; pos 1888 0
 	item title { title Menu; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
-item "§ ClassicButton" {
-	auto-layout abs; width 400; height 104; border-color #0000000f; corner-radius 8; pos 0 -516
+item ClassicButtons {
+	auto-layout abs; width 400; height 104; color #ffffff; border-color #0000000f; corner-radius 8; pos 0 -516
 	item title { title ClassicButton; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
-item "§ ClassicButtonCatalog" {
-	auto-layout abs; width 856; height 324; border-color #0000000f; corner-radius 8; pos 448 -516
+item "ClassicButton catalog" {
+	auto-layout abs; width 856; height 324; color #ffffff; border-color #0000000f; corner-radius 8; pos 448 -516
 	item title { title ClassicButtonCatalog; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+	item ClassicButtonCatalog {
+	pos 24 -44
+	item Catalog {
+		auto-layout column; gap 12; padding 24; clip yes; color #ffffff
+		item regular {
+			auto-layout row; gap 8; align center; clip yes
+			use ClassicButton as small { kind regular; size small }
+			use ClassicButton as "small icon" { kind regular; size small; shape icon }
+			use ClassicButton as medium { kind regular; size medium }
+			use ClassicButton as "medium icon" { kind regular; size medium; shape icon }
+			use ClassicButton as large { kind regular; size large }
+			use ClassicButton as "large icon" { kind regular; size large; shape icon }
+		}
+		item primary {
+			auto-layout row; gap 8; align center; clip yes
+			use ClassicButton as small { kind primary; size small }
+			use ClassicButton as "small icon" { kind primary; size small; shape icon }
+			use ClassicButton as medium { kind primary; size medium }
+			use ClassicButton as "medium icon" { kind primary; size medium; shape icon }
+			use ClassicButton as large { kind primary; size large }
+			use ClassicButton as "large icon" { kind primary; size large; shape icon }
+		}
+		item dangerous {
+			auto-layout row; gap 8; align center; clip yes
+			use ClassicButton as small { kind dangerous; size small }
+			use ClassicButton as "small icon" { kind dangerous; size small; shape icon }
+			use ClassicButton as medium { kind dangerous; size medium }
+			use ClassicButton as "medium icon" { kind dangerous; size medium; shape icon }
+			use ClassicButton as large { kind dangerous; size large }
+			use ClassicButton as "large icon" { kind dangerous; size large; shape icon }
+		}
+		item ghost {
+			auto-layout row; gap 8; align center; clip yes
+			use ClassicButton as small { kind ghost; size small }
+			use ClassicButton as "small icon" { kind ghost; size small; shape icon }
+			use ClassicButton as medium { kind ghost; size medium }
+			use ClassicButton as "medium icon" { kind ghost; size medium; shape icon }
+			use ClassicButton as large { kind ghost; size large }
+			use ClassicButton as "large icon" { kind ghost; size large; shape icon }
+		}
+		item icon {
+			auto-layout row; gap 8; align center; clip yes
+			use ClassicButton as small { kind icon; size small }
+			use ClassicButton as "small icon" { kind icon; size small; shape icon }
+			use ClassicButton as medium { kind icon; size medium }
+			use ClassicButton as "medium icon" { kind icon; size medium; shape icon }
+			use ClassicButton as large { kind icon; size large }
+			use ClassicButton as "large icon" { kind icon; size large; shape icon }
+		}
+	}
 }
-item "§ Modal" {
-	auto-layout abs; width 648; height 240; border-color #0000000f; corner-radius 8; pos 1352 -516
+}
+item Modals {
+	auto-layout abs; width 648; height 240; color #ffffff; border-color #0000000f; corner-radius 8; pos 1352 -516
 	item title { title Modal; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item Button {
@@ -111,88 +244,6 @@ item Button {
 			width 16; height 16; view-box 0 0 24 24
 			color ${kind === "primary" || kind === "brand" || kind === "negative" || kind === "dangerous" ? "#ffffff" : kind === "tertiary" ? "#6b3ad3" : "#0f121a"}
 			path "M12,1A11,11 0 1 1 1,12L3,12A9,9 0 1 0 12,3Z"
-		}
-	}
-}
-item ButtonCatalog {
-	pos 252 -44
-	item Catalog {
-		auto-layout column; gap 12; padding 24; clip yes; color #ffffff
-		item primary {
-			auto-layout row; gap 8; align center; clip yes
-			use Button as large { kind primary; size large }
-			use Button as "large icon" { kind primary; size large; shape icon }
-			use Button as medium { kind primary; size medium }
-			use Button as "medium icon" { kind primary; size medium; shape icon }
-			use Button as small { kind primary; size small }
-			use Button as "small icon" { kind primary; size small; shape icon }
-			use Button as "extra-small" { kind primary; size extra-small }
-			use Button as "extra-small icon" { kind primary; size extra-small; shape icon }
-		}
-		item secondary {
-			auto-layout row; gap 8; align center; clip yes
-			use Button as large { kind secondary; size large }
-			use Button as "large icon" { kind secondary; size large; shape icon }
-			use Button as medium { kind secondary; size medium }
-			use Button as "medium icon" { kind secondary; size medium; shape icon }
-			use Button as small { kind secondary; size small }
-			use Button as "small icon" { kind secondary; size small; shape icon }
-			use Button as "extra-small" { kind secondary; size extra-small }
-			use Button as "extra-small icon" { kind secondary; size extra-small; shape icon }
-		}
-		item tertiary {
-			auto-layout row; gap 8; align center; clip yes
-			use Button as large { kind tertiary; size large }
-			use Button as "large icon" { kind tertiary; size large; shape icon }
-			use Button as medium { kind tertiary; size medium }
-			use Button as "medium icon" { kind tertiary; size medium; shape icon }
-			use Button as small { kind tertiary; size small }
-			use Button as "small icon" { kind tertiary; size small; shape icon }
-			use Button as "extra-small" { kind tertiary; size extra-small }
-			use Button as "extra-small icon" { kind tertiary; size extra-small; shape icon }
-		}
-		item ghost {
-			auto-layout row; gap 8; align center; clip yes
-			use Button as large { kind ghost; size large }
-			use Button as "large icon" { kind ghost; size large; shape icon }
-			use Button as medium { kind ghost; size medium }
-			use Button as "medium icon" { kind ghost; size medium; shape icon }
-			use Button as small { kind ghost; size small }
-			use Button as "small icon" { kind ghost; size small; shape icon }
-			use Button as "extra-small" { kind ghost; size extra-small }
-			use Button as "extra-small icon" { kind ghost; size extra-small; shape icon }
-		}
-		item negative {
-			auto-layout row; gap 8; align center; clip yes
-			use Button as large { kind negative; size large }
-			use Button as "large icon" { kind negative; size large; shape icon }
-			use Button as medium { kind negative; size medium }
-			use Button as "medium icon" { kind negative; size medium; shape icon }
-			use Button as small { kind negative; size small }
-			use Button as "small icon" { kind negative; size small; shape icon }
-			use Button as "extra-small" { kind negative; size extra-small }
-			use Button as "extra-small icon" { kind negative; size extra-small; shape icon }
-		}
-		item brand {
-			auto-layout row; gap 8; align center; clip yes
-			use Button as large { kind brand; size large }
-			use Button as "large icon" { kind brand; size large; shape icon }
-			use Button as medium { kind brand; size medium }
-			use Button as "medium icon" { kind brand; size medium; shape icon }
-			use Button as small { kind brand; size small }
-			use Button as "small icon" { kind brand; size small; shape icon }
-			use Button as "extra-small" { kind brand; size extra-small }
-			use Button as "extra-small icon" { kind brand; size extra-small; shape icon }
-		}
-		item "Button states" {
-			auto-layout row; gap 8; align center; clip yes
-			use Button as default { state default }
-			use Button as hover { state hover }
-			use Button as focus { state focus }
-			use Button as disabled { state disabled }
-			use Button as loading { state loading }
-			use Button as pressed { kind secondary; pressed true }
-			use Button as menu { menu true }
 		}
 	}
 }
@@ -295,57 +346,6 @@ item ClassicButton {
 			width 16; height 16; view-box 0 0 24 24
 			color ${kind === "primary" || kind === "brand" || kind === "negative" || kind === "dangerous" ? "#ffffff" : kind === "tertiary" ? "#6b3ad3" : "#0f121a"}
 			path "M12,1A11,11 0 1 1 1,12L3,12A9,9 0 1 0 12,3Z"
-		}
-	}
-}
-item ClassicButtonCatalog {
-	pos 472 -560
-	item Catalog {
-		auto-layout column; gap 12; padding 24; clip yes; color #ffffff
-		item regular {
-			auto-layout row; gap 8; align center; clip yes
-			use ClassicButton as small { kind regular; size small }
-			use ClassicButton as "small icon" { kind regular; size small; shape icon }
-			use ClassicButton as medium { kind regular; size medium }
-			use ClassicButton as "medium icon" { kind regular; size medium; shape icon }
-			use ClassicButton as large { kind regular; size large }
-			use ClassicButton as "large icon" { kind regular; size large; shape icon }
-		}
-		item primary {
-			auto-layout row; gap 8; align center; clip yes
-			use ClassicButton as small { kind primary; size small }
-			use ClassicButton as "small icon" { kind primary; size small; shape icon }
-			use ClassicButton as medium { kind primary; size medium }
-			use ClassicButton as "medium icon" { kind primary; size medium; shape icon }
-			use ClassicButton as large { kind primary; size large }
-			use ClassicButton as "large icon" { kind primary; size large; shape icon }
-		}
-		item dangerous {
-			auto-layout row; gap 8; align center; clip yes
-			use ClassicButton as small { kind dangerous; size small }
-			use ClassicButton as "small icon" { kind dangerous; size small; shape icon }
-			use ClassicButton as medium { kind dangerous; size medium }
-			use ClassicButton as "medium icon" { kind dangerous; size medium; shape icon }
-			use ClassicButton as large { kind dangerous; size large }
-			use ClassicButton as "large icon" { kind dangerous; size large; shape icon }
-		}
-		item ghost {
-			auto-layout row; gap 8; align center; clip yes
-			use ClassicButton as small { kind ghost; size small }
-			use ClassicButton as "small icon" { kind ghost; size small; shape icon }
-			use ClassicButton as medium { kind ghost; size medium }
-			use ClassicButton as "medium icon" { kind ghost; size medium; shape icon }
-			use ClassicButton as large { kind ghost; size large }
-			use ClassicButton as "large icon" { kind ghost; size large; shape icon }
-		}
-		item icon {
-			auto-layout row; gap 8; align center; clip yes
-			use ClassicButton as small { kind icon; size small }
-			use ClassicButton as "small icon" { kind icon; size small; shape icon }
-			use ClassicButton as medium { kind icon; size medium }
-			use ClassicButton as "medium icon" { kind icon; size medium; shape icon }
-			use ClassicButton as large { kind icon; size large }
-			use ClassicButton as "large icon" { kind icon; size large; shape icon }
 		}
 	}
 }

@@ -123,10 +123,10 @@ element "1 Текущий канбан (as-is)" {
 			}
 			item Kanban {
 				auto-layout row; padding 24 0 0 24; width 1513; height 930; clip yes; pos 2 -114
-				use Libraries.tracker_kit.KanbanColumn as "Column Backlog" {
+				use Libraries.tracker_kit.Kanban.KanbanColumn as "Column Backlog" {
 					height 898
 					replace ColumnHeader_In_Progress {
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader Backlog" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader Backlog" {
 							padding 0 8 0 20; color #e1e1e3
 							replace title.Status_StatusIcon_active {
 								use Libraries.ui_kit.Status.StatusIcon as "Status/StatusIcon/backlog" { category backlog }
@@ -136,7 +136,7 @@ element "1 Текущий канбан (as-is)" {
 						}
 					}
 					slot cards {
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-10" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-10" {
 							density normal; width 278
 							at top.left.id { title APP-10 }
 							replace top.Avatar_20 {
@@ -174,7 +174,7 @@ element "1 Текущий канбан (as-is)" {
 								}
 							}
 						}
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-11" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-11" {
 							density normal; width 278
 							at top.left.id { title APP-11 }
 							replace top.Avatar_20 {
@@ -204,7 +204,7 @@ element "1 Текущий канбан (as-is)" {
 								}
 							}
 						}
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-5" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-5" {
 							density normal; width 278
 							at top.left.id { title APP-5 }
 							replace top.Avatar_20 {
@@ -231,10 +231,10 @@ element "1 Текущий канбан (as-is)" {
 						}
 					}
 				}
-				use Libraries.tracker_kit.KanbanColumn as "Column Todo" {
+				use Libraries.tracker_kit.Kanban.KanbanColumn as "Column Todo" {
 					height 898
 					replace ColumnHeader_In_Progress {
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader Todo" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader Todo" {
 							padding 0 8 0 20; color #d8dbe1
 							replace title.Status_StatusIcon_active {
 								use Libraries.ui_kit.Status.StatusIcon as "Status/StatusIcon/todo" { category todo }
@@ -244,7 +244,7 @@ element "1 Текущий канбан (as-is)" {
 						}
 					}
 					slot cards {
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-13" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-13" {
 							width 278
 							at top.left.id { title APP-13 }
 							replace top.Avatar_20 {
@@ -274,7 +274,7 @@ element "1 Текущий канбан (as-is)" {
 								}
 							}
 						}
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-14" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-14" {
 							width 278
 							at top.left.id { title APP-14 }
 							replace top.Avatar_20 {
@@ -304,7 +304,7 @@ element "1 Текущий канбан (as-is)" {
 								}
 							}
 						}
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-4" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-4" {
 							width 278
 							at top.left.id { title APP-4 }
 							replace top.Avatar_20 {
@@ -339,7 +339,7 @@ element "1 Текущий канбан (as-is)" {
 								}
 							}
 						}
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-8" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-8" {
 							width 278
 							at top.left.id { title APP-8 }
 							replace top.Avatar_20 {
@@ -376,16 +376,16 @@ element "1 Текущий канбан (as-is)" {
 						}
 					}
 				}
-				use Libraries.tracker_kit.KanbanColumn as "Column In Progress" {
+				use Libraries.tracker_kit.Kanban.KanbanColumn as "Column In Progress" {
 					height 898
 					replace ColumnHeader_In_Progress {
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader In Progress" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader In Progress" {
 							at title._6 { title "5" }
 							at tools__hover_ { hidden no }
 						}
 					}
 					slot cards {
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-3" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-3" {
 							width 278
 							at top.left.id { title APP-3 }
 							replace top.Avatar_20 {
@@ -431,7 +431,7 @@ element "1 Текущий канбан (as-is)" {
 								}
 							}
 						}
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-17" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-17" {
 							width 278
 							at top.left.id { title APP-17 }
 							at top.left.parent { hidden no; title "› Push notifications for order s…" }
@@ -463,7 +463,7 @@ element "1 Текущий канбан (as-is)" {
 								}
 							}
 						}
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-6" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-6" {
 							width 278
 							at top.left.id { title APP-6 }
 							replace top.Avatar_20 {
@@ -499,7 +499,7 @@ element "1 Текущий канбан (as-is)" {
 								}
 							}
 						}
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-9" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-9" {
 							width 278
 							at top.left.id { title APP-9 }
 							replace top.Avatar_20 {
@@ -542,10 +542,10 @@ element "1 Текущий канбан (as-is)" {
 						}
 					}
 				}
-				use Libraries.tracker_kit.KanbanColumn as "Column Done" {
+				use Libraries.tracker_kit.Kanban.KanbanColumn as "Column Done" {
 					height 898
 					replace ColumnHeader_In_Progress {
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader Done" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader Done" {
 							padding 0 8 0 20; color #dbe4c7
 							replace title.Status_StatusIcon_active {
 								use Libraries.ui_kit.Status.StatusIcon as "Status/StatusIcon/won" { category won }
@@ -555,7 +555,7 @@ element "1 Текущий канбан (as-is)" {
 						}
 					}
 					slot cards {
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-1" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-1" {
 							width 278
 							at top.left.id { title APP-1 }
 							replace top.Avatar_20 {
@@ -592,7 +592,7 @@ element "1 Текущий канбан (as-is)" {
 								}
 							}
 						}
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-12" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-12" {
 							width 278
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -618,7 +618,7 @@ element "1 Текущий канбан (as-is)" {
 								}
 							}
 						}
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-2" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-2" {
 							width 278
 							at top.left.id { title APP-2 }
 							replace top.Avatar_20 {
@@ -650,7 +650,7 @@ element "1 Текущий канбан (as-is)" {
 								}
 							}
 						}
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-16" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-16" {
 							width 278
 							at top.left.id { title APP-16 }
 							at top.left.parent { hidden no; title "› Push notifications for order s…" }
@@ -685,10 +685,10 @@ element "1 Текущий канбан (as-is)" {
 						}
 					}
 				}
-				use Libraries.tracker_kit.KanbanColumn as "Column Canceled" {
+				use Libraries.tracker_kit.Kanban.KanbanColumn as "Column Canceled" {
 					height 898
 					replace ColumnHeader_In_Progress {
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader Canceled" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader Canceled" {
 							padding 0 8 0 20; color #dedee1
 							replace title.Status_StatusIcon_active {
 								use Libraries.ui_kit.Status.StatusIcon as "Status/StatusIcon/lost" { category lost }
@@ -698,7 +698,7 @@ element "1 Текущий канбан (as-is)" {
 						}
 					}
 					slot cards {
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-15" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-15" {
 							density normal; width 278
 							at top.left.id { title APP-15 }
 							replace top.Avatar_20 {
@@ -922,7 +922,7 @@ element "2 Доска (to-be)" {
 					auto-layout row; gap 12; width 1483; clip yes
 					item "Column To Do" {
 						auto-layout column; gap 6; width 234; clip yes
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader To Do" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader To Do" {
 							padding 0 8 0 20; width 234; color #d8dbe1
 							replace title.Status_StatusIcon_active {
 								use Libraries.ui_kit.Status.StatusIcon as "Status/StatusIcon/todo" { category todo }
@@ -933,7 +933,7 @@ element "2 Доска (to-be)" {
 					}
 					item "Column On Hold" {
 						auto-layout column; gap 6; width 234; clip yes
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader On Hold" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader On Hold" {
 							padding 0 8 0 20; width 234; color #d8dbe1
 							replace title.Status_StatusIcon_active {
 								use Libraries.ui_kit.Status.StatusIcon as "Status/StatusIcon/todo" { category todo }
@@ -944,7 +944,7 @@ element "2 Доска (to-be)" {
 					}
 					item "Column In Progress" {
 						auto-layout column; gap 6; width 234; clip yes
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader In Progress" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader In Progress" {
 							padding 0 8 0 20; width 234
 							at title._6 { title "10" }
 							at title.__8 { hidden no; text-color #cb4b42 }
@@ -952,7 +952,7 @@ element "2 Доска (to-be)" {
 					}
 					item "Column Peer Review" {
 						auto-layout column; gap 6; width 234; clip yes
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader Peer Review" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader Peer Review" {
 							padding 0 8 0 20; width 234
 							at title.In_Progress { title "Peer Review" }
 							at title._6 { title "2" }
@@ -960,7 +960,7 @@ element "2 Доска (to-be)" {
 					}
 					item "Column Ready for QA" {
 						auto-layout column; gap 6; width 234; clip yes
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader Ready for QA" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader Ready for QA" {
 							padding 0 8 0 20; width 234
 							at title.In_Progress { title "Ready for QA" }
 							at title._6 { title "1" }
@@ -969,7 +969,7 @@ element "2 Доска (to-be)" {
 					}
 					item "Column Done" {
 						auto-layout column; gap 6; width 234; clip yes
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader Done" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader Done" {
 							padding 0 8 0 20; width 234; color #dbe4c7
 							replace title.Status_StatusIcon_active {
 								use Libraries.ui_kit.Status.StatusIcon as "Status/StatusIcon/won" { category won }
@@ -994,7 +994,7 @@ element "2 Доска (to-be)" {
 					item cell { auto-layout column; gap 8; width 234; clip yes }
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-6" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-6" {
 							at top.left.id { title APP-6 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -1033,7 +1033,7 @@ element "2 Доска (to-be)" {
 					item cell { auto-layout column; gap 8; width 234; clip yes }
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-7" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-7" {
 							at top.left.id { title APP-7 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -1082,7 +1082,7 @@ element "2 Доска (to-be)" {
 					auto-layout row; gap 12; width 1483; clip yes
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard MKT-2" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard MKT-2" {
 							at top.left.id { title MKT-2 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -1104,7 +1104,7 @@ element "2 Доска (to-be)" {
 								}
 							}
 						}
-						use Libraries.tracker_kit.IssueCard as "IssueCard MKT-5" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard MKT-5" {
 							at top.left.id { title MKT-5 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -1130,7 +1130,7 @@ element "2 Доска (to-be)" {
 					}
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-22" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-22" {
 							at top.left.id { title APP-22 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -1156,7 +1156,7 @@ element "2 Доска (to-be)" {
 					}
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard MKT-1" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard MKT-1" {
 							at top.left.id { title MKT-1 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -1180,7 +1180,7 @@ element "2 Доска (to-be)" {
 								}
 							}
 						}
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-3" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-3" {
 							at top.left.id { title APP-3 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -1227,7 +1227,7 @@ element "2 Доска (to-be)" {
 					}
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-27" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-27" {
 							border-color #d15045; line-width 2
 							at top.left.id { title APP-27 }
 							replace top.Avatar_20 {
@@ -1252,7 +1252,7 @@ element "2 Доска (to-be)" {
 								}
 							}
 						}
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-28" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-28" {
 							border-color #d15045; line-width 2
 							at top.left.id { title APP-28 }
 							replace top.Avatar_20 {
@@ -1280,7 +1280,7 @@ element "2 Доска (to-be)" {
 					}
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-29" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-29" {
 							border-color #d27540; line-width 2
 							at top.left.id { title APP-29 }
 							replace top.Avatar_20 {
@@ -1308,7 +1308,7 @@ element "2 Доска (to-be)" {
 					}
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard MKT-4" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard MKT-4" {
 							at top.left.id { title MKT-4 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -1333,7 +1333,7 @@ element "2 Доска (to-be)" {
 								}
 							}
 						}
-						use Libraries.tracker_kit.IssueCard as "IssueCard MKT-6" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard MKT-6" {
 							density normal
 							at top.left.id { title MKT-6 }
 							replace top.Avatar_20 {
@@ -1589,7 +1589,7 @@ element "2 Доска (to-be)" {
 					auto-layout row; gap 12; width 1483; clip yes
 					item "Column To Do" {
 						auto-layout column; gap 6; width 234; clip yes
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader To Do" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader To Do" {
 							padding 0 8 0 20; width 234; color #d8dbe1
 							replace title.Status_StatusIcon_active {
 								use Libraries.ui_kit.Status.StatusIcon as "Status/StatusIcon/todo" { category todo }
@@ -1600,7 +1600,7 @@ element "2 Доска (to-be)" {
 					}
 					item "Column On Hold" {
 						auto-layout column; gap 6; width 234; clip yes
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader On Hold" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader On Hold" {
 							padding 0 8 0 20; width 234; color #d8dbe1
 							replace title.Status_StatusIcon_active {
 								use Libraries.ui_kit.Status.StatusIcon as "Status/StatusIcon/todo" { category todo }
@@ -1611,7 +1611,7 @@ element "2 Доска (to-be)" {
 					}
 					item "Column In Progress" {
 						auto-layout column; gap 6; width 234; clip yes
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader In Progress" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader In Progress" {
 							padding 0 8 0 20; width 234
 							at title._6 { title "10" }
 							at title.__8 { hidden no; text-color #cb4b42 }
@@ -1619,7 +1619,7 @@ element "2 Доска (to-be)" {
 					}
 					item "Column Peer Review" {
 						auto-layout column; gap 6; width 234; clip yes
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader Peer Review" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader Peer Review" {
 							padding 0 8 0 20; width 234
 							at title.In_Progress { title "Peer Review" }
 							at title._6 { title "2" }
@@ -1627,7 +1627,7 @@ element "2 Доска (to-be)" {
 					}
 					item "Column Ready for QA" {
 						auto-layout column; gap 6; width 234; clip yes
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader Ready for QA" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader Ready for QA" {
 							padding 0 8 0 20; width 234
 							at title.In_Progress { title "Ready for QA" }
 							at title._6 { title "1" }
@@ -1636,7 +1636,7 @@ element "2 Доска (to-be)" {
 					}
 					item "Column Done" {
 						auto-layout column; gap 6; width 234; clip yes
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader Done" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader Done" {
 							padding 0 8 0 20; width 234; color #dbe4c7
 							replace title.Status_StatusIcon_active {
 								use Libraries.ui_kit.Status.StatusIcon as "Status/StatusIcon/won" { category won }
@@ -1661,7 +1661,7 @@ element "2 Доска (to-be)" {
 					item cell { auto-layout column; gap 8; width 234; clip yes }
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-6" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-6" {
 							at top.left.id { title APP-6 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -1700,7 +1700,7 @@ element "2 Доска (to-be)" {
 					item cell { auto-layout column; gap 8; width 234; clip yes }
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-7" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-7" {
 							at top.left.id { title APP-7 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -1749,7 +1749,7 @@ element "2 Доска (to-be)" {
 					auto-layout row; gap 12; width 1483; clip yes
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard MKT-2" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard MKT-2" {
 							at top.left.id { title MKT-2 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -1771,7 +1771,7 @@ element "2 Доска (to-be)" {
 								}
 							}
 						}
-						use Libraries.tracker_kit.IssueCard as "IssueCard MKT-5" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard MKT-5" {
 							at top.left.id { title MKT-5 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -1797,7 +1797,7 @@ element "2 Доска (to-be)" {
 					}
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-22" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-22" {
 							at top.left.id { title APP-22 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -1823,7 +1823,7 @@ element "2 Доска (to-be)" {
 					}
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard MKT-1" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard MKT-1" {
 							at top.left.id { title MKT-1 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -1847,7 +1847,7 @@ element "2 Доска (to-be)" {
 								}
 							}
 						}
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-3" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-3" {
 							at top.left.id { title APP-3 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -1894,7 +1894,7 @@ element "2 Доска (to-be)" {
 					}
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-27" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-27" {
 							border-color #d15045; line-width 2
 							at top.left.id { title APP-27 }
 							replace top.Avatar_20 {
@@ -1919,7 +1919,7 @@ element "2 Доска (to-be)" {
 								}
 							}
 						}
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-28" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-28" {
 							border-color #d15045; line-width 2
 							at top.left.id { title APP-28 }
 							replace top.Avatar_20 {
@@ -1947,7 +1947,7 @@ element "2 Доска (to-be)" {
 					}
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-29" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-29" {
 							border-color #d27540; line-width 2
 							at top.left.id { title APP-29 }
 							replace top.Avatar_20 {
@@ -1975,7 +1975,7 @@ element "2 Доска (to-be)" {
 					}
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard MKT-4" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard MKT-4" {
 							at top.left.id { title MKT-4 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -2000,7 +2000,7 @@ element "2 Доска (to-be)" {
 								}
 							}
 						}
-						use Libraries.tracker_kit.IssueCard as "IssueCard MKT-6" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard MKT-6" {
 							density normal
 							at top.left.id { title MKT-6 }
 							replace top.Avatar_20 {
@@ -2319,7 +2319,7 @@ element "2 Доска (to-be)" {
 					auto-layout row; gap 12; width 1483; clip yes
 					item "Column To Do" {
 						auto-layout column; gap 6; width 234; clip yes
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader To Do" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader To Do" {
 							padding 0 8 0 20; width 234; color #d8dbe1
 							replace title.Status_StatusIcon_active {
 								use Libraries.ui_kit.Status.StatusIcon as "Status/StatusIcon/todo" { category todo }
@@ -2330,7 +2330,7 @@ element "2 Доска (to-be)" {
 					}
 					item "Column On Hold" {
 						auto-layout column; gap 6; width 234; clip yes
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader On Hold" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader On Hold" {
 							padding 0 8 0 20; width 234; color #d8dbe1
 							replace title.Status_StatusIcon_active {
 								use Libraries.ui_kit.Status.StatusIcon as "Status/StatusIcon/todo" { category todo }
@@ -2341,7 +2341,7 @@ element "2 Доска (to-be)" {
 					}
 					item "Column In Progress" {
 						auto-layout column; gap 6; width 234; clip yes
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader In Progress" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader In Progress" {
 							padding 0 8 0 20; width 234
 							at title._6 { title "10" }
 							at title.__8 { hidden no; text-color #cb4b42 }
@@ -2349,7 +2349,7 @@ element "2 Доска (to-be)" {
 					}
 					item "Column Peer Review" {
 						auto-layout column; gap 6; width 234; clip yes
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader Peer Review" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader Peer Review" {
 							padding 0 8 0 20; width 234
 							at title.In_Progress { title "Peer Review" }
 							at title._6 { title "2" }
@@ -2357,7 +2357,7 @@ element "2 Доска (to-be)" {
 					}
 					item "Column Ready for QA" {
 						auto-layout column; gap 6; width 234; clip yes
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader Ready for QA" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader Ready for QA" {
 							padding 0 8 0 20; width 234
 							at title.In_Progress { title "Ready for QA" }
 							at title._6 { title "1" }
@@ -2366,7 +2366,7 @@ element "2 Доска (to-be)" {
 					}
 					item "Column Done" {
 						auto-layout column; gap 6; width 234; clip yes
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader Done" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader Done" {
 							padding 0 8 0 20; width 234; color #dbe4c7
 							replace title.Status_StatusIcon_active {
 								use Libraries.ui_kit.Status.StatusIcon as "Status/StatusIcon/won" { category won }
@@ -2391,7 +2391,7 @@ element "2 Доска (to-be)" {
 					item cell { auto-layout column; gap 8; width 234; clip yes }
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-6" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-6" {
 							at top.left.id { title APP-6 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -2430,7 +2430,7 @@ element "2 Доска (to-be)" {
 					item cell { auto-layout column; gap 8; width 234; clip yes }
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-7" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-7" {
 							at top.left.id { title APP-7 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -2479,7 +2479,7 @@ element "2 Доска (to-be)" {
 					auto-layout row; gap 12; width 1483; clip yes
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard MKT-2" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard MKT-2" {
 							at top.left.id { title MKT-2 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -2501,7 +2501,7 @@ element "2 Доска (to-be)" {
 								}
 							}
 						}
-						use Libraries.tracker_kit.IssueCard as "IssueCard MKT-5" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard MKT-5" {
 							at top.left.id { title MKT-5 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -2527,7 +2527,7 @@ element "2 Доска (to-be)" {
 					}
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-22" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-22" {
 							at top.left.id { title APP-22 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -2553,7 +2553,7 @@ element "2 Доска (to-be)" {
 					}
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard MKT-1" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard MKT-1" {
 							at top.left.id { title MKT-1 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -2577,7 +2577,7 @@ element "2 Доска (to-be)" {
 								}
 							}
 						}
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-3" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-3" {
 							at top.left.id { title APP-3 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -2624,7 +2624,7 @@ element "2 Доска (to-be)" {
 					}
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-27" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-27" {
 							border-color #d15045; line-width 2
 							at top.left.id { title APP-27 }
 							replace top.Avatar_20 {
@@ -2649,7 +2649,7 @@ element "2 Доска (to-be)" {
 								}
 							}
 						}
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-28" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-28" {
 							border-color #d15045; line-width 2
 							at top.left.id { title APP-28 }
 							replace top.Avatar_20 {
@@ -2677,7 +2677,7 @@ element "2 Доска (to-be)" {
 					}
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-29" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-29" {
 							border-color #d27540; line-width 2
 							at top.left.id { title APP-29 }
 							replace top.Avatar_20 {
@@ -2705,7 +2705,7 @@ element "2 Доска (to-be)" {
 					}
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard MKT-4" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard MKT-4" {
 							at top.left.id { title MKT-4 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -2730,7 +2730,7 @@ element "2 Доска (to-be)" {
 								}
 							}
 						}
-						use Libraries.tracker_kit.IssueCard as "IssueCard MKT-6" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard MKT-6" {
 							density normal
 							at top.left.id { title MKT-6 }
 							replace top.Avatar_20 {
@@ -2992,7 +2992,7 @@ element "2 Доска (to-be)" {
 					auto-layout row; gap 12; width 1483; clip yes
 					item "Column To Do" {
 						auto-layout column; gap 6; width 234; clip yes
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader To Do" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader To Do" {
 							padding 0 8 0 20; width 234; color #d8dbe1
 							replace title.Status_StatusIcon_active {
 								use Libraries.ui_kit.Status.StatusIcon as "Status/StatusIcon/todo" { category todo }
@@ -3003,7 +3003,7 @@ element "2 Доска (to-be)" {
 					}
 					item "Column On Hold" {
 						auto-layout column; gap 6; width 234; clip yes
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader On Hold" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader On Hold" {
 							padding 0 8 0 20; width 234; color #d8dbe1
 							replace title.Status_StatusIcon_active {
 								use Libraries.ui_kit.Status.StatusIcon as "Status/StatusIcon/todo" { category todo }
@@ -3014,7 +3014,7 @@ element "2 Доска (to-be)" {
 					}
 					item "Column In Progress" {
 						auto-layout column; gap 6; width 234; clip yes
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader In Progress" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader In Progress" {
 							padding 0 8 0 20; width 234
 							at title._6 { title "10" }
 							at title.__8 { hidden no; text-color #cb4b42 }
@@ -3022,7 +3022,7 @@ element "2 Доска (to-be)" {
 					}
 					item "Column Peer Review" {
 						auto-layout column; gap 6; width 234; clip yes
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader Peer Review" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader Peer Review" {
 							padding 0 8 0 20; width 234
 							at title.In_Progress { title "Peer Review" }
 							at title._6 { title "2" }
@@ -3030,7 +3030,7 @@ element "2 Доска (to-be)" {
 					}
 					item "Column Ready for QA" {
 						auto-layout column; gap 6; width 234; clip yes
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader Ready for QA" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader Ready for QA" {
 							padding 0 8 0 20; width 234
 							at title.In_Progress { title "Ready for QA" }
 							at title._6 { title "1" }
@@ -3039,7 +3039,7 @@ element "2 Доска (to-be)" {
 					}
 					item "Column Done" {
 						auto-layout column; gap 6; width 234; clip yes
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader Done" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader Done" {
 							padding 0 8 0 20; width 234; color #dbe4c7
 							replace title.Status_StatusIcon_active {
 								use Libraries.ui_kit.Status.StatusIcon as "Status/StatusIcon/won" { category won }
@@ -3064,7 +3064,7 @@ element "2 Доска (to-be)" {
 					item cell { auto-layout column; gap 8; width 234; clip yes }
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-6" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-6" {
 							at top.left.id { title APP-6 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -3103,7 +3103,7 @@ element "2 Доска (to-be)" {
 					item cell { auto-layout column; gap 8; width 234; clip yes }
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-7" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-7" {
 							at top.left.id { title APP-7 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -3152,7 +3152,7 @@ element "2 Доска (to-be)" {
 					auto-layout row; gap 12; width 1483; clip yes
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard MKT-2" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard MKT-2" {
 							at top.left.id { title MKT-2 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -3174,7 +3174,7 @@ element "2 Доска (to-be)" {
 								}
 							}
 						}
-						use Libraries.tracker_kit.IssueCard as "IssueCard MKT-5" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard MKT-5" {
 							at top.left.id { title MKT-5 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -3200,7 +3200,7 @@ element "2 Доска (to-be)" {
 					}
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-22" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-22" {
 							at top.left.id { title APP-22 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -3226,7 +3226,7 @@ element "2 Доска (to-be)" {
 					}
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard MKT-1" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard MKT-1" {
 							at top.left.id { title MKT-1 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -3250,7 +3250,7 @@ element "2 Доска (to-be)" {
 								}
 							}
 						}
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-3" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-3" {
 							at top.left.id { title APP-3 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -3297,7 +3297,7 @@ element "2 Доска (to-be)" {
 					}
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-27" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-27" {
 							border-color #d15045; line-width 2
 							at top.left.id { title APP-27 }
 							replace top.Avatar_20 {
@@ -3322,7 +3322,7 @@ element "2 Доска (to-be)" {
 								}
 							}
 						}
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-28" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-28" {
 							border-color #d15045; line-width 2
 							at top.left.id { title APP-28 }
 							replace top.Avatar_20 {
@@ -3350,7 +3350,7 @@ element "2 Доска (to-be)" {
 					}
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-29" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-29" {
 							border-color #d27540; line-width 2
 							at top.left.id { title APP-29 }
 							replace top.Avatar_20 {
@@ -3378,7 +3378,7 @@ element "2 Доска (to-be)" {
 					}
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard MKT-4" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard MKT-4" {
 							at top.left.id { title MKT-4 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -3403,7 +3403,7 @@ element "2 Доска (to-be)" {
 								}
 							}
 						}
-						use Libraries.tracker_kit.IssueCard as "IssueCard MKT-6" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard MKT-6" {
 							density normal
 							at top.left.id { title MKT-6 }
 							replace top.Avatar_20 {
@@ -3696,7 +3696,7 @@ element "2 Доска (to-be)" {
 					auto-layout row; gap 12; width 1483; clip yes
 					item "Column To Do" {
 						auto-layout column; gap 6; width 234; clip yes
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader To Do" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader To Do" {
 							padding 0 8 0 20; width 234; color #d8dbe1
 							replace title.Status_StatusIcon_active {
 								use Libraries.ui_kit.Status.StatusIcon as "Status/StatusIcon/todo" { category todo }
@@ -3707,7 +3707,7 @@ element "2 Доска (to-be)" {
 					}
 					item "Column On Hold" {
 						auto-layout column; gap 6; width 234; clip yes
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader On Hold" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader On Hold" {
 							padding 0 8 0 20; width 234; color #d8dbe1
 							replace title.Status_StatusIcon_active {
 								use Libraries.ui_kit.Status.StatusIcon as "Status/StatusIcon/todo" { category todo }
@@ -3718,7 +3718,7 @@ element "2 Доска (to-be)" {
 					}
 					item "Column In Progress" {
 						auto-layout column; gap 6; width 234; clip yes
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader In Progress" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader In Progress" {
 							padding 0 8 0 20; width 234
 							at title._6 { title "10" }
 							at title.__8 { hidden no; text-color #cb4b42 }
@@ -3726,7 +3726,7 @@ element "2 Доска (to-be)" {
 					}
 					item "Column Peer Review" {
 						auto-layout column; gap 6; width 234; clip yes
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader Peer Review" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader Peer Review" {
 							padding 0 8 0 20; width 234
 							at title.In_Progress { title "Peer Review" }
 							at title._6 { title "2" }
@@ -3734,7 +3734,7 @@ element "2 Доска (to-be)" {
 					}
 					item "Column Ready for QA" {
 						auto-layout column; gap 6; width 234; clip yes
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader Ready for QA" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader Ready for QA" {
 							padding 0 8 0 20; width 234
 							at title.In_Progress { title "Ready for QA" }
 							at title._6 { title "1" }
@@ -3743,7 +3743,7 @@ element "2 Доска (to-be)" {
 					}
 					item "Column Done" {
 						auto-layout column; gap 6; width 234; clip yes
-						use Libraries.tracker_kit.ColumnHeader as "ColumnHeader Done" {
+						use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader Done" {
 							padding 0 8 0 20; width 234; color #dbe4c7
 							replace title.Status_StatusIcon_active {
 								use Libraries.ui_kit.Status.StatusIcon as "Status/StatusIcon/won" { category won }
@@ -3768,7 +3768,7 @@ element "2 Доска (to-be)" {
 					item cell { auto-layout column; gap 8; width 234; clip yes }
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-6" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-6" {
 							at top.left.id { title APP-6 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -3807,7 +3807,7 @@ element "2 Доска (to-be)" {
 					item cell { auto-layout column; gap 8; width 234; clip yes }
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-7" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-7" {
 							at top.left.id { title APP-7 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -3856,7 +3856,7 @@ element "2 Доска (to-be)" {
 					auto-layout row; gap 12; width 1483; clip yes
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard MKT-2" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard MKT-2" {
 							at top.left.id { title MKT-2 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -3878,7 +3878,7 @@ element "2 Доска (to-be)" {
 								}
 							}
 						}
-						use Libraries.tracker_kit.IssueCard as "IssueCard MKT-5" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard MKT-5" {
 							at top.left.id { title MKT-5 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -3904,7 +3904,7 @@ element "2 Доска (to-be)" {
 					}
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-22" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-22" {
 							at top.left.id { title APP-22 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -3930,7 +3930,7 @@ element "2 Доска (to-be)" {
 					}
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard MKT-1" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard MKT-1" {
 							at top.left.id { title MKT-1 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -3954,7 +3954,7 @@ element "2 Доска (to-be)" {
 								}
 							}
 						}
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-3" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-3" {
 							at top.left.id { title APP-3 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -4001,7 +4001,7 @@ element "2 Доска (to-be)" {
 					}
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-27" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-27" {
 							border-color #d15045; line-width 2
 							at top.left.id { title APP-27 }
 							replace top.Avatar_20 {
@@ -4026,7 +4026,7 @@ element "2 Доска (to-be)" {
 								}
 							}
 						}
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-28" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-28" {
 							border-color #d15045; line-width 2
 							at top.left.id { title APP-28 }
 							replace top.Avatar_20 {
@@ -4054,7 +4054,7 @@ element "2 Доска (to-be)" {
 					}
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-29" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-29" {
 							border-color #d27540; line-width 2
 							at top.left.id { title APP-29 }
 							replace top.Avatar_20 {
@@ -4082,7 +4082,7 @@ element "2 Доска (to-be)" {
 					}
 					item cell {
 						auto-layout column; gap 8; width 234; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard MKT-4" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard MKT-4" {
 							at top.left.id { title MKT-4 }
 							replace top.Avatar_20 {
 								use Libraries.ui_kit.People.Avatar as "Avatar/20" {
@@ -4107,7 +4107,7 @@ element "2 Доска (to-be)" {
 								}
 							}
 						}
-						use Libraries.tracker_kit.IssueCard as "IssueCard MKT-6" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard MKT-6" {
 							density normal
 							at top.left.id { title MKT-6 }
 							replace top.Avatar_20 {
@@ -6208,7 +6208,7 @@ element "3 Настройка доски (to-be)" {
 					item Пример { title Пример; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; auto-layout row; text-color #00000066 }
 					item Preview {
 						auto-layout row; gap 12; width 720; clip yes
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-29" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-29" {
 							width 264; border-color #d27540; line-width 2
 							at top.left.id { title APP-29 }
 							replace top.Avatar_20 {
@@ -6234,7 +6234,7 @@ element "3 Настройка доски (to-be)" {
 								}
 							}
 						}
-						use Libraries.tracker_kit.IssueCard as "IssueCard APP-27" {
+						use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-27" {
 							width 264; border-color #d15045; line-width 2
 							at top.left.id { title APP-27 }
 							replace top.Avatar_20 {
@@ -6495,7 +6495,7 @@ element "3 Настройка доски (to-be)" {
 						item preview {
 							auto-layout column; gap 8; clip yes
 							item Пример { title Пример; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #00000066 }
-							use Libraries.tracker_kit.IssueCard as "IssueCard APP-9" {
+							use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-9" {
 								width 296
 								at top.left.id { title APP-9 }
 								replace top.Avatar_20 {

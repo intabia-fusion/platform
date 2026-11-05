@@ -5,17 +5,15 @@ element "Sign in" {
 		item "Login background" {
 			auto-layout abs; width 1920; height 1080; clip yes
 			item sky { width 1920; height 1080; color linear 180 #0b0123 0 #170134 0.33 #250932 0.66 #100118 1; pos 0 -32 }
-			item "ball top" { width 250; height 250; corner-radius 125; color linear 225 #2e0f52 0 #1a0630 1; pos 232 135 }
-			item "ball small" { width 144; height 144; corner-radius 72; color linear 225 #4a2070 0 #26104a 1; opacity 0.5; pos 1292 -166 }
-			item "ball big" { width 426; height 426; corner-radius 213; color linear 225 #431870 0 #1c0636 1; pos 1412 -372 }
+			item "ball top" { width 250; height 250; corner-radius 125; color linear 45 #63117d 0 #32055f 1; opacity 0.8; pos 232 135 }
+			item "ball small" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; opacity 0.5; pos 1292 -166 }
+			item "ball big" { width 426; height 426; corner-radius 213; color linear 45 #63117d 0 #220631 1; pos 1412 -372 }
 			item oval {
 				width 1920; height 1080; path "M-552.07 990.40A1527.59 201.19691119691117 0 1 0 2503.11 990.40A1527.59 201.19691119691117 0 1 0 -552.07 990.40Z"
 				view-box 0 0 1920 1080; color #f5f4f5
 			}
-			item "ball left" { width 144; height 144; corner-radius 72; color linear 225 #6b1f8a 0 #2d0a52 1; pos 218 -735 }
-			item "pin shadow" {
-				width 1920; height 1080; path "M1395.00 860.00A105 22 0 1 0 1605.00 860.00A105 22 0 1 0 1395.00 860.00Z"; view-box 0 0 1920 1080; color #3c1250; opacity 0.5
-			}
+			item "ball left" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; pos 218 -735 }
+			item "pin shadow" { width 210; height 44; corner-radius 22; color linear 90 #2d0e5300 0 #2d0e53 1; opacity 0.5; pos 1395 -838 }
 			item "pin body" { width 1920; height 1080; path "M1500 628L1640 668L1585 830L1445 775Z"; view-box 0 0 1920 1080; color #f760d3 }
 			item "pin rim" {
 				width 1920; height 1080; path "M1504.34 623.37A72 26 20 1 0 1639.66 672.63A72 26 20 1 0 1504.34 623.37Z"; view-box 0 0 1920 1080; color #d43cb0
@@ -123,17 +121,15 @@ element "Sign in" {
 		item "Login background" {
 			auto-layout abs; width 1920; height 1080; clip yes
 			item sky { width 1920; height 1080; color linear 180 #0b0123 0 #170134 0.33 #250932 0.66 #100118 1; pos 0 -32 }
-			item "ball top" { width 250; height 250; corner-radius 125; color linear 225 #2e0f52 0 #1a0630 1; pos 232 135 }
-			item "ball small" { width 144; height 144; corner-radius 72; color linear 225 #4a2070 0 #26104a 1; opacity 0.5; pos 1292 -166 }
-			item "ball big" { width 426; height 426; corner-radius 213; color linear 225 #431870 0 #1c0636 1; pos 1412 -372 }
+			item "ball top" { width 250; height 250; corner-radius 125; color linear 45 #63117d 0 #32055f 1; opacity 0.8; pos 232 135 }
+			item "ball small" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; opacity 0.5; pos 1292 -166 }
+			item "ball big" { width 426; height 426; corner-radius 213; color linear 45 #63117d 0 #220631 1; pos 1412 -372 }
 			item oval {
 				width 1920; height 1080; path "M-552.07 990.40A1527.59 201.19691119691117 0 1 0 2503.11 990.40A1527.59 201.19691119691117 0 1 0 -552.07 990.40Z"
 				view-box 0 0 1920 1080; color #f5f4f5
 			}
-			item "ball left" { width 144; height 144; corner-radius 72; color linear 225 #6b1f8a 0 #2d0a52 1; pos 218 -735 }
-			item "pin shadow" {
-				width 1920; height 1080; path "M1395.00 860.00A105 22 0 1 0 1605.00 860.00A105 22 0 1 0 1395.00 860.00Z"; view-box 0 0 1920 1080; color #3c1250; opacity 0.5
-			}
+			item "ball left" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; pos 218 -735 }
+			item "pin shadow" { width 210; height 44; corner-radius 22; color linear 90 #2d0e5300 0 #2d0e53 1; opacity 0.5; pos 1395 -838 }
 			item "pin body" { width 1920; height 1080; path "M1500 628L1640 668L1585 830L1445 775Z"; view-box 0 0 1920 1080; color #f760d3 }
 			item "pin rim" {
 				width 1920; height 1080; path "M1504.34 623.37A72 26 20 1 0 1639.66 672.63A72 26 20 1 0 1504.34 623.37Z"; view-box 0 0 1920 1080; color #d43cb0
@@ -241,17 +237,15 @@ element "Sign in" {
 		item "Login background" {
 			auto-layout abs; width 1920; height 1080; clip yes
 			item sky { width 1920; height 1080; color linear 180 #0b0123 0 #170134 0.33 #250932 0.66 #100118 1; pos 0 -32 }
-			item "ball top" { width 250; height 250; corner-radius 125; color linear 225 #2e0f52 0 #1a0630 1; pos 232 135 }
-			item "ball small" { width 144; height 144; corner-radius 72; color linear 225 #4a2070 0 #26104a 1; opacity 0.5; pos 1292 -166 }
-			item "ball big" { width 426; height 426; corner-radius 213; color linear 225 #431870 0 #1c0636 1; pos 1412 -372 }
+			item "ball top" { width 250; height 250; corner-radius 125; color linear 45 #63117d 0 #32055f 1; opacity 0.8; pos 232 135 }
+			item "ball small" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; opacity 0.5; pos 1292 -166 }
+			item "ball big" { width 426; height 426; corner-radius 213; color linear 45 #63117d 0 #220631 1; pos 1412 -372 }
 			item oval {
 				width 1920; height 1080; path "M-552.07 990.40A1527.59 201.19691119691117 0 1 0 2503.11 990.40A1527.59 201.19691119691117 0 1 0 -552.07 990.40Z"
 				view-box 0 0 1920 1080; color #f5f4f5
 			}
-			item "ball left" { width 144; height 144; corner-radius 72; color linear 225 #6b1f8a 0 #2d0a52 1; pos 218 -735 }
-			item "pin shadow" {
-				width 1920; height 1080; path "M1395.00 860.00A105 22 0 1 0 1605.00 860.00A105 22 0 1 0 1395.00 860.00Z"; view-box 0 0 1920 1080; color #3c1250; opacity 0.5
-			}
+			item "ball left" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; pos 218 -735 }
+			item "pin shadow" { width 210; height 44; corner-radius 22; color linear 90 #2d0e5300 0 #2d0e53 1; opacity 0.5; pos 1395 -838 }
 			item "pin body" { width 1920; height 1080; path "M1500 628L1640 668L1585 830L1445 775Z"; view-box 0 0 1920 1080; color #f760d3 }
 			item "pin rim" {
 				width 1920; height 1080; path "M1504.34 623.37A72 26 20 1 0 1639.66 672.63A72 26 20 1 0 1504.34 623.37Z"; view-box 0 0 1920 1080; color #d43cb0
@@ -361,17 +355,15 @@ element "Sign in" {
 		item "Login background" {
 			auto-layout abs; width 1920; height 1080; clip yes
 			item sky { width 1920; height 1080; color linear 180 #0b0123 0 #170134 0.33 #250932 0.66 #100118 1; pos 0 -32 }
-			item "ball top" { width 250; height 250; corner-radius 125; color linear 225 #2e0f52 0 #1a0630 1; pos 232 135 }
-			item "ball small" { width 144; height 144; corner-radius 72; color linear 225 #4a2070 0 #26104a 1; opacity 0.5; pos 1292 -166 }
-			item "ball big" { width 426; height 426; corner-radius 213; color linear 225 #431870 0 #1c0636 1; pos 1412 -372 }
+			item "ball top" { width 250; height 250; corner-radius 125; color linear 45 #63117d 0 #32055f 1; opacity 0.8; pos 232 135 }
+			item "ball small" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; opacity 0.5; pos 1292 -166 }
+			item "ball big" { width 426; height 426; corner-radius 213; color linear 45 #63117d 0 #220631 1; pos 1412 -372 }
 			item oval {
 				width 1920; height 1080; path "M-552.07 990.40A1527.59 201.19691119691117 0 1 0 2503.11 990.40A1527.59 201.19691119691117 0 1 0 -552.07 990.40Z"
 				view-box 0 0 1920 1080; color #f5f4f5
 			}
-			item "ball left" { width 144; height 144; corner-radius 72; color linear 225 #6b1f8a 0 #2d0a52 1; pos 218 -735 }
-			item "pin shadow" {
-				width 1920; height 1080; path "M1395.00 860.00A105 22 0 1 0 1605.00 860.00A105 22 0 1 0 1395.00 860.00Z"; view-box 0 0 1920 1080; color #3c1250; opacity 0.5
-			}
+			item "ball left" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; pos 218 -735 }
+			item "pin shadow" { width 210; height 44; corner-radius 22; color linear 90 #2d0e5300 0 #2d0e53 1; opacity 0.5; pos 1395 -838 }
 			item "pin body" { width 1920; height 1080; path "M1500 628L1640 668L1585 830L1445 775Z"; view-box 0 0 1920 1080; color #f760d3 }
 			item "pin rim" {
 				width 1920; height 1080; path "M1504.34 623.37A72 26 20 1 0 1639.66 672.63A72 26 20 1 0 1504.34 623.37Z"; view-box 0 0 1920 1080; color #d43cb0
@@ -524,17 +516,15 @@ element "Sign in" {
 		item "Login background" {
 			auto-layout abs; width 1920; height 1080; clip yes
 			item sky { width 1920; height 1080; color linear 180 #0b0123 0 #170134 0.33 #250932 0.66 #100118 1; pos 0 -32 }
-			item "ball top" { width 250; height 250; corner-radius 125; color linear 225 #2e0f52 0 #1a0630 1; pos 232 135 }
-			item "ball small" { width 144; height 144; corner-radius 72; color linear 225 #4a2070 0 #26104a 1; opacity 0.5; pos 1292 -166 }
-			item "ball big" { width 426; height 426; corner-radius 213; color linear 225 #431870 0 #1c0636 1; pos 1412 -372 }
+			item "ball top" { width 250; height 250; corner-radius 125; color linear 45 #63117d 0 #32055f 1; opacity 0.8; pos 232 135 }
+			item "ball small" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; opacity 0.5; pos 1292 -166 }
+			item "ball big" { width 426; height 426; corner-radius 213; color linear 45 #63117d 0 #220631 1; pos 1412 -372 }
 			item oval {
 				width 1920; height 1080; path "M-552.07 990.40A1527.59 201.19691119691117 0 1 0 2503.11 990.40A1527.59 201.19691119691117 0 1 0 -552.07 990.40Z"
 				view-box 0 0 1920 1080; color #f5f4f5
 			}
-			item "ball left" { width 144; height 144; corner-radius 72; color linear 225 #6b1f8a 0 #2d0a52 1; pos 218 -735 }
-			item "pin shadow" {
-				width 1920; height 1080; path "M1395.00 860.00A105 22 0 1 0 1605.00 860.00A105 22 0 1 0 1395.00 860.00Z"; view-box 0 0 1920 1080; color #3c1250; opacity 0.5
-			}
+			item "ball left" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; pos 218 -735 }
+			item "pin shadow" { width 210; height 44; corner-radius 22; color linear 90 #2d0e5300 0 #2d0e53 1; opacity 0.5; pos 1395 -838 }
 			item "pin body" { width 1920; height 1080; path "M1500 628L1640 668L1585 830L1445 775Z"; view-box 0 0 1920 1080; color #f760d3 }
 			item "pin rim" {
 				width 1920; height 1080; path "M1504.34 623.37A72 26 20 1 0 1639.66 672.63A72 26 20 1 0 1504.34 623.37Z"; view-box 0 0 1920 1080; color #d43cb0
@@ -626,17 +616,15 @@ element "Sign in" {
 		item "Login background" {
 			auto-layout abs; width 1920; height 1080; clip yes
 			item sky { width 1920; height 1080; color linear 180 #0b0123 0 #170134 0.33 #250932 0.66 #100118 1; pos 0 -32 }
-			item "ball top" { width 250; height 250; corner-radius 125; color linear 225 #2e0f52 0 #1a0630 1; pos 232 135 }
-			item "ball small" { width 144; height 144; corner-radius 72; color linear 225 #4a2070 0 #26104a 1; opacity 0.5; pos 1292 -166 }
-			item "ball big" { width 426; height 426; corner-radius 213; color linear 225 #431870 0 #1c0636 1; pos 1412 -372 }
+			item "ball top" { width 250; height 250; corner-radius 125; color linear 45 #63117d 0 #32055f 1; opacity 0.8; pos 232 135 }
+			item "ball small" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; opacity 0.5; pos 1292 -166 }
+			item "ball big" { width 426; height 426; corner-radius 213; color linear 45 #63117d 0 #220631 1; pos 1412 -372 }
 			item oval {
 				width 1920; height 1080; path "M-552.07 990.40A1527.59 201.19691119691117 0 1 0 2503.11 990.40A1527.59 201.19691119691117 0 1 0 -552.07 990.40Z"
 				view-box 0 0 1920 1080; color #f5f4f5
 			}
-			item "ball left" { width 144; height 144; corner-radius 72; color linear 225 #6b1f8a 0 #2d0a52 1; pos 218 -735 }
-			item "pin shadow" {
-				width 1920; height 1080; path "M1395.00 860.00A105 22 0 1 0 1605.00 860.00A105 22 0 1 0 1395.00 860.00Z"; view-box 0 0 1920 1080; color #3c1250; opacity 0.5
-			}
+			item "ball left" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; pos 218 -735 }
+			item "pin shadow" { width 210; height 44; corner-radius 22; color linear 90 #2d0e5300 0 #2d0e53 1; opacity 0.5; pos 1395 -838 }
 			item "pin body" { width 1920; height 1080; path "M1500 628L1640 668L1585 830L1445 775Z"; view-box 0 0 1920 1080; color #f760d3 }
 			item "pin rim" {
 				width 1920; height 1080; path "M1504.34 623.37A72 26 20 1 0 1639.66 672.63A72 26 20 1 0 1504.34 623.37Z"; view-box 0 0 1920 1080; color #d43cb0
@@ -730,17 +718,15 @@ element "Sign in" {
 		item "Login background" {
 			auto-layout abs; width 1920; height 1080; clip yes
 			item sky { width 1920; height 1080; color linear 180 #0b0123 0 #170134 0.33 #250932 0.66 #100118 1; pos 0 -32 }
-			item "ball top" { width 250; height 250; corner-radius 125; color linear 225 #2e0f52 0 #1a0630 1; pos 232 135 }
-			item "ball small" { width 144; height 144; corner-radius 72; color linear 225 #4a2070 0 #26104a 1; opacity 0.5; pos 1292 -166 }
-			item "ball big" { width 426; height 426; corner-radius 213; color linear 225 #431870 0 #1c0636 1; pos 1412 -372 }
+			item "ball top" { width 250; height 250; corner-radius 125; color linear 45 #63117d 0 #32055f 1; opacity 0.8; pos 232 135 }
+			item "ball small" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; opacity 0.5; pos 1292 -166 }
+			item "ball big" { width 426; height 426; corner-radius 213; color linear 45 #63117d 0 #220631 1; pos 1412 -372 }
 			item oval {
 				width 1920; height 1080; path "M-552.07 990.40A1527.59 201.19691119691117 0 1 0 2503.11 990.40A1527.59 201.19691119691117 0 1 0 -552.07 990.40Z"
 				view-box 0 0 1920 1080; color #f5f4f5
 			}
-			item "ball left" { width 144; height 144; corner-radius 72; color linear 225 #6b1f8a 0 #2d0a52 1; pos 218 -735 }
-			item "pin shadow" {
-				width 1920; height 1080; path "M1395.00 860.00A105 22 0 1 0 1605.00 860.00A105 22 0 1 0 1395.00 860.00Z"; view-box 0 0 1920 1080; color #3c1250; opacity 0.5
-			}
+			item "ball left" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; pos 218 -735 }
+			item "pin shadow" { width 210; height 44; corner-radius 22; color linear 90 #2d0e5300 0 #2d0e53 1; opacity 0.5; pos 1395 -838 }
 			item "pin body" { width 1920; height 1080; path "M1500 628L1640 668L1585 830L1445 775Z"; view-box 0 0 1920 1080; color #f760d3 }
 			item "pin rim" {
 				width 1920; height 1080; path "M1504.34 623.37A72 26 20 1 0 1639.66 672.63A72 26 20 1 0 1504.34 623.37Z"; view-box 0 0 1920 1080; color #d43cb0
@@ -867,17 +853,15 @@ element "Sign up" {
 		item "Login background" {
 			auto-layout abs; width 1920; height 1080; clip yes
 			item sky { width 1920; height 1080; color linear 180 #0b0123 0 #170134 0.33 #250932 0.66 #100118 1; pos 0 -32 }
-			item "ball top" { width 250; height 250; corner-radius 125; color linear 225 #2e0f52 0 #1a0630 1; pos 232 135 }
-			item "ball small" { width 144; height 144; corner-radius 72; color linear 225 #4a2070 0 #26104a 1; opacity 0.5; pos 1292 -166 }
-			item "ball big" { width 426; height 426; corner-radius 213; color linear 225 #431870 0 #1c0636 1; pos 1412 -372 }
+			item "ball top" { width 250; height 250; corner-radius 125; color linear 45 #63117d 0 #32055f 1; opacity 0.8; pos 232 135 }
+			item "ball small" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; opacity 0.5; pos 1292 -166 }
+			item "ball big" { width 426; height 426; corner-radius 213; color linear 45 #63117d 0 #220631 1; pos 1412 -372 }
 			item oval {
 				width 1920; height 1080; path "M-552.07 990.40A1527.59 201.19691119691117 0 1 0 2503.11 990.40A1527.59 201.19691119691117 0 1 0 -552.07 990.40Z"
 				view-box 0 0 1920 1080; color #f5f4f5
 			}
-			item "ball left" { width 144; height 144; corner-radius 72; color linear 225 #6b1f8a 0 #2d0a52 1; pos 218 -735 }
-			item "pin shadow" {
-				width 1920; height 1080; path "M1395.00 860.00A105 22 0 1 0 1605.00 860.00A105 22 0 1 0 1395.00 860.00Z"; view-box 0 0 1920 1080; color #3c1250; opacity 0.5
-			}
+			item "ball left" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; pos 218 -735 }
+			item "pin shadow" { width 210; height 44; corner-radius 22; color linear 90 #2d0e5300 0 #2d0e53 1; opacity 0.5; pos 1395 -838 }
 			item "pin body" { width 1920; height 1080; path "M1500 628L1640 668L1585 830L1445 775Z"; view-box 0 0 1920 1080; color #f760d3 }
 			item "pin rim" {
 				width 1920; height 1080; path "M1504.34 623.37A72 26 20 1 0 1639.66 672.63A72 26 20 1 0 1504.34 623.37Z"; view-box 0 0 1920 1080; color #d43cb0
@@ -999,17 +983,15 @@ element "Sign up" {
 		item "Login background" {
 			auto-layout abs; width 1920; height 1080; clip yes
 			item sky { width 1920; height 1080; color linear 180 #0b0123 0 #170134 0.33 #250932 0.66 #100118 1; pos 0 -32 }
-			item "ball top" { width 250; height 250; corner-radius 125; color linear 225 #2e0f52 0 #1a0630 1; pos 232 135 }
-			item "ball small" { width 144; height 144; corner-radius 72; color linear 225 #4a2070 0 #26104a 1; opacity 0.5; pos 1292 -166 }
-			item "ball big" { width 426; height 426; corner-radius 213; color linear 225 #431870 0 #1c0636 1; pos 1412 -372 }
+			item "ball top" { width 250; height 250; corner-radius 125; color linear 45 #63117d 0 #32055f 1; opacity 0.8; pos 232 135 }
+			item "ball small" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; opacity 0.5; pos 1292 -166 }
+			item "ball big" { width 426; height 426; corner-radius 213; color linear 45 #63117d 0 #220631 1; pos 1412 -372 }
 			item oval {
 				width 1920; height 1080; path "M-552.07 990.40A1527.59 201.19691119691117 0 1 0 2503.11 990.40A1527.59 201.19691119691117 0 1 0 -552.07 990.40Z"
 				view-box 0 0 1920 1080; color #f5f4f5
 			}
-			item "ball left" { width 144; height 144; corner-radius 72; color linear 225 #6b1f8a 0 #2d0a52 1; pos 218 -735 }
-			item "pin shadow" {
-				width 1920; height 1080; path "M1395.00 860.00A105 22 0 1 0 1605.00 860.00A105 22 0 1 0 1395.00 860.00Z"; view-box 0 0 1920 1080; color #3c1250; opacity 0.5
-			}
+			item "ball left" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; pos 218 -735 }
+			item "pin shadow" { width 210; height 44; corner-radius 22; color linear 90 #2d0e5300 0 #2d0e53 1; opacity 0.5; pos 1395 -838 }
 			item "pin body" { width 1920; height 1080; path "M1500 628L1640 668L1585 830L1445 775Z"; view-box 0 0 1920 1080; color #f760d3 }
 			item "pin rim" {
 				width 1920; height 1080; path "M1504.34 623.37A72 26 20 1 0 1639.66 672.63A72 26 20 1 0 1504.34 623.37Z"; view-box 0 0 1920 1080; color #d43cb0
@@ -1129,17 +1111,15 @@ element "Sign up" {
 		item "Login background" {
 			auto-layout abs; width 1920; height 1080; clip yes
 			item sky { width 1920; height 1080; color linear 180 #0b0123 0 #170134 0.33 #250932 0.66 #100118 1; pos 0 -32 }
-			item "ball top" { width 250; height 250; corner-radius 125; color linear 225 #2e0f52 0 #1a0630 1; pos 232 135 }
-			item "ball small" { width 144; height 144; corner-radius 72; color linear 225 #4a2070 0 #26104a 1; opacity 0.5; pos 1292 -166 }
-			item "ball big" { width 426; height 426; corner-radius 213; color linear 225 #431870 0 #1c0636 1; pos 1412 -372 }
+			item "ball top" { width 250; height 250; corner-radius 125; color linear 45 #63117d 0 #32055f 1; opacity 0.8; pos 232 135 }
+			item "ball small" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; opacity 0.5; pos 1292 -166 }
+			item "ball big" { width 426; height 426; corner-radius 213; color linear 45 #63117d 0 #220631 1; pos 1412 -372 }
 			item oval {
 				width 1920; height 1080; path "M-552.07 990.40A1527.59 201.19691119691117 0 1 0 2503.11 990.40A1527.59 201.19691119691117 0 1 0 -552.07 990.40Z"
 				view-box 0 0 1920 1080; color #f5f4f5
 			}
-			item "ball left" { width 144; height 144; corner-radius 72; color linear 225 #6b1f8a 0 #2d0a52 1; pos 218 -735 }
-			item "pin shadow" {
-				width 1920; height 1080; path "M1395.00 860.00A105 22 0 1 0 1605.00 860.00A105 22 0 1 0 1395.00 860.00Z"; view-box 0 0 1920 1080; color #3c1250; opacity 0.5
-			}
+			item "ball left" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; pos 218 -735 }
+			item "pin shadow" { width 210; height 44; corner-radius 22; color linear 90 #2d0e5300 0 #2d0e53 1; opacity 0.5; pos 1395 -838 }
 			item "pin body" { width 1920; height 1080; path "M1500 628L1640 668L1585 830L1445 775Z"; view-box 0 0 1920 1080; color #f760d3 }
 			item "pin rim" {
 				width 1920; height 1080; path "M1504.34 623.37A72 26 20 1 0 1639.66 672.63A72 26 20 1 0 1504.34 623.37Z"; view-box 0 0 1920 1080; color #d43cb0
@@ -1257,17 +1237,15 @@ element "Sign up" {
 		item "Login background" {
 			auto-layout abs; width 1920; height 1080; clip yes
 			item sky { width 1920; height 1080; color linear 180 #0b0123 0 #170134 0.33 #250932 0.66 #100118 1; pos 0 -32 }
-			item "ball top" { width 250; height 250; corner-radius 125; color linear 225 #2e0f52 0 #1a0630 1; pos 232 135 }
-			item "ball small" { width 144; height 144; corner-radius 72; color linear 225 #4a2070 0 #26104a 1; opacity 0.5; pos 1292 -166 }
-			item "ball big" { width 426; height 426; corner-radius 213; color linear 225 #431870 0 #1c0636 1; pos 1412 -372 }
+			item "ball top" { width 250; height 250; corner-radius 125; color linear 45 #63117d 0 #32055f 1; opacity 0.8; pos 232 135 }
+			item "ball small" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; opacity 0.5; pos 1292 -166 }
+			item "ball big" { width 426; height 426; corner-radius 213; color linear 45 #63117d 0 #220631 1; pos 1412 -372 }
 			item oval {
 				width 1920; height 1080; path "M-552.07 990.40A1527.59 201.19691119691117 0 1 0 2503.11 990.40A1527.59 201.19691119691117 0 1 0 -552.07 990.40Z"
 				view-box 0 0 1920 1080; color #f5f4f5
 			}
-			item "ball left" { width 144; height 144; corner-radius 72; color linear 225 #6b1f8a 0 #2d0a52 1; pos 218 -735 }
-			item "pin shadow" {
-				width 1920; height 1080; path "M1395.00 860.00A105 22 0 1 0 1605.00 860.00A105 22 0 1 0 1395.00 860.00Z"; view-box 0 0 1920 1080; color #3c1250; opacity 0.5
-			}
+			item "ball left" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; pos 218 -735 }
+			item "pin shadow" { width 210; height 44; corner-radius 22; color linear 90 #2d0e5300 0 #2d0e53 1; opacity 0.5; pos 1395 -838 }
 			item "pin body" { width 1920; height 1080; path "M1500 628L1640 668L1585 830L1445 775Z"; view-box 0 0 1920 1080; color #f760d3 }
 			item "pin rim" {
 				width 1920; height 1080; path "M1504.34 623.37A72 26 20 1 0 1639.66 672.63A72 26 20 1 0 1504.34 623.37Z"; view-box 0 0 1920 1080; color #d43cb0
@@ -1348,17 +1326,15 @@ element "Sign up" {
 		item "Login background" {
 			auto-layout abs; width 1920; height 1080; clip yes
 			item sky { width 1920; height 1080; color linear 180 #0b0123 0 #170134 0.33 #250932 0.66 #100118 1; pos 0 -32 }
-			item "ball top" { width 250; height 250; corner-radius 125; color linear 225 #2e0f52 0 #1a0630 1; pos 232 135 }
-			item "ball small" { width 144; height 144; corner-radius 72; color linear 225 #4a2070 0 #26104a 1; opacity 0.5; pos 1292 -166 }
-			item "ball big" { width 426; height 426; corner-radius 213; color linear 225 #431870 0 #1c0636 1; pos 1412 -372 }
+			item "ball top" { width 250; height 250; corner-radius 125; color linear 45 #63117d 0 #32055f 1; opacity 0.8; pos 232 135 }
+			item "ball small" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; opacity 0.5; pos 1292 -166 }
+			item "ball big" { width 426; height 426; corner-radius 213; color linear 45 #63117d 0 #220631 1; pos 1412 -372 }
 			item oval {
 				width 1920; height 1080; path "M-552.07 990.40A1527.59 201.19691119691117 0 1 0 2503.11 990.40A1527.59 201.19691119691117 0 1 0 -552.07 990.40Z"
 				view-box 0 0 1920 1080; color #f5f4f5
 			}
-			item "ball left" { width 144; height 144; corner-radius 72; color linear 225 #6b1f8a 0 #2d0a52 1; pos 218 -735 }
-			item "pin shadow" {
-				width 1920; height 1080; path "M1395.00 860.00A105 22 0 1 0 1605.00 860.00A105 22 0 1 0 1395.00 860.00Z"; view-box 0 0 1920 1080; color #3c1250; opacity 0.5
-			}
+			item "ball left" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; pos 218 -735 }
+			item "pin shadow" { width 210; height 44; corner-radius 22; color linear 90 #2d0e5300 0 #2d0e53 1; opacity 0.5; pos 1395 -838 }
 			item "pin body" { width 1920; height 1080; path "M1500 628L1640 668L1585 830L1445 775Z"; view-box 0 0 1920 1080; color #f760d3 }
 			item "pin rim" {
 				width 1920; height 1080; path "M1504.34 623.37A72 26 20 1 0 1639.66 672.63A72 26 20 1 0 1504.34 623.37Z"; view-box 0 0 1920 1080; color #d43cb0
@@ -1463,17 +1439,15 @@ element "Password recovery" {
 		item "Login background" {
 			auto-layout abs; width 1920; height 1080; clip yes
 			item sky { width 1920; height 1080; color linear 180 #0b0123 0 #170134 0.33 #250932 0.66 #100118 1; pos 0 -32 }
-			item "ball top" { width 250; height 250; corner-radius 125; color linear 225 #2e0f52 0 #1a0630 1; pos 232 135 }
-			item "ball small" { width 144; height 144; corner-radius 72; color linear 225 #4a2070 0 #26104a 1; opacity 0.5; pos 1292 -166 }
-			item "ball big" { width 426; height 426; corner-radius 213; color linear 225 #431870 0 #1c0636 1; pos 1412 -372 }
+			item "ball top" { width 250; height 250; corner-radius 125; color linear 45 #63117d 0 #32055f 1; opacity 0.8; pos 232 135 }
+			item "ball small" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; opacity 0.5; pos 1292 -166 }
+			item "ball big" { width 426; height 426; corner-radius 213; color linear 45 #63117d 0 #220631 1; pos 1412 -372 }
 			item oval {
 				width 1920; height 1080; path "M-552.07 990.40A1527.59 201.19691119691117 0 1 0 2503.11 990.40A1527.59 201.19691119691117 0 1 0 -552.07 990.40Z"
 				view-box 0 0 1920 1080; color #f5f4f5
 			}
-			item "ball left" { width 144; height 144; corner-radius 72; color linear 225 #6b1f8a 0 #2d0a52 1; pos 218 -735 }
-			item "pin shadow" {
-				width 1920; height 1080; path "M1395.00 860.00A105 22 0 1 0 1605.00 860.00A105 22 0 1 0 1395.00 860.00Z"; view-box 0 0 1920 1080; color #3c1250; opacity 0.5
-			}
+			item "ball left" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; pos 218 -735 }
+			item "pin shadow" { width 210; height 44; corner-radius 22; color linear 90 #2d0e5300 0 #2d0e53 1; opacity 0.5; pos 1395 -838 }
 			item "pin body" { width 1920; height 1080; path "M1500 628L1640 668L1585 830L1445 775Z"; view-box 0 0 1920 1080; color #f760d3 }
 			item "pin rim" {
 				width 1920; height 1080; path "M1504.34 623.37A72 26 20 1 0 1639.66 672.63A72 26 20 1 0 1504.34 623.37Z"; view-box 0 0 1920 1080; color #d43cb0
@@ -1579,17 +1553,15 @@ element "Password recovery" {
 		item "Login background" {
 			auto-layout abs; width 1920; height 1080; clip yes
 			item sky { width 1920; height 1080; color linear 180 #0b0123 0 #170134 0.33 #250932 0.66 #100118 1; pos 0 -32 }
-			item "ball top" { width 250; height 250; corner-radius 125; color linear 225 #2e0f52 0 #1a0630 1; pos 232 135 }
-			item "ball small" { width 144; height 144; corner-radius 72; color linear 225 #4a2070 0 #26104a 1; opacity 0.5; pos 1292 -166 }
-			item "ball big" { width 426; height 426; corner-radius 213; color linear 225 #431870 0 #1c0636 1; pos 1412 -372 }
+			item "ball top" { width 250; height 250; corner-radius 125; color linear 45 #63117d 0 #32055f 1; opacity 0.8; pos 232 135 }
+			item "ball small" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; opacity 0.5; pos 1292 -166 }
+			item "ball big" { width 426; height 426; corner-radius 213; color linear 45 #63117d 0 #220631 1; pos 1412 -372 }
 			item oval {
 				width 1920; height 1080; path "M-552.07 990.40A1527.59 201.19691119691117 0 1 0 2503.11 990.40A1527.59 201.19691119691117 0 1 0 -552.07 990.40Z"
 				view-box 0 0 1920 1080; color #f5f4f5
 			}
-			item "ball left" { width 144; height 144; corner-radius 72; color linear 225 #6b1f8a 0 #2d0a52 1; pos 218 -735 }
-			item "pin shadow" {
-				width 1920; height 1080; path "M1395.00 860.00A105 22 0 1 0 1605.00 860.00A105 22 0 1 0 1395.00 860.00Z"; view-box 0 0 1920 1080; color #3c1250; opacity 0.5
-			}
+			item "ball left" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; pos 218 -735 }
+			item "pin shadow" { width 210; height 44; corner-radius 22; color linear 90 #2d0e5300 0 #2d0e53 1; opacity 0.5; pos 1395 -838 }
 			item "pin body" { width 1920; height 1080; path "M1500 628L1640 668L1585 830L1445 775Z"; view-box 0 0 1920 1080; color #f760d3 }
 			item "pin rim" {
 				width 1920; height 1080; path "M1504.34 623.37A72 26 20 1 0 1639.66 672.63A72 26 20 1 0 1504.34 623.37Z"; view-box 0 0 1920 1080; color #d43cb0
@@ -1680,17 +1652,15 @@ element "Password recovery" {
 		item "Login background" {
 			auto-layout abs; width 1920; height 1080; clip yes
 			item sky { width 1920; height 1080; color linear 180 #0b0123 0 #170134 0.33 #250932 0.66 #100118 1; pos 0 -32 }
-			item "ball top" { width 250; height 250; corner-radius 125; color linear 225 #2e0f52 0 #1a0630 1; pos 232 135 }
-			item "ball small" { width 144; height 144; corner-radius 72; color linear 225 #4a2070 0 #26104a 1; opacity 0.5; pos 1292 -166 }
-			item "ball big" { width 426; height 426; corner-radius 213; color linear 225 #431870 0 #1c0636 1; pos 1412 -372 }
+			item "ball top" { width 250; height 250; corner-radius 125; color linear 45 #63117d 0 #32055f 1; opacity 0.8; pos 232 135 }
+			item "ball small" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; opacity 0.5; pos 1292 -166 }
+			item "ball big" { width 426; height 426; corner-radius 213; color linear 45 #63117d 0 #220631 1; pos 1412 -372 }
 			item oval {
 				width 1920; height 1080; path "M-552.07 990.40A1527.59 201.19691119691117 0 1 0 2503.11 990.40A1527.59 201.19691119691117 0 1 0 -552.07 990.40Z"
 				view-box 0 0 1920 1080; color #f5f4f5
 			}
-			item "ball left" { width 144; height 144; corner-radius 72; color linear 225 #6b1f8a 0 #2d0a52 1; pos 218 -735 }
-			item "pin shadow" {
-				width 1920; height 1080; path "M1395.00 860.00A105 22 0 1 0 1605.00 860.00A105 22 0 1 0 1395.00 860.00Z"; view-box 0 0 1920 1080; color #3c1250; opacity 0.5
-			}
+			item "ball left" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; pos 218 -735 }
+			item "pin shadow" { width 210; height 44; corner-radius 22; color linear 90 #2d0e5300 0 #2d0e53 1; opacity 0.5; pos 1395 -838 }
 			item "pin body" { width 1920; height 1080; path "M1500 628L1640 668L1585 830L1445 775Z"; view-box 0 0 1920 1080; color #f760d3 }
 			item "pin rim" {
 				width 1920; height 1080; path "M1504.34 623.37A72 26 20 1 0 1639.66 672.63A72 26 20 1 0 1504.34 623.37Z"; view-box 0 0 1920 1080; color #d43cb0
@@ -1787,17 +1757,15 @@ element "Link confirmation" {
 		item "Login background" {
 			auto-layout abs; width 1920; height 1080; clip yes
 			item sky { width 1920; height 1080; color linear 180 #0b0123 0 #170134 0.33 #250932 0.66 #100118 1; pos 0 -32 }
-			item "ball top" { width 250; height 250; corner-radius 125; color linear 225 #2e0f52 0 #1a0630 1; pos 232 135 }
-			item "ball small" { width 144; height 144; corner-radius 72; color linear 225 #4a2070 0 #26104a 1; opacity 0.5; pos 1292 -166 }
-			item "ball big" { width 426; height 426; corner-radius 213; color linear 225 #431870 0 #1c0636 1; pos 1412 -372 }
+			item "ball top" { width 250; height 250; corner-radius 125; color linear 45 #63117d 0 #32055f 1; opacity 0.8; pos 232 135 }
+			item "ball small" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; opacity 0.5; pos 1292 -166 }
+			item "ball big" { width 426; height 426; corner-radius 213; color linear 45 #63117d 0 #220631 1; pos 1412 -372 }
 			item oval {
 				width 1920; height 1080; path "M-552.07 990.40A1527.59 201.19691119691117 0 1 0 2503.11 990.40A1527.59 201.19691119691117 0 1 0 -552.07 990.40Z"
 				view-box 0 0 1920 1080; color #f5f4f5
 			}
-			item "ball left" { width 144; height 144; corner-radius 72; color linear 225 #6b1f8a 0 #2d0a52 1; pos 218 -735 }
-			item "pin shadow" {
-				width 1920; height 1080; path "M1395.00 860.00A105 22 0 1 0 1605.00 860.00A105 22 0 1 0 1395.00 860.00Z"; view-box 0 0 1920 1080; color #3c1250; opacity 0.5
-			}
+			item "ball left" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; pos 218 -735 }
+			item "pin shadow" { width 210; height 44; corner-radius 22; color linear 90 #2d0e5300 0 #2d0e53 1; opacity 0.5; pos 1395 -838 }
 			item "pin body" { width 1920; height 1080; path "M1500 628L1640 668L1585 830L1445 775Z"; view-box 0 0 1920 1080; color #f760d3 }
 			item "pin rim" {
 				width 1920; height 1080; path "M1504.34 623.37A72 26 20 1 0 1639.66 672.63A72 26 20 1 0 1504.34 623.37Z"; view-box 0 0 1920 1080; color #d43cb0
@@ -1873,17 +1841,15 @@ element "Link confirmation" {
 		item "Login background" {
 			auto-layout abs; width 1920; height 1080; clip yes
 			item sky { width 1920; height 1080; color linear 180 #0b0123 0 #170134 0.33 #250932 0.66 #100118 1; pos 0 -32 }
-			item "ball top" { width 250; height 250; corner-radius 125; color linear 225 #2e0f52 0 #1a0630 1; pos 232 135 }
-			item "ball small" { width 144; height 144; corner-radius 72; color linear 225 #4a2070 0 #26104a 1; opacity 0.5; pos 1292 -166 }
-			item "ball big" { width 426; height 426; corner-radius 213; color linear 225 #431870 0 #1c0636 1; pos 1412 -372 }
+			item "ball top" { width 250; height 250; corner-radius 125; color linear 45 #63117d 0 #32055f 1; opacity 0.8; pos 232 135 }
+			item "ball small" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; opacity 0.5; pos 1292 -166 }
+			item "ball big" { width 426; height 426; corner-radius 213; color linear 45 #63117d 0 #220631 1; pos 1412 -372 }
 			item oval {
 				width 1920; height 1080; path "M-552.07 990.40A1527.59 201.19691119691117 0 1 0 2503.11 990.40A1527.59 201.19691119691117 0 1 0 -552.07 990.40Z"
 				view-box 0 0 1920 1080; color #f5f4f5
 			}
-			item "ball left" { width 144; height 144; corner-radius 72; color linear 225 #6b1f8a 0 #2d0a52 1; pos 218 -735 }
-			item "pin shadow" {
-				width 1920; height 1080; path "M1395.00 860.00A105 22 0 1 0 1605.00 860.00A105 22 0 1 0 1395.00 860.00Z"; view-box 0 0 1920 1080; color #3c1250; opacity 0.5
-			}
+			item "ball left" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; pos 218 -735 }
+			item "pin shadow" { width 210; height 44; corner-radius 22; color linear 90 #2d0e5300 0 #2d0e53 1; opacity 0.5; pos 1395 -838 }
 			item "pin body" { width 1920; height 1080; path "M1500 628L1640 668L1585 830L1445 775Z"; view-box 0 0 1920 1080; color #f760d3 }
 			item "pin rim" {
 				width 1920; height 1080; path "M1504.34 623.37A72 26 20 1 0 1639.66 672.63A72 26 20 1 0 1504.34 623.37Z"; view-box 0 0 1920 1080; color #d43cb0
@@ -1966,17 +1932,15 @@ element "Link confirmation" {
 		item "Login background" {
 			auto-layout abs; width 1920; height 1080; clip yes
 			item sky { width 1920; height 1080; color linear 180 #0b0123 0 #170134 0.33 #250932 0.66 #100118 1; pos 0 -32 }
-			item "ball top" { width 250; height 250; corner-radius 125; color linear 225 #2e0f52 0 #1a0630 1; pos 232 135 }
-			item "ball small" { width 144; height 144; corner-radius 72; color linear 225 #4a2070 0 #26104a 1; opacity 0.5; pos 1292 -166 }
-			item "ball big" { width 426; height 426; corner-radius 213; color linear 225 #431870 0 #1c0636 1; pos 1412 -372 }
+			item "ball top" { width 250; height 250; corner-radius 125; color linear 45 #63117d 0 #32055f 1; opacity 0.8; pos 232 135 }
+			item "ball small" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; opacity 0.5; pos 1292 -166 }
+			item "ball big" { width 426; height 426; corner-radius 213; color linear 45 #63117d 0 #220631 1; pos 1412 -372 }
 			item oval {
 				width 1920; height 1080; path "M-552.07 990.40A1527.59 201.19691119691117 0 1 0 2503.11 990.40A1527.59 201.19691119691117 0 1 0 -552.07 990.40Z"
 				view-box 0 0 1920 1080; color #f5f4f5
 			}
-			item "ball left" { width 144; height 144; corner-radius 72; color linear 225 #6b1f8a 0 #2d0a52 1; pos 218 -735 }
-			item "pin shadow" {
-				width 1920; height 1080; path "M1395.00 860.00A105 22 0 1 0 1605.00 860.00A105 22 0 1 0 1395.00 860.00Z"; view-box 0 0 1920 1080; color #3c1250; opacity 0.5
-			}
+			item "ball left" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; pos 218 -735 }
+			item "pin shadow" { width 210; height 44; corner-radius 22; color linear 90 #2d0e5300 0 #2d0e53 1; opacity 0.5; pos 1395 -838 }
 			item "pin body" { width 1920; height 1080; path "M1500 628L1640 668L1585 830L1445 775Z"; view-box 0 0 1920 1080; color #f760d3 }
 			item "pin rim" {
 				width 1920; height 1080; path "M1504.34 623.37A72 26 20 1 0 1639.66 672.63A72 26 20 1 0 1504.34 623.37Z"; view-box 0 0 1920 1080; color #d43cb0
@@ -2059,17 +2023,15 @@ element "Link confirmation" {
 		item "Login background" {
 			auto-layout abs; width 1920; height 1080; clip yes
 			item sky { width 1920; height 1080; color linear 180 #0b0123 0 #170134 0.33 #250932 0.66 #100118 1; pos 0 -32 }
-			item "ball top" { width 250; height 250; corner-radius 125; color linear 225 #2e0f52 0 #1a0630 1; pos 232 135 }
-			item "ball small" { width 144; height 144; corner-radius 72; color linear 225 #4a2070 0 #26104a 1; opacity 0.5; pos 1292 -166 }
-			item "ball big" { width 426; height 426; corner-radius 213; color linear 225 #431870 0 #1c0636 1; pos 1412 -372 }
+			item "ball top" { width 250; height 250; corner-radius 125; color linear 45 #63117d 0 #32055f 1; opacity 0.8; pos 232 135 }
+			item "ball small" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; opacity 0.5; pos 1292 -166 }
+			item "ball big" { width 426; height 426; corner-radius 213; color linear 45 #63117d 0 #220631 1; pos 1412 -372 }
 			item oval {
 				width 1920; height 1080; path "M-552.07 990.40A1527.59 201.19691119691117 0 1 0 2503.11 990.40A1527.59 201.19691119691117 0 1 0 -552.07 990.40Z"
 				view-box 0 0 1920 1080; color #f5f4f5
 			}
-			item "ball left" { width 144; height 144; corner-radius 72; color linear 225 #6b1f8a 0 #2d0a52 1; pos 218 -735 }
-			item "pin shadow" {
-				width 1920; height 1080; path "M1395.00 860.00A105 22 0 1 0 1605.00 860.00A105 22 0 1 0 1395.00 860.00Z"; view-box 0 0 1920 1080; color #3c1250; opacity 0.5
-			}
+			item "ball left" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; pos 218 -735 }
+			item "pin shadow" { width 210; height 44; corner-radius 22; color linear 90 #2d0e5300 0 #2d0e53 1; opacity 0.5; pos 1395 -838 }
 			item "pin body" { width 1920; height 1080; path "M1500 628L1640 668L1585 830L1445 775Z"; view-box 0 0 1920 1080; color #f760d3 }
 			item "pin rim" {
 				width 1920; height 1080; path "M1504.34 623.37A72 26 20 1 0 1639.66 672.63A72 26 20 1 0 1504.34 623.37Z"; view-box 0 0 1920 1080; color #d43cb0
@@ -2152,17 +2114,15 @@ element "Link confirmation" {
 		item "Login background" {
 			auto-layout abs; width 1920; height 1080; clip yes
 			item sky { width 1920; height 1080; color linear 180 #0b0123 0 #170134 0.33 #250932 0.66 #100118 1; pos 0 -32 }
-			item "ball top" { width 250; height 250; corner-radius 125; color linear 225 #2e0f52 0 #1a0630 1; pos 232 135 }
-			item "ball small" { width 144; height 144; corner-radius 72; color linear 225 #4a2070 0 #26104a 1; opacity 0.5; pos 1292 -166 }
-			item "ball big" { width 426; height 426; corner-radius 213; color linear 225 #431870 0 #1c0636 1; pos 1412 -372 }
+			item "ball top" { width 250; height 250; corner-radius 125; color linear 45 #63117d 0 #32055f 1; opacity 0.8; pos 232 135 }
+			item "ball small" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; opacity 0.5; pos 1292 -166 }
+			item "ball big" { width 426; height 426; corner-radius 213; color linear 45 #63117d 0 #220631 1; pos 1412 -372 }
 			item oval {
 				width 1920; height 1080; path "M-552.07 990.40A1527.59 201.19691119691117 0 1 0 2503.11 990.40A1527.59 201.19691119691117 0 1 0 -552.07 990.40Z"
 				view-box 0 0 1920 1080; color #f5f4f5
 			}
-			item "ball left" { width 144; height 144; corner-radius 72; color linear 225 #6b1f8a 0 #2d0a52 1; pos 218 -735 }
-			item "pin shadow" {
-				width 1920; height 1080; path "M1395.00 860.00A105 22 0 1 0 1605.00 860.00A105 22 0 1 0 1395.00 860.00Z"; view-box 0 0 1920 1080; color #3c1250; opacity 0.5
-			}
+			item "ball left" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; pos 218 -735 }
+			item "pin shadow" { width 210; height 44; corner-radius 22; color linear 90 #2d0e5300 0 #2d0e53 1; opacity 0.5; pos 1395 -838 }
 			item "pin body" { width 1920; height 1080; path "M1500 628L1640 668L1585 830L1445 775Z"; view-box 0 0 1920 1080; color #f760d3 }
 			item "pin rim" {
 				width 1920; height 1080; path "M1504.34 623.37A72 26 20 1 0 1639.66 672.63A72 26 20 1 0 1504.34 623.37Z"; view-box 0 0 1920 1080; color #d43cb0
@@ -2255,17 +2215,15 @@ element Workspaces {
 		item "Login background" {
 			auto-layout abs; width 1920; height 1080; clip yes
 			item sky { width 1920; height 1080; color linear 180 #0b0123 0 #170134 0.33 #250932 0.66 #100118 1; pos 0 -32 }
-			item "ball top" { width 250; height 250; corner-radius 125; color linear 225 #2e0f52 0 #1a0630 1; pos 232 135 }
-			item "ball small" { width 144; height 144; corner-radius 72; color linear 225 #4a2070 0 #26104a 1; opacity 0.5; pos 1292 -166 }
-			item "ball big" { width 426; height 426; corner-radius 213; color linear 225 #431870 0 #1c0636 1; pos 1412 -372 }
+			item "ball top" { width 250; height 250; corner-radius 125; color linear 45 #63117d 0 #32055f 1; opacity 0.8; pos 232 135 }
+			item "ball small" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; opacity 0.5; pos 1292 -166 }
+			item "ball big" { width 426; height 426; corner-radius 213; color linear 45 #63117d 0 #220631 1; pos 1412 -372 }
 			item oval {
 				width 1920; height 1080; path "M-552.07 990.40A1527.59 201.19691119691117 0 1 0 2503.11 990.40A1527.59 201.19691119691117 0 1 0 -552.07 990.40Z"
 				view-box 0 0 1920 1080; color #f5f4f5
 			}
-			item "ball left" { width 144; height 144; corner-radius 72; color linear 225 #6b1f8a 0 #2d0a52 1; pos 218 -735 }
-			item "pin shadow" {
-				width 1920; height 1080; path "M1395.00 860.00A105 22 0 1 0 1605.00 860.00A105 22 0 1 0 1395.00 860.00Z"; view-box 0 0 1920 1080; color #3c1250; opacity 0.5
-			}
+			item "ball left" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; pos 218 -735 }
+			item "pin shadow" { width 210; height 44; corner-radius 22; color linear 90 #2d0e5300 0 #2d0e53 1; opacity 0.5; pos 1395 -838 }
 			item "pin body" { width 1920; height 1080; path "M1500 628L1640 668L1585 830L1445 775Z"; view-box 0 0 1920 1080; color #f760d3 }
 			item "pin rim" {
 				width 1920; height 1080; path "M1504.34 623.37A72 26 20 1 0 1639.66 672.63A72 26 20 1 0 1504.34 623.37Z"; view-box 0 0 1920 1080; color #d43cb0
@@ -2378,17 +2336,15 @@ element Workspaces {
 		item "Login background" {
 			auto-layout abs; width 1920; height 1080; clip yes
 			item sky { width 1920; height 1080; color linear 180 #0b0123 0 #170134 0.33 #250932 0.66 #100118 1; pos 0 -32 }
-			item "ball top" { width 250; height 250; corner-radius 125; color linear 225 #2e0f52 0 #1a0630 1; pos 232 135 }
-			item "ball small" { width 144; height 144; corner-radius 72; color linear 225 #4a2070 0 #26104a 1; opacity 0.5; pos 1292 -166 }
-			item "ball big" { width 426; height 426; corner-radius 213; color linear 225 #431870 0 #1c0636 1; pos 1412 -372 }
+			item "ball top" { width 250; height 250; corner-radius 125; color linear 45 #63117d 0 #32055f 1; opacity 0.8; pos 232 135 }
+			item "ball small" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; opacity 0.5; pos 1292 -166 }
+			item "ball big" { width 426; height 426; corner-radius 213; color linear 45 #63117d 0 #220631 1; pos 1412 -372 }
 			item oval {
 				width 1920; height 1080; path "M-552.07 990.40A1527.59 201.19691119691117 0 1 0 2503.11 990.40A1527.59 201.19691119691117 0 1 0 -552.07 990.40Z"
 				view-box 0 0 1920 1080; color #f5f4f5
 			}
-			item "ball left" { width 144; height 144; corner-radius 72; color linear 225 #6b1f8a 0 #2d0a52 1; pos 218 -735 }
-			item "pin shadow" {
-				width 1920; height 1080; path "M1395.00 860.00A105 22 0 1 0 1605.00 860.00A105 22 0 1 0 1395.00 860.00Z"; view-box 0 0 1920 1080; color #3c1250; opacity 0.5
-			}
+			item "ball left" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; pos 218 -735 }
+			item "pin shadow" { width 210; height 44; corner-radius 22; color linear 90 #2d0e5300 0 #2d0e53 1; opacity 0.5; pos 1395 -838 }
 			item "pin body" { width 1920; height 1080; path "M1500 628L1640 668L1585 830L1445 775Z"; view-box 0 0 1920 1080; color #f760d3 }
 			item "pin rim" {
 				width 1920; height 1080; path "M1504.34 623.37A72 26 20 1 0 1639.66 672.63A72 26 20 1 0 1504.34 623.37Z"; view-box 0 0 1920 1080; color #d43cb0
@@ -2490,17 +2446,15 @@ element Workspaces {
 		item "Login background" {
 			auto-layout abs; width 1920; height 1080; clip yes
 			item sky { width 1920; height 1080; color linear 180 #0b0123 0 #170134 0.33 #250932 0.66 #100118 1; pos 0 -32 }
-			item "ball top" { width 250; height 250; corner-radius 125; color linear 225 #2e0f52 0 #1a0630 1; pos 232 135 }
-			item "ball small" { width 144; height 144; corner-radius 72; color linear 225 #4a2070 0 #26104a 1; opacity 0.5; pos 1292 -166 }
-			item "ball big" { width 426; height 426; corner-radius 213; color linear 225 #431870 0 #1c0636 1; pos 1412 -372 }
+			item "ball top" { width 250; height 250; corner-radius 125; color linear 45 #63117d 0 #32055f 1; opacity 0.8; pos 232 135 }
+			item "ball small" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; opacity 0.5; pos 1292 -166 }
+			item "ball big" { width 426; height 426; corner-radius 213; color linear 45 #63117d 0 #220631 1; pos 1412 -372 }
 			item oval {
 				width 1920; height 1080; path "M-552.07 990.40A1527.59 201.19691119691117 0 1 0 2503.11 990.40A1527.59 201.19691119691117 0 1 0 -552.07 990.40Z"
 				view-box 0 0 1920 1080; color #f5f4f5
 			}
-			item "ball left" { width 144; height 144; corner-radius 72; color linear 225 #6b1f8a 0 #2d0a52 1; pos 218 -735 }
-			item "pin shadow" {
-				width 1920; height 1080; path "M1395.00 860.00A105 22 0 1 0 1605.00 860.00A105 22 0 1 0 1395.00 860.00Z"; view-box 0 0 1920 1080; color #3c1250; opacity 0.5
-			}
+			item "ball left" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; pos 218 -735 }
+			item "pin shadow" { width 210; height 44; corner-radius 22; color linear 90 #2d0e5300 0 #2d0e53 1; opacity 0.5; pos 1395 -838 }
 			item "pin body" { width 1920; height 1080; path "M1500 628L1640 668L1585 830L1445 775Z"; view-box 0 0 1920 1080; color #f760d3 }
 			item "pin rim" {
 				width 1920; height 1080; path "M1504.34 623.37A72 26 20 1 0 1639.66 672.63A72 26 20 1 0 1504.34 623.37Z"; view-box 0 0 1920 1080; color #d43cb0
@@ -2605,17 +2559,15 @@ element Invitations {
 		item "Login background" {
 			auto-layout abs; width 1920; height 1080; clip yes
 			item sky { width 1920; height 1080; color linear 180 #0b0123 0 #170134 0.33 #250932 0.66 #100118 1; pos 0 -32 }
-			item "ball top" { width 250; height 250; corner-radius 125; color linear 225 #2e0f52 0 #1a0630 1; pos 232 135 }
-			item "ball small" { width 144; height 144; corner-radius 72; color linear 225 #4a2070 0 #26104a 1; opacity 0.5; pos 1292 -166 }
-			item "ball big" { width 426; height 426; corner-radius 213; color linear 225 #431870 0 #1c0636 1; pos 1412 -372 }
+			item "ball top" { width 250; height 250; corner-radius 125; color linear 45 #63117d 0 #32055f 1; opacity 0.8; pos 232 135 }
+			item "ball small" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; opacity 0.5; pos 1292 -166 }
+			item "ball big" { width 426; height 426; corner-radius 213; color linear 45 #63117d 0 #220631 1; pos 1412 -372 }
 			item oval {
 				width 1920; height 1080; path "M-552.07 990.40A1527.59 201.19691119691117 0 1 0 2503.11 990.40A1527.59 201.19691119691117 0 1 0 -552.07 990.40Z"
 				view-box 0 0 1920 1080; color #f5f4f5
 			}
-			item "ball left" { width 144; height 144; corner-radius 72; color linear 225 #6b1f8a 0 #2d0a52 1; pos 218 -735 }
-			item "pin shadow" {
-				width 1920; height 1080; path "M1395.00 860.00A105 22 0 1 0 1605.00 860.00A105 22 0 1 0 1395.00 860.00Z"; view-box 0 0 1920 1080; color #3c1250; opacity 0.5
-			}
+			item "ball left" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; pos 218 -735 }
+			item "pin shadow" { width 210; height 44; corner-radius 22; color linear 90 #2d0e5300 0 #2d0e53 1; opacity 0.5; pos 1395 -838 }
 			item "pin body" { width 1920; height 1080; path "M1500 628L1640 668L1585 830L1445 775Z"; view-box 0 0 1920 1080; color #f760d3 }
 			item "pin rim" {
 				width 1920; height 1080; path "M1504.34 623.37A72 26 20 1 0 1639.66 672.63A72 26 20 1 0 1504.34 623.37Z"; view-box 0 0 1920 1080; color #d43cb0
@@ -2709,17 +2661,15 @@ element Invitations {
 		item "Login background" {
 			auto-layout abs; width 1920; height 1080; clip yes
 			item sky { width 1920; height 1080; color linear 180 #0b0123 0 #170134 0.33 #250932 0.66 #100118 1; pos 0 -32 }
-			item "ball top" { width 250; height 250; corner-radius 125; color linear 225 #2e0f52 0 #1a0630 1; pos 232 135 }
-			item "ball small" { width 144; height 144; corner-radius 72; color linear 225 #4a2070 0 #26104a 1; opacity 0.5; pos 1292 -166 }
-			item "ball big" { width 426; height 426; corner-radius 213; color linear 225 #431870 0 #1c0636 1; pos 1412 -372 }
+			item "ball top" { width 250; height 250; corner-radius 125; color linear 45 #63117d 0 #32055f 1; opacity 0.8; pos 232 135 }
+			item "ball small" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; opacity 0.5; pos 1292 -166 }
+			item "ball big" { width 426; height 426; corner-radius 213; color linear 45 #63117d 0 #220631 1; pos 1412 -372 }
 			item oval {
 				width 1920; height 1080; path "M-552.07 990.40A1527.59 201.19691119691117 0 1 0 2503.11 990.40A1527.59 201.19691119691117 0 1 0 -552.07 990.40Z"
 				view-box 0 0 1920 1080; color #f5f4f5
 			}
-			item "ball left" { width 144; height 144; corner-radius 72; color linear 225 #6b1f8a 0 #2d0a52 1; pos 218 -735 }
-			item "pin shadow" {
-				width 1920; height 1080; path "M1395.00 860.00A105 22 0 1 0 1605.00 860.00A105 22 0 1 0 1395.00 860.00Z"; view-box 0 0 1920 1080; color #3c1250; opacity 0.5
-			}
+			item "ball left" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; pos 218 -735 }
+			item "pin shadow" { width 210; height 44; corner-radius 22; color linear 90 #2d0e5300 0 #2d0e53 1; opacity 0.5; pos 1395 -838 }
 			item "pin body" { width 1920; height 1080; path "M1500 628L1640 668L1585 830L1445 775Z"; view-box 0 0 1920 1080; color #f760d3 }
 			item "pin rim" {
 				width 1920; height 1080; path "M1504.34 623.37A72 26 20 1 0 1639.66 672.63A72 26 20 1 0 1504.34 623.37Z"; view-box 0 0 1920 1080; color #d43cb0
@@ -2841,17 +2791,15 @@ element Invitations {
 		item "Login background" {
 			auto-layout abs; width 1920; height 1080; clip yes
 			item sky { width 1920; height 1080; color linear 180 #0b0123 0 #170134 0.33 #250932 0.66 #100118 1; pos 0 -32 }
-			item "ball top" { width 250; height 250; corner-radius 125; color linear 225 #2e0f52 0 #1a0630 1; pos 232 135 }
-			item "ball small" { width 144; height 144; corner-radius 72; color linear 225 #4a2070 0 #26104a 1; opacity 0.5; pos 1292 -166 }
-			item "ball big" { width 426; height 426; corner-radius 213; color linear 225 #431870 0 #1c0636 1; pos 1412 -372 }
+			item "ball top" { width 250; height 250; corner-radius 125; color linear 45 #63117d 0 #32055f 1; opacity 0.8; pos 232 135 }
+			item "ball small" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; opacity 0.5; pos 1292 -166 }
+			item "ball big" { width 426; height 426; corner-radius 213; color linear 45 #63117d 0 #220631 1; pos 1412 -372 }
 			item oval {
 				width 1920; height 1080; path "M-552.07 990.40A1527.59 201.19691119691117 0 1 0 2503.11 990.40A1527.59 201.19691119691117 0 1 0 -552.07 990.40Z"
 				view-box 0 0 1920 1080; color #f5f4f5
 			}
-			item "ball left" { width 144; height 144; corner-radius 72; color linear 225 #6b1f8a 0 #2d0a52 1; pos 218 -735 }
-			item "pin shadow" {
-				width 1920; height 1080; path "M1395.00 860.00A105 22 0 1 0 1605.00 860.00A105 22 0 1 0 1395.00 860.00Z"; view-box 0 0 1920 1080; color #3c1250; opacity 0.5
-			}
+			item "ball left" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; pos 218 -735 }
+			item "pin shadow" { width 210; height 44; corner-radius 22; color linear 90 #2d0e5300 0 #2d0e53 1; opacity 0.5; pos 1395 -838 }
 			item "pin body" { width 1920; height 1080; path "M1500 628L1640 668L1585 830L1445 775Z"; view-box 0 0 1920 1080; color #f760d3 }
 			item "pin rim" {
 				width 1920; height 1080; path "M1504.34 623.37A72 26 20 1 0 1639.66 672.63A72 26 20 1 0 1504.34 623.37Z"; view-box 0 0 1920 1080; color #d43cb0
@@ -2930,17 +2878,15 @@ element Invitations {
 		item "Login background" {
 			auto-layout abs; width 1920; height 1080; clip yes
 			item sky { width 1920; height 1080; color linear 180 #0b0123 0 #170134 0.33 #250932 0.66 #100118 1; pos 0 -32 }
-			item "ball top" { width 250; height 250; corner-radius 125; color linear 225 #2e0f52 0 #1a0630 1; pos 232 135 }
-			item "ball small" { width 144; height 144; corner-radius 72; color linear 225 #4a2070 0 #26104a 1; opacity 0.5; pos 1292 -166 }
-			item "ball big" { width 426; height 426; corner-radius 213; color linear 225 #431870 0 #1c0636 1; pos 1412 -372 }
+			item "ball top" { width 250; height 250; corner-radius 125; color linear 45 #63117d 0 #32055f 1; opacity 0.8; pos 232 135 }
+			item "ball small" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; opacity 0.5; pos 1292 -166 }
+			item "ball big" { width 426; height 426; corner-radius 213; color linear 45 #63117d 0 #220631 1; pos 1412 -372 }
 			item oval {
 				width 1920; height 1080; path "M-552.07 990.40A1527.59 201.19691119691117 0 1 0 2503.11 990.40A1527.59 201.19691119691117 0 1 0 -552.07 990.40Z"
 				view-box 0 0 1920 1080; color #f5f4f5
 			}
-			item "ball left" { width 144; height 144; corner-radius 72; color linear 225 #6b1f8a 0 #2d0a52 1; pos 218 -735 }
-			item "pin shadow" {
-				width 1920; height 1080; path "M1395.00 860.00A105 22 0 1 0 1605.00 860.00A105 22 0 1 0 1395.00 860.00Z"; view-box 0 0 1920 1080; color #3c1250; opacity 0.5
-			}
+			item "ball left" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; pos 218 -735 }
+			item "pin shadow" { width 210; height 44; corner-radius 22; color linear 90 #2d0e5300 0 #2d0e53 1; opacity 0.5; pos 1395 -838 }
 			item "pin body" { width 1920; height 1080; path "M1500 628L1640 668L1585 830L1445 775Z"; view-box 0 0 1920 1080; color #f760d3 }
 			item "pin rim" {
 				width 1920; height 1080; path "M1504.34 623.37A72 26 20 1 0 1639.66 672.63A72 26 20 1 0 1504.34 623.37Z"; view-box 0 0 1920 1080; color #d43cb0
@@ -3019,17 +2965,15 @@ element Invitations {
 		item "Login background" {
 			auto-layout abs; width 1920; height 1080; clip yes
 			item sky { width 1920; height 1080; color linear 180 #0b0123 0 #170134 0.33 #250932 0.66 #100118 1; pos 0 -32 }
-			item "ball top" { width 250; height 250; corner-radius 125; color linear 225 #2e0f52 0 #1a0630 1; pos 232 135 }
-			item "ball small" { width 144; height 144; corner-radius 72; color linear 225 #4a2070 0 #26104a 1; opacity 0.5; pos 1292 -166 }
-			item "ball big" { width 426; height 426; corner-radius 213; color linear 225 #431870 0 #1c0636 1; pos 1412 -372 }
+			item "ball top" { width 250; height 250; corner-radius 125; color linear 45 #63117d 0 #32055f 1; opacity 0.8; pos 232 135 }
+			item "ball small" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; opacity 0.5; pos 1292 -166 }
+			item "ball big" { width 426; height 426; corner-radius 213; color linear 45 #63117d 0 #220631 1; pos 1412 -372 }
 			item oval {
 				width 1920; height 1080; path "M-552.07 990.40A1527.59 201.19691119691117 0 1 0 2503.11 990.40A1527.59 201.19691119691117 0 1 0 -552.07 990.40Z"
 				view-box 0 0 1920 1080; color #f5f4f5
 			}
-			item "ball left" { width 144; height 144; corner-radius 72; color linear 225 #6b1f8a 0 #2d0a52 1; pos 218 -735 }
-			item "pin shadow" {
-				width 1920; height 1080; path "M1395.00 860.00A105 22 0 1 0 1605.00 860.00A105 22 0 1 0 1395.00 860.00Z"; view-box 0 0 1920 1080; color #3c1250; opacity 0.5
-			}
+			item "ball left" { width 144; height 144; corner-radius 72; color linear 45 #63117d 0 #32055f 1; pos 218 -735 }
+			item "pin shadow" { width 210; height 44; corner-radius 22; color linear 90 #2d0e5300 0 #2d0e53 1; opacity 0.5; pos 1395 -838 }
 			item "pin body" { width 1920; height 1080; path "M1500 628L1640 668L1585 830L1445 775Z"; view-box 0 0 1920 1080; color #f760d3 }
 			item "pin rim" {
 				width 1920; height 1080; path "M1504.34 623.37A72 26 20 1 0 1639.66 672.63A72 26 20 1 0 1504.34 623.37Z"; view-box 0 0 1920 1080; color #d43cb0

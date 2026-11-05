@@ -1,22 +1,22 @@
 entry "../../../../PlatformDesign.tenn"
 item "§ SectionTitle" {
-	auto-layout abs; width 87; height 88; border-color #0000000f; corner-radius 8; pos 0 0
+	auto-layout abs; width 87; height 88; color #ffffff; border-color #0000000f; corner-radius 8; pos 0 0
 	item title { title SectionTitle; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ FormRow" {
-	auto-layout abs; width 768; height 100; border-color #0000000f; corner-radius 8; pos 135 0
+	auto-layout abs; width 768; height 100; color #ffffff; border-color #0000000f; corner-radius 8; pos 135 0
 	item title { title FormRow; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ Table" {
-	auto-layout abs; width 448; height 166; border-color #0000000f; corner-radius 8; pos 951 0
+	auto-layout abs; width 448; height 166; color #ffffff; border-color #0000000f; corner-radius 8; pos 951 0
 	item title { title Table; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ GridRow" {
-	auto-layout abs; width 598; height 103; border-color #0000000f; corner-radius 8; pos 1447 0
+	auto-layout abs; width 598; height 103; color #ffffff; border-color #0000000f; corner-radius 8; pos 1447 0
 	item title { title GridRow; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ SettingsLayout" {
-	auto-layout abs; width 1248; height 768; border-color #0000000f; corner-radius 8; pos 0 -214
+	auto-layout abs; width 1248; height 768; color #ffffff; border-color #0000000f; corner-radius 8; pos 0 -214
 	item title { title SettingsLayout; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item SectionTitle {
@@ -41,7 +41,7 @@ item FormRow {
 	}
 }
 item Table {
-	auto-layout column; width 400; clip yes; border-color #0000000f; corner-radius 8; pos 975 -44
+	auto-layout column; width 400; clip yes; color #ffffff; border-color #0000000f; corner-radius 8; pos 975 -44
 	item head {
 		auto-layout row; align center; width 400; height 36; clip yes; color #f7f7f8
 		slot head {

@@ -1,37 +1,7 @@
 entry "../../../../PlatformDesign.tenn"
-item "§ IssueCard" {
-	auto-layout abs; width 814; height 252; border-color #0000000f; corner-radius 8; pos 0 0
-	item title { title IssueCard; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
-}
-item "§ ColumnHeader" {
-	auto-layout abs; width 342; height 108; border-color #0000000f; corner-radius 8; pos 862 0
-	item title { title ColumnHeader; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
-}
-item "§ KanbanColumn" {
-	auto-layout abs; width 368; height 828; border-color #0000000f; corner-radius 8; pos 1252 0
-	item title { title KanbanColumn; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
-}
-item "§ IssueRow" {
-	auto-layout abs; width 1529; height 112; border-color #0000000f; corner-radius 8; pos 0 -876
-	item title { title IssueRow; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
-}
-item "§ IssueGroup" {
-	auto-layout abs; width 1529; height 232; border-color #0000000f; corner-radius 8; pos 0 -1036
-	item title { title IssueGroup; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
-}
-item "§ IssueList" {
-	auto-layout abs; width 1529; height 156; border-color #0000000f; corner-radius 8; pos 0 -1316
-	item title { title IssueList; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
-}
-item "§ IssuePage" {
-	auto-layout abs; width 1563; height 1035; border-color #0000000f; corner-radius 8; pos 0 -1520
-	item title { title IssuePage; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
-}
-item "§ NewIssuePopup" {
-	auto-layout abs; width 768; height 459; border-color #0000000f; corner-radius 8; pos 1611 -1520
-	item title { title NewIssuePopup; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
-}
-item IssueCard {
+
+element Cards {
+	item IssueCard {
 	export let id = APP-12; export let title = "Fix the board layout when a column has no limit"; export let parent = ""; export let estimation = "Оценка 4h"
 	export let density = detailed; auto-layout column; gap 8; padding 12 14; width 234; clip yes; color #ffffff; border-color #0000000f; corner-radius 8
 	shadow 0 -1 3 #0000000f; use-style ${density}; pos 24 -44
@@ -99,7 +69,29 @@ item IssueCard {
 		font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #00000066; title ${estimation}; hidden ${density === "normal"}
 	}
 }
-item "IssueCard/compact" {
+	item "IssueCard/dense" {
+	export let id = APP-12; export let title = "Fix the board layout…"; auto-layout column; gap 4; padding 6 10; width 234; clip yes; color #ffffff
+	border-color #0000000f; corner-radius 8; shadow 0 -1 3 #0000000f; pos 556 -44
+	item row {
+		auto-layout row; gap 6; align center; width fill; clip yes
+		item "StatusIcon/active" {
+			auto-layout abs; width 16; height 16
+			item ring { width 14; height 14; corner-radius 7; border-color #5195d7; line-width 1.5; pos 1 -1 }
+			item wedge { width 16; height 16; path "M8 8L8 3A5 5 0 0 1 13 8Z"; view-box 0 0 16 16; color #5195d7 }
+		}
+		item "APP-12" { font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #00000066; title ${id} }
+		item title { font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; title ${title} }
+		use Libraries.ui_kit.People.Avatar as "Avatar/20" {
+			color #6260c2; corner-radius 10
+			at initials { title AJ; font-size 8; line-height 10 }
+		}
+	}
+}
+	item "§ IssueCard" {
+	auto-layout abs; width 814; height 252; color #ffffff; border-color #0000000f; corner-radius 8; pos 0 0
+	item title { title IssueCard; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+	item "IssueCard/compact" {
 	export let id = APP-12; export let title = "Fix the board layout when a column has no limit"; auto-layout column; gap 6; padding 8 10; width 234; clip yes
 	color #ffffff; border-color #0000000f; corner-radius 8; shadow 0 -1 3 #0000000f; pos 290 -44
 	item "title row" {
@@ -127,270 +119,17 @@ item "IssueCard/compact" {
 		}
 	}
 }
-item "IssueCard/dense" {
-	export let id = APP-12; export let title = "Fix the board layout…"; auto-layout column; gap 4; padding 6 10; width 234; clip yes; color #ffffff
-	border-color #0000000f; corner-radius 8; shadow 0 -1 3 #0000000f; pos 556 -44
-	item row {
-		auto-layout row; gap 6; align center; width fill; clip yes
-		item "StatusIcon/active" {
-			auto-layout abs; width 16; height 16
-			item ring { width 14; height 14; corner-radius 7; border-color #5195d7; line-width 1.5; pos 1 -1 }
-			item wedge { width 16; height 16; path "M8 8L8 3A5 5 0 0 1 13 8Z"; view-box 0 0 16 16; color #5195d7 }
-		}
-		item "APP-12" { font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #00000066; title ${id} }
-		item title { font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; title ${title} }
-		use Libraries.ui_kit.People.Avatar as "Avatar/20" {
-			color #6260c2; corner-radius 10
-			at initials { title AJ; font-size 8; line-height 10 }
-		}
-	}
 }
-item ColumnHeader {
-	export let label = "In Progress"; export let count = 6; export let limit = ""; export let tools = false; auto-layout row; padding 0 4 0 20; align center
-	justify space-between; width 294; height 40; clip yes; color #d1dfee; border-color #0000000f; corner-radius 4
-	use-style ${(tools === "true") ? "tools-on" : "tools-off"}; pos 886 -44
-	styles {
-		tools-on {
-			ColumnAction { hidden no }
-			tools__hover_ { hidden no }
-		}
-		tools-off {
-			ColumnAction { hidden yes }
-			tools__hover_ { hidden yes }
-		}
-	}
-	item title {
-		auto-layout row; gap 8; align center; clip yes
-		use Libraries.ui_kit.Status.StatusIcon as "Status/StatusIcon/active" { category active }
-		item "In Progress" { font-size 14; line-height 18; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #2e7cc7; title ${label} }
-		item _6 { font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #00000099; title ${count} }
-		item "/ 8" {
-			font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #00000066; title ${limit === "" ? "" : "/ " + limit}
-			hidden ${limit === ""}
-		}
-	}
-	use Libraries.ui_kit.Actions.Button as ColumnAction {
-		kind secondary; size extra-small
-		replace icon_kit_Plus {
-			use Libraries.ui_kit.Icon.milestone as "icon/milestone" { border-color #000000; line-width 1 }
-		}
-		at Button { title Release }
-	}
-	item "tools (hover)" {
-		auto-layout row; gap 4; align center; clip yes
-		use Libraries.ui_kit.Actions.Button as "IconButton/chevronR" {
-			kind tertiary; size small; shape icon
-			replace icon_gear {
-				use Libraries.ui_kit.Icon.chevronR as "icon/chevronR" { border-color #5a667e; line-width 1 }
-			}
-		}
-		use Libraries.ui_kit.Actions.Button as "IconButton/merge" {
-			kind tertiary; size small; shape icon
-			replace icon_gear {
-				use Libraries.ui_kit.Icon.merge as "icon/merge" { border-color #5a667e; line-width 1 }
-			}
-		}
-		use Libraries.ui_kit.Actions.Button as "IconButton/plus" {
-			kind tertiary; size small; shape icon
-			replace icon_gear {
-				use Libraries.ui_kit.Icon.plus as "icon/plus" { border-color #5a667e; line-width 1 }
-			}
-		}
-	}
+element List {
+	item "§ IssueRow" {
+	auto-layout abs; width 1529; height 112; color #ffffff; border-color #0000000f; corner-radius 8; pos 0 -876
+	item title { title IssueRow; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
-item KanbanColumn {
-	auto-layout column; gap 8; padding 0 13; width 320; height 760; clip yes; pos 1276 -44
-	use ColumnHeader as "ColumnHeader In Progress" {
-		padding 0 8 0 20
-		at title._6 { title "2" }
-	}
-	item spacer { auto-layout abs; width 294; height 1; clip yes }
-	item statuses {
-		hidden yes; auto-layout row; gap 4; padding 0 2; width 294; clip yes; wrap yes; line-gap 4
-		slot statuses {
-			use Libraries.ui_kit.Status.StatusChip as "StatusChip/Review" {
-				at In_Progress { title Review }
-			}
-			use Libraries.ui_kit.Status.StatusChip as "StatusChip/Testing" {
-				at In_Progress { title Testing }
-			}
-		}
-	}
-	item cards {
-		auto-layout column; gap 8; padding 8; width 294; color #00000008; corner-radius 8
-		slot cards {
-			use IssueCard as "IssueCard APP-12" {
-				width 278
-				at top.left.parent { hidden no }
-				at chips { width 248 }
-				slot chips {
-					item priority {
-						auto-layout row; gap 6; padding 3 8; align center; clip yes; color #ffffff; border-color #00000017; corner-radius 12
-						use Libraries.ui_kit.Status.PriorityIcon as "Status/PriorityIcon/high" { priority high }
-					}
-					item "sub-issues" {
-						auto-layout row; gap 6; padding 3 8; align center; clip yes; color #ffffff; border-color #00000017; corner-radius 12
-						use Libraries.ui_kit.Icon.subissues as "icon/subissues" { width 14; height 14; border-color #00000099; line-width 1.14 }
-						item "1/2" { title "1/2"; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #00000099 }
-					}
-					item "due date" {
-						auto-layout row; gap 6; padding 3 8; align center; clip yes; color #ffffff; border-color #00000017; corner-radius 12
-						use Libraries.ui_kit.Icon.calendar as "icon/calendar" { width 14; height 14; border-color #00000099; line-width 1.14 }
-						item "30 Oct" { title "30 Oct"; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #00000099 }
-					}
-					item component {
-						auto-layout row; gap 6; padding 3 8; align center; clip yes; color #ffffff; border-color #00000017; corner-radius 12
-						use Libraries.ui_kit.Icon.component as "icon/component" { width 14; height 14; border-color #00000099; line-width 1.14 }
-						item iOS { title iOS; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #00000099 }
-					}
-					item label {
-						auto-layout row; gap 6; padding 3 8; align center; clip yes; color #ffffff; border-color #00000017; corner-radius 12
-						item dot { width 8; height 8; corner-radius 4; color #4ca6ee }
-						item bug { title bug; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #00000099 }
-					}
-					item label {
-						auto-layout row; gap 6; padding 3 8; align center; clip yes; color #ffffff; border-color #00000017; corner-radius 12
-						item dot { width 8; height 8; corner-radius 4; color #d27540 }
-						item ux { title ux; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #00000099 }
-					}
-				}
-			}
-			use IssueCard as "IssueCard APP-13" {
-				density normal; width 278
-				at top.left.id { title APP-13 }
-				at chips { width 248 }
-				slot chips {
-					item priority {
-						auto-layout row; gap 6; padding 3 8; align center; clip yes; color #ffffff; border-color #00000017; corner-radius 12
-						use Libraries.ui_kit.Status.PriorityIcon as "Status/PriorityIcon/high" { priority high }
-					}
-					item "sub-issues" {
-						auto-layout row; gap 6; padding 3 8; align center; clip yes; color #ffffff; border-color #00000017; corner-radius 12
-						use Libraries.ui_kit.Icon.subissues as "icon/subissues" { width 14; height 14; border-color #00000099; line-width 1.14 }
-						item "1/2" { title "1/2"; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #00000099 }
-					}
-					item "due date" {
-						auto-layout row; gap 6; padding 3 8; align center; clip yes; color #ffffff; border-color #00000017; corner-radius 12
-						use Libraries.ui_kit.Icon.calendar as "icon/calendar" { width 14; height 14; border-color #00000099; line-width 1.14 }
-						item "30 Oct" { title "30 Oct"; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #00000099 }
-					}
-					item component {
-						auto-layout row; gap 6; padding 3 8; align center; clip yes; color #ffffff; border-color #00000017; corner-radius 12
-						use Libraries.ui_kit.Icon.component as "icon/component" { width 14; height 14; border-color #00000099; line-width 1.14 }
-						item iOS { title iOS; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #00000099 }
-					}
-				}
-			}
-		}
-	}
+	item "§ IssueList" {
+	auto-layout abs; width 1529; height 156; color #ffffff; border-color #0000000f; corner-radius 8; pos 0 -1316
+	item title { title IssueList; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
-item IssueRow {
-	auto-layout column; width 1481; height 44; clip yes; color #f7f7f8; pos 24 -920
-	item row {
-		auto-layout row; gap 4; padding 0 24 0 12; align center; width 1481; height 43; clip yes
-		slot row {
-			item check { width 16; height 16; clip yes; border-color #cf13a233; corner-radius 4 }
-			item spacer { auto-layout abs; width 4; height 1; clip yes }
-			item priority {
-				auto-layout row; align center; width 16; height 16; clip yes
-				use Libraries.ui_kit.Status.PriorityIcon as "Status/PriorityIcon/high" { priority high }
-			}
-			item id {
-				auto-layout row; align center; width 49; height 18; clip yes
-				item "APP-12" { title APP-12; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #00000080 }
-			}
-			item status {
-				auto-layout row; padding 0 0 0 14; width 30; height 16; clip yes
-				item "StatusIcon/active" {
-					auto-layout abs; width 16; height 16
-					item ring { width 14; height 14; corner-radius 7; border-color #5195d7; line-width 1.5; pos 1 -1 }
-					item wedge { width 16; height 16; path "M8 8L8 3A5 5 0 0 1 13 8Z"; view-box 0 0 16 16; color #5195d7 }
-				}
-			}
-			item title { title "Fix the board layout when a column has no limit"; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left }
-			use Libraries.ui_kit.TagsAndFilters.Chip as "sub-issues" {
-				slot content {
-					use Libraries.ui_kit.Icon.subissues as "icon/subissues" { width 14; height 14; border-color #00000099; line-width 1.14 }
-					item "_1/2" { title "1/2"; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; auto-layout row; text-color #000000cc }
-				}
-			}
-			item comments {
-				auto-layout row; gap 3; align center; clip yes
-				use Libraries.ui_kit.Icon.comment as "icon/comment" { width 14; height 14; border-color #00000099; line-width 1.14 }
-				item _3 { title "3"; font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; text-color #00000099 }
-			}
-			item attachments {
-				auto-layout row; gap 3; align center; clip yes
-				use Libraries.ui_kit.Icon.clip as "icon/clip" { width 14; height 14; border-color #00000099; line-width 1.14 }
-				item _1 { title "1"; font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; text-color #00000099 }
-			}
-			item grow { auto-layout abs; width fill; height 1; clip yes }
-			item "Label bug" {
-				auto-layout row; gap 6; padding 0 8; align center; height 28; clip yes; color #6b3ad31a; border-color #00000017; corner-radius 24
-				item dot { auto-layout abs; width 8; height 8; clip yes; color #4ca6ee; corner-radius 4 }
-				item bug { title bug; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left }
-			}
-			item "ListChip/milestone" {
-				auto-layout row; gap 6; padding 0 8; align center; height 28; clip yes; color #f2f2f4; border-color #00000017; corner-radius 24
-				use Libraries.ui_kit.Icon.milestone as "icon/milestone" { border-color #00000080; line-width 1 }
-				item "Release 1.0" { title "Release 1.0"; font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; text-color #00000080 }
-			}
-			item "ListChip/component" {
-				auto-layout row; gap 6; padding 0 8; align center; height 28; clip yes; color #f2f2f4; border-color #00000017; corner-radius 24
-				use Libraries.ui_kit.Icon.component as "icon/component" { border-color #00000080; line-width 1 }
-				item iOS { title iOS; font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; text-color #00000080 }
-			}
-			item "ListChip/calendar" {
-				auto-layout row; gap 6; padding 0 8; align center; height 28; clip yes; color #f2f2f4; border-color #00000017; corner-radius 24
-				use Libraries.ui_kit.Icon.calendar as "icon/calendar" { border-color #00000080; line-width 1 }
-				item "_30 Oct" { title "30 Oct"; font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; text-color #00000080 }
-			}
-			item divider {
-				auto-layout row; padding 0 6 0 14; width 21; height 24; clip yes
-				item line { auto-layout abs; width 1; height 24; clip yes; color #00000012 }
-			}
-			item "col reported" {
-				auto-layout row; align center; width 16; height 18; clip yes
-				item reported { title "2h"; font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; text-color #00000080 }
-			}
-			item "divider 2" {
-				auto-layout row; padding 0 6 0 14; width 21; height 24; clip yes
-				item line { auto-layout abs; width 1; height 24; clip yes; color #00000012 }
-			}
-			item estimation {
-				auto-layout row; gap 8; align center; width 40; height 18; clip yes
-				item ProgressCircle {
-					auto-layout abs; width 16; height 16
-					item ring { width 12; height 12; corner-radius 6; border-color #00000099; line-width 1.5; opacity 0.5; pos 2 -2 }
-					item fill { width 16; height 16; path "M8 8L8 3A5 5 0 0 1 8 13Z"; view-box 0 0 16 16; color #00000099 }
-				}
-				item _4h { title "4h"; font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; text-color #00000080 }
-			}
-			item "divider 3" {
-				auto-layout row; padding 0 6 0 14; width 21; height 24; clip yes
-				item line { auto-layout abs; width 1; height 24; clip yes; color #00000012 }
-			}
-			item "col created" {
-				auto-layout row; align center; width 58; height 18; clip yes
-				item created { title "2 days ago"; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #00000099 }
-			}
-			item "divider 4" {
-				auto-layout row; padding 0 6 0 14; width 21; height 24; clip yes
-				item line { auto-layout abs; width 1; height 24; clip yes; color #00000012 }
-			}
-			item "col modified" {
-				auto-layout row; align center; width 36; height 18; clip yes
-				item modified { title "Oct 21"; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #00000099 }
-			}
-			use Libraries.ui_kit.People.Avatar as "Avatar/24" {
-				width 24; height 24; color #6260c2; corner-radius 5
-				at initials { title AJ; font-size 10; line-height 13 }
-			}
-		}
-	}
-	item border { auto-layout abs; width 1481; height 1; clip yes; color #0000000f }
-}
-item IssueGroup {
+	item IssueGroup {
 	export let name = "In Progress"; export let estimation = "4h"; auto-layout column; width 1481; clip yes; border-color #00000017; corner-radius 4; pos 24 -1080
 	item categoryHeader {
 		auto-layout row; padding 0 112 0 12; align center; justify space-between; width 1481; height 44; clip yes; color #d1dfee; corner-radius 4
@@ -418,7 +157,7 @@ item IssueGroup {
 	item rows {
 		auto-layout column; width 1479
 		slot rows {
-			use IssueRow as "IssueRow APP-12" {
+			use Libraries.tracker_kit.List.IssueRow as "IssueRow APP-12" {
 				width 1479
 				at row { width 1479; height 44 }
 				at border { hidden yes }
@@ -527,46 +266,12 @@ item IssueGroup {
 		}
 	}
 }
-item "IssueGroup/empty" {
-	auto-layout column; width 1481; clip yes; border-color #00000017; corner-radius 4; pos 24 -1200
-	item categoryHeader {
-		auto-layout row; padding 0 112 0 12; align center; justify space-between; width 1481; height 44; clip yes; color #dedee1; corner-radius 4
-		item title {
-			auto-layout row; align center; clip yes
-			item chevron {
-				auto-layout row; padding 0 12 0 0; width 28; height 16; clip yes
-				item dot {
-					auto-layout row; align center; justify center; width 16; height 16; clip yes
-					item dot { auto-layout abs; width 4; height 4; clip yes; color #00000099; corner-radius 2 }
-				}
-			}
-			item "StatusIcon/lost" {
-				auto-layout abs; width 16; height 16
-				item ring { width 14; height 14; corner-radius 7; border-color #939395; line-width 1.5; pos 1 -1 }
-				item disc { width 14; height 14; corner-radius 7; color #939395; pos 1 -1 }
-				item cross { width 16; height 16; path "M6 6L10 10M10 6L6 10"; view-box 0 0 16 16; border-color #ffffff; line-width 1.5 }
-			}
-			item spacer { auto-layout abs; width 8; height 1; clip yes }
-			item Canceled { title Canceled; font-size 14; line-height 18; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #79797c }
-			item "spacer 2" { auto-layout abs; width 8; height 1; clip yes }
-			item _0 { title "0"; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #00000099 }
-		}
-		item estimation {
-			auto-layout row; padding 0 0 0 8; align center; width 48; height 24; clip yes
-			item estimation { title "0h"; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #79797c }
-		}
-	}
-	item rows {
-		auto-layout column; width 1479
-		slot rows
-	}
-}
-item IssueList {
+	item IssueList {
 	auto-layout column; gap 8; width 1481; clip yes; pos 24 -1360
 	slot content {
-		use IssueGroup as "Group In Progress" {
+		use Libraries.tracker_kit.List.IssueGroup as "Group In Progress" {
 			slot rows {
-				use IssueRow as "IssueRow APP-12" {
+				use Libraries.tracker_kit.List.IssueRow as "IssueRow APP-12" {
 					width 1479
 					at row { width 1479; height 44 }
 					at border { hidden yes }
@@ -676,7 +381,153 @@ item IssueList {
 		}
 	}
 }
-item IssuePage {
+	item "§ IssueGroup" {
+	auto-layout abs; width 1529; height 232; color #ffffff; border-color #0000000f; corner-radius 8; pos 0 -1036
+	item title { title IssueGroup; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+	item "IssueGroup/empty" {
+	auto-layout column; width 1481; clip yes; border-color #00000017; corner-radius 4; pos 24 -1200
+	item categoryHeader {
+		auto-layout row; padding 0 112 0 12; align center; justify space-between; width 1481; height 44; clip yes; color #dedee1; corner-radius 4
+		item title {
+			auto-layout row; align center; clip yes
+			item chevron {
+				auto-layout row; padding 0 12 0 0; width 28; height 16; clip yes
+				item dot {
+					auto-layout row; align center; justify center; width 16; height 16; clip yes
+					item dot { auto-layout abs; width 4; height 4; clip yes; color #00000099; corner-radius 2 }
+				}
+			}
+			item "StatusIcon/lost" {
+				auto-layout abs; width 16; height 16
+				item ring { width 14; height 14; corner-radius 7; border-color #939395; line-width 1.5; pos 1 -1 }
+				item disc { width 14; height 14; corner-radius 7; color #939395; pos 1 -1 }
+				item cross { width 16; height 16; path "M6 6L10 10M10 6L6 10"; view-box 0 0 16 16; border-color #ffffff; line-width 1.5 }
+			}
+			item spacer { auto-layout abs; width 8; height 1; clip yes }
+			item Canceled { title Canceled; font-size 14; line-height 18; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #79797c }
+			item "spacer 2" { auto-layout abs; width 8; height 1; clip yes }
+			item _0 { title "0"; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #00000099 }
+		}
+		item estimation {
+			auto-layout row; padding 0 0 0 8; align center; width 48; height 24; clip yes
+			item estimation { title "0h"; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #79797c }
+		}
+	}
+	item rows {
+		auto-layout column; width 1479
+		slot rows
+	}
+}
+	item IssueRow {
+	auto-layout column; width 1481; height 44; clip yes; color #f7f7f8; pos 24 -920
+	item row {
+		auto-layout row; gap 4; padding 0 24 0 12; align center; width 1481; height 43; clip yes
+		slot row {
+			item check { width 16; height 16; clip yes; border-color #cf13a233; corner-radius 4 }
+			item spacer { auto-layout abs; width 4; height 1; clip yes }
+			item priority {
+				auto-layout row; align center; width 16; height 16; clip yes
+				use Libraries.ui_kit.Status.PriorityIcon as "Status/PriorityIcon/high" { priority high }
+			}
+			item id {
+				auto-layout row; align center; width 49; height 18; clip yes
+				item "APP-12" { title APP-12; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #00000080 }
+			}
+			item status {
+				auto-layout row; padding 0 0 0 14; width 30; height 16; clip yes
+				item "StatusIcon/active" {
+					auto-layout abs; width 16; height 16
+					item ring { width 14; height 14; corner-radius 7; border-color #5195d7; line-width 1.5; pos 1 -1 }
+					item wedge { width 16; height 16; path "M8 8L8 3A5 5 0 0 1 13 8Z"; view-box 0 0 16 16; color #5195d7 }
+				}
+			}
+			item title { title "Fix the board layout when a column has no limit"; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left }
+			use Libraries.ui_kit.TagsAndFilters.Chip as "sub-issues" {
+				slot content {
+					use Libraries.ui_kit.Icon.subissues as "icon/subissues" { width 14; height 14; border-color #00000099; line-width 1.14 }
+					item "_1/2" { title "1/2"; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; auto-layout row; text-color #000000cc }
+				}
+			}
+			item comments {
+				auto-layout row; gap 3; align center; clip yes
+				use Libraries.ui_kit.Icon.comment as "icon/comment" { width 14; height 14; border-color #00000099; line-width 1.14 }
+				item _3 { title "3"; font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; text-color #00000099 }
+			}
+			item attachments {
+				auto-layout row; gap 3; align center; clip yes
+				use Libraries.ui_kit.Icon.clip as "icon/clip" { width 14; height 14; border-color #00000099; line-width 1.14 }
+				item _1 { title "1"; font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; text-color #00000099 }
+			}
+			item grow { auto-layout abs; width fill; height 1; clip yes }
+			item "Label bug" {
+				auto-layout row; gap 6; padding 0 8; align center; height 28; clip yes; color #6b3ad31a; border-color #00000017; corner-radius 24
+				item dot { auto-layout abs; width 8; height 8; clip yes; color #4ca6ee; corner-radius 4 }
+				item bug { title bug; font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left }
+			}
+			item "ListChip/milestone" {
+				auto-layout row; gap 6; padding 0 8; align center; height 28; clip yes; color #f2f2f4; border-color #00000017; corner-radius 24
+				use Libraries.ui_kit.Icon.milestone as "icon/milestone" { border-color #00000080; line-width 1 }
+				item "Release 1.0" { title "Release 1.0"; font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; text-color #00000080 }
+			}
+			item "ListChip/component" {
+				auto-layout row; gap 6; padding 0 8; align center; height 28; clip yes; color #f2f2f4; border-color #00000017; corner-radius 24
+				use Libraries.ui_kit.Icon.component as "icon/component" { border-color #00000080; line-width 1 }
+				item iOS { title iOS; font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; text-color #00000080 }
+			}
+			item "ListChip/calendar" {
+				auto-layout row; gap 6; padding 0 8; align center; height 28; clip yes; color #f2f2f4; border-color #00000017; corner-radius 24
+				use Libraries.ui_kit.Icon.calendar as "icon/calendar" { border-color #00000080; line-width 1 }
+				item "_30 Oct" { title "30 Oct"; font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; text-color #00000080 }
+			}
+			item divider {
+				auto-layout row; padding 0 6 0 14; width 21; height 24; clip yes
+				item line { auto-layout abs; width 1; height 24; clip yes; color #00000012 }
+			}
+			item "col reported" {
+				auto-layout row; align center; width 16; height 18; clip yes
+				item reported { title "2h"; font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; text-color #00000080 }
+			}
+			item "divider 2" {
+				auto-layout row; padding 0 6 0 14; width 21; height 24; clip yes
+				item line { auto-layout abs; width 1; height 24; clip yes; color #00000012 }
+			}
+			item estimation {
+				auto-layout row; gap 8; align center; width 40; height 18; clip yes
+				item ProgressCircle {
+					auto-layout abs; width 16; height 16
+					item ring { width 12; height 12; corner-radius 6; border-color #00000099; line-width 1.5; opacity 0.5; pos 2 -2 }
+					item fill { width 16; height 16; path "M8 8L8 3A5 5 0 0 1 8 13Z"; view-box 0 0 16 16; color #00000099 }
+				}
+				item _4h { title "4h"; font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; text-color #00000080 }
+			}
+			item "divider 3" {
+				auto-layout row; padding 0 6 0 14; width 21; height 24; clip yes
+				item line { auto-layout abs; width 1; height 24; clip yes; color #00000012 }
+			}
+			item "col created" {
+				auto-layout row; align center; width 58; height 18; clip yes
+				item created { title "2 days ago"; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #00000099 }
+			}
+			item "divider 4" {
+				auto-layout row; padding 0 6 0 14; width 21; height 24; clip yes
+				item line { auto-layout abs; width 1; height 24; clip yes; color #00000012 }
+			}
+			item "col modified" {
+				auto-layout row; align center; width 36; height 18; clip yes
+				item modified { title "Oct 21"; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #00000099 }
+			}
+			use Libraries.ui_kit.People.Avatar as "Avatar/24" {
+				width 24; height 24; color #6260c2; corner-radius 5
+				at initials { title AJ; font-size 10; line-height 13 }
+			}
+		}
+	}
+	item border { auto-layout abs; width 1481; height 1; clip yes; color #0000000f }
+}
+}
+element Page {
+	item IssuePage {
 	auto-layout abs; width 1515; height 967; clip yes; color #ffffff; border-color #0000000f; corner-radius 8; pos 24 -1564
 	slot content {
 		item "button kit/Cross" {
@@ -932,7 +783,162 @@ item IssuePage {
 		}
 	}
 }
-item NewIssuePopup {
+	item "§ IssuePage" {
+	auto-layout abs; width 1563; height 1035; color #ffffff; border-color #0000000f; corner-radius 8; pos 0 -1520
+	item title { title IssuePage; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+}
+element Kanban {
+	item "§ KanbanColumn" {
+	auto-layout abs; width 368; height 828; color #ffffff; border-color #0000000f; corner-radius 8; pos 1252 0
+	item title { title KanbanColumn; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+	item KanbanColumn {
+	auto-layout column; gap 8; padding 0 13; width 320; height 760; clip yes; pos 1276 -44
+	use Libraries.tracker_kit.Kanban.ColumnHeader as "ColumnHeader In Progress" {
+		padding 0 8 0 20
+		at title._6 { title "2" }
+	}
+	item spacer { auto-layout abs; width 294; height 1; clip yes }
+	item statuses {
+		hidden yes; auto-layout row; gap 4; padding 0 2; width 294; clip yes; wrap yes; line-gap 4
+		slot statuses {
+			use Libraries.ui_kit.Status.StatusChip as "StatusChip/Review" {
+				at In_Progress { title Review }
+			}
+			use Libraries.ui_kit.Status.StatusChip as "StatusChip/Testing" {
+				at In_Progress { title Testing }
+			}
+		}
+	}
+	item cards {
+		auto-layout column; gap 8; padding 8; width 294; color #00000008; corner-radius 8
+		slot cards {
+			use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-12" {
+				width 278
+				at top.left.parent { hidden no }
+				at chips { width 248 }
+				slot chips {
+					item priority {
+						auto-layout row; gap 6; padding 3 8; align center; clip yes; color #ffffff; border-color #00000017; corner-radius 12
+						use Libraries.ui_kit.Status.PriorityIcon as "Status/PriorityIcon/high" { priority high }
+					}
+					item "sub-issues" {
+						auto-layout row; gap 6; padding 3 8; align center; clip yes; color #ffffff; border-color #00000017; corner-radius 12
+						use Libraries.ui_kit.Icon.subissues as "icon/subissues" { width 14; height 14; border-color #00000099; line-width 1.14 }
+						item "1/2" { title "1/2"; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #00000099 }
+					}
+					item "due date" {
+						auto-layout row; gap 6; padding 3 8; align center; clip yes; color #ffffff; border-color #00000017; corner-radius 12
+						use Libraries.ui_kit.Icon.calendar as "icon/calendar" { width 14; height 14; border-color #00000099; line-width 1.14 }
+						item "30 Oct" { title "30 Oct"; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #00000099 }
+					}
+					item component {
+						auto-layout row; gap 6; padding 3 8; align center; clip yes; color #ffffff; border-color #00000017; corner-radius 12
+						use Libraries.ui_kit.Icon.component as "icon/component" { width 14; height 14; border-color #00000099; line-width 1.14 }
+						item iOS { title iOS; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #00000099 }
+					}
+					item label {
+						auto-layout row; gap 6; padding 3 8; align center; clip yes; color #ffffff; border-color #00000017; corner-radius 12
+						item dot { width 8; height 8; corner-radius 4; color #4ca6ee }
+						item bug { title bug; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #00000099 }
+					}
+					item label {
+						auto-layout row; gap 6; padding 3 8; align center; clip yes; color #ffffff; border-color #00000017; corner-radius 12
+						item dot { width 8; height 8; corner-radius 4; color #d27540 }
+						item ux { title ux; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #00000099 }
+					}
+				}
+			}
+			use Libraries.tracker_kit.Cards.IssueCard as "IssueCard APP-13" {
+				density normal; width 278
+				at top.left.id { title APP-13 }
+				at chips { width 248 }
+				slot chips {
+					item priority {
+						auto-layout row; gap 6; padding 3 8; align center; clip yes; color #ffffff; border-color #00000017; corner-radius 12
+						use Libraries.ui_kit.Status.PriorityIcon as "Status/PriorityIcon/high" { priority high }
+					}
+					item "sub-issues" {
+						auto-layout row; gap 6; padding 3 8; align center; clip yes; color #ffffff; border-color #00000017; corner-radius 12
+						use Libraries.ui_kit.Icon.subissues as "icon/subissues" { width 14; height 14; border-color #00000099; line-width 1.14 }
+						item "1/2" { title "1/2"; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #00000099 }
+					}
+					item "due date" {
+						auto-layout row; gap 6; padding 3 8; align center; clip yes; color #ffffff; border-color #00000017; corner-radius 12
+						use Libraries.ui_kit.Icon.calendar as "icon/calendar" { width 14; height 14; border-color #00000099; line-width 1.14 }
+						item "30 Oct" { title "30 Oct"; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #00000099 }
+					}
+					item component {
+						auto-layout row; gap 6; padding 3 8; align center; clip yes; color #ffffff; border-color #00000017; corner-radius 12
+						use Libraries.ui_kit.Icon.component as "icon/component" { width 14; height 14; border-color #00000099; line-width 1.14 }
+						item iOS { title iOS; font-size 12; line-height 15; font-family "IBM Plex Sans"; layout left; text-color #00000099 }
+					}
+				}
+			}
+		}
+	}
+}
+	item ColumnHeader {
+	export let label = "In Progress"; export let count = 6; export let limit = ""; export let tools = false; auto-layout row; padding 0 4 0 20; align center
+	justify space-between; width 294; height 40; clip yes; color #d1dfee; border-color #0000000f; corner-radius 4
+	use-style ${(tools === "true") ? "tools-on" : "tools-off"}; pos 886 -44
+	styles {
+		tools-on {
+			ColumnAction { hidden no }
+			tools__hover_ { hidden no }
+		}
+		tools-off {
+			ColumnAction { hidden yes }
+			tools__hover_ { hidden yes }
+		}
+	}
+	item title {
+		auto-layout row; gap 8; align center; clip yes
+		use Libraries.ui_kit.Status.StatusIcon as "Status/StatusIcon/active" { category active }
+		item "In Progress" { font-size 14; line-height 18; font-family "IBM Plex Sans"; font-weight 500; layout left; text-color #2e7cc7; title ${label} }
+		item _6 { font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #00000099; title ${count} }
+		item "/ 8" {
+			font-size 14; line-height 18; font-family "IBM Plex Sans"; layout left; text-color #00000066; title ${limit === "" ? "" : "/ " + limit}
+			hidden ${limit === ""}
+		}
+	}
+	use Libraries.ui_kit.Actions.Button as ColumnAction {
+		kind secondary; size extra-small
+		replace icon_kit_Plus {
+			use Libraries.ui_kit.Icon.milestone as "icon/milestone" { border-color #000000; line-width 1 }
+		}
+		at Button { title Release }
+	}
+	item "tools (hover)" {
+		auto-layout row; gap 4; align center; clip yes
+		use Libraries.ui_kit.Actions.Button as "IconButton/chevronR" {
+			kind tertiary; size small; shape icon
+			replace icon_gear {
+				use Libraries.ui_kit.Icon.chevronR as "icon/chevronR" { border-color #5a667e; line-width 1 }
+			}
+		}
+		use Libraries.ui_kit.Actions.Button as "IconButton/merge" {
+			kind tertiary; size small; shape icon
+			replace icon_gear {
+				use Libraries.ui_kit.Icon.merge as "icon/merge" { border-color #5a667e; line-width 1 }
+			}
+		}
+		use Libraries.ui_kit.Actions.Button as "IconButton/plus" {
+			kind tertiary; size small; shape icon
+			replace icon_gear {
+				use Libraries.ui_kit.Icon.plus as "icon/plus" { border-color #5a667e; line-width 1 }
+			}
+		}
+	}
+}
+	item "§ ColumnHeader" {
+	auto-layout abs; width 342; height 108; color #ffffff; border-color #0000000f; corner-radius 8; pos 862 0
+	item title { title ColumnHeader; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
+}
+element Popup {
+	item NewIssuePopup {
 	auto-layout abs; width 720; height 391; clip yes; color #ffffff; corner-radius 8; shadow 0 0 8 #00000033; pos 1635 -1564
 	item ai {
 		auto-layout row; align center; justify center; width 32; height 32; clip yes; corner-radius 6; pos 620 -22
@@ -1036,4 +1042,9 @@ item NewIssuePopup {
 			item "Set parent issue…" { title "Set parent issue…"; font-size 13; line-height 16; font-family "IBM Plex Sans"; layout left; text-color #00000099 }
 		}
 	}
+}
+	item "§ NewIssuePopup" {
+	auto-layout abs; width 768; height 459; color #ffffff; border-color #0000000f; corner-radius 8; pos 1611 -1520
+	item title { title NewIssuePopup; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
 }

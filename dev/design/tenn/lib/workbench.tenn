@@ -1,46 +1,46 @@
 entry "../../../../PlatformDesign.tenn"
 item "§ TopBar" {
-	auto-layout abs; width 1968; height 104; border-color #0000000f; corner-radius 8; pos 0 0
+	auto-layout abs; width 1968; height 104; color #ffffff; border-color #0000000f; corner-radius 8; pos 0 0
 	item title { title TopBar; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ AppRail" {
-	auto-layout abs; width 116; height 1112; border-color #0000000f; corner-radius 8; pos 2016 0
+	auto-layout abs; width 116; height 1112; color #ffffff; border-color #0000000f; corner-radius 8; pos 2016 0
 	item title { title AppRail; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ Sidebar" {
-	auto-layout abs; width 105; height 1112; border-color #0000000f; corner-radius 8; pos 2180 0
+	auto-layout abs; width 105; height 1112; color #ffffff; border-color #0000000f; corner-radius 8; pos 2180 0
 	item title { title Sidebar; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ Navigator" {
-	auto-layout abs; width 640; height 1112; border-color #0000000f; corner-radius 8; pos 0 -1160
+	auto-layout abs; width 640; height 1112; color #ffffff; border-color #0000000f; corner-radius 8; pos 0 -1160
 	item title { title Navigator; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ NavItem" {
-	auto-layout abs; width 590; height 100; border-color #0000000f; corner-radius 8; pos 688 -1160
+	auto-layout abs; width 590; height 100; color #ffffff; border-color #0000000f; corner-radius 8; pos 688 -1160
 	item title { title NavItem; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ NavCaption" {
-	auto-layout abs; width 130; height 88; border-color #0000000f; corner-radius 8; pos 1326 -1160
+	auto-layout abs; width 130; height 88; color #ffffff; border-color #0000000f; corner-radius 8; pos 1326 -1160
 	item title { title NavCaption; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ NavGroup" {
-	auto-layout abs; width 327; height 110; border-color #0000000f; corner-radius 8; pos 1504 -1160
+	auto-layout abs; width 327; height 110; color #ffffff; border-color #0000000f; corner-radius 8; pos 1504 -1160
 	item title { title NavGroup; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ NavSpace" {
-	auto-layout abs; width 327; height 100; border-color #0000000f; corner-radius 8; pos 1879 -1160
+	auto-layout abs; width 327; height 100; color #ffffff; border-color #0000000f; corner-radius 8; pos 1879 -1160
 	item title { title NavSpace; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ SpaceHeader" {
-	auto-layout abs; width 1608; height 181; border-color #0000000f; corner-radius 8; pos 0 -2320
+	auto-layout abs; width 1608; height 181; color #ffffff; border-color #0000000f; corner-radius 8; pos 0 -2320
 	item title { title SpaceHeader; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ PanelHeader" {
-	auto-layout abs; width 1248; height 214; border-color #0000000f; corner-radius 8; pos 0 -2549
+	auto-layout abs; width 1248; height 214; color #ffffff; border-color #0000000f; corner-radius 8; pos 0 -2549
 	item title { title PanelHeader; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item "§ Workbench" {
-	auto-layout abs; width 1968; height 3372; border-color #0000000f; corner-radius 8; pos 0 -2811
+	auto-layout abs; width 1968; height 3372; color #ffffff; border-color #0000000f; corner-radius 8; pos 0 -2811
 	item title { title Workbench; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
 }
 item TopBar {
@@ -651,4 +651,28 @@ item "Workbench/with overlay" {
 			item Overlay { auto-layout abs; width 1920; height 1080; clip yes; color #00000033 }
 		}
 	}
+}
+element "Bars" {
+	use TopBar as "Top bar" { pos 24 -60 }
+	use AppRail as "App rail" { pos 24 -140 }
+	use Sidebar as "Sidebar rail" { pos 1887 -140 }
+}
+element "Navigation" {
+	use Navigator as "Navigator/Tracker" { pos 14 -1210 }
+	use "Navigator/tools" as "Navigator/Chat" { pos 336 -1204 }
+	use NavItem as "NavItem default" { pos 648 -1204 }
+	use "NavItem/object" as "NavItem object" { pos 935 -1204 }
+	use NavCaption as "NavCaption channels" { pos 1222 -1204 }
+	use NavGroup as "NavGroup Your projects" { pos 1384 -1204 }
+	use NavSpace as "NavSpace Mobile app" { pos 1695 -1204 }
+}
+element "Headers" {
+	use SpaceHeader as "Space header" { pos 24 -60 }
+	use PanelHeader as "Panel header" { pos 24 -240 }
+	use "PanelHeader/divided" as "Panel header/divided" { pos 24 -340 }
+}
+element "Shells" {
+	use Workbench as "Workbench default" { pos 24 -60 }
+	use "Workbench/with side panel" as "Workbench side panel" { pos 24 -1220 }
+	use "Workbench/with overlay" as "Workbench overlay" { pos 24 -2380 }
 }
