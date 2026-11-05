@@ -27,6 +27,8 @@ export const uiId = 'ui' as Plugin
 export const uis = plugin(uiId, {
   icon: {
     Archive: '' as Asset,
+    ArrowBarToLeft: '' as Asset,
+    ArrowBarToRight: '' as Asset,
     ArrowBendUpLeft: '' as Asset,
     ArrowBendUpRight: '' as Asset,
     ArrowClockwise: '' as Asset,
