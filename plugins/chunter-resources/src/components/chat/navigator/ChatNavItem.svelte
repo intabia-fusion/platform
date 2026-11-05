@@ -34,6 +34,7 @@
   import NavItem from './NavItem.svelte'
   import type { ChatNavItemModel } from '../types'
   import { isFakeDirect } from '../utils'
+  import { getPinUpdate } from '../navigatorRank'
   import { openChannel, openChannelInSidebar, resetChunterLocIfEqual } from '../../../navigation'
   import chunter from '../../../plugin'
   import { leaveChannel, toggleChannelIcon } from '../../../utils'
@@ -42,6 +43,7 @@
   export let item: ChatNavItemModel
   export let isSelected = false
   export let type: 'type-link' | 'type-tag' | 'type-anchor-link' | 'type-object' = 'type-link'
+  export let draggable: boolean = false
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
@@ -148,7 +150,7 @@
             chat.attachedTo,
             chat.attachedToClass,
             'chats',
-            { pinned: true }
+            getPinUpdate(true)
           )
         }
       })
@@ -165,7 +167,7 @@
             chat.attachedTo,
             chat.attachedToClass,
             'chats',
-            { pinned: false }
+            getPinUpdate(false)
           )
         }
       })
@@ -278,6 +280,7 @@
   identifier={item.identifier}
   {actions}
   {type}
+  {draggable}
   muted={setting?.mode === 'mute'}
   {pressed}
   typing={typers.length > 0}

@@ -46,6 +46,7 @@ import {
   TChannel,
   TChat,
   TChatMessage,
+  TChatNavSortPreference,
   TChatSyncInfo,
   TChunterSpace,
   TDirectMessage,
@@ -81,7 +82,8 @@ export function createModel (builder: Builder): void {
     TThreadMessage,
     TObjectChatPanel,
     TChatSyncInfo,
-    TChat
+    TChat,
+    TChatNavSortPreference
   )
 
   createAttributeApplier(builder, core.class.Doc, 'comments', chunter.function.CommentsApplier)

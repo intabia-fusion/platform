@@ -32,6 +32,8 @@ export interface ChatNavGroupModel {
   showEmpty?: boolean
   // Loaded after the other groups have answered
   deferred?: boolean
+  // Its sections can be ordered by hand
+  manualSort?: boolean
 }
 
 export interface ChatNavEntry {

@@ -8409,6 +8409,9 @@ importers:
       '@hcengineering/model-notification':
         specifier: workspace:^0.7.0
         version: link:../notification
+      '@hcengineering/model-preference':
+        specifier: workspace:^0.7.0
+        version: link:../preference
       '@hcengineering/model-presentation':
         specifier: workspace:^0.7.0
         version: link:../presentation
@@ -19289,6 +19292,9 @@ importers:
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
+      '@hcengineering/preference':
+        specifier: workspace:^0.7.0
+        version: link:../preference
       '@hcengineering/retry':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/retry
@@ -19471,6 +19477,9 @@ importers:
       '@hcengineering/presentation':
         specifier: workspace:^0.7.0
         version: link:../../packages/presentation
+      '@hcengineering/rank':
+        specifier: workspace:^0.7.17
+        version: link:../../foundations/core/packages/rank
       '@hcengineering/text':
         specifier: workspace:^0.7.18
         version: link:../../foundations/core/packages/text
