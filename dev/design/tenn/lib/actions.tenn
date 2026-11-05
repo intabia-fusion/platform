@@ -38,27 +38,21 @@ item Button {
 		state one-of default hover focus disabled loading
 		primary {
 			color #6b3ad3; border-color #1725471a; text-color #ffffff
-			spinner { border-color #ffffff }
 		}
 		secondary {
 			color #1725470d; border-color #1725471a; text-color #0f121a
-			spinner { border-color #0f121a }
 		}
 		tertiary {
 			color none; border-color none; text-color #6b3ad3
-			spinner { border-color #6b3ad3 }
 		}
 		ghost {
 			color none; border-color none; text-color #0f121a
-			spinner { border-color #0f121a }
 		}
 		negative {
 			color #cb4b42; border-color #d1d5de26; text-color #ffffff
-			spinner { border-color #ffffff }
 		}
 		brand {
 			color #cf13a2; border-color none; text-color #ffffff
-			spinner { border-color #ffffff }
 		}
 		large { height 48; gap 8; padding 0 16; corner-radius 8 }
 		medium { height 40; gap 8; padding 0 16; corner-radius 8 }
@@ -113,15 +107,10 @@ item Button {
 	item spinner {
 		width 16; height 16; clip yes
 		hidden ${state !== "loading"}; animation spin 1s linear infinite
-		item "arc lower" {
+		item arc {
 			width 16; height 16; view-box 0 0 24 24
 			color ${kind === "primary" || kind === "brand" || kind === "negative" || kind === "dangerous" ? "#ffffff" : kind === "tertiary" ? "#6b3ad3" : "#0f121a"}
-			path "M12,22.5C6.2,22.5,1.5,17.8,1.5,12C1.5,6.2,6.2,1.5,12,1.5v-1C5.6,0.5,0.5,5.6,0.5,12c0,6.4,5.1,11.5,11.5,11.5V22.5z"
-		}
-		item "arc upper" {
-			width 16; height 16; view-box 0 0 24 24
-			color ${kind === "primary" || kind === "brand" || kind === "negative" || kind === "dangerous" ? "#ffffff" : kind === "tertiary" ? "#6b3ad3" : "#0f121a"}
-			path "M12,0.5v1c5.8,0,10.5,4.7,10.5,10.5c0,5.8-4.7,10.5-10.5,10.5v1c6.4,0,11.5-5.1,11.5-11.5C23.5,5.6,18.4,0.5,12,0.5z"
+			path "M12,1A11,11 0 1 1 1,12L3,12A9,9 0 1 0 12,3Z"
 		}
 	}
 }
@@ -275,11 +264,9 @@ item ClassicButton {
 		regular { color #6b3ad31a; border-color #00000017; text-color #000000cc }
 		primary {
 			color #cf13a2; border-color #1725471a; text-color #ffffff
-			spinner { border-color #ffffff }
 		}
 		dangerous {
 			color #eb5757; border-color #eb5757; text-color #ffffff
-			spinner { border-color #ffffff }
 		}
 		ghost { color none; border-color none; text-color #000000cc }
 		icon { color none; border-color none; text-color #000000cc }
@@ -304,15 +291,10 @@ item ClassicButton {
 	item spinner {
 		width 16; height 16; clip yes
 		hidden ${state !== "loading"}; animation spin 1s linear infinite
-		item "arc lower" {
+		item arc {
 			width 16; height 16; view-box 0 0 24 24
 			color ${kind === "primary" || kind === "brand" || kind === "negative" || kind === "dangerous" ? "#ffffff" : kind === "tertiary" ? "#6b3ad3" : "#0f121a"}
-			path "M12,22.5C6.2,22.5,1.5,17.8,1.5,12C1.5,6.2,6.2,1.5,12,1.5v-1C5.6,0.5,0.5,5.6,0.5,12c0,6.4,5.1,11.5,11.5,11.5V22.5z"
-		}
-		item "arc upper" {
-			width 16; height 16; view-box 0 0 24 24
-			color ${kind === "primary" || kind === "brand" || kind === "negative" || kind === "dangerous" ? "#ffffff" : kind === "tertiary" ? "#6b3ad3" : "#0f121a"}
-			path "M12,0.5v1c5.8,0,10.5,4.7,10.5,10.5c0,5.8-4.7,10.5-10.5,10.5v1c6.4,0,11.5-5.1,11.5-11.5C23.5,5.6,18.4,0.5,12,0.5z"
+			path "M12,1A11,11 0 1 1 1,12L3,12A9,9 0 1 0 12,3Z"
 		}
 	}
 }
