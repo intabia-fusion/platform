@@ -37,7 +37,7 @@ import {
   removeRootBarComponent,
   showPopup
 } from '@hcengineering/ui'
-import { handleDownloadItem } from '@hcengineering/desktop-downloads'
+import { handleDownloadItem, setDownloadItemActions } from '@hcengineering/desktop-downloads'
 import notification, { notificationId } from '@hcengineering/notification'
 import workbench, { workbenchId, logOut } from '@hcengineering/workbench'
 import view, { Action } from '@hcengineering/view'
@@ -272,6 +272,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
   ipcMain.handleDownloadItem((item) => {
     void handleDownloadItem(item)
+  })
+
+  // The downloads popup shows and opens files by the id of the download: the bridge to the main process lives here,
+  // next to the other handlers, so the plugin stays away from `window.electron`.
+  setDownloadItemActions({
+    reveal: async (key) => await ipcMain.revealDownloadItem(key),
+    open: async (key, confirm) => await ipcMain.openDownloadItem(key, confirm)
   })
 
   ipcMain.on(IpcMessage.StartBackup, () => {

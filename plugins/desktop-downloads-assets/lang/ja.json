@@ -5,6 +5,12 @@
     "Cancelled": "キャンセル",
     "Interrupted": "中断",
     "Paused": "一時停止",
-    "Progressing": "進行中"
+    "Progressing": "進行中",
+    "ShowInFolder": "フォルダーで表示",
+    "OpenFile": "ファイルを開く",
+    "Open": "開く",
+    "FileMissing": "ファイルが見つかりません。移動または削除された可能性があります。",
+    "OpenFailed": "ファイルを開けませんでした。この種類のファイルに関連付けられたアプリケーションがありません。",
+    "OpenExecutable": "このファイルはプログラムを実行する可能性があります。開きますか？"
   }
 }
