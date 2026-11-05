@@ -746,25 +746,11 @@
   $: checkInboxPopup($popupstore)
 
   let inboxPopup: PopupResult | undefined = undefined
-  let lastLoc: Location | undefined = undefined
 
   $: inboxProps = {
     selected: currentAppAlias === notificationId || inboxPopup !== undefined,
     navigator: (currentAppAlias === notificationId || inboxPopup !== undefined) && $deviceInfo.navigator.visible,
-    notify: hasInboxNotifications,
-    onClick: (e: MouseEvent) => {
-      if (e.metaKey || e.ctrlKey) return
-      if (!$deviceInfo.navigator.visible && $deviceInfo.navigator.float && currentAppAlias === notificationId) {
-        void toggleNav()
-      } else if (currentAppAlias === notificationId && lastLoc !== undefined) {
-        e.preventDefault()
-        e.stopPropagation()
-        navigate(lastLoc)
-        lastLoc = undefined
-      } else {
-        lastLoc = $location
-      }
-    }
+    notify: hasInboxNotifications
   }
 
   $: customAppProps = new Map([[notificationId, inboxProps]])
@@ -871,15 +857,12 @@
           <NavLink
             app={notificationId}
             shrink={0}
-            disabled={!$deviceInfo.navigator.visible &&
-              $deviceInfo.navigator.float &&
-              currentAppAlias === notificationId}
+            disabled={currentAppAlias === notificationId}
           >
             <AppItem
               icon={notification.icon.Notifications}
               label={notification.string.Inbox}
               {...inboxProps}
-              on:click={inboxProps.onClick}
             />
           </NavLink>
         {/if}
@@ -888,7 +871,6 @@
           active={currentApplication?._id}
           direction={$deviceInfo.navigator.direction}
           {customAppProps}
-          on:toggleNav={toggleNav}
         />
       </div>
       <div
