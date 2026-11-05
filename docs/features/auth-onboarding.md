@@ -61,7 +61,7 @@
 **2. Вход по коду (OTP) и регистрация без пароля.**
 1. `loginOtp()` (`operations.ts`) отправляет код на email; для незарегистрированного email ответ всё равно `{sent: true}` (анти-эниумерация).
 2. `signUpOtp()` (`operations.ts`) создаёт `Person` + `SocialId(EMAIL)`.
-3. `validateOtp()` (`operations.ts`) проверяет код и выдаёт токен.
+3. `validateOtp()` (`operations.ts`) проверяет код и выдаёт токен. `SignupForm.svelte` передаёт пароль только при включённом флажке "Задать пароль"; регистрация без пароля не запускает проверку сложности.
 
 **3. OAuth (Google/GitHub/OpenID).**
 1. `pods/authProviders/src/index.ts` отдаёт список провайдеров на `GET /providers`.
