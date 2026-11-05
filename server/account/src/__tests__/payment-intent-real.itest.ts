@@ -17,7 +17,7 @@ import { generateId, generateUuid, systemAccountUuid, type AccountUuid, type Wor
 import { shutdownPostgres, type PostgresClientReference } from '@hcengineering/postgres'
 import { generateToken } from '@hcengineering/server-token'
 import { type PostgresAccountDB } from '../collections/postgres/postgres'
-import { SubscriptionStatus, SubscriptionType } from '../types'
+import { SubscriptionStatus, SubscriptionType, type PaymentOperation } from '../types'
 import { createAccount } from '../utils'
 import { clearTables, openRealDb, realDbFlavors } from './realDbFlavors'
 
@@ -29,7 +29,7 @@ const renewKey = (subscriptionId: string, periodEnd: number): string => `renew:$
 const checkoutKey = (workspaceUuid: string, type: string): string => `checkout:${workspaceUuid}:${type}`
 
 // Rows the tests themselves write; cleared between tests, children before parents.
-const DIRTY_TABLES = ['payment_intent', 'subscription']
+const DIRTY_TABLES = ['payment_intent', 'subscription', 'payment_operation']
 // Fixtures seed once in beforeAll, cleared at startup - db outlives the run. Children before
 // parents (social_id/account_events/user_profile -> person); shared with other real-db suites.
 const FIXTURE_TABLES = [
@@ -103,6 +103,96 @@ describe.each(realDbFlavors)('payment-intent-real [$flavor]', ({ flavor: dbFlavo
     })
     return subId
   }
+
+  it('deduplicates confirmed provider payments across recurrent charges and webhook retries', async () => {
+    const rows: Array<Pick<PaymentOperation, 'provider' | 'operation' | 'status' | 'paymentId' | 'amount'>> = [
+      { provider: 'tbank', operation: 'charge_recurrent', status: 'success', paymentId: 'shared', amount: 100 },
+      { provider: 'tbank', operation: 'webhook', status: 'CONFIRMED', paymentId: 'shared', amount: 100 },
+      { provider: 'tbank', operation: 'webhook', status: 'CONFIRMED', paymentId: 'shared', amount: 100 },
+      { provider: 'stripe', operation: 'webhook', status: 'CONFIRMED', paymentId: 'shared', amount: 200 },
+      { provider: 'tbank', operation: 'webhook', status: 'CONFIRMED', amount: 300 },
+      { provider: 'tbank', operation: 'webhook', status: 'CONFIRMED', amount: 400 },
+      { provider: 'tbank', operation: 'charge_recurrent', status: 'failed', paymentId: 'failed', amount: 500 }
+    ]
+    for (const row of rows) {
+      await crAccount.logPaymentOperation({ ...row, workspaceUuid: wsUuid, createdOn: Date.now() })
+    }
+
+    const to = Date.now() + 1000
+    const daily = await crAccount.getPaymentOperationStats(0, to)
+    expect(daily.totalCharges).toBe(4)
+    expect(daily.totalAmount).toBe(1000)
+    expect(daily.byProvider).toEqual(
+      expect.arrayContaining([
+        { provider: 'tbank', charges: 3, amount: 800, errors: 1 },
+        { provider: 'stripe', charges: 1, amount: 200, errors: 0 }
+      ])
+    )
+    expect(daily.workspaces).toEqual([{ workspaceUuid: wsUuid, charges: 4, amount: 1000, errors: 1 }])
+    const monthly = await crAccount.getPaymentMonthlyStats(0, to)
+    expect(monthly).toEqual([
+      { month: new Date().toISOString().slice(0, 7), charges: 4, amount: 1000, errors: 1, cancels: 0, refunds: 0 }
+    ])
+  })
+
+  it('attributes a recurrent payment to its first successful month regardless of insertion order', async () => {
+    const october = Date.UTC(2026, 9, 31, 23, 59)
+    const november = Date.UTC(2026, 10, 1)
+    const rows: PaymentOperation[] = [
+      {
+        provider: 'tbank',
+        operation: 'webhook',
+        status: 'CONFIRMED',
+        paymentId: 'month-boundary',
+        amount: 200,
+        workspaceUuid: wsUuid,
+        createdOn: november
+      },
+      {
+        provider: 'tbank',
+        operation: 'charge_recurrent',
+        status: 'success',
+        paymentId: 'month-boundary',
+        amount: 100,
+        workspaceUuid: wsUuid,
+        createdOn: october
+      }
+    ]
+    for (const row of rows) await crAccount.paymentOperation.insertOne(row)
+
+    const daily = await crAccount.getPaymentOperationStats(october, november + 1000)
+    expect(daily.totalCharges).toBe(1)
+    expect(daily.totalAmount).toBe(100)
+    const monthly = await crAccount.getPaymentMonthlyStats(october, november + 1000)
+    expect(monthly).toEqual([
+      { month: '2026-10', charges: 1, amount: 100, errors: 0, cancels: 0, refunds: 0 },
+      { month: '2026-11', charges: 0, amount: 0, errors: 0, cancels: 0, refunds: 0 }
+    ])
+  })
+
+  it('retrieves full payment history and pages equal timestamps without mixing providers', async () => {
+    const createdOn = Date.now()
+    for (const [id, provider, paymentId] of [
+      ['history-a', 'tbank', 'payment-one'],
+      ['history-c', 'tbank', 'payment-one'],
+      ['history-b', 'stripe', 'payment-one'],
+      ['history-d', 'tbank', 'payment-two']
+    ]) {
+      await crAccount.paymentOperation.insertOne({
+        id,
+        provider,
+        paymentId,
+        operation: 'webhook',
+        status: 'CONFIRMED',
+        amount: 100,
+        createdOn
+      })
+    }
+    const filter = { provider: 'tbank', paymentId: 'payment-one', limit: 1 }
+    expect((await crAccount.getPaymentOperations(filter)).map((row) => row.id)).toEqual(['history-c'])
+    expect((await crAccount.getPaymentOperations({ ...filter, offset: 1 })).map((row) => row.id)).toEqual(['history-a'])
+    expect(await crAccount.getPaymentOperations({ ...filter, offset: 2 })).toEqual([])
+  })
 
   describe('A: atomic dedup via ON CONFLICT DO NOTHING', () => {
     it('same claim key -> second claim returns claimed=false with same intent', async () => {
