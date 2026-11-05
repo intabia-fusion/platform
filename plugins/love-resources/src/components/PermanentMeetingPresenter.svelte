@@ -46,6 +46,13 @@
       </div>
     </DocNavLink>
   {:else}
-    <span class="overflow-label" use:tooltip={{ label: getEmbeddedLabel(value.name) }}>{value.name}</span>
+    <span class="flex-presenter" use:tooltip={{ label: getEmbeddedLabel(value.name) }}>
+      {#if shouldShowAvatar}
+        <div class="icon">
+          <Icon icon={love.icon.MeetingMinutes} size="medium" />
+        </div>
+      {/if}
+      <span class="overflow-label">{value.name}</span>
+    </span>
   {/if}
 {/if}

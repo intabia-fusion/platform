@@ -15,10 +15,11 @@
 <script lang="ts">
   import type { Ref } from '@hcengineering/core'
   import type { Room } from '@hcengineering/love'
-  import { Button, CheckBox, Label } from '@hcengineering/ui'
+  import { Button, CheckBox, Label, ModernToggle } from '@hcengineering/ui'
   import type { Writable } from 'svelte/store'
   import love from '../plugin'
   import RoomSelector from './RoomSelector.svelte'
+  import RepeatEveryEditor from './RepeatEveryEditor.svelte'
   import { myOffice, rooms } from '../stores'
 
   export let state: Writable<Record<string, any>>
@@ -32,9 +33,29 @@
     if (val && $state.room === undefined) {
       $state.room = $myOffice?._id
     }
+    if (!val) {
+      // A regular meeting is scheduled by an event: without the meeting there is nothing to make
+      // regular, and a stale flag would create a meeting nobody asked for.
+      changeIsPermanent(false)
+    }
   }
 
+  // A meeting is either one-off or regular: the switch replaces the two independent checkboxes that
+  // used to allow "a meeting that is also permanent" as a third, meaningless state.
   let isMeeting = false
+  let isPermanent = $state.isPermanent === true
+
+  function changeIsPermanent (val: boolean): void {
+    isPermanent = val
+    $state.isPermanent = val
+    // Default period of a regular meeting: a week, the same as the one the editor starts from.
+    if (val && $state.repeatEvery === undefined) $state.repeatEvery = 7 * 24 * 60 * 60 * 1000
+    if (!val) $state.repeatEvery = undefined
+  }
+
+  function changeRepeatEvery (val: number): void {
+    $state.repeatEvery = val
+  }
 
   $: selectedRoom = $rooms.find((r) => r._id === $state.room)
   $: isPrivateRoom = selectedRoom?.startPrivate ?? false
@@ -70,6 +91,22 @@
   {#if isPrivateRoom}
     <div class="text-sm mt-1 ml-4 text-content-color">
       <Label label={love.string.Private} />
+    </div>
+  {/if}
+  <div class="flex-row-center gap-1-5 mt-1">
+    <ModernToggle
+      size="small"
+      checked={isPermanent}
+      on:change={() => {
+        changeIsPermanent(!isPermanent)
+      }}
+    />
+    <Label label={love.string.RecurringMeeting} />
+  </div>
+  {#if isPermanent}
+    <div class="flex-row-center gap-2 mt-1 ml-4">
+      <Label label={love.string.RepeatEvery} />
+      <RepeatEveryEditor value={$state.repeatEvery} onChange={changeRepeatEvery} />
     </div>
   {/if}
 {/if}

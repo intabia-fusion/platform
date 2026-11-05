@@ -207,6 +207,16 @@
     "CopyLinkWithPassword": "Copy link and password",
     "EnterPassword": "Enter the meeting password",
     "WrongPassword": "Wrong password",
-    "TooManyAttempts": "Too many attempts. Try again later"
+    "TooManyAttempts": "Too many attempts. Try again later",
+    "RepeatEvery": "Repeat every",
+    "Kind": "Kind",
+    "From": "From",
+    "To": "To",
+    "EveryDay": "Every day",
+    "EveryWeek": "Every week",
+    "EveryMonth": "Every month",
+    "RemindBefore": "Remind before",
+    "MeetingReminderBody": "Meeting \"{title}\" starts in {minutes} min",
+    "RecurringMeeting": "Recurring meeting"
   }
 }

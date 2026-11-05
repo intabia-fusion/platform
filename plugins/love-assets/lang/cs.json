@@ -207,6 +207,16 @@
     "CopyLinkWithPassword": "Kopírovat odkaz a heslo",
     "EnterPassword": "Zadejte heslo schůzky",
     "WrongPassword": "Nesprávné heslo",
-    "TooManyAttempts": "Příliš mnoho pokusů. Zkuste to později"
+    "TooManyAttempts": "Příliš mnoho pokusů. Zkuste to později",
+    "RepeatEvery": "Opakovat každých",
+    "Kind": "Druh",
+    "From": "Od",
+    "To": "Komu",
+    "EveryDay": "Každý den",
+    "EveryWeek": "Každý týden",
+    "EveryMonth": "Každý měsíc",
+    "RemindBefore": "Připomenout předem",
+    "MeetingReminderBody": "Schůzka „{title}“ začne za {minutes} min",
+    "RecurringMeeting": "Pravidelná schůzka"
   }
 }

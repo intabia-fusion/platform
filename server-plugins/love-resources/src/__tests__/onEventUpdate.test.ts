@@ -26,6 +26,7 @@ import core, {
   toFindResult,
   type Tx,
   TxFactory,
+  type TxRemoveDoc,
   type TxUpdateDoc
 } from '@hcengineering/core'
 import type { TriggerControl } from '@hcengineering/server-core'
@@ -116,6 +117,19 @@ function createUpdateTx (ops: Partial<Event>, objectClass: Ref<Class<Doc>> = cal
 }
 
 type FindAllFn = (_class: Ref<Class<Doc>>, query: any) => Doc[]
+
+function createRemoveTx (objectClass: Ref<Class<Doc>> = calendar.class.Event): TxRemoveDoc<Event> {
+  return {
+    _id: generateId(),
+    _class: core.class.TxRemoveDoc,
+    space: core.space.DerivedTx,
+    objectId: eventRef,
+    objectClass: objectClass as Ref<Class<Event>>,
+    objectSpace: core.space.Workspace as unknown as Ref<Space>,
+    modifiedOn: Date.now(),
+    modifiedBy: 'creator' as PersonId
+  } satisfies TxRemoveDoc<Event>
+}
 
 function createMockControl (findAllImpl: FindAllFn): TriggerControl {
   return {
@@ -333,6 +347,52 @@ describe('OnEventUpdate', () => {
       const result = await OnEventUpdate([createUpdateTx({ participants: [personA, personB] })], control)
 
       expect(getUpdateOps(result)).toHaveLength(0)
+    })
+  })
+
+  describe('series removal', () => {
+    it('finishes the live session when the series is deleted', async () => {
+      // The meeting panel lives on the event, so a deleted event would strand a running session.
+      const control = createMockControl(
+        buildFindAll({
+          meeting: createMeetingDoc({ status: MeetingStatus.Active }),
+          event: createEvent()
+        })
+      )
+
+      const result = await OnEventUpdate([createRemoveTx()], control)
+      const ops = getUpdateOps(result)
+
+      expect(ops).toHaveLength(1)
+      expect(ops[0].status).toBe(MeetingStatus.Finished)
+      expect(typeof ops[0].meetingEnd).toBe('number')
+    })
+
+    it('ignores removal of a participant copy', async () => {
+      // Only the master carries the series; a participant dropping their copy ends nothing.
+      const control = createMockControl(
+        buildFindAll({
+          meeting: createMeetingDoc({ status: MeetingStatus.Active }),
+          event: createEvent({ access: AccessLevel.Reader })
+        })
+      )
+
+      const result = await OnEventUpdate([createRemoveTx()], control)
+
+      expect(result).toHaveLength(0)
+    })
+
+    it('ignores removal of a document that is not an event', async () => {
+      const control = createMockControl(
+        buildFindAll({
+          meeting: createMeetingDoc({ status: MeetingStatus.Active }),
+          event: createEvent()
+        })
+      )
+
+      const result = await OnEventUpdate([createRemoveTx(love.class.MeetingMinutes)], control)
+
+      expect(result).toHaveLength(0)
     })
   })
 

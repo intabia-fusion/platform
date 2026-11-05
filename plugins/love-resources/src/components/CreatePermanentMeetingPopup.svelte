@@ -15,11 +15,13 @@
   import { AccountArrayEditor } from '@hcengineering/contact-resources'
   import core, { getCurrentAccount, type AccountUuid } from '@hcengineering/core'
   import { RoomType, type RoomLanguage } from '@hcengineering/love'
+  import { translate } from '@hcengineering/platform'
   import { Card, getClient } from '@hcengineering/presentation'
   import { getCurrentLanguage } from '@hcengineering/theme'
   import { EditBox, Label, ModernToggle, RadioButton } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import love from '../plugin'
+  import { createPermanentMeeting } from '../utils'
 
   const dispatch = createEventDispatcher()
   const client = getClient()
@@ -37,23 +39,20 @@
   const language: RoomLanguage = getCurrentLanguage() as RoomLanguage
 
   // The author stays a member whatever the editor is left with - a meeting nobody could open is junk.
-  function membersChanged(value: AccountUuid[]): void {
+  function membersChanged (value: AccountUuid[]): void {
     members = value.includes(me.uuid) ? value : [me.uuid, ...value]
   }
 
-  async function create(): Promise<void> {
-    await client.createDoc(love.class.PermanentMeeting, core.space.Space, {
-      name,
+  async function create (): Promise<void> {
+    await createPermanentMeeting(client, {
+      // A meeting without a name is unfindable in the list, so the placeholder never becomes a title.
+      name: name.trim() !== '' ? name.trim() : translate(love.string.PermanentMeeting),
       type,
       language,
       startWithRecording,
       startWithTranscription,
-      private: true,
       members,
-      owners: [me.uuid],
-      archived: false,
-      description: '',
-      descriptionRef: null
+      owners: [me.uuid]
     })
   }
 </script>

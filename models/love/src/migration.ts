@@ -53,6 +53,7 @@ import {
 } from '@hcengineering/model'
 import calendar, { AccessLevel, DOMAIN_EVENT, type Event } from '@hcengineering/model-calendar'
 import core, { DOMAIN_SPACE } from '@hcengineering/model-core'
+import presentation from '@hcengineering/model-presentation'
 import { DOMAIN_LOVE, DOMAIN_LOVE_PENDING, DOMAIN_MEETING_MINUTES } from '.'
 import love from './plugin'
 
@@ -300,6 +301,23 @@ export async function stripMixinFromNonMasters (client: MigrationClient): Promis
     { [MEETING_MIXIN]: { $exists: true }, _class: calendar.class.ReccuringInstance },
     { $unset: { [MEETING_MIXIN]: true } }
   )
+}
+
+// The event card badge is a model document, and a workspace never picks new model documents up on
+// its own - the model it was created with is the model it keeps. Without this step the card stays
+// unmarked on every workspace created before the badge existed.
+async function addMeetingEventCardBadge (client: MigrationUpgradeClient): Promise<void> {
+  const existing = await client.findAll(presentation.class.ComponentPointExtension, {
+    extension: calendar.extensions.EventCardExtensions
+  })
+  // A fresh workspace already has it from the model, and the step runs once per workspace anyway.
+  if (existing.length > 0) return
+
+  const tx = new TxOperations(client, core.account.System)
+  await tx.createDoc(presentation.class.ComponentPointExtension, core.space.Model, {
+    extension: calendar.extensions.EventCardExtensions,
+    component: love.component.MeetingEventBadge
+  })
 }
 
 export const loveOperation: MigrateOperation = {
@@ -736,6 +754,10 @@ export const loveOperation: MigrateOperation = {
             drive.class.Drive
           )
         }
+      },
+      {
+        state: 'meeting-event-card-badge',
+        func: addMeetingEventCardBadge
       }
     ])
   }

@@ -207,6 +207,16 @@
     "CopyLinkWithPassword": "Bağlantıyı ve parolayı kopyala",
     "EnterPassword": "Toplantı parolasını girin",
     "WrongPassword": "Hatalı parola",
-    "TooManyAttempts": "Çok fazla deneme. Daha sonra tekrar deneyin"
+    "TooManyAttempts": "Çok fazla deneme. Daha sonra tekrar deneyin",
+    "RepeatEvery": "Tekrar aralığı",
+    "Kind": "Tür",
+    "From": "Kimden",
+    "To": "Kime",
+    "EveryDay": "Her gün",
+    "EveryWeek": "Her hafta",
+    "EveryMonth": "Her ay",
+    "RemindBefore": "Önceden hatırlat",
+    "MeetingReminderBody": "«{title}» toplantısı {minutes} dakika sonra başlıyor",
+    "RecurringMeeting": "Düzenli toplantı"
   }
 }

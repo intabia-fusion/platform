@@ -33,6 +33,7 @@
   import type { SetPosRules } from '../types'
   import ByDateSelector from './ByDateSelector.svelte'
   import DateEditor from './DateEditor.svelte'
+  import RecurrenceSummary from './RecurrenceSummary.svelte'
   import SetPosSelector from './SetPosSelector.svelte'
   import MonthSelector from './MonthSelector.svelte'
 
@@ -76,7 +77,7 @@
     }
   ] as DropdownIntlItem[]
 
-  function save () {
+  function buildRule (): RecurringRule {
     const res: RecurringRule = {
       freq: periodType,
       interval
@@ -104,7 +105,28 @@
         res.byDay = setPos.byDay
       }
     }
-    rules = [res]
+    return res
+  }
+
+  // Saved rule that cannot produce an occurrence is worse than no rule: the series would look
+  // scheduled while nothing ever opens. An end date before the first occurrence is the same story.
+  function isInvalid (rule: RecurringRule): boolean {
+    // The end date is picked by day while the series starts at a time, so a rule ending on the very
+    // day of its first occurrence is still valid there.
+    if (rule.endDate !== undefined && new Date(rule.endDate).setHours(23, 59, 59, 999) < startDate) return true
+    if (rule.freq === 'WEEKLY') return (rule.byDay ?? []).length === 0
+    if (rule.freq === 'MONTHLY') {
+      return rule.byMonthDay !== undefined ? rule.byMonthDay.length === 0 : (rule.byDay ?? []).length === 0
+    }
+    return false
+  }
+
+  $: preview = buildRule()
+  $: invalid = isInvalid(preview)
+
+  function save () {
+    if (invalid) return
+    rules = [preview]
     dispatch('close', rules)
   }
 
@@ -136,7 +158,7 @@
     { id: 'SU', label: calendar.string.SundayShort }
   ]
 
-  let until: number = rules[0]?.endDate ?? Date.now()
+  let until: number = rules[0]?.endDate ?? Math.max(startDate, Date.now())
 </script>
 
 <div class="repeatPopup-container">
@@ -246,13 +268,11 @@
       </div>
     </Grid>
   </div>
+  <div class="preview flex-row-center">
+    <RecurrenceSummary rules={[preview]} {startDate} />
+  </div>
   <div class="pool flex-row-reverse flex-gap-3">
-    <Button
-      label={ui.string.Save}
-      on:click={save}
-      kind="primary"
-      disabled={periodType === 'MONTHLY' && selectedWeekdays.length === 0}
-    />
+    <Button label={ui.string.Save} on:click={save} kind="primary" disabled={invalid} />
     <Button label={ui.string.Cancel} on:click={() => dispatch('close')} />
   </div>
 </div>

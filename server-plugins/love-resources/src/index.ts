@@ -31,6 +31,7 @@ import core, {
   TxCUD,
   TxMixin,
   TxProcessor,
+  TxRemoveDoc,
   TxUpdateDoc
 } from '@hcengineering/core'
 import love, {
@@ -805,6 +806,35 @@ export async function OnEventUpdate (txes: Tx[], control: TriggerControl): Promi
   const result: Tx[] = []
 
   for (const tx of txes) {
+    // Deleting the series must not leave a live session behind: the panel is gone with the event,
+    // so nobody could end it, and the room would stay occupied by a meeting that no longer exists.
+    // Only the owner's copy is the master - a participant deleting their copy ends nothing.
+    if (tx._class === core.class.TxRemoveDoc) {
+      const removeTx = tx as TxRemoveDoc<Event>
+      if (!control.hierarchy.isDerived(removeTx.objectClass, calendar.class.Event)) continue
+      const removed = (
+        await control.findAll(control.ctx, calendar.class.Event, { _id: removeTx.objectId }, { limit: 1 })
+      )[0]
+      // Some pipelines hand the trigger an already removed document: the series cannot be resolved.
+      if (removed?.access !== AccessLevel.Owner) continue
+      if (!control.hierarchy.hasMixin(removed, love.mixin.MeetingEventLink)) continue
+
+      const live = await control.findAll(control.ctx, love.class.MeetingMinutes, {
+        eventId: removed.eventId,
+        status: { $in: LIVE_MEETING_STATUSES }
+      })
+      const endTs = Date.now()
+      for (const meetingDoc of live) {
+        result.push(
+          control.txFactory.createTxUpdateDoc(love.class.MeetingMinutes, meetingDoc.space, meetingDoc._id, {
+            status: MeetingStatus.Finished,
+            meetingEnd: endTs
+          })
+        )
+      }
+      continue
+    }
+
     if (tx._class !== core.class.TxUpdateDoc) continue
 
     const cudTx = tx as TxCUD<Event>
@@ -891,7 +921,7 @@ export async function OnPermanentMeetingUpdate (txes: Tx[], control: TriggerCont
     if (meeting === undefined) continue
 
     const owners = meeting.owners ?? []
-    const missing = ops.members !== undefined ? owners.filter((it) => !ops.members?.includes(it)) : []
+    const missing = ops.members !== undefined ? owners.filter((it) => ops.members?.includes(it) !== true) : []
     if (ops.$pull?.members !== undefined) {
       const pulled = ops.$pull.members
       const pulledAccounts = Array.isArray(pulled) ? pulled : typeof pulled === 'object' ? pulled.$in : [pulled]

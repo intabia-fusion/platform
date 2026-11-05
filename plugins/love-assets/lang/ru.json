@@ -207,6 +207,16 @@
     "CopyLinkWithPassword": "Скопировать ссылку с паролем",
     "EnterPassword": "Введите пароль встречи",
     "WrongPassword": "Неверный пароль",
-    "TooManyAttempts": "Слишком много попыток, попробуйте позже"
+    "TooManyAttempts": "Слишком много попыток, попробуйте позже",
+    "RepeatEvery": "Повторять каждые",
+    "Kind": "Тип",
+    "From": "От",
+    "To": "Кому",
+    "EveryDay": "Каждый день",
+    "EveryWeek": "Каждую неделю",
+    "EveryMonth": "Каждый месяц",
+    "RemindBefore": "Напомнить заранее",
+    "MeetingReminderBody": "Встреча «{title}» начнётся через {minutes} мин",
+    "RecurringMeeting": "Регулярная встреча"
   }
 }

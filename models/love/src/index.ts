@@ -246,6 +246,13 @@ export class TMeeting extends TEvent implements MeetingEventLink {
 
   @Prop(TypeBoolean(), love.string.StartWithTranscription)
   startWithTranscription?: boolean
+
+  // Lead time of the meeting reminder in msec. Stored on the mixin, so a copy of the series and the
+  // master agree on it: the reminder belongs to the meeting, not to one of its occurrences.
+  reminderBefore?: number
+
+  @Index(IndexKind.Indexed)
+  permanentMeeting?: Ref<PermanentMeeting>
 }
 
 @Model(love.class.MeetingMinutes, core.class.Space, DOMAIN_SPACE)
@@ -384,7 +391,7 @@ export class TPermanentMeeting extends TSpace implements PermanentMeeting {
 
   // How often the meeting is held, for a permanent meeting created from the planner: the interval
   // the planner already knows (`Schedule.meetingInterval`) is copied here, so the meeting keeps it.
-  @Prop(TypeNumber(), love.string.RepeatEvery)
+  @Prop(TypeNumber(), love.string.RepeatEvery, { editor: love.component.RepeatEveryEditor })
   repeatEvery?: number
 
   @Hidden()
@@ -526,6 +533,13 @@ export function createModel (builder: Builder): void {
   builder.createDoc(presentation.class.ComponentPointExtension, core.space.Model, {
     extension: calendar.extensions.EditEventExtensions,
     component: love.component.EditMeetingData
+  })
+
+  // Every calendar card of a meeting gets a join badge: the mixin is mirrored onto participant
+  // copies, so the marker is visible to everyone in the series, not only to its owner.
+  builder.createDoc(presentation.class.ComponentPointExtension, core.space.Model, {
+    extension: calendar.extensions.EventCardExtensions,
+    component: love.component.MeetingEventBadge
   })
 
   builder.createDoc(presentation.class.DocCreateExtension, core.space.Model, {
@@ -762,6 +776,21 @@ export function createModel (builder: Builder): void {
     presenter: love.component.PermanentMeetingPresenter
   })
 
+  // Walking out is a membership edit, not a deletion: the meeting outlives whoever leaves it, and
+  // the server puts the owner back if the owner is the one leaving.
+  createAction(builder, {
+    action: love.actionImpl.LeavePermanentMeeting,
+    label: view.string.Leave,
+    icon: view.icon.Leave,
+    category: love.category.Office,
+    target: love.class.PermanentMeeting,
+    input: 'focus',
+    visibilityTester: love.function.CanLeavePermanentMeeting,
+    context: {
+      mode: 'context'
+    }
+  })
+
   // Opened through the mixin (links and lists use Hierarchy.mixinOrClass), so a scheduled meeting
   // gets its own header while a plain calendar event keeps the calendar editor.
   builder.mixin(love.mixin.MeetingEventLink, core.class.Class, view.mixin.ObjectEditor, {
@@ -795,7 +824,16 @@ export function createModel (builder: Builder): void {
     {
       attachTo: love.class.PermanentMeeting,
       descriptor: view.viewlet.Table,
-      config: ['', 'members', 'createdOn'],
+      config: [
+        {
+          key: '',
+          presenter: love.component.PermanentMeetingPresenter,
+          label: love.string.PermanentMeeting,
+          sortingKey: 'name'
+        },
+        'members',
+        'createdOn'
+      ],
       configOptions: { hiddenKeys: ['name', 'description'], sortable: true }
     },
     love.viewlet.TablePermanentMeetings

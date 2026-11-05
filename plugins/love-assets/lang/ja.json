@@ -207,6 +207,16 @@
     "CopyLinkWithPassword": "リンクとパスワードをコピー",
     "EnterPassword": "ミーティングのパスワードを入力",
     "WrongPassword": "パスワードが違います",
-    "TooManyAttempts": "試行回数が多すぎます。しばらくしてからお試しください"
+    "TooManyAttempts": "試行回数が多すぎます。しばらくしてからお試しください",
+    "RepeatEvery": "繰り返し間隔",
+    "Kind": "種類",
+    "From": "差出人",
+    "To": "宛先",
+    "EveryDay": "毎日",
+    "EveryWeek": "毎週",
+    "EveryMonth": "毎月",
+    "RemindBefore": "事前に通知",
+    "MeetingReminderBody": "ミーティング「{title}」は{minutes}分後に始まります",
+    "RecurringMeeting": "定例ミーティング"
   }
 }

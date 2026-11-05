@@ -1,7 +1,8 @@
 import { getMetadata, type Resources } from '@hcengineering/platform'
 import aiBot from '@hcengineering/ai-bot'
-import { AccountRole, getCurrentAccount, hasAccountRole, type AccountUuid } from '@hcengineering/core'
-import { type MeetingMinutes } from '@hcengineering/love'
+import { AccountRole, getCurrentAccount, hasAccountRole, type AccountUuid, type Doc } from '@hcengineering/core'
+import { type MeetingMinutes, type PermanentMeeting } from '@hcengineering/love'
+import { getClient } from '@hcengineering/presentation'
 import { getCurrentEmployee } from '@hcengineering/contact'
 import { getPersonByPersonRef } from '@hcengineering/contact-resources'
 
@@ -46,6 +47,7 @@ import SpeakingWhileMutedIndicator from './components/meeting/SpeakingWhileMuted
 import MeetingScheduleData from './components/MeetingScheduleData.svelte'
 import EditMeetingScheduleData from './components/EditMeetingScheduleData.svelte'
 import InviteEmployeeButton from './components/meeting/invites/InviteEmployeeButton.svelte'
+import MeetingEventBadge from './components/MeetingEventBadge.svelte'
 import PendingRecordingPresenter from './components/PendingRecordingPresenter.svelte'
 import GuestMeetingApp from './components/guest/GuestMeetingApp.svelte'
 import RoomMeetingsFooter from './components/RoomMeetingsFooter.svelte'
@@ -58,6 +60,11 @@ import RoomListItem from './components/RoomListItem.svelte'
 import MeetingAccessAttributeEditor from './components/MeetingAccessAttributeEditor.svelte'
 import PermanentMeetingMembersEditor from './components/PermanentMeetingMembersEditor.svelte'
 import MeetingPrivateEditor from './components/MeetingPrivateEditor.svelte'
+import RepeatEveryEditor from './components/RepeatEveryEditor.svelte'
+
+// Wires the meeting reminders: the client is the only thing that can deliver them, there is no
+// scheduler for calendar events on the server.
+import './meetingReminders'
 
 import {
   copyGuestLink,
@@ -105,6 +112,22 @@ async function canOpenRoom (mm?: MeetingMinutes): Promise<boolean> {
   return await isRoomOwner(mm)
 }
 
+// An owner cannot walk out: the server puts an owner straight back, so offering the action would be
+// a lie - the meeting is closed by handing ownership over, not by leaving.
+async function canLeavePermanentMeeting (object?: Doc): Promise<boolean> {
+  const meeting = object as PermanentMeeting | undefined
+  if (meeting?.members === undefined) return false
+  const me = getCurrentAccount().uuid
+  if (meeting.owners?.includes(me) === true) return false
+  return meeting.members.includes(me)
+}
+
+async function leavePermanentMeeting (object: Doc): Promise<void> {
+  const meeting = object as PermanentMeeting
+  const me = getCurrentAccount().uuid
+  await getClient().update(meeting, { $pull: { members: me } })
+}
+
 export { setCustomCreateScreenTracks } from './utils'
 
 export default async (): Promise<Resources> => ({
@@ -150,6 +173,7 @@ export default async (): Promise<Resources> => ({
     MeetingScheduleData,
     EditMeetingScheduleData,
     InviteEmployeeButton,
+    MeetingEventBadge,
     PendingRecordingPresenter,
     GuestMeetingApp,
     RoomMeetingsFooter,
@@ -161,7 +185,8 @@ export default async (): Promise<Resources> => ({
     RoomListItem,
     MeetingAccessAttributeEditor,
     PermanentMeetingMembersEditor,
-    MeetingPrivateEditor
+    MeetingPrivateEditor,
+    RepeatEveryEditor
   },
   function: {
     CreateMeeting: createMeeting,
@@ -170,6 +195,7 @@ export default async (): Promise<Resources> => ({
     CanCopyGuestLink: canCopyGuestLink,
     CanCloseRoom: canCloseRoom,
     CanOpenRoom: canOpenRoom,
+    CanLeavePermanentMeeting: canLeavePermanentMeeting,
     MeetingMinutesTitleProvider: getMeetingMinutesTitle,
     RoomTitleProvider: getRoomTitle,
     UserMeetingInviteTitleProvider: getUserMeetingInviteTitle
@@ -181,7 +207,8 @@ export default async (): Promise<Resources> => ({
     StopTranscribing: stopTranscription,
     ShowRoomSettings: showRoomSettings,
     CopyGuestLink: copyGuestLink,
-    ToggleRoomPrivacy: toggleRoomPrivacy
+    ToggleRoomPrivacy: toggleRoomPrivacy,
+    LeavePermanentMeeting: leavePermanentMeeting
   },
   completion: {
     MeetingMinutesQuery: queryMeetingMinutes

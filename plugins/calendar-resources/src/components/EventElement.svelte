@@ -17,6 +17,7 @@
   import calendar from '@hcengineering/calendar'
   import type { Doc } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
+  import { ComponentExtensions } from '@hcengineering/presentation'
   import { Component, MILLISECONDS_IN_MINUTE, showPopup, tooltip } from '@hcengineering/ui'
   import type { ObjectEditor } from '@hcengineering/view'
   import view from '@hcengineering/view'
@@ -71,12 +72,23 @@
     {#if !empty && presenter?.presenter}
       <Component is={presenter.presenter} props={{ event, narrow, oneRow, hideDetails: !visible }} />
     {/if}
+    <!-- Another plugin may mark the card (a meeting, for one). Rendered as an overlay so it does
+         not take a row from the presenter, which fills the whole card. -->
+    {#if !empty}
+      <div class="event-card-extensions">
+        <ComponentExtensions
+          extension={calendar.extensions.EventCardExtensions}
+          props={{ event, narrow, oneRow, hideDetails: !visible }}
+        />
+      </div>
+    {/if}
   </div>
 {/if}
 
 <style lang="scss">
   .event-container {
     pointer-events: auto;
+    position: relative;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -92,5 +104,13 @@
     border-radius: 0.25rem;
     cursor: pointer;
     padding: 0.25rem 0.5rem 0.25rem 1rem;
+  }
+
+  .event-card-extensions {
+    position: absolute;
+    top: 0.125rem;
+    right: 0.25rem;
+    display: flex;
+    align-items: center;
   }
 </style>

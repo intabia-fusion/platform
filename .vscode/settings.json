@@ -26,5 +26,20 @@
   },
   "[svelte]": {
     "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+  "chat.tools.terminal.autoApprove": {
+    "/^cd \"/c/Users/a\\.zaytsev/AppData/Roaming/Code - Insiders/User/workspaceStorage/3a669d52992e605abef58fe00f19bc78/GitHub\\.copilot-chat/chat-session-resources/8b3ff2f2-5bd8-48b4-8fa2-8d27e3aeec64/call_00_Livabgr9tFdLV4Bow7we4517__vscode-1793589053964\" && node -e \"const d=require\\('\\./content\\.json'\\);console\\.log\\(JSON\\.stringify\\(\\{title:d\\.title,number:d\\.number,comments:\\(d\\.comments\\|\\|\\[\\]\\)\\.map\\(c=>c\\.author\\+': '\\+c\\.body\\),threads:\\(d\\.threads\\|\\|\\[\\]\\)\\.map\\(t=>\\(\\{resolved:t\\.isResolved,cs:t\\.comments\\.map\\(c=>\\(\\{a:c\\.author,b:c\\.body,p:c\\.path,l:c\\.line\\}\\)\\)\\}\\)\\)\\},null,1\\)\\)\"$/": {
+      "approve": true,
+      "matchCommandLine": true
+    },
+    "/^cd \"/c/Users/a\\.zaytsev/AppData/Roaming/Code - Insiders/User/workspaceStorage/3a669d52992e605abef58fe00f19bc78/GitHub\\.copilot-chat/chat-session-resources/8b3ff2f2-5bd8-48b4-8fa2-8d27e3aeec64/call_00_ET_qmzLXbXR2LAAZOd45b2l8084__vscode-1793589053968\" && node -e \"const d=require\\('\\./content\\.json'\\); console\\.log\\(Object\\.keys\\(d\\)\\.join\\(', '\\)\\); const c=d\\.comments\\|\\|\\[\\]; console\\.log\\('comments:', c\\.length\\); for \\(const x of c\\) console\\.log\\('---', x\\.author&&\\(x\\.author\\.login\\|\\|x\\.author\\), '\\\\n', \\(x\\.body\\|\\|''\\)\\.slice\\(0,800\\)\\);\"$/": {
+      "approve": true,
+      "matchCommandLine": true
+    },
+    "/^cd /c/Users/a\\.zaytsev/Desktop/Projects/platform && node -e '\nconst en=require\\(\"\\./plugins/calendar-assets/lang/en\\.json\"\\);\nconst keys=\\[\"Every\",\"Day\",\"Week\",\"Month\",\"Year\",\"Times\",\"OnUntil\",\"After\",\"Never\",\"Repeat\",\"On\",\"Each\",\"MondayShort\",\"TuesdayShort\",\"WednesdayShort\",\"ThursdayShort\",\"FridayShort\",\"SaturdayShort\",\"SundayShort\",\"Reccuring\"\\];\nconst s=en\\.string\\|\\|en;\nfor \\(const k of keys\\) console\\.log\\(k, \"=\", JSON\\.stringify\\(s\\[k\\]\\)\\);\n'$/": {
+      "approve": true,
+      "matchCommandLine": true
+    },
+    "npx jest": true
   }
 }

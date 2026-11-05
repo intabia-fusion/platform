@@ -47,7 +47,9 @@ export default mergeIds(loveId, love, {
     MeetingScheduleData: '' as AnyComponent,
     EditMeetingScheduleData: '' as AnyComponent,
     InviteEmployeeButton: '' as AnyComponent,
-    PendingRecordingPresenter: '' as AnyComponent
+    PendingRecordingPresenter: '' as AnyComponent,
+    MeetingEventBadge: '' as AnyComponent,
+    RepeatEveryEditor: '' as AnyComponent
   },
   function: {
     CreateMeeting: '' as Resource<DocCreateFunction>,
@@ -56,6 +58,7 @@ export default mergeIds(loveId, love, {
     CanCopyGuestLink: '' as Resource<ViewActionAvailabilityFunction>,
     CanCloseRoom: '' as Resource<ViewActionAvailabilityFunction>,
     CanOpenRoom: '' as Resource<ViewActionAvailabilityFunction>,
+    CanLeavePermanentMeeting: '' as Resource<ViewActionAvailabilityFunction>,
     MeetingMinutesTitleProvider: '' as Resource<(client: Client, ref: Ref<Doc>, doc?: Doc) => Promise<string>>,
     RoomTitleProvider: '' as Resource<(client: Client, ref: Ref<Doc>, doc?: Doc) => Promise<string>>,
     UserMeetingInviteTitleProvider: '' as Resource<(client: Client, ref: Ref<Doc>, doc?: Doc) => Promise<string>>
@@ -150,6 +153,12 @@ export default mergeIds(loveId, love, {
     JoinAndCloseRoom: '' as IntlString,
     PrivateMeetingJoinHeader: '' as IntlString,
     PrivateMeetingJoinText: '' as IntlString,
-    RepeatEvery: '' as IntlString
+    RepeatEvery: '' as IntlString,
+    RecurringMeeting: '' as IntlString,
+    EveryDay: '' as IntlString,
+    EveryWeek: '' as IntlString,
+    EveryMonth: '' as IntlString,
+    RemindBefore: '' as IntlString,
+    MeetingReminderBody: '' as IntlString
   }
 })

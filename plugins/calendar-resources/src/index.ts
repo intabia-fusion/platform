@@ -44,6 +44,7 @@ import ConnectApp from './components/ConnectApp.svelte'
 import CalendarWidget from './components/CalendarWidget.svelte'
 import ScheduleNavSection from './components/ScheduleNavSection.svelte'
 import CalendarSettings from './components/CalendarSettings.svelte'
+import RecurrenceSummary from './components/RecurrenceSummary.svelte'
 import IntegrationState from './components/IntegrationState.svelte'
 import calendar from './plugin'
 import contact from '@hcengineering/contact'
@@ -63,6 +64,7 @@ export {
   VisibilityEditor,
   CalendarSelector,
   EventPresenter,
+  RecurrenceSummary,
   ScheduleNavSection
 }
 

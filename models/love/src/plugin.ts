@@ -43,7 +43,8 @@ export default mergeIds(loveId, love, {
     ToggleVideo: '' as ViewAction,
     ShowRoomSettings: '' as ViewAction,
     CopyGuestLink: '' as ViewAction,
-    ToggleRoomPrivacy: '' as ViewAction
+    ToggleRoomPrivacy: '' as ViewAction,
+    LeavePermanentMeeting: '' as ViewAction
   },
   ids: {
     Settings: '' as Ref<Doc>,

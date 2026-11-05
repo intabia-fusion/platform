@@ -185,6 +185,12 @@ export interface MeetingEventLink extends Event {
   language?: RoomLanguage
   startWithRecording?: boolean
   startWithTranscription?: boolean
+
+  /** Lead time of the meeting reminder in msec; absent or 0 turns the reminder off. */
+  reminderBefore?: number
+
+  /** The permanent meeting the series belongs to, so renaming one renames the other. */
+  permanentMeeting?: Ref<PermanentMeeting>
 }
 
 export interface MeetingSchedule extends Schedule {

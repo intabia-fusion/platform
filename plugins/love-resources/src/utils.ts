@@ -1,11 +1,12 @@
 import aiBot from '@hcengineering/ai-bot'
 import { connectMeeting, disconnectMeeting } from '@hcengineering/ai-bot-resources'
 import { Analytics } from '@hcengineering/analytics'
-import calendar, { type Event, type Schedule } from '@hcengineering/calendar'
+import calendar, { type Event, type ReccuringEvent, type Schedule } from '@hcengineering/calendar'
 import chunter from '@hcengineering/chunter'
-import contact, { getName } from '@hcengineering/contact'
+import contact, { getName, type Employee } from '@hcengineering/contact'
 import workbench from '@hcengineering/workbench'
 import core, {
+  type AccountUuid,
   type Client,
   concatLink,
   type Data,
@@ -40,7 +41,7 @@ import presentation, {
   getClient,
   type ObjectSearchResult
 } from '@hcengineering/presentation'
-import { closePanel, getCurrentLocation, navigate, panelstore, showPopup } from '@hcengineering/ui'
+import { closePanel, getCurrentLocation, getUserTimezone, navigate, panelstore, showPopup } from '@hcengineering/ui'
 import { getCurrentLanguage } from '@hcengineering/theme'
 import view from '@hcengineering/view'
 import { getObjectLinkFragment } from '@hcengineering/view-resources'
@@ -57,6 +58,7 @@ import {
 } from 'livekit-client'
 import { derived, get, writable } from 'svelte/store'
 
+import { periodRules } from './period'
 import { getPersonByPersonRef } from '@hcengineering/contact-resources'
 import MeetingMinutesSearchItem from './components/MeetingMinutesSearchItem.svelte'
 import RoomSettingsPopup from './components/RoomSettingsPopup.svelte'
@@ -239,6 +241,91 @@ async function checkRecordAvailable (): Promise<void> {
 
 void checkRecordAvailable()
 
+/** Lead time of the meeting reminder unless the meeting says otherwise: a quarter of an hour. */
+export const DEFAULT_MEETING_REMINDER = 15 * 60 * 1000
+
+// A permanent meeting is always open: it is created without a series, and `repeatEvery` only
+// records how often the team intends to hold it, so the panel can show the period.
+export async function createPermanentMeeting (
+  client: TxOperations,
+  data: {
+    name: string
+    type: RoomType.Video | RoomType.Audio
+    language: string
+    startWithRecording: boolean
+    startWithTranscription: boolean
+    members: AccountUuid[]
+    owners: AccountUuid[]
+    repeatEvery?: number
+  }
+): Promise<Ref<PermanentMeeting>> {
+  return await client.createDoc(love.class.PermanentMeeting, core.space.Space, {
+    name: data.name,
+    type: data.type,
+    language: data.language as any,
+    startWithRecording: data.startWithRecording,
+    startWithTranscription: data.startWithTranscription,
+    private: true,
+    members: data.members,
+    owners: data.owners,
+    archived: false,
+    description: '',
+    descriptionRef: null,
+    repeatEvery: data.repeatEvery
+  })
+}
+
+// A regular meeting has to show its future occurrences on the timeline, and only a series is expanded
+// by the calendar. The dialog creates a one-off event, so it is replaced by a series carrying the same
+// fields one for one - it was created a moment ago, nothing points at it yet.
+async function makeRecurring (client: TxOperations, event: Event, period: number): Promise<Event> {
+  if (event._class === calendar.class.ReccuringEvent) return event
+  const rules = periodRules(event.date, period)
+  const series: Data<Event> = {
+    attachedTo: event.attachedTo,
+    attachedToClass: event.attachedToClass,
+    collection: event.collection,
+    calendar: event.calendar,
+    eventId: event.eventId,
+    title: event.title,
+    description: event.description,
+    location: event.location,
+    allDay: event.allDay,
+    date: event.date,
+    dueDate: event.dueDate,
+    participants: event.participants,
+    externalParticipants: event.externalParticipants,
+    reminders: event.reminders,
+    visibility: event.visibility,
+    // A series needs a zone: the occurrences are expanded from the rule, and a missing zone makes
+    // them drift with daylight saving.
+    timeZone: event.timeZone ?? getUserTimezone(),
+    access: event.access,
+    user: event.user,
+    blockTime: event.blockTime
+  }
+  await client.removeDoc(event._class, event.space, event._id)
+  const attributes: Data<ReccuringEvent> = {
+    ...series,
+    // A series needs a zone: occurrences are expanded from the rule, and a missing zone makes them
+    // drift across daylight saving.
+    timeZone: series.timeZone ?? getUserTimezone(),
+    rules,
+    rdate: [],
+    exdate: [],
+    originalStartTime: event.date
+  }
+  const id = await client.addCollection<Doc, ReccuringEvent>(
+    calendar.class.ReccuringEvent,
+    event.space,
+    event.attachedTo,
+    event.attachedToClass,
+    event.collection,
+    attributes
+  )
+  return (await client.findOne(calendar.class.Event, { _id: id })) ?? event
+}
+
 export async function createMeeting (
   client: TxOperations,
   _id: Ref<Event>,
@@ -257,12 +344,19 @@ export async function createMeeting (
 
     const room = await client.findOne(love.class.Room, { _id: store.room as Ref<Room> })
 
+    // A regular meeting is a series: without the conversion the timeline would show one occurrence
+    // and the period would only live in the meeting panel.
+    const target =
+      store.isPermanent === true && typeof store.repeatEvery === 'number'
+        ? await makeRecurring(client, master, store.repeatEvery)
+        : master
+
     // No session is created here any more: the love service opens one when an occurrence comes,
     // and it is the only writer allowed to (F1 §5). Scheduling only records what the meeting is.
     await client.createMixin<Event, MeetingEventLink>(
-      master._id,
-      master._class,
-      master.space,
+      target._id,
+      target._class,
+      target.space,
       love.mixin.MeetingEventLink,
       {
         type: room?.type === RoomType.Audio ? RoomType.Audio : RoomType.Video,
@@ -271,18 +365,49 @@ export async function createMeeting (
         private: room?.startPrivate ?? false,
         language: room?.language ?? 'en',
         startWithRecording: room?.startWithRecording ?? false,
-        startWithTranscription: room?.startWithTranscription ?? false
+        startWithTranscription: room?.startWithTranscription ?? false,
+        reminderBefore: DEFAULT_MEETING_REMINDER
       }
     )
+
+    if (store.isPermanent === true) {
+      // Participants are contacts, the meeting keeps accounts: only an employee carries the account
+      // uuid the space needs, and the author stays a member whatever the dialog ended up with.
+      const employees = await client.findAll(contact.mixin.Employee, {
+        _id: { $in: (_data.participants ?? []) as Array<Ref<Employee>> }
+      })
+      const me = getCurrentAccount().uuid
+      const members = employees
+        .map((it) => it.personUuid)
+        .filter((it): it is AccountUuid => it !== undefined && it !== null && it !== me)
+      members.unshift(me)
+
+      const permanentMeeting = await createPermanentMeeting(client, {
+        // The dialog commits with empty data, so the title is only on the created document.
+        name: target.title ?? '',
+        type: room?.type === RoomType.Audio ? RoomType.Audio : RoomType.Video,
+        language: room?.language ?? 'en',
+        startWithRecording: room?.startWithRecording ?? false,
+        startWithTranscription: room?.startWithTranscription ?? false,
+        members,
+        owners: [me],
+        repeatEvery: store.repeatEvery as number | undefined
+      })
+
+      // The link is what keeps the two names in step later: renaming the meeting renames its series.
+      await client.updateMixin(target._id, target._class, target.space, love.mixin.MeetingEventLink, {
+        permanentMeeting
+      })
+    }
     const navigateUrl = getCurrentLocation()
     navigateUrl.path[2] = loveId
     navigateUrl.query = {
       meetId: _id
     }
-    // The link belongs to the series, so it is addressed by the master's id, not the event's.
-    const link = await getEventMeetingLink(master.eventId)
+    // The link belongs to the series, so it is addressed by the series' eventId, not the event's.
+    const link = await getEventMeetingLink(target.eventId)
     if (link !== '') {
-      await client.update(event, { location: link })
+      await client.update(target, { location: link })
     }
   }
 }

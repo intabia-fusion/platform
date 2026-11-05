@@ -367,7 +367,10 @@ const calendarPlugin = plugin(calendarId, {
   },
   extensions: {
     EditEventExtensions: '' as ComponentExtensionId,
-    EditScheduleExtensions: '' as ComponentExtensionId
+    EditScheduleExtensions: '' as ComponentExtensionId,
+    // Rendered inside the event card of every calendar view (day, month, planner), so another
+    // plugin can mark an event without calendar knowing about it.
+    EventCardExtensions: '' as ComponentExtensionId
   },
   ids: {
     ReminderNotification: '' as Ref<NotificationType>,

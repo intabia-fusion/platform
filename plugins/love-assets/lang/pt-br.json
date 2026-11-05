@@ -207,6 +207,16 @@
     "CopyLinkWithPassword": "Copiar link e senha",
     "EnterPassword": "Digite a senha da reunião",
     "WrongPassword": "Senha incorreta",
-    "TooManyAttempts": "Muitas tentativas. Tente novamente mais tarde"
+    "TooManyAttempts": "Muitas tentativas. Tente novamente mais tarde",
+    "RepeatEvery": "Repetir a cada",
+    "Kind": "Tipo",
+    "From": "De",
+    "To": "Para",
+    "EveryDay": "Todos os dias",
+    "EveryWeek": "Todas as semanas",
+    "EveryMonth": "Todos os meses",
+    "RemindBefore": "Lembrar antes",
+    "MeetingReminderBody": "A reunião «{title}» começa em {minutes} min",
+    "RecurringMeeting": "Reunião recorrente"
   }
 }
