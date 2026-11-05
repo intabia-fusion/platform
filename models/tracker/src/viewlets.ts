@@ -244,12 +244,15 @@ export function issueConfig (
     },
     {
       key: 'createdOn',
-      displayProps: { key: key + 'created', fixed: 'left', dividerBefore: true }
+      presenter: view.component.TimestampLabel,
+      displayProps: { key: key + 'created', fixed: 'left', dividerBefore: true },
+      props: { label: tracker.string.CreationDate }
     },
     {
       key: 'modifiedOn',
-      presenter: tracker.component.ModificationDatePresenter,
-      displayProps: { key: key + 'modified', fixed: 'left', dividerBefore: true }
+      presenter: view.component.TimestampLabel,
+      displayProps: { key: key + 'modified', fixed: 'left', dividerBefore: true },
+      props: { label: tracker.string.ModificationDate }
     },
     {
       key: 'assignee',
@@ -623,8 +626,9 @@ export function defineViewlets (builder: Builder): void {
         { key: '', displayProps: { grow: true } },
         {
           key: 'modifiedOn',
-          presenter: tracker.component.ModificationDatePresenter,
-          displayProps: { fixed: 'right', dividerBefore: true }
+          presenter: view.component.TimestampLabel,
+          displayProps: { fixed: 'right', dividerBefore: true },
+          props: { label: tracker.string.ModificationDate }
         },
         {
           key: 'assignee',
@@ -783,8 +787,9 @@ export function defineViewlets (builder: Builder): void {
         },
         {
           key: 'modifiedOn',
-          presenter: tracker.component.ModificationDatePresenter,
-          displayProps: { fixed: 'right', dividerBefore: true }
+          presenter: view.component.TimestampLabel,
+          displayProps: { fixed: 'right', dividerBefore: true },
+          props: { label: tracker.string.ModificationDate }
         }
       ],
       options: {
@@ -821,8 +826,9 @@ export function defineViewlets (builder: Builder): void {
         },
         {
           key: 'modifiedOn',
-          presenter: tracker.component.ModificationDatePresenter,
-          displayProps: { fixed: 'right', dividerBefore: true }
+          presenter: view.component.TimestampLabel,
+          displayProps: { fixed: 'right', dividerBefore: true },
+          props: { label: tracker.string.ModificationDate }
         }
       ],
       options: {
