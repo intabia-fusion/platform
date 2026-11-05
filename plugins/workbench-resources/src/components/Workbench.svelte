@@ -91,6 +91,7 @@
   import { get } from 'svelte/store'
 
   import { subscribeMobile } from '../mobile'
+  import { hasApplicationNavigator } from '../navigation'
   import workbench from '../plugin'
   import { buildNavModel, fullscreenStore, isAllowedToRole, logOut, workspacesStore } from '../utils'
   import AccountPopup from './AccountPopup.svelte'
@@ -844,9 +845,13 @@
         >
           <Logo mini={appsMini} workspace={windowWorkspaceName ?? $resolvedLocationStore.path[1]} />
         </div>
-        <div class="topmenu-container clear-mins flex-no-shrink" class:mini={appsMini}>
+        <div
+          class="topmenu-container clear-mins flex-no-shrink"
+          class:mini={appsMini}
+          class:unavailable={!hasApplicationNavigator(currentApplication, navigatorModel)}
+        >
           <AppItem
-            icon={ui.icon.Equals}
+            icon={$deviceInfo.navigator.visible ? ui.icon.ArrowBarToLeft : ui.icon.ArrowBarToRight}
             label={$deviceInfo.navigator.visible ? workbench.string.HideMenu : workbench.string.ShowMenu}
             selected={!$deviceInfo.navigator.visible}
             size={appsMini ? 'small' : 'medium'}
@@ -1154,6 +1159,10 @@
       .topmenu-container {
         margin-bottom: 1rem;
       }
+    }
+
+    .topmenu-container.unavailable {
+      visibility: hidden;
     }
 
     .logo-container,

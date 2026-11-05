@@ -45,6 +45,9 @@ export interface Application extends Doc {
   // Also attached ApplicationNavModel will be joined after this one main.
   navigatorModel?: NavigatorModel
 
+  // The application component renders its own menu instead of using navigatorModel.
+  hasNavigator?: boolean
+
   locationResolver?: Resource<(loc: Location) => Promise<ResolvedLocation | undefined>>
   locationDataResolver?: Resource<(loc: Location) => Promise<LocationData>>
 

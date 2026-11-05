@@ -70,7 +70,20 @@ for (const { alias, label } of [
 
     const hideMenu = page.locator('[id="app-workbench:string:HideMenu"]')
     const showMenu = page.locator('[id="app-workbench:string:ShowMenu"]')
+    if (alias === 'love') {
+      await expect(hideMenu).toBeHidden()
+      await expect(showMenu).toBeHidden()
+      await expect(page.locator('.antiPanel-navigator')).toHaveCount(0)
+      const currentUrl = page.url()
+      await app.click()
+      await expect(page).toHaveURL(currentUrl)
+      await expect(app).toHaveClass(/selected/)
+      await expect(hideMenu).toBeHidden()
+      await expect(showMenu).toBeHidden()
+      return
+    }
     await expect(hideMenu).toBeVisible()
+    await expect(hideMenu.locator('use')).toHaveAttribute('href', /#arrow-bar-to-left$/)
     if (alias === 'tracker') {
       await page.locator('.antiPanel-navigator a[href$="all-issues"]').click()
       await expect(page).toHaveURL(/\/tracker\/all-issues(?:[/?#]|$)/)
@@ -83,6 +96,7 @@ for (const { alias, label } of [
 
     await hideMenu.click()
     await expect(showMenu).toBeVisible()
+    await expect(showMenu.locator('use')).toHaveAttribute('href', /#arrow-bar-to-right$/)
     await app.click()
     await expect(showMenu).toBeVisible()
     await expect(page).toHaveURL(currentUrl)
