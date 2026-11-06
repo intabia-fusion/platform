@@ -859,16 +859,8 @@
           />
         </div>
         {#if !isExcludedApp(notificationId)}
-          <NavLink
-            app={notificationId}
-            shrink={0}
-            disabled={currentAppAlias === notificationId}
-          >
-            <AppItem
-              icon={notification.icon.Notifications}
-              label={notification.string.Inbox}
-              {...inboxProps}
-            />
+          <NavLink app={notificationId} shrink={0} disabled={currentAppAlias === notificationId}>
+            <AppItem icon={notification.icon.Notifications} label={notification.string.Inbox} {...inboxProps} />
           </NavLink>
         {/if}
         <Applications
