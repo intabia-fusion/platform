@@ -798,8 +798,29 @@ async function queueCallCancels (control: TriggerControl, responses: UserMeeting
 }
 
 /**
+ * Ends the live sessions a single edit made unreachable: the query names them exactly - a cancelled
+ * occurrence has one, a deleted series has all of them.
+ */
+async function finishLiveSessions (
+  control: TriggerControl,
+  query: DocumentQuery<MeetingMinutes>
+): Promise<Tx[]> {
+  const live = await control.findAll(control.ctx, love.class.MeetingMinutes, {
+    ...query,
+    status: { $in: LIVE_MEETING_STATUSES }
+  })
+  const endTs = Date.now()
+  return live.map((meetingDoc) =>
+    control.txFactory.createTxUpdateDoc(love.class.MeetingMinutes, meetingDoc.space, meetingDoc._id, {
+      status: MeetingStatus.Finished,
+      meetingEnd: endTs
+    })
+  )
+}
+
+/**
  * Trigger to update MeetingMinutes when Event is updated
- * - Updates meetingScheduledDate when Event date changes
+ * - Ends the sessions of a deleted series and of a cancelled occurrence
  * - Updates members when Event participants change
  */
 export async function OnEventUpdate (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
@@ -819,19 +840,36 @@ export async function OnEventUpdate (txes: Tx[], control: TriggerControl): Promi
       if (removed?.access !== AccessLevel.Owner) continue
       if (!control.hierarchy.hasMixin(removed, love.mixin.MeetingEventLink)) continue
 
-      const live = await control.findAll(control.ctx, love.class.MeetingMinutes, {
-        eventId: removed.eventId,
-        status: { $in: LIVE_MEETING_STATUSES }
-      })
-      const endTs = Date.now()
-      for (const meetingDoc of live) {
-        result.push(
-          control.txFactory.createTxUpdateDoc(love.class.MeetingMinutes, meetingDoc.space, meetingDoc._id, {
-            status: MeetingStatus.Finished,
-            meetingEnd: endTs
-          })
-        )
-      }
+      // A removed occurrence is one occurrence, even when the calendar truncates a series by removing
+      // its materialised occurrences: only the master takes the whole series down with it.
+      const removedOccurrence = control.hierarchy.isDerived(removed._class, calendar.class.ReccuringInstance)
+        ? (removed as ReccuringInstance).originalStartTime
+        : undefined
+      result.push(
+        ...(await finishLiveSessions(control, {
+          eventId: removed.eventId,
+          ...(removedOccurrence !== undefined ? { occurrence: removedOccurrence } : {})
+        }))
+      )
+      continue
+    }
+
+    // A single occurrence is cancelled by replacing it with a copy marked `isCancelled`
+    // (`deleteRecHandler` in calendar-resources), so the cancellation arrives as a creation and not
+    // as an edit of the series. The session of that occurrence is already under way and its card is
+    // gone from the calendar - nobody could end it any more.
+    if (tx._class === core.class.TxCreateDoc) {
+      const createTx = tx as TxCreateDoc<Event>
+      if (!control.hierarchy.isDerived(createTx.objectClass, calendar.class.Event)) continue
+      const created = createTx.attributes as Partial<ReccuringInstance> | undefined
+      if (created?.isCancelled !== true || created.eventId === undefined) continue
+      const occurrence = created.originalStartTime ?? created.date
+      result.push(
+        ...(await finishLiveSessions(control, {
+          eventId: created.eventId,
+          ...(occurrence !== undefined ? { occurrence } : {})
+        }))
+      )
       continue
     }
 
@@ -866,6 +904,22 @@ export async function OnEventUpdate (txes: Tx[], control: TriggerControl): Promi
 
     const updateTx = tx as TxUpdateDoc<Event>
     const ops = updateTx.operations
+
+    // The same cancellation, but written in place: an occurrence copy that already exists gets
+    // `isCancelled` set, and its session has to end the same way.
+    const instance = event as ReccuringInstance
+    if ((ops as Partial<ReccuringInstance>).isCancelled === true && instance.originalStartTime !== undefined) {
+      if (event.eventId !== undefined) {
+        result.push(
+          ...(await finishLiveSessions(control, {
+            eventId: event.eventId,
+            occurrence: instance.originalStartTime
+          }))
+        )
+      }
+      continue
+    }
+
     if (ops.participants === undefined) continue
 
     // Resolved once, not per session: the participants of the event are the same for all of them.
@@ -900,10 +954,44 @@ export async function OnEventUpdate (txes: Tx[], control: TriggerControl): Promi
  * account at a time (`$pull`), so both shapes are checked. The corrective transaction carries
  * `$push`, which this trigger does not act on, so it cannot loop.
  */
+/** Accounts from `accounts` that the update drops: an explicit list replaces them, a `$pull` removes them. */
+function missingFrom (
+  ops: {
+    members?: AccountUuid[]
+    owners?: AccountUuid[]
+    $pull?: {
+      members?: AccountUuid | AccountUuid[] | { $in: AccountUuid[] }
+      owners?: AccountUuid | AccountUuid[] | { $in: AccountUuid[] }
+    }
+  },
+  field: 'members' | 'owners',
+  accounts: AccountUuid[]
+): AccountUuid[] {
+  const next = ops[field]
+  const missing = next !== undefined ? accounts.filter((it) => !next.includes(it)) : []
+  const pulled = ops.$pull?.[field]
+  if (pulled !== undefined) {
+    const pulledAccounts = Array.isArray(pulled) ? pulled : typeof pulled === 'object' ? pulled.$in : [pulled]
+    for (const account of accounts) {
+      if (pulledAccounts.includes(account) && !missing.includes(account)) missing.push(account)
+    }
+  }
+  return missing
+}
+
 export async function OnPermanentMeetingUpdate (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []
 
   for (const tx of txes) {
+    // Deleting a permanent meeting leaves its running session behind the same way a deleted series
+    // does: the panel is the only place that could end it, and it goes away with the meeting.
+    if (tx._class === core.class.TxRemoveDoc) {
+      const removeTx = tx as TxRemoveDoc<PermanentMeeting>
+      if (removeTx.objectClass !== love.class.PermanentMeeting) continue
+      result.push(...(await finishLiveSessions(control, { meeting: removeTx.objectId })))
+      continue
+    }
+
     if (tx._class !== core.class.TxUpdateDoc) continue
 
     const cudTx = tx as TxUpdateDoc<PermanentMeeting>
@@ -911,35 +999,56 @@ export async function OnPermanentMeetingUpdate (txes: Tx[], control: TriggerCont
 
     const ops = cudTx.operations as {
       members?: AccountUuid[]
-      $pull?: { members?: AccountUuid | AccountUuid[] | { $in: AccountUuid[] } }
+      owners?: AccountUuid[]
+      $pull?: {
+        members?: AccountUuid | AccountUuid[] | { $in: AccountUuid[] }
+        owners?: AccountUuid | AccountUuid[] | { $in: AccountUuid[] }
+      }
     }
-    if (ops.members === undefined && ops.$pull?.members === undefined) continue
+    const touchesMembers = ops.members !== undefined || ops.$pull?.members !== undefined
+    const touchesOwners = ops.owners !== undefined || ops.$pull?.owners !== undefined
+    if (!touchesMembers && !touchesOwners) continue
 
     const meeting = (
       await control.findAll(control.ctx, love.class.PermanentMeeting, { _id: cudTx.objectId }, { limit: 1 })
     )[0]
     if (meeting === undefined) continue
 
+    // The creator is the one who can delete the meeting, so losing the creator turns a meeting into
+    // something nobody can remove. `createdBy` holds a social id: an old document without it keeps
+    // the plain owner rule, which the push-back below already covers.
+    const creator =
+      meeting.createdBy !== undefined ? await getAccountBySocialId(control, meeting.createdBy) : null
+
     const owners = meeting.owners ?? []
-    const missing = ops.members !== undefined ? owners.filter((it) => ops.members?.includes(it) !== true) : []
-    if (ops.$pull?.members !== undefined) {
-      const pulled = ops.$pull.members
-      const pulledAccounts = Array.isArray(pulled) ? pulled : typeof pulled === 'object' ? pulled.$in : [pulled]
-      for (const owner of owners) {
-        if (pulledAccounts.includes(owner) && !missing.includes(owner)) missing.push(owner)
-      }
-    }
-    if (missing.length === 0) continue
+    const missingOwners = touchesOwners ? missingFrom(ops, 'owners', owners) : []
+    if (touchesOwners && creator !== null && !owners.includes(creator)) missingOwners.push(creator)
+
+    // The creator stays a member even on a document that predates the owner rule.
+    const protectedMembers =
+      creator !== null && !owners.includes(creator) ? [...owners, creator] : owners
+    const missing = touchesMembers ? missingFrom(ops, 'members', protectedMembers) : []
+    if (missing.length === 0 && missingOwners.length === 0) continue
 
     control.ctx.warn('[OnPermanentMeetingUpdate] Owner is not in the members, pushed back', {
       meeting: cudTx.objectId,
-      missing
+      missing,
+      missingOwners
     })
-    result.push(
-      control.txFactory.createTxUpdateDoc(love.class.PermanentMeeting, meeting.space, meeting._id, {
-        $push: { members: { $each: missing, $position: 0 } }
-      })
-    )
+    if (missingOwners.length > 0) {
+      result.push(
+        control.txFactory.createTxUpdateDoc(love.class.PermanentMeeting, meeting.space, meeting._id, {
+          $push: { owners: { $each: missingOwners, $position: 0 } }
+        })
+      )
+    }
+    if (missing.length > 0) {
+      result.push(
+        control.txFactory.createTxUpdateDoc(love.class.PermanentMeeting, meeting.space, meeting._id, {
+          $push: { members: { $each: missing, $position: 0 } }
+        })
+      )
+    }
   }
 
   return result

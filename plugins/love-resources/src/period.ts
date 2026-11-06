@@ -67,3 +67,13 @@ export function retimedRules (date: Timestamp, period: number, previous?: Recurr
     }
   ]
 }
+
+/**
+ * The first occurrence that is still ahead of `now`. A meeting without a period has a single one:
+ * its start date, which is in the past once the meeting has begun.
+ */
+export function nextOccurrence (date: Timestamp, period: number | undefined, now: Timestamp): Timestamp | undefined {
+  if (date >= now) return date
+  if (period === undefined || period <= 0) return undefined
+  return date + Math.ceil((now - date) / period) * period
+}

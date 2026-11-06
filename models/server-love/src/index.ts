@@ -23,6 +23,7 @@ import serverLove from '@hcengineering/server-love'
 import serverActivity from '@hcengineering/server-activity'
 
 export { serverLoveId } from '@hcengineering/server-love'
+export { serverLoveOperation } from './migration'
 
 export function createModel (builder: Builder): void {
   builder.mixin(love.class.MeetingMinutes, core.class.Class, serverActivity.mixin.UrlPresenter, {
@@ -74,6 +75,15 @@ export function createModel (builder: Builder): void {
     trigger: serverLove.trigger.OnEventUpdate,
     txMatch: {
       objectClass: calendar.class.Event
+    }
+  })
+
+  // Keeps an owner in the member list of a permanent meeting, and ends its session when the meeting
+  // is deleted. Registered here: the function alone is never called, a trigger doc binds it.
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverLove.trigger.OnPermanentMeetingUpdate,
+    txMatch: {
+      objectClass: love.class.PermanentMeeting
     }
   })
 

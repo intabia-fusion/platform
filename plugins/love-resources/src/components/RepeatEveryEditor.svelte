@@ -19,10 +19,16 @@
 -->
 <script lang="ts">
   import calendar from '@hcengineering/calendar'
+  import type { Doc } from '@hcengineering/core'
+  import { getClient } from '@hcengineering/presentation'
   import { DropdownLabelsIntl, NumberInput, type DropdownIntlItem } from '@hcengineering/ui'
 
   export let value: number | undefined = undefined
-  export let onChange: (value: number) => void = () => {}
+  // The model registers this component as the attribute editor of `repeatEvery`, and an attribute
+  // editor is handed the document and no callback: it writes itself. A caller in a custom header
+  // passes `onChange` instead, and then the caller owns the write.
+  export let onChange: ((value: number) => void) | undefined = undefined
+  export let object: Doc | undefined = undefined
   export let readonly: boolean = false
 
   const DAY = 24 * 60 * 60 * 1000
@@ -64,7 +70,13 @@
     const msec = Math.max(1, Math.round(nextInterval)) * UNITS[nextUnit]
     if (msec === known) return
     known = msec
-    onChange(msec)
+    if (onChange !== undefined) {
+      onChange(msec)
+      return
+    }
+    if (object !== undefined) {
+      void getClient().diffUpdate(object, { repeatEvery: msec } as any)
+    }
   }
 </script>
 

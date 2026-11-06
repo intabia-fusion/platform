@@ -132,7 +132,7 @@
       ]
     },
     {
-      "name": "FUSIO-1307 Ссылка на встречу",
+      "name": "FUSIO-1307 Встречи и постоянные встречи",
       "libraries": [
         "Intabia UI Kit"
       ],
@@ -149,6 +149,18 @@
         [
           "screens/love-meeting-link/_meeting.js",
           "screens/love-meeting-link/03-guest-lobby.js"
+        ],
+        [
+          "screens/love-permanent-meetings/_permanent.js",
+          "screens/love-permanent-meetings/01-create-window.js"
+        ],
+        [
+          "screens/love-permanent-meetings/_permanent.js",
+          "screens/love-permanent-meetings/02-list-with-groups.js"
+        ],
+        [
+          "screens/love-permanent-meetings/_permanent.js",
+          "screens/love-permanent-meetings/03-meeting-card.js"
         ]
       ]
     }

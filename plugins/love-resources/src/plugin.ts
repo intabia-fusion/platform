@@ -59,6 +59,9 @@ export default mergeIds(loveId, love, {
     CanCloseRoom: '' as Resource<ViewActionAvailabilityFunction>,
     CanOpenRoom: '' as Resource<ViewActionAvailabilityFunction>,
     CanLeavePermanentMeeting: '' as Resource<ViewActionAvailabilityFunction>,
+    CanDeletePermanentMeeting: '' as Resource<ViewActionAvailabilityFunction>,
+    CanEditPermanentMeeting: '' as Resource<ViewActionAvailabilityFunction>,
+    CanEditMeetingSettings: '' as Resource<ViewActionAvailabilityFunction>,
     MeetingMinutesTitleProvider: '' as Resource<(client: Client, ref: Ref<Doc>, doc?: Doc) => Promise<string>>,
     RoomTitleProvider: '' as Resource<(client: Client, ref: Ref<Doc>, doc?: Doc) => Promise<string>>,
     UserMeetingInviteTitleProvider: '' as Resource<(client: Client, ref: Ref<Doc>, doc?: Doc) => Promise<string>>
@@ -159,6 +162,18 @@ export default mergeIds(loveId, love, {
     EveryWeek: '' as IntlString,
     EveryMonth: '' as IntlString,
     RemindBefore: '' as IntlString,
-    MeetingReminderBody: '' as IntlString
+    MeetingReminderBody: '' as IntlString,
+    MeetingGroup: '' as IntlString,
+    MeetingOrder: '' as IntlString,
+    MergeIntoGroup: '' as IntlString,
+    GroupName: '' as IntlString,
+    MeetingsWithoutGroup: '' as IntlString,
+    CopyMeetingLink: '' as IntlString,
+    MeetingSettings: '' as IntlString,
+    NextOccurrence: '' as IntlString,
+    RemindBeforeMinutes: '' as IntlString,
+    RepeatUntil: '' as IntlString,
+    LinkReady: '' as IntlString,
+    CreateMeetingGroup: '' as IntlString
   }
 })

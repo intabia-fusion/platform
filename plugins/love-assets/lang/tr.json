@@ -217,6 +217,18 @@
     "EveryMonth": "Her ay",
     "RemindBefore": "Önceden hatırlat",
     "MeetingReminderBody": "«{title}» toplantısı {minutes} dakika sonra başlıyor",
-    "RecurringMeeting": "Düzenli toplantı"
+    "RecurringMeeting": "Düzenli toplantı",
+    "MeetingGroup": "Meeting group",
+    "MeetingOrder": "Order",
+    "MergeIntoGroup": "Merge into group",
+    "GroupName": "Group name",
+    "MeetingsWithoutGroup": "Without group",
+    "CopyMeetingLink": "Copy guest link",
+    "MeetingSettings": "Meeting settings",
+    "NextOccurrence": "Next occurrence",
+    "RemindBeforeMinutes": "Remind before (minutes)",
+    "RepeatUntil": "Repeat until",
+    "LinkReady": "Guest link is ready",
+    "CreateMeetingGroup": "New group"
   }
 }

@@ -217,6 +217,18 @@
     "EveryMonth": "Každý měsíc",
     "RemindBefore": "Připomenout předem",
     "MeetingReminderBody": "Schůzka „{title}“ začne za {minutes} min",
-    "RecurringMeeting": "Pravidelná schůzka"
+    "RecurringMeeting": "Pravidelná schůzka",
+    "MeetingGroup": "Meeting group",
+    "MeetingOrder": "Order",
+    "MergeIntoGroup": "Merge into group",
+    "GroupName": "Group name",
+    "MeetingsWithoutGroup": "Without group",
+    "CopyMeetingLink": "Copy guest link",
+    "MeetingSettings": "Meeting settings",
+    "NextOccurrence": "Next occurrence",
+    "RemindBeforeMinutes": "Remind before (minutes)",
+    "RepeatUntil": "Repeat until",
+    "LinkReady": "Guest link is ready",
+    "CreateMeetingGroup": "New group"
   }
 }

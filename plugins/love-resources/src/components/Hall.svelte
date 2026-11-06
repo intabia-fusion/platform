@@ -18,12 +18,15 @@
   import type { Floor as FloorType, Office, Room } from '@hcengineering/love'
   import love, { isOffice } from '@hcengineering/love'
   import { SpecialView } from '@hcengineering/workbench-resources'
-  import { deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
+  import { deviceOptionsStore as deviceInfo, showPopup } from '@hcengineering/ui'
+  import { Button } from '@hcengineering/ui/kit'
   import { onDestroy } from 'svelte'
   import { currentFloor, ensureOfficeDetailsLoaded, officeView, rooms } from '../stores'
 
   import Floor from './Floor.svelte'
   import FloorConfigure from './FloorConfigure.svelte'
+  import MeetingGroupPopup from './MeetingGroupPopup.svelte'
+  import PermanentMeetingsList from './PermanentMeetingsList.svelte'
 
   void ensureOfficeDetailsLoaded()
 
@@ -46,15 +49,36 @@
 
 <div class="antiPanel-component filledNav" bind:this={replacedPanel}>
   {#if $officeView === 'meetings'}
-    <SpecialView _class={love.mixin.MeetingEventLink} label={love.string.Meetings} icon={love.icon.Cam} />
-  {:else if $officeView === 'permanent'}
+    <!-- A materialised occurrence keeps the mixin the calendar mirrors onto every copy, so without
+         a filter every edited or cancelled occurrence would sit in the list as a second meeting.
+         `recurringEventId` is declared on the occurrence class alone: a series master carries
+         `originalStartTime` too, and filtering by it would hide every series. -->
     <SpecialView
-      _class={love.class.PermanentMeeting}
-      label={love.string.PermanentMeetings}
-      icon={love.icon.MeetingMinutes}
-      createLabel={love.string.NewMeeting}
-      createComponent={love.component.CreatePermanentMeetingPopup}
+      _class={love.mixin.MeetingEventLink}
+      baseQuery={{ recurringEventId: { $exists: false } }}
+      label={love.string.Meetings}
+      icon={love.icon.Cam}
     />
+  {:else if $officeView === 'permanent'}
+    <!-- The list keeps the group order explicit (`order`), which the standard table cannot: a
+         dropped header has to stay where it was dropped after a reload. -->
+    <div class="flex-col h-full">
+      <div class="flex-row-center gap-2 mb-2">
+        <Button
+          label={love.string.NewMeeting}
+          kind="primary"
+          size="medium"
+          on:click={() => showPopup(love.component.CreatePermanentMeetingPopup, {})}
+        />
+        <Button
+          label={love.string.MergeIntoGroup}
+          kind="secondary"
+          size="medium"
+          on:click={() => showPopup(MeetingGroupPopup, {})}
+        />
+      </div>
+      <PermanentMeetingsList />
+    </div>
   {:else if configure}
     <FloorConfigure
       rooms={getRooms($rooms, floor)}

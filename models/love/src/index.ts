@@ -35,6 +35,7 @@ import {
   type Floor,
   loveId,
   type MeetingEventLink,
+  type MeetingGroup,
   type MeetingMinutes,
   type MeetingStatus,
   type MeetingSchedule,
@@ -405,11 +406,38 @@ export class TPermanentMeeting extends TSpace implements PermanentMeeting {
   })
   meetingAccess?: MeetingAccess
 
+  // Lead time of the reminder for a meeting with no series. A scheduled meeting keeps it on the
+  // series mixin, so both places exist: this one is for the always-open room.
+  @Prop(TypeNumber(), love.string.RemindBefore)
+  reminderBefore?: number
+
+  // Flat grouping of the permanent meetings list. `order` is authoritative: the list sorts by it
+  // and drag-and-drop rewrites it, so a manual sort never has to fight a computed one.
+  @Index(IndexKind.Indexed)
+  @Prop(TypeRef(love.class.MeetingGroup), love.string.MeetingGroup)
+  group?: Ref<MeetingGroup>
+
+  @Prop(TypeNumber(), love.string.MeetingOrder)
+  order?: number
+
   @Prop(PropCollection(chunter.class.ChatMessage), activity.string.Messages)
   messages?: number
 
   @Prop(Collection(attachment.class.Attachment), attachment.string.Attachments, { shortLabel: attachment.string.Files })
   attachments?: number
+}
+
+// A flat group of permanent meetings: a name and an order. Meetings point at it and carry their own
+// `order` inside the group, so drag-and-drop only rewrites numbers.
+@Model(love.class.MeetingGroup, core.class.Doc, DOMAIN_LOVE)
+@UX(love.string.MeetingGroup, love.icon.MeetingMinutes, undefined, undefined, undefined, undefined, 'name')
+export class TMeetingGroup extends TDoc implements MeetingGroup {
+  @Prop(TypeString(), core.string.Name)
+  name!: string
+
+  @Prop(TypeNumber(), love.string.MeetingOrder)
+  @Index(IndexKind.Indexed)
+  order!: number
 }
 
 @Mixin(love.mixin.MeetingSchedule, calendar.class.Schedule)
@@ -791,10 +819,52 @@ export function createModel (builder: Builder): void {
     }
   })
 
+  // A permanent meeting is deleted like any space. The generic `Delete` is gated by object
+  // permissions a space does not pass, so the tab's selection toolbar needs its own action; the
+  // server trigger ends the live sessions of the removed meeting.
+  createAction(builder, {
+    action: view.actionImpl.Delete,
+    label: view.string.Delete,
+    icon: view.icon.Delete,
+    category: love.category.Office,
+    override: [view.action.Delete],
+    input: 'any',
+    target: love.class.PermanentMeeting,
+    context: { mode: ['context', 'browser'], group: 'remove' },
+    visibilityTester: love.function.CanDeletePermanentMeeting
+  })
+
+  // Settings of the meeting open the same window that created it, so the list does not need to be
+  // navigated into for a rename or a new period.
+  createAction(builder, {
+    action: love.actionImpl.EditPermanentMeetingSettings,
+    label: love.string.MeetingSettings,
+    icon: view.icon.Edit,
+    category: love.category.Office,
+    target: love.class.PermanentMeeting,
+    input: 'focus',
+    visibilityTester: love.function.CanEditPermanentMeeting,
+    context: { mode: ['context', 'browser'] }
+  })
+
   // Opened through the mixin (links and lists use Hierarchy.mixinOrClass), so a scheduled meeting
   // gets its own header while a plain calendar event keeps the calendar editor.
   builder.mixin(love.mixin.MeetingEventLink, core.class.Class, view.mixin.ObjectEditor, {
     editor: love.component.EditScheduledMeeting
+  })
+
+  // A series is edited through the window that created it: the calendar editor of a recurring event
+  // asks on every save whether the scope is the occurrence or the series, and a meeting has only one
+  // honest scope - the meeting itself. The action hides on a plain event (`CanEditMeetingSettings`).
+  createAction(builder, {
+    action: love.actionImpl.EditMeetingSettings,
+    label: love.string.MeetingSettings,
+    icon: view.icon.Edit,
+    category: love.category.Office,
+    target: love.mixin.MeetingEventLink,
+    input: 'focus',
+    visibilityTester: love.function.CanEditMeetingSettings,
+    context: { mode: ['context', 'browser'] }
   })
 
   // Past sessions go below the description and attachments, where a panel lists related documents.

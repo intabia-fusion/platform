@@ -14,7 +14,7 @@
 //
 import type { RecurringRule } from '@hcengineering/calendar'
 import type { Timestamp } from '@hcengineering/core'
-import { periodRules, retimedRules, ruleToPeriod } from '../period'
+import { nextOccurrence, periodRules, retimedRules, ruleToPeriod } from '../period'
 
 const DAY = 24 * 60 * 60 * 1000
 const WEEK = 7 * DAY
@@ -81,5 +81,27 @@ describe('retimedRules', () => {
 
   it('builds a plain rule when there was none', () => {
     expect(retimedRules(start, WEEK)).toEqual([{ freq: 'WEEKLY', interval: 1, byDay: ['FR'] }])
+  })
+})
+
+describe('nextOccurrence', () => {
+  const base = new Date(2026, 10, 10, 9, 0, 0, 0).getTime() as Timestamp
+  const HOUR = 60 * 60 * 1000
+
+  it('keeps a start that is still ahead', () => {
+    expect(nextOccurrence(base, WEEK, base - HOUR)).toBe(base)
+  })
+
+  it('counts whole periods forward from the start', () => {
+    expect(nextOccurrence(base, WEEK, base + HOUR)).toBe(base + WEEK)
+    expect(nextOccurrence(base, WEEK, base + WEEK + HOUR)).toBe(base + 2 * WEEK)
+  })
+
+  it('has no next occurrence for a one-off in the past', () => {
+    expect(nextOccurrence(base, undefined, base + HOUR)).toBeUndefined()
+  })
+
+  it('ignores a period that is not positive', () => {
+    expect(nextOccurrence(base, 0, base + HOUR)).toBeUndefined()
   })
 })

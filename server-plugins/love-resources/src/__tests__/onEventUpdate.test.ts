@@ -131,6 +131,23 @@ function createRemoveTx (objectClass: Ref<Class<Doc>> = calendar.class.Event): T
   } satisfies TxRemoveDoc<Event>
 }
 
+function createCreateTx (
+  attributes: Record<string, any>,
+  objectClass: Ref<Class<Doc>> = calendar.class.ReccuringInstance
+): Tx {
+  return {
+    _id: generateId(),
+    _class: core.class.TxCreateDoc,
+    space: core.space.DerivedTx,
+    objectId: generateId(),
+    objectClass: objectClass as Ref<Class<Doc>>,
+    objectSpace: core.space.Workspace as unknown as Ref<Space>,
+    modifiedOn: Date.now(),
+    modifiedBy: 'creator' as PersonId,
+    attributes
+  } as unknown as Tx
+}
+
 function createMockControl (findAllImpl: FindAllFn): TriggerControl {
   return {
     ctx: {
@@ -447,6 +464,89 @@ describe('OnEventUpdate', () => {
       expect(ops).toHaveLength(1)
       expect(ops[0].meetingScheduledDate).toBeUndefined()
       expect(ops[0].$push.members.$each).toEqual([accountB])
+    })
+  })
+
+  describe('cancelled occurrence', () => {
+    it('ends the session of the cancelled occurrence', async () => {
+      // Deleting one occurrence replaces it with a copy marked `isCancelled`; its session is already
+      // running and its card is gone from the calendar, so nobody could end it any more.
+      const occurrence = Date.now() + 3600000
+      const control = createMockControl(
+        buildFindAll({ meeting: createMeetingDoc({ status: MeetingStatus.Active }), event: createEvent() })
+      )
+
+      const result = await OnEventUpdate(
+        [
+          createCreateTx({
+            eventId: 'E1',
+            originalStartTime: occurrence,
+            date: occurrence,
+            isCancelled: true
+          })
+        ],
+        control
+      )
+
+      const ops = getUpdateOps(result)
+      expect(ops).toHaveLength(1)
+      expect(ops[0].status).toBe(MeetingStatus.Finished)
+      expect(ops[0].meetingEnd).toBeDefined()
+    })
+
+    it('asks the query for that very occurrence, not for the whole series', async () => {
+      const occurrence = Date.now() + 3600000
+      const queries: any[] = []
+      const control = createMockControl((_class, query) => {
+        if (_class === love.class.MeetingMinutes) {
+          queries.push(query)
+          return [createMeetingDoc({ status: MeetingStatus.Active })]
+        }
+        if (_class === calendar.class.Event) return [createEvent()]
+        return []
+      })
+
+      await OnEventUpdate(
+        [createCreateTx({ eventId: 'E1', originalStartTime: occurrence, date: occurrence, isCancelled: true })],
+        control
+      )
+
+      expect(queries).toHaveLength(1)
+      expect(queries[0].eventId).toBe('E1')
+      expect(queries[0].occurrence).toBe(occurrence)
+    })
+
+    it('finishes the occurrence session marked cancelled in place', async () => {
+      const occurrence = Date.now() + 3600000
+      const control = createMockControl(
+        buildFindAll({
+          meeting: createMeetingDoc({ status: MeetingStatus.Active }),
+          event: { ...createEvent(), originalStartTime: occurrence } as Event
+        })
+      )
+
+      const result = await OnEventUpdate(
+        [createUpdateTx({ isCancelled: true } as unknown as Partial<Event>)],
+        control
+      )
+
+      const ops = getUpdateOps(result)
+      expect(ops).toHaveLength(1)
+      expect(ops[0].status).toBe(MeetingStatus.Finished)
+    })
+
+    it('ignores a copy that is created without the cancellation mark', async () => {
+      // Moving one occurrence also replaces it with a copy: that copy is not a cancellation.
+      const control = createMockControl(
+        buildFindAll({ meeting: createMeetingDoc({ status: MeetingStatus.Active }), event: createEvent() })
+      )
+
+      const result = await OnEventUpdate(
+        [createCreateTx({ eventId: 'E1', originalStartTime: Date.now(), date: Date.now() })],
+        control
+      )
+
+      expect(getUpdateOps(result)).toHaveLength(0)
     })
   })
 })

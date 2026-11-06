@@ -288,8 +288,27 @@ export interface PermanentMeeting extends Space {
   /** Only `start` applies here: with no series there is nothing for `afterTtl`/`past` to follow. */
   meetingAccess?: MeetingAccess
 
+  /** Lead time of the reminder in ms for a meeting with no series; absent or 0 turns it off. */
+  reminderBefore?: number
+
+  /** Flat group of the meetings list. */
+  group?: Ref<MeetingGroup>
+  /** Position inside the group; the list sorts by it and drag-and-drop rewrites it. */
+  order?: number
+
   messages?: number
   attachments?: number
+}
+
+/**
+ * @public
+ *
+ * A flat named group of permanent meetings. Meetings carry their own `order` inside the group,
+ * so both the group list and the meeting list are ordered by a number and nothing else.
+ */
+export interface MeetingGroup extends Doc {
+  name: string
+  order: number
 }
 
 /**

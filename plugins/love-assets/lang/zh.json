@@ -217,6 +217,18 @@
     "EveryMonth": "每月",
     "RemindBefore": "提前提醒",
     "MeetingReminderBody": "会议「{title}」将在 {minutes} 分钟后开始",
-    "RecurringMeeting": "定期会议"
+    "RecurringMeeting": "定期会议",
+    "MeetingGroup": "Meeting group",
+    "MeetingOrder": "Order",
+    "MergeIntoGroup": "Merge into group",
+    "GroupName": "Group name",
+    "MeetingsWithoutGroup": "Without group",
+    "CopyMeetingLink": "Copy guest link",
+    "MeetingSettings": "Meeting settings",
+    "NextOccurrence": "Next occurrence",
+    "RemindBeforeMinutes": "Remind before (minutes)",
+    "RepeatUntil": "Repeat until",
+    "LinkReady": "Guest link is ready",
+    "CreateMeetingGroup": "New group"
   }
 }

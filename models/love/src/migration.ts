@@ -54,6 +54,7 @@ import {
 import calendar, { AccessLevel, DOMAIN_EVENT, type Event } from '@hcengineering/model-calendar'
 import core, { DOMAIN_SPACE } from '@hcengineering/model-core'
 import presentation from '@hcengineering/model-presentation'
+import view from '@hcengineering/model-view'
 import { DOMAIN_LOVE, DOMAIN_LOVE_PENDING, DOMAIN_MEETING_MINUTES } from '.'
 import love from './plugin'
 
@@ -318,6 +319,74 @@ async function addMeetingEventCardBadge (client: MigrationUpgradeClient): Promis
     extension: calendar.extensions.EventCardExtensions,
     component: love.component.MeetingEventBadge
   })
+}
+
+// The delete action of a permanent meeting is a model document too: a workspace created before it
+// existed never receives it, and the tab's selection toolbar stays without a delete entry.
+async function addPermanentMeetingDeleteAction (client: MigrationUpgradeClient): Promise<void> {
+  const tx = new TxOperations(client, core.account.System)
+  const existing = await client.findAll(view.class.Action, {
+    target: love.class.PermanentMeeting,
+    action: view.actionImpl.Delete
+  })
+  if (existing.length === 0) {
+    await tx.createDoc(view.class.Action, core.space.Model, {
+      action: view.actionImpl.Delete,
+      label: view.string.Delete,
+      icon: view.icon.Delete,
+      category: love.category.Office,
+      override: [view.action.Delete],
+      input: 'any',
+      target: love.class.PermanentMeeting,
+      context: { mode: ['context', 'browser'], group: 'remove' },
+      visibilityTester: love.function.CanDeletePermanentMeeting
+    })
+  } else {
+    // A workspace that got the action before the creator check existed still carries CanDeleteSpace,
+    // and the delete entry would stay visible to everyone.
+    for (const action of existing) {
+      if (action.visibilityTester !== love.function.CanDeletePermanentMeeting) {
+        await tx.update(action, { visibilityTester: love.function.CanDeletePermanentMeeting })
+      }
+    }
+  }
+
+  // The settings action is new: same reason, a workspace never picks a model document up on its own.
+  const settings = await client.findAll(view.class.Action, {
+    target: love.class.PermanentMeeting,
+    action: love.actionImpl.EditPermanentMeetingSettings
+  })
+  if (settings.length === 0) {
+    await tx.createDoc(view.class.Action, core.space.Model, {
+      action: love.actionImpl.EditPermanentMeetingSettings,
+      label: love.string.MeetingSettings,
+      icon: view.icon.Edit,
+      category: love.category.Office,
+      target: love.class.PermanentMeeting,
+      input: 'focus',
+      visibilityTester: love.function.CanEditPermanentMeeting,
+      context: { mode: ['context', 'browser'] }
+    })
+  }
+
+  // The series of a meeting is edited through the same window, so the list of meetings needs its
+  // own entry: the calendar's `Edit` opens a recurrence scope dialog a meeting has no answer for.
+  const seriesSettings = await client.findAll(view.class.Action, {
+    target: love.mixin.MeetingEventLink,
+    action: love.actionImpl.EditMeetingSettings
+  })
+  if (seriesSettings.length === 0) {
+    await tx.createDoc(view.class.Action, core.space.Model, {
+      action: love.actionImpl.EditMeetingSettings,
+      label: love.string.MeetingSettings,
+      icon: view.icon.Edit,
+      category: love.category.Office,
+      target: love.mixin.MeetingEventLink,
+      input: 'focus',
+      visibilityTester: love.function.CanEditMeetingSettings,
+      context: { mode: ['context', 'browser'] }
+    })
+  }
 }
 
 export const loveOperation: MigrateOperation = {
@@ -758,6 +827,12 @@ export const loveOperation: MigrateOperation = {
       {
         state: 'meeting-event-card-badge',
         func: addMeetingEventCardBadge
+      },
+      {
+        // Renamed from 'permanent-meeting-delete-action': the step now also rewrites the delete
+        // visibility to the creator check, and a state that already ran would be skipped.
+        state: 'permanent-meeting-actions-v3',
+        func: addPermanentMeetingDeleteAction
       }
     ])
   }

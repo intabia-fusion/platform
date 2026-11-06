@@ -43,6 +43,7 @@ import { recorderId, recorderOperation } from '@hcengineering/model-recorder'
 import { recruitOperation } from '@hcengineering/model-recruit'
 import { requestOperation } from '@hcengineering/model-request'
 import { activityServerOperation } from '@hcengineering/model-server-activity'
+import { serverLoveId, serverLoveOperation } from '@hcengineering/model-server-love'
 import { settingOperation } from '@hcengineering/model-setting'
 import { surveyOperation } from '@hcengineering/model-survey'
 import { tagsOperation } from '@hcengineering/model-tags'
@@ -91,6 +92,7 @@ export const migrateOperations: [string, MigrateOperation][] = [
   ['pre-time', githubOperationPreTime],
   ['time', timeOperation],
   [loveId, loveOperation],
+  [serverLoveId, serverLoveOperation],
   ['activityServer', activityServerOperation],
   ['textEditorOperation', textEditorOperation],
   // We should call notification migration after activityServer and chunter

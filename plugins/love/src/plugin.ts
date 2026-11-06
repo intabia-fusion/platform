@@ -9,6 +9,7 @@ import {
   DevicesPreference,
   Floor,
   MeetingEventLink,
+  MeetingGroup,
   MeetingMinutes,
   MeetingSchedule,
   Office,
@@ -33,6 +34,7 @@ const love = plugin(loveId, {
     RoomInfo: '' as Ref<Class<RoomInfo>>,
     MeetingMinutes: '' as Ref<Class<MeetingMinutes>>,
     PermanentMeeting: '' as Ref<Class<PermanentMeeting>>,
+    MeetingGroup: '' as Ref<Class<MeetingGroup>>,
     UserMeetingInvite: '' as Ref<Class<UserMeetingInvite>>
   },
   mixin: {
@@ -240,6 +242,7 @@ const love = plugin(loveId, {
     MeetingSessionsFooter: '' as AnyComponent,
     MeetingAccessEditor: '' as AnyComponent,
     CreatePermanentMeetingPopup: '' as AnyComponent,
+    PermanentMeetingForm: '' as AnyComponent,
     MeetingPrivateEditor: '' as AnyComponent,
     PermanentMeetingMembersEditor: '' as AnyComponent
   },

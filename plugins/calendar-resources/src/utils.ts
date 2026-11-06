@@ -140,7 +140,7 @@ export async function updateReccuringInstance (
     return true
   } else {
     return await new Promise((resolve) => {
-      showPopup(UpdateRecInstancePopup, { currentAvailable: ops.rules === undefined }, undefined, async (res) => {
+      showPopup(UpdateRecInstancePopup, { currentAvailable: ops.rules === undefined, modes: ['current', 'all'] }, undefined, async (res) => {
         if (res !== null) {
           try {
             if (res.mode === 'current') {

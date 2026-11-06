@@ -109,16 +109,30 @@ RSVP календаря - в [calendar-rsvp.md](calendar-rsvp.md).
   | `linkVersion` | бамп отзывает предыдущую ссылку: новый payload - новый shortId |
   | `meetingAccess` | политика доступа, см. §7a |
   | `private`, `language`, `startWithRecording`, `startWithTranscription` | параметры будущих сессий |
-  | `room`, `meetingId` | legacy старого пути планирования, ещё пишутся |
+  | `reminderBefore` | за сколько до вхождения напоминать (мс); `0` выключает, отсутствие - 15 минут по умолчанию |
+  | `permanentMeeting` | ссылка на `PermanentMeeting`, созданную вместе с серией: переименование одной переименовывает другую |
 
 - `MeetingSchedule extends Schedule` (миксин): `room`. **`calendar.class.Schedule`
-  - это booking-page** (`availability`, `meetingDuration`, `meetingInterval`), а не рекуррентность. Рекуррентность живёт в `ReccuringEvent { rules, exdate, rdate }` + `ReccuringInstance { recurringEventId, originalStartTime, virtual }`; инстансы разворачиваются на клиенте через `getAllEvents` и не персистятся.
+  - это booking-page** (`availability`, `meetingDuration`, `meetingInterval`), а не рекуррентность. Рекуррентность живёт в `ReccuringEvent { rules, exdate, rdate }` + `ReccuringInstance { recurringEventId, originalStartTime, virtual }`; инстансы разворачиваются на клиенте через `getAllEvents` и не персистятся. Поле `meetingId`, объявленное в модели (`models/love/src/index.ts:418`), пока не пишется никем - это место под встречу, созданную из booking-расписания (бэклог).
 - Создание: `createMeeting` в `plugins/love-resources/src/utils.ts` (`DocCreateFunction`, фаза `post`) вешает миксин на мастер-событие. Сессия **не создаётся заранее** - её открывает `resolveSession`, когда наступает вхождение (§7a).
 - Триггер `OnEventUpdate` (`server-plugins/love-resources/src/index.ts`) при сдвиге Event досыпает участников в живые сессии серии. Переопределение одного вхождения (`ReccuringInstance`) правит только свою сессию - она найдена по `occurrence === originalStartTime`; мастер правит все живые сессии сразу, их может быть две, когда затянувшийся митинг заходит на старт следующего.
+- Отмена и удаление (там же, `finishLiveSessions`):
+  - удаление мастера серии завершает все её живые сессии, удаление копии участником - ничего (мастер отличён по `access === 'owner'`);
+  - отмена **одного вхождения** календарь делает не через `exdate`, а заменой вхождения копией с `isCancelled: true` (`deleteRecHandler`, `plugins/calendar-resources/src/index.ts:87`) - это приходит как `TxCreateDoc`, а не как правка серии; сессия этого вхождения (найдена по `eventId` + `occurrence`) завершается, остальные вхождения работают;
+  - удаление `PermanentMeeting` завершает живые сессии по ссылке `meeting`, иначе комната остаётся занятой митингом, которого больше нет.
+- Триггер - это модельный документ: функция в серверном плагине без `serverCore.class.Trigger` не вызывается вообще, а воркспейс не получает новые модельные документы сам. Поэтому у каждой новой триггер-функции должна быть регистрация (`models/server-love/src/index.ts`) и шаг миграции (`models/server-love/src/migration.ts`, операция `serverLoveOperation`).
 
 ### 2.6 PermanentMeeting
 
-`PermanentMeeting extends Space` (`plugins/love/src/types.ts`) - митинг без серии и без расписания: `type`, `language`, `startWithRecording`, `startWithTranscription`, `linkId`, `linkVersion`, `meetingAccess`. Открыт всегда, ждать вхождения не нужно. Сессии (`MeetingMinutes`) ссылаются на него через `meeting`, как на серию через `eventId`.
+`PermanentMeeting extends Space` (`plugins/love/src/types.ts`) - митинг без серии и без расписания: `type`, `language`, `startWithRecording`, `startWithTranscription`, `linkId`, `linkVersion`, `meetingAccess`, `repeatEvery`, `reminderBefore`, `group`, `order`. Открыт всегда, ждать вхождения не нужно. Сессии (`MeetingMinutes`) ссылаются на него через `meeting`, как на серию через `eventId`.
+
+`repeatEvery` (мс) - как часто команда собирается собираться; задаётся в окне создания/настроек (§7a.7) и больше нигде. Сессии по нему **не открываются**: вход в комнату - единственный источник сессии.
+
+`reminderBefore` (мс) - за сколько напоминать о вхождении; `0` - молчать, отсутствие - дефолт 15 минут (§7a.5). Значение дублируется на миксине серии: напоминание читает `MeetingEventLink`.
+
+`group?: Ref<MeetingGroup>` и `order?: number` - положение в списке раздела «Постоянные встречи». `MeetingGroup` (`name`, `order`) - обычный документ `core.class.Doc` в домене `DOMAIN_LOVE`, не `Space`: группа - это порядок строк, а не контейнер прав.
+
+Серия встречи живёт отдельно и ищется по обратной ссылке `MeetingEventLink.permanentMeeting`; `MeetingSchedule.meetingId` объявлен, но не пишется.
 
 ---
 
@@ -372,12 +386,12 @@ UI: `OutgoingInvitePopup`, `IncomingInvitePopup`, `InviteButton` (лейблы `
 Навигатор офиса (`OfficeNavigator.svelte` в `Main.svelte`) держит выбор в URL - `/love/<сегмент>`: `meetings`, `permanent` или id этажа (стор `officeSegment`, из него `officeView`; `Hall.svelte` рендерит центр). Переход сбрасывает `fragment`, поэтому открытая по центру панель закрывается. Разделы - штатный `SpecialView`:
 
 - «Этажи» - этаж с людьми, чтобы позвонить; таблица и список этажа - встречи, прошедшие в его комнатах. Кнопка «+» (Maintainer) - `EditFloorPopup.svelte`.
-- «Встречи» - по миксину `love.mixin.MeetingEventLink`, единственный вьюлет - календарь (`love.viewlet.CalendarScheduledMeetings`), он висит на миксине и в приложение календаря не попадает. Панель открывается через `Hierarchy.mixinOrClass`, `ObjectEditor` на миксине даёт шапку `EditScheduledMeeting.svelte` (название, «Редактировать» - редактор события, вход).
-- «Постоянные встречи» - по `PermanentMeeting`, таблица `love.viewlet.TablePermanentMeetings`, шапка `EditPermanentMeeting.svelte` (название, вход).
+- «Встречи» - по миксину `love.mixin.MeetingEventLink`, единственный вьюлет - календарь (`love.viewlet.CalendarScheduledMeetings`), он висит на миксине и в приложение календаря не попадает. Панель открывается через `Hierarchy.mixinOrClass`, `ObjectEditor` на миксине даёт шапку `EditScheduledMeeting.svelte` (название, «Редактировать», вход). Список фильтрует `recurringEventId: { $exists: false }` - мастера серий и одиночные события, без копий вхождений.
+- «Постоянные встречи» - свой список `PermanentMeetingsList.svelte` (не `Table`): секции по `MeetingGroup`, встречи без группы - последней секцией, порядок и перетаскивание - §7a.7. Над списком две кнопки: «Новая встреча» (`CreatePermanentMeetingPopup` → `PermanentMeetingForm`) и «Объединить в группу» (`MeetingGroupPopup`). Шапка панели - `EditPermanentMeeting.svelte` (название, галка «Постоянная встреча» → то же окно настроек, вход).
 
 Настройки встречи - в панели свойств: у миксина `MeetingEventLink` и у `PermanentMeeting` свойства `meetingAccess` (редактор `MeetingAccessEditor.svelte` открывает `MeetingLinkPopup.svelte`: кто начинает, срок жизни, пароль, копирование гостевой ссылки, отзыв), запись, транскрипция; у миксина ещё приватность и язык. Прошедшие сессии - `ObjectEditorFooter` (`MeetingSessionsFooter.svelte` -> `MeetingMinutesSection.svelte`, таблица `TableMeetingMinutesEmbedded`, запрос по `meeting` или `eventId`), ниже описания и вложений.
 
-Постоянный митинг создаётся кнопкой «Новая встреча» в «Постоянных встречах» (`CreatePermanentMeetingPopup.svelte`):
+Постоянный митинг создаётся кнопкой «Новая встреча» в «Постоянных встречах» - одним окном на создание и настройку, §7a.7:
 
 ![Создание постоянного митинга](images/love-permanent-create.png)
 
@@ -420,6 +434,103 @@ pbkdf2-sha256, 100 000 итераций, случайная соль на пар
 
 Пустая строка паролем не считается (иначе войти можно было бы, прислав `''`),
 снятие - явный `null`.
+
+### 7a.5 Напоминания о вхождениях
+
+Напоминание - клиентское: серверного планировщика для событий календаря нет, поэтому его
+доставляет тот клиент, который открыт (`plugins/love-resources/src/meetingReminders.ts`).
+
+| Что | Значение |
+|---|---|
+| Тик | 30 с |
+| Окно развёртывания вхождений | 1 ч вперёд |
+| Задержка по умолчанию | 15 мин (`DEFAULT_MEETING_REMINDER`) |
+| Где хранится задержка | `MeetingEventLink.reminderBefore`, мс; `0` - молчать |
+| Защита от повторов | `localStorage['love-meeting-reminders']`, ключ `eventId:date`, хранится 200 последних |
+
+Требует разрешения браузерных `Notification` - оно спрашивается один раз при первом запуске
+клиента. Таймер один на вкладку: после повторного входа в том же окне второй интервал
+не создаётся, иначе напоминания приходили бы дважды. Запрос - один, по наличию миксина и
+`date <= now + 1ч`; лишние события (старые серии и события вне окна) отсеивает `getAllEvents`
+и проверка `dueAt`. `$or` в запросе не используется: адаптер БД воркспейса его не переводит
+и падает с `operator does not exist: text = text[]`.
+
+Включить/выключить напоминание можно в шапке встречи (`EditScheduledMeeting.svelte`,
+чекбокс `love.string.RemindBefore`).
+
+### 7a.6 Встреча из планировщика
+
+Планировщик (`plugins/time-resources`, «Планировщик»/«Планировщик команды») открывает
+тот же попап, что и календарь: `PlanningCalendar.svelte:312` → `calendar.component.CreateEvent`.
+Любовское тело `MeetingData.svelte` (`DocCreateExtension` на `calendar.class.Event`)
+добавляет в него «Создать встречу» и выбор комнаты, участники - штатные `EventParticipants` календаря.
+
+`createMeeting` (`plugins/love-resources/src/utils.ts`, фаза `post`) делает две вещи:
+
+1. вешает миксин `MeetingEventLink` на созданное событие/мастер;
+2. пишет в событие `location` - ссылку на комнату.
+
+Серии и `PermanentMeeting` эта форма больше не создаёт: помимо встречи из планировщика
+есть второе, отдельное окно - «Новая встреча» в разделе «Постоянные встречи» (§7a.7),
+которое и создаёт пару «серия + постоянная». Так у каждого пути создания один результат
+и одна точка правки.
+
+Карточки в планировщике рисует `DayCalendar.svelte` → `EventElement.svelte`, а он рендерит
+`EventCardExtensions` → `MeetingEventBadge.svelte` (кнопка входа прямо с карточки). Поэтому
+встреча из планировщика видна и в календаре, и во вкладке «Встречи».
+
+Во вкладке «Встречи» вхождения отсечены фильтром `recurringEventId: { $exists: false }`:
+календарь зеркалит миксин на все копии с тем же `eventId`, и без фильтра каждое перенесённое
+или отменённое вхождение висело бы в списке отдельной встречей. Фильтровать по
+`originalStartTime` нельзя: его несёт и мастер серии (`makeRecurring`), и тогда из списка
+исчезают все серии.
+
+### 7a.7 Окно постоянной встречи, группы и права
+
+Одно окно на создание и настройку - `PermanentMeetingForm.svelte` (id
+`love.component.PermanentMeetingForm`): название, дата/время (`EventTimeEditor`), период
+повторения (`RepeatEveryEditor`), участники (`AccountArrayEditor`), «напомнить за N минут»,
+пароль для гостей, комната. Открывается тремя путями: кнопкой «Новая встреча» (новая встреча),
+действием «Настройки» в строке списка и галкой «Постоянная встреча» в шапке карточки.
+
+Сохранение идёт через `plugins/love-resources/src/permanentMeetingSchedule.ts`:
+
+| Функция | Что пишет |
+|---|---|
+| `createPermanentMeetingWithSchedule` | серию (`ReccuringEvent` с правилом из `periodRules`, или `Event` без периода), миксин на мастер, `PermanentMeeting`, обратную ссылку `permanentMeeting`, пароль гостей |
+| `updatePermanentMeetingWithSchedule` | саму встречу (название, участники, `reminderBefore`, `repeatEvery`), мастер серии (название, дата, `rules`) и миксин, пароль гостей |
+
+Серия ищется по миксину: `{ '<mixin>.permanentMeeting': <id встречи> }`. Обратной связи
+«встреча → серия» в документе нет намеренно: серий может быть больше одной (старые данные),
+и поиск по ссылке находит все.
+
+Права (`plugins/love-resources/src/permissions.ts`, чистые функции + серверный триггер):
+
+| Кто | Видит «Настройки» | «Покинуть» | «Удалить» |
+|---|---|---|---|
+| Создатель (`createdBy`, иначе `owners[0]`) | да | нет | да |
+| Участник | да | да | нет |
+| Посторонний | нет | нет | нет |
+
+Создателя нельзя убрать ни из `owners`, ни из `members`: `OnPermanentMeetingUpdate`
+(`server-plugins/love-resources`) возвращает его обратно, иначе встречу некому было бы удалить.
+Триггер правит и `owners`, и `members` - первая версия смотрела только на `members`.
+
+Список «Постоянные встречи» (`PermanentMeetingsList.svelte`) держит порядок сам, а не через
+`Table`: секции по группам (`order` группы), внутри - строки по `order` встречи, без группы -
+последней секцией. Перетаскивание - нативный HTML5 drag: шапка группы меняет порядок групп,
+строка - переезжает в другую группу или меняет место внутри; результат сохраняет
+`persistOrder` (`groups.ts`) пакетом `diffUpdate`. Группа создаётся кнопкой «Объединить
+в группу» (`MeetingGroupPopup.svelte`: название + отметки встреч → `createMeetingGroup`),
+переименовывается прямо в шапке (`renameMeetingGroup`).
+
+В строке: название, следующее вхождение (`nextOccurrence` в `period.ts`: старт мастера +
+период), «Копировать гостевую ссылку» (только участнику) и «Присоединиться».
+
+Правка серии из вкладки «Встречи» - действие `EditMeetingSettings` на миксине: открывает то же
+окно настроек, если у серии есть `permanentMeeting`, и скрыто для обычного события
+(`CanEditMeetingSettings`). Диалог выбора области правки (`UpdateRecInstancePopup`) для встреч
+показывает только «Текущая» и «Все (будущие)»: проп `modes`, у события остаются все три варианта.
 
 ---
 

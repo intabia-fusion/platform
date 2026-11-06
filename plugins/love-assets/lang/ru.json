@@ -217,6 +217,18 @@
     "EveryMonth": "Каждый месяц",
     "RemindBefore": "Напомнить заранее",
     "MeetingReminderBody": "Встреча «{title}» начнётся через {minutes} мин",
-    "RecurringMeeting": "Регулярная встреча"
+    "RecurringMeeting": "Регулярная встреча",
+    "MeetingGroup": "Группа встреч",
+    "MeetingOrder": "Порядок",
+    "MergeIntoGroup": "Объединить в группу",
+    "GroupName": "Название группы",
+    "MeetingsWithoutGroup": "Без группы",
+    "CopyMeetingLink": "Копировать гостевую ссылку",
+    "MeetingSettings": "Настройки встречи",
+    "NextOccurrence": "Следующая встреча",
+    "RemindBeforeMinutes": "Напомнить за (минут)",
+    "RepeatUntil": "Повторять до",
+    "LinkReady": "Гостевая ссылка готова",
+    "CreateMeetingGroup": "Новая группа"
   }
 }

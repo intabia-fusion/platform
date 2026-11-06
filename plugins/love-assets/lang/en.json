@@ -217,6 +217,18 @@
     "EveryMonth": "Every month",
     "RemindBefore": "Remind before",
     "MeetingReminderBody": "Meeting \"{title}\" starts in {minutes} min",
-    "RecurringMeeting": "Recurring meeting"
+    "RecurringMeeting": "Recurring meeting",
+    "MeetingGroup": "Meeting group",
+    "MeetingOrder": "Order",
+    "MergeIntoGroup": "Merge into group",
+    "GroupName": "Group name",
+    "MeetingsWithoutGroup": "Without group",
+    "CopyMeetingLink": "Copy guest link",
+    "MeetingSettings": "Meeting settings",
+    "NextOccurrence": "Next occurrence",
+    "RemindBeforeMinutes": "Remind before (minutes)",
+    "RepeatUntil": "Repeat until",
+    "LinkReady": "Guest link is ready",
+    "CreateMeetingGroup": "New group"
   }
 }

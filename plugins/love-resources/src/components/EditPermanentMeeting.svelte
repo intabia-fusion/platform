@@ -21,7 +21,7 @@
   import calendar, { type Event } from '@hcengineering/calendar'
   import type { PermanentMeeting } from '@hcengineering/love'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { EditBox, Label } from '@hcengineering/ui'
+  import { CheckBox, EditBox, Label, showPopup } from '@hcengineering/ui'
   import { Button } from '@hcengineering/ui/kit'
   import { createEventDispatcher, onMount } from 'svelte'
   import love from '../plugin'
@@ -80,6 +80,12 @@
   onMount(() => {
     dispatch('open', { ignoreKeys: ['name', 'repeatEvery'] })
   })
+
+  // The marked point in the information panel: it says the meeting is permanent and opens the same
+  // window that created it, so settings are one click away from the card.
+  function openSettings (): void {
+    showPopup(love.component.PermanentMeetingForm, { object: live })
+  }
 </script>
 
 <div class="flex-row-center flex-between flex-gap-2 mb-4">
@@ -100,6 +106,19 @@
       void joinMeetingBySession(live._id, 'meeting')
     }}
   />
+</div>
+
+<div class="flex-row-center gap-1-5 mb-2">
+  <CheckBox
+    checked={true}
+    kind="primary"
+    on:value={() => {
+      openSettings()
+    }}
+  />
+  <span class="text-sm text-content-color cursor-pointer" on:click={openSettings} on:keydown={openSettings} role="button" tabindex="0">
+    <Label label={love.string.PermanentMeeting} />
+  </span>
 </div>
 
 <div class="flex-row-center gap-2 mb-4">

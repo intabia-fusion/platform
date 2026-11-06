@@ -44,7 +44,9 @@ export default mergeIds(loveId, love, {
     ShowRoomSettings: '' as ViewAction,
     CopyGuestLink: '' as ViewAction,
     ToggleRoomPrivacy: '' as ViewAction,
-    LeavePermanentMeeting: '' as ViewAction
+    LeavePermanentMeeting: '' as ViewAction,
+    EditPermanentMeetingSettings: '' as ViewAction,
+    EditMeetingSettings: '' as ViewAction
   },
   ids: {
     Settings: '' as Ref<Doc>,

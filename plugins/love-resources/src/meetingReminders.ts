@@ -69,6 +69,10 @@ function leadOf (event: Event): number {
 
 async function tick (client: Client): Promise<void> {
   const now = Date.now()
+  // No `$or` here: the storage adapter for the workspace database does not translate it and the
+  // query fails with `operator does not exist: text = text[]`. Masters of meetings are already a
+  // small set, so a single `date` bound is enough - `getAllEvents` below drops whatever is outside
+  // the window.
   const masters = await client.findAll(calendar.class.Event, {
     [MIXIN_KEY]: { $exists: true },
     date: { $lte: now + LOOKAHEAD }
@@ -94,13 +98,22 @@ async function tick (client: Client): Promise<void> {
   }
 }
 
+// One timer for the whole tab: `onClient` runs again after a re-login in the same tab, and a second
+// interval would send every reminder twice. The client reference is kept fresh instead.
+let timer: ReturnType<typeof setInterval> | undefined
+let activeClient: Client | undefined
+
 onClient((client) => {
+  activeClient = client
+  if (timer !== undefined) return
   // Permission is asked once, on the first meeting reminder the account could get.
   if ('Notification' in window && Notification.permission === 'default') {
     void Notification.requestPermission()
   }
-  setInterval(() => {
-    void tick(client).catch((err) => {
+  timer = setInterval(() => {
+    const current = activeClient
+    if (current === undefined) return
+    void tick(current).catch((err) => {
       console.error('[meetingReminders] tick failed', err)
     })
   }, TICK_MS)
