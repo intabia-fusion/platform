@@ -33,6 +33,19 @@ export interface BenchConfig {
   workspaceList?: string[]
   profile: boolean
   profileDir?: string
+
+  // Live (WebSocket) scenario params
+  iters: number
+  count: number
+  tenants: boolean
+  prefix: string
+  startIdx: number
+  keepOpen: boolean
+  small?: string
+  medium?: string
+  large?: string
+  manifest?: string
+  disruptCmd?: string
 }
 
 function parseIntList (val: string): number[] {
@@ -49,6 +62,8 @@ export function parseArgs (argv: string[]): BenchConfig {
       if (val !== 'true') i++
     }
   }
+
+  const flag = (k: string): boolean => args.get(k) === 'true' || args.get(k) === '1'
 
   return {
     url: args.get('url') ?? process.env.HULY_URL ?? 'http://localhost:8087',
@@ -69,6 +84,18 @@ export function parseArgs (argv: string[]): BenchConfig {
       ? args.get('workspace-list')!.split(',').map((s) => s.trim()).filter(Boolean)
       : undefined,
     profile: args.get('profile') === 'true',
-    profileDir: args.get('profile-dir')
+    profileDir: args.get('profile-dir'),
+
+    iters: parseInt(args.get('iters') ?? '30', 10),
+    count: parseInt(args.get('count') ?? args.get('n') ?? '100', 10),
+    tenants: flag('tenants'),
+    prefix: args.get('prefix') ?? 'co',
+    startIdx: parseInt(args.get('start') ?? '1', 10),
+    keepOpen: flag('keep-open'),
+    small: args.get('small'),
+    medium: args.get('medium'),
+    large: args.get('large'),
+    manifest: args.get('manifest'),
+    disruptCmd: args.get('disrupt'),
   }
 }

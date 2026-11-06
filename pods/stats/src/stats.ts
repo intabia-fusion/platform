@@ -145,6 +145,10 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
     }
   }, serviceTimeout)
 
+  // Service ids with a pending one-shot wipe request. The service receives the
+  // flag in the reply to its next stats PUT, wipes locally, and we clear it.
+  const pendingWipe = new Set<string>()
+
   const app = new Koa()
   const router = new Router()
 
@@ -299,8 +303,10 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
         }
       }
       // Older services ignore the body and keep their built-in interval.
+      // Tell the service to wipe its local metrics if a one-shot wipe is pending.
+      const wipe = service && pendingWipe.delete(serviceName)
       req.res.writeHead(200, { 'Content-Type': 'application/json' })
-      req.res.end(JSON.stringify({ ...policyFor(serviceName), reset: resetGeneration }))
+      req.res.end(JSON.stringify({ ...policyFor(serviceName), reset: resetGeneration, wipe }))
     } catch (err: any) {
       console.error(err, req.host, req.headers, req.ip)
       req.res.writeHead(404, {})
@@ -320,7 +326,8 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
       }
       // `known: false` after a stats restart tells the service to send the full tree again.
       req.res.writeHead(200, { 'Content-Type': 'application/json' })
-      req.res.end(JSON.stringify({ ...policyFor(serviceName), known: existing !== undefined, reset: resetGeneration }))
+      const wipe = isServiceReporter(payload) && pendingWipe.delete(serviceName)
+      req.res.end(JSON.stringify({ ...policyFor(serviceName), known: existing !== undefined, reset: resetGeneration, wipe }))
     } catch (err: any) {
       console.error(err, req.host, req.ip)
       req.res.writeHead(404, {})
@@ -454,8 +461,16 @@ export function serveStats (ctx: MeasureContext, onClose?: () => void): void {
 
       switch (operation) {
         case 'wipe-statistics': {
-          statistics.clear()
-          resetGeneration++
+          // Optional ?name=<serviceId> targets one service; otherwise all known.
+          const target = (req.query.name as string) ?? ''
+          if (target !== '') {
+            pendingWipe.add(target)
+            statistics.delete(target)
+          } else {
+            for (const k of statistics.keys()) pendingWipe.add(k)
+            statistics.clear()
+            resetGeneration++
+          }
           req.res.writeHead(200)
           req.res.end()
           return

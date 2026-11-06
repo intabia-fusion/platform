@@ -128,3 +128,4 @@ tests/sanity/step-report.ndjson
 .tmp-shots/
 coverage-stand.json
 dev/pen/.state.json
+.claude/worktrees

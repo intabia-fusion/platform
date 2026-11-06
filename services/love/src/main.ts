@@ -398,7 +398,7 @@ export const main = async (): Promise<void> => {
           res.status(409).send({ error: 'Meeting is finished' })
           return
         }
-        if (meetingDoc !== undefined && meetingDoc.private && !meetingDoc.members.includes(accountUuid)) {
+        if (meetingDoc?.private === true && !meetingDoc.members.includes(accountUuid)) {
           // Owners bypass private-meeting membership; rechecked here in case the client's self-add races or fails.
           let isWorkspaceOwner = false
           try {
