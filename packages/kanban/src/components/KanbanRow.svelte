@@ -21,6 +21,10 @@
   import type { CardDragEvent, DocWithRank, Item } from '../types'
   import { createRowInteraction, visibleCards, hasHiddenCards, loadedCard } from '../row'
 
+  interface $$Slots {
+    card: { object: DocWithRank, dragged: boolean }
+  }
+
   export let stateObjects: Item[]
   export let isDragging: boolean
   export let dragCard: Item | undefined

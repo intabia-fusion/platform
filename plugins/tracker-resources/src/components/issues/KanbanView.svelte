@@ -941,6 +941,7 @@
     </svelte:fragment>
     <svelte:fragment slot="header" let:state let:count let:index let:collapsed let:toggle let:members let:merge>
       {@const column = boardColumn(state)}
+      {@const headerKey = String(typeof state === 'object' ? state.name : state)}
       {@const color =
         board !== undefined
           ? columnColor(column, $themeStore.dark, statusCategoryDocs)
@@ -982,7 +983,7 @@
               {:else if groupByKey === noCategory}
                 <Label label={view.string.NoGrouping} />
               {:else if headerComponent}
-                {#each expandedHeaders.has(String(state)) ? members : members.slice(0, MERGED_NAMES) as member, mi}
+                {#each expandedHeaders.has(headerKey) ? members : members.slice(0, MERGED_NAMES) as member, mi}
                   <div class="pointer-events-none">
                     <svelte:component
                       this={headerComponent.presenter}
@@ -1006,13 +1007,13 @@
               <!-- svelte-ignore a11y-no-static-element-interactions -->
               <div
                 class="more-members"
-                class:expanded={expandedHeaders.has(String(state))}
+                class:expanded={expandedHeaders.has(headerKey)}
                 on:click|stopPropagation={() => {
-                  toggleHeaderNames(String(state))
+                  toggleHeaderNames(headerKey)
                 }}
               >
                 <Icon icon={ui.icon.ChevronDown} size="small" />
-                {#if !expandedHeaders.has(String(state))}<span>+{members.length - MERGED_NAMES}</span>{/if}
+                {#if !expandedHeaders.has(headerKey)}<span>+{members.length - MERGED_NAMES}</span>{/if}
               </div>
             {/if}
           </div>

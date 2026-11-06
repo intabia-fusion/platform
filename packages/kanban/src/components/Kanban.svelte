@@ -40,6 +40,33 @@
   import { createLaneQueryController } from '../laneQueryController'
   import { withoutCard } from '../row'
 
+  interface $$Slots {
+    header: {
+      state: CategoryType
+      count: number
+      index: number
+      collapsed: boolean
+      blocked: boolean
+      toggle: () => void
+      members: CategoryType[]
+      merge: (other: CategoryType) => void
+    }
+    swimLaneHeader: {
+      swimLane: SwimLane
+      count: number
+      collapsed: boolean
+      laneDoc: DocWithRank | undefined
+      docsLoaded: boolean
+      toggle: () => void
+    }
+    beforeCard: { state: CategoryType, swimLane?: SwimLane }
+    dropTarget: { state: CategoryType, target: DropTarget, dragCard: DocWithRank | undefined }
+    card: { object: DocWithRank, dragged: boolean, swimLane?: SwimLane }
+    afterCard: { state: CategoryType, swimLane?: SwimLane }
+    afterPanel: Record<string, never>
+    doneBar: { onDone: (updateValue: DocumentUpdate<Item>) => Promise<void> }
+  }
+
   export let categories: CategoryType[] = []
 
   export let _class: Ref<Class<DocWithRank>>
