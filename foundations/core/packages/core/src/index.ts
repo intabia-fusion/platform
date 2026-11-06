@@ -25,7 +25,8 @@ export {
   systemAccountEmail,
   systemAccount,
   configUserAccountUuid,
-  aiBotAccountEmail
+  aiBotAccountEmail,
+  legacyAiBotAccountEmail
 } from './component'
 export * from './hierarchy'
 export * from '@hcengineering/measurements'

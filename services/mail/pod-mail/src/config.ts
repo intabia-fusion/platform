@@ -112,7 +112,7 @@ const envMap = {
 const parseNumber = (str: string | undefined): number | undefined => (str !== undefined ? Number(str) : undefined)
 const isEmpty = (str: string | undefined): boolean => str === undefined || str.trim().length === 0
 
-const DEFAULT_BLOCKED_RECIPIENTS = 'huly.ai.bot@hc.engineering'
+const DEFAULT_BLOCKED_RECIPIENTS = 'ai.bot@platform'
 
 const parseAddressList = (str: string): Set<string> =>
   new Set(
