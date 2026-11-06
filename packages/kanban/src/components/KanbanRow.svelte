@@ -19,6 +19,7 @@
   import { createEventDispatcher } from 'svelte'
 
   import type { CardDragEvent, DocWithRank, Item } from '../types'
+  import { createRowInteraction, visibleCards, hasHiddenCards, loadedCard } from '../row'
 
   export let stateObjects: Item[]
   export let isDragging: boolean
@@ -40,46 +41,23 @@
   export let showMenu: (evt: MouseEvent, object: Item) => void
 
   const dispatch = createEventDispatcher()
+  const interaction = createRowInteraction()
 
-  function toAny (object: any): any {
-    return object
-  }
-
-  const stateRefs: HTMLElement[] = []
-
-  $: stateRefs.length = visibleObjects.length
   export function scroll (item: Item): void {
-    const pos = visibleObjects.findIndex((it) => it._id === item._id)
-    if (pos >= 0) {
-      stateRefs[pos]?.scrollIntoView({ behavior: 'auto', block: 'nearest' })
-    }
+    interaction.scroll(item)
   }
 
-  function getObject (_id: Ref<DocWithRank>, loaded: IdMap<DocWithRank>): DocWithRank | undefined {
-    return loaded.get(_id) ?? (_id === dragCard?._id ? dragCard : undefined)
-  }
-
-  $: visibleObjects = stateObjects.filter((o, i) => i < limit || o._id === dragCard?._id)
-  $: hasMoreToShow = stateObjects.some((o, i) => i >= limit && o._id !== dragCard?._id)
-
-  // Force native HTML5 drag image to be the whole card wrapper instead of the
-  // narrow inner element (e.g. an anchor in the title) the user may have
-  // grabbed onto.
-  function forceWrapperDragImage (evt: DragEvent): void {
-    const target = evt.currentTarget
-    if (!(target instanceof HTMLElement) || evt.dataTransfer === null) return
-    const rect = target.getBoundingClientRect()
-    evt.dataTransfer.setDragImage(target, evt.clientX - rect.left, evt.clientY - rect.top)
-  }
+  $: visibleObjects = visibleCards(stateObjects, limit, dragCard)
+  $: hasMoreToShow = hasHiddenCards(stateObjects, limit, dragCard)
 </script>
 
-{#each visibleObjects as objectRef, i (objectRef._id)}
+{#each visibleObjects as objectRef (objectRef._id)}
   {@const dragged = isDragging && objectRef._id === dragCard?._id}
-  {@const object = getObject(objectRef._id, loaded)}
+  {@const object = loadedCard(objectRef._id, loaded, dragCard)}
   {#if object !== undefined}
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div
-      bind:this={stateRefs[i]}
+      use:interaction.cardElement={objectRef._id}
       class="flex-no-shrink border-radius-1 clear-mins"
       class:p-1={!modern}
       on:dragover|preventDefault={(evt) => {
@@ -89,6 +67,7 @@
         cardDrop(evt, object)
       }}
     >
+      <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
       <div
         class="card-container"
         class:modern
@@ -96,6 +75,9 @@
         data-card-id={object._id}
         class:selection={selection !== undefined ? objects[selection]?._id === object._id : false}
         class:checked={checkedSet.has(object._id)}
+        on:pointerdown|capture={interaction.pointerDown}
+        on:pointercancel={interaction.pointerCancel}
+        on:click|capture={interaction.click}
         on:mouseover={mouseAttractor(() => dispatch('obj-focus', object))}
         on:mouseenter={mouseAttractor(() => dispatch('obj-focus', object))}
         on:focus={() => {}}
@@ -106,7 +88,7 @@
         class:draggable={true}
         class:dragged
         on:dragstart={(evt) => {
-          forceWrapperDragImage(evt)
+          interaction.dragStart(evt)
           onDragStart(object, state)
         }}
         on:dragend={() => {
@@ -114,7 +96,7 @@
         }}
       >
         <Lazy>
-          <slot name="card" object={toAny(object)} {dragged} />
+          <slot name="card" {object} {dragged} />
         </Lazy>
       </div>
     </div>

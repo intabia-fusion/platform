@@ -37,6 +37,7 @@
 </script>
 
 <Header
+  let:doubleRow
   {adaptive}
   overflowExtra
   hideActions={!$$slots.actions}
@@ -55,7 +56,7 @@
     <slot name="header-tools" />
   </svelte:fragment>
 
-  {#if searchFirst}
+  {#if searchFirst && !doubleRow}
     <div class="search-first">
       <SearchInput bind:value={search} collapsed />
       <FilterButton {_class} {space} />
@@ -73,10 +74,18 @@
   {/if}
 
   <svelte:fragment slot="search">
-    <!-- A double-row header lays the search group out row-reverse: this slot shows last -->
-    <slot name="afterSearch" />
-    <SearchInput bind:value={search} collapsed />
-    <FilterButton {_class} {space} />
+    {#if searchFirst}
+      <div class="search-first">
+        <SearchInput bind:value={search} collapsed />
+        <FilterButton {_class} {space} />
+        <slot name="afterSearch" />
+      </div>
+    {:else}
+      <!-- A double-row header lays the search group out row-reverse: this slot shows last -->
+      <slot name="afterSearch" />
+      <SearchInput bind:value={search} collapsed />
+      <FilterButton {_class} {space} />
+    {/if}
   </svelte:fragment>
   <svelte:fragment slot="actions">
     {#each actionViewletActions as action (action._id)}
@@ -116,5 +125,6 @@
     align-items: center;
     gap: var(--spacing-0_5);
     min-width: 0;
+    width: 100%;
   }
 </style>

@@ -114,6 +114,7 @@
   } from '../../swimLanes'
   import CreateIssue from '../CreateIssue.svelte'
   import IssueKanbanCard from './IssueKanbanCard.svelte'
+  import { fullscreenStore } from '@hcengineering/workbench-resources'
   import IssueStatusIcon from './IssueStatusIcon.svelte'
   import BoardColumnStatuses from '../boards/BoardColumnStatuses.svelte'
   import BoardConditionHint from '../boards/BoardConditionHint.svelte'
@@ -342,6 +343,9 @@
       _id: 1,
       _class: 1,
       rank: 1,
+      estimation: 1,
+      reportedTime: 1,
+      remainingTime: 1,
       ...getCategoryQueryProjection(
         client.getHierarchy(),
         _class,
@@ -495,7 +499,7 @@
   const allowedByDoc = new Map<Ref<Doc>, Ref<Status>[] | undefined>()
 
   // Landing spots per board column for the dragged issue, so the kanban reveals a spot per status.
-  // Computed eagerly on drag start; the kanban only shows them while a card is held over a column.
+  // Computed eagerly on drag start; the kanban shows them once the card starts moving.
   let dropTargets = new Map<string, DropTarget[]>()
 
   function buildDropTargets (board: Board, doc: Doc, allowed: Ref<Status>[] | undefined): Map<string, DropTarget[]> {
@@ -503,7 +507,7 @@
     const issue = toIssue(doc)
     for (const column of board.columns) {
       const statuses = columnDropTargets(column, issue.status, allowed)
-      if (statuses.length > 1) {
+      if (statuses.length > 0) {
         result.set(
           column.id,
           statuses.map((s) => ({ id: s }))
@@ -853,6 +857,7 @@
   <!-- svelte-ignore a11y-no-static-element-interactions -->
   <KanbanUI
     bind:this={kanbanUI}
+    fitColumns={board !== undefined && $fullscreenStore}
     limitScale={density === 'dense' ? 2 : 1}
     overLimit={board !== undefined ? (state, count) => isOverLimit(count, boardColumn(state)?.limit) : undefined}
     --kanban-column-inset={grid?.inset}
@@ -905,7 +910,12 @@
     <svelte:fragment slot="swimLaneHeader" let:swimLane let:count let:collapsed let:laneDoc let:docsLoaded let:toggle>
       <div class="swimlane-header-inner">
         {#if swimLane._id === UNASSIGNED_SWIM || swimLanePresenter === undefined}
-          <span class="swimlane-title">{swimLane.title || emptyLabel}</span>
+          <span
+            class="swimlane-title"
+            class:overflow-label={board !== undefined && $fullscreenStore}
+            title={board !== undefined && $fullscreenStore ? swimLane.title || emptyLabel : undefined}
+            >{swimLane.title || emptyLabel}</span
+          >
         {:else if swimLanesBy === 'attachedTo' && laneDoc === undefined && !docsLoaded}
           <span class="swimlane-title" />
         {:else}
@@ -941,6 +951,7 @@
       <div
         style:background={headerBGColor}
         class="header flex-between"
+        class:fit-columns={board !== undefined && $fullscreenStore}
         class:merged={members.length > 1}
         class:collapsed
         use:tooltip={board !== undefined && !collapsed
@@ -966,7 +977,7 @@
                     value={column !== undefined ? statusCategoryDocs.get(column.category) : undefined}
                     size="small"
                   />
-                  <span class="overflow-label">{column?.title ?? ''}</span>
+                  <span class="overflow-label" title={column?.title}>{column?.title ?? ''}</span>
                 </span>
               {:else if groupByKey === noCategory}
                 <Label label={view.string.NoGrouping} />
@@ -1060,7 +1071,7 @@
       {@const status = dropTargetStatus(target)}
       {#if status !== undefined}
         <IssueStatusIcon value={status} size="small" space={toIssue(dragCard).space} />
-        <span class="drop-target-name">{status.name}</span>
+        <span class="drop-target-name overflow-label" title={status.name}>{status.name}</span>
       {/if}
     </svelte:fragment>
   </KanbanUI>
@@ -1096,6 +1107,13 @@
     border: 1px solid var(--theme-divider-color);
     border-radius: 0.25rem;
 
+    &.fit-columns {
+      box-sizing: border-box;
+      min-width: 0;
+      padding: 0 min(0.5rem, 5%) 0 min(1.25rem, 8%);
+      overflow: hidden;
+    }
+
     .counter {
       color: var(--theme-dark-color);
     }
@@ -1104,7 +1122,7 @@
       align-items: center;
       gap: 0.5rem;
       min-width: 0;
-      font-weight: 500;
+      font-weight: 400;
       pointer-events: auto;
     }
     // Only the limit turns red, the fill of the header stays

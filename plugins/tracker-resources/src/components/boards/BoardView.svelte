@@ -21,7 +21,15 @@
   import type { Board, Issue, Project } from '@hcengineering/tracker'
   import { statusesWithoutColumn } from '@hcengineering/tracker'
   import { translate } from '@hcengineering/platform'
-  import ui, { Label, getCurrentResolvedLocation, navigate, showPopup, themeStore, tooltip } from '@hcengineering/ui'
+  import ui, {
+    Icon,
+    Label,
+    getCurrentResolvedLocation,
+    navigate,
+    showPopup,
+    themeStore,
+    tooltip
+  } from '@hcengineering/ui'
   import { Button, Slider } from '@hcengineering/ui/kit'
   import view, { type SliderViewOption, type ViewOptions, type Viewlet } from '@hcengineering/view'
   import {
@@ -34,7 +42,7 @@
   } from '@hcengineering/view-resources'
   import { fullscreenStore } from '@hcengineering/workbench-resources'
   import { onDestroy } from 'svelte'
-  import { boardLocation, boardQuery, reportBoardError, setBoardInNavigation, shareBoard } from '../../boards'
+  import { boardLocation, boardQuery, reportBoardError, setBoardInNavigation } from '../../boards'
   import tracker from '../../plugin'
   import IssuesView from '../issues/IssuesView.svelte'
   import BoardQuickFilters from './BoardQuickFilters.svelte'
@@ -46,7 +54,6 @@
   export let inNavigation: boolean
   export let navigationReady: boolean
 
-  let sharing = false
   let updatingNavigation = false
 
   const client = getClient()
@@ -261,32 +268,19 @@
           }}
         />
       {/if}
-      <Button
-        data-id="boardShare"
-        kind="ghost"
-        size="small"
-        label={tracker.string.ShareBoard}
-        loading={sharing}
-        on:click={() => {
-          if (sharing) return
-          sharing = true
-          void shareBoard(board)
-            .catch(reportBoardError)
-            .finally(() => {
-              sharing = false
-            })
-        }}
-      />
       {#if uncovered.length > 0}
         <button type="button" class="uncovered" data-id="boardUncovered" on:click={openUncovered}>
-          <svg class="uncovered-icon" viewBox="0 0 16 16" aria-hidden="true">
-            <path d="M8 2.5l6 10.5H2z" />
-            <path d="M8 6.5v3M8 11v.3" />
-          </svg>
-          <Label
-            label={tracker.string.StatusesWithoutColumn}
-            params={{ statuses: uncovered.length, issues: hiddenCount }}
-          />
+          <span class="uncovered-icon" aria-hidden="true">
+            <Icon icon={ui.icon.ExclamationCircle} size="small" />
+          </span>
+          <span class="uncovered-label">
+            <span>
+              <Label
+                label={tracker.string.StatusesWithoutColumn}
+                params={{ statuses: uncovered.length, issues: hiddenCount }}
+              />
+            </span>
+          </span>
         </button>
       {/if}
       {#if unavailableCount > 0}
@@ -388,10 +382,45 @@
       color: var(--theme-warning-color);
     }
   }
+  .uncovered[data-id='boardUncovered'] {
+    gap: 0;
+    padding: 0 0.375rem;
+    transition: gap 0.2s ease;
+
+    .uncovered-label {
+      display: grid;
+      grid-template-columns: 0fr;
+      transition: grid-template-columns 0.2s ease;
+
+      > span {
+        min-width: 0;
+        overflow: hidden;
+      }
+    }
+    &:hover,
+    &:focus-visible {
+      gap: var(--spacing-1);
+
+      .uncovered-label {
+        grid-template-columns: 1fr;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      &,
+      .uncovered-label {
+        transition: none;
+      }
+    }
+  }
   .uncovered-icon {
     flex-shrink: 0;
     width: 1rem;
     height: 1rem;
+  }
+  span.uncovered-icon {
+    display: inline-flex;
+  }
+  svg.uncovered-icon {
     fill: none;
     stroke: currentColor;
     stroke-width: 1.3;

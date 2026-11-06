@@ -559,11 +559,55 @@ describe('getStatusNameSuffixes with task types', () => {
     expect([...res.values()]).toEqual(['Task', 'Bug', 'Story'])
   })
 
-  it('keeps the project label for statuses of different projects', () => {
-    const taskTypes: any[] = [{ _id: 'tt1', name: 'Task', parent: 'ptA', statuses: ['a1'] }]
+  it('uses task types for statuses of different projects', () => {
+    const taskTypes: any[] = [
+      { _id: 'tt1', name: 'Epic', parent: 'ptA', statuses: ['a1'] },
+      { _id: 'tt2', name: 'Issue', parent: 'ptB', statuses: ['b1'] }
+    ]
     const res = getStatusNameSuffixes([st('a1', 'Done'), st('b1', 'Done')], types, projects, taskTypes)
-    expect(res.get('a1' as Ref<Status>)).toBe('Classic project')
-    expect(res.get('b1' as Ref<Status>)).toBe('Internal')
+    expect(res.get('a1' as Ref<Status>)).toBe('Epic')
+    expect(res.get('b1' as Ref<Status>)).toBe('Issue')
+  })
+
+  it('lists distinct task type names across all project types sharing a status', () => {
+    const sharedTypes: any[] = [
+      { _id: 'ptA', name: 'Classic', statuses: [entry('shared')] },
+      { _id: 'ptB', name: 'Service', statuses: [entry('shared'), entry('b1')] }
+    ]
+    const taskTypes: any[] = [
+      { _id: 'tt1', name: 'Issue', parent: 'ptA', statuses: ['shared'] },
+      { _id: 'tt2', name: 'Epic', parent: 'ptB', statuses: ['shared'] },
+      { _id: 'tt3', name: 'Issue', parent: 'ptB', statuses: ['shared'] },
+      { _id: 'tt4', name: 'Bug', parent: 'ptB', statuses: ['b1'] }
+    ]
+    const res = getStatusNameSuffixes([st('shared', 'Done'), st('b1', 'Done')], sharedTypes, projects, taskTypes)
+    expect(res.get('shared' as Ref<Status>)).toBe('Epic, Issue')
+    expect(res.get('b1' as Ref<Status>)).toBe('Bug')
+  })
+
+  it('adds project names when task type names collide across projects', () => {
+    const taskTypes: any[] = [
+      { _id: 'tt1', name: 'Issue', parent: 'ptA', statuses: ['a1'] },
+      { _id: 'tt2', name: 'Issue', parent: 'ptB', statuses: ['b1'] }
+    ]
+    const res = getStatusNameSuffixes([st('a1', 'Done'), st('b1', 'Done')], types, projects, taskTypes)
+    expect(res.get('a1' as Ref<Status>)).toBe('Issue, Classic project')
+    expect(res.get('b1' as Ref<Status>)).toBe('Issue, Internal')
+  })
+
+  it('adds project type names when colliding task types have multiple projects', () => {
+    const taskTypes: any[] = [
+      { _id: 'tt1', name: 'Issue', parent: 'ptA', statuses: ['a1'] },
+      { _id: 'tt2', name: 'Issue', parent: 'ptB', statuses: ['b1'] }
+    ]
+    const manyProjects: any[] = [
+      ...projects,
+      { _id: 'p3', type: 'ptA', name: 'Another classic project' },
+      { _id: 'p4', type: 'ptB', name: 'External' }
+    ]
+    const res = getStatusNameSuffixes([st('a1', 'Done'), st('b1', 'Done')], types, manyProjects, taskTypes)
+    expect(res.get('a1' as Ref<Status>)).toBe('Issue, Classic')
+    expect(res.get('b1' as Ref<Status>)).toBe('Issue, Service')
   })
 
   it('mixes: a clashing pair gets task types, the lone status keeps its project', () => {

@@ -712,12 +712,7 @@ export function chooseMergeTarget (
 
 /**
  * @public
- * Disambiguation for statuses shown together under one name: for every status whose trimmed, case-insensitive
- * name is shared with another listed status, the name of its project type, or of its project when that type has
- * exactly one project. A status listed by several project types takes the first of them by name. When several
- * statuses of one name get the same label (they come from one project type or project), the names of the task
- * types that list the status are used instead. Statuses with a unique name, or without a project type, get no
- * entry.
+ * Task type names distinguish statuses sharing a name; project labels support legacy types without task types.
  */
 export function getStatusNameSuffixes (
   statuses: Status[],
@@ -740,20 +735,25 @@ export function getStatusNameSuffixes (
   for (const group of byName.values()) {
     const unique = group.filter((it, idx, arr) => arr.findIndex((p) => p._id === it._id) === idx)
     if (unique.length < 2) continue
-    const labels = new Map<Ref<Status>, { label: string, type: Ref<ProjectType> }>()
+    const labels = new Map<Ref<Status>, { suffix: string, project: string }>()
     for (const s of unique) {
-      const type = sortedTypes.find((t) => t.statuses.some((it) => it._id === s._id))
+      const statusTypes = sortedTypes.filter((t) => t.statuses.some((it) => it._id === s._id))
+      const type = statusTypes[0]
       if (type === undefined) continue
       const typeProjects = projectsByType.get(type._id) ?? []
-      labels.set(s._id, { label: typeProjects.length === 1 ? typeProjects[0].name : type.name, type: type._id })
+      const label = typeProjects.length === 1 ? typeProjects[0].name : type.name
+      const names = [
+        ...new Set(
+          taskTypeList
+            .filter((tt) => statusTypes.some((t) => t._id === tt.parent) && tt.statuses.includes(s._id))
+            .map((tt) => tt.name)
+        )
+      ].sort((a, b) => a.localeCompare(b))
+      labels.set(s._id, { suffix: names.length > 0 ? names.join(', ') : label, project: label })
     }
-    for (const [id, { label, type }] of labels) {
-      const clash = [...labels].some(([other, it]) => other !== id && it.label === label)
-      const names = taskTypeList
-        .filter((tt) => tt.parent === type && tt.statuses.includes(id))
-        .map((tt) => tt.name)
-        .sort((a, b) => a.localeCompare(b))
-      result.set(id, clash && names.length > 0 ? names.join(', ') : label)
+    for (const [id, { suffix, project }] of labels) {
+      const clash = [...labels].some(([other, label]) => other !== id && label.suffix === suffix)
+      result.set(id, clash && suffix !== project ? `${suffix}, ${project}` : suffix)
     }
   }
   return result

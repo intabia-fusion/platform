@@ -1150,7 +1150,6 @@ test.describe('Kanban board', () => {
       const board = new KanbanBoardPage(page)
       const done = ctx.statuses.get('Done') as string
       const canceled = ctx.statuses.get('Cancelled') as string
-      const states = await board.boardLayout()
       // The viewlet is shared by all projects: its key also holds the groups of other boards.
       const foreign = ['foreign-status-done', 'foreign-status-canceled']
       const merged = async (): Promise<unknown> => Object.values(await board.storedColumns('merged'))[0]
@@ -1170,7 +1169,6 @@ test.describe('Kanban board', () => {
       // Only another board's group is stored: nothing is merged here, nothing to reset.
       await expect(board.column(canceled)).toBeVisible()
       await board.openMoreActions()
-      await expect(board.moreActionsItem('Merge columns by category')).toBeVisible()
       await expect(board.moreActionsItem('Reset merged columns')).toHaveCount(0)
       await page.keyboard.press('Escape')
 
@@ -1180,18 +1178,6 @@ test.describe('Kanban board', () => {
       await board.moreActionsItem('Reset merged columns').click()
       await expect(board.column(canceled)).toBeVisible()
       await expect.poll(merged).toEqual([foreign])
-
-      // Merging by category replaces this board's groups only.
-      const statuses = await client.findAll(tracker.class.IssueStatus, {})
-      const byCategory = new Map<string, string[]>()
-      for (const id of states) {
-        const category = statuses.find((status) => status._id === id)?.category
-        if (category !== undefined) byCategory.set(category, [...(byCategory.get(category) ?? []), id])
-      }
-      await board.mergeColumns(done, 'Canceled')
-      await board.openMoreActions()
-      await board.moreActionsItem('Merge columns by category').click()
-      await expect.poll(merged).toEqual([foreign, ...Array.from(byCategory.values()).filter((ids) => ids.length > 1)])
     })
 
     test('swim lane count does not count a merged status twice', async ({ page }) => {

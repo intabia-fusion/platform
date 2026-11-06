@@ -22,13 +22,13 @@
   import { Button, Callout, IconButton, Toggle } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import { statusStore } from '@hcengineering/view-resources'
-  import { StatusCounts } from '../../../boards'
+  import { boardQuery, StatusCounts } from '../../../boards'
   import tracker from '../../../plugin'
   import IssueStatusIcon from '../../issues/IssueStatusIcon.svelte'
   import ProjectSettingsSection from '../../projects/settings/ProjectSettingsSection.svelte'
 
-  // Reads only the columns and the projects, so a wizard may pass a draft
-  export let board: Pick<Board, 'columns' | 'projects' | 'warnOnClosedStatuses'>
+  // Reads the column settings and board scope, so a wizard may pass a draft
+  export let board: Pick<Board, 'columns' | 'projects' | 'filter' | 'warnOnClosedStatuses'>
   // Statuses of the board projects
   export let statuses: Status[]
   export let onChange: (patch: Partial<Data<Board>>) => Promise<void>
@@ -47,16 +47,19 @@
   $: unplaced = statuses.filter((s) => !placed.has(s._id))
   $: open = new Set(statusesWithoutColumn(board.columns, statuses, board.warnOnClosedStatuses).map((s) => s._id))
 
-  // Issues of the board projects per status, the board filter aside
+  // Counts follow the saved board scope; temporary quick filters belong only to the board page
   let counts = new Map<Ref<Status>, number>()
   const statusCounts = new StatusCounts()
   let countSeq = 0
-  async function countIssues (projects: Board['projects'], ids: Array<Ref<Status>>): Promise<void> {
+  async function countIssues (board: Pick<Board, 'projects' | 'filter'>, ids: Array<Ref<Status>>): Promise<void> {
     const seq = ++countSeq
-    const res = await statusCounts.load(client, projects, ids)
+    const scope = await boardQuery(client, { ...board, quickFilters: [] }, new Set(), () => {
+      void countIssues(board, ids)
+    })
+    const res = await statusCounts.load(client, scope, ids)
     if (seq === countSeq) counts = res
   }
-  $: void countIssues(board.projects, [...new Set([...statuses.map((s) => s._id), ...placed])])
+  $: void countIssues(board, [...new Set([...statuses.map((s) => s._id), ...placed])])
 
   $: hiddenIssues = [...open].reduce((sum, id) => sum + (counts.get(id) ?? 0), 0)
 

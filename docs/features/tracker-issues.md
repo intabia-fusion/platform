@@ -146,7 +146,11 @@
 
 #### Порядок групп по статусу
 
+Одноименные статусы в заголовках групп различаются именами типов задач: `Done (Epic)`, `Done (Issue)`. Общий статус перечисляет уникальные имена всех использующих его типов задач, включая разные типы проектов. При совпадении подписей добавляется имя единственного проекта либо типа проекта: `Done (Issue, Alpha)`. При отсутствии типов задач подпись использует имя единственного проекта либо типа проекта. Уникальные имена статусов остаются без подписи. - `getStatusNameSuffixes` (`plugins/task/src/utils.ts`), `getSuffixes` (`plugins/task-resources/src/utils.ts`), `StateRefPresenter.svelte`.
+
 `issueStatusSort` (`plugins/tracker-resources/src/utils.ts`): категория (`listIssueStatusOrder` для списка, `listIssueKanbanStatusOrder` для kanban) -> порядок типа проекта: `ProjectType.statusOrder`, если задан, затем слитый порядок типов задач (`mergeStatusOrder`: порядок `TaskType.statuses` каждого типа сохраняется, общий статус идёт после всех своих предшественников; типы в порядке экрана настроек, по имени, `getOrderedTaskTypes`; ранги собирает `getProjectStatusRank`) -> имя; компаратор `statusOrderComparator` - `plugins/task/src/utils.ts`.
+
+Общая механика канбана вынесена в `packages/kanban/src/kanbanController.ts`, `boardView.ts`, `row.ts` и `laneQueryController.ts`. Компоненты подписываются на отдельные поля состояния; одинаковый hover не запускает обновление всех карточек. Тесты и бенчмарки перечислены в [tracker-boards.md](tracker-boards.md#проверка-канбана).
 
 #### Опции показа
 
