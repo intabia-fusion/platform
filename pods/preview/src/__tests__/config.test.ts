@@ -21,13 +21,16 @@ const MAX_TIMEOUT = 2147483647
 // the config reads the environment once, at import
 async function load (env: Record<string, string> = {}): Promise<Config> {
   jest.resetModules()
-  Object.assign(process.env, { SECRET: 'secret' }, env)
+  Object.assign(process.env, { SECRET: 'secret', ACCOUNTS_URL: 'http://account' }, env)
   return (await import('../config')).default
 }
 
 describe('video config', () => {
   afterEach(() => {
     delete process.env.SECRET
+    delete process.env.ACCOUNTS_URL
+    delete process.env.AUTH_ALLOW_CACHE_SEC
+    delete process.env.AUTH_DENY_CACHE_SEC
     delete process.env.FFMPEG_TIMEOUT
     delete process.env.VIDEO_CONCURRENCY
     delete process.env.VIDEO_HEAD_TAIL_SIZE
@@ -79,5 +82,29 @@ describe('video config', () => {
       await expect(load({ [name]: value })).rejects.toThrow(`${name} must be a positive number`)
       Reflect.deleteProperty(process.env, name)
     }
+  })
+})
+
+describe('auth cache config', () => {
+  afterEach(() => {
+    delete process.env.SECRET
+    delete process.env.ACCOUNTS_URL
+    delete process.env.AUTH_ALLOW_CACHE_SEC
+    delete process.env.AUTH_DENY_CACHE_SEC
+  })
+
+  it('trusts a membership answer for a minute and a refusal for five seconds', async () => {
+    const config = await load()
+
+    expect(config.AuthAllowCacheMs).toBe(60 * 1000)
+    expect(config.AuthDenyCacheMs).toBe(5 * 1000)
+  })
+
+  // the variable is named after the seconds it takes, the field keeps milliseconds
+  it('reads AUTH_ALLOW_CACHE_SEC and AUTH_DENY_CACHE_SEC in seconds', async () => {
+    const config = await load({ AUTH_ALLOW_CACHE_SEC: '120', AUTH_DENY_CACHE_SEC: '2' })
+
+    expect(config.AuthAllowCacheMs).toBe(120 * 1000)
+    expect(config.AuthDenyCacheMs).toBe(2 * 1000)
   })
 })

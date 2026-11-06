@@ -15,11 +15,14 @@
 //
 
 import { Analytics } from '@hcengineering/analytics'
-import { MeasureContext, systemAccountUuid } from '@hcengineering/core'
-import { extractToken } from '@hcengineering/server-client'
+import { getClient as getAccountClient } from '@hcengineering/account-client'
+import { type WorkspaceInfoWithStatus, MeasureContext, systemAccountUuid } from '@hcengineering/core'
+import { extractToken, readToken } from '@hcengineering/server-client'
 import { Token } from '@hcengineering/server-token'
 import { type Response, type Request, type NextFunction, type RequestHandler, type ErrorRequestHandler } from 'express'
+import { LRUCache } from 'lru-cache'
 import { BadRequestError, HttpError, ToolError } from './error'
+import { SingleFlight } from './singleflight'
 
 export interface KeepAliveOptions {
   timeout: number
@@ -53,10 +56,12 @@ export const withAdminAuthorization = (req: RequestWithAuth, res: Response, next
   }
 }
 
+// Preview only reads, so a guest of a public link and a readonly account are served too: both
+// bring a token, and `createWorkspaceAccess` decides whether its workspace is the requested one.
 export const withAuthorization = (req: RequestWithAuth, res: Response, next: NextFunction): void => {
   try {
     const token = extractToken(req.headers)
-    if (token == null || token.extra?.guest === 'true' || token.extra?.readonly === 'true') {
+    if (token == null) {
       throw new HttpError(401, 'Unauthorized')
     }
     req.token = token
@@ -68,6 +73,106 @@ export const withAuthorization = (req: RequestWithAuth, res: Response, next: Nex
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+
+// One entry per account, not per account and workspace: `getUserWorkspaces` answers with the
+// whole list, so opening a file in a second workspace costs nothing and a probe of a foreign
+// uuid does not evict the answer of somebody else.
+const MEMBERSHIP_CACHE_MAX = 1000
+
+export interface WorkspaceAccessOptions {
+  accountsUrl: string
+  /** How long the workspace list of an account is trusted. */
+  allowTtlMs: number
+  /** How long a refusal from that list is trusted: a member added a moment ago must not wait for `allowTtlMs`. */
+  denyTtlMs: number
+}
+
+interface Membership {
+  workspaces: Set<string>
+  fetchedAt: number
+}
+
+export const createWorkspaceAccess = (options: WorkspaceAccessOptions): RequestHandler => {
+  const memberships = new LRUCache<string, Membership>({ max: MEMBERSHIP_CACHE_MAX })
+  const requests = new SingleFlight<Set<string>>()
+
+  // A feed of 40 images asks for the same list 120 times over (three srcset steps each), and a
+  // restarted pod has no cache at all, so every burst collapses into one call to account.
+  const workspacesOf = async (account: string, raw: string): Promise<Set<string>> => {
+    return await requests.execute(account, async () => {
+      try {
+        const answer: WorkspaceInfoWithStatus[] = await getAccountClient(options.accountsUrl, raw).getUserWorkspaces()
+        const workspaces = new Set<string>(answer.map((it) => it.uuid))
+        memberships.set(account, { workspaces, fetchedAt: Date.now() }, { ttl: options.allowTtlMs })
+        return workspaces
+      } catch (err: any) {
+        // Reported once for the whole burst: every request of it lands in the catch below.
+        Analytics.handleError(err)
+        throw err
+      }
+    })
+  }
+
+  return (req: RequestWithAuth, _res: Response, next: NextFunction) => {
+    const workspace: string | undefined = req.params.workspace
+    const token = req.token
+    if (token === undefined || workspace === undefined) {
+      next(new HttpError(401, 'Unauthorized'))
+      return
+    }
+
+    if (token.account === systemAccountUuid || token.extra?.admin === 'true') {
+      next()
+      return
+    }
+
+    // A workspace token names its workspace, a guest token among them, so account is not asked.
+    // A guest token of another workspace is refused outright; a regular one falls through to the
+    // membership check, so an account that is a member survives a stale cookie of a second tab.
+    if (token.workspace === workspace) {
+      next()
+      return
+    }
+    if (token.workspace !== undefined && token.extra?.guest === 'true') {
+      next(new HttpError(401, 'Unauthorized'))
+      return
+    }
+
+    const cached = memberships.get(token.account)
+    if (cached !== undefined) {
+      if (cached.workspaces.has(workspace)) {
+        next()
+        return
+      }
+      // A deny is trusted only for a moment: the account may have been added to the workspace
+      // after the list was fetched.
+      if (Date.now() - cached.fetchedAt < options.denyTtlMs) {
+        next(new HttpError(401, 'Unauthorized'))
+        return
+      }
+    }
+
+    const raw = readToken(req.headers)
+    if (raw === undefined) {
+      next(new HttpError(401, 'Unauthorized'))
+      return
+    }
+
+    void workspacesOf(token.account, raw)
+      .then((workspaces) => {
+        if (workspaces.has(workspace)) {
+          next()
+        } else {
+          next(new HttpError(401, 'Unauthorized'))
+        }
+      })
+      .catch(() => {
+        // Fail closed: an unreachable account must not turn into an open blob. The failure itself
+        // is reported once in `workspacesOf`, not by every request of the burst.
+        next(new HttpError(401, 'Unauthorized'))
+      })
+  }
+}
 
 // The storage client puts the workspace into the url as it is: fetch turns "./<uuid>" into
 // the same blob under another key. A name of "." or ".." is resolved the same way.
