@@ -29,6 +29,8 @@
 - `isPendingFirstPayment` = `past_due` + `pending:true` - черновик первого платежа (чекаут начат, не подтверждён). Нет `rebillId`, нет реального периода. Плана не даёт.
 - `isFailedRenewal` = `past_due` + `pending:false` - реальный провал рекуррентного списания на ранее активной подписке. Есть `rebillId`, идёт grace. План даёт.
 
+Черновик помечается `providerData.draft:true` (`buildSubscriptionData`), флаг переживает закрытие неоплаченным (`ABANDONED`/`REJECTED`) и снимается только при `CONFIRMED`. Вместе с `pending:true` он читается через `isCheckoutDraft` (`account-client`): черновик - не состояние тарифа, его пропускают все, кто выбирает «текущий тир» (плашка trial/free/overdue в `plugins/billing-resources/src/utils.ts`).
+
 ### Какие статусы дают тариф
 
 `PLAN_GRANTING_STATUSES = [Active, Trialing, PastDue, ReadOnly]` (`foundations/core/packages/account-client/src/utils.ts`). `grantsPlan()` поверх списка режет два случая: `past_due` с `providerData.pending === true` (черновик неоплачен) и `trialing` с истёкшим `trialEnd` (откат на free). `canceled`/`expired` не дают план никогда. Проверка лимитов биллинга использует тот же набор статусов (`services/billing/pod-billing/src/__tests__/limits.test.ts`).
@@ -47,15 +49,16 @@
 
 | Из | В | Триггер | Место |
 |---|---|---|---|
-| - | `past_due` (`pending:true`, `providerData.status='PENDING'`) | создание черновика при старте чекаута, до оплаты | `pod-tbank-subscriptions/src/server.ts` (`buildSubscriptionData`) |
+| - | `past_due` (`pending:true`, `draft:true`, `providerData.status='PENDING'`) | создание черновика при старте чекаута, до оплаты | `pod-tbank-subscriptions/src/server.ts` (`buildSubscriptionData`) |
 
 ### Первая оплата
 
 | Из | В | Триггер | Место |
 |---|---|---|---|
 | `past_due` (`pending:true`) | `active` | вебхук tbank `CONFIRMED` / `AUTHORIZED` | `server.ts` (ветка `Status === 'CONFIRMED'`, вызывает `buildSubscriptionDataFromWebhook`) |
-| `past_due` (`pending:true`) | `canceled` (`providerData.status='ABANDONED'`, `pending:false`) | планировщик: черновик старше 24 ч не подтверждён | `scheduler.ts` (`cleanupAbandonedSubscriptions`) |
-| `past_due` (`pending:true`) | `canceled` (`ABANDONED`) | вебхук `DEADLINE_EXPIRED` / `CANCELED` - ссылка протухла до оплаты; трогает только pending-черновик, активную подписку не задевает | `server.ts` (обработка терминальных статусов вебхука) |
+| `past_due` (`pending:true`) | `canceled` (`providerData.status='ABANDONED'`, `pending:false`, `draft:true`) | планировщик: черновик старше 24 ч не подтверждён | `scheduler.ts` (`cleanupAbandonedSubscriptions`) |
+| `past_due` (`pending:true`) | `canceled` (`ABANDONED`, `draft:true`) | вебхук `DEADLINE_EXPIRED` / `CANCELED` - ссылка протухла до оплаты; трогает только pending-черновик, активную подписку не задевает | `server.ts` (обработка терминальных статусов вебхука) |
+| `past_due` (`pending:true`) | `canceled` (`ABANDONED`/`REJECTED`, `draft:true`) | `cancelPendingCheckout` (reclaim/force/протухшая ссылка) или терминальный вебхук `REJECTED`/`REVERSED`/`REFUNDED` - неоплаченный черновик закрывается, а не уходит в `past_due` | `server.ts` |
 | `active` (старая, того же типа) | `canceled` (`status='PLAN_CHANGE'`, `canceledAt=now`) | немедленная смена плана: sweep старой подписки по вебхуку `CONFIRMED` | `server.ts` |
 
 Период и сумма при подтверждении берутся из черновика, не из вебхука - иначе пропорциональный апгрейд сбросил бы дальний `periodEnd`, а продление списало бы разовую дельту вместо полной цены.
@@ -138,9 +141,11 @@ Grace = `GRACE_PERIOD_DAYS`, дефолт 7 дней, считается от `p
 | Событие | Действие | Место |
 |---|---|---|
 | `CONFIRMED`, `AUTHORIZED` | -> `active` (первая оплата / подтверждение) | `server.ts` |
-| `REJECTED`, `REVERSED`, `REFUNDED` | -> `past_due` (`pending:false`, `retryAttempt`, `retryAfter = now + 1 ч`) - не отмена, карта и `rebillId` сохраняются для ретрая | `server.ts` |
+| `REJECTED`, `REVERSED`, `REFUNDED` на `active` или `past_due` (grace) | -> `past_due` (`pending:false`, `retryAttempt`, `retryAfter = now + 1 ч`) - не отмена, карта и `rebillId` сохраняются для ретрая | `server.ts` |
+| `REJECTED`, `REVERSED`, `REFUNDED` на `canceled`/`readonly` | ничего: статус терминальный, поздний вебхук не оживляет подписку (иначе план вернулся бы, а scheduler списал бы по сохранённому `rebillId`) | `server.ts` |
+| `REJECTED`, `REVERSED`, `REFUNDED` на pending-черновике | -> `canceled` (`draft:true`) | `server.ts` |
 
-Идемпотентность терминальных вебхуков: если на не-pending `past_due` уже записан ровно этот `Status`, повтор пропускается - иначе только сбросился бы `retryAfter` и ушло дублирующее письмо.
+Идемпотентность терминальных вебхуков: если на не-pending `past_due` уже записан ровно этот `Status`, повтор пропускается - иначе только сбросился бы `retryAfter` и ушло дублирующее письмо. Для `canceled`/`readonly` отдельная проверка не нужна: их отсекает условие перехода.
 
 ### Административные переходы (`server/account/src/serviceOperations.ts`)
 
@@ -250,7 +255,7 @@ stateDiagram-v2
 - Grace считается от `periodEnd`, а ретраи - от момента провала. Если первый провал случился заметно позже `periodEnd`, оба условия могут выполниться почти одновременно и grace фактически сожмётся.
 - `readonly` ничего не ограничивает и никуда не ведёт. Блокировки записи по неоплате в коде нет: строка `PaymentOverdueReadonly` лежит в 12 локалях и не используется нигде. План продолжает выдаваться, автоперехода на free нет, оплатой из статуса не выйти.
 - `past_due` перегружен: черновик первой оплаты и провал продления - одно значение статуса, различаются только флагом `providerData.pending`. Ветвление по `past_due` без проверки `pending` затрагивает оба случая сразу.
-- `REFUNDED`/`REVERSED` обрабатываются как `REJECTED` -> уходят в `past_due` с ретраем, хотя деньги уже возвращены.
+- `REFUNDED`/`REVERSED` на `active` обрабатываются как `REJECTED` -> уходят в `past_due` с ретраем, хотя деньги уже возвращены; на `canceled`/`readonly` такой вебхук теперь игнорируется.
 - Ручной ретрай расходует тот же лимит из 3 попыток, что и автоматический - исчерпав его вручную, пользователь ускоряет уход в `readonly`, откуда оплатой уже не выберется.
 - Гейты retry в фасаде и tbank-поде расходятся: `pod-payment/src/server.ts` пропускает только `past_due`, `pod-tbank-subscriptions/src/server.ts` (`handleRetryPayment`) - `past_due` и `readonly`.
 - Просроченный `package` в UI не отображается: бейдж "Активен" рисуется по `status === 'active'` и при `past_due` пропадает, футер продолжает показывать "Продление: {дата}", кнопки retry для пакета нет - этот блок завязан на tier.
