@@ -162,7 +162,16 @@ export class YandexMetrikaProvider implements AnalyticProvider {
       window.ym(this.counterId, 'reachGoal', 'signup_submit', { method, invite: isInvite })
     }
 
-    // 2) Created space
+    // 2) Attempt to submit the signup form: `reason` is present only when the press hit an inert button.
+    if (event === 'signup.submitAttempt') {
+      const goal = params?.reason !== undefined ? 'signup_click_blocked' : 'signup_click'
+      window.ym(this.counterId, 'reachGoal', goal, {
+        ...params,
+        invite: window.location.pathname.includes('/join')
+      })
+    }
+
+    // 3) Created space
     if (event === 'onboard.createWorkspace' && params?.ok === true) {
       window.ym(this.counterId, 'reachGoal', 'workspace_created')
     }
