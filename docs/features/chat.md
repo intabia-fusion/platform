@@ -107,7 +107,7 @@
 - **Архивация каналов.** Actions `ArchiveChannel`/`UnarchiveChannel`, фильтр `archived` в навигаторе. - models/chunter/src/actions.ts; plugins/chunter-resources/src/components/chat/navigator/ChatNavGroup.svelte.
 - **Личное состояние чата (pin/hidden).** `TChat` (AttachedDoc в PersonSpace); auto-unhide и auto-hide - "Как работает" п.9-10.
 - **Дефолтные каналы general/random.** Upgrade-миграция создаёт `chunter.space.General`/`Random` (autoJoin=true). - `createGeneral`/`createRandom`/`joinEmployees`, models/chunter/src/migration.ts.
-- **Миграции истории.** `convertCommentsToChatMessages`, `removeOldClasses`, `removeWrongActivity`, `migrateMessagesSpace`, `removeUnavailableChats`. - models/chunter/src/migration.ts.
+- **Миграции истории.** `convertCommentsToChatMessages`, `removeOldClasses`, `removeWrongActivity`, `migrateMessagesSpace`, `removeUnavailableChats`. Классы обратных ссылок на задачи восстанавливает `repair-task-reference-classes-v1` (`models/task/src/referenceClasses.ts`); новые изменения типа обрабатывает `OnDocClassChanged` (`server-plugins/activity-resources/src/index.ts`), не меняя исторический `DocUpdateMessage.objectClass`. - models/chunter/src/migration.ts.
 - **Deep-link на тред/сообщение.** `openChannel` пишет тред в `loc.path[4]`. Переход к сообщению из Saved, Threads и жалоб (`openMessageFromSpecial`) и из поиска (`openSearchResult`) собирает путь и `query.message`:
     - ответ в треде - чат открывается на корне треда (в ленте чата ответа нет), тред - в сайдбаре, ответ - в `messageInFocus`;
     - сообщение в задаче или документе - объект открывается в чате своей панелью, как из навигатора (адрес `<id>|<class>`), его активность прокручивается к сообщению.

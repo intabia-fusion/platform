@@ -56,7 +56,7 @@ UnStarted/ToDo/Active/Won/Lost, классические статусы Issue Ba
 
 #### Смена типа задачи
 
-Действие `ChangeTaskType`; освобождает переход workflow при смене `kind` (см. `server-plugins/workflow/src/middleware.ts`). История активности неизменяема: запись о создании и другие старые записи сохраняют тип на момент события, документ ищется по родительскому классу (см. `../memory/activity-history-class.md`).
+Действие `ChangeTaskType`; освобождает переход workflow при смене `kind` (см. `server-plugins/workflow/src/middleware.ts`). История активности неизменяема: запись о создании и другие старые записи сохраняют тип на момент события, документ ищется по родительскому классу (см. `../memory/activity-history-class.md`). У обратных ссылок `ActivityReference` триггер `OnDocClassChanged` обновляет текущие указатели `attachedToClass`/`srcDocClass`/`attachedDocClass`; миграция `repair-task-reference-classes-v1` (`models/task/src/referenceClasses.ts`) восстанавливает их у существующих задач, в том числе после удаления старого типа.
 
 #### Экспорт/импорт TaskType
 

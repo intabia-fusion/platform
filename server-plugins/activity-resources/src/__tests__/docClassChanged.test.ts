@@ -46,8 +46,15 @@ function makeControl (messages: Doc[]): TriggerControl {
       findDomain: () => 'tracker'
     },
     modelDb: { findAllSync: () => [] },
-    findAll: jest.fn().mockImplementation(async (_ctx, _class) => {
-      return _class === activity.class.ActivityMessage ? toFindResult(messages) : toFindResult([])
+    findAll: jest.fn().mockImplementation(async (_ctx, _class, query) => {
+      const candidates = _class === activity.class.ActivityReference
+        ? messages.filter((message) => message._class === activity.class.ActivityReference)
+        : messages
+      return toFindResult(candidates.filter((message) => {
+        const matches = (filter: Record<string, any>): boolean =>
+          Object.entries(filter).every(([key, value]) => (message as any)[key] === value)
+        return query.$or !== undefined ? query.$or.some(matches) === true : matches(query)
+      }))
     })
   } as any as TriggerControl
 }
@@ -120,5 +127,53 @@ describe('OnDocClassChanged (activity)', () => {
     const tx = txFactory.createTxRemoveDoc(oldClass, 'space-1' as any, objectId)
 
     expect(await OnDocClassChanged([tx as TxCUD<Doc>], control)).toEqual([])
+  })
+})
+
+describe('OnDocClassChanged (references)', () => {
+  function makeReference (over: Record<string, any> = {}): Doc {
+    return makeMessage({
+      _class: activity.class.ActivityReference,
+      attachedTo: 'document-1',
+      attachedToClass: 'document:class:Document',
+      srcDocId: objectId,
+      srcDocClass: oldClass,
+      ...over
+    })
+  }
+
+  it('repoints an outgoing backlink stored under another document', async () => {
+    const control = makeControl([makeReference()])
+    const result = (await OnDocClassChanged([classChangeTx()], control)) as TxUpdateDoc<Doc>[]
+    expect(result).toHaveLength(1)
+    expect(result[0].operations).toEqual({ srcDocClass: newClass })
+  })
+
+  it('repoints a reference to the changed attached document', async () => {
+    const control = makeControl([makeReference({
+      srcDocId: 'source-1', attachedDocId: objectId, attachedDocClass: oldClass
+    })])
+    const result = (await OnDocClassChanged([classChangeTx()], control)) as TxUpdateDoc<Doc>[]
+    expect(result).toHaveLength(1)
+    expect(result[0].operations).toEqual({ attachedDocClass: newClass })
+  })
+
+  it('combines all pointers to the same object into one update', async () => {
+    const control = makeControl([makeReference({
+      attachedTo: objectId,
+      attachedToClass: oldClass,
+      attachedDocId: objectId,
+      attachedDocClass: oldClass
+    })])
+    const result = (await OnDocClassChanged([classChangeTx()], control)) as TxUpdateDoc<Doc>[]
+    expect(result).toHaveLength(1)
+    expect(result[0].operations).toEqual({
+      attachedToClass: newClass, srcDocClass: newClass, attachedDocClass: newClass
+    })
+  })
+
+  it('does not rewrite an unrelated pointer or the historical class', async () => {
+    const control = makeControl([makeReference({ srcDocClass: newClass })])
+    expect(await OnDocClassChanged([classChangeTx()], control)).toEqual([])
   })
 })
