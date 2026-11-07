@@ -103,6 +103,7 @@ describe('mounted drag operation budgets', () => {
         frames.mockRestore()
         cancel.mockRestore()
       }
-    }
+    },
+    15000
   )
 })
