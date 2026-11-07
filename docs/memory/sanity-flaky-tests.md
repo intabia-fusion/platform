@@ -4,11 +4,16 @@
 
 ## Diagnosing
 
+- `kanban.spec.ts` uses the shared Default project. `settings.spec.ts` adds a task type there and renames two statuses, creating additional statuses in existing categories. Run `20261107-014207` failed the reset-merge test with 7 statuses and 5 categories. The reset test must not assume category uniqueness or assert the unrelated merge-by-category menu item; a separate E2E checks category merging with owned statuses.
+- CI `42392235702`: copying another TaskType's generated `targetClass` into a temporary TaskType made cleanup delete the shared class through `OnTaskTypeRemove` (`server-plugins/task-resources/src/index.ts`), breaking subsequent issue creation. A fixture without its own class uses `targetClass === ofClass`; after cleanup, check that the shared class exists and `createIssue` still works with it.
+
 Playwright marks a test flaky when a retry passes, so the cause is in the *first* attempt. `node analyze_failures.js runs/<stamp>/playwright-report.json` - what failed. `node analyze_steps.js runs/<stamp>/step-report.ndjson` - where time went; a step with small p50 and huge max is the next flake. `test-results/<test>/error-context.md` - call log. Two opposite diagnoses: `waiting for <locator>` = the control was never there; `intercepts pointer events` = it was covered.
 
 Service logs for the failure window: `startTime` in the report is UTC, containers log UTC, host `date` is local - `docker logs --since <ISO>Z --until <ISO>Z sanity-<svc>-1`. Client-side causes (who called disconnect, console errors) are visible only in a trace: repro with `--trace on`. The JSON reporter carries no steps and `error-context.md` no snapshot for those.
 
 ## Recurring shapes
+
+- Kanban selection uses category-query projections (`plugins/tracker-resources/src/components/issues/KanbanView.svelte:341`, `plugins/view-resources/src/selection.ts:205`); header statistics require `estimation`, `reportedTime`, `remainingTime` (`plugins/tracker-resources/src/components/issues/IssuesView.svelte:235`). Missing fields leave cards checked but remove them from statistics.
 
 - **`locator.count()` never waits.** Arithmetic on it needs a settled read (`waitStable`). But settled is not the same as non-empty: a just-filtered list is stably 0 for a moment, which reads exactly like "matched nothing" (`checkAllIssuesInStatus` waits for the first row first).
 - **Controls that exist only while hovered or just opened.** Hover/open and use in two separate statements → a re-render between them leaves the second waiting out the whole test timeout. Retry the pair: hover → assert visible → click.

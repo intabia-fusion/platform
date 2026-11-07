@@ -113,13 +113,13 @@
     <div class="card-row dense-row">
       <StatusEditor value={card} kind="list" isEditable={false} />
       <span class="card-id"><IssuePresenter value={card} /></span>
-      <span class="card-title one-line caption-color">{issue.title}</span>
+      <span class="card-title one-line" title={issue.title}>{issue.title}</span>
       <AssigneeEditor object={card} avatarSize="card" shouldShowName={false} showStatus={false} />
     </div>
   {:else if density === 'compact'}
     <div class="card-row title-row">
       <StatusEditor value={card} kind="list" isEditable={false} />
-      <span class="card-title caption-color">{issue.title}</span>
+      <span class="card-title" title={issue.title}>{issue.title}</span>
       <Component is={notification.component.NotificationPresenter} props={{ value: card }} />
       <AssigneeEditor object={card} avatarSize="card" shouldShowName={false} showStatus={false} />
     </div>
@@ -159,7 +159,7 @@
   {:else}
     <div class="card-row card-top">
       <div class="card-id flex-row-center min-w-0">
-        <div class="flex-no-shrink"><IssuePresenter value={card} /></div>
+        <div class="card-identifier flex-no-shrink" title={card.identifier}><IssuePresenter value={card} /></div>
         {#if shown('parent')}<ParentNamesPresenter value={card} />{/if}
       </div>
       <div class="flex-row-center gap-2 reverse flex-no-shrink">
@@ -169,7 +169,7 @@
     </div>
     <div class="card-row title-row">
       <StatusEditor value={card} kind="list" isEditable={false} />
-      <span class="card-title caption-color lines-limit-2">{issue.title}</span>
+      <span class="card-title lines-limit-2" title={issue.title}>{issue.title}</span>
     </div>
     <div class="card-chips">
       {#if shown('priority')}
@@ -266,6 +266,43 @@
 </div>
 
 <style lang="scss">
+  :global(.kanban-container.fit-columns) .tracker-card {
+    box-sizing: border-box;
+    max-width: 100%;
+    overflow-x: clip;
+    overflow-clip-margin: 2px;
+
+    .card-id,
+    .card-identifier {
+      flex-shrink: 1;
+      min-width: 0;
+      max-width: 100%;
+    }
+    .card-id :global(.flex-row-center),
+    .card-id :global(a),
+    .card-id :global(.issuePresenterRoot),
+    .card-chips > :global(*),
+    .card-chips :global(.antiButton),
+    .card-chips :global(.datetime-button),
+    .card-chips :global(.link-container),
+    .card-meta > :global(*) {
+      box-sizing: border-box;
+      min-width: 0;
+      max-width: 100%;
+    }
+    .card-chips :global(.label) {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .card-footer,
+    .card-counters {
+      flex-wrap: wrap;
+      min-width: 0;
+      max-width: 100%;
+    }
+  }
   .tracker-card {
     position: relative;
     display: flex;
@@ -312,7 +349,8 @@
       flex: 1;
       min-width: 0;
       font-size: 0.875rem;
-      font-weight: 500;
+      font-weight: 400;
+      color: var(--theme-content-color);
       line-height: 1.3;
       word-break: break-word;
     }
@@ -321,7 +359,6 @@
     }
     &.dense .card-title {
       font-size: 0.8125rem;
-      font-weight: 400;
     }
     .one-line {
       overflow: hidden;

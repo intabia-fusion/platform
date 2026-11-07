@@ -134,9 +134,12 @@ const cell = (laneId: string, state: string): HTMLElement =>
 const cardEl = (id: string): HTMLElement => one(`[data-card-id="${id}"]`)
 const laneBlock = (id: string): HTMLElement => one(`[data-id="kanban-swimlane"][data-swimlane-id="${id}"]`)
 
-function fire (el: Element, type: string, offsetY: number = 0): Event {
+function fire (el: Element, type: string, offsetY: number = 0, point?: { x: number, y: number }): Event {
   const ev = new Event(type, { bubbles: true, cancelable: true })
   Object.defineProperty(ev, 'offsetY', { value: offsetY })
+  if (point !== undefined) {
+    Object.defineProperties(ev, { clientX: { value: point.x }, clientY: { value: point.y } })
+  }
   // A plain Event has no dataTransfer; a browser DragEvent made by script has null.
   Object.defineProperty(ev, 'dataTransfer', { value: null })
   el.dispatchEvent(ev)
@@ -163,6 +166,34 @@ afterEach(() => {
     c.$destroy()
   })
   mounted = []
+})
+
+describe.each([false, true])('Kanban fitted columns, swim lanes: %s', (swim) => {
+  it('fits open tracks and the collapsed stack, then restores fixed widths when disabled', async () => {
+    const groups = board({ todo: cards('t', 1, 'todo', 'a'), doing: cards('d', 1, 'doing', 'a'), done: [] })
+    const props = swim ? swimProps(groups, [lane('a')]) : legacyProps(groups)
+    const component = await mount({ ...props, fitColumns: true, modern: true, controlKey: 'fit' })
+    const grid = (): HTMLElement => one(swim ? '.swimlane-header-row' : '.kanban-content')
+    const track = 'minmax(0, var(--kanban-col-width))'
+    expect(grid().style.gridTemplateColumns).toBe(`${track} ${track} ${track}`)
+    expect(q('[data-test="column-header"]')).toHaveLength(3)
+    if (swim) {
+      expect(one('.swimlane-grid').style.gridTemplateColumns).toBe(grid().style.gridTemplateColumns)
+    }
+
+    one('[data-test="column-header"]').click()
+    await settle()
+    expect(one('[data-id="kanban-collapsed-stack"]')).toBeTruthy()
+    expect(one('.kanban-container').style.getPropertyValue('--kanban-fit-tracks')).toBe('3')
+    expect(grid().style.gridTemplateColumns).toBe(
+      swim ? `${track} ${track}` : `${track} ${track} minmax(0, var(--kanban-col-stack))`
+    )
+
+    component.$set({ fitColumns: false })
+    await settle()
+    expect(one('.kanban-container').classList.contains('fit-columns')).toBe(false)
+    expect(grid().style.gridTemplateColumns).toBe(swim ? 'var(--kanban-col-width) var(--kanban-col-width)' : '')
+  })
 })
 
 describe('Kanban legacy layout', () => {
@@ -255,6 +286,76 @@ describe('Kanban legacy layout', () => {
     expect(live().find((c) => ids(c).includes('x29'))).toBeTruthy()
     expect(cardIds(column('fresh'))).toHaveLength(10)
     expect(cardIds(column('done'))).toHaveLength(30)
+  })
+})
+
+describe('Kanban column scrolling', () => {
+  it('keeps status targets outside the cards viewport while scrolling and dropping', async () => {
+    const groups = board({ todo: cards('t', 2, 'todo'), doing: cards('d', 20, 'doing') })
+    const updates = vi.fn((_doc: unknown, state: string, target?: string) => ({ status: target ?? state }))
+    await mount(
+      legacyProps(groups, {
+        limitScale: 2,
+        getUpdateProps: updates,
+        dropTargets: new Map([['doing', [{ id: 'a' }, { id: 'b' }]]])
+      })
+    )
+    await flush()
+    const destination = column('doing')
+    const viewport = one('.scroll', destination)
+    viewport.scrollTop = 250
+    fire(viewport, 'scroll')
+    fire(cardEl('t00'), 'dragstart')
+    await settle()
+    fire(destination, 'dragover')
+    await settle()
+    const targets = one('[data-id="kanban-drop-targets"]', destination)
+    expect(viewport.contains(targets)).toBe(false)
+    expect(targets.parentElement).toBe(one('.column-body', destination))
+    expect(one('.column-body', destination).parentElement).toBe(destination)
+    expect(viewport.scrollTop).toBe(250)
+    viewport.scrollTop = 400
+    fire(viewport, 'scroll')
+    await settle()
+    expect(one('[data-id="kanban-drop-targets"]', destination)).toBe(targets)
+    expect(one('.scroll', destination)).toBe(viewport)
+    fire(one('[data-drop-target="b"]', targets), 'dragover')
+    await settle()
+    fire(one('[data-drop-target="b"]', targets), 'drop')
+    await settle()
+    expect(updates).toHaveBeenCalledWith(expect.objectContaining({ _id: 't00' }), 'doing', 'b')
+    expect(fakeClient.update).toHaveBeenCalledWith(
+      expect.objectContaining({ _id: 't00' }),
+      expect.objectContaining({ status: 'b' })
+    )
+    expect(q('[data-id="kanban-drop-targets"]')).toHaveLength(0)
+    expect(viewport.scrollTop).toBe(400)
+  })
+
+  it('keeps ordinary columns scrollable when no status targets are configured', async () => {
+    const groups = board({ todo: cards('t', 20, 'todo'), doing: cards('d', 5, 'doing') })
+    await mount(legacyProps(groups, { limitScale: 2 }))
+    await flush()
+    const source = column('todo')
+    const viewport = one('.scroll', source)
+    expect(one('.column-cards-scroll', source).contains(viewport)).toBe(true)
+    expect(cardIds(source)).toHaveLength(20)
+    expect(q('[data-id="kanban-drop-targets"]')).toHaveLength(0)
+    viewport.scrollTop = 250
+    fire(viewport, 'scroll')
+    await settle()
+    expect(one('.scroll', source)).toBe(viewport)
+    expect(viewport.scrollTop).toBe(250)
+    fire(cardEl('t00'), 'dragstart')
+    await settle()
+    fire(column('doing'), 'dragover')
+    await settle()
+    expect(q('[data-id="kanban-drop-targets"]')).toHaveLength(0)
+    window.dispatchEvent(new Event('dragend'))
+    await settle()
+    expect(cardIds(source)[0]).toBe('t00')
+    expect(fakeClient.update).not.toHaveBeenCalled()
+    expect(fakeClient.diffUpdate).not.toHaveBeenCalled()
   })
 })
 
@@ -358,7 +459,7 @@ describe('Kanban column collapse', () => {
     expect(columnOrder()).toEqual(['todo', 'stack'])
   })
 
-  it('shows the landing spots of a column while a card is held over it', async () => {
+  it('shows a destination column spots after movement in the source column', async () => {
     const groups = board({ todo: cards('t', 1, 'todo'), doing: cards('d', 1, 'doing') })
     await mount(
       legacyProps(groups, {
@@ -369,10 +470,10 @@ describe('Kanban column collapse', () => {
 
     fire(cardEl('t00'), 'dragstart')
     await settle()
-    // No spots while the card is still over its own column.
+    // No spots before movement, so dragstart keeps the source card mounted.
     expect(q('[data-id="kanban-drop-targets"]')).toHaveLength(0)
 
-    fire(column('doing'), 'dragover')
+    fire(column('todo'), 'dragover')
     await settle()
     const spots = q('[data-drop-target]', column('doing'))
     expect(spots.map((e) => e.getAttribute('data-drop-target'))).toEqual(['a', 'b'])
@@ -559,6 +660,749 @@ describe('Kanban column collapse', () => {
     fire(cardEl('t00'), 'dragend')
     await settle()
     expect(column('done').classList.contains('drop-disabled')).toBe(false)
+  })
+})
+
+describe.each([false, true])('Kanban landing spots, swim lanes: %s', (swim) => {
+  it.each(['card', 'spot'])(
+    'ends a stopped %s drop before its write resolves and keeps the next drag',
+    async (targetKind) => {
+      const groups = board({ todo: cards('t', 2, 'todo', 'A'), doing: cards('d', 2, 'doing', 'A') })
+      const props = swim ? swimProps(groups, [lane('A')]) : legacyProps(groups)
+      await mount({ ...props, dropTargets: new Map([['doing', [{ id: 'doing' }]]]) })
+      await flush()
+      let finish!: () => void
+      const write = targetKind === 'card' ? fakeClient.diffUpdate : fakeClient.update
+      write.mockImplementationOnce(
+        async () =>
+          await new Promise((resolve) => {
+            finish = () => {
+              resolve({})
+            }
+          })
+      )
+      fire(cardEl('t00'), 'dragstart')
+      await settle()
+      const destination = swim ? cell('A', 'doing') : column('doing')
+      fire(destination, 'dragover')
+      await settle()
+      const target = targetKind === 'card' ? cardEl('d00') : one('[data-drop-target="doing"]', destination)
+      fire(target, 'dragover', 5)
+      fire(target, 'drop')
+      await Promise.resolve()
+      await Promise.resolve()
+      expect(q('[data-drop-target]')).toHaveLength(1)
+      await settle()
+      expect(write).toHaveBeenCalledTimes(1)
+      expect(write).toHaveBeenCalledWith(
+        expect.objectContaining({ _id: 't00' }),
+        expect.objectContaining({ status: 'doing' })
+      )
+      expect(q('[data-drop-target]')).toHaveLength(0)
+      expect(q('[data-dragged="true"]')).toHaveLength(0)
+      expect(q('.drop-allowed, .drop-disabled')).toHaveLength(0)
+
+      fire(cardEl('t01'), 'dragstart')
+      await settle()
+      fire(destination, 'dragover')
+      await settle()
+      expect(q('[data-drop-target]')).toHaveLength(1)
+      finish()
+      await settle()
+      expect(q('[data-drop-target]')).toHaveLength(1)
+      fire(one('[data-drop-target="doing"]', destination), 'dragover')
+      await settle()
+      expect(one('.drop-target-card', destination).textContent).toBe('t01')
+      expect(write).toHaveBeenCalledTimes(1)
+    }
+  )
+
+  it.each([false, true])(
+    'cancels a return to the source panel outside the original rectangle, nonmanual descending: %s',
+    async (descending) => {
+      const groups = board({ todo: cards('t', 2, 'todo', 'A'), doing: [] })
+      const props = swim ? swimProps(groups, [lane('A')]) : legacyProps(groups)
+      await mount({
+        ...props,
+        dontUpdateRank: descending,
+        orderBy: descending ? ['modifiedOn', -1] : undefined,
+        dropTargets: new Map([
+          ['todo', [{ id: 'todo' }]],
+          ['doing', [{ id: 'doing' }]]
+        ])
+      })
+      await flush()
+      vi.spyOn(cardEl('t00'), 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 100, 200, 100))
+      fire(cardEl('t00'), 'dragstart')
+      await settle()
+      fire(swim ? cell('A', 'doing') : column('doing'), 'dragover', 0, { x: 450, y: 300 })
+      await settle()
+      const source = swim ? cell('A', 'todo') : column('todo')
+      fire(source, 'dragover', 0, { x: 150, y: 400 })
+      await settle()
+      fire(source, 'drop', 0, { x: 150, y: 400 })
+      await settle()
+      expect(groups.todo.map((doc) => doc._id)).toEqual(['t00', 't01'])
+      expect(fakeClient.update).not.toHaveBeenCalled()
+      expect(fakeClient.diffUpdate).not.toHaveBeenCalled()
+    }
+  )
+
+  it('cancels a source panel drop after crossing a neighbouring card', async () => {
+    const groups = board({ todo: cards('t', 3, 'todo', 'A'), doing: [] })
+    const props = swim ? swimProps(groups, [lane('A')]) : legacyProps(groups)
+    await mount(props)
+    await flush()
+    const originalRank = groups.todo[1].rank
+    fire(cardEl('t01'), 'dragstart')
+    await settle()
+    fire(swim ? cell('A', 'doing') : column('doing'), 'dragover')
+    await settle()
+    const source = swim ? cell('A', 'todo') : column('todo')
+    fire(source, 'dragover')
+    await settle()
+    fire(cardEl('t00'), 'dragover', -5)
+    await settle()
+    fire(source, 'dragover')
+    fire(source, 'drop')
+    await settle()
+    expect(cardIds(source)).toEqual(['t00', 't01', 't02'])
+    expect(docs.get('t01')?.rank).toBe(originalRank)
+    expect(fakeClient.update).not.toHaveBeenCalled()
+    expect(fakeClient.diffUpdate).not.toHaveBeenCalled()
+  })
+
+  it.skipIf(!swim)('keeps a drop in another lane of the source column', async () => {
+    const groups = board({ todo: cards('t', 2, 'todo', 'A') })
+    await mount(swimProps(groups, [lane('A'), lane('B')], { dropTargets: new Map([['todo', [{ id: 'todo' }]]]) }))
+    await flush()
+    fire(cardEl('t00'), 'dragstart')
+    await settle()
+    fire(cell('B', 'todo'), 'dragover')
+    await settle()
+    fire(one('[data-drop-target="todo"]', cell('B', 'todo')), 'drop')
+    await settle()
+    expect(fakeClient.update).toHaveBeenCalledTimes(1)
+    expect(fakeClient.update).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ lane: 'B' }))
+  })
+
+  it('keeps an explicitly chosen different status in the source column', async () => {
+    const groups = board({ todo: cards('t', 2, 'todo', 'A') })
+    const props = swim ? swimProps(groups, [lane('A')]) : legacyProps(groups)
+    await mount({
+      ...props,
+      dropTargets: new Map([['todo', [{ id: 'other-status' }]]]),
+      getUpdateProps: (_doc: unknown, state: string, target?: string) => ({ status: target ?? state })
+    })
+    await flush()
+    fire(cardEl('t00'), 'dragstart')
+    await settle()
+    const source = swim ? cell('A', 'todo') : column('todo')
+    fire(source, 'dragover')
+    await settle()
+    const spot = one('[data-drop-target="other-status"]', source)
+    fire(spot, 'dragover')
+    fire(spot, 'drop')
+    await settle()
+    expect(fakeClient.update).toHaveBeenCalledTimes(1)
+    expect(fakeClient.update).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ status: 'other-status' })
+    )
+  })
+
+  it('ends a cancelled drag when dragend reaches only its detached source card', async () => {
+    const groups = board({ todo: cards('t', 2, 'todo', 'A'), doing: [] })
+    await mount({
+      ...(swim ? swimProps(groups, [lane('A')]) : legacyProps(groups)),
+      dropTargets: new Map([['doing', [{ id: 'doing' }]]]),
+      getAvailableCategories: async () => ['todo', 'doing']
+    })
+    await flush()
+    const source = cardEl('t00')
+    vi.spyOn(source, 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 100, 200, 100))
+    fire(source, 'dragstart')
+    await settle()
+    fire(swim ? cell('A', 'doing') : column('doing'), 'dragover', 0, { x: 450, y: 300 })
+    await settle()
+    expect(source.isConnected).toBe(false)
+    expect(q('[data-drop-target]')).toHaveLength(1)
+    fire(source, 'dragend')
+    await settle()
+    expect(q('[data-dragged="true"], .drop-allowed, .drop-disabled, [data-drop-target]')).toHaveLength(0)
+    expect(cardIds(swim ? cell('A', 'todo') : column('todo'))).toEqual(['t00', 't01'])
+    expect(fakeClient.update).not.toHaveBeenCalled()
+    expect(fakeClient.diffUpdate).not.toHaveBeenCalled()
+  })
+
+  it('ends a drop at the origin before available statuses finish loading', async () => {
+    const groups = board({ todo: cards('t', 2, 'todo', 'A'), doing: [] })
+    let resolveAvailable!: (value: string[]) => void
+    const available = new Promise<string[]>((resolve) => {
+      resolveAvailable = resolve
+    })
+    const props = swim ? swimProps(groups, [lane('A')]) : legacyProps(groups)
+    const component = await mount({
+      ...props,
+      dropTargets: new Map(),
+      getAvailableCategories: async () => {
+        const states = await available
+        component.$set({
+          dropTargets: new Map([
+            ['todo', [{ id: 'todo' }]],
+            ['doing', [{ id: 'doing' }]]
+          ])
+        })
+        return states
+      }
+    })
+    await flush()
+    vi.spyOn(cardEl('t00'), 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 100, 200, 100))
+    const source = swim ? cell('A', 'todo') : column('todo')
+    fire(cardEl('t00'), 'dragstart')
+    fire(source, 'dragover', 0, { x: 104, y: 104 })
+    fire(source, 'drop', 0, { x: 104, y: 104 })
+    expect(fakeClient.update).not.toHaveBeenCalled()
+    expect(fakeClient.diffUpdate).not.toHaveBeenCalled()
+    await settle()
+    expect(q('[data-dragged="true"]')).toHaveLength(0)
+    resolveAvailable(['todo', 'doing'])
+    await settle()
+    expect(q('[data-dragged="true"]')).toHaveLength(0)
+    expect(q('[data-drop-target]')).toHaveLength(0)
+    expect(fakeClient.update).not.toHaveBeenCalled()
+    expect(fakeClient.diffUpdate).not.toHaveBeenCalled()
+  })
+
+  it('checks the origin before neighbor hover and still allows reordering outside it', async () => {
+    const groups = board({ todo: cards('t', 2, 'todo', 'A'), doing: [] })
+    const props = swim ? swimProps(groups, [lane('A')]) : legacyProps(groups)
+    const setGroupByValues = vi.fn((g: Record<string, Item[]>, state: string, items: Item[]) => {
+      g[state] = items
+    })
+    await mount({ ...props, setGroupByValues, dropTargets: new Map([['todo', [{ id: 'todo' }]]]) })
+    await flush()
+    const original = cardEl('t00')
+    const neighbor = cardEl('t01')
+    vi.spyOn(cardEl('t00'), 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 100, 200, 100))
+    fire(cardEl('t00'), 'dragstart')
+    await settle()
+    const frames = vi.spyOn(globalThis, 'requestAnimationFrame')
+    for (let index = 0; index < 20; index++) {
+      fire(neighbor, 'dragover', 5, { x: 104, y: 104 })
+    }
+    const scheduledFrames = frames.mock.calls.length
+    frames.mockRestore()
+    await settle()
+    expect(scheduledFrames).toBe(0)
+    expect(setGroupByValues).not.toHaveBeenCalled()
+    expect(groups.todo.map((doc) => doc._id)).toEqual(['t00', 't01'])
+    expect(cardEl('t00')).toBe(original)
+    expect(cardEl('t01')).toBe(neighbor)
+    expect(fakeClient.update).not.toHaveBeenCalled()
+    expect(fakeClient.diffUpdate).not.toHaveBeenCalled()
+
+    fire(neighbor, 'dragover', 5, { x: 150, y: 250 })
+    await settle()
+    expect(q('[data-drop-target]', swim ? cell('A', 'todo') : column('todo'))).toHaveLength(1)
+    fire(neighbor, 'drop', 5, { x: 150, y: 250 })
+    await settle()
+    expect(fakeClient.diffUpdate).toHaveBeenCalledTimes(1)
+    expect(fakeClient.diffUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ _id: 't00' }),
+      expect.objectContaining({ rank: expect.any(String) })
+    )
+  })
+
+  it('rolls back a rejected earlier write without ending the next drag', async () => {
+    const groups = board({ todo: cards('t', 2, 'todo', 'A'), doing: cards('d', 1, 'doing', 'A') })
+    const rollback = vi.fn()
+    await mount({
+      ...(swim ? swimProps(groups, [lane('A')]) : legacyProps(groups)),
+      onMoveRollback: rollback,
+      dropTargets: new Map([['doing', [{ id: 'doing' }]]])
+    })
+    await flush()
+    let rejectWrite!: (error: Error) => void
+    fakeClient.diffUpdate.mockImplementationOnce(
+      async () =>
+        await new Promise((_resolve, reject) => {
+          rejectWrite = reject
+        })
+    )
+    fire(cardEl('t00'), 'dragstart')
+    await settle()
+    const destination = swim ? cell('A', 'doing') : column('doing')
+    fire(destination, 'dragover')
+    await settle()
+    fire(cardEl('d00'), 'drop')
+    await settle()
+    fire(cardEl('t01'), 'dragstart')
+    await settle()
+    fire(destination, 'dragover')
+    await settle()
+    fire(one('[data-drop-target]', destination), 'dragover')
+    await settle()
+    rejectWrite(new Error('write A failed'))
+    await settle()
+    expect(rollback).toHaveBeenCalledTimes(1)
+    expect(rollback).toHaveBeenCalledWith('t00')
+    expect(one('.drop-target-card', destination).textContent).toBe('t01')
+    expect(q('[data-drop-target]')).toHaveLength(1)
+  })
+
+  it('cancels the current drag when available categories fail to load', async () => {
+    const groups = board({ todo: cards('t', 1, 'todo', 'A'), doing: [] })
+    let rejectAvailable!: (error: Error) => void
+    await mount({
+      ...(swim ? swimProps(groups, [lane('A')]) : legacyProps(groups)),
+      getAvailableCategories: async () =>
+        await new Promise<string[]>((_resolve, reject) => {
+          rejectAvailable = reject
+        })
+    })
+    await flush()
+    const add = vi.spyOn(window, 'addEventListener')
+    const remove = vi.spyOn(window, 'removeEventListener')
+    const frames = vi.spyOn(globalThis, 'requestAnimationFrame').mockReturnValue(77)
+    const cancel = vi.spyOn(globalThis, 'cancelAnimationFrame')
+    const report = vi.spyOn(console, 'error').mockImplementation(() => {})
+    try {
+      fire(cardEl('t00'), 'dragstart')
+      await settle()
+      fire(swim ? cell('A', 'doing') : column('doing'), 'dragover', 0, { x: 400, y: 300 })
+      await settle()
+      expect(frames).toHaveBeenCalledTimes(1)
+      rejectAvailable(new Error('available categories failed'))
+      await settle()
+      expect(q('[data-dragged="true"], .drop-allowed, .drop-disabled, [data-drop-target]')).toHaveLength(0)
+      expect(cancel).toHaveBeenCalledWith(77)
+      for (const [type, listener, options] of add.mock.calls) {
+        if (!['drop', 'dragend', 'mousemove'].includes(type)) continue
+        expect(remove).toHaveBeenCalledWith(type, listener, options)
+      }
+      expect(fakeClient.update).not.toHaveBeenCalled()
+      expect(fakeClient.diffUpdate).not.toHaveBeenCalled()
+    } finally {
+      add.mockRestore()
+      remove.mockRestore()
+      frames.mockRestore()
+      cancel.mockRestore()
+      report.mockRestore()
+    }
+  })
+
+  it('keeps the next drag usable when earlier available categories reject', async () => {
+    const groups = board({ todo: cards('t', 2, 'todo', 'A'), doing: [], done: [] })
+    let rejectAvailable!: (error: Error) => void
+    let resolveAvailable!: (states: string[]) => void
+    const available = vi
+      .fn()
+      .mockImplementationOnce(
+        async () =>
+          await new Promise<string[]>((_resolve, reject) => {
+            rejectAvailable = reject
+          })
+      )
+      .mockImplementationOnce(
+        async () =>
+          await new Promise<string[]>((resolve) => {
+            resolveAvailable = resolve
+          })
+      )
+    await mount({
+      ...(swim ? swimProps(groups, [lane('A')]) : legacyProps(groups)),
+      getAvailableCategories: available
+    })
+    await flush()
+    const report = vi.spyOn(console, 'error').mockImplementation(() => {})
+    try {
+      fire(cardEl('t00'), 'dragstart')
+      await settle()
+      fire(cardEl('t00'), 'dragend')
+      await settle()
+      fire(cardEl('t01'), 'dragstart')
+      await settle()
+      resolveAvailable(['todo', 'doing'])
+      await settle()
+      const destination = swim ? cell('A', 'doing') : column('doing')
+      const blocked = swim ? cell('A', 'done') : column('done')
+      fire(destination, 'dragover')
+      await settle()
+      expect(blocked.classList.contains('drop-disabled')).toBe(true)
+      rejectAvailable(new Error('earlier available categories failed'))
+      await settle()
+      expect(blocked.classList.contains('drop-disabled')).toBe(true)
+      expect(destination.classList.contains('drop-allowed')).toBe(true)
+      fire(destination, 'drop')
+      await settle()
+      expect(fakeClient.update).toHaveBeenCalledTimes(1)
+      expect(fakeClient.update).toHaveBeenCalledWith(
+        expect.objectContaining({ _id: 't01' }),
+        expect.objectContaining({ status: 'doing' })
+      )
+      expect(fakeClient.diffUpdate).not.toHaveBeenCalled()
+    } finally {
+      report.mockRestore()
+    }
+  })
+
+  it('ignores available categories from an earlier drag and from a destroyed board', async () => {
+    const groups = board({ todo: cards('t', 2, 'todo', 'A'), doing: [], done: [] })
+    const resolvers: Array<(states: string[]) => void> = []
+    const available = vi.fn(async () => await new Promise<string[]>((resolve) => resolvers.push(resolve)))
+    const component = await mount({
+      ...(swim ? swimProps(groups, [lane('A')]) : legacyProps(groups)),
+      getAvailableCategories: available
+    })
+    await flush()
+    fire(cardEl('t00'), 'dragstart')
+    await settle()
+    fire(cardEl('t00'), 'dragend')
+    await settle()
+    fire(cardEl('t01'), 'dragstart')
+    await settle()
+    fire(swim ? cell('A', 'doing') : column('doing'), 'dragover')
+    await settle()
+    resolvers[1](['todo', 'doing'])
+    await settle()
+    const destination = swim ? cell('A', 'done') : column('done')
+    expect(destination.classList.contains('drop-disabled')).toBe(true)
+    resolvers[0](['todo', 'done'])
+    await settle()
+    expect(destination.classList.contains('drop-disabled')).toBe(true)
+    fire(cardEl('t01'), 'dragend')
+    await settle()
+    fire(cardEl('t00'), 'dragstart')
+    await settle()
+    component.$destroy()
+    mounted = mounted.filter((entry) => entry !== component)
+    const queries = fakeQueries.calls.length
+    const frames = vi.spyOn(globalThis, 'requestAnimationFrame')
+    resolvers[2](['todo', 'done'])
+    await settle()
+    const scheduled = frames.mock.calls.length
+    frames.mockRestore()
+    expect(scheduled).toBe(0)
+    expect(fakeQueries.calls).toHaveLength(queries)
+    expect(q('.kanban-container')).toHaveLength(0)
+    expect(fakeClient.update).not.toHaveBeenCalled()
+    expect(fakeClient.diffUpdate).not.toHaveBeenCalled()
+  })
+
+  it('keeps insertion stable when hover changes between a card and its nested title', async () => {
+    const groups = board({ todo: cards('t', 2, 'todo', 'A'), doing: [] })
+    const setGroupByValues = vi.fn((g: Record<string, Item[]>, state: string, items: Item[]) => {
+      g[state] = items
+    })
+    await mount({ ...(swim ? swimProps(groups, [lane('A')]) : legacyProps(groups)), setGroupByValues })
+    await flush()
+    const source = cardEl('t00')
+    const target = cardEl('t01')
+    const title = one('[data-test="card-body"]', target)
+    vi.spyOn(target, 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 100, 200, 100))
+    Object.defineProperty(target, 'offsetHeight', { configurable: true, value: 100 })
+    Object.defineProperty(title, 'offsetHeight', { configurable: true, value: 20 })
+    vi.spyOn(title, 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 150, 200, 20))
+    fire(source, 'dragstart')
+    await settle()
+    fire(target, 'dragover', 55, { x: 150, y: 155 })
+    await settle()
+    const root = swim ? cell('A', 'todo') : column('todo')
+    expect(cardIds(root)).toEqual(['t01', 't00'])
+    const writes = setGroupByValues.mock.calls.length
+    const queries = fakeQueries.calls.length
+    for (let index = 0; index < 20; index++) {
+      fire(target, 'dragover', 55, { x: 150, y: 155 })
+      await settle()
+      expect(cardIds(root)).toEqual(['t01', 't00'])
+    }
+    expect(setGroupByValues).toHaveBeenCalledTimes(writes)
+    expect(fakeQueries.calls).toHaveLength(queries)
+    for (let index = 0; index < 20; index++) {
+      fire(index % 2 === 0 ? title : target, 'dragover', index % 2 === 0 ? 5 : 55, { x: 150, y: 155 })
+      await settle()
+      expect(cardIds(root)).toEqual(['t01', 't00'])
+      expect(cardEl('t00')).toBe(source)
+      expect(cardEl('t01')).toBe(target)
+      expect(one('[data-test="card-body"]', target)).toBe(title)
+    }
+    expect(setGroupByValues).toHaveBeenCalledTimes(writes)
+    expect(fakeQueries.calls).toHaveLength(queries)
+    expect(fakeClient.update).not.toHaveBeenCalled()
+    expect(fakeClient.diffUpdate).not.toHaveBeenCalled()
+  })
+
+  it.each([false, true])('reschedules edge scrolling only when offsets change, blocked: %s', async (blocked) => {
+    const groups = board({ todo: cards('t', 1, 'todo', 'A'), doing: [] })
+    await mount(swim ? swimProps(groups, [lane('A')]) : legacyProps(groups))
+    await flush()
+    const scroll = one('.kanban-container .scroll')
+    vi.spyOn(scroll, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 300, 300))
+    let left = 0
+    let top = 0
+    Object.defineProperties(scroll, {
+      scrollLeft: {
+        configurable: true,
+        get: () => left,
+        set: (value: number) => {
+          if (!blocked) left = value
+        }
+      },
+      scrollTop: {
+        configurable: true,
+        get: () => top,
+        set: (value: number) => {
+          if (!blocked) top = value
+        }
+      }
+    })
+    fire(cardEl('t00'), 'dragstart')
+    await settle()
+    const callbacks: FrameRequestCallback[] = []
+    const frames = vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((callback) => {
+      callbacks.push(callback)
+      return callbacks.length
+    })
+    fire(swim ? cell('A', 'doing') : column('doing'), 'dragover', 0, { x: 295, y: 295 })
+    expect(callbacks).toHaveLength(1)
+    callbacks[0](0)
+    const scheduled = callbacks.length
+    frames.mockRestore()
+    expect(scheduled).toBe(blocked ? 1 : 2)
+  })
+
+  it('keeps one diagonal scroll frame until both axes stop moving', async () => {
+    const groups = board({ todo: cards('t', 1, 'todo', 'A'), doing: [] })
+    await mount(swim ? swimProps(groups, [lane('A')]) : legacyProps(groups))
+    await flush()
+    const scroll = one('.kanban-container .scroll')
+    vi.spyOn(scroll, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 300, 300))
+    let top = 0
+    let blocked = false
+    Object.defineProperties(scroll, {
+      scrollLeft: { configurable: true, get: () => 0, set: () => {} },
+      scrollTop: {
+        configurable: true,
+        get: () => top,
+        set: (value: number) => {
+          if (!blocked) top = value
+        }
+      }
+    })
+    fire(cardEl('t00'), 'dragstart')
+    await settle()
+    const pending = new Map<number, FrameRequestCallback>()
+    let id = 0
+    const frames = vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((callback) => {
+      pending.set(++id, callback)
+      return id
+    })
+    const cancel = vi.spyOn(globalThis, 'cancelAnimationFrame').mockImplementation((key) => {
+      pending.delete(key)
+    })
+    try {
+      const destination = swim ? cell('A', 'doing') : column('doing')
+      for (let index = 0; index < 20; index++) fire(destination, 'dragover', 0, { x: 295, y: 295 })
+      expect(pending.size).toBe(1)
+      for (let index = 0; index < 3; index++) {
+        const [key, frame] = Array.from(pending.entries())[0]
+        pending.delete(key)
+        frame(index)
+        expect(pending.size).toBe(1)
+      }
+      expect(top).toBeGreaterThan(0)
+      blocked = true
+      const [key, frame] = Array.from(pending.entries())[0]
+      pending.delete(key)
+      frame(3)
+      expect(pending.size).toBe(0)
+      fire(destination, 'dragover', 0, { x: 295, y: 295 })
+      expect(pending.size).toBe(1)
+      fire(destination, 'dragend')
+      await settle()
+      expect(pending.size).toBe(0)
+    } finally {
+      frames.mockRestore()
+      cancel.mockRestore()
+    }
+  })
+
+  it('keeps the initial rectangle when the first drag loads landing spots asynchronously', async () => {
+    const groups = board({ todo: cards('t', 2, 'todo', 'A'), doing: [] })
+    const props = swim ? swimProps(groups, [lane('A')]) : legacyProps(groups)
+    const component = await mount({
+      ...props,
+      dropTargets: new Map(),
+      getAvailableCategories: async () => {
+        await Promise.resolve()
+        component.$set({
+          dropTargets: new Map([
+            ['todo', [{ id: 'todo' }]],
+            ['doing', [{ id: 'doing' }]]
+          ])
+        })
+        return ['todo', 'doing']
+      }
+    })
+    await flush()
+    vi.spyOn(cardEl('t00'), 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 100, 200, 100))
+    fire(cardEl('t00'), 'dragstart')
+    await settle()
+    const source = swim ? cell('A', 'todo') : column('todo')
+    fire(source, 'dragover', 0, { x: 104, y: 104 })
+    await settle()
+    expect(cardIds(source)).toEqual(['t00', 't01'])
+    expect(q('[data-drop-target]', source)).toHaveLength(0)
+    expect(q('[data-drop-target]', swim ? cell('A', 'doing') : column('doing'))).toHaveLength(1)
+    fire(source, 'drop', 0, { x: 104, y: 104 })
+    await settle()
+    expect(fakeClient.update).not.toHaveBeenCalled()
+    expect(fakeClient.diffUpdate).not.toHaveBeenCalled()
+  })
+
+  it.each([false, true])('keeps the initial card and cancels a nearby drop, on card: %s', async (onCard) => {
+    const groups = board({ todo: cards('t', 2, 'todo', 'A'), doing: [] })
+    const props = swim ? swimProps(groups, [lane('A')]) : legacyProps(groups)
+    await mount({
+      ...props,
+      dropTargets: new Map([
+        ['todo', [{ id: 'todo' }]],
+        ['doing', [{ id: 'doing' }]]
+      ])
+    })
+    await flush()
+    vi.spyOn(cardEl('t00'), 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 100, 200, 100))
+    fire(cardEl('t00'), 'dragstart')
+    await settle()
+    const source = swim ? cell('A', 'todo') : column('todo')
+    fire(source, 'dragover', 0, { x: 104, y: 104 })
+    await settle()
+    expect(cardIds(source)).toEqual(['t00', 't01'])
+    expect(q('[data-drop-target]', source)).toHaveLength(0)
+    expect(q('[data-drop-target]', swim ? cell('A', 'doing') : column('doing'))).toHaveLength(1)
+    fire(onCard ? cardEl('t00') : source, 'drop', 0, { x: 104, y: 104 })
+    await settle()
+    expect(fakeClient.update).not.toHaveBeenCalled()
+    expect(fakeClient.diffUpdate).not.toHaveBeenCalled()
+  })
+
+  it.each([false, true])(
+    'reveals source spots after leaving the initial rectangle and cancels on return, other column: %s',
+    async (otherColumn) => {
+      const groups = board({ todo: cards('t', 2, 'todo', 'A'), doing: [] })
+      const rank = groups.todo[0].rank
+      const props = swim ? swimProps(groups, [lane('A')]) : legacyProps(groups)
+      await mount({
+        ...props,
+        dropTargets: new Map([
+          ['todo', [{ id: 'todo' }]],
+          ['doing', [{ id: 'doing' }]]
+        ])
+      })
+      await flush()
+      vi.spyOn(cardEl('t00'), 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 100, 200, 100))
+      fire(cardEl('t00'), 'dragstart')
+      await settle()
+      const source = swim ? cell('A', 'todo') : column('todo')
+      const destination = otherColumn ? (swim ? cell('A', 'doing') : column('doing')) : source
+      fire(destination, 'dragover', 0, { x: 400, y: 220 })
+      await settle()
+      expect(q('[data-drop-target]', source)).toHaveLength(1)
+      fire(one('[data-drop-target]', source), 'dragover', 0, { x: 110, y: 110 })
+      await settle()
+      expect(q('[data-drop-target]', source)).toHaveLength(0)
+      expect(cardIds(source)).toEqual(['t00', 't01'])
+      fire(source, 'drop', 0, { x: 110, y: 110 })
+      await settle()
+      expect(groups.todo[0].rank).toBe(rank)
+      expect(fakeClient.update).not.toHaveBeenCalled()
+      expect(fakeClient.diffUpdate).not.toHaveBeenCalled()
+    }
+  )
+
+  it('shows every reachable column after movement and previews only the hovered spot', async () => {
+    const groups = board({ todo: cards('t', 1, 'todo', 'A'), doing: [], blocked: [] })
+    const props = swim ? swimProps(groups, [lane('A'), lane('B')]) : legacyProps(groups)
+    await mount({
+      ...props,
+      dropTargets: new Map(['todo', 'doing', 'blocked'].map((state) => [state, [{ id: 'shared' }]])),
+      getAvailableCategories: async () => ['todo', 'doing'],
+      getSwimLaneUpdateProps: () => undefined
+    })
+    await flush()
+    fire(cardEl('t00'), 'dragstart')
+    await settle()
+    expect(q('[data-drop-target]')).toHaveLength(0)
+    fire(swim ? cell('A', 'todo') : column('todo'), 'dragover')
+    await settle()
+    const source = swim ? cell('A', 'todo') : column('todo')
+    const destination = swim ? cell('A', 'doing') : column('doing')
+    expect(q('[data-drop-target]', source)).toHaveLength(1)
+    expect(q('[data-drop-target]', destination)).toHaveLength(1)
+    expect(q('[data-drop-target]', swim ? cell('A', 'blocked') : column('blocked'))).toHaveLength(0)
+    if (swim) expect(q('[data-drop-target]', laneBlock('B'))).toHaveLength(0)
+    expect(q('.drop-target-card')).toHaveLength(0)
+    fire(one('[data-drop-target]', destination), 'dragover')
+    await settle()
+    expect(q('.drop-target-card')).toHaveLength(1)
+    expect(q('.drop-target-card', source)).toHaveLength(0)
+    expect(one('.drop-target-card', destination).textContent).toBe('t00')
+  })
+
+  it.each([{ targets: [] }, { targets: ['a'] }, { targets: ['a', 'b'] }])(
+    'shows only available targets: $targets',
+    async ({ targets }) => {
+      const groups = board({ todo: cards('t', 1, 'todo', 'A'), doing: cards('d', 1, 'doing', 'A') })
+      const getUpdateProps = vi.fn((_doc: unknown, state: string, id?: string) => ({ status: id ?? state }))
+      const props = swim ? swimProps(groups, [lane('A')]) : legacyProps(groups)
+      await mount({
+        ...props,
+        dropTargets: new Map([['doing', targets.map((id) => ({ id }))]]),
+        getAvailableCategories: async () => (targets.length > 0 ? ['todo', 'doing'] : ['todo']),
+        getUpdateProps
+      })
+      await flush()
+      fire(cardEl('t00'), 'dragstart')
+      await settle()
+      const destination = swim ? cell('A', 'doing') : column('doing')
+      fire(destination, 'dragover')
+      await settle()
+      expect(q('[data-drop-target]', destination).map((el) => el.dataset.dropTarget)).toEqual(targets)
+      if (targets.length === 0) {
+        fire(destination, 'drop')
+        await settle()
+        expect(fakeClient.update).not.toHaveBeenCalled()
+        return
+      }
+      const target = one(`[data-drop-target="${targets[0]}"]`, destination)
+      fire(target, 'dragover')
+      await settle()
+      expect(q('[data-test="card-body"]', target).map((el) => el.textContent)).toEqual(['t00'])
+      expect(q('[data-test="card-body"]', destination).filter((el) => el.textContent === 't00')).toHaveLength(1)
+      fire(target, 'drop')
+      await settle()
+      expect(getUpdateProps).toHaveBeenCalledWith(expect.anything(), 'doing', targets[0])
+      expect(fakeClient.update).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ status: targets[0] }))
+    }
+  )
+
+  it('keeps ranking within a column with one landing spot', async () => {
+    const groups = board({ todo: cards('t', 2, 'todo', 'A') })
+    const second = groups.todo[1]
+    const props = swim ? swimProps(groups, [lane('A')]) : legacyProps(groups)
+    await mount({ ...props, dropTargets: new Map([['todo', [{ id: 'todo' }]]]) })
+    await flush()
+    fire(cardEl('t00'), 'dragstart')
+    await settle()
+    fire(cardEl('t01'), 'dragover', 5)
+    fire(cardEl('t01'), 'drop')
+    await settle()
+    expect(fakeClient.update).not.toHaveBeenCalled()
+    expect(fakeClient.diffUpdate).toHaveBeenCalledTimes(1)
+    const [target, update] = fakeClient.diffUpdate.mock.calls[0] as [Card, { rank: string }]
+    expect(target._id).toBe('t00')
+    expect(update.rank > second.rank).toBe(true)
   })
 })
 
@@ -1286,6 +2130,13 @@ describe('Kanban legacy drag', () => {
 
     expect(mouseCalls(add)).toHaveLength(2)
     expect(mouseCalls(remove)).toEqual(mouseCalls(add))
+    for (const type of ['drop', 'dragend']) {
+      const added = add.mock.calls.filter(([event]) => event === type)
+      const removed = remove.mock.calls.filter(([event]) => event === type)
+      expect(added).toHaveLength(2)
+      expect(removed).toEqual(added)
+      expect(added.every((call) => call[2] === true)).toBe(true)
+    }
     add.mockRestore()
     remove.mockRestore()
   })
@@ -1848,5 +2699,83 @@ describe('Kanban card modern mode', () => {
     await flush()
     expect(cardEls().length).toBeGreaterThan(0)
     expect(q('.card-container.modern')).toHaveLength(0)
+  })
+})
+
+describe('Kanban card click gestures', () => {
+  let body: HTMLElement
+  let open: ReturnType<typeof vi.fn>
+
+  beforeEach(async () => {
+    await mount(legacyProps(board({ todo: cards('gesture', 1, 'todo') })))
+    await flush()
+    body = one('[data-test="card-body"]', cardEl('gesture00'))
+    open = vi.fn()
+    body.addEventListener('click', open)
+  })
+
+  function gesture (target: Element, type: string, timeStamp: number, options: MouseEventInit = {}): MouseEvent {
+    const event = new MouseEvent(type, { bubbles: true, cancelable: true, detail: 1, ...options })
+    Object.defineProperty(event, 'timeStamp', { value: timeStamp })
+    target.dispatchEvent(event)
+    return event
+  }
+
+  it('opens on a short click but intercepts a held click before its child handler', () => {
+    gesture(body, 'pointerdown', 100)
+    gesture(body, 'pointerup', 150)
+    expect(gesture(body, 'click', 150).defaultPrevented).toBe(false)
+    expect(open).toHaveBeenCalledTimes(1)
+
+    gesture(body, 'pointerdown', 200)
+    gesture(body, 'pointerup', 700)
+    expect(gesture(body, 'click', 700).defaultPrevented).toBe(true)
+    expect(open).toHaveBeenCalledTimes(1)
+
+    gesture(body, 'pointerdown', 800)
+    gesture(body, 'click', 850)
+    expect(open).toHaveBeenCalledTimes(2)
+  })
+
+  it('ignores the click after a native drag, including its pointer cancellation', () => {
+    gesture(body, 'pointerdown', 100)
+    fire(cardEl('gesture00'), 'dragstart')
+    gesture(body, 'pointercancel', 150)
+    fire(cardEl('gesture00'), 'dragend')
+    expect(gesture(body, 'click', 200).defaultPrevented).toBe(true)
+    expect(open).not.toHaveBeenCalled()
+
+    gesture(body, 'pointerdown', 300)
+    gesture(body, 'click', 350)
+    expect(open).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps keyboard activation after a held pointer gesture', () => {
+    gesture(body, 'pointerdown', 100)
+    expect(gesture(body, 'click', 700, { detail: 0 }).defaultPrevented).toBe(false)
+    expect(open).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not retain a cancelled pointer hold', () => {
+    gesture(body, 'pointerdown', 100)
+    gesture(body, 'pointercancel', 150)
+    expect(gesture(body, 'click', 700).defaultPrevented).toBe(false)
+    expect(open).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not intercept secondary buttons', () => {
+    gesture(body, 'pointerdown', 100, { button: 2 })
+    expect(gesture(body, 'click', 700, { button: 2 }).defaultPrevented).toBe(false)
+    expect(open).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps held clicks on interactive child controls', () => {
+    const button = document.createElement('button')
+    body.appendChild(button)
+    const action = vi.fn()
+    button.addEventListener('click', action)
+    gesture(button, 'pointerdown', 100)
+    expect(gesture(button, 'click', 700).defaultPrevented).toBe(false)
+    expect(action).toHaveBeenCalledTimes(1)
   })
 })

@@ -340,21 +340,20 @@ export class StatusCounts {
 
   async load (
     client: TxOperations,
-    projects: Array<Ref<Project>>,
+    scope: DocumentQuery<Issue>,
     ids: Array<Ref<Status>>
   ): Promise<Map<Ref<Status>, number>> {
     const unique = [...new Set(ids)]
-    const key = JSON.stringify([[...projects].sort(), [...unique].sort()])
+    const key = JSON.stringify([scope, [...unique].sort()])
     if (this.result !== undefined && key === this.key) return await this.result
     this.key = key
     this.result = Promise.all(
       unique.map(
         async (status) =>
-          await client.findAll<Issue>(
-            tracker.class.Issue,
-            { space: { $in: projects }, status },
-            { limit: 1, total: true }
-          )
+          await client.findAll<Issue>(tracker.class.Issue, mergeQueries(scope, { status: { $in: [status] } }), {
+            limit: 1,
+            total: true
+          })
       )
     ).then((totals) => new Map(unique.map((id, i) => [id, totals[i].total])))
     this.result.catch(() => {

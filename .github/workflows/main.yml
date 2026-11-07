@@ -100,6 +100,16 @@ jobs:
           DOCKER_ACCESS_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
           DOCKER_CLI_HINTS: false
           DOCKER_BUILDKIT: 1
+          KANBAN_CPU_PROFILE_DIR: ${{ github.workspace }}/coverage/kanban-cpu
+
+      - name: Upload kanban CPU profiles
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: kanban-cpu-profiles
+          path: coverage/kanban-cpu/*.cpuprofile
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Coverage summary
         if: always()

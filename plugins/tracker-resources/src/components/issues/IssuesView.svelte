@@ -249,7 +249,7 @@
   defaultViewletDescriptor={board !== undefined ? tracker.viewlet.Kanban : undefined}
   hideViewlets={board !== undefined}
   searchFirst={board !== undefined}
-  adaptive={board !== undefined ? 'disabled' : undefined}
+  adaptive={board !== undefined ? 'freezeActions' : undefined}
   {viewlets}
   {label}
   {space}

@@ -126,8 +126,16 @@ describe('BoardEditor', () => {
 describe('StatusCounts', () => {
   // The server counts: each query answers with the total of its status
   function issuesClient (statuses: string[]): { client: TxOperations, findAll: jest.Mock } {
-    const findAll = jest.fn(async (_class: unknown, query: { status: string }) =>
-      Object.assign([], { total: statuses.filter((s) => s === query.status).length })
+    const findAll = jest.fn(
+      async (_class: unknown, query: { status: string | { $in?: string[], $nin?: string[] } }) => {
+        const status = query.status
+        const total = statuses.filter((s) =>
+          typeof status === 'string'
+            ? s === status
+            : (status.$in === undefined || status.$in.includes(s)) && !(status.$nin?.includes(s) ?? false)
+        ).length
+        return Object.assign([], { total })
+      }
     )
     return { client: stub<TxOperations>({ findAll }), findAll }
   }
@@ -135,7 +143,7 @@ describe('StatusCounts', () => {
   it('counts each status by the server, without fetching the issues', async () => {
     const { client, findAll } = issuesClient(['s1', 's1', 's2'])
     const counts = new StatusCounts()
-    const res = await counts.load(client, ['p1' as any, 'p2' as any], ['s1', 's2', 's3', 's1'] as any)
+    const res = await counts.load(client, { space: { $in: ['p1', 'p2'] as any } }, ['s1', 's2', 's3', 's1'] as any)
     expect(res.get('s1' as any)).toBe(2)
     expect(res.get('s2' as any)).toBe(1)
     expect(res.get('s3' as any)).toBe(0)
@@ -146,12 +154,34 @@ describe('StatusCounts', () => {
   it('does not query again for equal inputs', async () => {
     const { client, findAll } = issuesClient(['s1'])
     const counts = new StatusCounts()
-    await counts.load(client, ['p1' as any], ['s1', 's2'] as any)
+    await counts.load(client, { space: { $in: ['p1'] as any } }, ['s1', 's2'] as any)
     // A status moved between columns keeps the set: no new queries
-    await counts.load(client, ['p1' as any], ['s2', 's1'] as any)
+    await counts.load(client, { space: { $in: ['p1'] as any } }, ['s2', 's1'] as any)
     expect(findAll).toHaveBeenCalledTimes(2)
-    await counts.load(client, ['p1' as any, 'p2' as any], ['s1', 's2'] as any)
+    await counts.load(client, { space: { $in: ['p1', 'p2'] as any } }, ['s1', 's2'] as any)
     expect(findAll).toHaveBeenCalledTimes(4)
+  })
+
+  it('keeps board filters when counting statuses and invalidates their cached totals', async () => {
+    const { client, findAll } = issuesClient([])
+    const counts = new StatusCounts()
+    const scope = { space: { $in: ['p1'] as any }, priority: 1, status: { $in: ['s1'] as any } }
+    await counts.load(client, scope, ['s1', 's2'] as any)
+    expect(findAll.mock.calls[0][1]).toEqual({ space: { $in: ['p1'] }, priority: 1, status: { $in: ['s1'] } })
+    expect(findAll.mock.calls[1][1]).toEqual({ space: { $in: ['p1'] }, priority: 1, status: { $in: [] } })
+    await counts.load(client, { ...scope, priority: 2 }, ['s1', 's2'] as any)
+    expect(findAll).toHaveBeenCalledTimes(4)
+    expect(findAll.mock.calls[2][1]).toMatchObject({ priority: 2 })
+  })
+
+  it.each([
+    { $in: ['s1', 's2'], $nin: ['s1'] },
+    { $nin: ['s1'], $in: ['s1', 's2'] }
+  ])('intersects all status predicates when counting: %j', async (status) => {
+    const { client } = issuesClient(['s1', 's1', 's2', 's3'])
+    const counts = new StatusCounts()
+    const res = await counts.load(client, { status: status as any }, ['s1', 's2', 's3'] as any)
+    expect([...res.values()]).toEqual([0, 1, 0])
   })
 })
 

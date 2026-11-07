@@ -45,8 +45,12 @@
 <style lang="scss">
   .quick-filters {
     display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
     align-items: center;
     gap: var(--spacing-1);
+    overflow-x: auto;
+    padding: 0.125rem;
   }
   .divider {
     flex-shrink: 0;

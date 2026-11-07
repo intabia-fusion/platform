@@ -26,6 +26,19 @@ Codex и pi читают `.agents/skills`; для других агентов п
 Не создавайте отдельные копии инструкций для каждого агента. Инструменты и модели выбирайте из доступных в текущей сессии.
 Навыки работы с планами находятся в `../foundation-tasks/.agents/skills`; их пользовательские ссылки устанавливает `../foundation-tasks/scripts/install-skills.sh`.
 
+## Continuing work and browser verification
+
+- A status question does not pause the task. Answer briefly and continue the remaining authorized work; a completed implementation stage still needs its agreed checks. Honor explicit pause and resume requests.
+- Verify Browser MCP with an actual tool call after a browser or session restart. An available tool is not proof of a live connection; a requested profile is not captured until the tool confirms it.
+- Reuse the authenticated browser session. Use a separate tab for automated checks and viewport changes; preserve the user's original tab and restore browser emulation afterward.
+- If an interaction still hangs after a fix, collect and inspect a performance profile of the reproduced hang before making another performance change. Read large traces incrementally.
+
+## Shared UI changes
+
+- Changes to a board-specific view must also preserve the ordinary project kanban. Check flat columns and swim lanes, single-status and merged columns, and collapsed columns when changing the shared kanban engine.
+- Native drag checks must include holding and releasing without movement, returning directly or through another column, Escape, and dragging after scrolling. Cancellation must clear indicators without a click, document write, or rank change; intentional moves and reordering must still work.
+- When extracting a TypeScript controller, move ownership of behavior and internal state together. Keep the component's public contract and a narrow input/output boundary; do not mirror every field through reactive assignments.
+
 ## Where features live
 
 Before searching the code for a feature, open the feature map [`docs/features/README.md`](docs/features/README.md): one file per product area (tracker, chat, meetings, documents/QMS, AI, billing, ...) with the packages, data model, main flows with files and symbols, and a "where to look if you need to..." list. How the pieces fit together (plugin layers, client -> transactor -> DB path, pods and services): [`docs/architecture.md`](docs/architecture.md).
@@ -126,6 +139,8 @@ docker compose -f dev/docker-compose.yaml up -d aibot --force-recreate
 
 UI via `pnpm build:watch` auto-picks changes, no container restart needed.
 
+Container-backed sanity serves a built frontend image. Before visual verification, check which image is running and whether it includes the current changes. Use `pnpm docker:build --to @hcengineering/pod-front` for a scoped image build, not `pnpm docker --to ...`. When updating only the frontend, recreate `front0` with `--no-deps` so the other stand services keep their versions.
+
 ## Changelog
 
 ```bash
@@ -217,6 +232,8 @@ Flags:
 - Extra playwright flags pass through `pnpm run uitest` unchanged.
 
 Do not run bare `npx playwright test` - without `pnpm run uitest`'s env wiring and `-c ./tests/playwright.config.ts` neither dotenv nor `storageState` load, and every test fails on login with `BadRequest`.
+
+The seeded Default project and project type are shared mutable fixtures: other specs add task types and statuses in existing categories. Use test-owned data or derive expectations from the actual fixture; do not assume fixed status counts or unique categories. A test that passes alone must also handle the fixture changes from the full suite; see `docs/memory/sanity-flaky-tests.md` for confirmed cases.
 
 ### Tracing and retries
 
