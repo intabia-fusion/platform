@@ -1,0 +1,151 @@
+entry "../../../PlatformDesign.tenn"
+
+item Root {
+  auto-layout column; width 1520; padding 40; gap 28; color #f7f7fa; corner-radius 16; font-family "IBM Plex Sans"
+  item Header {
+    auto-layout row; width fill; align center
+    item Title { title "Старт продукта: кнопка против email-формы на landing"; width fill; font-size 22; font-weight 600; line-height 28; text-color #201240; layout left }
+    item Num { title "Сравнение 6 из 6"; font-size 12; line-height 16; text-color #7f7f7f }
+  }
+  item Columns {
+    auto-layout row; gap 32; width fill; align start
+    item Current {
+      auto-layout column; gap 12; width 700
+      item Label {
+        auto-layout row; padding 4 10; color #ffffff; border-color #00000014; corner-radius 6
+        item Text { title "СЕЙЧАС - platform-stage.intabia.ru"; font-size 11; font-weight 600; text-color #5c6470 }
+      }
+      item Scene_current {
+        auto-layout abs; width 700; height 680; color #130228; corner-radius 12; clip yes
+        item art_c {
+          auto-layout abs; width 700; height 680; clip yes
+          item glow_c { width 400; height 400; corner-radius 200; color linear 45 #6c3bd4 0 #13022800 1; opacity 0.5; pos 150 -120 }
+        }
+        item top_c {
+          auto-layout row; width 700; padding 14 20; gap 8; align center; pos 0 -14
+          item logo_c { title "Интабия Платформа"; width fill; font-size 12; font-weight 700; line-height 16; text-color #ffffff; layout left }
+          item chip_demo {
+            auto-layout row; padding 6 14; align center; corner-radius 999; border-color #6c3bd4
+            item t { title Демо; font-size 10; line-height 13; text-color #ffffff }
+          }
+          item chip_login {
+            auto-layout row; padding 6 14; align center; corner-radius 999; border-color #ffffff66
+            item t2 { title Войти; font-size 10; line-height 13; text-color #ffffff }
+          }
+        }
+        item hero_c {
+          auto-layout column; width 652; gap 10; pos 24 -72
+          item h1_c {
+            auto-layout column; gap 2; width fill
+            item l1_c { title "Управляйте командной работой"; width fill; font-size 28; font-weight 700; line-height 34; text-color #ffffff; layout left }
+            item l2_c { title "на единой AI-платформе"; width fill; font-size 28; font-weight 700; line-height 34; text-color #a96bff; layout left }
+          }
+          item lead_c { title "Задачи, документы, встречи и договорённости - в одном контуре, без потери рабочего контекста."; width fill; font-size 12; line-height 16; text-color #ffffffb3; layout left }
+          item cta_c {
+            auto-layout row; padding 12 20; align center; color #f5f1e8; corner-radius 999
+            item cta_text_c { title "+ Попробовать бесплатно"; font-size 14; font-weight 600; line-height 18; text-color #201240 }
+          }
+          item caption_c { title "Без привязки карты. Можно начать одному. Бесплатно для команд до 5 человек."; width fill; font-size 11; line-height 15; text-color #ffffff99; layout left }
+        }
+      }
+      item Problem {
+        auto-layout column; gap 6; width fill; padding 12; color #ffffff; border-color #ee7a7a66; corner-radius 10
+        item PTitle { title "Проблема"; font-size 12; font-weight 600; text-color #c14b4b; layout left }
+        item PText { title "CTA ведёт всех на одну страницу signup. Возвращающийся пользователь теряется, email с landing не захвачен - в приложении вводит его заново."; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+      }
+    }
+    item Proposed {
+      auto-layout column; gap 12; width 700
+      item Label {
+        auto-layout row; padding 4 10; color #efdcf2; corner-radius 6
+        item Text { title "ПРЕДЛОЖЕНИЕ"; font-size 11; font-weight 600; text-color #7d1f70 }
+      }
+      item Scene_proposed {
+        auto-layout abs; width 700; height 680; color #130228; corner-radius 12; clip yes
+        item art_p {
+          auto-layout abs; width 700; height 680; clip yes
+          item glow_p { width 400; height 400; corner-radius 200; color linear 45 #6c3bd4 0 #13022800 1; opacity 0.5; pos 150 -120 }
+        }
+        item top_p {
+          auto-layout row; width 700; padding 14 20; gap 8; align center; pos 0 -14
+          item logo_p { title "Интабия Платформа"; width fill; font-size 12; font-weight 700; line-height 16; text-color #ffffff; layout left }
+          item chip_demo_p {
+            auto-layout row; padding 6 14; align center; corner-radius 999; border-color #6c3bd4
+            item tp { title Демо; font-size 10; line-height 13; text-color #ffffff }
+          }
+          item chip_login_p {
+            auto-layout row; padding 5 12; gap 6; align center; corner-radius 999; color #ffffff10; border-color #ffffff22
+            item avp {
+              auto-layout row; width 14; height 14; align center; justify center; color #6c3bd4; corner-radius 7
+              item avpt { title АС; font-size 7; font-weight 600; text-color #ffffff }
+            }
+            item lcolp {
+              auto-layout column; gap 0
+              item ltp { title "Войти как"; font-size 7; line-height 9; text-color #ffffff99 }
+              item lep { title "anna.smirnova@intabia.io"; font-size 9; line-height 11; text-color #ffffff }
+            }
+          }
+        }
+        item hero_p {
+          auto-layout column; width 652; gap 10; pos 24 -72
+          item h1_p {
+            auto-layout column; gap 2; width fill
+            item l1_p { title "Управляйте командной работой"; width fill; font-size 28; font-weight 700; line-height 34; text-color #ffffff; layout left }
+            item l2_p { title "на единой AI-платформе"; width fill; font-size 28; font-weight 700; line-height 34; text-color #a96bff; layout left }
+          }
+          item lead_p { title "Задачи, документы, встречи и договорённости - в одном контуре, без потери рабочего контекста."; width fill; font-size 12; line-height 16; text-color #ffffffb3; layout left }
+          item email_row_p {
+            auto-layout row; gap 10; width fill; align center
+            item f_email_p {
+              auto-layout row; width 300; height 40; padding 0 12; align center; color #ffffff12; border-color #ffffff2e; corner-radius 8
+              item ph_p { title "Рабочая почта"; width fill; font-size 11; line-height 14; text-color #ffffff8c; layout left }
+            }
+            item cta_p {
+              auto-layout row; padding 14 20; align center; justify center; color #f5f1e8; corner-radius 999
+              item cta_text_p { title Продолжить; font-size 14; font-weight 600; line-height 18; text-color #201240 }
+            }
+          }
+          item caption_p { title "Без привязки карты. Можно начать одному. Бесплатно для команд до 5 человек."; width fill; font-size 11; line-height 15; text-color #ffffff99; layout left }
+        }
+      }
+      item Change {
+        auto-layout column; gap 6; width fill; padding 12; color #ffffff; border-color #d9b9d8; corner-radius 10
+        item CTitle { title "Что меняется"; font-size 12; font-weight 600; text-color #7d1f70; layout left }
+        item CText { title "Email вводится один раз и передаётся в приложение одноразовым подписанным handoff. Дальше ветвление без повторного ввода: парольный экран для существующего, код из письма для новых и OTP. Соцсети не возвращаем."; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+      }
+    }
+  }
+  item Routes {
+    auto-layout column; width fill; gap 8
+    item RTitle { title "Маршруты после ввода почты"; width fill; font-size 15; font-weight 600; line-height 20; text-color #201240; layout left }
+    item R1 {
+      auto-layout row; width fill; padding 12 14; gap 12; align center; color #ffffff; border-color #00000014; corner-radius 10
+      item Num1 {
+        auto-layout row; width 24; height 24; align center; justify center; color #efdcf2; corner-radius 12
+        item N1 { title 1; font-size 12; font-weight 600; text-color #7d1f70 }
+      }
+      item T1 { title "Существующий с паролем: парольный экран с подставленным email, без повторного ввода → после пароля сразу в последнее активное пространство"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+    }
+    item R2 {
+      auto-layout row; width fill; padding 12 14; gap 12; align center; color #ffffff; border-color #00000014; corner-radius 10
+      item Num2 {
+        auto-layout row; width 24; height 24; align center; justify center; color #efdcf2; corner-radius 12
+        item N2 { title 2; font-size 12; font-weight 600; text-color #7d1f70 }
+      }
+      item T2 { title "Требуется OTP: экран кода с подставленным email → существующий в последнее пространство, новый - в профиль"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+    }
+    item R3 {
+      auto-layout row; width fill; padding 12 14; gap 12; align center; color #ffffff; border-color #00000014; corner-radius 10
+      item Num3 {
+        auto-layout row; width 24; height 24; align center; justify center; color #efdcf2; corner-radius 12
+        item N3 { title 3; font-size 12; font-weight 600; text-color #7d1f70 }
+      }
+      item T3 { title "Новый: код из письма → профиль → первое пространство; приглашение сохраняется и после входа ведёт в нужное пространство"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+    }
+  }
+  item Requirements {
+    auto-layout column; gap 6; width fill; padding 12; color #ffffff; border-color #00000014; corner-radius 10
+    item ReqTitle { title "Требования к реализации (не показываем пользователю)"; font-size 12; font-weight 600; text-color #5c6470; layout left }
+    item ReqText { title "API: определение способа входа по email без раскрытия деталей аккаунта; одноразовый подписанный handoff landing→app с email; last-workspace в глобальном профиле; сохранение invite через вход. Rate limiting и anti-enumeration - на стороне API, в UI не выводим."; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+  }
+}

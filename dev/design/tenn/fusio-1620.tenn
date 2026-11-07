@@ -1,117 +1,15 @@
 entry "../../../PlatformDesign.tenn"
 
+element "1 Финальный flow: landing и пространство" --from-file "final-1620-flow.tenn"
 
 
 
 
 
 
-element "0 Маршрут входа" {
-  item Screen {
-    auto-layout column; width 1920; height 1080; padding 56; gap 24; color #f7f7fa
-    item Header {
-      auto-layout column; width fill; gap 8
-      item Title { title "Вход и первый запуск"; font-size 30; font-weight 600; line-height 38; layout left }
-      item Subtitle { title "Пользователь попадает в личный профиль или сразу в пространство в зависимости от способа входа"; font-size 15; line-height 22; text-color #5c6470; layout left }
-    }
-    item Routes {
-      auto-layout column; width fill; height fill; gap 20
-      item Sign_in {
-        auto-layout row; width fill; height fill; padding 24; gap 16; align center; color #ffffff; border-color #00000014; corner-radius 12
-        item Route_label {
-          auto-layout column; width 220; gap 6
-          item Number { title "01"; font-size 12; font-weight 600; line-height 16; text-color #8c267d; layout left }
-          item Title { title "Обычный вход"; font-size 18; font-weight 600; line-height 24; layout left }
-          item Hint { title "У пользователя уже есть аккаунт"; width 200; font-size 13; line-height 18; text-color #7f7f7f; layout left }
-        }
-        item Login_card {
-          auto-layout column; width fill; height fill; padding 20; gap 8; justify center; color #f8f5fa; corner-radius 10
-          item Step { title "ВХОД"; font-size 11; font-weight 600; line-height 14; text-color #8c267d; layout left }
-          item Title { title "Email или GitHub"; font-size 17; font-weight 600; line-height 23; layout left }
-          item Text { title "Вход в существующий аккаунт"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
-        }
-        item Arrow_1 { title ">"; width 24; font-size 24; text-color #a3a3ad }
-        item Profile_card {
-          auto-layout column; width fill; height fill; padding 20; gap 8; justify center; color #f8f5fa; corner-radius 10
-          item Step { title "ЛИЧНЫЙ КАБИНЕТ"; font-size 11; font-weight 600; line-height 14; text-color #8c267d; layout left }
-          item Title { title "Профиль и пространства"; font-size 17; font-weight 600; line-height 23; layout left }
-          item Text { title "Личные данные и доступные пространства"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
-        }
-        item Arrow_2 { title ">"; width 24; font-size 24; text-color #a3a3ad }
-        item Workspace_card {
-          auto-layout column; width fill; height fill; padding 20; gap 8; justify center; color #efdcf2; corner-radius 10
-          item Step { title "РАБОТА"; font-size 11; font-weight 600; line-height 14; text-color #7d1f70; layout left }
-          item Title { title "Выбранное пространство"; font-size 17; font-weight 600; line-height 23; layout left }
-          item Text { title "Переход в рабочий интерфейс"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
-        }
-      }
-      item Registration {
-        auto-layout row; width fill; height fill; padding 24; gap 16; align center; color #ffffff; border-color #00000014; corner-radius 12
-        item Route_label {
-          auto-layout column; width 220; gap 6
-          item Number { title "02"; font-size 12; font-weight 600; line-height 16; text-color #8c267d; layout left }
-          item Title { title "Регистрация"; font-size 18; font-weight 600; line-height 24; layout left }
-          item Hint { title "Первый вход нового пользователя"; width 200; font-size 13; line-height 18; text-color #7f7f7f; layout left }
-        }
-        item Signup_card {
-          auto-layout column; width fill; height fill; padding 20; gap 8; justify center; color #f8f5fa; corner-radius 10
-          item Step { title "РЕГИСТРАЦИЯ"; font-size 11; font-weight 600; line-height 14; text-color #8c267d; layout left }
-          item Title { title "Создание аккаунта"; font-size 17; font-weight 600; line-height 23; layout left }
-          item Text { title "Email, имя и пароль"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
-        }
-        item Arrow_1 { title ">"; width 24; font-size 24; text-color #a3a3ad }
-        item Profile_card {
-          auto-layout column; width fill; height fill; padding 20; gap 8; justify center; color #f8f5fa; corner-radius 10
-          item Step { title "ПЕРВЫЙ ШАГ"; font-size 11; font-weight 600; line-height 14; text-color #8c267d; layout left }
-          item Title { title "Пустой профиль"; font-size 17; font-weight 600; line-height 23; layout left }
-          item Text { title "Заполнение личных данных"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
-        }
-        item Arrow_2 { title ">"; width 24; font-size 24; text-color #a3a3ad }
-        item Workspace_card {
-          auto-layout column; width fill; height fill; padding 20; gap 8; justify center; color #efdcf2; corner-radius 10
-          item Step { title "ВТОРОЙ ШАГ"; font-size 11; font-weight 600; line-height 14; text-color #7d1f70; layout left }
-          item Title { title "Первое пространство"; font-size 17; font-weight 600; line-height 23; layout left }
-          item Text { title "Создание пространства и вход в него"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
-        }
-      }
-      item Invitation {
-        auto-layout row; width fill; height fill; padding 24; gap 16; align center; color #ffffff; border-color #00000014; corner-radius 12
-        item Route_label {
-          auto-layout column; width 220; gap 6
-          item Number { title "03"; font-size 12; font-weight 600; line-height 16; text-color #8c267d; layout left }
-          item Title { title "Ссылка на пространство"; font-size 18; font-weight 600; line-height 24; layout left }
-          item Hint { title "Приглашение или прямая ссылка"; width 200; font-size 13; line-height 18; text-color #7f7f7f; layout left }
-        }
-        item Link_card {
-          auto-layout column; width fill; height fill; padding 20; gap 8; justify center; color #f8f5fa; corner-radius 10
-          item Step { title "ССЫЛКА"; font-size 11; font-weight 600; line-height 14; text-color #8c267d; layout left }
-          item Title { title "Открытие приглашения"; font-size 17; font-weight 600; line-height 23; layout left }
-          item Text { title "Вход или регистрация при необходимости"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
-        }
-        item Arrow_1 { title ">"; width 24; font-size 24; text-color #a3a3ad }
-        item Workspace_card {
-          auto-layout column; width fill; height fill; padding 20; gap 8; justify center; color #efdcf2; corner-radius 10
-          item Step { title "СРАЗУ В РАБОТУ"; font-size 11; font-weight 600; line-height 14; text-color #7d1f70; layout left }
-          item Title { title "Пространство из ссылки"; font-size 17; font-weight 600; line-height 23; layout left }
-          item Text { title "Личный кабинет не перехватывает переход"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
-        }
-        item Arrow_2 { title ">"; width 24; font-size 24; text-color #a3a3ad }
-        item Profile_card {
-          auto-layout column; width fill; height fill; padding 20; gap 8; justify center; color #f8f5fa; corner-radius 10
-          item Step { title "ПО ЗАПРОСУ"; font-size 11; font-weight 600; line-height 14; text-color #8c267d; layout left }
-          item Title { title "Меню аккаунта"; font-size 17; font-weight 600; line-height 23; layout left }
-          item Text { title "Переход в профиль из рабочего интерфейса"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
-        }
-      }
-    }
-    item Note {
-      auto-layout row; width fill; padding 16 20; gap 12; align center; color #efdcf2; corner-radius 10
-      use Libraries.ui_kit.Icon.kit_Person as Icon { width 20; height 20; color #7d1f70 }
-      item Text { title "Личный профиль и подписки принадлежат аккаунту, а не отдельному пространству"; width fill; font-size 14; line-height 20; text-color #7d1f70; layout left }
-    }
-  }
-}
-element "1 Пространства" {
+
+element "Группа: профиль, подписки, поддержка (экраны 14-22)" {
+  element "14 Пространства" {
   use Libraries.profile_kit.ProfilePage as Screen {
     at Cabinet.Sidebar.navigation.Workspaces { color #efdcf2; text-color #7d1f70 }
     slot header {
@@ -167,7 +65,7 @@ element "1 Пространства" {
     }
   }
 }
-element "2 Пространства - пусто" {
+element "15 Пространства - пусто" {
   use Libraries.profile_kit.ProfilePage as Screen {
     at Cabinet.Sidebar.navigation.Workspaces { color #efdcf2; text-color #7d1f70 }
     slot header {
@@ -197,7 +95,7 @@ element "2 Пространства - пусто" {
     }
   }
 }
-element "3 Подписки" {
+element "16 Подписки" {
   use Libraries.profile_kit.ProfilePage as Screen {
     at Cabinet.Sidebar.navigation.Subscriptions { color #efdcf2; text-color #7d1f70 }
     slot header {
@@ -259,7 +157,7 @@ element "3 Подписки" {
     }
   }
 }
-element "4 Профиль" {
+element "17 Профиль" {
   use Libraries.profile_kit.ProfilePage as Screen {
     at Cabinet.Sidebar.navigation.Profile { color #efdcf2; text-color #7d1f70 }
     slot header {
@@ -307,7 +205,7 @@ element "4 Профиль" {
     }
   }
 }
-element "5 Безопасность" {
+element "18 Безопасность" {
   use Libraries.profile_kit.ProfilePage as Screen {
     at Cabinet.Sidebar.navigation.Security { color #efdcf2; text-color #7d1f70 }
     slot header {
@@ -365,7 +263,7 @@ element "5 Безопасность" {
     }
   }
 }
-element "6 Меню аккаунта" {
+element "19 Меню аккаунта" {
   item Screen {
     auto-layout abs; width 1920; height 1080; clip yes; color #ffffff
     use Libraries.workbench.Workbench as Workbench { pos 0 0 }
@@ -418,7 +316,7 @@ element "6 Меню аккаунта" {
   }
 }
 
-element "7 Обновить план" {
+element "20 Обновить план" {
   item Screen {
     auto-layout abs; width 1920; height 1080; clip yes; color #ffffff
     use Libraries.workbench.Workbench as Workbench { pos 0 0 }
@@ -604,7 +502,7 @@ element "7 Обновить план" {
   }
 }
 
-element "8 Использование - popup" {
+element "21 Использование - popup" {
   item Screen {
     auto-layout abs; width 1920; height 1080; clip yes; color #ffffff
     use Libraries.workbench.Workbench as Workbench { pos 0 0 }
@@ -658,7 +556,7 @@ element "8 Использование - popup" {
   }
 }
 
-element "9 Панель поддержки" {
+element "22 Панель поддержки" {
   item Screen {
     auto-layout abs; width 1920; height 1080; clip yes; color #ffffff
     use Libraries.workbench.Workbench as Workbench {
@@ -701,4 +599,670 @@ element "9 Панель поддержки" {
       }
     }
   }
+}
+}
+
+element "2 Landing: email" {
+
+  item Screen {
+    auto-layout abs; width 1920; height 1080; color #130228; clip yes
+    item pool { width 1920; height 1080; path "M 1240 950 A 210 58 0 1 0 1660 950 A 210 58 0 1 0 1240 950 Z"; view-box 0 0 1920 1080; color #c77dff33; pos 0 0 }
+    item beam_soft { width 1920; height 1080; path "M 1378 0 L 1442 0 L 1442 1080 L 1378 1080 Z"; view-box 0 0 1920 1080; color #a96bff3d; pos 0 0 }
+    item beam_v { width 1920; height 1080; path "M 1398 0 L 1422 0 L 1422 1080 L 1398 1080 Z"; view-box 0 0 1920 1080; color #e9ccff; pos 0 0 }
+    item ball_low { width 260; height 260; corner-radius 130; color linear 45 #2a0a4e 0 #05010d 1; pos 1170 700 }
+    item disc_rim { width 1920; height 1080; path "M 1059 803 A 380 110 18 0 1 1781 569 A 380 110 18 0 1 1059 803 Z"; view-box 0 0 1920 1080; color #150429; pos 0 0 }
+    item disc_top { width 1920; height 1080; path "M 1059 785 A 380 110 18 0 1 1781 551 A 380 110 18 0 1 1059 785 Z"; view-box 0 0 1920 1080; color #6f54ad; pos 0 0 }
+    item disc_sheen { width 1920; height 1080; path "M 1119 745 A 330 84 18 0 1 1741 535 A 330 84 18 0 1 1119 745 Z"; view-box 0 0 1920 1080; color #b39ddb66; pos 0 0 }
+    item ball_top { width 270; height 270; corner-radius 135; color linear 45 #8a4de0 0 #180533 1; pos 1345 195 }
+    item "Top bar" {
+      auto-layout row; width 1920; padding 20 96; gap 26; align center; pos 0 -16
+      item Logo {
+        auto-layout row; gap 10; align center
+        item Logo_mark {
+          auto-layout row; width 34; height 34; align center; justify center; color #6c3bd4; corner-radius 8
+          item Logo_p { title P; font-size 18; font-weight 700; text-color #ffffff }
+        }
+        item Logo_text {
+          auto-layout column; gap 0
+          item Logo_l1 { title ИНТАБИЯ; font-size 11; font-weight 700; line-height 13; text-color #ffffff; layout left }
+          item Logo_l2 { title ПЛАТФОРМА; font-size 11; font-weight 700; line-height 13; text-color #a96bff; layout left }
+        }
+      }
+      item menu_gap { width 140 }
+      item Menu {
+        auto-layout row; gap 22; align center
+        item M1 { title Инструменты; font-size 14; line-height 17; text-color #ffffffb3 }
+        item M2 { title Демо; font-size 14; line-height 17; text-color #ffffffb3 }
+        item M3 { title Тарифы; font-size 14; line-height 17; text-color #ffffffb3 }
+        item M4 { title Безопасность; font-size 14; line-height 17; text-color #ffffffb3 }
+        item M5 { title Блог; font-size 14; line-height 17; text-color #ffffffb3 }
+        item M6 { title Контакты; font-size 14; line-height 17; text-color #ffffffb3 }
+      }
+      item grow { width fill }
+      item Demo {
+        auto-layout row; padding 10 22; align center; corner-radius 999; border-color #6c3bd4
+        item Demo_text { title Демо; font-size 14; line-height 18; text-color #ffffff }
+      }
+      item Login {
+        auto-layout row; padding 10 24; align center; corner-radius 999; border-color #ffffff66
+        item Login_text { title Войти; font-size 14; line-height 18; text-color #ffffff }
+      }
+    }
+    item Hero {
+      auto-layout column; width 900; gap 22; pos 96 -247
+      item H1 {
+        auto-layout column; gap 2; width fill
+        item L1 { title Управляйте; width fill; font-size 76; font-weight 700; line-height 96; text-color #ffffff; layout left }
+        item L2 { title "командной работой"; width fill; font-size 76; font-weight 700; line-height 96; text-color #ffffff; layout left }
+        item L3 { title "на единой AI-платформе"; width fill; font-size 76; font-weight 700; line-height 96; text-color #a96bff; layout left }
+      }
+      item Lead { title "Задачи, документы, встречи и договорённости - в одном контуре, без потери рабочего контекста."; width 560; font-size 16; line-height 24; text-color #ffffffb3; layout left }
+      item "email row" {
+        auto-layout row; gap 12; width fill; align center
+        item "Email input" {
+          auto-layout row; width 360; height 44; padding 0 14; align center; color #ffffff12; border-color #ffffff2e; corner-radius 8
+          item "Email placeholder" { title "Рабочая почта"; width fill; font-size 13; line-height 17; text-color #ffffff8c; layout left }
+        }
+        item CTA {
+          auto-layout row; padding 14 28; align center; justify center; color #f5f1e8; corner-radius 999
+          item Cta_text { title Продолжить; font-size 16; font-weight 600; line-height 20; text-color #201240 }
+        }
+      }
+      item caption { title "Без привязки карты. Можно начать одному. Бесплатно для команд до 5 человек."; width fill; font-size 13; line-height 18; text-color #ffffff99; layout left }
+    }
+  }}
+
+element "3 Вход: пароль" {
+  use Libraries.login_kit.LoginPage as Screen {
+    slot Card_slot {
+      use Libraries.login_kit.LoginCard as Card {
+        slot content {
+          use Libraries.login_kit.LoginForm as Form {
+            slot content {
+              item form {
+                auto-layout column; gap 20; width 396; clip yes; font-family "IBM Plex Sans"
+                item Heading {
+                  auto-layout column; gap 8; width 396; align center
+                  item Title { title "С возвращением"; font-size 28; font-weight 700; line-height 36; text-color #000061 }
+                  item "email row" {
+                    auto-layout row; gap 8; align center; justify center; width 396
+                    item Email { title "anna.smirnova@intabia.io"; font-size 14; line-height 18; text-color #000061 }
+                    item Change { title "Сменить"; font-size 14; line-height 18; text-color #6e48ce }
+                  }
+                  item Subtitle { title "После входа - сразу в «Intabia Platform», ваше последнее активное пространство"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+                }
+                use Libraries.login_kit.LoginField as "Field Пароль" {
+                  label Пароль
+                  at Value { title "********" }
+                }
+                use Libraries.login_kit.LoginButton as "Button Войти" {
+                  at Button { title Войти }
+                }
+                item hint { title "Сменить пространство можно внутри продукта"; width fill; font-size 12; line-height 16; text-color #7f7f7f; layout left }
+              }
+            }
+          }
+          use Libraries.login_kit.LoginAction as "Action Код" {
+            at Action { title "Войти с кодом из письма" }
+          }
+        }
+      }
+    }
+  }
+}
+
+element "4 Код из письма" {
+  use Libraries.login_kit.LoginPage as Screen {
+    slot Card_slot {
+      use Libraries.login_kit.LoginCard as Card {
+        slot content {
+          use Libraries.login_kit.LoginForm as Form {
+            padding 16 24
+            slot content {
+              item form {
+                auto-layout column; gap 24; width 412; clip yes; font-family "IBM Plex Sans"
+                use Libraries.login_kit.LoginOtpHeader as Header {
+                  at title_row.Enter_the_code { title "Введите код" }
+                  at description.We_sent_the_code_to { title "Мы отправили код на" }
+                  at description.name_example_com { title "anna.smirnova@intabia.io" }
+                }
+                use Libraries.login_kit.LoginCode as Code {
+                  at digit_1._1 { title "4" }
+                  at digit_2._2 { title "8" }
+                  at digit_3._3 { title "2" }
+                  at digit_4._4 { title "9" }
+                  at digit_5._5 { title "1" }
+                  at digit_6._6 { title "3" }
+                }
+                item footer {
+                  auto-layout column; gap 8; width 412
+                  item hint { title "Не пришло письмо? Проверьте папку «Спам»."; font-size 12.8; line-height 17; text-color #00000066; layout left }
+                  item row {
+                    auto-layout row; gap 16; width 412
+                    item Resend { title "Отправить код повторно"; font-size 12.8; line-height 17; text-color #333333 }
+                    item Alt { title "Сменить почту"; font-size 12.8; line-height 17; text-color #333333 }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+element "5 Код: неверный код" {
+
+  use Libraries.login_kit.LoginPage as Screen {
+    slot Card_slot {
+      use Libraries.login_kit.LoginCard as Card {
+        slot content {
+          use Libraries.login_kit.LoginForm as Form {
+            padding 16 24
+            slot content {
+              item form {
+                auto-layout column; gap 20; width 412; clip yes; font-family "IBM Plex Sans"
+                use Libraries.login_kit.LoginOtpHeader as Header {
+                  at title_row.Enter_the_code { title "Введите код" }
+                  at description.We_sent_the_code_to { title "Мы отправили код на" }
+                  at description.name_example_com { title "anna.smirnova@intabia.io" }
+                }
+                use Libraries.login_kit.LoginCode as Code {
+                  at digit_1._1 { title "4" }
+                  at digit_2._2 { title "8" }
+                  at digit_3._3 { title "2" }
+                  at digit_4._4 { title "9" }
+                  at digit_5._5 { title "1" }
+                  at digit_6._6 { title "3" }
+                }
+                use Libraries.login_kit.LoginStatus as Status {
+                  kind error
+                  at message.Message { title "Неверный код. Проверьте письмо и введите код ещё раз." }
+                }
+                item footer {
+                  auto-layout column; gap 8; width 412
+                  item row {
+                    auto-layout row; gap 16; width 412
+                    item Resend { title "Отправить код повторно"; font-size 12.8; line-height 17; text-color #333333 }
+                    item Alt { title "Сменить почту"; font-size 12.8; line-height 17; text-color #333333 }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }}
+
+element "6 Новый: имя пространства" {
+  use Libraries.login_kit.LoginPage as Screen {
+    slot Card_slot {
+      use Libraries.login_kit.LoginCard as Card {
+        slot content {
+          use Libraries.login_kit.LoginForm as Form {
+            slot content {
+              item form {
+                auto-layout column; gap 24; width 396; clip yes; font-family "IBM Plex Sans"
+                item Heading {
+                  auto-layout column; gap 8; width 396; align center
+                  item Title { title "Сначала пространство"; font-size 28; font-weight 700; line-height 36; text-color #000061 }
+                  item Subtitle { title "Назовите его - создадим, пока вы заполняете профиль"; width fill; font-size 14; line-height 18; text-color #5c6470; layout left }
+                }
+                use Libraries.login_kit.LoginField as "Field Название" {
+                  label "Название пространства"
+                  at Value { title "Команда Анны" }
+                }
+                use Libraries.login_kit.LoginButton as "Button Создать" {
+                  at Button { title "Создать и продолжить" }
+                }
+              }
+            }
+          }
+          use Libraries.login_kit.LoginAction as "Action Приглашение" {
+            at Action { title "У меня есть ссылка-приглашение" }
+          }
+        }
+      }
+    }
+  }
+}
+
+element "7 Новый: профиль при создании" {
+  use Libraries.login_kit.LoginPage as Screen {
+    slot Card_slot {
+      use Libraries.login_kit.LoginCard as Card {
+        slot content {
+          use Libraries.login_kit.LoginForm as Form {
+            slot content {
+              item form {
+                auto-layout column; gap 16; width 396; clip yes; font-family "IBM Plex Sans"
+                item Heading {
+                  auto-layout column; gap 8; width 396; align center
+                  item Title { title "Ваш профиль"; font-size 28; font-weight 700; line-height 36; text-color #000061 }
+                  item Subtitle { title "«Команда Анны» создаётся, пока вы заполняете форму"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+                  item "email row" {
+                    auto-layout row; gap 8; align center; justify center; width 396
+                    item Email { title "anna.smirnova@intabia.io"; font-size 14; line-height 18; text-color #000061 }
+                    item Change { title "Сменить"; font-size 14; line-height 18; text-color #6e48ce }
+                  }
+                }
+                use Libraries.login_kit.LoginStatus as Status {
+                  at message.Message { title "Создаём «Команда Анны»…" }
+                }
+                use Libraries.login_kit.LoginField as "Field Имя" {
+                  label "Имя"
+                  at Value { title "Анна" }
+                }
+                use Libraries.login_kit.LoginField as "Field Фамилия" {
+                  label "Фамилия"
+                  at Value { title "Смирнова" }
+                }
+                use Libraries.login_kit.LoginField as "Field Телефон" {
+                  label "Телефон · необязательно"
+                  at Value { hidden yes }
+                }
+                item consent {
+                  auto-layout column; gap 6; width 396
+                  use Libraries.login_kit.LoginCheckbox as "Option Согласие" {
+                    checked true; label "Соглашаюсь с Условиями использования и обработкой персональных данных"
+                  }
+                  item links { title "Условия использования · Политика конфиденциальности"; width fill; font-size 10; line-height 13; text-color #6e48ce; layout left }
+                }
+                use Libraries.login_kit.LoginButton as "Button Сохранить" {
+                  at Button { title "Сохранить и войти" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+element "8 Новый: готово, пространство создано" {
+  item Screen {
+    auto-layout abs; width 1920; height 1080; clip yes; color #ffffff
+    use Libraries.workbench.Workbench as Workbench {
+      pos -0 -1
+      slot Main_panel {
+        item Workspace {
+          auto-layout abs; width 1515; height 1044; color #ffffff
+          item Header {
+            auto-layout row; width 1435; height 56; gap 20; align center; pos 40 -28
+            item Title { title "Команда Анны"; width fill; font-size 26; font-weight 600; line-height 32; layout left }
+            item Hint { title "создано из профиля anna.smirnova@intabia.io"; font-size 12; line-height 16; text-color #7f7f7f }
+          }
+          item Panel {
+            auto-layout row; width 800; padding 16 18; gap 14; align center; color #f8f5fa; border-color #d9b9d8; corner-radius 12; pos 265 -946
+            item Panel_icon {
+              auto-layout row; width 40; height 40; align center; justify center; color #efdcf2; corner-radius 10
+              use Libraries.ui_kit.Icon.kit_Person as Icon { width 20; height 20; color #8c267d }
+            }
+            item Panel_text {
+              auto-layout column; width fill; gap 4
+              item Title { title "«Команда Анны» готово - профиль сохранён в глобальном аккаунте"; font-size 14; font-weight 600; line-height 18; layout left }
+              item Text { title "Профиль один на все пространства. Приглашение, если оно было, сохранено и ждёт вас."; font-size 12; line-height 17; text-color #5c6470; layout left }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+element "9 Ошибка создания пространства" {
+  use Libraries.login_kit.LoginPage as Screen {
+    slot Card_slot {
+      use Libraries.login_kit.LoginCard as Card {
+        slot content {
+          use Libraries.login_kit.LoginForm as Form {
+            slot content {
+              item form {
+                auto-layout column; gap 20; width 396; clip yes; font-family "IBM Plex Sans"
+                item Heading {
+                  auto-layout column; gap 8; width 396; align center
+                  item Title { title "Ваш профиль"; font-size 28; font-weight 700; line-height 36; text-color #000061 }
+                  item Subtitle { title "Пространство не создано - вы ничего не потеряли"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+                }
+                use Libraries.login_kit.LoginStatus as Status {
+                  kind error
+                  at message.Message { title "Не удалось создать «Команда Анны». Профиль сохранён." }
+                }
+                use Libraries.login_kit.LoginField as "Field Имя" {
+                  label Имя
+                  at Value { title Анна }
+                }
+                use Libraries.login_kit.LoginField as "Field Фамилия" {
+                  label Фамилия
+                  at Value { title Смирнова }
+                }
+                item actions {
+                  auto-layout row; gap 8; width 396
+                  use Libraries.login_kit.LoginButton as "Button Повторить" {
+                    width 190
+                    at Button { title Повторить }
+                  }
+                  use Libraries.login_kit.LoginButton as "Button Войти" {
+                    kind default; width 190
+                    at Button { title "Войти и создать позже" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+element "10 Fallback: выбор пространства" {
+  use Libraries.login_kit.LoginPage as Screen {
+    slot Card_slot {
+      use Libraries.login_kit.LoginCard as Card {
+        slot content {
+          use Libraries.login_kit.LoginForm as Form {
+            slot content {
+              item form {
+                auto-layout column; gap 12; width 396; clip yes; font-family "IBM Plex Sans"
+                item Heading {
+                  auto-layout column; gap 8; width 396; align center
+                  item Hello { title "Здравствуйте, Анна"; font-size 28; font-weight 700; line-height 36; text-color #000061 }
+                  item Account { title "anna.smirnova@intabia.io · Бесплатный план"; font-size 14; line-height 18; text-color #5c6470 }
+                }
+                item spacer { auto-layout abs; width 396; height 4; clip yes }
+                use Libraries.login_kit.LoginWorkspace as Platform { width 396; name "Intabia Platform"; note "Владелец · сегодня, 16:42" }
+                use Libraries.login_kit.LoginWorkspace as Marketing { width 396; name "Маркетинг"; note "Участник · вчера" }
+                use Libraries.login_kit.LoginWorkspace as Personal { width 396; name "Личное"; note "Владелец · 28 октября" }
+                item Invitation {
+                  auto-layout column; gap 12; width 396; padding 16; color #f8f5fa; border-color #d9b9d8; corner-radius 12; clip yes
+                  item "inv text" {
+                    auto-layout column; gap 4; width fill
+                    item T1 { title "Приглашение в «Дизайн-команда»"; font-size 14; font-weight 600; line-height 18; text-color #201240; layout left }
+                    item T2 { title "Мария Орлова · роль: участник"; font-size 13; line-height 18; text-color #5c6470; layout left }
+                  }
+                  item "inv buttons" {
+                    auto-layout row; gap 8; width fill; justify end
+                    use Libraries.login_kit.LoginButton as Decline {
+                      kind default; width 140
+                      at Button { title "Отклонить" }
+                    }
+                    use Libraries.login_kit.LoginButton as Accept {
+                      width 140
+                      at Button { title "Принять" }
+                    }
+                  }
+                }
+                item spacer2 { auto-layout abs; width 396; height 8; clip yes }
+                use Libraries.login_kit.LoginButton as "Button Создать" {
+                  kind default
+                  at Button { title "Создать пространство" }
+                }
+                use Libraries.login_kit.LoginLinks as Links {
+                  slot content {
+                    item "link row" {
+                      auto-layout row; gap 3; align center; justify center; width 396; wrap yes; line-gap 3
+                      item Link { title "Выйти из аккаунта"; font-size 12.8; line-height 17; text-color #333333 }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+element "11 Приглашение: продолжение" {
+  use Libraries.login_kit.LoginPage as Screen {
+    slot Card_slot {
+      use Libraries.login_kit.LoginCard as Card {
+        slot content {
+          use Libraries.login_kit.LoginForm as Form {
+            slot content {
+              item form {
+                auto-layout column; gap 24; width 396; clip yes; font-family "IBM Plex Sans"
+                item Heading {
+                  auto-layout column; gap 8; width 396; align center
+                  item Title { title "Вас приглашают"; font-size 28; font-weight 700; line-height 36; text-color #000061 }
+                  item Subtitle { title "Введите почту и код из письма - приглашение сохранится и дождётся вас здесь."; width fill; font-size 14; line-height 18; text-color #5c6470; layout left }
+                }
+                item "invite chip" {
+                  auto-layout row; gap 12; width 396; padding 12; align center; color #f3e5f5; corner-radius 12; clip yes
+                  item Mark {
+                    auto-layout row; width 40; height 40; align center; justify center; color #cf13a2; corner-radius 20
+                    item Letter { title "Д"; font-size 16; font-weight 600; text-color #ffffff }
+                  }
+                  item "chip text" {
+                    auto-layout column; gap 4; width fill
+                    item Name { title "Дизайн-команда"; font-size 14; font-weight 600; line-height 18; text-color #201240; layout left }
+                    item From { title "Мария Орлова · роль: участник"; font-size 13; line-height 18; text-color #5c6470; layout left }
+                  }
+                }
+                use Libraries.login_kit.LoginButton as "Button Продолжить" {
+                  at Button { title "Продолжить" }
+                }
+                use Libraries.login_kit.LoginLinks as Links {
+                  slot content {
+                    item "link row" {
+                      auto-layout row; gap 3; align center; justify center; width 396; wrap yes; line-gap 3
+                      item Link { title "Отклонить приглашение"; font-size 12.8; line-height 17; text-color #333333 }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+element "12 Схема: аккаунт и пространства" {
+  styles {
+    item { font-size 13; color #ffffff; corner-radius 12 }
+    line { color #a3a3ad }
+    accent { color #efdcf2; text-color #7d1f70 }
+  }
+  item "Landing: рабочая почта" {
+    pos -420 -60
+    body "email вводится один раз, на старте продукта"
+  }
+  item "Существующий: пароль" {
+    pos -420 -260
+    body "парольный экран с подставленным email"
+  }
+  item "Код из письма" {
+    pos -120 -260
+    body "если требуется OTP - для новых и существующих"
+  }
+  item "Новый аккаунт: профиль" {
+    pos -120 -460
+    body "имя, фамилия; пространство создаётся в фоне"
+  }
+  item "Глобальный профиль аккаунта" {
+    pos 120 -60
+    use-style accent
+    body "email, имя, телефон, последнее пространство - один на все"
+  }
+  item "Первое пространство" {
+    pos -120 -660
+    body "имя до профиля; создание идёт в фоне"
+  }
+  item "Последнее пространство" {
+    pos 420 -260
+    body "сразу после пароля или кода; если нет - выбор или создание"
+  }
+  item "Приглашения" {
+    pos 420 -460
+    body "сохраняются, ведут в нужное пространство после входа"
+  }
+  item "12 Новый flow: email на landing, пароль или код, сразу в последнее пространство" {
+    pos -420 100
+    display text
+    font-size 12
+    text-color #5c6470
+  }
+  link "Landing: рабочая почта" "Существующий: пароль" { display arrow }
+  link "Landing: рабочая почта" "Код из письма" { display arrow }
+  link "Существующий: пароль" "Последнее пространство" { display arrow }
+  link "Код из письма" "Последнее пространство" { display arrow }
+  link "Код из письма" "Новый аккаунт: профиль" { display arrow }
+  link "Новый аккаунт: профиль" "Глобальный профиль аккаунта" { display arrow }
+  link "Новый аккаунт: профиль" "Первое пространство" { display arrow }
+  link "Первое пространство" "Последнее пространство" { display arrow }
+  link "Глобальный профиль аккаунта" "Последнее пространство" { display arrow }
+  link "Приглашения" "Последнее пространство" { display arrow; line-style dashed }
+}
+
+element "13 Вход: последнее пространство" {
+  item Screen {
+    auto-layout abs; width 1920; height 1080; clip yes; color #ffffff
+    use Libraries.workbench.Workbench as Workbench {
+      pos -0 -1
+      slot Main_panel {
+        item Workspace {
+          auto-layout abs; width 1515; height 1044; color #ffffff
+          item Header {
+            auto-layout row; width 1435; height 56; gap 20; align center; pos 40 -28
+            item Title { title "Intabia Platform"; width fill; font-size 26; font-weight 600; line-height 32; layout left }
+            item Hint { title "последнее активное пространство"; font-size 12; line-height 16; text-color #7f7f7f }
+          }
+          item Panel {
+            auto-layout row; width 800; padding 16 18; gap 14; align center; color #f8f5fa; border-color #d9b9d8; corner-radius 12; pos 265 -946
+            item Panel_icon {
+              auto-layout row; width 40; height 40; align center; justify center; color #efdcf2; corner-radius 10
+              use Libraries.ui_kit.Icon.kit_Person as Icon { width 20; height 20; color #8c267d }
+            }
+            item Panel_text {
+              auto-layout column; width fill; gap 4
+              item Title { title "Вы вошли сразу в последнее активное пространство"; font-size 14; font-weight 600; line-height 18; layout left }
+              item Text { title "Если последнего нет - покажем выбор или создание. Сменить пространство: меню профиля."; font-size 12; line-height 17; text-color #5c6470; layout left }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+element "23 Черновик: маршрут входа (устарел)" {
+  item Screen {
+    auto-layout column; width 1920; height 1080; padding 56; gap 24; color #f7f7fa
+    item Header {
+      auto-layout column; width fill; gap 8
+      item Title { title "Черновик до landing (устарел): вход и первый запуск"; font-size 30; font-weight 600; line-height 38; layout left }
+      item Subtitle { title "Пользователь попадает в личный профиль или сразу в пространство в зависимости от способа входа"; font-size 15; line-height 22; text-color #5c6470; layout left }
+    }
+    item Routes {
+      auto-layout column; width fill; height fill; gap 20
+      item Sign_in {
+        auto-layout row; width fill; height fill; padding 24; gap 16; align center; color #ffffff; border-color #00000014; corner-radius 12
+        item Route_label {
+          auto-layout column; width 220; gap 6
+          item Number { title "01"; font-size 12; font-weight 600; line-height 16; text-color #8c267d; layout left }
+          item Title { title "Обычный вход"; font-size 18; font-weight 600; line-height 24; layout left }
+          item Hint { title "У пользователя уже есть аккаунт"; width 200; font-size 13; line-height 18; text-color #7f7f7f; layout left }
+        }
+        item Login_card {
+          auto-layout column; width fill; height fill; padding 20; gap 8; justify center; color #f8f5fa; corner-radius 10
+          item Step { title "ВХОД"; font-size 11; font-weight 600; line-height 14; text-color #8c267d; layout left }
+          item Title { title "Email или GitHub"; font-size 17; font-weight 600; line-height 23; layout left }
+          item Text { title "Вход в существующий аккаунт"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+        }
+        item Arrow_1 { title ">"; width 24; font-size 24; text-color #a3a3ad }
+        item Profile_card {
+          auto-layout column; width fill; height fill; padding 20; gap 8; justify center; color #f8f5fa; corner-radius 10
+          item Step { title "ЛИЧНЫЙ КАБИНЕТ"; font-size 11; font-weight 600; line-height 14; text-color #8c267d; layout left }
+          item Title { title "Профиль и пространства"; font-size 17; font-weight 600; line-height 23; layout left }
+          item Text { title "Личные данные и доступные пространства"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+        }
+        item Arrow_2 { title ">"; width 24; font-size 24; text-color #a3a3ad }
+        item Workspace_card {
+          auto-layout column; width fill; height fill; padding 20; gap 8; justify center; color #efdcf2; corner-radius 10
+          item Step { title "РАБОТА"; font-size 11; font-weight 600; line-height 14; text-color #7d1f70; layout left }
+          item Title { title "Выбранное пространство"; font-size 17; font-weight 600; line-height 23; layout left }
+          item Text { title "Переход в рабочий интерфейс"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+        }
+      }
+      item Registration {
+        auto-layout row; width fill; height fill; padding 24; gap 16; align center; color #ffffff; border-color #00000014; corner-radius 12
+        item Route_label {
+          auto-layout column; width 220; gap 6
+          item Number { title "02"; font-size 12; font-weight 600; line-height 16; text-color #8c267d; layout left }
+          item Title { title "Регистрация"; font-size 18; font-weight 600; line-height 24; layout left }
+          item Hint { title "Первый вход нового пользователя"; width 200; font-size 13; line-height 18; text-color #7f7f7f; layout left }
+        }
+        item Signup_card {
+          auto-layout column; width fill; height fill; padding 20; gap 8; justify center; color #f8f5fa; corner-radius 10
+          item Step { title "РЕГИСТРАЦИЯ"; font-size 11; font-weight 600; line-height 14; text-color #8c267d; layout left }
+          item Title { title "Создание аккаунта"; font-size 17; font-weight 600; line-height 23; layout left }
+          item Text { title "Email, имя и пароль"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+        }
+        item Arrow_1 { title ">"; width 24; font-size 24; text-color #a3a3ad }
+        item Profile_card {
+          auto-layout column; width fill; height fill; padding 20; gap 8; justify center; color #f8f5fa; corner-radius 10
+          item Step { title "ПЕРВЫЙ ШАГ"; font-size 11; font-weight 600; line-height 14; text-color #8c267d; layout left }
+          item Title { title "Пустой профиль"; font-size 17; font-weight 600; line-height 23; layout left }
+          item Text { title "Заполнение личных данных"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+        }
+        item Arrow_2 { title ">"; width 24; font-size 24; text-color #a3a3ad }
+        item Workspace_card {
+          auto-layout column; width fill; height fill; padding 20; gap 8; justify center; color #efdcf2; corner-radius 10
+          item Step { title "ВТОРОЙ ШАГ"; font-size 11; font-weight 600; line-height 14; text-color #7d1f70; layout left }
+          item Title { title "Первое пространство"; font-size 17; font-weight 600; line-height 23; layout left }
+          item Text { title "Создание пространства и вход в него"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+        }
+      }
+      item Invitation {
+        auto-layout row; width fill; height fill; padding 24; gap 16; align center; color #ffffff; border-color #00000014; corner-radius 12
+        item Route_label {
+          auto-layout column; width 220; gap 6
+          item Number { title "03"; font-size 12; font-weight 600; line-height 16; text-color #8c267d; layout left }
+          item Title { title "Ссылка на пространство"; font-size 18; font-weight 600; line-height 24; layout left }
+          item Hint { title "Приглашение или прямая ссылка"; width 200; font-size 13; line-height 18; text-color #7f7f7f; layout left }
+        }
+        item Link_card {
+          auto-layout column; width fill; height fill; padding 20; gap 8; justify center; color #f8f5fa; corner-radius 10
+          item Step { title "ССЫЛКА"; font-size 11; font-weight 600; line-height 14; text-color #8c267d; layout left }
+          item Title { title "Открытие приглашения"; font-size 17; font-weight 600; line-height 23; layout left }
+          item Text { title "Вход или регистрация при необходимости"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+        }
+        item Arrow_1 { title ">"; width 24; font-size 24; text-color #a3a3ad }
+        item Workspace_card {
+          auto-layout column; width fill; height fill; padding 20; gap 8; justify center; color #efdcf2; corner-radius 10
+          item Step { title "СРАЗУ В РАБОТУ"; font-size 11; font-weight 600; line-height 14; text-color #7d1f70; layout left }
+          item Title { title "Пространство из ссылки"; font-size 17; font-weight 600; line-height 23; layout left }
+          item Text { title "Личный кабинет не перехватывает переход"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+        }
+        item Arrow_2 { title ">"; width 24; font-size 24; text-color #a3a3ad }
+        item Profile_card {
+          auto-layout column; width fill; height fill; padding 20; gap 8; justify center; color #f8f5fa; corner-radius 10
+          item Step { title "ПО ЗАПРОСУ"; font-size 11; font-weight 600; line-height 14; text-color #8c267d; layout left }
+          item Title { title "Меню аккаунта"; font-size 17; font-weight 600; line-height 23; layout left }
+          item Text { title "Переход в профиль из рабочего интерфейса"; width fill; font-size 13; line-height 18; text-color #5c6470; layout left }
+        }
+      }
+    }
+    item Note {
+      auto-layout row; width fill; padding 16 20; gap 12; align center; color #efdcf2; corner-radius 10
+      use Libraries.ui_kit.Icon.kit_Person as Icon { width 20; height 20; color #7d1f70 }
+      item Text { title "Личный профиль и подписки принадлежат аккаунту, а не отдельному пространству"; width fill; font-size 14; line-height 20; text-color #7d1f70; layout left }
+    }
+  }
+}
+
+element "24 Архив: сравнения и альтернативы" {
+  element "Сравнение 1: Старт - табы против почты" --from-file "cmp-1620-start.tenn"
+element "Сравнение 2: Регистрация - длинная против минимальной" --from-file "cmp-1620-signup.tenn"
+element "Сравнение 3: Пространства - список против профиля" --from-file "cmp-1620-workspace.tenn"
+element "Сравнение 4: Код - сноска против равного пути" --from-file "cmp-1620-otp.tenn"
+element "Сравнение 5: После кода - профиль и пространство (A/B)" --from-file "cmp-1620-after-otp.tenn"
+element "Сравнение 6: Landing - кнопка против email-старта" --from-file "cmp-1620-landing.tenn"
 }

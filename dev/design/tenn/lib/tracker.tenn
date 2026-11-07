@@ -1,6 +1,10 @@
 entry "../../../../PlatformDesign.tenn"
 
 element Cards {
+	item "§ IssueCard" {
+	auto-layout abs; width 814; height 252; color gray-500; border-color #0000000f; corner-radius 8; pos -8 -5
+	item title { title IssueCard; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
+}
 	item IssueCard {
 	export let id = APP-12; export let title = "Fix the board layout when a column has no limit"; export let parent = ""; export let estimation = "Оценка 4h"
 	export let density = detailed; auto-layout column; gap 8; padding 12 14; width 234; clip yes; color #ffffff; border-color #0000000f; corner-radius 8
@@ -29,7 +33,7 @@ element Cards {
 			item ring { width 14; height 14; corner-radius 7; border-color #5195d7; line-width 1.5; pos 1 -1 }
 			item wedge { width 16; height 16; path "M8 8L8 3A5 5 0 0 1 13 8Z"; view-box 0 0 16 16; color #5195d7 }
 		}
-		item title { font-size 14; line-height 18; font-family "IBM Plex Sans"; font-weight 500; layout left; width fill; title ${title} }
+		item title { font-size 14; line-height 18; font-family "IBM Plex Sans"; font-weight 300; layout left; width fill; title ${title} }
 	}
 	item chips {
 		auto-layout row; gap 6; width 204; clip yes; wrap yes; line-gap 6
@@ -71,7 +75,7 @@ element Cards {
 }
 	item "IssueCard/dense" {
 	export let id = APP-12; export let title = "Fix the board layout…"; auto-layout column; gap 4; padding 6 10; width 234; clip yes; color #ffffff
-	border-color #0000000f; corner-radius 8; shadow 0 -1 3 #0000000f; pos 556 -44
+	border-color #0000000f; corner-radius 8; shadow 0 -1 3 #0000000f; pos 294 -140
 	item row {
 		auto-layout row; gap 6; align center; width fill; clip yes
 		item "StatusIcon/active" {
@@ -87,10 +91,6 @@ element Cards {
 		}
 	}
 }
-	item "§ IssueCard" {
-	auto-layout abs; width 814; height 252; color #ffffff; border-color #0000000f; corner-radius 8; pos 0 0
-	item title { title IssueCard; font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 600; layout left; pos 24 -14 }
-}
 	item "IssueCard/compact" {
 	export let id = APP-12; export let title = "Fix the board layout when a column has no limit"; auto-layout column; gap 6; padding 8 10; width 234; clip yes
 	color #ffffff; border-color #0000000f; corner-radius 8; shadow 0 -1 3 #0000000f; pos 290 -44
@@ -101,7 +101,7 @@ element Cards {
 			item ring { width 14; height 14; corner-radius 7; border-color #5195d7; line-width 1.5; pos 1 -1 }
 			item wedge { width 16; height 16; path "M8 8L8 3A5 5 0 0 1 13 8Z"; view-box 0 0 16 16; color #5195d7 }
 		}
-		item title { font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 500; layout left; width fill; title ${title} }
+		item title { font-size 13; line-height 16; font-family "IBM Plex Sans"; font-weight 200; layout left; width fill; title ${title} }
 		use Libraries.ui_kit.People.Avatar as "Avatar/20" {
 			color #6260c2; corner-radius 10
 			at initials { title AJ; font-size 8; line-height 10 }
@@ -119,6 +119,7 @@ element Cards {
 		}
 	}
 }
+
 }
 element List {
 	item "§ IssueRow" {
