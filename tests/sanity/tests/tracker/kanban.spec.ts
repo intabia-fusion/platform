@@ -15,7 +15,8 @@
 
 import { expect, test } from '../fixtures'
 import tracker, { IssuePriority, type Issue } from '@hcengineering/tracker'
-import { type Ref, type TxOperations } from '@hcengineering/core'
+import core, { type Ref, type TxOperations } from '@hcengineering/core'
+import task, { createStatusAtomic, type ProjectType, type TaskType } from '@hcengineering/task'
 import {
   connectTracker,
   createComponent,
@@ -1141,6 +1142,131 @@ test.describe('Kanban board', () => {
       await expect(merged.locator(`[data-card-id="${cardId}"]`)).toHaveCount(1)
       await expect(inBacklog.locator(`[data-card-id="${cardId}"]`)).toHaveCount(0)
       await expect.poll(async () => await board.cardIdsIn(merged)).toEqual(placed)
+    })
+
+    test('merge columns by category groups owned statuses and reset keeps other boards groups', async ({ page }) => {
+      const projectTypeId = generateId() as Ref<ProjectType>
+      const taskTypeId = generateId() as Ref<TaskType>
+      const projectId = generateId() as typeof ctx.project._id
+      const fixturePrefix = `${titlePrefix}category-`
+      const sourceType = await client.findOne(task.class.ProjectType, { _id: ctx.project.type })
+      const sourceTask = await client.findOne(task.class.TaskType, { _id: ctx.taskType })
+      const sourceStatus = await client.findOne(tracker.class.IssueStatus, { _id: ctx.statuses.get('Backlog') })
+      if (sourceType === undefined || sourceTask === undefined || sourceStatus === undefined) {
+        throw new Error('Missing tracker project type, task type or Backlog status')
+      }
+      expect(sourceStatus.category).toBeDefined()
+      const ownedStatuses: Array<typeof sourceStatus._id> = []
+      try {
+        await client.createDoc(
+          task.class.ProjectType,
+          sourceType.space,
+          {
+            name: fixturePrefix,
+            description: '',
+            descriptor: sourceType.descriptor,
+            targetClass: sourceType.targetClass,
+            roles: 0,
+            tasks: [taskTypeId],
+            statuses: [],
+            classic: sourceType.classic
+          },
+          projectTypeId
+        )
+        await client.createDoc(
+          task.class.TaskType,
+          sourceTask.space,
+          {
+            name: fixturePrefix,
+            parent: projectTypeId,
+            descriptor: sourceTask.descriptor,
+            ofClass: sourceTask.ofClass,
+            targetClass: sourceTask.targetClass,
+            statusClass: sourceTask.statusClass,
+            statusCategories: sourceTask.statusCategories,
+            isRootTaskType: true,
+            statuses: []
+          },
+          taskTypeId
+        )
+        for (const name of ['First', 'Second']) {
+          const status = await createStatusAtomic(
+            client,
+            projectTypeId,
+            tracker.class.IssueStatus,
+            {
+              name: `${fixturePrefix}${name}`,
+              ofAttribute: sourceStatus.ofAttribute,
+              category: sourceStatus.category
+            },
+            [{ taskType: taskTypeId, place: (statuses, id) => [...statuses, id] }]
+          )
+          expect(status.reused).toBe(false)
+          ownedStatuses.push(status.id as typeof sourceStatus._id)
+        }
+        await client.createDoc(
+          tracker.class.Project,
+          core.space.Space,
+          {
+            name: fixturePrefix,
+            description: '',
+            private: false,
+            archived: false,
+            members: ctx.project.members,
+            type: projectTypeId,
+            identifier: `MC${generateId(6)}`,
+            sequence: 0,
+            defaultTimeReportDay: ctx.project.defaultTimeReportDay
+          },
+          projectId
+        )
+        const ownedContext = await getProjectContext(client, projectId)
+        const cards = []
+        for (const status of ownedStatuses) {
+          cards.push(await createIssue(client, ownedContext, { title: `${fixturePrefix}${status}`, status }))
+        }
+        await openTrackerBoard(page, projectId)
+        const board = new KanbanBoardPage(page)
+        const [first, second] = ownedStatuses
+        await board.mergeColumns(first, `${fixturePrefix}Second`)
+        const [key] = Object.keys(await board.storedColumns('merged'))
+        expect(key).toBeDefined()
+        const foreign = ['foreign-status-done', 'foreign-status-canceled']
+        await page.evaluate(
+          ([k, groups]) => {
+            localStorage.setItem(k, groups)
+          },
+          [key, JSON.stringify([foreign])]
+        )
+        await openTrackerBoard(page, projectId, true)
+        await expect(board.column(first)).toBeVisible()
+        await expect(board.column(second)).toBeVisible()
+        await board.openMoreActions()
+        await expect(board.moreActionsItem('Merge columns by category')).toBeVisible()
+        await board.moreActionsItem('Merge columns by category').click()
+        await expect(board.column(first)).toBeVisible()
+        await expect(board.column(second)).toHaveCount(0)
+        await expect(board.columnHeader(first)).toHaveClass(/merged/)
+        for (const card of cards) await board.expectCardInColumn(card, first)
+        const merged = async (): Promise<unknown> => (await board.storedColumns('merged'))[key]
+        await expect.poll(merged).toEqual([foreign, [first, second]])
+        await board.openMoreActions()
+        await board.moreActionsItem('Reset merged columns').click()
+        await expect(board.column(second)).toBeVisible()
+        await board.expectCardInColumn(cards[0], first)
+        await board.expectCardInColumn(cards[1], second)
+        await expect.poll(merged).toEqual([foreign])
+      } finally {
+        await deleteIssuesByTitlePrefix(client, fixturePrefix)
+        for (const doc of [
+          await client.findOne(tracker.class.Project, { _id: projectId }),
+          await client.findOne(task.class.TaskType, { _id: taskTypeId }),
+          await client.findOne(task.class.ProjectType, { _id: projectTypeId }),
+          ...(await client.findAll(tracker.class.IssueStatus, { _id: { $in: ownedStatuses } }))
+        ]) {
+          if (doc !== undefined) await client.remove(doc)
+        }
+      }
     })
 
     test('reset merged columns shows only when this board has a merged column and keeps other boards groups', async ({
