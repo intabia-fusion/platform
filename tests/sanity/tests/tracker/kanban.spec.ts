@@ -15,7 +15,7 @@
 
 import { expect, test } from '../fixtures'
 import tracker, { IssuePriority, type Issue } from '@hcengineering/tracker'
-import core, { type Ref, type TxOperations } from '@hcengineering/core'
+import core, { type Class, type Ref, type TxOperations } from '@hcengineering/core'
 import task, { createStatusAtomic, type ProjectType, type TaskType } from '@hcengineering/task'
 import {
   connectTracker,
@@ -1181,7 +1181,8 @@ test.describe('Kanban board', () => {
             parent: projectTypeId,
             descriptor: sourceTask.descriptor,
             ofClass: sourceTask.ofClass,
-            targetClass: sourceTask.targetClass,
+            // Removing this fixture must not delete the shared task type's generated class.
+            targetClass: sourceTask.ofClass,
             statusClass: sourceTask.statusClass,
             statusCategories: sourceTask.statusCategories,
             isRootTaskType: true,
@@ -1267,6 +1268,13 @@ test.describe('Kanban board', () => {
           if (doc !== undefined) await client.remove(doc)
         }
       }
+      expect(await client.findOne(core.class.Class, { _id: sourceTask.targetClass })).toBeDefined()
+      const sharedCard = await createIssue(client, ctx, {
+        title: `${titlePrefix}after-category-cleanup`,
+        status: 'Backlog',
+        _class: sourceTask.targetClass as Ref<Class<Issue>>
+      })
+      expect((await client.findOne(tracker.class.Issue, { _id: sharedCard }))?._class).toBe(sourceTask.targetClass)
     })
 
     test('reset merged columns shows only when this board has a merged column and keeps other boards groups', async ({

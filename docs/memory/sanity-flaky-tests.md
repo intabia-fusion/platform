@@ -4,7 +4,8 @@
 
 ## Diagnosing
 
-- `kanban.spec.ts` uses the shared Default project. `settings.spec.ts` adds a task type there and renames two statuses, creating additional statuses in existing categories. Run `20261107-014207` failed the reset-merge test with 7 statuses and 5 categories. The reset test must not assume category uniqueness or assert the unrelated merge-by-category menu item; component tests cover its availability.
+- `kanban.spec.ts` uses the shared Default project. `settings.spec.ts` adds a task type there and renames two statuses, creating additional statuses in existing categories. Run `20261107-014207` failed the reset-merge test with 7 statuses and 5 categories. The reset test must not assume category uniqueness or assert the unrelated merge-by-category menu item; a separate E2E checks category merging with owned statuses.
+- CI `42392235702`: copying another TaskType's generated `targetClass` into a temporary TaskType made cleanup delete the shared class through `OnTaskTypeRemove` (`server-plugins/task-resources/src/index.ts`), breaking subsequent issue creation. A fixture without its own class uses `targetClass === ofClass`; after cleanup, check that the shared class exists and `createIssue` still works with it.
 
 Playwright marks a test flaky when a retry passes, so the cause is in the *first* attempt. `node analyze_failures.js runs/<stamp>/playwright-report.json` - what failed. `node analyze_steps.js runs/<stamp>/step-report.ndjson` - where time went; a step with small p50 and huge max is the next flake. `test-results/<test>/error-context.md` - call log. Two opposite diagnoses: `waiting for <locator>` = the control was never there; `intercepts pointer events` = it was covered.
 
