@@ -588,6 +588,7 @@ jobs:
           security list-keychain -d user -s $KEYCHAIN_PATH
       - name: Build distribution's
         env:
+          DEBUG: '@electron/get*'
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_ID_APP_PASS: ${{ secrets.APPLE_ID_APP_PASS }}
           TEAM_ID: ${{ secrets.TEAM_ID }}

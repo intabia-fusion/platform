@@ -465,8 +465,8 @@ catalogs:
       specifier: ^8.0.1
       version: 8.1.1
     electron:
-      specifier: ^44.7.0
-      version: 44.7.0
+      specifier: ^45.2.3
+      version: 45.2.3
     electron-squirrel-startup:
       specifier: ~1.0.0
       version: 1.0.1
@@ -1748,7 +1748,7 @@ importers:
         version: 8.1.1(webpack@5.111.1)
       electron:
         specifier: 'catalog:'
-        version: 44.7.0(supports-color@8.1.1)
+        version: 45.2.3(supports-color@8.1.1)
       esbuild:
         specifier: 'catalog:'
         version: 0.28.2
@@ -1905,7 +1905,7 @@ importers:
         version: 7.0.3
       electron:
         specifier: 'catalog:'
-        version: 44.7.0(supports-color@8.1.1)
+        version: 45.2.3(supports-color@8.1.1)
       electron-builder:
         specifier: ^26.16.0
         version: 26.16.0(supports-color@8.1.1)
@@ -51271,8 +51271,8 @@ packages:
   electron-windows-badge@1.1.0:
     resolution: {integrity: sha512-hWFbUk9u3fQHcKzTAcjZAN7XH9bL9oH9g20RRDU/DVDNqdMI03GzlBZfR/R8R1krYu9AT4biLqSCAxnt9LMAfA==}
 
-  electron@44.7.0:
-    resolution: {integrity: sha512-aUq9/zLAAFYc+a9gy6cd0C3Y/N/RmovLCD8TV8LhIzNhuND6HEgsu96jJz9cbAxvckSPv+Trf2PKEjktoZgFkw==}
+  electron@45.2.3:
+    resolution: {integrity: sha512-Vurzu5UOA5nTGT4LqIwXD16QFGrOZdiXxF+1UP4KNsAOo/YtDcT3/u0jhP4WSwNJ0iLrLDi85hzBJ0arnGDhyw==}
     engines: {node: '>= 22.12.0'}
     hasBin: true
 
@@ -64855,7 +64855,7 @@ snapshots:
 
   electron-windows-badge@1.1.0: {}
 
-  electron@44.7.0(supports-color@8.1.1):
+  electron@45.2.3(supports-color@8.1.1):
     dependencies:
       '@electron-internal/extract-zip': 1.0.5
       '@electron/get': 5.1.0(supports-color@8.1.1)
