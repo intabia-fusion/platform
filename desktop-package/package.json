@@ -73,6 +73,9 @@
       "artifactName": "Platform-macos-${version}-${arch}.${ext}",
       "icon": "./src/AppIcon.icns",
       "hardenedRuntime": true,
+      "extendInfo": {
+        "LSFileQuarantineEnabled": true
+      },
       "entitlements": "./entitlements.mac.plist",
       "entitlementsInherit": "./entitlements.mac.plist",
       "notarize": false,
