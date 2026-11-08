@@ -10,7 +10,7 @@
     "OpenFile": "Dosyayı aç",
     "Open": "Aç",
     "FileMissing": "Dosya bulunamadı. Taşınmış veya silinmiş olabilir.",
-    "OpenFailed": "Dosya açılamadı: bu dosya türüyle ilişkilendirilmiş bir uygulama yok.",
+    "OpenFailed": "Dosya veya klasör açılamadı.",
     "OpenExecutable": "Bu dosya bir program çalıştırabilir. Açılsın mı?"
   }
 }

@@ -10,7 +10,7 @@
     "OpenFile": "打开文件",
     "Open": "打开",
     "FileMissing": "找不到文件。文件可能已被移动或删除。",
-    "OpenFailed": "无法打开文件：没有与此文件类型关联的应用程序。",
+    "OpenFailed": "无法打开文件或文件夹。",
     "OpenExecutable": "此文件可能会运行程序。是否打开？"
   }
 }

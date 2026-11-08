@@ -37,7 +37,19 @@ describe('isSafeToOpen', () => {
     'page.htm',
     'picture.svg',
     'font.woff',
-    'unknown.pif'
+    'unknown.pif',
+    'shortcut.url',
+    'script.wsf',
+    'installer.msp',
+    'deploy.application',
+    'profile.terminal',
+    'shortcut.fileloc',
+    'shortcut.inetloc',
+    'script.applescript',
+    'script.py',
+    'document.odt',
+    'sheet.ods',
+    'slides.odp'
   ])('asks before opening %s', (name) => {
     expect(isSafeToOpen(name)).toBe(false)
   })

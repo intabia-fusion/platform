@@ -49,9 +49,6 @@ const SAFE_EXTENSIONS = new Set([
   'docx',
   'xlsx',
   'pptx',
-  'odt',
-  'ods',
-  'odp',
   // Archives
   'zip',
   '7z',

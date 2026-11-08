@@ -10,7 +10,7 @@
     "OpenFile": "Otevřít soubor",
     "Open": "Otevřít",
     "FileMissing": "Soubor nebyl nalezen. Možná byl přesunut nebo smazán.",
-    "OpenFailed": "Soubor nelze otevřít: pro tento typ souboru není přidružena žádná aplikace.",
+    "OpenFailed": "Soubor nebo složku se nepodařilo otevřít.",
     "OpenExecutable": "Tento soubor může spustit program. Otevřít jej?"
   }
 }

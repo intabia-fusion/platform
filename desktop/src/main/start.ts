@@ -609,8 +609,8 @@ function runTheApp (): void {
     async (event, files: unknown) => await downloadToFolder(event.sender, files)
   )
 
-  ipcMain.handle(IpcMessage.RevealDownloadItem, (_event, key: string) => {
-    return revealDownload(key)
+  ipcMain.handle(IpcMessage.RevealDownloadItem, async (_event, key: string) => {
+    return await revealDownload(key)
   })
 
   ipcMain.handle(IpcMessage.OpenDownloadItem, async (event, key: string, confirm: DownloadConfirmTexts) => {

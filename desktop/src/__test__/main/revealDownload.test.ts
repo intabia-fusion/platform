@@ -16,11 +16,12 @@
 import * as fs from 'fs'
 import * as os from 'os'
 import * as path from 'path'
-import { dialog, shell } from 'electron'
+import { BrowserWindow, dialog, shell } from 'electron'
 
 import { openDownload, rememberDownload, revealDownload } from '../../main/revealDownload'
 
 jest.mock('electron', () => ({
+  BrowserWindow: jest.fn(),
   dialog: {
     showMessageBox: jest.fn()
   },
@@ -68,7 +69,7 @@ describe('revealDownload', () => {
   let file: string
 
   beforeEach(() => {
-    jest.clearAllMocks()
+    jest.resetAllMocks()
     usePlatform('win32')
     folder = fs.mkdtempSync(path.join(os.tmpdir(), 'reveal-'))
     file = path.join(folder, 'report.pdf')
@@ -79,68 +80,119 @@ describe('revealDownload', () => {
     fs.rmSync(folder, { recursive: true, force: true })
   })
 
-  it('selects the finished download in the file manager', () => {
+  it('selects the finished download in the file manager', async () => {
     rememberDownload('reveal-win', file)
-    expect(revealDownload('reveal-win')).toBe('ok')
+    expect(await revealDownload('reveal-win')).toBe('ok')
     expect(mockedShell.showItemInFolder).toHaveBeenCalledWith(file)
     expect(mockedShell.openPath).not.toHaveBeenCalled()
   })
 
-  it('selects the finished download in the file manager on macOS', () => {
+  it('selects the finished download in the file manager on macOS', async () => {
     usePlatform('darwin')
     rememberDownload('reveal-mac', file)
-    expect(revealDownload('reveal-mac')).toBe('ok')
+    expect(await revealDownload('reveal-mac')).toBe('ok')
     expect(mockedShell.showItemInFolder).toHaveBeenCalledWith(file)
+  })
+
+  it('reports a thrown file manager error', async () => {
+    const error = jest.spyOn(console, 'error').mockImplementation(() => {})
+    mockedShell.showItemInFolder.mockImplementation(() => {
+      throw new Error('File manager failed')
+    })
+    rememberDownload('reveal-thrown', file)
+
+    expect(await revealDownload('reveal-thrown')).toBe('failed')
+    error.mockRestore()
   })
 
   // The id is all the renderer has: a file it never downloaded is out of reach even when it exists.
-  it('refuses an id this session never completed', () => {
-    expect(revealDownload('reveal-never-downloaded')).toBe('unknown')
+  it('refuses an id this session never completed', async () => {
+    expect(await revealDownload('reveal-never-downloaded')).toBe('unknown')
     expect(mockedShell.showItemInFolder).not.toHaveBeenCalled()
     expect(mockedShell.openPath).not.toHaveBeenCalled()
   })
 
-  it('refuses a path used as an id', () => {
-    expect(revealDownload(file)).toBe('unknown')
+  it('refuses a path used as an id', async () => {
+    expect(await revealDownload(file)).toBe('unknown')
     expect(mockedShell.showItemInFolder).not.toHaveBeenCalled()
     expect(mockedShell.openPath).not.toHaveBeenCalled()
   })
 
-  it('refuses an id that is not a string', () => {
-    expect(revealDownload(undefined)).toBe('unknown')
-    expect(revealDownload({ key: 'reveal-win' })).toBe('unknown')
+  it('refuses an id that is not a string', async () => {
+    expect(await revealDownload(undefined)).toBe('unknown')
+    expect(await revealDownload({ key: 'reveal-win' })).toBe('unknown')
     expect(mockedShell.showItemInFolder).not.toHaveBeenCalled()
   })
 
-  it('reports a file deleted after the download', () => {
+  it('reports a file deleted after the download', async () => {
     rememberDownload('reveal-gone', path.join(folder, 'gone.pdf'))
-    expect(revealDownload('reveal-gone')).toBe('missing')
+    expect(await revealDownload('reveal-gone')).toBe('missing')
     expect(mockedShell.showItemInFolder).not.toHaveBeenCalled()
     expect(mockedShell.openPath).not.toHaveBeenCalled()
   })
 
-  it('forgets nothing for an empty id or path', () => {
+  it('forgets nothing for an empty id or path', async () => {
     rememberDownload('', file)
     rememberDownload('reveal-empty-path', '')
-    expect(revealDownload('reveal-empty-path')).toBe('unknown')
+    expect(await revealDownload('reveal-empty-path')).toBe('unknown')
     expect(mockedShell.showItemInFolder).not.toHaveBeenCalled()
   })
 
   describe('on Linux', () => {
-    it('selects the file when a session bus is available', () => {
+    it('selects the file when a session bus is available', async () => {
       usePlatform('linux', 'unix:path=/run/user/1000/bus')
       rememberDownload('reveal-linux-bus', file)
-      expect(revealDownload('reveal-linux-bus')).toBe('ok')
+      expect(await revealDownload('reveal-linux-bus')).toBe('ok')
       expect(mockedShell.showItemInFolder).toHaveBeenCalledWith(file)
       expect(mockedShell.openPath).not.toHaveBeenCalled()
     })
 
+    it('waits for the folder to open before reporting success', async () => {
+      usePlatform('linux')
+      let finish!: (error: string) => void
+      mockedShell.openPath.mockReturnValue(
+        new Promise<string>((resolve) => {
+          finish = resolve
+        })
+      )
+      rememberDownload('reveal-linux-pending', file)
+      const settled = jest.fn()
+      const result = revealDownload('reveal-linux-pending').then(settled)
+
+      await Promise.resolve()
+      expect(settled).not.toHaveBeenCalled()
+      finish('')
+      await result
+      expect(settled).toHaveBeenCalledWith('ok')
+    })
+
+    it('reports a folder open error', async () => {
+      usePlatform('linux')
+      const error = jest.spyOn(console, 'error').mockImplementation(() => {})
+      mockedShell.openPath.mockResolvedValue('Failed to open folder')
+      rememberDownload('reveal-linux-error', file)
+
+      expect(await revealDownload('reveal-linux-error')).toBe('failed')
+      expect(mockedShell.showItemInFolder).not.toHaveBeenCalled()
+      error.mockRestore()
+    })
+
+    it('reports a rejected folder open', async () => {
+      usePlatform('linux')
+      const error = jest.spyOn(console, 'error').mockImplementation(() => {})
+      mockedShell.openPath.mockRejectedValue(new Error('Folder open failed'))
+      rememberDownload('reveal-linux-rejected', file)
+
+      expect(await revealDownload('reveal-linux-rejected')).toBe('failed')
+      error.mockRestore()
+    })
+
     // FileManager1.ShowItems cannot be reached without a session bus and reports nothing, so the folder is opened.
-    it('opens the folder when there is no session bus', () => {
+    it('opens the folder when there is no session bus', async () => {
       usePlatform('linux')
       mockedShell.openPath.mockResolvedValue('')
       rememberDownload('reveal-linux-no-bus', file)
-      expect(revealDownload('reveal-linux-no-bus')).toBe('ok')
+      expect(await revealDownload('reveal-linux-no-bus')).toBe('ok')
       expect(mockedShell.openPath).toHaveBeenCalledWith(folder)
       expect(mockedShell.showItemInFolder).not.toHaveBeenCalled()
     })
@@ -152,7 +204,7 @@ describe('openDownload', () => {
   let file: string
 
   beforeEach(() => {
-    jest.clearAllMocks()
+    jest.resetAllMocks()
     usePlatform('win32')
     folder = fs.mkdtempSync(path.join(os.tmpdir(), 'open-'))
     file = path.join(folder, 'report.pdf')
@@ -219,6 +271,52 @@ describe('openDownload', () => {
     rememberDownload('open-failed', file)
     expect(await openDownload('open-failed', confirmTexts)).toBe('failed')
     expect(error).toHaveBeenCalled()
+    error.mockRestore()
+  })
+
+  it.each(['odt', 'ods', 'odp'])('does not open an ODF %s file after cancellation', async (extension) => {
+    const document = path.join(folder, `document.${extension}`)
+    fs.writeFileSync(document, 'content')
+    mockedDialog.showMessageBox.mockResolvedValue({ response: 1, checkboxChecked: false })
+    rememberDownload(`open-odf-${extension}`, document)
+
+    expect(await openDownload(`open-odf-${extension}`, confirmTexts)).toBe('cancelled')
+    expect(mockedDialog.showMessageBox).toHaveBeenCalledWith(
+      expect.objectContaining({ detail: `document.${extension}`, defaultId: 1, cancelId: 1 })
+    )
+    expect(mockedShell.openPath).not.toHaveBeenCalled()
+  })
+
+  it('attaches the confirmation to the parent window', async () => {
+    const exe = path.join(folder, 'setup.exe')
+    const parent = new BrowserWindow()
+    fs.writeFileSync(exe, 'MZ')
+    mockedDialog.showMessageBox.mockResolvedValue({ response: 1, checkboxChecked: false })
+    rememberDownload('open-parent', exe)
+
+    expect(await openDownload('open-parent', confirmTexts, parent)).toBe('cancelled')
+    expect(mockedDialog.showMessageBox).toHaveBeenCalledWith(parent, expect.objectContaining({ detail: 'setup.exe' }))
+    expect(mockedShell.openPath).not.toHaveBeenCalled()
+  })
+
+  it('reports a rejected file open', async () => {
+    const error = jest.spyOn(console, 'error').mockImplementation(() => {})
+    mockedShell.openPath.mockRejectedValue(new Error('File open failed'))
+    rememberDownload('open-rejected', file)
+
+    expect(await openDownload('open-rejected', confirmTexts)).toBe('failed')
+    error.mockRestore()
+  })
+
+  it('reports a rejected confirmation without opening the file', async () => {
+    const exe = path.join(folder, 'setup.exe')
+    fs.writeFileSync(exe, 'MZ')
+    const error = jest.spyOn(console, 'error').mockImplementation(() => {})
+    mockedDialog.showMessageBox.mockRejectedValue(new Error('Dialog failed'))
+    rememberDownload('open-dialog-rejected', exe)
+
+    expect(await openDownload('open-dialog-rejected', confirmTexts)).toBe('failed')
+    expect(mockedShell.openPath).not.toHaveBeenCalled()
     error.mockRestore()
   })
 

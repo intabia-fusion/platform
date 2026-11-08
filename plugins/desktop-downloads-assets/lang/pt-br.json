@@ -10,7 +10,7 @@
     "OpenFile": "Abrir arquivo",
     "Open": "Abrir",
     "FileMissing": "O arquivo não foi encontrado. Ele pode ter sido movido ou excluído.",
-    "OpenFailed": "Não foi possível abrir o arquivo: nenhum aplicativo está associado a este tipo de arquivo.",
+    "OpenFailed": "Não foi possível abrir o arquivo ou a pasta.",
     "OpenExecutable": "Este arquivo pode executar um programa. Abri-lo?"
   }
 }

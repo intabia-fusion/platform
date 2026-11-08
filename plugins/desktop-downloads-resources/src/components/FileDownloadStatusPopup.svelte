@@ -51,7 +51,7 @@
   }
 
   async function runAction (item: DownloadItem, action: (key: string) => Promise<DownloadActionStatus>): Promise<void> {
-    if (busy === item.key) return
+    if (busy !== '') return
     busy = item.key
     try {
       const status = await action(item.key)
@@ -62,6 +62,8 @@
       }
       if (status === 'cancelled') return
       failures = new Map(failures).set(item.key, status)
+    } catch {
+      failures = new Map(failures).set(item.key, 'failed')
     } finally {
       busy = ''
     }
@@ -72,14 +74,16 @@
   }
 
   async function handleOpen (item: DownloadItem): Promise<void> {
-    // The OS dialog is native: the main process cannot read our locale, so its texts are translated here.
-    const confirm = {
-      title: await translate(plugin.string.OpenFile, {}),
-      message: await translate(plugin.string.OpenExecutable, {}),
-      open: await translate(plugin.string.Open, {}),
-      cancel: await translate(ui.string.Cancel, {})
-    }
-    await runAction(item, async (key) => await openDownloadItem(key, confirm))
+    await runAction(item, async (key) => {
+      // The OS dialog is native: the main process cannot read our locale, so its texts are translated here.
+      const confirm = {
+        title: await translate(plugin.string.OpenFile, {}),
+        message: await translate(plugin.string.OpenExecutable, {}),
+        open: await translate(plugin.string.Open, {}),
+        cancel: await translate(ui.string.Cancel, {})
+      }
+      return await openDownloadItem(key, confirm)
+    })
   }
 </script>
 
@@ -135,7 +139,7 @@
                 tooltip={{ label: plugin.string.ShowInFolder }}
                 kind="ghost"
                 size="small"
-                disabled={busy === item.key}
+                disabled={busy !== ''}
                 on:click={() => {
                   handleReveal(item)
                 }}
@@ -146,7 +150,7 @@
                   tooltip={{ label: plugin.string.OpenFile }}
                   kind="ghost"
                   size="small"
-                  disabled={busy === item.key}
+                  disabled={busy !== ''}
                   on:click={() => {
                     void handleOpen(item)
                   }}

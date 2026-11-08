@@ -10,7 +10,7 @@
     "OpenFile": "Open file",
     "Open": "Open",
     "FileMissing": "The file was not found. It may have been moved or deleted.",
-    "OpenFailed": "Could not open the file: no application is associated with this file type.",
+    "OpenFailed": "Could not open the file or folder.",
     "OpenExecutable": "This file can run a program. Open it?"
   }
 }

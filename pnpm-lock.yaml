@@ -18415,7 +18415,7 @@ importers:
         version: 8.70.0(eslint@8.57.1(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3)
       '@vitest/coverage-v8':
         specifier: 'catalog:'
-        version: 3.2.7(supports-color@8.1.1)(vitest@3.2.7(@types/node@24.13.3)(jsdom@25.0.1(bufferutil@4.1.0)(supports-color@8.1.1)(utf-8-validate@6.0.6))(sass@1.93.3)(supports-color@8.1.1)(terser@5.51.2))
+        version: 3.2.7(supports-color@8.1.1)(vitest@3.2.7(@types/debug@4.1.12)(@types/node@24.13.3)(jsdom@25.0.1(bufferutil@4.1.0)(supports-color@8.1.1)(utf-8-validate@6.0.6))(sass@1.93.3)(supports-color@8.1.1)(terser@5.51.2))
       eslint:
         specifier: 'catalog:'
         version: 8.57.1(supports-color@8.1.1)
@@ -18466,7 +18466,7 @@ importers:
         version: 5.4.21(@types/node@24.13.3)(sass@1.93.3)(terser@5.51.2)
       vitest:
         specifier: 'catalog:'
-        version: 3.2.7(@types/node@24.13.3)(jsdom@25.0.1(bufferutil@4.1.0)(supports-color@8.1.1)(utf-8-validate@6.0.6))(sass@1.93.3)(supports-color@8.1.1)(terser@5.51.2)
+        version: 3.2.7(@types/debug@4.1.12)(@types/node@24.13.3)(jsdom@25.0.1(bufferutil@4.1.0)(supports-color@8.1.1)(utf-8-validate@6.0.6))(sass@1.93.3)(supports-color@8.1.1)(terser@5.51.2)
 
   plugins/billing:
     dependencies:
@@ -20481,9 +20481,6 @@ importers:
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
-      '@hcengineering/presentation':
-        specifier: workspace:^0.7.0
-        version: link:../../packages/presentation
       '@hcengineering/ui':
         specifier: workspace:^0.7.0
         version: link:../../packages/ui
@@ -20497,9 +20494,15 @@ importers:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
         version: link:../../foundations/utils/packages/platform-rig
+      '@hcengineering/theme':
+        specifier: workspace:^0.7.0
+        version: link:../../packages/theme
       '@stylistic/eslint-plugin':
         specifier: 'catalog:'
         version: 3.1.0(eslint@8.57.1(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3)
+      '@sveltejs/vite-plugin-svelte':
+        specifier: 'catalog:'
+        version: 3.1.2(supports-color@8.1.1)(svelte@4.2.20)(vite@5.4.21(@types/node@24.13.3)(sass@1.93.3)(terser@5.51.2))
       '@types/jest':
         specifier: 'catalog:'
         version: 29.5.14
@@ -20533,6 +20536,9 @@ importers:
       jest:
         specifier: 'catalog:'
         version: 29.7.0(@types/node@24.13.3)(supports-color@8.1.1)(ts-node@10.9.2(@swc/core@1.16.2(@swc/helpers@0.5.19))(@types/node@24.13.3)(typescript@6.0.3))
+      jsdom:
+        specifier: 'catalog:'
+        version: 25.0.1(bufferutil@4.1.0)(supports-color@8.1.1)(utf-8-validate@6.0.6)
       prettier:
         specifier: 'catalog:'
         version: 3.6.2
@@ -20560,6 +20566,12 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
+      vite:
+        specifier: 'catalog:'
+        version: 5.4.21(@types/node@24.13.3)(sass@1.93.3)(terser@5.51.2)
+      vitest:
+        specifier: 'catalog:'
+        version: 3.2.7(@types/debug@4.1.12)(@types/node@24.13.3)(jsdom@25.0.1(bufferutil@4.1.0)(supports-color@8.1.1)(utf-8-validate@6.0.6))(sass@1.93.3)(supports-color@8.1.1)(terser@5.51.2)
 
   plugins/desktop-preferences:
     dependencies:
@@ -62638,7 +62650,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@vitest/coverage-v8@3.2.7(supports-color@8.1.1)(vitest@3.2.7(@types/node@24.13.3)(jsdom@25.0.1(bufferutil@4.1.0)(supports-color@8.1.1)(utf-8-validate@6.0.6))(sass@1.93.3)(supports-color@8.1.1)(terser@5.51.2))':
+  '@vitest/coverage-v8@3.2.7(supports-color@8.1.1)(vitest@3.2.7(@types/debug@4.1.12)(@types/node@24.13.3)(jsdom@25.0.1(bufferutil@4.1.0)(supports-color@8.1.1)(utf-8-validate@6.0.6))(sass@1.93.3)(supports-color@8.1.1)(terser@5.51.2))':
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@bcoe/v8-coverage': 1.0.2
@@ -62653,7 +62665,7 @@ snapshots:
       std-env: 3.10.0
       test-exclude: 7.0.2
       tinyrainbow: 2.0.0
-      vitest: 3.2.7(@types/node@24.13.3)(jsdom@25.0.1(bufferutil@4.1.0)(supports-color@8.1.1)(utf-8-validate@6.0.6))(sass@1.93.3)(supports-color@8.1.1)(terser@5.51.2)
+      vitest: 3.2.7(@types/debug@4.1.12)(@types/node@24.13.3)(jsdom@25.0.1(bufferutil@4.1.0)(supports-color@8.1.1)(utf-8-validate@6.0.6))(sass@1.93.3)(supports-color@8.1.1)(terser@5.51.2)
     transitivePeerDependencies:
       - supports-color
 
@@ -68129,23 +68141,6 @@ snapshots:
       svgo: 2.8.0
       uglify-js: 3.19.3
 
-  minimizer-webpack-plugin@5.11.0(@swc/core@1.16.2(@swc/helpers@0.5.19))(clean-css@5.3.3)(csso@4.2.0)(esbuild@0.28.2)(html-minifier-terser@6.1.0)(sharp@0.34.5)(svgo@2.8.0)(uglify-js@3.19.3)(webpack@5.111.1):
-    dependencies:
-      '@jridgewell/trace-mapping': 0.3.31
-      jest-worker: 27.5.1
-      schema-utils: 4.5.0
-      terser: 5.51.2
-      webpack: 5.111.1(@swc/core@1.16.2(@swc/helpers@0.5.19))(clean-css@5.3.3)(csso@4.2.0)(esbuild@0.28.2)(html-minifier-terser@6.1.0)(sharp@0.34.5)(svgo@2.8.0)(uglify-js@3.19.3)(webpack-cli@7.2.3)
-    optionalDependencies:
-      '@swc/core': 1.16.2(@swc/helpers@0.5.19)
-      clean-css: 5.3.3
-      csso: 4.2.0
-      esbuild: 0.28.2
-      html-minifier-terser: 6.1.0
-      sharp: 0.34.5
-      svgo: 2.8.0
-      uglify-js: 3.19.3
-
   minio@8.0.7:
     dependencies:
       async: 3.2.6
@@ -71445,7 +71440,7 @@ snapshots:
       - supports-color
       - terser
 
-  vitest@3.2.7(@types/node@24.13.3)(jsdom@25.0.1(bufferutil@4.1.0)(supports-color@8.1.1)(utf-8-validate@6.0.6))(sass@1.93.3)(supports-color@8.1.1)(terser@5.51.2):
+  vitest@3.2.7(@types/debug@4.1.12)(@types/node@24.13.3)(jsdom@25.0.1(bufferutil@4.1.0)(supports-color@8.1.1)(utf-8-validate@6.0.6))(sass@1.93.3)(supports-color@8.1.1)(terser@5.51.2):
     dependencies:
       '@types/chai': 5.2.3
       '@vitest/expect': 3.2.7
@@ -71471,6 +71466,7 @@ snapshots:
       vite-node: 3.2.4(@types/node@24.13.3)(sass@1.93.3)(supports-color@8.1.1)(terser@5.51.2)
       why-is-node-running: 2.3.0
     optionalDependencies:
+      '@types/debug': 4.1.12
       '@types/node': 24.13.3
       jsdom: 25.0.1(bufferutil@4.1.0)(supports-color@8.1.1)(utf-8-validate@6.0.6)
     transitivePeerDependencies:
@@ -71668,45 +71664,6 @@ snapshots:
       graceful-fs: 4.2.11
       mime-db: 1.54.0
       minimizer-webpack-plugin: 5.11.0(@swc/core@1.16.2(@swc/helpers@0.5.19))(clean-css@5.3.3)(csso@4.2.0)(esbuild@0.28.2)(html-minifier-terser@6.1.0)(postcss@8.5.6)(sharp@0.35.3(@types/node@24.13.3))(svgo@2.8.0)(uglify-js@3.19.3)(webpack@5.111.1)
-      schema-utils: 4.5.0
-      tapable: 2.3.0
-      watchpack: 2.5.2
-      webpack-sources: 3.5.1
-    optionalDependencies:
-      webpack-cli: 7.2.3(js-yaml@5.4.1)(json5@2.2.3)(webpack-bundle-analyzer@4.10.2(bufferutil@4.1.0)(utf-8-validate@5.0.10))(webpack-dev-server@6.0.0)(webpack@5.111.1)
-    transitivePeerDependencies:
-      - '@minify-html/node'
-      - '@napi-rs/image'
-      - '@swc/core'
-      - '@swc/css'
-      - '@swc/html'
-      - clean-css
-      - cssnano
-      - csso
-      - esbuild
-      - html-minifier-terser
-      - imagemin
-      - lightningcss
-      - postcss
-      - sharp
-      - svgo
-      - uglify-js
-
-  webpack@5.111.1(@swc/core@1.16.2(@swc/helpers@0.5.19))(clean-css@5.3.3)(csso@4.2.0)(esbuild@0.28.2)(html-minifier-terser@6.1.0)(sharp@0.34.5)(svgo@2.8.0)(uglify-js@3.19.3)(webpack-cli@7.2.3):
-    dependencies:
-      '@types/estree': 1.0.9
-      '@types/json-schema': 7.0.15
-      '@webassemblyjs/ast': 1.14.1
-      '@webassemblyjs/wasm-edit': 1.14.1
-      '@webassemblyjs/wasm-parser': 1.14.1
-      browserslist: 4.28.9
-      chrome-trace-event: 1.0.4
-      enhanced-resolve: 5.25.1
-      es-module-lexer: 2.3.2
-      events: 3.3.0
-      graceful-fs: 4.2.11
-      mime-db: 1.54.0
-      minimizer-webpack-plugin: 5.11.0(@swc/core@1.16.2(@swc/helpers@0.5.19))(clean-css@5.3.3)(csso@4.2.0)(esbuild@0.28.2)(html-minifier-terser@6.1.0)(sharp@0.34.5)(svgo@2.8.0)(uglify-js@3.19.3)(webpack@5.111.1)
       schema-utils: 4.5.0
       tapable: 2.3.0
       watchpack: 2.5.2

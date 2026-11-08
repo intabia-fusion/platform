@@ -38,20 +38,29 @@ function completedPath (key: unknown): string | undefined {
 }
 
 /** Shows the finished download in the OS file manager, selected. */
-export function revealDownload (key: unknown): DownloadActionStatus {
+export async function revealDownload (key: unknown): Promise<DownloadActionStatus> {
   const savePath = completedPath(key)
   if (savePath === undefined) return 'unknown'
   if (!fs.existsSync(savePath)) return 'missing'
 
-  // On Linux the selection goes through org.freedesktop.FileManager1 over DBus: with no session bus the call
-  // is a silent no-op and says nothing back, so opening the folder is at least somewhere to start.
-  if (process.platform === 'linux' && (process.env.DBUS_SESSION_BUS_ADDRESS ?? '') === '') {
-    void shell.openPath(path.dirname(savePath))
-    return 'ok'
-  }
+  try {
+    // On Linux the selection goes through org.freedesktop.FileManager1 over DBus: with no session bus the call
+    // is a silent no-op and says nothing back, so opening the folder is at least somewhere to start.
+    if (process.platform === 'linux' && (process.env.DBUS_SESSION_BUS_ADDRESS ?? '') === '') {
+      const error = await shell.openPath(path.dirname(savePath))
+      if (error !== '') {
+        console.error('Failed to reveal the downloaded file', error)
+        return 'failed'
+      }
+      return 'ok'
+    }
 
-  shell.showItemInFolder(savePath)
-  return 'ok'
+    shell.showItemInFolder(savePath)
+    return 'ok'
+  } catch (error) {
+    console.error('Failed to reveal the downloaded file', error)
+    return 'failed'
+  }
 }
 
 /**
@@ -70,16 +79,21 @@ export async function openDownload (
   if (savePath === undefined) return 'unknown'
   if (!fs.existsSync(savePath)) return 'missing'
 
-  if (!isSafeToOpen(path.basename(savePath)) && !(await confirmOpen(parent, confirm, path.basename(savePath)))) {
-    return 'cancelled'
-  }
+  try {
+    if (!isSafeToOpen(path.basename(savePath)) && !(await confirmOpen(parent, confirm, path.basename(savePath)))) {
+      return 'cancelled'
+    }
 
-  const error = await shell.openPath(savePath)
-  if (error !== '') {
+    const error = await shell.openPath(savePath)
+    if (error !== '') {
+      console.error('Failed to open the downloaded file', error)
+      return 'failed'
+    }
+    return 'ok'
+  } catch (error) {
     console.error('Failed to open the downloaded file', error)
     return 'failed'
   }
-  return 'ok'
 }
 
 // Cancel is the default button: a file we do not know is one keypress away from running only by a deliberate choice.
