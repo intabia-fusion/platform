@@ -22,7 +22,7 @@
 | onboard-resources | `plugins/onboard-resources/src` | UI мастера онбординга (шаги Workspace/User/Finish) |
 | onboard-assets | `plugins/onboard-assets` | статические ресурсы онбординга |
 | admin | `plugins/admin/src` | клиентский плагин админ-панели |
-| admin-resources | `plugins/admin-resources/src` | UI админки: вкладки Accounts/Workspaces/Billing/Audit/General |
+| admin-resources | `plugins/admin-resources/src` | UI админки: вкладки General/Workspaces/Accounts/Payments/Statistics/Audit/AI |
 | guest | `plugins/guest/src` | клиентский плагин публичных ссылок |
 | guest-resources | `plugins/guest-resources/src` | UI публичных ссылок, гостевой вход |
 | model-guest | `models/guest/src` | модель класса `PublicLink` |

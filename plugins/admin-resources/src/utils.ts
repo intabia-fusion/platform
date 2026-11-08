@@ -106,20 +106,20 @@ export async function getWorkspaceActivityStats (workspace: string, from: number
   return await safe(async () => await getAccountClient().getWorkspaceActivityStats(workspace as any, from), [])
 }
 
-export async function getPaymentOperations (filter: PaymentOperationFilter): Promise<PaymentOperation[]> {
-  return await safe(async () => await getAccountClient().getPaymentOperations(filter), [])
+export async function getPaymentOperations (filter: PaymentOperationFilter): Promise<PaymentOperation[] | null> {
+  return await safe(async () => await getAccountClient().getPaymentOperations(filter), null)
 }
 
 export async function getPaymentOperationStats (from: number, to: number): Promise<PaymentOperationStats | null> {
   return await safe(async () => await getAccountClient().getPaymentOperationStats(from, to), null)
 }
 
-export async function getPaymentMonthlyStats (from: number, to: number): Promise<PaymentMonthlyStats[]> {
-  return await safe(async () => await getAccountClient().getPaymentMonthlyStats(from, to), [])
+export async function getPaymentMonthlyStats (from: number, to: number): Promise<PaymentMonthlyStats[] | null> {
+  return await safe(async () => await getAccountClient().getPaymentMonthlyStats(from, to), null)
 }
 
-export async function getAllSubscriptions (): Promise<SubscriptionInfo[]> {
-  return await safe(async () => await getAccountClient().getAllSubscriptions(), [])
+export async function getAllSubscriptions (): Promise<SubscriptionInfo[] | null> {
+  return await safe(async () => await getAccountClient().getAllSubscriptions(), null)
 }
 
 /** Money for display: kopecks -> "1 500 ₽" */
