@@ -13,12 +13,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Asset } from '@hcengineering/platform'
+  import { getEmbeddedLabel, type Asset } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import task from '@hcengineering/task'
   import { typeStore } from '@hcengineering/task-resources'
   import type { Project } from '@hcengineering/tracker'
-  import { Icon, showPopup } from '@hcengineering/ui'
+  import { Icon, showPopup, tooltip } from '@hcengineering/ui'
   import { Button, SettingRow, TextArea, TextInput } from '@hcengineering/ui/kit'
   import { IconPicker } from '@hcengineering/view-resources'
   import { isOwnerOrMaintainer } from '@hcengineering/core'
@@ -86,10 +86,10 @@
     </SettingRow>
 
     <SettingRow kind="column" label={task.string.ProjectType} hint={tracker.string.ProjectTypeHint}>
-      <div class="flex-row-center flex-wrap flex-gap-2">
-        <span class="type-chip" data-id="project-type">
+      <div class="type-control flex-row-center flex-wrap flex-gap-2">
+        <span class="type-chip" data-id="project-type" use:tooltip={{ label: getEmbeddedLabel(typeName) }}>
           <Icon icon={task.icon.ManageTemplates} size="small" />
-          {typeName}
+          <span class="overflow-label">{typeName}</span>
         </span>
         {#if canOpenType}
           <Button
@@ -152,11 +152,17 @@
       width: 26.25rem;
     }
   }
+  .type-control {
+    min-width: 0;
+    max-width: 100%;
+  }
   .type-chip {
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
     box-sizing: border-box;
+    min-width: 0;
+    max-width: 100%;
     height: 1.75rem;
     padding: 0 0.375rem;
     font-size: 0.8125rem;
@@ -164,5 +170,9 @@
     background-color: var(--theme-link-button-color);
     border: 1px solid var(--theme-button-border);
     border-radius: 0.375rem;
+
+    :global(.icon) {
+      flex-shrink: 0;
+    }
   }
 </style>

@@ -174,6 +174,10 @@ Validators (`FieldRequired`, `SubtaskStatus`, `ParentStatus`), Requests (`Screen
 
 Файлы: `models/tracker/src/actions.ts`, `models/tracker/src/index.ts`, `plugins/tracker-resources/src/{projectSettings.ts,projectSettingsLogic.ts,projectCopyLogic.ts,projectActions.ts}`, `components/projects/{CreateProject,ProjectBasePopup,ProjectBaseItem}.svelte`.
 
+Название типа проекта при создании (`CreateProjectType.svelte` → `CreateSpaceType.svelte`) и переименовании (`ProjectTypeGeneralSectionEditor.svelte` → `SpaceTypeGeneralSectionEditor.svelte`) ограничено 32 символами через `limit`, как у типа задачи; существующие длинные названия автоматически не сокращаются. Другие типы пространств сохраняют прежний лимит.
+
+Длинное название типа проекта в `GeneralSection.svelte` (`plugins/tracker-resources/src/components/projects/settings/`) ограничено шириной поля, сокращается многоточием; полный текст доступен через стандартный `tooltip` при наведении. В заголовке класса свойств типа (`plugins/setting-resources/src/components/ClassAttributes.svelte`) действует такое же ограничение и подсказка с полным названием класса.
+
 #### Дефолтный проект
 
 `tracker.project.DefaultProject` (`identifier: 'TSK'`, `autoJoin: true`) создаётся миграцией `create-defaults`, только если не удалён пользователем. - `models/tracker/src/migration.ts`.
@@ -210,7 +214,7 @@ Permission `ForbidCreateProject` - `forbid`-правило на `TxCreateDoc`/`P
 | Каскадное удаление | - | - | plan | - | |
 | Экспорт/импорт workflow-конфигурации | workflow/create-rules-transitions | - | partial | 0.8.60 | импорт упомянут (раздел "Воркфлоу" типа проекта, из файла или буфера обмена), сам процесс (выбор файла, проверка совместимости) не раскрыт |
 | Создание workflow и его экранов перехода | workflow/create-workflow, workflow/create-screens, workflow/add-workflow, workflow/defining-workflow | - | no-en | 0.8.61 | |
-| Управление проектом: создание, настройки, архивирование, удаление | task-tracking/creating-projects | task-tracking/creating-projects | stale | 0.8.60 | редактирование проекта переехало из окна на страницу настроек с разделами (вход шестерёнкой из шапки), не описаны архивирование и удаление проекта; создание проекта стало мастером из пяти шагов (основное, участники и доступ, задачи, workflow, сводка); не описано создание проекта на основе другого (выбор основы, шаг «Что взять из основы»), множественный выбор ролей с пунктом "Участник"; не описаны возврат из шаблонов в настройки проекта, общий каталог шаблонов и восстановление из архива; действие меню называется "Архивировать", раздел настроек - "Архивация" |
+| Управление проектом: создание, настройки, архивирование, удаление | task-tracking/creating-projects | task-tracking/creating-projects | stale | 0.8.60 | редактирование проекта переехало из окна на страницу настроек с разделами (вход шестерёнкой из шапки), не описаны архивирование и удаление проекта; создание проекта стало мастером из пяти шагов (основное, участники и доступ, задачи, workflow, сводка); не описано создание проекта на основе другого (выбор основы, шаг «Что взять из основы»), множественный выбор ролей с пунктом "Участник"; не описаны возврат из шаблонов в настройки проекта, общий каталог шаблонов и восстановление из архива; действие меню называется "Архивировать", раздел настроек - "Архивация"; длинное название типа проекта сокращается многоточием и показывается полностью в подсказке; создание и переименование типа проекта ограничены 32 символами |
 | Дефолтный проект | - | - | plan | - | |
 | Запрет создания проектов | - | - | plan | - | |
 | Компоненты | task-tracking/components | task-tracking/components | partial | 0.8.60 | не описано объединение одноимённых компонентов разных проектов при группировке/фильтре (агрегация идёт по названию компонента без учёта регистра, а не по руководителю) |
