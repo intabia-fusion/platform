@@ -168,6 +168,23 @@ describe('OnCollaboratorAdded', () => {
     expect((res[0] as TxCreateDoc<Chat>).attributes.readState).toBe(stateTx.objectId)
   })
 
+  it('persists the missing read state before returning chats that reference it', async () => {
+    const control = makeControl()
+    let stored: TxCreateDoc<ReadState> | undefined
+    ;(control.apply as jest.Mock).mockImplementation(
+      async (_ctx: unknown, txes: TxCreateDoc<ReadState>[], needResult: boolean) => {
+        if (needResult) stored = txes[0]
+        return {}
+      }
+    )
+    ;(control.findAll as jest.Mock).mockImplementation(previewsOnly)
+
+    const res = await trigger(control, [collaboratorTx(OLD_DOC)])
+
+    expect(stored).toBeDefined()
+    expect((res[0] as TxCreateDoc<Chat>).attributes.readState).toBe(stored?.objectId)
+  })
+
   it('takes the state another trigger made first when its own is refused', async () => {
     const control = makeControl()
     ;(control.apply as jest.Mock).mockRejectedValue(new Error('duplicate key'))
