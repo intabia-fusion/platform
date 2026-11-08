@@ -31,6 +31,8 @@
 
 Черновик помечается `providerData.draft:true` (`buildSubscriptionData`), флаг переживает закрытие неоплаченным (`ABANDONED`/`REJECTED`) и снимается только при `CONFIRMED`. Вместе с `pending:true` он читается через `isCheckoutDraft` (`account-client`): черновик - не состояние тарифа, его пропускают все, кто выбирает «текущий тир» (плашка trial/free/overdue в `plugins/billing-resources/src/utils.ts`).
 
+Для старых записей без флага `draft` функция `isCheckoutDraft` также распознаёт T-Bank-подписку со статусом `canceled` и `providerData.status='ABANDONED'`. Такие черновики не скрывают плашку free после истечения тарифа; миграция записей не требуется.
+
 ### Какие статусы дают тариф
 
 `PLAN_GRANTING_STATUSES = [Active, Trialing, PastDue, ReadOnly]` (`foundations/core/packages/account-client/src/utils.ts`). `grantsPlan()` поверх списка режет два случая: `past_due` с `providerData.pending === true` (черновик неоплачен) и `trialing` с истёкшим `trialEnd` (откат на free). `canceled`/`expired` не дают план никогда. Проверка лимитов биллинга использует тот же набор статусов (`services/billing/pod-billing/src/__tests__/limits.test.ts`).
@@ -55,7 +57,7 @@
 
 | Из | В | Триггер | Место |
 |---|---|---|---|
-| `past_due` (`pending:true`) | `active` | вебхук tbank `CONFIRMED` / `AUTHORIZED` | `server.ts` (ветка `Status === 'CONFIRMED'`, вызывает `buildSubscriptionDataFromWebhook`) |
+| `past_due` (`pending:true`) | `active` | вебхук tbank `CONFIRMED` | `server.ts` (ветка `Status === 'CONFIRMED'`, вызывает `buildSubscriptionDataFromWebhook`) |
 | `past_due` (`pending:true`) | `canceled` (`providerData.status='ABANDONED'`, `pending:false`, `draft:true`) | планировщик: черновик старше 24 ч не подтверждён | `scheduler.ts` (`cleanupAbandonedSubscriptions`) |
 | `past_due` (`pending:true`) | `canceled` (`ABANDONED`, `draft:true`) | вебхук `DEADLINE_EXPIRED` / `CANCELED` - ссылка протухла до оплаты; трогает только pending-черновик, активную подписку не задевает | `server.ts` (обработка терминальных статусов вебхука) |
 | `past_due` (`pending:true`) | `canceled` (`ABANDONED`/`REJECTED`, `draft:true`) | `cancelPendingCheckout` (reclaim/force/протухшая ссылка) или терминальный вебхук `REJECTED`/`REVERSED`/`REFUNDED` - неоплаченный черновик закрывается, а не уходит в `past_due` | `server.ts` |
@@ -140,7 +142,8 @@ Grace = `GRACE_PERIOD_DAYS`, дефолт 7 дней, считается от `p
 
 | Событие | Действие | Место |
 |---|---|---|
-| `CONFIRMED`, `AUTHORIZED` | -> `active` (первая оплата / подтверждение) | `server.ts` |
+| `CONFIRMED` | -> `active` (первая оплата / подтверждение) | `server.ts` |
+| `AUTHORIZED` | запись события без активации; ожидание `CONFIRMED` | `server.ts` |
 | `REJECTED`, `REVERSED`, `REFUNDED` на `active` или `past_due` (grace) | -> `past_due` (`pending:false`, `retryAttempt`, `retryAfter = now + 1 ч`) - не отмена, карта и `rebillId` сохраняются для ретрая | `server.ts` |
 | `REJECTED`, `REVERSED`, `REFUNDED` на `canceled`/`readonly` | ничего: статус терминальный, поздний вебхук не оживляет подписку (иначе план вернулся бы, а scheduler списал бы по сохранённому `rebillId`) | `server.ts` |
 | `REJECTED`, `REVERSED`, `REFUNDED` на pending-черновике | -> `canceled` (`draft:true`) | `server.ts` |
@@ -222,9 +225,11 @@ stateDiagram-v2
     state "past_due (pending:true)" as Draft
     state "past_due (pending:false)" as Grace
 
-    Draft --> Active: вебхук CONFIRMED/AUTHORIZED
+    Draft --> Draft: вебхук AUTHORIZED, ожидание CONFIRMED
+    Draft --> Active: вебхук CONFIRMED
     Draft --> Canceled: >24ч не оплачен (ABANDONED)
     Draft --> Canceled: вебхук DEADLINE_EXPIRED/CANCELED
+    Draft --> Canceled: вебхук REJECTED/REVERSED/REFUNDED
 
     Active --> Active: списание успешно (новый periodEnd)
     Active --> Grace: Charge failed / REJECTED / чек 54-ФЗ не собран

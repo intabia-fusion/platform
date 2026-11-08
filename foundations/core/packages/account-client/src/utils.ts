@@ -47,9 +47,11 @@ export function grantsPlan (sub: Pick<Subscription, 'status' | 'providerData' | 
  * A draft is not a plan state: it grants nothing and says nothing about the workspace's own tier, so
  * it must not decide the plan/limit/banner tier — only the real subscriptions around it can.
  */
-export function isCheckoutDraft (sub: Pick<Subscription, 'providerData'> | undefined): boolean {
+export function isCheckoutDraft (sub: Pick<Subscription, 'provider' | 'status' | 'providerData'> | undefined): boolean {
   const data = sub?.providerData as Record<string, any> | undefined
-  return data?.pending === true || data?.draft === true
+  if (data?.pending === true || data?.draft === true) return true
+  // Older unpaid checkouts were closed as ABANDONED before the draft marker existed.
+  return sub?.provider === 'tbank' && sub.status === SubscriptionStatus.Canceled && data?.status === 'ABANDONED'
 }
 
 // Free plan = no granting tier, the free-billing provider, or the 'free' plan by name (admin/manual

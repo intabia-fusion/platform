@@ -346,6 +346,46 @@ describe('isCheckoutDraft', () => {
     expect(isCheckoutDraft({ providerData: { pending: false, draft: true } } as any)).toBe(true)
   })
 
+  it('recognizes a legacy abandoned T-Bank checkout without a draft marker', () => {
+    expect(
+      isCheckoutDraft({
+        provider: 'tbank',
+        status: SubscriptionStatus.Canceled,
+        providerData: { pending: false, status: 'ABANDONED' }
+      })
+    ).toBe(true)
+  })
+
+  it.each(['CANCELED', 'PLAN_CHANGE', 'REPLACED', 'REFUNDED'])(
+    'does not treat a paid subscription closed as %s as a draft',
+    (status) => {
+      expect(
+        isCheckoutDraft({
+          provider: 'tbank',
+          status: SubscriptionStatus.Canceled,
+          providerData: { pending: false, status }
+        })
+      ).toBe(false)
+    }
+  )
+
+  it('does not infer a legacy draft for another provider or an active subscription', () => {
+    expect(
+      isCheckoutDraft({
+        provider: 'manual',
+        status: SubscriptionStatus.Canceled,
+        providerData: { status: 'ABANDONED' }
+      })
+    ).toBe(false)
+    expect(
+      isCheckoutDraft({
+        provider: 'tbank',
+        status: SubscriptionStatus.Active,
+        providerData: { status: 'ABANDONED' }
+      })
+    ).toBe(false)
+  })
+
   it('is false for a real subscription, a missing providerData or undefined', () => {
     expect(isCheckoutDraft({ providerData: { pending: false, draft: false, rebillId: 'reb' } } as any)).toBe(false)
     expect(isCheckoutDraft({ providerData: undefined } as any)).toBe(false)

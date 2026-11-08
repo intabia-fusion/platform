@@ -61,7 +61,7 @@ jest.mock('@hcengineering/account-client', () => {
     SubscriptionStatus,
     SubscriptionType,
     // Mirrors the real helper: the module is mocked wholesale, and the provider stamps both flags.
-    isCheckoutDraft: (sub: any): boolean => sub?.providerData?.pending === true || sub?.providerData?.draft === true,
+    isCheckoutDraft: jest.requireActual('@hcengineering/account-client').isCheckoutDraft,
     grantsPlan: (sub: any): boolean => {
       if (sub == null) return false
       if (sub.status === 'past_due' && sub.providerData?.pending === true) return false
@@ -351,4 +351,32 @@ describe('checkWorkspaceLimits — banner tier selection', () => {
 
     expect(jest.mocked(setSubscriptionState).mock.calls[0][5]).toBeUndefined()
   })
+
+  it.each([SubscriptionStatus.Expired, SubscriptionStatus.Trialing])(
+    'a legacy abandoned draft does not hide the free fallback of a %s tier',
+    async (status) => {
+      const expiredTrial = tier({
+        id: 'trial',
+        status,
+        plan: 'trial',
+        trialEnd: Date.now() - DAY,
+        createdOn: 100
+      })
+      const legacyDraft = tier({
+        id: 'draft',
+        provider: 'tbank',
+        status: SubscriptionStatus.Canceled,
+        plan: 'max',
+        createdOn: 200,
+        providerData: { pending: false, status: 'ABANDONED' }
+      })
+      ;(getAccountClientRaw as unknown as jest.Mock).mockReturnValue(fakeAccountClient([expiredTrial, legacyDraft]))
+
+      await checkWorkspaceLimits()
+
+      const call = jest.mocked(setSubscriptionState).mock.calls[0]
+      expect(call[0]).toBeUndefined()
+      expect(call[5]).toBe(expiredTrial)
+    }
+  )
 })
