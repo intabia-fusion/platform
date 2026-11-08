@@ -2,6 +2,15 @@
 
 Changelog.
 
+## [0.8.67] - 2026-11-08
+
+* 🐛 BUG FIXES: · FUSIO-1727: Fix board header overflow, filtered status counts and ambiguous status names; improve Kanban drag cancellation, scrolling and fullscreen column sizing ([#659](https://github.com/hcengineering/platform/issues/659)) · FUSIO-1648: Limit project type names and keep long names within settings layouts ([#652](https://github.com/hcengineering/platform/issues/652))
+
+## [0.8.66] - 2026-11-06
+
+* 🚀 FEATURES: · FUSIO-1692: Add chat navigator sorting by last message or name, with manual ordering in supported sections ([#655](https://github.com/hcengineering/platform/issues/655)) · FUSIO-1638: Show calendar dates and full timestamp tooltips for issue creation and modification dates ([#639](https://github.com/hcengineering/platform/issues/639))
+* 🐛 BUG FIXES: · FUSIO-1704: Allow OTP registration without a password when password complexity rules are enabled ([#653](https://github.com/hcengineering/platform/issues/653)) · FUSIO-1661: Clarify the Russian label for manual sorting ([#651](https://github.com/hcengineering/platform/issues/651))
+
 ## [0.8.65] - 2026-11-02
 
 * 🚀 FEATURES: FUSIO-1615: Add a board catalog, personal navigation lists and board sharing ([#650](https://github.com/intabia-fusion/platform/pull/650))
