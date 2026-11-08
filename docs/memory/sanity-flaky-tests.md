@@ -4,6 +4,7 @@
 
 ## Diagnosing
 
+- CI `42447213534`: `rage-click/admin-billing.spec.ts` seeded `mock/mock-model` as a purchased pool with 1000 tokens. Billing includes earlier usage from the current hour (`services/billing/pod-billing/src/usage.ts:117-119`); aibot then rejected all six edit/task proposal attempts with `AI provider pool exhausted`.
 - `kanban.spec.ts` uses the shared Default project. `settings.spec.ts` adds a task type there and renames two statuses, creating additional statuses in existing categories. Run `20261107-014207` failed the reset-merge test with 7 statuses and 5 categories. The reset test must not assume category uniqueness or assert the unrelated merge-by-category menu item; a separate E2E checks category merging with owned statuses.
 - CI `42392235702`: copying another TaskType's generated `targetClass` into a temporary TaskType made cleanup delete the shared class through `OnTaskTypeRemove` (`server-plugins/task-resources/src/index.ts`), breaking subsequent issue creation. A fixture without its own class uses `targetClass === ofClass`; after cleanup, check that the shared class exists and `createIssue` still works with it.
 

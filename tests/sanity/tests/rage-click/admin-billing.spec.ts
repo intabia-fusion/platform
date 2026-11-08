@@ -80,10 +80,12 @@ test.describe('Rage click: admin billing', () => {
     const model = 'mock-model'
     const baseline = 1000
     // Deterministic baseline, independent of whatever earlier runs left behind.
-    await request.post(`${BILLING_URL}/api/v1/admin/pools`, {
+    // A purchased mock pool would cap every AI test, including concurrent workers.
+    const seeded = await request.post(`${BILLING_URL}/api/v1/admin/pools`, {
       headers: getAdminHeaders(),
-      data: { providerId, model, kind: 'purchased', purchasedTokens: baseline, period: 'none' }
+      data: { providerId, model, kind: 'local', purchasedTokens: baseline, period: 'none' }
     })
+    expect(seeded.status()).toBe(204)
 
     await openAdminTab(page, 'billing')
     const row = page.locator('.model-card', { hasText: `${providerId} / ${model}` })
