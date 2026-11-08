@@ -465,7 +465,7 @@ async function makeReadState (control: TriggerControl, collaborator: Collaborato
   control.ctx.warn('read state made for a document without one', { attachedTo, attachedToClass })
   const tx = await createReadStateTx(control, collaborator)
   try {
-    await control.apply(control.ctx, [tx])
+    await control.apply(control.ctx, [tx], true)
     return tx.objectId
   } catch (err: any) {
     const [existing] = await control.findAll(control.ctx, notification.class.ReadState, { attachedTo, attachedToClass })
