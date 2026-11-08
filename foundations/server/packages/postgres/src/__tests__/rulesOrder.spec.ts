@@ -33,6 +33,19 @@ describe('ORDER BY sorting rules', () => {
     { query: 'low', index: 1 }
   ]
 
+  it.each([
+    ['createdOn', 'tracker_doc."createdOn"'],
+    ['status', "tracker_doc.data#>>'{status}'"]
+  ])('puts missing %s last in either direction', (key, sqlKey) => {
+    for (const [order, direction] of [
+      [SortingOrder.Ascending, 'ASC'],
+      [SortingOrder.Descending, 'DESC']
+    ] as const) {
+      const sql = adapter.buildOrder(vars([]), 'tracker:class:Issue', 'tracker_doc', { [key]: order }, [])
+      expect(sql).toBe(`ORDER BY ${sqlKey} ${direction} NULLS LAST`)
+    }
+  })
+
   it('puts a value the rules do not name last in either direction', () => {
     const ascValues: any[] = []
     const asc: string = adapter.buildOrder(

@@ -1215,7 +1215,7 @@ abstract class PostgresAdapterBase implements DbAdapter {
       return order === SortingOrder.Ascending ? ' NULLS FIRST' : ' NULLS LAST'
     }
     const sqlKey = this.getKey(_class, baseDomain, key, joins)
-    return sqlKey.includes('->') || sqlKey.includes('#>>') ? ' NULLS LAST' : ''
+    return sqlKey.includes('->') || sqlKey.includes('#>>') || !getSchema(baseDomain)[key]?.notNull ? ' NULLS LAST' : ''
   }
 
   // `SortingRules` sorts by a value list: a case gives each known value its index. A value the list does

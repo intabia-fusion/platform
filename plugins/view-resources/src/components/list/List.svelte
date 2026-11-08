@@ -90,11 +90,11 @@
       orderBy === undefined ? '' : `${_class}|${orderBy[0]}|${orderBy[1]}|${space ?? ''}|${viewlet?.descriptor ?? ''}`
     if (signature !== sortSignature) {
       sortSignature = signature
+      sortRequest++
       if (orderBy === undefined) {
         sortValue = undefined
         sortReady = true
       } else if (hasSortRules(client, _class, orderBy[0])) {
-        sortRequest++
         sortReady = false
         void updateSort(orderBy, space, sortRequest)
       } else {
