@@ -128,7 +128,7 @@
     const columnTitle = await translate(tracker.string.MyColumn, {})
     columns = [{ id: generateId(), title: columnTitle, category: task.statusCategory.UnStarted, statuses: [] }]
   })
-  $: draft = { projects: selected, columns, warnOnClosedStatuses }
+  $: draft = { projects: selected, columns, filter, warnOnClosedStatuses }
 
   async function onColumns (patch: Partial<Pick<Board, 'columns' | 'warnOnClosedStatuses'>>): Promise<void> {
     if (patch.columns !== undefined) columns = patch.columns

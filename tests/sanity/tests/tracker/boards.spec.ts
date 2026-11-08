@@ -14,11 +14,20 @@
 //
 
 import { createRestClient } from '@hcengineering/api-client'
-import core, { generateId, type AccountUuid, type Data, type Ref, type TxOperations } from '@hcengineering/core'
+import core, {
+  generateId,
+  SortingOrder,
+  type AccountUuid,
+  type Data,
+  type Ref,
+  type TxOperations
+} from '@hcengineering/core'
+import { makeRank } from '@hcengineering/rank'
 import task from '@hcengineering/task'
 import tracker, {
   cardFields,
   IssuePriority,
+  IssuesOrdering,
   type Board,
   type BoardNavigationPreference,
   type CardField,
@@ -187,8 +196,15 @@ test.describe('task boards', () => {
     const board = new KanbanBoardPage(page)
     const doing = await createIssue(client, ctx, { title: `${titlePrefix}spot`, status: 'In Progress' })
     await boards.open(boardId)
-    const spots = page.locator('[data-id="kanban-drop-targets"] [data-drop-target]')
+    const spots = board.column('queue').locator('[data-id="kanban-drop-targets"] [data-drop-target]')
     await board.holdCardVia(doing, [
+      {
+        over: board.column('doing'),
+        check: async () => {
+          await expect(spots).toHaveCount(2)
+          await expect(board.cardInColumn(doing, 'queue')).toHaveCount(0)
+        }
+      },
       {
         over: board.column('queue'),
         check: async () => {
@@ -210,6 +226,80 @@ test.describe('task boards', () => {
     await expect
       .poll(async () => (await client.findOne(tracker.class.Issue, { _id: id }))?.status)
       .toBe(statusId('Todo'))
+  })
+
+  test('returning a dragged card to its column preserves its position and rank', async ({ page }) => {
+    const issueId = await createIssue(client, ctx, { title: `${titlePrefix}return-to-column`, status: 'Todo' })
+    const issue = await client.findOne(tracker.class.Issue, { _id: issueId })
+    if (issue === undefined) throw new Error('the dragged issue is gone')
+    const nextId = await createIssue(client, ctx, {
+      title: `${titlePrefix}return-to-column-next`,
+      status: 'Todo',
+      rank: makeRank(issue.rank, undefined)
+    })
+    const id = await makeBoard('return-to-column', {
+      orderBy: [IssuesOrdering.Manual, SortingOrder.Ascending],
+      columns: [
+        { id: 'queue', title: 'Queue', category: task.statusCategory.ToDo, statuses: [statusId('Todo')] },
+        { id: 'doing', title: 'Doing', category: task.statusCategory.Active, statuses: [statusId('In Progress')] }
+      ]
+    })
+    const boards = new BoardsPage(page)
+    const board = new KanbanBoardPage(page)
+    await boards.open(id)
+    await board.revealCard(issueId)
+    await board.revealCard(nextId)
+    const queue = board.column('queue')
+    const originalIds = await board.cardIdsIn(queue)
+    const originalIndex = originalIds.indexOf(issueId)
+    expect(originalIndex).toBeGreaterThanOrEqual(0)
+    expect(originalIndex).toBeLessThan(originalIds.indexOf(nextId))
+
+    const origin = await board.card(issueId).boundingBox()
+    if (origin === null) throw new Error('the dragged card has no bounding box')
+    await board.holdCardVia(issueId, [{ over: board.column('doing') }])
+    await page.mouse.move(origin.x + origin.width / 2, origin.y + origin.height / 2, { steps: 10 })
+    await expect(board.cardInColumn(issueId, 'queue')).toBeVisible()
+    const insertions = await queue.evaluateHandle((element) => {
+      const state = { count: 0 }
+      const observer = new MutationObserver((records) => {
+        for (const record of records) {
+          for (const node of record.addedNodes) {
+            if (
+              node instanceof Element &&
+              (node.matches('[data-id="kanban-card"]') || node.querySelector('[data-id="kanban-card"]') !== null)
+            ) {
+              state.count++
+            }
+          }
+        }
+      })
+      observer.observe(element, { childList: true, subtree: true })
+      return { state, observer }
+    })
+    for (let i = 0; i < 20; i++) {
+      await page.mouse.move(origin.x + origin.width / 2 + (i % 2), origin.y + origin.height / 2)
+    }
+    const count = await insertions.evaluate(({ state, observer }) => {
+      observer.disconnect()
+      return state.count
+    })
+    await insertions.dispose()
+    expect(count).toBe(0)
+    await page.mouse.up()
+    await expect(page.locator('.kanban-container .drop-allowed, .kanban-container .drop-disabled')).toHaveCount(0)
+
+    await board.holdCardVia(issueId, [{ over: board.column('doing') }, { over: queue }])
+    await page.mouse.up()
+
+    await expect(page.locator('.kanban-container .drop-allowed, .kanban-container .drop-disabled')).toHaveCount(0)
+    await expect(page.locator('[data-id="kanban-drop-targets"]')).toHaveCount(0)
+    await expect.poll(async () => (await board.cardIdsIn(queue)).indexOf(issueId)).toBe(originalIndex)
+    await expect(board.card(issueId)).toHaveCount(1)
+    expect(await client.findOne(tracker.class.Issue, { _id: issueId })).toMatchObject({
+      status: issue.status,
+      rank: issue.rank
+    })
   })
 
   test('the board opens from the navigator', async ({ page }) => {
@@ -345,7 +435,8 @@ test.describe('task boards', () => {
     const boards = new BoardsPage(page)
     await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: new URL(PlatformURI).origin })
     await boards.open(boardId)
-    await boards.share().click()
+    await boards.menuButton().click()
+    await page.getByRole('button', { name: 'Share', exact: true }).click()
     await expect
       .poll(async () => await page.evaluate(async () => await navigator.clipboard.readText()))
       .toBe(boards.boardUrl(boardId))
@@ -555,10 +646,20 @@ test.describe('task boards', () => {
   })
 
   test('the board header has no view controls and no density slider', async ({ page }) => {
+    const issueId = await createIssue(client, ctx, {
+      title: `${titlePrefix}header-statistics`,
+      status: 'Todo',
+      estimation: 2
+    })
     // Own board: view options are kept per board, the slider must not touch the shared one
     const id = await makeBoard('density-slider', {
       columns: [{ id: 'queue', title: 'Queue', category: task.statusCategory.ToDo, statuses: [statusId('Todo')] }],
-      density: 'normal'
+      density: 'normal',
+      quickFilters: Array.from({ length: 26 }, (_, index) => ({
+        id: `quick-${index}`,
+        title: `Quick filter ${index}`,
+        condition: ''
+      }))
     })
     const boards = new BoardsPage(page)
     await boards.open(id)
@@ -570,6 +671,40 @@ test.describe('task boards', () => {
     await expect(page.locator('[name="viewletSelector"]')).toHaveCount(0)
     // The density slider hides behind tracker-board-next
     await expect(page.locator('[data-id="boardDensity"]')).toHaveCount(0)
+
+    const header = page.locator('.hulyHeader-container').filter({ has: boards.menuButton() })
+    const card = page.locator(`[data-id="kanban-card"][data-card-id="${issueId}"]`)
+    await card.hover()
+    await page.keyboard.press('x')
+    await expect(card).toHaveClass(/checked/)
+    const statistics = header.locator('.hulyHeader-buttonsGroup.extra')
+    await expect(statistics).toHaveText('2h')
+    const statisticsText = await statistics.innerText()
+    const viewport = page.viewportSize()
+    try {
+      for (const width of [1600, 900]) {
+        await page.setViewportSize({ width, height: 900 })
+        await expect(header).toHaveClass(width === 900 ? /doubleRow/ : /^(?!.*doubleRow)/)
+        await expect(header.locator('.searchInput-wrapper')).toHaveCount(1)
+        await expect(header.getByRole('button', { name: 'Filter', exact: true })).toHaveCount(1)
+        await expect(statistics).toBeVisible()
+        await expect(statistics).toHaveText(statisticsText)
+        const statisticsBounds = await statistics.boundingBox()
+        const headerBounds = await header.boundingBox()
+        expect(statisticsBounds).not.toBeNull()
+        expect((statisticsBounds?.x ?? 0) + (statisticsBounds?.width ?? 0)).toBeLessThanOrEqual(
+          (headerBounds?.x ?? 0) + (headerBounds?.width ?? 0)
+        )
+        if (width === 900) {
+          const menu = await boards.menuButton().boundingBox()
+          const search = await header.locator('.searchInput-wrapper').boundingBox()
+          expect(menu).not.toBeNull()
+          expect(search?.y).toBeGreaterThanOrEqual((menu?.y ?? 0) + (menu?.height ?? 0))
+        }
+      }
+    } finally {
+      if (viewport !== null) await page.setViewportSize(viewport)
+    }
   })
 
   test('settings: a column is renamed', async ({ page }) => {
@@ -1000,6 +1135,39 @@ test.describe('task boards', () => {
     await boards.open(id)
     await expect(boards.uncovered()).toBeVisible()
     await expect(boards.uncovered()).toContainText('without a column')
+    await expect(boards.uncovered()).toHaveAccessibleName(/without a column/)
+    await page.mouse.move(0, 0)
+    await expect.poll(async () => (await boards.uncovered().boundingBox())?.width ?? 0).toBeLessThanOrEqual(32)
+    const collapsedWidth = (await boards.uncovered().boundingBox())?.width ?? 0
+    await boards.uncovered().hover()
+    await expect
+      .poll(async () => (await boards.uncovered().boundingBox())?.width ?? 0)
+      .toBeGreaterThan(collapsedWidth + 100)
+    await expect
+      .poll(
+        async () =>
+          await boards
+            .uncovered()
+            .locator('.uncovered-label > span')
+            .evaluate((el) => el.scrollWidth <= el.clientWidth + 1)
+      )
+      .toBe(true)
+    expect(
+      await boards.uncovered().evaluate((el) => {
+        const bounds = el.getBoundingClientRect()
+        const header = el.closest('.hulyHeader-container')?.getBoundingClientRect()
+        return header !== undefined && bounds.left >= header.left && bounds.right <= header.right
+      })
+    ).toBe(true)
+    await page.mouse.move(0, 0)
+    await expect.poll(async () => (await boards.uncovered().boundingBox())?.width ?? 0).toBe(collapsedWidth)
+    await boards.uncovered().focus()
+    await page.keyboard.press('Shift+Tab')
+    await page.keyboard.press('Tab')
+    await expect(boards.uncovered()).toBeFocused()
+    await expect
+      .poll(async () => (await boards.uncovered().boundingBox())?.width ?? 0)
+      .toBeGreaterThan(collapsedWidth + 100)
 
     await boards.uncovered().click()
     await expect(boards.uncoveredPopup()).toBeVisible()

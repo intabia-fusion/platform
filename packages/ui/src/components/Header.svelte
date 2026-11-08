@@ -125,10 +125,10 @@
         on:click
       >
         {#if $$slots.description && !hideDescription}
-          <div class="hulyHeader-titleGroup"><slot /></div>
+          <div class="hulyHeader-titleGroup"><slot doubleRow={_doubleRow} /></div>
           <div class="hulyHeader-titleGroup"><slot name="description" /></div>
         {:else}
-          <slot />
+          <slot doubleRow={_doubleRow} />
         {/if}
       </div>
 
@@ -172,11 +172,15 @@
         </div>
       {/if}
       {#if $$slots.search}
-        <div class="hulyHeader-buttonsGroup search">
+        <div
+          class="hulyHeader-buttonsGroup search"
+          style:max-width={hideSearch ? '100%' : undefined}
+          style:flex={hideSearch ? '1 1 0' : undefined}
+        >
           <slot name="search" {doubleRow} />
         </div>
       {/if}
-      {#if $$slots.extra && !hideExtra && (adaptive === 'doubleRow' || adaptive === 'autoExtra')}
+      {#if $$slots.extra && !hideExtra && (adaptive === 'freezeActions' || adaptive === 'doubleRow' || adaptive === 'autoExtra')}
         <div
           class="hulyHeader-buttonsGroup extra"
           class:overflow={overflowExtra}
@@ -224,10 +228,10 @@
       on:click
     >
       {#if $$slots.description && !hideDescription}
-        <slot />
+        <slot doubleRow={_doubleRow} />
         <slot name="description" />
       {:else}
-        <slot />
+        <slot doubleRow={_doubleRow} />
       {/if}
     </div>
 

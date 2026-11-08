@@ -1,0 +1,394 @@
+element "01 Как устроен канбан" {
+    styles {
+        item {
+            font-size 22
+            width 280
+            height 120
+            corner-radius 10
+            text-color #0f172a
+        }
+        line {
+            color #64748b
+            line-width 2
+        }
+    }
+    item "HostLayer" {
+        pos -20.0 280.0
+        width 690
+        height 440
+        display no-fill
+        line-width 1
+        color #94a3b8
+        title ""
+        font-size 18
+    }
+    item "EngineLayer" {
+        pos 720.0 280.0
+        width 700
+        height 680
+        display no-fill
+        line-width 1
+        color #94a3b8
+        title ""
+        font-size 18
+    }
+    item "HostTitle" {
+        pos 0.0 260.0
+        display text
+        title "ПРИЛОЖЕНИЕ"
+        width 240
+        height 25
+        font-size 18
+    }
+    item "EngineTitle" {
+        pos 740.0 260.0
+        display text
+        title "ОБЩИЙ ДВИЖОК"
+        width 260
+        height 25
+        font-size 18
+    }
+    item "Screen" {
+        title "Экран трекера"
+        body "Доска и фильтры.\nBoardView.svelte\nIssuesView.svelte"
+        color #dbeafe
+        layout middle center
+    }
+    item "Adapter" {
+        pos 370.0 0.0
+        title "Правила задач"
+        body "Статусы и разрешения.\ntracker/KanbanView.svelte"
+        color #dbeafe
+        layout middle center
+    }
+    item "Board" {
+        pos 740.0 0.0
+        title "Общая доска"
+        body "Колонки и дорожки.\nKanban.svelte"
+        color #cffafe
+        layout middle center
+    }
+    item "Cards" {
+        pos 1110.0 0.0
+        display stack
+        title "Карточки"
+        body "Документы и жесты.\nKanbanRow.svelte\nrow.ts"
+        color #cffafe
+        layout middle center
+    }
+    item "Generic" {
+        pos 370.0 220.0
+        title "Канбан Task"
+        body "Другой набор правил.\ntask/KanbanView.svelte"
+        color #dbeafe
+        layout middle center
+    }
+    item "Controller" {
+        pos 740.0 -240.0
+        title "Состояние доски"
+        body "Drag, выбор, collapse.\nkanbanController.ts"
+        color #e0e7ff
+        layout middle center
+    }
+    item "L1" {
+        pos 282.0 -12.0
+        display text
+        title "запрос"
+        width 85
+        height 25
+        font-size 16
+    }
+    item "L2" {
+        pos 652.0 -12.0
+        display text
+        title "данные\nи правила"
+        width 85
+        height 42
+        font-size 16
+    }
+    item "L3" {
+        pos 635.0 150.0
+        display text
+        title "второй вход"
+        width 125
+        height 25
+        font-size 16
+    }
+    item "L4" {
+        pos 1022.0 -12.0
+        display text
+        title "полные\nданные"
+        width 85
+        height 42
+        font-size 16
+    }
+    item "L5" {
+        pos 900.0 -160.0
+        display text
+        title "события / состояние"
+        width 225
+        height 25
+        font-size 16
+    }
+    link "Screen" "Adapter" {
+        display arrow
+    }
+    link "Adapter" "Board" {
+        display arrow
+    }
+    link "Generic" "Board" {
+        display arrow
+    }
+    link "Board" "Cards" {
+        display arrow
+    }
+    link "Board" "Controller" {
+        display arrows
+    }
+}
+element "02 Как данные становятся карточками" {
+    styles {
+        item {
+            font-size 22
+            width 280
+            height 130
+            corner-radius 10
+            text-color #0f172a
+        }
+        line {
+            color #64748b
+            line-width 2
+        }
+    }
+    item "List" {
+        display stack
+        title "Легкий список"
+        body "ID, rank и поля группировки.\nБыстрый запрос: до 1000.\nВторой запрос: весь список."
+        color #dcfce7
+        layout middle center
+    }
+    item "Visible" {
+        pos 380.0 0.0
+        title "Видимые ID"
+        body "Только раскрытые колонки\nи достигнутые дорожки.\nЛимит карточек в ячейке."
+        color #e0e7ff
+        layout middle center
+    }
+    item "Load" {
+        pos 760.0 0.0
+        title "Полные документы"
+        body "Отдельные подписки по ID.\nСтарый ответ игнорируется.\nПачка ответов сливается."
+        color #dcfce7
+        layout middle center
+    }
+    item "Card" {
+        pos 1140.0 0.0
+        display stack
+        title "Карточка на экране"
+        body "Ждет полный документ.\nВо время drag использует\nперетаскиваемую карточку."
+        color #cffafe
+        layout middle center
+    }
+    item "Live" {
+        pos 760.0 -250.0
+        width 280
+        height 95
+        display no-fill
+        title "Сервер меняет данные"
+        body "Live query обновляет снимки."
+        color #94a3b8
+        layout middle center
+    }
+    item "L1" {
+        pos 282.0 -15.0
+        display text
+        title "группировка"
+        width 95
+        height 25
+        font-size 16
+    }
+    item "L2" {
+        pos 662.0 -15.0
+        display text
+        title "наборы ID"
+        width 95
+        height 25
+        font-size 16
+    }
+    item "L3" {
+        pos 1042.0 -15.0
+        display text
+        title "документы"
+        width 95
+        height 25
+        font-size 16
+    }
+    item "L4" {
+        pos 1060.0 -180.0
+        display text
+        title "изменения\nполных данных"
+        width 150
+        height 42
+        font-size 16
+    }
+    item "L5" {
+        pos 340.0 -210.0
+        display text
+        title "обновленный легкий список"
+        width 300
+        height 25
+        font-size 16
+    }
+    link "List" "Visible" {
+        display arrow
+    }
+    link "Visible" "Load" {
+        display arrow
+    }
+    link "Load" "Card" {
+        display arrow
+    }
+    link "Live" "Load" {
+        display arrow
+    }
+    link "Live" "List" {
+        display arrow
+    }
+}
+element "03 Что происходит при перетаскивании" {
+    styles {
+        item {
+            font-size 20
+            width 250
+            height 120
+            corner-radius 10
+            text-color #0f172a
+        }
+        line {
+            color #64748b
+            line-width 2
+        }
+    }
+    item "Start" {
+        title "Взяли карточку"
+        body "Запомнить место, rank\nи прокрутку предков."
+        color #cffafe
+        layout middle center
+    }
+    item "Preview" {
+        pos 350.0 0.0
+        title "Новое место"
+        body "Проверить разрешения.\nТолько предпросмотр.\nЗаписи пока нет."
+        color #e0e7ff
+        layout center middle
+    }
+    item "Decision" {
+        pos 700.0 20.0
+        width 220
+        height 160
+        display circle
+        title ""
+        color #fef3c7
+        layout middle center
+    }
+    item "Condition" {
+        pos 730.0 -20.0
+        display text
+        width 180
+        height 80
+        font-size 20
+        title "Drop принят?\nЕсть изменение?"
+    }
+    item "Write" {
+        pos 1040.0 0.0
+        width 290
+        title "Запись изменения"
+        body "Показать pending overlay.\nclient.update: поля и rank.\nПри ошибке убрать overlay."
+        color #dcfce7
+        layout middle center
+    }
+    item "Cancel" {
+        pos 640.0 -260.0
+        width 330
+        height 110
+        display no-fill
+        title "Без записи"
+        body "Escape, drop вне, исходное место.\nВернуть порядок; очистить drag."
+        color #94a3b8
+        layout middle center
+    }
+    item "Confirm" {
+        pos 1040.0 -260.0
+        width 290
+        height 110
+        display stack
+        title "Сервер подтвердил"
+        body "Live query совпал с overlay.\nУбрать overlay; оставить данные."
+        color #dcfce7
+        layout middle center
+    }
+    item "L1" {
+        pos 252.0 -15.0
+        display text
+        title "dragover"
+        width 95
+        height 25
+        font-size 16
+    }
+    item "L2" {
+        pos 602.0 -15.0
+        display text
+        title "drop"
+        width 95
+        height 25
+        font-size 16
+    }
+    item "Yes" {
+        pos 932.0 -15.0
+        display text
+        title "да"
+        width 95
+        height 25
+        font-size 18
+    }
+    item "No" {
+        pos 830.0 -190.0
+        display text
+        title "нет"
+        width 80
+        height 25
+        font-size 18
+    }
+    item "Ack" {
+        pos 1090.0 -185.0
+        display text
+        title "новый снимок"
+        width 200
+        height 25
+        font-size 16
+    }
+    link "Start" "Preview" {
+        display arrow
+    }
+    link "Preview" "Decision" {
+        display arrow
+    }
+    link "Decision" "Write" {
+        display arrow
+    }
+    link "Decision" "Cancel" {
+        display arrow
+    }
+    link "Write" "Confirm" {
+        display arrow
+    }
+    item "Note" {
+        pos 0.0 -250.0
+        width 480
+        height 100
+        display text
+        font-size 18
+        title "Завершение любой ветки"
+        body "Очистить индикаторы, RAF, таймеры и listeners.\nВозврат в исходную геометрию отменяет drop.\nReorder внутри исходной колонки может записать rank."
+    }
+}

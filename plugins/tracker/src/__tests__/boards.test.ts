@@ -208,6 +208,8 @@ describe('column drops', () => {
     expect(columnDropTargets(column, id('x'), [id('b')])).toEqual(['b'])
     expect(columnDropTargets(column, id('x'), [id('z')])).toEqual([])
     expect(columnDropTargets(column, id('b'), [id('a')])).toEqual(['a', 'b'])
+    expect(columnDropTargets({ ...column, statuses: [id('a')] }, id('x'), [id('a')])).toEqual(['a'])
+    expect(columnDropTargets({ ...column, statuses: [id('a')] }, id('x'), [])).toEqual([])
   })
 
   it('makes one kanban category of the column statuses', () => {
