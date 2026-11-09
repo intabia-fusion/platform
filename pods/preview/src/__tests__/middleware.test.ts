@@ -14,13 +14,13 @@
 //
 
 jest.mock('@hcengineering/account-client', () => ({ getClient: jest.fn() }))
-jest.mock('@hcengineering/server-client', () => ({ extractToken: jest.fn(), readToken: jest.fn() }))
+jest.mock('@hcengineering/server-client', () => ({ extractToken: jest.fn(), extractTokenWithRaw: jest.fn(), readToken: jest.fn() }))
 
 /* eslint-disable import/first */
 import { Analytics } from '@hcengineering/analytics'
 import { getClient } from '@hcengineering/account-client'
 import { MeasureMetricsContext, systemAccountUuid } from '@hcengineering/core'
-import { extractToken, readToken } from '@hcengineering/server-client'
+import { extractToken, extractTokenWithRaw } from '@hcengineering/server-client'
 import type { Token } from '@hcengineering/server-token'
 import { type Request, type RequestHandler, type Response } from 'express'
 
@@ -92,6 +92,9 @@ describe('withAuthorization', () => {
 
   function check (token: Token | undefined, cookie: string): jest.Mock {
     ;(extractToken as jest.Mock).mockReturnValue(token)
+    ;(extractTokenWithRaw as jest.Mock).mockReturnValue(
+      token === undefined ? undefined : { token, raw: 'raw-' + (token.extra?.guest ?? 'user') }
+    )
     const next = jest.fn()
     const request = { headers: { cookie } } as unknown as RequestWithAuth
     withAuthorization(request, noResponse, next)
@@ -113,6 +116,19 @@ describe('withAuthorization', () => {
     const regular = check({ account, extra: {} } as unknown as Token, 'regular-token=u')
     expect(regular).toHaveBeenCalledWith()
   })
+
+  // a browser with two accounts carries two cookies; the raw kept must be the decoded one's
+  it('keeps the raw token the decoded one came from', () => {
+    ;(extractTokenWithRaw as jest.Mock).mockReturnValue({
+      token: { account, extra: {} } as unknown as Token,
+      raw: 'token-of-a'
+    })
+    const request = { headers: { cookie: 'a=token-of-a; b=token-of-b' } } as unknown as RequestWithAuth
+
+    withAuthorization(request, noResponse, jest.fn())
+
+    expect(request.tokenRaw).toBe('token-of-a')
+  })
 })
 
 describe('createWorkspaceAccess', () => {
@@ -123,10 +139,11 @@ describe('createWorkspaceAccess', () => {
   const getUserWorkspaces = jest.fn()
   let access: RequestHandler
 
-  function request (token: Token | undefined, ws = workspace): RequestWithAuth {
+  function request (token: Token | undefined, ws = workspace, raw = 'raw'): RequestWithAuth {
     return {
       params: { workspace: ws, name: 'blob.png' },
       token,
+      tokenRaw: raw,
       headers: { cookie: 'account-metadata-Token=raw' }
     } as unknown as RequestWithAuth
   }
@@ -146,7 +163,6 @@ describe('createWorkspaceAccess', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     ;(getClient as jest.Mock).mockReturnValue({ getUserWorkspaces })
-    ;(readToken as jest.Mock).mockReturnValue('raw')
     access = createWorkspaceAccess({ accountsUrl: 'http://account', allowTtlMs: 60_000, denyTtlMs: 1_000 })
   })
 
@@ -156,6 +172,20 @@ describe('createWorkspaceAccess', () => {
     access(request(undefined), noResponse, next)
 
     expect(next).toHaveBeenCalledWith(expect.objectContaining({ code: 401 }))
+  })
+
+  // two accounts in one browser: the decoded token names one account, the first cookie another
+  it('asks account with the token it decoded, not with the first cookie', async () => {
+    getUserWorkspaces.mockResolvedValue([{ uuid: workspace }])
+    const next = jest.fn()
+
+    access(request(userToken(), workspace, 'token-of-a'), noResponse, next)
+    await flush()
+
+    // only the url and the token matter here, the timeouts are the client's business
+    expect((getClient as jest.Mock).mock.calls[0][0]).toBe('http://account')
+    expect((getClient as jest.Mock).mock.calls[0][1]).toBe('token-of-a')
+    expect(next).toHaveBeenCalledWith()
   })
 
   it('accepts a token carrying the same workspace, without asking account', () => {

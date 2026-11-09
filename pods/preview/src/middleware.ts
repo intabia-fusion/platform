@@ -17,7 +17,7 @@
 import { Analytics } from '@hcengineering/analytics'
 import { getClient as getAccountClient } from '@hcengineering/account-client'
 import { type WorkspaceInfoWithStatus, MeasureContext, systemAccountUuid } from '@hcengineering/core'
-import { extractToken, readToken } from '@hcengineering/server-client'
+import { extractToken, extractTokenWithRaw } from '@hcengineering/server-client'
 import { Token } from '@hcengineering/server-token'
 import { type Response, type Request, type NextFunction, type RequestHandler, type ErrorRequestHandler } from 'express'
 import { LRUCache } from 'lru-cache'
@@ -31,6 +31,8 @@ export interface KeepAliveOptions {
 
 export interface RequestWithAuth extends Request {
   token?: Token
+  /** The exact string `token` was decoded from: account is asked with it, never with another one. */
+  tokenRaw?: string
 }
 
 export const keepAlive = (options: KeepAliveOptions): RequestHandler => {
@@ -60,11 +62,14 @@ export const withAdminAuthorization = (req: RequestWithAuth, res: Response, next
 // bring a token, and `createWorkspaceAccess` decides whether its workspace is the requested one.
 export const withAuthorization = (req: RequestWithAuth, res: Response, next: NextFunction): void => {
   try {
-    const token = extractToken(req.headers)
-    if (token == null) {
+    // The raw string is kept next to the decoded token: a request carries cookies of several
+    // accounts, and asking account with a token picked another way would answer for the wrong one.
+    const extracted = extractTokenWithRaw(req.headers)
+    if (extracted == null) {
       throw new HttpError(401, 'Unauthorized')
     }
-    req.token = token
+    req.token = extracted.token
+    req.tokenRaw = extracted.raw
 
     next()
   } catch (err: any) {
@@ -78,6 +83,10 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 // whole list, so opening a file in a second workspace costs nothing and a probe of a foreign
 // uuid does not evict the answer of somebody else.
 const MEMBERSHIP_CACHE_MAX = 1000
+
+// A thumbnail is not worth a half-minute wait: an account that does not answer within this is
+// treated as down, and the image is refused instead of holding the request.
+const ACCOUNT_ATTEMPT_TIMEOUT_MS = 5 * 1000
 
 export interface WorkspaceAccessOptions {
   accountsUrl: string
@@ -101,7 +110,13 @@ export const createWorkspaceAccess = (options: WorkspaceAccessOptions): RequestH
   const workspacesOf = async (account: string, raw: string): Promise<Set<string>> => {
     return await requests.execute(account, async () => {
       try {
-        const answer: WorkspaceInfoWithStatus[] = await getAccountClient(options.accountsUrl, raw).getUserWorkspaces()
+        const answer: WorkspaceInfoWithStatus[] = await getAccountClient(
+          options.accountsUrl,
+          raw,
+          undefined,
+          undefined,
+          ACCOUNT_ATTEMPT_TIMEOUT_MS
+        ).getUserWorkspaces()
         const workspaces = new Set<string>(answer.map((it) => it.uuid))
         memberships.set(account, { workspaces, fetchedAt: Date.now() }, { ttl: options.allowTtlMs })
         return workspaces
@@ -152,7 +167,7 @@ export const createWorkspaceAccess = (options: WorkspaceAccessOptions): RequestH
       }
     }
 
-    const raw = readToken(req.headers)
+    const raw = req.tokenRaw
     if (raw === undefined) {
       next(new HttpError(401, 'Unauthorized'))
       return

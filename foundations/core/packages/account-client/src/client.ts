@@ -90,6 +90,10 @@ import type {
 } from './types'
 import { getClientTimezone, isNetworkError } from './utils'
 
+// A hung connection (account pod paused, network black hole) never rejects on its own: without a
+// per-attempt bound a shared request stays pending forever and every caller waits with it.
+const RPC_ATTEMPT_TIMEOUT_MS = 30 * 1000
+
 /** @public */
 export interface AccountClient {
   // Static methods
@@ -432,13 +436,13 @@ export function getClient (
   accountsUrl?: string,
   token?: string,
   retryTimeoutMs?: number,
-  origin?: string
+  attemptTimeoutMs?: number
 ): AccountClient {
   if (accountsUrl === undefined) {
     throw new Error('Accounts url not specified')
   }
 
-  return new AccountClientImpl(accountsUrl, token, retryTimeoutMs, origin)
+  return new AccountClientImpl(accountsUrl, token, retryTimeoutMs, attemptTimeoutMs)
 }
 
 interface Request {
@@ -454,7 +458,9 @@ class AccountClientImpl implements AccountClient {
     private readonly url: string,
     private readonly token?: string,
     retryTimeoutMs?: number,
-    private readonly origin?: string
+    // A single attempt may hang: retryTimeoutMs only bounds the retries after an error, so without
+    // this a silent account makes every caller of a shared request wait forever.
+    private readonly attemptTimeoutMs: number = RPC_ATTEMPT_TIMEOUT_MS
   ) {
     if (url === '') {
       throw new Error('Accounts url not specified')
@@ -488,17 +494,32 @@ class AccountClientImpl implements AccountClient {
   private async _rpc<T>(request: Request): Promise<T> {
     const timezone = getClientTimezone()
     const meta: Record<string, string> = timezone !== undefined ? { 'x-timezone': timezone } : {}
-    const response = await fetch(this.url, {
-      ...this.request,
-      headers: {
-        ...this.request.headers,
-        'Content-Type': 'application/json',
-        Connection: 'keep-alive',
-        ...meta
-      },
-      method: 'POST',
-      body: JSON.stringify(request)
-    })
+    const controller = new AbortController()
+    const timer = setTimeout(() => { controller.abort() }, this.attemptTimeoutMs)
+    let response: Response
+    try {
+      response = await fetch(this.url, {
+        ...this.request,
+        headers: {
+          ...this.request.headers,
+          'Content-Type': 'application/json',
+          Connection: 'keep-alive',
+          ...meta
+        },
+        method: 'POST',
+        body: JSON.stringify(request),
+        signal: controller.signal
+      })
+    } catch (err: any) {
+      // An attempt cut by its own timeout is a dead service, not a broken request: report it the
+      // same way a refused connection is reported, and stop retrying.
+      if (controller.signal.aborted) {
+        throw serviceUnavailable()
+      }
+      throw err
+    } finally {
+      clearTimeout(timer)
+    }
 
     const result = await parseRpcResponse(response)
     if (result.error != null) {

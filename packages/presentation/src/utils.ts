@@ -80,6 +80,7 @@ import { onDestroy } from 'svelte'
 import { get, writable } from 'svelte/store'
 
 import { type KeyedAttribute } from '.'
+import { presentationCookiePaths } from './cookies'
 import { OptimizeQueryMiddleware, type PresentationPipeline, PresentationPipelineImpl } from './pipeline'
 import plugin, { type ClientHook } from './plugin'
 
@@ -1141,25 +1142,17 @@ export function setPresentationCookie (token: string, workspaceUuid: WorkspaceUu
   const cookieValue = encodeURIComponent(token)
 
   const storage = getMetadata(plugin.metadata.FileStorage)
+  let storagePath: string | undefined
   if (storage !== undefined) {
-    let path = `/files/${workspaceUuid}`
+    storagePath = `/files/${workspaceUuid}`
     try {
-      path = storage.getCookiePath(workspaceUuid)
+      storagePath = storage.getCookiePath(workspaceUuid)
     } catch {}
-
-    const normalized = path.startsWith('/') ? path : `/${path}`
-    document.cookie = `${cookieName}=${cookieValue}; path=${normalized}`
   }
 
-  // A thumbnail is an <img> request, and an <img> carries no Authorization header: the token has
-  // to reach preview as a cookie. The cookie above is scoped to the storage path, and a guest of
-  // a public link has no account cookie at all, so both would load every thumbnail as 401.
   const previewUrl = getMetadata(plugin.metadata.PreviewUrl)
-  if (previewUrl !== undefined && previewUrl !== '') {
-    try {
-      const previewPath = new URL(previewUrl, window.location.origin).pathname
-      document.cookie = `${cookieName}=${cookieValue}; path=${previewPath}`
-    } catch {}
+  for (const path of presentationCookiePaths(storagePath, previewUrl, window.location.origin)) {
+    document.cookie = `${cookieName}=${cookieValue}; path=${path}`
   }
 }
 
