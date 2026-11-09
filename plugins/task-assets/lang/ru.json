@@ -40,6 +40,8 @@
     "TaskTypeNameAlreadyExists": "Тип задачи с таким именем уже существует",
     "TaskTypeNameEmpty": "Название типа задачи не может быть пустым",
     "TaskTypeStatusOrderWarning": "Порядок статусов отличается от типа проекта. Этот порядок можно сохранить, но заполнение иконок определяется порядком типа проекта.",
+    "AlignTaskTypeStatusOrder": "Исправить",
+    "StatusNotInTaskType": "Нет в типе задачи",
     "AssignThisTask": "Назначить эту задачу",
     "More": "Опции",
     "TaskUnAssign": "Сбросить назначение",

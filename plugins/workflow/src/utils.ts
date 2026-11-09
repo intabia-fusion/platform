@@ -282,6 +282,24 @@ export function hasSelfTransition (transition: Pick<WorkflowTransition, 'from' |
   return transition.from.includes(transition.to)
 }
 
+export function findStatusesWithoutOutgoingTransitions (
+  statuses: Ref<Status>[],
+  transitions: Array<Pick<WorkflowTransition, 'from' | 'to'>>,
+  terminalStatuses: Ref<Status>[]
+): Ref<Status>[] {
+  const statusSet = new Set(statuses)
+  const terminal = new Set(terminalStatuses)
+  return statuses.filter(
+    (status) =>
+      !terminal.has(status) &&
+      !transitions.some(
+        (transition) =>
+          statusSet.has(transition.to) &&
+          (transition.from == null || transition.from.length === 0 || transition.from.includes(status))
+      )
+  )
+}
+
 export async function addScreenTab (
   client: TxOperations,
   screenId: Ref<Screen>,

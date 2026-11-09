@@ -245,6 +245,38 @@ for (const swim of [false, true]) {
       before = await snapshot()
     }
 
+    if (!swim) {
+      for (const ending of ['Escape', 'source panel', 'foreign card']) {
+        demo(`manual drag over a foreign card ends at ${ending} without duplicate`, async ({ page }) => {
+          await open(page, true)
+          const foreignId = issueIds[issueIds.length - 1]
+          const foreign = await client.findOne(tracker.class.Issue, { _id: foreignId })
+          if (foreign === undefined) throw new Error('Demo foreign card disappeared')
+          await client.update(foreign, { status: statusId('In Progress') })
+          await expect(destination.locator(`[data-card-id="${foreignId}"]`)).toBeVisible()
+          ids = await board.cardIdsIn(source)
+          before = await snapshot()
+          await board.holdCardVia(ids[0], [])
+          await hover(page, destination.locator(`[data-card-id="${foreignId}"]`), 0.2)
+          expect(await board.cardIdsIn(source)).toEqual(ids)
+          expect(await board.cardIdsIn(destination)).toEqual([foreignId])
+          if (ending === 'Escape') await page.keyboard.press('Escape')
+          else if (ending === 'source panel') await hover(page, source, 0.98)
+          await page.mouse.up()
+          await cleanDrag(page)
+          await expect(page.locator(`[data-card-id="${ids[0]}"]`)).toHaveCount(1)
+          if (ending === 'foreign card') {
+            await expect
+              .poll(async () => (await client.findOne(tracker.class.Issue, { _id: ids[0] as Ref<Issue> }))?.status)
+              .toBe(statusId('In Progress'))
+          } else {
+            expect(await board.cardIdsIn(source)).toEqual(ids)
+            await expect.poll(snapshot).toEqual(before)
+          }
+        })
+      }
+    }
+
     for (const index of [0, 1, 2]) {
       for (const ending of ['shifted', 'via-column', 'escape', 'scroll', 'hold', 'current-status']) {
         demo(`card ${index + 1} cancels by ${ending} without writes or jumping`, async ({ page }) => {

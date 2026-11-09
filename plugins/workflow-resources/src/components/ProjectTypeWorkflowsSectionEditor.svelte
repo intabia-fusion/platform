@@ -13,17 +13,20 @@
 -->
 <script lang="ts">
   import { onDestroy } from 'svelte'
-  import type { Ref } from '@hcengineering/core'
+  import type { Ref, Status } from '@hcengineering/core'
   import { SortingOrder } from '@hcengineering/core'
   import presentation, { createQuery, getClient } from '@hcengineering/presentation'
+  import { getEmbeddedLabel } from '@hcengineering/platform'
   import setting from '@hcengineering/setting'
   import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
   import type { ProjectType, ProjectTypeDescriptor, TaskType } from '@hcengineering/task'
   import task from '@hcengineering/task'
   import { taskTypeStore } from '@hcengineering/task-resources'
   import ui, { type DropdownIntlItem, Icon, Label, showPopup } from '@hcengineering/ui'
-  import { IconButton, MenuButton } from '@hcengineering/ui/kit'
-  import type { Workflow, WorkflowConfig } from '@hcengineering/workflow'
+  import { Chip, IconButton, MenuButton } from '@hcengineering/ui/kit'
+  import { statusStore } from '@hcengineering/view-resources'
+  import type { Workflow, WorkflowConfig, WorkflowTransition } from '@hcengineering/workflow'
+  import { findStatusesWithoutOutgoingTransitions } from '@hcengineering/workflow'
 
   import { navigateToWorkflow } from '../location'
   import plugin from '../plugin'
@@ -38,6 +41,7 @@
 
   const client = getClient()
   const workflowsQuery = createQuery()
+  const transitionsQuery = createQuery()
 
   let fileInput: HTMLInputElement | undefined
   let isWorkflowsLoading = true
@@ -53,6 +57,47 @@
       isWorkflowsLoading = false
     },
     { sort: { name: SortingOrder.Ascending } }
+  )
+
+  let transitions: WorkflowTransition[] = []
+  let transitionsLoaded = false
+  $: workflowIds = workflows.map((item) => item._id)
+  $: if (workflowIds.length > 0) {
+    if (
+      transitionsQuery.query(plugin.class.WorkflowTransition, { attachedTo: { $in: workflowIds } }, (res) => {
+        transitions = res
+        transitionsLoaded = true
+      })
+    ) {
+      transitions = []
+      transitionsLoaded = false
+    }
+  } else {
+    transitionsQuery.unsubscribe()
+    transitions = []
+    transitionsLoaded = false
+  }
+
+  $: noOutgoing = new Map(
+    workflows.map((item) => {
+      const taskType = $taskTypeStore.get(item.taskType)
+      if (!transitionsLoaded || taskType === undefined || taskType.statuses.some((id) => !$statusStore.byId.has(id))) {
+        return [item._id, [] as Status[]] as const
+      }
+      const terminal = taskType.statuses.filter((id) => {
+        const category = $statusStore.byId.get(id)?.category
+        return category === task.statusCategory.Won || category === task.statusCategory.Lost
+      })
+      const ids = findStatusesWithoutOutgoingTransitions(
+        taskType.statuses,
+        transitions.filter((edge) => edge.attachedTo === item._id),
+        terminal
+      )
+      return [
+        item._id,
+        ids.map((id) => $statusStore.byId.get(id)).filter((status): status is Status => status !== undefined)
+      ] as const
+    })
   )
 
   function getTaskTypeName (taskTypeId: Ref<TaskType>): string | undefined {
@@ -232,6 +277,7 @@
   <div class="hulyTableAttr-content workflow">
     {#each workflows as workflow (workflow._id)}
       {@const taskTypeName = getTaskTypeName(workflow.taskType)}
+      {@const missing = noOutgoing.get(workflow._id) ?? []}
       <button
         type="button"
         class="hulyTableAttr-content__row"
@@ -254,6 +300,19 @@
             <Label label={plugin.string.UnknownTaskType} />
           {/if}
         </span>
+        {#if missing.length > 0}
+          <span class="missing-statuses" data-id="workflow-no-outgoing">
+            <Label label={plugin.string.NoOutgoingTransitions} />:
+            {#each missing as status (status._id)}
+              <Chip
+                label={getEmbeddedLabel(status.name)}
+                tooltip={{ label: getEmbeddedLabel(status.name) }}
+                size="extra-small"
+                kind="neutral"
+              />
+            {/each}
+          </span>
+        {/if}
       </button>
     {/each}
   </div>
@@ -285,5 +344,25 @@
     color: var(--primary-color-purple-02, #6452db);
     white-space: nowrap;
     margin-left: 0.5rem;
+  }
+
+  .missing-statuses {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-0_5);
+    margin-left: auto;
+    min-width: 0;
+    max-width: 55%;
+  }
+
+  .missing-statuses :global(.chip) {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .missing-statuses :global(.chip__label) {
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 </style>

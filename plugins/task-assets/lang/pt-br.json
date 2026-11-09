@@ -1,6 +1,8 @@
 {
   "string": {
     "TaskTypeStatusOrderWarning": "A ordem dos status difere da ordem do tipo de projeto. Você pode manter esta ordem, mas o preenchimento dos ícones de status segue a ordem do tipo de projeto.",
+    "AlignTaskTypeStatusOrder": "Corrigir",
+    "StatusNotInTaskType": "Fora do tipo de tarefa",
     "ExportSingleTaskTypeDescription": "Exportar a configuração apenas deste tipo de tarefa (com todos os status e atributos)",
     "ParentOf": "Pai",
     "ChildOf": "Subtarefa",

@@ -290,6 +290,31 @@ export function hasTaskTypeStatusOrderMismatch (
   return false
 }
 
+export function alignTaskTypeStatusOrder (
+  type: ProjectType,
+  taskType: Pick<TaskType, 'statuses'>,
+  taskTypes: IdMap<TaskType>,
+  statuses: IdMap<Status>
+): Array<Ref<Status>> {
+  const rank = getProjectStatusRank([type], taskTypes)
+  const ordered = [...taskType.statuses]
+  const categories = new Map<Ref<StatusCategory>, number[]>()
+  for (const [index, id] of ordered.entries()) {
+    const category = statuses.get(id)?.category
+    if (category === undefined || !rank.has(id)) continue
+    const positions = categories.get(category) ?? []
+    positions.push(index)
+    categories.set(category, positions)
+  }
+  for (const positions of categories.values()) {
+    const sorted = positions.map((index) => ordered[index]).sort((a, b) => (rank.get(a) ?? 0) - (rank.get(b) ?? 0))
+    positions.forEach((index, i) => {
+      ordered[index] = sorted[i]
+    })
+  }
+  return ordered
+}
+
 /**
  * @public
  * Position of a status among the statuses of its category in the order of one task type (`TaskType.statuses`),
@@ -316,6 +341,21 @@ export function getSingleQueryKind (kind: unknown): Ref<TaskType> | undefined {
   return Array.isArray(list) && list.length === 1 && typeof list[0] === 'string'
     ? (list[0] as Ref<TaskType>)
     : undefined
+}
+
+export function getMissingTaskTypeStatuses (
+  tasks: Array<Pick<Task, 'kind' | 'status'>>,
+  taskTypes: IdMap<TaskType>
+): Map<Ref<TaskType>, Array<Ref<Status>>> {
+  const result = new Map<Ref<TaskType>, Array<Ref<Status>>>()
+  for (const task of tasks) {
+    const taskType = taskTypes.get(task.kind)
+    if (taskType === undefined || taskType.statuses.includes(task.status)) continue
+    const ids = result.get(task.kind) ?? []
+    if (!ids.includes(task.status)) ids.push(task.status)
+    result.set(task.kind, ids)
+  }
+  return result
 }
 
 /**

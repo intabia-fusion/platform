@@ -22,6 +22,7 @@
   import { getEmbeddedLabel } from '@hcengineering/platform'
 
   import plugin from '../../plugin'
+  import { FixedColumn } from '@hcengineering/view-resources'
 
   export let workflow: Workflow
   export let statuses: Status[] = []
@@ -57,10 +58,12 @@
 </script>
 
 <div class="initial-statuses-row flex-row-center flex-gap-2">
-  <span class="label flex-row-center flex-gap-1 font-medium-14 flex-shrink-0">
-    <Icon icon={plugin.icon.Workflow} size="small" />
-    <Label label={plugin.string.InitialStatuses} />:
-  </span>
+  <FixedColumn key="workflow.label">
+    <span class="label flex-row-center flex-gap-1 font-medium-14 flex-shrink-0">
+      <Icon icon={plugin.icon.Workflow} size="small" />
+      <Label label={plugin.string.InitialStatuses} />:
+    </span>
+  </FixedColumn>
   <div class="selector flex-grow min-w-0">
     <ModernDropdown
       dataId="initial-statuses"

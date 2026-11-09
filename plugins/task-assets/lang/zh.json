@@ -1,6 +1,8 @@
 {
   "string": {
     "TaskTypeStatusOrderWarning": "状态顺序与项目类型中的顺序不同。您可以保留此顺序，但状态图标的填充遵循项目类型中的顺序。",
+    "AlignTaskTypeStatusOrder": "修复",
+    "StatusNotInTaskType": "不在任务类型中",
     "ExportSingleTaskTypeDescription": "仅导出此任务类型的配置（包含所有状态和属性）",
     "ParentOf": "父任务",
     "ChildOf": "子任务",

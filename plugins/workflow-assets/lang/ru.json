@@ -15,6 +15,7 @@
     "AnyStatus": "Любой статус",
     "AnyTaskType": "Любой тип задачи",
     "Workflows": "Воркфлоу",
+    "NoOutgoingTransitions": "Без переходов",
     "DeleteWorkflow": "Удалить воркфлоу",
     "DeleteWorkflowConfirm": "Вы уверены, что хотите удалить этот воркфлоу?",
     "DeleteWorkflowTransition": "Удалить переход",

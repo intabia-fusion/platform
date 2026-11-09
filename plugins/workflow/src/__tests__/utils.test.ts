@@ -35,6 +35,7 @@ import {
   removeRuleConfig,
   updateRuleConfig,
   setWorkflow,
+  findStatusesWithoutOutgoingTransitions,
   findTransitionConflict,
   checkConflict,
   getTransitionConflict,
@@ -724,6 +725,29 @@ describe('Workflow Utilities', () => {
         workflow.mixin.ProjectWorkflow,
         { workflows: { otherType: 'wf-2' } }
       )
+    })
+  })
+
+  describe('findStatusesWithoutOutgoingTransitions', () => {
+    const outside = 'status-outside' as Ref<Status>
+    const statuses = [statusOpen, statusInProgress, statusDone]
+
+    it('excludes terminal statuses and requires an outgoing transition to an allowed status', () => {
+      expect(findStatusesWithoutOutgoingTransitions(statuses, [], [statusDone])).toEqual([statusOpen, statusInProgress])
+      expect(
+        findStatusesWithoutOutgoingTransitions(
+          statuses,
+          [
+            { from: [statusOpen], to: outside },
+            { from: [statusInProgress], to: statusInProgress }
+          ],
+          [statusDone]
+        )
+      ).toEqual([statusOpen])
+    })
+
+    it.each([null, []])('treats from %p as any status', (from) => {
+      expect(findStatusesWithoutOutgoingTransitions(statuses, [{ from, to: statusDone }], [statusDone])).toEqual([])
     })
   })
 

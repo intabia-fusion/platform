@@ -1,6 +1,8 @@
 {
   "string": {
     "TaskTypeStatusOrderWarning": "L'ordine degli stati differisce da quello del tipo di progetto. È possibile mantenere questo ordine, ma il riempimento delle icone di stato segue l'ordine del tipo di progetto.",
+    "AlignTaskTypeStatusOrder": "Correggi",
+    "StatusNotInTaskType": "Non nel tipo di attività",
     "ExportSingleTaskTypeDescription": "Esporta la configurazione solo di questo tipo di attività (con tutti gli stati e gli attributi)",
     "ParentOf": "Padre",
     "ChildOf": "Sottoattività",
