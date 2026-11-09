@@ -1,3 +1,5 @@
+// Copyright © 2026 Intabia Fusion.
+
 import { expect, test, type SharedWorkspace } from '../fixtures'
 import { LeftSideMenuPage } from '../model/left-side-menu-page'
 import { ChannelPage } from '../model/channel-page'
@@ -113,19 +115,24 @@ test.describe('Check direct messages channels', () => {
       await expect(blocks).toHaveCount(2)
       // Wait for the lazy Highlight component, not its temporary plain-text fallback.
       await expect(blocks.nth(1).locator('.hljs-keyword')).toHaveText('const')
-      await expect(blocks.first()).toHaveJSProperty('textContent', code)
+      // The Svelte wrapper can append one space. Keep indentation and newlines significant.
+      await expect.poll(async () => (await blocks.first().textContent())?.replace(/ $/, '')).toBe(code)
       await expect(message.locator('script')).toHaveCount(0)
       await expect(blocks.first()).toBeVisible()
-      expect(await blocks.first().evaluate((element) => {
-        const style = getComputedStyle(element)
-        const computedLineHeight = parseFloat(style.lineHeight)
-        const lineHeight = Number.isNaN(computedLineHeight) ? parseFloat(style.fontSize) : computedLineHeight
-        const height = element.getBoundingClientRect().height
-        const lines = (element.textContent ?? '').split('\n').length
-        return element.scrollHeight <= element.clientHeight + 1 &&
-          height >= lines * lineHeight - 1 &&
-          (element.parentElement?.getBoundingClientRect().height ?? 0) >= height
-      })).toBe(true)
+      expect(
+        await blocks.first().evaluate((element) => {
+          const style = getComputedStyle(element)
+          const computedLineHeight = parseFloat(style.lineHeight)
+          const lineHeight = Number.isNaN(computedLineHeight) ? parseFloat(style.fontSize) : computedLineHeight
+          const height = element.getBoundingClientRect().height
+          const lines = (element.textContent ?? '').split('\n').length
+          return (
+            element.scrollHeight <= element.clientHeight + 1 &&
+            height >= lines * lineHeight - 1 &&
+            (element.parentElement?.getBoundingClientRect().height ?? 0) >= height
+          )
+        })
+      ).toBe(true)
     }
 
     await test.step('Send an Astro code block through the editor', async () => {
