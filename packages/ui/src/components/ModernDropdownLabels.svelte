@@ -14,6 +14,7 @@
 -->
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
+  import type { SortingOrder } from '@hcengineering/core'
   import { createEventDispatcher } from 'svelte'
 
   import Button from '../ui-kit/button/Button.svelte'
@@ -40,6 +41,8 @@
   export let multiselect: boolean = false
   export let wrap: boolean = false
   export let selected: DropdownTextItem['id'] | Array<DropdownTextItem['id']> | undefined = multiselect ? [] : undefined
+  // When the list picks what to sort by, the mark on the chosen item says which way it sorts.
+  export let sortOrder: SortingOrder | undefined = undefined
   export let allowDeselect: boolean = false
   export let showDropdownIcon: boolean = false
   export let showContent: boolean = true
@@ -87,7 +90,7 @@
       opened = true
       popup = showPopup(
         ModernPopupLabels,
-        { placeholder: ui.string.SearchDots, items, multiselect, selected, enableSearch, categoryKind },
+        { placeholder: ui.string.SearchDots, items, multiselect, selected, enableSearch, categoryKind, sortOrder },
         container,
         (result) => {
           if (result != null) {

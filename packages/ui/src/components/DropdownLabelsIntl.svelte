@@ -32,6 +32,7 @@
   export let items: DropdownIntlItem[]
   export let multiselect: boolean = false
   export let selected: DropdownIntlItem['id'] | Array<DropdownIntlItem['id']> | undefined = multiselect ? [] : undefined
+  export let sortOrder: SortingOrder | undefined = undefined
   export let disabled: boolean = false
   export let kind: ButtonKind = 'regular'
   export let size: ButtonSize = 'small'
@@ -64,7 +65,7 @@
       opened = true
       showPopup(
         DropdownLabelsPopupIntl,
-        { items, selected, params, withSearch, multiselect },
+        { items, selected, params, withSearch, multiselect, sortOrder },
         container,
         (result) => {
           if (result) {

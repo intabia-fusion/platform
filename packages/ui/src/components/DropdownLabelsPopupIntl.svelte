@@ -14,8 +14,9 @@
 -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import type { IntlString } from '@hcengineering/platform'
+  import type { Asset, IntlString } from '@hcengineering/platform'
   import { translate } from '@hcengineering/platform'
+  import { SortingOrder } from '@hcengineering/core'
 
   import type { DropdownIntlItem } from '../types'
   import Label from './Label.svelte'
@@ -28,6 +29,8 @@
   export let params: Record<string, any> = {}
   export let withSearch: boolean = false
   export let searchPlaceholder: IntlString = ui.string.Search
+  // When the list picks what to sort by, the mark on the chosen item says which way it sorts.
+  export let sortOrder: SortingOrder | undefined = undefined
 
   const dispatch = createEventDispatcher()
 
@@ -40,6 +43,10 @@
     } else {
       return item.id === selected
     }
+  }
+
+  function markIcon (order: SortingOrder | undefined): Asset {
+    return order === SortingOrder.Ascending ? ui.icon.ChevronUpSmall : ui.icon.ChevronDownSmall
   }
   let btns: HTMLButtonElement[] = []
 
@@ -77,6 +84,8 @@
 
   $: filteredItems = withSearch ? items.filter((item) => searchMap[item.label]?.includes(lowerSearch)) : items
   $: btns = btns.slice(0, filteredItems.length)
+
+    console.log('if:', items, selected, filteredItems, params, sortOrder)
 </script>
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
@@ -133,7 +142,7 @@
             <Label label={item.label} params={item.params ?? params} />
           </div>
           <div class="check">
-            {#if isSelected(selected, item)}<Icon icon={ui.icon.Check} size="small" />{/if}
+            {#if isSelected(selected, item)}<Icon icon={markIcon(sortOrder)} size="small" />{/if}
           </div>
         </button>
       {/each}
