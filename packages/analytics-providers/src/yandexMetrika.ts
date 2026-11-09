@@ -36,8 +36,8 @@ export class YandexMetrikaProvider implements AnalyticProvider {
       const path = window.location.pathname
       if (this.isTrackingPath(path)) {
         this.loadMetrika()
-        window.ym(this.counterId, 'hit', window.location.href, {
-          referer: document.referrer,
+        window.ym(this.counterId, 'hit', this.pageUrl(window.location.href), {
+          referer: this.pageUrl(document.referrer),
           title: document.title
         })
       }
@@ -47,15 +47,51 @@ export class YandexMetrikaProvider implements AnalyticProvider {
   }
 
   private isTrackingPath (path: string): boolean {
-    if (path.includes('/selectWorkspace') || path.includes('/workbench')) return false
+    // The SDK reads location and referrer itself, even when explicit hits omit their query strings.
+    if (!this.isSafeUrl(path) || !this.isSafeUrl(window.location.href) || !this.isSafeUrl(document.referrer)) {
+      return false
+    }
+    const [, app, page] = path.split(/[?#]/, 1)[0].split('/')
+    if (app === 'login') {
+      return (
+        page === undefined ||
+        page === '' ||
+        [
+          'login',
+          'signup',
+          'join',
+          'autoJoin',
+          'auth',
+          'confirm',
+          'confirmationSend',
+          'password',
+          'recovery',
+          'loginLink',
+          'createWorkspace'
+        ].includes(page)
+      )
+    }
+    return ['signup', 'join', 'createWorkspace', 'onboard'].includes(app)
+  }
 
-    return (
-      path.includes('/login') ||
-      path.includes('/signup') ||
-      path.includes('/join') ||
-      path.includes('/createWorkspace') ||
-      path.includes('/onboard')
-    )
+  private isSafeUrl (path: string): boolean {
+    try {
+      const url = new URL(path, window.location.origin)
+      return (
+        url.hash === '' &&
+        Array.from(url.searchParams.keys()).every(
+          (key) => /^utm_(source|medium|campaign|term|content|id)$/.test(key) || key === 'yclid' || key === 'gclid'
+        )
+      )
+    } catch {
+      return false
+    }
+  }
+
+  private pageUrl (path: string): string {
+    if (path === '') return ''
+    const url = new URL(path, window.location.origin)
+    return url.origin + url.pathname
   }
 
   private loadMetrika (): void {
@@ -86,6 +122,10 @@ export class YandexMetrikaProvider implements AnalyticProvider {
       const script = document.createElement('script')
       script.async = true
       script.src = scriptUrl
+      // Removing a downloading script does not prevent it from executing later.
+      script.onload = () => {
+        if (!this.isTrackingPath(window.location.pathname)) this.unloadMetrika()
+      }
 
       const firstScript = document.getElementsByTagName('script')[0] as HTMLScriptElement | undefined
       if (firstScript !== undefined && firstScript !== null) {
@@ -113,6 +153,12 @@ export class YandexMetrikaProvider implements AnalyticProvider {
 
   private unloadMetrika (): void {
     if (typeof window === 'undefined') return
+
+    if (window.ym?.a !== undefined) {
+      window.ym.a.length = 0
+    } else if (this.counterId !== undefined && window.ym !== undefined) {
+      window.ym(this.counterId, 'destruct')
+    }
 
     const scripts = document.getElementsByTagName('script')
     for (let i = 0; i < scripts.length; i++) {
@@ -146,6 +192,7 @@ export class YandexMetrikaProvider implements AnalyticProvider {
 
   handleEvent (event: string, params: Record<string, any> = {}): void {
     if (typeof window === 'undefined' || this.counterId === undefined || window.ym === undefined) return
+    if (!this.isTrackingPath(window.location.pathname)) return
 
     // 1) Submitted form with registration data (either standard email or OTP code success validation)
     if ((event === 'signup.viaEmail' || event === 'signup.viaOtp') && params?.ok === true) {
@@ -157,18 +204,21 @@ export class YandexMetrikaProvider implements AnalyticProvider {
       window.ym(this.counterId, 'reachGoal', 'signup_submit', { method, invite: isInvite })
     } else if (event.startsWith('signup.') && event.endsWith('.completed')) {
       const split = event.split('.')
-      const method = split[1] !== undefined && split[1] !== '' ? split[1] : 'oauth'
+      const method = ['google', 'github', 'openid'].includes(split[1]) ? split[1] : 'oauth'
       const isInvite = window.location.pathname.includes('/join')
       window.ym(this.counterId, 'reachGoal', 'signup_submit', { method, invite: isInvite })
     }
 
     // 2) Attempt to submit the signup form: `reason` is present only when the press hit an inert button.
     if (event === 'signup.submitAttempt') {
-      const goal = params?.reason !== undefined ? 'signup_click_blocked' : 'signup_click'
-      window.ym(this.counterId, 'reachGoal', goal, {
-        ...params,
+      const goalParams: Record<string, string | boolean> = {
         invite: window.location.pathname.includes('/join')
-      })
+      }
+      if (params.method === 'otp' || params.method === 'email') goalParams.method = params.method
+      if (params.via === 'click' || params.via === 'enter') goalParams.via = params.via
+      if (params.reason === 'consents' || params.reason === 'invalid') goalParams.reason = params.reason
+      const goal = goalParams.reason !== undefined ? 'signup_click_blocked' : 'signup_click'
+      window.ym(this.counterId, 'reachGoal', goal, goalParams)
     }
 
     // 3) Created space
@@ -186,25 +236,13 @@ export class YandexMetrikaProvider implements AnalyticProvider {
     if (this.isTrackingPath(path)) {
       this.loadMetrika()
       if (window.ym !== undefined) {
-        let fullUrl: string
-        try {
-          fullUrl = new URL(path, window.location.origin).href
-        } catch {
-          fullUrl = path
-        }
-        window.ym(this.counterId, 'hit', fullUrl, {
-          referer: document.referrer,
+        window.ym(this.counterId, 'hit', this.pageUrl(path), {
+          referer: this.pageUrl(document.referrer),
           title: document.title
         })
       }
-    } else if (path.includes('/workbench')) {
-      // Delay unloading by 3 seconds to make sure that the network requests
-      // for any pending goals/hits are dispatched successfully by the browser.
-      setTimeout(() => {
-        if (typeof window !== 'undefined' && window.location.pathname.includes('/workbench')) {
-          this.unloadMetrika()
-        }
-      }, 3000)
+    } else {
+      this.unloadMetrika()
     }
   }
 

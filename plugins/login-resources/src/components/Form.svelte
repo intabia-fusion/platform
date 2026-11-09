@@ -163,6 +163,8 @@
     void validate($themeStore.language).then((res) => {
       if (res) {
         performAction(action, via)
+      } else if (via === 'enter' && !proceedDisabled) {
+        reportAttempt(via, 'invalid')
       }
     })
   }
