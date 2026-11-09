@@ -34,6 +34,102 @@ const hover = (target: HTMLElement, x: number, y: number): CardDragEvent =>
   }) as unknown as CardDragEvent
 
 describe('deterministic drag operation budgets', () => {
+  it('keeps the shifted origin fixed while a manual reorder moves the source card', async () => {
+    const inputs = controllerFixture(1, 2)
+    inputs.dropTargets = new Map([['column0', [{ id: 'column0' }]]])
+    const scroller = document.createElement('div')
+    const cell = document.createElement('div')
+    cell.dataset.state = 'column0'
+    const spots = document.createElement('div')
+    spots.dataset.id = 'kanban-drop-targets'
+    const source = document.createElement('div')
+    source.dataset.cardId = inputs.objects[0]._id
+    cell.append(spots, source)
+    scroller.append(cell)
+    inputs.scrollerEl = scroller
+    const measure = vi.spyOn(source, 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 100, 200, 100))
+    vi.spyOn(globalThis, 'requestAnimationFrame').mockReturnValue(1)
+    vi.spyOn(globalThis, 'cancelAnimationFrame').mockImplementation(() => {})
+    const controller = new KanbanController(inputs)
+    try {
+      await controller.onDragStart(inputs.objects[0], 'column0')
+      controller.handleDragMove(hover(scroller, 400, 500))
+      measure.mockReturnValue(new DOMRect(100, 260, 200, 100))
+      controller.handleDragMove(hover(scroller, 400, 500))
+      const neighbor = document.createElement('div')
+      vi.spyOn(neighbor, 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 380, 200, 100))
+      neighbor.dataset.cardId = inputs.objects[1]._id
+      controller.cardDragOver(hover(neighbor, 110, 460), inputs.objects[1], 'column0')
+      expect(controller.state.dragCardTargetIndex).toBe(1)
+      measure.mockReturnValue(new DOMRect(100, 380, 200, 100))
+      controller.handleDragMove(hover(source, 110, 460))
+      expect(controller.state.atInitialPlace).toBe(false)
+      expect(controller.state.dragCardTargetIndex).toBe(1)
+      controller.handleDragMove(hover(cell, 110, 300))
+      expect(controller.state.atInitialPlace).toBe(true)
+      expect(controller.state.dragCardTargetIndex).toBeUndefined()
+      expect(controller.state.groupByDocs.column0).toEqual(inputs.objects)
+    } finally {
+      controller.destroy()
+    }
+  })
+
+  it.each([false, true])('keeps a reorder when returning from another column, swim lanes: %s', async (swim) => {
+    const inputs = controllerFixture(2, 3)
+    const lane = { _id: 'A', title: 'A', value: 'A' }
+    inputs.swimLaneMode = swim
+    inputs.swimLanes = swim ? [lane] : []
+    inputs.getSwimLaneOfDoc = () => lane._id
+    inputs.dropTargets = new Map([['column0', [{ id: 'column0' }]]])
+    const controller = new KanbanController(inputs)
+    const target = document.createElement('div')
+    target.dataset.cardId = inputs.objects[2]._id
+    vi.spyOn(target, 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 300, 200, 100))
+    try {
+      await controller.onDragStart(inputs.objects[0], 'column0', swim ? lane : undefined)
+      controller.panelDragOver(undefined, 'column1', swim ? lane : undefined)
+      controller.cardDragOver(hover(target, 150, 390), inputs.objects[2], 'column0', swim ? lane : undefined)
+      controller.panelDragOver(undefined, 'column0', swim ? lane : undefined)
+      expect(controller.state.dragCardTargetIndex).toBe(2)
+      expect(controller.state.dragCardState).toBe('column0')
+    } finally {
+      controller.destroy()
+    }
+  })
+
+  it('keeps descending board cards in their original lane when visiting another column', async () => {
+    const inputs = controllerFixture(2, 2)
+    const lane = { _id: 'A', title: 'A', value: 'A' }
+    inputs.swimLanes = [lane]
+    inputs.swimLaneMode = true
+    inputs.getSwimLaneOfDoc = () => lane._id
+    inputs.dontUpdateRank = true
+    inputs.orderBy = ['modifiedOn', -1]
+    inputs.dropTargets = new Map([
+      ['column0', [{ id: 'column0' }]],
+      ['column1', [{ id: 'column1' }]]
+    ])
+    const controller = new KanbanController(inputs)
+    try {
+      await controller.onDragStart(inputs.objects[0], 'column0', lane)
+      controller.panelDragOver(undefined, 'column1', lane)
+      expect(controller.state.dragCardTargetIndex).toBeUndefined()
+      expect(
+        controller.getSwimLaneCategoryValues(
+          lane,
+          'column0',
+          controller.state.groupByDocs,
+          controller.state.dragCard,
+          controller.state.dragCardCurrentSwimLane,
+          controller.state.dragCardState,
+          controller.state.dragCardTargetIndex
+        )
+      ).toEqual(inputs.groupByDocs.column0)
+    } finally {
+      controller.destroy()
+    }
+  })
+
   it.each([
     [10, 20],
     [100, 200]

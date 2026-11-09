@@ -28,7 +28,16 @@
 
   import { getClient } from '@hcengineering/presentation'
 
-  import ui, { Button, Icon, Scroller, lazyObserver, themeStore, defaultBackground } from '@hcengineering/ui'
+  import ui, {
+    Button,
+    Icon,
+    Label,
+    Spinner,
+    Scroller,
+    lazyObserver,
+    themeStore,
+    defaultBackground
+  } from '@hcengineering/ui'
   import { createEventDispatcher, onDestroy } from 'svelte'
 
   import type { DocWithRank, DropTarget, Item, SwimLane } from '../types'
@@ -97,6 +106,7 @@
   // Landing spots per column (stateKey -> spots), shown once the dragged card starts moving.
   // The host computes them; on drop the spot id goes back through `getUpdateProps`.
   export let dropTargets = new Map<string, DropTarget[]>()
+  export let loading = false
 
   // SwimLane support. When empty - classic kanban layout (legacy).
   export let swimLanes: SwimLane[] = []
@@ -130,6 +140,7 @@
     fitColumns,
     getCategoryGroup,
     groupByDocs,
+    dropTargets,
     getGroupByValues,
     storageKey,
     swimLanes,
@@ -293,6 +304,7 @@
       fitColumns,
       getCategoryGroup,
       groupByDocs,
+      dropTargets,
       getGroupByValues,
       storageKey,
       swimLanes,
@@ -398,6 +410,12 @@
   on:dragend={onDragEnd}
   on:drop={onDragEnd}
 >
+  {#if loading}
+    <div class="loading-status flex-row-center gap-2" role="status" data-id="kanban-loading">
+      <Spinner size="small" />
+      <Label label={ui.string.Loading} />
+    </div>
+  {/if}
   {#if swimLaneMode}
     <Scroller horizontal bind:divScroll={scrollerEl}>
       <div class="kanban-swimlane-wrap">
@@ -509,15 +527,7 @@
                       $columns.membersOf
                     )}
                     {#if columnPlace(state, $collapsedColumns, $columns.membersOf) === 'open'}
-                      {@const spots =
-                        laneTakes(swimLane) &&
-                        !(
-                          $atInitialPlace &&
-                          state === $dragCardInitialState &&
-                          swimLane._id === $dragCardInitialSwimLane?._id
-                        )
-                          ? (shownSpots.get(stateKey(state)) ?? [])
-                          : []}
+                      {@const spots = laneTakes(swimLane) ? (shownSpots.get(stateKey(state)) ?? []) : []}
                       {@const laneStateObjects = getSwimLaneCategoryValues(
                         swimLane,
                         state,
@@ -569,7 +579,7 @@
                                 <div class="drop-target-label">
                                   <slot name="dropTarget" {state} {target} dragCard={$dragCard} />
                                 </div>
-                                {#if $dragOverDropTarget === target.id && $dragCardState === state && $dragCardCurrentSwimLane?._id === swimLane._id && $dragCard !== undefined}
+                                {#if $dragOverDropTarget === target.id && $dragCardState === state && $dragCardCurrentSwimLane?._id === swimLane._id && $dragCard !== undefined && (state !== $dragCardInitialState || swimLane._id !== $dragCardInitialSwimLane?._id)}
                                   <div class="drop-target-card">
                                     <slot
                                       name="card"
@@ -586,7 +596,10 @@
                         <KanbanRow
                           bind:this={swimRowBindings[swimCellKey(swimLane._id, si)]}
                           on:obj-focus
-                          stateObjects={cardInSpot ? withoutCard(laneStateObjects, $dragCard) : laneStateObjects}
+                          stateObjects={cardInSpot &&
+                          (state !== $dragCardInitialState || swimLane._id !== $dragCardInitialSwimLane?._id)
+                            ? withoutCard(laneStateObjects, $dragCard)
+                            : laneStateObjects}
                           isDragging={$isDragging}
                           dragCard={$dragCard}
                           {objects}
@@ -599,7 +612,7 @@
                             showMore(cellKey(swimLane._id, state), swimCellLimit, SWIM_CELL_LIMIT_STEP)
                           }}
                           cardDragOver={(evt, obj) => {
-                            cardDragOver(evt, obj, state)
+                            cardDragOver(evt, obj, state, swimLane)
                           }}
                           cardDrop={(evt, obj) => {
                             void cardDrop(evt, obj, state, swimLane)
@@ -723,8 +736,7 @@
           )}
 
           {#if columnPlace(state, $collapsedColumns, $columns.membersOf) === 'open'}
-            {@const spots =
-              $atInitialPlace && state === $dragCardInitialState ? [] : (shownSpots.get(stateKey(state)) ?? [])}
+            {@const spots = shownSpots.get(stateKey(state)) ?? []}
             <!-- svelte-ignore a11y-no-static-element-interactions -->
             <div
               class="panel-container"
@@ -778,7 +790,7 @@
                         <div class="drop-target-label">
                           <slot name="dropTarget" {state} {target} dragCard={$dragCard} />
                         </div>
-                        {#if $dragOverDropTarget === target.id && $dragCardState === state && $dragCard !== undefined}
+                        {#if $dragOverDropTarget === target.id && $dragCardState === state && $dragCard !== undefined && state !== $dragCardInitialState}
                           <div class="drop-target-card">
                             <slot name="card" object={$dragCard} dragged={true} />
                           </div>
@@ -802,7 +814,9 @@
                       <KanbanRow
                         bind:this={stateRows[si]}
                         on:obj-focus
-                        stateObjects={cardInSpot ? withoutCard(stateObjects, $dragCard) : stateObjects}
+                        stateObjects={cardInSpot && state !== $dragCardInitialState
+                          ? withoutCard(stateObjects, $dragCard)
+                          : stateObjects}
                         isDragging={$isDragging}
                         dragCard={$dragCard}
                         {objects}
@@ -907,6 +921,18 @@
 </div>
 
 <style lang="scss">
+  .loading-status {
+    position: absolute;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    z-index: 2;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--theme-divider-color);
+    border-radius: 0.5rem;
+    background: var(--theme-popup-color);
+    pointer-events: none;
+  }
+
   :global(.kanban-drop-placeholder) {
     pointer-events: none;
     outline: 2px dashed var(--theme-divider-color);
@@ -1260,6 +1286,7 @@
   // Landing spots of every available column: one full-width slot per value the card
   // can take, the card standing in the hovered slot. A drop sets exactly that value.
   .drop-targets {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: 0.375rem;
@@ -1290,6 +1317,10 @@
     min-width: 0;
   }
   .drop-target-card {
-    pointer-events: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 2;
   }
 </style>
