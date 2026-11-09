@@ -14,6 +14,7 @@
 -->
 <script lang="ts">
   import type { IntlString, Asset } from '@hcengineering/platform'
+  import type { SortingOrder } from '@hcengineering/core'
   import { createEventDispatcher } from 'svelte'
   import { deepEqual } from 'fast-equals'
 
