@@ -145,6 +145,7 @@
         size="medium"
         items={orderBy}
         selected={viewOptions.orderBy?.[0]}
+        sortOrder={viewOptions.orderBy?.[1]}
         width="10rem"
         justify="left"
         on:selected={(e) => {
