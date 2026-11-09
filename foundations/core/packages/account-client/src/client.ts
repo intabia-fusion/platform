@@ -497,7 +497,9 @@ class AccountClientImpl implements AccountClient {
     const timezone = getClientTimezone()
     const meta: Record<string, string> = timezone !== undefined ? { 'x-timezone': timezone } : {}
     const controller = new AbortController()
-    const timer = setTimeout(() => { controller.abort() }, this.attemptTimeoutMs)
+    const timer = setTimeout(() => {
+      controller.abort()
+    }, this.attemptTimeoutMs)
     let response: Response
     try {
       response = await fetch(this.url, {

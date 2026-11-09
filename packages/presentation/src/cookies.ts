@@ -19,11 +19,11 @@
  * Authorization header, and a guest of a public link has no account cookie at all - without the
  * preview path every such image would be a 401.
  */
-export function presentationCookiePaths (
+export const presentationCookiePaths = (
   storagePath: string | undefined,
   previewUrl: string | undefined,
   origin: string
-): string[] {
+): string[] => {
   const paths: string[] = []
 
   if (storagePath !== undefined) {

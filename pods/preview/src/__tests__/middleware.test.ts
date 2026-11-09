@@ -14,7 +14,11 @@
 //
 
 jest.mock('@hcengineering/account-client', () => ({ getClient: jest.fn() }))
-jest.mock('@hcengineering/server-client', () => ({ extractToken: jest.fn(), extractTokenWithRaw: jest.fn(), readToken: jest.fn() }))
+jest.mock('@hcengineering/server-client', () => ({
+  extractToken: jest.fn(),
+  extractTokenWithRaw: jest.fn(),
+  readToken: jest.fn()
+}))
 
 /* eslint-disable import/first */
 import { Analytics } from '@hcengineering/analytics'

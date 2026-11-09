@@ -109,13 +109,10 @@ test.describe('Preview service thumbnails in a browser', () => {
       'image/png'
     )
 
-    const answer = await page.evaluate(
-      async (url) => {
-        const response = await fetch(url, { credentials: 'include' })
-        return { status: response.status, type: response.headers.get('content-type') }
-      },
-      `${previewUrl}/image/width=${WIDTH}/${workspace}/${name}`
-    )
+    const answer = await page.evaluate(async (url) => {
+      const response = await fetch(url, { credentials: 'include' })
+      return { status: response.status, type: response.headers.get('content-type') }
+    }, `${previewUrl}/image/width=${WIDTH}/${workspace}/${name}`)
 
     expect(answer.status).toBe(200)
     expect(answer.type).toBe('image/png')
