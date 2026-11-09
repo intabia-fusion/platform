@@ -459,6 +459,10 @@ function defineFolder (builder: Builder): void {
     presenter: drive.component.FolderPresenter
   })
 
+  builder.mixin(drive.class.Folder, core.class.Class, view.mixin.AttributePresenter, {
+    presenter: drive.component.FolderRefPresenter
+  })
+
   builder.mixin(drive.class.Folder, core.class.Class, view.mixin.ObjectEditor, {
     editor: drive.component.EditFolder
   })

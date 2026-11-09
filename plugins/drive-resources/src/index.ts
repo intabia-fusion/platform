@@ -36,6 +36,7 @@ import FileVersionPresenter from './components/FileVersionPresenter.svelte'
 import FileVersionVersionPresenter from './components/FileVersionVersionPresenter.svelte'
 import FolderPanel from './components/FolderPanel.svelte'
 import FolderPresenter from './components/FolderPresenter.svelte'
+import FolderRefPresenter from './components/FolderRefPresenter.svelte'
 import FolderSearchItem from './components/FolderSearchItem.svelte'
 import GridView from './components/GridView.svelte'
 import MoveResource from './components/MoveResource.svelte'
@@ -275,6 +276,7 @@ export default async (): Promise<Resources> => ({
     FileVersionVersionPresenter,
     FolderPanel,
     FolderPresenter,
+    FolderRefPresenter,
     GridView,
     MoveResource,
     ResourcePresenter,
