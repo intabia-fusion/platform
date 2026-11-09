@@ -84,8 +84,6 @@
 
   $: filteredItems = withSearch ? items.filter((item) => searchMap[item.label]?.includes(lowerSearch)) : items
   $: btns = btns.slice(0, filteredItems.length)
-
-    console.log('if:', items, selected, filteredItems, params, sortOrder)
 </script>
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
