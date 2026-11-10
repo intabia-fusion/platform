@@ -82,11 +82,18 @@ describe('migrateTaskReferenceClasses', () => {
     ]
     const client = makeClient(refs, { 'issue-1': 'current-type' })
     await migrateTaskReferenceClasses(client, taskDomain, activityDomain)
-    expect(client.traverse).toHaveBeenCalledWith(activityDomain,
-      { _class: activity.class.ActivityReference }, expect.any(Object))
-    expect(client.find).toHaveBeenCalledWith(taskDomain, {
-      _id: { $in: ['issue-1', 'document-1'] }
-    }, { projection: { _id: 1, _class: 1 } })
+    expect(client.traverse).toHaveBeenCalledWith(
+      activityDomain,
+      { _class: activity.class.ActivityReference },
+      expect.any(Object)
+    )
+    expect(client.find).toHaveBeenCalledWith(
+      taskDomain,
+      {
+        _id: { $in: ['issue-1', 'document-1'] }
+      },
+      { projection: { _id: 1, _class: 1 } }
+    )
     expect(client.bulk).toHaveBeenCalledWith(activityDomain, [
       { filter: { _id: 'outgoing' }, update: { srcDocClass: 'current-type' } },
       { filter: { _id: 'incoming' }, update: { attachedToClass: 'current-type' } },
@@ -95,7 +102,6 @@ describe('migrateTaskReferenceClasses', () => {
     expect(refs[0]).toMatchObject({ message: 'original text', modifiedOn: 1, srcDocClass: 'current-type' })
     const iterator = await (client.traverse as jest.Mock).mock.results[0].value
     expect(iterator.close).toHaveBeenCalledTimes(1)
-
     ;(client.bulk as jest.Mock).mockClear()
     await migrateTaskReferenceClasses(client, taskDomain, activityDomain)
     expect(client.bulk).not.toHaveBeenCalled()

@@ -15,10 +15,7 @@
 
 import type { Class, Doc, Hierarchy, Ref } from '@hcengineering/core'
 
-export function getReferenceQueryClass (
-  hierarchy: Hierarchy,
-  _class: Ref<Class<Doc>>
-): Ref<Class<Doc>> | undefined {
+export function getReferenceQueryClass (hierarchy: Hierarchy, _class: Ref<Class<Doc>>): Ref<Class<Doc>> | undefined {
   // A task may have changed type since the reference was written. Its domain's
   // parent still finds it; a deleted class cannot safely be queried at all.
   return hierarchy.hasClass(_class) ? hierarchy.getParentClass(_class) : undefined

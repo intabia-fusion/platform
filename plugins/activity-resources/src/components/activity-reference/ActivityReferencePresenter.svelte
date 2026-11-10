@@ -92,12 +92,14 @@
     targetDoc = undefined
   }
 
-  $: targetPanel = targetDoc !== undefined && hierarchy.hasClass(targetDoc._class)
-    ? hierarchy.classHierarchyMixin(targetDoc._class, view.mixin.ObjectPanel)
-    : undefined
-  $: srcDocPanel = srcDoc !== undefined && hierarchy.hasClass(srcDoc._class)
-    ? hierarchy.classHierarchyMixin(srcDoc._class, view.mixin.ObjectPanel)
-    : undefined
+  $: targetPanel =
+    targetDoc !== undefined && hierarchy.hasClass(targetDoc._class)
+      ? hierarchy.classHierarchyMixin(targetDoc._class, view.mixin.ObjectPanel)
+      : undefined
+  $: srcDocPanel =
+    srcDoc !== undefined && hierarchy.hasClass(srcDoc._class)
+      ? hierarchy.classHierarchyMixin(srcDoc._class, view.mixin.ObjectPanel)
+      : undefined
 
   $: void (
     targetDoc !== undefined &&

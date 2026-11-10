@@ -47,14 +47,17 @@ function makeControl (messages: Doc[]): TriggerControl {
     },
     modelDb: { findAllSync: () => [] },
     findAll: jest.fn().mockImplementation(async (_ctx, _class, query) => {
-      const candidates = _class === activity.class.ActivityReference
-        ? messages.filter((message) => message._class === activity.class.ActivityReference)
-        : messages
-      return toFindResult(candidates.filter((message) => {
-        const matches = (filter: Record<string, any>): boolean =>
-          Object.entries(filter).every(([key, value]) => (message as any)[key] === value)
-        return query.$or !== undefined ? query.$or.some(matches) === true : matches(query)
-      }))
+      const candidates =
+        _class === activity.class.ActivityReference
+          ? messages.filter((message) => message._class === activity.class.ActivityReference)
+          : messages
+      return toFindResult(
+        candidates.filter((message) => {
+          const matches = (filter: Record<string, any>): boolean =>
+            Object.entries(filter).every(([key, value]) => (message as any)[key] === value)
+          return query.$or !== undefined ? query.$or.some(matches) === true : matches(query)
+        })
+      )
     })
   } as any as TriggerControl
 }
@@ -150,25 +153,33 @@ describe('OnDocClassChanged (references)', () => {
   })
 
   it('repoints a reference to the changed attached document', async () => {
-    const control = makeControl([makeReference({
-      srcDocId: 'source-1', attachedDocId: objectId, attachedDocClass: oldClass
-    })])
+    const control = makeControl([
+      makeReference({
+        srcDocId: 'source-1',
+        attachedDocId: objectId,
+        attachedDocClass: oldClass
+      })
+    ])
     const result = (await OnDocClassChanged([classChangeTx()], control)) as TxUpdateDoc<Doc>[]
     expect(result).toHaveLength(1)
     expect(result[0].operations).toEqual({ attachedDocClass: newClass })
   })
 
   it('combines all pointers to the same object into one update', async () => {
-    const control = makeControl([makeReference({
-      attachedTo: objectId,
-      attachedToClass: oldClass,
-      attachedDocId: objectId,
-      attachedDocClass: oldClass
-    })])
+    const control = makeControl([
+      makeReference({
+        attachedTo: objectId,
+        attachedToClass: oldClass,
+        attachedDocId: objectId,
+        attachedDocClass: oldClass
+      })
+    ])
     const result = (await OnDocClassChanged([classChangeTx()], control)) as TxUpdateDoc<Doc>[]
     expect(result).toHaveLength(1)
     expect(result[0].operations).toEqual({
-      attachedToClass: newClass, srcDocClass: newClass, attachedDocClass: newClass
+      attachedToClass: newClass,
+      srcDocClass: newClass,
+      attachedDocClass: newClass
     })
   })
 

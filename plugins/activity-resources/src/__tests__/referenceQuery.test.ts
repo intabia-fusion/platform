@@ -31,7 +31,9 @@ describe('getReferenceQueryClass', () => {
   })
 
   it('does not resolve or query a deleted class', () => {
-    const getParentClass = jest.fn(() => { throw new Error('ancestors not found') })
+    const getParentClass = jest.fn(() => {
+      throw new Error('ancestors not found')
+    })
     const hierarchy = {
       hasClass: () => false,
       getParentClass

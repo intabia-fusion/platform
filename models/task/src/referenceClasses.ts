@@ -23,34 +23,44 @@ export async function migrateTaskReferenceClasses (
   taskDomain: Domain,
   activityDomain: Domain
 ): Promise<void> {
-  const iterator = await client.traverse<ActivityReference>(activityDomain, {
-    _class: activity.class.ActivityReference
-  }, {
-    projection: {
-      _id: 1,
-      attachedTo: 1,
-      attachedToClass: 1,
-      srcDocId: 1,
-      srcDocClass: 1,
-      attachedDocId: 1,
-      attachedDocClass: 1
+  const iterator = await client.traverse<ActivityReference>(
+    activityDomain,
+    {
+      _class: activity.class.ActivityReference
+    },
+    {
+      projection: {
+        _id: 1,
+        attachedTo: 1,
+        attachedToClass: 1,
+        srcDocId: 1,
+        srcDocClass: 1,
+        attachedDocId: 1,
+        attachedDocClass: 1
+      }
     }
-  })
+  )
   try {
     while (true) {
       const references = (await iterator.next(500)) ?? []
 
       if (references.length === 0) break
 
-      const ids = [...new Set(references.flatMap((ref) => [ref.srcDocId, ref.attachedTo, ref.attachedDocId])
-        .filter(notEmpty))]
+      const ids = [
+        ...new Set(references.flatMap((ref) => [ref.srcDocId, ref.attachedTo, ref.attachedDocId]).filter(notEmpty))
+      ]
 
-      const tasks = await client.find<Doc>(taskDomain, { _id: { $in: ids } }, {
-        projection: { _id: 1, _class: 1 }
-      })
+      const tasks = await client.find<Doc>(
+        taskDomain,
+        { _id: { $in: ids } },
+        {
+          projection: { _id: 1, _class: 1 }
+        }
+      )
 
-      const classes = new Map(tasks.filter((doc) => client.hierarchy.hasClass(doc._class))
-        .map((doc) => [doc._id, doc._class]))
+      const classes = new Map(
+        tasks.filter((doc) => client.hierarchy.hasClass(doc._class)).map((doc) => [doc._id, doc._class])
+      )
 
       const operations: {
         filter: MigrationDocumentQuery<ActivityReference>
