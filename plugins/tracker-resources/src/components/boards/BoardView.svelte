@@ -42,7 +42,7 @@
   } from '@hcengineering/view-resources'
   import { fullscreenStore } from '@hcengineering/workbench-resources'
   import { onDestroy } from 'svelte'
-  import { boardLocation, boardQuery, reportBoardError, setBoardInNavigation } from '../../boards'
+  import { boardLocation, BoardQuery, reportBoardError, setBoardInNavigation } from '../../boards'
   import tracker from '../../plugin'
   import IssuesView from '../issues/IssuesView.svelte'
   import BoardQuickFilters from './BoardQuickFilters.svelte'
@@ -73,15 +73,22 @@
   }
 
   let query: DocumentQuery<Issue> | undefined
+  const boardQueries = new BoardQuery(client, () => {
+    void buildQuery(board, activeQuickFilters)
+  })
+  onDestroy(() => {
+    boardQueries.destroy()
+  })
   let querySeq = 0
   async function buildQuery (board: Board, active: ReadonlySet<string>): Promise<void> {
     const seq = ++querySeq
-    const result = await boardQuery(client, board, active, () => {
-      void buildQuery(board, active)
-    })
+    const result = await boardQueries.build(board, active)
     if (seq === querySeq) query = result
   }
-  $: void buildQuery(board, activeQuickFilters)
+  $: {
+    void $statusStore
+    void buildQuery(board, activeQuickFilters)
+  }
 
   // Project of each status of the board projects, for the status icon color
   // Archived projects stay on the board; the store of active projects drops them

@@ -488,9 +488,9 @@
     "BoardVisibilityAllMembers": "Visível para todos",
     "BoardVisibilityOnlyMe": "Somente eu",
     "BoardVisibilityOnlyMeHint": "Quadro pessoal, visível só para você",
-    "BoardHideDoneOlder": "Ocultar concluídas com mais de",
-    "BoardHideDoneOlderHint": "Colunas da categoria Concluído",
-    "BoardHideDoneValue": "2 semanas",
+    "BoardHideDoneOlder": "Ocultar tarefas concluídas",
+    "BoardHideDoneOlderHint": "Com base na data de conclusão.",
+    "BoardHideDoneValue": "Após 2 semanas",
     "BoardCardOrder": "Ordem dos cartões",
     "BoardEditorsHint": "Os demais podem usar o quadro ou criar o seu próprio",
     "WipLimits": "Limites WIP",
@@ -548,7 +548,18 @@
     "BoardSearch": "Pesquisar quadros",
     "BoardPersonal": "Quadro pessoal",
     "WarnOnClosedStatuses": "Avisar sobre status encerrados sem coluna",
-    "WarnOnClosedStatusesHint": "Incluir status concluídos e cancelados nos avisos de tarefas ocultas. Desativado por padrão."
+    "WarnOnClosedStatusesHint": "Incluir status concluídos e cancelados nos avisos de tarefas ocultas. Desativado por padrão.",
+    "BoardHideDoneNever": "Não ocultar",
+    "BoardHideDoneWeek": "Após 1 semana",
+    "BoardHideDoneMonth": "Após 1 mês",
+    "CompletedOn": "Data de conclusão",
+    "BoardHideDoneDay": "Após 1 dia",
+    "BoardHideDoneThreeDays": "Após 3 dias",
+    "BoardHideDoneQuarter": "Após 3 meses",
+    "BoardHideDoneHalfYear": "Após 6 meses",
+    "BoardHideDoneYear": "Após 1 ano",
+    "BoardHideDoneCustom": "Antes de uma data…",
+    "BoardHideDoneCustomHint": "Ocultar tarefas concluídas antes da data selecionada. O dia selecionado não está incluído."
   },
   "status": {
     "DuplicateColumnTitle": "Já existe uma coluna com esse nome"

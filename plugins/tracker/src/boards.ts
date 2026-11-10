@@ -21,7 +21,8 @@ import core, {
   type Ref,
   type SortingOrder,
   type Status,
-  type StatusCategory
+  type StatusCategory,
+  type Timestamp
 } from '@hcengineering/core'
 import task from '@hcengineering/task'
 import type { Preference } from '@hcengineering/preference'
@@ -152,6 +153,11 @@ export interface Board extends Doc {
   filter: BoardCondition
   columns: BoardColumn[]
   preventDuplicateColumnTitles?: boolean
+
+  // Absent: show all completed issues.
+  hideCompletedAfterDays?: 0 | 1 | 3 | 7 | 14 | 30 | 90 | 180 | 365
+  // A fixed exclusive cutoff; when present, takes precedence over the rolling period.
+  hideCompletedBefore?: Timestamp | null
   warnOnClosedStatuses?: boolean
   swimlanes: BoardSwimlane[]
   // Lanes by a field win over `swimlanes`; not set or null: lanes by conditions, or none
@@ -343,4 +349,9 @@ export function nextColumnTitle (columns: Pick<BoardColumn, 'title'>[], title: s
   let suffix = 2
   while (used.has(normalizeColumnTitle(candidate))) candidate = `${title} ${suffix++}`
   return candidate
+}
+
+// Completion is a status category, independent of board columns and status names.
+export function isCompletedIssueStatus (status: Pick<Status, 'category'> | undefined): boolean {
+  return status?.category === task.statusCategory.Won
 }
