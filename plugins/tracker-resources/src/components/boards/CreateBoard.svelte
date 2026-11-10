@@ -134,7 +134,9 @@
   async function onColumns (
     patch: Partial<Pick<Board, 'columns' | 'warnOnClosedStatuses' | 'preventDuplicateColumnTitles'>>
   ): Promise<void> {
-    if (patch.preventDuplicateColumnTitles !== undefined) preventDuplicateColumnTitles = patch.preventDuplicateColumnTitles
+    if (patch.preventDuplicateColumnTitles !== undefined) {
+      preventDuplicateColumnTitles = patch.preventDuplicateColumnTitles
+    }
     if (patch.columns !== undefined) columns = patch.columns
     if (patch.warnOnClosedStatuses !== undefined) warnOnClosedStatuses = patch.warnOnClosedStatuses
   }

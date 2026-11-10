@@ -1093,7 +1093,8 @@ test.describe('task boards', () => {
     await expect(boards.settingsColumn()).toHaveCount(3)
     await add.click()
     await expect(boards.settingsColumn()).toHaveCount(4)
-    await expect.poll(async () => (await readBoardById(id))?.columns.map((column) => column.title))
+    await expect
+      .poll(async () => (await readBoardById(id))?.columns.map((column) => column.title))
       .toEqual(['Queue', 'Doing', 'New column', 'New column 2'])
     await page.reload()
     await expect(toggle).toBeChecked()

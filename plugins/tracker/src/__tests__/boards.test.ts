@@ -272,7 +272,11 @@ describe('board helpers edge cases', () => {
 })
 
 describe('column title uniqueness', () => {
-  const columns = [{ id: 'a', title: ' Готово ' }, { id: 'b', title: 'готово' }, { id: 'c', title: 'In progress' }]
+  const columns = [
+    { id: 'a', title: ' Готово ' },
+    { id: 'b', title: 'готово' },
+    { id: 'c', title: 'In progress' }
+  ]
 
   it('compares case and surrounding spaces without changing internal spaces', () => {
     expect(normalizeColumnTitle(' ГоТоВо ')).toBe('готово')

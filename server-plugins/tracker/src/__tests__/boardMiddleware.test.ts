@@ -134,7 +134,9 @@ describe('BoardMiddleware', () => {
 
   it('keeps duplicates allowed by default and when the restriction is disabled', async () => {
     await middleware.tx(ctxOf(alice), [update('own', { columns: columns(' queue ') })])
-    await middleware.tx(ctxOf(alice), [update('own', { preventDuplicateColumnTitles: false, columns: columns('QUEUE') })])
+    await middleware.tx(ctxOf(alice), [
+      update('own', { preventDuplicateColumnTitles: false, columns: columns('QUEUE') })
+    ])
     expect(passed).toHaveLength(2)
   })
 
@@ -147,7 +149,10 @@ describe('BoardMiddleware', () => {
 
   it('validates creation as well as renaming and insertion through operators', async () => {
     const create = factory.createTxCreateDoc(tracker.class.Board, core.space.Workspace, {
-      author: alice, visibility: 'all', columns: columns('QUEUE'), preventDuplicateColumnTitles: true
+      author: alice,
+      visibility: 'all',
+      columns: columns('QUEUE'),
+      preventDuplicateColumnTitles: true
     } as any)
     await refusal(middleware.tx(ctxOf(alice), [create]))
     stored[0] = board('own', { columns: columns(), preventDuplicateColumnTitles: true })
@@ -155,34 +160,42 @@ describe('BoardMiddleware', () => {
     await refusal(middleware.tx(ctxOf(alice), [update('own', { $push: { columns: { ...columns()[0], id: 'c' } } })]))
     expect(passed).toHaveLength(0)
     await middleware.tx(ctxOf(alice), [update('own', { columns: columns('Unique') })])
-    await middleware.tx(ctxOf(alice), [update('own', { preventDuplicateColumnTitles: false, columns: columns('Queue') })])
+    await middleware.tx(ctxOf(alice), [
+      update('own', { preventDuplicateColumnTitles: false, columns: columns('Queue') })
+    ])
     expect(passed).toHaveLength(2)
   })
 
   it('uses the preceding transaction state within a batch', async () => {
     stored[0] = board('own', { columns: columns() })
-    await refusal(middleware.tx(ctxOf(alice), [
-      update('own', { preventDuplicateColumnTitles: true }),
-      update('own', { columns: columns('QUEUE') })
-    ]))
+    await refusal(
+      middleware.tx(ctxOf(alice), [
+        update('own', { preventDuplicateColumnTitles: true }),
+        update('own', { columns: columns('QUEUE') })
+      ])
+    )
     expect(passed).toHaveLength(0)
   })
 
-  it.each([true, false])('serializes two editors changing the policy and columns (enable first: %s)', async (enableFirst) => {
-    stored[0] = board('own', { columns: columns() })
-    persist = true
-    const enable = update('own', { preventDuplicateColumnTitles: true })
-    const duplicate = update('own', { columns: columns('QUEUE') })
-    const [first, second] = enableFirst ? [enable, duplicate] : [duplicate, enable]
-    const results = await Promise.allSettled([
-      middleware.tx(ctxOf(alice), [first]), middleware.tx(ctxOf(bob), [second])
-    ])
-    expect(results.map((result) => result.status)).toEqual(['fulfilled', 'rejected'])
-    expect(passed).toHaveLength(1)
-    // An unsuccessful request releases the queue.
-    await middleware.tx(ctxOf(alice), [update('own', { columns: columns() })])
-    expect(passed).toHaveLength(2)
-  })
+  it.each([true, false])(
+    'serializes two editors changing the policy and columns (enable first: %s)',
+    async (enableFirst) => {
+      stored[0] = board('own', { columns: columns() })
+      persist = true
+      const enable = update('own', { preventDuplicateColumnTitles: true })
+      const duplicate = update('own', { columns: columns('QUEUE') })
+      const [first, second] = enableFirst ? [enable, duplicate] : [duplicate, enable]
+      const results = await Promise.allSettled([
+        middleware.tx(ctxOf(alice), [first]),
+        middleware.tx(ctxOf(bob), [second])
+      ])
+      expect(results.map((result) => result.status)).toEqual(['fulfilled', 'rejected'])
+      expect(passed).toHaveLength(1)
+      // An unsuccessful request releases the queue.
+      await middleware.tx(ctxOf(alice), [update('own', { columns: columns() })])
+      expect(passed).toHaveLength(2)
+    }
+  )
 
   it('lets the author and an editor change a board', async () => {
     await middleware.tx(ctxOf(alice), [update('own', { title: 'A' })])
