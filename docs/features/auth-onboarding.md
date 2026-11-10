@@ -206,6 +206,8 @@
 
 ## Тесты
 
+- Макеты для согласования FUSIO-1620: `dev/storybook/src/fusio-1620/` - email-first, OTP с ожиданием и блокировкой, профиль и сквозные сценарии. Обычная регистрация создаёт пространство без ввода токена; регистрация по ссылке показывает пригласившего и пространство и пропускает создание пространства. Используют локальные данные, не меняют живой вход и серверные операции. План: `../foundation-tasks/docs/ux/2026-11-10-login-registration-profile.md`.
+
 - Unit: `server/account/src/__tests__/` - `operations.test.ts`, `utils.test.ts`, `admin-access.test.ts`, `admin-email.test.ts`, `deferred-deletion.test.ts`, `deletion-real.test.ts`, `account-block.test.ts`, `backup-lease-real.test.ts`, `lang.test.ts`, `migrations.test.ts`, `postgres.test.ts`/`postgres-real.test.ts`.
 - Unit токена: `foundations/core/packages/token/src/__tests__/token.test.ts`.
 - Sanity (Playwright): `tests/sanity/tests/login.spec.ts`, `tests/sanity/tests/workspace/onboarding-workspace.spec.ts`, `tests/sanity/tests/workspace/workspace-settings.spec.ts`, page-объекты `tests/sanity/tests/model/login-page.ts`, `tests/sanity/tests/model/select-workspace-page.ts`.

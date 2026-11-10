@@ -33,6 +33,7 @@ const rootSections: Record<string, SectionId | null> = {
   Activity: 'plugins',
   Attachments: 'plugins',
   Icons: 'plugins',
+  'FUSIO-1620': 'screens',
   'Kit (pen.dev)': 'screens'
 }
 
