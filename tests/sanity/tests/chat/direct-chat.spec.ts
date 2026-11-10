@@ -164,8 +164,7 @@ test.describe('Check direct messages channels', () => {
     })
 
     await test.step('Reply preview still contains the source code', async () => {
-      await channelPage.textMessage(marker).hover()
-      await channelPage.messageActionButton(marker, 'data-id="chunter:action:ReplyToMessage"').click()
+      await channelPage.clickReplyToMessage(marker)
       await expect(page.locator('.reply__text')).toContainText(code)
       await checkCode(channelPage)
     })

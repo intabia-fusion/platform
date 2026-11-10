@@ -4,6 +4,7 @@
 
 ## Diagnosing
 
+- CI `42662485899`, `direct-chat.spec.ts`: hovering a long message scrolls the chat; `Scroller.svelte` disables pointer events for 300 ms afterward. The Reply click started 12 ms after hover and lost the hover toolbar. Message actions must wait for the row's computed `pointer-events: auto` before moving the pointer onto the toolbar.
 - `direct-chat.spec.ts`, `Multiline code remains visible`: CI rendering appends one space after the complete code in `pre > code.textContent` (`</script> `), identically on all three attempts. Compare after removing at most one final space; preserve leading indentation, internal whitespace and line breaks.
 - CI `42617439731`: the board header test pressed `x` before its card acquired selection focus. `mouseAttractor` (`packages/ui/src/utils.ts:239`) needs different pointer coordinates; one `hover()` can leave both entry events at the same point. Hover at two positions and wait for `.selection` before toggling selection. Reproduced locally; the corrected test passed 8/8 repeats.
 - CI `42447213534`: `rage-click/admin-billing.spec.ts` seeded `mock/mock-model` as a purchased pool with 1000 tokens. Billing includes earlier usage from the current hour (`services/billing/pod-billing/src/usage.ts:117-119`); aibot then rejected all six edit/task proposal attempts with `AI provider pool exhausted`.

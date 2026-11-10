@@ -225,6 +225,7 @@
   }
 
   let isDeleting = false
+  let isAligning = false
 
   $: canDelete = !loading && !isDeleting && tasksCounter === 0 && taskTypes.length > 1
 
@@ -419,11 +420,17 @@
                     size="small"
                     label={plugin.string.AlignTaskTypeStatusOrder}
                     disabled={readonly}
-                    on:click={() => {
-                      if (taskType === undefined || readonly) return
-                      void client.diffUpdate(taskType, {
-                        statuses: alignTaskTypeStatusOrder(spaceType, taskType, $taskTypeStore, $statusStore.byId)
-                      })
+                    loading={isAligning}
+                    on:click={async () => {
+                      if (taskType === undefined || readonly || isAligning) return
+                      isAligning = true
+                      try {
+                        await client.diffUpdate(taskType, {
+                          statuses: alignTaskTypeStatusOrder(spaceType, taskType, $taskTypeStore, $statusStore.byId)
+                        })
+                      } finally {
+                        isAligning = false
+                      }
                     }}
                   />
                 </Callout>
