@@ -269,6 +269,18 @@ describe('mail layout', () => {
     expect(sent[0].html).not.toContain('<i>Иван</i>')
   })
 
+  test.each([
+    ['paymentId', 'purchase'],
+    ['lastChargePaymentId', 'renewal']
+  ] as const)('the receipt renders a numeric %s for %s', async (field, kind) => {
+    const sent: any[] = []
+    const providerData = { ...sub.providerData, [field]: 9611664710 }
+    await notifyPaymentSucceeded(ctx, mailWith(sent), { ...sub, providerData }, kind)
+    expect(sent).toHaveLength(1)
+    expect(sent[0].html).toContain('9611664710')
+    expect(sent[0].text).toContain('ID транзакции: 9611664710')
+  })
+
   test('support contacts go to the muted footer', async () => {
     const sent: any[] = []
     await notifyUpcoming(ctx, mailWith(sent, { supportEmail: 'help@x.com' }), sub, 'trial', sub.periodEnd)
