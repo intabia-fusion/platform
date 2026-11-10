@@ -69,6 +69,10 @@
     stopActivityTracking = startActivityTracking()
     document.addEventListener('visibilitychange', visibilityChangeHandler)
     window.addEventListener('wheel', handleWindowFocus)
+    // Any interaction inside the window means the user is here: a blur may have been missed (devtools,
+    // another window, a system notification), and a stale "unfocused" flag would keep the app "hidden".
+    window.addEventListener('pointerdown', handleWindowFocus)
+    window.addEventListener('keydown', handleWindowFocus)
     window.addEventListener('focus', handleWindowFocus)
     window.addEventListener('blur', handleWindowBlur)
     window.addEventListener('beforeunload', handleWindowBeforeUnload)
@@ -78,6 +82,8 @@
     stopActivityTracking()
     document.removeEventListener('visibilitychange', visibilityChangeHandler)
     window.removeEventListener('wheel', handleWindowFocus)
+    window.removeEventListener('pointerdown', handleWindowFocus)
+    window.removeEventListener('keydown', handleWindowFocus)
     window.removeEventListener('focus', handleWindowFocus)
     window.removeEventListener('blur', handleWindowBlur)
     window.removeEventListener('beforeunload', handleWindowBeforeUnload)

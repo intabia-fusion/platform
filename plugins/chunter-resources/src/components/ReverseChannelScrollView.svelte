@@ -298,7 +298,7 @@
     } else {
       msgElement.scrollIntoView({ block: 'start' })
     }
-    read()
+    read(true)
   }
 
   function scrollToStartOfNew (): void {
@@ -383,6 +383,11 @@
       updateScrollData()
       updateDownButtonVisibility(messages, scrollDiv, $isTailLoadedStore)
       loadMore()
+      if (selectedMessageExists) {
+        // The chat was opened on a message (a notification, a link): it is on screen, so it is read even
+        // when the window focus flag is stale and the page counts as hidden.
+        read(true)
+      }
     }
   }
 
@@ -391,8 +396,12 @@
     void initializeScroll($isLoadingStore, separatorDiv, separatorIndex)
   }
 
-  function read (): void {
-    if (isFreeze() || !isScrollInitialized) return
+  // `explicit`: the user jumped to this message (a notification, a link, search), so what is on screen is
+  // read even if the app is considered unfocused - the focus flag can stick after a blur (devtools, another
+  // window, a system notification) and the message would stay unread forever.
+  function read (explicit = false): void {
+    if (freeze || !isScrollInitialized) return
+    if (!explicit && isPageHidden) return
     readViewportMessages(target._id, messages, scrollDiv, contentDiv, notifyContext, readState)
   }
 
