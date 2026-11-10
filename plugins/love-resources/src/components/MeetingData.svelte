@@ -12,32 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 -->
+<!--
+  The body of the calendar event form: one checkbox that turns the event into a meeting. The meeting
+  is a standalone entity - it owns no office room, its session runs in the service room - so there is
+  nothing else to pick here; room settings are per room in the office, not per meeting.
+-->
 <script lang="ts">
-  import type { Ref } from '@hcengineering/core'
-  import type { Room } from '@hcengineering/love'
   import { Button, CheckBox, Label } from '@hcengineering/ui'
   import type { Writable } from 'svelte/store'
   import love from '../plugin'
-  import RoomSelector from './RoomSelector.svelte'
-  import { myOffice, rooms } from '../stores'
 
   export let state: Writable<Record<string, any>>
-
-  function changeRoom (val: Ref<Room>): void {
-    $state.room = val
-  }
 
   let isMeeting = $state.isMeeting === true
 
   function changeIsMeeting (val: boolean): void {
     $state.isMeeting = val
-    if (val && $state.room === undefined) {
-      $state.room = $myOffice?._id
-    }
   }
-
-  $: selectedRoom = $rooms.find((r) => r._id === $state.room)
-  $: isPrivateRoom = selectedRoom?.startPrivate ?? false
 </script>
 
 <div class="flex-row-center gap-1-5 mt-1">
@@ -61,15 +52,7 @@
   />
 </div>
 {#if isMeeting}
-  <RoomSelector
-    value={$state.room}
-    on:change={(ev) => {
-      changeRoom(ev.detail)
-    }}
-  />
-  {#if isPrivateRoom}
-    <div class="text-sm mt-1 ml-4 text-content-color">
-      <Label label={love.string.Private} />
-    </div>
-  {/if}
+  <div class="text-sm mt-1 ml-4 content-color">
+    <Label label={love.string.MeetingRunsInServiceRoom} />
+  </div>
 {/if}

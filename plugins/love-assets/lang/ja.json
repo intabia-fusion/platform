@@ -12,6 +12,8 @@
     "UnMute": "ミュート解除",
     "LeaveRoom": "ルームを退出",
     "Floors": "フロア",
+    "SelectFloor": "フロアを選択",
+    "MeetingRunsInServiceRoom": "会議はバーチャルルームで行われます",
     "MyOffice": "マイオフィス",
     "EditOffice": "オフィスを編集",
     "FinalizeEditing": "完了",

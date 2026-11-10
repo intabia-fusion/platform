@@ -32,6 +32,7 @@ import {
   type MeetingSchedule,
   type PermanentMeeting,
   type Room,
+  type RoomLanguage,
   RoomType,
   type UserMeetingInvite
 } from '@hcengineering/love'
@@ -60,6 +61,7 @@ import {
 import { derived, get, writable } from 'svelte/store'
 
 import { periodRules } from './period'
+import { createPermanentMeeting } from './permanentMeetingSchedule'
 import { getPersonByPersonRef } from '@hcengineering/contact-resources'
 import MeetingMinutesSearchItem from './components/MeetingMinutesSearchItem.svelte'
 import RoomSettingsPopup from './components/RoomSettingsPopup.svelte'
@@ -253,7 +255,7 @@ export async function createMeeting (
   store: Record<string, any>,
   phase: DocCreatePhase
 ): Promise<void> {
-  if (phase === 'post' && store.room != null && store.isMeeting === true) {
+  if (phase === 'post' && store.isMeeting === true) {
     const event = await client.findOne(calendar.class.Event, { _id })
     if (event === undefined) return
     // The mixin goes on the series master alone: onEventMixin mirrors it onto every copy sharing
@@ -263,9 +265,9 @@ export async function createMeeting (
     const master = await client.findOne(calendar.class.Event, meetingMasterQuery(event))
     if (master === undefined) return
 
-    const room = await client.findOne(love.class.Room, { _id: store.room as Ref<Room> })
-
-    // No session is created here any more: the love service opens one when an occurrence comes,
+    // A meeting is its own entity and belongs to no office room: its session runs in the service
+    // room, so the media settings below are defaults rather than something inherited from a room.
+    // No session is created here either: the love service opens one when an occurrence comes,
     // and it is the only writer allowed to (F1 §5). Scheduling only records what the meeting is.
     await client.createMixin<Event, MeetingEventLink>(
       master._id,
@@ -273,13 +275,13 @@ export async function createMeeting (
       master.space,
       love.mixin.MeetingEventLink,
       {
-        type: room?.type === RoomType.Audio ? RoomType.Audio : RoomType.Video,
+        type: RoomType.Video,
         linkVersion: 1,
         meetingAccess: defaultMeetingAccess,
-        private: room?.startPrivate ?? false,
-        language: room?.language ?? 'en',
-        startWithRecording: room?.startWithRecording ?? false,
-        startWithTranscription: room?.startWithTranscription ?? false,
+        private: false,
+        language: getCurrentLanguage() as RoomLanguage,
+        startWithRecording: false,
+        startWithTranscription: false,
         reminderBefore: DEFAULT_MEETING_REMINDER
       }
     )
@@ -303,13 +305,27 @@ export async function createMeetingSchedule (
   if (phase === 'post') {
     const schedule = await client.findOne(calendar.class.Schedule, { _id })
     if (schedule === undefined) return
+    // A public schedule has no `eventId`, so there is no series to hang the meeting on: the booking
+    // path creates the meeting itself and the mixin remembers it, which is what the panel shows.
+    const acc = getCurrentAccount()
+    const meeting = await createPermanentMeeting(client, {
+      name: schedule.title,
+      type: RoomType.Video,
+      language: getCurrentLanguage(),
+      startWithRecording: false,
+      startWithTranscription: false,
+      members: [acc.uuid],
+      owners: [acc.uuid],
+      reminderBefore: DEFAULT_MEETING_REMINDER
+    })
     await client.createMixin<Schedule, MeetingSchedule>(
       schedule._id,
       calendar.class.Schedule,
       space._id,
       love.mixin.MeetingSchedule,
       {
-        room: store.room as Ref<Room>
+        room: store.room as Ref<Room>,
+        meetingId: meeting
       }
     )
   }

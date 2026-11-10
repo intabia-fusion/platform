@@ -12,6 +12,8 @@
     "UnMute": "Réactiver le son",
     "LeaveRoom": "Quitter la salle",
     "Floors": "Étages",
+    "SelectFloor": "Sélectionner un étage",
+    "MeetingRunsInServiceRoom": "La réunion se déroule dans une salle virtuelle",
     "MyOffice": "Mon bureau",
     "EditOffice": "Modifier le bureau",
     "FinalizeEditing": "Terminé",

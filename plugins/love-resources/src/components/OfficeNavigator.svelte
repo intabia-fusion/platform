@@ -32,10 +32,13 @@
   import { IconButton } from '@hcengineering/ui/kit'
   import { NavFooter, NavHeader, TreeSeparator } from '@hcengineering/workbench-resources'
   import plugin from '../plugin'
-  import { currentFloor, officeFloors, officeView, selectedFloor } from '../stores'
+  import { officeView } from '../stores'
   import EditFloorPopup from './EditFloorPopup.svelte'
+  import FloorsNav from './FloorsNav.svelte'
 
-  const canAddFloor = hasAccountRole(getCurrentAccount(), AccountRole.Maintainer)
+  const canAddFloor =
+    hasAccountRole(getCurrentAccount(), AccountRole.Owner) ||
+    hasAccountRole(getCurrentAccount(), AccountRole.Maintainer)
 
   // Dropping the fragment closes whatever document was opened in the centre.
   function open (segment: string): void {
@@ -73,29 +76,26 @@
     />
     <TreeSeparator line />
     <Scroller shrink>
+      <!-- Each floor folds open into its rooms; the grid itself stays a detail view of one floor. -->
       <NavGroup label={plugin.string.Floors} categoryName="love-floors" isFold noDivider>
-        <svelte:fragment slot="actions">
+        <!-- `extra` is rendered all the time, unlike `actions`, which only shows up on hover: adding
+             a floor is the one action of this section, so it should not have to be discovered. -->
+        <svelte:fragment slot="extra">
           {#if canAddFloor}
-            <IconButton
-              icon={IconAdd}
-              kind="tertiary"
-              size="min"
-              tooltip={{ label: plugin.string.AddAFloor }}
-              on:click={(e) => showPopup(EditFloorPopup, {}, eventToHTMLElement(e))}
-            />
+            <!-- The header is a button of its own: the wrapper swallows its click, otherwise adding
+                 a floor would also pick the section (the list has no floor to pick anyway). -->
+            <div class="flex" on:click|stopPropagation>
+              <IconButton
+                icon={IconAdd}
+                kind="tertiary"
+                size="min"
+                tooltip={{ label: plugin.string.AddAFloor }}
+                on:click={(e) => showPopup(EditFloorPopup, {}, eventToHTMLElement(e))}
+              />
+            </div>
           {/if}
         </svelte:fragment>
-        {#each $officeFloors as floor (floor._id)}
-          <NavItem
-            _id={floor._id}
-            title={floor.name}
-            selected={$officeView === 'floor' && floor._id === $currentFloor}
-            on:click={() => {
-              selectedFloor.set(floor._id)
-              open(floor._id)
-            }}
-          />
-        {/each}
+        <FloorsNav />
       </NavGroup>
     </Scroller>
     <NavFooter split />

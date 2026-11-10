@@ -78,6 +78,7 @@ function createContext (setGuestPassword = jest.fn(async () => {})): ScheduleCon
     timeZone: 'Europe/Moscow',
     me,
     primarySocialId: 'social:me' as PersonId,
+    language: 'ru',
     setGuestPassword
   }
 }
@@ -165,6 +166,15 @@ describe('createPermanentMeetingWithSchedule', () => {
     await createPermanentMeetingWithSchedule(client, input({ guestPassword: 'secret' }), createContext(setGuestPassword))
 
     expect(setGuestPassword).toHaveBeenCalledWith(meetingId, 'secret')
+  })
+
+  it('keeps the meeting standalone: no room is read and the language comes from the caller', async () => {
+    const { client, calls } = createFakeClient()
+
+    await createPermanentMeetingWithSchedule(client, input(), createContext())
+
+    expect(find(calls, 'findOne')).toHaveLength(0)
+    expect(find(calls, 'createMixin')[0].args[4]).toMatchObject({ language: 'ru', private: false })
   })
 })
 

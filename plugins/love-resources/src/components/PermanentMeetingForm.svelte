@@ -14,22 +14,22 @@
 -->
 <!--
   The one window that creates and edits a permanent meeting: name, date and time, repeat period,
-  participants, reminder, guest password and room. Saving creates the series (so the meeting shows
-  up in the schedule) together with the always-open room - see `createPermanentMeetingWithSchedule`.
+  participants, reminder and guest password. A meeting is its own entity and belongs to no office
+  room, so nothing here picks one - see `createPermanentMeetingWithSchedule`.
 -->
 <script lang="ts">
   import { EventTimeEditor } from '@hcengineering/calendar-resources'
   import { AccountArrayEditor } from '@hcengineering/contact-resources'
   import { getCurrentEmployeeSpace } from '@hcengineering/contact'
-  import type { AccountUuid, Ref } from '@hcengineering/core'
+  import type { AccountUuid } from '@hcengineering/core'
   import core, { getCurrentAccount } from '@hcengineering/core'
-  import type { PermanentMeeting, Room } from '@hcengineering/love'
+  import type { PermanentMeeting } from '@hcengineering/love'
   import { Card, getClient } from '@hcengineering/presentation'
+  import { getCurrentLanguage } from '@hcengineering/theme'
   import { EditBox, getUserTimezone, Label, NumberInput } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import love from '../plugin'
   import RepeatEveryEditor from './RepeatEveryEditor.svelte'
-  import RoomSelector from './RoomSelector.svelte'
   import { getLoveClient } from '../loveClient'
   import {
     createPermanentMeetingWithSchedule,
@@ -57,7 +57,6 @@
   let members: AccountUuid[] = object?.members ?? []
   let reminderMinutes: number = Math.round((object?.reminderBefore ?? 15 * 60 * 1000) / 60000)
   let password: string = ''
-  let room: Ref<Room> | undefined = undefined
   let saving = false
 
   function membersChanged (value: AccountUuid[]): void {
@@ -81,6 +80,7 @@
         timeZone,
         me: acc.uuid,
         primarySocialId: acc.primarySocialId,
+        language: getCurrentLanguage(),
         setGuestPassword: async (meeting, value) => {
           await getLoveClient().setGuestPassword(meeting, value, 'meeting')
         }
@@ -93,8 +93,7 @@
         members,
         // 0 turns the reminder off, absent falls back to the default, so the value is explicit.
         reminderBefore: Math.max(0, Math.round(reminderMinutes)) * 60 * 1000,
-        guestPassword: password !== '' ? password : undefined,
-        room
+        guestPassword: password !== '' ? password : undefined
       }
       const created = object === undefined ? await createPermanentMeetingWithSchedule(client, input, ctx) : undefined
       if (object !== undefined) {
@@ -137,12 +136,8 @@
       </div>
     </div>
     <div class="antiGrid-row">
-      <div class="antiGrid-row__header"><Label label={love.string.Room} /></div>
-      <RoomSelector value={room} on:change={(ev) => (room = ev.detail)} />
-    </div>
-    <div class="antiGrid-row">
       <div class="antiGrid-row__header"><Label label={love.string.GuestPassword} /></div>
-      <EditBox bind:value={password} kind="regular" />
+      <EditBox bind:value={password} format="password" placeholder={love.string.EnterPassword} />
     </div>
     <div class="antiGrid-row">
       <div class="antiGrid-row__header"><Label label={core.string.Members} /></div>

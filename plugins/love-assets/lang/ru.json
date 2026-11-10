@@ -12,6 +12,8 @@
     "UnMute": "Включить звук",
     "LeaveRoom": "Покинуть комнату",
     "Floors": "Этажи",
+    "SelectFloor": "Выберите этаж",
+    "MeetingRunsInServiceRoom": "Встреча проходит в виртуальной комнате",
     "MyOffice": "Мой офис",
     "EditOffice": "Редактировать офис",
     "FinalizeEditing": "Завершить",

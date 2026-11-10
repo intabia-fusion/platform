@@ -12,6 +12,8 @@
     "UnMute": "取消静音",
     "LeaveRoom": "离开房间",
     "Floors": "楼层",
+    "SelectFloor": "选择楼层",
+    "MeetingRunsInServiceRoom": "会议在虚拟房间中进行",
     "MyOffice": "我的办公室",
     "EditOffice": "编辑办公室",
     "FinalizeEditing": "完成",

@@ -12,6 +12,8 @@
     "UnMute": "Stummschaltung aufheben",
     "LeaveRoom": "Raum verlassen",
     "Floors": "Etagen",
+    "SelectFloor": "Etage auswählen",
+    "MeetingRunsInServiceRoom": "Das Meeting findet in einem virtuellen Raum statt",
     "MyOffice": "Mein Büro",
     "EditOffice": "Büro bearbeiten",
     "FinalizeEditing": "Fertig",

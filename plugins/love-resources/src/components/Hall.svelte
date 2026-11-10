@@ -18,7 +18,7 @@
   import type { Floor as FloorType, Office, Room } from '@hcengineering/love'
   import love, { isOffice } from '@hcengineering/love'
   import { SpecialView } from '@hcengineering/workbench-resources'
-  import { deviceOptionsStore as deviceInfo, showPopup } from '@hcengineering/ui'
+  import { deviceOptionsStore as deviceInfo, Label, showPopup } from '@hcengineering/ui'
   import { Button } from '@hcengineering/ui/kit'
   import { onDestroy } from 'svelte'
   import { currentFloor, ensureOfficeDetailsLoaded, officeView, rooms } from '../stores'
@@ -59,6 +59,11 @@
       label={love.string.Meetings}
       icon={love.icon.Cam}
     />
+  {:else if $officeView === 'floors'}
+    <!-- Nothing is picked yet: the floors list is in the navigator, the grid is its detail view. -->
+    <div class="flex-col h-full justify-center items-center">
+      <span class="content-color"><Label label={love.string.SelectFloor} /></span>
+    </div>
   {:else if $officeView === 'permanent'}
     <!-- The list keeps the group order explicit (`order`), which the standard table cannot: a
          dropped header has to stay where it was dropped after a reload. -->

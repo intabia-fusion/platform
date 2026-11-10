@@ -12,6 +12,8 @@
     "UnMute": "Unmute",
     "LeaveRoom": "Leave room",
     "Floors": "Floors",
+    "SelectFloor": "Select a floor",
+    "MeetingRunsInServiceRoom": "The meeting runs in a virtual room",
     "MyOffice": "My office",
     "EditOffice": "Edit office",
     "FinalizeEditing": "Done",

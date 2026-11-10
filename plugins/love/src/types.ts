@@ -14,6 +14,8 @@ export enum RoomType {
 
 export interface Floor extends Doc {
   name: string
+  /** Manual position in the office navigator. Floors without one sort after the ordered ones, by name. */
+  order?: number
 }
 
 /**
@@ -195,6 +197,9 @@ export interface MeetingEventLink extends Event {
 
 export interface MeetingSchedule extends Schedule {
   room: Ref<Room>
+  /** Set when the recording of a public schedule is also a permanent meeting: a schedule carries no
+   *  `eventId`, so it points at the meeting itself instead of a series. */
+  meetingId?: Ref<PermanentMeeting>
 }
 
 export interface DevicesPreference extends Preference {

@@ -75,6 +75,18 @@ interface OldCollaborators extends Doc {
   collaborators: AccountUuid[]
 }
 
+/** Legacy mixin, removed from the model once collaborators became documents of their own. */
+const OLD_COLLABORATORS_MIXIN = 'notification:mixin:Collaborators' as Ref<Mixin<Doc>>
+
+/**
+ * The mixin is no longer declared anywhere, so on a workspace that never had it the adapter cannot
+ * resolve it: `hierarchy.as` throws `class not found` and the whole upgrade dies on a step that has
+ * nothing to migrate. Workspaces created after the removal skip these steps instead.
+ */
+function hasLegacyCollaborators (client: MigrationClient): boolean {
+  return client.hierarchy.hasClass(OLD_COLLABORATORS_MIXIN)
+}
+
 const DOMAIN_CONTACT = 'contact' as Domain
 const DOMAIN_NOTIFICATION = 'notification' as Domain
 const DOMAIN_CHUNTER_DOC = 'chunter_doc' as Domain
@@ -267,6 +279,10 @@ export async function migrateDuplicateContexts (client: MigrationClient): Promis
 }
 
 async function migrateCollaborators (client: MigrationClient): Promise<void> {
+  if (!hasLegacyCollaborators(client)) {
+    client.logger.log('skip collaborators migration: no legacy mixin in the model', {})
+    return
+  }
   const hierarchy = client.hierarchy
   client.logger.log('processing extract collaborators ', {})
   for (const domain of client.hierarchy.domains()) {
@@ -363,6 +379,10 @@ async function migrateCommonNotificationFields (client: MigrationClient): Promis
  * @returns
  */
 async function migrateAccounts (client: MigrationClient): Promise<void> {
+  if (!hasLegacyCollaborators(client)) {
+    client.logger.log('skip accounts migration: no legacy mixin in the model', {})
+    return
+  }
   const hierarchy = client.hierarchy
   const socialKeyByAccount = await getSocialKeyByOldAccount(client)
   const socialIdBySocialKey = new Map<string, PersonId | null>()

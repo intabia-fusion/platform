@@ -154,6 +154,12 @@ export class TOffice extends TRoom implements Office {
 @Model(love.class.Floor, core.class.Doc, DOMAIN_LOVE)
 export class TFloor extends TDoc implements Floor {
   name!: string
+
+  // Drag-and-drop in the office navigator rewrites this number; the list sorts by it and nothing
+  // else. Floors created before the list existed carry no value and sort after the ordered ones.
+  @Prop(TypeNumber(), love.string.MeetingOrder)
+  @Index(IndexKind.Indexed)
+  order?: number
 }
 
 @Model(love.class.ParticipantInfo, core.class.Doc, DOMAIN_TRANSIENT)
@@ -443,7 +449,11 @@ export class TMeetingGroup extends TDoc implements MeetingGroup {
 @Mixin(love.mixin.MeetingSchedule, calendar.class.Schedule)
 export class TMeetingSchedule extends TSchedule implements MeetingSchedule {
   room!: Ref<Room>
-  meetingId!: Ref<MeetingMinutes>
+
+  // Written when the schedule is saved: the booking path creates the meeting itself, because a
+  // schedule has no `eventId` to hang a series on. Optional - schedules created earlier carry none.
+  @Prop(TypeRef(love.class.PermanentMeeting), love.string.PermanentMeeting)
+  meetingId?: Ref<PermanentMeeting>
 }
 
 // Placeholder class so that the legacy `meeting-minutes` table is created/kept

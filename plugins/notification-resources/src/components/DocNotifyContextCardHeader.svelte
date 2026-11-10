@@ -64,8 +64,12 @@
     dispatch('clear')
   }
   $: identifier = value.objectIdentifier
+  // `objectTitle` is optional in the data: a context saved without a title crashed the whole card
+  // header on `undefined.startsWith`.
   $: title =
-    hierarchy.isDerived(value.objectClass, chunter.class.Channel) && value.objectTitle.startsWith('#')
+    value.objectTitle !== undefined &&
+    hierarchy.isDerived(value.objectClass, chunter.class.Channel) &&
+    value.objectTitle.startsWith('#')
       ? value.objectTitle.slice(1)
       : value.objectTitle
 </script>

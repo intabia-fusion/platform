@@ -124,12 +124,23 @@ export const activeFloor = derived([rooms, myInfo, myOffice], ([rooms, myInfo, m
   return res ?? love.ids.MainFloor
 })
 // The office navigator keeps its choice in the URL, /love/<segment>: 'meetings', 'permanent' or a floor id.
+// No segment means the office was just opened: the navigator shows the floors, the centre stays empty
+// until a floor is picked - the floor grid is a detail view, not the landing screen.
 export const officeSegment = derived(location, (loc) => (loc.path[2] === loveId ? loc.path[3] : undefined))
 export const officeView = derived(officeSegment, (segment) =>
-  segment === 'meetings' || segment === 'permanent' ? segment : 'floor'
+  segment === 'meetings' || segment === 'permanent' ? segment : segment === undefined ? 'floors' : 'floor'
 )
 // The service floor only hosts the sessions of scheduled meetings; people never sit on it.
-export const officeFloors = derived(floors, (floors) => floors.filter((it) => !isServiceFloor(it._id)))
+// Floors are ordered by hand (`order`) in the navigator; a floor created before the list existed
+// carries no value and sorts after the ordered ones, by name.
+export const officeFloors = derived(floors, (floors) =>
+  floors
+    .filter((it) => !isServiceFloor(it._id))
+    .sort(
+      (a, b) =>
+        (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER) || a.name.localeCompare(b.name)
+    )
+)
 export const currentFloor = derived(
   [selectedFloor, activeFloor, officeFloors],
   ([selected, active, officeFloors]): Ref<Floor> => {

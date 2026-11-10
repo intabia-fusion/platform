@@ -41,7 +41,7 @@ import {
   defaultMeetingAccess,
   type MeetingEventLink,
   type PermanentMeeting,
-  type Room,
+  type RoomLanguage,
   RoomType
 } from '@hcengineering/love'
 import { periodRules } from './period'
@@ -54,6 +54,8 @@ export interface ScheduleContext {
   timeZone: string
   me: AccountUuid
   primarySocialId: PersonId
+  /** Language of the meeting itself: it has no room to inherit it from any more. */
+  language: string
   /** Applied only when the input carries a password; a session-less meeting needs the service call. */
   setGuestPassword: (meeting: Ref<PermanentMeeting>, password: string | null) => Promise<void>
 }
@@ -69,7 +71,6 @@ export interface PermanentMeetingInput {
   reminderBefore: number
   /** Plain-text guest password to set, '' to leave it as is, null to remove. */
   guestPassword?: string | null
-  room?: Ref<Room>
 }
 
 export async function findPrimaryCalendarId (client: Client): Promise<Ref<Calendar> | undefined> {
@@ -118,23 +119,19 @@ export async function createPermanentMeeting (
 
 /**
  * Creating a permanent meeting means two documents: the series that puts the meeting into the
- * schedule, and the room that stays open between occurrences. The series is created exactly like
- * the calendar dialog does it (same fields, same owner access), so nothing downstream has to
- * special-case a meeting.
+ * schedule, and the meeting itself, which stays open between occurrences. It is a standalone
+ * entity: it belongs to no office room, so the session of such a meeting runs in the service room
+ * and the media settings below are defaults rather than something inherited from a room.
  */
 export async function createPermanentMeetingWithSchedule (
   client: TxOperations,
   input: PermanentMeetingInput,
   ctx: ScheduleContext
 ): Promise<{ eventId: string, meeting: Ref<PermanentMeeting> }> {
-  const room =
-    input.room !== undefined
-      ? ((await client.findOne(love.class.Room, { _id: input.room })) as Room | undefined)
-      : undefined
-  const type = room?.type === RoomType.Audio ? RoomType.Audio : RoomType.Video
-  const language = room?.language ?? 'en'
-  const startWithRecording = room?.startWithRecording ?? false
-  const startWithTranscription = room?.startWithTranscription ?? false
+  const type = RoomType.Video
+  const language = ctx.language as RoomLanguage
+  const startWithRecording = false
+  const startWithTranscription = false
 
   const rules = input.period !== undefined ? periodRules(input.startDate, input.period) : []
   if (rules.length > 0 && input.endDate !== undefined) rules[0] = { ...rules[0], endDate: input.endDate }
@@ -199,7 +196,7 @@ export async function createPermanentMeetingWithSchedule (
       type,
       linkVersion: 1,
       meetingAccess: defaultMeetingAccess,
-      private: room?.startPrivate ?? false,
+      private: false,
       language,
       startWithRecording,
       startWithTranscription,
