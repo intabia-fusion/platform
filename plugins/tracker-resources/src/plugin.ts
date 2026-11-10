@@ -49,6 +49,10 @@ export default mergeIds(trackerId, tracker, {
     IssueCategory: '' as Ref<ObjectSearchCategory>
   },
   string: {
+    PreventDuplicateColumnTitles: '' as IntlString,
+    PreventDuplicateColumnTitlesHint: '' as IntlString,
+    DuplicateColumnTitle: '' as IntlString,
+    ResolveDuplicateColumnTitles: '' as IntlString,
     WarnOnClosedStatuses: '' as IntlString,
     WarnOnClosedStatusesHint: '' as IntlString,
     AllBoards: '' as IntlString,

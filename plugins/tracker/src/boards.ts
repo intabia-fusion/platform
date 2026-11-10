@@ -151,6 +151,7 @@ export interface Board extends Doc {
   editors: AccountUuid[]
   filter: BoardCondition
   columns: BoardColumn[]
+  preventDuplicateColumnTitles?: boolean
   warnOnClosedStatuses?: boolean
   swimlanes: BoardSwimlane[]
   // Lanes by a field win over `swimlanes`; not set or null: lanes by conditions, or none
@@ -314,4 +315,32 @@ export function pickRuleSamples (
     if (ids !== undefined) above.push(ids)
   }
   return result
+}
+
+/** Column titles are compared independently of UI locale and surrounding whitespace. */
+export function normalizeColumnTitle (title: string): string {
+  return title.trim().toLowerCase()
+}
+
+export function duplicateColumnIds (columns: Pick<BoardColumn, 'id' | 'title'>[]): Set<string> {
+  const firstByTitle = new Map<string, string>()
+  const duplicates = new Set<string>()
+  for (const column of columns) {
+    const key = normalizeColumnTitle(column.title)
+    const first = firstByTitle.get(key)
+    if (first === undefined) firstByTitle.set(key, column.id)
+    else {
+      duplicates.add(first)
+      duplicates.add(column.id)
+    }
+  }
+  return duplicates
+}
+
+export function nextColumnTitle (columns: Pick<BoardColumn, 'title'>[], title: string): string {
+  const used = new Set(columns.map((column) => normalizeColumnTitle(column.title)))
+  let candidate = title
+  let suffix = 2
+  while (used.has(normalizeColumnTitle(candidate))) candidate = `${title} ${suffix++}`
+  return candidate
 }

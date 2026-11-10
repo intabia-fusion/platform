@@ -35,7 +35,7 @@ import {
   Type,
   type Permission
 } from '@hcengineering/core'
-import { Asset, IntlString, Plugin, Resource, plugin } from '@hcengineering/platform'
+import { Asset, IntlString, Plugin, Resource, type StatusCode, plugin } from '@hcengineering/platform'
 import { Preference } from '@hcengineering/preference'
 import { TagCategory, TagElement, TagReference } from '@hcengineering/tags'
 import { ToDo, WorkSlot } from '@hcengineering/time'
@@ -556,6 +556,7 @@ const pluginState = plugin(trackerId, {
     BoardVisibility: '' as Ref<Enum>
   },
   status: {
+    DuplicateColumnTitle: '' as StatusCode,
     Backlog: '' as Ref<Status>,
     Todo: '' as Ref<Status>,
     InProgress: '' as Ref<Status>,

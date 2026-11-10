@@ -507,6 +507,8 @@ export class TBoard extends TDoc implements Board {
 
   columns!: BoardColumn[]
 
+  preventDuplicateColumnTitles?: boolean
+
   warnOnClosedStatuses?: boolean
 
   swimlanes!: BoardSwimlane[]

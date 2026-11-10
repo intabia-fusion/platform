@@ -1,5 +1,9 @@
 {
   "string": {
+    "PreventDuplicateColumnTitles": "Prevent duplicate column titles",
+    "PreventDuplicateColumnTitlesHint": "Compare all column titles on this board ignoring case and surrounding spaces.",
+    "DuplicateColumnTitle": "A column with this title already exists",
+    "ResolveDuplicateColumnTitles": "Rename columns with duplicate titles to enable this restriction",
     "TrackerApplication": "Tracker",
     "Projects": "Your projects",
     "More": "More",
@@ -565,7 +569,9 @@
     "WarnOnClosedStatuses": "Warn about closed statuses without a column",
     "WarnOnClosedStatusesHint": "Include completed and canceled statuses in hidden issue warnings. Off by default."
   },
-  "status": {},
+  "status": {
+    "DuplicateColumnTitle": "A column with this title already exists"
+  },
   "emailTemplate": {
     "AssigneeNotificationText": "{doc} was assigned to you by {sender}",
     "AssigneeNotificationHtml": "<p>{doc} was assigned to you by {sender}</p> <p>{link}</p>",

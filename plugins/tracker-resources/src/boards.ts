@@ -173,6 +173,7 @@ export interface NewBoardData {
   editors: AccountUuid[]
   filter: string
   columns: BoardColumn[]
+  preventDuplicateColumnTitles?: boolean
   warnOnClosedStatuses?: boolean
 }
 

@@ -13,11 +13,19 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import { tick } from 'svelte'
   import { generateId, type Data, type Ref, type Status } from '@hcengineering/core'
   import { translate } from '@hcengineering/platform'
   import { getClient, isDisabled } from '@hcengineering/presentation'
   import task from '@hcengineering/task'
-  import { statusesWithoutColumn, type Board, type BoardColumn } from '@hcengineering/tracker'
+  import {
+    duplicateColumnIds,
+    nextColumnTitle,
+    normalizeColumnTitle,
+    statusesWithoutColumn,
+    type Board,
+    type BoardColumn
+  } from '@hcengineering/tracker'
   import ui, { getEventPositionElement, Icon, Label, Menu, Scroller, showPopup } from '@hcengineering/ui'
   import { Button, Callout, IconButton, Toggle } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
@@ -28,7 +36,10 @@
   import ProjectSettingsSection from '../../projects/settings/ProjectSettingsSection.svelte'
 
   // Reads the column settings and board scope, so a wizard may pass a draft
-  export let board: Pick<Board, 'columns' | 'projects' | 'filter' | 'warnOnClosedStatuses'>
+  export let board: Pick<
+    Board,
+    'columns' | 'projects' | 'filter' | 'warnOnClosedStatuses' | 'preventDuplicateColumnTitles'
+  >
   // Statuses of the board projects
   export let statuses: Status[]
   export let onChange: (patch: Partial<Data<Board>>) => Promise<void>
@@ -76,8 +87,30 @@
     void onChange({ columns })
   }
 
+  let titleDrafts: Record<string, string> = {}
+  let showDuplicateTitles = false
+  $: preventDuplicates = board.preventDuplicateColumnTitles ?? false
+  $: duplicateIds = duplicateColumnIds(board.columns)
+
+  function titleConflicts (id: string, title: string): boolean {
+    return board.columns.some(
+      (column) => column.id !== id && normalizeColumnTitle(column.title) === normalizeColumnTitle(title)
+    )
+  }
+
+  async function setPreventDuplicates (on: boolean): Promise<void> {
+    preventDuplicates = on
+    showDuplicateTitles = on && duplicateIds.size > 0
+    if (showDuplicateTitles) {
+      // Flush the attempted value before restoring it so the switch also resets its internal state.
+      await tick()
+      preventDuplicates = board.preventDuplicateColumnTitles ?? false
+    } else await onChange({ preventDuplicateColumnTitles: on })
+  }
+
   async function addColumn (): Promise<void> {
-    const title = await translate(tracker.string.NewColumn, {})
+    const defaultTitle = await translate(tracker.string.NewColumn, {})
+    const title = board.preventDuplicateColumnTitles ? nextColumnTitle(board.columns, defaultTitle) : defaultTitle
     save([...board.columns, { id: generateId(), title, category: task.statusCategory.UnStarted, statuses: [] }])
   }
 
@@ -117,7 +150,15 @@
   }
 
   function setTitle (column: BoardColumn, value: string): void {
-    if (value.trim() !== '' && value.trim() !== column.title) patchColumn(column.id, { title: value.trim() })
+    const title = value.trim()
+    if (board.preventDuplicateColumnTitles && titleConflicts(column.id, title)) return
+    clearTitleDraft(column.id)
+    if (title !== '' && title !== column.title) patchColumn(column.id, { title })
+  }
+
+  function clearTitleDraft (id: string): void {
+    const { [id]: removed, ...rest } = titleDrafts
+    titleDrafts = rest
   }
 
   function showColumnMenu (e: MouseEvent, index: number): void {
@@ -226,6 +267,22 @@
       />
     </div>
 
+    <div class="title-policy">
+      <Toggle
+        kind="brand"
+        checked={preventDuplicates}
+        label={tracker.string.PreventDuplicateColumnTitles}
+        tooltip={{ label: tracker.string.PreventDuplicateColumnTitlesHint }}
+        data-id="boardPreventDuplicateColumnTitles"
+        on:change={(e) => {
+          void setPreventDuplicates(e.detail)
+        }}
+      />
+      {#if showDuplicateTitles && duplicateIds.size > 0}
+        <Callout tone="warning" label={tracker.string.ResolveDuplicateColumnTitles} />
+      {/if}
+    </div>
+
     <div class="editor">
       <div
         class="column unplaced"
@@ -269,6 +326,11 @@
       <div class="columns-scroll" data-id="boardColumnsScroll">
         <Scroller horizontal contentDirection="horizontal" align="start" stickedScrollBars>
           {#each board.columns as column, i (column.id)}
+            {@const invalidTitle =
+              (showDuplicateTitles && duplicateIds.has(column.id)) ||
+              (board.preventDuplicateColumnTitles &&
+                titleDrafts[column.id] !== undefined &&
+                titleConflicts(column.id, titleDrafts[column.id]))}
             {@const first = byId.get(column.statuses[0])}
             {@const issues = column.statuses.reduce((sum, id) => sum + (counts.get(id) ?? 0), 0)}
             <div
@@ -302,11 +364,23 @@
                 {/if}
                 <input
                   class="name"
-                  value={column.title}
+                  value={titleDrafts[column.id] ?? column.title}
+                  aria-label={column.title}
+                  aria-invalid={invalidTitle ? 'true' : undefined}
+                  aria-describedby={invalidTitle ? `column-title-error-${column.id}` : undefined}
+                  on:input={(e) => {
+                    titleDrafts = { ...titleDrafts, [column.id]: e.currentTarget.value }
+                  }}
                   on:change={(e) => {
-                    const title = e.currentTarget.value.trim()
-                    e.currentTarget.value = title === '' ? column.title : title
-                    setTitle(column, title)
+                    setTitle(column, e.currentTarget.value)
+                  }}
+                  on:keydown={(e) => {
+                    if (e.key === 'Escape') {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      clearTitleDraft(column.id)
+                      e.currentTarget.value = column.title
+                    }
                   }}
                 />
                 <IconButton
@@ -320,6 +394,16 @@
                   }}
                 />
               </div>
+              {#if invalidTitle}
+                <span
+                  class="title-error"
+                  id={`column-title-error-${column.id}`}
+                  data-id="boardColumnTitleError"
+                  role="alert"
+                >
+                  <Label label={tracker.string.DuplicateColumnTitle} />
+                </span>
+              {/if}
               {#if wip && !compact}
                 <div class="wips">
                   <!-- tracker-board-next: BoardColumn has no min limit field -->
@@ -403,6 +487,19 @@
     flex-wrap: wrap;
     gap: 1rem 2rem;
     min-height: 2rem;
+  }
+  .title-policy {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  .title-error {
+    color: var(--theme-error-color);
+    font-size: 0.75rem;
+  }
+  .name[aria-invalid='true'] {
+    box-shadow: inset 0 0 0 1px var(--theme-error-color);
   }
   .editor {
     display: flex;

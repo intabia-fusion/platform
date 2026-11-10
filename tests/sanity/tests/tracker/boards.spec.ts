@@ -769,6 +769,9 @@ test.describe('task boards', () => {
     const closedWarning = page.locator('input[data-id="boardWarnOnClosedStatuses"]')
     await expect(closedWarning).not.toBeChecked()
     await closedWarning.setChecked(true)
+    const uniqueTitles = page.locator('input[data-id="boardPreventDuplicateColumnTitles"]')
+    await expect(uniqueTitles).not.toBeChecked()
+    await uniqueTitles.setChecked(true)
     await boards.createSubmit().click()
     await expect(page).toHaveURL(/\/tracker\/boards\/[^/]+$/)
 
@@ -777,6 +780,7 @@ test.describe('task boards', () => {
     const board = await readBoardById(created)
     expect(board?.projects).toEqual([project?._id])
     expect(board?.warnOnClosedStatuses).toBe(true)
+    expect(board?.preventDuplicateColumnTitles).toBe(true)
     // The statuses wait in "Statuses without a column" until the user drags them
     expect(board?.columns.map((c) => [c.title, c.statuses])).toEqual([['My column', []]])
     await expect(boards.columns()).toHaveCount(0)
@@ -1046,6 +1050,59 @@ test.describe('task boards', () => {
     await expect(boards.quickFilter('Todo only')).toHaveAttribute('aria-pressed', 'false')
     await expect(card('backlog')).toBeVisible()
     await expect(card('doing')).toBeVisible()
+  })
+
+  test('duplicate column titles are optional and rejected before saving when restricted', async ({ page }) => {
+    const id = await makeBoard('unique-column-titles', {
+      columns: [
+        { id: 'a', title: 'Queue', category: task.statusCategory.ToDo, statuses: [statusId('Todo')] },
+        { id: 'b', title: 'Doing', category: task.statusCategory.Active, statuses: [] }
+      ]
+    })
+    const boards = new BoardsPage(page)
+    await page.goto(boards.boardUrl(id, true, 'columns'))
+    const toggle = page.locator('input[data-id="boardPreventDuplicateColumnTitles"]')
+    const secondTitle = boards.settingsColumn().nth(1).locator('input.name')
+    const errors = page.locator('[data-id="boardColumnTitleError"]')
+    await expect(toggle).not.toBeChecked()
+    await secondTitle.fill(' queue ')
+    await secondTitle.blur()
+    await expect.poll(async () => (await readBoardById(id))?.columns[1].title).toBe('queue')
+    await toggle.click()
+    await expect(toggle).not.toBeChecked()
+    await expect(errors).toHaveCount(2)
+    await expect(page.getByText('Rename columns with duplicate titles to enable this restriction')).toBeVisible()
+    expect((await readBoardById(id))?.preventDuplicateColumnTitles).not.toBe(true)
+
+    await secondTitle.fill('Doing')
+    await secondTitle.blur()
+    await expect.poll(async () => (await readBoardById(id))?.columns[1].title).toBe('Doing')
+    await toggle.setChecked(true)
+    await expect.poll(async () => (await readBoardById(id))?.preventDuplicateColumnTitles).toBe(true)
+    await secondTitle.fill(' QUEUE ')
+    await secondTitle.blur()
+    await expect(errors).toHaveCount(1)
+    await expect(secondTitle).toHaveAttribute('aria-invalid', 'true')
+    expect((await readBoardById(id))?.columns[1].title).toBe('Doing')
+    await secondTitle.press('Escape')
+    await expect(secondTitle).toHaveValue('Doing')
+    await expect(errors).toHaveCount(0)
+
+    const add = page.locator('[data-id="boardAddColumn"]')
+    await add.click()
+    await expect(boards.settingsColumn()).toHaveCount(3)
+    await add.click()
+    await expect(boards.settingsColumn()).toHaveCount(4)
+    await expect.poll(async () => (await readBoardById(id))?.columns.map((column) => column.title))
+      .toEqual(['Queue', 'Doing', 'New column', 'New column 2'])
+    await page.reload()
+    await expect(toggle).toBeChecked()
+    await toggle.setChecked(false)
+    await expect.poll(async () => (await readBoardById(id))?.preventDuplicateColumnTitles).toBe(false)
+    await secondTitle.fill('Queue')
+    await secondTitle.blur()
+    await expect.poll(async () => (await readBoardById(id))?.columns[1].title).toBe('Queue')
+    await expect(errors).toHaveCount(0)
   })
 
   test('FUSIO-1683 an empty column title restores the saved value after blur', async ({ page }) => {

@@ -21,7 +21,9 @@ import core, {
   systemAccountUuid,
   toFindResult,
   type Tx,
-  TxFactory
+  TxFactory,
+  TxProcessor,
+  type TxUpdateDoc
 } from '@hcengineering/core'
 import { ForbiddenKind, PlatformError, type Status } from '@hcengineering/platform'
 import type { Middleware } from '@hcengineering/server-core'
@@ -81,6 +83,7 @@ describe('BoardMiddleware', () => {
   let stored: Doc[]
   let passed: Tx[]
   let middleware: Middleware
+  let persist: boolean
 
   beforeEach(async () => {
     stored = [
@@ -90,8 +93,18 @@ describe('BoardMiddleware', () => {
       { _id: 'bob-space', _class: contact.class.PersonSpace, account: bob } as any
     ]
     passed = []
+    persist = false
     const next = {
       tx: async (_ctx: any, txes: Tx[]) => {
+        if (persist) {
+          for (const tx of txes) {
+            if (tx._class === core.class.TxUpdateDoc) {
+              const update = tx as TxUpdateDoc<Board>
+              const index = stored.findIndex((doc) => doc._id === update.objectId)
+              stored[index] = TxProcessor.updateDoc2Doc({ ...(stored[index] as Board) }, update)
+            }
+          }
+        }
         passed.push(...txes)
         return {}
       },
@@ -113,6 +126,63 @@ describe('BoardMiddleware', () => {
     factory.createTxUpdateDoc(tracker.class.Board, core.space.Workspace, id as Ref<Board>, ops)
   const remove = (id: string): Tx =>
     factory.createTxRemoveDoc(tracker.class.Board, core.space.Workspace, id as Ref<Board>)
+
+  const columns = (second = 'Doing'): Board['columns'] => [
+    { id: 'a', title: 'Queue', statuses: [], category: 'category' as any },
+    { id: 'b', title: second, statuses: [], category: 'category' as any }
+  ]
+
+  it('keeps duplicates allowed by default and when the restriction is disabled', async () => {
+    await middleware.tx(ctxOf(alice), [update('own', { columns: columns(' queue ') })])
+    await middleware.tx(ctxOf(alice), [update('own', { preventDuplicateColumnTitles: false, columns: columns('QUEUE') })])
+    expect(passed).toHaveLength(2)
+  })
+
+  it('refuses enabling the restriction with existing duplicate titles', async () => {
+    stored[0] = board('own', { columns: columns(' queue ') })
+    const status = await refusal(middleware.tx(ctxOf(alice), [update('own', { preventDuplicateColumnTitles: true })]))
+    expect(status.code).toBe(tracker.status.DuplicateColumnTitle)
+    expect(passed).toHaveLength(0)
+  })
+
+  it('validates creation as well as renaming and insertion through operators', async () => {
+    const create = factory.createTxCreateDoc(tracker.class.Board, core.space.Workspace, {
+      author: alice, visibility: 'all', columns: columns('QUEUE'), preventDuplicateColumnTitles: true
+    } as any)
+    await refusal(middleware.tx(ctxOf(alice), [create]))
+    stored[0] = board('own', { columns: columns(), preventDuplicateColumnTitles: true })
+    await refusal(middleware.tx(ctxOf(bob), [update('own', { 'columns.1.title': ' queue ' })]))
+    await refusal(middleware.tx(ctxOf(alice), [update('own', { $push: { columns: { ...columns()[0], id: 'c' } } })]))
+    expect(passed).toHaveLength(0)
+    await middleware.tx(ctxOf(alice), [update('own', { columns: columns('Unique') })])
+    await middleware.tx(ctxOf(alice), [update('own', { preventDuplicateColumnTitles: false, columns: columns('Queue') })])
+    expect(passed).toHaveLength(2)
+  })
+
+  it('uses the preceding transaction state within a batch', async () => {
+    stored[0] = board('own', { columns: columns() })
+    await refusal(middleware.tx(ctxOf(alice), [
+      update('own', { preventDuplicateColumnTitles: true }),
+      update('own', { columns: columns('QUEUE') })
+    ]))
+    expect(passed).toHaveLength(0)
+  })
+
+  it.each([true, false])('serializes two editors changing the policy and columns (enable first: %s)', async (enableFirst) => {
+    stored[0] = board('own', { columns: columns() })
+    persist = true
+    const enable = update('own', { preventDuplicateColumnTitles: true })
+    const duplicate = update('own', { columns: columns('QUEUE') })
+    const [first, second] = enableFirst ? [enable, duplicate] : [duplicate, enable]
+    const results = await Promise.allSettled([
+      middleware.tx(ctxOf(alice), [first]), middleware.tx(ctxOf(bob), [second])
+    ])
+    expect(results.map((result) => result.status)).toEqual(['fulfilled', 'rejected'])
+    expect(passed).toHaveLength(1)
+    // An unsuccessful request releases the queue.
+    await middleware.tx(ctxOf(alice), [update('own', { columns: columns() })])
+    expect(passed).toHaveLength(2)
+  })
 
   it('lets the author and an editor change a board', async () => {
     await middleware.tx(ctxOf(alice), [update('own', { title: 'A' })])

@@ -28,7 +28,7 @@ import core, {
   systemAccountUuid
 } from '@hcengineering/core'
 import contact from '@hcengineering/contact'
-import { ForbiddenKind } from '@hcengineering/platform'
+import { ForbiddenKind, PlatformError, Severity, Status } from '@hcengineering/platform'
 import {
   BaseMiddleware,
   createBroadcastEvent,
@@ -37,7 +37,7 @@ import {
   type PipelineContext,
   type TxMiddlewareResult
 } from '@hcengineering/server-core'
-import tracker, { type Board, canEditBoard } from '@hcengineering/tracker'
+import tracker, { type Board, canEditBoard, duplicateColumnIds } from '@hcengineering/tracker'
 
 /**
  * Board write rights: only the author or an editor changes a board, only the author removes it.
@@ -49,7 +49,42 @@ export class BoardMiddleware extends BaseMiddleware {
     return new BoardMiddleware(context, next)
   }
 
+  private readonly pendingBoards = new Map<Ref<Doc>, Promise<void>>()
+
   async tx (ctx: MeasureContext<SessionData>, txes: Tx[]): Promise<TxMiddlewareResult> {
+    // Derived writes can re-enter this middleware while the parent request holds its queue entry.
+    if (ctx.contextData.isTriggerCtx === true) return await this.processTxes(ctx, txes)
+    // Validation must read the state left by earlier requests, including a concurrent policy switch.
+    const ids = new Set<Ref<Doc>>()
+    for (const tx of txes) {
+      if (
+        TxProcessor.isExtendsCUD(tx._class) &&
+        this.context.hierarchy.isDerived((tx as TxCUD<Doc>).objectClass, tracker.class.Board)
+      ) {
+        ids.add((tx as TxCUD<Doc>).objectId)
+      }
+    }
+    if (ids.size === 0) return await this.processTxes(ctx, txes)
+    const previous = [...ids]
+      .map((id) => this.pendingBoards.get(id))
+      .filter((pending): pending is Promise<void> => pending !== undefined)
+    let release: () => void = () => {}
+    const pending = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    for (const id of ids) this.pendingBoards.set(id, pending)
+    await Promise.all(previous)
+    try {
+      return await this.processTxes(ctx, txes)
+    } finally {
+      release()
+      for (const id of ids) {
+        if (this.pendingBoards.get(id) === pending) this.pendingBoards.delete(id)
+      }
+    }
+  }
+
+  private async processTxes (ctx: MeasureContext<SessionData>, txes: Tx[]): Promise<TxMiddlewareResult> {
     const trusted = ctx.contextData.account.uuid === systemAccountUuid || ctx.contextData.isTriggerCtx === true
     // Boards of this batch as the batch leaves them: a later tx checks against the earlier ones.
     const batch = new Map<Ref<Board>, Board | null>()
@@ -121,6 +156,7 @@ export class BoardMiddleware extends BaseMiddleware {
         throw this.forbiddenTx(ctx, ForbiddenKind.AuthorOnly, 'A board is created in the name of its author only', tx)
       }
       if (!trusted) await this.checkPlacement(ctx, board, tx)
+      this.checkColumnTitles(board)
       batch.set(board._id, board)
       return false
     }
@@ -154,9 +190,18 @@ export class BoardMiddleware extends BaseMiddleware {
         )
       }
       if (!trusted && (moved || after.author !== before.author)) await this.checkPlacement(ctx, after, tx)
+      this.checkColumnTitles(after)
     }
     batch.set(tx.objectId, tx._class === core.class.TxRemoveDoc ? null : after)
     return after.space !== before.space
+  }
+
+  private checkColumnTitles (board: Board): void {
+    if (board.preventDuplicateColumnTitles === true && duplicateColumnIds(board.columns).size > 0) {
+      throw new PlatformError(
+        new Status(Severity.ERROR, tracker.status.DuplicateColumnTitle, {}, undefined, { propagate: true })
+      )
+    }
   }
 
   // A team board lives in the workspace, a personal one only in its author's own PersonSpace
