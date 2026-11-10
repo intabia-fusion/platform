@@ -1322,5 +1322,9 @@
     left: 0;
     right: 0;
     z-index: 2;
+    background-color: var(--theme-popup-color);
+    border: 1px solid var(--theme-divider-color);
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   }
 </style>

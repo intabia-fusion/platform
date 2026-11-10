@@ -2,6 +2,17 @@
 
 Changelog.
 
+## [0.8.69] - 2026-11-10
+
+* 🚀 FEATURES: · Show missing task type statuses, add compatible existing statuses, align status order and identify workflow statuses without outgoing transitions ([#666](https://github.com/hcengineering/platform/issues/666))
+* 🐛 BUG FIXES: · FUSIO-1763: Fix board card dragging, reordering and cancellation across merged columns and swim lanes; show Kanban loading progress ([#666](https://github.com/hcengineering/platform/issues/666)) · FUSIO-1635: Render and escape multiline code blocks without a recognized language ([#664](https://github.com/hcengineering/platform/issues/664))
+
+## [0.8.68] - 2026-11-09
+
+* 🚀 FEATURES: · FUSIO-1596: Open downloaded files or reveal them in the desktop file manager, with confirmation for executable and unknown file types ([#633](https://github.com/hcengineering/platform/issues/633)) · Add subscription categories, manual seat counts and payment history with confirmed payment and refund totals to the admin dashboard ([#657](https://github.com/hcengineering/platform/issues/657)) · FUSIO-1607: Track signup submission attempts and blocked actions while excluding sensitive URLs from analytics ([#646](https://github.com/hcengineering/platform/issues/646))
+* 🐛 BUG FIXES: · FUSIO-1636: Apply presentation ordering to task sorting and prevent conflicts with grouping fields ([#644](https://github.com/hcengineering/platform/issues/644)) · FUSIO-1639: Show the selected sorting direction in dropdown menus ([#663](https://github.com/hcengineering/platform/issues/663)) · FUSIO-1279: Preserve trial and free plan banners after unsuccessful checkout and prevent unpaid drafts from granting a paid plan ([#634](https://github.com/hcengineering/platform/issues/634)) · FUSIO-1745: Persist fallback ReadState before creating its Chat reference ([#662](https://github.com/hcengineering/platform/issues/662))
+* 🧩 OTHER: · Keep the admin billing rage-click test pool from limiting parallel AI tests ([#660](https://github.com/hcengineering/platform/issues/660))
+
 ## [0.8.67] - 2026-11-08
 
 * 🐛 BUG FIXES: · FUSIO-1727: Fix board header overflow, filtered status counts and ambiguous status names; improve Kanban drag cancellation, scrolling and fullscreen column sizing ([#659](https://github.com/hcengineering/platform/issues/659)) · FUSIO-1648: Limit project type names and keep long names within settings layouts ([#652](https://github.com/hcengineering/platform/issues/652))
