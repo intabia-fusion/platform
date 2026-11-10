@@ -47,15 +47,16 @@ function makeControl (messages: Doc[]): TriggerControl {
     },
     modelDb: { findAllSync: () => [] },
     findAll: jest.fn().mockImplementation(async (_ctx, _class, query) => {
+      if ('$or' in query) {
+        throw new Error('$or is not supported')
+      }
       const candidates =
         _class === activity.class.ActivityReference
           ? messages.filter((message) => message._class === activity.class.ActivityReference)
           : messages
       return toFindResult(
         candidates.filter((message) => {
-          const matches = (filter: Record<string, any>): boolean =>
-            Object.entries(filter).every(([key, value]) => (message as any)[key] === value)
-          return query.$or !== undefined ? query.$or.some(matches) === true : matches(query)
+          return Object.entries(query).every(([key, value]) => (message as any)[key] === value)
         })
       )
     })
