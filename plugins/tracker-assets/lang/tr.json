@@ -1,5 +1,9 @@
 {
   "string": {
+    "PreventDuplicateColumnTitles": "Yinelenen sütun adlarını engelle",
+    "PreventDuplicateColumnTitlesHint": "Bu panodaki tüm sütun adlarını, büyük/küçük harf farkını ve baştaki ve sondaki boşlukları yok sayarak karşılaştırın.",
+    "DuplicateColumnTitle": "Bu ada sahip bir sütun zaten var",
+    "ResolveDuplicateColumnTitles": "Bu kısıtlamayı etkinleştirmek için aynı ada sahip sütunları yeniden adlandırın",
     "TrackerApplication": "Tracker",
     "Projects": "Projeleriniz",
     "More": "Daha fazla",
@@ -546,7 +550,9 @@
     "WarnOnClosedStatuses": "Sütunu olmayan kapalı durumlar için uyar",
     "WarnOnClosedStatusesHint": "Tamamlanan ve iptal edilen durumları gizli görev uyarılarına dahil et. Varsayılan olarak kapalıdır."
   },
-  "status": {},
+  "status": {
+    "DuplicateColumnTitle": "Bu ada sahip bir sütun zaten var"
+  },
   "emailTemplate": {
     "AssigneeNotificationText": "{doc} was assigned to you by {sender}",
     "AssigneeNotificationHtml": "<p>{doc} was assigned to you by {sender}</p> <p>{link}</p>",

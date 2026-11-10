@@ -1,5 +1,9 @@
 {
   "string": {
+    "PreventDuplicateColumnTitles": "Empêcher les noms de colonnes identiques",
+    "PreventDuplicateColumnTitlesHint": "Comparer les noms de toutes les colonnes de ce tableau sans tenir compte de la casse ni des espaces en début et en fin.",
+    "DuplicateColumnTitle": "Une colonne portant ce nom existe déjà",
+    "ResolveDuplicateColumnTitles": "Renommez les colonnes portant le même nom pour activer cette restriction",
     "TrackerApplication": "Suivi",
     "Projects": "Vos projets",
     "More": "Plus",
@@ -546,7 +550,9 @@
     "WarnOnClosedStatuses": "Signaler les statuts fermés sans colonne",
     "WarnOnClosedStatusesHint": "Inclure les statuts terminés et annulés dans les avertissements concernant les tâches masquées. Désactivé par défaut."
   },
-  "status": {},
+  "status": {
+    "DuplicateColumnTitle": "Une colonne portant ce nom existe déjà"
+  },
   "emailTemplate": {
     "AssigneeNotificationText": "{doc} was assigned to you by {sender}",
     "AssigneeNotificationHtml": "<p>{doc} was assigned to you by {sender}</p> <p>{link}</p>",

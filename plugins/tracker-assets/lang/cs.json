@@ -1,5 +1,9 @@
 {
   "string": {
+    "PreventDuplicateColumnTitles": "Zabránit duplicitním názvům sloupců",
+    "PreventDuplicateColumnTitlesHint": "Porovnávat názvy všech sloupců této tabule bez rozlišení velkých a malých písmen a bez úvodních a koncových mezer.",
+    "DuplicateColumnTitle": "Sloupec s tímto názvem již existuje",
+    "ResolveDuplicateColumnTitles": "Chcete-li toto omezení zapnout, přejmenujte sloupce se stejnými názvy",
     "TrackerApplication": "Přehled",
     "Projects": "Vaše projekty",
     "More": "Více",
@@ -546,7 +550,9 @@
     "WarnOnClosedStatuses": "Upozorňovat na uzavřené stavy bez sloupce",
     "WarnOnClosedStatusesHint": "Zahrnout dokončené a zrušené stavy do upozornění na skryté úkoly. Ve výchozím nastavení vypnuto."
   },
-  "status": {},
+  "status": {
+    "DuplicateColumnTitle": "Sloupec s tímto názvem již existuje"
+  },
   "emailTemplate": {
     "AssigneeNotificationText": "{doc} was assigned to you by {sender}",
     "AssigneeNotificationHtml": "<p>{doc} was assigned to you by {sender}</p> <p>{link}</p>",
