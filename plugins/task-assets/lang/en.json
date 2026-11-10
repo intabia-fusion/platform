@@ -40,6 +40,8 @@
     "TaskTypeNameAlreadyExists": "A task type with this name already exists",
     "TaskTypeNameEmpty": "Task type name cannot be empty",
     "TaskTypeStatusOrderWarning": "The status order differs from the project type. You can keep this order, but status icons follow the project type order.",
+    "AlignTaskTypeStatusOrder": "Fix",
+    "StatusNotInTaskType": "Not in task type",
     "AssignThisTask": "Assign this task",
     "More": "Options",
     "TaskUnAssign": "Unassign",

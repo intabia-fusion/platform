@@ -674,7 +674,9 @@ test.describe('task boards', () => {
 
     const header = page.locator('.hulyHeader-container').filter({ has: boards.menuButton() })
     const card = page.locator(`[data-id="kanban-card"][data-card-id="${issueId}"]`)
+    await card.hover({ position: { x: 8, y: 8 } })
     await card.hover()
+    await expect(card).toHaveClass(/selection/)
     await page.keyboard.press('x')
     await expect(card).toHaveClass(/checked/)
     const statistics = header.locator('.hulyHeader-buttonsGroup.extra')

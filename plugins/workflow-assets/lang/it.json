@@ -15,6 +15,7 @@
     "AnyStatus": "Qualsiasi stato",
     "AnyTaskType": "Qualsiasi tipo di attività",
     "Workflows": "Flussi di lavoro",
+    "NoOutgoingTransitions": "Senza transizioni",
     "DeleteWorkflow": "Elimina flusso di lavoro",
     "DeleteWorkflowConfirm": "Sei sicuro di voler eliminare questo flusso di lavoro?",
     "DeleteWorkflowTransition": "Elimina transizione",

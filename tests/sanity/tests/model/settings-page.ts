@@ -49,7 +49,7 @@ export class SettingsPage extends CommonPage {
     this.page
       .locator('div.hulyTableAttr-header', { hasText: 'Task types' })
       .locator('xpath=..')
-      .locator('div.hulyTableAttr-content button.hulyTableAttr-content__row')
+      .locator('div.hulyTableAttr-content button[data-id="task-type-open"]')
       .filter({ has: this.page.getByText(value, { exact: true }) })
 
   deleteStateButton = (): Locator =>

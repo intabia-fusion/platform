@@ -61,6 +61,7 @@ export interface KanbanBindings {
   getCategoryGroup: ((state: CategoryType) => string | undefined) | undefined
   categoryGroups: string[][]
   groupByDocs: Record<string | number, Item[]>
+  dropTargets: Map<string, DropTarget[]>
   getGroupByValues: (groupByDocs: Record<string | number, Item[]>, category: CategoryType) => Item[]
   // The collapsed column under the dragged card shows the card, as a live column does.
   dragOverCollapsed: string | undefined
@@ -136,6 +137,7 @@ export class KanbanController {
   private dragOriginScrolls: DragOriginScroll[] = []
   private dragSource: HTMLElement | undefined
   private dragCardInitialRect: DOMRect | undefined
+  private dragOriginShifted = false
   private dragCardInitialRank: Rank | undefined
   // Where the card stood in its category, to put it back there in the legacy layout.
   private dragCardInitialIndex = -1
@@ -417,7 +419,7 @@ export class KanbanController {
       category,
       this.board.getSwimLaneOfDoc,
       {
-        card: merged ? undefined : _dragCard,
+        card: merged || (this.board.dropTargets.size > 0 && _dragCardTargetIndex === undefined) ? undefined : _dragCard,
         initialLane: this.board.dragCardInitialSwimLane?._id,
         initialState: this.board.dragCardInitialState,
         lane: _dragCardCurrentSwimLane?._id,
@@ -514,8 +516,12 @@ export class KanbanController {
     if (
       state === this.board.dragCardInitialState &&
       targetSwimLane?._id === this.board.dragCardInitialSwimLane?._id &&
-      (dropTargetId === undefined ||
-        Object.entries(updates).every(([key, value]) => key === 'rank' || cardValues[key] === value))
+      (dropTargetId === undefined
+        ? this.board.dropTargets.size === 0 ||
+          this.board.dontUpdateRank ||
+          this.board.dragCardState !== state ||
+          this.board.dragCardTargetIndex === undefined
+        : Object.entries(updates).every(([key, value]) => key === 'rank' || cardValues[key] === value))
     ) {
       this.onDragEnd()
       return
@@ -635,8 +641,25 @@ export class KanbanController {
 
   handleDragMove = (e: DragEvent): void => {
     if (!this.board.isDragging) return
-    const rect = this.dragCardInitialRect
-    this.set('atInitialPlace', isAtDragOrigin(rect, e, this.dragOriginScrolls))
+    const shiftedOrigin =
+      this.board.dragMoved && (this.board.dropTargets.get(stateKey(this.board.dragCardInitialState))?.length ?? 0) > 0
+    if (shiftedOrigin && !this.dragOriginShifted && this.board.dragCardTargetIndex === undefined) {
+      const source = this.board.scrollerEl?.querySelector<HTMLElement>(`[data-card-id="${this.board.dragCard?._id}"]`)
+      const cell = source?.closest<HTMLElement>('[data-state]')
+      if (
+        source != null &&
+        cell?.dataset.state === stateKey(this.board.dragCardInitialState) &&
+        (!this.board.swimLaneMode || cell.dataset.swimlaneId === this.board.dragCardInitialSwimLane?._id) &&
+        cell.querySelector('[data-id="kanban-drop-targets"]') !== null
+      ) {
+        // Reordering moves the preview; cancellation stays at the slot below the status targets.
+        this.dragCardInitialRect = source.getBoundingClientRect()
+        this.dragOriginScrolls = captureDragOriginScrolls(source, this.board.scrollerEl)
+        this.dragOriginShifted = true
+      }
+    }
+    const overDropTarget = e.target instanceof Element && e.target.closest('[data-drop-target]') !== null
+    this.set('atInitialPlace', !overDropTarget && isAtDragOrigin(this.dragCardInitialRect, e, this.dragOriginScrolls))
     if (
       this.board.atInitialPlace &&
       this.board.dragCard !== undefined &&
@@ -735,8 +758,10 @@ export class KanbanController {
         return
       }
 
+      const targetIndex =
+        this.board.dropTargets.size === 0 && this.board.dontUpdateRank && this.board.orderBy?.[1] === -1 ? 0 : undefined
       if (this.board.dragCardState !== state) {
-        if (!this.board.swimLaneMode) {
+        if (!this.board.swimLaneMode && this.board.dropTargets.size === 0) {
           // Move dragCard into the target column synchronously via groupByDocs
           // mutation so Svelte renders it in its new column on the next tick.
           // Strip dragCard from EVERY category first to prevent duplicate-key
@@ -748,12 +773,12 @@ export class KanbanController {
         }
         this.set('dragOverDropTarget', undefined)
         this.set('dragCardState', state)
-        this.set('dragCardTargetIndex', this.board.dontUpdateRank && this.board.orderBy?.[1] === -1 ? 0 : undefined)
+        this.set('dragCardTargetIndex', targetIndex)
       }
 
       if (swimLaneChanged) {
         this.set('dragCardCurrentSwimLane', swimLane)
-        this.set('dragCardTargetIndex', this.board.dontUpdateRank && this.board.orderBy?.[1] === -1 ? 0 : undefined)
+        this.set('dragCardTargetIndex', targetIndex)
       }
       this.set('groupByDocs', this.board.groupByDocs)
     }
@@ -764,8 +789,8 @@ export class KanbanController {
     // Legacy preview is render-only via getLegacyCategoryValues — no restore needed.
   }
 
-  cardDragOver = (evt: CardDragEvent, object: Item, state: CategoryType): void => {
-    if (this.board.atInitialPlace) {
+  cardDragOver = (evt: CardDragEvent, object: Item, state: CategoryType, swimLane?: SwimLane): void => {
+    if (this.board.atInitialPlace || this.board.dontUpdateRank) {
       evt.preventDefault()
       return
     }
@@ -777,6 +802,8 @@ export class KanbanController {
     ) {
       return
     }
+    // The cell's bubbling dragover must not reset a reorder computed for its card.
+    this.panelDragOver(evt, state, swimLane)
     if (this.board.swimLaneMode) {
       if (this.board.dragCard === undefined) return
       if (object._id === this.board.dragCard._id) return
@@ -817,6 +844,10 @@ export class KanbanController {
       const beforeTarget = cardPointerOffset(evt) < 0
       const desired = beforeTarget ? targetIdx : targetIdx + 1
       const mapped = insertIndex(desired, dragIdx, arr.length)
+      if (this.board.dropTargets.size > 0 && state !== this.board.dragCardInitialState) {
+        this.set('dragCardTargetIndex', mapped)
+        return
+      }
       // Reorder dragCard inside the column array so Svelte can render the
       // preview without any imperative DOM placeholder. Strip ALL occurrences
       // of dragCard before insertion to defend against any transient parent
@@ -941,6 +972,7 @@ export class KanbanController {
     const rect = this.dragSource?.getBoundingClientRect()
     this.dragOriginScrolls = captureDragOriginScrolls(this.dragSource, this.board.scrollerEl)
     this.dragCardInitialRect = rect !== undefined && rect.width > 0 && rect.height > 0 ? rect : undefined
+    this.dragOriginShifted = false
     this.set('atInitialPlace', this.dragCardInitialRect !== undefined)
     this.set('dragCardInitialState', state)
     this.dragCardInitialIndex = (this.board.getGroupByValues(this.board.groupByDocs, state) ?? []).findIndex(
@@ -980,6 +1012,7 @@ export class KanbanController {
     this.set('dragCardAvailableCategories', undefined)
     this.set('dragOverDropTarget', undefined)
     this.dragCardInitialRect = undefined
+    this.dragOriginShifted = false
     this.set('atInitialPlace', false)
     this.stopAutoScroll()
     window.removeEventListener('mousemove', this.onDragEnd, true)

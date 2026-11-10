@@ -261,8 +261,7 @@ test.describe('Poll placement tests', () => {
     await sendPoll(chat.me, chat.channel, question, { options: ['Pizza', 'Sushi'] })
     await expect(polls.poll(question)).toBeVisible()
 
-    await channelPage.textMessage(question).last().hover()
-    await channelPage.messageActionButton(question, 'data-id$="ReplyToMessage"').click()
+    await channelPage.clickReplyToMessage(question)
     const quote = page.locator('.reply:not([inert] *)').filter({ hasText: 'Reply to' })
     await expect(quote).toContainText(question)
     await expect(quote.locator('.applet-preview')).toBeVisible()
@@ -477,8 +476,7 @@ test.describe('Poll placement tests', () => {
     // Forwarded first: the quoting answer repeats the text, and the message actions take the last match.
     await forwardTo(page, text, target.name)
 
-    await channelPage.textMessage(text).last().hover()
-    await channelPage.messageActionButton(text, 'data-id$="ReplyToMessage"').click()
+    await channelPage.clickReplyToMessage(text)
     const answer = `Answer ${uniq}`
     await channelPage.sendMessage(answer)
     await checkNoAppletBlock(message(page, answer).locator('.forwarded-message__content'), text)

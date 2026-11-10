@@ -41,6 +41,7 @@ export function controllerFixture (columns: number, cardsPerColumn: number): Kan
     fitColumns: false,
     getCategoryGroup: undefined,
     groupByDocs,
+    dropTargets: new Map(),
     getGroupByValues: (groups, state) => groups[stateKey(state)],
     setGroupByValues: (groups, state, docs) => {
       groups[stateKey(state)] = docs

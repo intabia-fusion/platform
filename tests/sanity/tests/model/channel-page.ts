@@ -252,11 +252,18 @@ export class ChannelPage extends CommonPage {
   // last(): dozens of specs send 'Test message' here, and the newest is the one just sent.
   private async clickMessageAction (message: string, dataIdSelector: string): Promise<void> {
     const button = this.messageActionButton(message, dataIdSelector)
+    const row = this.textMessage(message).last()
     await retry(async () => {
-      await this.textMessage(message).last().hover()
+      await row.hover()
+      // Scrolling briefly disables pointer events; moving onto the toolbar then would drop hover.
+      await expect(row).toHaveCSS('pointer-events', 'auto')
       await expect(button).toBeVisible({ timeout: 2000 })
       await button.click({ timeout: 5000 })
     })
+  }
+
+  async clickReplyToMessage (message: string): Promise<void> {
+    await this.clickMessageAction(message, 'data-id$="ReplyToMessage"')
   }
 
   async clickEditMessageButton (editedMessage: string): Promise<void> {

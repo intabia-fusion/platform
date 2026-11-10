@@ -1,6 +1,8 @@
 {
   "string": {
     "TaskTypeStatusOrderWarning": "ステータスの順序がプロジェクトタイプと異なります。この順序を保持できますが、ステータスアイコンの塗りつぶしはプロジェクトタイプの順序に従います。",
+    "AlignTaskTypeStatusOrder": "修正",
+    "StatusNotInTaskType": "タスクタイプにありません",
     "ExportSingleTaskTypeDescription": "このタスクタイプの設定のみをエクスポート（すべてのステータスと属性を含む）",
     "ParentOf": "親",
     "ChildOf": "サブタスク",

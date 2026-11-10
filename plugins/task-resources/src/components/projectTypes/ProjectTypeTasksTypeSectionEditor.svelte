@@ -21,14 +21,16 @@
   import { Severity, Status, setPlatformStatus } from '@hcengineering/platform'
   import presentation, { createQuery } from '@hcengineering/presentation'
   import setting from '@hcengineering/setting'
-  import type { ProjectType, ProjectTypeDescriptor, TaskType } from '@hcengineering/task'
+  import type { ProjectType, ProjectTypeDescriptor, Task, TaskType } from '@hcengineering/task'
   import type { TaskTypeExportConfig } from '@hcengineering/task'
+  import { getMissingTaskTypeStatuses } from '@hcengineering/task'
   import { clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
 
   import TaskTypeIcon from '../taskTypes/TaskTypeIcon.svelte'
   import CreateTaskType from '../taskTypes/CreateTaskType.svelte'
   import TaskTypeDiagramPopup from '../taskTypes/TaskTypeDiagramPopup.svelte'
   import ImportTaskTypePopup from '../taskTypes/ImportTaskTypePopup.svelte'
+  import MissingTaskTypeStatuses from '../taskTypes/MissingTaskTypeStatuses.svelte'
   import task from '../../plugin'
   import { openTaskTypeSettings } from '../../utils'
 
@@ -49,6 +51,26 @@
   )
 
   $: sortedTaskTypes = [...taskTypes].sort((a, b) => a.name.localeCompare(b.name))
+  let tasksWithMissingStatus: Array<Pick<Task, 'kind' | 'status'>> = []
+  const missingStatusQuery = createQuery()
+  $: taskTypeIds = taskTypes.map((item) => item._id)
+  $: if (taskTypeIds.length > 0) {
+    missingStatusQuery.query(
+      task.class.Task,
+      { kind: { $in: taskTypeIds } },
+      (res) => {
+        tasksWithMissingStatus = res
+      },
+      { projection: { kind: 1, status: 1 } }
+    )
+  } else {
+    missingStatusQuery.unsubscribe()
+    tasksWithMissingStatus = []
+  }
+  $: missingByType = getMissingTaskTypeStatuses(
+    tasksWithMissingStatus,
+    new Map(taskTypes.map((item) => [item._id, item]))
+  )
 
   const importActions: DropdownIntlItem[] = [
     {
@@ -228,22 +250,47 @@
   {#if sortedTaskTypes.length}
     <div class="hulyTableAttr-content task">
       {#each sortedTaskTypes as taskType}
-        <button
-          class="hulyTableAttr-content__row"
-          on:click|stopPropagation={() => {
-            openTaskTypeSettings(taskType._id)
-          }}
-        >
-          <div class="hulyTableAttr-content__row-icon-wrapper">
-            <TaskTypeIcon value={taskType} size="small" />
-          </div>
-          {#if taskType.name}
-            <div class="hulyTableAttr-content__row-label grow font-medium-14">
-              {taskType.name}
-            </div>
+        <div class="hulyTableAttr-content__row task-type-row">
+          <button
+            class="task-type-open"
+            data-id="task-type-open"
+            on:click|stopPropagation={() => {
+              openTaskTypeSettings(taskType._id)
+            }}
+          >
+            <span class="hulyTableAttr-content__row-icon-wrapper">
+              <TaskTypeIcon value={taskType} size="small" />
+            </span>
+            {#if taskType.name}
+              <span class="hulyTableAttr-content__row-label grow font-medium-14">{taskType.name}</span>
+            {/if}
+          </button>
+          {#if type !== undefined}
+            <MissingTaskTypeStatuses {type} {taskType} ids={missingByType.get(taskType._id) ?? []} {disabled} />
           {/if}
-        </button>
+        </div>
       {/each}
     </div>
   {/if}
 {/if}
+
+<style lang="scss">
+  .task-type-row {
+    width: 100%;
+  }
+
+  .task-type-open {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+    background: transparent;
+    color: inherit;
+  }
+
+  .task-type-row :global(.missing-statuses) {
+    max-width: 60%;
+    justify-content: flex-end;
+  }
+</style>

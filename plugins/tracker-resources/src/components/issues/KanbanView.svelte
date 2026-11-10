@@ -371,13 +371,7 @@
     }
   }
 
-  let fastDocs: DocWithRank[] = []
-  let slowDocs: DocWithRank[] = []
-
   const docsQuery = createQuery()
-  const docsQuerySlow = createQuery()
-
-  let fastQueryIds = new Set<Ref<DocWithRank>>()
 
   // A board has no lanes option in the view options: only the board sets its lanes
   $: swimLaneBy = board !== undefined ? (board.swimLaneBy ?? 'none') : ((viewOptions.swimLaneBy as string) ?? 'none')
@@ -405,27 +399,20 @@
 
   let docsLoaded = false
   $: if (sortReady) {
-    docsQuery.query(
-      _class,
-      queryNoLookup,
-      (res) => {
-        fastDocs = res
-        fastQueryIds = new Set(res.map((it) => it._id))
-        docsLoaded = true
-      },
-      { ...categoryQueryOptions, limit: 1000 }
-    )
-    docsQuerySlow.query(
-      _class,
-      queryNoLookup,
-      (res) => {
-        slowDocs = res
-      },
-      categoryQueryOptions
-    )
+    if (
+      docsQuery.query(
+        _class,
+        queryNoLookup,
+        (res) => {
+          tasks = res
+          docsLoaded = true
+        },
+        categoryQueryOptions
+      )
+    ) {
+      docsLoaded = false
+    }
   }
-
-  $: tasks = [...fastDocs, ...slowDocs.filter((it) => !fastQueryIds.has(it._id))]
 
   $: listProvider.update(tasks)
 
@@ -906,6 +893,7 @@
   <!-- svelte-ignore a11y-no-static-element-interactions -->
   <KanbanUI
     bind:this={kanbanUI}
+    loading={!docsLoaded}
     fitColumns={board !== undefined && $fullscreenStore}
     limitScale={density === 'dense' ? 2 : 1}
     overLimit={board !== undefined ? (state, count) => isOverLimit(count, boardColumn(state)?.limit) : undefined}

@@ -15,6 +15,7 @@
     "AnyStatus": "任意状态",
     "AnyTaskType": "任意任务类型",
     "Workflows": "工作流",
+    "NoOutgoingTransitions": "无转换",
     "DeleteWorkflow": "删除工作流",
     "DeleteWorkflowConfirm": "您确定要删除此工作流吗？",
     "DeleteWorkflowTransition": "删除转换",
