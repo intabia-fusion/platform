@@ -16,7 +16,7 @@ import { createRestClient } from '@hcengineering/api-client'
 import contact from '@hcengineering/contact'
 import core, { generateId, type AccountUuid, type Ref, type TxOperations } from '@hcengineering/core'
 import task from '@hcengineering/task'
-import tracker, { cardDensities, type Board, type IssueStatus, type Project } from '@hcengineering/tracker'
+import tracker, { cardDensities, type Board, type Issue, type IssueStatus, type Project } from '@hcengineering/tracker'
 import { expect, test, type Locator } from '../fixtures'
 import {
   connectTracker,
@@ -308,6 +308,135 @@ test.describe('board settings', () => {
       .toBe('priority')
   })
 
+  test('completed tasks are hidden after the selected period and restored when reopened', async ({ page }) => {
+    const source = await client.findOne(tracker.class.Board, { _id: boardId })
+    if (source === undefined) throw new Error('no board')
+    const completed = client.getModel().findAllSync(core.class.Status, {
+      _id: { $in: [...ctx.statuses.values()] },
+      category: task.statusCategory.Won
+    })[0]
+    if (completed === undefined) throw new Error('project has no completed status')
+    const day = 24 * 60 * 60 * 1000
+    const names = ['old', 'recent', 'open', 'cancelled', 'unknown'].map((name) => `${titlePrefix}completion-${name}`)
+    const ids: Array<Ref<Issue>> = []
+    for (const [i, title] of names.entries()) {
+      ids.push(
+        await createIssue(client, ctx, {
+          title,
+          status: i === 2 ? 'Backlog' : i === 3 ? 'Cancelled' : completed._id
+        })
+      )
+    }
+    // Wait for derived create transactions before giving these fixtures their historical dates.
+    for (const id of ids) {
+      await expect
+        .poll(async () => (await client.findOne(tracker.class.Issue, { _id: id }))?.completedOn !== undefined)
+        .toBe(true)
+    }
+    await client.updateDoc(tracker.class.Issue, ctx.project._id, ids[0], { completedOn: Date.now() - 20 * day })
+    await client.updateDoc(tracker.class.Issue, ctx.project._id, ids[1], { completedOn: Date.now() - day })
+    await client.updateDoc(tracker.class.Issue, ctx.project._id, ids[4], { $unset: { completedOn: true } })
+    const { _id, _class, space, modifiedOn, modifiedBy, createdOn, createdBy, ...data } = source
+    const id = await client.createDoc(tracker.class.Board, core.space.Workspace, {
+      ...data,
+      title: `${titlePrefix}completion-board`,
+      filter: '',
+      quickFilters: [],
+      swimlanes: [],
+      colorRules: [],
+      columns: [
+        { id: 'open', title: 'Open', category: task.statusCategory.ToDo, statuses: [statusId('Backlog')] },
+        { id: 'done', title: 'Done', category: task.statusCategory.Won, statuses: [completed._id] },
+        { id: 'cancelled', title: 'Cancelled', category: task.statusCategory.Lost, statuses: [statusId('Cancelled')] }
+      ]
+    })
+    const boards = new BoardsPage(page)
+    const selector = page.locator('[data-id="boardHideDone"]')
+    const settings = async (): Promise<void> => {
+      await (await page.goto(boards.boardUrl(id, true, 'general')))?.finished()
+      await expect(selector).toBeVisible()
+    }
+    const select = async (label: string, value: number): Promise<void> => {
+      await selector.click()
+      await boards.menuItem(label).click()
+      await expect
+        .poll(async () => (await client.findOne(tracker.class.Board, { _id: id }))?.hideCompletedAfterDays)
+        .toBe(value)
+    }
+    await settings()
+    await expect(selector).toContainText('Do not hide')
+    await select('After 2 weeks', 14)
+    await page.reload()
+    await expect(selector).toContainText('After 2 weeks')
+    await boards.open(id)
+    await expect(page.getByText(names[0], { exact: true })).toHaveCount(0)
+    for (const name of names.slice(1)) await expect(page.getByText(name, { exact: true })).toBeVisible()
+    // A title edit must not restart the completed period.
+    await client.updateDoc(tracker.class.Issue, ctx.project._id, ids[0], { title: `${names[0]}-edited` })
+    await expect(page.getByText(`${names[0]}-edited`, { exact: true })).toHaveCount(0)
+    await client.updateDoc(tracker.class.Issue, ctx.project._id, ids[0], { status: statusId('Backlog') })
+    await expect(page.getByText(`${names[0]}-edited`, { exact: true })).toBeVisible()
+    await client.updateDoc(tracker.class.Issue, ctx.project._id, ids[0], { status: completed._id })
+    await expect
+      .poll(async () => (await client.findOne(tracker.class.Issue, { _id: ids[0] }))?.completedOn ?? 0)
+      .toBeGreaterThan(Date.now() - day)
+    await expect(page.getByText(`${names[0]}-edited`, { exact: true })).toBeVisible()
+    await client.updateDoc(tracker.class.Issue, ctx.project._id, ids[0], { completedOn: Date.now() - 20 * day })
+    await expect(page.getByText(`${names[0]}-edited`, { exact: true })).toHaveCount(0)
+    await settings()
+    await select('After 1 month', 30)
+    await boards.open(id)
+    await expect(page.getByText(`${names[0]}-edited`, { exact: true })).toBeVisible()
+    await settings()
+    for (const [label, days] of [
+      ['After 1 day', 1],
+      ['After 3 days', 3],
+      ['After 3 months', 90],
+      ['After 6 months', 180],
+      ['After 1 year', 365]
+    ] as const) {
+      await select(label, days)
+    }
+    await select('After 1 week', 7)
+    const picker = page.locator('.date-picker[role="dialog"]')
+    await selector.click()
+    await boards.menuItem('Before a date').click()
+    await expect(picker).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(picker).toHaveCount(0)
+    await expect(selector).toContainText('After 1 week')
+    await selector.click()
+    await boards.menuItem('Before a date').click()
+    await expect(picker).toBeVisible()
+    await picker.locator('.calendar__day--today').click()
+    const before = new Date().setHours(0, 0, 0, 0)
+    await expect
+      .poll(async () => (await client.findOne(tracker.class.Board, { _id: id }))?.hideCompletedBefore)
+      .toBe(before)
+    await page.reload()
+    await expect(selector).toContainText('Before a date')
+    await expect(page.locator('[data-id="boardHideDoneCustomPeriod"]')).toBeVisible()
+    await client.updateDoc(tracker.class.Issue, ctx.project._id, ids[1], { completedOn: before })
+    await boards.open(id)
+    await expect(page.getByText(`${names[0]}-edited`, { exact: true })).toHaveCount(0)
+    for (const name of names.slice(1)) await expect(page.getByText(name, { exact: true })).toBeVisible()
+    await settings()
+    await page.locator('[data-id="boardHideDoneCustomPeriod"]').click()
+    await expect(picker).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(selector).toContainText('Before a date')
+    await select('After 1 week', 7)
+    await expect
+      .poll(async () => (await client.findOne(tracker.class.Board, { _id: id }))?.hideCompletedBefore)
+      .toBeNull()
+    await expect(page.locator('[data-id="boardHideDoneCustomPeriod"]')).toHaveCount(0)
+    await select('Do not hide', 0)
+    await page.reload()
+    await expect(selector).toContainText('Do not hide')
+    await boards.open(id)
+    await expect(page.getByText(`${names[0]}-edited`, { exact: true })).toBeVisible()
+  })
+
   test('the description is saved on the board when the field loses focus', async ({ page }) => {
     // Own board: the shared one keeps no description for the other tests
     const board = await client.findOne(tracker.class.Board, { _id: boardId })
@@ -419,7 +548,6 @@ test.describe('board settings', () => {
   test('controls without a model field are absent while the flags are off', async ({ page }) => {
     const boards = new BoardsPage(page)
     const absent: Record<string, string[]> = {
-      general: ['boardHideDone'],
       columns: ['boardWipMin', 'boardDaysInColumn'],
       swimlanes: ['boardLaneExample'],
       quickFilters: ['boardQuickFilterOnBoard'],

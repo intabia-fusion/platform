@@ -40,6 +40,7 @@ import {
   type Project
 } from '@hcengineering/tracker'
 import { getCurrentResolvedLocation, locationToUrl, navigate, showPopup } from '@hcengineering/ui'
+import task from '@hcengineering/task'
 import tracker from './plugin'
 import { filtersToQuery, parseFilters } from '@hcengineering/view-resources'
 
@@ -57,9 +58,10 @@ export async function conditionToQuery (
 // Issues of the board: its projects, its filter, and the quick filters that are on.
 export async function boardQuery (
   client: TxOperations,
-  board: Pick<Board, 'projects' | 'filter' | 'quickFilters'>,
+  board: Pick<Board, 'projects' | 'filter' | 'quickFilters' | 'hideCompletedAfterDays' | 'hideCompletedBefore'>,
   activeQuickFilters: ReadonlySet<string>,
-  onUpdate: () => void
+  onUpdate: () => void,
+  excludedCompleted?: Array<Ref<Issue>>
 ): Promise<DocumentQuery<Issue>> {
   let query: DocumentQuery<Issue> = { space: { $in: board.projects } }
   for (const condition of [
@@ -68,7 +70,112 @@ export async function boardQuery (
   ]) {
     if (condition !== '') query = mergeQueries(query, await conditionToQuery(client, condition, onUpdate))
   }
+  const hiddenQuery = hiddenCompletedQuery(client, board)
+  if (hiddenQuery !== undefined) {
+    const ids =
+      excludedCompleted ??
+      (await client.findAll(tracker.class.Issue, hiddenQuery, { projection: { _id: 1 } })).map((issue) => issue._id)
+    query = mergeQueries(query, { _id: { $nin: ids } })
+  }
   return query
+}
+
+type BoardQueryScope = Pick<
+  Board,
+  'projects' | 'filter' | 'quickFilters' | 'hideCompletedAfterDays' | 'hideCompletedBefore'
+>
+
+function hiddenCompletedQuery (
+  client: TxOperations,
+  board: BoardQueryScope,
+  now: number = Date.now()
+): DocumentQuery<Issue> | undefined {
+  const before = board.hideCompletedBefore
+  if (before == null && (board.hideCompletedAfterDays === undefined || board.hideCompletedAfterDays === 0)) return
+  const completed = client.getModel().findAllSync(core.class.Status, { category: task.statusCategory.Won })
+  return {
+    space: { $in: board.projects },
+    status: { $in: completed.map((s) => s._id) },
+    completedOn:
+      before != null
+        ? { $ne: null, $lt: before }
+        : { $ne: null, $lt: now - (board.hideCompletedAfterDays ?? 0) * 24 * 60 * 60 * 1000 }
+  }
+}
+
+// Own the exclusion subscription and rolling clock together with the query's consumer.
+export class BoardQuery {
+  private readonly hidden = createQuery(true)
+  private key = ''
+  private ids: Promise<Array<Ref<Issue>>> = Promise.resolve([])
+  private timer: ReturnType<typeof setInterval> | undefined
+  private destroyed = false
+  private now = Date.now()
+  private resolvePending: (() => void) | undefined
+
+  constructor (
+    private readonly client: TxOperations,
+    private readonly onUpdate: () => void
+  ) {}
+
+  async build (board: BoardQueryScope, active: ReadonlySet<string> = new Set()): Promise<DocumentQuery<Issue>> {
+    if (this.destroyed) return { _id: { $in: [] } }
+    if (this.timer === undefined) this.now = Date.now()
+    const hiddenQuery = hiddenCompletedQuery(this.client, board, this.now)
+    if (hiddenQuery === undefined) {
+      this.hidden.unsubscribe()
+      this.key = ''
+      this.resolvePending?.()
+      if (this.timer !== undefined) clearInterval(this.timer)
+      this.timer = undefined
+      return await boardQuery(this.client, board, active, this.onUpdate)
+    }
+    if (board.hideCompletedBefore == null) {
+      this.timer ??= setInterval(() => {
+        this.now = Date.now()
+        this.onUpdate()
+      }, 60_000)
+    } else {
+      if (this.timer !== undefined) clearInterval(this.timer)
+      this.timer = undefined
+    }
+    const key = JSON.stringify(hiddenQuery)
+    if (key !== this.key && !this.destroyed) {
+      this.resolvePending?.()
+      this.key = key
+      this.ids = new Promise((resolve) => {
+        let first = true
+        this.resolvePending = () => {
+          resolve([])
+        }
+        this.hidden.query(
+          tracker.class.Issue,
+          hiddenQuery,
+          (issues) => {
+            if (this.destroyed || this.key !== key) return
+            const ids = issues.map((issue) => issue._id)
+            if (first) {
+              first = false
+              this.resolvePending = undefined
+              resolve(ids)
+            } else {
+              this.ids = Promise.resolve(ids)
+              this.onUpdate()
+            }
+          },
+          { projection: { _id: 1 } }
+        )
+      })
+    }
+    return await boardQuery(this.client, board, active, this.onUpdate, await this.ids)
+  }
+
+  destroy (): void {
+    this.destroyed = true
+    this.resolvePending?.()
+    this.hidden.unsubscribe()
+    if (this.timer !== undefined) clearInterval(this.timer)
+  }
 }
 
 export interface ConditionItem {

@@ -195,6 +195,9 @@ export interface Issue extends Task {
   status: Ref<IssueStatus>
   priority: IssuePriority
 
+  // null: not completed; absent: legacy completion date is unknown.
+  completedOn?: Timestamp | null
+
   component: Ref<Component> | null
 
   // For subtasks
@@ -683,6 +686,7 @@ const pluginState = plugin(trackerId, {
     CreateIssue: '' as Resource<(client: TxOperations, project: Project, data: NewIssue) => Promise<CreatedIssue>>
   },
   string: {
+    CompletedOn: '' as IntlString,
     TrackerApplication: '' as IntlString,
     ConfigLabel: '' as IntlString,
     NewRelatedIssue: '' as IntlString,

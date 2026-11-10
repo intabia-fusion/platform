@@ -488,9 +488,9 @@
     "BoardVisibilityAllMembers": "Visibile a tutti",
     "BoardVisibilityOnlyMe": "Solo io",
     "BoardVisibilityOnlyMeHint": "Bacheca personale, visibile solo a te",
-    "BoardHideDoneOlder": "Nascondi completate più vecchie di",
-    "BoardHideDoneOlderHint": "Colonne della categoria Completato",
-    "BoardHideDoneValue": "2 settimane",
+    "BoardHideDoneOlder": "Nascondi attività completate",
+    "BoardHideDoneOlderHint": "In base alla data di completamento.",
+    "BoardHideDoneValue": "Dopo 2 settimane",
     "BoardCardOrder": "Ordine delle schede",
     "BoardEditorsHint": "Gli altri possono usare la bacheca o crearne una propria",
     "WipLimits": "Limiti WIP",
@@ -548,7 +548,18 @@
     "BoardSearch": "Cerca bacheche",
     "BoardPersonal": "Bacheca personale",
     "WarnOnClosedStatuses": "Segnala gli stati chiusi senza colonna",
-    "WarnOnClosedStatusesHint": "Includi gli stati completati e annullati negli avvisi sulle attività nascoste. Disattivato per impostazione predefinita."
+    "WarnOnClosedStatusesHint": "Includi gli stati completati e annullati negli avvisi sulle attività nascoste. Disattivato per impostazione predefinita.",
+    "BoardHideDoneNever": "Non nascondere",
+    "BoardHideDoneWeek": "Dopo 1 settimana",
+    "BoardHideDoneMonth": "Dopo 1 mese",
+    "CompletedOn": "Data di completamento",
+    "BoardHideDoneDay": "Dopo 1 giorno",
+    "BoardHideDoneThreeDays": "Dopo 3 giorni",
+    "BoardHideDoneQuarter": "Dopo 3 mesi",
+    "BoardHideDoneHalfYear": "Dopo 6 mesi",
+    "BoardHideDoneYear": "Dopo 1 anno",
+    "BoardHideDoneCustom": "Prima di una data…",
+    "BoardHideDoneCustomHint": "Nascondi le attività completate prima della data selezionata. Il giorno selezionato è escluso."
   },
   "status": {
     "DuplicateColumnTitle": "Esiste già una colonna con questo nome"

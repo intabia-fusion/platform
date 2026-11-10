@@ -510,9 +510,9 @@
     "BoardVisibilityAllMembers": "Visible to everyone",
     "BoardVisibilityOnlyMe": "Only me",
     "BoardVisibilityOnlyMeHint": "A personal board, only you see it",
-    "BoardHideDoneOlder": "Hide completed older than",
-    "BoardHideDoneOlderHint": "Columns of the Done category",
-    "BoardHideDoneValue": "2 weeks",
+    "BoardHideDoneOlder": "Hide completed tasks",
+    "BoardHideDoneOlderHint": "Counted from completion",
+    "BoardHideDoneValue": "After 2 weeks",
     "BoardCardOrder": "Card order",
     "BoardEditorsHint": "Others can use the board or create their own",
     "WipLimits": "WIP limits",
@@ -567,7 +567,18 @@
     "BoardSearch": "Search boards",
     "BoardPersonal": "Personal board",
     "WarnOnClosedStatuses": "Warn about closed statuses without a column",
-    "WarnOnClosedStatusesHint": "Include completed and canceled statuses in hidden issue warnings. Off by default."
+    "WarnOnClosedStatusesHint": "Include completed and canceled statuses in hidden issue warnings. Off by default.",
+    "BoardHideDoneNever": "Do not hide",
+    "BoardHideDoneWeek": "After 1 week",
+    "BoardHideDoneMonth": "After 1 month",
+    "CompletedOn": "Completed on",
+    "BoardHideDoneDay": "After 1 day",
+    "BoardHideDoneThreeDays": "After 3 days",
+    "BoardHideDoneQuarter": "After 3 months",
+    "BoardHideDoneHalfYear": "After 6 months",
+    "BoardHideDoneYear": "After 1 year",
+    "BoardHideDoneCustom": "Before a date…",
+    "BoardHideDoneCustomHint": "Hide completed tasks finished before the selected date. The selected day is not included."
   },
   "status": {
     "DuplicateColumnTitle": "A column with this title already exists"

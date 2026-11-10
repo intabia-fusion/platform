@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import core, { setCurrentAccount, type Ref, type TxOperations } from '@hcengineering/core'
+import core, { setCurrentAccount, findProperty, type Ref, type TxOperations } from '@hcengineering/core'
 import type { Board, Project } from '@hcengineering/tracker'
 import { getCurrentResolvedLocation, locationToUrl, navigate, showPopup } from '@hcengineering/ui'
 import { filtersToQuery } from '@hcengineering/view-resources'
@@ -22,6 +22,7 @@ import task from '@hcengineering/task'
 import {
   boardLocation,
   boardQuery,
+  BoardQuery,
   ConditionMatches,
   createBoard,
   togglePinned,
@@ -481,5 +482,158 @@ describe('shareBoard', () => {
     await (showPopup as jest.Mock).mock.calls[0][1].action()
     expect(copyTextToClipboard).toHaveBeenCalledTimes(1)
     expect(board.visibility).toBe('me')
+  })
+})
+
+describe('completed issue visibility', () => {
+  const day = 24 * 60 * 60 * 1000
+  const now = 1_800_000_000_000
+  const docs = [
+    { _id: 'old', status: 'done', completedOn: now - 20 * day },
+    { _id: 'boundary', status: 'done', completedOn: now - 14 * day },
+    { _id: 'recent', status: 'done', completedOn: now - day },
+    { _id: 'open', status: 'open', completedOn: null },
+    { _id: 'cancelled', status: 'cancelled', completedOn: null },
+    { _id: 'unknown', status: 'done' },
+    { _id: 'unknown-null', status: 'done', completedOn: null }
+  ].map((d) => ({ space: 'p1', priority: 1, ...d }))
+  const apply = (rows: any[], q: any): any[] => Object.entries(q).reduce((r, [k, v]) => findProperty(r, k, v), rows)
+  const client = stub<TxOperations>({
+    getModel: () => ({ findAllSync: () => [{ _id: 'done' }] }),
+    findAll: jest.fn(async (_class, q) => apply(docs, q))
+  })
+
+  beforeEach(() => {
+    jest.spyOn(Date, 'now').mockReturnValue(now)
+  })
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
+  it.each([undefined, 0] as const)('keeps all tasks when disabled (%s)', async (hideCompletedAfterDays) => {
+    const q = await boardQuery(client, makeBoard({ hideCompletedAfterDays }), new Set(), () => {})
+    expect(apply(docs, q)).toHaveLength(docs.length)
+  })
+
+  it.each([1, 3, 7, 14, 30, 90, 180, 365] as const)(
+    'uses the selected rolling period (%s days)',
+    async (hideCompletedAfterDays) => {
+      const q = await boardQuery(client, makeBoard({ hideCompletedAfterDays }), new Set(), () => {})
+      const ids = apply(docs, q).map((d) => d._id)
+      expect(ids).toContain('open')
+      expect(ids).toContain('cancelled')
+      expect(ids).toContain('unknown')
+      expect(ids).toContain('unknown-null')
+      expect(ids).toContain('recent')
+      expect(ids.includes('old')).toBe(hideCompletedAfterDays >= 30)
+      expect(ids.includes('boundary')).toBe(hideCompletedAfterDays >= 14)
+    }
+  )
+
+  it('uses a fixed date without hiding tasks on that date or advancing the cutoff', async () => {
+    const before = now - 14 * day
+    const board = makeBoard({ hideCompletedAfterDays: 7, hideCompletedBefore: before })
+    const q = await boardQuery(client, board, new Set(), () => {})
+    expect(apply(docs, q).map((d) => d._id)).toEqual([
+      'boundary',
+      'recent',
+      'open',
+      'cancelled',
+      'unknown',
+      'unknown-null'
+    ])
+    ;(Date.now as jest.Mock).mockReturnValue(now + 365 * day)
+    expect(await boardQuery(client, board, new Set(), () => {})).toEqual(q)
+    expect(
+      apply(
+        docs,
+        await boardQuery(
+          client,
+          makeBoard({ hideCompletedAfterDays: 0, hideCompletedBefore: null }),
+          new Set(),
+          () => {}
+        )
+      )
+    ).toHaveLength(docs.length)
+  })
+
+  it('does not keep a rolling timer for a fixed date', async () => {
+    jest.useFakeTimers({ now })
+    ;(createQuery as jest.Mock).mockReturnValue({
+      unsubscribe: jest.fn(),
+      query: jest.fn((_class, _q, emit) => {
+        emit([{ _id: 'old' }])
+      })
+    })
+    const refresh = jest.fn()
+    const controller = new BoardQuery(client, refresh)
+    await controller.build(makeBoard({ hideCompletedAfterDays: 14 }))
+    expect(jest.getTimerCount()).toBe(1)
+    await controller.build(makeBoard({ hideCompletedBefore: now - 14 * day }))
+    expect(jest.getTimerCount()).toBe(0)
+    jest.advanceTimersByTime(60_000)
+    expect(refresh).not.toHaveBeenCalled()
+    controller.destroy()
+    jest.useRealTimers()
+  })
+
+  it('intersects exclusions with existing board and quick filters', async () => {
+    ;(filtersToQuery as jest.Mock).mockImplementation(async (_c, _q, parsed) => parsed[0].q)
+    const board = makeBoard({
+      hideCompletedAfterDays: 14,
+      filter: JSON.stringify([{ q: { _id: { $in: ['old', 'recent', 'open'] } } }]),
+      quickFilters: [{ id: 'p', title: 'Priority', condition: JSON.stringify([{ q: { priority: 2 } }]) }]
+    })
+    const q = await boardQuery(client, board, new Set(), () => {})
+    expect(apply(docs, q).map((d) => d._id)).toEqual(['recent', 'open'])
+    expect(apply(docs, await boardQuery(client, board, new Set(['p']), () => {}))).toEqual([])
+  })
+
+  it('refreshes exclusions on status changes and releases its subscription and timer', async () => {
+    jest.useFakeTimers({ now })
+    let update: (rows: any[]) => void = () => {}
+    const unsubscribe = jest.fn()
+    ;(createQuery as jest.Mock).mockReturnValue({
+      unsubscribe,
+      query: jest.fn((_class, _q, emit) => {
+        update = emit
+        emit([{ _id: 'old' }])
+      })
+    })
+    const refresh = jest.fn()
+    const controller = new BoardQuery(client, refresh)
+    const board = makeBoard({ hideCompletedAfterDays: 14 })
+    const q = await controller.build(board)
+    expect(apply(docs, q).some((d) => d._id === 'old')).toBe(false)
+    update([])
+    expect(refresh).toHaveBeenCalledTimes(1)
+    const reopened = await controller.build(board)
+    expect(apply(docs, reopened).some((d) => d._id === 'old')).toBe(true)
+    jest.advanceTimersByTime(60_000)
+    expect(refresh).toHaveBeenCalledTimes(2)
+    await controller.build(makeBoard({ hideCompletedAfterDays: 0 }))
+    const calls = refresh.mock.calls.length
+    jest.advanceTimersByTime(120_000)
+    expect(refresh).toHaveBeenCalledTimes(calls)
+    controller.destroy()
+    expect(unsubscribe).toHaveBeenCalled()
+    expect(await controller.build(board)).toEqual({ _id: { $in: [] } })
+    expect(jest.getTimerCount()).toBe(0)
+    jest.useRealTimers()
+  })
+
+  it('settles pending work on destroy without leaving a subscription or timer', async () => {
+    jest.useFakeTimers({ now })
+    const unsubscribe = jest.fn()
+    ;(createQuery as jest.Mock).mockReturnValue({ unsubscribe, query: jest.fn() })
+    const refresh = jest.fn()
+    const controller = new BoardQuery(client, refresh)
+    const pending = controller.build(makeBoard({ hideCompletedAfterDays: 14 }))
+    controller.destroy()
+    await pending
+    expect(unsubscribe).toHaveBeenCalledTimes(1)
+    expect(refresh).not.toHaveBeenCalled()
+    expect(jest.getTimerCount()).toBe(0)
+    jest.useRealTimers()
   })
 })
