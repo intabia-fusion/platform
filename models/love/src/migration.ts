@@ -321,6 +321,21 @@ async function addMeetingEventCardBadge (client: MigrationUpgradeClient): Promis
   })
 }
 
+/**
+ * A permanent meeting is an always-open room, but its link was left at the default `start: 'members'`:
+ * a guest could join only after a participant had already started the session. New meetings are
+ * created with `start: 'link'`; this step gives the existing ones the same policy.
+ */
+async function openPermanentMeetingsOnLink (client: MigrationUpgradeClient): Promise<void> {
+  const tx = new TxOperations(client, core.account.System)
+  const meetings = await client.findAll(love.class.PermanentMeeting, {})
+  for (const meeting of meetings) {
+    const access = meeting.meetingAccess
+    if (access?.start === 'link') continue
+    await tx.update(meeting, { meetingAccess: { ...defaultMeetingAccess, ...access, start: 'link' } })
+  }
+}
+
 // The delete action of a permanent meeting is a model document too: a workspace created before it
 // existed never receives it, and the tab's selection toolbar stays without a delete entry.
 async function addPermanentMeetingDeleteAction (client: MigrationUpgradeClient): Promise<void> {
@@ -833,6 +848,11 @@ export const loveOperation: MigrateOperation = {
         // visibility to the creator check, and a state that already ran would be skipped.
         state: 'permanent-meeting-actions-v3',
         func: addPermanentMeetingDeleteAction
+      },
+      {
+        // Existing meetings keep the policy they were created with - the default `members`.
+        state: 'permanent-meeting-link-open',
+        func: openPermanentMeetingsOnLink
       }
     ])
   }

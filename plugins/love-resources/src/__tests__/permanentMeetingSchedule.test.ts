@@ -19,6 +19,7 @@ import love, { type PermanentMeeting } from '@hcengineering/love'
 import {
   createPermanentMeetingWithSchedule,
   updatePermanentMeetingWithSchedule,
+  withOwners,
   type PermanentMeetingInput,
   type ScheduleContext
 } from '../permanentMeetingSchedule'
@@ -175,6 +176,34 @@ describe('createPermanentMeetingWithSchedule', () => {
 
     expect(find(calls, 'findOne')).toHaveLength(0)
     expect(find(calls, 'createMixin')[0].args[4]).toMatchObject({ language: 'ru', private: false })
+  })
+
+  it('creates the meeting as an always-open room: a link holder may start the session', async () => {
+    const { client, calls } = createFakeClient()
+
+    await createPermanentMeetingWithSchedule(client, input(), createContext())
+
+    // `start: 'members'` (the default) would make a guest wait for a participant to start it,
+    // which is the opposite of what a permanent meeting's link promises.
+    expect(find(calls, 'createDoc')[0].args[2]).toMatchObject({
+      meetingAccess: expect.objectContaining({ start: 'link' })
+    })
+  })
+})
+
+describe('withOwners', () => {
+  it('keeps an owner the list lost', () => {
+    // The server pushes the owner back (`OnPermanentMeetingUpdate`); the form must not show otherwise.
+    expect(withOwners([other], [me])).toEqual([me, other])
+  })
+
+  it('leaves a list that already has every owner as it is', () => {
+    const members = [me, other]
+    expect(withOwners(members, [me])).toBe(members)
+  })
+
+  it('adds nothing when there are no owners', () => {
+    expect(withOwners([other], [])).toEqual([other])
   })
 })
 

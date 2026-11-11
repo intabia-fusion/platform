@@ -15,9 +15,10 @@ import {
   MeetingMinutes,
   MeetingStatus,
   ParticipantMetadata,
-  parseMeetingLinkPayload
+  parseMeetingLinkPayload,
+  type RoomMetadata
 } from '@hcengineering/love'
-import { RoomServiceClient } from 'livekit-server-sdk'
+import { RoomAgentDispatch, RoomServiceClient } from 'livekit-server-sdk'
 import { ResolveSessionResult, WorkspaceClient } from './workspaceClient'
 import { isWorkspaceLoginInfo, WorkspaceLoginInfo } from '@hcengineering/account-client'
 import { decodeToken, generateToken, Token } from '@hcengineering/server-token'
@@ -72,6 +73,31 @@ export class GuestManager {
     readonly ctx: MeasureContext,
     readonly roomClient: RoomServiceClient
   ) {}
+
+  /**
+   * Opens the LiveKit room of a session if nobody has opened it yet. A meeting started by a guest
+   * gets the same metadata and agents as one started from the member path (`/roomToken`).
+   */
+  private async ensureRoom (
+    workspace: WorkspaceUuid,
+    meetingId: Ref<MeetingMinutes>,
+    roomName: string
+  ): Promise<void> {
+    try {
+      const existing = await this.roomClient.listRooms([roomName])
+      if (existing !== undefined && existing.length > 0) return
+      const metadata: RoomMetadata = { projectKey: config.LiveKitProject, workspaceId: workspace, meetingId }
+      await this.roomClient.createRoom({
+        metadata: JSON.stringify(metadata),
+        departureTimeout: config.DepartureTimeoutSec,
+        name: roomName,
+        agents: config.Agents.map((it) => new RoomAgentDispatch({ agentName: it }))
+      })
+    } catch (err: any) {
+      // A room that cannot be created is reported by the caller's own check, as before.
+      this.ctx.error('[guestJoin] Failed to ensure LiveKit room', { roomName, error: err?.message ?? String(err) })
+    }
+  }
 
   private isRateLimited (key: string): boolean {
     const state = this.passwordAttempts.get(key)
@@ -384,7 +410,9 @@ export class GuestManager {
             workspaceUrl,
             now: Date.now(),
             // No session yet: either the meeting is still ahead, or the series is over for good.
-            mode: isOver ? 'after' : 'before',
+            // A permanent meeting has no window at all - its lobby always offers to join, and the
+            // session is opened by whoever comes first.
+            mode: isOver ? 'after' : target?.kind === 'meeting' ? 'live' : 'before',
             nextOccurrence: occurrence,
             title: isOver && past === 'none' ? undefined : target?.title,
             roomFound: false
@@ -505,7 +533,9 @@ export class GuestManager {
         return
       }
 
-      // Ensure LiveKit room exists
+      // Ensure LiveKit room exists. With `start: 'link'` the first person through the door may be
+      // the guest, so the room is created here the same way `/roomToken` does it for a member.
+      await this.ensureRoom(workspace, meetingId, roomName)
       const room = await this.roomClient.listRooms([roomName])
       if (room === undefined || room.length === 0) {
         this.ctx.info('No room found guest join, not possible to join', { roomName })

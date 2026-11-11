@@ -23,6 +23,7 @@
   import view from '@hcengineering/view'
   import { showMenu } from '@hcengineering/view-resources'
   import { calendarByIdStore, isVisible } from '../utils'
+  import { eventCard } from '../eventCard'
   import EventPresenter from './EventPresenter.svelte'
 
   export let event: Event
@@ -32,12 +33,19 @@
   $: narrow = event.dueDate - event.date < MILLISECONDS_IN_MINUTE * 25
   $: empty = size.width < 44
 
-  function click () {
-    if (visible) {
-      const editor = hierarchy.classHierarchyMixin<Doc, ObjectEditor>(event._class, view.mixin.ObjectEditor)
-      if (editor?.editor !== undefined) {
-        showPopup(editor.editor, { object: event })
-      }
+  // A meeting (or any other document with its own card) is opened as that card: the calendar's own
+  // editor works on the occurrence, while a meeting keeps its title, rules and participants on the
+  // series, so the series is what the card has to show.
+  async function click (): Promise<void> {
+    if (!visible) return
+    const card = await eventCard(client, event, calendar.component.EditEvent)
+    if (card !== undefined) {
+      showPopup(card.editor, { object: card.object }, 'content')
+      return
+    }
+    const editor = hierarchy.classHierarchyMixin<Doc, ObjectEditor>(event._class, view.mixin.ObjectEditor)
+    if (editor?.editor !== undefined) {
+      showPopup(editor.editor, { object: event })
     }
   }
 

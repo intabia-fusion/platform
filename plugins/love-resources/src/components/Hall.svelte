@@ -73,13 +73,13 @@
           label={love.string.NewMeeting}
           kind="primary"
           size="medium"
-          on:click={() => showPopup(love.component.CreatePermanentMeetingPopup, {})}
+          on:click={() => showPopup(love.component.CreatePermanentMeetingPopup, {}, 'content')}
         />
         <Button
           label={love.string.MergeIntoGroup}
           kind="secondary"
           size="medium"
-          on:click={() => showPopup(MeetingGroupPopup, {})}
+          on:click={() => showPopup(MeetingGroupPopup, {}, 'content')}
         />
       </div>
       <PermanentMeetingsList />

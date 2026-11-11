@@ -20,9 +20,9 @@
   import type { Ref } from '@hcengineering/core'
   import core, { DateRangeMode, getCurrentAccount } from '@hcengineering/core'
   import calendar, { type Event } from '@hcengineering/calendar'
+  import contact from '@hcengineering/contact'
   import love, { type MeetingEventLink, type MeetingGroup, type PermanentMeeting } from '@hcengineering/love'
-  import { createQuery, getClient } from '@hcengineering/presentation'
-  import { copyTextToClipboard } from '@hcengineering/presentation'
+  import { copyTextToClipboard, createQuery, getClient, onClient } from '@hcengineering/presentation'
   import { EditBox, Icon, Label, showPopup } from '@hcengineering/ui'
   import { formatDateValue, IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
@@ -30,7 +30,7 @@
   import { joinMeetingBySession } from '../meetings'
   import { getEventMeetingLink } from '../utils'
   import { mergeMeetingIntoGroup, moveItem, persistOrder, renameMeetingGroup } from '../groups'
-  import { canEditMeeting } from '../permissions'
+  import { canEditMeeting, canLeaveMeeting, isPermanentMeetingCreator } from '../permissions'
   import { nextOccurrence } from '../period'
 
   const client = getClient()
@@ -38,54 +38,59 @@
   let meetings: PermanentMeeting[] = []
   let groups: MeetingGroup[] = []
 
-  const meetingsQuery = createQuery()
-  const groupsQuery = createQuery()
-
-  $: void meetingsQuery.query(love.class.PermanentMeeting, {}, (res) => {
-    meetings = res
-  })
-  $: void groupsQuery.query(love.class.MeetingGroup, {}, (res) => {
-    groups = res
-  })
-
   // The series of every meeting, to tell when it happens next. Occurrences are skipped: they carry a
   // copy of the mixin and would answer for the same meeting several times.
   let series: Event[] = []
-  const seriesQuery = createQuery()
-  $: void seriesQuery.query(
-    calendar.class.Event,
-    {
-      [`${love.mixin.MeetingEventLink as string}.permanentMeeting`]: { $exists: true },
-      recurringEventId: { $exists: false }
-    } as any,
-    (res) => {
-      series = res
-    }
-  )
 
-  /** Start of the series of a meeting, the base the period is counted from. */
-  function seriesStart (meeting: PermanentMeeting): number | undefined {
-    for (const event of series) {
+  const meetingsQuery = createQuery()
+  const groupsQuery = createQuery()
+  const seriesQuery = createQuery()
+
+  // The office sections mount before the client is connected (the workbench renders Hall while the
+  // socket is still opening), and a one-shot reactive query issued that early never gets subscribed.
+  // `onClient` re-issues them on every connect, which is also what a reconnect needs.
+  onClient(() => {
+    void meetingsQuery.query(love.class.PermanentMeeting, {}, (res) => {
+      meetings = res
+    })
+    void groupsQuery.query(love.class.MeetingGroup, {}, (res) => {
+      groups = res
+    })
+    void seriesQuery.query(
+      calendar.class.Event,
+      {
+        [`${love.mixin.MeetingEventLink as string}.permanentMeeting`]: { $exists: true },
+        recurringEventId: { $exists: false }
+      } as any,
+      (res) => {
+        series = res
+      }
+    )
+  })
+
+  /**
+   * Start of the series of a meeting, the base the period is counted from. The series list is passed
+   * in, not read from the component state: the caller computes these labels in one reactive
+   * statement, and a hidden dependency there would leave the column empty after the data arrives.
+   */
+  function seriesStart (meeting: PermanentMeeting, seriesList: Event[]): number | undefined {
+    for (const event of seriesList) {
       const link = event as unknown as MeetingEventLink
       if (link.permanentMeeting === meeting._id) return event.date
     }
     return undefined
   }
 
-  function nextOf (meeting: PermanentMeeting): number | undefined {
-    const start = seriesStart(meeting)
+  function nextOf (meeting: PermanentMeeting, seriesList: Event[]): number | undefined {
+    const start = seriesStart(meeting, seriesList)
     if (start === undefined) return undefined
     return nextOccurrence(start, meeting.repeatEvery, Date.now())
   }
 
   /** Formatted here rather than in the markup: a component call cannot carry a TS cast in Svelte 4. */
-  function nextLabel (meeting: PermanentMeeting): string | undefined {
-    const next = nextOf(meeting)
+  function nextLabel (meeting: PermanentMeeting, seriesList: Event[]): string | undefined {
+    const next = nextOf(meeting, seriesList)
     return next === undefined ? undefined : formatDateValue(next, DateRangeMode.DATE)
-  }
-
-  function canCopyLink (meeting: PermanentMeeting): boolean {
-    return canEditMeeting(meeting, getCurrentAccount())
   }
 
   type DragKind = 'group' | 'meeting'
@@ -140,7 +145,7 @@
   }
 
   function openSettings (meeting: PermanentMeeting): void {
-    showPopup(love.component.PermanentMeetingForm, { object: meeting })
+    showPopup(love.component.PermanentMeetingForm, { object: meeting }, 'content')
   }
 
   async function copyLink (event: MouseEvent, meeting: PermanentMeeting): Promise<void> {
@@ -149,16 +154,67 @@
     if (link !== '') await copyTextToClipboard(link)
   }
 
+  /** Deleting the meeting takes its live sessions with it: the server trigger finishes them. */
+  function deleteMeeting (event: MouseEvent, meeting: PermanentMeeting): void {
+    event.stopPropagation()
+    showPopup(contact.component.DeleteConfirmationPopup, {
+      object: meeting,
+      deleteAction: async () => {
+        await client.remove(meeting)
+      }
+    })
+  }
+
+  /** Walking out is a membership edit: the meeting itself stays. */
+  async function leaveMeeting (event: MouseEvent, meeting: PermanentMeeting): Promise<void> {
+    event.stopPropagation()
+    await client.update(meeting, { $pull: { members: getCurrentAccount().uuid } })
+  }
+
+  interface Row {
+    meeting: PermanentMeeting
+    /** Formatted next occurrence, absent when the series is over or unknown. */
+    next?: string
+    canCopyLink: boolean
+    /** Only the creator deletes a meeting; everyone else in it can only walk out. */
+    canDelete: boolean
+    canLeave: boolean
+  }
+
   interface Section {
     group?: MeetingGroup
-    meetings: PermanentMeeting[]
+    rows: Row[]
   }
 
   // One flat list of sections, the ungrouped one last: the markup then has a single branch and no
-  // duplication between grouped and ungrouped rows.
-  function sections (): Section[] {
-    const res: Section[] = orderOfGroups().map((group) => ({ group, meetings: meetingsOf(group._id) }))
-    res.push({ group: undefined, meetings: meetingsOf(undefined) })
+  // duplication between grouped and ungrouped rows. Computed in a reactive statement over the three
+  // arrays, not by calling a helper from the markup: Svelte 4 collects dependencies from the
+  // statement itself, so `{#each sections()}` would never re-render when `meetings` arrives.
+  $: sections = buildSections(groups, meetings, series)
+
+  function buildSections (
+    groupsList: MeetingGroup[],
+    meetingsList: PermanentMeeting[],
+    seriesList: Event[]
+  ): Section[] {
+    const me = getCurrentAccount()
+    const byOrder = (a: { order?: number }, b: { order?: number }): number => (a.order ?? 0) - (b.order ?? 0)
+    const rowsOf = (group?: Ref<MeetingGroup>): Row[] =>
+      meetingsList
+        .filter((it) => it.group === group)
+        .sort(byOrder)
+        .map((meeting) => ({
+          meeting,
+          next: nextLabel(meeting, seriesList),
+          canCopyLink: canEditMeeting(meeting, me),
+          canDelete: isPermanentMeetingCreator(meeting, me),
+          canLeave: canLeaveMeeting(meeting, me)
+        }))
+
+    const res: Section[] = [...groupsList]
+      .sort(byOrder)
+      .map((group) => ({ group, rows: rowsOf(group._id) }))
+    res.push({ group: undefined, rows: rowsOf(undefined) })
     return res
   }
 
@@ -194,7 +250,7 @@
 </script>
 
 <div class="flex-col gap-1" data-id="permanent-meetings-list">
-  {#each sections() as section (section.group?._id ?? 'ungrouped')}
+  {#each sections as section (section.group?._id ?? 'ungrouped')}
     {#if section.group !== undefined}
       <div
         class="group-header"
@@ -224,7 +280,7 @@
             on:click={() => startRenameSection(section)}
           />
         {/if}
-        <span class="count">{section.meetings.length}</span>
+        <span class="count">{section.rows.length}</span>
       </div>
     {:else}
       <div
@@ -234,34 +290,34 @@
         data-id="permanent-meeting-ungrouped"
       >
         <span class="group-title"><Label label={love.string.MeetingsWithoutGroup} /></span>
-        <span class="count">{section.meetings.length}</span>
+        <span class="count">{section.rows.length}</span>
       </div>
     {/if}
-    {#each section.meetings as meeting (meeting._id)}
+    {#each section.rows as row (row.meeting._id)}
       <div
         class="meeting-row"
         draggable={true}
-        on:dragstart={() => startDrag('meeting', meeting._id)}
+        on:dragstart={() => startDrag('meeting', row.meeting._id)}
         on:dragover|preventDefault
-        on:drop|preventDefault={() => void dropOnMeeting(meeting._id)}
-        on:click={() => openSettings(meeting)}
-        on:keydown={() => openSettings(meeting)}
+        on:drop|preventDefault={() => void dropOnMeeting(row.meeting._id)}
+        on:click={() => openSettings(row.meeting)}
+        on:keydown={() => openSettings(row.meeting)}
         role="button"
         tabindex="0"
         data-id="permanent-meeting-row"
       >
         <Icon icon={love.icon.MeetingMinutes} size="medium" />
-        <span class="name">{meeting.name}</span>
-        {#if nextLabel(meeting) !== undefined}
-          <span class="next">{nextLabel(meeting)}</span>
+        <span class="name">{row.meeting.name}</span>
+        {#if row.next !== undefined}
+          <span class="next">{row.next}</span>
         {/if}
-        {#if canCopyLink(meeting)}
+        {#if row.canCopyLink}
           <IconButton
             icon={view.icon.CopyLink}
             size="small"
             kind="ghost"
             tooltip={{ label: love.string.CopyMeetingLink }}
-            on:click={(e) => void copyLink(e, meeting)}
+            on:click={(e) => void copyLink(e, row.meeting)}
           />
         {/if}
         <IconButton
@@ -271,9 +327,26 @@
           tooltip={{ label: love.string.JoinMeeting }}
           on:click={(e) => {
             e.stopPropagation()
-            void joinMeetingBySession(meeting._id, 'meeting')
+            void joinMeetingBySession(row.meeting._id, 'meeting')
           }}
         />
+        {#if row.canDelete}
+          <IconButton
+            icon={view.icon.Delete}
+            size="small"
+            kind="ghost"
+            tooltip={{ label: view.string.Delete }}
+            on:click={(e) => deleteMeeting(e, row.meeting)}
+          />
+        {:else if row.canLeave}
+          <IconButton
+            icon={view.icon.Leave}
+            size="small"
+            kind="ghost"
+            tooltip={{ label: view.string.Leave }}
+            on:click={(e) => void leaveMeeting(e, row.meeting)}
+          />
+        {/if}
       </div>
     {/each}
   {/each}

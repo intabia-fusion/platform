@@ -46,9 +46,12 @@
 
   let interval: number = 1
   let unitId: string = 'week'
-  // What the inputs were last set from or reported as, so the two directions do not fight: a value
-  // arriving from the document must not be echoed straight back as an update.
-  let known: number | undefined = undefined
+  // The value this editor last asked for. Until the document reports it back, incoming values are
+  // stale (the parent re-renders with the old prop before the new one arrives) and must not reset
+  // the unit the user just picked - that loop made "Day" bounce back to "Week".
+  let pending: number | undefined = undefined
+  // The value currently shown, so a genuinely new document value still reaches the inputs.
+  let shown: number | undefined = undefined
 
   function split (msec: number): { unit: string, msec: number, count: number } {
     const bySize = Object.entries(UNITS).sort((a, b) => b[1] - a[1])
@@ -59,17 +62,26 @@
     return { unit: 'day', msec: DAY, count: 1 }
   }
 
-  $: if (value !== undefined && value !== known) {
-    const { unit, count } = split(value)
-    known = value
-    unitId = unit
-    interval = count
+  $: if (value !== undefined) {
+    if (pending !== undefined) {
+      // Our own value came back: the parent caught up, the editor is free again.
+      if (value === pending) {
+        pending = undefined
+        shown = value
+      }
+    } else if (value !== shown) {
+      const { unit, count } = split(value)
+      shown = value
+      unitId = unit
+      interval = count
+    }
   }
 
   function commit (nextInterval: number, nextUnit: string): void {
     const msec = Math.max(1, Math.round(nextInterval)) * UNITS[nextUnit]
-    if (msec === known) return
-    known = msec
+    if (msec === shown) return
+    shown = msec
+    pending = msec
     if (onChange !== undefined) {
       onChange(msec)
       return

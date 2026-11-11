@@ -208,7 +208,10 @@
   }
 
   async function join (firstName: string, lastName: string): Promise<void> {
-    if (guestToken == null || meetingId == null) {
+    // The token alone is enough: the love service resolves the link itself. For a link behind a
+    // password `/guestInfo` never reveals a meetingId - nothing about the meeting leaks before the
+    // password is checked - so requiring one here blocked every guest of a protected link.
+    if (guestToken == null) {
       error = 'Missing invite information'
       return
     }
@@ -423,8 +426,11 @@
             </div>
           {/if}
           {#if passwordRequired}
-            <div class="input-wrapper">
-              <EditBox bind:value={password} format="password" placeholder={love.string.EnterPassword} kind="default" />
+            <div class="password-row" data-id="guest-password-row">
+              <div class="password-label"><Label label={love.string.GuestPassword} /></div>
+              <div class="input-wrapper">
+                <EditBox bind:value={password} format="password" placeholder={love.string.EnterPassword} kind="default" />
+              </div>
             </div>
           {/if}
           <div class="preview-area" aria-hidden={startWithVideo ? 'false' : 'true'}>
@@ -610,6 +616,20 @@
   .input-wrapper {
     width: 100%;
     max-width: 520px;
+  }
+
+  .password-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    max-width: 520px;
+    margin-bottom: 8px;
+  }
+
+  .password-label {
+    color: var(--theme-caption-color);
+    font-size: 0.875rem;
   }
 
   .actions {

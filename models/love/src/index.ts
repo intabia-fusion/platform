@@ -509,6 +509,10 @@ export function createModel (builder: Builder): void {
     TMeeting,
     TMeetingMinutes,
     TPermanentMeeting,
+    // Without this entry the class doc is never created: the `group` attribute of a permanent
+    // meeting still points at `love:class:MeetingGroup`, and the workspace fails with
+    // `ancestors not found: love:class:MeetingGroup` on the first view that resolves ancestors.
+    TMeetingGroup,
     TMeetingSchedule,
     TUserMeetingInvite,
     TLegacyMeetingMinutes

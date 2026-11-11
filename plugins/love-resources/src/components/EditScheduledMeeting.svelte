@@ -79,7 +79,7 @@
   }
 
   function openEditor (): void {
-    if (settings !== undefined) showPopup(love.component.PermanentMeetingForm, { object: settings })
+    if (settings !== undefined) showPopup(love.component.PermanentMeetingForm, { object: settings }, 'content')
     else showPopup(calendar.component.EditEvent, { object: live }, 'content')
   }
 </script>

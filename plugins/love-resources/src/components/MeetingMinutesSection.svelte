@@ -23,7 +23,6 @@
     getDefaults,
     getResultOptions,
     Table,
-    ViewletSettingButton,
     ViewletsSettingButton
   } from '@hcengineering/view-resources'
   import type { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
@@ -66,15 +65,16 @@
 {#if canViewMinutes}
   <Section {label} icon={love.icon.Cam}>
     <svelte:fragment slot="header">
-      {#if viewlet}
-        <ViewletSettingButton kind="tertiary" {viewlet} bind:viewOptions />
-      {/if}
+      <!-- One settings entry: `ViewletsSettingButton` already renders both the grouping selector and
+           the "customize view" button, so a second `ViewletSettingButton` next to it drew the same
+           pair twice. `viewOptions` is read back from it for the filter bar and the table. -->
       <ViewletsSettingButton
         viewletQuery={{ _id: love.viewlet.TableMeetingMinutesEmbedded }}
         kind="tertiary"
         bind:viewlet
         bind:loading
         bind:preference
+        bind:viewOptions
       />
     </svelte:fragment>
 

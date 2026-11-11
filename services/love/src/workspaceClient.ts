@@ -16,7 +16,7 @@
 import activity, { ActivityInfoMessage } from '@hcengineering/activity'
 import { RestClient } from '@hcengineering/api-client'
 import attachment, { Attachment } from '@hcengineering/attachment'
-import calendar, { AccessLevel, type Event } from '@hcengineering/calendar'
+import calendar, { AccessLevel, type Event, type ReccuringEvent } from '@hcengineering/calendar'
 import contact, { Person } from '@hcengineering/contact'
 import core, {
   Data,
@@ -51,6 +51,8 @@ import love, {
   MeetingStatus,
   meetingMasterQuery,
   resolveOccurrence,
+  type OccurrenceOverride,
+  SCHEDULED_MEETING_WINDOW_MS,
   Office,
   ParticipantInfo,
   ParticipantMetadata,
@@ -688,7 +690,7 @@ export class WorkspaceClient {
     const master = await this.client.findOne(calendar.class.Event, meetingMasterQuery(event))
     if (master === undefined) return undefined
 
-    const { current, next } = resolveOccurrence(master, now)
+    const { current, next } = resolveOccurrence(master, now, await this.occurrenceOverrides(master, now))
     return {
       kind: 'event',
       master,
@@ -755,6 +757,35 @@ export class WorkspaceClient {
   }
 
   /**
+   * Cancelled and moved occurrences of a series. Calendar keeps each as a `ReccuringInstance` of the
+   * master in the calendar space of whoever holds it, so reading them needs a system client - which
+   * this service is. Only overrides that can still change an answer about `now` are read: neither an
+   * occurrence well in the past nor an old original start of one matters any more.
+   */
+  private async occurrenceOverrides (master: Event, now: number): Promise<OccurrenceOverride[]> {
+    const from = now - SCHEDULED_MEETING_WINDOW_MS
+    try {
+      const instances = await this.client.findAll(calendar.class.ReccuringInstance, {
+        recurringEventId: master.eventId as Ref<ReccuringEvent>,
+        // A moved occurrence can leave a future original start behind, so both ends are checked.
+        $or: [{ date: { $gte: from } }, { originalStartTime: { $gte: from } }]
+      })
+      return instances.map((it) => ({
+        originalStartTime: it.originalStartTime,
+        date: it.date,
+        isCancelled: it.isCancelled
+      }))
+    } catch (err: any) {
+      // Read as the rules say: a series without its exceptions beats a join that fails outright.
+      this.ctx.warn('[resolveSession] Failed to read occurrence overrides', {
+        eventId: master.eventId,
+        error: err?.message ?? String(err)
+      })
+      return []
+    }
+  }
+
+  /**
    * The session to join for this `eventId`, created if the occurrence is open. Single writer:
    * doing this from the client left a race between the calendar and ad-hoc paths.
    */
@@ -770,6 +801,7 @@ export class WorkspaceClient {
     if (target === undefined) return { error: 'not-found' }
     const query: DocumentQuery<MeetingMinutes> =
       target.kind === 'meeting' ? { meeting: target.meeting._id } : { eventId: target.master.eventId }
+    const overrides = target.kind === 'event' ? await this.occurrenceOverrides(target.master, now) : []
 
     // Bounded: each turn either returns or loses the notMatch to another creator, whose session
     // the next lookup then finds.
@@ -783,7 +815,7 @@ export class WorkspaceClient {
       // A permanent meeting has no occurrence to wait for: it is open whenever someone starts it.
       let occurrence: Timestamp | undefined
       if (target.kind === 'event') {
-        const { current, next } = resolveOccurrence(target.master, now)
+        const { current, next } = resolveOccurrence(target.master, now, overrides)
         if (current === undefined) return { error: 'no-occurrence', nextOccurrence: next }
         occurrence = current
       }

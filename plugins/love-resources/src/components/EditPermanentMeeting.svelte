@@ -84,7 +84,7 @@
   // The marked point in the information panel: it says the meeting is permanent and opens the same
   // window that created it, so settings are one click away from the card.
   function openSettings (): void {
-    showPopup(love.component.PermanentMeetingForm, { object: live })
+    showPopup(love.component.PermanentMeetingForm, { object: live }, 'content')
   }
 </script>
 

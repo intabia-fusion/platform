@@ -1,11 +1,12 @@
-import { AccessLevel, type Event, type ReccuringInstance } from '@hcengineering/calendar'
+import calendar, { AccessLevel, type Event, type ReccuringInstance } from '@hcengineering/calendar'
 import { meetingMasterQuery } from '../utils'
 
 describe('meetingMasterQuery', () => {
   it('resolves a plain event by its own eventId', () => {
     expect(meetingMasterQuery({ eventId: 'E1' } as unknown as Event)).toEqual({
       eventId: 'E1',
-      access: AccessLevel.Owner
+      access: AccessLevel.Owner,
+      _class: { $ne: calendar.class.ReccuringInstance }
     })
   })
 
@@ -13,11 +14,23 @@ describe('meetingMasterQuery', () => {
     // The override owns a fresh eventId and access: 'owner' of its own, so resolving by it would
     // put the meeting - linkId included - on a single occurrence.
     const instance = { eventId: 'E2', recurringEventId: 'E1' } as unknown as ReccuringInstance
-    expect(meetingMasterQuery(instance)).toEqual({ eventId: 'E1', access: AccessLevel.Owner })
+    expect(meetingMasterQuery(instance)).toEqual({
+      eventId: 'E1',
+      access: AccessLevel.Owner,
+      _class: { $ne: calendar.class.ReccuringInstance }
+    })
   })
 
   it('never resolves to a copy', () => {
     expect(meetingMasterQuery({ eventId: 'E1' } as unknown as Event).access).toEqual(AccessLevel.Owner)
+  })
+
+  it('never resolves to an occurrence, even one that kept owner access', () => {
+    // A moved occurrence lives in the calendar of whoever moved it with `access: 'owner'`; without
+    // the class exclusion the lookup could pick it and make one occurrence the whole series.
+    expect(meetingMasterQuery({ eventId: 'E1' } as unknown as Event)._class).toEqual({
+      $ne: calendar.class.ReccuringInstance
+    })
   })
 })
 
@@ -31,6 +44,10 @@ describe('virtual occurrence', () => {
       virtual: true
     } as unknown as ReccuringInstance
 
-    expect(meetingMasterQuery(virtual)).toEqual({ eventId: 'E1', access: AccessLevel.Owner })
+    expect(meetingMasterQuery(virtual)).toEqual({
+      eventId: 'E1',
+      access: AccessLevel.Owner,
+      _class: { $ne: calendar.class.ReccuringInstance }
+    })
   })
 })

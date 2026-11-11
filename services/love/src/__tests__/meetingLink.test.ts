@@ -236,6 +236,30 @@ describe('guest link pointer payload', () => {
     expect(response.send.mock.calls[0][0]).toMatchObject({ mode: 'after' })
   })
 
+  it('never calls a permanent meeting over, even after a finished session', async () => {
+    // A permanent meeting outlives every session: a finished one means the room is free again, and
+    // the link stays usable - `after` would tell the guest there is nothing left to join.
+    const wsClient = wsClientWith(
+      {
+        kind: 'meeting',
+        pointer: 'PM1',
+        title: 'Design corner',
+        link: { linkVersion: 1, meetingAccess: defaultMeetingAccess },
+        lastMeetingEnd: Date.now() - 60 * 1000
+      },
+      { meeting: { _id: meetingId, status: MeetingStatus.Finished, meeting: 'PM1' } }
+    )
+    ;(WorkspaceClient.create as jest.Mock).mockResolvedValue(wsClient)
+    const response = res()
+
+    await manager.handleGuestInfo(req({ token: permanentPointer() }), response)
+
+    // The join form stays up: a permanent meeting is never over, so the guest is offered the room
+    // again - `after` would be the "nothing left to join" screen of a finished series.
+    expect(response.send.mock.calls[0][0]).toMatchObject({ mode: 'live' })
+    expect(response.send.mock.calls[0][0].mode).not.toEqual('after')
+  })
+
   it('holds the guest in the lobby until the room actually exists', async () => {
     // A session row is not an open meeting: without a LiveKit room there is nothing to join.
     roomClient.listRooms.mockResolvedValue([])
@@ -298,7 +322,9 @@ describe('guest link pointer payload', () => {
     expect(response.send.mock.calls[0][0]).toMatchObject({ mode: 'live' })
   })
 
-  it('never calls a permanent meeting over, only not started', async () => {
+  it('offers to join a permanent meeting before anything has run', async () => {
+    // No occurrence and no session, but a permanent meeting is an always-open room: the lobby must
+    // show the join form, not a "wait for the host" screen - a guest may be the first one in.
     const wsClient = wsClientWith(
       { kind: 'meeting', pointer: 'PM1', title: 'Design corner', link: { linkVersion: 1 } },
       { error: 'not-started' }
@@ -308,7 +334,7 @@ describe('guest link pointer payload', () => {
 
     await manager.handleGuestInfo(req({ token: permanentPointer() }), response)
 
-    expect(response.send.mock.calls[0][0]).toMatchObject({ mode: 'before', title: 'Design corner' })
+    expect(response.send.mock.calls[0][0]).toMatchObject({ mode: 'live', title: 'Design corner' })
   })
 
   it('reports a pointer to a meeting that no longer exists', async () => {

@@ -13,22 +13,34 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Event } from '@hcengineering/calendar'
+  import calendarModel, { type Event } from '@hcengineering/calendar'
+  import { getClient } from '@hcengineering/presentation'
   import { Label, addZero, getPlatformColorForTextDef, showPopup, themeStore, tooltip } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import calendar from '../plugin'
+  import { eventCard } from '../eventCard'
   import EventsPopup from './EventsPopup.svelte'
 
   export let events: Event[]
   export let date: Date
-  export let size: 'small' | 'huge' = 'small'
-
   export let today: boolean = false
   export let selected: boolean = false
   export let wrongMonth: boolean = false
 
   const dispatch = createEventDispatcher()
   const eventCount = 3
+
+  // A meeting (or any other document carrying its own card) is opened as that card: its editor is
+  // not the calendar's, and the quick-edit popup would write to the occurrence instead of the series.
+  async function openEvent (event: Event): Promise<void> {
+    const client = getClient()
+    const card = await eventCard(client, event, calendar.component.EditEvent)
+    if (card !== undefined) {
+      showPopup(card.editor, { object: card.object }, 'content')
+      return
+    }
+    showPopup(calendar.component.EditEvent, { object: event }, 'content')
+  }
 
   $: tip = {
     label: calendar.string.Events,
@@ -67,7 +79,7 @@
           class="overflow-label mt-1 py-1 flex flex-between event cursor-pointer"
           style="background-color: {getPlatformColorForTextDef(e.space, $themeStore.dark).color};"
           on:click|stopPropagation|preventDefault={() => {
-            showPopup(calendar.component.EditEvent, { object: e }, 'content')
+            openEvent(e)
           }}
         >
           {e.title}

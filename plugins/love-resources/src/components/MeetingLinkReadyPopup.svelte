@@ -17,7 +17,7 @@
   share, and digging it out of the settings window afterwards is the step this screen removes.
 -->
 <script lang="ts">
-  import { Card, copyTextToClipboard } from '@hcengineering/presentation'
+  import presentation, { Card, copyTextToClipboard } from '@hcengineering/presentation'
   import { Button, EditBox, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import love from '../plugin'
@@ -33,7 +33,13 @@
   }
 </script>
 
-<Card label={love.string.LinkReady} okAction={() => dispatch('close')} on:close={() => dispatch('close')}>
+<Card
+  label={love.string.LinkReady}
+  okAction={() => dispatch('close')}
+  okLabel={presentation.string.Ok}
+  canSave={true}
+  on:close={() => dispatch('close')}
+>
   <div class="flex-col gap-2 p-4" style="min-width: 32rem">
     <Label label={love.string.CopyMeetingLink} />
     <div class="flex-row-center gap-2">

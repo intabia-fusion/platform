@@ -23,6 +23,8 @@ const start = new Date('2026-03-02T10:00:00Z').getTime()
 
 interface FakeOpts {
   events?: any[]
+  /** Calendar overrides of the series: cancelled and moved occurrences. */
+  instances?: any[]
   meetings?: any[]
   persons?: any[]
   identities?: any[]
@@ -40,9 +42,15 @@ function makeClient (opts: FakeOpts): { wc: WorkspaceClient, created: any[], app
   const match = (rows: any[], query: any): any[] =>
     rows.filter((row) =>
       Object.entries(query).every(([key, cond]: [string, any]) => {
+        if (key === '$or') {
+          return (cond as any[]).some((part) => match([row], part).length > 0)
+        }
         const value = row[key]
-        if (cond !== null && typeof cond === 'object' && cond.$in !== undefined) {
-          return (cond.$in as any[]).includes(value)
+        if (cond !== null && typeof cond === 'object') {
+          if (cond.$in !== undefined) return (cond.$in as any[]).includes(value)
+          if (cond.$gte !== undefined) return value >= cond.$gte
+          // `meetingMasterQuery` excludes the occurrence class this way.
+          if (cond.$ne !== undefined) return value !== cond.$ne
         }
         return value === cond
       })
@@ -50,6 +58,7 @@ function makeClient (opts: FakeOpts): { wc: WorkspaceClient, created: any[], app
 
   const rowsFor = (_class: Ref<Class<Doc>>): any[] => {
     if (_class === calendar.class.Event) return opts.events ?? []
+    if (_class === calendar.class.ReccuringInstance) return opts.instances ?? []
     if (_class === love.class.MeetingMinutes) return opts.meetings ?? []
     if (_class === contact.class.Person) return opts.persons ?? []
     if (_class === contact.class.SocialIdentity) return opts.identities ?? []
@@ -158,6 +167,50 @@ describe('WorkspaceClient.resolveSession', () => {
 
     expect(res).toEqual({ error: 'no-occurrence', nextOccurrence: start })
     expect(created).toHaveLength(0)
+  })
+
+  it('does not open an occurrence cancelled in the calendar', async () => {
+    // Calendar keeps a cancellation as a ReccuringInstance of the master with `isCancelled`.
+    const series = masterEvent({ rules: [{ freq: 'DAILY', interval: 1 }] })
+    const cancelled = {
+      _id: 'ev-cancelled',
+      _class: calendar.class.ReccuringInstance,
+      eventId: 'E2',
+      recurringEventId: 'E1',
+      originalStartTime: start,
+      date: start,
+      isCancelled: true
+    }
+    const { wc, created } = makeClient({ events: [series], instances: [cancelled] })
+
+    const res = await wc.resolveSession('E1', start)
+
+    expect(res).toEqual({ error: 'no-occurrence', nextOccurrence: start + 24 * hour })
+    expect(created).toHaveLength(0)
+  })
+
+  it('opens a moved occurrence at its new time instead of the old one', async () => {
+    const series = masterEvent({ rules: [{ freq: 'DAILY', interval: 1 }] })
+    const moved = {
+      _id: 'ev-moved',
+      _class: calendar.class.ReccuringInstance,
+      eventId: 'E2',
+      recurringEventId: 'E1',
+      originalStartTime: start,
+      date: start + 2 * hour
+    }
+    const { wc, created } = makeClient({
+      events: [series],
+      instances: [moved],
+      persons: [{ _id: 'person-1', _class: contact.class.Person, personUuid: 'acc-1' }],
+      identities: [{ _id: 'social-1', _class: contact.class.SocialIdentity, attachedTo: 'person-1' }]
+    })
+
+    expect(await wc.resolveSession('E1', start)).toMatchObject({ error: 'no-occurrence' })
+    const res = await wc.resolveSession('E1', start + 2 * hour)
+
+    expect(res).toMatchObject({ created: true })
+    expect(created[0]).toMatchObject({ occurrence: start + 2 * hour })
   })
 
   it('resolves an overridden occurrence through its series master', async () => {

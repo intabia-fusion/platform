@@ -26,7 +26,7 @@
   async function created (event: CustomEvent<{ eventId: string, meeting: PermanentMeeting | string }>): Promise<void> {
     const meeting = event.detail.meeting as string
     const link = await getEventMeetingLink(meeting, 'meeting')
-    if (link !== '') showPopup(MeetingLinkReadyPopup, { link })
+    if (link !== '') showPopup(MeetingLinkReadyPopup, { link }, 'content')
     dispatch('close')
   }
 </script>

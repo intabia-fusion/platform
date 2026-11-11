@@ -142,7 +142,7 @@ async function canEditPermanentMeeting (object?: Doc): Promise<boolean> {
 }
 
 function editPermanentMeetingSettings (object: Doc): void {
-  showPopup(PermanentMeetingForm, { object: object as PermanentMeeting })
+  showPopup(PermanentMeetingForm, { object: object as PermanentMeeting }, 'content')
 }
 
 /**
@@ -161,7 +161,7 @@ async function editMeetingSettings (object: Doc): Promise<void> {
   if (link.permanentMeeting === undefined) return
   const meeting = await getClient().findOne(love.class.PermanentMeeting, { _id: link.permanentMeeting })
   if (meeting === undefined) return
-  showPopup(PermanentMeetingForm, { object: meeting })
+  showPopup(PermanentMeetingForm, { object: meeting }, 'content')
 }
 
 export { setCustomCreateScreenTracks } from './utils'

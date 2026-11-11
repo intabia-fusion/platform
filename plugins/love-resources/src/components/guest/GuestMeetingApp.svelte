@@ -505,7 +505,7 @@
       {:else if guestInfo != null}
         <div>
           <div class="flex flex-col justify-center fs-title mb-2">
-            {#if guestInfo.workspaceUrl !== '' && guestInfo.passwordRequired !== true}
+            {#if guestInfo.workspaceUrl != null && guestInfo.workspaceUrl !== '' && guestInfo.passwordRequired !== true}
               <div class="message flex flex-row-center justify-center">
                 <Label label={love.string.Meeting} />
                 <div class="p-1">

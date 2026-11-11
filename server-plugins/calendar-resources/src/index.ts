@@ -293,12 +293,25 @@ async function removeBusySlot (event: Event, control: TriggerControl): Promise<T
   return res
 }
 
-async function onEventMixin (ctx: TxMixin<Event, Event>, control: TriggerControl): Promise<Tx[]> {
+export async function onEventMixin (ctx: TxMixin<Event, Event>, control: TriggerControl): Promise<Tx[]> {
   const ops = ctx.attributes
   const event = (await control.findAll(control.ctx, calendar.class.Event, { _id: ctx.objectId }, { limit: 1 }))[0]
   void putEventToQueue(control, 'mixin', event, ctx.modifiedBy, ops)
   if (event === undefined) return []
   if (event.access !== 'owner') return []
+  // Only the master carries the identity mixin. An occurrence is a `ReccuringInstance` that keeps
+  // `access: 'owner'` in the calendar of whoever moved it, and a mixin there would give the series a
+  // second identity - the same reason `meetingMasterQuery` excludes the class.
+  if (control.hierarchy.isDerived(event._class, calendar.class.ReccuringInstance)) {
+    // A client that writes the mixin to an occurrence is a bug, not an old document: this is worth
+    // seeing in the log, while the transaction itself is simply not propagated.
+    control.ctx.warn('Meeting identity mixin written to an occurrence, ignored', {
+      eventId: event.eventId,
+      objectId: event._id,
+      modifiedBy: ctx.modifiedBy
+    })
+    return []
+  }
   const events = await control.findAll(control.ctx, calendar.class.Event, { eventId: event.eventId })
   const res: Tx[] = []
   for (const ev of events) {
@@ -356,6 +369,9 @@ async function onEventUpdate (ctx: TxUpdateDoc<Event>, control: TriggerControl):
     return await rsvpSummaryTxes(event, control)
   }
   if (event.access !== 'owner') return []
+  // An occurrence edits itself only: propagating its fields to the whole series would overwrite the
+  // master's participants and times with those of one moved occurrence.
+  if (control.hierarchy.isDerived(event._class, calendar.class.ReccuringInstance)) return []
   const participantsChanged = ops.participants !== undefined
   const events = await control.findAll(control.ctx, calendar.class.Event, { eventId: event.eventId })
   const res: Tx[] = []

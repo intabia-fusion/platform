@@ -21,7 +21,6 @@
     getDefaults,
     getResultOptions,
     Table,
-    ViewletSettingButton,
     ViewletsSettingButton
   } from '@hcengineering/view-resources'
   import type { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
@@ -66,15 +65,15 @@
 <div class="step-tb-6">
   <Section label={love.string.MeetingMinutes} icon={love.icon.MeetingMinutes}>
     <svelte:fragment slot="header">
-      {#if viewlet}
-        <ViewletSettingButton kind="tertiary" {viewlet} bind:viewOptions />
-      {/if}
+      <!-- One settings entry: `ViewletsSettingButton` already renders both the grouping selector and
+           the "customize view" button, so a second `ViewletSettingButton` drew the same pair twice. -->
       <ViewletsSettingButton
         viewletQuery={{ _id: love.viewlet.TableMeetingMinutesEmbedded }}
         kind="tertiary"
         bind:viewlet
         bind:loading
         bind:preference
+        bind:viewOptions
       />
     </svelte:fragment>
 

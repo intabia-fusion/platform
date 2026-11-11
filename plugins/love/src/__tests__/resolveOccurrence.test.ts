@@ -91,3 +91,37 @@ describe('resolveOccurrence', () => {
     expect(next).toEqual(start + day)
   })
 })
+
+describe('resolveOccurrence with calendar overrides', () => {
+  it('does not open a meeting cancelled in the calendar', () => {
+    // Calendar keeps a cancellation as a copy of the occurrence with `isCancelled`, not as exdate.
+    const cancelled = [{ originalStartTime: start, date: start, isCancelled: true }]
+    const { current, next } = resolveOccurrence(series(), start, cancelled)
+    expect(current).toBeUndefined()
+    expect(next).toEqual(start + day)
+  })
+
+  it('opens a meeting moved by a few hours at the new time', () => {
+    const moved = [{ originalStartTime: start, date: start + 8 * hour }]
+    // The old time is not an occurrence any more.
+    expect(resolveOccurrence(series(), start, moved).current).toBeUndefined()
+    // The new one is, once the join window reaches it.
+    expect(resolveOccurrence(series(), start + 8 * hour, moved).current).toEqual(start + 8 * hour)
+  })
+
+  it('does not open today when the occurrence moved to tomorrow', () => {
+    const moved = [{ originalStartTime: start, date: start + day }]
+    const today = resolveOccurrence(series(), start, moved)
+    expect(today.current).toBeUndefined()
+    // Tomorrow is both the regular occurrence and the moved one: a single start, not two.
+    expect(meetingOccurrences(series(), start, start + 3 * day, moved)).toEqual([start + day, start + 2 * day])
+  })
+
+  it('handles a cancellation and a move in the same series', () => {
+    const overrides = [
+      { originalStartTime: start, date: start, isCancelled: true },
+      { originalStartTime: start + 2 * day, date: start + 2 * day + 3 * hour }
+    ]
+    expect(meetingOccurrences(series(), start, start + 3 * day, overrides)).toEqual([start + day, start + 2 * day + 3 * hour])
+  })
+})

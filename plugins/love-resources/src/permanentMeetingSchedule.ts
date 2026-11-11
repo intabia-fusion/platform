@@ -86,6 +86,15 @@ export async function findPrimaryCalendarId (client: Client): Promise<Ref<Calend
 
 // A permanent meeting is always open: it is created without a series, and `repeatEvery` only
 // records how often the team intends to hold it, so the panel can show the period.
+/**
+ * Participants with every owner kept in the list. The server pushes a missing owner back anyway
+ * (`OnPermanentMeetingUpdate`), so a form that shows them gone would lie until the next refresh.
+ */
+export function withOwners (members: AccountUuid[], owners: AccountUuid[]): AccountUuid[] {
+  const missing = owners.filter((it) => !members.includes(it))
+  return missing.length > 0 ? [...missing, ...members] : members
+}
+
 export async function createPermanentMeeting (
   client: TxOperations,
   data: {
@@ -113,7 +122,11 @@ export async function createPermanentMeeting (
     description: '',
     descriptionRef: null,
     repeatEvery: data.repeatEvery,
-    reminderBefore: data.reminderBefore
+    reminderBefore: data.reminderBefore,
+    // A permanent meeting is an always-open room: whoever holds the link may open a session,
+    // outside any occurrence. The default `start: 'members'` made a guest wait for a participant
+    // to start the meeting, which for this kind of meeting is exactly what the link should avoid.
+    meetingAccess: { ...defaultMeetingAccess, start: 'link' as const }
   })
 }
 

@@ -367,6 +367,14 @@ UI: `OutgoingInvitePopup`, `IncomingInvitePopup`, `InviteButton` (лейблы `
 у годовой серии следующее вхождение дальше любого фиксированного окна, и плоские
 90 дней хоронили живую ссылку.
 
+Третьим аргументом `resolveOccurrence(master, now, overrides)` принимает исключения календаря
+(`OccurrenceOverride`): отменённое вхождение - `ReccuringInstance` с `isCancelled: true` и `date` =
+исходному времени - из набора убирается, перенесённое (`date` = новое время, `originalStartTime` =
+старое) убирается из старого места и появляется в новом. Иначе ссылка открывала отменённую встречу
+и перенесённую - по старому времени. Читает их `WorkspaceClient.occurrenceOverrides` системным клиентом
+(они лежат в `PersonSpace` участников), выборка
+`$or: [{ date: { $gte } }, { originalStartTime: { $gte } }]`.
+
 Результаты `resolveSession` (`workspaceClient.ts:68`):
 
 | Результат | Что значит |
@@ -672,7 +680,7 @@ Egress ждёт сигнал `START_RECORDING` от страницы шабло�
 | Файл | Что проверяет |
 |---|---|
 | `getFreeRoomPlace.test.ts` | Границы `pref`, резерв `(0,0)` офиса, overflow по `x` |
-| `resolveOccurrence.test.ts` | Окно вхождения, exdate/rdate, горизонт поиска `next` для годовой и полугодовой серии |
+| `resolveOccurrence.test.ts` | Окно вхождения, exdate/rdate, горизонт поиска `next` для годовой и полугодовой серии, отмена и перенос вхождения (`OccurrenceOverride`) |
 | `checkMeetingLink.test.ts` | Отзыв по `linkVersion`, `afterTtl` только при отсутствии будущих вхождений, постоянный митинг не истекает |
 | `meetingLinkPayload.test.ts` | Round-trip payload, в том числе `kind: 'meeting'` |
 | `meetingMasterQuery.test.ts` | Резолв мастера серии против переопределения вхождения |

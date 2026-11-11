@@ -25,6 +25,7 @@
   import core, { getCurrentAccount } from '@hcengineering/core'
   import type { PermanentMeeting } from '@hcengineering/love'
   import { Card, getClient } from '@hcengineering/presentation'
+  import presentation from '@hcengineering/presentation'
   import { getCurrentLanguage } from '@hcengineering/theme'
   import { EditBox, getUserTimezone, Label, NumberInput } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
@@ -36,7 +37,8 @@
     findPrimaryCalendarId,
     updatePermanentMeetingWithSchedule,
     type PermanentMeetingInput,
-    type ScheduleContext
+    type ScheduleContext,
+    withOwners
   } from '../permanentMeetingSchedule'
 
   export let object: PermanentMeeting | undefined = undefined
@@ -60,7 +62,9 @@
   let saving = false
 
   function membersChanged (value: AccountUuid[]): void {
-    members = value
+    // An owner stays a member: the server pushes them back anyway, and a list that shows them gone
+    // would be a lie until the next refresh. The creator is an owner on every meeting we write.
+    members = withOwners(value, object?.owners ?? [])
   }
 
   function changePeriod (value: number): void {
@@ -110,6 +114,7 @@
 <Card
   label={object === undefined ? love.string.NewMeeting : love.string.MeetingSettings}
   okAction={save}
+  okLabel={object === undefined ? presentation.string.Create : presentation.string.Save}
   canSave={name.trim() !== '' && !saving}
   on:close={() => dispatch('close')}
 >

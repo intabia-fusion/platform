@@ -1,4 +1,4 @@
-import { AccessLevel, Event, ReccuringEvent, ReccuringInstance, generateRecurringValues } from '@hcengineering/calendar'
+import calendar, { AccessLevel, Event, ReccuringEvent, ReccuringInstance, generateRecurringValues } from '@hcengineering/calendar'
 import { Employee, Person } from '@hcengineering/contact'
 import { Data, DocumentQuery, Timestamp, generateId, Ref, WorkspaceUuid } from '@hcengineering/core'
 
@@ -56,7 +56,14 @@ export function isServiceRoom (room: Pick<Room, '_id'> | undefined): boolean {
  */
 export function meetingMasterQuery (event: Pick<Event, 'eventId'>): DocumentQuery<Event> {
   const recurringEventId = (event as ReccuringInstance).recurringEventId
-  return { eventId: recurringEventId ?? event.eventId, access: AccessLevel.Owner }
+  return {
+    eventId: recurringEventId ?? event.eventId,
+    access: AccessLevel.Owner,
+    // An occurrence is a `ReccuringInstance` with `access: 'owner'` in the calendar of whoever moved
+    // it, so the class has to be excluded explicitly: resolving through an occurrence would make
+    // that one occurrence the identity of the whole series.
+    _class: { $ne: calendar.class.ReccuringInstance }
+  }
 }
 
 export const GRID_WIDTH = 15
@@ -335,10 +342,27 @@ export function getFreeRoomPlace (
 }
 
 /**
- * Occurrence starts of a meeting inside `[from, to)`, sorted. Overrides are not subtracted:
- * an override is a session of its own, resolved through its `originalStartTime` (F1 §5).
+ * One occurrence that differs from what the rules say: it moved, or it was cancelled. Calendar keeps
+ * both as a `ReccuringInstance` of the master - `originalStartTime` names the occurrence, `date` is
+ * where it moved to (the original time for a cancelled one), `isCancelled` marks a cancellation.
  */
-export function meetingOccurrences (master: Event, from: Timestamp, to: Timestamp): Timestamp[] {
+export interface OccurrenceOverride {
+  originalStartTime: Timestamp
+  date: Timestamp
+  isCancelled?: boolean
+}
+
+/**
+ * Occurrence starts of a meeting inside `[from, to)`, sorted. `overrides` are the calendar's own
+ * exceptions to the series: a cancelled occurrence disappears, a moved one leaves its old place
+ * and appears at the new time.
+ */
+export function meetingOccurrences (
+  master: Event,
+  from: Timestamp,
+  to: Timestamp,
+  overrides: OccurrenceOverride[] = []
+): Timestamp[] {
   const rec = master as ReccuringEvent
   if (rec.rules === undefined && rec.rdate === undefined) {
     return master.date >= from && master.date < to ? [master.date] : []
@@ -357,6 +381,15 @@ export function meetingOccurrences (master: Event, from: Timestamp, to: Timestam
   }
   for (const date of rec.exdate ?? []) {
     values.delete(date)
+  }
+
+  // An override replaces the occurrence it names. A moved one can land inside this window while its
+  // original start sits outside it, so the new time is added from the override itself.
+  for (const it of overrides) {
+    values.delete(it.originalStartTime)
+  }
+  for (const it of overrides) {
+    if (it.isCancelled !== true && it.date >= from && it.date < to) values.add(it.date)
   }
   return Array.from(values).sort((a, b) => a - b)
 }
@@ -388,10 +421,15 @@ function lookaheadFor (master: Event): number {
 
 /**
  * Which occurrence a session may be opened for right now: `current` is the one whose join window
- * is open, `next` is what a caller outside the window is told to wait for.
+ * is open, `next` is what a caller outside the window is told to wait for. `overrides` are the
+ * calendar's cancelled and moved occurrences - a meeting cancelled in the calendar is not open.
  */
-export function resolveOccurrence (master: Event, now: number = Date.now()): { current?: Timestamp, next?: Timestamp } {
-  const starts = meetingOccurrences(master, now - SCHEDULED_MEETING_WINDOW_MS, now + lookaheadFor(master))
+export function resolveOccurrence (
+  master: Event,
+  now: number = Date.now(),
+  overrides: OccurrenceOverride[] = []
+): { current?: Timestamp, next?: Timestamp } {
+  const starts = meetingOccurrences(master, now - SCHEDULED_MEETING_WINDOW_MS, now + lookaheadFor(master), overrides)
   const current = starts.find((it) => now >= it - SCHEDULED_JOIN_LEAD_MS && now < it + SCHEDULED_MEETING_WINDOW_MS)
   const next = starts.find((it) => it - SCHEDULED_JOIN_LEAD_MS > now)
   return { current, next }
