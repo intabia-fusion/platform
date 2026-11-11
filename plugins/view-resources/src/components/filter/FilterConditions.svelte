@@ -36,6 +36,8 @@
   // Attributes not offered for a new condition; saved conditions on them still show
   export let hiddenKeys: string[] = []
 
+  export let allowCurrentUser: boolean = false
+
   const dispatch = createEventDispatcher<{ change: string }>()
 
   let filters: Filter[] = parseFilters(value)
@@ -66,6 +68,7 @@
         target,
         space,
         hiddenKeys,
+        allowCurrentUser,
         // Indexes key the live queries of nested filters: conditions of different rows must not collide.
         index: Math.floor(Math.random() * 1_000_000_000) + 1,
         onChange: (f: Filter) => {
@@ -88,6 +91,7 @@
     <FilterSection
       {filter}
       {space}
+      {allowCurrentUser}
       hideRemove={!removable}
       on:change={emit}
       on:remove={() => {

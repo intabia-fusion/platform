@@ -184,6 +184,7 @@
         <SettingRow kind="column" label={tracker.string.BoardFilter} hint={tracker.string.BoardFilterHint}>
           <div class="filter">
             <FilterConditions
+              allowCurrentUser
               _class={tracker.class.Issue}
               value={board.filter}
               removable

@@ -417,6 +417,7 @@
             </div>
             <div class="cell condition">
               <FilterConditions
+                allowCurrentUser={kind === 'quickFilters'}
                 _class={tracker.class.Issue}
                 value={rule.condition}
                 removable

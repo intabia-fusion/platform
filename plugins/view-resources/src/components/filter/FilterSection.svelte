@@ -26,7 +26,12 @@
   import view from '../../plugin'
   import ModeSelector from './ModeSelector.svelte'
 
+  import CurrentUserFilter from './CurrentUserFilter.svelte'
+  import { CURRENT_USER_FILTER_VALUE, isUserFilter } from '../../currentUserFilter'
+  import contact from '@hcengineering/contact'
+
   export let filter: Filter
+  export let allowCurrentUser: boolean = false
   export let space: Ref<Space> | undefined
   export let hideRemove: boolean = false
 
@@ -47,6 +52,8 @@
     }
   }
   const targetClass = getTargetClass()
+  $: hasCurrentUser = currentFilter.value.includes(CURRENT_USER_FILTER_VALUE)
+  $: displayedValues = currentFilter.value.filter((value) => value !== CURRENT_USER_FILTER_VALUE)
   $: isState = targetClass === core.class.Status
   const dispatch = createEventDispatcher()
 
@@ -118,7 +125,7 @@
               valueButtonEl.click()
             } else {
               showPopup(
-                curr.key.component,
+                allowCurrentUser && isUserFilter(hierarchy, curr) ? CurrentUserFilter : curr.key.component,
                 {
                   _class: curr.key._class,
                   filter: curr,
@@ -178,7 +185,9 @@
         bind:this={valueButtonEl}
         on:click={(e) => {
           showPopup(
-            currentFilter.key.component,
+            allowCurrentUser && isUserFilter(hierarchy, currentFilter)
+              ? CurrentUserFilter
+              : currentFilter.key.component,
             {
               _class: currentFilter.key._class,
               filter: currentFilter,
@@ -189,12 +198,12 @@
           )
         }}
       >
-        {#if valueComponent}
-          <Component
-            is={valueComponent}
-            props={{ value: currentFilter.value, onChange, filter: currentFilter, space }}
-          />
-        {:else}
+        {#if hasCurrentUser}
+          <Label label={contact.string.CategoryCurrentUser} />
+        {/if}
+        {#if valueComponent && (!hasCurrentUser || displayedValues.length > 0)}
+          <Component is={valueComponent} props={{ value: displayedValues, onChange, filter: currentFilter, space }} />
+        {:else if !hasCurrentUser}
           <span>{countLabel}</span>
         {/if}
       </button>

@@ -168,9 +168,9 @@
 |---|---|---|---|
 | filter/FilterBar.svelte | Панель активных фильтров вьюлета | _class, space, query, viewOptions | import |
 | filter/FilterButton.svelte | Кнопка "Filter", открывает FilterTypePopup | _class, space, viewOptions, adaptive | import |
-| filter/FilterTypePopup.svelte | Popup выбора атрибута фильтра; `hiddenKeys` убирает атрибуты верхнего уровня | _class, target, filter, index, hiddenKeys | view.component.FilterTypePopup |
-| filter/FilterConditions.svelte | Условия (JSON `Filter[]`) строкой чипов, с кнопкой добавления (иконка или подпись `addLabel`); крестики - `removable`; `hiddenKeys` не предлагает атрибуты для нового условия (сохранённые показываются); настройки досок | value, _class, space, disabled, removable, addLabel, hiddenKeys | import |
-| filter/FilterSection.svelte | Один активный фильтр в FilterBar | filter, space, hideRemove | internal |
+| filter/FilterTypePopup.svelte | Popup выбора атрибута фильтра; `hiddenKeys` убирает атрибуты верхнего уровня; `allowCurrentUser` включает динамического пользователя для пользовательских полей | _class, target, filter, index, hiddenKeys | view.component.FilterTypePopup |
+| filter/FilterConditions.svelte | Условия (JSON `Filter[]`) строкой чипов, с кнопкой добавления (иконка или подпись `addLabel`); крестики - `removable`; `hiddenKeys` не предлагает атрибуты для нового условия (сохранённые показываются); настройки досок; `allowCurrentUser` включает динамического пользователя | value, _class, space, disabled, removable, addLabel, hiddenKeys, allowCurrentUser | import |
+| filter/FilterSection.svelte | Один активный фильтр в FilterBar | filter, space, hideRemove, allowCurrentUser | internal |
 | filter/FilterSave.svelte | Сохранить фильтры как отдельный вид | viewOptions, _class | internal |
 | filter/ModeSelector.svelte | Селектор режима фильтра | filter | internal |
 | filter/ArrayFilter.svelte | Фильтр по значению ArrOf-атрибута | _class, filter, onChange | view.component.ArrayFilter |
@@ -217,3 +217,5 @@
 | viewer/PDFViewer.svelte | Просмотрщик PDF-вложения | value, name, fit | view.component.PDFViewer |
 | viewer/TextViewer.svelte | Просмотрщик текстового вложения | value, name, fit | view.component.TextViewer |
 | viewer/VideoViewer.svelte | Просмотрщик видео-вложения | value, name, contentType, metadata | view.component.VideoViewer |
+
+В `filter/ObjectFilter.svelte` и мосте `filter/PersonIdFilter.svelte` слот `beforeValues` размещает закреплённые пункты внутри popup после поиска и до прокручиваемого списка. Без слота поведение редакторов не меняется.

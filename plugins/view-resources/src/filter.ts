@@ -18,6 +18,7 @@ import { getCurrentResolvedLocation, locationToUrl, type AnyComponent } from '@h
 import { type Filter, type FilterMode, type FilteredView, type KeyFilter } from '@hcengineering/view'
 import { get, writable } from 'svelte/store'
 import view from './plugin'
+import { resolveCurrentUserFilter } from './currentUserFilter'
 
 /**
  * @public
@@ -204,7 +205,7 @@ export async function getRefs (filter: Filter, onUpdate: () => void): Promise<Ar
   const mode = await client.findOne(view.class.FilterMode, { _id: filter.mode })
   if (mode === undefined) return []
   const result = await getResource(mode.result)
-  const newValue = await result(filter, () => {})
+  const newValue = await result(resolveCurrentUserFilter(client.getHierarchy(), filter), () => {})
   const promise = new Promise<Array<Ref<Doc>>>((resolve, reject) => {
     const refresh = lq.query(
       filter.key._class,
@@ -384,7 +385,7 @@ export async function filtersToQuery (
     const mode = await client.findOne(view.class.FilterMode, { _id: filter.mode })
     if (mode === undefined) continue
     const result = await getResource(mode.result)
-    const newValue = await result(filter, onUpdate)
+    const newValue = await result(resolveCurrentUserFilter(hierarchy, filter), onUpdate)
 
     if (Object.keys(newValue).length === 0) continue
 
