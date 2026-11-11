@@ -59,6 +59,8 @@
 
 ## Как работает
 
+При смене воркспейса `setClient` (packages/presentation/src/utils.ts) до запросов новой модели закрывает глобальную панель через `closePanel(false)`: сбрасываются `panelstore` и внутренний URI панели (packages/ui/src/panelup.ts), адрес назначения сохраняется. Поэтому панель задачи с кастомным классом из предыдущего воркспейса не монтируется с новой иерархией. Повторное подключение к тому же воркспейсу сохраняет панель. Регрессия: packages/presentation/src/___tests___/liveQuery.test.ts.
+
 `SpacesNavModel.catalog` добавляет постоянную кнопку каталога после кнопки создания в заголовке раздела. `SpacesNav` передает ее через слот `headerActions` у `TreeNode` и `TreeElement`; кнопки доступны при свернутом и пустом разделе. Пустой контейнер действий `NavGroup` не появляется при наведении и не сдвигает соседние кнопки. В трекере каталог проектов открывается по прежнему адресу `all-projects`.
 
 1. **Переключение приложения в левой панели.** Клик по иконке в `Applications.svelte` (`<NavLink app={app.alias}>`) меняет location -> `Workbench.svelte` вызывает `buildNavModel` (`plugins/workbench-resources/src/utils.ts`), который мёрджит `Application` с найденным по `extends` `ApplicationNavModel` в единый `NavigatorModel`. Программная навигация (шорткаты, действия) идёт через action `Navigate` (`createNavigateAction`, `models/workbench/src/index.ts`, impl `workbench.actionImpl.Navigate`).
@@ -139,7 +141,7 @@
 | Виджеты сайдбара (Fixed/Flexible/Configurable) | getting-started/learn-the-basics, communication/sending-messages | getting-started/learn-the-basics, communication/sending-messages | stale | 0.8.60 | явное открытие вкладки показывает сайдбар в полном экране; страница показывает только значки Планировщика/Офиса (Fixed) и закреплённые чаты (Flexible) в правой панели, без названий типов; кнопка добавления виджета (`AddWidgetsPopup`) на проде недостижима (нет ни одного Configurable-виджета), описывать её не нужно |
 | Три состояния вкладки виджета | - | - | plan | - | отложено |
 | Вкладки воркбенча на аккаунт | getting-started/learn-the-basics | getting-started/learn-the-basics | partial | 0.8.60 | закрепление и закрытие вкладок страница не описывает |
-| Видимость приложений и меню выбора воркспейса | advanced-settings/main-menu | - | no-en | 0.8.60 | |
+| Видимость приложений и меню выбора воркспейса | advanced-settings/main-menu | - | stale | 0.8.60 | при смене воркспейса закрывается панель объекта предыдущего воркспейса, включая задачи кастомного типа |
 | "Client statistics" (ServerManager) | - | - | plan | - | отложено |
 | Расширенный Help & Support | advanced-settings/main-menu | - | no-en | 0.8.60 | |
 | Intabia-акцентные темы | - | - | plan | - | отложено |

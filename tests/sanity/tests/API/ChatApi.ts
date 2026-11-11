@@ -41,6 +41,7 @@ const directMessageClass = 'chunter:class:DirectMessage' as Ref<Class<Doc>>
 const channelClass = 'chunter:class:Channel' as Ref<Class<Doc>>
 const reactionClass = 'activity:class:Reaction' as Ref<Class<Doc>>
 const personClass = 'contact:class:Person' as Ref<Class<Doc>>
+const personSpaceClass = 'contact:class:PersonSpace' as Ref<Class<Doc>>
 const docNotifyContextClass = 'notification:class:DocNotifyContext' as Ref<Class<Doc>>
 const readStateClass = 'notification:class:ReadState' as Ref<Class<Doc>>
 const savedMessageClass = 'activity:class:SavedMessage' as Ref<Class<Doc>>
@@ -82,6 +83,11 @@ export class ChatMember {
 
   /** The document the "New channel" dialog creates. */
   async createChannel (name: string, members: AccountUuid[]): Promise<ChannelDoc> {
+    await test.step('ChatApi.awaitPersonalSpace', async () => {
+      await poll(
+        async () => (await this.client.findOne(personSpaceClass, { account: this.account } as any)) !== undefined
+      )
+    })
     await this.client.createDoc(channelClass, spaceSpace, {
       name,
       description: '',
