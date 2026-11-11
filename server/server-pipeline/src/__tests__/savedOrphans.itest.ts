@@ -309,24 +309,44 @@ describe('saved messages and attachments follow their target', () => {
     const owner = system()
     const issues: Ref<Issue>[] = []
     for (let n = 0; n < 5; n++) {
-      issues.push(await owner.addCollection(tracker.class.Issue, core.space.Workspace, tracker.ids.NoParent, tracker.class.Issue, 'subIssues', {
-        title: `View ordering ${n}`,
-        identifier: `VIEW-${n}`,
-        number: n,
-        rank: String(n),
-        status: 'test-status',
-        attachedTo: tracker.ids.NoParent,
-        parents: [],
-        assignee: null,
-        priority: 0
-      } as any))
+      issues.push(
+        await owner.addCollection(
+          tracker.class.Issue,
+          core.space.Workspace,
+          tracker.ids.NoParent,
+          tracker.class.Issue,
+          'subIssues',
+          {
+            title: `View ordering ${n}`,
+            identifier: `VIEW-${n}`,
+            number: n,
+            rank: String(n),
+            status: 'test-status',
+            attachedTo: tracker.ids.NoParent,
+            parents: [],
+            assignee: null,
+            priority: 0
+          } as any
+        )
+      )
     }
     const a = clientOf(alice)
     const b = clientOf(bob)
-    const createView = async (client: TxOperations, issue: Ref<Issue>, time: number): Promise<Ref<IssueViewPreference>> =>
-      await owner.createDoc(tracker.class.IssueViewPreference, core.space.Workspace, {
-        attachedTo: issue
-      }, undefined, time, client.user)
+    const createView = async (
+      client: TxOperations,
+      issue: Ref<Issue>,
+      time: number
+    ): Promise<Ref<IssueViewPreference>> =>
+      await owner.createDoc(
+        tracker.class.IssueViewPreference,
+        core.space.Workspace,
+        {
+          attachedTo: issue
+        },
+        undefined,
+        time,
+        client.user
+      )
     const aFirst = await createView(a, issues[4], 100)
     await createView(a, issues[3], 200)
     await createView(b, issues[0], 300)
@@ -334,9 +354,14 @@ describe('saved messages and attachments follow their target', () => {
 
     const ordered = async (client: TxOperations, direction: SortingOrder, limit?: number): Promise<Ref<Issue>[]> => {
       const views = await client.findAll(tracker.class.IssueViewPreference, {})
-      const result = await client.findAll(tracker.class.Issue, { _id: { $in: issues } }, {
-        sort: issueViewSort(views, direction), limit
-      })
+      const result = await client.findAll(
+        tracker.class.Issue,
+        { _id: { $in: issues } },
+        {
+          sort: issueViewSort(views, direction),
+          limit
+        }
+      )
       return result.map((issue) => issue._id)
     }
     expect((await a.findAll(tracker.class.IssueViewPreference, {})).map((v) => v._id)).not.toContain(bLast)
@@ -350,9 +375,18 @@ describe('saved messages and attachments follow their target', () => {
       ...(await a.findAll(tracker.class.IssueViewPreference, {})),
       ...Array.from({ length: 70000 }, (_, n) => ({ attachedTo: `other-project-${n}` as Ref<Issue>, modifiedOn: n }))
     ]
-    expect((await a.findAll(tracker.class.Issue, { _id: { $in: issues } }, {
-      sort: issueViewSort(largeHistory, SortingOrder.Descending), limit: 1
-    })).map((issue) => issue._id)).toEqual([issues[3]])
+    expect(
+      (
+        await a.findAll(
+          tracker.class.Issue,
+          { _id: { $in: issues } },
+          {
+            sort: issueViewSort(largeHistory, SortingOrder.Descending),
+            limit: 1
+          }
+        )
+      ).map((issue) => issue._id)
+    ).toEqual([issues[3]])
 
     await a.updateDoc(tracker.class.IssueViewPreference, core.space.Workspace, aFirst, {})
     expect(await ordered(a, SortingOrder.Descending, 1)).toEqual([issues[4]])
@@ -367,7 +401,11 @@ describe('saved messages and attachments follow their target', () => {
 
     const unchanged = await owner.findOne(tracker.class.Issue, { _id: issues[2] })
     setCurrentAccount(alice)
-    await Promise.all(Array.from({ length: 5 }, async () => { await recordIssueView(a, issues[2]) }))
+    await Promise.all(
+      Array.from({ length: 5 }, async () => {
+        await recordIssueView(a, issues[2])
+      })
+    )
     expect(await a.findAll(tracker.class.IssueViewPreference, { attachedTo: issues[2] })).toHaveLength(1)
     expect((await owner.findOne(tracker.class.Issue, { _id: issues[2] }))?.modifiedOn).toBe(unchanged?.modifiedOn)
     expect(await ordered(a, SortingOrder.Descending, 1)).toEqual([issues[2]])
@@ -396,8 +434,14 @@ describe('saved messages and attachments follow their target', () => {
       identifier: 'VC',
       sequence: 0
     } as any)
-    const child = await owner.addCollection(tracker.class.Issue, project, tracker.ids.NoParent, tracker.class.Issue,
-      'subIssues', { title: 'Cascade views', identifier: 'VC-1', rank: '1', number: 1, parents: [] } as any)
+    const child = await owner.addCollection(
+      tracker.class.Issue,
+      project,
+      tracker.ids.NoParent,
+      tracker.class.Issue,
+      'subIssues',
+      { title: 'Cascade views', identifier: 'VC-1', rank: '1', number: 1, parents: [] } as any
+    )
     await createView(a, child, 700)
     await createView(b, child, 800)
     expect(await owner.findAll(tracker.class.IssueViewPreference, { attachedTo: child })).toHaveLength(2)

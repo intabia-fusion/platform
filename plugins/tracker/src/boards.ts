@@ -340,7 +340,8 @@ export function issueViewSort (
     _id: {
       order: SortingOrder.Ascending,
       default: times.size,
-      cases: [...times].sort(([a, at], [b, bt]) => at === bt ? a.localeCompare(b) : (at - bt) * direction)
+      cases: [...times]
+        .sort(([a, at], [b, bt]) => (at === bt ? a.localeCompare(b) : (at - bt) * direction))
         .map(([query], index) => ({ query, index }))
     },
     identifier: SortingOrder.Ascending

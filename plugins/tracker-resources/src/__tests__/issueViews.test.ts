@@ -13,7 +13,15 @@
 // limitations under the License.
 //
 
-import core, { setCurrentAccount, AccountRole, type Account, type AccountUuid, type PersonId, type Ref, type TxOperations } from '@hcengineering/core'
+import core, {
+  setCurrentAccount,
+  AccountRole,
+  type Account,
+  type AccountUuid,
+  type PersonId,
+  type Ref,
+  type TxOperations
+} from '@hcengineering/core'
 import tracker, { recordIssueView, type Issue } from '@hcengineering/tracker'
 
 const account: Account = {
@@ -42,8 +50,12 @@ describe('recording issue openings', () => {
     await recordIssueView(client as unknown as TxOperations, issue)
     expect(client.apply).toHaveBeenCalledWith('issue-view:alice:issue-1')
     expect(op.match).toHaveBeenCalledWith(tracker.class.Issue, { _id: issue })
-    expect(op.createDoc).toHaveBeenCalledWith(tracker.class.IssueViewPreference, core.space.Workspace,
-      { attachedTo: issue }, 'issue-view:alice:issue-1')
+    expect(op.createDoc).toHaveBeenCalledWith(
+      tracker.class.IssueViewPreference,
+      core.space.Workspace,
+      { attachedTo: issue },
+      'issue-view:alice:issue-1'
+    )
     expect(op.updateDoc).not.toHaveBeenCalled()
   })
 
@@ -53,20 +65,29 @@ describe('recording issue openings', () => {
     const second = operation()
     const client = {
       findOne: jest.fn().mockResolvedValueOnce(undefined).mockResolvedValueOnce({
-        _id: 'issue-view:alice:issue-1', space: core.space.Workspace, modifiedOn: 1
+        _id: 'issue-view:alice:issue-1',
+        space: core.space.Workspace,
+        modifiedOn: 1
       }),
       apply: jest.fn().mockReturnValueOnce(first).mockReturnValueOnce(second)
     }
     await recordIssueView(client as unknown as TxOperations, issue)
-    expect(second.updateDoc).toHaveBeenCalledWith(tracker.class.IssueViewPreference, core.space.Workspace,
-      'issue-view:alice:issue-1', {})
+    expect(second.updateDoc).toHaveBeenCalledWith(
+      tracker.class.IssueViewPreference,
+      core.space.Workspace,
+      'issue-view:alice:issue-1',
+      {}
+    )
     expect(second.createDoc).not.toHaveBeenCalled()
   })
 
   it('guards updates against removal and stops after two conflicts', async () => {
     const op = operation()
     op.commit.mockResolvedValue({ result: false })
-    const client = { findOne: jest.fn(async () => ({ modifiedOn: 42, space: core.space.Workspace })), apply: jest.fn(() => op) }
+    const client = {
+      findOne: jest.fn(async () => ({ modifiedOn: 42, space: core.space.Workspace })),
+      apply: jest.fn(() => op)
+    }
     await recordIssueView(client as unknown as TxOperations, issue)
     expect(op.match).toHaveBeenCalledWith(tracker.class.IssueViewPreference, { _id: 'issue-view:alice:issue-1' })
     expect(op.commit).toHaveBeenCalledTimes(2)

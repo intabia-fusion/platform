@@ -231,10 +231,15 @@
   let viewsReady = false
   $: isViewOrder = board !== undefined && orderBy?.[0] === lastViewedOrder
   $: if (isViewOrder) {
-    viewsQuery.query(tracker.class.IssueViewPreference, {}, (result) => {
-      views = result
-      viewsReady = true
-    }, { projection: { attachedTo: 1, modifiedOn: 1 } })
+    viewsQuery.query(
+      tracker.class.IssueViewPreference,
+      {},
+      (result) => {
+        views = result
+        viewsReady = true
+      },
+      { projection: { attachedTo: 1, modifiedOn: 1 } }
+    )
   } else {
     viewsQuery.unsubscribe()
     viewsReady = false

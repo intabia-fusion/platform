@@ -174,13 +174,18 @@ describe('PostgreSQL Integration Tests (Real Database)', () => {
     it('sorts a large id history before LIMIT and keeps unseen tasks last', async () => {
       const ids: Ref<Task>[] = []
       for (const name of ['oldest', 'newest', 'unseen']) {
-        ids.push(await operations.createDoc(taskPlugin.class.Task, '' as Ref<Space>, {
-          name,
-          description: '',
-          rate: 0
-        }))
+        ids.push(
+          await operations.createDoc(taskPlugin.class.Task, '' as Ref<Space>, {
+            name,
+            description: '',
+            rate: 0
+          })
+        )
       }
-      const cases = Array.from({ length: 70000 }, (_, index) => ({ query: `unrelated-${index}`, index: index + 1 }))
+      const cases = Array.from({ length: 70000 }, (_, index) => ({
+        query: `unrelated-${index}` as Ref<Task>,
+        index: index + 1
+      }))
       cases.unshift({ query: ids[0], index: 0 })
       cases.push({ query: ids[1], index: 70001 }, { query: ids[0], index: 99999 })
       for (const [order, expected] of [

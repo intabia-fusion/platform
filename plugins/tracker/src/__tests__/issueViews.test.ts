@@ -38,11 +38,10 @@ describe('personal issue view ordering', () => {
   })
 
   it('uses the latest duplicate, stable ties and ignores invalid dates', () => {
-    const sort = issueViewSort([
-      ...views,
-      { attachedTo: id('a'), modifiedOn: 300 },
-      { attachedTo: id('bad'), modifiedOn: NaN }
-    ], SortingOrder.Descending)
+    const sort = issueViewSort(
+      [...views, { attachedTo: id('a'), modifiedOn: 300 }, { attachedTo: id('bad'), modifiedOn: NaN }],
+      SortingOrder.Descending
+    )
     expect(sort._id).toEqual({
       order: SortingOrder.Ascending,
       default: 3,
@@ -52,7 +51,9 @@ describe('personal issue view ordering', () => {
 
   it('supports an account without views', () => {
     expect(issueViewSort([], SortingOrder.Descending)._id).toEqual({
-      order: SortingOrder.Ascending, default: 0, cases: []
+      order: SortingOrder.Ascending,
+      default: 0,
+      cases: []
     })
   })
 })

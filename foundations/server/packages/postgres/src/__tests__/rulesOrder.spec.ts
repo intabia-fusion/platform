@@ -81,10 +81,18 @@ describe('ORDER BY sorting rules', () => {
     const cases = Array.from({ length: 70000 }, (_, index) => ({ query: `issue-${index}`, index }))
     // Preserve the first match when an id is repeated, including special JSON object keys.
     cases.push({ query: 'issue-0', index: 99999 }, { query: '__proto__', index: 70000 })
-    const sql = adapter.buildOrder(vars(values), 'tracker:class:Issue', 'tracker_doc', {
-      _id: { order, cases }
-    }, [])
-    expect(sql).toBe(`ORDER BY ($1::text::jsonb ->> tracker_doc."_id")::numeric ${order === 1 ? 'ASC' : 'DESC'} NULLS LAST`)
+    const sql = adapter.buildOrder(
+      vars(values),
+      'tracker:class:Issue',
+      'tracker_doc',
+      {
+        _id: { order, cases }
+      },
+      []
+    )
+    expect(sql).toBe(
+      `ORDER BY ($1::text::jsonb ->> tracker_doc."_id")::numeric ${order === 1 ? 'ASC' : 'DESC'} NULLS LAST`
+    )
     expect(values).toHaveLength(1)
     const ranks = JSON.parse(values[0])
     expect(ranks['issue-0']).toBe(0)

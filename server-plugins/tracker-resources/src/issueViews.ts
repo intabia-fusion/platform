@@ -49,9 +49,14 @@ export async function OnIssueViewsChanged (txes: Tx[], control: TriggerControl):
       _class: tracker.class.IssueViewPreference,
       _id: { $in: [...changed] }
     })
-    const alive = await control.findAll(control.ctx, tracker.class.Issue, {
-      _id: { $in: views.map((view) => view.attachedTo) }
-    }, { projection: { _id: 1 } })
+    const alive = await control.findAll(
+      control.ctx,
+      tracker.class.Issue,
+      {
+        _id: { $in: views.map((view) => view.attachedTo) }
+      },
+      { projection: { _id: 1 } }
+    )
     const ids = new Set(alive.map((issue) => issue._id))
     for (const view of views) {
       if (!ids.has(view.attachedTo) && !removed.has(view.attachedTo)) {

@@ -28,9 +28,14 @@ export async function recordIssueView (client: TxOperations, issue: Ref<Issue>):
     operations.match(tracker.class.Issue, { _id: issue })
     if (before === undefined) {
       operations.notMatch(tracker.class.IssueViewPreference, { _id: id })
-      await operations.createDoc(tracker.class.IssueViewPreference, core.space.Workspace, {
-        attachedTo: issue
-      }, id)
+      await operations.createDoc(
+        tracker.class.IssueViewPreference,
+        core.space.Workspace,
+        {
+          attachedTo: issue
+        },
+        id
+      )
     } else {
       operations.match(tracker.class.IssueViewPreference, { _id: id })
       await operations.updateDoc(tracker.class.IssueViewPreference, before.space, id, {})

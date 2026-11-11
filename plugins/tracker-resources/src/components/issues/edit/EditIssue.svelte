@@ -126,7 +126,9 @@
           title = issue.title
           if (viewedId !== issue._id) {
             viewedId = issue._id
-            void recordIssueView(client, issue._id).catch((err) => { console.error('Recording issue view failed', err) })
+            void recordIssueView(client, issue._id).catch((err) => {
+              console.error('Recording issue view failed', err)
+            })
           }
         }
       },

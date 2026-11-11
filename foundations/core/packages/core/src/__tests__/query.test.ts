@@ -73,11 +73,15 @@ describe('resultSort', () => {
     let reads = 0
     const count = 70000
     const cases = Array.from({ length: count }, (_, index) => ({
-      get query (): string { reads++; return `issue-${index}` },
+      get query (): string {
+        reads++
+        return `issue-${index}`
+      },
       index
     }))
     const result: any[] = Array.from({ length: 500 }, (_, i) => ({
-      _id: `issue-${count - 1 - i}`, _class: core.class.Space
+      _id: `issue-${count - 1 - i}`,
+      _class: core.class.Space
     }))
     result.unshift({ _id: 'unseen', _class: core.class.Space })
     resultSort(result, { _id: { order, cases } }, core.class.Space, hierarchy, {} as any)

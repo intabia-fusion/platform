@@ -1232,8 +1232,11 @@ abstract class PostgresAdapterBase implements DbAdapter {
     // Personal history can name more ids than PostgreSQL's bind-parameter limit. A JSON
     // rank map keeps a large id order in one parameter, with the same first-match semantics
     // as CASE and a missing id remaining NULL. Other fields/selectors keep the existing path.
-    if (key === '_id' && rules.cases.length > 64 && rules.cases.every((rule) =>
-      rule.query !== null && rule.query !== undefined && typeof rule.query !== 'object')) {
+    if (
+      key === '_id' &&
+      rules.cases.length > 64 &&
+      rules.cases.every((rule) => rule.query !== null && rule.query !== undefined && typeof rule.query !== 'object')
+    ) {
       const ranks = new Map<string, number>()
       for (const rule of rules.cases) {
         const id = String(orderValue(rule.query))
