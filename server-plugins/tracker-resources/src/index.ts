@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
+import { OnIssueViewsChanged } from './issueViews'
 import core, {
   concatLink,
   Doc,
@@ -554,6 +555,7 @@ export default async () => ({
   trigger: {
     OnIssueUpdate,
     OnComponentRemove,
-    OnProjectRemove
+    OnProjectRemove,
+    OnIssueViewsChanged
   }
 })

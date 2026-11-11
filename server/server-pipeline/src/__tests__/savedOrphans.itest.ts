@@ -18,6 +18,8 @@
 
 import activity, { type ActivityMessage, type SavedMessage } from '@hcengineering/activity'
 import attachment, { type Attachment, type SavedAttachments } from '@hcengineering/attachment'
+import tracker, { issueViewSort, recordIssueView, type Issue, type IssueViewPreference } from '@hcengineering/tracker'
+import { serverTrackerId } from '@hcengineering/server-tracker'
 import chunter, { type Channel, type ChatMessage, type ThreadMessage } from '@hcengineering/chunter'
 import core, {
   type Account,
@@ -30,6 +32,8 @@ import core, {
   type PersonId,
   type Ref,
   TxOperations,
+  SortingOrder,
+  setCurrentAccount,
   type WorkspaceIds,
   type WorkspaceUuid
 } from '@hcengineering/core'
@@ -131,6 +135,7 @@ describe('saved messages and attachments follow their target', () => {
     addLocation(serverActivityId, async () => require('@hcengineering/server-activity-resources'))
     addLocation(serverAttachmentId, async () => require('@hcengineering/server-attachment-resources'))
     addLocation(serverChunterId, async () => require('@hcengineering/server-chunter-resources'))
+    addLocation(serverTrackerId, async () => require('@hcengineering/server-tracker-resources'))
 
     pipeline = await getServerPipeline(ctx, buildModel().getTxes(), dbUrl, wsIds, createDummyStorageAdapter())
     // Preferences live in the workspace space; a workspace created by the service has it from its init.
@@ -298,5 +303,105 @@ describe('saved messages and attachments follow their target', () => {
     for (const target of [message, reply, file]) {
       expect(await savedOf(target)).toHaveLength(1)
     }
+  })
+
+  it('sorts by each account views before LIMIT and removes all views with the issue', async () => {
+    const owner = system()
+    const issues: Ref<Issue>[] = []
+    for (let n = 0; n < 5; n++) {
+      issues.push(await owner.addCollection(tracker.class.Issue, core.space.Workspace, tracker.ids.NoParent, tracker.class.Issue, 'subIssues', {
+        title: `View ordering ${n}`,
+        identifier: `VIEW-${n}`,
+        number: n,
+        rank: String(n),
+        status: 'test-status',
+        attachedTo: tracker.ids.NoParent,
+        parents: [],
+        assignee: null,
+        priority: 0
+      } as any))
+    }
+    const a = clientOf(alice)
+    const b = clientOf(bob)
+    const createView = async (client: TxOperations, issue: Ref<Issue>, time: number): Promise<Ref<IssueViewPreference>> =>
+      await owner.createDoc(tracker.class.IssueViewPreference, core.space.Workspace, {
+        attachedTo: issue
+      }, undefined, time, client.user)
+    const aFirst = await createView(a, issues[4], 100)
+    await createView(a, issues[3], 200)
+    await createView(b, issues[0], 300)
+    const bLast = await createView(b, issues[4], 400)
+
+    const ordered = async (client: TxOperations, direction: SortingOrder, limit?: number): Promise<Ref<Issue>[]> => {
+      const views = await client.findAll(tracker.class.IssueViewPreference, {})
+      const result = await client.findAll(tracker.class.Issue, { _id: { $in: issues } }, {
+        sort: issueViewSort(views, direction), limit
+      })
+      return result.map((issue) => issue._id)
+    }
+    expect((await a.findAll(tracker.class.IssueViewPreference, {})).map((v) => v._id)).not.toContain(bLast)
+    expect(await ordered(a, SortingOrder.Descending, 1)).toEqual([issues[3]])
+    expect(await ordered(a, SortingOrder.Ascending, 1)).toEqual([issues[4]])
+    expect(await ordered(b, SortingOrder.Descending, 1)).toEqual([issues[4]])
+    expect(await ordered(b, SortingOrder.Ascending, 1)).toEqual([issues[0]])
+    expect(await ordered(a, SortingOrder.Descending)).toEqual([issues[3], issues[4], ...issues.slice(0, 3)])
+    expect(await ordered(a, SortingOrder.Ascending)).toEqual([issues[4], issues[3], ...issues.slice(0, 3)])
+    const largeHistory = [
+      ...(await a.findAll(tracker.class.IssueViewPreference, {})),
+      ...Array.from({ length: 70000 }, (_, n) => ({ attachedTo: `other-project-${n}` as Ref<Issue>, modifiedOn: n }))
+    ]
+    expect((await a.findAll(tracker.class.Issue, { _id: { $in: issues } }, {
+      sort: issueViewSort(largeHistory, SortingOrder.Descending), limit: 1
+    })).map((issue) => issue._id)).toEqual([issues[3]])
+
+    await a.updateDoc(tracker.class.IssueViewPreference, core.space.Workspace, aFirst, {})
+    expect(await ordered(a, SortingOrder.Descending, 1)).toEqual([issues[4]])
+    expect(await ordered(b, SortingOrder.Ascending, 1)).toEqual([issues[0]])
+    await owner.removeDoc(tracker.class.Issue, core.space.Workspace, issues[4])
+    expect(await owner.findAll(tracker.class.IssueViewPreference, { attachedTo: issues[4] })).toHaveLength(0)
+    // Even a client bypassing conditional recording cannot leave a late orphan behind.
+    await createView(a, issues[4], 600)
+    expect(await owner.findAll(tracker.class.IssueViewPreference, { attachedTo: issues[4] })).toHaveLength(0)
+    // Archive/other metadata is not deletion: records of surviving issues stay intact.
+    expect(await owner.findAll(tracker.class.IssueViewPreference, { attachedTo: issues[3] })).toHaveLength(1)
+
+    const unchanged = await owner.findOne(tracker.class.Issue, { _id: issues[2] })
+    setCurrentAccount(alice)
+    await Promise.all(Array.from({ length: 5 }, async () => { await recordIssueView(a, issues[2]) }))
+    expect(await a.findAll(tracker.class.IssueViewPreference, { attachedTo: issues[2] })).toHaveLength(1)
+    expect((await owner.findOne(tracker.class.Issue, { _id: issues[2] }))?.modifiedOn).toBe(unchanged?.modifiedOn)
+    expect(await ordered(a, SortingOrder.Descending, 1)).toEqual([issues[2]])
+
+    const lowLevel = pipeline.context.lowLevelStorage
+    if (lowLevel === undefined) throw new Error('no low level storage')
+    const live = (await a.findAll(tracker.class.IssueViewPreference, { attachedTo: issues[2] }))[0]
+    const orphanView: IssueViewPreference = { ...live, _id: generateId(), attachedTo: issues[4] }
+    await lowLevel.upload(ctx, DOMAIN_PREFERENCE, [orphanView])
+    const migration: any = {
+      hierarchy: pipeline.context.hierarchy,
+      find: (domain: any, query: any, options: any) => lowLevel.rawFindAll(domain, query, options),
+      traverse: (domain: any, query: any, options: any) => lowLevel.traverse(domain, query, options),
+      deleteMany: (domain: any, query: any) => lowLevel.rawDeleteMany(domain, query)
+    }
+    await removeOrphanPreferences(migration, tracker.class.IssueViewPreference, tracker.class.Issue)
+    expect(await owner.findAll(tracker.class.IssueViewPreference, { attachedTo: issues[4] })).toHaveLength(0)
+    expect(await owner.findAll(tracker.class.IssueViewPreference, { attachedTo: issues[2] })).toHaveLength(1)
+
+    const project = await owner.createDoc(tracker.class.Project, core.space.Space, {
+      name: 'View cleanup project',
+      description: '',
+      private: false,
+      archived: false,
+      members: [alice.uuid, bob.uuid],
+      identifier: 'VC',
+      sequence: 0
+    } as any)
+    const child = await owner.addCollection(tracker.class.Issue, project, tracker.ids.NoParent, tracker.class.Issue,
+      'subIssues', { title: 'Cascade views', identifier: 'VC-1', rank: '1', number: 1, parents: [] } as any)
+    await createView(a, child, 700)
+    await createView(b, child, 800)
+    expect(await owner.findAll(tracker.class.IssueViewPreference, { attachedTo: child })).toHaveLength(2)
+    await owner.removeDoc(tracker.class.Project, core.space.Space, project)
+    expect(await owner.findAll(tracker.class.IssueViewPreference, { attachedTo: child })).toHaveLength(0)
   })
 })

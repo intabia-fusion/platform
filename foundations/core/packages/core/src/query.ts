@@ -76,6 +76,18 @@ export function resultSort<T extends Doc> (
   modelDb: MemDb
 ): void {
   const enums = getEnums(_class, sortOptions, hierarchy, modelDb)
+  // A personal history order can contain thousands of ids. Compile it once per sort,
+  // rather than walking every case for both operands of every comparison.
+  const idOrder = sortOptions._id
+  let idRanks: Map<string, string | number> | undefined
+  if (typeof idOrder === 'object' && idOrder.cases.length > 64 &&
+    idOrder.cases.every((rule) => typeof rule.query === 'string')) {
+    idRanks = new Map()
+    for (const rule of idOrder.cases) {
+      const id = rule.query as string
+      if (!idRanks.has(id)) idRanks.set(id, rule.index)
+    }
+  }
   const sortFunc = (a: any, b: any): number => {
     for (const key in sortOptions) {
       const order = sortOptions[key]
@@ -84,7 +96,9 @@ export function resultSort<T extends Doc> (
         _enum !== undefined ? getEnumValue(key, _class, hierarchy, a, _enum) : getValue(key, a, _class, hierarchy)
       const bValue =
         _enum !== undefined ? getEnumValue(key, _class, hierarchy, b, _enum) : getValue(key, b, _class, hierarchy)
-      const result = getSortingResult(aValue, bValue, order, key.startsWith('$lookup.'))
+      const result = key === '_id' && idRanks !== undefined && typeof order === 'object'
+        ? getSortingResult(idRanks.get(aValue), idRanks.get(bValue), order.order)
+        : getSortingResult(aValue, bValue, order, key.startsWith('$lookup.'))
       if (result !== 0) return result
     }
     return 0

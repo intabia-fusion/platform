@@ -19,13 +19,14 @@ import core, {
   type AccountUuid,
   type Doc,
   type Ref,
-  type SortingOrder,
+  SortingOrder,
+  type SortingQuery,
   type Status,
   type StatusCategory
 } from '@hcengineering/core'
 import task from '@hcengineering/task'
 import type { Preference } from '@hcengineering/preference'
-import type { Project } from './index'
+import type { Issue, Project } from './index'
 
 /**
  * @public
@@ -161,7 +162,7 @@ export interface Board extends Doc {
   density: CardDensity
   // Fields the cards show; not set on boards made before the setting: every field
   cardFields?: CardField[]
-  // Card order: a field of the kanban sorting and its direction; not set: the order of the view options
+  // Card order: a kanban field or lastViewedOrder and its direction; unset: the view options order
   orderBy?: [string, SortingOrder]
 }
 
@@ -314,4 +315,34 @@ export function pickRuleSamples (
     if (ids !== undefined) above.push(ids)
   }
   return result
+}
+
+/** @public */
+export const lastViewedOrder = 'lastViewedOn'
+
+/** One last opening per account and issue, stored in the private preference domain. @public */
+export interface IssueViewPreference extends Preference {
+  attachedTo: Ref<Issue>
+}
+
+/** Database sorting rules: missing views stay last in both directions, before any query limit. @public */
+export function issueViewSort (
+  views: Pick<IssueViewPreference, 'attachedTo' | 'modifiedOn'>[],
+  direction: SortingOrder
+): SortingQuery<Issue> {
+  const times = new Map<Ref<Issue>, number>()
+  for (const view of views) {
+    if (Number.isFinite(view.modifiedOn)) {
+      times.set(view.attachedTo, Math.max(times.get(view.attachedTo) ?? 0, view.modifiedOn))
+    }
+  }
+  return {
+    _id: {
+      order: SortingOrder.Ascending,
+      default: times.size,
+      cases: [...times].sort(([a, at], [b, bt]) => at === bt ? a.localeCompare(b) : (at - bt) * direction)
+        .map(([query], index) => ({ query, index }))
+    },
+    identifier: SortingOrder.Ascending
+  }
 }

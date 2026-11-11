@@ -1,6 +1,7 @@
 /* eslint-disable import/first */
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -168,6 +169,32 @@ describe('PostgreSQL Integration Tests (Real Database)', () => {
 
     operations = new TxOperations(client, core.account.System)
   }
+
+  describe('Personal history sorting', () => {
+    it('sorts a large id history before LIMIT and keeps unseen tasks last', async () => {
+      const ids: Ref<Task>[] = []
+      for (const name of ['oldest', 'newest', 'unseen']) {
+        ids.push(await operations.createDoc(taskPlugin.class.Task, '' as Ref<Space>, {
+          name,
+          description: '',
+          rate: 0
+        }))
+      }
+      const cases = Array.from({ length: 70000 }, (_, index) => ({ query: `unrelated-${index}`, index: index + 1 }))
+      cases.unshift({ query: ids[0], index: 0 })
+      cases.push({ query: ids[1], index: 70001 }, { query: ids[0], index: 99999 })
+      for (const [order, expected] of [
+        [SortingOrder.Ascending, [ids[0], ids[1], ids[2]]],
+        [SortingOrder.Descending, [ids[1], ids[0], ids[2]]]
+      ] as const) {
+        const sort = { _id: { order, cases } }
+        const all = await client.findAll<Task>(taskPlugin.class.Task, {}, { sort })
+        expect(all.map((task) => task._id)).toEqual(expected)
+        const first = await client.findAll<Task>(taskPlugin.class.Task, {}, { sort, limit: 1 })
+        expect(first.map((task) => task._id)).toEqual([expected[0]])
+      }
+    })
+  })
 
   describe('Basic CRUD Operations', () => {
     it('should create a document in real database', async () => {

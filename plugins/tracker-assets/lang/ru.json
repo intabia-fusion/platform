@@ -509,6 +509,8 @@
     "BoardHideDoneOlder": "Скрывать выполненные старше",
     "BoardHideDoneOlderHint": "Колонки категории «Выполнено»",
     "BoardHideDoneValue": "2 недели",
+    "LastViewedNewest": "Последний просмотр: сначала новые",
+    "LastViewedOldest": "Последний просмотр: сначала старые",
     "BoardCardOrder": "Порядок карточек",
     "BoardEditorsHint": "Остальные могут пользоваться доской или создать свою",
     "WipLimits": "WIP-лимиты",

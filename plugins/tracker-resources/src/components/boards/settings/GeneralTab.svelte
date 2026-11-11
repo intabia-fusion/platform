@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { notEmpty, type Data, type Ref } from '@hcengineering/core'
+  import { notEmpty, SortingOrder, type Data, type Ref } from '@hcengineering/core'
   import { getClient, isDisabled, SpacesMultiPopup } from '@hcengineering/presentation'
-  import type { Board, Issue, Project } from '@hcengineering/tracker'
+  import { lastViewedOrder, type Board, type Issue, type Project } from '@hcengineering/tracker'
   import ui, { Icon, Label, showPopup } from '@hcengineering/ui'
   import { Button, Dropdown, IconButton, SettingRow, TextArea, TextInput } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
@@ -39,10 +39,20 @@
       .getModel()
       .findAllSync(view.class.Viewlet, { attachTo: tracker.class.Issue, descriptor: tracker.viewlet.Kanban })
       .find((v) => v.variant === undefined)?.viewOptions?.orderBy ?? []
-  const cardOrderItems = cardOrders.map(([key]) => ({
-    id: key,
-    label: key === 'rank' ? tracker.string.Manual : getKeyLabel(client, tracker.class.Issue, key, undefined)
-  }))
+  const orderOptions = [
+    ...cardOrders.map((order) => ({
+      id: `${order[0]}:${order[1]}`,
+      order,
+      label: order[0] === 'rank' ? tracker.string.Manual : getKeyLabel(client, tracker.class.Issue, order[0], undefined)
+    })),
+    ...[SortingOrder.Descending, SortingOrder.Ascending].map((direction) => ({
+      id: `${lastViewedOrder}:${direction}`,
+      order: [lastViewedOrder, direction] as [string, SortingOrder],
+      label: direction === SortingOrder.Descending ? tracker.string.LastViewedNewest : tracker.string.LastViewedOldest
+    }))
+  ]
+  const cardOrderItems = orderOptions.map(({ id, label }) => ({ id, label }))
+  $: selectedOrder = board.orderBy ?? cardOrders[0]
 
   let title = board.title
   // An object prop is invalidated on every parent update: take the title only when it changed
@@ -202,10 +212,12 @@
         data-id="boardCardOrder"
         kind="secondary"
         items={cardOrderItems}
-        selected={board.orderBy?.[0] ?? cardOrders[0]?.[0]}
+        selected={selectedOrder === undefined ? undefined : `${selectedOrder[0]}:${selectedOrder[1]}`}
         on:selected={(e) => {
-          const order = cardOrders.find(([key]) => key === e.detail)
-          if (order !== undefined && order[0] !== board.orderBy?.[0]) void onChange({ orderBy: order })
+          const order = orderOptions.find(({ id }) => id === e.detail)?.order
+          if (order !== undefined && (order[0] !== board.orderBy?.[0] || order[1] !== board.orderBy?.[1])) {
+            void onChange({ orderBy: order })
+          }
         }}
       />
     </SettingRow>

@@ -50,10 +50,11 @@ import {
 } from '@hcengineering/task'
 import { AnyComponent, ComponentExtensionId, Location, ResolvedLocation } from '@hcengineering/ui'
 import { Action, ActionCategory, IconProps } from '@hcengineering/view'
-import type { Board, BoardNavigationPreference, BoardPreference } from './boards'
+import type { Board, BoardNavigationPreference, BoardPreference, IssueViewPreference } from './boards'
 
 export * from './analytics'
 export * from './boards'
+export { recordIssueView } from './issueViews'
 export * from './duration'
 export * from './ops'
 
@@ -539,6 +540,7 @@ const pluginState = plugin(trackerId, {
     RelatedIssueTarget: '' as Ref<Class<RelatedIssueTarget>>,
     ProjectTargetPreference: '' as Ref<Class<ProjectTargetPreference>>,
     Board: '' as Ref<Class<Board>>,
+    IssueViewPreference: '' as Ref<Class<IssueViewPreference>>,
     BoardPreference: '' as Ref<Class<BoardPreference>>,
     BoardNavigationPreference: '' as Ref<Class<BoardNavigationPreference>>,
     IssueTaskType: '' as Ref<Class<Issue>>

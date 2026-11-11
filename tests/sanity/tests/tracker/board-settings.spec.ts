@@ -14,7 +14,7 @@
 
 import { createRestClient } from '@hcengineering/api-client'
 import contact from '@hcengineering/contact'
-import core, { generateId, type AccountUuid, type Ref, type TxOperations } from '@hcengineering/core'
+import core, { SortingOrder, generateId, type AccountUuid, type Ref, type TxOperations } from '@hcengineering/core'
 import task from '@hcengineering/task'
 import tracker, { cardDensities, type Board, type IssueStatus, type Project } from '@hcengineering/tracker'
 import { expect, test, type Locator } from '../fixtures'
@@ -306,6 +306,29 @@ test.describe('board settings', () => {
     await expect
       .poll(async () => (await client.findOne(tracker.class.Board, { _id: id }))?.orderBy?.[0])
       .toBe('priority')
+  })
+
+  test('both last viewed orders are saved and restored independently', async ({ page }) => {
+    const board = await client.findOne(tracker.class.Board, { _id: boardId })
+    if (board === undefined) throw new Error('no board')
+    const { _id, _class, space, modifiedOn, modifiedBy, createdOn, createdBy, ...data } = board
+    const id = await client.createDoc(tracker.class.Board, core.space.Workspace, {
+      ...data,
+      title: `${titlePrefix}last-viewed-order`
+    })
+    const boards = new BoardsPage(page)
+    await (await page.goto(boards.boardUrl(id, true, 'general')))?.finished()
+    for (const [label, direction] of [
+      ['Last viewed: newest first', SortingOrder.Descending],
+      ['Last viewed: oldest first', SortingOrder.Ascending]
+    ] as const) {
+      await page.locator('[data-id="boardCardOrder"]').click()
+      await page.locator('div.hulyPopup-container .hulyPopup-row', { hasText: label }).click()
+      await expect.poll(async () => (await client.findOne(tracker.class.Board, { _id: id }))?.orderBy)
+        .toEqual(['lastViewedOn', direction])
+      await page.reload()
+      await expect(page.locator('[data-id="boardCardOrder"]')).toContainText(label)
+    }
   })
 
   test('the description is saved on the board when the field loses focus', async ({ page }) => {

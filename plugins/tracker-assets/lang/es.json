@@ -487,6 +487,8 @@
     "BoardHideDoneOlder": "Ocultar completadas con más de",
     "BoardHideDoneOlderHint": "Columnas de la categoría Hecho",
     "BoardHideDoneValue": "2 semanas",
+    "LastViewedNewest": "Última visualización: más recientes primero",
+    "LastViewedOldest": "Última visualización: más antiguas primero",
     "BoardCardOrder": "Orden de las tarjetas",
     "BoardEditorsHint": "Los demás pueden usar el tablero o crear el suyo",
     "WipLimits": "Límites WIP",

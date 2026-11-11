@@ -487,6 +487,8 @@
     "BoardHideDoneOlder": "Şundan eski tamamlananları gizle",
     "BoardHideDoneOlderHint": "Tamamlandı kategorisindeki sütunlar",
     "BoardHideDoneValue": "2 hafta",
+    "LastViewedNewest": "Son görüntülenme: yeniden eskiye",
+    "LastViewedOldest": "Son görüntülenme: eskiden yeniye",
     "BoardCardOrder": "Kart sırası",
     "BoardEditorsHint": "Diğerleri panoyu kullanabilir veya kendi panolarını oluşturabilir",
     "WipLimits": "WIP limitleri",
