@@ -203,12 +203,6 @@ export class AIControl {
     }
     const { workspace, meetingId } = parsed
 
-    // Transcript/payment limit: skip transcription without error
-    if (this.limitsState?.isTranscriptBlocked(workspace) === true) {
-      this.ctx.info('transcript limit exhausted, skipping transcription', { workspace })
-      return
-    }
-
     // Generate unique blob ID for this chunk
     const blobId = `audio-chunk-${uuid()}`
 

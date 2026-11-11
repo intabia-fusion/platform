@@ -16,6 +16,7 @@
 import { type Sql, type TransactionSql } from 'postgres'
 
 import {
+  type StorageCleanupJob,
   type Data,
   type Version,
   type Person,
@@ -568,6 +569,7 @@ export class PostgresAccountDB implements AccountDB {
   accountEvent: PostgresDbCollection<AccountEvent>
   otp: PostgresDbCollection<OTP>
   invite: PostgresDbCollection<WorkspaceInvite, 'id'>
+  storageCleanup: PostgresDbCollection<StorageCleanupJob, 'id'>
   shortLink: PostgresDbCollection<ShortLink, 'id'>
   mailbox: PostgresDbCollection<Mailbox, 'mailbox'>
   mailboxSecret: PostgresDbCollection<MailboxSecret>
@@ -617,6 +619,12 @@ export class PostgresAccountDB implements AccountDB {
       ns,
       idKey: 'id',
       timestampFields: ['expiresOn'],
+      withRetryClient
+    })
+    this.storageCleanup = new PostgresDbCollection<StorageCleanupJob, 'id'>('storage_cleanup_jobs', client, {
+      ns,
+      idKey: 'id',
+      timestampFields: ['createdOn', 'updatedOn'],
       withRetryClient
     })
     this.shortLink = new PostgresDbCollection<ShortLink, 'id'>('short_links', client, {

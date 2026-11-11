@@ -265,6 +265,20 @@
     "PaymentShowYear": "Show the last year",
     "PaymentRequested": "Invoice / period",
     "PaymentOverdue": "Payment overdue",
-    "PaymentRestricted": "Access restricted: overdue payment"
+    "PaymentRestricted": "Access restricted: overdue payment",
+    "Storage": "Storage",
+    "StorageEligibility": "These objects are not used in any workspace.",
+    "StorageQueued": "Job queued",
+    "StorageRunning": "Job running",
+    "StorageReady": "Calculation ready",
+    "StorageCompleted": "Cleanup completed",
+    "StorageFailed": "The operation failed. Please try again.",
+    "StorageFreed": "Freed",
+    "StorageCanFree": "Can be freed",
+    "StorageObjects": "Objects",
+    "StorageEmpty": "There are no objects to clean up.",
+    "StorageCalculate": "Calculate cleanup",
+    "StorageClean": "Clean up",
+    "StorageConfirmHint": "Deletion is irreversible and requires an administrator confirmation code."
   }
 }

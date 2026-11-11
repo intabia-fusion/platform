@@ -265,6 +265,20 @@
     "PaymentShowYear": "Показать за год",
     "PaymentRequested": "Счет / период",
     "PaymentOverdue": "Оплата просрочена",
-    "PaymentRestricted": "Доступ ограничен: просрочка оплаты"
+    "PaymentRestricted": "Доступ ограничен: просрочка оплаты",
+    "Storage": "Хранилище",
+    "StorageEligibility": "Эти объекты не используются ни в одном пространстве.",
+    "StorageQueued": "Задание в очереди",
+    "StorageRunning": "Задание выполняется",
+    "StorageReady": "Расчет готов",
+    "StorageCompleted": "Очистка завершена",
+    "StorageFailed": "Операция не выполнена. Повторите попытку.",
+    "StorageFreed": "Освобождено",
+    "StorageCanFree": "Можно освободить",
+    "StorageObjects": "Объекты",
+    "StorageEmpty": "Объектов для очистки нет.",
+    "StorageCalculate": "Рассчитать очистку",
+    "StorageClean": "Очистить",
+    "StorageConfirmHint": "Удаление необратимо и требует кода подтверждения администратора."
   }
 }

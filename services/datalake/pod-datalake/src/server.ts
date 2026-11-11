@@ -63,6 +63,7 @@ import { DatalakeImpl } from './datalake/datalake'
 import { Config } from './config'
 import { LimitsState } from './limits'
 import { createWorkspaceCleaner } from './workspace'
+import { createStorageCleaner, StorageCleanup } from './cleanup'
 import { createBucket, createClient, S3Bucket } from './s3'
 import { TemporaryDir } from './tempdir'
 
@@ -135,6 +136,7 @@ export async function createServer (
   const tempDir = new TemporaryDir(ctx, 'datalake-', config.CleanupInterval)
   const limitsState = new LimitsState(ctx, queue)
   const workspaceCleaner = createWorkspaceCleaner(ctx, queue, datalake)
+  const storageCleaner = createStorageCleaner(ctx, queue, new StorageCleanup(db, buckets))
 
   const app = express()
   app.disable('x-powered-by')
@@ -351,6 +353,7 @@ export async function createServer (
     close: () => {
       void limitsState.close()
       void workspaceCleaner.close()
+      void storageCleaner.close()
       void tempDir.close()
     }
   }

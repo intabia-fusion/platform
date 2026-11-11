@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -136,6 +137,13 @@ export class DatalakeImpl implements Datalake {
   }
 
   async delete (ctx: MeasureContext, workspace: WorkspaceUuid, name: string | string[]): Promise<void> {
+    const names = Array.isArray(name) ? name : [name]
+    const blobs = await this.db.execute<Array<{ name: string, size: number }>>(
+      `SELECT b.name, d.size FROM blob.blob b JOIN blob.data d USING (hash, location)
+       WHERE b.workspace = $1 AND b.name = ANY($2) AND b.deleted_at IS NULL`,
+      [workspace, names]
+    )
+    const sizes = new Map(blobs.map((blob) => [blob.name, blob.size]))
     if (Array.isArray(name)) {
       await this.db.deleteBlobList(ctx, { workspace, names: name })
     } else {
@@ -143,7 +151,7 @@ export class DatalakeImpl implements Datalake {
     }
 
     try {
-      const events = Array.isArray(name) ? name.map((n) => blobEvents.deleted(n)) : [blobEvents.deleted(name)]
+      const events = names.map((n) => blobEvents.deleted(n, sizes.get(n)))
       await this.producer.send(ctx, workspace, events)
     } catch (err) {
       ctx.error('failed to send blob deleted event', { workspace, name, err })
@@ -170,106 +178,109 @@ export class DatalakeImpl implements Datalake {
     const { size, contentType, lastModified } = options
     const { location, bucket } = await this.selectStorage(ctx, workspace)
 
-    const blob = await this.db.getBlob(ctx, { workspace, name })
-
     const hash = digestToUUID(sha256)
     const filename = hash
     const etag = hash
 
-    // Check if we have the same blob already
-    if (blob?.hash === hash && blob?.type === contentType) {
-      return { name, size, contentType, lastModified, etag }
-    }
+    let event: Tx | undefined
+    let cacheEntry: CacheEntry | undefined
+    const result = await this.db.withDataLock(ctx, { hash, location }, async (db) => {
+      await this.assertWritableData(db, hash, location, filename)
+      const blob = await db.getBlob(ctx, { workspace, name })
+      // Check if we have the same blob already
+      if (blob?.hash === hash && blob?.type === contentType) {
+        return { name, size, contentType, lastModified, etag }
+      }
 
-    const data = await this.db.getData(ctx, { hash, location })
+      const data = await db.getData(ctx, { hash, location })
 
-    if (data !== null) {
-      // Nothing to upload, use existing blob
-      await this.db.createBlob(ctx, { workspace, name, hash, location })
+      if (data !== null) {
+        // Nothing to upload, use existing blob
+        await db.createBlob(ctx, { workspace, name, hash, location })
 
-      try {
-        const event =
+        event =
           blob != null
             ? blobEvents.updated(name, { contentType, lastModified, size, etag })
             : blobEvents.created(name, { contentType, lastModified, size, etag })
-        await this.producer.send(ctx, workspace, [event])
-      } catch (err) {
-        ctx.error('failed to send blob created event', { workspace, name, err })
-      }
 
-      return { name, size, contentType, lastModified, etag }
-    } else {
-      const putOptions = {
-        contentLength: size,
-        contentType,
-        cacheControl,
-        lastModified
-      }
-
-      let dataToUpload: Readable | Buffer = body
-      let cacheBuffer: Buffer | undefined
-
-      if (this.cache.enabled(size)) {
-        cacheBuffer = await streamToBuffer(body)
-        dataToUpload = cacheBuffer
-      }
-
-      await bucket.put(ctx, filename, dataToUpload, putOptions)
-
-      // put() throws on real failure; a null head here is usually read-after-write lag, so retry.
-      let head = await bucket.head(ctx, filename)
-      for (let attempt = 0; head === null && attempt < 5; attempt++) {
-        await new Promise((resolve) => setTimeout(resolve, 100 * (attempt + 1)))
-        head = await bucket.head(ctx, filename)
-        if (head !== null) {
-          ctx.warn('uploaded blob head succeeded after retry', { workspace, name, attempt: attempt + 1 })
+        return { name, size, contentType, lastModified, etag }
+      } else {
+        const putOptions = {
+          contentLength: size,
+          contentType,
+          cacheControl,
+          lastModified
         }
-      }
 
-      if (head === null) {
-        ctx.error('failed to upload blob: uploaded blob not found', { workspace, name })
-        throw new Error('Failed to upload blob: uploaded blob not found')
-      }
+        let dataToUpload: Readable | Buffer = body
+        let cacheBuffer: Buffer | undefined
 
-      if (head.size !== size) {
-        ctx.error('failed to upload blob: uploaded blob size mismatch', {
-          workspace,
-          name,
-          expected: size,
-          uploaded: head.size
-        })
-        await bucket.delete(ctx, filename)
-        throw new Error(`Failed to upload blob: uploaded blob size mismatch, expected ${size}, got ${head.size}`)
-      }
-
-      await this.db.createBlobData(ctx, { workspace, name, hash, location, filename, size, type: contentType })
-
-      if (cacheBuffer !== undefined) {
-        const entry: CacheEntry = {
-          body: cacheBuffer,
-          bodyLength: cacheBuffer.length,
-          bodyEtag: head.etag,
-          size,
-          etag,
-          name,
-          ...putOptions
+        if (this.cache.enabled(size)) {
+          cacheBuffer = await streamToBuffer(body)
+          dataToUpload = cacheBuffer
         }
-        this.cache.set(hash, entry)
-      }
 
-      try {
-        const event =
+        await bucket.put(ctx, filename, dataToUpload, putOptions)
+
+        // put() throws on real failure; a null head here is usually read-after-write lag, so retry.
+        let head = await bucket.head(ctx, filename)
+        for (let attempt = 0; head === null && attempt < 5; attempt++) {
+          await new Promise((resolve) => setTimeout(resolve, 100 * (attempt + 1)))
+          head = await bucket.head(ctx, filename)
+          if (head !== null) {
+            ctx.warn('uploaded blob head succeeded after retry', { workspace, name, attempt: attempt + 1 })
+          }
+        }
+
+        if (head === null) {
+          ctx.error('failed to upload blob: uploaded blob not found', { workspace, name })
+          throw new Error('Failed to upload blob: uploaded blob not found')
+        }
+
+        if (head.size !== size) {
+          ctx.error('failed to upload blob: uploaded blob size mismatch', {
+            workspace,
+            name,
+            expected: size,
+            uploaded: head.size
+          })
+          await bucket.delete(ctx, filename)
+          throw new Error(`Failed to upload blob: uploaded blob size mismatch, expected ${size}, got ${head.size}`)
+        }
+
+        await db.createBlobData(ctx, { workspace, name, hash, location, filename, size, type: contentType })
+
+        if (cacheBuffer !== undefined) {
+          const entry: CacheEntry = {
+            body: cacheBuffer,
+            bodyLength: cacheBuffer.length,
+            bodyEtag: head.etag,
+            size,
+            etag,
+            name,
+            ...putOptions
+          }
+          cacheEntry = entry
+        }
+
+        event =
           blob != null
             ? blobEvents.updated(name, { contentType, lastModified, size, etag })
             : blobEvents.created(name, { contentType, lastModified, size, etag })
+
+        return { name, size, contentType, lastModified, etag }
+      }
+    })
+    if (cacheEntry !== undefined) this.cache.set(hash, cacheEntry)
+    if (event !== undefined) {
+      try {
         await this.producer.send(ctx, workspace, [event])
       } catch (err) {
-        this.cache.delete(hash)
+        if (cacheEntry !== undefined) this.cache.delete(hash)
         ctx.error('failed to send blob created event', { workspace, name, err })
       }
-
-      return { name, size, contentType, lastModified, etag }
     }
+    return result
   }
 
   async create (
@@ -299,24 +310,47 @@ export class DatalakeImpl implements Datalake {
     const contentType = head.contentType ?? 'application/octet-stream'
     const lastModified = head.lastModified
 
-    const data = await this.db.getData(ctx, { hash, location })
-    if (data !== null) {
-      await this.db.createBlob(ctx, { workspace, name, hash, location })
-    } else {
-      await this.db.createBlobData(ctx, { workspace, name, hash, location, filename, size, type: contentType })
-    }
+    let event: Tx | undefined
+    const result = await this.db.withDataLock(
+      ctx,
+      { hash, location },
+      async (db) => {
+        await this.assertWritableData(db, hash, location, filename)
+        const current = await bucket.head(ctx, filename)
+        if (current?.etag !== head.etag) return null
+        const data = await db.getData(ctx, { hash, location })
+        if (data !== null) {
+          await db.createBlob(ctx, { workspace, name, hash, location })
+        } else {
+          await db.createBlobData(ctx, { workspace, name, hash, location, filename, size, type: contentType })
+        }
 
-    try {
-      const event =
-        data != null
-          ? blobEvents.updated(name, { contentType, lastModified, size, etag: hash })
-          : blobEvents.created(name, { contentType, lastModified, size, etag: hash })
-      await this.producer.send(ctx, workspace, [event])
-    } catch (err) {
-      ctx.error('failed to send blob created event', { workspace, name, err })
-    }
+        event =
+          data != null
+            ? blobEvents.updated(name, { contentType, lastModified, size, etag: hash })
+            : blobEvents.created(name, { contentType, lastModified, size, etag: hash })
 
-    return { name, size, contentType, lastModified, etag: hash }
+        return { name, size, contentType, lastModified, etag: hash }
+      },
+      filename
+    )
+    if (event !== undefined) {
+      try {
+        await this.producer.send(ctx, workspace, [event])
+      } catch (err) {
+        ctx.error('failed to send blob created event', { workspace, name, err })
+      }
+    }
+    return result
+  }
+
+  private async assertWritableData (db: BlobDB, hash: string, location: Location, filename: string): Promise<void> {
+    const deleting = await db.execute(
+      `SELECT 1 FROM blob.cleanup_candidate
+      WHERE location = $2 AND (hash = $1 OR filename = $3) AND state = 'deleting' LIMIT 1`,
+      [hash, location, filename]
+    )
+    if (deleting.length > 0) throw new Error('Storage object cleanup is in progress; retry the upload')
   }
 
   async getMeta (ctx: MeasureContext, workspace: WorkspaceUuid, name: string): Promise<Record<string, any> | null> {

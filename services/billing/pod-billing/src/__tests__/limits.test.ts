@@ -123,6 +123,37 @@ function msg (ref: string, amount = 1): BillingUsageMessage {
 }
 
 describe('LimitsEngine', () => {
+  it('clears stale disk exhaustion after deletion and persists before notifying clients', async () => {
+    tierLimits({ storageLimitGB: 10 })
+    const db = makeDb()
+    await db.upsertLimitState(ctx, { workspace: WS, category: 'disk', used: 16e9, limitValue: 10e9, exhausted: true })
+    collectDatalakeStatsMock.mockResolvedValue({ size: 496622591, count: 4621, byType: [] })
+    const { engine, producer } = makeEngine(db)
+    const observed: any[] = []
+    producer.send.mockImplementation(async (_ctx: any, workspace: WorkspaceUuid, events: any[]) => {
+      for (const event of events) observed.push(await db.getLimitState(ctx, workspace, event.category))
+    })
+    await engine.recomputeWorkspace(ctx, WS)
+    expect(observed).toContainEqual(expect.objectContaining({ category: 'disk', used: 496622591, exhausted: false }))
+    expect(producer.send).toHaveBeenCalledWith(
+      ctx,
+      WS,
+      expect.arrayContaining([expect.objectContaining({ category: 'disk', status: 'ok' })])
+    )
+  })
+
+  it('persists an exhausted delta before notifying clients', async () => {
+    tierLimits({ tokenLimit: 1000, windowMonthLimit: 1000 })
+    const db = makeDb()
+    const { engine, producer } = makeEngine(db)
+    const observed: any[] = []
+    producer.send.mockImplementation(async () => {
+      observed.push(await db.getLimitState(ctx, WS, 'tokens'))
+    })
+    await engine.processUsageDelta(ctx, msg('new-usage', 1001))
+    expect(observed[0]).toMatchObject({ used: 1001, exhausted: true })
+  })
+
   it('ignores duplicate ref', async () => {
     tierLimits({ tokenLimit: 1000, windowMonthLimit: 1000 })
     const db = makeDb(0)

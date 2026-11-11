@@ -434,6 +434,7 @@ export const uis = plugin(uiId, {
     Connection: '' as IntlString,
     Connected: '' as IntlString,
     Reconnecting: '' as IntlString,
+    WorkspaceLimitsExhausted: '' as IntlString,
     RateLimit: '' as IntlString,
     RateLimitValue: '' as IntlString,
     RateLimitUsage: '' as IntlString,

@@ -265,6 +265,20 @@
     "PaymentShowYear": "Son yılı göster",
     "PaymentRequested": "Fatura / dönem",
     "PaymentOverdue": "Ödeme gecikti",
-    "PaymentRestricted": "Erişim kısıtlı: ödeme gecikti"
+    "PaymentRestricted": "Erişim kısıtlı: ödeme gecikti",
+    "Storage": "Depolama",
+    "StorageEligibility": "Bu nesneler hiçbir çalışma alanında kullanılmıyor.",
+    "StorageQueued": "İş sıraya alındı",
+    "StorageRunning": "İş çalışıyor",
+    "StorageReady": "Hesaplama hazır",
+    "StorageCompleted": "Temizleme tamamlandı",
+    "StorageFailed": "İşlem başarısız oldu. Tekrar deneyin.",
+    "StorageFreed": "Boşaltılan",
+    "StorageCanFree": "Boşaltılabilir",
+    "StorageObjects": "Nesneler",
+    "StorageEmpty": "Temizlenecek nesne yok.",
+    "StorageCalculate": "Temizlemeyi hesapla",
+    "StorageClean": "Temizle",
+    "StorageConfirmHint": "Silme işlemi geri alınamaz ve yönetici onay kodu gerektirir."
   }
 }

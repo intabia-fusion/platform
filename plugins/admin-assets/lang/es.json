@@ -265,6 +265,20 @@
     "PaymentShowYear": "Mostrar el último año",
     "PaymentRequested": "Factura / período",
     "PaymentOverdue": "Pago vencido",
-    "PaymentRestricted": "Acceso restringido: pago vencido"
+    "PaymentRestricted": "Acceso restringido: pago vencido",
+    "Storage": "Almacenamiento",
+    "StorageEligibility": "Estos objetos no se utilizan en ningún espacio de trabajo.",
+    "StorageQueued": "Tarea en cola",
+    "StorageRunning": "Tarea en curso",
+    "StorageReady": "Cálculo listo",
+    "StorageCompleted": "Limpieza completada",
+    "StorageFailed": "La operación falló. Inténtelo de nuevo.",
+    "StorageFreed": "Liberado",
+    "StorageCanFree": "Se puede liberar",
+    "StorageObjects": "Objetos",
+    "StorageEmpty": "No hay objetos para limpiar.",
+    "StorageCalculate": "Calcular limpieza",
+    "StorageClean": "Limpiar",
+    "StorageConfirmHint": "La eliminación es irreversible y requiere un código de confirmación del administrador."
   }
 }

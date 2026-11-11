@@ -25,5 +25,6 @@ export * from './freeLimits'
 export { createManualSubscription } from './serviceOperations'
 export * from './adminOp'
 export * from './deletion'
+export * from './storageCleanup'
 
 export default accountPlugin

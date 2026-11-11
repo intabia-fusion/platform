@@ -47,6 +47,7 @@ import {
 } from '@hcengineering/server-core'
 
 import { isHumanAdminLogin, requireAdminOp, requireAdminSession, verifyAdminOtpLimited } from './adminOp'
+import { adminGetStorageCleanup, adminRequestStorageCleanup } from './storageCleanup'
 import { deletionDeadline, getDeletionReadonlyDays } from './deletion'
 
 import { accountPlugin } from './plugin'
@@ -2945,6 +2946,8 @@ export type AccountServiceMethods =
   | 'getAccountActivityStats'
   | 'requestAdminOperationOtp'
   | 'verifyAdminSession'
+  | 'adminGetStorageCleanup'
+  | 'adminRequestStorageCleanup'
   | 'adminSetMaintenance'
   | 'adminForceCloseWorkspace'
   | 'adminConfirmExport'
@@ -3036,6 +3039,8 @@ export function getServiceMethods (): Partial<Record<AccountServiceMethods, Acco
     getAccountActivityStats: wrap(getAccountActivityStats),
     requestAdminOperationOtp: wrap(requestAdminOperationOtp),
     verifyAdminSession: wrap(verifyAdminSession),
+    adminGetStorageCleanup: wrap(adminGetStorageCleanup),
+    adminRequestStorageCleanup: wrap(adminRequestStorageCleanup),
     adminSetMaintenance: wrap(adminSetMaintenance),
     adminForceCloseWorkspace: wrap(adminForceCloseWorkspace),
     adminConfirmExport: wrap(adminConfirmExport),

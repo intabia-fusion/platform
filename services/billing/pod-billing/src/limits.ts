@@ -131,12 +131,12 @@ export class LimitsEngine {
     const prevExhausted = prev?.exhausted ?? false
     const nowExhausted = limitValue > 0 && used >= limitValue
 
+    await this.db.upsertLimitState(ctx, { workspace, category, used, limitValue, exhausted: nowExhausted })
     if (nowExhausted !== prevExhausted) {
       const status = nowExhausted ? LimitStatus.Exhausted : LimitStatus.Ok
       ctx.info('limit status changed (delta)', { workspace, category, status, used, limitValue })
       await this.producer.send(ctx, workspace, [workspaceEvents.limitsChanged(category as SCLimitCategory, status)])
     }
-    await this.db.upsertLimitState(ctx, { workspace, category, used, limitValue, exhausted: nowExhausted })
 
     // Reflect the increment in the displayed usageInfo so the UI moves without waiting for the tick.
     await this.bumpUsageInfo(ctx, workspace, metric, amount)
@@ -250,13 +250,12 @@ export class LimitsEngine {
     const prev = await this.db.getLimitState(ctx, workspace, category)
     const prevExhausted = prev?.exhausted ?? false
 
+    await this.db.upsertLimitState(ctx, { workspace, category, used, limitValue, exhausted: nowExhausted })
     if (nowExhausted !== prevExhausted) {
       const status = nowExhausted ? LimitStatus.Exhausted : LimitStatus.Ok
       ctx.info('limit status changed', { workspace, category, status, used, limitValue })
       await this.producer.send(ctx, workspace, [workspaceEvents.limitsChanged(category as SCLimitCategory, status)])
     }
-
-    await this.db.upsertLimitState(ctx, { workspace, category, used, limitValue, exhausted: nowExhausted })
   }
 
   private async computeUsed (

@@ -64,10 +64,10 @@ export interface S3UploadPartOptions {
 export interface S3Bucket {
   bucket: string
 
-  head: (ctx: MeasureContext, key: string) => Promise<S3Object | null>
+  head: (ctx: MeasureContext, key: string, signal?: AbortSignal) => Promise<S3Object | null>
   get: (ctx: MeasureContext, key: string, options?: S3GetOptions) => Promise<S3ObjectBody | null>
   put: (ctx: MeasureContext, key: string, body: Readable | Buffer | string, options: S3PutOptions) => Promise<void>
-  delete: (ctx: MeasureContext, key: string) => Promise<void>
+  delete: (ctx: MeasureContext, key: string, signal?: AbortSignal) => Promise<void>
 
   // multipart
   createMultipartUpload: (

@@ -15,6 +15,7 @@
 
 import core from './component'
 
+export type * from './storageCleanup'
 export * from './classes'
 export * from './client'
 export * from './collaboration'

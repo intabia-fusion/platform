@@ -123,7 +123,8 @@ export function getMigrations (ns: string, flavor: DBFlavor): [string, string][]
     getV53Migration(ns, flavor),
     getV54Migration(ns, flavor),
     getV55Migration(ns, flavor),
-    getV56Migration(ns)
+    getV56Migration(ns),
+    getV57Migration(ns, flavor)
   ]
 }
 
@@ -1387,5 +1388,24 @@ function getV56Migration (ns: string): [string, string] {
     DELETE FROM ${ns}.otp
     WHERE social_id IN (${botSocialIds});
     `
+  ]
+}
+
+function getV57Migration (ns: string, flavor: DBFlavor): [string, string] {
+  const types = dbTypes[flavor]
+  return [
+    'account_db_v57_storage_cleanup_jobs',
+    `CREATE TABLE IF NOT EXISTS ${ns}.storage_cleanup_jobs (
+      id ${types.string} PRIMARY KEY,
+      action ${types.string} NOT NULL,
+      scan_id ${types.string},
+      status ${types.string} NOT NULL,
+      created_on ${types.int8} NOT NULL,
+      updated_on ${types.int8} NOT NULL,
+      actor ${types.string} NOT NULL,
+      result JSONB
+    );
+    CREATE INDEX IF NOT EXISTS storage_cleanup_jobs_created_on ON ${ns}.storage_cleanup_jobs (created_on DESC);
+    CREATE UNIQUE INDEX IF NOT EXISTS storage_cleanup_jobs_delete_scan ON ${ns}.storage_cleanup_jobs (scan_id) WHERE action = 'delete';`
   ]
 }

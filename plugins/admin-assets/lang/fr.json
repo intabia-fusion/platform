@@ -265,6 +265,20 @@
     "PaymentShowYear": "Afficher la dernière année",
     "PaymentRequested": "Facture / période",
     "PaymentOverdue": "Paiement en retard",
-    "PaymentRestricted": "Accès restreint : paiement en retard"
+    "PaymentRestricted": "Accès restreint : paiement en retard",
+    "Storage": "Stockage",
+    "StorageEligibility": "Ces objets ne sont utilisés dans aucun espace de travail.",
+    "StorageQueued": "Tâche en attente",
+    "StorageRunning": "Tâche en cours",
+    "StorageReady": "Calcul terminé",
+    "StorageCompleted": "Nettoyage terminé",
+    "StorageFailed": "L'opération a échoué. Réessayez.",
+    "StorageFreed": "Libéré",
+    "StorageCanFree": "Peut être libéré",
+    "StorageObjects": "Objets",
+    "StorageEmpty": "Aucun objet à nettoyer.",
+    "StorageCalculate": "Calculer le nettoyage",
+    "StorageClean": "Nettoyer",
+    "StorageConfirmHint": "La suppression est irréversible et nécessite un code de confirmation de l'administrateur."
   }
 }

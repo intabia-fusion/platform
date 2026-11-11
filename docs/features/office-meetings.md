@@ -98,12 +98,18 @@
 - **Экранный рекордер воркспейса.** Записывает экран через `MediaRecorder`, чанкует и заливает в Drive; не связан с LiveKit Egress встречи. - `class Recorder`, `plugins/recorder-resources/src/recorder.ts`; `models/recorder/src/plugin.ts` (merge `WorkbenchExtension`).
 - **Выбор микрофона/камеры.** `toggleCamState`/`toggleMicState`, `WorkbenchExtension` для попапа устройств. - `plugins/media-resources/src/utils.ts`.
 
+Запись проверяет persisted disk-лимит через `BillingClient.getWorkspaceLimitStates` перед ручным и автоматическим стартом.
+Транскрипция дополнительно проверяет tokens/transcript до изменения metadata при новом старте.
+Исчерпание не останавливает текущую запись или транскрипцию. Повторные запросы и внутреннее восстановление записи продолжают разрешенную сессию.
+Payment приходит через события; без `BILLING_URL` все проверки используют только события.
+Ошибка billing запрещает новый старт.
+
 ## Пользовательская документация
 
 | Фича | ru | en | Статус | Сверено | Расхождение |
 | --- | --- | --- | --- | --- | --- |
-| Транскрипция встречи в реальном времени | communication/live-transcription | communication/live-transcription | stale | 0.8.60 | скрины hulia-live-transcription*.png - апстримный Huly UI (Hulia, английский интерфейс); en liveTranscriptionViewAll - тоже апстримный, в ru на этом месте уже снят new-transcription.png |
-| Запись встречи по умолчанию и её отключение | communication/live-transcription | communication/live-transcription | stale | 0.8.60 | см. выше - те же устаревшие скрины используются и для записи |
+| Транскрипция встречи в реальном времени | communication/live-transcription | communication/live-transcription | stale | 0.8.60 | запрет нового старта по disk/tokens/transcript не описаны; скрины hulia-live-transcription*.png - апстримный Huly UI (Hulia, английский интерфейс); en liveTranscriptionViewAll - тоже апстримный, в ru на этом месте уже снят new-transcription.png |
+| Запись встречи по умолчанию и её отключение | communication/live-transcription | communication/live-transcription | stale | 0.8.60 | см. выше; запрет нового старта записи по лимитам не описаны |
 | Создание встречи из Планировщика и гостевой join по ссылке | communication/invite-link | - | no-en | 0.8.60 | |
 | Trace ID звонка | - | - | internal | - | |
 | Проброс trace в очередь | - | - | internal | - | |

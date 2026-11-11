@@ -138,6 +138,7 @@
     "Connection": "Verbindung",
     "Connected": "Verbunden",
     "Reconnecting": "Wiederverbindung...",
+    "WorkspaceLimitsExhausted": "Die Limits des Arbeitsbereichs sind ausgeschöpft",
     "RateLimit": "Ratenlimit",
     "RateLimitValue": "{remaining} von {limit} übrig, Reset in {seconds}s",
     "RateLimitUsage": "Anfragen im Limit: {current} / {limit}",

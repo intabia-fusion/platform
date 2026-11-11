@@ -14,6 +14,8 @@
 // limitations under the License.
 //
 import {
+  type StorageCleanupJob,
+  type StorageCleanupRequest,
   type AccountInfo,
   type AccountRole,
   type AccountUuid,
@@ -245,6 +247,8 @@ export interface AccountClient {
   getWorkspaceActivityStats: (workspace: WorkspaceUuid, from: number) => Promise<WorkspaceActivityPoint[]>
   getWorkspaceMembersInfo: (workspace: WorkspaceUuid) => Promise<WorkspaceMemberDetails[]>
   getAccountActivityStats: (account: AccountUuid, from: number) => Promise<AccountActivityStats>
+  adminGetStorageCleanup: (jobId?: string) => Promise<StorageCleanupJob | undefined>
+  adminRequestStorageCleanup: (params: StorageCleanupRequest) => Promise<StorageCleanupJob>
   requestAdminOperationOtp: () => Promise<OtpInfo>
   /** Consumes the admin second factor and returns a token stamped with `mfaAt`. */
   verifyAdminSession: (otpCode: string) => Promise<{ account: AccountUuid, token: string }>
@@ -1139,6 +1143,14 @@ class AccountClientImpl implements AccountClient {
 
   async getAccountActivityStats (account: AccountUuid, from: number): Promise<AccountActivityStats> {
     return await this.rpc({ method: 'getAccountActivityStats' as const, params: { account, from } })
+  }
+
+  async adminGetStorageCleanup (jobId?: string): Promise<StorageCleanupJob | undefined> {
+    return await this.rpc({ method: 'adminGetStorageCleanup' as const, params: { jobId } })
+  }
+
+  async adminRequestStorageCleanup (params: StorageCleanupRequest): Promise<StorageCleanupJob> {
+    return await this.rpc({ method: 'adminRequestStorageCleanup' as const, params })
   }
 
   async requestAdminOperationOtp (): Promise<OtpInfo> {

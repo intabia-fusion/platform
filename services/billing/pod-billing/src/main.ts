@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -15,7 +16,7 @@
 
 import { Analytics } from '@hcengineering/analytics'
 import { configureAnalytics, createOpenTelemetryMetricsContext, SplitLogger } from '@hcengineering/analytics-service'
-import { newMetrics } from '@hcengineering/core'
+import core, { newMetrics, type Blob, type Tx, type TxRemoveDoc } from '@hcengineering/core'
 import { getPlatformQueue } from '@hcengineering/kafka'
 import { setMetadata } from '@hcengineering/platform'
 import serverClient from '@hcengineering/server-client'
@@ -162,6 +163,27 @@ export const main = async (): Promise<void> => {
     { batchSize: 50, batchTimeout: 500, sessionTimeout: 120000 }
   )
 
+  const storageDeletionConsumer = queue.createBatchConsumer<Tx>(
+    metricsContext,
+    QueueTopic.Tx,
+    'billing-storage-deletions',
+    async (ctx, msgs, queue) => {
+      const workspaces = msgs
+        .filter(
+          (m) =>
+            m.value._class === core.class.TxRemoveDoc &&
+            (m.value as TxRemoveDoc<Blob>).objectClass === core.class.Blob &&
+            typeof m.value.meta?.size === 'number' &&
+            m.value.meta.size > 50_000_000
+        )
+        .map((m) => m.workspace)
+      if (workspaces.length > 0) {
+        await worker.recomputeWorkspacesNow(ctx, workspaces, queue.heartbeat)
+      }
+    },
+    { batchSize: 100, batchTimeout: 1000, sessionTimeout: 120000 }
+  )
+
   // Publish already-exhausted states on startup (best-effort, non-blocking)
   void engine.startupScan(metricsContext).catch((err) => {
     metricsContext.error('startup limits scan failed', { err })
@@ -175,6 +197,7 @@ export const main = async (): Promise<void> => {
   const shutdown = (): void => {
     void usageConsumer.close()
     void planConsumer.close()
+    void storageDeletionConsumer.close()
     void workspaceProducer.close()
     void worker.close()
     close()

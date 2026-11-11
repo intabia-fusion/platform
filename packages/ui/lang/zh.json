@@ -138,6 +138,7 @@
     "Connection": "连接",
     "Connected": "已连接",
     "Reconnecting": "重新连接中...",
+    "WorkspaceLimitsExhausted": "工作空间限额已用尽",
     "RateLimit": "速率限制",
     "RateLimitValue": "剩余 {remaining}/{limit}，{seconds}秒后重置",
     "RateLimitUsage": "限额内请求数：{current} / {limit}",

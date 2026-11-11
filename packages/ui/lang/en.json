@@ -138,6 +138,7 @@
     "Connection": "Connection",
     "Connected": "Connected",
     "Reconnecting": "Reconnecting...",
+    "WorkspaceLimitsExhausted": "Workspace limits exhausted",
     "RateLimit": "Rate limit",
     "RateLimitValue": "{remaining} of {limit} left, resets in {seconds}s",
     "RateLimitUsage": "Requests in limit: {current} / {limit}",

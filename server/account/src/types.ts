@@ -14,6 +14,7 @@
 // limitations under the License.
 //
 import {
+  type StorageCleanupJob,
   type AccountRole,
   type BackupStatus,
   type Branding,
@@ -601,6 +602,7 @@ export interface AccountDB {
   accountEvent: DbCollection<AccountEvent>
   otp: DbCollection<OTP>
   invite: DbCollection<WorkspaceInvite>
+  storageCleanup: DbCollection<StorageCleanupJob>
   shortLink: DbCollection<ShortLink>
   mailbox: DbCollection<Mailbox>
   mailboxSecret: DbCollection<MailboxSecret>

@@ -138,6 +138,7 @@
     "Connection": "Připojení",
     "Connected": "Připojeno",
     "Reconnecting": "Opětovné připojení...",
+    "WorkspaceLimitsExhausted": "Limity pracovního prostoru byly vyčerpány",
     "RateLimit": "Limit požadavků",
     "RateLimitValue": "zbývá {remaining} z {limit}, obnova za {seconds}s",
     "RateLimitUsage": "Požadavků v limitu: {current} / {limit}",

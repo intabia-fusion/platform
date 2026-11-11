@@ -120,6 +120,13 @@ export async function createDb (ctx: MeasureContext, connectionString: string): 
 }
 
 export interface BlobDB {
+  execute: <T extends any[] = (Row & Iterable<Row>)[]>(query: string, params?: any[]) => Promise<T>
+  withDataLock: <T>(
+    ctx: MeasureContext,
+    dataId: BlobDataId,
+    operation: (db: BlobDB) => Promise<T>,
+    filename?: string
+  ) => Promise<T>
   getData: (ctx: MeasureContext, dataId: BlobDataId) => Promise<BlobDataRecord | null>
   getBlob: (ctx: MeasureContext, blobId: BlobId) => Promise<BlobWithDataRecord | null>
   listBlobs: (ctx: MeasureContext, workspace: string, options: ListBlobOptions) => Promise<ListBlobResult>
@@ -144,6 +151,19 @@ export class PostgresDB implements BlobDB {
     const db = new PostgresDB(sql)
     await db.initSchema(ctx)
     return db
+  }
+
+  async withDataLock<T>(
+    ctx: MeasureContext,
+    dataId: BlobDataId,
+    operation: (db: BlobDB) => Promise<T>,
+    filename?: string
+  ): Promise<T> {
+    return (await this.sql.begin(async (tx) => {
+      await tx`SELECT pg_advisory_xact_lock(hashtextextended(${'physical:' + dataId.location + ':' + (filename ?? dataId.hash)}, 0))`
+      await tx`SELECT pg_advisory_xact_lock(hashtextextended(${'data:' + dataId.location + ':' + dataId.hash}, 0))`
+      return await operation(new PostgresDB(tx as unknown as Sql))
+    })) as T
   }
 
   async execute<T extends any[] = (Row & Iterable<Row>)[]>(query: string, params?: any[]): Promise<T> {
@@ -295,37 +315,23 @@ export class PostgresDB implements BlobDB {
 
   async createBlobData (ctx: MeasureContext, data: BlobWithDataRecord): Promise<void> {
     const { workspace, name, hash, location, parent, filename, size, type } = data
-
-    await this.sql.begin(async (tx) => {
-      await tx.unsafe(
-        injectVars(
-          `
-      INSERT INTO blob.data (hash, location, filename, size, type)
-      VALUES ($1, $2, $3, $4, $5)
-      ON CONFLICT (hash, location) DO UPDATE SET
-        filename = EXCLUDED.filename,
-        size = EXCLUDED.size,
-        type = EXCLUDED.type
-    `,
-          [hash, location, filename, size, type]
-        )
+    await this.execute(
+      `
+      WITH physical AS (
+        INSERT INTO blob.data (hash, location, filename, size, type)
+        VALUES ($3, $4, $6, $7, $8)
+        ON CONFLICT (hash, location) DO UPDATE SET
+          filename = EXCLUDED.filename, size = EXCLUDED.size, type = EXCLUDED.type
+        RETURNING hash, location
       )
-
-      await tx.unsafe(
-        injectVars(
-          `
       INSERT INTO blob.blob (workspace, name, hash, location, parent, deleted_at)
-      VALUES ($1, $2, $3, $4, $5, NULL)
+      SELECT $1, $2, hash, location, $5, NULL FROM physical
       ON CONFLICT (workspace, name) DO UPDATE SET
-        hash = EXCLUDED.hash,
-        location = EXCLUDED.location,
-        parent = EXCLUDED.parent,
-        deleted_at = EXCLUDED.deleted_at
+        hash = EXCLUDED.hash, location = EXCLUDED.location,
+        parent = EXCLUDED.parent, deleted_at = EXCLUDED.deleted_at
     `,
-          [workspace, name, hash, location, parent]
-        )
-      )
-    })
+      [workspace, name, hash, location, parent, filename, size, type]
+    )
   }
 
   async deleteBlob (ctx: MeasureContext, blob: BlobId): Promise<void> {
@@ -529,6 +535,20 @@ export class RetryDB implements BlobDB {
     private readonly options: RetryOptions
   ) {}
 
+  async execute<T extends any[] = (Row & Iterable<Row>)[]>(query: string, params?: any[]): Promise<T> {
+    return await this.db.execute<T>(query, params)
+  }
+
+  async withDataLock<T>(
+    ctx: MeasureContext,
+    dataId: BlobDataId,
+    operation: (db: BlobDB) => Promise<T>,
+    filename?: string
+  ): Promise<T> {
+    // The callback may consume an upload stream or delete S3 data; replay belongs to its caller.
+    return await this.db.withDataLock(ctx, dataId, operation, filename)
+  }
+
   async getData (ctx: MeasureContext, dataId: BlobDataId): Promise<BlobDataRecord | null> {
     return await retry(() => this.db.getData(ctx, dataId), this.options)
   }
@@ -595,6 +615,20 @@ export class LoggedDB implements BlobDB {
     private readonly ctx: MeasureContext,
     private readonly db: BlobDB
   ) {}
+
+  async execute<T extends any[] = (Row & Iterable<Row>)[]>(query: string, params?: any[]): Promise<T> {
+    return await this.db.execute<T>(query, params)
+  }
+
+  async withDataLock<T>(
+    ctx: MeasureContext,
+    dataId: BlobDataId,
+    operation: (db: BlobDB) => Promise<T>,
+    filename?: string
+  ): Promise<T> {
+    // The callback may consume an upload stream or delete S3 data; replay belongs to its caller.
+    return await this.db.withDataLock(ctx, dataId, operation, filename)
+  }
 
   async getData (ctx: MeasureContext, dataId: BlobDataId): Promise<BlobDataRecord | null> {
     const params = { location: dataId.location }
@@ -714,7 +748,7 @@ export function escape (value: any): string {
 }
 
 function getMigrations (): [string, string][] {
-  return [migrationV1(), migrationV2()]
+  return [migrationV1(), migrationV2(), migrationV3()]
 }
 
 function migrationV1 (): [string, string] {
@@ -781,4 +815,27 @@ function migrationV2 (): [string, string] {
     ALTER TABLE blob.meta ADD CONSTRAINT fk_blob_meta FOREIGN KEY (workspace, name) REFERENCES blob.blob (workspace, name);
   `
   return ['migrate_workspaces_02', sql]
+}
+
+function migrationV3 (): [string, string] {
+  return [
+    'storage_cleanup_03',
+    `
+    CREATE TABLE IF NOT EXISTS blob.cleanup_job (
+      id TEXT PRIMARY KEY, action TEXT NOT NULL, scan_id TEXT,
+      status TEXT NOT NULL, result JSONB
+    );
+    CREATE TABLE IF NOT EXISTS blob.cleanup_candidate (
+      scan_id TEXT NOT NULL REFERENCES blob.cleanup_job(id),
+      hash UUID NOT NULL, location VARCHAR(10) NOT NULL,
+      filename VARCHAR(255) NOT NULL, size BIGINT NOT NULL, type VARCHAR(255) NOT NULL,
+      state TEXT NOT NULL DEFAULT 'pending', delete_job TEXT,
+      PRIMARY KEY (scan_id, hash, location)
+    );
+    CREATE INDEX IF NOT EXISTS cleanup_deleting ON blob.cleanup_candidate(hash, location) WHERE state = 'deleting';
+    CREATE INDEX IF NOT EXISTS data_physical_key ON blob.data(location, filename);
+    CREATE INDEX IF NOT EXISTS blob_data_refs ON blob.blob(hash, location) INCLUDE(deleted_at);
+    CREATE INDEX IF NOT EXISTS blob_children ON blob.blob(workspace, parent) WHERE parent IS NOT NULL;
+  `
+  ]
 }

@@ -67,6 +67,8 @@
 
 ### Drive
 
+- **Файлы Drive в использовании хранилища.** В настройках биллинга список крупнейших пространств учитывает все версии файлов диска. Внутри диска таблица показывает двадцать крупнейших версий с именем файла и размером, сохраняя штатные права и запрет удаления текущей версии. - `plugins/billing-resources/src/components/LargestSpaces.svelte`, `services/billing/pod-billing/src/billing.ts` (`handleGetLargestSpaces`).
+
 - **Версии файлов.** `createFile`/`createFileVersion`/`restoreFileVersion` - создание, добавление новой версии (`$inc` версии отдельным `update`, затем addCollection и обновление указателя `file` в одной `client.apply()`-транзакции) и откат на старую версию.
   - `createFileVersion`, `plugins/drive/src/utils.ts`.
 - **Actions над версиями.** `RestoreFileVersion`, видимость через `CanUpdateFileVersion`; удаление версии доступно только для не-текущей (`$lookup.attachedTo.file !== p._id`).
@@ -191,10 +193,31 @@
 
 - **Только контракт в `plugins/image-cropper`**, реальный компонент `Cropper.svelte` - в `plugins/image-cropper-resources/src/components/Cropper.svelte`.
 
+## Очистка неиспользуемых физических объектов
+
+Администратор запрашивает снимок через account. Kafka `StorageCleanup` доставляет scan/delete в datalake;
+`StorageCleanupResults` возвращает агрегат количества, байтов и MIME-типов, без имен объектов.
+`services/datalake/pod-datalake/src/cleanup.ts` хранит durable jobs и кандидатов в `blob.cleanup_job`/`blob.cleanup_candidate`.
+Consumer очистки подключается к Kafka в фоне: ожидание rebalance не задерживает запуск HTTP datalake.
+Удаление принимает только готовый scanId и повторно проверяет глобальные ссылки перед S3 delete.
+
+Кандидат не имеет активных ссылок ни в одном workspace (`blob.blob.deleted_at IS NULL`).
+Свежие soft-deleted и физические данные без ссылок допускаются сразу, без учета возраста.
+Объекты с дочерними blob и несколько hash для одного S3 filename исключаются; родители могут попасть в следующий снимок после удаления детей.
+
+GC, put и createFromS3 удерживают advisory locks в порядке physical `(location,filename)`, затем `(location,hash)`.
+GC сохраняет intent `deleting` до S3 delete; upload/create отказывают для такого объекта до завершения retry.
+Удаление блокирует строки data/refs через `FOR UPDATE`, удаляет S3 с таймаутом 5 секунд, затем meta, refs и data в транзакции.
+Kafka и cache updates выполняются после commit загрузки; callbacks со stream/S3 не повторяются RetryDB.
+Счетчики берутся из durable статусов; повтор команды не удваивает результат.
+S3 versioning может сохранять предыдущие версии, поэтому байты снимка не обещают уменьшение счета провайдера.
+
 ## Пользовательская документация
 
 | Фича | ru | en | Статус | Сверено | Расхождение |
 | --- | --- | --- | --- | --- | --- |
+| Файлы Drive в использовании хранилища | - | - | plan | - | |
+| Административная очистка объектов без активных ссылок | - | - | plan | - | Снимок MIME-типов и асинхронное удаление через account/Kafka/datalake |
 | Версии файлов | knowledge-management/drive | knowledge-management/drive | partial | 0.8.60 | не описан откат на старую версию (`restoreFileVersion`) и удаление отдельной версии |
 | Actions над версиями | - | - | plan | - | |
 | Перемещение с пересчётом путей | knowledge-management/drive | knowledge-management/drive | ok | 0.8.60 | |

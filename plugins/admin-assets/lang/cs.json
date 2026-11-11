@@ -265,6 +265,20 @@
     "PaymentShowYear": "Zobrazit poslední rok",
     "PaymentRequested": "Faktura / období",
     "PaymentOverdue": "Platba po splatnosti",
-    "PaymentRestricted": "Přístup omezen: platba po splatnosti"
+    "PaymentRestricted": "Přístup omezen: platba po splatnosti",
+    "Storage": "Úložiště",
+    "StorageEligibility": "Tyto objekty se nepoužívají v žádném pracovním prostoru.",
+    "StorageQueued": "Úloha čeká ve frontě",
+    "StorageRunning": "Úloha probíhá",
+    "StorageReady": "Výpočet dokončen",
+    "StorageCompleted": "Čištění dokončeno",
+    "StorageFailed": "Operace se nezdařila. Zkuste to znovu.",
+    "StorageFreed": "Uvolněno",
+    "StorageCanFree": "Lze uvolnit",
+    "StorageObjects": "Objekty",
+    "StorageEmpty": "Žádné objekty k vyčištění.",
+    "StorageCalculate": "Vypočítat čištění",
+    "StorageClean": "Vyčistit",
+    "StorageConfirmHint": "Odstranění je nevratné a vyžaduje potvrzovací kód správce."
   }
 }

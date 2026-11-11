@@ -22,7 +22,8 @@ import {
   ProviderPool,
   ProviderPoolConfig,
   AiModelRegistryEntry,
-  WorkspaceTokenWindows
+  WorkspaceTokenWindows,
+  WorkspaceLimitState
 } from './types'
 
 /** @public */
@@ -48,6 +49,12 @@ export class BillingClient {
       Authorization: 'Bearer ' + token,
       'Content-Type': 'application/json'
     }
+  }
+
+  async getWorkspaceLimitStates (workspace: WorkspaceUuid): Promise<WorkspaceLimitState[]> {
+    const url = new URL(concatLink(this.endpoint, `/api/v1/${workspace}/limits`))
+    const response = await fetchSafe(url, { headers: { ...this.headers }, signal: AbortSignal.timeout(5000) })
+    return (await response.json()) as WorkspaceLimitState[]
   }
 
   async getBillingStats (workspace: WorkspaceUuid): Promise<BillingStats> {

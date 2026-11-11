@@ -61,12 +61,12 @@ class S3BucketImpl implements S3Bucket {
     }
   }
 
-  async head (ctx: MeasureContext, key: string): Promise<S3Object | null> {
+  async head (ctx: MeasureContext, key: string, signal?: AbortSignal): Promise<S3Object | null> {
     try {
       const result = await ctx.with(
         's3.headObject',
         {},
-        () => this.client.headObject({ Bucket: this.bucket, Key: key }),
+        () => this.client.headObject({ Bucket: this.bucket, Key: key }, { abortSignal: signal }),
         { bucket: this.bucket }
       )
 
@@ -151,8 +151,8 @@ class S3BucketImpl implements S3Bucket {
     }
   }
 
-  async delete (ctx: MeasureContext, key: string): Promise<void> {
-    await this.client.deleteObject({ Bucket: this.bucket, Key: key })
+  async delete (ctx: MeasureContext, key: string, signal?: AbortSignal): Promise<void> {
+    await this.client.deleteObject({ Bucket: this.bucket, Key: key }, { abortSignal: signal })
   }
 
   async createMultipartUpload (

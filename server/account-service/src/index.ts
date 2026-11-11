@@ -19,7 +19,10 @@ import account, {
   generateShortId,
   isServiceToken,
   sweepScheduledDeletions,
-  parsePasswordStrictness
+  parsePasswordStrictness,
+  setStorageCleanupProducer,
+  persistStorageCleanupResult,
+  retryStorageCleanupOutbox
 } from '@hcengineering/account'
 import accountCs from '@hcengineering/account/lang/cs.json'
 import accountDe from '@hcengineering/account/lang/de.json'
@@ -35,7 +38,14 @@ import accountTr from '@hcengineering/account/lang/tr.json'
 import accountZh from '@hcengineering/account/lang/zh.json'
 import { Analytics } from '@hcengineering/analytics'
 import { registerProviders } from '@hcengineering/auth-providers'
-import { metricsAggregate, type Branding, type BrandingMap, type MeasureContext } from '@hcengineering/core'
+import {
+  metricsAggregate,
+  type Branding,
+  type BrandingMap,
+  type MeasureContext,
+  type StorageCleanupCommand,
+  type StorageCleanupResult
+} from '@hcengineering/core'
 import platform, { Severity, Status, addStringsLoader, setMetadata, unknownStatus } from '@hcengineering/platform'
 import serverToken, {
   decodeToken,
@@ -270,6 +280,37 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
     },
     { batchSize: 200, batchTimeout: 1000 }
   )
+
+  const cleanupProducer = platformQueue.getProducer<StorageCleanupCommand>(measureCtx, QueueTopic.StorageCleanup)
+  setStorageCleanupProducer(cleanupProducer)
+  const cleanupResultsConsumer = platformQueue.createConsumer<StorageCleanupResult>(
+    measureCtx,
+    QueueTopic.StorageCleanupResults,
+    'account-storage-cleanup-results',
+    async (ctx, message) => {
+      const [db] = await accountsDb
+      await persistStorageCleanupResult(ctx, db, message.value)
+    },
+    { fromBegining: true }
+  )
+  let cleanupPublishing = false
+  const publishCleanupOutbox = async (): Promise<void> => {
+    if (cleanupPublishing) return
+    cleanupPublishing = true
+    try {
+      await cleanupResultsConsumer.waitReady?.()
+      const [db] = await accountsDb
+      await retryStorageCleanupOutbox(measureCtx, db)
+    } catch (error) {
+      measureCtx.error('Storage cleanup outbox retry failed', { error })
+    } finally {
+      cleanupPublishing = false
+    }
+  }
+  const cleanupTimer = setInterval(() => {
+    void publishCleanupOutbox()
+  }, 30000)
+  void publishCleanupOutbox()
 
   const app = new Koa()
   const router = new Router()
@@ -672,12 +713,15 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
     if (closing) return
     closing = true
     onClose?.()
+    clearInterval(cleanupTimer)
     const closed = Promise.allSettled([
       notificationProducer.close(),
       crmProducer.close(),
       subscriptionProducer.close(),
       usersConsumer.close(),
       paymentOperationConsumer.close(),
+      cleanupResultsConsumer.close(),
+      cleanupProducer.close(),
       platformQueue.shutdown(),
       accountsDb.then(([, closeAccountsDb]) => {
         closeAccountsDb()

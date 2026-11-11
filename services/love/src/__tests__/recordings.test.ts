@@ -17,6 +17,8 @@ import { type WorkspaceLoginInfo } from '@hcengineering/account-client'
 import { type WorkspaceIds } from '@hcengineering/core'
 import { RecordingState } from '@hcengineering/love'
 import { EgressStatus } from 'livekit-server-sdk'
+import { QueueWorkspaceEvent, LimitCategory, LimitStatus } from '@hcengineering/server-core'
+import { LimitsState } from '../limits'
 import { RecordingProcessor, templateStartFailed } from '../recordings'
 import { WorkspaceClient } from '../workspaceClient'
 import config from '../config'
@@ -83,6 +85,7 @@ function createMockWsClient (): Record<string, any> {
       if (idx >= 0) pending.splice(idx, 1)
     }),
     updateMeetingRecordingState: jest.fn().mockResolvedValue(undefined),
+    updateMeetingTranscriptionState: jest.fn().mockResolvedValue(undefined),
     cancelPendingRecording: jest.fn(async (row: any) => {
       const found = pending.find((it) => it._id === row._id)
       if (found !== undefined) found.status = 'cancelled'
@@ -93,7 +96,7 @@ function createMockWsClient (): Record<string, any> {
 }
 
 describe('RecordingProcessor.startRecording', () => {
-  let roomClient: { listRooms: jest.Mock }
+  let roomClient: { listRooms: jest.Mock, updateRoomMetadata: jest.Mock }
   let egressClient: { startRoomCompositeEgress: jest.Mock, stopEgress: jest.Mock, listEgress: jest.Mock }
   let eventProducer: { send: jest.Mock }
   let wsClient: Record<string, any>
@@ -109,20 +112,21 @@ describe('RecordingProcessor.startRecording', () => {
       stopRecording: (...a: Parameters<RecordingProcessor['stopRecording']>) => Promise<StopVerdict>
     } => p
 
-  function createProcessor (): RecordingProcessor {
+  function createProcessor (limits?: LimitsState): RecordingProcessor {
     return new RecordingProcessor(
       createMockContext(),
       roomClient as any,
       eventProducer as any,
       egressClient as any,
       { storages: [] } as any,
-      undefined
+      undefined,
+      limits
     )
   }
 
   beforeEach(() => {
     jest.clearAllMocks()
-    roomClient = { listRooms: jest.fn().mockResolvedValue([{ name: roomName }]) }
+    roomClient = { listRooms: jest.fn().mockResolvedValue([{ name: roomName }]), updateRoomMetadata: jest.fn() }
     let egresses = 0
     egressClient = {
       startRoomCompositeEgress: jest.fn(async () => ({ egressId: `EG_${++egresses}` })),
@@ -133,6 +137,78 @@ describe('RecordingProcessor.startRecording', () => {
     wsClient = createMockWsClient()
     ;(WorkspaceClient.create as jest.Mock).mockResolvedValue(wsClient)
     processor = createProcessor()
+  })
+
+  it('keeps an active egress running when an exhausted event arrives', async () => {
+    const consumer = jest.fn(() => ({ close: jest.fn() }))
+    const limits = new LimitsState(createMockContext(), { createBatchConsumer: consumer } as any)
+    await createProcessor(limits).startRecording(roomName, TEST_IDS.workspace, meeting._id, wsIds, 'All hands')
+    const onMessages = (consumer.mock.calls as any)[0][3]
+    await onMessages(createMockContext(), [
+      {
+        workspace: TEST_IDS.workspace,
+        value: { type: QueueWorkspaceEvent.LimitsChanged, category: LimitCategory.Disk, status: LimitStatus.Exhausted }
+      }
+    ])
+    expect(limits.isExhausted(TEST_IDS.workspace)).toBe(true)
+    expect(egressClient.stopEgress).not.toHaveBeenCalled()
+    expect(wsClient.cancelPendingRecording).not.toHaveBeenCalled()
+  })
+
+  it('preserves an active recording when the limit becomes exhausted', async () => {
+    const refresh = jest.fn().mockRejectedValue(new Error('billing offline'))
+    const limits = { refresh, isExhausted: () => true } as unknown as LimitsState
+    wsClient.findPendingRecordingsByMeeting.mockResolvedValue([
+      { format: 'video', status: 'active', egressId: 'EG_active' }
+    ])
+    const result = await createProcessor(limits).startRecording(
+      roomName,
+      TEST_IDS.workspace,
+      meeting._id,
+      wsIds,
+      'All hands'
+    )
+    expect(result).toEqual({ started: false, reason: 'already-running' })
+    expect(refresh).not.toHaveBeenCalled()
+    expect(egressClient.stopEgress).not.toHaveBeenCalled()
+  })
+
+  it('continues an admitted recording through an internal template fallback despite exhaustion', async () => {
+    const refresh = jest.fn().mockRejectedValue(new Error('billing offline'))
+    const limits = { refresh, isExhausted: () => true } as unknown as LimitsState
+    const result = await createProcessor(limits).startWithBuiltInLayout(
+      roomName,
+      TEST_IDS.workspace,
+      meeting._id,
+      'page-load-failed'
+    )
+    expect(result).toBe(true)
+    expect(refresh).not.toHaveBeenCalled()
+    expect(egressClient.startRoomCompositeEgress).toHaveBeenCalledTimes(1)
+    expect(egressClient.stopEgress).not.toHaveBeenCalled()
+  })
+
+  it('checks persisted limits before starting an egress', async () => {
+    const refresh = jest.fn().mockResolvedValue(undefined)
+    const limits = { refresh, isExhausted: () => true } as unknown as LimitsState
+    const result = await createProcessor(limits).startRecording(
+      roomName,
+      TEST_IDS.workspace,
+      meeting._id,
+      wsIds,
+      'All hands'
+    )
+    expect(refresh).toHaveBeenCalledWith(TEST_IDS.workspace)
+    expect(result).toEqual({ started: false, reason: 'limits-exhausted' })
+    expect(egressClient.startRoomCompositeEgress).not.toHaveBeenCalled()
+  })
+
+  it('does not start an egress when the persisted limits cannot be checked', async () => {
+    const limits = { refresh: jest.fn().mockRejectedValue(new Error('billing offline')) } as unknown as LimitsState
+    await expect(
+      createProcessor(limits).startRecording(roomName, TEST_IDS.workspace, meeting._id, wsIds, 'All hands')
+    ).rejects.toThrow('billing offline')
+    expect(egressClient.startRoomCompositeEgress).not.toHaveBeenCalled()
   })
 
   describe('recording template', () => {
@@ -488,5 +564,46 @@ describe('RecordingProcessor.startRecording', () => {
 
     expect(egressClient.startRoomCompositeEgress).toHaveBeenCalledTimes(1)
     expect(wsClient.createPendingRecording).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('persisted meeting limits', () => {
+  function createLimits (getWorkspaceLimitStates?: jest.Mock): LimitsState {
+    return new LimitsState(
+      createMockContext(),
+      {
+        createBatchConsumer: jest.fn(() => ({ close: jest.fn() }))
+      } as any,
+      getWorkspaceLimitStates === undefined ? undefined : ({ getWorkspaceLimitStates } as any)
+    )
+  }
+
+  it('restores disk limits after restart and clears them after recovery', async () => {
+    const snapshot = jest.fn().mockResolvedValue([{ category: 'disk', exhausted: true }])
+    const limits = createLimits(snapshot)
+    await limits.refresh(TEST_IDS.workspace)
+    expect(limits.isExhausted(TEST_IDS.workspace)).toBe(true)
+    expect(limits.isTranscriptionExhausted(TEST_IDS.workspace)).toBe(true)
+    snapshot.mockResolvedValue([{ category: 'disk', exhausted: false }])
+    await limits.refresh(TEST_IDS.workspace)
+    expect(limits.isExhausted(TEST_IDS.workspace)).toBe(false)
+  })
+
+  it.each(['tokens', 'transcript'])('blocks transcription only for %s exhaustion', async (category) => {
+    const limits = createLimits(jest.fn().mockResolvedValue([{ category, exhausted: true }]))
+    await limits.refresh(TEST_IDS.workspace)
+    expect(limits.isExhausted(TEST_IDS.workspace)).toBe(false)
+    expect(limits.isTranscriptionExhausted(TEST_IDS.workspace)).toBe(true)
+  })
+
+  it('rejects refresh failures instead of permitting a start', async () => {
+    const limits = createLimits(jest.fn().mockRejectedValue(new Error('billing offline')))
+    await expect(limits.refresh(TEST_IDS.workspace)).rejects.toThrow('billing offline')
+  })
+
+  it('supports installations without billing', async () => {
+    const limits = createLimits()
+    await limits.refresh(TEST_IDS.workspace)
+    expect(limits.isExhausted(TEST_IDS.workspace)).toBe(false)
   })
 })

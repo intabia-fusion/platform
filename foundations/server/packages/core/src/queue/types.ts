@@ -10,6 +10,9 @@ export enum QueueTopic {
   // Topic to send workspace information into
   Workspace = 'workspace',
 
+  StorageCleanup = 'storage-cleanup',
+  StorageCleanupResults = 'storage-cleanup-results',
+
   // A fulltext topic to hold extra fulltext request, like re-indexing requests etc, private to fulltext service.
   Fulltext = 'fulltext',
 

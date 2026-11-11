@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -16,6 +17,7 @@
 import type { Request, Response } from 'express'
 import { MeasureContext, Ref, Space, systemAccountUuid, WorkspaceUuid } from '@hcengineering/core'
 import attachment from '@hcengineering/attachment'
+import drive from '@hcengineering/drive'
 import {
   LiveKitSessionData,
   BillingDB,
@@ -28,7 +30,8 @@ import {
   AiWorkspaceBreakdown,
   ProviderPoolConfig,
   AiTranscriptGroupBy,
-  AiTranscriptUsageData
+  AiTranscriptUsageData,
+  LimitCategory
 } from './types'
 import { generateToken } from '@hcengineering/server-token'
 import {
@@ -51,6 +54,24 @@ function parseIntParam (req: Request, name: string): number | undefined {
   if (typeof v !== 'string') return undefined
   const n = parseInt(v, 10)
   return Number.isFinite(n) ? n : undefined
+}
+
+export async function handleGetWorkspaceLimitStates (
+  ctx: MeasureContext,
+  db: BillingDB,
+  storageConfigs: StorageConfig[],
+  req: Request,
+  res: Response
+): Promise<void> {
+  const workspace = getWorkspaceUuid(req)
+  const categories: LimitCategory[] = ['disk', 'tokens', 'transcript']
+  const states = await Promise.all(
+    categories.map(async (category) => ({
+      category,
+      exhausted: (await db.getLimitState(ctx, workspace, category))?.exhausted ?? false
+    }))
+  )
+  res.json(states)
 }
 
 export async function handleListLiveKitSessions (
@@ -269,11 +290,14 @@ export async function handleGetLargestSpaces (
 
   const client = await getClient(token, workspace)
 
-  const attachments = await client.findAll(attachment.class.Attachment, {}, { projection: { space: 1, size: 1 } })
+  const [attachments, versions] = await Promise.all([
+    client.findAll(attachment.class.Attachment, {}, { projection: { space: 1, size: 1 } }),
+    client.findAll(drive.class.FileVersion, {}, { projection: { space: 1, size: 1 } })
+  ])
 
   const spaceSizes = new Map<Ref<Space>, number>()
 
-  for (const att of attachments) {
+  for (const att of [...attachments, ...versions]) {
     if (att.space != null && att.size != null) {
       const currentSize = spaceSizes.get(att.space) ?? 0
       spaceSizes.set(att.space, currentSize + att.size)

@@ -7,3 +7,5 @@ export * from './dummyQueue'
 export * from './users'
 export type * from './onlineUserTx'
 export * from './utils'
+
+export type * from './storageCleanup'

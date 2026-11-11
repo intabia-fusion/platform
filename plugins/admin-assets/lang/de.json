@@ -265,6 +265,20 @@
     "PaymentShowYear": "Letztes Jahr anzeigen",
     "PaymentRequested": "Rechnung / Zeitraum",
     "PaymentOverdue": "Zahlung überfällig",
-    "PaymentRestricted": "Zugriff eingeschränkt: Zahlung überfällig"
+    "PaymentRestricted": "Zugriff eingeschränkt: Zahlung überfällig",
+    "Storage": "Speicher",
+    "StorageEligibility": "Diese Objekte werden in keinem Arbeitsbereich verwendet.",
+    "StorageQueued": "Auftrag eingereiht",
+    "StorageRunning": "Auftrag wird ausgeführt",
+    "StorageReady": "Berechnung abgeschlossen",
+    "StorageCompleted": "Bereinigung abgeschlossen",
+    "StorageFailed": "Der Vorgang ist fehlgeschlagen. Versuchen Sie es erneut.",
+    "StorageFreed": "Freigegeben",
+    "StorageCanFree": "Freigebbar",
+    "StorageObjects": "Objekte",
+    "StorageEmpty": "Keine Objekte zur Bereinigung.",
+    "StorageCalculate": "Bereinigung berechnen",
+    "StorageClean": "Bereinigen",
+    "StorageConfirmHint": "Das Löschen ist unwiderruflich und erfordert einen Bestätigungscode des Administrators."
   }
 }
