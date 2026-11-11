@@ -2,6 +2,14 @@
 
 Changelog.
 
+## [0.8.71] - 2026-11-10
+
+* 🐛 BUG FIXES: · FUSIO-1768: Prevent successful-payment receipt emails from failing when the transaction ID is numeric ([76a3c5bc59](https://github.com/intabia-fusion/platform/commit/76a3c5bc59a6b00e2cbcad6d2ca31f5e59333492))
+
+## [0.8.70] - 2026-11-10
+
+* 🐛 BUG FIXES: · Give Kanban drop-target card previews an opaque background, border and rounded corners so underlying cards do not show through ([d6c269f977](https://github.com/intabia-fusion/platform/commit/d6c269f977c2e27ff5b2bb7f18ecce1014afa077))
+
 ## [0.8.69] - 2026-11-10
 
 * 🚀 FEATURES: · Show missing task type statuses, add compatible existing statuses, align status order and identify workflow statuses without outgoing transitions ([#666](https://github.com/hcengineering/platform/issues/666))
