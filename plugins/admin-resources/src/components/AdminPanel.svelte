@@ -35,6 +35,7 @@
   import StatisticsTab from './tabs/StatisticsTab.svelte'
   import WorkspacesTab from './tabs/WorkspacesTab.svelte'
   import PaymentsTab from './tabs/PaymentsTab.svelte'
+  import StorageTab from './tabs/StorageTab.svelte'
 
   let lastUpdated: number | undefined
   let refreshTick = 0
@@ -72,6 +73,7 @@
     { id: 'accounts', labelIntl: adminRes.string.Accounts },
     { id: 'payments', labelIntl: adminRes.string.Payments },
     { id: 'statistics', labelIntl: adminRes.string.Statistics },
+    { id: 'storage', labelIntl: adminRes.string.Storage },
     { id: 'audit', labelIntl: adminRes.string.Audit },
     { id: 'billing', labelIntl: adminRes.string.AI }
   ]
@@ -123,6 +125,8 @@
       <PaymentsTab {refreshTick} />
     {:else if selectedTab === 'statistics'}
       <StatisticsTab {refreshTick} />
+    {:else if selectedTab === 'storage'}
+      <StorageTab {refreshTick} />
     {:else if selectedTab === 'audit'}
       <AuditTab {refreshTick} />
     {:else if selectedTab === 'billing'}

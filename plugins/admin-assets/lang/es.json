@@ -265,6 +265,13 @@
     "PaymentShowYear": "Mostrar el último año",
     "PaymentRequested": "Factura / período",
     "PaymentOverdue": "Pago vencido",
-    "PaymentRestricted": "Acceso restringido: pago vencido"
+    "PaymentRestricted": "Acceso restringido: pago vencido",
+    "Storage": "Almacenamiento",
+    "StorageEligibility": "Estos objetos no se utilizan en ningún espacio de trabajo.",
+    "StorageFailed": "La operación falló. Inténtelo de nuevo.",
+    "StorageCanFree": "Se puede liberar",
+    "StorageObjects": "Objetos",
+    "StorageEmpty": "No hay objetos para limpiar.",
+    "StorageCalculate": "Calcular limpieza"
   }
 }

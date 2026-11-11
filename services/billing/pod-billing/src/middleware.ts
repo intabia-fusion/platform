@@ -53,7 +53,16 @@ export const withOwner = (req: RequestWithAuth, res: Response, next: NextFunctio
   void withOwnerAsync(req, res, next)
 }
 
-const withOwnerAsync = async (req: RequestWithAuth, res: Response, next: NextFunction): Promise<void> => {
+export const withWorkspaceMember = (req: RequestWithAuth, res: Response, next: NextFunction): void => {
+  void withOwnerAsync(req, res, next, false)
+}
+
+const withOwnerAsync = async (
+  req: RequestWithAuth,
+  res: Response,
+  next: NextFunction,
+  ownerOnly = true
+): Promise<void> => {
   if (req.token === undefined || req.token == null) {
     res.status(401).json({ message: 'Token error' }).end()
     return
@@ -77,8 +86,18 @@ const withOwnerAsync = async (req: RequestWithAuth, res: Response, next: NextFun
     res.status(401).json({ message: 'Missing workspace role' }).end()
     return
   }
-  if (loginInfo.role !== AccountRole.Owner) {
+  if (ownerOnly && loginInfo.role !== AccountRole.Owner) {
     res.status(401).json({ message: 'Workspace owners only' }).end()
+    return
+  }
+
+  if (
+    !ownerOnly &&
+    (!Object.values(AccountRole).includes(loginInfo.role) ||
+      !('workspace' in loginInfo) ||
+      loginInfo.workspace !== req.params.workspace)
+  ) {
+    res.status(403).json({ message: 'Missing workspace membership' }).end()
     return
   }
 

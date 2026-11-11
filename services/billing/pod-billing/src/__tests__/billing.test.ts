@@ -12,7 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { type WorkspaceUuid } from '@hcengineering/core'
+import { AccountRole, systemAccountUuid, type WorkspaceUuid } from '@hcengineering/core'
+import attachment from '@hcengineering/attachment'
+import drive from '@hcengineering/drive'
+import { getClient } from '../client'
 
 const getSubscriptionsMock = jest.fn()
 
@@ -38,7 +41,14 @@ jest.mock('@hcengineering/account-client', () => ({
   }
 }))
 jest.mock('@hcengineering/server-token', () => ({
-  generateToken: jest.fn(() => 'tok')
+  generateToken: jest.fn(() => 'tok'),
+  isHumanAdmin: (token: any) => token.extra?.admin === 'true',
+  hasAdminSession: (token: any) => token.extra?.fresh === 'true'
+}))
+const getLoginInfoByTokenMock = jest.fn()
+jest.mock('@hcengineering/server-client', () => ({
+  extractToken: jest.fn(),
+  getAccountClient: () => ({ getLoginInfoByToken: getLoginInfoByTokenMock })
 }))
 const datalakeClientMock = jest.fn()
 jest.mock('@hcengineering/datalake', () => ({
@@ -48,13 +58,14 @@ jest.mock('../config', () => ({
   __esModule: true,
   default: { AccountsUrl: 'http://account', WindowMonthLimit: 1000, ProviderPrices: {} }
 }))
-// handleGetLargestSpaces uses this getClient (unrelated to account-client), not exercised
-// here.
+// The workspace document client is separate from account-client.
 jest.mock('../client', () => ({ getClient: jest.fn() }))
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 const {
+  handleGetLargestSpaces,
   handleGetWorkspaceTokenWindows,
+  handleGetWorkspaceLimitStates,
   handleAddAiTokens,
   handlePushAiTokensData,
   handlePushTranscriptUsage,
@@ -64,6 +75,7 @@ const {
   clearWorkspacePlanCache,
   collectDatalakeStats
 } = require('../billing')
+const { withOwner, withWorkspaceMember } = require('../middleware')
 /* eslint-enable @typescript-eslint/no-var-requires */
 
 const WS = '123e4567-e89b-12d3-a456-426614174000' as WorkspaceUuid
@@ -358,5 +370,129 @@ describe('collectDatalakeStats', () => {
 
     const image = result.byType.find((t: any) => t.type === 'image')
     expect(image).toEqual({ type: 'image', count: 2, size: 100, derivedCount: 0, derivedSize: 0 })
+  })
+})
+
+describe('handleGetWorkspaceLimitStates', () => {
+  it('returns persisted exhausted states and allows categories with no state', async () => {
+    const db = makeDb({
+      getLimitState: jest.fn(async (_ctx, _ws, category) => (category === 'disk' ? { exhausted: true } : undefined))
+    })
+    const res = makeRes()
+    await handleGetWorkspaceLimitStates(ctx, db, [], makeReq(), res)
+    expect(res.json).toHaveBeenCalledWith([
+      { category: 'disk', exhausted: true },
+      { category: 'tokens', exhausted: false },
+      { category: 'transcript', exhausted: false }
+    ])
+    expect(db.getLimitState).toHaveBeenCalledWith(ctx, WS, 'disk')
+  })
+})
+
+describe('workspace limit state access', () => {
+  async function authorize (
+    middleware: typeof withOwner,
+    loginInfo: any,
+    workspace = WS,
+    token: any = {}
+  ): Promise<any> {
+    getLoginInfoByTokenMock.mockResolvedValue(loginInfo)
+    const req: any = {
+      params: { workspace },
+      headers: { authorization: 'Bearer tok' },
+      token: { account: 'person', workspace: WS, ...token }
+    }
+    const res: any = { status: jest.fn().mockReturnThis(), json: jest.fn().mockReturnThis(), end: jest.fn() }
+    const next = jest.fn()
+    middleware(req, res, next)
+    await Promise.resolve()
+    await Promise.resolve()
+    return { next, res }
+  }
+
+  it.each([AccountRole.Owner, AccountRole.User])('allows %s to read its workspace limits', async (role) => {
+    const { next } = await authorize(withWorkspaceMember, { workspace: WS, role })
+    expect(next).toHaveBeenCalledTimes(1)
+  })
+
+  it('rejects another workspace', async () => {
+    const { next, res } = await authorize(
+      withWorkspaceMember,
+      { workspace: WS, role: AccountRole.User },
+      'other' as WorkspaceUuid
+    )
+    expect(next).not.toHaveBeenCalled()
+    expect(res.status).toHaveBeenCalledWith(401)
+  })
+
+  it.each([null, {}, { workspace: WS, role: 'unknown' }, { workspace: 'other', role: AccountRole.User }])(
+    'rejects missing or invalid membership %p',
+    async (loginInfo) => {
+      const { next, res } = await authorize(withWorkspaceMember, loginInfo)
+      expect(next).not.toHaveBeenCalled()
+      expect(res.status).toHaveBeenCalled()
+    }
+  )
+
+  it('keeps owner-only APIs closed to members', async () => {
+    const { next, res } = await authorize(withOwner, { workspace: WS, role: AccountRole.User })
+    expect(next).not.toHaveBeenCalled()
+    expect(res.status).toHaveBeenCalledWith(401)
+    expect((await authorize(withOwner, { workspace: WS, role: AccountRole.Owner })).next).toHaveBeenCalledTimes(1)
+  })
+
+  it.each([{ account: systemAccountUuid }, { extra: { admin: 'true', fresh: 'true' } }])(
+    'preserves privileged access %p',
+    async (token) => {
+      const { next } = await authorize(withWorkspaceMember, null, 'other' as WorkspaceUuid, token)
+      expect(next).toHaveBeenCalledTimes(1)
+    }
+  )
+})
+
+describe('handleGetLargestSpaces', () => {
+  it('combines attachments and every Drive version, including drives without attachments', async () => {
+    const findAll = jest.fn(async (clazz: string) =>
+      clazz === attachment.class.Attachment
+        ? [
+            { space: 'project', size: 100 },
+            { space: 'mixed', size: 20 }
+          ]
+        : [
+            { space: 'drive-only', size: 200 },
+            { space: 'mixed', size: 30 },
+            { space: 'mixed', size: 40 }
+          ]
+    )
+    ;(getClient as jest.Mock).mockResolvedValue({ findAll })
+    const res = makeRes()
+    await handleGetLargestSpaces(ctx, makeDb(), [], makeReq(), res)
+    expect(findAll).toHaveBeenCalledWith(drive.class.FileVersion, {}, { projection: { space: 1, size: 1 } })
+    expect(res.json).toHaveBeenCalledWith([
+      { spaceId: 'drive-only', size: 200 },
+      { spaceId: 'project', size: 100 },
+      { spaceId: 'mixed', size: 90 }
+    ])
+  })
+
+  it('applies the top ten after combining and sorting both sources', async () => {
+    const findAll = jest.fn(async (clazz: string) =>
+      clazz === attachment.class.Attachment
+        ? Array.from({ length: 11 }, (_, i) => ({ space: `project-${i}`, size: i + 1 }))
+        : [
+            { space: 'drive-only', size: 100 },
+            { space: 'project-0', size: 200 }
+          ]
+    )
+    ;(getClient as jest.Mock).mockResolvedValue({ findAll })
+    const res = makeRes()
+    await handleGetLargestSpaces(ctx, makeDb(), [], makeReq(), res)
+    const result = res.json.mock.calls[0][0]
+    expect(result).toHaveLength(10)
+    expect(result.slice(0, 2)).toEqual([
+      { spaceId: 'project-0', size: 201 },
+      { spaceId: 'drive-only', size: 100 }
+    ])
+    expect(result[result.length - 1]).toEqual({ spaceId: 'project-3', size: 4 })
   })
 })

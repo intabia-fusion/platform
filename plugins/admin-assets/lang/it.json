@@ -265,6 +265,13 @@
     "PaymentShowYear": "Mostra l'ultimo anno",
     "PaymentRequested": "Fattura / periodo",
     "PaymentOverdue": "Pagamento scaduto",
-    "PaymentRestricted": "Accesso limitato: pagamento scaduto"
+    "PaymentRestricted": "Accesso limitato: pagamento scaduto",
+    "Storage": "Archiviazione",
+    "StorageEligibility": "Questi oggetti non vengono utilizzati in nessuno spazio di lavoro.",
+    "StorageFailed": "Operazione non riuscita. Riprovare.",
+    "StorageCanFree": "Liberabile",
+    "StorageObjects": "Oggetti",
+    "StorageEmpty": "Nessun oggetto da eliminare.",
+    "StorageCalculate": "Calcola pulizia"
   }
 }

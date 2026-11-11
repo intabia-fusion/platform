@@ -123,6 +123,219 @@ function msg (ref: string, amount = 1): BillingUsageMessage {
 }
 
 describe('LimitsEngine', () => {
+  it.each([
+    { previous: true, size: 5e9, status: 'ok' },
+    { previous: false, size: 15e9, status: 'exhausted' }
+  ])('retries a failed recompute notification: $status', async ({ previous, size, status }) => {
+    tierLimits({ storageLimitGB: 10 })
+    const db = makeDb()
+    await db.upsertLimitState(ctx, {
+      workspace: WS,
+      category: 'disk',
+      used: size,
+      limitValue: 10e9,
+      exhausted: previous
+    })
+    collectDatalakeStatsMock.mockResolvedValue({ size, count: 0, byType: [] })
+    const { engine, producer } = makeEngine(db)
+    const delivered: string[] = []
+    let diskAttempts = 0
+    producer.send.mockImplementation(async (_ctx: any, _workspace: WorkspaceUuid, events: any[]) => {
+      if (events[0].category !== 'disk') return
+      diskAttempts++
+      if (diskAttempts === 1) throw new Error('queue unavailable')
+      delivered.push(events[0].status)
+    })
+
+    await engine.recomputeWorkspace(ctx, WS)
+    await engine.recomputeWorkspace(ctx, WS)
+
+    expect(diskAttempts).toBe(2)
+    expect(delivered).toEqual([status])
+  })
+
+  it.each([
+    { previous: true, used: 15e9, amount: -10e9, status: 'ok' },
+    { previous: false, used: 5e9, amount: 10e9, status: 'exhausted' }
+  ])('recovers a failed delta notification: $status', async ({ previous, used, amount, status }) => {
+    tierLimits({ storageLimitGB: 10 })
+    const db = makeDb()
+    await db.upsertLimitState(ctx, { workspace: WS, category: 'disk', used, limitValue: 10e9, exhausted: previous })
+    collectDatalakeStatsMock.mockResolvedValue({ size: used + amount, count: 0, byType: [] })
+    const { engine, producer } = makeEngine(db)
+    const delivered: string[] = []
+    let diskAttempts = 0
+    producer.send.mockImplementation(async (_ctx: any, _workspace: WorkspaceUuid, events: any[]) => {
+      if (events[0].category !== 'disk') return
+      diskAttempts++
+      if (diskAttempts === 1) throw new Error('queue unavailable')
+      delivered.push(events[0].status)
+    })
+    const delta: BillingUsageMessage = {
+      kind: BillingMessageKind.Usage,
+      workspace: WS,
+      metric: 'storage',
+      amount,
+      ref: 'retry'
+    }
+
+    await engine.processUsageBatch(ctx, [delta])
+    await engine.processUsageBatch(ctx, [delta])
+    expect(await db.getLimitState(ctx, WS, 'disk')).toMatchObject({ used: used + amount })
+    await engine.recomputeWorkspace(ctx, WS)
+
+    expect(await db.getLimitState(ctx, WS, 'disk')).toMatchObject({ used: used + amount })
+    expect(diskAttempts).toBe(2)
+    expect(delivered).toEqual([status])
+  })
+
+  it.each([
+    { size: 5e9, exhausted: false, status: 'ok' },
+    { size: 15e9, exhausted: true, status: 'exhausted' }
+  ])('publishes the persisted $status state once until it changes', async ({ size, exhausted, status }) => {
+    tierLimits({ storageLimitGB: 10 })
+    const db = makeDb()
+    await db.upsertLimitState(ctx, { workspace: WS, category: 'disk', used: 0, limitValue: 10e9, exhausted })
+    collectDatalakeStatsMock.mockResolvedValue({ size, count: 0, byType: [] })
+    const { engine, producer } = makeEngine(db)
+    const observed: Array<WorkspaceLimitState | undefined> = []
+    producer.send.mockImplementation(async (_ctx: any, workspace: WorkspaceUuid, events: any[]) => {
+      if (events[0].category !== 'disk') return
+      expect(events[0].status).toBe(status)
+      observed.push(await db.getLimitState(ctx, workspace, 'disk'))
+    })
+
+    await engine.recomputeWorkspace(ctx, WS)
+    await engine.recomputeWorkspace(ctx, WS)
+
+    expect(observed).toEqual([expect.objectContaining({ used: size, exhausted })])
+    expect(await db.getLimitState(ctx, WS, 'disk')).toMatchObject({ used: size, exhausted })
+  })
+
+  it('publishes each category initially, then only a changed disk status', async () => {
+    tierLimits({ storageLimitGB: 10 })
+    const db = makeDb()
+    const { engine, producer } = makeEngine(db)
+    await engine.recomputeWorkspace(ctx, WS)
+    const categories = producer.send.mock.calls.map((call: any[]) => call[2][0].category)
+    expect(categories.sort()).toEqual(['disk', 'meetingMinutes', 'tokens', 'transcript'].sort())
+    producer.send.mockClear()
+    collectDatalakeStatsMock.mockResolvedValue({ size: 5e9, count: 0, byType: [] })
+    await engine.recomputeWorkspace(ctx, WS)
+    expect(producer.send).not.toHaveBeenCalled()
+    expect(await db.getLimitState(ctx, WS, 'disk')).toMatchObject({ used: 5e9, exhausted: false })
+    collectDatalakeStatsMock.mockResolvedValue({ size: 15e9, count: 0, byType: [] })
+    await engine.recomputeWorkspace(ctx, WS)
+    expect(producer.send.mock.calls.map((call: any[]) => call[2][0])).toEqual([
+      expect.objectContaining({ category: 'disk', status: 'exhausted' })
+    ])
+  })
+
+  it('publishes again after a new engine starts with the same database', async () => {
+    tierLimits({ storageLimitGB: 10 })
+    const db = makeDb()
+    await makeEngine(db).engine.recomputeWorkspace(ctx, WS)
+    const { engine, producer } = makeEngine(db)
+    await engine.recomputeWorkspace(ctx, WS)
+    expect(producer.send.mock.calls.map((call: any[]) => call[2][0])).toContainEqual(
+      expect.objectContaining({ category: 'disk', status: 'ok' })
+    )
+  })
+
+  it('keeps the previous successful status when a changed status fails', async () => {
+    tierLimits({ storageLimitGB: 10 })
+    const db = makeDb()
+    const { engine, producer } = makeEngine(db)
+    await engine.recomputeWorkspace(ctx, WS)
+    producer.send.mockImplementation(async (_ctx: any, _ws: WorkspaceUuid, events: any[]) => {
+      if (events[0].category === 'disk') throw new Error('queue unavailable')
+    })
+    collectDatalakeStatsMock.mockResolvedValue({ size: 15e9, count: 0, byType: [] })
+    await engine.recomputeWorkspace(ctx, WS)
+    producer.send.mockClear().mockResolvedValue(undefined)
+    await engine.recomputeWorkspace(ctx, WS)
+    const disk = producer.send.mock.calls.filter((call: any[]) => call[2][0].category === 'disk')
+    expect(disk.map((call: any[]) => call[2][0].status)).toEqual(['exhausted'])
+  })
+
+  it('remembers a successful delta during the next recompute', async () => {
+    tierLimits({ storageLimitGB: 10 })
+    const db = makeDb()
+    const { engine, producer } = makeEngine(db)
+    const delta = { kind: BillingMessageKind.Usage, workspace: WS, metric: 'storage', amount: 15e9, ref: 'disk' }
+    await engine.processUsageDelta(ctx, delta)
+    collectDatalakeStatsMock.mockResolvedValue({ size: 15e9, count: 0, byType: [] })
+    await engine.recomputeWorkspace(ctx, WS)
+    const disk = producer.send.mock.calls.filter((call: any[]) => call[2][0].category === 'disk')
+    expect(disk.map((call: any[]) => call[2][0].status)).toEqual(['exhausted'])
+  })
+
+  it('serializes concurrent disk sends and retains the latest successful status', async () => {
+    tierLimits({ storageLimitGB: 10 })
+    const db = makeDb()
+    const { engine, producer } = makeEngine(db)
+    let release!: () => void
+    let started!: () => void
+    const pending = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    const sending = new Promise<void>((resolve) => {
+      started = resolve
+    })
+    const statuses: string[] = []
+    producer.send.mockImplementation(async (_ctx: any, _ws: WorkspaceUuid, events: any[]) => {
+      if (events[0].category !== 'disk') return
+      statuses.push(events[0].status)
+      if (statuses.length === 1) {
+        started()
+        await pending
+      }
+    })
+    const first = engine.recomputeWorkspace(ctx, WS)
+    await sending
+    const delta = { kind: BillingMessageKind.Usage, workspace: WS, metric: 'storage', amount: 15e9, ref: 'disk' }
+    const second = engine.processUsageDelta(ctx, delta)
+    await new Promise<void>((resolve) => setImmediate(resolve))
+    expect(statuses).toEqual(['ok'])
+    release()
+    await Promise.all([first, second])
+    expect(statuses).toEqual(['ok', 'exhausted'])
+    collectDatalakeStatsMock.mockResolvedValue({ size: 15e9, count: 0, byType: [] })
+    await engine.recomputeWorkspace(ctx, WS)
+    expect(statuses).toEqual(['ok', 'exhausted'])
+  })
+
+  it('clears stale disk exhaustion after deletion and persists before notifying clients', async () => {
+    tierLimits({ storageLimitGB: 10 })
+    const db = makeDb()
+    await db.upsertLimitState(ctx, { workspace: WS, category: 'disk', used: 16e9, limitValue: 10e9, exhausted: true })
+    collectDatalakeStatsMock.mockResolvedValue({ size: 496622591, count: 4621, byType: [] })
+    const { engine, producer } = makeEngine(db)
+    const observed: any[] = []
+    producer.send.mockImplementation(async (_ctx: any, workspace: WorkspaceUuid, events: any[]) => {
+      for (const event of events) observed.push(await db.getLimitState(ctx, workspace, event.category))
+    })
+    await engine.recomputeWorkspace(ctx, WS)
+    expect(observed).toContainEqual(expect.objectContaining({ category: 'disk', used: 496622591, exhausted: false }))
+    expect(producer.send).toHaveBeenCalledWith(
+      ctx,
+      WS,
+      expect.arrayContaining([expect.objectContaining({ category: 'disk', status: 'ok' })])
+    )
+  })
+
+  it('persists an exhausted delta before notifying clients', async () => {
+    tierLimits({ tokenLimit: 1000, windowMonthLimit: 1000 })
+    const db = makeDb()
+    const { engine, producer } = makeEngine(db)
+    const observed: any[] = []
+    producer.send.mockImplementation(async () => {
+      observed.push(await db.getLimitState(ctx, WS, 'tokens'))
+    })
+    await engine.processUsageDelta(ctx, msg('new-usage', 1001))
+    expect(observed[0]).toMatchObject({ used: 1001, exhausted: true })
+  })
+
   it('ignores duplicate ref', async () => {
     tierLimits({ tokenLimit: 1000, windowMonthLimit: 1000 })
     const db = makeDb(0)
@@ -260,7 +473,11 @@ describe('LimitsEngine', () => {
 
       const state = await db.getLimitState(ctx, WS, 'tokens')
       expect(state?.exhausted).toBe(false)
-      expect(producer.send).not.toHaveBeenCalled()
+      expect(producer.send).toHaveBeenCalledWith(
+        ctx,
+        WS,
+        expect.arrayContaining([expect.objectContaining({ category: 'tokens', status: 'ok' })])
+      )
     })
 
     it('exhausts only when both pools are empty', async () => {
@@ -437,6 +654,20 @@ describe('window step notify (5% fill)', () => {
       WS,
       expect.arrayContaining([expect.objectContaining({ category: 'tokens', status: 'ok' })])
     )
+  })
+
+  it('keeps an exhausted status on a window step and remembers it', async () => {
+    tierWithWindow(5, 100)
+    const db = makeDb(100)
+    const { engine, producer } = makeEngine(db)
+    await engine.processUsageDelta(ctx, msg('r1', 100))
+    const tokenEvents = producer.send.mock.calls
+      .map((call: any[]) => call[2][0])
+      .filter((event: any) => event.category === 'tokens')
+    expect(tokenEvents.map((event: any) => event.status)).toEqual(['exhausted', 'exhausted'])
+    await engine.recomputeWorkspace(ctx, WS)
+    const after = producer.send.mock.calls.filter((call: any[]) => call[2][0].category === 'tokens')
+    expect(after).toHaveLength(2)
   })
 
   it('does not publish when the delta stays within the same 5% step', async () => {

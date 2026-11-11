@@ -138,6 +138,7 @@
     "Connection": "Соединение",
     "Connected": "Подключено",
     "Reconnecting": "Переподключение...",
+    "WorkspaceLimitsExhausted": "Лимиты пространства исчерпаны",
     "RateLimit": "Лимит запросов",
     "RateLimitValue": "осталось {remaining} из {limit}, сброс через {seconds}с",
     "RateLimitUsage": "Запросов в лимите: {current} / {limit}",

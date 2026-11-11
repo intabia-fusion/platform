@@ -24,6 +24,7 @@ import {
   handleGetLiveKitStats,
   handleGetDatalakeStats,
   handleGetStats,
+  handleGetWorkspaceLimitStates,
   handlePushAiTranscriptData,
   handleGetAiTranscriptLastData,
   handlePushAiTokensData,
@@ -45,7 +46,7 @@ import {
   handleGetPricing
 } from './billing'
 import { Config } from './config'
-import { withAdmin, withOwner, withToken } from './middleware'
+import { withAdmin, withOwner, withToken, withWorkspaceMember } from './middleware'
 import { BillingDB } from './types'
 
 import cors from 'cors'
@@ -157,6 +158,12 @@ export async function createServer (
     withToken,
     withOwner,
     wrapRequest(ctx, 'getDatalakeStats', handleGetDatalakeStats)
+  )
+  app.get(
+    '/api/v1/:workspace/limits',
+    withToken,
+    withWorkspaceMember,
+    wrapRequest(ctx, 'getWorkspaceLimitStates', handleGetWorkspaceLimitStates)
   )
   app.get('/api/v1/:workspace/stats', withToken, withOwner, wrapRequest(ctx, 'getStats', handleGetStats))
   app.get(

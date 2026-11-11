@@ -265,6 +265,13 @@
     "PaymentShowYear": "Zobrazit poslední rok",
     "PaymentRequested": "Faktura / období",
     "PaymentOverdue": "Platba po splatnosti",
-    "PaymentRestricted": "Přístup omezen: platba po splatnosti"
+    "PaymentRestricted": "Přístup omezen: platba po splatnosti",
+    "Storage": "Úložiště",
+    "StorageEligibility": "Tyto objekty se nepoužívají v žádném pracovním prostoru.",
+    "StorageFailed": "Operace se nezdařila. Zkuste to znovu.",
+    "StorageCanFree": "Lze uvolnit",
+    "StorageObjects": "Objekty",
+    "StorageEmpty": "Žádné objekty k vyčištění.",
+    "StorageCalculate": "Vypočítat čištění"
   }
 }

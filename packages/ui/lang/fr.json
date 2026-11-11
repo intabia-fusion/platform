@@ -138,6 +138,7 @@
     "Connection": "Connexion",
     "Connected": "Connecté",
     "Reconnecting": "Reconnexion...",
+    "WorkspaceLimitsExhausted": "Les limites de l'espace de travail sont épuisées",
     "RateLimit": "Limite de requêtes",
     "RateLimitValue": "{remaining} sur {limit} restant, réinit. dans {seconds}s",
     "RateLimitUsage": "Requêtes dans la limite : {current} / {limit}",

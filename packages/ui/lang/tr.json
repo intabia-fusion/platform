@@ -138,6 +138,7 @@
     "Connection": "Bağlantı",
     "Connected": "Bağlandı",
     "Reconnecting": "Yeniden bağlanıyor...",
+    "WorkspaceLimitsExhausted": "Çalışma alanı limitleri tükendi",
     "RateLimit": "İstek limiti",
     "RateLimitValue": "{limit} üzerinden {remaining} kaldı, {seconds}s içinde sıfırlanır",
     "RateLimitUsage": "Sınırdaki istekler: {current} / {limit}",

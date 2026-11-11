@@ -265,6 +265,13 @@
     "PaymentShowYear": "過去1年を表示",
     "PaymentRequested": "請求 / 期間",
     "PaymentOverdue": "支払期限超過",
-    "PaymentRestricted": "アクセス制限: 支払期限超過"
+    "PaymentRestricted": "アクセス制限: 支払期限超過",
+    "Storage": "ストレージ",
+    "StorageEligibility": "これらのオブジェクトはどのワークスペースでも使用されていません。",
+    "StorageFailed": "操作に失敗しました。再試行してください。",
+    "StorageCanFree": "解放可能",
+    "StorageObjects": "オブジェクト",
+    "StorageEmpty": "削除対象のオブジェクトはありません。",
+    "StorageCalculate": "クリーンアップを計算"
   }
 }

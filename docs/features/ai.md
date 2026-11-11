@@ -104,9 +104,9 @@
 - **Реестр ASR-провайдеров с fallback.** - `availableAsrLevels`/`resolveAsrModel`, `transcription/asrRegistry.ts`.
 
 ### Лимиты и биллинг
-- **In-memory `LimitsState`.** fail-open до первого события `LimitsChanged`. - `limits.ts`.
+- **In-memory `LimitsState`.** fail-open до первого события `LimitsChanged`; ограничивает новые LLM-запросы. Исчерпание лимита не останавливает аудиочанки, очередь и повторы ASR уже начатой встречи. Допуск нового старта транскрипции проверяет love; отказ возвращается через `/love/connect` как HTTP 413 без создания участника и состояния Transcribing. - `limits.ts`, `controller.ts`, `transcription/consumer.ts`, `services/love/src/main.ts`.
 - **Месячное окно биллинга.** Кэш 30с + stale-if-error. - `getWorkspaceWindows`, `billing.ts`; `decideLevel`, `workspace/windowLimit.ts`.
-- **Гейт по лимиту токенов перед LLM.** - `checkTokensLimit`, `controller.ts`.
+- **Гейт по лимиту токенов перед LLM.** При исчерпании запрос блокируется без сообщения в чат; участники видят плашку лимита пространства. - `checkTokensLimit`, `controller.ts`; `decideLevel`, `workspace/workspaceClient.ts`.
 - **Глобальный пул-лимит на (provider, model).** fail-open, адаптивный поллинг. - `PoolLimits`, `billing.ts`.
 - **Биллинг токенов.** `billedTokens = ceil((prompt+completion) * tokenMultiplier)`. - `billUsage`/`pushTokensData`, `billing.ts`.
 - **Биллинг длительности транскрипции.** - `pushTranscriptDuration`, `billing.ts`.
@@ -137,7 +137,7 @@
 | Окно контекста ветки + промпт объекта | - | - | internal | - | |
 | Цикл "модель<->инструменты" с лимитом итераций | - | - | internal | - | |
 | `AIRequest` как документ жизненного цикла запроса | - | - | internal | - | |
-| Транскрипция встречи в реальном времени | communication/live-transcription | communication/live-transcription | stale | 0.8.60 | исправлено: выбор языка транскрибации (это настройка комнаты, не контрол в меню встречи); скрины hulia-live-transcription*.png устарели (апстримный Huly UI), см. office-meetings.md |
+| Транскрипция встречи в реальном времени | communication/live-transcription | communication/live-transcription | stale | 0.8.60 | лимиты запрещают новый старт транскрипции, начатая встреча завершается без остановки; исправлено: выбор языка транскрибации (это настройка комнаты, не контрол в меню встречи); скрины hulia-live-transcription*.png устарели (апстримный Huly UI), см. office-meetings.md |
 | OpenAI-провайдер | - | - | internal | - | |
 | Счётчик токенов tiktoken | - | - | internal | - | |
 | GigaChat-провайдер | - | - | internal | - | |

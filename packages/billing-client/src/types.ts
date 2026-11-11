@@ -236,3 +236,8 @@ export interface AiWorkspaceBreakdown {
   byModel: Array<{ key: string, totalTokens: number, rawTokens?: number }>
   byLevel: Array<{ key: string, totalTokens: number, rawTokens?: number }>
 }
+
+export interface WorkspaceLimitState {
+  category: string
+  exhausted: boolean
+}
