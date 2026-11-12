@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -30,6 +31,7 @@
   import ReferenceSrcPresenter from './ReferenceSrcPresenter.svelte'
 
   import ActivityMessageTemplate from '../activity-message/ActivityMessageTemplate.svelte'
+  import { getReferenceQueryClass } from '../../referenceQuery'
 
   export let value: ActivityReference
   export let showNotify: boolean = false
@@ -69,16 +71,35 @@
     person = p ?? undefined
   })
 
-  $: srcDocQuery.query(value.srcDocClass, { _id: value.srcDocId }, (result) => {
-    srcDoc = result.shift()
-  })
+  $: srcQueryClass = getReferenceQueryClass(hierarchy, value.srcDocClass)
+  $: targetQueryClass = getReferenceQueryClass(hierarchy, value.attachedToClass)
 
-  $: targetDocQuery.query(value.attachedToClass, { _id: value.attachedTo }, (r) => {
-    targetDoc = r.shift()
-  })
+  $: if (srcQueryClass !== undefined) {
+    srcDocQuery.query(srcQueryClass, { _id: value.srcDocId }, (result) => {
+      srcDoc = result[0]
+    })
+  } else {
+    srcDocQuery.unsubscribe()
+    srcDoc = undefined
+  }
 
-  $: targetPanel = hierarchy.classHierarchyMixin(value.attachedToClass, view.mixin.ObjectPanel)
-  $: srcDocPanel = hierarchy.classHierarchyMixin(value.srcDocClass, view.mixin.ObjectPanel)
+  $: if (targetQueryClass !== undefined) {
+    targetDocQuery.query(targetQueryClass, { _id: value.attachedTo }, (result) => {
+      targetDoc = result[0]
+    })
+  } else {
+    targetDocQuery.unsubscribe()
+    targetDoc = undefined
+  }
+
+  $: targetPanel =
+    targetDoc !== undefined && hierarchy.hasClass(targetDoc._class)
+      ? hierarchy.classHierarchyMixin(targetDoc._class, view.mixin.ObjectPanel)
+      : undefined
+  $: srcDocPanel =
+    srcDoc !== undefined && hierarchy.hasClass(srcDoc._class)
+      ? hierarchy.classHierarchyMixin(srcDoc._class, view.mixin.ObjectPanel)
+      : undefined
 
   $: void (
     targetDoc !== undefined &&
