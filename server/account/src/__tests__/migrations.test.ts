@@ -259,8 +259,7 @@ describe.each(['postgres', 'cockroach'] as const)('getMigrations - v57 ai bot em
     expect(sql).toContain(`UPDATE ${ns}.social_id`)
     expect(sql).toContain("type = 'email' AND value = 'huly.ai.bot@hc.engineering'")
     expect(sql).toMatch(/SET value = 'ai\.bot@platform'/)
-    // Guard against a real account already holding the new address: nothing to rename then.
-    expect(sql).toContain('NOT EXISTS')
+    expect(sql).not.toContain('NOT EXISTS')
     expect(sql).not.toMatch(/ALTER TABLE|CREATE |DROP |DELETE FROM|INSERT INTO/i)
   })
 })

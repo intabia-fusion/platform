@@ -112,10 +112,6 @@ export const readOnlyGuestAccountUuid = '83bbed9a-0867-4851-be32-31d49d1d42ce' a
 // Email of the ai-bot account: the one place the platform recognises the bot by.
 export const aiBotAccountEmail = 'ai.bot@platform'
 
-// Where the bot's email was before FUSIO-1379. Data migrations and legacy imports read it; identity
-// checks must not: whoever takes this address now is a plain user, not the bot.
-export const legacyAiBotAccountEmail = 'huly.ai.bot@hc.engineering'
-
 export default plugin(coreId, {
   class: {
     Obj: '' as Ref<Class<Obj>>,

@@ -22,7 +22,6 @@ import {
   DOMAIN_SPACE,
   AccountRole,
   generateId,
-  legacyAiBotAccountEmail,
   type WorkspaceDataId,
   type WorkspaceUuid,
   generateUuid,
@@ -479,7 +478,7 @@ export async function migrateMergedAccounts (
       SELECT workspace_id, person_ref, array_agg(new_social_key) as social_keys
       FROM temp_data.account_socialkey_mapping
       WHERE new_social_key NOT IN (
-        'email:' || ${legacyAiBotAccountEmail}::text,
+        'email:huly.ai.bot@hc.engineering',
         'email:' || ${aiBotAccountEmail}::text
       )
       GROUP BY workspace_id, person_ref

@@ -82,14 +82,22 @@ describe('contact migration - rename the ai-bot email', () => {
     ])
   })
 
-  it('drops the old identity when the workspace already provisioned the current one', async () => {
+  it('preserves the old author identity as deleted when the current one already exists', async () => {
     const stale = emailIdentity('bot-social-id', legacyKey, 'huly.ai.bot@hc.engineering', bot)
     const fresh = emailIdentity('bot-new-id', currentKey, 'ai.bot@platform', bot)
     const { client, rows } = createClient([stale, fresh])
 
     await renameAiBotEmail(client)
 
-    expect(rows()).toEqual([expect.objectContaining({ _id: 'bot-new-id', key: currentKey, attachedTo: bot })])
+    expect(rows()).toEqual([
+      expect.objectContaining({ _id: 'bot-social-id', key: legacyKey, attachedTo: bot, isDeleted: true }),
+      expect.objectContaining({ _id: 'bot-new-id', key: currentKey, attachedTo: bot })
+    ])
+    expect(client.deleteMany).not.toHaveBeenCalled()
+
+    await renameAiBotEmail(client)
+
+    expect(rows()).toHaveLength(2)
   })
 
   it('does nothing in a workspace the bot never joined', async () => {

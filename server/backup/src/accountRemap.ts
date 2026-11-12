@@ -14,7 +14,7 @@
 //
 
 import { type AccountDB, type Person as GlobalPerson, type SocialId } from '@hcengineering/account'
-import { aiBotAccountEmail, legacyAiBotAccountEmail, type MeasureContext, type PersonUuid } from '@hcengineering/core'
+import { aiBotAccountEmail, type MeasureContext, type PersonUuid } from '@hcengineering/core'
 import { promisify } from 'node:util'
 import { gunzip } from 'zlib'
 import { collectAccountObjects } from './restore'
@@ -31,7 +31,7 @@ const accountSchema = 'global_account'
 // System accounts to skip: same bootstrap identity exists in every workspace, must not be remapped.
 // Both the current and the pre-rename (FUSIO-1379) bot address: a backup taken before the rename
 // still carries the old one.
-const ignoredSocialValues = new Set([aiBotAccountEmail, legacyAiBotAccountEmail])
+const ignoredSocialValues = new Set([aiBotAccountEmail, 'huly.ai.bot@hc.engineering'])
 
 interface Collision {
   key: string // socialId natural key, e.g. email:user@x.com

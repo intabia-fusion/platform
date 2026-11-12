@@ -1403,16 +1403,11 @@ function getV57Migration (ns: string): [string, string] {
     /* FUSIO-1379: the bot's email is its identity, so the rename is a data change, not a code one.
        `key` is a generated column and recomputes itself, and `_id` is independent of the value, so
        every createdBy/modifiedBy, mention and integration secret keeps resolving.
-       NOT EXISTS keeps the upgrade alive when a real account already owns the new address: the bot
-       then stays on the old one (the reason is visible in the data, SQL cannot log it).
        DML only: no DDL in the same batch. */
     `
     UPDATE ${ns}.social_id
        SET value = '${AI_BOT_EMAIL_RENAMED}'
-     WHERE type = 'email' AND value = '${AI_BOT_EMAIL_LEGACY}'
-       AND NOT EXISTS (
-         SELECT 1 FROM ${ns}.social_id WHERE type = 'email' AND value = '${AI_BOT_EMAIL_RENAMED}'
-       );
+     WHERE type = 'email' AND value = '${AI_BOT_EMAIL_LEGACY}';
     `
   ]
 }

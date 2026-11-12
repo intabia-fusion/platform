@@ -25,7 +25,6 @@ import {
   DOMAIN_SPACE,
   DOMAIN_TX,
   generateId,
-  legacyAiBotAccountEmail,
   type MarkupBlobRef,
   type PersonId,
   type PersonUuid,
@@ -303,7 +302,7 @@ async function migrateMergedAccounts (client: MigrationClient): Promise<void> {
 
     // exclude empty emails
     // also exclude the AI bot account, under both its current and its pre-rename address
-    if (account.email === '' || account.email === aiBotAccountEmail || account.email === legacyAiBotAccountEmail) {
+    if (account.email === '' || account.email === aiBotAccountEmail || account.email === 'huly.ai.bot@hc.engineering') {
       continue
     }
     accountsByPerson.get(account.person)?.push(account)
@@ -498,7 +497,7 @@ async function fixSocialIdCase (client: MigrationClient): Promise<void> {
  * address keeps riding out in webhooks.
  */
 export async function renameAiBotEmail (client: MigrationClient): Promise<void> {
-  const oldKey = buildSocialIdString({ type: SocialIdType.EMAIL, value: legacyAiBotAccountEmail })
+  const oldKey = buildSocialIdString({ type: SocialIdType.EMAIL, value: 'huly.ai.bot@hc.engineering' })
   const newKey = buildSocialIdString({ type: SocialIdType.EMAIL, value: aiBotAccountEmail })
 
   const identities = await client.find<SocialIdentity>(DOMAIN_CHANNEL, {
@@ -516,7 +515,11 @@ export async function renameAiBotEmail (client: MigrationClient): Promise<void> 
     key: newKey
   })
   if (current.length > 0) {
-    await client.deleteMany(DOMAIN_CHANNEL, { _class: contact.class.SocialIdentity, key: oldKey })
+    await client.update(
+      DOMAIN_CHANNEL,
+      { _class: contact.class.SocialIdentity, key: oldKey },
+      { isDeleted: true }
+    )
     return
   }
 

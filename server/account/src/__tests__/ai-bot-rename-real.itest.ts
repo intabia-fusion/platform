@@ -116,10 +116,10 @@ describe.each(realDbFlavors)('real-ai-bot-rename [$flavor]', ({ flavor, adminUri
     expect(await emailOf(legacyEmail)).toBeNull()
   })
 
-  it('keeps the bot on the old address when a real account already owns the new one', async () => {
+  it('fails when another account already owns the new address', async () => {
     await seed(squatterUuid, renamedEmail)
 
-    await runMigration()
+    await expect(runMigration()).rejects.toMatchObject({ code: '23505' })
 
     expect(await emailOf(legacyEmail)).not.toBeNull()
     expect(await emailOf(renamedEmail)).not.toBeNull()
