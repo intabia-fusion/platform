@@ -169,7 +169,7 @@ test.describe('board settings', () => {
     expect((await client.findOne(tracker.class.Board, { _id: id }))?.columns).toEqual(columns)
   })
 
-  test('unplaced statuses stay fixed while top-aligned columns scroll horizontally', async ({ page }) => {
+  test('adding a settings column reveals and focuses it while unplaced statuses stay fixed', async ({ page }) => {
     const board = await client.findOne(tracker.class.Board, { _id: boardId })
     if (board === undefined) throw new Error('no board')
     const { _id, _class, space, modifiedOn, modifiedBy, createdOn, createdBy, ...data } = board
@@ -193,12 +193,23 @@ test.describe('board settings', () => {
     await expect(unplaced).toBeVisible()
     const before = await unplaced.boundingBox()
     const scroll = page.locator('[data-id="boardColumnsScroll"] .scroll')
-    await scroll.evaluate((element) => {
-      element.scrollLeft = element.scrollWidth
-    })
+    await expect.poll(async () => await scroll.evaluate((element) => element.scrollLeft)).toBe(0)
+    await page.locator('[data-id="boardAddColumn"]').click()
+    await expect(boards.settingsColumn()).toHaveCount(9)
+    const last = boards.settingsColumn().last()
+    const name = last.locator('input.name')
+    await expect(name).toBeFocused()
+    await expect(last).toBeInViewport({ ratio: 1 })
+    expect(
+      await name.evaluate((input: HTMLInputElement) => (input.selectionEnd ?? 0) - (input.selectionStart ?? 0))
+    ).toBe((await name.inputValue()).length)
+    await name.pressSequentially('Review')
+    await name.press('Tab')
+    await expect
+      .poll(async () => (await client.findOne(tracker.class.Board, { _id: id }))?.columns.at(-1)?.title)
+      .toBe('Review')
     await expect.poll(async () => await scroll.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0)
     expect(await unplaced.boundingBox()).toEqual(before)
-    const last = boards.settingsColumn().last()
     await expect(last).toBeInViewport()
     expect((await last.boundingBox())?.y).toBeCloseTo(before?.y ?? 0, 0)
     await page.mouse.move(0, 0)
@@ -212,6 +223,22 @@ test.describe('board settings', () => {
     await expect
       .poll(async () => (await client.findOne(tracker.class.Board, { _id: id }))?.columns.at(-1)?.statuses)
       .toContain(statusId('Cancelled'))
+
+    // Another user's addition must not move this editor or take its keyboard focus.
+    const firstName = boards.settingsColumn().first().locator('input.name')
+    await firstName.focus()
+    const scrollLeft = await scroll.evaluate((element) => element.scrollLeft)
+    const current = await client.findOne(tracker.class.Board, { _id: id })
+    if (current === undefined) throw new Error('no board')
+    await client.update(current, {
+      columns: [
+        ...current.columns,
+        { id: 'remote', title: 'Remote column', category: task.statusCategory.ToDo, statuses: [] }
+      ]
+    })
+    await expect(boards.settingsColumn()).toHaveCount(10)
+    await expect(firstName).toBeFocused()
+    expect(await scroll.evaluate((element) => element.scrollLeft)).toBe(scrollLeft)
   })
 
   test('the personal board toggle shows its label and hint and saves visibility', async ({ page }) => {
