@@ -63,6 +63,8 @@
     if (attr === undefined) return
     if (attribute.collectionAttr) return
     if (attribute.isLookup) return
+    // A descendant attribute belongs to another class, its value cannot be updated from this view
+    if (attribute.displayProps?._class !== undefined) return
     if (attribute?.attribute?.readonly === true) return
     return (value: any) => {
       onChange(value, docObject, attribute.key, attr)

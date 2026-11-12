@@ -42,6 +42,7 @@ export default mergeIds(driveId, drive, {
     FilePanel: '' as AnyComponent,
     FolderPanel: '' as AnyComponent,
     FolderPresenter: '' as AnyComponent,
+    FolderRefPresenter: '' as AnyComponent,
     FilePresenter: '' as AnyComponent,
     FileVersionPresenter: '' as AnyComponent,
     FileVersionVersionPresenter: '' as AnyComponent,

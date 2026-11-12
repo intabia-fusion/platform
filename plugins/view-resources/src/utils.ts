@@ -644,6 +644,16 @@ export async function buildModel (options: BuildModelOptions): Promise<Attribute
             }
           }
         }
+        const descendantClass = key.displayProps?._class
+        if (descendantClass !== undefined) {
+          // A descendant attribute key belongs to the class in displayProps._class, not to the viewlet class.
+          // An optional descendant column the model cannot render is skipped instead of failing the whole table
+          try {
+            return await getPresenter(options.client, descendantClass, key, key, options.lookup)
+          } catch {
+            return undefined
+          }
+        }
         return await getPresenter(options.client, options._class, key, key, options.lookup)
       } catch (err: any) {
         if (options.ignoreMissing ?? false) {
