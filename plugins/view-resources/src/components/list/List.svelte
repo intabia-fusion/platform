@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -17,9 +18,10 @@
   import core, { getObjectValue, RateLimiter, mergeQueries, type SortingOrder } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import { createQuery, getClient, reduceCalls } from '@hcengineering/presentation'
-  import type { AnyComponent, AnySvelteComponent } from '@hcengineering/ui'
+  import { resizeObserver, type AnyComponent, type AnySvelteComponent } from '@hcengineering/ui'
   import type { BuildModelKey, ViewOptionModel, ViewOptions, Viewlet } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
+  import { provideListColumnSizing } from '../../listColumnSizing'
   import type { SelectionFocusProvider } from '../../selection'
   import { buildSortRules, hasSortRules } from '../../sortRules'
   import { buildConfigLookup, isRefAttribute } from '../../utils'
@@ -50,6 +52,8 @@
   export let singleCategoryLimit: number | undefined = undefined
   export let readonly: boolean = false
   export let empty: boolean = false
+
+  const resizeColumns = provideListColumnSizing()
 
   const limiter = new RateLimiter(10)
 
@@ -303,7 +307,7 @@
   let listCategories: ListCategories
 </script>
 
-<div class="list-container" bind:this={listDiv}>
+<div class="list-container" bind:this={listDiv} use:resizeObserver={resizeColumns}>
   <ListCategories
     bind:this={listCategories}
     bind:empty={noCategories}
