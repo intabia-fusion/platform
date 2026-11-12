@@ -276,7 +276,14 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
 
   app.use(
     cors({
-      credentials: true
+      credentials: true,
+      exposeHeaders: [
+        'Retry-After',
+        'Retry-After-ms',
+        'X-RateLimit-Limit',
+        'X-RateLimit-Remaining',
+        'X-RateLimit-Reset'
+      ]
     })
   )
   app.use(bodyParser())
