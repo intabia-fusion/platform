@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
+import { aiBotAccountEmail } from '@hcengineering/core'
 import { config as dotenvConfig } from 'dotenv'
 
 dotenvConfig()
@@ -112,7 +113,7 @@ const envMap = {
 const parseNumber = (str: string | undefined): number | undefined => (str !== undefined ? Number(str) : undefined)
 const isEmpty = (str: string | undefined): boolean => str === undefined || str.trim().length === 0
 
-const DEFAULT_BLOCKED_RECIPIENTS = 'huly.ai.bot@hc.engineering'
+const DEFAULT_BLOCKED_RECIPIENTS = aiBotAccountEmail
 
 const parseAddressList = (str: string): Set<string> =>
   new Set(

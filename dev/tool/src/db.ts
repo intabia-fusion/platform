@@ -17,6 +17,7 @@ import {
   type PersonUuid,
   type SocialKey,
   type AccountUuid,
+  aiBotAccountEmail,
   parseSocialIdString,
   DOMAIN_SPACE,
   AccountRole,
@@ -476,7 +477,10 @@ export async function migrateMergedAccounts (
     const personsAccounts = await pgClient`
       SELECT workspace_id, person_ref, array_agg(new_social_key) as social_keys
       FROM temp_data.account_socialkey_mapping
-      WHERE new_social_key != 'email:huly.ai.bot@hc.engineering'
+      WHERE new_social_key NOT IN (
+        'email:huly.ai.bot@hc.engineering',
+        'email:' || ${aiBotAccountEmail}::text
+      )
       GROUP BY workspace_id, person_ref
       HAVING count(*) > 1
     `
