@@ -98,7 +98,7 @@
 | RelationshipTable.svelte | Таблица связанных документов по Association | _class, query, config, viewOptions | internal |
 | RelationshipTableBrowser.svelte | Обёртка над RelationshipTable, грузит viewlet | _class, query, viewlet | view.component.RelationshipTableBrowser |
 | list/List.svelte | Список документов с категориями/группировкой | _class, query, viewOptions, config | import |
-| list/ListView.svelte | Обёртка над List, слушает клавиатуру; List создаёт общую область ширин колонок для презентеров (`getListColumnSizing`) | _class, viewlet, config, viewOptions | both |
+| list/ListView.svelte | Обёртка над List, слушает клавиатуру; `viewlet.props.columnWidths` задаёт сетку колонок, `minRowWidth` — минимум для горизонтальной прокрутки | _class, viewlet, config, viewOptions | both |
 | list/ListPresenter.svelte | Презентер значения одного атрибута в строке | docObject, attributeModel, value, onChange | import |
 | list/ListCategories.svelte | Рекурсивный рендер категорий списка | docs, categoryRefsMap, viewOptions | internal |
 | list/ListCategory.svelte | Одна категория списка, рекурсия по вложенным | category, itemProj, itemModels | internal |

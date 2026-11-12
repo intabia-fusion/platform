@@ -421,5 +421,3 @@ export default async (): Promise<Resources> => ({
     GetLink: getLink
   }
 })
-
-export { getListColumnSizing } from './listColumnSizing'
