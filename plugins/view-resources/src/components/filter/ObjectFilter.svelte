@@ -228,6 +228,7 @@
   {:else}
     <div class="menu-space" />
   {/if}
+  <slot name="beforeValues" />
   <div class="scroll">
     <div class="box">
       {#await promise then attribute}

@@ -66,6 +66,7 @@ import {
   type BoardColumn,
   type BoardCondition,
   type BoardPreference,
+  type IssueViewPreference,
   type BoardNavigationPreference,
   type BoardQuickFilter,
   type BoardSwimlane,
@@ -533,4 +534,10 @@ export class TBoardPreference extends TPreference implements BoardPreference {
 @Model(tracker.class.BoardNavigationPreference, preference.class.Preference)
 export class TBoardNavigationPreference extends TPreference implements BoardNavigationPreference {
   boards!: Ref<Board>[]
+}
+
+@Model(tracker.class.IssueViewPreference, preference.class.Preference)
+export class TIssueViewPreference extends TPreference implements IssueViewPreference {
+  @Prop(TypeRef(tracker.class.Issue), core.string.AttachedTo)
+  declare attachedTo: Ref<Issue>
 }

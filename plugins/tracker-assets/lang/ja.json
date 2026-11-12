@@ -487,6 +487,8 @@
     "BoardHideDoneOlder": "次より古い完了を非表示",
     "BoardHideDoneOlderHint": "完了カテゴリの列",
     "BoardHideDoneValue": "2週間",
+    "LastViewedNewest": "最終閲覧日時：新しい順",
+    "LastViewedOldest": "最終閲覧日時：古い順",
     "BoardCardOrder": "カードの順序",
     "BoardEditorsHint": "他のユーザーはボードを利用するか、自分のボードを作成できます",
     "WipLimits": "WIP制限",

@@ -509,6 +509,8 @@
     "BoardHideDoneOlder": "Hide completed older than",
     "BoardHideDoneOlderHint": "Columns of the Done category",
     "BoardHideDoneValue": "2 weeks",
+    "LastViewedNewest": "Last viewed: newest first",
+    "LastViewedOldest": "Last viewed: oldest first",
     "BoardCardOrder": "Card order",
     "BoardEditorsHint": "Others can use the board or create their own",
     "WipLimits": "WIP limits",

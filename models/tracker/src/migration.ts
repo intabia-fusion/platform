@@ -36,6 +36,7 @@ import {
 } from '@hcengineering/model'
 import { DOMAIN_ACTIVITY } from '@hcengineering/model-activity'
 import { DOMAIN_SPACE } from '@hcengineering/model-core'
+import { removeOrphanPreferences } from '@hcengineering/model-preference'
 import { DOMAIN_TASK, migrateDefaultStatusesBase, migrateTaskTypesToClasses } from '@hcengineering/model-task'
 import { migrateMixinCustomAttributesPref } from '@hcengineering/model-view'
 import tags from '@hcengineering/tags'
@@ -435,6 +436,12 @@ export const trackerOperation: MigrateOperation = {
   },
   async migrate (client: MigrationClient, mode): Promise<void> {
     await tryMigrate(mode, client, trackerId, [
+      {
+        state: 'remove-orphan-issue-views-v1',
+        func: async (client) => {
+          await removeOrphanPreferences(client, tracker.class.IssueViewPreference, tracker.class.Issue)
+        }
+      },
       {
         state: 'identifier',
         mode: 'upgrade',

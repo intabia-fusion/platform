@@ -48,6 +48,7 @@ import {
   TProjectTargetPreference,
   TBoard,
   TBoardPreference,
+  TIssueViewPreference,
   TBoardNavigationPreference,
   TRelatedIssueTarget,
   TTimeSpendReport,
@@ -490,8 +491,13 @@ export function createModel (builder: Builder): void {
     TProjectTargetPreference,
     TBoard,
     TBoardPreference,
+    TIssueViewPreference,
     TBoardNavigationPreference
   )
+
+  builder.mixin(tracker.class.IssueViewPreference, core.class.Class, core.mixin.IndexConfiguration, {
+    indexes: [{ keys: { _class: 1, attachedTo: 1 } }, { keys: { _class: 1, createdBy: 1 } }]
+  })
 
   builder.mixin(tracker.class.Project, core.class.Class, activity.mixin.ActivityDoc, {})
   builder.mixin(tracker.class.Issue, core.class.Class, activity.mixin.ActivityDoc, {})

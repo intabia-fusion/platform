@@ -68,6 +68,28 @@ describe('searchTargets', () => {
 
 describe('resultSort', () => {
   const hierarchy = new Hierarchy()
+
+  it.each([SortingOrder.Ascending, SortingOrder.Descending])('indexes a large personal id order once (%s)', (order) => {
+    let reads = 0
+    const count = 70000
+    const cases = Array.from({ length: count }, (_, index) => ({
+      get query (): string {
+        reads++
+        return `issue-${index}`
+      },
+      index
+    }))
+    const result: any[] = Array.from({ length: 500 }, (_, i) => ({
+      _id: `issue-${count - 1 - i}`,
+      _class: core.class.Space
+    }))
+    result.unshift({ _id: 'unseen', _class: core.class.Space })
+    resultSort(result, { _id: { order, cases } }, core.class.Space, hierarchy, {} as any)
+    expect(result[result.length - 1]._id).toBe('unseen')
+    expect(result[0]._id).toBe(`issue-${order === SortingOrder.Ascending ? count - 500 : count - 1}`)
+    expect(reads).toBeLessThanOrEqual(count * 3)
+  })
+
   const docs = (): any[] => [
     { _id: 'none', _class: core.class.Space, modifiedOn: 1 },
     { _id: 'old', _class: core.class.Space, modifiedOn: 1, $lookup: { readState: { latestMessageTimestamp: 10 } } },

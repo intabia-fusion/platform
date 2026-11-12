@@ -487,6 +487,8 @@
     "BoardHideDoneOlder": "Erledigte ausblenden, älter als",
     "BoardHideDoneOlderHint": "Spalten der Kategorie Erledigt",
     "BoardHideDoneValue": "2 Wochen",
+    "LastViewedNewest": "Zuletzt angesehen: neueste zuerst",
+    "LastViewedOldest": "Zuletzt angesehen: älteste zuerst",
     "BoardCardOrder": "Reihenfolge der Karten",
     "BoardEditorsHint": "Andere können das Board nutzen oder ein eigenes erstellen",
     "WipLimits": "WIP-Limits",

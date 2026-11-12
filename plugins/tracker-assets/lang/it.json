@@ -487,6 +487,8 @@
     "BoardHideDoneOlder": "Nascondi completate più vecchie di",
     "BoardHideDoneOlderHint": "Colonne della categoria Completato",
     "BoardHideDoneValue": "2 settimane",
+    "LastViewedNewest": "Ultima visualizzazione: più recenti prima",
+    "LastViewedOldest": "Ultima visualizzazione: meno recenti prima",
     "BoardCardOrder": "Ordine delle schede",
     "BoardEditorsHint": "Gli altri possono usare la bacheca o crearne una propria",
     "WipLimits": "Limiti WIP",

@@ -27,10 +27,12 @@ describe.each(['../components/list/List.svelte', '../../../tracker-resources/src
   (file) => {
     // Run the production block through Svelte: the package's normal .svelte mapper replaces components with mocks.
     const source = readFileSync(resolve(__dirname, file), 'utf8')
-    const block = source.match(/ {2}let sortValue:[\s\S]*?(?=\n {2}(?:const docsQuery|\$: resultOptions))/)?.[0]
+    const block = source.match(
+      / {2}let sortValue:[\s\S]*?(?=\n {2}(?:const docsQuery|\$: (?:resultOptions|effectiveSort)))/
+    )?.[0]
     if (block === undefined) throw new Error(`Sort block missing in ${file}`)
     const script = ts.transpileModule(
-      `export let orderBy, space, _class, viewlet, client, reduceCalls, buildSortRules, hasSortRules;
+      `export let orderBy, space, _class, viewlet, client, reduceCalls, buildSortRules, hasSortRules, lastViewedOrder, board;
     ${block}
     export function currentSort() { return { value: sortValue, ready: sortReady }; }`,
       { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }
@@ -55,6 +57,8 @@ describe.each(['../components/list/List.svelte', '../../../tracker-resources/src
           _class: 'issue',
           viewlet: { descriptor: 'viewlet' },
           client: {},
+          lastViewedOrder: 'lastViewedOn',
+          board: undefined,
           reduceCalls,
           buildSortRules,
           hasSortRules: (_client, _class, key) => key === 'priority' || key === 'kind'

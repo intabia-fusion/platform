@@ -487,6 +487,8 @@
     "BoardHideDoneOlder": "Masquer les terminées de plus de",
     "BoardHideDoneOlderHint": "Colonnes de la catégorie Terminé",
     "BoardHideDoneValue": "2 semaines",
+    "LastViewedNewest": "Dernière consultation : plus récentes en premier",
+    "LastViewedOldest": "Dernière consultation : plus anciennes en premier",
     "BoardCardOrder": "Ordre des cartes",
     "BoardEditorsHint": "Les autres peuvent utiliser le tableau ou créer le leur",
     "WipLimits": "Limites WIP",

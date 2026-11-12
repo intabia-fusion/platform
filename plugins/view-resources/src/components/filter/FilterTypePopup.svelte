@@ -24,7 +24,11 @@
   import { FilterQuery, buildFilterKey } from '../../filter'
   import view from '../../plugin'
 
+  import CurrentUserFilter from './CurrentUserFilter.svelte'
+  import { isUserFilter } from '../../currentUserFilter'
+
   export let _class: Ref<Class<Doc>>
+  export let allowCurrentUser: boolean = false
   export let space: Ref<Space> | undefined
   export let target: HTMLElement
   export let filter: Filter | undefined
@@ -224,7 +228,7 @@
       }
       const targetClass = (hierarchy.getAttribute(nestedFrom._class, nestedFrom.key).type as RefTo<Doc>).to
       showPopup(
-        type.component,
+        allowCurrentUser && isUserFilter(hierarchy, { key: type }) ? CurrentUserFilter : type.component,
         {
           _class: targetClass,
           space,
@@ -240,7 +244,7 @@
       )
     } else {
       showPopup(
-        type.component,
+        allowCurrentUser && isUserFilter(hierarchy, { key: type }) ? CurrentUserFilter : type.component,
         {
           _class,
           space,
@@ -338,6 +342,7 @@
               index,
               target,
               onChange,
+              allowCurrentUser,
               nestedFrom: type
             }}
             options={{ component: view.component.FilterTypePopup }}

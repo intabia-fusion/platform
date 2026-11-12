@@ -49,6 +49,9 @@
   import type { Board, BoardColumn, Issue, Project } from '@hcengineering/tracker'
   import {
     IssuePriority,
+    issueViewSort,
+    lastViewedOrder,
+    type IssueViewPreference,
     IssuesGrouping,
     IssuesOrdering,
     columnCategory,
@@ -223,6 +226,27 @@
     }
   }
 
+  const viewsQuery = createQuery()
+  let views: IssueViewPreference[] = []
+  let viewsReady = false
+  $: isViewOrder = board !== undefined && orderBy?.[0] === lastViewedOrder
+  $: if (isViewOrder) {
+    viewsQuery.query(
+      tracker.class.IssueViewPreference,
+      {},
+      (result) => {
+        views = result
+        viewsReady = true
+      },
+      { projection: { attachedTo: 1, modifiedOn: 1 } }
+    )
+  } else {
+    viewsQuery.unsubscribe()
+    viewsReady = false
+    views = []
+  }
+  $: viewSort = isViewOrder && viewsReady && orderBy !== undefined ? issueViewSort(views, orderBy[1]) : undefined
+
   let sortValue: SortingQuery<DocWithRank> | undefined = undefined
   let sortReady = true
   let sortRequest = 0
@@ -250,6 +274,9 @@
       if (orderBy === undefined) {
         sortValue = undefined
         sortReady = true
+      } else if (orderBy[0] === lastViewedOrder && board !== undefined) {
+        sortValue = undefined
+        sortReady = true
       } else if (hasSortRules(client, _class, orderBy[0])) {
         sortReady = false
         void updateSort(orderBy, sortRequest)
@@ -260,7 +287,8 @@
     }
   }
 
-  $: resultOptions = { ...options, lookup, ...(sortValue !== undefined ? { sort: sortValue } : {}) }
+  $: effectiveSort = isViewOrder ? viewSort : sortValue
+  $: resultOptions = { ...options, lookup, ...(effectiveSort !== undefined ? { sort: effectiveSort } : {}) }
 
   let kanbanUI: KanbanUI
   const listProvider = new ListSelectionProvider((offset: 1 | -1 | 0, of?: Doc, dir?: SelectDirection) => {
@@ -398,7 +426,7 @@
   }
 
   let docsLoaded = false
-  $: if (sortReady) {
+  $: if (sortReady && (!isViewOrder || viewsReady)) {
     if (
       docsQuery.query(
         _class,
@@ -877,7 +905,7 @@
   }
 </script>
 
-{#if loadCategories}
+{#if loadCategories || (isViewOrder && !viewsReady)}
   <Loading />
 {:else if emptyState !== undefined && docsLoaded && categories.length === 0}
   <div class="flex-col-center flex-grow">

@@ -487,6 +487,8 @@
     "BoardHideDoneOlder": "Skrýt dokončené starší než",
     "BoardHideDoneOlderHint": "Sloupce kategorie Hotovo",
     "BoardHideDoneValue": "2 týdny",
+    "LastViewedNewest": "Poslední zobrazení: od nejnovějšího",
+    "LastViewedOldest": "Poslední zobrazení: od nejstaršího",
     "BoardCardOrder": "Pořadí karet",
     "BoardEditorsHint": "Ostatní mohou nástěnku používat nebo si vytvořit vlastní",
     "WipLimits": "WIP limity",

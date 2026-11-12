@@ -1,5 +1,6 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 // Copyright © 2021, 2023 Hardcore Engineering Inc.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
@@ -79,7 +80,6 @@ export default mergeIds(contactId, contact, {
     AddMembersHeader: '' as IntlString,
     Assigned: '' as IntlString,
     Unassigned: '' as IntlString,
-    CategoryCurrentUser: '' as IntlString,
     CategoryOther: '' as IntlString,
     DeleteEmployee: '' as IntlString,
     DeleteEmployeeDescr: '' as IntlString,

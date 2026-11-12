@@ -487,6 +487,8 @@
     "BoardHideDoneOlder": "Ocultar concluídas com mais de",
     "BoardHideDoneOlderHint": "Colunas da categoria Concluído",
     "BoardHideDoneValue": "2 semanas",
+    "LastViewedNewest": "Última visualização: mais recentes primeiro",
+    "LastViewedOldest": "Última visualização: mais antigas primeiro",
     "BoardCardOrder": "Ordem dos cartões",
     "BoardEditorsHint": "Os restantes podem usar o quadro ou criar o seu próprio",
     "WipLimits": "Limites WIP",

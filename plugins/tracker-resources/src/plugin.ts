@@ -117,6 +117,8 @@ export default mergeIds(trackerId, tracker, {
     BoardHideDoneOlderHint: '' as IntlString,
     BoardHideDoneValue: '' as IntlString,
     BoardCardOrder: '' as IntlString,
+    LastViewedNewest: '' as IntlString,
+    LastViewedOldest: '' as IntlString,
     WipMin: '' as IntlString,
     DaysInColumnToggle: '' as IntlString,
     DaysInColumn: '' as IntlString,

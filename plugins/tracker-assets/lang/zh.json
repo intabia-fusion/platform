@@ -486,6 +486,8 @@
     "BoardHideDoneOlder": "隐藏早于以下时间的已完成任务",
     "BoardHideDoneOlderHint": "“已完成”类别的列",
     "BoardHideDoneValue": "2 周",
+    "LastViewedNewest": "上次查看时间：从新到旧",
+    "LastViewedOldest": "上次查看时间：从旧到新",
     "BoardCardOrder": "卡片顺序",
     "BoardEditorsHint": "其他人可以使用该看板或创建自己的看板",
     "WipLimits": "WIP 限制",

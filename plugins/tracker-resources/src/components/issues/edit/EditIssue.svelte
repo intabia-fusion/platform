@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022, 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -55,6 +56,7 @@
   import ProjectPresenter from '../../projects/ProjectPresenter.svelte'
   import { generateIssueShortLink, getIssueIdByIdentifier } from '../../../issues'
   import tracker from '../../../plugin'
+  import { recordIssueView } from '@hcengineering/tracker'
   import IssueStatusActivity from '../IssueStatusActivity.svelte'
   import ControlPanel from './ControlPanel.svelte'
   import CopyToClipboard from './CopyToClipboard.svelte'
@@ -71,6 +73,7 @@
   export let isSidebar: boolean = false
 
   let lastId: Ref<Issue> | undefined
+  let viewedId: Ref<Issue> | undefined
 
   const queryClient = createQuery()
   const dispatch = createEventDispatcher()
@@ -121,6 +124,12 @@
         ;[issue] = result
         if (issue !== undefined) {
           title = issue.title
+          if (viewedId !== issue._id) {
+            viewedId = issue._id
+            void recordIssueView(client, issue._id).catch((err) => {
+              console.error('Recording issue view failed', err)
+            })
+          }
         }
       },
       {
