@@ -18,6 +18,7 @@ import { writable, derived, get } from 'svelte/store'
 import { type SubscriptionData, SubscriptionStatus } from '@hcengineering/account-client'
 import { type PlanItem, type PackageItem } from '@hcengineering/billing'
 import { type UsageStatus, type WorkspaceInfoWithStatus } from '@hcengineering/core'
+import { type WorkspaceLimitState } from '@hcengineering/billing-client'
 import { checkUsageAgainstLimits, calculateLimits } from '../utils'
 
 export interface SubscriptionState {
@@ -32,6 +33,7 @@ export interface SubscriptionState {
   workspaceInfo: WorkspaceInfoWithStatus | undefined
   usageInfo: UsageStatus | undefined
   limitExceeded: boolean
+  limitStates: WorkspaceLimitState[]
   onFreePlan: boolean // on free limits (own free plan, or paid tier no longer granting)
   freePlanOverdue: boolean // on free BECAUSE payment lapsed (readonly/expired) -> show "overdue" hint
   isLimited: boolean // this user is seatless -> read-only
@@ -49,6 +51,7 @@ const initialState: SubscriptionState = {
   workspaceInfo: undefined,
   usageInfo: undefined,
   limitExceeded: false,
+  limitStates: [],
   onFreePlan: false,
   freePlanOverdue: false,
   isLimited: false,
@@ -60,6 +63,9 @@ const initialState: SubscriptionState = {
 export const subscriptionStore = writable<SubscriptionState>(initialState)
 
 export const limitExceeded = derived(subscriptionStore, ($store) => $store.limitExceeded)
+export const workspaceLimitsExhausted = derived(subscriptionStore, ($store) =>
+  $store.limitStates.some((state) => state.exhausted)
+)
 export const onFreePlan = derived(subscriptionStore, ($store) => $store.onFreePlan)
 export const freePlanOverdue = derived(subscriptionStore, ($store) => $store.freePlanOverdue)
 export const isLimited = derived(subscriptionStore, ($store) => $store.isLimited)

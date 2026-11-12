@@ -15,8 +15,11 @@
 
 import { type WorkspaceLoginInfo } from '@hcengineering/account-client'
 import { type WorkspaceIds } from '@hcengineering/core'
-import { RecordingState } from '@hcengineering/love'
+import { RecordingState, TranscriptionState } from '@hcengineering/love'
 import { EgressStatus } from 'livekit-server-sdk'
+import { EventEmitter } from 'events'
+import { QueueWorkspaceEvent, LimitCategory, LimitStatus } from '@hcengineering/server-core'
+import { LimitsState } from '../limits'
 import { RecordingProcessor, templateStartFailed } from '../recordings'
 import { WorkspaceClient } from '../workspaceClient'
 import config from '../config'
@@ -83,6 +86,7 @@ function createMockWsClient (): Record<string, any> {
       if (idx >= 0) pending.splice(idx, 1)
     }),
     updateMeetingRecordingState: jest.fn().mockResolvedValue(undefined),
+    updateMeetingTranscriptionState: jest.fn().mockResolvedValue(undefined),
     cancelPendingRecording: jest.fn(async (row: any) => {
       const found = pending.find((it) => it._id === row._id)
       if (found !== undefined) found.status = 'cancelled'
@@ -93,7 +97,7 @@ function createMockWsClient (): Record<string, any> {
 }
 
 describe('RecordingProcessor.startRecording', () => {
-  let roomClient: { listRooms: jest.Mock }
+  let roomClient: { listRooms: jest.Mock, updateRoomMetadata: jest.Mock }
   let egressClient: { startRoomCompositeEgress: jest.Mock, stopEgress: jest.Mock, listEgress: jest.Mock }
   let eventProducer: { send: jest.Mock }
   let wsClient: Record<string, any>
@@ -109,20 +113,21 @@ describe('RecordingProcessor.startRecording', () => {
       stopRecording: (...a: Parameters<RecordingProcessor['stopRecording']>) => Promise<StopVerdict>
     } => p
 
-  function createProcessor (): RecordingProcessor {
+  function createProcessor (limits?: LimitsState): RecordingProcessor {
     return new RecordingProcessor(
       createMockContext(),
       roomClient as any,
       eventProducer as any,
       egressClient as any,
       { storages: [] } as any,
-      undefined
+      undefined,
+      limits
     )
   }
 
   beforeEach(() => {
     jest.clearAllMocks()
-    roomClient = { listRooms: jest.fn().mockResolvedValue([{ name: roomName }]) }
+    roomClient = { listRooms: jest.fn().mockResolvedValue([{ name: roomName }]), updateRoomMetadata: jest.fn() }
     let egresses = 0
     egressClient = {
       startRoomCompositeEgress: jest.fn(async () => ({ egressId: `EG_${++egresses}` })),
@@ -133,6 +138,78 @@ describe('RecordingProcessor.startRecording', () => {
     wsClient = createMockWsClient()
     ;(WorkspaceClient.create as jest.Mock).mockResolvedValue(wsClient)
     processor = createProcessor()
+  })
+
+  it('keeps an active egress running when an exhausted event arrives', async () => {
+    const consumer = jest.fn(() => ({ close: jest.fn() }))
+    const limits = new LimitsState(createMockContext(), { createBatchConsumer: consumer } as any)
+    await createProcessor(limits).startRecording(roomName, TEST_IDS.workspace, meeting._id, wsIds, 'All hands')
+    const onMessages = (consumer.mock.calls as any)[0][3]
+    await onMessages(createMockContext(), [
+      {
+        workspace: TEST_IDS.workspace,
+        value: { type: QueueWorkspaceEvent.LimitsChanged, category: LimitCategory.Disk, status: LimitStatus.Exhausted }
+      }
+    ])
+    expect(limits.isExhausted(TEST_IDS.workspace)).toBe(true)
+    expect(egressClient.stopEgress).not.toHaveBeenCalled()
+    expect(wsClient.cancelPendingRecording).not.toHaveBeenCalled()
+  })
+
+  it('preserves an active recording when the limit becomes exhausted', async () => {
+    const refresh = jest.fn().mockRejectedValue(new Error('billing offline'))
+    const limits = { refresh, isExhausted: () => true } as unknown as LimitsState
+    wsClient.findPendingRecordingsByMeeting.mockResolvedValue([
+      { format: 'video', status: 'active', egressId: 'EG_active' }
+    ])
+    const result = await createProcessor(limits).startRecording(
+      roomName,
+      TEST_IDS.workspace,
+      meeting._id,
+      wsIds,
+      'All hands'
+    )
+    expect(result).toEqual({ started: false, reason: 'already-running' })
+    expect(refresh).not.toHaveBeenCalled()
+    expect(egressClient.stopEgress).not.toHaveBeenCalled()
+  })
+
+  it('continues an admitted recording through an internal template fallback despite exhaustion', async () => {
+    const refresh = jest.fn().mockRejectedValue(new Error('billing offline'))
+    const limits = { refresh, isExhausted: () => true } as unknown as LimitsState
+    const result = await createProcessor(limits).startWithBuiltInLayout(
+      roomName,
+      TEST_IDS.workspace,
+      meeting._id,
+      'page-load-failed'
+    )
+    expect(result).toBe(true)
+    expect(refresh).not.toHaveBeenCalled()
+    expect(egressClient.startRoomCompositeEgress).toHaveBeenCalledTimes(1)
+    expect(egressClient.stopEgress).not.toHaveBeenCalled()
+  })
+
+  it('checks persisted limits before starting an egress', async () => {
+    const refresh = jest.fn().mockResolvedValue(undefined)
+    const limits = { refresh, isExhausted: () => true } as unknown as LimitsState
+    const result = await createProcessor(limits).startRecording(
+      roomName,
+      TEST_IDS.workspace,
+      meeting._id,
+      wsIds,
+      'All hands'
+    )
+    expect(refresh).toHaveBeenCalledWith(TEST_IDS.workspace)
+    expect(result).toEqual({ started: false, reason: 'limits-exhausted' })
+    expect(egressClient.startRoomCompositeEgress).not.toHaveBeenCalled()
+  })
+
+  it('does not start an egress when the persisted limits cannot be checked', async () => {
+    const limits = { refresh: jest.fn().mockRejectedValue(new Error('billing offline')) } as unknown as LimitsState
+    await expect(
+      createProcessor(limits).startRecording(roomName, TEST_IDS.workspace, meeting._id, wsIds, 'All hands')
+    ).rejects.toThrow('billing offline')
+    expect(egressClient.startRoomCompositeEgress).not.toHaveBeenCalled()
   })
 
   describe('recording template', () => {
@@ -488,5 +565,244 @@ describe('RecordingProcessor.startRecording', () => {
 
     expect(egressClient.startRoomCompositeEgress).toHaveBeenCalledTimes(1)
     expect(wsClient.createPendingRecording).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('persisted meeting limits', () => {
+  function createLimits (getWorkspaceLimitStates?: jest.Mock): LimitsState {
+    return new LimitsState(
+      createMockContext(),
+      {
+        createBatchConsumer: jest.fn(() => ({ close: jest.fn() }))
+      } as any,
+      getWorkspaceLimitStates === undefined ? undefined : ({ getWorkspaceLimitStates } as any)
+    )
+  }
+
+  it('restores disk limits after restart and clears them after recovery', async () => {
+    const snapshot = jest.fn().mockResolvedValue([{ category: 'disk', exhausted: true }])
+    const limits = createLimits(snapshot)
+    await limits.refresh(TEST_IDS.workspace)
+    expect(limits.isExhausted(TEST_IDS.workspace)).toBe(true)
+    expect(limits.isTranscriptionExhausted(TEST_IDS.workspace)).toBe(true)
+    snapshot.mockResolvedValue([{ category: 'disk', exhausted: false }])
+    await limits.refresh(TEST_IDS.workspace)
+    expect(limits.isExhausted(TEST_IDS.workspace)).toBe(false)
+  })
+
+  it.each(['tokens', 'transcript'])('blocks transcription only for %s exhaustion', async (category) => {
+    const limits = createLimits(jest.fn().mockResolvedValue([{ category, exhausted: true }]))
+    await limits.refresh(TEST_IDS.workspace)
+    expect(limits.isExhausted(TEST_IDS.workspace)).toBe(false)
+    expect(limits.isTranscriptionExhausted(TEST_IDS.workspace)).toBe(true)
+  })
+
+  it('rejects refresh failures instead of permitting a start', async () => {
+    const limits = createLimits(jest.fn().mockRejectedValue(new Error('billing offline')))
+    await expect(limits.refresh(TEST_IDS.workspace)).rejects.toThrow('billing offline')
+  })
+
+  it('supports installations without billing', async () => {
+    const limits = createLimits()
+    await limits.refresh(TEST_IDS.workspace)
+    expect(limits.isExhausted(TEST_IDS.workspace)).toBe(false)
+  })
+})
+
+describe('transcription route', () => {
+  const routes: Record<string, (req: any, res: any) => Promise<void>> = {}
+  const routeRoomClient = { listRooms: jest.fn() }
+  const routeLimits = { refresh: jest.fn(), isTranscriptionExhausted: jest.fn(), close: jest.fn() }
+  const routeRecording = { startAudioRecording: jest.fn(), stopAudioRecording: jest.fn() }
+  const routeWorkspace = { findMeetingById: jest.fn(), updateMeetingTranscriptionState: jest.fn() }
+  const routeSend = jest.fn()
+  const events = ['SIGINT', 'SIGTERM', 'uncaughtException', 'unhandledRejection'] as const
+  const listeners = new Map<(typeof events)[number], ReturnType<typeof process.rawListeners>>()
+  const processEvents: EventEmitter = process
+
+  beforeAll(async () => {
+    jest.useFakeTimers()
+    for (const event of events) {
+      listeners.set(event, process.rawListeners(event))
+    }
+    const app = {
+      disable: jest.fn(),
+      use: jest.fn(),
+      get: jest.fn(),
+      post: jest.fn((path: string, handler: any) => {
+        routes[path] = handler
+      }),
+      listen: jest.fn(() => ({ close: jest.fn() }))
+    }
+    const express = Object.assign(
+      jest.fn(() => app),
+      { raw: jest.fn(), json: jest.fn(), static: jest.fn() }
+    )
+    const queue = {
+      getProducer: jest.fn(() => ({ send: routeSend, close: jest.fn() })),
+      createConsumer: jest.fn(() => ({ close: jest.fn() })),
+      createBatchConsumer: jest.fn(() => ({ close: jest.fn() })),
+      shutdown: jest.fn()
+    }
+    const context = createMockContext()
+    jest.doMock('express', () => ({ __esModule: true, default: express }))
+    jest.doMock('cors', () => ({ __esModule: true, default: jest.fn() }))
+    jest.doMock('@hcengineering/kafka', () => ({ getPlatformQueue: () => queue }))
+    jest.doMock('@hcengineering/server-storage', () => ({ storageConfigFromEnv: () => ({ storages: [] }) }))
+    jest.doMock('@hcengineering/server-core', () => ({
+      ...jest.requireActual('@hcengineering/server-core'),
+      initStatisticsContext: () => context
+    }))
+    jest.doMock('@hcengineering/account-client', () => ({
+      ...jest.requireActual('@hcengineering/account-client'),
+      getClient: () => ({ listWorkspaces: async () => [], getLoginInfoByToken: async () => wsLoginInfo }),
+      isWorkspaceLoginInfo: () => true
+    }))
+    jest.doMock('@hcengineering/server-token', () => ({
+      __esModule: true,
+      ...jest.requireActual('@hcengineering/server-token'),
+      generateToken: jest.fn(() => 'test-token')
+    }))
+    jest.doMock('livekit-server-sdk', () => ({
+      RoomServiceClient: jest.fn(() => routeRoomClient),
+      EgressClient: jest.fn(),
+      WebhookReceiver: jest.fn()
+    }))
+    jest.doMock('../limits', () => ({ LimitsState: jest.fn(() => routeLimits) }))
+    jest.doMock('../recordings', () => ({ RecordingProcessor: jest.fn(() => routeRecording) }))
+    jest.doMock('../workspaceClient', () => ({ WorkspaceClient: { create: async () => routeWorkspace } }))
+    jest.doMock('../polling', () => ({ LiveKitPollingService: jest.fn(() => ({ start: jest.fn() })) }))
+    jest.doMock('../webhook', () => ({ WebhookProcessor: jest.fn() }))
+    jest.doMock('../guests', () => ({ GuestManager: jest.fn() }))
+    jest.doMock('../utils', () => ({
+      ...jest.requireActual('../utils'),
+      decodeMeetingToken: () => ({ meetingId: TEST_IDS.meeting, workspaceId: TEST_IDS.workspace })
+    }))
+    jest.resetModules()
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { main } = require('../main')
+    await main()
+  })
+
+  afterAll(() => {
+    jest.clearAllTimers()
+    jest.useRealTimers()
+    for (const [event, original] of listeners) {
+      for (const listener of process.rawListeners(event)) {
+        if (!original.includes(listener)) processEvents.removeListener(event, listener as (...args: unknown[]) => void)
+      }
+    }
+    for (const module of [
+      'express',
+      'cors',
+      '@hcengineering/kafka',
+      '@hcengineering/server-storage',
+      '@hcengineering/server-core',
+      '@hcengineering/account-client',
+      '@hcengineering/server-token',
+      'livekit-server-sdk',
+      '../limits',
+      '../recordings',
+      '../workspaceClient',
+      '../polling',
+      '../webhook',
+      '../guests',
+      '../utils'
+    ]) {
+      jest.dontMock(module)
+    }
+    jest.resetModules()
+  })
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    routeRoomClient.listRooms.mockResolvedValue([{ metadata: JSON.stringify({ transcription: true }) }])
+    routeLimits.refresh.mockResolvedValue(undefined)
+    routeLimits.isTranscriptionExhausted.mockReturnValue(false)
+    routeWorkspace.updateMeetingTranscriptionState.mockResolvedValue(undefined)
+    routeSend.mockResolvedValue(undefined)
+  })
+
+  async function transcription (enabled: boolean): Promise<any> {
+    const res: any = { status: jest.fn().mockReturnThis(), send: jest.fn().mockReturnThis() }
+    await routes['/transcription']({ body: { transcription: enabled } }, res)
+    return res
+  }
+
+  async function stop (): Promise<void> {
+    let state = TranscriptionState.Transcribing
+    routeWorkspace.findMeetingById.mockImplementation(async () => ({ transcriptionState: state }))
+    routeWorkspace.updateMeetingTranscriptionState.mockImplementation(
+      async (_id: unknown, value: TranscriptionState) => {
+        state = value
+      }
+    )
+    const res = await transcription(false)
+    expect(res.status).toHaveBeenCalledWith(200)
+    expect(routeRecording.stopAudioRecording).toHaveBeenCalledTimes(1)
+    expect(routeWorkspace.updateMeetingTranscriptionState).toHaveBeenCalledWith(
+      TEST_IDS.meeting,
+      TranscriptionState.Finished
+    )
+    expect(state).toBe(TranscriptionState.Finished)
+    routeSend.mockClear()
+    routeWorkspace.updateMeetingTranscriptionState.mockClear()
+  }
+
+  it('starts audio when metadata still says active after a stop', async () => {
+    await stop()
+    const res = await transcription(true)
+    expect(res.status).toHaveBeenCalledWith(200)
+    expect(routeLimits.refresh).toHaveBeenCalledWith(TEST_IDS.workspace)
+    expect(routeRecording.startAudioRecording).toHaveBeenCalledTimes(1)
+  })
+
+  it('rejects a restart when the transcription limit is exhausted', async () => {
+    await stop()
+    routeLimits.isTranscriptionExhausted.mockReturnValue(true)
+    const res = await transcription(true)
+    expect(res.status).toHaveBeenCalledWith(413)
+    expect(routeSend).not.toHaveBeenCalled()
+    expect(routeWorkspace.updateMeetingTranscriptionState).not.toHaveBeenCalled()
+    expect(routeRecording.startAudioRecording).not.toHaveBeenCalled()
+  })
+
+  it('allows an already transcribing meeting to continue without a new limit check', async () => {
+    routeWorkspace.findMeetingById.mockResolvedValue({ transcriptionState: TranscriptionState.Transcribing })
+    routeLimits.isTranscriptionExhausted.mockReturnValue(true)
+    const res = await transcription(true)
+    expect(res.status).toHaveBeenCalledWith(200)
+    expect(routeLimits.refresh).not.toHaveBeenCalled()
+    expect(routeRecording.startAudioRecording).toHaveBeenCalledTimes(1)
+  })
+
+  it('retries audio after an unsuccessful start even if the limit is exhausted', async () => {
+    let state = TranscriptionState.Finished
+    routeWorkspace.findMeetingById.mockImplementation(async () => ({ transcriptionState: state }))
+    routeWorkspace.updateMeetingTranscriptionState.mockImplementation(
+      async (_id: unknown, value: TranscriptionState) => {
+        state = value
+      }
+    )
+    routeRecording.startAudioRecording.mockResolvedValue(undefined)
+
+    const first = await transcription(true)
+    expect(first.status).toHaveBeenCalledWith(200)
+    expect(state).toBe(TranscriptionState.Transcribing)
+    expect(routeRecording.startAudioRecording).toHaveBeenCalledTimes(1)
+
+    routeLimits.refresh.mockClear()
+    routeLimits.isTranscriptionExhausted.mockReturnValue(true)
+    const second = await transcription(true)
+    expect(second.status).toHaveBeenCalledWith(200)
+    expect(routeLimits.refresh).not.toHaveBeenCalled()
+    expect(routeRecording.startAudioRecording).toHaveBeenCalledTimes(2)
+    expect(routeRecording.startAudioRecording).toHaveBeenLastCalledWith(
+      expect.any(String),
+      TEST_IDS.workspace,
+      TEST_IDS.meeting,
+      wsLoginInfo,
+      true
+    )
   })
 })

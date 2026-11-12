@@ -265,6 +265,13 @@
     "PaymentShowYear": "Letztes Jahr anzeigen",
     "PaymentRequested": "Rechnung / Zeitraum",
     "PaymentOverdue": "Zahlung überfällig",
-    "PaymentRestricted": "Zugriff eingeschränkt: Zahlung überfällig"
+    "PaymentRestricted": "Zugriff eingeschränkt: Zahlung überfällig",
+    "Storage": "Speicher",
+    "StorageEligibility": "Diese Objekte werden in keinem Arbeitsbereich verwendet.",
+    "StorageFailed": "Der Vorgang ist fehlgeschlagen. Versuchen Sie es erneut.",
+    "StorageCanFree": "Freigebbar",
+    "StorageObjects": "Objekte",
+    "StorageEmpty": "Keine Objekte zur Bereinigung.",
+    "StorageCalculate": "Bereinigung berechnen"
   }
 }

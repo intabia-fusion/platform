@@ -138,6 +138,7 @@
     "Connection": "Conexão",
     "Connected": "Conectado",
     "Reconnecting": "Reconectando...",
+    "WorkspaceLimitsExhausted": "Os limites do espaço de trabalho foram esgotados",
     "RateLimit": "Limite de pedidos",
     "RateLimitValue": "{remaining} de {limit} restantes, repõe em {seconds}s",
     "RateLimitUsage": "Pedidos no limite: {current} / {limit}",

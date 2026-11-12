@@ -22,7 +22,7 @@
 | onboard-resources | `plugins/onboard-resources/src` | UI мастера онбординга (шаги Workspace/User/Finish) |
 | onboard-assets | `plugins/onboard-assets` | статические ресурсы онбординга |
 | admin | `plugins/admin/src` | клиентский плагин админ-панели |
-| admin-resources | `plugins/admin-resources/src` | UI админки: вкладки General/Workspaces/Accounts/Payments/Statistics/Audit/AI |
+| admin-resources | `plugins/admin-resources/src` | UI админки: вкладки General/Workspaces/Accounts/Payments/Statistics/Storage/Audit/AI |
 | guest | `plugins/guest/src` | клиентский плагин публичных ссылок |
 | guest-resources | `plugins/guest-resources/src` | UI публичных ссылок, гостевой вход |
 | model-guest | `models/guest/src` | модель класса `PublicLink` |
@@ -131,6 +131,7 @@
 - **Аренда бэкапа перед удалением.** `updateBackupLease`/`workspace_status.backup_lease_until` - см. `docs/memory/deferred-deletion.md`. Детальная механика, миграции v43-v47, найденные баги - `docs/memory/deferred-deletion.md`, `docs/memory/account_db_migrations.md`.
 
 ### Администрирование и self-host
+- **Очистка хранилища.** Глобальная вкладка `StorageTab.svelte` показывает только объекты, не используемые ни в одном пространстве, и разбивку по MIME. Расчет и удаление идут через account RPC `adminGetStorageCleanup`/`adminRequestStorageCleanup`; удаление требует admin-OTP. При открытии вкладка получает последнее задание, затем опрашивает его по `jobId` до завершения: новый расчет другого администратора не заменяет текущее задание. Прямых вызовов S3 или datalake из браузера нет.
 - **Единый admin-гейт.** `requireAdminOp`/`isHumanAdminLogin` - `server/account/src/adminOp.ts`.
 - **Self-host лицензия.** `LicenseEdition` (dev/community/licensed), `COMMUNITY_MAX_USERS = 15`, RSA-подпись - `foundations/core/packages/token/src/license.ts`.
 - **Бесплатные лимиты self-host.** `parseFreePlanLimits`/`getFreePlanLimits` - `server/account/src/freeLimits.ts`.
@@ -171,6 +172,7 @@
 | Отмена удаления | - | - | plan | - | отложено |
 | Немедленное удаление и блокировка админом | - | - | internal | - | |
 | Аренда бэкапа перед удалением | - | - | internal | - | |
+| Очистка хранилища | - | - | plan | - | |
 | Единый admin-гейт | - | - | internal | - | |
 | Self-host лицензия | - | - | plan | - | отложено |
 | Бесплатные лимиты self-host | - | - | plan | - | отложено |

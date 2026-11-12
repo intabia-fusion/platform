@@ -40,6 +40,7 @@ import { jsonToMarkup, MarkupNodeType } from '@hcengineering/text'
 
 import config from '../config'
 import { RestClient } from '@hcengineering/api-client'
+import { ApiError } from '../server/error'
 
 export class LoveController {
   private readonly connectedMeetings = new Set<Ref<MeetingMinutes>>()
@@ -95,10 +96,10 @@ export class LoveController {
       }
 
       this.ctx.info('Connecting', { room: mm.name, meeting: mm._id, transcription: request.transcription })
-      this.connectedMeetings.add(request.meetingId)
       await this.requestTranscription(mm, request.language)
       await this.updateTranscriptionState(mm._id, TranscriptionState.Transcribing)
       const participantId = await this.createAiParticipant(mm)
+      this.connectedMeetings.add(request.meetingId)
       this.ctx.info('AI participant created/found', { meeting: mm._id, participantId })
     }
   }
@@ -466,7 +467,7 @@ async function startTranscription (
   token: string,
   meetingId: Ref<MeetingMinutes>,
   language: RoomLanguage
-): Promise<boolean> {
+): Promise<void> {
   try {
     const endpoint = config.LoveEndpoint
     const res = await fetch(concatLink(endpoint, '/transcription'), {
@@ -481,10 +482,15 @@ async function startTranscription (
         transcription: true
       })
     })
-    return res.ok
+    if (!res.ok) {
+      throw new ApiError(
+        res.status,
+        res.status === 413 ? 'transcription-limit-exceeded' : 'Failed to start transcription'
+      )
+    }
   } catch (err: any) {
     console.error('Failed to request start transcription', err)
-    return false
+    throw err
   }
 }
 

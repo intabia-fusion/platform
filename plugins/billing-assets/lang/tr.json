@@ -1,5 +1,6 @@
 {
   "string": {
+    "DeleteDriveFileConfirm": "Dosya ve tüm sürümleri silinsin mi?",
     "Billing": "Faturalama",
     "Subscriptions": "Abonelikler",
     "AllPlans": "Tüm planlar",

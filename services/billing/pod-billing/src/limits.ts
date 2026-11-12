@@ -50,8 +50,12 @@ export function packCharge (periodUsage: number, limitMonth: number, pack: numbe
   return Math.min(pack, Math.max(0, periodUsage - limitMonth))
 }
 
-/** Computes volume-limit state, persists it, and publishes edge-triggered LimitsChanged events. */
 export class LimitsEngine {
+  // Billing replication is not supported while publication state is process-local.
+  // Coordinate publishers and share delivery state before running multiple replicas.
+  private readonly publishedStatuses = new Map<string, LimitStatus>()
+  private readonly pendingPublishes = new Map<string, Promise<void>>()
+
   constructor (
     private readonly db: BillingDB,
     private readonly accountsUrl: string,
@@ -131,12 +135,12 @@ export class LimitsEngine {
     const prevExhausted = prev?.exhausted ?? false
     const nowExhausted = limitValue > 0 && used >= limitValue
 
+    await this.db.upsertLimitState(ctx, { workspace, category, used, limitValue, exhausted: nowExhausted })
     if (nowExhausted !== prevExhausted) {
       const status = nowExhausted ? LimitStatus.Exhausted : LimitStatus.Ok
       ctx.info('limit status changed (delta)', { workspace, category, status, used, limitValue })
-      await this.producer.send(ctx, workspace, [workspaceEvents.limitsChanged(category as SCLimitCategory, status)])
+      await this.publishStatus(ctx, workspace, category, status)
     }
-    await this.db.upsertLimitState(ctx, { workspace, category, used, limitValue, exhausted: nowExhausted })
 
     // Reflect the increment in the displayed usageInfo so the UI moves without waiting for the tick.
     await this.bumpUsageInfo(ctx, workspace, metric, amount)
@@ -144,7 +148,7 @@ export class LimitsEngine {
     // Tokens: nudge the UI to re-read the window whenever the monthly fill crosses a
     // 5% step, so the indicator stays fresh between the hourly poll.
     if (metric === 'tokens') {
-      await this.maybeNotifyWindowStep(ctx, workspace, amount, subs)
+      await this.maybeNotifyWindowStep(ctx, workspace, amount, subs, nowExhausted)
     }
   }
 
@@ -154,7 +158,8 @@ export class LimitsEngine {
     ctx: MeasureContext,
     workspace: WorkspaceUuid,
     amount: number,
-    subs: Subscription[]
+    subs: Subscription[],
+    exhausted: boolean
   ): Promise<void> {
     try {
       const limitMonth = tokenWindowLimit(subs)
@@ -169,9 +174,7 @@ export class LimitsEngine {
       const stepNow = Math.floor(Math.min(100, (usedNow / total) * 100) / 5)
       const stepPrev = Math.floor(Math.min(100, (Math.max(0, usedNow - amount) / total) * 100) / 5)
       if (stepNow !== stepPrev) {
-        await this.producer.send(ctx, workspace, [
-          workspaceEvents.limitsChanged(SCLimitCategory.Tokens, LimitStatus.Ok)
-        ])
+        await this.publishStatus(ctx, workspace, 'tokens', exhausted ? LimitStatus.Exhausted : LimitStatus.Ok, true)
       }
     } catch (err: any) {
       ctx.error('window step notify failed', { workspace, err })
@@ -203,7 +206,6 @@ export class LimitsEngine {
     }
   }
 
-  /** Startup scan: enumerate all active workspaces, publish already-exhausted states. */
   async startupScan (ctx: MeasureContext): Promise<void> {
     const account = this.accountClient(undefined)
     const workspaces = await account.listWorkspaces(undefined, null, undefined)
@@ -233,7 +235,6 @@ export class LimitsEngine {
     }
   }
 
-  /** Recompute used vs limit for one metric and publish on exhausted-flag flip. */
   private async recompute (
     ctx: MeasureContext,
     workspace: WorkspaceUuid,
@@ -247,16 +248,34 @@ export class LimitsEngine {
     const limitValue = await this.effectiveLimit(ctx, workspace, subs, metric)
 
     const nowExhausted = limitValue > 0 && used >= limitValue
-    const prev = await this.db.getLimitState(ctx, workspace, category)
-    const prevExhausted = prev?.exhausted ?? false
-
-    if (nowExhausted !== prevExhausted) {
-      const status = nowExhausted ? LimitStatus.Exhausted : LimitStatus.Ok
-      ctx.info('limit status changed', { workspace, category, status, used, limitValue })
-      await this.producer.send(ctx, workspace, [workspaceEvents.limitsChanged(category as SCLimitCategory, status)])
-    }
-
     await this.db.upsertLimitState(ctx, { workspace, category, used, limitValue, exhausted: nowExhausted })
+    const status = nowExhausted ? LimitStatus.Exhausted : LimitStatus.Ok
+    ctx.info('limit status recomputed', { workspace, category, status, used, limitValue })
+    await this.publishStatus(ctx, workspace, category, status)
+  }
+
+  private async publishStatus (
+    ctx: MeasureContext,
+    workspace: WorkspaceUuid,
+    category: LimitCategory,
+    status: LimitStatus,
+    force = false
+  ): Promise<void> {
+    const key = `${workspace}:${category}`
+    const previous = this.pendingPublishes.get(key)
+    const publish = (previous ?? Promise.resolve())
+      .catch(() => {})
+      .then(async () => {
+        if (!force && this.publishedStatuses.get(key) === status) return
+        await this.producer.send(ctx, workspace, [workspaceEvents.limitsChanged(category as SCLimitCategory, status)])
+        this.publishedStatuses.set(key, status)
+      })
+    this.pendingPublishes.set(key, publish)
+    try {
+      await publish
+    } finally {
+      if (this.pendingPublishes.get(key) === publish) this.pendingPublishes.delete(key)
+    }
   }
 
   private async computeUsed (

@@ -265,6 +265,13 @@
     "PaymentShowYear": "Mostrar o último ano",
     "PaymentRequested": "Fatura / período",
     "PaymentOverdue": "Pagamento em atraso",
-    "PaymentRestricted": "Acesso restrito: pagamento em atraso"
+    "PaymentRestricted": "Acesso restrito: pagamento em atraso",
+    "Storage": "Armazenamento",
+    "StorageEligibility": "Estes objetos não são utilizados em nenhum espaço de trabalho.",
+    "StorageFailed": "A operação falhou. Tente novamente.",
+    "StorageCanFree": "Pode ser libertado",
+    "StorageObjects": "Objetos",
+    "StorageEmpty": "Não existem objetos para limpar.",
+    "StorageCalculate": "Calcular limpeza"
   }
 }

@@ -265,6 +265,13 @@
     "PaymentShowYear": "Show the last year",
     "PaymentRequested": "Invoice / period",
     "PaymentOverdue": "Payment overdue",
-    "PaymentRestricted": "Access restricted: overdue payment"
+    "PaymentRestricted": "Access restricted: overdue payment",
+    "Storage": "Storage",
+    "StorageEligibility": "These objects are not used in any workspace.",
+    "StorageFailed": "The operation failed. Please try again.",
+    "StorageCanFree": "Can be freed",
+    "StorageObjects": "Objects",
+    "StorageEmpty": "There are no objects to clean up.",
+    "StorageCalculate": "Calculate cleanup"
   }
 }

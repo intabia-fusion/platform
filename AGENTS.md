@@ -65,6 +65,16 @@ Use `pnpm build:*` from the repo root. All accept `--to PKG` to scope to a packa
 
 Type checking is **part of the build**: one native `tsc` (TypeScript 7) pass per package emits `lib/` and `types/` together. There is no separate validate phase.
 
+### Verification and reporting
+
+- Report the command, package scope and commit SHA for each verification result. State whether uncommitted changes were included. Distinguish local checks from remote CI; a local pass does not make a PR green.
+- Before reporting CI status, inspect the current PR head, individual checks and failed-step logs. Report pending checks explicitly. A run for an earlier SHA does not validate the current changes.
+- Identify the failing phase before changing code. Distinguish product or test failures from dependency installation, DNS and runner failures. If setup failed before tests started, report that the tests did not run.
+- Passing Jest tests does not prove the package compiles or passes lint. Run the scoped build and lint after test changes, including changes confined to test files.
+- For Svelte changes, verify the affected runtime behavior as well as compilation. Dynamic presenters, action availability and visible controls require runtime checks. Confirm that the running frontend includes the changes being tested.
+- For a bug fix, verify that the regression test fails before the fix and passes afterward. A test-only stage may intentionally remain red; report that state explicitly and do not call the fix complete.
+- When adding translation keys, add them to every supported locale of the affected package. Check JSON validity and key presence across those locale files.
+
 ```bash
 pnpm install --frozen-lockfile    # Install deps
 pnpm build                        # Compile + typecheck (JS + .d.ts)

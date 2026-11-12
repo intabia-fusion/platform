@@ -265,6 +265,13 @@
     "PaymentShowYear": "显示过去一年",
     "PaymentRequested": "账单 / 周期",
     "PaymentOverdue": "付款逾期",
-    "PaymentRestricted": "访问受限: 付款逾期"
+    "PaymentRestricted": "访问受限: 付款逾期",
+    "Storage": "存储",
+    "StorageEligibility": "这些对象未被任何工作空间使用。",
+    "StorageFailed": "操作失败。请重试。",
+    "StorageCanFree": "可释放",
+    "StorageObjects": "对象",
+    "StorageEmpty": "没有可清理的对象。",
+    "StorageCalculate": "计算清理空间"
   }
 }

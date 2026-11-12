@@ -265,6 +265,13 @@
     "PaymentShowYear": "Показать за год",
     "PaymentRequested": "Счет / период",
     "PaymentOverdue": "Оплата просрочена",
-    "PaymentRestricted": "Доступ ограничен: просрочка оплаты"
+    "PaymentRestricted": "Доступ ограничен: просрочка оплаты",
+    "Storage": "Хранилище",
+    "StorageEligibility": "Эти объекты не используются ни в одном пространстве.",
+    "StorageFailed": "Операция не выполнена. Повторите попытку.",
+    "StorageCanFree": "Можно освободить",
+    "StorageObjects": "Объекты",
+    "StorageEmpty": "Объектов для очистки нет.",
+    "StorageCalculate": "Рассчитать очистку"
   }
 }

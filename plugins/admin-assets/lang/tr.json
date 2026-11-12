@@ -265,6 +265,13 @@
     "PaymentShowYear": "Son yılı göster",
     "PaymentRequested": "Fatura / dönem",
     "PaymentOverdue": "Ödeme gecikti",
-    "PaymentRestricted": "Erişim kısıtlı: ödeme gecikti"
+    "PaymentRestricted": "Erişim kısıtlı: ödeme gecikti",
+    "Storage": "Depolama",
+    "StorageEligibility": "Bu nesneler hiçbir çalışma alanında kullanılmıyor.",
+    "StorageFailed": "İşlem başarısız oldu. Tekrar deneyin.",
+    "StorageCanFree": "Boşaltılabilir",
+    "StorageObjects": "Nesneler",
+    "StorageEmpty": "Temizlenecek nesne yok.",
+    "StorageCalculate": "Temizlemeyi hesapla"
   }
 }

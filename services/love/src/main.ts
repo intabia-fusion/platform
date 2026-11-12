@@ -78,6 +78,7 @@ import config from './config'
 import { LiveKitPollingService } from './polling'
 import { claimSession, kickParticipant, liveSessionsOf } from './sessions'
 import { LimitsState } from './limits'
+import { BillingClient } from '@hcengineering/billing-client'
 import { RecordingProcessor } from './recordings'
 import { WebhookProcessor } from './webhook'
 import { WorkspaceClient } from './workspaceClient'
@@ -207,7 +208,13 @@ export const main = async (): Promise<void> => {
   setBillingProducer(billingProducer)
 
   // Disk/payment-exhausted workspaces (LimitsChanged consumer) — gate for starting recordings.
-  const limitsState = new LimitsState(ctx, queue)
+  const limitsState = new LimitsState(
+    ctx,
+    queue,
+    config.BillingUrl === ''
+      ? undefined
+      : new BillingClient(config.BillingUrl, generateToken(systemAccountUuid, undefined, { service: 'love' }))
+  )
 
   const recordingProcessor = new RecordingProcessor(
     ctx.newChild('recordings', {}),
@@ -561,12 +568,6 @@ export const main = async (): Promise<void> => {
 
     const roomName = getRoomName(workspaceId, meetingId)
 
-    // No disk left (or unpaid) — reject with a clear status instead of silently skipping.
-    if (limitsState.isExhausted(workspaceId)) {
-      res.status(413).send({ error: 'Storage limit exceeded' })
-      return
-    }
-
     try {
       const token = extractToken(req.headers)
       const wsLoginInfo = await getAccountClient(token).getLoginInfoByToken()
@@ -586,7 +587,10 @@ export const main = async (): Promise<void> => {
       )
       if (!verdict.started) {
         // 409 so the second person to press the button sees the refusal instead of a fake success.
-        res.status(verdict.reason === 'no-room' ? 404 : 409).send({ error: verdict.reason })
+        // No disk left (or unpaid) — reject with a clear status instead of silently skipping.
+        res
+          .status(verdict.reason === 'limits-exhausted' ? 413 : verdict.reason === 'no-room' ? 404 : 409)
+          .send({ error: verdict.reason })
         return
       }
       res.send()
@@ -644,13 +648,21 @@ export const main = async (): Promise<void> => {
         return
       }
 
+      const wsClient = await WorkspaceClient.create(workspaceId, ctx)
+      const meeting = await wsClient.findMeetingById(meetingId)
+      const active = meeting?.transcriptionState === TranscriptionState.Transcribing
+      if (transcription === true && !active) {
+        await limitsState.refresh(workspaceId)
+        if (limitsState.isTranscriptionExhausted(workspaceId)) {
+          res.status(413).send({ error: 'Transcription limit exceeded' })
+          return
+        }
+      }
       const metadata = language != null ? { transcription, language } : { transcription }
       await eventProducer.send(ctx, workspaceId, [queueEvents.updateMetadata(meetingId, roomName, metadata)])
 
       // The UI reads this document; without a deployed ai-bot nothing else would flip it.
-      await (
-        await WorkspaceClient.create(workspaceId, ctx)
-      ).updateMeetingTranscriptionState(
+      await wsClient.updateMeetingTranscriptionState(
         meetingId,
         transcription === true ? TranscriptionState.Transcribing : TranscriptionState.Finished
       )
@@ -660,9 +672,9 @@ export const main = async (): Promise<void> => {
         const sysToken = generateToken(systemAccountUuid, workspaceId, { service: 'love' })
         const wsLoginInfo = await getAccountClient(sysToken).getLoginInfoByToken()
         if (isWorkspaceLoginInfo(wsLoginInfo)) {
-          await recordingProcessor.startAudioRecording(roomName, workspaceId, meetingId, wsLoginInfo)
+          await recordingProcessor.startAudioRecording(roomName, workspaceId, meetingId, wsLoginInfo, true)
         }
-      } else {
+      } else if (transcription !== true) {
         void recordingProcessor.stopAudioRecording(roomName, workspaceId, meetingId)
       }
 

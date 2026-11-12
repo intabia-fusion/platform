@@ -277,6 +277,29 @@ export function buildToolProgram (prepareTools: PrepareTools, extendProgram?: (p
   })
 
   program
+    .command('datalake-cleanup')
+    .description('Delete unused datalake objects after stopping and draining all writers')
+    .action(async () => {
+      try {
+        const config = storageConfigFromEnv()
+        const storage = config.storages.find((entry) => entry.name === config.default && entry.kind === 'datalake')
+        if (storage === undefined) throw new Error('Default storage must be datalake')
+        if (serverSecret === undefined || serverSecret === '') throw new Error('SERVER_SECRET is required')
+        const token = generateToken(systemAccountUuid, undefined, { service: 'tool' }, serverSecret)
+        const url = new URL(storage.endpoint)
+        if (storage.port !== undefined) url.port = String(storage.port)
+        url.pathname = `${url.pathname.replace(/\/$/, '')}/admin/storage/cleanup`
+        const response = await fetch(url, { method: 'POST', headers: { Authorization: `Bearer ${token}` } })
+        if (!response.ok) throw new Error(`Datalake cleanup failed: HTTP ${response.status}`)
+        const result = (await response.json()) as { objects: number, bytes: number }
+        console.log(`Deleted ${result.objects} objects, ${result.bytes} bytes`)
+      } catch (error) {
+        console.error('Datalake cleanup failed', error)
+        process.exitCode = 1
+      }
+    })
+
+  program
     .command('create-account <email>')
     .description('create user and corresponding account in master database')
     .requiredOption('-p, --password <password>', 'user password')

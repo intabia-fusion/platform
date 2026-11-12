@@ -15,12 +15,18 @@
 
 import { RecordingState, type MeetingMinutes } from '@hcengineering/love'
 import { LoveClient } from '../loveClient'
+import { addStatusNotification } from '@hcengineering/ui'
 
 jest.mock('@hcengineering/platform', () => ({
   ...jest.requireActual('@hcengineering/platform'),
   getMetadata: jest.fn(() => 'http://love')
 }))
 jest.mock('@hcengineering/analytics', () => ({ Analytics: { handleError: jest.fn() } }))
+jest.mock('@hcengineering/ui', () => ({
+  __esModule: true,
+  default: { string: { WorkspaceLimitsExhausted: 'ui:string:WorkspaceLimitsExhausted' } },
+  addStatusNotification: jest.fn()
+}))
 jest.mock('@hcengineering/contact', () => ({ getCurrentEmployee: jest.fn() }))
 jest.mock('@hcengineering/contact-resources', () => ({ getPersonByPersonRef: jest.fn() }))
 jest.mock('svelte/store', () => ({ get: jest.fn(() => undefined) }))
@@ -41,6 +47,7 @@ describe('LoveClient.record', () => {
   const staleMeeting = { _id: 'mm-1', name: 'All hands', recordingState: RecordingState.NotStarted }
 
   beforeEach(() => {
+    jest.clearAllMocks()
     globalThis.fetch = jest.fn(async () => ({ ok: true, status: 200 })) as any
   })
 
@@ -54,5 +61,15 @@ describe('LoveClient.record', () => {
     await client.record(staleMeeting as unknown as MeetingMinutes, false)
 
     expect(requestedPath()).toBe('/startRecord')
+  })
+
+  it('shows the workspace limit message when a new recording is rejected', async () => {
+    globalThis.fetch = jest.fn(async () => ({ ok: false, status: 413 })) as any
+
+    await expect(client.record(staleMeeting as unknown as MeetingMinutes, false)).rejects.toMatchObject({ status: 413 })
+
+    expect(addStatusNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ code: 'ui:string:WorkspaceLimitsExhausted' })
+    )
   })
 })

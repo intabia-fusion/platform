@@ -18,6 +18,14 @@ import { type IntlString, mergeIds } from '@hcengineering/platform'
 
 export default mergeIds(adminId, admin, {
   string: {
+    Storage: '' as IntlString,
+    StorageEligibility: '' as IntlString,
+    StorageFailed: '' as IntlString,
+    StorageCanFree: '' as IntlString,
+    StorageObjects: '' as IntlString,
+    StorageEmpty: '' as IntlString,
+    StorageCalculate: '' as IntlString,
+
     PaymentRestricted: '' as IntlString,
     PaymentOverdue: '' as IntlString,
     PaymentRequested: '' as IntlString,
