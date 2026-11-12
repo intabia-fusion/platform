@@ -1,6 +1,7 @@
 {
   "string": {
     "Office": "Oficina",
+    "OfficeNoOwnerHint": "Esta oficina aún no está asignada a nadie: asigna una persona para poder llamar desde ella.",
     "Room": "Sala",
     "RoomType": "Tipo de sala",
     "Share": "Compartir",
@@ -104,6 +105,7 @@
     "Video": "Video",
     "NoMeetingMinutes": "Sin minutos de reunión",
     "JoinMeeting": "Unirse a la reunión",
+    "JoinAsParticipant": "Unirse como participante",
     "JoinedMeeting": "Se unió a la reunión",
     "LeaveParticipant": "Abandonó la reunión",
     "MeetingStart": "Inicio de la reunión",
@@ -221,6 +223,9 @@
     "MeetingReminderBody": "La reunión «{title}» empieza en {minutes} min",
     "RecurringMeeting": "Reunión periódica",
     "MeetingGroup": "Meeting group",
+    "MeetingGroupHint": "Ponle un nombre al grupo y elige las reuniones: se moverán a él y conservarán su configuración.",
+    "MeetingGroupSelected": "{count, plural, =0 {Ninguna reunión seleccionada} one {# reunión seleccionada} other {# reuniones seleccionadas}}",
+    "MeetingGroupNoMeetings": "Aún no hay reuniones permanentes: crea una primero.",
     "MeetingOrder": "Order",
     "MergeIntoGroup": "Merge into group",
     "GroupName": "Group name",
@@ -231,6 +236,10 @@
     "RemindBeforeMinutes": "Remind before (minutes)",
     "RepeatUntil": "Repeat until",
     "LinkReady": "Guest link is ready",
-    "CreateMeetingGroup": "New group"
+    "CreateMeetingGroup": "New group",
+    "LinkCopied": "Enlace copiado",
+    "RoomBusy": "La sala está ocupada",
+    "RoomBusyText": "Ya hay una reunión en curso en «{room}».",
+    "TakeOverRoom": "Ocupar la sala"
   }
 }

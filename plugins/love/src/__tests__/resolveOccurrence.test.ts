@@ -40,6 +40,13 @@ describe('meetingOccurrences', () => {
     expect(meetingOccurrences(plain(), start + hour, start + day)).toEqual([])
   })
 
+  it('treats an event with empty rules as a plain one', () => {
+    // The calendar stores `rules: []` on a non-recurring event. Reading that as a series left the
+    // event with no occurrences at all, so its meeting never opened.
+    const empty = { ...(plain() as unknown as Record<string, unknown>), rules: [] } as unknown as Event
+    expect(meetingOccurrences(empty, start - day, start + day)).toEqual([start])
+  })
+
   it('expands a daily series', () => {
     expect(meetingOccurrences(series(), start, start + 3 * day)).toEqual([start, start + day, start + 2 * day])
   })

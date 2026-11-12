@@ -1,6 +1,7 @@
 {
   "string": {
     "Office": "Офис",
+    "OfficeNoOwnerHint": "Офис пока ничей — закрепите за ним сотрудника, чтобы из него можно было звонить.",
     "Room": "Комната",
     "RoomType": "Тип комнаты",
     "Share": "Поделиться",
@@ -104,6 +105,7 @@
     "Video": "Видео",
     "NoMeetingMinutes": "Нет результатов встреч",
     "JoinMeeting": "Присоединиться к встрече",
+    "JoinAsParticipant": "Присоединиться как участник",
     "JoinedMeeting": "Присоединился(ась) к встрече",
     "LeaveParticipant": "Покинул встречу",
     "MeetingStart": "Начало встречи",
@@ -221,6 +223,9 @@
     "MeetingReminderBody": "Встреча «{title}» начнётся через {minutes} мин",
     "RecurringMeeting": "Регулярная встреча",
     "MeetingGroup": "Группа встреч",
+    "MeetingGroupHint": "Задайте название и отметьте встречи — они перейдут в группу и сохранят свои настройки.",
+    "MeetingGroupSelected": "{count, plural, =0 {Встречи не выбраны} one {Выбрана # встреча} few {Выбраны # встречи} other {Выбрано # встреч}}",
+    "MeetingGroupNoMeetings": "Постоянных встреч пока нет — сначала создайте встречу.",
     "MeetingOrder": "Порядок",
     "MergeIntoGroup": "Объединить в группу",
     "GroupName": "Название группы",
@@ -231,6 +236,10 @@
     "RemindBeforeMinutes": "Напомнить за (минут)",
     "RepeatUntil": "Повторять до",
     "LinkReady": "Гостевая ссылка готова",
-    "CreateMeetingGroup": "Новая группа"
+    "CreateMeetingGroup": "Новая группа",
+    "LinkCopied": "Ссылка скопирована",
+    "RoomBusy": "Комната занята",
+    "RoomBusyText": "В комнате «{room}» уже идёт встреча.",
+    "TakeOverRoom": "Перехватить"
   }
 }

@@ -16,6 +16,7 @@
   import calendarModel, { type Event } from '@hcengineering/calendar'
   import { getClient } from '@hcengineering/presentation'
   import { Label, addZero, getPlatformColorForTextDef, showPopup, themeStore, tooltip } from '@hcengineering/ui'
+  import { openDoc } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import calendar from '../plugin'
   import { eventCard } from '../eventCard'
@@ -26,17 +27,19 @@
   export let today: boolean = false
   export let selected: boolean = false
   export let wrongMonth: boolean = false
+  /** Cell size of the calendar the day sits in: `huge` is the month grid, which lists the events. */
+  export let size: 'huge' | undefined = undefined
 
   const dispatch = createEventDispatcher()
   const eventCount = 3
 
-  // A meeting (or any other document carrying its own card) is opened as that card: its editor is
-  // not the calendar's, and the quick-edit popup would write to the occurrence instead of the series.
+  // A meeting (or any other document carrying its own card) is opened as that document; a plain
+  // event keeps the calendar's editor, which is the popup it has always been edited in.
   async function openEvent (event: Event): Promise<void> {
     const client = getClient()
     const card = await eventCard(client, event, calendar.component.EditEvent)
-    if (card !== undefined) {
-      showPopup(card.editor, { object: card.object }, 'content')
+    if (card !== undefined && !client.getHierarchy().isDerived(card.object._class, calendarModel.class.Event)) {
+      await openDoc(client.getHierarchy(), card.object)
       return
     }
     showPopup(calendar.component.EditEvent, { object: event }, 'content')

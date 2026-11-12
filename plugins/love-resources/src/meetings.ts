@@ -1,4 +1,4 @@
-import calendar, { AccessLevel } from '@hcengineering/calendar'
+import calendar, { AccessLevel, type Event, type ReccuringInstance } from '@hcengineering/calendar'
 import { AccountRole, generateId, getCurrentAccount, type Ref, type Space, type AccountUuid } from '@hcengineering/core'
 import love, {
   LIVE_MEETING_STATUSES,
@@ -225,6 +225,18 @@ export async function joinMeeting (meeting: MeetingMinutes): Promise<void> {
 }
 
 /**
+ * The id a calendar event is joined by.
+ *
+ * An occurrence expanded in a calendar view is virtual: its `eventId` exists in no database, so the
+ * service answers 404 for it. The series is the identity of the meeting, and it keeps the guest link
+ * and the members of the whole series rather than of one occurrence.
+ */
+export function seriesIdOf (event: Event): string {
+  const recurring = (event as ReccuringInstance).recurringEventId as unknown as string | undefined
+  return recurring ?? event.eventId
+}
+
+/**
  * Enter the meeting of a calendar event (`event`) or a permanent meeting (`meeting`).
  *
  * The session is resolved - and opened, if this occurrence has come - by the love service, which
@@ -236,6 +248,47 @@ export async function joinMeetingBySession (id: string, kind: MeetingLinkKind): 
   const meeting = await getClient().findOne(love.class.MeetingMinutes, { _id: meetingId })
   if (meeting === undefined) return
   await joinMeeting(meeting)
+}
+
+/**
+ * A scheduled meeting may name the room it happens in. That room hosts one meeting at a time: a
+ * second one leaves the room card showing one of two live sessions, so whoever starts later is asked
+ * first and may take the room over. Resolves `true` when the caller may go on - no room, a free
+ * room, or the other meeting was finished.
+ */
+export async function confirmRoomAvailable (room: Ref<Room> | undefined, selfEventId?: string): Promise<boolean> {
+  if (room === undefined) return true
+
+  const client = getClient()
+  const live = await client.findAll(love.class.MeetingMinutes, {
+    roomId: room,
+    status: { $in: LIVE_MEETING_STATUSES }
+  })
+  // The session of this very series is not a conflict: it is the thing being joined. A private one
+  // of somebody else is invisible and stays where it is.
+  const busy = live.filter((it) => it._id !== currentMeeting && it.eventId !== selfEventId)
+  if (busy.length === 0) return true
+
+  const roomDoc = (await client.findOne(love.class.Room, { _id: room })) ?? get(rooms).find((it) => it._id === room)
+  const takeOver = await askTakeOverRoom(roomDoc?.name ?? '')
+
+  if (!takeOver) return false
+  for (const other of busy) {
+    await loveClient.requestFinishMeeting(other._id)
+  }
+  return true
+}
+
+function askTakeOverRoom (roomName: string): Promise<boolean> {
+  // Loaded on demand: the UI barrel brings styles and components with it, and a module-level import
+  // would drag all of that into every consumer of this file, tests included.
+  return new Promise((resolve) => {
+    void Promise.all([import('@hcengineering/ui'), import('./components/TakeOverRoomPopup.svelte')]).then(
+      ([{ showPopup }, { default: TakeOverRoomPopup }]) => {
+        showPopup(TakeOverRoomPopup, { roomName }, 'center', (res) => resolve(res === true))
+      }
+    )
+  })
 }
 
 export async function joinOrCreateMeetingByInvite (meetingId: Ref<MeetingMinutes>): Promise<boolean> {

@@ -49,7 +49,9 @@ export default mergeIds(loveId, love, {
     InviteEmployeeButton: '' as AnyComponent,
     PendingRecordingPresenter: '' as AnyComponent,
     MeetingEventBadge: '' as AnyComponent,
-    RepeatEveryEditor: '' as AnyComponent
+    RepeatEveryEditor: '' as AnyComponent,
+    ReminderBeforePresenter: '' as AnyComponent,
+    ReminderBeforeEditor: '' as AnyComponent
   },
   function: {
     CreateMeeting: '' as Resource<DocCreateFunction>,
@@ -87,6 +89,7 @@ export default mergeIds(loveId, love, {
     Floor: '' as IntlString,
     SelectFloor: '' as IntlString,
     MeetingRunsInServiceRoom: '' as IntlString,
+    JoinAsParticipant: '' as IntlString,
     EditOffice: '' as IntlString,
     FinalizeEditing: '' as IntlString,
     ChangeFloor: '' as IntlString,
@@ -166,6 +169,10 @@ export default mergeIds(loveId, love, {
     RemindBefore: '' as IntlString,
     MeetingReminderBody: '' as IntlString,
     MeetingGroup: '' as IntlString,
+    MeetingGroupHint: '' as IntlString,
+    MeetingGroupSelected: '' as IntlString,
+    MeetingGroupNoMeetings: '' as IntlString,
+    OfficeNoOwnerHint: '' as IntlString,
     MeetingOrder: '' as IntlString,
     MergeIntoGroup: '' as IntlString,
     GroupName: '' as IntlString,
@@ -176,6 +183,10 @@ export default mergeIds(loveId, love, {
     RemindBeforeMinutes: '' as IntlString,
     RepeatUntil: '' as IntlString,
     LinkReady: '' as IntlString,
-    CreateMeetingGroup: '' as IntlString
+    CreateMeetingGroup: '' as IntlString,
+    LinkCopied: '' as IntlString,
+    RoomBusy: '' as IntlString,
+    RoomBusyText: '' as IntlString,
+    TakeOverRoom: '' as IntlString
   }
 })

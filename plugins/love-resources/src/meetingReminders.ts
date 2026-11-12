@@ -17,7 +17,7 @@ import type { Client, Timestamp } from '@hcengineering/core'
 import { translate } from '@hcengineering/platform'
 import { onClient } from '@hcengineering/presentation'
 import love from './plugin'
-import { joinMeetingBySession } from './meetings'
+import { joinMeetingBySession, seriesIdOf } from './meetings'
 import { DEFAULT_MEETING_REMINDER } from './utils'
 
 // The reminder is due when the lead time of a meeting occurrence runs out. Nothing on the server
@@ -57,7 +57,7 @@ async function show (event: Event, minutesLeft: number): Promise<void> {
   const notification = new Notification(event.title, { body, tag: `love-meeting-${event.eventId}` })
   notification.onclick = () => {
     window.focus()
-    void joinMeetingBySession(event.eventId, 'event')
+    void joinMeetingBySession(seriesIdOf(event), 'event')
     notification.close()
   }
 }

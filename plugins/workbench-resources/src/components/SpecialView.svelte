@@ -34,9 +34,12 @@
   import {
     FilterBar,
     FilterButton,
+    getDefaults,
     getResultOptions,
     getResultQuery,
     getViewletSpecialActions,
+    getViewOptions,
+    viewOptionStore,
     ViewletSelector,
     ViewletSettingButton
   } from '@hcengineering/view-resources'
@@ -65,6 +68,8 @@
   export let defaultViewletDescriptor: Ref<ViewletDescriptor> | undefined = undefined
   export let defaultViewOptions: ViewOptions | undefined = undefined
   export let defaultConfig: (BuildModelKey | string)[] | undefined = undefined
+  /** A view that is not the user's to arrange hides the gear: the settings it opens mean nothing there. */
+  export let hideViewSettings: boolean = false
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
@@ -87,6 +92,13 @@
 
   let options = viewlet?.options
   let _options = viewlet?.options ?? {}
+
+  // `viewOptions` used to be computed by the settings button alone, so a view that hides the gear
+  // (`hideViewSettings`) rendered nothing at all: its content waits for these options. The value is
+  // the same one the button would have produced.
+  $: if (hideViewSettings) {
+    viewOptions = getViewOptions(viewlet, $viewOptionStore, getDefaults(viewlet?.viewOptions))
+  }
 
   $: if (!deepEqual(viewlet?.options ?? {}, _options)) {
     _options = viewlet?.options ?? {}
@@ -157,7 +169,9 @@
         ...(descriptors !== undefined ? { descriptor: { $in: descriptors } } : {})
       }}
     />
-    <ViewletSettingButton bind:viewOptions bind:viewlet {defaultViewOptions} {defaultConfig} />
+    {#if !hideViewSettings}
+      <ViewletSettingButton bind:viewOptions bind:viewlet {defaultViewOptions} {defaultConfig} />
+    {/if}
   </svelte:fragment>
 
   <Breadcrumb {icon} {iconProps} {label} size="large" isCurrent />

@@ -101,8 +101,10 @@
   // saveEvent bails out silently, so the button must not be clickable yet.
   $: canSave = title !== '' && _calendar !== undefined
 
+  // A modal must be dismissible: swallowing the overlay click reads as a broken popup. The draft is
+  // lost on dismissal, and that is the expected cost of clicking outside.
   export function canClose (): boolean {
-    return title?.trim().length === 0 && participants.length === 0
+    return true
   }
 
   let saving = false

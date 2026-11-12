@@ -18,7 +18,7 @@
   import type { Floor, Room } from '@hcengineering/love'
   import { GRID_WIDTH, getFreeSpace, isServiceFloor } from '@hcengineering/love'
   import { getClient } from '@hcengineering/presentation'
-  import { DropdownLabels, Header, IconAdd, Scroller, eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  import ui, { DropdownLabels, Header, Scroller, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import { Button, IconButton } from '@hcengineering/ui/kit'
   import { createEventDispatcher } from 'svelte'
   import lovePlg from '../plugin'
@@ -313,7 +313,7 @@
     <svelte:fragment slot="actions">
       <!-- The service floor holds exactly one room, created by fixed id along with the floor. -->
       {#if !isServiceFloor(floor)}
-        <IconButton icon={IconAdd} size="small" tooltip={{ label: lovePlg.string.AddRoom }} on:click={addRoom} />
+        <IconButton icon={ui.icon.Plus} size="small" tooltip={{ label: lovePlg.string.AddRoom }} on:click={addRoom} />
       {/if}
       <div class="hulyHeader-divider short" />
       <Button

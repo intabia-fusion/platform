@@ -159,6 +159,18 @@ describe('WorkspaceClient.resolveSession', () => {
     expect(applyIds).toEqual(['love_session_E1'])
   })
 
+  it('opens the session in the room the meeting was scheduled in', async () => {
+    const { wc, created } = makeClient({
+      events: [masterEvent({ [love.mixin.MeetingEventLink]: { linkVersion: 1, room: 'room-1' } })],
+      persons: [{ _id: 'person-1', _class: contact.class.Person, personUuid: 'acc-1' }],
+      identities: [{ _id: 'social-1', _class: contact.class.SocialIdentity, attachedTo: 'person-1' }]
+    })
+
+    await wc.resolveSession('E1', start)
+
+    expect(created[0]).toMatchObject({ roomId: 'room-1' })
+  })
+
   it('refuses outside the occurrence window and says when to come back', async () => {
     const series = masterEvent({ rules: [{ freq: 'DAILY', interval: 1 }] })
     const { wc, created } = makeClient({ events: [series] })

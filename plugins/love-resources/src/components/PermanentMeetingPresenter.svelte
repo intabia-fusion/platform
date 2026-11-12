@@ -23,7 +23,7 @@
   import view from '@hcengineering/view'
   import type { ObjectPresenterType } from '@hcengineering/view'
   import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
-  import { getEventMeetingLink } from '../utils'
+  import { getEventMeetingLink, notifyCopied } from '../utils'
   import { canEditMeeting } from '../permissions'
 
   export let value: WithLookup<PermanentMeeting>
@@ -48,7 +48,9 @@
     copying = true
     try {
       const link = await getEventMeetingLink(value._id, 'meeting')
-      if (link !== '') await copyTextToClipboard(link)
+      if (link === '') return
+      await copyTextToClipboard(link)
+      await notifyCopied(love.string.LinkCopied)
     } finally {
       copying = false
     }

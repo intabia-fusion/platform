@@ -185,7 +185,7 @@
   }
 
   export function canClose (): boolean {
-    return title === ''
+    return true
   }
 
   let saving = false

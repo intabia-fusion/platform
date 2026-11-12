@@ -672,23 +672,22 @@ export class WorkspaceClient {
     kind: MeetingLinkKind = 'event',
     now: number = Date.now()
   ): Promise<MeetingTarget | undefined> {
-    if (kind === 'meeting') {
-      const meeting = await this.client.findOne(love.class.PermanentMeeting, { _id: id as Ref<PermanentMeeting> })
-      if (meeting === undefined) return undefined
-      return {
-        kind: 'meeting',
-        meeting,
-        pointer: meeting._id,
-        title: meeting.name,
-        link: { linkVersion: meeting.linkVersion, meetingAccess: meeting.meetingAccess, linkId: meeting.linkId },
-        lastMeetingEnd: await this.lastSessionEnd({ meeting: meeting._id })
-      }
-    }
+    if (kind === 'meeting') return await this.permanentMeetingTarget(id as Ref<PermanentMeeting>)
 
     const event = await this.client.findOne(calendar.class.Event, { eventId: id, access: AccessLevel.Owner })
     if (event === undefined) return undefined
     const master = await this.client.findOne(calendar.class.Event, meetingMasterQuery(event))
     if (master === undefined) return undefined
+
+    // A permanent meeting also has a series, and that event carries no participants: the people
+    // are the meeting's members, and the series points back at the meeting. Resolving through the
+    // back-reference keeps one rule for who may join, whether the caller clicked the calendar card
+    // (an event id) or the meeting list (a meeting id).
+    const permanent = ((master as any)[love.mixin.MeetingEventLink] as MeetingEventLink | undefined)?.permanentMeeting
+    if (permanent !== undefined) {
+      const meeting = await this.permanentMeetingTarget(permanent)
+      if (meeting !== undefined) return meeting
+    }
 
     const { current, next } = resolveOccurrence(master, now, await this.occurrenceOverrides(master, now))
     return {
@@ -700,6 +699,20 @@ export class WorkspaceClient {
       // An occurrence in progress keeps the link alive just as a future one does.
       nextOccurrence: current ?? next,
       lastMeetingEnd: await this.lastSessionEnd({ eventId: master.eventId })
+    }
+  }
+
+  /** The permanent meeting as a target of its own: it is open between occurrences, not by series. */
+  private async permanentMeetingTarget (ref: Ref<PermanentMeeting>): Promise<MeetingTarget | undefined> {
+    const meeting = await this.client.findOne(love.class.PermanentMeeting, { _id: ref })
+    if (meeting === undefined) return undefined
+    return {
+      kind: 'meeting',
+      meeting,
+      pointer: meeting._id,
+      title: meeting.name,
+      link: { linkVersion: meeting.linkVersion, meetingAccess: meeting.meetingAccess, linkId: meeting.linkId },
+      lastMeetingEnd: await this.lastSessionEnd({ meeting: meeting._id })
     }
   }
 
@@ -867,8 +880,9 @@ export class WorkspaceClient {
         owners,
         descriptionRef: null,
         summary: null,
-        // The one service room of the workspace - neither kind of meeting occupies an ordinary room.
-        roomId: love.ids.ScheduledRoom,
+        // The room the meeting was scheduled in; a meeting without one runs in the single service
+        // room of the workspace, which is where every meeting used to run.
+        roomId: link?.room ?? love.ids.ScheduledRoom,
         status: MeetingStatus.Pending,
         transcriptionState: TranscriptionState.NotStarted,
         recordingState: RecordingState.NotStarted,

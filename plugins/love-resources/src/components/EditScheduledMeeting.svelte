@@ -24,7 +24,7 @@
   import { Button } from '@hcengineering/ui/kit'
   import { createEventDispatcher, onMount } from 'svelte'
   import love from '../plugin'
-  import { joinMeetingBySession } from '../meetings'
+  import { joinMeetingBySession, seriesIdOf } from '../meetings'
   import { DEFAULT_MEETING_REMINDER } from '../utils'
 
   export let object: Event
@@ -82,6 +82,13 @@
     if (settings !== undefined) showPopup(love.component.PermanentMeetingForm, { object: settings }, 'content')
     else showPopup(calendar.component.EditEvent, { object: live }, 'content')
   }
+
+  // A permanent meeting is joined by itself: its series carries no participants.
+  function joinLive (): void {
+    const permanent = (live as MeetingEventLink).permanentMeeting
+    if (permanent !== undefined) void joinMeetingBySession(permanent, 'meeting')
+    else void joinMeetingBySession(seriesIdOf(live), 'event')
+  }
 </script>
 
 <div class="flex-col gap-1 mb-4">
@@ -90,14 +97,7 @@
     {#if !readonly}
       <Button label={presentation.string.Edit} size="small" on:click={openEditor} />
     {/if}
-    <Button
-      label={love.string.JoinMeeting}
-      size="large"
-      kind="primary"
-      on:click={() => {
-        void joinMeetingBySession(live.eventId, 'event')
-      }}
-    />
+    <Button label={love.string.JoinMeeting} size="large" kind="primary" on:click={joinLive} />
   </div>
   {#if !readonly}
     <div class="flex-row-center gap-1-5">

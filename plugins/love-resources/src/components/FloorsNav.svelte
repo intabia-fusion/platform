@@ -20,16 +20,34 @@
 <script lang="ts">
   import type { Person } from '@hcengineering/contact'
   import { Avatar, getPersonsByPersonRefs } from '@hcengineering/contact-resources'
-  import type { Ref } from '@hcengineering/core'
+  import { AccountRole, getCurrentAccount, hasAccountRole, type Ref } from '@hcengineering/core'
   import type { Floor, Office, Room } from '@hcengineering/love'
   import { isOffice } from '@hcengineering/love'
   import { getClient } from '@hcengineering/presentation'
-  import { getCurrentLocation, Icon, navigate, NavGroup, NavItem } from '@hcengineering/ui'
+  import ui, {
+    eventToHTMLElement,
+    getCurrentLocation,
+    Icon,
+    Menu,
+    navigate,
+    NavGroup,
+    NavItem,
+    showPopup,
+    type Action
+  } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
+  import view from '@hcengineering/view'
   import { openDoc } from '@hcengineering/view-resources'
   import plugin from '../plugin'
   import { persistFloorOrder, reorderFloors } from '../floors'
   import { currentFloor, infos, officeFloors, officeView, rooms, selectedFloor, selectedRoomPlace } from '../stores'
-  import { getRoomName } from '../utils'
+  import { getRoomName, showRoomSettings } from '../utils'
+  import AddRoomPopup from './AddRoomPopup.svelte'
+
+  // Only the people who arrange the office see the plus and the room menu at all.
+  const canManageRooms =
+    hasAccountRole(getCurrentAccount(), AccountRole.Owner) ||
+    hasAccountRole(getCurrentAccount(), AccountRole.Maintainer)
 
   let drag: Ref<Floor> | undefined
   let names = new Map<Ref<Room>, string>()
@@ -112,6 +130,36 @@
       console.error('[FloorsNav.drop] Failed to persist the floor order', err)
     })
   }
+
+  // A new room belongs to this floor from the start: the popup takes the floor it was opened from.
+  function addRoom (event: MouseEvent, floor: Ref<Floor>): void {
+    event.stopPropagation()
+    showPopup(AddRoomPopup, { floor }, eventToHTMLElement(event))
+  }
+
+  // The same menu a chat row has: open the room, or change it, without leaving the list.
+  function showRoomMenu (event: MouseEvent, room: Room): void {
+    event.stopPropagation()
+    const actions: Action[] = [
+      {
+        label: plugin.string.EnterRoom,
+        icon: plugin.icon.EnterRoom,
+        action: async () => {
+          openRoom(room)
+        }
+      }
+    ]
+    if (canManageRooms) {
+      actions.push({
+        label: ui.string.Settings,
+        icon: ui.icon.Gear,
+        action: async () => {
+          await showRoomSettings(room)
+        }
+      })
+    }
+    showPopup(Menu, { actions }, eventToHTMLElement(event))
+  }
 </script>
 
 {#each $officeFloors as floor (floor._id)}
@@ -137,6 +185,23 @@
       }}
       on:dragstart={() => (drag = floor._id)}
     >
+      <!-- The header is a button of its own: without this the click would also pick the floor. -->
+      <svelte:fragment slot="extra">
+        {#if canManageRooms}
+          <!-- svelte-ignore a11y-click-events-have-key-events -->
+          <div class="flex" on:click|stopPropagation>
+            <IconButton
+              icon={ui.icon.Plus}
+              kind="ghost"
+              size="min"
+              tooltip={{ label: plugin.string.AddRoom }}
+              on:click={(e) => {
+                addRoom(e, floor._id)
+              }}
+            />
+          </div>
+        {/if}
+      </svelte:fragment>
       <div class="rooms">
         {#each roomsOf(floor._id) as room (room._id)}
           <!-- An unassigned office seat has no name of its own; the row still has to be readable. -->
@@ -164,6 +229,22 @@
             <svelte:fragment slot="extra">
               {#if live}<span class="live" />{/if}
             </svelte:fragment>
+            <svelte:fragment slot="actions">
+              {#if canManageRooms}
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <div class="flex" on:click|stopPropagation>
+                  <IconButton
+                    icon={ui.icon.DotsVertical}
+                    kind="ghost"
+                    size="min"
+                    tooltip={{ label: view.string.MoreActions }}
+                    on:click={(e) => {
+                      showRoomMenu(e, room)
+                    }}
+                  />
+                </div>
+              {/if}
+            </svelte:fragment>
           </NavItem>
         {/each}
       </div>
@@ -186,11 +267,6 @@
     flex-direction: column;
     gap: 0.125rem;
     padding-left: 1.75rem;
-
-    /* The icon box and the label were touching: every row gets the same gap between them. */
-    :global(.hulyNavItem-icon) {
-      margin-right: 0.625rem;
-    }
   }
 
   /* A call is in progress in this room - the same signal the grid gives by showing people. */

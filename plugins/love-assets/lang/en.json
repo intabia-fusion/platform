@@ -1,6 +1,7 @@
 {
   "string": {
     "Office": "Office",
+    "OfficeNoOwnerHint": "This office is not assigned to anyone yet - assign a person to the office to be able to call from it.",
     "Room": "Room",
     "RoomType": "Room type",
     "Share": "Share",
@@ -104,6 +105,7 @@
     "Video": "Video",
     "NoMeetingMinutes": "No meeting minutes",
     "JoinMeeting": "Join meeting",
+    "JoinAsParticipant": "Join as participant",
     "JoinedMeeting": "Joined meeting",
     "MeetingStart": "Meeting start",
     "MeetingEnd": "Meeting end",
@@ -221,6 +223,9 @@
     "MeetingReminderBody": "Meeting \"{title}\" starts in {minutes} min",
     "RecurringMeeting": "Recurring meeting",
     "MeetingGroup": "Meeting group",
+    "MeetingGroupHint": "Give the group a name and pick the meetings - they move into it and keep their own settings.",
+    "MeetingGroupSelected": "{count, plural, =0 {No meetings selected} one {# meeting selected} other {# meetings selected}}",
+    "MeetingGroupNoMeetings": "There are no permanent meetings yet - create one first.",
     "MeetingOrder": "Order",
     "MergeIntoGroup": "Merge into group",
     "GroupName": "Group name",
@@ -231,6 +236,10 @@
     "RemindBeforeMinutes": "Remind before (minutes)",
     "RepeatUntil": "Repeat until",
     "LinkReady": "Guest link is ready",
-    "CreateMeetingGroup": "New group"
+    "CreateMeetingGroup": "New group",
+    "LinkCopied": "Link copied",
+    "RoomBusy": "Room is busy",
+    "RoomBusyText": "A meeting is already running in “{room}”.",
+    "TakeOverRoom": "Take over"
   }
 }

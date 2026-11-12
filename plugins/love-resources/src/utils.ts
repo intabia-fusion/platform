@@ -36,7 +36,15 @@ import {
   RoomType,
   type UserMeetingInvite
 } from '@hcengineering/love'
-import { getEmbeddedLabel, getMetadata, translate, type IntlString } from '@hcengineering/platform'
+import {
+  getEmbeddedLabel,
+  getMetadata,
+  setPlatformStatus,
+  Severity,
+  Status,
+  translate,
+  type IntlString
+} from '@hcengineering/platform'
 import presentation, {
   copyTextToClipboard,
   type DocCreatePhase,
@@ -265,23 +273,28 @@ export async function createMeeting (
     const master = await client.findOne(calendar.class.Event, meetingMasterQuery(event))
     if (master === undefined) return
 
-    // A meeting is its own entity and belongs to no office room: its session runs in the service
-    // room, so the media settings below are defaults rather than something inherited from a room.
-    // No session is created here either: the love service opens one when an occurrence comes,
-    // and it is the only writer allowed to (F1 §5). Scheduling only records what the meeting is.
+    // The room is picked in the form; it decides where the session runs and inherits the media
+    // settings of that room, the way a meeting held in a room always has. No room picked - the
+    // session goes to the workspace service room.
+    const room =
+      store.room !== undefined ? await client.findOne(love.class.Room, { _id: store.room as Ref<Room> }) : undefined
+
+    // A meeting is its own entity: scheduling only records what the meeting is, the session is
+    // opened by the love service when an occurrence comes (the only writer allowed to, F1 §5).
     await client.createMixin<Event, MeetingEventLink>(
       master._id,
       master._class,
       master.space,
       love.mixin.MeetingEventLink,
       {
-        type: RoomType.Video,
+        type: room?.type === RoomType.Audio ? RoomType.Audio : RoomType.Video,
+        room: room?._id,
         linkVersion: 1,
         meetingAccess: defaultMeetingAccess,
-        private: false,
-        language: getCurrentLanguage() as RoomLanguage,
-        startWithRecording: false,
-        startWithTranscription: false,
+        private: room?.startPrivate ?? false,
+        language: (room?.language ?? getCurrentLanguage()) as RoomLanguage,
+        startWithRecording: room?.startWithRecording ?? false,
+        startWithTranscription: room?.startWithTranscription ?? false,
         reminderBefore: DEFAULT_MEETING_REMINDER
       }
     )
@@ -375,6 +388,17 @@ export async function copyGuestLink (mm: MeetingMinutes): Promise<void> {
 
   // Pass a Promise so ClipboardItem is created synchronously within the user gesture (Safari)
   await copyTextToClipboard(getMeetingGuestLink(mm))
+  await notifyCopied(love.string.LinkCopied)
+}
+
+/**
+ * Confirms a copy to the user. A clipboard write that says nothing looks like a dead button, and a
+ * link is exactly what people paste without checking, so the text is the only proof it worked.
+ * Plain status on purpose: a status with `display: Notification` is swallowed by the notification
+ * store, which nothing renders, and never reaches the status bar.
+ */
+export async function notifyCopied (text: IntlString): Promise<void> {
+  await setPlatformStatus(new Status(Severity.INFO, text, {}, undefined, { timeout: 2500 }))
 }
 
 export async function toggleRoomPrivacy (mm: MeetingMinutes): Promise<void> {

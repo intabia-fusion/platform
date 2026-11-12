@@ -18,11 +18,10 @@
 -->
 <script lang="ts">
   import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
-  import {
+  import ui, {
     deviceOptionsStore as deviceInfo,
     eventToHTMLElement,
     getCurrentLocation,
-    IconAdd,
     navigate,
     NavGroup,
     NavItem,
@@ -86,7 +85,7 @@
                  a floor would also pick the section (the list has no floor to pick anyway). -->
             <div class="flex" on:click|stopPropagation>
               <IconButton
-                icon={IconAdd}
+                icon={ui.icon.Plus}
                 kind="tertiary"
                 size="min"
                 tooltip={{ label: plugin.string.AddAFloor }}

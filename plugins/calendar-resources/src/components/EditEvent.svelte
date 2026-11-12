@@ -76,8 +76,11 @@
   const dispatch = createEventDispatcher()
   const client = getClient()
 
+  // A modal must be dismissible: clicking the overlay or pressing Esc is how a user leaves a popup.
+  // The previous rule allowed closing only while the title was empty, which for an existing event is
+  // never true, so the popup could not be closed at all.
   export function canClose (): boolean {
-    return title?.trim().length === 0 && participants.length === 0
+    return true
   }
 
   let saving = false

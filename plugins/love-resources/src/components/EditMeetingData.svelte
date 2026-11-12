@@ -13,16 +13,20 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Event, ReccuringInstance } from '@hcengineering/calendar'
+  import calendar, { type Event, type ReccuringInstance } from '@hcengineering/calendar'
+  import type { Ref } from '@hcengineering/core'
   import love from '../plugin'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { ObjectPresenter } from '@hcengineering/view-resources'
-  import type { MeetingMinutes } from '@hcengineering/love'
-  import { LIVE_MEETING_STATUSES } from '@hcengineering/love'
-  import { Button, Icon, IconSettings, Label, eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  import type { MeetingMinutes, Room } from '@hcengineering/love'
+  import { LIVE_MEETING_STATUSES, meetingMasterQuery } from '@hcengineering/love'
+  // Icons come off the default export: `@hcengineering/ui` exports no `Icon<Name>` components, so a
+  // named import is `undefined` and the button renders empty.
+  import ui, { Button, Icon, Label, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import MeetingMinutesStatusPresenter from './MeetingMinutesStatusPresenter.svelte'
-  import { joinMeeting, joinMeetingBySession, leaveMeeting } from '../meetings'
+  import RoomSelector from './RoomSelector.svelte'
+  import { confirmRoomAvailable, joinMeeting, joinMeetingBySession, leaveMeeting } from '../meetings'
   import MeetingLinkPopup from './MeetingLinkPopup.svelte'
 
   export let value: Event
@@ -58,6 +62,9 @@
   )
 
   async function openMeeting (): Promise<void> {
+    // The room hosts one meeting at a time: a newcomer may evict the one already running there, but
+    // only by saying so.
+    if (!(await confirmRoomAvailable(meeting?.room, seriesEventId))) return
     // Sessions of a series are opened by the love service, addressed by the event. The old path
     // stays for meetings whose mixin still points at a session created by the client (F1 §7).
     if (seriesEventId !== undefined && meeting?.linkVersion !== undefined) {
@@ -66,6 +73,17 @@
     }
     if (meetingDoc === undefined) return
     await joinMeeting(meetingDoc)
+  }
+
+  /**
+   * The room is part of the meeting, not of one occurrence, so it is written on the series master.
+   * A live session already holds a room and cannot be moved out of it.
+   */
+  async function changeRoom (room: Ref<Room>): Promise<void> {
+    if (meetingDoc !== undefined) return
+    const master = await client.findOne(calendar.class.Event, meetingMasterQuery(_value))
+    if (master === undefined) return
+    await client.updateMixin(master._id, master._class, master.space, love.mixin.MeetingEventLink, { room })
   }
 
   async function closeMeeting (): Promise<void> {
@@ -82,6 +100,7 @@
       <div class="mr-2">
         <Label label={love.string.Meeting} />
       </div>
+      <!-- The room the meeting takes place in: editable until a session holds it. -->
       <div class="flex-grow">
         {#if meetingDoc !== undefined}
           <ObjectPresenter
@@ -90,6 +109,8 @@
             _class={meetingDoc._class}
             value={meetingDoc}
           />
+        {:else}
+          <RoomSelector value={meeting?.room} disabled={readOnly} on:change={(ev) => void changeRoom(ev.detail)} />
         {/if}
       </div>
       <div class="ml-3 flex flex-row-center flex-gap-2">
@@ -98,7 +119,7 @@
         {/if}
         {#if !readOnly}
           <IconButton
-            icon={IconSettings}
+            icon={ui.icon.Gear}
             size="small"
             kind="tertiary"
             tooltip={{ label: love.string.MeetingLinkSettings }}

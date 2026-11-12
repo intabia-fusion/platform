@@ -1,6 +1,7 @@
 {
   "string": {
     "Office": "Ofis",
+    "OfficeNoOwnerHint": "Bu ofis henüz kimseye atanmadı - buradan arama yapabilmek için bir kişi atayın.",
     "Room": "Oda",
     "RoomType": "Oda tipi",
     "Share": "Paylaş",
@@ -104,6 +105,7 @@
     "Video": "Video",
     "NoMeetingMinutes": "Toplantı tutanağı yok",
     "JoinMeeting": "Toplantıya katıl",
+    "JoinAsParticipant": "Katılımcı olarak katıl",
     "JoinedMeeting": "Toplantıya katıldı",
     "LeaveParticipant": "Toplantıdan ayrıldı",
     "MeetingStart": "Toplantı başlangıcı",
@@ -221,6 +223,9 @@
     "MeetingReminderBody": "«{title}» toplantısı {minutes} dakika sonra başlıyor",
     "RecurringMeeting": "Düzenli toplantı",
     "MeetingGroup": "Meeting group",
+    "MeetingGroupHint": "Gruba bir ad verin ve toplantıları seçin - toplantılar kendi ayarlarını koruyarak gruba taşınır.",
+    "MeetingGroupSelected": "{count, plural, =0 {Toplantı seçilmedi} one {# toplantı seçildi} other {# toplantı seçildi}}",
+    "MeetingGroupNoMeetings": "Henüz kalıcı toplantı yok - önce bir tane oluşturun.",
     "MeetingOrder": "Order",
     "MergeIntoGroup": "Merge into group",
     "GroupName": "Group name",
@@ -231,6 +236,10 @@
     "RemindBeforeMinutes": "Remind before (minutes)",
     "RepeatUntil": "Repeat until",
     "LinkReady": "Guest link is ready",
-    "CreateMeetingGroup": "New group"
+    "CreateMeetingGroup": "New group",
+    "LinkCopied": "Bağlantı kopyalandı",
+    "RoomBusy": "Oda dolu",
+    "RoomBusyText": "“{room}” odasında zaten bir toplantı sürüyor.",
+    "TakeOverRoom": "Odayı devral"
   }
 }

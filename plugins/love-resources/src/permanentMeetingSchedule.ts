@@ -44,6 +44,7 @@ import {
   type RoomLanguage,
   RoomType
 } from '@hcengineering/love'
+import contact, { type Person } from '@hcengineering/contact'
 import { periodRules } from './period'
 import love from './plugin'
 
@@ -73,8 +74,7 @@ export interface PermanentMeetingInput {
   guestPassword?: string | null
 }
 
-export async function findPrimaryCalendarId (client: Client): Promise<Ref<Calendar> | undefined> {
-  const acc = getCurrentAccount()
+export async function findPrimaryCalendarId (client: Client): Promise<Ref<Calendar> | undefined> {  const acc = getCurrentAccount()
   const calendars = await client.findAll(calendar.class.Calendar, {
     user: acc.primarySocialId,
     hidden: false,
@@ -93,6 +93,20 @@ export async function findPrimaryCalendarId (client: Client): Promise<Ref<Calend
 export function withOwners (members: AccountUuid[], owners: AccountUuid[]): AccountUuid[] {
   const missing = owners.filter((it) => !members.includes(it))
   return missing.length > 0 ? [...missing, ...members] : members
+}
+
+/**
+ * The people of the meeting as event participants.
+ *
+ * The series is a calendar event, and the calendar keeps a copy of an event in the calendar of every
+ * participant, propagating the master's changes to those copies. Without this list a member of the
+ * meeting has no series in their own planner at all, and a rename made by the organiser never
+ * reaches them - the two see different names for the same meeting.
+ */
+async function participantsOf (client: Client, members: AccountUuid[]): Promise<Array<Ref<Person>>> {
+  if (members.length === 0) return []
+  const persons = await client.findAll(contact.class.Person, { personUuid: { $in: members } })
+  return persons.map((it) => it._id)
 }
 
 export async function createPermanentMeeting (
@@ -150,6 +164,7 @@ export async function createPermanentMeetingWithSchedule (
   if (rules.length > 0 && input.endDate !== undefined) rules[0] = { ...rules[0], endDate: input.endDate }
 
   const members = input.members.includes(ctx.me) ? input.members : [ctx.me, ...input.members]
+  const participants = await participantsOf(client, members)
   const eventId = generateEventId()
   const dueDate = input.startDate + input.duration
   const eventIdRef = generateId<Event>()
@@ -161,7 +176,7 @@ export async function createPermanentMeetingWithSchedule (
     dueDate,
     title: input.name,
     description: '',
-    participants: [],
+    participants,
     externalParticipants: [],
     reminders: [input.reminderBefore],
     visibility: 'private' as const,
@@ -263,6 +278,7 @@ export async function updatePermanentMeetingWithSchedule (
   const rules = input.period !== undefined ? periodRules(input.startDate, input.period) : []
   if (rules.length > 0 && input.endDate !== undefined) rules[0] = { ...rules[0], endDate: input.endDate }
 
+  const participants = await participantsOf(client, members)
   const series = await client.findAll(calendar.class.Event, {
     [`${love.mixin.MeetingEventLink as string}.permanentMeeting`]: object._id
   } as any)
@@ -270,7 +286,8 @@ export async function updatePermanentMeetingWithSchedule (
     const update: Record<string, any> = {
       title: input.name,
       date: input.startDate,
-      dueDate: input.startDate + input.duration
+      dueDate: input.startDate + input.duration,
+      participants
     }
     if (rules.length > 0) update.rules = rules
     await client.update(event, update as any)

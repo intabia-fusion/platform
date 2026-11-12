@@ -1,6 +1,7 @@
 {
   "string": {
     "Office": "Kancelář",
+    "OfficeNoOwnerHint": "Tato kancelář zatím nikomu nepatří - přiřaďte jí osobu, abyste z ní mohli volat.",
     "Room": "Místnost",
     "RoomType": "Typ místnosti",
     "Share": "Sdílet",
@@ -104,6 +105,7 @@
     "Video": "Video",
     "NoMeetingMinutes": "Žádné zápisy ze schůzek",
     "JoinMeeting": "Připojit se ke schůzce",
+    "JoinAsParticipant": "Připojit se jako účastník",
     "JoinedMeeting": "Připojil se ke schůzce",
     "LeaveParticipant": "Opustil schůzku",
     "MeetingStart": "Začátek schůzky",
@@ -221,6 +223,9 @@
     "MeetingReminderBody": "Schůzka „{title}“ začne za {minutes} min",
     "RecurringMeeting": "Pravidelná schůzka",
     "MeetingGroup": "Meeting group",
+    "MeetingGroupHint": "Zadejte název a vyberte schůzky – přesunou se do skupiny a ponechají si své nastavení.",
+    "MeetingGroupSelected": "{count, plural, =0 {Nejsou vybrány žádné schůzky} one {Vybrána # schůzka} few {Vybrány # schůzky} other {Vybráno # schůzek}}",
+    "MeetingGroupNoMeetings": "Zatím nejsou žádné trvalé schůzky - nejprve nějakou vytvořte.",
     "MeetingOrder": "Order",
     "MergeIntoGroup": "Merge into group",
     "GroupName": "Group name",
@@ -231,6 +236,10 @@
     "RemindBeforeMinutes": "Remind before (minutes)",
     "RepeatUntil": "Repeat until",
     "LinkReady": "Guest link is ready",
-    "CreateMeetingGroup": "New group"
+    "CreateMeetingGroup": "New group",
+    "LinkCopied": "Odkaz zkopírován",
+    "RoomBusy": "Místnost je obsazená",
+    "RoomBusyText": "V místnosti „{room}“ již probíhá schůzka.",
+    "TakeOverRoom": "Převzít místnost"
   }
 }

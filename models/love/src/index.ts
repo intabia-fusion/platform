@@ -145,9 +145,10 @@ export class TRoom extends TDoc implements Room {
 @Model(love.class.Office, love.class.Room)
 @UX(love.string.Office, love.icon.Love)
 export class TOffice extends TRoom implements Office {
+  // Editable: an office can be created first and assigned to a person later, and a seat that changes
+  // hands is reassigned here. Two offices for one person are not prevented by the model.
   @Prop(TypeRef(contact.mixin.Employee), contact.string.Employee)
   @Index(IndexKind.Indexed)
-  @ReadOnly()
   person!: Ref<Employee> | null
 }
 
@@ -230,6 +231,11 @@ export class TRoomInfo extends TDoc implements RoomInfo {
 @Mixin(love.mixin.MeetingEventLink, calendar.class.Event)
 export class TMeeting extends TEvent implements MeetingEventLink {
   type?: RoomType.Video | RoomType.Audio
+
+  // The room the meeting takes place in. Absent means the session runs in the workspace service
+  // room, which is where every meeting used to run before the room could be picked.
+  @Prop(TypeRef(love.class.Room), love.string.Room)
+  room?: Ref<Room>
 
   // Looked up by the link resolver on every guest join.
   @Index(IndexKind.Indexed)
@@ -414,7 +420,7 @@ export class TPermanentMeeting extends TSpace implements PermanentMeeting {
 
   // Lead time of the reminder for a meeting with no series. A scheduled meeting keeps it on the
   // series mixin, so both places exist: this one is for the always-open room.
-  @Prop(TypeNumber(), love.string.RemindBefore)
+  @Prop(TypeNumber(), love.string.RemindBefore, { editor: love.component.ReminderBeforeEditor })
   reminderBefore?: number
 
   // Flat grouping of the permanent meetings list. `order` is authoritative: the list sorts by it
@@ -1372,6 +1378,16 @@ export function createModel (builder: Builder): void {
     love.class.PermanentMeeting,
     'members',
     'array'
+  )
+
+  // The reminder lead time is stored in milliseconds, which is unreadable in the attribute panel:
+  // the presenter reads it as "15 minutes", "2 hours" or "1 day".
+  createAttributePresenter(
+    builder,
+    love.component.ReminderBeforePresenter,
+    love.class.PermanentMeeting,
+    'reminderBefore',
+    'attribute'
   )
 
   builder.createDoc(

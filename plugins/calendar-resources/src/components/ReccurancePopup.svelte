@@ -77,32 +77,47 @@
     }
   ] as DropdownIntlItem[]
 
-  function buildRule (): RecurringRule {
+  // The inputs are parameters, not free variables: a reactive statement only re-runs on the values
+  // it can see, and `$: preview = buildRule()` read none of them - the preview, the summary and the
+  // saved rule kept the values the popup was opened with, so changing the period did nothing.
+  function buildRule (settings: {
+    periodType: Freq
+    interval: number
+    selected: string
+    until: number
+    count: number
+    isByMonthDay: boolean
+    byMonthDay: number[]
+    isYearBySetPos: boolean
+    byMonth: number[]
+    byDay: string[]
+    setPos: SetPosRules
+  }): RecurringRule {
     const res: RecurringRule = {
-      freq: periodType,
-      interval
+      freq: settings.periodType,
+      interval: settings.interval
     }
-    if (selected === 'on') {
-      res.endDate = until
-    } else if (selected === 'after') {
-      res.count = count
+    if (settings.selected === 'on') {
+      res.endDate = settings.until
+    } else if (settings.selected === 'after') {
+      res.count = settings.count
     }
-    if (periodType === 'WEEKLY') {
-      res.byDay = selectedWeekdays
+    if (settings.periodType === 'WEEKLY') {
+      res.byDay = settings.byDay
     }
-    if (periodType === 'MONTHLY') {
-      if (isByMonthDay) {
-        res.byMonthDay = byMonthDay
+    if (settings.periodType === 'MONTHLY') {
+      if (settings.isByMonthDay) {
+        res.byMonthDay = settings.byMonthDay
       } else {
-        res.bySetPos = setPos.bySetPos
-        res.byDay = setPos.byDay
+        res.bySetPos = settings.setPos.bySetPos
+        res.byDay = settings.setPos.byDay
       }
     }
-    if (periodType === 'YEARLY') {
-      res.byMonth = byMonth
-      if (isYearBySetPos) {
-        res.bySetPos = setPos.bySetPos
-        res.byDay = setPos.byDay
+    if (settings.periodType === 'YEARLY') {
+      res.byMonth = settings.byMonth
+      if (settings.isYearBySetPos) {
+        res.bySetPos = settings.setPos.bySetPos
+        res.byDay = settings.setPos.byDay
       }
     }
     return res
@@ -121,7 +136,19 @@
     return false
   }
 
-  $: preview = buildRule()
+  $: preview = buildRule({
+    periodType,
+    interval,
+    selected,
+    until,
+    count,
+    isByMonthDay,
+    byMonthDay,
+    isYearBySetPos,
+    byMonth,
+    byDay: selectedWeekdays,
+    setPos
+  })
   $: invalid = isInvalid(preview)
 
   function save () {

@@ -19,8 +19,10 @@
 <script lang="ts">
   import presentation, { Card, copyTextToClipboard } from '@hcengineering/presentation'
   import { Button, EditBox, Label } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import love from '../plugin'
+  import { notifyCopied } from '../utils'
 
   export let link: string
 
@@ -30,6 +32,7 @@
   async function copy (): Promise<void> {
     await copyTextToClipboard(link)
     copied = true
+    await notifyCopied(love.string.LinkCopied)
   }
 </script>
 
@@ -46,7 +49,11 @@
       <div class="flex-grow">
         <EditBox value={link} disabled />
       </div>
-      <Button label={love.string.CopyMeetingLink} kind="primary" on:click={copy} />
+      <Button
+        label={copied ? view.string.Copied : love.string.CopyMeetingLink}
+        kind="primary"
+        on:click={copy}
+      />
     </div>
   </div>
 </Card>

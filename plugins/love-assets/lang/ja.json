@@ -1,6 +1,7 @@
 {
   "string": {
     "Office": "オフィス",
+    "OfficeNoOwnerHint": "このオフィスはまだ誰にも割り当てられていません。通話できるように担当者を割り当ててください。",
     "Room": "ルーム",
     "RoomType": "ルームタイプ",
     "Share": "共有",
@@ -104,6 +105,7 @@
     "Video": "ビデオ",
     "NoMeetingMinutes": "議事録はありません",
     "JoinMeeting": "会議に参加",
+    "JoinAsParticipant": "参加者として参加",
     "JoinedMeeting": "ミーティングに参加しました",
     "LeaveParticipant": "ミーティングを退出しました",
     "MeetingStart": "会議開始",
@@ -221,6 +223,9 @@
     "MeetingReminderBody": "ミーティング「{title}」は{minutes}分後に始まります",
     "RecurringMeeting": "定例ミーティング",
     "MeetingGroup": "Meeting group",
+    "MeetingGroupHint": "グループ名を入力し、会議を選択してください。会議は設定を保ったままグループに移動します。",
+    "MeetingGroupSelected": "{count, plural, =0 {会議が選択されていません} other {# 件の会議を選択中}}",
+    "MeetingGroupNoMeetings": "定例会議がまだありません。まず会議を作成してください。",
     "MeetingOrder": "Order",
     "MergeIntoGroup": "Merge into group",
     "GroupName": "Group name",
@@ -231,6 +236,10 @@
     "RemindBeforeMinutes": "Remind before (minutes)",
     "RepeatUntil": "Repeat until",
     "LinkReady": "Guest link is ready",
-    "CreateMeetingGroup": "New group"
+    "CreateMeetingGroup": "New group",
+    "LinkCopied": "リンクをコピーしました",
+    "RoomBusy": "会議室は使用中です",
+    "RoomBusyText": "「{room}」ではすでに会議が行われています。",
+    "TakeOverRoom": "会議室を引き継ぐ"
   }
 }

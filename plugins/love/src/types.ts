@@ -174,6 +174,9 @@ export interface MeetingEventLink extends Event {
   /** Media mode of the session. Used to be taken from Room.type. */
   type?: RoomType.Video | RoomType.Audio
 
+  /** The room the meeting takes place in. Absent: the session runs in the workspace service room. */
+  room?: Ref<Room>
+
   /** shortId of the permanent link. Absent until the link is first issued. */
   linkId?: string
   /** Bumping it revokes the previous link: new payload, new shortId. */

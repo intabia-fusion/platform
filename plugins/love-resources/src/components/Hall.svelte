@@ -58,6 +58,7 @@
       baseQuery={{ recurringEventId: { $exists: false } }}
       label={love.string.Meetings}
       icon={love.icon.Cam}
+      hideViewSettings
     />
   {:else if $officeView === 'floors'}
     <!-- Nothing is picked yet: the floors list is in the navigator, the grid is its detail view. -->
@@ -79,7 +80,7 @@
           label={love.string.MergeIntoGroup}
           kind="secondary"
           size="medium"
-          on:click={() => showPopup(MeetingGroupPopup, {}, 'content')}
+          on:click={() => showPopup(MeetingGroupPopup, {}, 'center')}
         />
       </div>
       <PermanentMeetingsList />

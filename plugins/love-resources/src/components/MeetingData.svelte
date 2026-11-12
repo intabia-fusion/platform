@@ -13,21 +13,32 @@
 // limitations under the License.
 -->
 <!--
-  The body of the calendar event form: one checkbox that turns the event into a meeting. The meeting
-  is a standalone entity - it owns no office room, its session runs in the service room - so there is
-  nothing else to pick here; room settings are per room in the office, not per meeting.
+  The body of the calendar event form: one checkbox that turns the event into a meeting, and the room
+  the meeting takes place in. Without a room the session runs in the workspace service room, which is
+  what every meeting did before rooms could be picked.
 -->
 <script lang="ts">
+  import type { Ref } from '@hcengineering/core'
+  import type { Room } from '@hcengineering/love'
   import { Button, CheckBox, Label } from '@hcengineering/ui'
   import type { Writable } from 'svelte/store'
   import love from '../plugin'
+  import RoomSelector from './RoomSelector.svelte'
+  import { myOffice, rooms } from '../stores'
 
   export let state: Writable<Record<string, any>>
 
   let isMeeting = $state.isMeeting === true
 
+  $: selectedRoom = $rooms.find((r) => r._id === $state.room)
+  $: isPrivateRoom = selectedRoom?.startPrivate ?? false
+
   function changeIsMeeting (val: boolean): void {
     $state.isMeeting = val
+  }
+
+  function changeRoom (val: Ref<Room>): void {
+    $state.room = val
   }
 </script>
 
@@ -48,11 +59,23 @@
     on:click={() => {
       isMeeting = !isMeeting
       changeIsMeeting(isMeeting)
+      // The own office is where a person usually sits, so it is the default the room list opens on.
+      if (isMeeting && $state.room === undefined) {
+        $state.room = $myOffice?._id
+      }
     }}
   />
 </div>
 {#if isMeeting}
-  <div class="text-sm mt-1 ml-4 content-color">
-    <Label label={love.string.MeetingRunsInServiceRoom} />
-  </div>
+  <RoomSelector
+    value={$state.room}
+    on:change={(ev) => {
+      changeRoom(ev.detail)
+    }}
+  />
+  {#if isPrivateRoom}
+    <div class="text-sm mt-1 ml-4 text-content-color">
+      <Label label={love.string.Private} />
+    </div>
+  {/if}
 {/if}

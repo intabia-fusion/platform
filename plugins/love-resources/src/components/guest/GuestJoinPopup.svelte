@@ -22,10 +22,10 @@
   import love from '../../plugin'
   import { getLiveKitEndpoint, liveKitClient, lk } from '../../utils'
   import { lkSessionConnected } from '../../liveKitClient'
-  import { closePanel, CheckBox, EditBox } from '@hcengineering/ui'
+  import { closePanel, CheckBox } from '@hcengineering/ui'
   import type { RemoteTrack, RemoteTrackPublication } from 'livekit-client'
   import { RoomEvent } from 'livekit-client'
-  import { AuthLikeForm, Label } from '@hcengineering/login-resources'
+  import { AuthLikeForm, Label, StylishEdit } from '@hcengineering/login-resources'
   import { generateId } from '@hcengineering/core'
 
   export let meetingId: string | undefined
@@ -426,11 +426,10 @@
             </div>
           {/if}
           {#if passwordRequired}
+            <!-- The login input, not the app one: `EditBox` takes its colors from the app theme, and on
+                 a dark screen its white text sits on the white login panel of the guest page. -->
             <div class="password-row" data-id="guest-password-row">
-              <div class="password-label"><Label label={love.string.GuestPassword} /></div>
-              <div class="input-wrapper">
-                <EditBox bind:value={password} format="password" placeholder={love.string.EnterPassword} kind="default" />
-              </div>
+              <StylishEdit password label={love.string.GuestPassword} bind:value={password} />
             </div>
           {/if}
           <div class="preview-area" aria-hidden={startWithVideo ? 'false' : 'true'}>
@@ -625,11 +624,6 @@
     width: 100%;
     max-width: 520px;
     margin-bottom: 8px;
-  }
-
-  .password-label {
-    color: var(--theme-caption-color);
-    font-size: 0.875rem;
   }
 
   .actions {

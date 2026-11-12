@@ -1,6 +1,7 @@
 {
   "string": {
     "Office": "办公室",
+    "OfficeNoOwnerHint": "该办公室尚未分配给任何人——请分配人员后即可从此处发起通话。",
     "Room": "房间",
     "RoomType": "房间类型",
     "Share": "共享",
@@ -104,6 +105,7 @@
     "Video": "视频",
     "NoMeetingMinutes": "无会议记录",
     "JoinMeeting": "加入会议",
+    "JoinAsParticipant": "以参与者身份加入",
     "JoinedMeeting": "已加入会议",
     "LeaveParticipant": "已离开会议",
     "MeetingStart": "会议开始",
@@ -221,6 +223,9 @@
     "MeetingReminderBody": "会议「{title}」将在 {minutes} 分钟后开始",
     "RecurringMeeting": "定期会议",
     "MeetingGroup": "Meeting group",
+    "MeetingGroupHint": "为分组命名并选择会议——会议将移入分组并保留各自设置。",
+    "MeetingGroupSelected": "{count, plural, =0 {未选择会议} other {已选择 # 个会议}}",
+    "MeetingGroupNoMeetings": "还没有定期会议——请先创建一个。",
     "MeetingOrder": "Order",
     "MergeIntoGroup": "Merge into group",
     "GroupName": "Group name",
@@ -231,6 +236,10 @@
     "RemindBeforeMinutes": "Remind before (minutes)",
     "RepeatUntil": "Repeat until",
     "LinkReady": "Guest link is ready",
-    "CreateMeetingGroup": "New group"
+    "CreateMeetingGroup": "New group",
+    "LinkCopied": "链接已复制",
+    "RoomBusy": "房间已被占用",
+    "RoomBusyText": "“{room}”中已有会议正在进行。",
+    "TakeOverRoom": "接管"
   }
 }

@@ -19,9 +19,8 @@
   import { getClient } from '@hcengineering/presentation'
   import { ComponentExtensions } from '@hcengineering/presentation'
   import { Component, MILLISECONDS_IN_MINUTE, showPopup, tooltip } from '@hcengineering/ui'
-  import type { ObjectEditor } from '@hcengineering/view'
   import view from '@hcengineering/view'
-  import { showMenu } from '@hcengineering/view-resources'
+  import { openDoc, showMenu } from '@hcengineering/view-resources'
   import { calendarByIdStore, isVisible } from '../utils'
   import { eventCard } from '../eventCard'
   import EventPresenter from './EventPresenter.svelte'
@@ -33,20 +32,17 @@
   $: narrow = event.dueDate - event.date < MILLISECONDS_IN_MINUTE * 25
   $: empty = size.width < 44
 
-  // A meeting (or any other document with its own card) is opened as that card: the calendar's own
-  // editor works on the occurrence, while a meeting keeps its title, rules and participants on the
-  // series, so the series is what the card has to show.
+  // A meeting (or any other document with its own card) is opened as that document; a plain event
+  // keeps the calendar's editor, which is the popup it has always been edited in. The mixin editor
+  // alone is only a panel header, so opening the event page for it would show an event, not a meeting.
   async function click (): Promise<void> {
     if (!visible) return
     const card = await eventCard(client, event, calendar.component.EditEvent)
-    if (card !== undefined) {
-      showPopup(card.editor, { object: card.object }, 'content')
+    if (card !== undefined && !hierarchy.isDerived(card.object._class, calendar.class.Event)) {
+      await openDoc(hierarchy, card.object)
       return
     }
-    const editor = hierarchy.classHierarchyMixin<Doc, ObjectEditor>(event._class, view.mixin.ObjectEditor)
-    if (editor?.editor !== undefined) {
-      showPopup(editor.editor, { object: event })
-    }
+    showPopup(calendar.component.EditEvent, { object: event }, 'content')
   }
 
   const client = getClient()

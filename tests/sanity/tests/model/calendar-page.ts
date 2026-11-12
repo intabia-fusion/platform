@@ -212,6 +212,31 @@ export class CalendarPage extends CommonPage {
     await this.buttonRepeatSave().click()
   }
 
+  // The live preview under the repeat form ("Every 2 Week · Mo"). It is the whole point of the
+  // form: it must follow the inputs, and what it shows is what Save writes.
+  repeatPreview = (): Locator => this.recurrencePopup().locator('div.preview')
+
+  // ReccurancePopup.svelte: the interval input of "Every <n> <period>", the first number in the form.
+  private readonly inputRepeatInterval = (): Locator =>
+    this.recurrencePopup().locator('input[type="number"]').first()
+
+  // Opens the repeat popup and sets the interval, leaving the period as it is (Week by default).
+  async setRepeatInterval (interval: number): Promise<void> {
+    await this.buttonRepeat().click()
+    await expect(this.recurrencePopup()).toBeVisible()
+    await this.inputRepeatInterval().fill(`${interval}`)
+    await this.inputRepeatInterval().blur()
+  }
+
+  // The rule the repeat popup saved is what the event popup shows in place of the "Repeat" label.
+  buttonSavedRepeatRule = (): Locator => this.createEventPopup().getByRole('button', { name: /Every\s+\d+\s+Week/ })
+
+  // The overlay covers the whole viewport behind the popup, so a corner click lands on it and
+  // nothing else: the same gesture a user makes to dismiss a modal.
+  async clickOutsideEventPopup (): Promise<void> {
+    await this.page.locator('div.modal-overlay').last().click({ position: { x: 4, y: 4 } })
+  }
+
   // calendar.action.DeleteRecEvent overrides the generic Delete for a ReccuringInstance and opens
   // UpdateRecInstancePopup, whose dropdown defaults to "This event" - exactly the override case.
   private readonly recInstancePopup = (): Locator => this.page.locator('div.popup div.msgbox-container')
@@ -226,6 +251,8 @@ export class CalendarPage extends CommonPage {
 
   // The participants dropdown stays open for multi-select and covers the popup, so Escape goes
   // to it first; the create popup itself only closes through its own cross.
+  // Escape closes the popup as well as the cross does: the popup is dismissible again (it used to
+  // refuse to close while the form had anything typed in it).
   async closeCreateEventPopup (): Promise<void> {
     await this.page.keyboard.press('Escape')
     if (await this.createEventPopup().isVisible()) {

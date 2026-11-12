@@ -15,7 +15,7 @@
 
 import type { Class, Client, Doc, Ref } from '@hcengineering/core'
 import type { AnyComponent } from '@hcengineering/ui'
-import { eventCard } from '../eventCard'
+import { eventCard, registerEventCardResolver } from '../eventCard'
 
 const calendarEditor = 'calendar:component:EditEvent' as unknown as AnyComponent
 const meetingEditor = 'love:component:EditScheduledMeeting' as unknown as AnyComponent
@@ -71,5 +71,25 @@ describe('eventCard', () => {
   it('asks nothing when the class has no mixin with an editor', async () => {
     const client = fakeClient({}, [meetingMixin as string])
     expect(await eventCard(client, event(), calendarEditor)).toBeUndefined()
+  })
+})
+
+// Last in the file: a resolver is registered for the lifetime of the module, and it answers before
+// the mixin lookup, so every later case would get its document.
+describe('eventCard plugin resolvers', () => {
+  it('lets a plugin name the document the event opens as', async () => {
+    const meeting = {
+      _id: 'love:class:PermanentMeeting:1',
+      _class: 'love:class:PermanentMeeting',
+      space: 'space:1'
+    } as unknown as Doc
+    registerEventCardResolver(async () => meeting)
+
+    const client = fakeClient({ [meetingMixin]: meetingEditor }, [])
+    const card = await eventCard(client, event(), calendarEditor)
+
+    expect(card?.object).toBe(meeting)
+    // The owner of the document knows how to render it: the calendar's mixin editor does not apply.
+    expect(card?.editor).toBeUndefined()
   })
 })

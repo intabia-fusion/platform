@@ -13,20 +13,20 @@
 // limitations under the License.
 -->
 <!--
-  Panel header of a permanent meeting. The document, attachments and chat below it are rendered by
-  the generic panel from `descriptionRef` and the collections, the same way a session gets them.
-  The document is followed live, so a rename made here is the rename the panel shows.
+  Panel header of a permanent meeting: the name, followed live, and the way into the meeting. The
+  document, attachments and chat below it are rendered by the generic panel, the same way a session
+  gets them. The settings of the meeting - name, members, period, guest password - have one place,
+  the gear of the meeting row in the office navigator, so this header carries no settings of its own.
 -->
 <script lang="ts">
   import calendar, { type Event } from '@hcengineering/calendar'
-  import type { PermanentMeeting } from '@hcengineering/love'
+  import { LIVE_MEETING_STATUSES, type MeetingMinutes, type PermanentMeeting } from '@hcengineering/love'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { CheckBox, EditBox, Label, showPopup } from '@hcengineering/ui'
+  import { EditBox } from '@hcengineering/ui'
   import { Button } from '@hcengineering/ui/kit'
   import { createEventDispatcher, onMount } from 'svelte'
   import love from '../plugin'
-  import { joinMeetingBySession } from '../meetings'
-  import RepeatEveryEditor from './RepeatEveryEditor.svelte'
+  import { joinMeeting, joinMeetingBySession } from '../meetings'
 
   export let object: PermanentMeeting
   export let readonly: boolean = false
@@ -63,28 +63,29 @@
     }
   }
 
-  // The period is edited here rather than in the attribute panel: it is stored in milliseconds and
-  // reads as a number and a unit, which the panel cannot do without a model update. The value is
-  // held locally as well, so the editor follows the click at once and not only the live document.
-  let period: number | undefined = object.repeatEvery
-
-  $: if (live.repeatEvery !== undefined && live.repeatEvery !== period) {
-    period = live.repeatEvery
-  }
-
-  async function changeRepeatEvery (value: number): Promise<void> {
-    period = value
-    await client.diffUpdate(live, { repeatEvery: value })
-  }
-
+  // Both read in the header, and the attributes panel below would repeat them: the period has its own
+  // editor in the settings window, the name is edited here.
   onMount(() => {
     dispatch('open', { ignoreKeys: ['name', 'repeatEvery'] })
   })
 
-  // The marked point in the information panel: it says the meeting is permanent and opens the same
-  // window that created it, so settings are one click away from the card.
-  function openSettings (): void {
-    showPopup(love.component.PermanentMeetingForm, { object: live }, 'content')
+  // A session someone already started is a meeting in progress: a member joins it as a participant
+  // instead of opening the room, which would start a session of their own.
+  let liveSession: MeetingMinutes | undefined
+  const sessionQuery = createQuery(true)
+
+  $: sessionQuery.query(
+    love.class.MeetingMinutes,
+    { meeting: object._id, status: { $in: LIVE_MEETING_STATUSES } },
+    (res) => {
+      liveSession = res[0]
+    }
+  )
+
+  // Joining a running session directly: the room is already open, there is nothing to start.
+  function joinLive (): void {
+    if (liveSession === undefined) return
+    void joinMeeting(liveSession)
   }
 </script>
 
@@ -98,6 +99,9 @@
       focusIndex={1}
     />
   </div>
+  {#if liveSession !== undefined}
+    <Button label={love.string.JoinAsParticipant} size="large" kind="secondary" on:click={joinLive} />
+  {/if}
   <Button
     label={love.string.JoinMeeting}
     size="large"
@@ -106,24 +110,6 @@
       void joinMeetingBySession(live._id, 'meeting')
     }}
   />
-</div>
-
-<div class="flex-row-center gap-1-5 mb-2">
-  <CheckBox
-    checked={true}
-    kind="primary"
-    on:value={() => {
-      openSettings()
-    }}
-  />
-  <span class="text-sm text-content-color cursor-pointer" on:click={openSettings} on:keydown={openSettings} role="button" tabindex="0">
-    <Label label={love.string.PermanentMeeting} />
-  </span>
-</div>
-
-<div class="flex-row-center gap-2 mb-4">
-  <span class="text-sm text-content-color"><Label label={love.string.RepeatEvery} /></span>
-  <RepeatEveryEditor value={period} onChange={changeRepeatEvery} readonly={readonly} />
 </div>
 
 <style lang="scss">

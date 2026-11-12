@@ -1,6 +1,16 @@
 import { getMetadata, type Resources } from '@hcengineering/platform'
 import aiBot from '@hcengineering/ai-bot'
-import { AccountRole, getCurrentAccount, hasAccountRole, type AccountUuid, type Doc } from '@hcengineering/core'
+import {
+  AccountRole,
+  SortingOrder,
+  getCurrentAccount,
+  hasAccountRole,
+  type AccountUuid,
+  type Client,
+  type Doc
+} from '@hcengineering/core'
+import type { Event, ReccuringInstance } from '@hcengineering/calendar'
+import { registerEventCardResolver } from '@hcengineering/calendar-resources'
 import { type MeetingEventLink, type MeetingMinutes, type PermanentMeeting } from '@hcengineering/love'
 import love from '@hcengineering/love'
 import { getClient } from '@hcengineering/presentation'
@@ -64,6 +74,8 @@ import MeetingAccessAttributeEditor from './components/MeetingAccessAttributeEdi
 import PermanentMeetingMembersEditor from './components/PermanentMeetingMembersEditor.svelte'
 import MeetingPrivateEditor from './components/MeetingPrivateEditor.svelte'
 import RepeatEveryEditor from './components/RepeatEveryEditor.svelte'
+import ReminderBeforePresenter from './components/ReminderBeforePresenter.svelte'
+import ReminderBeforeEditor from './components/ReminderBeforeEditor.svelte'
 
 // Wires the meeting reminders: the client is the only thing that can deliver them, there is no
 // scheduler for calendar events on the server.
@@ -164,6 +176,46 @@ async function editMeetingSettings (object: Doc): Promise<void> {
   showPopup(PermanentMeetingForm, { object: meeting }, 'content')
 }
 
+/**
+ * A meeting series is only a projection: the meeting itself is a document of its own, and its card
+ * is what the calendar has to open. The link is read off the event when the view queried the mixin,
+ * and by the series otherwise - an occurrence carries no mixin at all, only its master does. A series
+ * created before the meeting document existed has no meeting to point at, so the latest session of
+ * that series is opened instead: it is still a meeting page, not the event settings.
+ */
+async function resolveMeetingCard (client: Client, event: Doc): Promise<Doc | undefined> {
+  const hierarchy = client.getHierarchy()
+  const seriesId = (event as ReccuringInstance).recurringEventId ?? (event as Event).eventId
+
+  let link: MeetingEventLink | undefined
+  if (hierarchy.hasMixin(event, love.mixin.MeetingEventLink)) {
+    link = hierarchy.as(event, love.mixin.MeetingEventLink)
+  } else {
+    // A mixin document carries both the id of the document it extends and its eventId, and which of
+    // the two the calendar handed over depends on the view: both are tried.
+    link =
+      (await client.findOne(love.mixin.MeetingEventLink, { _id: seriesId as any })) ??
+      (await client.findOne(love.mixin.MeetingEventLink, { eventId: seriesId as any }))
+  }
+  if (link === undefined) return undefined
+
+  if (link.permanentMeeting !== undefined) {
+    const meeting = await client.findOne(love.class.PermanentMeeting, { _id: link.permanentMeeting })
+    if (meeting !== undefined) return meeting
+  }
+
+  const sessions = await client.findAll(
+    love.class.MeetingMinutes,
+    { eventId: seriesId },
+    { sort: { meetingStart: SortingOrder.Descending }, limit: 1 }
+  )
+  return sessions[0]
+}
+
+// The calendar asks before it opens an event: a meeting series answers with the meeting itself.
+// Registered on import and not in the plugin factory: a hot reload re-runs modules, not factories.
+registerEventCardResolver(resolveMeetingCard)
+
 export { setCustomCreateScreenTracks } from './utils'
 
 export default async (): Promise<Resources> => ({
@@ -223,7 +275,9 @@ export default async (): Promise<Resources> => ({
     MeetingAccessAttributeEditor,
     PermanentMeetingMembersEditor,
     MeetingPrivateEditor,
-    RepeatEveryEditor
+    RepeatEveryEditor,
+    ReminderBeforePresenter,
+    ReminderBeforeEditor
   },
   function: {
     CreateMeeting: createMeeting,

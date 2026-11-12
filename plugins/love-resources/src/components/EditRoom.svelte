@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { EditBox } from '@hcengineering/ui'
+  import { EditBox, Label } from '@hcengineering/ui'
   import { Button } from '@hcengineering/ui/kit'
   import type { Room } from '@hcengineering/love'
   import {
@@ -222,9 +222,24 @@
       <RoomPreview room={object} info={roomInfos} preview />
     </div>
   {/if}
+  {#if isOffice(object) && object.person === null}
+    <!-- An office is a seat of a person: with nobody in it there is no one to call, and the connect
+         button stays hidden - so the panel says why instead of looking broken. -->
+    <div class="office-hint" data-id="office-no-owner"><Label label={love.string.OfficeNoOwnerHint} /></div>
+  {/if}
 </div>
 
 <style lang="scss">
+  .office-hint {
+    margin-top: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px dashed var(--theme-divider-color);
+    border-radius: 0.5rem;
+    color: var(--theme-content-color);
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
+  }
+
   .name {
     font-weight: 500;
     font-size: 1.25rem;

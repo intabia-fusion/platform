@@ -23,12 +23,13 @@
   import contact from '@hcengineering/contact'
   import love, { type MeetingEventLink, type MeetingGroup, type PermanentMeeting } from '@hcengineering/love'
   import { copyTextToClipboard, createQuery, getClient, onClient } from '@hcengineering/presentation'
-  import { EditBox, Icon, Label, showPopup } from '@hcengineering/ui'
+  import ui, { EditBox, Icon, Label, showPopup } from '@hcengineering/ui'
   import { formatDateValue, IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
+  import { openDoc } from '@hcengineering/view-resources'
   import { onMount } from 'svelte'
   import { joinMeetingBySession } from '../meetings'
-  import { getEventMeetingLink } from '../utils'
+  import { getEventMeetingLink, notifyCopied } from '../utils'
   import { mergeMeetingIntoGroup, moveItem, persistOrder, renameMeetingGroup } from '../groups'
   import { canEditMeeting, canLeaveMeeting, isPermanentMeetingCreator } from '../permissions'
   import { nextOccurrence } from '../period'
@@ -148,10 +149,22 @@
     showPopup(love.component.PermanentMeetingForm, { object: meeting }, 'content')
   }
 
+  /**
+   * A row is the meeting itself: clicking it opens the card in the centre, where the series, its
+   * occurrences and its activity are, not the edit form. The form is behind the gear.
+   */
+  function openMeetingCard (meeting: PermanentMeeting): void {
+    openDoc(getClient().getHierarchy(), meeting).catch((err) => {
+      console.error('[PermanentMeetingsList.openMeetingCard] Failed to open the meeting', err)
+    })
+  }
+
   async function copyLink (event: MouseEvent, meeting: PermanentMeeting): Promise<void> {
     event.stopPropagation()
     const link = await getEventMeetingLink(meeting._id, 'meeting')
-    if (link !== '') await copyTextToClipboard(link)
+    if (link === '') return
+    await copyTextToClipboard(link)
+    await notifyCopied(love.string.LinkCopied)
   }
 
   /** Deleting the meeting takes its live sessions with it: the server trigger finishes them. */
@@ -175,7 +188,7 @@
     meeting: PermanentMeeting
     /** Formatted next occurrence, absent when the series is over or unknown. */
     next?: string
-    canCopyLink: boolean
+    canEdit: boolean
     /** Only the creator deletes a meeting; everyone else in it can only walk out. */
     canDelete: boolean
     canLeave: boolean
@@ -206,7 +219,7 @@
         .map((meeting) => ({
           meeting,
           next: nextLabel(meeting, seriesList),
-          canCopyLink: canEditMeeting(meeting, me),
+          canEdit: canEditMeeting(meeting, me),
           canDelete: isPermanentMeetingCreator(meeting, me),
           canLeave: canLeaveMeeting(meeting, me)
         }))
@@ -249,7 +262,7 @@
   }
 </script>
 
-<div class="flex-col gap-1" data-id="permanent-meetings-list">
+<div class="flex-col flex-gap-1" data-id="permanent-meetings-list">
   {#each sections as section (section.group?._id ?? 'ungrouped')}
     {#if section.group !== undefined}
       <div
@@ -280,7 +293,6 @@
             on:click={() => startRenameSection(section)}
           />
         {/if}
-        <span class="count">{section.rows.length}</span>
       </div>
     {:else}
       <div
@@ -290,7 +302,6 @@
         data-id="permanent-meeting-ungrouped"
       >
         <span class="group-title"><Label label={love.string.MeetingsWithoutGroup} /></span>
-        <span class="count">{section.rows.length}</span>
       </div>
     {/if}
     {#each section.rows as row (row.meeting._id)}
@@ -300,8 +311,8 @@
         on:dragstart={() => startDrag('meeting', row.meeting._id)}
         on:dragover|preventDefault
         on:drop|preventDefault={() => void dropOnMeeting(row.meeting._id)}
-        on:click={() => openSettings(row.meeting)}
-        on:keydown={() => openSettings(row.meeting)}
+        on:click={() => openMeetingCard(row.meeting)}
+        on:keydown={() => openMeetingCard(row.meeting)}
         role="button"
         tabindex="0"
         data-id="permanent-meeting-row"
@@ -311,7 +322,9 @@
         {#if row.next !== undefined}
           <span class="next">{row.next}</span>
         {/if}
-        {#if row.canCopyLink}
+        <!-- One group, packed from the right: a row with fewer actions keeps the same right edge,
+             and no per-child margin can shift a single row out of line. -->
+        <span class="actions">
           <IconButton
             icon={view.icon.CopyLink}
             size="small"
@@ -319,34 +332,46 @@
             tooltip={{ label: love.string.CopyMeetingLink }}
             on:click={(e) => void copyLink(e, row.meeting)}
           />
-        {/if}
-        <IconButton
-          icon={love.icon.Cam}
-          size="small"
-          kind="ghost"
-          tooltip={{ label: love.string.JoinMeeting }}
-          on:click={(e) => {
-            e.stopPropagation()
-            void joinMeetingBySession(row.meeting._id, 'meeting')
-          }}
-        />
-        {#if row.canDelete}
           <IconButton
-            icon={view.icon.Delete}
+            icon={love.icon.Cam}
             size="small"
             kind="ghost"
-            tooltip={{ label: view.string.Delete }}
-            on:click={(e) => deleteMeeting(e, row.meeting)}
+            tooltip={{ label: love.string.JoinMeeting }}
+            on:click={(e) => {
+              e.stopPropagation()
+              void joinMeetingBySession(row.meeting._id, 'meeting')
+            }}
           />
-        {:else if row.canLeave}
-          <IconButton
-            icon={view.icon.Leave}
-            size="small"
-            kind="ghost"
-            tooltip={{ label: view.string.Leave }}
-            on:click={(e) => void leaveMeeting(e, row.meeting)}
-          />
-        {/if}
+          {#if row.canEdit}
+            <IconButton
+              icon={ui.icon.Gear}
+              size="small"
+              kind="ghost"
+              tooltip={{ label: ui.string.Settings }}
+              on:click={(e) => {
+                e.stopPropagation()
+                openSettings(row.meeting)
+              }}
+            />
+          {/if}
+          {#if row.canDelete}
+            <IconButton
+              icon={view.icon.Delete}
+              size="small"
+              kind="ghost"
+              tooltip={{ label: view.string.Delete }}
+              on:click={(e) => deleteMeeting(e, row.meeting)}
+            />
+          {:else if row.canLeave}
+            <IconButton
+              icon={view.icon.Leave}
+              size="small"
+              kind="ghost"
+              tooltip={{ label: view.string.Leave }}
+              on:click={(e) => void leaveMeeting(e, row.meeting)}
+            />
+          {/if}
+        </span>
       </div>
     {/each}
   {/each}
@@ -364,7 +389,6 @@
     font-weight: 500;
     cursor: grab;
   }
-
   .group-header.ungrouped {
     background: transparent;
     color: var(--theme-content-color);
@@ -373,11 +397,6 @@
 
   .group-title {
     flex: 1;
-  }
-
-  .count {
-    color: var(--theme-dark-color);
-    font-size: 0.75rem;
   }
 
   .meeting-row {
@@ -394,7 +413,8 @@
   }
 
   .name {
-    flex: 1;
+    flex: 1 1 auto;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -404,5 +424,13 @@
     flex-shrink: 0;
     font-size: 0.75rem;
     color: var(--theme-content-color);
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 0.125rem;
+    flex-shrink: 0;
+    margin-left: auto;
   }
 </style>

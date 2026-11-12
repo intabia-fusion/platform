@@ -364,7 +364,9 @@ export function meetingOccurrences (
   overrides: OccurrenceOverride[] = []
 ): Timestamp[] {
   const rec = master as ReccuringEvent
-  if (rec.rules === undefined && rec.rdate === undefined) {
+  // Empty on purpose, not only absent: the calendar stores `rules: []` on a plain event, and
+  // treating that as a series leaves it with no occurrences at all - the meeting never opens.
+  if ((rec.rules?.length ?? 0) === 0 && (rec.rdate?.length ?? 0) === 0) {
     return master.date >= from && master.date < to ? [master.date] : []
   }
 

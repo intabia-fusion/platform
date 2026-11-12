@@ -22,9 +22,9 @@
     type PermanentMeeting
   } from '@hcengineering/love'
   import { Button, DropdownLabelsIntl, EditBox, Label, type DropdownIntlItem } from '@hcengineering/ui'
-  import { createEventDispatcher } from 'svelte'
+  import { createEventDispatcher, onMount } from 'svelte'
   import plugin from '../plugin'
-  import { getEventMeetingLink, revokeMeetingLink, revokePermanentMeetingLink } from '../utils'
+  import { getEventMeetingLink, notifyCopied, revokeMeetingLink, revokePermanentMeetingLink } from '../utils'
   import { getLoveClient } from '../loveClient'
 
   // Exactly one of the two: a calendar series keeps its policy in a mixin, a permanent meeting
@@ -71,20 +71,28 @@
   let editingPassword = false
   let passwordInput = ''
 
-  $: if (meeting !== undefined) {
-    access = meeting.meetingAccess ?? defaultMeetingAccess
-    passwordSet = access.guestPassword !== undefined
-  } else if (event !== undefined) {
-    void client.findOne(calendar.class.Event, meetingMasterQuery(event)).then((res) => {
+  // Loaded once per opened popup, not derived. A reactive `$:` block here would depend on `access`
+  // too (it is read to compute `passwordSet`) and write it back: every write invalidates the block,
+  // it re-runs, issues another `findOne`, gets a fresh object and writes again - an endless query
+  // loop that locks the tab up. Owning the value also lets the dropdowns below keep what the user
+  // picked instead of having it overwritten by the stored one on the next pass.
+  onMount(() => {
+    if (meeting !== undefined) {
+      access = meeting.meetingAccess ?? defaultMeetingAccess
+      passwordSet = access.guestPassword !== undefined
+      return
+    }
+    const seriesEvent = event
+    if (seriesEvent === undefined) return
+    void client.findOne(calendar.class.Event, meetingMasterQuery(seriesEvent)).then((res) => {
       master = res
-      if (res !== undefined) {
-        access = client.getHierarchy().as(res, love.mixin.MeetingEventLink).meetingAccess ?? defaultMeetingAccess
-        passwordSet = access.guestPassword !== undefined
-      }
+      if (res === undefined) return
+      access = client.getHierarchy().as(res, love.mixin.MeetingEventLink).meetingAccess ?? defaultMeetingAccess
+      passwordSet = access.guestPassword !== undefined
     })
-  }
+  })
 
-  async function save(update: Partial<MeetingAccess>): Promise<void> {
+  async function save (update: Partial<MeetingAccess>): Promise<void> {
     access = { ...access, ...update }
     if (meeting !== undefined) {
       await client.update(meeting, { meetingAccess: access })
@@ -96,12 +104,12 @@
     })
   }
 
-  function startEditPassword(): void {
+  function startEditPassword (): void {
     passwordInput = ''
     editingPassword = true
   }
 
-  async function savePassword(): Promise<void> {
+  async function savePassword (): Promise<void> {
     if (pointer === undefined || passwordInput === '') return
     await loveClient.setGuestPassword(pointer, passwordInput, isPermanent ? 'meeting' : 'event')
     plainPassword = passwordInput
@@ -109,26 +117,28 @@
     editingPassword = false
   }
 
-  async function removePassword(): Promise<void> {
+  async function removePassword (): Promise<void> {
     if (pointer === undefined) return
     await loveClient.setGuestPassword(pointer, null, isPermanent ? 'meeting' : 'event')
     plainPassword = undefined
     passwordSet = false
   }
 
-  async function copyLink(): Promise<void> {
+  async function copyLink (): Promise<void> {
     if (pointer === undefined) return
     // The promise goes in as is: Safari drops the clipboard write once the user gesture is awaited away.
     await copyTextToClipboard(getEventMeetingLink(pointer, isPermanent ? 'meeting' : 'event'))
+    await notifyCopied(plugin.string.LinkCopied)
   }
 
-  async function copyLinkWithPassword(): Promise<void> {
+  async function copyLinkWithPassword (): Promise<void> {
     if (pointer === undefined || plainPassword === undefined) return
     const link = await getEventMeetingLink(pointer, isPermanent ? 'meeting' : 'event')
     await copyTextToClipboard(`${link}\n${plainPassword}`)
+    await notifyCopied(plugin.string.LinkCopied)
   }
 
-  async function revoke(): Promise<void> {
+  async function revoke (): Promise<void> {
     if (meeting !== undefined) {
       await revokePermanentMeetingLink(meeting)
     } else if (event !== undefined) {

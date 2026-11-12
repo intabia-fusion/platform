@@ -200,6 +200,9 @@
   }
 
   let resolvingShortLink = false
+  // The link itself was refused (revoked, expired, unknown). Polling it again would only repeat the
+  // same refusal, and the answer never changes for as long as this page lives.
+  let linkRejected = false
 
   function handleLocation(loc: Location): void {
     if (loc.path[0] !== 'meetings') {
@@ -211,9 +214,11 @@
     if (q.guestToken != null) {
       guestToken = q.guestToken
       errorMessage = null
-      void fetchGuestInfo(0)
+      linkRejected = false
+      void fetchGuestInfo()
     } else if (shortId != null && shortId !== '') {
       errorMessage = null
+      linkRejected = false
       resolvingShortLink = true
       void resolveShortLink(shortId).then((resolved) => {
         resolvingShortLink = false
@@ -222,7 +227,7 @@
           guestInfo = null
         } else {
           guestToken = resolved
-          void fetchGuestInfo(0)
+          void fetchGuestInfo()
         }
       })
     } else {
@@ -257,10 +262,11 @@
     }
   }
 
-  async function fetchGuestInfo(_time: number): Promise<void> {
-    if (guestToken == null) return
+  async function fetchGuestInfo(): Promise<void> {
+    if (guestToken == null || linkRejected) return
 
-    if (guestToken === null) {
+    const token = guestToken
+    if (guestInfo == null) {
       resolving = true
     }
     resolveError = null
@@ -274,11 +280,19 @@
       const resp = await fetch(`${endpoint}/guestInfo`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: guestToken })
+        body: JSON.stringify({ token })
       })
 
       if (!resp.ok) {
         const txt = await resp.text().catch(() => '')
+        // 401/403/404 are the link's own verdicts: unknown, expired, or revoked. They are final, so the
+        // lobby says the link is dead instead of polling a refusal forever behind a blank form.
+        if (resp.status === 401 || resp.status === 403 || resp.status === 404) {
+          linkRejected = true
+          guestInfo = null
+          errorMessage = love.string.InvalidOrExpiredLink
+          return
+        }
         throw new Error(`Failed to fetch guest info: ${resp.status} ${txt}`)
       }
 
@@ -483,7 +497,7 @@
     {:else if guestToken}
       {#if resolving}
         <div class="center">
-          <div class="message flex justify-center">{love.string.CheckingLink}</div>
+          <div class="message flex justify-center"><Label label={love.string.CheckingLink} /></div>
         </div>
       {:else if $lkSessionConnected}
         <div bind:this={roomEl} data-id="guest-connected" class="flex-col-center w-full h-full">
@@ -516,7 +530,7 @@
               </div>
             {/if}
             {#if resolveError}
-              <div class="message" role="alert">{love.string.Error}: {resolveError}</div>
+              <div class="message" role="alert"><Label label={love.string.Error} />: {resolveError}</div>
             {/if}
           </div>
 
@@ -534,12 +548,12 @@
       {/if}
     {:else if resolvingShortLink}
       <div class="center">
-        <div class="message">{love.string.ResolvingLink}</div>
+        <div class="message"><Label label={love.string.ResolvingLink} /></div>
       </div>
     {:else}
       <!-- In case location hasn't been populated yet we show a small loader/placeholder -->
       <div class="center">
-        <div class="message">{love.string.PreparingGuestConnection}</div>
+        <div class="message"><Label label={love.string.PreparingGuestConnection} /></div>
       </div>
     {/if}
   </svelte:fragment>
