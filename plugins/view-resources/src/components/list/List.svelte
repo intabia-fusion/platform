@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -303,7 +304,7 @@
   let listCategories: ListCategories
 </script>
 
-<div class="list-container" bind:this={listDiv}>
+<div class="list-container" bind:this={listDiv} style:min-width={props.minRowWidth}>
   <ListCategories
     bind:this={listCategories}
     bind:empty={noCategories}

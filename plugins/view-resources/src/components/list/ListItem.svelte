@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -69,6 +70,13 @@
     }
   }
 
+  $: columns = model.filter(
+    (p) => !p.displayProps?.grow && (groupByKey === undefined || p.displayProps?.excludeByKey !== groupByKey)
+  )
+  $: gridTemplate = Array.isArray(props.columnWidths)
+    ? `1.5rem ${columns.map((_, i) => props.columnWidths[i] ?? 'minmax(8rem, 1fr)').join(' ')}`
+    : undefined
+
   $: mobile = $deviceInfo.isMobile
   $: needCompact =
     model.filter((m) => m.displayProps?.optional || m.displayProps?.compression || m.displayProps?.suffix).length > 0
@@ -88,6 +96,8 @@
   bind:this={elem}
   class="listGrid antiList__row row flex-gap-1 flex-grow"
   class:compactMode
+  class:columns={gridTemplate !== undefined}
+  style:grid-template-columns={gridTemplate}
   class:checking={checked}
   class:mListGridSelected={selected}
   class:last
@@ -126,67 +136,83 @@
       />
     </div>
   </div>
-  {#each model.filter((p) => !(p.displayProps?.optional === true || p.displayProps?.compression === true || p.displayProps?.suffix === true)) as attributeModel, i}
-    {@const displayProps = attributeModel.displayProps}
-    {#if !groupByKey || displayProps?.excludeByKey !== groupByKey}
-      {#if displayProps?.grow}
-        {#if !(compactMode && mobile)}
-          {#each model.filter((p) => p.displayProps?.suffix === true) as attrModel}
-            <ListPresenter
-              {docObject}
-              attributeModel={attrModel}
-              {props}
-              {readonly}
-              {compactMode}
-              value={getObjectValue(attrModel.key, docObject)}
-              onChange={getOnChange(docObject, attrModel)}
-            />
-          {/each}
-        {/if}
-        <GrowPresenter />
-        {#if !compactMode}
-          <div class="compression-bar" style:min-width={`${minWidth}px`}>
-            {#each model.filter((p) => p.displayProps?.compression === true) as attrModel, index}
-              <ListPresenter
-                {docObject}
-                attributeModel={attrModel}
-                {props}
-                value={getObjectValue(attrModel.key, docObject)}
-                onChange={getOnChange(docObject, attrModel)}
-                {readonly}
-                on:resize={(e) => {
-                  if (e.detail == null) return
-                  sizes.set(index, e.detail)
-                  calcSizes()
-                }}
-              />
-            {/each}
-          </div>
-          {#each model.filter((p) => p.displayProps?.optional === true) as attrModel}
-            <ListPresenter
-              {docObject}
-              attributeModel={attrModel}
-              {readonly}
-              {props}
-              value={getObjectValue(attrModel.key, docObject)}
-              onChange={getOnChange(docObject, attrModel)}
-            />
-          {/each}
-        {/if}
-      {:else}
+  {#if gridTemplate !== undefined}
+    {#each columns as attributeModel}
+      <div class="list-column">
         <ListPresenter
           {docObject}
-          {attributeModel}
+          attributeModel={{ ...attributeModel, displayProps: { ...attributeModel.displayProps, fixed: undefined } }}
           {props}
           {readonly}
           value={getObjectValue(attributeModel.key, docObject)}
           onChange={getOnChange(docObject, attributeModel)}
-          hideDivider={i === 0}
-          {compactMode}
+          hideDivider
         />
+      </div>
+    {/each}
+  {:else}
+    {#each model.filter((p) => !(p.displayProps?.optional === true || p.displayProps?.compression === true || p.displayProps?.suffix === true)) as attributeModel, i}
+      {@const displayProps = attributeModel.displayProps}
+      {#if !groupByKey || displayProps?.excludeByKey !== groupByKey}
+        {#if displayProps?.grow}
+          {#if !(compactMode && mobile)}
+            {#each model.filter((p) => p.displayProps?.suffix === true) as attrModel}
+              <ListPresenter
+                {docObject}
+                attributeModel={attrModel}
+                {props}
+                {readonly}
+                {compactMode}
+                value={getObjectValue(attrModel.key, docObject)}
+                onChange={getOnChange(docObject, attrModel)}
+              />
+            {/each}
+          {/if}
+          <GrowPresenter />
+          {#if !compactMode}
+            <div class="compression-bar" style:min-width={`${minWidth}px`}>
+              {#each model.filter((p) => p.displayProps?.compression === true) as attrModel, index}
+                <ListPresenter
+                  {docObject}
+                  attributeModel={attrModel}
+                  {props}
+                  value={getObjectValue(attrModel.key, docObject)}
+                  onChange={getOnChange(docObject, attrModel)}
+                  {readonly}
+                  on:resize={(e) => {
+                    if (e.detail == null) return
+                    sizes.set(index, e.detail)
+                    calcSizes()
+                  }}
+                />
+              {/each}
+            </div>
+            {#each model.filter((p) => p.displayProps?.optional === true) as attrModel}
+              <ListPresenter
+                {docObject}
+                attributeModel={attrModel}
+                {readonly}
+                {props}
+                value={getObjectValue(attrModel.key, docObject)}
+                onChange={getOnChange(docObject, attrModel)}
+              />
+            {/each}
+          {/if}
+        {:else}
+          <ListPresenter
+            {docObject}
+            {attributeModel}
+            {props}
+            {readonly}
+            value={getObjectValue(attributeModel.key, docObject)}
+            onChange={getOnChange(docObject, attributeModel)}
+            hideDivider={i === 0}
+            {compactMode}
+          />
+        {/if}
       {/if}
-    {/if}
-  {/each}
+    {/each}
+  {/if}
   {#if compactMode && needCompact}
     <div class="panel-trigger" tabindex="-1">
       <Icon icon={ui.icon.GripVertical} size="small" fill="var(--theme-caption-color)" />
@@ -254,8 +280,24 @@
   {/if}
 </div>
 
-<!--
 <style lang="scss">
-  /* Global styles in components.scss */
+  .listGrid.columns {
+    display: grid;
+    column-gap: 1rem;
+  }
+
+  .list-column {
+    display: flex;
+    align-items: left;
+    min-width: 0;
+    overflow: hidden;
+    :global(> *) {
+      min-width: 0;
+      max-width: 100%;
+    }
+  }
+
+  .list-column:last-child {
+    justify-content: flex-end;
+  }
 </style>
--->

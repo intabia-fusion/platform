@@ -780,7 +780,6 @@ export function defineViewlets (builder: Builder): void {
             openIssues: true
           }
         },
-        'members',
         {
           key: 'defaultAssignee',
           props: { kind: 'list' }
@@ -790,7 +789,8 @@ export function defineViewlets (builder: Builder): void {
           presenter: view.component.TimestampLabel,
           displayProps: { fixed: 'right', dividerBefore: true },
           props: { label: tracker.string.ModificationDate }
-        }
+        },
+        'members'
       ],
       options: {
         showArchived: true
@@ -805,6 +805,10 @@ export function defineViewlets (builder: Builder): void {
     {
       attachTo: tracker.class.Project,
       descriptor: view.viewlet.List,
+      props: {
+        columnWidths: ['minmax(12rem, 4fr)', 'minmax(9rem, 2fr)', 'minmax(6rem, 1fr)', 'minmax(10rem, 2fr)'],
+        minRowWidth: '44rem'
+      },
       viewOptions: projectListOptions,
       configOptions: {
         strict: true,
@@ -819,7 +823,6 @@ export function defineViewlets (builder: Builder): void {
             shouldUseMargin: true
           }
         },
-        'members',
         {
           key: 'defaultAssignee',
           props: { kind: 'list' }
@@ -829,7 +832,8 @@ export function defineViewlets (builder: Builder): void {
           presenter: view.component.TimestampLabel,
           displayProps: { fixed: 'right', dividerBefore: true },
           props: { label: tracker.string.ModificationDate }
-        }
+        },
+        'members'
       ],
       options: {
         showArchived: true
