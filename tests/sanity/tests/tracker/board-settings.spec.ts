@@ -324,7 +324,8 @@ test.describe('board settings', () => {
     ] as const) {
       await page.locator('[data-id="boardCardOrder"]').click()
       await page.locator('div.hulyPopup-container .hulyPopup-row', { hasText: label }).click()
-      await expect.poll(async () => (await client.findOne(tracker.class.Board, { _id: id }))?.orderBy)
+      await expect
+        .poll(async () => (await client.findOne(tracker.class.Board, { _id: id }))?.orderBy)
         .toEqual(['lastViewedOn', direction])
       await page.reload()
       await expect(page.locator('[data-id="boardCardOrder"]')).toContainText(label)
