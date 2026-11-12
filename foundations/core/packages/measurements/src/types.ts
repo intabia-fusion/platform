@@ -19,6 +19,11 @@ export type FullParamsType = Record<string, any>
 export interface MetricsData {
   operations: number
   value: number
+  // Non-overlapping latency buckets (ms): le10=[0,10], le100=(10,100], le500=(100,500].
+  // Anything slower lands in topResult. Used to estimate p95/p99 cheaply.
+  le10?: number
+  le100?: number
+  le500?: number
   topResult?: {
     value: number
     time?: number
@@ -39,6 +44,35 @@ export interface OperationLog {
 }
 
 /**
+ * A single keyed observation aggregate inside a top-N registry.
+ * @public
+ */
+export interface TopEntry {
+  count: number
+  sum: number
+  max: number
+  // Non-overlapping latency buckets (ms), same boundaries as MetricsData.
+  le10: number
+  le100: number
+  le500: number
+  // A raw sample for display (e.g. the actual SQL of the slowest hit).
+  sample?: string
+}
+
+/**
+ * Top-N registry: detailed entries for the N heaviest keys plus a roll-up of
+ * everything evicted, so totals stay exact even with a hard cap.
+ * @public
+ */
+export interface TopRegistry {
+  entries: Record<string, TopEntry>
+  totalCount: number
+  totalSum: number
+  evictedCount: number
+  evictedSum: number
+}
+
+/**
  * @public
  */
 export interface Metrics extends MetricsData {
@@ -47,6 +81,9 @@ export interface Metrics extends MetricsData {
   measurements: Record<string, Metrics>
 
   opLog?: Record<string, OperationLog>
+
+  // Named top-N registries, kept only on the root metrics node.
+  top?: Record<string, TopRegistry>
 }
 
 /**
@@ -131,6 +168,11 @@ export interface MeasureContext<Q = any> {
   // Record a duration sample (ms) into a histogram-style metric with optional labels.
   // Use for latency/duration distributions - db query timing, request handling, etc.
   recordDuration: (name: string, ms: number, labels?: ParamsType) => void
+
+  // Record a keyed observation into a named top-N registry kept at the root.
+  // Groups by key (count/sum/max + latency buckets); a hard cap of N keeps memory
+  // bounded while evicted keys still contribute to the registry totals.
+  recordTop: (registry: string, key: string, value: number, sample?: string) => void
 
   // Capture error
   error: (message: string, obj?: Record<string, any>) => void

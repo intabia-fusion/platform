@@ -1,0 +1,7 @@
+# Temporary override: expose node inspector on transactor0 for CPU profiling.
+services:
+  transactor0:
+    ports:
+      - "9229:9229"
+    environment:
+      - NODE_OPTIONS=--inspect=0.0.0.0:9229

@@ -2,3 +2,4 @@
 logs/
 .persona/
 .secure/
+multiuser-manifest.json

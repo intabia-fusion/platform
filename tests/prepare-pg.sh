@@ -17,8 +17,10 @@ STAND=sanity
 PROFILE_ARG=false
 ASR_OVERLAYS=
 DOCS_OVERLAY=
+RESTORE_SNAPSHOT="${RESTORE_BENCH:-}"
 while [ $# -gt 0 ]; do
     case "$1" in
+        restore_bench) RESTORE_SNAPSHOT=1; shift ;;
         --full) STAND=full; shift ;;
         --docs) STAND=docs; DOCS_OVERLAY=docker-compose.docs.yaml; shift ;;
         --profile) PROFILE_ARG=true; shift ;;
@@ -60,6 +62,26 @@ if [ -n "$DOCS_OVERLAY" ]; then
 fi
 
 ../dev/test-base/run.sh "$STAND"
+
+# Restore the full dataset, then put the functional workspaces back on their baseline.
+if [ "$RESTORE_SNAPSHOT" = "1" ] || [ -n "${BENCH_DUMP:-}" ]; then
+    BENCH_BACKUPS="${BENCH_BACKUPS:-$HOME/Develop/private/bench-backups}"
+    STAND=sanity ../dev/stand-snapshot.sh restore "${BENCH_DUMP:-$BENCH_BACKUPS}"
+    ./tool-pg.sh create-account user1 -f John -l Appleseed -p 1234 || true
+    ./tool-pg.sh create-account user2 -f Kainin -l Dirak -p 1234 || true
+    ./tool-pg.sh create-account user3 -f Muffin -l Muram -p 1234 || true
+    ./tool-pg.sh create-account user4 -f Armin -l Karmin -p 1234 || true
+    ./tool-pg.sh create-account admin -f Super -l User -p 1234 || true
+    ./tool-pg.sh create-workspace sanity-ws email:user1 || true
+    ./tool-pg.sh create-workspace meetings-ws email:user1 || true
+    ../dev/test-base/run.sh "$STAND" restore
+    rm -rf ./sanity/.auth
+fi
+
+INDEXES_YAML="${INDEXES_YAML:-../../deployment/deployments/indexes.yaml}"
+if [ -f "$INDEXES_YAML" ]; then
+    ./tool-pg.sh apply-indexes "$INDEXES_YAML" --apply
+fi
 
 # The media sanity tests need an mp4 and a docx; generate them with the stand images once the
 # stand is up, so nothing is downloaded and no host ffmpeg or libreoffice is needed.
