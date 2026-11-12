@@ -2,6 +2,11 @@
 
 Changelog.
 
+## [0.8.72] - 2026-11-13
+
+* 🚀 FEATURES: · FUSIO-1733: Add an optional board setting to prevent duplicate column titles, with client and server validation ([#669](https://github.com/hcengineering/platform/issues/669)) · FUSIO-1780: Show workspace limit warnings, include Drive file versions in storage usage, support deleting Drive files from the largest-files list and estimate unused storage in the admin panel ([#672](https://github.com/hcengineering/platform/issues/672))
+* 🐛 BUG FIXES: · FUSIO-1705: Repair stale activity reference classes after task type changes and avoid rendering references to unknown classes ([#658](https://github.com/hcengineering/platform/issues/658)) · FUSIO-1757: Align project list columns and controls and show full project names in tooltips ([#673](https://github.com/hcengineering/platform/issues/673)) · FUSIO-1780: Refresh and republish resource limit states, recalculate storage usage after large blob deletions and check limits before starting new recordings or transcriptions while allowing active sessions to continue ([#672](https://github.com/hcengineering/platform/issues/672)) · FUSIO-1617: Close the previous workspace panel when switching workspaces to prevent errors from custom task types ([#670](https://github.com/hcengineering/platform/issues/670))
+
 ## [0.8.71] - 2026-11-10
 
 * 🐛 BUG FIXES: · FUSIO-1768: Prevent successful-payment receipt emails from failing when the transaction ID is numeric ([76a3c5bc59](https://github.com/intabia-fusion/platform/commit/76a3c5bc59a6b00e2cbcad6d2ca31f5e59333492))
