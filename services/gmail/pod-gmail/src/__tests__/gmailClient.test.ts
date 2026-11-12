@@ -93,6 +93,7 @@ jest.mock('googleapis', () => ({
 }))
 
 jest.mock('../tokens')
+jest.mock('@hcengineering/kafka', () => ({ getPlatformQueue: jest.fn() }))
 jest.mock('../message/adapter')
 jest.mock('../message/sync')
 jest.mock('../message/attachments')
