@@ -70,6 +70,7 @@ import { LiveQuery as LQ } from '@hcengineering/query'
 import {
   type AnyComponent,
   type AnySvelteComponent,
+  closePanel,
   getRawCurrentLocation,
   isSafari,
   workspaceId
@@ -560,6 +561,7 @@ export async function setClient (_client: Client): Promise<void> {
   pendingCreatedDocs.set({})
   const workspace = getMetadata(plugin.metadata.WorkspaceUuid)
   if (clientWorkspace !== undefined && clientWorkspace !== workspace) {
+    closePanel(false)
     for (const l of workspaceChangeListeners) {
       l()
     }
