@@ -151,19 +151,31 @@ describe('OnDocClassChanged (references)', () => {
     const result = (await OnDocClassChanged([classChangeTx()], control)) as TxUpdateDoc<Doc>[]
     expect(result).toHaveLength(1)
     expect(result[0].operations).toEqual({ srcDocClass: newClass })
+    expect((control.findAll as jest.Mock).mock.calls.map(([, clazz, query]) => ({ clazz, query }))).toEqual([
+      { clazz: activity.class.ActivityMessage, query: { attachedTo: objectId } },
+      { clazz: activity.class.ActivityReference, query: { srcDocId: objectId } }
+    ])
   })
 
-  it('repoints a reference to the changed attached document', async () => {
+  it('repoints both source pointers for a mention in the task description', async () => {
     const control = makeControl([
       makeReference({
-        srcDocId: 'source-1',
         attachedDocId: objectId,
         attachedDocClass: oldClass
       })
     ])
     const result = (await OnDocClassChanged([classChangeTx()], control)) as TxUpdateDoc<Doc>[]
     expect(result).toHaveLength(1)
-    expect(result[0].operations).toEqual({ attachedDocClass: newClass })
+    expect(result[0].operations).toEqual({ srcDocClass: newClass, attachedDocClass: newClass })
+  })
+
+  it('preserves the comment class when the parent task changes class', async () => {
+    const control = makeControl([
+      makeReference({ attachedDocId: 'comment-1', attachedDocClass: 'chunter:class:ChatMessage' })
+    ])
+    const result = (await OnDocClassChanged([classChangeTx()], control)) as TxUpdateDoc<Doc>[]
+    expect(result).toHaveLength(1)
+    expect(result[0].operations).toEqual({ srcDocClass: newClass })
   })
 
   it('combines all pointers to the same object into one update', async () => {

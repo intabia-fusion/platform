@@ -103,14 +103,11 @@ export async function OnDocClassChanged (txes: TxCUD<Doc>[], control: TriggerCon
     const objectClass = ((tx as TxUpdateDoc<Doc>).operations as any)._class as Ref<Class<Doc>> | undefined
     if (objectClass == null || objectClass === tx.objectClass) continue
 
-    const [messages, sourceReferences, attachedReferences] = await Promise.all([
+    const [messages, sourceReferences] = await Promise.all([
       control.findAll(control.ctx, activity.class.ActivityMessage, { attachedTo: tx.objectId }),
-      control.findAll(control.ctx, activity.class.ActivityReference, { srcDocId: tx.objectId }),
-      control.findAll(control.ctx, activity.class.ActivityReference, { attachedDocId: tx.objectId })
+      control.findAll(control.ctx, activity.class.ActivityReference, { srcDocId: tx.objectId })
     ])
-    const affected = new Map(
-      [...messages, ...sourceReferences, ...attachedReferences].map((message) => [message._id, message])
-    )
+    const affected = new Map([...messages, ...sourceReferences].map((message) => [message._id, message]))
     for (const message of affected.values()) {
       const ops: DocumentUpdate<ActivityReference> = {}
       if (message.attachedTo === tx.objectId && message.attachedToClass !== objectClass) {
