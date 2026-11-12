@@ -1,5 +1,9 @@
 {
   "string": {
+    "PreventDuplicateColumnTitles": "Doppelte Spaltennamen verhindern",
+    "PreventDuplicateColumnTitlesHint": "Die Namen aller Spalten dieses Boards vergleichen und dabei Groß- und Kleinschreibung sowie führende und nachfolgende Leerzeichen ignorieren.",
+    "DuplicateColumnTitle": "Eine Spalte mit diesem Namen existiert bereits",
+    "ResolveDuplicateColumnTitles": "Benennen Sie Spalten mit gleichen Namen um, um diese Einschränkung zu aktivieren",
     "TrackerApplication": "Tracker",
     "Projects": "Deine Projekte",
     "More": "Mehr",
@@ -546,7 +550,9 @@
     "WarnOnClosedStatuses": "Vor abgeschlossenen Status ohne Spalte warnen",
     "WarnOnClosedStatusesHint": "Abgeschlossene und abgebrochene Status in Warnungen zu ausgeblendeten Aufgaben einbeziehen. Standardmäßig deaktiviert."
   },
-  "status": {},
+  "status": {
+    "DuplicateColumnTitle": "Eine Spalte mit diesem Namen existiert bereits"
+  },
   "emailTemplate": {
     "AssigneeNotificationText": "{doc} was assigned to you by {sender}",
     "AssigneeNotificationHtml": "<p>{doc} was assigned to you by {sender}</p> <p>{link}</p>",

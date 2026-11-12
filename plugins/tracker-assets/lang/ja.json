@@ -1,5 +1,9 @@
 {
   "string": {
+    "PreventDuplicateColumnTitles": "列名の重複を禁止する",
+    "PreventDuplicateColumnTitlesHint": "このボードのすべての列名を、大文字・小文字と先頭・末尾の空白を区別せずに比較します。",
+    "DuplicateColumnTitle": "この名前の列はすでに存在します",
+    "ResolveDuplicateColumnTitles": "この制限を有効にするには、同じ名前の列の名前を変更してください",
     "TrackerApplication": "トラッカー",
     "Projects": "あなたのプロジェクト",
     "More": "その他",
@@ -546,7 +550,9 @@
     "WarnOnClosedStatuses": "列のない完了済みステータスについて警告する",
     "WarnOnClosedStatusesHint": "非表示のタスクの警告に、完了およびキャンセルのステータスを含めます。既定では無効です。"
   },
-  "status": {},
+  "status": {
+    "DuplicateColumnTitle": "この名前の列はすでに存在します"
+  },
   "emailTemplate": {
     "AssigneeNotificationText": "{doc} was assigned to you by {sender}",
     "AssigneeNotificationHtml": "<p>{doc} was assigned to you by {sender}</p> <p>{link}</p>",

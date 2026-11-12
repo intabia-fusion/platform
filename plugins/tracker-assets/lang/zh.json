@@ -1,5 +1,9 @@
 {
   "string": {
+    "PreventDuplicateColumnTitles": "禁止重复的列名称",
+    "PreventDuplicateColumnTitlesHint": "比较此看板中所有列的名称，忽略大小写及首尾空格。",
+    "DuplicateColumnTitle": "已存在同名的列",
+    "ResolveDuplicateColumnTitles": "要启用此限制，请先重命名同名的列",
     "TrackerApplication": "追踪器",
     "Projects": "您的项目",
     "More": "更多",
@@ -545,7 +549,9 @@
     "WarnOnClosedStatuses": "对没有列的已关闭状态发出警告",
     "WarnOnClosedStatusesHint": "在隐藏任务警告中包含已完成和已取消的状态。默认关闭。"
   },
-  "status": {},
+  "status": {
+    "DuplicateColumnTitle": "已存在同名的列"
+  },
   "emailTemplate": {
     "AssigneeNotificationText": "{doc} was assigned to you by {sender}",
     "AssigneeNotificationHtml": "<p>{doc} was assigned to you by {sender}</p> <p>{link}</p>",

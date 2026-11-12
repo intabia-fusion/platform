@@ -1,6 +1,9 @@
 import type { AccountUuid, Doc, Ref, Status, StatusCategory } from '@hcengineering/core'
 import task from '@hcengineering/task'
 import {
+  duplicateColumnIds,
+  nextColumnTitle,
+  normalizeColumnTitle,
   canEditBoard,
   cardFields,
   columnCategory,
@@ -265,5 +268,28 @@ describe('board helpers edge cases', () => {
     expect(samples.get('b')).toBe('i3')
     expect(samples.get('c')).toBeUndefined()
     expect(samples.get('d')).toBeUndefined()
+  })
+})
+
+describe('column title uniqueness', () => {
+  const columns = [
+    { id: 'a', title: ' Готово ' },
+    { id: 'b', title: 'готово' },
+    { id: 'c', title: 'In progress' }
+  ]
+
+  it('compares case and surrounding spaces without changing internal spaces', () => {
+    expect(normalizeColumnTitle(' ГоТоВо ')).toBe('готово')
+    expect(normalizeColumnTitle('In  progress')).toBe('in  progress')
+    expect([...duplicateColumnIds(columns)]).toEqual(['a', 'b'])
+    expect(duplicateColumnIds([columns[0], columns[2]]).size).toBe(0)
+    expect(duplicateColumnIds([]).size).toBe(0)
+  })
+
+  it('finds an available default title including existing numbered titles', () => {
+    expect(nextColumnTitle(columns, 'New column')).toBe('New column')
+    expect(
+      nextColumnTitle([{ title: 'NEW COLUMN' }, { title: ' New column 2 ' }, { title: 'New column 4' }], 'New column')
+    ).toBe('New column 3')
   })
 })

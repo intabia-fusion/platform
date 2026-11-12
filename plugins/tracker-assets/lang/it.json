@@ -1,5 +1,9 @@
 {
   "string": {
+    "PreventDuplicateColumnTitles": "Impedisci nomi di colonna duplicati",
+    "PreventDuplicateColumnTitlesHint": "Confronta i nomi di tutte le colonne di questa bacheca ignorando maiuscole e minuscole e gli spazi iniziali e finali.",
+    "DuplicateColumnTitle": "Esiste già una colonna con questo nome",
+    "ResolveDuplicateColumnTitles": "Rinomina le colonne con lo stesso nome per attivare questa restrizione",
     "TrackerApplication": "Tracker",
     "Projects": "I tuoi progetti",
     "More": "Altro",
@@ -546,7 +550,9 @@
     "WarnOnClosedStatuses": "Segnala gli stati chiusi senza colonna",
     "WarnOnClosedStatusesHint": "Includi gli stati completati e annullati negli avvisi sulle attività nascoste. Disattivato per impostazione predefinita."
   },
-  "status": {},
+  "status": {
+    "DuplicateColumnTitle": "Esiste già una colonna con questo nome"
+  },
   "emailTemplate": {
     "AssigneeNotificationText": "{doc} was assigned to you by {sender}",
     "AssigneeNotificationHtml": "<p>{doc} was assigned to you by {sender}</p> <p>{link}</p>",

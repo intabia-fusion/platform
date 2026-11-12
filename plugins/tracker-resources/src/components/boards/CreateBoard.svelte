@@ -123,14 +123,20 @@
 
   // One empty column: the user drags the statuses of the projects into it
   let columns: BoardColumn[] = []
+  let preventDuplicateColumnTitles = false
   let warnOnClosedStatuses = false
   onMount(async () => {
     const columnTitle = await translate(tracker.string.MyColumn, {})
     columns = [{ id: generateId(), title: columnTitle, category: task.statusCategory.UnStarted, statuses: [] }]
   })
-  $: draft = { projects: selected, columns, filter, warnOnClosedStatuses }
+  $: draft = { projects: selected, columns, filter, warnOnClosedStatuses, preventDuplicateColumnTitles }
 
-  async function onColumns (patch: Partial<Pick<Board, 'columns' | 'warnOnClosedStatuses'>>): Promise<void> {
+  async function onColumns (
+    patch: Partial<Pick<Board, 'columns' | 'warnOnClosedStatuses' | 'preventDuplicateColumnTitles'>>
+  ): Promise<void> {
+    if (patch.preventDuplicateColumnTitles !== undefined) {
+      preventDuplicateColumnTitles = patch.preventDuplicateColumnTitles
+    }
     if (patch.columns !== undefined) columns = patch.columns
     if (patch.warnOnClosedStatuses !== undefined) warnOnClosedStatuses = patch.warnOnClosedStatuses
   }
@@ -153,7 +159,8 @@
         editors: visibility === 'me' ? [] : editors,
         filter,
         columns,
-        warnOnClosedStatuses
+        warnOnClosedStatuses,
+        preventDuplicateColumnTitles
       })
       dispatch('close')
       boardLocation(id)

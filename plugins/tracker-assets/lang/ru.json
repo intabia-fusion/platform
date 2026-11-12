@@ -1,5 +1,9 @@
 {
   "string": {
+    "PreventDuplicateColumnTitles": "Запретить одинаковые названия колонок",
+    "PreventDuplicateColumnTitlesHint": "Проверять названия всех колонок этой доски без учёта регистра и пробелов по краям.",
+    "DuplicateColumnTitle": "Колонка с таким названием уже существует",
+    "ResolveDuplicateColumnTitles": "Чтобы включить запрет, переименуйте колонки с одинаковыми названиями",
     "TrackerApplication": "Трекер",
     "Projects": "Проекты",
     "More": "Больше",
@@ -565,7 +569,9 @@
     "WarnOnClosedStatuses": "Предупреждать о завершенных статусах без колонки",
     "WarnOnClosedStatusesHint": "Учитывать завершенные и отмененные статусы в предупреждении о скрытых задачах. По умолчанию выключено."
   },
-  "status": {},
+  "status": {
+    "DuplicateColumnTitle": "Колонка с таким названием уже существует"
+  },
   "emailTemplate": {
     "AssigneeNotificationText": "{sender} назначил(а) вам {doc}",
     "AssigneeNotificationHtml": "<p><b>{sender}</b> назначил(а) вам {doc}</p> <p>{link}</p>",
