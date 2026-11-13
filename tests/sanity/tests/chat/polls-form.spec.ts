@@ -194,6 +194,52 @@ test.describe('Poll form tests', () => {
     await expect(polls.draft(edited)).toHaveCount(0)
   })
 
+  test('More than five poll drafts can be scrolled horizontally and edited', async ({ page }) => {
+    await openChannel()
+    const questions = Array.from({ length: 7 }, (_, index) => `Poll ${index + 1} ${uniq}`)
+    for (const question of questions) {
+      await createDraft(question, ['Red', 'Blue'])
+    }
+
+    const last = polls.draft(questions[6])
+    const strip = page.locator('.list').filter({ has: polls.draft(questions[0]) })
+    await expect(strip).toHaveCSS('scrollbar-width', 'thin')
+    await expect(strip.locator('.tile')).toHaveCount(7)
+
+    for (const width of [900, 375]) {
+      await page.setViewportSize({ width, height: 900 })
+      await expect
+        .poll(async () => await strip.evaluate((element) => element.scrollWidth > element.clientWidth))
+        .toBe(true)
+      await strip.evaluate((element) => {
+        element.scrollLeft = element.scrollWidth
+      })
+      await expect
+        .poll(async () => {
+          const card = await last.boundingBox()
+          const viewport = await strip.boundingBox()
+          return (
+            card != null &&
+            viewport != null &&
+            card.x >= viewport.x &&
+            card.x + card.width <= viewport.x + viewport.width + 1
+          )
+        })
+        .toBe(true)
+    }
+
+    await last.locator('.open').click()
+    await expect(polls.questionInput()).toHaveValue(questions[6])
+    await polls.questionInput().fill(`Edited ${uniq}`)
+    await polls.createButton().click()
+    await expect(polls.questionInput()).toBeHidden()
+    const edited = polls.draft(`Edited ${uniq}`)
+    await edited.hover()
+    await edited.getByRole('button', { name: 'Remove' }).click()
+    await expect(edited).toHaveCount(0)
+    await expect(strip.locator('.tile')).toHaveCount(6)
+  })
+
   test('A poll is sent without text, and with text both land in one message', async () => {
     await openChannel()
     const alone = `Colour? ${uniq}`
