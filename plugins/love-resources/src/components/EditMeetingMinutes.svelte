@@ -23,7 +23,7 @@
   import { createEventDispatcher, onMount } from 'svelte'
 
   import love from '../plugin'
-  import { joinMeeting, leaveMeeting } from '../meetings'
+  import { joinMeeting, joinMeetingBySession, leaveMeeting } from '../meetings'
   import { currentMeetingMinutes, infos, myConnectingSessionId, rooms, connectingToMeeting } from '../stores'
   import { lkIsConnecting, lkSessionConnected } from '../liveKitClient'
   import { getMetadata } from '@hcengineering/platform'
@@ -106,6 +106,27 @@
     await joinMeeting(object)
   }
 
+  // A finished session is the past gathering, not the meeting: the button has to lead to whatever
+  // is open now - the next occurrence of the series, or a permanent meeting at any time. A guest and
+  // a read-only viewer get nothing, as with the live session above.
+  $: canJoinCurrent =
+    object.status === MeetingStatus.Finished &&
+    currentAccount.role !== AccountRole.Guest &&
+    currentAccount.role !== AccountRole.ReadOnlyGuest &&
+    (object.meeting !== undefined || object.eventId !== undefined)
+
+  let joiningCurrent = false
+  async function joinCurrent(): Promise<void> {
+    if (joiningCurrent) return
+    joiningCurrent = true
+    try {
+      if (object.meeting !== undefined) await joinMeetingBySession(object.meeting, 'meeting')
+      else if (object.eventId !== undefined) await joinMeetingBySession(object.eventId, 'event')
+    } finally {
+      joiningCurrent = false
+    }
+  }
+
   let leavingRoom = false
   async function handleLeaveRoom(): Promise<void> {
     if (leavingRoom) return
@@ -137,6 +158,18 @@
 
     return true
   }
+
+  // The live session and the document this panel shows are not always the same document: the card
+  // was opened before the call, and the service may have opened another session for the same
+  // meeting. `currentMeetingMinutes` is derived from my own ParticipantInfo, which the live query may
+  // not have delivered yet, so a connected client with no named session still counts as being here -
+  // the panel was opened for the session just joined.
+  $: sameMeeting =
+    $currentMeetingMinutes !== undefined &&
+    ($currentMeetingMinutes._id === object._id ||
+      (object.meeting !== undefined && $currentMeetingMinutes.meeting === object.meeting) ||
+      (object.eventId !== undefined && $currentMeetingMinutes.eventId === object.eventId))
+  $: inThisCall = $lkSessionConnected && (sameMeeting || $currentMeetingMinutes === undefined)
 
   function getInfo(mm: Ref<MeetingMinutes>, info: ParticipantInfo[]): ParticipantInfo[] {
     return info.filter((p) => p.meeting === mm)
@@ -176,7 +209,7 @@
           loading={togglingPrivate}
         />
       {/if}
-      {#if showConnectionButton(object, hasPendingJoinInThisSession || $connectingToMeeting, $lkSessionConnected, currentAccount.role)}
+      {#if showConnectionButton(object, hasPendingJoinInThisSession || $connectingToMeeting, $lkSessionConnected, currentAccount.role) && !inThisCall}
         <Button
           label={love.string.JoinMeeting}
           size="large"
@@ -184,6 +217,15 @@
           on:click={connect}
           loading={hasPendingJoinInThisSession || $connectingToMeeting}
           data-id="meeting-connect"
+        />
+      {:else if canJoinCurrent}
+        <Button
+          label={love.string.JoinMeeting}
+          size="large"
+          kind="primary"
+          on:click={joinCurrent}
+          loading={joiningCurrent}
+          data-id="meeting-connect-current"
         />
       {:else if $lkSessionConnected}
         {#if !$videoVisible}

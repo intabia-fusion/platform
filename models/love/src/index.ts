@@ -147,7 +147,7 @@ export class TRoom extends TDoc implements Room {
 export class TOffice extends TRoom implements Office {
   // Editable: an office can be created first and assigned to a person later, and a seat that changes
   // hands is reassigned here. Two offices for one person are not prevented by the model.
-  @Prop(TypeRef(contact.mixin.Employee), contact.string.Employee)
+  @Prop(TypeRef(contact.mixin.Employee), contact.string.Employee, { editor: love.component.OfficePersonEditor })
   @Index(IndexKind.Indexed)
   person!: Ref<Employee> | null
 }

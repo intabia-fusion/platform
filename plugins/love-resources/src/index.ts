@@ -9,7 +9,6 @@ import {
   type Client,
   type Doc
 } from '@hcengineering/core'
-import type { Event, ReccuringInstance } from '@hcengineering/calendar'
 import { registerEventCardResolver } from '@hcengineering/calendar-resources'
 import { type MeetingEventLink, type MeetingMinutes, type PermanentMeeting } from '@hcengineering/love'
 import love from '@hcengineering/love'
@@ -17,6 +16,7 @@ import { getClient } from '@hcengineering/presentation'
 import { showPopup } from '@hcengineering/ui'
 import { getCurrentEmployee } from '@hcengineering/contact'
 import { getPersonByPersonRef } from '@hcengineering/contact-resources'
+import { findMeetingLink, seriesKeyOf } from './meetingLink'
 
 import ControlExt from './components/meeting/ControlExt.svelte'
 import InvitesExt from './components/meeting/invites/InvitesExt.svelte'
@@ -40,6 +40,7 @@ import CreatePermanentMeetingPopup from './components/CreatePermanentMeetingPopu
 import PermanentMeetingForm from './components/PermanentMeetingForm.svelte'
 import PermanentMeetingPresenter from './components/PermanentMeetingPresenter.svelte'
 import EditRoom from './components/EditRoom.svelte'
+import OfficePersonEditor from './components/OfficePersonEditor.svelte'
 import FloorAttributePresenter from './components/FloorAttributePresenter.svelte'
 import FloorView from './components/FloorView.svelte'
 import MeetingMinutesTable from './components/MeetingMinutesTable.svelte'
@@ -184,19 +185,7 @@ async function editMeetingSettings (object: Doc): Promise<void> {
  * that series is opened instead: it is still a meeting page, not the event settings.
  */
 async function resolveMeetingCard (client: Client, event: Doc): Promise<Doc | undefined> {
-  const hierarchy = client.getHierarchy()
-  const seriesId = (event as ReccuringInstance).recurringEventId ?? (event as Event).eventId
-
-  let link: MeetingEventLink | undefined
-  if (hierarchy.hasMixin(event, love.mixin.MeetingEventLink)) {
-    link = hierarchy.as(event, love.mixin.MeetingEventLink)
-  } else {
-    // A mixin document carries both the id of the document it extends and its eventId, and which of
-    // the two the calendar handed over depends on the view: both are tried.
-    link =
-      (await client.findOne(love.mixin.MeetingEventLink, { _id: seriesId as any })) ??
-      (await client.findOne(love.mixin.MeetingEventLink, { eventId: seriesId as any }))
-  }
+  const link = await findMeetingLink(client, event)
   if (link === undefined) return undefined
 
   if (link.permanentMeeting !== undefined) {
@@ -206,7 +195,7 @@ async function resolveMeetingCard (client: Client, event: Doc): Promise<Doc | un
 
   const sessions = await client.findAll(
     love.class.MeetingMinutes,
-    { eventId: seriesId },
+    { eventId: seriesKeyOf(event) },
     { sort: { meetingStart: SortingOrder.Descending }, limit: 1 }
   )
   return sessions[0]
@@ -242,6 +231,7 @@ export default async (): Promise<Resources> => ({
     PermanentMeetingForm,
     PermanentMeetingPresenter,
     EditRoom,
+    OfficePersonEditor,
     FloorAttributePresenter,
     FloorView,
     MeetingMinutesTable,

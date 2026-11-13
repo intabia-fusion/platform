@@ -1,5 +1,11 @@
 import { type Event, type ReccuringEvent } from '@hcengineering/calendar'
-import { SCHEDULED_JOIN_LEAD_MS, SCHEDULED_MEETING_WINDOW_MS, meetingOccurrences, resolveOccurrence } from '../utils'
+import {
+  SCHEDULED_JOIN_LEAD_MS,
+  SCHEDULED_MEETING_WINDOW_MS,
+  meetingOccurrences,
+  occurrencePin,
+  resolveOccurrence
+} from '../utils'
 
 const hour = 60 * 60 * 1000
 const day = 24 * hour
@@ -130,5 +136,29 @@ describe('resolveOccurrence with calendar overrides', () => {
       { originalStartTime: start + 2 * day, date: start + 2 * day + 3 * hour }
     ]
     expect(meetingOccurrences(series(), start, start + 3 * day, overrides)).toEqual([start + day, start + 2 * day + 3 * hour])
+  })
+})
+
+describe('occurrencePin', () => {
+  it('pins an untouched occurrence to its own start', () => {
+    const { current } = resolveOccurrence(series(), start)
+    expect(occurrencePin(current)).toBe(start)
+  })
+
+  it('pins a moved occurrence to its original start', () => {
+    // A session carries the slot it belongs to, not the time the slot was moved to.
+    const moved = [{ originalStartTime: start, date: start + 8 * hour }]
+    const { current } = resolveOccurrence(series(), start + 8 * hour, moved)
+    expect(occurrencePin(current, moved)).toBe(start)
+  })
+
+  it('pins a later, untouched occurrence of the same series to itself', () => {
+    const moved = [{ originalStartTime: start, date: start + 8 * hour }]
+    const { current } = resolveOccurrence(series(), start + day, moved)
+    expect(occurrencePin(current, moved)).toBe(start + day)
+  })
+
+  it('gives no pin when no occurrence is open', () => {
+    expect(occurrencePin(undefined)).toBeUndefined()
   })
 })

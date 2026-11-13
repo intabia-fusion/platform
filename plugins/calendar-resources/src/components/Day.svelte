@@ -13,13 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import calendarModel, { type Event } from '@hcengineering/calendar'
-  import { getClient } from '@hcengineering/presentation'
+  import { type Event } from '@hcengineering/calendar'
   import { Label, addZero, getPlatformColorForTextDef, showPopup, themeStore, tooltip } from '@hcengineering/ui'
-  import { openDoc } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
   import calendar from '../plugin'
-  import { eventCard } from '../eventCard'
   import EventsPopup from './EventsPopup.svelte'
 
   export let events: Event[]
@@ -33,16 +30,12 @@
   const dispatch = createEventDispatcher()
   const eventCount = 3
 
-  // A meeting (or any other document carrying its own card) is opened as that document; a plain
-  // event keeps the calendar's editor, which is the popup it has always been edited in.
-  async function openEvent (event: Event): Promise<void> {
-    const client = getClient()
-    const card = await eventCard(client, event, calendar.component.EditEvent)
-    if (card !== undefined && !client.getHierarchy().isDerived(card.object._class, calendarModel.class.Event)) {
-      await openDoc(client.getHierarchy(), card.object)
-      return
-    }
-    showPopup(calendar.component.EditEvent, { object: event }, 'content')
+  // The calendar's own editor - the popup the event has always been edited in. A meeting adds its
+  // block to that editor through `calendar.extensions.EditEventExtensions`, so nothing is branched
+  // here for it. `center` rather than `content`: only then the popup gets the modal overlay, and with
+  // it a click outside the window to dismiss it.
+  function openEvent (event: Event): void {
+    showPopup(calendar.component.EditEvent, { object: event }, 'center')
   }
 
   $: tip = {

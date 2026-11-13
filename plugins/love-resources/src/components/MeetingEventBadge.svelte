@@ -32,21 +32,31 @@
   import { IconButton } from '@hcengineering/ui/kit'
   import love from '../plugin'
   import { joinMeetingBySession, seriesIdOf } from '../meetings'
+  import { findMeetingLink } from '../meetingLink'
 
   export let event: Event
   export let narrow: boolean = false
   export let oneRow: boolean = false
   export let hideDetails: boolean = false
 
-  const hierarchy = getClient().getHierarchy()
   let joining = false
 
   $: iconSize = narrow || oneRow ? 'x-small' : 'smaller'
-  // Resolved through the mixin, not off the event: only a linked meeting carries the reference of
-  // the permanent meeting it was created from - a plain event and a colleague's busy slot do not.
-  $: link = hierarchy.hasMixin(event, love.mixin.MeetingEventLink)
-    ? hierarchy.as<Event, MeetingEventLink>(event, love.mixin.MeetingEventLink)
-    : undefined
+  // The calendar's queries hand over bare events, so the link is resolved through the mixin document
+  // rather than off the object: reading it off the object alone hid the join button on every tile
+  // the calendar drew itself, and showed it only where the view happened to query the mixin.
+  let link: MeetingEventLink | undefined
+  $: void resolveLink(event)
+
+  async function resolveLink (ev: Event): Promise<void> {
+    const found = await findMeetingLink(getClient(), ev)
+    if (found === undefined) {
+      link = undefined
+      return
+    }
+    link = found
+  }
+
   $: isPermanent = link?.permanentMeeting !== undefined
   // A busy overlay of a colleague carries no mixin, and a cancelled occurrence is not joinable.
   $: joinable = link !== undefined && !hideDetails && (event as ReccuringInstance).isCancelled !== true

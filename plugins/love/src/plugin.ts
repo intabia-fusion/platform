@@ -85,6 +85,9 @@ const love = plugin(loveId, {
     Reject: '' as IntlString,
     MeetingStart: '' as IntlString,
     MeetingEnd: '' as IntlString,
+    // Shown when a join is refused because the occurrence window is closed (403 from the service).
+    MeetingNotOpenYet: '' as IntlString,
+    MeetingIsOver: '' as IntlString,
     Status: '' as IntlString,
     Active: '' as IntlString,
     Finished: '' as IntlString,
@@ -244,6 +247,7 @@ const love = plugin(loveId, {
     CreatePermanentMeetingPopup: '' as AnyComponent,
     PermanentMeetingForm: '' as AnyComponent,
     MeetingPrivateEditor: '' as AnyComponent,
+    OfficePersonEditor: '' as AnyComponent,
     PermanentMeetingMembersEditor: '' as AnyComponent
   },
   viewlet: {

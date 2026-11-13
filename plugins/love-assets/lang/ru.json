@@ -109,6 +109,8 @@
     "JoinedMeeting": "Присоединился(ась) к встрече",
     "LeaveParticipant": "Покинул встречу",
     "MeetingStart": "Начало встречи",
+    "MeetingNotOpenYet": "Встреча ещё не началась. Откроется в {time}.",
+    "MeetingIsOver": "Встреча уже завершена.",
     "MeetingEnd": "Конец встречи",
     "EndMeeting": "Завершить встречу",
     "Status": "Статус",

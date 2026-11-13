@@ -109,6 +109,8 @@
     "JoinedMeeting": "Se unió a la reunión",
     "LeaveParticipant": "Abandonó la reunión",
     "MeetingStart": "Inicio de la reunión",
+    "MeetingNotOpenYet": "La reunión aún no ha comenzado. Se abre a las {time}.",
+    "MeetingIsOver": "La reunión ya ha terminado.",
     "MeetingEnd": "Fin de la reunión",
     "EndMeeting": "Terminar reunión",
     "Status": "Estado",

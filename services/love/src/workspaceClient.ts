@@ -50,6 +50,7 @@ import love, {
   type PermanentMeeting,
   MeetingStatus,
   meetingMasterQuery,
+  occurrencePin,
   resolveOccurrence,
   type OccurrenceOverride,
   SCHEDULED_MEETING_WINDOW_MS,
@@ -778,19 +779,25 @@ export class WorkspaceClient {
   private async occurrenceOverrides (master: Event, now: number): Promise<OccurrenceOverride[]> {
     const from = now - SCHEDULED_MEETING_WINDOW_MS
     try {
+      // No `$or` here on purpose: the Postgres adapter does not translate it and the query fails
+      // with `operator does not exist: text = text[]`, which used to make every moved occurrence
+      // invisible and every join into one a 403. Occurrences of a single series are few, so the
+      // second half of the condition (a moved occurrence can leave a future original start behind)
+      // is applied in memory.
       const instances = await this.client.findAll(calendar.class.ReccuringInstance, {
-        recurringEventId: master.eventId as Ref<ReccuringEvent>,
-        // A moved occurrence can leave a future original start behind, so both ends are checked.
-        $or: [{ date: { $gte: from } }, { originalStartTime: { $gte: from } }]
+        recurringEventId: master.eventId as Ref<ReccuringEvent>
       })
-      return instances.map((it) => ({
-        originalStartTime: it.originalStartTime,
-        date: it.date,
-        isCancelled: it.isCancelled
-      }))
+      return instances
+        .filter((it) => it.date >= from || it.originalStartTime >= from)
+        .map((it) => ({
+          originalStartTime: it.originalStartTime,
+          date: it.date,
+          isCancelled: it.isCancelled
+        }))
     } catch (err: any) {
       // Read as the rules say: a series without its exceptions beats a join that fails outright.
-      this.ctx.warn('[resolveSession] Failed to read occurrence overrides', {
+      // Logged as an error: on a healthy workspace this branch is never taken.
+      this.ctx.error('[resolveSession] Failed to read occurrence overrides', {
         eventId: master.eventId,
         error: err?.message ?? String(err)
       })
@@ -823,18 +830,40 @@ export class WorkspaceClient {
         ...query,
         status: { $in: LIVE_MEETING_STATUSES }
       })
-      if (live !== undefined) return { meeting: live }
 
       // A permanent meeting has no occurrence to wait for: it is open whenever someone starts it.
       let occurrence: Timestamp | undefined
+      let pin: Timestamp | undefined
       if (target.kind === 'event') {
         const { current, next } = resolveOccurrence(target.master, now, overrides)
         if (current === undefined) return { error: 'no-occurrence', nextOccurrence: next }
         occurrence = current
+        // What a session is pinned to: the moved occurrence keeps its original start.
+        pin = occurrencePin(current, overrides)
       }
+
+      if (live !== undefined) {
+        // A session of another slot means the meeting was moved (calendar writes the new time to
+        // the master, the link stays the same). It is closed and replaced on the next join, so the
+        // same link opens the new time instead of the room of the old one. A session without a pin
+        // predates the field - it is accepted as is rather than ended on a guess.
+        if (target.kind === 'meeting' || live.occurrence === undefined || live.occurrence === pin) {
+          return { meeting: live }
+        }
+        // Only a caller who is about to join may end it: a lobby merely looking must not.
+        if (!create) return { error: 'not-started', occurrence }
+        this.ctx.info('Meeting moved, replacing the session of the old slot', {
+          meeting: live._id,
+          pointer: target.pointer,
+          previousOccurrence: live.occurrence,
+          occurrence: pin
+        })
+        await this.finishMeeting(live._id, now)
+      }
+
       if (!create) return { error: 'not-started', occurrence }
 
-      const created = await this.createSession(target, occurrence)
+      const created = await this.createSession(target, pin)
       if (created !== undefined) return { meeting: created, created: true }
     }
     return { error: 'conflict' }

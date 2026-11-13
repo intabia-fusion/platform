@@ -109,6 +109,8 @@
     "JoinedMeeting": "已加入会议",
     "LeaveParticipant": "已离开会议",
     "MeetingStart": "会议开始",
+    "MeetingNotOpenYet": "会议尚未开始。将于{time}开放。",
+    "MeetingIsOver": "会议已经结束。",
     "MeetingEnd": "会议结束",
     "EndMeeting": "结束会议",
     "Status": "状态",

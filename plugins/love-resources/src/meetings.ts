@@ -13,6 +13,8 @@ import love, {
   newCallTraceId
 } from '@hcengineering/love'
 import presentation, { getClient, onClient } from '@hcengineering/presentation'
+import { getMetadata, setPlatformStatus } from '@hcengineering/platform'
+import { meetingClosedStatus } from './meetingClosed'
 import {
   getLiveKitEndpoint,
   getRoomName,
@@ -36,7 +38,6 @@ import {
 } from './stores'
 import { getCurrentEmployee, type Person } from '@hcengineering/contact'
 import { getPersonByPersonRef } from '@hcengineering/contact-resources'
-import { getMetadata } from '@hcengineering/platform'
 import { sendInvites } from './invites'
 import { lkIsConnecting, lkSessionConnected, lkSessionEnded } from './liveKitClient'
 import { findOtherLiveSession } from './otherSession'
@@ -244,10 +245,21 @@ export function seriesIdOf (event: Event): string {
  * yields a session.
  */
 export async function joinMeetingBySession (id: string, kind: MeetingLinkKind): Promise<void> {
-  const { meetingId } = await loveClient.resolveSession(id, kind)
-  const meeting = await getClient().findOne(love.class.MeetingMinutes, { _id: meetingId })
-  if (meeting === undefined) return
-  await joinMeeting(meeting)
+  try {
+    const { meetingId } = await loveClient.resolveSession(id, kind)
+    const meeting = await getClient().findOne(love.class.MeetingMinutes, { _id: meetingId })
+    if (meeting === undefined) return
+    await joinMeeting(meeting)
+  } catch (err) {
+    // A closed window is an answer, not a crash: the service says so with 403, and the participant
+    // gets a sentence instead of an uncaught runtime error.
+    const closed = meetingClosedStatus(
+      err instanceof LoveServiceError ? err.status : undefined,
+      err instanceof LoveServiceError ? err.body : undefined
+    )
+    if (closed === undefined) throw err
+    await setPlatformStatus(closed)
+  }
 }
 
 /**

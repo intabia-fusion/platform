@@ -49,6 +49,7 @@
   import { cancelInvites, sendKnockRequest, outgoingInvitesStore } from '../invites'
 
   export let object: Room
+
   export let readonly: boolean = false
 
   const dispatch = createEventDispatcher()

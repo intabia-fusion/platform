@@ -43,7 +43,10 @@ function makeClient (opts: FakeOpts): { wc: WorkspaceClient, created: any[], app
     rows.filter((row) =>
       Object.entries(query).every(([key, cond]: [string, any]) => {
         if (key === '$or') {
-          return (cond as any[]).some((part) => match([row], part).length > 0)
+          // The Postgres adapter does not translate `$or`: it compares the column with an array and
+          // fails with 42883 `operator does not exist: text = text[]`. That is exactly what made
+          // moved occurrences unreadable and joins into them a 403, so the fake refuses it too.
+          throw new Error('operator does not exist: text = text[]')
         }
         const value = row[key]
         if (cond !== null && typeof cond === 'object') {
@@ -76,7 +79,12 @@ function makeClient (opts: FakeOpts): { wc: WorkspaceClient, created: any[], app
     }),
     findAll: jest.fn(async <T extends Doc>(_class: Ref<Class<T>>, query: DocumentQuery<T>) =>
       match(rowsFor(_class as Ref<Class<Doc>>), query)
-    )
+    ),
+    // `finishMeeting` writes the status; the row is mutated so a later read sees Finished.
+    update: jest.fn(async (doc: any, ops: any) => {
+      Object.assign(doc, ops)
+    }),
+    remove: jest.fn(async (doc: any) => {})
   }
 
   const txOps = {
@@ -133,6 +141,66 @@ describe('WorkspaceClient.resolveSession', () => {
     const res = await wc.resolveSession('E1', start)
 
     expect(res).toEqual({ meeting: expect.objectContaining({ _id: 'mm-live' }) })
+    expect(created).toHaveLength(0)
+  })
+
+  it('replaces the session of the slot the meeting was moved away from', async () => {
+    // The owner moves the meeting: its date changes, the link does not. The session left in the old
+    // slot must not be handed out - the same link has to open the new time.
+    const movedMaster = masterEvent({ date: start + 2 * hour, dueDate: start + 3 * hour })
+    const stale = liveSession({ occurrence: start, status: MeetingStatus.Pending })
+    const { wc, created } = makeClient({
+      events: [movedMaster],
+      meetings: [stale],
+      persons: [{ _id: 'person-1', _class: contact.class.Person, personUuid: 'acc-1' }],
+      identities: [{ _id: 'social-1', _class: contact.class.SocialIdentity, attachedTo: 'person-1' }]
+    })
+
+    const res = await wc.resolveSession('E1', start + 2 * hour)
+
+    expect(res).toMatchObject({ created: true })
+    expect(stale.status).toBe(MeetingStatus.Finished)
+    expect(created[0]).toMatchObject({ eventId: 'E1', occurrence: start + 2 * hour })
+  })
+
+  it('replaces an active session of another slot as well', async () => {
+    // Decision 2026-11-13: a move during a call finishes that call too.
+    const movedMaster = masterEvent({ date: start + 2 * hour, dueDate: start + 3 * hour })
+    const stale = liveSession({ occurrence: start, status: MeetingStatus.Active })
+    const { wc, created } = makeClient({
+      events: [movedMaster],
+      meetings: [stale],
+      persons: [{ _id: 'person-1', _class: contact.class.Person, personUuid: 'acc-1' }],
+      identities: [{ _id: 'social-1', _class: contact.class.SocialIdentity, attachedTo: 'person-1' }]
+    })
+
+    await wc.resolveSession('E1', start + 2 * hour)
+
+    expect(stale.status).toBe(MeetingStatus.Finished)
+    expect(created).toHaveLength(1)
+  })
+
+  it('keeps a session pinned to the same slot', async () => {
+    const session = liveSession({ occurrence: start, status: MeetingStatus.Pending })
+    const { wc, created } = makeClient({ events: [masterEvent()], meetings: [session] })
+
+    const res = await wc.resolveSession('E1', start)
+
+    expect(res).toEqual({ meeting: expect.objectContaining({ _id: 'mm-live' }) })
+    expect(session.status).toBe(MeetingStatus.Pending)
+    expect(created).toHaveLength(0)
+  })
+
+  it('does not end a session when a lobby only asks about the meeting', async () => {
+    // `create: false` is the lobby's view of the link: looking at it must not kill a running call.
+    const movedMaster = masterEvent({ date: start + 2 * hour, dueDate: start + 3 * hour })
+    const stale = liveSession({ occurrence: start, status: MeetingStatus.Active })
+    const { wc, created } = makeClient({ events: [movedMaster], meetings: [stale] })
+
+    const res = await wc.resolveSession('E1', start + 2 * hour, false)
+
+    expect(res).toMatchObject({ error: 'not-started', occurrence: start + 2 * hour })
+    expect(stale.status).toBe(MeetingStatus.Active)
     expect(created).toHaveLength(0)
   })
 
@@ -222,7 +290,9 @@ describe('WorkspaceClient.resolveSession', () => {
     const res = await wc.resolveSession('E1', start + 2 * hour)
 
     expect(res).toMatchObject({ created: true })
-    expect(created[0]).toMatchObject({ occurrence: start + 2 * hour })
+    // The session is pinned to the slot's **original** start: that is the occurrence identity the
+    // series keeps for its history, not the time the calendar moved it to.
+    expect(created[0]).toMatchObject({ occurrence: start })
   })
 
   it('resolves an overridden occurrence through its series master', async () => {

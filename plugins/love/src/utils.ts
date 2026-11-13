@@ -437,6 +437,25 @@ export function resolveOccurrence (
   return { current, next }
 }
 
+/**
+ * The point in the series a session of the `current` occurrence is pinned to, or `undefined` when
+ * there is no open occurrence to pin to.
+ *
+ * A moved occurrence is pinned to its **original** start, not to the time it moved to: that is what
+ * `MeetingMinutes.occurrence` means, and it keeps a session of the series stitched to its own slot
+ * when the calendar moves the slot around. Everything that has to compare a session with "the
+ * occurrence that is open right now" goes through this function, so the comparison cannot drift
+ * from `meetingOccurrences`.
+ */
+export function occurrencePin (
+  current: Timestamp | undefined,
+  overrides: OccurrenceOverride[] = []
+): Timestamp | undefined {
+  if (current === undefined) return undefined
+  const moved = overrides.find((it) => it.isCancelled !== true && it.date === current)
+  return moved?.originalStartTime ?? current
+}
+
 /** Why a meeting link no longer works, or `undefined` when it still does. */
 export type LinkRejection = 'revoked' | 'expired'
 

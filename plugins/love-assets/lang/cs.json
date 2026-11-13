@@ -109,6 +109,8 @@
     "JoinedMeeting": "Připojil se ke schůzce",
     "LeaveParticipant": "Opustil schůzku",
     "MeetingStart": "Začátek schůzky",
+    "MeetingNotOpenYet": "Schůzka ještě nezačala. Otevře se v {time}.",
+    "MeetingIsOver": "Schůzka již skončila.",
     "MeetingEnd": "Konec schůzky",
     "EndMeeting": "Ukončit schůzku",
     "Status": "Stav",

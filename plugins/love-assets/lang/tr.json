@@ -109,6 +109,8 @@
     "JoinedMeeting": "Toplantıya katıldı",
     "LeaveParticipant": "Toplantıdan ayrıldı",
     "MeetingStart": "Toplantı başlangıcı",
+    "MeetingNotOpenYet": "Toplantı henüz başlamadı. {time} saatinde açılacak.",
+    "MeetingIsOver": "Toplantı zaten bitti.",
     "MeetingEnd": "Toplantı bitişi",
     "EndMeeting": "Toplantıyı bitir",
     "Status": "Durum",

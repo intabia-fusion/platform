@@ -22,8 +22,10 @@
   import { LIVE_MEETING_STATUSES, meetingMasterQuery } from '@hcengineering/love'
   // Icons come off the default export: `@hcengineering/ui` exports no `Icon<Name>` components, so a
   // named import is `undefined` and the button renders empty.
-  import ui, { Button, Icon, Label, eventToHTMLElement, showPopup } from '@hcengineering/ui'
-  import { IconButton } from '@hcengineering/ui/kit'
+  import ui, { Icon, Label, eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  // The kit, not the legacy barrel: `x-small` is not a kit size, and mixing the two buttons in one row
+  // left the primary action a different height from the icon button next to it.
+  import { Button, IconButton } from '@hcengineering/ui/kit'
   import MeetingMinutesStatusPresenter from './MeetingMinutesStatusPresenter.svelte'
   import RoomSelector from './RoomSelector.svelte'
   import { confirmRoomAvailable, joinMeeting, joinMeetingBySession, leaveMeeting } from '../meetings'
@@ -92,49 +94,57 @@
 </script>
 
 {#if isMeeting}
-  <div class="flex-col mt-2">
-    <div class="flex-row-center">
-      <div class="mr-2">
-        <Icon icon={love.icon.MeetingMinutes} size="small" />
-      </div>
-      <div class="mr-2">
-        <Label label={love.string.Meeting} />
-      </div>
-      <!-- The room the meeting takes place in: editable until a session holds it. -->
-      <div class="flex-grow">
-        {#if meetingDoc !== undefined}
-          <ObjectPresenter
-            shouldShowAvatar={false}
-            objectId={meetingDoc._id}
-            _class={meetingDoc._class}
-            value={meetingDoc}
-          />
-        {:else}
-          <RoomSelector value={meeting?.room} disabled={readOnly} on:change={(ev) => void changeRoom(ev.detail)} />
-        {/if}
-      </div>
-      <div class="ml-3 flex flex-row-center flex-gap-2">
-        {#if meetingDoc !== undefined}
-          <MeetingMinutesStatusPresenter object={meetingDoc} value={meetingDoc.status} attributeKey="status" />
-        {/if}
-        {#if !readOnly}
-          <IconButton
-            icon={ui.icon.Gear}
-            size="small"
-            kind="tertiary"
-            tooltip={{ label: love.string.MeetingLinkSettings }}
-            on:click={(e) => {
-              showPopup(MeetingLinkPopup, { event: _value }, eventToHTMLElement(e))
-            }}
-          />
-        {/if}
-        <!-- Any participant may start a scheduled meeting, not only its owner. -->
-        {#if meetingDoc !== undefined}
-          <Button kind="negative" label={love.string.EndMeeting} size="x-small" on:click={closeMeeting} />
-        {:else}
-          <Button kind="primary" label={love.string.StartMeeting} size="x-small" on:click={openMeeting} />
-        {/if}
-      </div>
+  <!-- One row with a single gap, no per-child margins: the label, the room and the actions keep the
+       same 8px rhythm at any width, and the actions never squeeze the primary button into its label. -->
+  <div class="meeting-row flex-row-center mt-2">
+    <div class="flex-row-center gap-2 shrink-0">
+      <Icon icon={love.icon.MeetingMinutes} size="small" />
+      <Label label={love.string.Meeting} />
+    </div>
+    <!-- The room the meeting takes place in: editable until a session holds it. -->
+    <div class="room flex-grow">
+      {#if meetingDoc !== undefined}
+        <ObjectPresenter shouldShowAvatar={false} objectId={meetingDoc._id} _class={meetingDoc._class} value={meetingDoc} />
+      {:else}
+        <RoomSelector value={meeting?.room} disabled={readOnly} on:change={(ev) => void changeRoom(ev.detail)} />
+      {/if}
+    </div>
+    <div class="actions flex-row-center gap-2 shrink-0">
+      {#if meetingDoc !== undefined}
+        <MeetingMinutesStatusPresenter object={meetingDoc} value={meetingDoc.status} attributeKey="status" />
+      {/if}
+      {#if !readOnly}
+        <IconButton
+          icon={ui.icon.Gear}
+          size="small"
+          kind="tertiary"
+          tooltip={{ label: love.string.MeetingLinkSettings }}
+          on:click={(e) => {
+            showPopup(MeetingLinkPopup, { event: _value }, eventToHTMLElement(e))
+          }}
+        />
+      {/if}
+      <!-- Any participant may start a scheduled meeting, not only its owner. -->
+      {#if meetingDoc !== undefined}
+        <Button kind="negative" label={love.string.EndMeeting} size="small" on:click={closeMeeting} />
+      {:else}
+        <Button kind="primary" label={love.string.StartMeeting} size="small" on:click={openMeeting} />
+      {/if}
     </div>
   </div>
 {/if}
+
+<style lang="scss">
+  .meeting-row {
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  .room {
+    min-width: 0;
+  }
+
+  .actions {
+    margin-left: auto;
+  }
+</style>

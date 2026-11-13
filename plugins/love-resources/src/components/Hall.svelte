@@ -69,18 +69,20 @@
     <!-- The list keeps the group order explicit (`order`), which the standard table cannot: a
          dropped header has to stay where it was dropped after a reload. -->
     <div class="flex-col h-full">
+      <!-- The order of the screen library (`02-list-with-groups`): the neutral action first, the
+           accent one last, so the primary button keeps the right edge of the group. -->
       <div class="flex-row-center gap-2 mb-2">
-        <Button
-          label={love.string.NewMeeting}
-          kind="primary"
-          size="medium"
-          on:click={() => showPopup(love.component.CreatePermanentMeetingPopup, {}, 'content')}
-        />
         <Button
           label={love.string.MergeIntoGroup}
           kind="secondary"
           size="medium"
           on:click={() => showPopup(MeetingGroupPopup, {}, 'center')}
+        />
+        <Button
+          label={love.string.NewMeeting}
+          kind="primary"
+          size="medium"
+          on:click={() => showPopup(love.component.CreatePermanentMeetingPopup, {}, 'content')}
         />
       </div>
       <PermanentMeetingsList />

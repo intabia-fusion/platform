@@ -22,7 +22,11 @@ export function getLoveClient (): LoveClient {
 export class LoveServiceError extends Error {
   constructor (
     readonly status: number,
-    message: string
+    message: string,
+    // Parsed response body, when it was JSON. `resolveSession` explains a refusal here
+    // (`{ error: 'Meeting is not open', nextOccurrence }`), and the caller needs it to answer
+    // the user in words instead of a runtime error.
+    readonly body?: Record<string, any>
   ) {
     super(message)
     this.name = 'LoveServiceError'
@@ -138,7 +142,13 @@ export class LoveClient {
     const res = await fetch(concatLink(this.getLoveEndpoint(), path), init)
     if (!res.ok) {
       const text = await res.text().catch(() => '')
-      throw new LoveServiceError(res.status, `${path.split('?')[0].slice(1)} failed: ${res.status} ${text}`)
+      let body: Record<string, any> | undefined
+      try {
+        body = text !== '' ? JSON.parse(text) : undefined
+      } catch {
+        // Not JSON: the message still carries the text, the body stays empty.
+      }
+      throw new LoveServiceError(res.status, `${path.split('?')[0].slice(1)} failed: ${res.status} ${text}`, body)
     }
     return res
   }

@@ -108,6 +108,8 @@
     "JoinAsParticipant": "Join as participant",
     "JoinedMeeting": "Joined meeting",
     "MeetingStart": "Meeting start",
+    "MeetingNotOpenYet": "The meeting has not started yet. It opens at {time}.",
+    "MeetingIsOver": "The meeting has already finished.",
     "MeetingEnd": "Meeting end",
     "EndMeeting": "End meeting",
     "Status": "Status",

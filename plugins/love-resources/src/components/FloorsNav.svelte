@@ -43,6 +43,7 @@
   import { currentFloor, infos, officeFloors, officeView, rooms, selectedFloor, selectedRoomPlace } from '../stores'
   import { getRoomName, showRoomSettings } from '../utils'
   import AddRoomPopup from './AddRoomPopup.svelte'
+  import EditFloorPopup from './EditFloorPopup.svelte'
 
   // Only the people who arrange the office see the plus and the room menu at all.
   const canManageRooms =
@@ -188,6 +189,18 @@
       <!-- The header is a button of its own: without this the click would also pick the floor. -->
       <svelte:fragment slot="extra">
         {#if canManageRooms}
+          <!-- svelte-ignore a11y-click-events-have-key-events -->
+          <div class="flex" on:click|stopPropagation>
+            <IconButton
+              icon={view.icon.Edit}
+              kind="ghost"
+              size="min"
+              tooltip={{ label: plugin.string.RenameAFloor }}
+              on:click={(e) => {
+                showPopup(EditFloorPopup, { id: floor._id }, eventToHTMLElement(e))
+              }}
+            />
+          </div>
           <!-- svelte-ignore a11y-click-events-have-key-events -->
           <div class="flex" on:click|stopPropagation>
             <IconButton

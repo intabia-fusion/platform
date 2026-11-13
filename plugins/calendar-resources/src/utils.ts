@@ -1,5 +1,4 @@
 import {
-  AccessLevel,
   type Calendar,
   type Event,
   type ReccuringEvent,
@@ -17,9 +16,8 @@ import {
   toIdMap
 } from '@hcengineering/core'
 import presentation, { createQuery, getClient, onClient } from '@hcengineering/presentation'
-import { closePopup, DAY, showPopup } from '@hcengineering/ui'
+import { DAY, showPopup } from '@hcengineering/ui'
 import { writable } from 'svelte/store'
-import UpdateRecInstancePopup from './components/UpdateRecInstancePopup.svelte'
 import calendar from './plugin'
 import { getMetadata } from '@hcengineering/platform'
 import login from '@hcengineering/login'
@@ -130,6 +128,13 @@ export async function updatePast (ops: DocumentUpdate<Event>, object: ReccuringI
   }
 }
 
+/**
+ * Applies a change made on one occurrence of a series.
+ *
+ * A change to an occurrence was once a question - "this event or all of them" - asked on every save.
+ * It is not a question here: the series is the scope of the change, so it goes to the master event
+ * straight away and no `UpdateRecInstancePopup` stands between the user and the edit.
+ */
 export async function updateReccuringInstance (
   ops: DocumentUpdate<ReccuringEvent>,
   object: ReccuringInstance
@@ -138,77 +143,22 @@ export async function updateReccuringInstance (
   if (object.virtual !== true) {
     await client.update(object, ops)
     return true
-  } else {
-    return await new Promise((resolve) => {
-      showPopup(UpdateRecInstancePopup, { currentAvailable: ops.rules === undefined, modes: ['current', 'all'] }, undefined, async (res) => {
-        if (res !== null) {
-          try {
-            if (res.mode === 'current') {
-              await client.addCollection(
-                object._class,
-                object.space,
-                object.attachedTo,
-                object.attachedToClass,
-                object.collection,
-                {
-                  title: object.title,
-                  description: object.description,
-                  date: object.date,
-                  dueDate: object.dueDate,
-                  allDay: object.allDay,
-                  participants: object.participants,
-                  externalParticipants: object.externalParticipants,
-                  originalStartTime: object.originalStartTime,
-                  recurringEventId: object.recurringEventId,
-                  reminders: object.reminders,
-                  location: object.location,
-                  eventId: object.eventId,
-                  calendar: object.calendar,
-                  access: AccessLevel.Owner,
-                  rules: object.rules,
-                  exdate: object.exdate,
-                  rdate: object.rdate,
-                  timeZone: object.timeZone,
-                  user: object.user,
-                  blockTime: object.blockTime,
-                  ...ops
-                },
-                object._id
-              )
-              resolve(true)
-            } else if (res.mode === 'all') {
-              const base = await client.findOne(calendar.class.ReccuringEvent, {
-                calendar: object.calendar,
-                eventId: object.recurringEventId
-              })
-              if (base !== undefined) {
-                if (ops.date !== undefined) {
-                  const diff = object.date - ops.date
-                  ops.date = base.date - diff
-                }
-                if (ops.dueDate !== undefined) {
-                  const diff = object.dueDate - ops.dueDate
-                  ops.dueDate = base.dueDate - diff
-                }
-                await client.update(base, ops)
-                resolve(true)
-              }
-              resolve(false)
-            } else if (res.mode === 'next') {
-              await updatePast(ops, object)
-              resolve(true)
-            }
-            resolve(false)
-          } catch {
-            resolve(false)
-          }
-        } else {
-          resolve(false)
-        }
-        closePopup()
-      })
-    })
   }
+  const base = await client.findOne(calendar.class.ReccuringEvent, {
+    calendar: object.calendar,
+    eventId: object.recurringEventId
+  })
+  if (base === undefined) return false
+  // The dates come from the occurrence the user edited, not from the master: the shift they made is
+  // the same for both, so it is applied relative to the master's own dates.
+  if (ops.date !== undefined) {
+    ops.date = base.date - (object.date - ops.date)
+  }
+  if (ops.dueDate !== undefined) {
+    ops.dueDate = base.dueDate - (object.dueDate - ops.dueDate)
+  }
+  await client.update(base, ops)
+  return true
 }
 
 export async function configureCalDavAccess (): Promise<void> {

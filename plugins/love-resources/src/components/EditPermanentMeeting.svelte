@@ -26,7 +26,11 @@
   import { Button } from '@hcengineering/ui/kit'
   import { createEventDispatcher, onMount } from 'svelte'
   import love from '../plugin'
-  import { joinMeeting, joinMeetingBySession } from '../meetings'
+  import { joinMeeting, joinMeetingBySession, leaveMeeting } from '../meetings'
+  import { currentMeetingMinutes } from '../stores'
+  import { lkSessionConnected } from '../liveKitClient'
+  import { videoVisible } from '../utils'
+  import { openWidgetTab } from '@hcengineering/workbench-resources'
 
   export let object: PermanentMeeting
   export let readonly: boolean = false
@@ -87,6 +91,24 @@
     if (liveSession === undefined) return
     void joinMeeting(liveSession)
   }
+
+  // The header follows the call, the way a room card does on develop: while this meeting is the one
+  // being attended the button leaves it instead of offering to join again - otherwise entering from
+  // here left a "Join meeting" button in front of a person who is already inside.
+  $: inThisMeeting =
+    $lkSessionConnected &&
+    ($currentMeetingMinutes?.meeting === object._id || $currentMeetingMinutes === undefined)
+
+  let leaving = false
+  async function handleLeaveRoom (): Promise<void> {
+    if (leaving) return
+    leaving = true
+    try {
+      await leaveMeeting()
+    } finally {
+      leaving = false
+    }
+  }
 </script>
 
 <div class="flex-row-center flex-between flex-gap-2 mb-4">
@@ -99,17 +121,39 @@
       focusIndex={1}
     />
   </div>
-  {#if liveSession !== undefined}
-    <Button label={love.string.JoinAsParticipant} size="large" kind="secondary" on:click={joinLive} />
+  {#if inThisMeeting}
+    {#if !$videoVisible}
+      <Button
+        label={love.string.ShowVideo}
+        size="large"
+        kind="secondary"
+        on:click={() => {
+          openWidgetTab(love.ids.MeetingWidget, 'video')
+        }}
+      />
+    {/if}
+    <Button
+      label={love.string.LeaveRoom}
+      size="large"
+      kind="negative"
+      on:click={handleLeaveRoom}
+      loading={leaving}
+      data-id="permanent-meeting-leave"
+    />
+  {:else}
+    {#if liveSession !== undefined}
+      <Button label={love.string.JoinAsParticipant} size="large" kind="secondary" on:click={joinLive} />
+    {/if}
+    <Button
+      label={love.string.JoinMeeting}
+      size="large"
+      kind="primary"
+      on:click={() => {
+        void joinMeetingBySession(live._id, 'meeting')
+      }}
+      data-id="permanent-meeting-join"
+    />
   {/if}
-  <Button
-    label={love.string.JoinMeeting}
-    size="large"
-    kind="primary"
-    on:click={() => {
-      void joinMeetingBySession(live._id, 'meeting')
-    }}
-  />
 </div>
 
 <style lang="scss">

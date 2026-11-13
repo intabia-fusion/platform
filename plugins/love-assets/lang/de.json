@@ -110,6 +110,8 @@
     "JoinedMeeting": "Hat sich dem Meeting angeschlossen",
     "LeaveParticipant": "Hat die Besprechung verlassen",
     "MeetingStart": "Meeting-Start",
+    "MeetingNotOpenYet": "Das Meeting hat noch nicht begonnen. Es öffnet um {time}.",
+    "MeetingIsOver": "Das Meeting ist bereits beendet.",
     "MeetingEnd": "Meeting-Ende",
     "Status": "Status",
     "Active": "Aktiv",

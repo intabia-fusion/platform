@@ -212,8 +212,11 @@
         }}
       >
         {#if isOffice(room) && rX === 0 && rY === 0}
+          <!-- `contact.mixin.Employee`, not `contact.class.Person`: the picker queries `active: true`,
+               a field of the Employee mixin, so asking by the Person class listed nobody and an office
+               could never be given an owner. -->
           <AssigneeBox
-            _class={contact.class.Person}
+            _class={contact.mixin.Employee}
             excluded={excludedPersons}
             shouldShowName={false}
             showNavigate={false}

@@ -378,11 +378,14 @@
 </div>
 
 <style lang="scss">
+  /* Metrics follow the screen library (`_permanent.js`, `pmGroupHeader`): 32px tall, 8px padding,
+     8px gap, 6px radius. */
   .group-header {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.375rem 0.5rem;
+    height: 2rem;
+    padding: 0 0.5rem;
     border-radius: 0.375rem;
     background: var(--theme-bg-accent-color);
     color: var(--theme-caption-color);
@@ -399,11 +402,14 @@
     flex: 1;
   }
 
+  /* `pmRow` of the screen library: 40px tall, 12px padding, 8px gap, 6px radius. A fixed height
+     keeps a row with fewer actions the same as its neighbours. */
   .meeting-row {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.375rem 0.5rem;
+    height: 2.5rem;
+    padding: 0 0.75rem;
     border-radius: 0.375rem;
     cursor: pointer;
   }
@@ -426,10 +432,12 @@
     color: var(--theme-content-color);
   }
 
+  /* Packed from the right with no extra gap: the icon buttons carry their own padding, which is what
+     keeps the right edge of every row on the same line. */
   .actions {
     display: flex;
     align-items: center;
-    gap: 0.125rem;
+    gap: 0;
     flex-shrink: 0;
     margin-left: auto;
   }
