@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -15,8 +16,8 @@
 <script lang="ts">
   import type { Doc, FindResult, IdMap, Ref, RefTo, Space, Status } from '@hcengineering/core'
   import { translate } from '@hcengineering/platform'
-  import presentation, { getClient } from '@hcengineering/presentation'
-  import type { ProjectStatus, ProjectType, TaskType } from '@hcengineering/task'
+  import presentation, { createQuery, getClient } from '@hcengineering/presentation'
+  import task, { type Project, type ProjectStatus, type ProjectType, type TaskType } from '@hcengineering/task'
   import ui, {
     EditWithIcon,
     Icon,
@@ -37,6 +38,7 @@
   import view from '@hcengineering/view-resources/src/plugin'
   import { buildConfigLookup, getPresenter, sortCategories } from '@hcengineering/view-resources/src/utils'
   import { createEventDispatcher } from 'svelte'
+  import { getProjectStatusFilterValues } from '../statusFilter'
 
   import {
     getProjectType,
@@ -49,10 +51,24 @@
 
   export let filter: Filter
   export let space: Ref<Space> | undefined = undefined
+  export let spaces: Array<Ref<Space>> | undefined = undefined
   export let onChange: (e: Filter) => void
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
+  const projectQuery = createQuery()
+  let scopedProjects: Project[] = []
+  let typeNames = new Map<Ref<Status>, string>()
+  $: if (spaces !== undefined) {
+    projectQuery.query(
+      task.class.Project,
+      { _id: { $in: spaces as Array<Ref<Project>> } },
+      (projects) => {
+        scopedProjects = projects
+      },
+      { showArchived: true }
+    )
+  }
   const tkey = '$lookup.' + filter.key.key
   const key = { key: tkey }
   const lookup = buildConfigLookup(hierarchy, filter.key._class, [tkey])
@@ -76,17 +92,28 @@
     statusStore: IdMap<Status>,
     selectedProjectType: Ref<ProjectType> | undefined,
     projectTypeStore: IdMap<ProjectType>,
-    joinedSpacesTypes: Ref<ProjectType>[]
+    joinedSpacesTypes: Ref<ProjectType>[],
+    scopedTypes: Ref<ProjectType>[] | undefined
   ): Promise<void> {
     await objectsPromise
-    const projectType = selectedProjectType ?? (await getProjectType(space))
+    const projectType = scopedTypes === undefined ? selectedProjectType ?? (await getProjectType(space)) : undefined
     targets.clear()
 
     for (const object of filter.value) {
       targets.add(object)
     }
     const type = selectedType !== undefined ? typeStore.get(selectedType) : undefined
-    if (type !== undefined) {
+    typeNames = new Map()
+    if (scopedTypes !== undefined) {
+      const scoped = getProjectStatusFilterValues(
+        scopedTypes.map((id) => projectTypeStore.get(id)).filter((it): it is ProjectType => it !== undefined),
+        statusStore
+      )
+      typeNames = scoped.typeNames
+      const statuses = scoped.values.filter((status) => hierarchy.isDerived(status._class, targetClass))
+      for (const status of statuses) targets.add(status._id)
+      values = await sort(statuses, statusStore)
+    } else if (type !== undefined) {
       const typeStatuses = (type.statuses ?? []).map((p) => statusStore.get(p))
       for (const value of typeStatuses) {
         targets.add(value?._id)
@@ -201,7 +228,10 @@
       $statusStore.byId,
       $selectedTypeStore,
       $typeStore,
-      $typesOfJoinedProjectsStore
+      $typesOfJoinedProjectsStore,
+      spaces === undefined
+        ? undefined
+        : scopedProjects.filter((project) => spaces?.includes(project._id) === true).map((project) => project.type)
     )
   }
 </script>
@@ -246,6 +276,9 @@
                         disabled
                         oneLine
                       />
+                      {#if typeNames.has(value._id)}
+                        <span class="status-project-type">{typeNames.get(value._id)}</span>
+                      {/if}
                     {/key}
                   {:else}
                     <Label label={ui.string.NotSelected} />
@@ -265,3 +298,13 @@
   </div>
   <div class="menu-space" />
 </div>
+
+<style lang="scss">
+  .status-project-type {
+    margin-left: 0.5rem;
+    color: var(--theme-dark-color);
+    font-size: 0.75rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+</style>

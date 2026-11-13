@@ -268,6 +268,7 @@
               <div class="filter">
                 <FilterConditions
                   _class={tracker.class.Issue}
+                  spaces={selected}
                   value={filter}
                   removable
                   addLabel={tracker.string.BoardCondition}

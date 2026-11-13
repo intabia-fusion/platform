@@ -175,6 +175,7 @@
           <div class="filter">
             <FilterConditions
               _class={tracker.class.Issue}
+              spaces={board.projects}
               value={board.filter}
               removable
               addLabel={tracker.string.BoardCondition}

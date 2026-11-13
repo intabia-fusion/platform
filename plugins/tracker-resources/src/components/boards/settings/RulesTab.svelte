@@ -418,6 +418,7 @@
             <div class="cell condition">
               <FilterConditions
                 _class={tracker.class.Issue}
+                spaces={board.projects}
                 value={rule.condition}
                 removable
                 hiddenKeys={['space']}

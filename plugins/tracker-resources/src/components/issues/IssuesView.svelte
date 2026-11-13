@@ -245,6 +245,7 @@
 
 <SpaceHeader
   _class={tracker.class.Issue}
+  spaces={board?.projects}
   {icon}
   bind:viewlet
   bind:search
@@ -322,6 +323,7 @@
 </SpaceHeader>
 <FilterBar
   _class={tracker.class.Issue}
+  spaces={board?.projects}
   {space}
   query={searchQuery}
   {viewOptions}

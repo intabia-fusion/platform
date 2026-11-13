@@ -28,6 +28,8 @@
   export let value: string
   export let _class: Ref<Class<Doc>>
   export let space: Ref<Space> | undefined = undefined
+  // An explicit scope, including an empty one, overrides the global filter selection.
+  export let spaces: Array<Ref<Space>> | undefined = undefined
   export let disabled: boolean = false
   // Conditions carry a remove cross
   export let removable: boolean = false
@@ -65,6 +67,7 @@
         _class,
         target,
         space,
+        spaces,
         hiddenKeys,
         // Indexes key the live queries of nested filters: conditions of different rows must not collide.
         index: Math.floor(Math.random() * 1_000_000_000) + 1,
@@ -88,6 +91,7 @@
     <FilterSection
       {filter}
       {space}
+      {spaces}
       hideRemove={!removable}
       on:change={emit}
       on:remove={() => {

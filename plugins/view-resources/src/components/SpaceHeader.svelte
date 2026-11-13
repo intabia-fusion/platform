@@ -1,3 +1,17 @@
+<!--
+// Copyright © 2026 Intabia Fusion.
+//
+// Licensed under the Eclipse Public License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License. You may
+// obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+-->
 <script lang="ts">
   import type { Class, Doc, DocumentQuery, Ref, Space, WithLookup } from '@hcengineering/core'
   import type { IModeSelector, HeaderAdaptive } from '@hcengineering/ui'
@@ -11,6 +25,7 @@
   import FilterButton from './filter/FilterButton.svelte'
 
   export let space: Ref<Space> | undefined = undefined
+  export let spaces: Array<Ref<Space>> | undefined = undefined
   export let _class: Ref<Class<Doc>>
   export let icon: Asset | undefined = undefined
   export let viewlet: WithLookup<Viewlet> | undefined
@@ -59,7 +74,7 @@
   {#if searchFirst && !doubleRow}
     <div class="search-first">
       <SearchInput bind:value={search} collapsed />
-      <FilterButton {_class} {space} />
+      <FilterButton {_class} {space} {spaces} />
       <slot name="afterSearch" />
     </div>
   {:else if showLabelSelector}
@@ -77,14 +92,14 @@
     {#if searchFirst}
       <div class="search-first">
         <SearchInput bind:value={search} collapsed />
-        <FilterButton {_class} {space} />
+        <FilterButton {_class} {space} {spaces} />
         <slot name="afterSearch" />
       </div>
     {:else}
       <!-- A double-row header lays the search group out row-reverse: this slot shows last -->
       <slot name="afterSearch" />
       <SearchInput bind:value={search} collapsed />
-      <FilterButton {_class} {space} />
+      <FilterButton {_class} {space} {spaces} />
     {/if}
   </svelte:fragment>
   <svelte:fragment slot="actions">
