@@ -30,14 +30,23 @@ import { pipeline } from 'stream/promises'
 
 import { createCache } from './cache'
 import { type Config } from './config'
-import { type RequestWithAuth, errorHandler, keepAlive, withBlob } from './middleware'
+import {
+  type RequestWithAuth,
+  createWorkspaceAccess,
+  errorHandler,
+  keepAlive,
+  withAuthorization,
+  withBlob
+} from './middleware'
 import { createPreviewService, ThumbnailParams } from './service'
 import { TemporaryDir } from './tempdir'
 
 const KEEP_ALIVE_TIMEOUT = 5 // seconds
 const KEEP_ALIVE_MAX = 1000
 
-const cacheControl = 'public, max-age=31536000, immutable'
+// A thumbnail is served only after the access check, so a shared cache (CDN, proxy_cache) must
+// not keep it: the browser still caches it for a year.
+const imageCacheControl = 'private, max-age=31536000, immutable'
 const cacheControlNoCache = 'public, no-store, no-cache, must-revalidate, max-age=0'
 
 type AsyncRequestHandler = (ctx: MeasureContext, req: RequestWithAuth, res: Response) => Promise<void>
@@ -174,9 +183,17 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
 
   app.use(morgan('short', { stream: new LogStream() }))
 
+  const workspaceAccess = createWorkspaceAccess({
+    accountsUrl: config.AccountsUrl,
+    allowTtlMs: config.AuthAllowCacheMs,
+    denyTtlMs: config.AuthDenyCacheMs
+  })
+
   app.get(
     '/metadata/:workspace/:name',
+    withAuthorization,
     withBlob,
+    workspaceAccess,
     wrapRequest(ctx, 'getMetadata', async (ctx, req, res) => {
       const workspace = req.params.workspace as WorkspaceUuid
       const name = req.params.name
@@ -188,7 +205,9 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
 
   app.get(
     '/image/:transform/:workspace/:name',
+    withAuthorization,
     withBlob,
+    workspaceAccess,
     wrapRequest(ctx, 'getThumbnail', async (ctx, req, res) => {
       const workspace = req.params.workspace as WorkspaceUuid
       const name = req.params.name
@@ -199,7 +218,7 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
 
       const { mimeType: contentType, filePath } = await service.thumbnail(ctx, workspace, name, params)
       const stream = createReadStream(filePath)
-      await writeToResponse(ctx, stream, res, { contentType, cacheControl })
+      await writeToResponse(ctx, stream, res, { contentType, cacheControl: imageCacheControl })
     })
   )
 

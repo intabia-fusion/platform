@@ -45,6 +45,8 @@ services:
     image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/preview:${DOCKER_TAG:-latest}"
     environment:
       - SECRET=secret
+      # Workspace membership of the account cookie is asked from account; without it preview refuses every request.
+      - ACCOUNTS_URL=http://account:3000
       - STORAGE_CONFIG=${STORAGE_CONFIG}
       - CACHE_PATH=/data/cache
     restart: unless-stopped

@@ -510,6 +510,7 @@ services:
         condition: service_started
     environment:
       - SECRET=secret
+      - ACCOUNTS_URL=http://account:3003
       # Preview reads blobs through datalake for on-the-fly image resizing (proxied via nginx /_preview).
       - STORAGE_CONFIG=datalake|http://datalake:4031
       - CACHE_PATH=/data/cache

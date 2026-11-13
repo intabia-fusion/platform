@@ -81,6 +81,7 @@ import { onDestroy } from 'svelte'
 import { get, writable } from 'svelte/store'
 
 import { type KeyedAttribute } from '.'
+import { presentationCookiePaths } from './cookies'
 import { OptimizeQueryMiddleware, type PresentationPipeline, PresentationPipelineImpl } from './pipeline'
 import plugin, { type ClientHook } from './plugin'
 
@@ -1144,14 +1145,17 @@ export function setPresentationCookie (token: string, workspaceUuid: WorkspaceUu
   const cookieValue = encodeURIComponent(token)
 
   const storage = getMetadata(plugin.metadata.FileStorage)
+  let storagePath: string | undefined
   if (storage !== undefined) {
-    let path = `/files/${workspaceUuid}`
+    storagePath = `/files/${workspaceUuid}`
     try {
-      path = storage.getCookiePath(workspaceUuid)
+      storagePath = storage.getCookiePath(workspaceUuid)
     } catch {}
+  }
 
-    const normalized = path.startsWith('/') ? path : `/${path}`
-    document.cookie = `${cookieName}=${cookieValue}; path=${normalized}`
+  const previewUrl = getMetadata(plugin.metadata.PreviewUrl)
+  for (const path of presentationCookiePaths(storagePath, previewUrl, window.location.origin)) {
+    document.cookie = `${cookieName}=${cookieValue}; path=${path}`
   }
 }
 
