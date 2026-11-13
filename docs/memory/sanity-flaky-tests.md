@@ -4,6 +4,7 @@
 
 ## Diagnosing
 
+- `polls-form.spec.ts`, horizontal drafts: `AppletTile` is 18rem wide. Requiring the whole tile inside the strip gives a false failure when the strip is narrower (Chromium: 288px tile in a 240px strip). After viewport changes, recompute the scroll end on each poll; verify the last tile's right edge is reachable rather than requiring full containment.
 - Local `ai-bot.spec.ts` monthly limit failure, 2026-11-11: all three attempts received the first echo and showed the exhausted badge, but no chat refusal. `AIControl.processEvent` rejects queued events at the token gate before the window check. The badge is the intended notification; neither token-block path writes a chat notice.
 - CI `42662485899`, `direct-chat.spec.ts`: hovering a long message scrolls the chat; `Scroller.svelte` disables pointer events for 300 ms afterward. The Reply click started 12 ms after hover and lost the hover toolbar. Message actions must wait for the row's computed `pointer-events: auto` before moving the pointer onto the toolbar.
 - `direct-chat.spec.ts`, `Multiline code remains visible`: CI rendering appends one space after the complete code in `pre > code.textContent` (`</script> `), identically on all three attempts. Compare after removing at most one final space; preserve leading indentation, internal whitespace and line breaks.
