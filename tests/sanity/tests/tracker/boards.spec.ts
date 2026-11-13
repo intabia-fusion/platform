@@ -493,7 +493,7 @@ test.describe('task boards', () => {
       await boards.createWizard().locator('[data-id="boardAddColumn"]').click()
       const last = boards.createWizard().locator('[data-id="boardColumn"]').last()
       await expect(last.locator('input.name')).toBeFocused()
-      await expect(last).toBeInViewport({ ratio: 1 })
+      await boards.expectColumnRevealed(last)
     }
     await page.mouse.move(0, 0)
     await expect(wrapper.locator('.bar-horizontal')).toBeVisible()

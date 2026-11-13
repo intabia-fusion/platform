@@ -199,7 +199,7 @@ test.describe('board settings', () => {
     const last = boards.settingsColumn().last()
     const name = last.locator('input.name')
     await expect(name).toBeFocused()
-    await expect(last).toBeInViewport({ ratio: 1 })
+    await boards.expectColumnRevealed(last)
     expect(
       await name.evaluate((input: HTMLInputElement) => (input.selectionEnd ?? 0) - (input.selectionStart ?? 0))
     ).toBe((await name.inputValue()).length)
