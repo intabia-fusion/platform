@@ -23,6 +23,8 @@ Service logs for the failure window: `startTime` in the report is UTC, container
 - **`locator.count()` never waits.** Arithmetic on it needs a settled read (`waitStable`). But settled is not the same as non-empty: a just-filtered list is stably 0 for a moment, which reads exactly like "matched nothing" (`checkAllIssuesInStatus` waits for the first row first).
 - **Controls that exist only while hovered or just opened.** Hover/open and use in two separate statements → a re-render between them leaves the second waiting out the whole test timeout. Retry the pair: hover → assert visible → click.
 - **An action with no timeout of its own inside `toPass`** blocks until the test dies and the retry loop never gets a turn. Same for an inner wait *longer* than the test timeout: the failure arrives as a bare "Test timeout exceeded" with no locator named.
+- **Контекстное меню задачи меняет положение после загрузки пунктов.** В `issues.spec.ts` три движения мыши по старым координатам закрыли подменю Change; `hover` пункта Status занял 20 с. Проверка появления нужного пункта внутри `openSubmenuOnIssue` возвращает управление `toPass`. Серия `20261103-124858..130502`; после исправления 8/8 на 5 воркерах.
+- **Список получателей пересчитывается после Search.** В `polls-places.spec.ts` строка target сместилась между разрешением точного локатора и кликом: под курсором оказался general. Ожидание одной строки с уникальным target перед единственным кликом и проверка выбранного чипа устранили гонку. До исправления 15/16 за 37,6 с; после 16/16 без повторов за 30,3 с на 5 воркерах. Оба полных файла: 23 passed, 1 skipped (`Set parent issue` отключен заранее), 0 failed, без повторов, 1.2 min. Сборка `tests/sanity` и ESLint обоих измененных файлов прошли.
 - **Timeouts are a measured maximum times a few, not "a minute just in case."** A minute only means the failure lands a minute later. ai-bot mock replies measured ≤4.9s against 60s bounds.
 - **A click that is not idempotent.** Rows toggle selection, rooms deselect. Retry the *wait*, not the click, or return early when the target state already holds.
 - **A process row does not prove creation navigation finished.** In `ProcessesSection.svelte:add`, a breadcrumb click before State/Transition creation finishes is overwritten by the final `handleSelect`; wait for the editor's "Add state" button first (`rage-click/process.spec.ts`).
@@ -209,6 +211,7 @@ Everything the drop checks must compare, learned over three rounds:
 - **Re-measure inside the held drag** (up to 4 times): taking the card out of its own cell rearranges the board, so the target moves after it was measured.
 - `grabCard()` retries the grab three times; `expectCardInColumn` calls `revealCard` first (past a column's limit the card is not in the DOM at all) and `revealCard` round-robins over all "Show more" buttons instead of always expanding the leftmost column.
 - Six status columns need ~2000px: `test.use({ viewport: { width: 2200, height: 1000 } })`.
+- **Held card at rest <60px from the board side autoscrolls it** (`EDGE_PX` in `Kanban.svelte`): a waypoint at `left + 3` of the first column undid `scrollIntoView` of the target. `dragPointer` parks mid-board after waypoints with `steps: 5` (a one-hop move sends no dragover). Skipping side points in `visiblePointOf` broke `legacy drop on self`.
 - `dragUntilField(read, target, drag)` reads the field *after* the drag, swallows the drag error and polls at `[100, 200, 300, 500]` with a 40s bound - shorter than the test timeout, so the poll gets to report its own error.
 
 ## love / LiveKit
@@ -305,3 +308,34 @@ Kept, with the reason (a condition would be a guess):
 - `getInviteLink` waited 5s for `appHeader`, which a fresh workspace never renders (`workspace/create.spec.ts` x2, 5005ms each); it now waits for `#profile-button`, which the toPass below clicks anyway. Join-link tests 4.0s/4.3s after.
 - `auth.setup.ts`: three tests ran on one worker (~1.2s each); `describe.configure({ mode: 'parallel' })`, setup 3 passed in 2.9s on 3 workers.
 - Re-running plan.spec many times (and `--repeat-each`) piles up `Plan work for several days-*` todos, and `Add several slots for the same day` then goes missing from the "All" list (todo is in the DB; fails the same on the original code). Needs a stand restore.
+
+## Run series 20261020-130621 .. 133105
+
+- kanban counters/lanes: other workers add issues to `DefaultProject` and the swim-lane projection lands late - poll live values (DB count, lane id), never compare to a value read earlier.
+- `changeState` must wait for the panel to close: a finishing save closes the panel reopened for the same status. Love invite race is a product bug: `love_invite_before_participant_info.md`.
+
+## Run series 20261102-112911 .. 120217
+
+- Все 68 неудачных AI-попыток совпали с `AI provider pool exhausted` для `mock`: по прогонам 0, 6, 9, 4, 49. Это отказ до вызова модели, а не задержка ответа.
+- `rage-click/admin-billing.spec.ts` задавал рабочему пулу `mock/mock-model` бюджет 1000 и добавлял 50, оставляя общий лимит 1050. Сброс пула не исключает расход предыдущих прогонов того же часа: `UsageWorker.recomputeProviderPools` (`services/billing/pod-billing/src/usage.ts`) округляет `periodStart` вниз до часа. Бюджет поднят до 1_000_000_000; пополнение проверено 8/8 за 12.9 с, пять AI-спек - 18/18 без ретраев за 26.4 с.
+- `rage-click/process.spec.ts` "Screen + Add Tab": в 120217 `initialCount` прочитан как 0 до загрузки штатной вкладки `General`; после одного добавления показаны 2 вкладки при ожидании 1. Соседний тест удаления вкладок сначала ждет `toHaveCount(1)`.
+
+## Run series 20261102-132338 .. 135743
+
+- В нагрузочной трассе `documents-training` после Submit кнопка Retry появилась при Draft, исчезла через 100 мс и вернулась при Failed еще через 116 мс. Видимость Retry не подтверждает завершение Submit; оба сценария Retry ждут Failed в заголовке текущей попытки.
+- `EditMeetingData` "End Meeting": `connectedMarker` появляется до последнего `navigateToMeetingMinutes` в `connectToMeeting`. Повторный `page.goto` запускает автоподключение с такой же навигацией; она замещала уже открытое календарное событие. `love.activeMeeting` записывается после последней навигации; календарь внутри того же workbench открывается без перезагрузки.
+- `EditMeetingMinutes` "Leave Room" воспроизведен с совпадающими ID в `/getToken` и открытом протоколе: виджет подключен, но панель показывает Join meeting. Трасса не раскрывает, какое из условий `showConnectionButton` сработало; версия об открытии старого протокола не подтвердилась.
+- Проверки тестовых правок: нагрузочный набор 89/92 до изменений и 92/92 после, оба около 1.5 мин; окончательные ожидания Training Retry и Love End Meeting - 24/24 без ретраев. Полные файлы Kanban и Training - 40 passed, один ранее отключенный тест Manual order, 1.8 мин; build и ESLint прошли.
+
+## Run series 20261102-151956 .. 153630
+
+- Add Tab повторил ожидание 1 при фактических 2: штатная `General` не попала в начальный счетчик. После ожидания штатной вкладки - 8/8 без ретраев за 25.5 с.
+- Обратное завершение фильтрации двух снимков `ParticipantInfo` воспроизведено unit-тестом: старый callback заменял новый `infos`. Регресс упал до фикса и прошел после. Источник и гарантия новых массивов - [love_one_person_two_meetings.md](love_one_person_two_meetings.md). Связь этого порядка с конкретным флаком Leave Room трассой не доказана.
+- Первый пустой ответ AI identity завершает загрузку, но позднее появление identity должно повторно открыть issue-draft: [ai_bot_context_and_settings.md](ai_bot_context_and_settings.md). Связь с конкретным флаком `.assist div.text-editor-view` без трассы первой попытки не доказана.
+- Проверки: Process, Relations и Gmail - 27/27 без ретраев за 46.8 с; `stores.dedup` и `stores.lazy` - 5/5. Полный Jest-пакет Love: 26 passed, 7 failed в двух наборах на импорте `MediaExt.svelte` (`Unexpected token '<'`). Сборка и линт четырех измененных продуктовых пакетов и `tests/sanity` прошли; браузерная проверка продуктовых правок требует пересборки front.
+
+## Run series 20261102-162918 .. 164451
+
+- Единственный флак - Leave Room в панели протокола. Snapshot показывает активную Join meeting без disabled, хотя виджет показывает Leave room; loading этой кнопки означал бы disabled, поэтому зависший connecting не объясняет состояние снимка.
+- Панель сравнивала протокол с `currentMeetingMinutes` из общего presence. Условие локального выхода использует `currentMeeting` с `lkSessionConnected`; остальные guards сохранены. Источники состояний - [love_one_person_two_meetings.md](love_one_person_two_meetings.md).
+- До пересборки front целевой тест прошел 8/8 без ретраев за 23.1 с; это базовый прогон старого UI. Сборка и линт `love-resources` прошли. Исправленный UI в браузере еще не проверен.

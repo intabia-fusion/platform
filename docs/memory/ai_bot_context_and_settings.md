@@ -62,6 +62,10 @@
 
 Мок должен реализовывать `chatToolStep` (`llms/mock.ts`), потому что сервер гоняет `runToolCalls` и ждёт `content`/`toolCalls`; без него нет тулов и в чат ничего не приходит.
 
+## Поздняя identity при открытии issue-draft
+
+`ensureAiBotIdentityLoaded` завершается на первом ответе LiveQuery, включая пустой массив (`plugins/ai-bot-resources/src/utils.ts`). Identity может появиться в store позднее; условие открытия `IssueAssistPanel` должно зависеть от этого store, иначе однократный `getBotAccount() === undefined` оставляет панель без поля ввода.
+
 ## Связанные документы
 
 - [`../features/ai.md`](../features/ai.md)

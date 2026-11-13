@@ -434,6 +434,18 @@ export class KanbanBoardPage extends CommonTrackerPage {
     await this.grabCard(source)
     try {
       await this.carryOver(via)
+      // A waypoint point sits at a cell's edge, so in the first column the held card rests within 60px
+      // of the board's side (EDGE_PX in Kanban.svelte) and the board keeps scrolling back, undoing the
+      // scrollIntoView below - the target then measured off screen on every attempt. Park mid-board;
+      // a single-hop move sends no dragover, so the board would never learn the pointer left the edge.
+      if (via.length > 0) {
+        const board = await this.page.locator('.kanban-container').first().boundingBox()
+        if (board !== null) {
+          const mid = { x: board.x + board.width / 2, y: board.y + board.height / 2 }
+          await this.page.mouse.move(mid.x, mid.y, { steps: 5 })
+          await this.page.mouse.move(mid.x + 2, mid.y + 2)
+        }
+      }
       // The board scrolls horizontally and does not fit five columns, so bring the target into view
       // only after the card is grabbed: hovering the source scrolls it back and a box measured
       // before that points outside the viewport. Scroll through the DOM - scrollIntoViewIfNeeded

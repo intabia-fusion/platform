@@ -86,7 +86,7 @@
       const res = await createTagElement(
         search,
         targetClass,
-        findTagCategory(search, categories),
+        categories.length > 0 ? findTagCategory(search, categories) : undefined,
         undefined,
         undefined,
         keyLabel
