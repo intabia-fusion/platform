@@ -488,9 +488,9 @@
     "BoardVisibilityAllMembers": "Visible par tous",
     "BoardVisibilityOnlyMe": "Moi seul",
     "BoardVisibilityOnlyMeHint": "Tableau personnel, visible uniquement par vous",
-    "BoardHideDoneOlder": "Masquer les terminées de plus de",
-    "BoardHideDoneOlderHint": "Colonnes de la catégorie Terminé",
-    "BoardHideDoneValue": "2 semaines",
+    "BoardHideDoneOlder": "Masquer les tâches terminées",
+    "BoardHideDoneOlderHint": "Selon la date de fin de la tâche.",
+    "BoardHideDoneValue": "Après 2 semaines",
     "BoardCardOrder": "Ordre des cartes",
     "BoardEditorsHint": "Les autres peuvent utiliser le tableau ou créer le leur",
     "WipLimits": "Limites WIP",
@@ -548,7 +548,18 @@
     "BoardSearch": "Rechercher des tableaux",
     "BoardPersonal": "Tableau personnel",
     "WarnOnClosedStatuses": "Signaler les statuts fermés sans colonne",
-    "WarnOnClosedStatusesHint": "Inclure les statuts terminés et annulés dans les avertissements concernant les tâches masquées. Désactivé par défaut."
+    "WarnOnClosedStatusesHint": "Inclure les statuts terminés et annulés dans les avertissements concernant les tâches masquées. Désactivé par défaut.",
+    "BoardHideDoneNever": "Ne pas masquer",
+    "BoardHideDoneWeek": "Après 1 semaine",
+    "BoardHideDoneMonth": "Après 1 mois",
+    "CompletedOn": "Date de fin",
+    "BoardHideDoneDay": "Après 1 jour",
+    "BoardHideDoneThreeDays": "Après 3 jours",
+    "BoardHideDoneQuarter": "Après 3 mois",
+    "BoardHideDoneHalfYear": "Après 6 mois",
+    "BoardHideDoneYear": "Après 1 an",
+    "BoardHideDoneCustom": "Avant une date…",
+    "BoardHideDoneCustomHint": "Masquer les tâches terminées avant la date sélectionnée. Le jour sélectionné est exclu."
   },
   "status": {
     "DuplicateColumnTitle": "Une colonne portant ce nom existe déjà"

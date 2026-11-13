@@ -510,9 +510,9 @@
     "BoardVisibilityAllMembers": "Видно всем",
     "BoardVisibilityOnlyMe": "Только я",
     "BoardVisibilityOnlyMeHint": "Личная доска, видна только вам",
-    "BoardHideDoneOlder": "Скрывать выполненные старше",
-    "BoardHideDoneOlderHint": "Колонки категории «Выполнено»",
-    "BoardHideDoneValue": "2 недели",
+    "BoardHideDoneOlder": "Скрывать выполненные задачи",
+    "BoardHideDoneOlderHint": "Отсчёт начинается после завершения задачи",
+    "BoardHideDoneValue": "Через 2 недели",
     "BoardCardOrder": "Порядок карточек",
     "BoardEditorsHint": "Остальные могут пользоваться доской или создать свою",
     "WipLimits": "WIP-лимиты",
@@ -567,7 +567,18 @@
     "BoardSearch": "Поиск досок",
     "BoardPersonal": "Личная доска",
     "WarnOnClosedStatuses": "Предупреждать о завершенных статусах без колонки",
-    "WarnOnClosedStatusesHint": "Учитывать завершенные и отмененные статусы в предупреждении о скрытых задачах. По умолчанию выключено."
+    "WarnOnClosedStatusesHint": "Учитывать завершенные и отмененные статусы в предупреждении о скрытых задачах. По умолчанию выключено.",
+    "BoardHideDoneNever": "Не скрывать",
+    "BoardHideDoneWeek": "Через 1 неделю",
+    "BoardHideDoneMonth": "Через 1 месяц",
+    "CompletedOn": "Дата завершения",
+    "BoardHideDoneDay": "Через 1 день",
+    "BoardHideDoneThreeDays": "Через 3 дня",
+    "BoardHideDoneQuarter": "Через 3 месяца",
+    "BoardHideDoneHalfYear": "Через 6 месяцев",
+    "BoardHideDoneYear": "Через 1 год",
+    "BoardHideDoneCustom": "До даты…",
+    "BoardHideDoneCustomHint": "Скрывать выполненные задачи, завершённые раньше выбранной даты. Выбранный день не включён."
   },
   "status": {
     "DuplicateColumnTitle": "Колонка с таким названием уже существует"

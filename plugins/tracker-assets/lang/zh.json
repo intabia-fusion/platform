@@ -487,9 +487,9 @@
     "BoardVisibilityAllMembers": "所有人可见",
     "BoardVisibilityOnlyMe": "仅我自己",
     "BoardVisibilityOnlyMeHint": "个人看板，仅您可见",
-    "BoardHideDoneOlder": "隐藏早于以下时间的已完成任务",
-    "BoardHideDoneOlderHint": "“已完成”类别的列",
-    "BoardHideDoneValue": "2 周",
+    "BoardHideDoneOlder": "隐藏已完成的任务",
+    "BoardHideDoneOlderHint": "根据任务完成日期。",
+    "BoardHideDoneValue": "2周后",
     "BoardCardOrder": "卡片顺序",
     "BoardEditorsHint": "其他人可以使用该看板或创建自己的看板",
     "WipLimits": "WIP 限制",
@@ -547,7 +547,18 @@
     "BoardSearch": "搜索看板",
     "BoardPersonal": "个人看板",
     "WarnOnClosedStatuses": "对没有列的已关闭状态发出警告",
-    "WarnOnClosedStatusesHint": "在隐藏任务警告中包含已完成和已取消的状态。默认关闭。"
+    "WarnOnClosedStatusesHint": "在隐藏任务警告中包含已完成和已取消的状态。默认关闭。",
+    "BoardHideDoneNever": "不隐藏",
+    "BoardHideDoneWeek": "1周后",
+    "BoardHideDoneMonth": "1个月后",
+    "CompletedOn": "完成时间",
+    "BoardHideDoneDay": "1天后",
+    "BoardHideDoneThreeDays": "3天后",
+    "BoardHideDoneQuarter": "3个月后",
+    "BoardHideDoneHalfYear": "6个月后",
+    "BoardHideDoneYear": "1年后",
+    "BoardHideDoneCustom": "指定日期之前…",
+    "BoardHideDoneCustomHint": "隐藏在所选日期之前完成的任务，不包含所选日期当天。"
   },
   "status": {
     "DuplicateColumnTitle": "已存在同名的列"

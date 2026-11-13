@@ -488,9 +488,9 @@
     "BoardVisibilityAllMembers": "全員に表示",
     "BoardVisibilityOnlyMe": "自分のみ",
     "BoardVisibilityOnlyMeHint": "個人用ボード。あなただけに表示されます",
-    "BoardHideDoneOlder": "次より古い完了を非表示",
-    "BoardHideDoneOlderHint": "完了カテゴリの列",
-    "BoardHideDoneValue": "2週間",
+    "BoardHideDoneOlder": "完了したタスクを非表示",
+    "BoardHideDoneOlderHint": "完了日に基づきます。",
+    "BoardHideDoneValue": "2週間後",
     "BoardCardOrder": "カードの順序",
     "BoardEditorsHint": "他のユーザーはボードを利用するか、自分のボードを作成できます",
     "WipLimits": "WIP制限",
@@ -548,7 +548,18 @@
     "BoardSearch": "ボードを検索",
     "BoardPersonal": "個人用ボード",
     "WarnOnClosedStatuses": "列のない完了済みステータスについて警告する",
-    "WarnOnClosedStatusesHint": "非表示のタスクの警告に、完了およびキャンセルのステータスを含めます。既定では無効です。"
+    "WarnOnClosedStatusesHint": "非表示のタスクの警告に、完了およびキャンセルのステータスを含めます。既定では無効です。",
+    "BoardHideDoneNever": "非表示にしない",
+    "BoardHideDoneWeek": "1週間後",
+    "BoardHideDoneMonth": "1か月後",
+    "CompletedOn": "完了日時",
+    "BoardHideDoneDay": "1日後",
+    "BoardHideDoneThreeDays": "3日後",
+    "BoardHideDoneQuarter": "3か月後",
+    "BoardHideDoneHalfYear": "6か月後",
+    "BoardHideDoneYear": "1年後",
+    "BoardHideDoneCustom": "指定日より前…",
+    "BoardHideDoneCustomHint": "選択した日より前に完了したタスクを非表示にします。選択した日は含みません。"
   },
   "status": {
     "DuplicateColumnTitle": "この名前の列はすでに存在します"

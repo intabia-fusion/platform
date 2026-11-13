@@ -38,6 +38,7 @@ import tracker, {
   type TimeSpendReport
 } from '@hcengineering/tracker'
 import { OnIssueUpdate } from '../index'
+import { isCompletedIssueStatus } from '@hcengineering/tracker'
 
 // -- Helpers --
 
@@ -183,7 +184,7 @@ function createMockControl (findAllImpl: FindAllFn): TriggerControl {
         return _class === base
       }
     } as any,
-    modelDb: {} as any,
+    modelDb: { findAllSync: jest.fn(() => []) } as any,
     removedMap: new Map(),
     userStatusMap: new Map(),
     cache: new Map(),
@@ -682,5 +683,82 @@ describe('OnIssueUpdate trigger', () => {
       const rootPush = findChildInfoPush(result, rootId)
       expect(rootPush?.reportedTime).toBe(7) // same — leaf's updated reportedTime
     })
+  })
+})
+
+describe('issue completion dates', () => {
+  const statuses = [
+    { _id: 'done', category: 'task:statusCategory:Won' },
+    { _id: 'also-done', category: 'task:statusCategory:Won' },
+    { _id: 'open', category: 'task:statusCategory:Active' },
+    { _id: 'cancelled', category: 'task:statusCategory:Lost' }
+  ]
+  const setup = (completedOn: Issue['completedOn'] = null): { issue: WithLookup<Issue>, control: TriggerControl } => {
+    const issue = { ...createMockIssue(), completedOn }
+    const control = createMockControl(async (_ctx, clazz) => (clazz === tracker.class.Issue ? [issue] : []))
+    control.modelDb.findAllSync = jest.fn((_class, q) => statuses.filter((s) => s._id === q._id)) as any
+    return { issue, control }
+  }
+  const dates = (txes: Tx[]): any[] =>
+    txes
+      .filter(
+        (tx) =>
+          tx._class === core.class.TxUpdateDoc &&
+          Object.prototype.hasOwnProperty.call((tx as TxUpdateDoc<Issue>).operations, 'completedOn')
+      )
+      .map((tx) => (tx as TxUpdateDoc<Issue>).operations.completedOn)
+
+  it('recognizes only the completed category', () => {
+    expect(isCompletedIssueStatus(statuses[0] as any)).toBe(true)
+    expect(isCompletedIssueStatus(statuses[3] as any)).toBe(false)
+  })
+
+  it.each(['open', 'done', 'cancelled'])('initializes tasks created in %s', async (status) => {
+    const { issue, control } = setup()
+    issue.status = status as any
+    const tx = createIssueTx(issue)
+    tx.modifiedOn = 1234
+    expect(dates(await OnIssueUpdate([tx], control))).toEqual([status === 'done' ? 1234 : null])
+  })
+
+  it('timestamps completion and ignores later edits', async () => {
+    const { issue, control } = setup()
+    const tx = createIssueUpdateTx(issue._id, { status: 'done' as Issue['status'] })
+    tx.modifiedOn = 1234
+    expect(dates(await OnIssueUpdate([tx], control))).toEqual([1234])
+    expect(dates(await OnIssueUpdate([createIssueUpdateTx(issue._id, { title: 'Edited' })], control))).toEqual([])
+  })
+
+  it('preserves the date between completed statuses', async () => {
+    const { issue, control } = setup(1234)
+    expect(
+      dates(await OnIssueUpdate([createIssueUpdateTx(issue._id, { status: 'also-done' as Issue['status'] })], control))
+    ).toEqual([])
+  })
+
+  it.each(['open', 'cancelled'])('clears completion when moving to %s', async (status) => {
+    const { issue, control } = setup(1234)
+    expect(
+      dates(await OnIssueUpdate([createIssueUpdateTx(issue._id, { status: status as Issue['status'] })], control))
+    ).toEqual([null])
+  })
+
+  it('restarts completion after reopening, including transitions in one batch', async () => {
+    const { issue, control } = setup(1234)
+    const reopen = createIssueUpdateTx(issue._id, { status: 'open' as Issue['status'] })
+    const finish = createIssueUpdateTx(issue._id, { status: 'done' as Issue['status'] })
+    finish.modifiedOn = 5678
+    expect(dates(await OnIssueUpdate([reopen, finish], control))).toEqual([null, 5678])
+  })
+
+  it('keeps an unknown legacy date unknown until the task is reopened', async () => {
+    const { issue, control } = setup()
+    delete issue.completedOn
+    expect(
+      dates(await OnIssueUpdate([createIssueUpdateTx(issue._id, { status: 'done' as Issue['status'] })], control))
+    ).toEqual([])
+    const reopen = createIssueUpdateTx(issue._id, { status: 'open' as Issue['status'] })
+    const finish = createIssueUpdateTx(issue._id, { status: 'done' as Issue['status'] })
+    expect(dates(await OnIssueUpdate([reopen, finish], control))).toEqual([null, finish.modifiedOn])
   })
 })

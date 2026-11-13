@@ -265,6 +265,12 @@ export class TIssue extends TTask implements Issue {
   @Prop(TypeDate(DateRangeMode.DATETIME), tracker.string.DueDate)
   declare dueDate: Timestamp | null
 
+  @Prop(TypeDate(DateRangeMode.DATETIME), tracker.string.CompletedOn)
+  @Hidden()
+  @ReadOnly()
+  @Index(IndexKind.Indexed)
+  completedOn?: Timestamp | null
+
   @Prop(TypeRef(tracker.class.Milestone), tracker.string.Milestone, { icon: tracker.icon.Milestone })
   @Index(IndexKind.Indexed)
   @Activity({ set: tracker.string.MilestoneChangedTo, unset: tracker.string.MilestoneUnset })
@@ -508,6 +514,10 @@ export class TBoard extends TDoc implements Board {
   columns!: BoardColumn[]
 
   preventDuplicateColumnTitles?: boolean
+
+  hideCompletedAfterDays?: 0 | 1 | 3 | 7 | 14 | 30 | 90 | 180 | 365
+
+  hideCompletedBefore?: Timestamp | null
 
   warnOnClosedStatuses?: boolean
 

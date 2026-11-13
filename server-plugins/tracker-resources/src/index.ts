@@ -38,7 +38,8 @@ import tracker, {
   trackerId,
   type Project,
   IssuePriority,
-  IssueStatus
+  IssueStatus,
+  isCompletedIssueStatus
 } from '@hcengineering/tracker'
 import { workbenchId } from '@hcengineering/workbench'
 import {
@@ -145,6 +146,7 @@ export async function OnComponentRemove (txes: Tx[], control: TriggerControl): P
  */
 export async function OnIssueUpdate (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []
+  const completionDates = new Map<Ref<Issue>, Issue['completedOn']>()
   for (const actualTx of txes) {
     // Check TimeReport operations
     if (
@@ -162,6 +164,10 @@ export async function OnIssueUpdate (txes: Tx[], control: TriggerControl): Promi
       const createTx = actualTx as TxCreateDoc<Issue>
       if (control.hierarchy.isDerived(createTx.objectClass, tracker.class.Issue)) {
         const issue = TxProcessor.createDoc2Doc(createTx)
+        const status = control.modelDb.findAllSync(core.class.Status, { _id: issue.status })[0]
+        const completedOn = isCompletedIssueStatus(status) ? createTx.modifiedOn : null
+        completionDates.set(issue._id, completedOn)
+        result.push(control.txFactory.createTxUpdateDoc(issue._class, issue.space, issue._id, { completedOn }))
         updateIssueParentEstimations(issue, result, control, [], issue.parents)
         continue
       }
@@ -170,6 +176,29 @@ export async function OnIssueUpdate (txes: Tx[], control: TriggerControl): Promi
     if (actualTx._class === core.class.TxUpdateDoc) {
       const updateTx = actualTx as TxUpdateDoc<Issue>
       if (control.hierarchy.isDerived(updateTx.objectClass, tracker.class.Issue)) {
+        if (updateTx.operations.status !== undefined) {
+          const status = control.modelDb.findAllSync(core.class.Status, { _id: updateTx.operations.status })[0]
+          if (status !== undefined) {
+            const [issue] = await control.findAll(control.ctx, tracker.class.Issue, { _id: updateTx.objectId })
+            const previous = completionDates.has(updateTx.objectId)
+              ? completionDates.get(updateTx.objectId)
+              : issue?.completedOn
+            // Missing on legacy completed issues means unknown, not a new completion.
+            const completedOn = isCompletedIssueStatus(status)
+              ? previous === null
+                ? updateTx.modifiedOn
+                : previous
+              : null
+            completionDates.set(updateTx.objectId, completedOn)
+            if (completedOn !== previous) {
+              result.push(
+                control.txFactory.createTxUpdateDoc(updateTx.objectClass, updateTx.objectSpace, updateTx.objectId, {
+                  completedOn
+                })
+              )
+            }
+          }
+        }
         result.push(...(await doIssueUpdate(updateTx, control)))
         continue
       }
