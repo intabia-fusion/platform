@@ -211,21 +211,22 @@ test.describe('Poll form tests', () => {
       await expect
         .poll(async () => await strip.evaluate((element) => element.scrollWidth > element.clientWidth))
         .toBe(true)
-      await strip.evaluate((element) => {
-        element.scrollLeft = element.scrollWidth
-      })
       await expect
         .poll(async () => {
+          const atEnd = await strip.evaluate((element) => {
+            element.scrollLeft = element.scrollWidth
+            return element.scrollWidth - element.clientWidth - element.scrollLeft <= 1
+          })
           const card = await last.boundingBox()
           const viewport = await strip.boundingBox()
-          return (
+          const lastVisible =
             card != null &&
             viewport != null &&
-            card.x >= viewport.x &&
+            card.x + card.width > viewport.x &&
             card.x + card.width <= viewport.x + viewport.width + 1
-          )
+          return { atEnd, lastVisible }
         })
-        .toBe(true)
+        .toEqual({ atEnd: true, lastVisible: true })
     }
 
     await last.locator('.open').click()
