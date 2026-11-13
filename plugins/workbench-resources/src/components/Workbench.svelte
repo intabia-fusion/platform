@@ -91,6 +91,7 @@
   import { get } from 'svelte/store'
 
   import { subscribeMobile } from '../mobile'
+  import { hasApplicationNavigator } from '../navigation'
   import workbench from '../plugin'
   import { buildNavModel, fullscreenStore, isAllowedToRole, logOut, workspacesStore } from '../utils'
   import AccountPopup from './AccountPopup.svelte'
@@ -746,25 +747,11 @@
   $: checkInboxPopup($popupstore)
 
   let inboxPopup: PopupResult | undefined = undefined
-  let lastLoc: Location | undefined = undefined
 
   $: inboxProps = {
     selected: currentAppAlias === notificationId || inboxPopup !== undefined,
     navigator: (currentAppAlias === notificationId || inboxPopup !== undefined) && $deviceInfo.navigator.visible,
-    notify: hasInboxNotifications,
-    onClick: (e: MouseEvent) => {
-      if (e.metaKey || e.ctrlKey) return
-      if (!$deviceInfo.navigator.visible && $deviceInfo.navigator.float && currentAppAlias === notificationId) {
-        void toggleNav()
-      } else if (currentAppAlias === notificationId && lastLoc !== undefined) {
-        e.preventDefault()
-        e.stopPropagation()
-        navigate(lastLoc)
-        lastLoc = undefined
-      } else {
-        lastLoc = $location
-      }
-    }
+    notify: hasInboxNotifications
   }
 
   $: customAppProps = new Map([[notificationId, inboxProps]])
@@ -858,9 +845,13 @@
         >
           <Logo mini={appsMini} workspace={windowWorkspaceName ?? $resolvedLocationStore.path[1]} />
         </div>
-        <div class="topmenu-container clear-mins flex-no-shrink" class:mini={appsMini}>
+        <div
+          class="topmenu-container clear-mins flex-no-shrink"
+          class:mini={appsMini}
+          class:unavailable={!hasApplicationNavigator(currentApplication, navigatorModel)}
+        >
           <AppItem
-            icon={ui.icon.Equals}
+            icon={$deviceInfo.navigator.visible ? ui.icon.ArrowBarToLeft : ui.icon.ArrowBarToRight}
             label={$deviceInfo.navigator.visible ? workbench.string.HideMenu : workbench.string.ShowMenu}
             selected={!$deviceInfo.navigator.visible}
             size={appsMini ? 'small' : 'medium'}
@@ -868,19 +859,8 @@
           />
         </div>
         {#if !isExcludedApp(notificationId)}
-          <NavLink
-            app={notificationId}
-            shrink={0}
-            disabled={!$deviceInfo.navigator.visible &&
-              $deviceInfo.navigator.float &&
-              currentAppAlias === notificationId}
-          >
-            <AppItem
-              icon={notification.icon.Notifications}
-              label={notification.string.Inbox}
-              {...inboxProps}
-              on:click={inboxProps.onClick}
-            />
+          <NavLink app={notificationId} shrink={0} disabled={currentAppAlias === notificationId}>
+            <AppItem icon={notification.icon.Notifications} label={notification.string.Inbox} {...inboxProps} />
           </NavLink>
         {/if}
         <Applications
@@ -888,7 +868,6 @@
           active={currentApplication?._id}
           direction={$deviceInfo.navigator.direction}
           {customAppProps}
-          on:toggleNav={toggleNav}
         />
       </div>
       <div
@@ -1172,6 +1151,10 @@
       .topmenu-container {
         margin-bottom: 1rem;
       }
+    }
+
+    .topmenu-container.unavailable {
+      visibility: hidden;
     }
 
     .logo-container,
