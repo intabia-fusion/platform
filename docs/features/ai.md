@@ -24,6 +24,11 @@
 
 ## Модель данных
 
+Идентичность бота задаёт `aiBotAccountEmail` из core (`ai.bot@platform`). Миграция account DB v57
+переименовывает прежний адрес и останавливается при конфликте. `utils/account.ts` откладывает регистрацию,
+пока существует прежний аккаунт. Миграция contact `rename-ai-bot-email` сохраняет старые `_id` авторов:
+при наличии нового идентификатора помечает прежний `isDeleted: true`. Версия модели - `common/scripts/version.txt`.
+
 | Класс | Смысл | Файл |
 | --- | --- | --- |
 | `AIRequest` (`TAIRequest`) | Статус одного запроса к LLM (`queued/processing/done/failed/cancelled`), токены, прогресс итераций, флаг компакции | `models/ai-bot/src/index.ts` |

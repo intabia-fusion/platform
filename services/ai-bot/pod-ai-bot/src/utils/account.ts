@@ -143,6 +143,11 @@ export async function getAccountUuid (ctx?: MeasureContext): Promise<AccountUuid
     return account
   }
 
+  const legacySocialId = await accountClient.findFullSocialIdBySocialKey('email:huly.ai.bot@hc.engineering')
+  if (legacySocialId != null) {
+    throw new Error('AI bot email migration is pending in account')
+  }
+
   // The bot signs in with service tokens, so its password is random and never kept.
   const password = randomBytes(32).toString('hex')
   const result = await accountClient.signUp(aiBotAccountEmail, password, config.FirstName, config.LastName)

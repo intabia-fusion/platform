@@ -15,6 +15,7 @@
 
 import {
   AccountRole,
+  aiBotAccountEmail,
   type AccountUuid,
   type MeasureContext,
   type PersonId,
@@ -61,7 +62,7 @@ jest.mock('@hcengineering/server-token', () => ({
   generateToken: jest.fn(() => 'new-token')
 }))
 
-const botEmail = 'huly.ai.bot@hc.engineering'
+const botEmail = aiBotAccountEmail
 const userEmail = 'user@example.com'
 const personUuid = 'person-uuid' as PersonUuid
 const accountUuid = personUuid as unknown as AccountUuid
@@ -131,7 +132,7 @@ describe('ai-bot sign in', () => {
         'password with the email in another case',
         async () => {
           storedEmail(botEmail)
-          await login(ctx, db, null, 'token', { email: ' Huly.AI.Bot@HC.engineering ', password: 'p' })
+          await login(ctx, db, null, 'token', { email: ' AI.Bot@Platform ', password: 'p' })
         }
       ],
       [
@@ -259,11 +260,12 @@ describe('ai-bot sign in', () => {
     })
 
     describe('as a mailbox', () => {
-      const createMailbox = async (name: string): Promise<any> =>
-        await getMethods().createMailbox?.(ctx, db, null, { id: 1, params: { name, domain: 'hc.engineering' } }, 't')
+      const domain = 'example.com'
+      const createMailbox = async (name: string, mailboxDomain: string = domain): Promise<any> =>
+        await getMethods().createMailbox?.(ctx, db, null, { id: 1, params: { name, domain: mailboxDomain } }, 't')
 
       beforeEach(() => {
-        process.env.MAILBOX_DOMAINS = 'hc.engineering'
+        process.env.MAILBOX_DOMAINS = domain
         ;(db.mailbox.findOne as jest.Mock).mockResolvedValue(null)
         ;(db.mailbox.find as jest.Mock).mockResolvedValue([])
         jest.spyOn(utils, 'addSocialIdBase').mockResolvedValue('mailbox-social-id' as PersonId)
@@ -273,22 +275,21 @@ describe('ai-bot sign in', () => {
         delete process.env.MAILBOX_DOMAINS
       })
 
-      test.each(['huly.ai.bot', 'Huly.AI.Bot'])(
-        'a user cannot create %s: no rows, no confirmed email social id',
-        async (name) => {
-          const response = await createMailbox(name)
+      test('the bot address cannot become one: it is not a valid email', async () => {
+        // ai.bot@platform has a single-label domain, so isEmail rejects it before the anti-squat
+        // check: no mailbox can take the bot's address, and no social id is created.
+        const response = await createMailbox('ai.bot', 'platform')
 
-          expect(response?.error?.code).toBe(platform.status.Forbidden)
-          expect(db.mailbox.insertOne).not.toHaveBeenCalled()
-          expect(db.mailboxSecret.insertOne).not.toHaveBeenCalled()
-          expect(utils.addSocialIdBase).not.toHaveBeenCalled()
-        }
-      )
+        expect(response?.error?.code).toBe(platform.status.MailboxError)
+        expect(db.mailbox.insertOne).not.toHaveBeenCalled()
+        expect(db.mailboxSecret.insertOne).not.toHaveBeenCalled()
+        expect(utils.addSocialIdBase).not.toHaveBeenCalled()
+      })
 
       test('another name in the same domain is created', async () => {
         const response = await createMailbox('someone.else')
 
-        expect(response?.result).toEqual({ mailbox: 'someone.else@hc.engineering', socialId: 'mailbox-social-id' })
+        expect(response?.result).toEqual({ mailbox: `someone.else@${domain}`, socialId: 'mailbox-social-id' })
         expect(db.mailbox.insertOne).toHaveBeenCalledTimes(1)
         expect(db.mailboxSecret.insertOne).toHaveBeenCalledTimes(1)
       })

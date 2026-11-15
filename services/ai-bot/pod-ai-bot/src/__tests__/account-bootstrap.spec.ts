@@ -43,7 +43,7 @@ async function freshGetAccountUuid (): Promise<(ctx?: MeasureContext) => Promise
 
 describe('ai-bot account bootstrap', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
+    jest.resetAllMocks()
   })
 
   it('first start signs up with a random password', async () => {
@@ -79,6 +79,19 @@ describe('ai-bot account bootstrap', () => {
     expect(await getAccountUuid(ctx)).toBe('bot-account')
     expect(mockSignUp).not.toHaveBeenCalled()
     expect(mockConfirm).not.toHaveBeenCalled()
+  })
+
+  it('waits for the legacy account migration without registering another bot', async () => {
+    mockFindSocialId.mockResolvedValueOnce(null).mockResolvedValueOnce(botSocialId)
+    const getAccountUuid = await freshGetAccountUuid()
+
+    await expect(getAccountUuid(ctx)).rejects.toThrow('AI bot email migration is pending in account')
+    expect(mockFindSocialId).toHaveBeenNthCalledWith(2, 'email:huly.ai.bot@hc.engineering')
+    expect(mockSignUp).not.toHaveBeenCalled()
+
+    mockFindSocialId.mockResolvedValueOnce(botSocialId)
+    expect(await getAccountUuid(ctx)).toBe('bot-account')
+    expect(mockSignUp).not.toHaveBeenCalled()
   })
 
   it('refuses a bot email that somebody else registered and left unconfirmed', async () => {

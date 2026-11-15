@@ -15,6 +15,7 @@ import {
 } from '@hcengineering/contact'
 import {
   AccountRole,
+  aiBotAccountEmail,
   type AccountUuid,
   buildSocialIdString,
   type Class,
@@ -29,6 +30,7 @@ import {
   type PersonUuid,
   type Ref,
   type SocialKey,
+  SocialIdType,
   SortingOrder,
   type Space,
   toIdMap,
@@ -299,8 +301,8 @@ async function migrateMergedAccounts (client: MigrationClient): Promise<void> {
     }
 
     // exclude empty emails
-    // also exclude Hulia account
-    if (account.email === '' || account.email === 'huly.ai.bot@hc.engineering') {
+    // also exclude the AI bot account, under both its current and its pre-rename address
+    if (account.email === '' || account.email === aiBotAccountEmail || account.email === 'huly.ai.bot@hc.engineering') {
       continue
     }
     accountsByPerson.get(account.person)?.push(account)
@@ -486,6 +488,46 @@ async function fixSocialIdCase (client: MigrationClient): Promise<void> {
     await socialIdsIterator.close()
     client.logger.log('Finished fixing social id case. Total updated:', { updated })
   }
+}
+
+/**
+ * FUSIO-1379: the bot's email is its identity in a workspace - the UI, the server trigger and the
+ * outgoing webhooks all find it by `email:<address>`. ensureEmployee never syncs a changed value, so
+ * the copy created when the bot joined has to be migrated here, or the bot goes silent and its old
+ * address keeps riding out in webhooks.
+ */
+export async function renameAiBotEmail (client: MigrationClient): Promise<void> {
+  const oldKey = buildSocialIdString({ type: SocialIdType.EMAIL, value: 'huly.ai.bot@hc.engineering' })
+  const newKey = buildSocialIdString({ type: SocialIdType.EMAIL, value: aiBotAccountEmail })
+
+  const identities = await client.find<SocialIdentity>(DOMAIN_CHANNEL, {
+    _class: contact.class.SocialIdentity,
+    key: oldKey
+  })
+  if (identities.length === 0) return
+
+  client.logger.log('Renaming the ai-bot email social identity...', { found: identities.length })
+
+  // A workspace that already provisioned the bot under the new address must not keep both: the
+  // webhook resolves a person's email with an unordered findAll and would pick either one.
+  const current = await client.find<SocialIdentity>(DOMAIN_CHANNEL, {
+    _class: contact.class.SocialIdentity,
+    key: newKey
+  })
+  if (current.length > 0) {
+    await client.update(
+      DOMAIN_CHANNEL,
+      { _class: contact.class.SocialIdentity, key: oldKey },
+      { isDeleted: true }
+    )
+    return
+  }
+
+  await client.update(
+    DOMAIN_CHANNEL,
+    { _class: contact.class.SocialIdentity, key: oldKey },
+    { key: newKey, value: aiBotAccountEmail }
+  )
 }
 
 async function setSocialIdentityIsDeleted (client: MigrationClient): Promise<void> {
@@ -745,6 +787,11 @@ export const contactOperation: MigrateOperation = {
         state: 'set-account-person-space-v2',
         mode: 'upgrade',
         func: setAccountInPersonSpace
+      },
+      {
+        state: 'rename-ai-bot-email',
+        mode: 'upgrade',
+        func: renameAiBotEmail
       }
     ])
   },
