@@ -15,32 +15,8 @@
 
 import type { Ref, Status } from '@hcengineering/core'
 import type { Board, BoardColumn } from '@hcengineering/tracker'
-import type { Filter } from '@hcengineering/view'
-
-/** Remove unavailable statuses from saved conditions without changing unrelated filters. */
-export function pruneStatusCondition (
-  condition: string,
-  allowed: ReadonlySet<Ref<Status>>,
-  onRemoved?: (count: number) => void
-): string {
-  let filters: Filter[]
-  try {
-    filters = JSON.parse(condition)
-  } catch {
-    return condition
-  }
-  if (!Array.isArray(filters)) return condition
-  let changed = false
-  const kept = filters.flatMap((filter) => {
-    if (filter?.key?.key !== 'status' || !Array.isArray(filter.value)) return [filter]
-    const value = filter.value.filter((id) => id == null || allowed.has(id))
-    if (value.length === filter.value.length) return [filter]
-    onRemoved?.(filter.value.length - value.length)
-    changed = true
-    return value.length === 0 ? [] : [{ ...filter, value }]
-  })
-  return changed ? (kept.length === 0 ? '' : JSON.stringify(kept)) : condition
-}
+import { pruneStatusCondition } from '@hcengineering/tracker'
+export { pruneStatusCondition } from '@hcengineering/tracker'
 
 export function pruneBoardColumns (columns: BoardColumn[], allowed: ReadonlySet<Ref<Status>>): BoardColumn[] {
   return columns.map((column) => ({ ...column, statuses: column.statuses.filter((id) => allowed.has(id)) }))
