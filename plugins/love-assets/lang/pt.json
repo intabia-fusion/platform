@@ -111,6 +111,7 @@
     "MeetingStart": "Início da reunião",
     "MeetingNotOpenYet": "A reunião ainda não começou. Abre às {time}.",
     "MeetingIsOver": "A reunião já terminou.",
+    "MeetingNotFound": "Reunião não encontrada.",
     "MeetingEnd": "Fim da reunião",
     "EndMeeting": "Terminar reunião",
     "Status": "Estado",

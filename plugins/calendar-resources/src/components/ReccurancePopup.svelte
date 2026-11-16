@@ -14,49 +14,32 @@
 -->
 <script lang="ts">
   import type { RecurringRule } from '@hcengineering/calendar'
-  import { getWeekday } from '@hcengineering/calendar'
   import type { Timestamp } from '@hcengineering/core'
   import type { DropdownIntlItem } from '@hcengineering/ui'
-  import ui, {
-    Button,
-    CheckBox,
-    CircleButton,
-    DropdownLabelsIntl,
-    Grid,
-    Label,
-    NumberInput,
-    RadioButton,
-    Row
-  } from '@hcengineering/ui'
+  import ui, { Button, DropdownLabelsIntl, Label, NumberInput, RadioButton } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import calendar from '../plugin'
-  import type { SetPosRules } from '../types'
-  import ByDateSelector from './ByDateSelector.svelte'
   import DateEditor from './DateEditor.svelte'
   import RecurrenceSummary from './RecurrenceSummary.svelte'
-  import SetPosSelector from './SetPosSelector.svelte'
-  import MonthSelector from './MonthSelector.svelte'
 
   export let rules: RecurringRule[]
   export let startDate: Timestamp
+  // Offered only where nothing is saved yet: removing the rule of an existing series needs the
+  // event itself to change class, and that is not what this popup does.
+  export let removable: boolean = false
 
   type Freq = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY'
   let periodType: Freq = (rules[0]?.freq as Freq) ?? 'WEEKLY'
   let interval: number = rules[0]?.interval ?? 1
-
-  let isByMonthDay: boolean = rules[0] === undefined || rules[0]?.byMonthDay !== undefined
-  let byMonthDay = rules[0]?.byMonthDay ?? [new Date(startDate).getDate()]
-  let isYearBySetPos = rules[0]?.bySetPos !== undefined
-  let byMonth = rules[0]?.byMonth ?? [new Date(startDate).getMonth()]
+  let until: number = rules[0]?.endDate ?? Math.max(startDate, Date.now())
 
   const dispatch = createEventDispatcher()
 
-  let setPos: SetPosRules = {
-    bySetPos: rules[0]?.bySetPos ?? [1],
-    byDay: rules[0]?.byDay ?? ['SU,MO,TU,WE,TH,FR,SA']
-  }
+  let selected = rules[0]?.endDate !== undefined ? 'on' : 'never'
 
-  let selected = rules[0]?.endDate !== undefined ? 'on' : rules[0]?.count ? 'after' : 'never'
+  // A rule saved with a fixed number of occurrences keeps it: the end condition is not edited here
+  // any more, so opening the popup and saving must not turn a finite series into an endless one.
+  const savedCount = rules[0]?.count
 
   const ddItems = [
     {
@@ -80,18 +63,18 @@
   // The inputs are parameters, not free variables: a reactive statement only re-runs on the values
   // it can see, and `$: preview = buildRule()` read none of them - the preview, the summary and the
   // saved rule kept the values the popup was opened with, so changing the period did nothing.
+  //
+  // The rule is "every N days/weeks/months/years" and nothing else. RFC 5545 also lets a rule name
+  // weekdays, month days and positions ("the second Tuesday"), and the popup asked for all of them
+  // at once - five pickers for a repeat that is nearly always "every week on the same day". Those
+  // keys are therefore not written: the generator falls back to the weekday and the day of month the
+  // series starts on, which is exactly what an interval alone means.
   function buildRule (settings: {
     periodType: Freq
     interval: number
     selected: string
     until: number
-    count: number
-    isByMonthDay: boolean
-    byMonthDay: number[]
-    isYearBySetPos: boolean
-    byMonth: number[]
-    byDay: string[]
-    setPos: SetPosRules
+    count: number | undefined
   }): RecurringRule {
     const res: RecurringRule = {
       freq: settings.periodType,
@@ -99,41 +82,18 @@
     }
     if (settings.selected === 'on') {
       res.endDate = settings.until
-    } else if (settings.selected === 'after') {
+    } else if (settings.count !== undefined) {
       res.count = settings.count
-    }
-    if (settings.periodType === 'WEEKLY') {
-      res.byDay = settings.byDay
-    }
-    if (settings.periodType === 'MONTHLY') {
-      if (settings.isByMonthDay) {
-        res.byMonthDay = settings.byMonthDay
-      } else {
-        res.bySetPos = settings.setPos.bySetPos
-        res.byDay = settings.setPos.byDay
-      }
-    }
-    if (settings.periodType === 'YEARLY') {
-      res.byMonth = settings.byMonth
-      if (settings.isYearBySetPos) {
-        res.bySetPos = settings.setPos.bySetPos
-        res.byDay = settings.setPos.byDay
-      }
     }
     return res
   }
 
-  // Saved rule that cannot produce an occurrence is worse than no rule: the series would look
-  // scheduled while nothing ever opens. An end date before the first occurrence is the same story.
+  // A rule that cannot produce an occurrence is worse than no rule: the series would look scheduled
+  // while nothing ever opens. An end date before the first occurrence is the same story.
   function isInvalid (rule: RecurringRule): boolean {
     // The end date is picked by day while the series starts at a time, so a rule ending on the very
     // day of its first occurrence is still valid there.
-    if (rule.endDate !== undefined && new Date(rule.endDate).setHours(23, 59, 59, 999) < startDate) return true
-    if (rule.freq === 'WEEKLY') return (rule.byDay ?? []).length === 0
-    if (rule.freq === 'MONTHLY') {
-      return rule.byMonthDay !== undefined ? rule.byMonthDay.length === 0 : (rule.byDay ?? []).length === 0
-    }
-    return false
+    return rule.endDate !== undefined && new Date(rule.endDate).setHours(23, 59, 59, 999) < startDate
   }
 
   $: preview = buildRule({
@@ -141,51 +101,15 @@
     interval,
     selected,
     until,
-    count,
-    isByMonthDay,
-    byMonthDay,
-    isYearBySetPos,
-    byMonth,
-    byDay: selectedWeekdays,
-    setPos
+    count: savedCount
   })
   $: invalid = isInvalid(preview)
 
-  function save () {
+  function save (): void {
     if (invalid) return
     rules = [preview]
     dispatch('close', rules)
   }
-
-  let count: number = rules[0]?.count ?? 1
-
-  let selectedWeekdays: string[] = rules[0]?.byDay ?? [getWeekday(new Date(startDate))]
-
-  function weekdayClick (day: string) {
-    const index = selectedWeekdays.findIndex((p) => p === day)
-    if (index !== -1) {
-      selectedWeekdays.splice(index, 1)
-    } else {
-      selectedWeekdays.push(day)
-    }
-    selectedWeekdays = selectedWeekdays
-  }
-
-  function isActive (day: string, selected: string[]): boolean {
-    return selectedWeekdays.includes(day)
-  }
-
-  const weekdays = [
-    { id: 'MO', label: calendar.string.MondayShort },
-    { id: 'TU', label: calendar.string.TuesdayShort },
-    { id: 'WE', label: calendar.string.WednesdayShort },
-    { id: 'TH', label: calendar.string.ThursdayShort },
-    { id: 'FR', label: calendar.string.FridayShort },
-    { id: 'SA', label: calendar.string.SaturdayShort },
-    { id: 'SU', label: calendar.string.SundayShort }
-  ]
-
-  let until: number = rules[0]?.endDate ?? Math.max(startDate, Date.now())
 </script>
 
 <div class="repeatPopup-container">
@@ -198,109 +122,44 @@
       <NumberInput bind:value={interval} maxWidth="4rem" maxDigitsAfterPoint={0} minValue={1} />
       <DropdownLabelsIntl bind:selected={periodType} items={ddItems} size="medium" params={{ count: interval }} />
     </div>
-    {#if periodType === 'WEEKLY'}
-      <div class="flex-row-center mt-3">
-        <span class="min-w-12"><Label label={calendar.string.On} /></span>
-        <div class="flex-row-center gap-1-5 ml-1-5">
-          {#each weekdays as day}
-            <CircleButton
-              size="medium"
-              primary={isActive(day.id, selectedWeekdays)}
-              on:click={() => {
-                weekdayClick(day.id)
-              }}
-              on:selected={() => {
-                weekdayClick(day.id)
-              }}
-            >
-              <div class="flex-row-center weekday" slot="content">
-                <Label label={day.label} />
-              </div>
-            </CircleButton>
-          {/each}
-        </div>
-      </div>
-    {/if}
-    {#if periodType === 'MONTHLY'}
-      <RadioButton
-        group={isByMonthDay}
-        value={true}
-        labelIntl={calendar.string.Each}
-        action={() => {
-          isByMonthDay = true
-        }}
-      />
-      <ByDateSelector bind:selected={byMonthDay} disabled={!isByMonthDay} />
-      <RadioButton
-        group={isByMonthDay}
-        value={false}
-        labelIntl={calendar.string.OnThe}
-        action={() => {
-          isByMonthDay = false
-        }}
-      />
-      <SetPosSelector bind:setPos disabled={isByMonthDay} />
-    {:else if periodType === 'YEARLY'}
-      <MonthSelector bind:selected={byMonth} />
-      <div class="flex-row-center flex-gap-1">
-        <CheckBox bind:checked={isYearBySetPos} />
-        <Label label={calendar.string.OnThe} />
-      </div>
-      <SetPosSelector bind:setPos disabled={!isYearBySetPos} />
-    {/if}
     <div class="flex-row-center min-h-8">
       <Label label={calendar.string.Ends} />
     </div>
-    <Grid columnGap={0.375} rowGap={0.75} equalHeight>
-      <Row>
+    <div class="flex-col flex-gap-2">
+      <RadioButton
+        labelIntl={calendar.string.Never}
+        value="never"
+        group={selected}
+        action={() => {
+          selected = 'never'
+        }}
+      />
+      <div class="flex-row-center flex-gap-2">
         <RadioButton
-          labelIntl={calendar.string.Never}
-          value="never"
+          labelIntl={calendar.string.OnUntil}
+          value="on"
           group={selected}
           action={() => {
-            selected = 'never'
+            selected = 'on'
           }}
         />
-      </Row>
-      <RadioButton
-        labelIntl={calendar.string.OnUntil}
-        value="on"
-        group={selected}
-        action={() => {
-          selected = 'on'
-        }}
-      />
-      <div class="flex-row-center">
         <DateEditor bind:date={until} withoutTime kind="secondary" disabled={selected !== 'on'} />
       </div>
-      <RadioButton
-        labelIntl={calendar.string.After}
-        value="after"
-        group={selected}
-        action={() => {
-          selected = 'after'
-        }}
-      />
-      <div class="flex-row-center">
-        <NumberInput
-          bind:value={count}
-          maxWidth="3rem"
-          maxDigitsAfterPoint={0}
-          minValue={1}
-          disabled={selected !== 'after'}
-        />
-        <span class="ml-1-5" class:content-dark-color={selected !== 'after'}>
-          <Label label={calendar.string.Times} params={{ count }} />
-        </span>
-      </div>
-    </Grid>
+    </div>
   </div>
   <div class="preview flex-row-center">
     <RecurrenceSummary rules={[preview]} {startDate} />
   </div>
-  <div class="pool flex-row-reverse flex-gap-3">
-    <Button label={ui.string.Save} on:click={save} kind="primary" disabled={invalid} />
-    <Button label={ui.string.Cancel} on:click={() => dispatch('close')} />
+  <div class="pool flex-between">
+    <div>
+      {#if removable}
+        <Button label={calendar.string.DoNotRepeat} kind="ghost" on:click={() => dispatch('close', [])} />
+      {/if}
+    </div>
+    <div class="flex-row-reverse flex-gap-3">
+      <Button label={ui.string.Save} on:click={save} kind="primary" disabled={invalid} />
+      <Button label={ui.string.Cancel} on:click={() => dispatch('close')} />
+    </div>
   </div>
 </div>
 
@@ -322,11 +181,6 @@
 
     .content {
       padding: 0 1.25rem 1.25rem;
-    }
-
-    .weekday {
-      overflow: hidden;
-      font-size: 0.6875rem;
     }
 
     .pool {

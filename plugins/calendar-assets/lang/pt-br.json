@@ -55,6 +55,7 @@
     "EventTitlePlaceholder": "Título do evento",
     "TimeZone": "Fuso horário",
     "Repeat": "Repetir",
+    "DoNotRepeat": "Não repetir",
     "On": "Em",
     "Every": "Todos os",
     "After": "Depois de",

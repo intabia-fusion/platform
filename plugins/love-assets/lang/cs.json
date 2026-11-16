@@ -111,6 +111,7 @@
     "MeetingStart": "Začátek schůzky",
     "MeetingNotOpenYet": "Schůzka ještě nezačala. Otevře se v {time}.",
     "MeetingIsOver": "Schůzka již skončila.",
+    "MeetingNotFound": "Schůzka nebyla nalezena.",
     "MeetingEnd": "Konec schůzky",
     "EndMeeting": "Ukončit schůzku",
     "Status": "Stav",

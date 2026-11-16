@@ -18,15 +18,13 @@
   import type { Floor as FloorType, Office, Room } from '@hcengineering/love'
   import love, { isOffice } from '@hcengineering/love'
   import { SpecialView } from '@hcengineering/workbench-resources'
-  import { deviceOptionsStore as deviceInfo, Label, showPopup } from '@hcengineering/ui'
-  import { Button } from '@hcengineering/ui/kit'
+  import { deviceOptionsStore as deviceInfo, Label } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
   import { onDestroy } from 'svelte'
   import { currentFloor, ensureOfficeDetailsLoaded, officeView, rooms } from '../stores'
 
   import Floor from './Floor.svelte'
   import FloorConfigure from './FloorConfigure.svelte'
-  import MeetingGroupPopup from './MeetingGroupPopup.svelte'
-  import PermanentMeetingsList from './PermanentMeetingsList.svelte'
 
   void ensureOfficeDetailsLoaded()
 
@@ -66,27 +64,17 @@
       <span class="content-color"><Label label={love.string.SelectFloor} /></span>
     </div>
   {:else if $officeView === 'permanent'}
-    <!-- The list keeps the group order explicit (`order`), which the standard table cannot: a
-         dropped header has to stay where it was dropped after a reload. -->
-    <div class="flex-col h-full">
-      <!-- The order of the screen library (`02-list-with-groups`): the neutral action first, the
-           accent one last, so the primary button keeps the right edge of the group. -->
-      <div class="flex-row-center gap-2 mb-2">
-        <Button
-          label={love.string.MergeIntoGroup}
-          kind="secondary"
-          size="medium"
-          on:click={() => showPopup(MeetingGroupPopup, {}, 'center')}
-        />
-        <Button
-          label={love.string.NewMeeting}
-          kind="primary"
-          size="medium"
-          on:click={() => showPopup(love.component.CreatePermanentMeetingPopup, {}, 'content')}
-        />
-      </div>
-      <PermanentMeetingsList />
-    </div>
+    <!-- The same view every other class gets: viewlet selector, search, filters, view settings with
+         the fields, and the grouped list of the `group` attribute. A hand-drawn list sat beside all
+         of that and drifted away from it. -->
+    <SpecialView
+      _class={love.class.PermanentMeeting}
+      label={love.string.PermanentMeetings}
+      icon={love.icon.Cam}
+      defaultViewletDescriptor={view.viewlet.List}
+      createComponent={love.component.CreatePermanentMeetingPopup}
+      createLabel={love.string.NewMeeting}
+    />
   {:else if configure}
     <FloorConfigure
       rooms={getRooms($rooms, floor)}

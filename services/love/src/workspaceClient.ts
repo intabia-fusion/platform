@@ -688,6 +688,14 @@ export class WorkspaceClient {
     if (permanent !== undefined) {
       const meeting = await this.permanentMeetingTarget(permanent)
       if (meeting !== undefined) return meeting
+      // The back-reference names a meeting that is gone: the series is an orphan, not a plain series.
+      // Falling through to the occurrence rules would answer "the meeting is not open" whenever the
+      // slot is not current, which reads as a schedule restriction on a meeting that no longer exists.
+      this.ctx.warn('[findMeetingTarget] Series points at a missing permanent meeting', {
+        eventId: master.eventId,
+        permanentMeeting: permanent
+      })
+      return undefined
     }
 
     const { current, next } = resolveOccurrence(master, now, await this.occurrenceOverrides(master, now))

@@ -68,7 +68,7 @@ import {
 } from 'livekit-client'
 import { derived, get, writable } from 'svelte/store'
 
-import { periodRules } from './period'
+import { periodRules, ruleToPeriod } from './period'
 import { createPermanentMeeting } from './permanentMeetingSchedule'
 import { getPersonByPersonRef } from '@hcengineering/contact-resources'
 import MeetingMinutesSearchItem from './components/MeetingMinutesSearchItem.svelte'
@@ -273,11 +273,18 @@ export async function createMeeting (
     const master = await client.findOne(calendar.class.Event, meetingMasterQuery(event))
     if (master === undefined) return
 
+    // A repeating meeting is a permanent one, and a permanent meeting owns no office room: it lives in
+    // the workspace meeting room. Whatever room the form still holds is ignored for it.
+    const rules = (master as ReccuringEvent).rules ?? []
+    const isPermanent = rules.length > 0
+
     // The room is picked in the form; it decides where the session runs and inherits the media
     // settings of that room, the way a meeting held in a room always has. No room picked - the
     // session goes to the workspace service room.
     const room =
-      store.room !== undefined ? await client.findOne(love.class.Room, { _id: store.room as Ref<Room> }) : undefined
+      !isPermanent && store.room !== undefined
+        ? await client.findOne(love.class.Room, { _id: store.room as Ref<Room> })
+        : undefined
 
     // A meeting is its own entity: scheduling only records what the meeting is, the session is
     // opened by the love service when an occurrence comes (the only writer allowed to, F1 §5).
@@ -303,6 +310,35 @@ export async function createMeeting (
     const link = await getEventMeetingLink(master.eventId)
     if (link !== '') {
       await client.update(master, { location: link })
+    }
+
+    // A repeating meeting is also a permanent one: the "Permanent meetings" tab is built from
+    // `PermanentMeeting` documents, not from the mixin, so without this row a meeting scheduled in
+    // the planner or the calendar existed only as a series and the tab stayed empty. A one-off
+    // meeting gets no row - it is a session, not a standing meeting.
+    if (isPermanent) {
+      const me = getCurrentAccount().uuid
+      const persons = await client.findAll(contact.class.Person, { _id: { $in: master.participants } })
+      const members = persons
+        .map((it) => it.personUuid as AccountUuid | undefined)
+        .filter((it): it is AccountUuid => it !== undefined)
+      const meeting = await createPermanentMeeting(client, {
+        name: master.title,
+        // Defaults, not the room's settings: there is no room to inherit from.
+        type: RoomType.Video,
+        language: getCurrentLanguage(),
+        startWithRecording: false,
+        startWithTranscription: false,
+        // The organiser is always a member: the list is filtered by membership, and a meeting the
+        // creator cannot see in their own tab would look like the same bug again.
+        members: members.includes(me) ? members : [me, ...members],
+        owners: [me],
+        repeatEvery: ruleToPeriod(rules[0]),
+        reminderBefore: DEFAULT_MEETING_REMINDER
+      })
+      await client.updateMixin(master._id, master._class, master.space, love.mixin.MeetingEventLink, {
+        permanentMeeting: meeting
+      })
     }
   }
 }

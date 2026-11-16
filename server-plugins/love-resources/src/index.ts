@@ -889,6 +889,14 @@ export async function OnEventUpdate (txes: Tx[], control: TriggerControl): Promi
     const hasMeetingMixin = control.hierarchy.hasMixin(event, love.mixin.MeetingEventLink)
     if (!hasMeetingMixin) continue
 
+    // The people of a permanent meeting are the participants of its series: adding someone to the
+    // event has to make them a member of the meeting, or the meeting never appears for them - the
+    // list is a space, and only members see it.
+    const participantsOps = (tx as TxUpdateDoc<Event>).operations.participants
+    if (participantsOps !== undefined) {
+      result.push(...(await permanentMeetingMembersTxes(control, event, participantsOps)))
+    }
+
     // The session is found by the series, not by a reference on the event: the mixin no longer
     // holds one, and a series has a different session per occurrence. An override edits its own
     // (pinned by `originalStartTime`); a master edits every live session, and two can overlap.
@@ -979,6 +987,142 @@ function missingFrom (
   return missing
 }
 
+/**
+ * A removal the collection it lives in knows about. A calendar event is stored inside its calendar
+ * (`attachedTo`/`collection`), and a bare `TxRemoveDoc` for such a document is not applied - which is
+ * why a deleted meeting kept sitting in the planner.
+ */
+function removeEventTx (control: TriggerControl, event: Event): Tx {
+  const inner = control.txFactory.createTxRemoveDoc(event._class, event.space, event._id)
+  const collection = (event as unknown as { collection?: string }).collection
+  if (collection === undefined || event.attachedTo === undefined) return inner
+  return control.txFactory.createTxCollectionCUD(
+    event.attachedToClass,
+    event.attachedTo,
+    event.space,
+    collection,
+    inner
+  )
+}
+
+/**
+ * The series of a meeting, looked up from the meeting side. The mixin documents are tried first, as
+ * a storage may keep them separate; this one embeds the mixin in the event, so the nested path is
+ * what answers.
+ */
+async function seriesEventsOf (control: TriggerControl, meetingId: Ref<PermanentMeeting>): Promise<Event[]> {
+  const links = await control.findAll(
+    control.ctx,
+    love.mixin.MeetingEventLink,
+    { permanentMeeting: meetingId } as any,
+    { limit: 50 }
+  )
+  if (links.length > 0) {
+    const events = await control.findAll(control.ctx, calendar.class.Event, { _id: { $in: links.map((it) => it._id) } })
+    if (events.length > 0) {
+      return events
+    }
+  }
+  return await control.findAll(
+    control.ctx,
+    calendar.class.Event,
+    { [`${love.mixin.MeetingEventLink as string}.permanentMeeting`]: meetingId } as any,
+    { limit: 50 }
+  )
+}
+
+/** The member list a transaction leaves behind: the new array, or the current one with its patch. */
+function membersAfter (
+  members: AccountUuid[],
+  ops: {
+    members?: AccountUuid[]
+    $push?: { members?: AccountUuid | AccountUuid[] | { $each: AccountUuid[] } }
+    $pull?: { members?: AccountUuid | AccountUuid[] | { $in: AccountUuid[] } }
+  },
+  keep: AccountUuid[]
+): AccountUuid[] {
+  let next = ops.members !== undefined ? [...ops.members] : [...members]
+  const pushed = ops.$push?.members
+  const pushedAccounts = pushed === undefined ? [] : Array.isArray(pushed) ? pushed : [pushed]
+  const pushedList = pushedAccounts.flatMap((it) => ('$each' in it ? it.$each : [it as AccountUuid]))
+  for (const account of pushedList) {
+    if (!next.includes(account)) next.push(account)
+  }
+  const pulled = ops.$pull?.members
+  const pulledAccounts = pulled === undefined ? [] : Array.isArray(pulled) ? pulled : [pulled]
+  const pulledList = pulledAccounts.flatMap((it) => (typeof it === 'object' ? it.$in : [it]))
+  if (pulledList.length > 0) next = next.filter((it) => !pulledList.includes(it))
+  // Owners are put back by the rules above, so they stay participants of the series as well.
+  for (const account of keep) {
+    if (!next.includes(account)) next.push(account)
+  }
+  return next
+}
+
+/**
+ * Who sees a meeting in the calendar is decided by the participants of its series, not by the space.
+ * Someone who walked out kept the whole series in their planner, because only the membership moved,
+ * and the calendar trigger only prunes copies when the event's participant list changes.
+ */
+async function seriesParticipantsTxes (
+  control: TriggerControl,
+  meeting: PermanentMeeting,
+  members: AccountUuid[]
+): Promise<Tx[]> {
+  const series = await seriesEventsOf(control, meeting._id)
+  if (series.length === 0) return []
+  const persons: Array<Ref<Person>> =
+    members.length === 0
+      ? []
+      : (
+          await control.findAll(control.ctx, contact.class.Person, { personUuid: { $in: members } } as any)
+        ).map((it) => it._id)
+  const res: Tx[] = []
+  for (const event of series) {
+    const current = (event.participants ?? []) as Array<Ref<Person>>
+    const same = current.length === persons.length && persons.every((person) => current.includes(person))
+    if (same) continue
+    res.push(control.txFactory.createTxUpdateDoc(event._class, event.space, event._id, { participants: persons }))
+  }
+  return res
+}
+
+/**
+ * The other half of the same invariant: a person added to the series becomes a member of the meeting,
+ * which is what makes the meeting visible to them at all - the list is a space, and a space is seen
+ * by its members. Owners stay in the list, the same way the meeting trigger keeps them there.
+ */
+async function permanentMeetingMembersTxes (
+  control: TriggerControl,
+  event: Event,
+  participants: Array<Ref<Person>>
+): Promise<Tx[]> {
+  const link = (event as unknown as Record<string, { permanentMeeting?: Ref<PermanentMeeting> } | undefined>)[
+    love.mixin.MeetingEventLink as unknown as string
+  ]
+  const meetingRef = link?.permanentMeeting
+  if (meetingRef === undefined) return []
+  const meeting = (
+    await control.findAll(control.ctx, love.class.PermanentMeeting, { _id: meetingRef }, { limit: 1 })
+  )[0]
+  if (meeting === undefined) return []
+
+  const persons =
+    participants.length === 0
+      ? []
+      : await control.findAll(control.ctx, contact.class.Person, { _id: { $in: participants } } as any)
+  const accounts = persons
+    .map((it) => it.personUuid as AccountUuid | undefined)
+    .filter((it): it is AccountUuid => it !== undefined)
+  const members = [...new Set([...(meeting.owners ?? []), ...accounts])]
+  const current = meeting.members ?? []
+  const same = current.length === members.length && members.every((it) => current.includes(it))
+  if (same) return []
+  return [
+    control.txFactory.createTxUpdateDoc(love.class.PermanentMeeting, meeting.space, meeting._id, { members })
+  ]
+}
+
 export async function OnPermanentMeetingUpdate (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []
 
@@ -989,6 +1133,18 @@ export async function OnPermanentMeetingUpdate (txes: Tx[], control: TriggerCont
       const removeTx = tx as TxRemoveDoc<PermanentMeeting>
       if (removeTx.objectClass !== love.class.PermanentMeeting) continue
       result.push(...(await finishLiveSessions(control, { meeting: removeTx.objectId })))
+      // The series is part of the meeting, not a booking of its own: leaving it behind keeps an event
+      // in the planners that still looks like a meeting, points at a document that no longer exists
+      // and refuses to open with "the meeting is not open".
+      const series = await seriesEventsOf(control, removeTx.objectId)
+      for (const event of series) {
+        // Every copy of the series goes with it: the calendar's own cascade reads the removed document
+        // from the trigger map, and a removal this trigger generates is not in it yet.
+        const copies = await control.findAll(control.ctx, calendar.class.Event, { eventId: event.eventId })
+        for (const copy of copies.length > 0 ? copies : [event]) {
+          result.push(removeEventTx(control, copy))
+        }
+      }
       continue
     }
 
@@ -1000,12 +1156,17 @@ export async function OnPermanentMeetingUpdate (txes: Tx[], control: TriggerCont
     const ops = cudTx.operations as {
       members?: AccountUuid[]
       owners?: AccountUuid[]
+      $push?: {
+        members?: AccountUuid | AccountUuid[] | { $each: AccountUuid[] }
+        owners?: AccountUuid | AccountUuid[] | { $each: AccountUuid[] }
+      }
       $pull?: {
         members?: AccountUuid | AccountUuid[] | { $in: AccountUuid[] }
         owners?: AccountUuid | AccountUuid[] | { $in: AccountUuid[] }
       }
     }
-    const touchesMembers = ops.members !== undefined || ops.$pull?.members !== undefined
+    const touchesMembers =
+      ops.members !== undefined || ops.$pull?.members !== undefined || ops.$push?.members !== undefined
     const touchesOwners = ops.owners !== undefined || ops.$pull?.owners !== undefined
     if (!touchesMembers && !touchesOwners) continue
 
@@ -1028,6 +1189,13 @@ export async function OnPermanentMeetingUpdate (txes: Tx[], control: TriggerCont
     const protectedMembers =
       creator !== null && !owners.includes(creator) ? [...owners, creator] : owners
     const missing = touchesMembers ? missingFrom(ops, 'members', protectedMembers) : []
+    // The series follows the membership: walking out of the meeting has to take the meeting out of
+    // that person's planner, and joining it has to put it there.
+    if (touchesMembers) {
+      result.push(
+        ...(await seriesParticipantsTxes(control, meeting, membersAfter(meeting.members ?? [], ops, protectedMembers)))
+      )
+    }
     if (missing.length === 0 && missingOwners.length === 0) continue
 
     control.ctx.warn('[OnPermanentMeetingUpdate] Owner is not in the members, pushed back', {

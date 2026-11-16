@@ -110,6 +110,7 @@
     "MeetingStart": "Meeting start",
     "MeetingNotOpenYet": "The meeting has not started yet. It opens at {time}.",
     "MeetingIsOver": "The meeting has already finished.",
+    "MeetingNotFound": "The meeting was not found.",
     "MeetingEnd": "Meeting end",
     "EndMeeting": "End meeting",
     "Status": "Status",

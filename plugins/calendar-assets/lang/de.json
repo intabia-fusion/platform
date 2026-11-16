@@ -55,6 +55,7 @@
     "EventTitlePlaceholder": "Termintitel",
     "TimeZone": "Zeitzone",
     "Repeat": "Wiederholen",
+    "DoNotRepeat": "Nicht wiederholen",
     "On": "Am",
     "Every": "Jeden",
     "After": "Nach",

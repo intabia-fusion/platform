@@ -222,7 +222,7 @@
         {busyPersons}
       />
       <ParticipantsBusy {participants} date={startDate} {dueDate} {ignoreEventId} bind:busyPersons />
-      <EventRsvp {object} />
+      <EventRsvp {object} indent />
       <ComponentExtensions extension={calendar.extensions.EditEventExtensions} props={{ readOnly, value: object }} />
     </div>
     <div class="block description">
@@ -310,7 +310,7 @@
     .top-icon {
       flex-shrink: 0;
       margin-top: 1.375rem;
-      margin-right: 0.125rem;
+      margin-right: 0.25rem;
 
       &.disabled {
         margin-top: 0.875rem;

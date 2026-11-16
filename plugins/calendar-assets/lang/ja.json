@@ -55,6 +55,7 @@
     "EventTitlePlaceholder": "イベントタイトル",
     "TimeZone": "タイムゾーン",
     "Repeat": "繰り返し",
+    "DoNotRepeat": "繰り返さない",
     "On": "開始日",
     "Every": "毎",
     "After": "後",

@@ -175,6 +175,24 @@ describe('mixin queries', () => {
     expect(other.last()).toHaveLength(0)
   })
 
+  it('drops a document from a mixin query when the document is removed', async () => {
+    // The removal carries the base class only: a mixin query has nothing to compare it with, so it
+    // must drop whatever it holds with that id. A viewlet attached to a mixin (the calendar on
+    // `MeetingEventLink`) otherwise keeps a deleted document until the page is reloaded.
+    const { liveQuery, factory } = await getClient()
+    const id = await createProject(factory, 'mx-removed')
+    await factory.createMixin(id, test.class.TestProject, core.space.Model, test.mixin.TestProjectMixin, {
+      someField: 'gone'
+    })
+    const q = await subscribe<TestProjectMixin>(liveQuery, test.mixin.TestProjectMixin, { prjName: 'mx-removed' })
+    expect(q.last()).toHaveLength(1)
+
+    await factory.removeDoc(test.class.TestProject, core.space.Model, id)
+    await settle()
+
+    expect(q.last()).toHaveLength(0)
+  })
+
   it('asks the server for a mixin findOne, even with the base document cached', async () => {
     // The cache is keyed by the stored class, so a base-class query never answers a mixin one -
     // otherwise a document without the mixin could come back as if it had it.

@@ -111,6 +111,7 @@
     "MeetingStart": "Toplantı başlangıcı",
     "MeetingNotOpenYet": "Toplantı henüz başlamadı. {time} saatinde açılacak.",
     "MeetingIsOver": "Toplantı zaten bitti.",
+    "MeetingNotFound": "Toplantı bulunamadı.",
     "MeetingEnd": "Toplantı bitişi",
     "EndMeeting": "Toplantıyı bitir",
     "Status": "Durum",

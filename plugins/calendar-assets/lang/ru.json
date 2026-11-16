@@ -55,6 +55,7 @@
     "EventTitlePlaceholder": "Название события",
     "TimeZone": "Часовой пояс",
     "Repeat": "Повтор",
+    "DoNotRepeat": "Не повторять",
     "On": "В",
     "Every": "Кажд.",
     "After": "После",

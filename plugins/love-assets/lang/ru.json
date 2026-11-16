@@ -111,6 +111,7 @@
     "MeetingStart": "Начало встречи",
     "MeetingNotOpenYet": "Встреча ещё не началась. Откроется в {time}.",
     "MeetingIsOver": "Встреча уже завершена.",
+    "MeetingNotFound": "Встреча не найдена.",
     "MeetingEnd": "Конец встречи",
     "EndMeeting": "Завершить встречу",
     "Status": "Статус",

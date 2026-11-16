@@ -112,6 +112,7 @@
     "MeetingStart": "Meeting-Start",
     "MeetingNotOpenYet": "Das Meeting hat noch nicht begonnen. Es öffnet um {time}.",
     "MeetingIsOver": "Das Meeting ist bereits beendet.",
+    "MeetingNotFound": "Meeting nicht gefunden.",
     "MeetingEnd": "Meeting-Ende",
     "Status": "Status",
     "Active": "Aktiv",

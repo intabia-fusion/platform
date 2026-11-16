@@ -51,7 +51,9 @@ export default mergeIds(loveId, love, {
     MeetingEventBadge: '' as AnyComponent,
     RepeatEveryEditor: '' as AnyComponent,
     ReminderBeforePresenter: '' as AnyComponent,
-    ReminderBeforeEditor: '' as AnyComponent
+    ReminderBeforeEditor: '' as AnyComponent,
+    PermanentMeetingNextPresenter: '' as AnyComponent,
+    PermanentMeetingLastSessionPresenter: '' as AnyComponent
   },
   function: {
     CreateMeeting: '' as Resource<DocCreateFunction>,
@@ -64,6 +66,7 @@ export default mergeIds(loveId, love, {
     CanDeletePermanentMeeting: '' as Resource<ViewActionAvailabilityFunction>,
     CanEditPermanentMeeting: '' as Resource<ViewActionAvailabilityFunction>,
     CanEditMeetingSettings: '' as Resource<ViewActionAvailabilityFunction>,
+    CanMergeIntoGroup: '' as Resource<ViewActionAvailabilityFunction>,
     MeetingMinutesTitleProvider: '' as Resource<(client: Client, ref: Ref<Doc>, doc?: Doc) => Promise<string>>,
     RoomTitleProvider: '' as Resource<(client: Client, ref: Ref<Doc>, doc?: Doc) => Promise<string>>,
     UserMeetingInviteTitleProvider: '' as Resource<(client: Client, ref: Ref<Doc>, doc?: Doc) => Promise<string>>

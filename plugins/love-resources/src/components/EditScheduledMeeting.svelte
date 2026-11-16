@@ -22,6 +22,7 @@
   import calendar, { type Event } from '@hcengineering/calendar'
   import type { Ref } from '@hcengineering/core'
   import { meetingMasterQuery, type MeetingEventLink, type PermanentMeeting } from '@hcengineering/love'
+  import { EventRsvp } from '@hcengineering/calendar-resources'
   import presentation, { createQuery, getClient } from '@hcengineering/presentation'
   import { CheckBox, EditBox, Label, showPopup, type PopupOptions } from '@hcengineering/ui'
   import { Button } from '@hcengineering/ui/kit'
@@ -154,5 +155,7 @@
       />
       <span class="text-sm content-color"><Label label={love.string.RemindBefore} /></span>
     </div>
-  {/if}
-</div>
+  {/if}  <!-- The answer of the person looking at the card, or the counts of everyone else's: the card is
+       the only place a meeting from the planner is opened, and RSVP used to live in the calendar
+       popup only. -->
+  <EventRsvp object={live} /></div>

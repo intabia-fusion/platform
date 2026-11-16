@@ -49,6 +49,7 @@ export default mergeIds(calendarId, calendar, {
     EventTitlePlaceholder: '' as IntlString,
     TimeZone: '' as IntlString,
     Repeat: '' as IntlString,
+    DoNotRepeat: '' as IntlString,
     Every: '' as IntlString,
     On: '' as IntlString,
     OnUntil: '' as IntlString,

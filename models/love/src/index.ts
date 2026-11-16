@@ -145,10 +145,9 @@ export class TRoom extends TDoc implements Room {
 @Model(love.class.Office, love.class.Room)
 @UX(love.string.Office, love.icon.Love)
 export class TOffice extends TRoom implements Office {
-  // Editable: an office can be created first and assigned to a person later, and a seat that changes
-  // hands is reassigned here. Two offices for one person are not prevented by the model.
-  @Prop(TypeRef(contact.mixin.Employee), contact.string.Employee, { editor: love.component.OfficePersonEditor })
+  @Prop(TypeRef(contact.mixin.Employee), contact.string.Employee)
   @Index(IndexKind.Indexed)
+  @ReadOnly()
   person!: Ref<Employee> | null
 }
 
@@ -919,15 +918,111 @@ export function createModel (builder: Builder): void {
           key: '',
           presenter: love.component.PermanentMeetingPresenter,
           label: love.string.PermanentMeeting,
+          displayProps: { key: 'name', fixed: 'left' },
           sortingKey: 'name'
         },
-        'members',
-        'createdOn'
+        {
+          key: '',
+          presenter: love.component.PermanentMeetingNextPresenter,
+          label: love.string.NextOccurrence,
+          displayProps: { key: 'next' }
+        },
+        { key: 'members', props: { noJoin: true, kind: 'link', size: 'small' }, displayProps: { key: 'members' } },
+        {
+          key: '',
+          presenter: love.component.PermanentMeetingLastSessionPresenter,
+          label: love.string.PastLast,
+          displayProps: { key: 'lastEnd' }
+        },
+        'createdOn',
+        'createdBy',
+        'group',
+        'repeatEvery'
       ],
-      configOptions: { hiddenKeys: ['name', 'description'], sortable: true }
+      configOptions: { strict: true, hiddenKeys: ['name', 'description', 'descriptionRef'], sortable: true }
     },
     love.viewlet.TablePermanentMeetings
   )
+
+  // The grouped list the rest of the app uses for a class with a grouping of its own: categories by
+  // `group`, read-only columns switched in the view settings, the same member stack as the protocols.
+  builder.createDoc(
+    view.class.Viewlet,
+    core.space.Model,
+    {
+      attachTo: love.class.PermanentMeeting,
+      descriptor: view.viewlet.List,
+      viewOptions: {
+        groupBy: ['group'],
+        orderBy: [
+          ['order', SortingOrder.Ascending],
+          ['name', SortingOrder.Ascending]
+        ],
+        other: []
+      },
+      configOptions: { strict: true, hiddenKeys: ['name', 'description', 'descriptionRef'], sortable: true },
+      config: [
+        {
+          key: '',
+          presenter: love.component.PermanentMeetingPresenter,
+          label: love.string.PermanentMeeting,
+          displayProps: { key: 'name', fixed: 'left' }
+        },
+        {
+          key: '',
+          presenter: love.component.PermanentMeetingNextPresenter,
+          label: love.string.NextOccurrence,
+          displayProps: { key: 'next' }
+        },
+        { key: '', displayProps: { grow: true } },
+        { key: 'members', props: { noJoin: true, kind: 'link', size: 'small' }, displayProps: { key: 'members', compression: true } },
+        {
+          key: '',
+          presenter: love.component.PermanentMeetingLastSessionPresenter,
+          label: love.string.PastLast,
+          displayProps: { key: 'lastEnd' }
+        },
+        { key: 'createdOn', displayProps: { key: 'createdOn', fixed: 'right', dividerBefore: true } },
+        { key: 'createdBy', displayProps: { key: 'createdBy', fixed: 'right' } },
+        { key: 'group', displayProps: { key: 'group', fixed: 'right' } }
+      ]
+    },
+    love.viewlet.ListPermanentMeetings
+  )
+
+  // A group of meetings is a document of its own: without a presenter the `group` column and the
+  // category headers of the grouped list would show a raw id.
+  builder.mixin(love.class.MeetingGroup, core.class.Class, view.mixin.ObjectPresenter, {
+    presenter: view.component.ObjectPresenter
+  })
+
+  builder.mixin(love.class.PermanentMeeting, core.class.Class, view.mixin.ClassFilters, {
+    filters: ['group', 'members', 'createdBy', 'createdOn', 'repeatEvery', 'private'],
+    ignoreKeys: [
+      'name',
+      'description',
+      'descriptionRef',
+      'meetingAccess',
+      'linkId',
+      'linkVersion',
+      'type',
+      'language',
+      'messages',
+      'attachments'
+    ]
+  })
+
+  // Merging is a selection action: the standard toolbar of the view offers it for the checked rows.
+  builder.createDoc(view.class.Action, core.space.Model, {
+    action: love.actionImpl.MergeIntoGroup,
+    label: love.string.MergeIntoGroup,
+    icon: view.icon.List,
+    category: love.category.Office,
+    target: love.class.PermanentMeeting,
+    input: 'any',
+    context: { mode: ['browser', 'panel'] },
+    visibilityTester: love.function.CanMergeIntoGroup
+  })
 
   builder.mixin(love.class.Floor, core.class.Class, view.mixin.AttributeEditor, {
     inlineEditor: love.component.FloorAttributePresenter

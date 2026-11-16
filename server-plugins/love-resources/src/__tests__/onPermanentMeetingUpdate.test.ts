@@ -28,6 +28,8 @@ import core, {
   type TxUpdateDoc
 } from '@hcengineering/core'
 import type { TriggerControl } from '@hcengineering/server-core'
+import calendar, { type Event } from '@hcengineering/calendar'
+import contact, { type Person } from '@hcengineering/contact'
 import love, { MeetingStatus, type MeetingMinutes, type PermanentMeeting } from '@hcengineering/love'
 import { OnPermanentMeetingUpdate } from '../index'
 
@@ -115,7 +117,9 @@ function createSession (id: string): MeetingMinutes {
 function createMockControl (
   meeting: PermanentMeeting | undefined,
   sessions: MeetingMinutes[] = [],
-  creatorAccount?: AccountUuid
+  creatorAccount?: AccountUuid,
+  series: Event[] = [],
+  persons: Person[] = []
 ): TriggerControl {
   return {
     ctx: {
@@ -138,6 +142,17 @@ function createMockControl (
     findAll: jest.fn(async (_ctx: any, _class: Ref<Class<Doc>>, query: any) => {
       if (_class === love.class.MeetingMinutes) {
         return toFindResult(sessions.filter((it) => query.meeting === it.meeting))
+      }
+      if (_class === calendar.class.Event) {
+        return toFindResult(series)
+      }
+      if (_class === contact.class.Person) {
+        const accounts: AccountUuid[] = query.personUuid?.$in ?? []
+        return toFindResult(
+          persons.filter(
+            (it) => it.personUuid !== undefined && accounts.includes(it.personUuid as unknown as AccountUuid)
+          )
+        )
       }
       const matched = _class === love.class.PermanentMeeting && meeting !== undefined && query._id === meeting._id
       return toFindResult(matched ? [meeting] : [])
@@ -190,6 +205,21 @@ function getFinishedSessions (txes: Tx[]): string[] {
     .filter((tx) => tx._class === core.class.TxUpdateDoc)
     .filter((tx) => (tx as TxUpdateDoc<MeetingMinutes>).objectClass === love.class.MeetingMinutes)
     .map((tx) => (tx as TxUpdateDoc<MeetingMinutes>).objectId)
+}
+
+/** A participant person for an account, the way the workspace keeps them. */
+function personOf (account: AccountUuid, id: string): Person {
+  return { _id: id as Ref<Person>, _class: contact.class.Person, personUuid: account } as unknown as Person
+}
+
+/** The participant list a trigger asked the series to carry. */
+function getSeriesParticipants (txes: Tx[]): Array<Ref<Person>> | undefined {
+  for (const tx of txes) {
+    if (tx._class !== core.class.TxUpdateDoc) continue
+    const ops = (tx as TxUpdateDoc<Doc>).operations as { participants?: Array<Ref<Person>> }
+    if (ops.participants !== undefined) return ops.participants
+  }
+  return undefined
 }
 
 // -- Tests --
@@ -335,6 +365,39 @@ describe('OnPermanentMeetingUpdate', () => {
       )
 
       expect(result).toHaveLength(0)
+    })
+  })
+
+  // Who sees a meeting in the calendar is decided by the participants of its series, not by the
+  // space: without this a member who walked out kept the whole series in their planner.
+  describe('series participants', () => {
+    const series = {
+      _id: 'event:1' as Ref<Event>,
+      _class: calendar.class.ReccuringEvent,
+      space: spaceId,
+      participants: [] as Array<Ref<Person>>,
+      eventId: 'event:1'
+    } as unknown as Event
+
+    it('drops a member who left from the series', async () => {
+      const personA = personOf(ownerA, 'person:a')
+      const personC = personOf(memberC, 'person:c')
+      const event = { ...series, participants: [personA._id, personC._id] } as Event
+      const control = createMockControl(createPermanentMeeting(), [], undefined, [event], [personA, personC])
+
+      const result = await OnPermanentMeetingUpdate([createUpdateTx({ $pull: { members: memberC } })], control)
+
+      expect(getSeriesParticipants(result)).toEqual([personA._id])
+    })
+
+    it('does not touch the series when the membership did not change', async () => {
+      const personA = personOf(ownerA, 'person:a')
+      const event = { ...series, participants: [personA._id] } as Event
+      const control = createMockControl(createPermanentMeeting(), [], undefined, [event], [personA])
+
+      const result = await OnPermanentMeetingUpdate([createUpdateTx({ title: 'Renamed' })], control)
+
+      expect(getSeriesParticipants(result)).toBeUndefined()
     })
   })
 })

@@ -39,8 +39,10 @@ import MeetingAccessEditor from './components/MeetingAccessEditor.svelte'
 import CreatePermanentMeetingPopup from './components/CreatePermanentMeetingPopup.svelte'
 import PermanentMeetingForm from './components/PermanentMeetingForm.svelte'
 import PermanentMeetingPresenter from './components/PermanentMeetingPresenter.svelte'
+import PermanentMeetingNextPresenter from './components/PermanentMeetingNextPresenter.svelte'
+import PermanentMeetingLastSessionPresenter from './components/PermanentMeetingLastSessionPresenter.svelte'
+import MeetingGroupPopup from './components/MeetingGroupPopup.svelte'
 import EditRoom from './components/EditRoom.svelte'
-import OfficePersonEditor from './components/OfficePersonEditor.svelte'
 import FloorAttributePresenter from './components/FloorAttributePresenter.svelte'
 import FloorView from './components/FloorView.svelte'
 import MeetingMinutesTable from './components/MeetingMinutesTable.svelte'
@@ -178,6 +180,22 @@ async function editMeetingSettings (object: Doc): Promise<void> {
 }
 
 /**
+ * A view action, so the merge sits in the standard toolbar of the list: the selected meetings come
+ * out of the view itself, and the popup lets the user name the group they are merged into.
+ */
+async function canMergeIntoGroup (docs?: Doc | Doc[]): Promise<boolean> {
+  const list = Array.isArray(docs) ? docs : docs === undefined ? [] : [docs]
+  return list.some((it) => it._class === love.class.PermanentMeeting)
+}
+
+async function mergeIntoGroup (docs: Doc | Doc[] | undefined): Promise<void> {
+  if (docs === undefined) return
+  const list = Array.isArray(docs) ? docs : [docs]
+  if (list.length === 0) return
+  showPopup(MeetingGroupPopup, {}, 'center')
+}
+
+/**
  * A meeting series is only a projection: the meeting itself is a document of its own, and its card
  * is what the calendar has to open. The link is read off the event when the view queried the mixin,
  * and by the series otherwise - an occurrence carries no mixin at all, only its master does. A series
@@ -230,8 +248,9 @@ export default async (): Promise<Resources> => ({
     CreatePermanentMeetingPopup,
     PermanentMeetingForm,
     PermanentMeetingPresenter,
+    PermanentMeetingNextPresenter,
+    PermanentMeetingLastSessionPresenter,
     EditRoom,
-    OfficePersonEditor,
     FloorAttributePresenter,
     FloorView,
     MeetingMinutesTable,
@@ -279,6 +298,7 @@ export default async (): Promise<Resources> => ({
     CanLeavePermanentMeeting: canLeavePermanentMeeting,
     CanDeletePermanentMeeting: canDeletePermanentMeeting,
     CanEditPermanentMeeting: canEditPermanentMeeting,
+    CanMergeIntoGroup: canMergeIntoGroup,
     CanEditMeetingSettings: canEditMeetingSettings,
     MeetingMinutesTitleProvider: getMeetingMinutesTitle,
     RoomTitleProvider: getRoomTitle,
@@ -294,7 +314,8 @@ export default async (): Promise<Resources> => ({
     ToggleRoomPrivacy: toggleRoomPrivacy,
     LeavePermanentMeeting: leavePermanentMeeting,
     EditPermanentMeetingSettings: editPermanentMeetingSettings,
-    EditMeetingSettings: editMeetingSettings
+    EditMeetingSettings: editMeetingSettings,
+    MergeIntoGroup: mergeIntoGroup
   },
   completion: {
     MeetingMinutesQuery: queryMeetingMinutes

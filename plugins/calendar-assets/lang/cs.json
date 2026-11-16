@@ -55,6 +55,7 @@
     "EventTitlePlaceholder": "Název události",
     "TimeZone": "Časové pásmo",
     "Repeat": "Opakovat",
+    "DoNotRepeat": "Neopakovat",
     "On": "Na",
     "Every": "Každý/každá",
     "After": "Po",

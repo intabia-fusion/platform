@@ -16,6 +16,7 @@
 import contact, { type SocialIdentity, type Employee } from '@hcengineering/contact'
 import {
   type AttachedDoc,
+  type DocumentQuery,
   type MarkupBlobRef,
   TxOperations,
   type Ref,
@@ -404,6 +405,30 @@ async function addPermanentMeetingDeleteAction (client: MigrationUpgradeClient):
   }
 }
 
+/**
+ * A permanent meeting used to be deleted on its own: its series event stayed in the calendars of
+ * everyone who was in it, pointing at a meeting that no longer exists. The server removes the pair
+ * together now, this step cleans up what the earlier deletions left behind. Such an event is
+ * invisible to a client query - that is what makes it a leftover - so the work is done on the raw
+ * event domain, and the copies of the series are found by their shared `eventId`.
+ */
+async function removeOrphanMeetingSeries (client: MigrationClient): Promise<void> {
+  const meetings = new Set<Ref<Space>>(
+    (await client.find<Space>(DOMAIN_SPACE, { _class: love.class.PermanentMeeting })).map((it) => it._id)
+  )
+  const events = await client.find<Event>(DOMAIN_EVENT, {})
+  for (const event of events) {
+    const link = (event as unknown as Record<string, MeetingEventLink | undefined>)[love.mixin.MeetingEventLink]
+    const meeting = link?.permanentMeeting
+    if (meeting === undefined || meetings.has(meeting as unknown as Ref<Space>)) continue
+    if (event.eventId === undefined) {
+      await client.delete(DOMAIN_EVENT, event._id)
+    } else {
+      await client.deleteMany(DOMAIN_EVENT, { eventId: event.eventId } as unknown as DocumentQuery<Event>)
+    }
+  }
+}
+
 export const loveOperation: MigrateOperation = {
   async migrate (client: MigrationClient, mode): Promise<void> {
     await tryMigrate(mode, client, loveId, [
@@ -785,6 +810,12 @@ export const loveOperation: MigrateOperation = {
         state: 'strip-meeting-mixin-from-non-masters',
         mode: 'upgrade',
         func: stripMixinFromNonMasters
+      },
+      {
+        // Raw-domain cleanup: the leftover events are not reachable through a client query.
+        state: 'remove-orphan-meeting-series',
+        mode: 'upgrade',
+        func: removeOrphanMeetingSeries
       }
     ])
   },

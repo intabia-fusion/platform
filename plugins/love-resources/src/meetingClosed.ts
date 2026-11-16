@@ -19,6 +19,8 @@ import { formatOccurrence } from './occurrenceTime'
 
 /** What the service answers when the join window of a meeting is closed. */
 const MEETING_CLOSED = 403
+/** What it answers when the meeting the request names no longer exists. */
+const MEETING_MISSING = 404
 
 /**
  * The status to show when a join was refused because the meeting is not open, or `undefined` when
@@ -33,6 +35,11 @@ export function meetingClosedStatus (
   body: Record<string, any> | undefined,
   formatTime: (ts: number) => string = formatOccurrence
 ): Status | undefined {
+  if (status === MEETING_MISSING) {
+    // A meeting that is gone is not a runtime error: its series may still be on screen after it was
+    // deleted, and the person deserves a sentence instead of a crash.
+    return new Status(Severity.WARNING, love.string.MeetingNotFound, {}, undefined, { timeout: 6000 })
+  }
   if (status !== MEETING_CLOSED) return undefined
   const next = typeof body?.nextOccurrence === 'number' ? body.nextOccurrence : undefined
   return next !== undefined

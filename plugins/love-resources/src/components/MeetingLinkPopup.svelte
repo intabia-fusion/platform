@@ -19,6 +19,7 @@
     defaultMeetingAccess,
     meetingMasterQuery,
     type MeetingAccess,
+    type MeetingEventLink,
     type PermanentMeeting
   } from '@hcengineering/love'
   import { Button, DropdownLabelsIntl, EditBox, Label, type DropdownIntlItem } from '@hcengineering/ui'
@@ -26,6 +27,7 @@
   import plugin from '../plugin'
   import { getEventMeetingLink, notifyCopied, revokeMeetingLink, revokePermanentMeetingLink } from '../utils'
   import { getLoveClient } from '../loveClient'
+  import { findMeetingLink } from '../meetingLink'
 
   // Exactly one of the two: a calendar series keeps its policy in a mixin, a permanent meeting
   // on the document itself.
@@ -56,10 +58,18 @@
   ]
 
   let master: Event | undefined
+  // The mixin of the series, resolved once. The popup is opened from two places - the meeting card
+  // (a `meeting` is passed) and the event card (only an `event` is passed), and in the second case
+  // nothing says whether the series belongs to a permanent meeting until its mixin is read.
+  let link: MeetingEventLink | undefined
   let access: MeetingAccess = defaultMeetingAccess
 
   // A permanent meeting has no series to outlive, so `past` and `afterTtl` decide nothing there.
   $: isPermanent = meeting !== undefined
+  // A series that a permanent meeting built inherits that meeting's link: it never expires and has
+  // no "after the series" behaviour to pick, so neither setting is offered on its event card either.
+  $: isPermanentSeries = link?.permanentMeeting !== undefined
+  $: offersSeriesSettings = !isPermanent && !isPermanentSeries
   $: pointer = meeting !== undefined ? meeting._id : master?.eventId
 
   // Kept only in this popup's memory after a successful save, to power "copy link + password" -
@@ -84,10 +94,15 @@
     }
     const seriesEvent = event
     if (seriesEvent === undefined) return
-    void client.findOne(calendar.class.Event, meetingMasterQuery(seriesEvent)).then((res) => {
+    void client.findOne(calendar.class.Event, meetingMasterQuery(seriesEvent)).then(async (res) => {
       master = res
       if (res === undefined) return
-      access = client.getHierarchy().as(res, love.mixin.MeetingEventLink).meetingAccess ?? defaultMeetingAccess
+      // Read through the mixin document: a master fetched by the event class arrives without the
+      // mixin fields, so `hierarchy.as` on it returns the event itself - both the stored policy and
+      // `permanentMeeting` read as undefined, which is what showed the series settings on a
+      // permanent meeting's card.
+      link = await findMeetingLink(client, res)
+      access = link?.meetingAccess ?? defaultMeetingAccess
       passwordSet = access.guestPassword !== undefined
     })
   })
@@ -163,7 +178,7 @@
       }}
     />
 
-    {#if !isPermanent}
+    {#if offersSeriesSettings}
       <Label label={plugin.string.AfterTheSeries} />
       <DropdownLabelsIntl
         items={pastItems}

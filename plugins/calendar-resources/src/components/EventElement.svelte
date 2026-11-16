@@ -18,7 +18,7 @@
   import type { Doc } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
   import { ComponentExtensions } from '@hcengineering/presentation'
-  import { Component, MILLISECONDS_IN_MINUTE, showPopup, tooltip } from '@hcengineering/ui'
+  import ui, { Component, Icon, MILLISECONDS_IN_MINUTE, showPopup, tooltip } from '@hcengineering/ui'
   import { showMenu } from '@hcengineering/view-resources'
   import { calendarByIdStore, isVisible } from '../utils'
   import EventPresenter from './EventPresenter.svelte'
@@ -52,6 +52,21 @@
 
   $: visible = isVisible(event, $calendarByIdStore)
 
+  // The answer of this person for the event, marked on the tile itself: the calendar is where the
+  // question is read, and the answer used to be visible only after opening the event.
+  $: rsvpIcon =
+    event.rsvp === 'accepted'
+      ? ui.icon.CheckCircle
+      : event.rsvp === 'declined'
+        ? ui.icon.CrossCircle
+        : ui.icon.Clock
+  $: rsvpLabel =
+    event.rsvp === 'accepted'
+      ? calendar.string.RsvpAccepted
+      : event.rsvp === 'declined'
+        ? calendar.string.RsvpDeclined
+        : calendar.string.RsvpTentative
+
   function contextMenu (e: MouseEvent): void {
     showMenu(e, { object: event })
   }
@@ -80,6 +95,11 @@
           extension={calendar.extensions.EventCardExtensions}
           props={{ event, narrow, oneRow, hideDetails: !visible }}
         />
+      </div>
+    {/if}
+    {#if !empty && event.rsvp !== undefined}
+      <div class="event-rsvp" use:tooltip={{ label: rsvpLabel }}>
+        <Icon icon={rsvpIcon} size="x-small" />
       </div>
     {/if}
   </div>
@@ -112,5 +132,14 @@
     right: 0.25rem;
     display: flex;
     align-items: center;
+  }
+
+  // Bottom corner: the top one carries the plugin marks (a meeting has three of them).
+  .event-rsvp {
+    position: absolute;
+    bottom: 0.125rem;
+    right: 0.25rem;
+    display: flex;
+    color: var(--theme-content-color);
   }
 </style>
