@@ -299,7 +299,7 @@
             />
           </div>
         {:else}
-          <ColumnsTab board={draft} {statuses} onChange={onColumns} compact />
+          <ColumnsTab board={draft} {statuses} projects={shown} onChange={onColumns} compact />
         {/if}
       </div>
     </Scroller>

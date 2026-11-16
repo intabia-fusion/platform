@@ -232,7 +232,7 @@
           {:else if tab === 'members'}
             <MembersTab board={current} {onChange} />
           {:else if tab === 'columns'}
-            <ColumnsTab board={current} {statuses} {onChange} />
+            <ColumnsTab board={current} {statuses} {projects} {onChange} />
           {:else if tab === 'card'}
             <CardTab board={current} {onChange} />
           {:else}

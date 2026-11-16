@@ -96,7 +96,7 @@
     scopedTypes: Ref<ProjectType>[] | undefined
   ): Promise<void> {
     await objectsPromise
-    const projectType = scopedTypes === undefined ? selectedProjectType ?? (await getProjectType(space)) : undefined
+    const projectType = scopedTypes === undefined ? (selectedProjectType ?? (await getProjectType(space))) : undefined
     targets.clear()
 
     for (const object of filter.value) {
