@@ -36,6 +36,8 @@
   export let loading = true
   export let disabled: boolean = false
   export let noGap: boolean = false
+  export let normalizeConfig: ((config: Viewlet['config'], viewlet: Viewlet) => Viewlet['config']) | undefined =
+    undefined
 
   const dispatch = createEventDispatcher()
 
@@ -45,7 +47,7 @@
   function clickHandler (event: MouseEvent) {
     pressed = true
     closeTooltip()
-    showPopup(ViewletSetting, { viewlet }, btn, () => {
+    showPopup(ViewletSetting, { viewlet, normalizeConfig }, btn, () => {
       pressed = false
     })
   }

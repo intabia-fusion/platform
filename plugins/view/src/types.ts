@@ -704,7 +704,7 @@ export interface PreviewPresenter extends Class<Doc> {
 export interface DisplayProps {
   key?: string
   excludeByKey?: string
-  fixed?: 'left' | 'right' // using for align items in row
+  fixed?: 'left' | 'right' | 'center' // using for align items in row
   align?: 'left' | 'right' | 'center'
   suffix?: boolean
   optional?: boolean
