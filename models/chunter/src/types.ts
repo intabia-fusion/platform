@@ -20,6 +20,7 @@ import {
   Model,
   Prop,
   TypeMarkup,
+  TypeRecord,
   TypeRef,
   TypeString,
   UX,
@@ -30,6 +31,7 @@ import core, { TAttachedDoc, TClass, TDoc, TSpace } from '@hcengineering/model-c
 import type {
   Channel,
   ChatMessage,
+  MessageTranslations,
   ChatSyncInfo,
   ChunterSpace,
   DirectMessage,
@@ -114,6 +116,12 @@ export class TChatMessage extends TActivityMessage implements ChatMessage {
 
   @Prop(TypeRef(contact.class.ChannelProvider), core.string.Object)
   provider?: Ref<SocialChannelProvider>
+}
+
+@Mixin(chunter.mixin.MessageTranslations, chunter.class.ChatMessage)
+export class TMessageTranslations extends TChatMessage implements MessageTranslations {
+  @Prop(TypeRecord(), core.string.Object)
+  entries!: MessageTranslations['entries']
 }
 
 @Model(chunter.class.ThreadMessage, chunter.class.ChatMessage)

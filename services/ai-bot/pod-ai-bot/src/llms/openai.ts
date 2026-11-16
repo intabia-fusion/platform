@@ -98,10 +98,11 @@ export default class OpenAIProvider implements LLMProvider {
     ctx: MeasureContext,
     workspace: WorkspaceUuid,
     html: string,
-    lang: string
+    lang: string,
+    level?: AILevel
   ): Promise<string | undefined> {
     const response = await this.client.chat.completions.create({
-      model: this.modelFor(),
+      model: this.modelFor(level),
       messages: [
         {
           role: 'system',
@@ -119,7 +120,7 @@ export default class OpenAIProvider implements LLMProvider {
     const usage = usageFromApi(response.usage)
     const total = totalTokens(usage)
     if (total !== 0 && usage !== undefined) {
-      const { multiplier, modelId, providerId, level } = this.billingFor()
+      const { multiplier, modelId, providerId, level: billedLevel } = this.billingFor(level)
       void pushTokensData(
         ctx,
         [
@@ -132,7 +133,7 @@ export default class OpenAIProvider implements LLMProvider {
             modelId,
             new Date((response.created ?? Date.now() / 1000) * 1000).toISOString(),
             providerId,
-            level
+            billedLevel
           )
         ],
         response.id

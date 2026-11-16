@@ -24,9 +24,7 @@ import aiBot, {
   PersonMessage,
   PostTranscriptRequest,
   SummarizeMessagesRequest,
-  SummarizeMessagesResponse,
-  TranslateRequest,
-  TranslateResponse
+  SummarizeMessagesResponse
 } from '@hcengineering/ai-bot'
 import core, {
   AccountUuid,
@@ -46,7 +44,7 @@ import contact, { Person, Contact, SocialIdentityRef, getFirstName, getLastName 
 import chunter, { ChatMessage } from '@hcengineering/chunter'
 import { getAccountClient, getTransactorEndpointEx } from '@hcengineering/server-client'
 import { generateToken } from '@hcengineering/server-token'
-import { htmlToMarkup, jsonToHTML, jsonToMarkup, markupToJSON } from '@hcengineering/text'
+import { jsonToMarkup, markupToJSON } from '@hcengineering/text'
 import { createDefaultProvider, createProvidersFromRegistry, type LLMProvider } from './llms'
 import { ClisrServer } from '@intabiafusion/clisr'
 
@@ -63,6 +61,7 @@ import { resolveModel, registryForFeature } from './llms/modelRegistry'
 import { ApiError } from './server/error'
 /* LLM helpers moved to ./llm; use provider methods on `this.llm` instead */
 import { WorkspaceClient } from './workspace/workspaceClient'
+import { type TranslationRequest } from './pipeline'
 
 /** Audio format type */
 export type AudioFormat = 'ogg' | 'wav'
@@ -137,6 +136,7 @@ export class AIControl {
 
   private llm?: LLMProvider // default provider, used by service ops (translate/summarize)
   private providers = new Map<string, LLMProvider>() // per-provider, keyed by provider id (= topic suffix)
+  private translationProducer?: PlatformQueueProducer<TranslationRequest>
   private limitsState?: LimitsState
   private poolLimits?: PoolLimits
 
@@ -160,6 +160,27 @@ export class AIControl {
   /** All provider ids in the registry (= per-provider topic suffixes). */
   getProviderIds (): string[] {
     return [...this.providers.keys()]
+  }
+
+  setTranslationProducer (producer: PlatformQueueProducer<TranslationRequest>): void {
+    this.translationProducer = producer
+  }
+
+  async queueTranslation (workspace: WorkspaceUuid, request: TranslationRequest): Promise<void> {
+    if (this.translationProducer === undefined) throw new Error('Translation queue is not available')
+    this.checkTokensLimit(workspace)
+    await this.translationProducer.send(this.ctx, workspace, [request])
+  }
+
+  async translateHtml (workspace: WorkspaceUuid, providerId: string, level: AILevel, html: string, lang: string): Promise<string> {
+    const provider = this.providers.get(providerId)
+    if (provider === undefined) throw new Error(`LLM provider ${providerId} is not configured`)
+    if (this.poolLimits?.isBlockedByLevel(config.AIProviders, providerId, level) === true) {
+      throw new Error('The global token budget for this model has been reached')
+    }
+    const result = await provider.translateHtml(this.ctx, workspace, html, lang, level)
+    if (result === undefined || result === '') throw new Error('LLM returned an empty translation')
+    return result
   }
 
   setTranscriptionProducer (producer: PlatformQueueProducer<TranscriptionTask>): void {
@@ -478,21 +499,6 @@ export class AIControl {
       return
     }
     await client.createDoc(aiBot.class.AISpaceSettings, core.space.Workspace, { level })
-  }
-
-  async translate (workspace: WorkspaceUuid, req: TranslateRequest): Promise<TranslateResponse | undefined> {
-    if (this.llm === undefined) {
-      return undefined
-    }
-    this.checkTokensLimit(workspace)
-    const lang = await this.resolveLanguage(workspace)
-    const html = jsonToHTML(markupToJSON(req.text))
-    const result = await this.llm.translateHtml(this.ctx, workspace, html, lang)
-    const text = result !== undefined ? htmlToMarkup(result) : req.text
-    return {
-      text,
-      lang
-    }
   }
 
   /**

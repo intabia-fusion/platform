@@ -112,6 +112,29 @@ describe('SpaceSecurityMiddleware', () => {
   let nextMiddleware: Middleware
   let nextFindAllResult: any[]
 
+  it('only permits the system to write message translations, including nested transactions', async () => {
+    const mw = await createMiddleware([createSpace('space1', ['user1'])])
+    const mixin = 'chunter:mixin:MessageTranslations'
+    const base = { objectClass: 'chunter:class:ChatMessage', objectSpace: 'space1', objectId: 'message' }
+    const writes = [
+      { ...base, _class: core.class.TxMixin, mixin, attributes: { entries: {} } },
+      { ...base, _class: core.class.TxUpdateDoc, operations: { [`${mixin}.entries.ru`]: {} } },
+      { ...base, _class: core.class.TxUpdateDoc, operations: { $unset: { [mixin]: true } } },
+      { ...base, _class: core.class.TxUpdateDoc, operations: { $rename: { other: mixin } } },
+      { ...base, _class: core.class.TxUpdateDoc, operations: { $rename: { other: `${mixin}.entries.ru` } } },
+      { ...base, _class: core.class.TxCreateDoc, attributes: { [mixin]: { entries: {} } } }
+    ]
+    ctx.contextData = createSessionData(createAccount('user1', AccountRole.Admin))
+    for (const write of writes) {
+      const nested = { _class: core.class.TxApplyIf, txes: [{ _class: core.class.TxApplyIf, txes: [write] }] }
+      await expect(mw.tx(ctx, [nested as any])).rejects.toThrow('Only the system can write message translations')
+    }
+    ctx.contextData = createSessionData(createAccount(systemAccountUuid))
+    for (const write of writes) {
+      await expect(mw.tx(ctx, [write as any])).resolves.not.toThrow()
+    }
+  })
+
   beforeEach(() => {
     hierarchy = new Hierarchy()
     modelDb = new ModelDb(hierarchy)

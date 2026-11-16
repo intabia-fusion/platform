@@ -54,7 +54,7 @@ AIQueue -> event-router: resolveModel(event.level) -> топик llm-<providerId
 
 ### 6. Перевод
 
-`/translate` -> `controller.translate`: markup -> HTML -> `llm.translateHtml` -> markup.
+`/translate` проверяет доступ к сообщению и ставит запрос в `ai-translation-request`. Event-router направляет его в `llm-translate-<providerId>`; воркер проверяет хеш текста, переводит и записывает результат в mixin сообщения. Клиент получает его через LiveQuery. Отдельные топики изолируют переводы от старых роутеров при обновлении.
 
 ### 7. Выбор уровня Юля ИИ (AILevel)
 

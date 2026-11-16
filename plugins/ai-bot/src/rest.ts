@@ -67,7 +67,7 @@ export interface ChatVoiceTranscriptionTask {
 }
 
 export interface TranslateRequest {
-  text: Markup
+  message: Ref<Doc>
   lang: string
 }
 

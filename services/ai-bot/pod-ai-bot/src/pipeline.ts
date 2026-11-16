@@ -14,6 +14,8 @@
 //
 
 import { type AIEventRequest } from '@hcengineering/ai-bot'
+import { type ChatMessage } from '@hcengineering/chunter'
+import { type Class, type Ref } from '@hcengineering/core'
 import { type AILevel, type AIProviderConfig } from './config'
 import { resolveModel } from './llms/modelRegistry'
 
@@ -21,6 +23,22 @@ import { resolveModel } from './llms/modelRegistry'
 export interface AIPipelineMessage {
   event: AIEventRequest
   level: AILevel
+}
+
+export interface TranslationRequest {
+  kind: 'translate'
+  message: Ref<ChatMessage>
+  messageClass: Ref<Class<ChatMessage>>
+  sourceHash: string
+  lang: string
+}
+
+export type AIQueueMessage = AIEventRequest | TranslationRequest
+export type ProviderMessage = AIPipelineMessage | (TranslationRequest & { level: AILevel })
+export const TRANSLATION_REQUEST_TOPIC = 'ai-translation-request'
+
+export function translationProviderTopic (providerId: string): string {
+  return `llm-translate-${providerId}`
 }
 
 /** Per-provider topic name. The provider id is the topic suffix. */

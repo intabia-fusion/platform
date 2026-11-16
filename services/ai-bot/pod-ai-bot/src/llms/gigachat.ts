@@ -129,7 +129,8 @@ export default class GigaChatProvider implements LLMProvider {
     ctx: MeasureContext,
     workspace: WorkspaceUuid,
     html: string,
-    lang: string
+    lang: string,
+    level?: AILevel
   ): Promise<string | undefined> {
     try {
       const response = await this.client.chat({
@@ -143,12 +144,12 @@ export default class GigaChatProvider implements LLMProvider {
             content: html
           }
         ],
-        model: this.modelFor()
+        model: this.modelFor(level)
       })
 
       const responseText = response.choices?.[0]?.message?.content ?? undefined
       const usage = usageFromApi(response.usage)
-      billUsage(ctx, workspace, usage, this.billingFor(), 'manual-translate', new Date().toISOString())
+      billUsage(ctx, workspace, usage, this.billingFor(level), 'manual-translate', new Date().toISOString())
 
       return responseText
     } catch (error) {

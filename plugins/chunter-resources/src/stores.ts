@@ -15,15 +15,47 @@
 
 import { readable, writable } from 'svelte/store'
 import { type ChatMessage } from '@hcengineering/chunter'
-import { type Doc, type Markup, type Ref } from '@hcengineering/core'
+import { type Doc, type Ref } from '@hcengineering/core'
 import { languageStore } from '@hcengineering/ui'
 import activity, { type ActivityMessage } from '@hcengineering/activity'
 import { NotificationClientImpl } from '@hcengineering/notification-resources'
 import { getClient } from '@hcengineering/presentation'
+import { setPlatformStatus, unknownError } from '@hcengineering/platform'
 
 export const translatingMessagesStore = writable<Set<Ref<ChatMessage>>>(new Set())
-export const translatedMessagesStore = writable<Map<Ref<ChatMessage>, Markup>>(new Map())
 export const shownTranslatedMessagesStore = writable<Set<Ref<ChatMessage>>>(new Set())
+
+const translationTimers = new Map<Ref<ChatMessage>, { attempt: symbol, timer: ReturnType<typeof setTimeout> }>()
+
+export function stopTranslating (id: Ref<ChatMessage>): void {
+  clearTimeout(translationTimers.get(id)?.timer)
+  translationTimers.delete(id)
+  translatingMessagesStore.update((store) => { store.delete(id); return store })
+}
+
+export function isTranslationAttempt (id: Ref<ChatMessage>, attempt: symbol): boolean {
+  return translationTimers.get(id)?.attempt === attempt
+}
+
+export function failTranslating (id: Ref<ChatMessage>, attempt: symbol): boolean {
+  if (!isTranslationAttempt(id, attempt)) return false
+  stopTranslating(id)
+  shownTranslatedMessagesStore.update((store) => { store.delete(id); return store })
+  return true
+}
+
+export function startTranslating (id: Ref<ChatMessage>): symbol {
+  stopTranslating(id)
+  translatingMessagesStore.update((store) => new Set(store).add(id))
+  const attempt = Symbol('translation attempt')
+  const timer = setTimeout(() => {
+    stopTranslating(id)
+    void setPlatformStatus(unknownError(new Error('Translation timed out')))
+    shownTranslatedMessagesStore.update((store) => { store.delete(id); return store })
+  }, 180_000)
+  translationTimers.set(id, { attempt, timer })
+  return attempt
+}
 
 /**
  * Meetings whose summary this user asked for and is still waiting on. The request only queues the
@@ -68,6 +100,6 @@ export const unreadThreadsCountStore = readable<number>(0, (set) => {
 })
 
 languageStore.subscribe(() => {
-  translatedMessagesStore.set(new Map())
+  for (const id of translationTimers.keys()) stopTranslating(id)
   shownTranslatedMessagesStore.set(new Set())
 })

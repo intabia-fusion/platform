@@ -15,6 +15,7 @@
 //
 
 import { ActivityInfoMessage, ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
+import { hash } from 'fast-sha256'
 import {
   AccountUuid,
   AttachedDoc,
@@ -90,6 +91,14 @@ export interface ChatMessage extends ActivityMessage {
 /**
  * @public
  */
+export function hashMessage (message: Markup): string {
+  return Array.from(hash(new TextEncoder().encode(message)), (byte) => byte.toString(16).padStart(2, '0')).join('')
+}
+
+export interface MessageTranslations extends ChatMessage {
+  entries: Record<string, Record<string, Markup>>
+}
+
 export interface ThreadMessage extends ChatMessage {
   attachedTo: Ref<ActivityMessage>
   attachedToClass: Ref<Class<ActivityMessage>>
@@ -190,7 +199,8 @@ export default plugin(chunterId, {
     ChatNavSortPreference: '' as Ref<Class<ChatNavSortPreference>>
   },
   mixin: {
-    ObjectChatPanel: '' as Ref<Mixin<ObjectChatPanel>>
+    ObjectChatPanel: '' as Ref<Mixin<ObjectChatPanel>>,
+    MessageTranslations: '' as Ref<Mixin<MessageTranslations>>
   },
   string: {
     Reactions: '' as IntlString,

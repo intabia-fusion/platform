@@ -50,6 +50,8 @@ import core, {
   type WorkspaceUuid
 } from '@hcengineering/core'
 import contact, { type Employee, type Person } from '@hcengineering/contact'
+import chunter, { hashMessage } from '@hcengineering/chunter'
+import { htmlToMarkup, jsonToHTML, markupToJSON } from '@hcengineering/text'
 import { getPlatformQueue } from '@hcengineering/kafka'
 import { join } from 'path'
 import {
@@ -63,7 +65,10 @@ import config from './config'
 import { type BillingQueueMessage, setUsageProducer } from './billing'
 import { AIControl } from './controller'
 import { LimitsState } from './limits'
-import { type AIPipelineMessage, dispatch, providerTopic, providerTopics } from './pipeline'
+import {
+  type AIQueueMessage, type ProviderMessage, type TranslationRequest, TRANSLATION_REQUEST_TOPIC,
+  dispatch, providerTopic, providerTopics, translationProviderTopic
+} from './pipeline'
 import { registryForFeature } from './llms/modelRegistry'
 import { registerLoaders } from './loaders'
 import { createServer } from './server/server'
@@ -292,14 +297,15 @@ function startWorkspaceConsumer (boot: Boot): void {
 async function startEventRouter (boot: Boot): Promise<void> {
   const { ctx, queue } = boot
 
-  const topics = providerTopics(config.AIProviders)
+  const topics = [...providerTopics(config.AIProviders), ...config.AIProviders.map((provider) => translationProviderTopic(provider.id))]
+  await queue.createTopic(TRANSLATION_REQUEST_TOPIC, 1)
   for (const topic of topics) {
     await queue.createTopic(topic, 1)
   }
 
-  const producers = new Map<string, ReturnType<typeof queue.getProducer<AIPipelineMessage>>>()
+  const producers = new Map<string, ReturnType<typeof queue.getProducer<ProviderMessage>>>()
   for (const topic of topics) {
-    producers.set(topic, queue.getProducer<AIPipelineMessage>(ctx, topic))
+    producers.set(topic, queue.getProducer<ProviderMessage>(ctx, topic))
   }
 
   const deadLetter = queue.getProducer<{ event: AIEventRequest, error: string }>(
@@ -307,42 +313,53 @@ async function startEventRouter (boot: Boot): Promise<void> {
     getDeadletterTopic(QueueTopic.AIQueue)
   )
 
-  const consumer = queue.createConsumer<AIEventRequest>(
-    ctx,
-    QueueTopic.AIQueue,
-    GROUP_EVENT_ROUTER,
-    async (ctx, message) => {
-      const event = message.value
-      let target: { topic: string, level: string } | undefined
-      try {
-        // Narrow to levels the request's feature allows, so a denied level routes to a capable one.
-        target = dispatch(event.level ?? config.DefaultLevel, registryForFeature(config.AIProviders, event.feature))
-      } catch (err: any) {
-        // No provider serves the requested level: redelivery cannot fix a config mismatch.
-        ctx.error('failed to dispatch ai event', { error: err.message })
+  const translationDeadLetter = queue.getProducer<{ request: TranslationRequest, error: string }>(ctx, getDeadletterTopic(TRANSLATION_REQUEST_TOPIC as QueueTopic))
+  const route = async (ctx: MeasureContext, message: ConsumerMessage<AIQueueMessage>): Promise<void> => {
+    const event = message.value
+    let target: { providerId: string, topic: string, level: string } | undefined
+    try {
+      // Narrow to levels the request's feature allows, so a denied level routes to a capable one.
+      target = 'kind' in event
+        ? dispatch(config.DefaultLevel, registryForFeature(config.AIProviders))
+        : dispatch(event.level ?? config.DefaultLevel, registryForFeature(config.AIProviders, event.feature))
+    } catch (err: any) {
+      // No provider serves the requested level: redelivery cannot fix a config mismatch.
+      ctx.error('failed to dispatch ai event', { error: err.message })
+      if ('kind' in event) {
+        await translationDeadLetter.send(ctx, message.workspace, [{ request: event, error: err.message }])
+      } else {
         await deadLetter?.send(ctx, message.workspace, [{ event, error: err.message }])
-        return
       }
-      const producer = producers.get(target.topic)
-      if (producer === undefined) {
-        ctx.error('No producer for resolved provider topic', { topic: target.topic })
-        await deadLetter?.send(ctx, message.workspace, [{ event, error: `no producer for ${target.topic}` }])
-        return
-      }
-      // Send failures are transient (broker down): rethrow so Kafka redelivers instead of dropping.
-      await producer.send(ctx, message.workspace, [{ event, level: target.level }])
+      return
     }
-  )
+    const topic = 'kind' in event ? translationProviderTopic(target.providerId) : target.topic
+    const producer = producers.get(topic)
+    if (producer === undefined) {
+      ctx.error('No producer for resolved provider topic', { topic: target.topic })
+      if ('kind' in event) {
+        await translationDeadLetter.send(ctx, message.workspace, [{ request: event, error: `no producer for ${target.topic}` }])
+      } else {
+        await deadLetter?.send(ctx, message.workspace, [{ event, error: `no producer for ${target.topic}` }])
+      }
+      return
+    }
+    // Send failures are transient (broker down): rethrow so Kafka redelivers instead of dropping.
+    await producer.send(ctx, message.workspace, ['kind' in event ? { ...event, level: target.level } : { event, level: target.level }])
+  }
+  const consumer = queue.createConsumer<AIQueueMessage>(ctx, QueueTopic.AIQueue, GROUP_EVENT_ROUTER, route)
+  const translations = queue.createConsumer<AIQueueMessage>(ctx, TRANSLATION_REQUEST_TOPIC, GROUP_EVENT_ROUTER, route, { fromBegining: true })
 
   boot.onClose.push(() => {
     void consumer?.close()
+    void translations.close()
     void deadLetter?.close()
+    void translationDeadLetter.close()
     for (const p of producers.values()) void p.close()
   })
 }
 
 /** llm-router role: batch consumer per provider topic `llm-<id>`, serving config.LLMProviderIds (empty = all). */
-function startLlmRouter (boot: Boot): void {
+export function startLlmRouter (boot: Boot): void {
   const { ctx, queue, aiControl } = boot
 
   const served = aiControl.getProviderIds()
@@ -353,13 +370,41 @@ function startLlmRouter (boot: Boot): void {
     getDeadletterTopic(QueueTopic.AIQueue)
   )
 
+  const translationDeadLetter = queue.getProducer<{ request: TranslationRequest, error: string }>(ctx, getDeadletterTopic(TRANSLATION_REQUEST_TOPIC as QueueTopic))
   for (const cfg of config.AIProviders) {
     if (!served.includes(cfg.id) || !wanted.includes(cfg.id)) continue
     const topic = providerTopic(cfg.id)
     const limiter = new RateLimiter(Math.max(1, cfg.concurrency))
     // Per message: one failing request must not take the rest of the batch down with it, and it
     // must not vanish either — it goes to the dead letter topic.
-    const handleOne = async (message: ConsumerMessage<AIPipelineMessage>, control?: ConsumerControl): Promise<void> => {
+    const handleOne = async (message: ConsumerMessage<ProviderMessage>, control?: ConsumerControl): Promise<void> => {
+      if ('kind' in message.value) {
+        const request = message.value
+        try {
+          const wsClient = await aiControl.getWorkspaceClient(message.workspace)
+          if (wsClient === undefined) throw new Error('workspace client is not connected')
+          const client = wsClient.systemAccessClient()
+          const current = await client.findOne(request.messageClass, { _id: request.message })
+          if (current === undefined || hashMessage(current.message) !== request.sourceHash) return
+          const translations = (current as any)[chunter.mixin.MessageTranslations]?.entries
+          if (translations?.[request.sourceHash]?.[request.lang] !== undefined) return
+          const html = jsonToHTML(markupToJSON(current.message))
+          const translated = await retryTransient(
+            () => aiControl.translateHtml(message.workspace, cfg.id, request.level, html, request.lang),
+            { maxRetries: 3, isRetryable: retryNetworkErrors },
+            'translateMessage'
+          )
+          const latest = await client.findOne(request.messageClass, { _id: request.message })
+          if (latest === undefined || hashMessage(latest.message) !== request.sourceHash) return
+          await client.updateMixin(latest._id, latest._class, latest.space, chunter.mixin.MessageTranslations, {
+            [`entries.${request.sourceHash}.${request.lang}`]: htmlToMarkup(translated)
+          } as any)
+        } catch (err: any) {
+          ctx.error('failed to translate', { error: err.message, provider: cfg.id })
+          await translationDeadLetter.send(ctx, message.workspace, [{ request, error: err.message }])
+        }
+        return
+      }
       const { event, level } = message.value
       try {
         // Network blips get a few attempts before the event is written off; anything else is a
@@ -374,36 +419,40 @@ function startLlmRouter (boot: Boot): void {
         await deadLetter?.send(ctx, message.workspace, [{ event, error: err.message, provider: cfg.id }])
       }
     }
-    consumers.push(
-      queue.createBatchConsumer<AIPipelineMessage>(
-        ctx,
-        topic,
-        providerGroup(cfg.id),
-        async (ctx, messages, control) => {
-          const hb = setInterval(() => {
-            void control?.heartbeat()
-          }, 1000)
-          try {
-            await Promise.all(
-              messages.map((m) =>
-                limiter.add(async () => {
-                  await handleOne(m, control)
-                })
+    for (const consumerTopic of [topic, translationProviderTopic(cfg.id)]) {
+      consumers.push(
+        queue.createBatchConsumer<ProviderMessage>(
+          ctx,
+          consumerTopic,
+          providerGroup(cfg.id),
+          async (ctx, messages, control) => {
+            const hb = setInterval(() => {
+              void control?.heartbeat()
+            }, 1000)
+            try {
+              const results = await Promise.allSettled(
+                messages.map((m) =>
+                  limiter.exec(async () => {
+                    await handleOne(m, control)
+                  })
+                )
               )
-            )
-            await limiter.waitProcessing()
-          } finally {
-            clearInterval(hb)
-          }
-        },
-        { batchSize: Math.max(1, cfg.batch) }
+              const failed = results.find((result): result is PromiseRejectedResult => result.status === 'rejected')
+              if (failed !== undefined) throw failed.reason
+            } finally {
+              clearInterval(hb)
+            }
+          },
+          { batchSize: Math.max(1, cfg.batch), fromBegining: consumerTopic !== topic }
+        )
       )
-    )
+    }
   }
   ctx.info('llm-router serving providers', { providers: wanted })
 
   boot.onClose.push(() => {
     for (const c of consumers) void c.close()
+    void translationDeadLetter.close()
   })
 }
 
@@ -613,6 +662,10 @@ async function startSttWorker (boot: Boot): Promise<void> {
 async function finalize (boot: Boot): Promise<void> {
   const { ctx, aiControl, app, clisrServer } = boot
 
+  await boot.queue.createTopic(TRANSLATION_REQUEST_TOPIC, 1)
+  const translations = boot.queue.getProducer<TranslationRequest>(ctx, TRANSLATION_REQUEST_TOPIC)
+  aiControl.setTranslationProducer(translations)
+  boot.onClose.push(() => { void translations.close() })
   createServer(aiControl, ctx, app)
   await clisrServer.start(ctx, config.Port)
   await aiControl.chunkStorageAdapter.make(ctx, { uuid: '' as WorkspaceUuid, url: '' })

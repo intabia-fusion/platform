@@ -23,6 +23,7 @@ import {
 import {
   type Channel,
   type ChatMessage,
+  hashMessage,
   chunterId,
   type ChunterSpace,
   createDirect,
@@ -49,7 +50,7 @@ import core, {
   type Timestamp
 } from '@hcengineering/core'
 import { type AttributeApplierResult } from '@hcengineering/view'
-import { type Asset, getMetadata, getResource, type IntlString, translate } from '@hcengineering/platform'
+import { type Asset, getMetadata, getResource, type IntlString, translate, setPlatformStatus, unknownError } from '@hcengineering/platform'
 import { getClient, type ObjectSearchResult } from '@hcengineering/presentation'
 import ChannelPresenter from './components/ChannelPresenter.svelte'
 import {
@@ -75,8 +76,9 @@ import chunter from './plugin'
 import {
   replyingToMessageStore,
   shownTranslatedMessagesStore,
-  translatedMessagesStore,
   translatingMessagesStore,
+  startTranslating,
+  failTranslating,
   unreadThreadsCountStore,
   startSummarizing,
   stopSummarizing
@@ -312,27 +314,16 @@ export function getChatTarget (doc: Doc): ChatTarget {
 }
 
 export async function translateMessage (message: ChatMessage): Promise<void> {
-  if (get(translatingMessagesStore).has(message._id)) {
-    return
+  if (get(translatingMessagesStore).has(message._id)) return
+  const language = get(languageStore)
+  const translation = getClient().getHierarchy().as(message, chunter.mixin.MessageTranslations)?.entries?.[hashMessage(message.message)]?.[language]
+  shownTranslatedMessagesStore.update((store) => new Set(store).add(message._id))
+  if (translation !== undefined) return
+  const attempt = startTranslating(message._id)
+  const queued = await aiTranslate(message._id, language)
+  if (!queued && failTranslating(message._id, attempt)) {
+    void setPlatformStatus(unknownError(new Error('Translation request failed')))
   }
-
-  if (get(translatedMessagesStore).has(message._id)) {
-    shownTranslatedMessagesStore.update((store) => store.add(message._id))
-    return
-  }
-
-  translatingMessagesStore.update((store) => store.add(message._id))
-  const response = await aiTranslate(message.message, get(languageStore))
-
-  if (response !== undefined) {
-    translatedMessagesStore.update((store) => store.set(message._id, response.text))
-    shownTranslatedMessagesStore.update((store) => store.add(message._id))
-  }
-
-  translatingMessagesStore.update((store) => {
-    store.delete(message._id)
-    return store
-  })
 }
 
 export async function showOriginalMessage (message: ChatMessage): Promise<void> {

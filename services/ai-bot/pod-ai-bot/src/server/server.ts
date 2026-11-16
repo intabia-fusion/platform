@@ -27,6 +27,7 @@ import {
 } from '@hcengineering/ai-bot'
 import { extractToken, getAccountClient, readToken } from '@hcengineering/server-client'
 import { AccountRole, type Doc, MeasureContext, type Ref, systemAccountUuid } from '@hcengineering/core'
+import chunter, { hashMessage, type ChatMessage } from '@hcengineering/chunter'
 import { isWorkspaceLoginInfo } from '@hcengineering/account-client'
 
 import { ApiError } from './error'
@@ -97,13 +98,19 @@ export function createServer (controller: AIControl, ctx: MeasureContext, app?: 
       if (req.body == null || Array.isArray(req.body) || typeof req.body !== 'object') {
         throw new ApiError(400)
       }
-      const response = await controller.translate(token.workspace, req.body as TranslateRequest)
-      if (response === undefined) {
-        throw new ApiError(500)
+      const request = req.body as TranslateRequest
+      if (typeof request.message !== 'string' || typeof request.lang !== 'string' || !/^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{2,8})*$/.test(request.lang)) {
+        throw new ApiError(400)
       }
-
-      res.status(200)
-      res.json(response)
+      const wsClient = await controller.getWorkspaceClient(token.workspace)
+      if (wsClient === undefined) throw new ApiError(503)
+      const message = await wsClient.clientFor(token.account).findOne(chunter.class.ChatMessage, { _id: request.message as Ref<ChatMessage> })
+      if (message === undefined) throw new ApiError(404)
+      await controller.queueTranslation(token.workspace, {
+        kind: 'translate', message: message._id, messageClass: message._class, sourceHash: hashMessage(message.message), lang: request.lang
+      })
+      res.status(202)
+      res.json({})
     })
   )
 

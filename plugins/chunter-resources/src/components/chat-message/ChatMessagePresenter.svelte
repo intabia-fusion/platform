@@ -27,7 +27,7 @@
   import type { AttachmentImageSize } from '@hcengineering/attachment-resources'
   import { AttachmentDocList } from '@hcengineering/attachment-resources'
   import type { ChatMessage } from '@hcengineering/chunter'
-  import chunter from '@hcengineering/chunter'
+  import chunter, { hashMessage } from '@hcengineering/chunter'
   import type { Employee, Person, SocialIdentity } from '@hcengineering/contact'
   import contact, { getCurrentEmployee } from '@hcengineering/contact'
   import { CombineAvatars, getPersonByPersonIdCb, getSocialIdByPersonIdCb } from '@hcengineering/contact-resources'
@@ -40,7 +40,7 @@
   import { getDocLinkTitle } from '@hcengineering/view-resources'
   import { NotificationClientImpl } from '@hcengineering/notification-resources'
 
-  import { shownTranslatedMessagesStore, translatedMessagesStore, translatingMessagesStore } from '../../stores'
+  import { shownTranslatedMessagesStore, translatingMessagesStore, stopTranslating } from '../../stores'
   import ChatMessageInput from './ChatMessageInput.svelte'
   import MessageReadMarker from './MessageReadMarker.svelte'
   import MessageChannelLabel from './MessageChannelLabel.svelte'
@@ -102,12 +102,7 @@
 
   $: if (value && originalText && originalText !== value?.message) {
     originalText = value.message
-    translatedMessagesStore.update((map) => {
-      if (value) {
-        map.delete(value._id)
-      }
-      return map
-    })
+    stopTranslating(value._id)
     shownTranslatedMessagesStore.update((map) => {
       if (value) {
         map.delete(value._id)
@@ -261,11 +256,13 @@
 
   let displayText: Markup = value?.message ?? EmptyMarkup
 
-  $: if (value && $shownTranslatedMessagesStore.has(value._id)) {
-    displayText = $translatedMessagesStore.get(value._id) ?? value?.message ?? EmptyMarkup
-  } else {
-    displayText = value?.message ?? EmptyMarkup
+  $: translation = value === undefined ? undefined : client.getHierarchy().as(value, chunter.mixin.MessageTranslations)?.entries?.[hashMessage(value.message)]?.[$languageStore]
+  $: if (value && translation !== undefined && $translatingMessagesStore.has(value._id)) {
+    stopTranslating(value._id)
   }
+  $: displayText = value && $shownTranslatedMessagesStore.has(value._id) && translation !== undefined
+    ? translation
+    : value?.message ?? EmptyMarkup
 
   async function handleDbClick (e: MouseEvent): Promise<void> {
     if ($deviceOptionsStore.isMobile) return

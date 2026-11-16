@@ -50,6 +50,8 @@ clisr-воркер (`MODE=client`) коннектится по WebSocket к ОД
 | Топик | Группа | Семантика |
 |---|---|---|
 | `ai-queue` | `ai-bot-event-router` | делится между репликами |
+| `ai-translation-request` | `ai-bot-event-router` | запросы переводов делятся между репликами |
+| `llm-translate-<providerId>` | `ai-bot-llm-<providerId>` | переводы обрабатываются с общим лимитом провайдера |
 | `llm-<providerId>` | `ai-bot-llm-<providerId>` | делится между репликами роли |
 | `love-queue` | `ai-bot-stt-ingest` | делится |
 | `transcription-queue` | `ai-bot-transcription` | делится |

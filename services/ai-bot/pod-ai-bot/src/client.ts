@@ -163,7 +163,7 @@ export const startClient = async (): Promise<void> => {
     }
     switch (request.method) {
       case 'translateHtml':
-        return await llmProvider.translateHtml(ctx, request.workspace, request.html, request.lang)
+        return await llmProvider.translateHtml(ctx, request.workspace, request.html, request.lang, level)
       case 'summarizeMessages':
         return await llmProvider.summarizeMessages(
           ctx,

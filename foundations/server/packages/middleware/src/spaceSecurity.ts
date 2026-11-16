@@ -46,6 +46,7 @@ import core, {
   type TxApplyIf,
   type TxCreateDoc,
   type TxCUD,
+  type TxMixin,
   TxProcessor,
   type TxRemoveDoc,
   type TxUpdateDoc,
@@ -83,6 +84,7 @@ const guestRoles = new Set<AccountRole>([AccountRole.Guest, AccountRole.DocGuest
 
 // guest.class.PublicLink: the guest plugin is not a dependency of this package.
 const publicLinkClass = 'guest:class:PublicLink' as Ref<Class<Doc>>
+const messageTranslationsMixin = 'chunter:mixin:MessageTranslations'
 
 interface PublicLinkDoc extends Doc {
   attachedTo?: Ref<Doc>
@@ -667,6 +669,26 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
     }
     if (TxProcessor.isExtendsCUD(tx._class)) {
       const cudTx = tx as TxCUD<Doc>
+      if (!derived && ctx.contextData.isTriggerCtx !== true && !isSystem(ctx.contextData.account, ctx)) {
+        const fields = tx._class === core.class.TxCreateDoc
+          ? (tx as TxCreateDoc<Doc>).attributes as Record<string, any>
+          : tx._class === core.class.TxUpdateDoc
+            ? (tx as TxUpdateDoc<Doc>).operations as Record<string, any>
+            : {}
+        const touchesMixin = (ops: Record<string, any>): boolean => Object.keys(ops).some((key) =>
+          key === messageTranslationsMixin || key.startsWith(`${messageTranslationsMixin}.`)
+        )
+        if (cudTx.objectClass === messageTranslationsMixin ||
+          (tx._class === core.class.TxMixin && (tx as TxMixin<Doc, Doc>).mixin === messageTranslationsMixin) ||
+          (fields.$rename != null && typeof fields.$rename === 'object' &&
+            Object.values(fields.$rename).some((value) => typeof value === 'string' &&
+              (value === messageTranslationsMixin || value.startsWith(`${messageTranslationsMixin}.`)))) ||
+          touchesMixin(fields) || Object.keys(fields).some((key) =>
+          key.startsWith('$') && fields[key] != null && typeof fields[key] === 'object' && touchesMixin(fields[key])
+        )) {
+          throw this.forbiddenTx(ctx, ForbiddenKind.SystemOnly, 'Only the system can write message translations', tx)
+        }
+      }
       const isSpace = h.isDerived(cudTx.objectClass, core.class.Space)
       if (isSpace) {
         await this.checkSpacePermissions(ctx, cudTx as TxCUD<Space>, derived)

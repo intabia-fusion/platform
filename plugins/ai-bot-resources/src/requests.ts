@@ -18,10 +18,9 @@ import {
   type ConnectMeetingRequest,
   type DisconnectMeetingRequest,
   type SummarizeMessagesRequest,
-  type TranslateRequest,
-  type TranslateResponse
+  type TranslateRequest
 } from '@hcengineering/ai-bot'
-import { type Class, concatLink, type Doc, type Markup, type Ref } from '@hcengineering/core'
+import { type Class, concatLink, type Doc, type Ref } from '@hcengineering/core'
 import { type MeetingMinutes, type RoomLanguage } from '@hcengineering/love'
 import { getMetadata, Severity, Status } from '@hcengineering/platform'
 import presentation from '@hcengineering/presentation'
@@ -29,16 +28,16 @@ import ui, { addStatusNotification } from '@hcengineering/ui'
 
 import aiBot from './plugin'
 
-export async function translate (text: Markup, lang: string): Promise<TranslateResponse | undefined> {
+export async function translate (message: Ref<Doc>, lang: string): Promise<boolean> {
   const url = getMetadata(aiBot.metadata.EndpointURL) ?? ''
   const token = getMetadata(presentation.metadata.Token) ?? ''
 
   if (url === '' || token === '') {
-    return undefined
+    return false
   }
 
   try {
-    const req: TranslateRequest = { text, lang }
+    const req: TranslateRequest = { message, lang }
     const resp = await fetch(concatLink(url, '/translate'), {
       method: 'POST',
       headers: {
@@ -47,14 +46,10 @@ export async function translate (text: Markup, lang: string): Promise<TranslateR
       },
       body: JSON.stringify(req)
     })
-    if (!resp.ok) {
-      return undefined
-    }
-
-    return (await resp.json()) as TranslateResponse
+    return resp.ok
   } catch (error) {
     console.error(error)
-    return undefined
+    return false
   }
 }
 

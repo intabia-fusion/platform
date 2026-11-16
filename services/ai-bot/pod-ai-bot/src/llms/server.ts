@@ -45,6 +45,7 @@ export interface TranslateHtmlRequest {
   html: string
   lang: string
   workspace: WorkspaceUuid
+  level?: AILevel
 }
 
 export interface SummarizeMessagesRequest {
@@ -129,7 +130,8 @@ export default class ServerLLMProvider implements LLMProvider {
     ctx: MeasureContext,
     workspace: WorkspaceUuid,
     html: string,
-    lang: string
+    lang: string,
+    level?: AILevel
   ): Promise<string | undefined> {
     const startTime = Date.now()
 
@@ -138,7 +140,8 @@ export default class ServerLLMProvider implements LLMProvider {
         method: 'translateHtml',
         html,
         lang,
-        workspace
+        workspace,
+        level
       }
 
       const result = await this.server.requestWithFilter(ctx, 'llm', [request], this.selectLLMClient)

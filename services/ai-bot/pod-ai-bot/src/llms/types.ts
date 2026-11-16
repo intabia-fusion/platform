@@ -134,7 +134,8 @@ export interface LLMProvider {
     ctx: MeasureContext,
     workspace: WorkspaceUuid,
     html: string,
-    lang: string
+    lang: string,
+    level?: AILevel
   ) => Promise<string | undefined>
 
   /**
