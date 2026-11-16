@@ -140,7 +140,7 @@ test.describe('Tracker tests', () => {
       await issuesPage.clickOrdering()
       await issuesPage.selectModifiedDate()
       await issuesPage.pressEscape()
-      await issuesPage.clickEstimationContainer()
+      await issuesPage.clickEstimationContainer(name)
       await issuesPage.waitForEstimation()
       await issuesPage.clickAddTimeReport()
       await issuesPage.waitForTimeReportAdd()
@@ -148,7 +148,7 @@ test.describe('Tracker tests', () => {
       await issuesPage.expectCreateEnabled()
       await issuesPage.clickCreate()
       await issuesPage.clickOkButton()
-      await issuesPage.checkReportedTime(count)
+      await issuesPage.checkReportedTime(name, count)
     }
   })
 

@@ -4,6 +4,8 @@
 
 ## Diagnosing
 
+- CI `43855636060`, `report-time-from-main-view`: все три попытки искали удаленный `.reported-container`; снимки показывали ожидаемое время в объединенной колонке. Проверка привязана к строке задачи и читает факт перед `/`.
+
 - `polls-form.spec.ts`, horizontal drafts: `AppletTile` is 18rem wide. Requiring the whole tile inside the strip gives a false failure when the strip is narrower (Chromium: 288px tile in a 240px strip). After viewport changes, recompute the scroll end on each poll; verify the last tile's right edge is reachable rather than requiring full containment.
 - Local `ai-bot.spec.ts` monthly limit failure, 2026-11-11: all three attempts received the first echo and showed the exhausted badge, but no chat refusal. `AIControl.processEvent` rejects queued events at the token gate before the window check. The badge is the intended notification; neither token-block path writes a chat notice.
 - `board-settings.spec.ts` at 1280×800: a revealed column had viewport area ratio `0.9408397078514099` on all three CI attempts. `ColumnsTab` can extend below the viewport; horizontal reveal must check the full column width against `.scroll` and the header against the viewport, not demand area ratio 1 for the whole column. Standalone regression: `board-column-visibility.spec.ts`.
