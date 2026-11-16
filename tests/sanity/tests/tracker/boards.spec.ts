@@ -474,9 +474,10 @@ test.describe('task boards', () => {
     expect(errors).toEqual([])
   })
 
-  test('adding columns in the board wizard reveals the horizontal scrollbar', async ({ page }) => {
+  test('adding columns in the board wizard reveals and focuses the new column', async ({ page }) => {
     const boards = new BoardsPage(page)
     await page.setViewportSize({ width: 1280, height: 800 })
+    await page.emulateMedia({ reducedMotion: 'no-preference' })
     await boards.open(boardId)
     await page.getByRole('button', { name: 'Create board', exact: true }).click()
     await page.locator('#board-create-title').fill(`${titlePrefix}columns-draft`)
@@ -490,17 +491,24 @@ test.describe('task boards', () => {
     const before = await unplaced.boundingBox()
     for (let index = 0; index < 6; index++) {
       await boards.createWizard().locator('[data-id="boardAddColumn"]').click()
+      const last = boards.createWizard().locator('[data-id="boardColumn"]').last()
+      await expect(last.locator('input.name')).toBeFocused()
+      await boards.expectColumnRevealed(last)
     }
     await page.mouse.move(0, 0)
     await expect(wrapper.locator('.bar-horizontal')).toBeVisible()
     await expect(wrapper.locator('.bar-horizontal')).toHaveCSS('opacity', '1')
-    await scroll.evaluate((element) => {
-      element.scrollLeft = element.scrollWidth
-    })
     await expect.poll(async () => await scroll.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0)
     expect(await unplaced.boundingBox()).toEqual(before)
     const last = boards.createWizard().locator('[data-id="boardColumn"]').last()
     expect((await last.boundingBox())?.y).toBeCloseTo(before?.y ?? 0, 0)
+    const name = last.locator('input.name')
+    expect(
+      await name.evaluate((input: HTMLInputElement) => (input.selectionEnd ?? 0) - (input.selectionStart ?? 0))
+    ).toBe((await name.inputValue()).length)
+    await name.pressSequentially('Review')
+    await name.press('Tab')
+    await expect(name).toHaveValue('Review')
   })
 
   test('the board catalog is a table and settings follow author and editor rights', async ({ page, browser }) => {

@@ -108,10 +108,29 @@
     } else await onChange({ preventDuplicateColumnTitles: on })
   }
 
+  let newColumnId: string | undefined
+  let columnsScroll: HTMLElement | undefined | null
+
+  function revealColumn (node: HTMLElement, id: string): void {
+    if (id !== newColumnId) return
+    // Wait for the keyed column and Scroller to finish mounting in both editors.
+    void tick().then(() => {
+      if (!node.isConnected || id !== newColumnId || columnsScroll == null) return
+      columnsScroll.scrollTo({
+        left: columnsScroll.scrollWidth,
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+      })
+      const input = node.querySelector('input')
+      input?.focus({ preventScroll: true })
+      input?.select()
+    })
+  }
+
   async function addColumn (): Promise<void> {
     const defaultTitle = await translate(tracker.string.NewColumn, {})
     const title = board.preventDuplicateColumnTitles ? nextColumnTitle(board.columns, defaultTitle) : defaultTitle
-    save([...board.columns, { id: generateId(), title, category: task.statusCategory.UnStarted, statuses: [] }])
+    newColumnId = generateId()
+    save([...board.columns, { id: newColumnId, title, category: task.statusCategory.UnStarted, statuses: [] }])
   }
 
   function patchColumn (id: string, patch: Partial<BoardColumn>): void {
@@ -324,7 +343,13 @@
       </div>
 
       <div class="columns-scroll" data-id="boardColumnsScroll">
-        <Scroller horizontal contentDirection="horizontal" align="start" stickedScrollBars>
+        <Scroller
+          horizontal
+          contentDirection="horizontal"
+          align="start"
+          stickedScrollBars
+          bind:divScroll={columnsScroll}
+        >
           {#each board.columns as column, i (column.id)}
             {@const invalidTitle =
               (showDuplicateTitles && duplicateIds.has(column.id)) ||
@@ -335,7 +360,9 @@
             {@const issues = column.statuses.reduce((sum, id) => sum + (counts.get(id) ?? 0), 0)}
             <div
               class="column"
+              class:created={column.id === newColumnId}
               class:over={over === column.id && dragged !== undefined}
+              use:revealColumn={column.id}
               data-id="boardColumn"
               role="list"
               on:dragover|preventDefault={() => {
@@ -550,6 +577,25 @@
     }
     &.over {
       border-color: var(--primary-button-default);
+    }
+    &.created {
+      animation: reveal-column 1.8s ease-out;
+    }
+  }
+  @keyframes reveal-column {
+    0%,
+    60% {
+      border-color: var(--primary-button-default);
+      box-shadow: inset 0 0 0 1px var(--primary-button-default);
+    }
+    100% {
+      border-color: var(--theme-divider-color);
+      box-shadow: inset 0 0 0 1px transparent;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .column.created {
+      animation-timing-function: step-end;
     }
   }
   .unplaced-title {

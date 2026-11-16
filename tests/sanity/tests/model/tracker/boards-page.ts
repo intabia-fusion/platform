@@ -50,6 +50,28 @@ export class BoardsPage {
   settingsBack = (): Locator => this.page.locator('[data-id="boardSettingsBack"]')
   settingsColumns = (): Locator => this.page.locator('[data-id="boardSettingsColumns"]')
   settingsColumn = (): Locator => this.page.locator('[data-id="boardColumn"]')
+
+  async expectColumnRevealed (column: Locator): Promise<void> {
+    // A settings column can extend below the viewport. Its header must be visible,
+    // and its full width must fit inside the horizontal scroller.
+    await expect(column.locator('.head')).toBeInViewport({ ratio: 1 })
+    await expect
+      .poll(
+        async () =>
+          await column.evaluate((element) => {
+            const scroll = element.closest('.scroll')
+            if (!(scroll instanceof HTMLElement)) throw new Error('Board column has no scroll container')
+            const bounds = element.getBoundingClientRect()
+            const left = scroll.getBoundingClientRect().left + scroll.clientLeft
+            return {
+              left: Math.round(Math.max(0, left - bounds.left)),
+              right: Math.round(Math.max(0, bounds.right - left - scroll.clientWidth))
+            }
+          })
+      )
+      .toEqual({ left: 0, right: 0 })
+  }
+
   density = (density: string): Locator => this.page.locator(`[data-id="boardDensity-${density}"]`)
   settingsTab = (id: string): Locator => this.page.locator(`[data-id="boardSettings-${id}"]`)
   settingsCard = (): Locator => this.page.locator('[data-id="boardSettingsCard"]')
