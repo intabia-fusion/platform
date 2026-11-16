@@ -81,6 +81,7 @@ export default mergeIds(trackerId, tracker, {
     BoardVisibilityAll: '' as IntlString,
     BoardVisibilityMe: '' as IntlString,
     BoardFilter: '' as IntlString,
+    BoardStatusFiltersCleaned: '' as IntlString,
     BoardAuthor: '' as IntlString,
     BoardEditors: '' as IntlString,
     BoardEditorsNone: '' as IntlString,

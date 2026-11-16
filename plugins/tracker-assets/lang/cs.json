@@ -1,5 +1,6 @@
 {
   "string": {
+    "BoardStatusFiltersCleaned": "Stavy odebraných projektů byly odstraněny z filtrů.",
     "PreventDuplicateColumnTitles": "Zabránit duplicitním názvům sloupců",
     "PreventDuplicateColumnTitlesHint": "Porovnávat názvy všech sloupců této tabule bez rozlišení velkých a malých písmen a bez úvodních a koncových mezer.",
     "DuplicateColumnTitle": "Sloupec s tímto názvem již existuje",

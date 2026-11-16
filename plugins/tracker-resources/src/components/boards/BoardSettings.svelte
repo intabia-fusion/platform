@@ -15,12 +15,14 @@
 <script lang="ts">
   import contact from '@hcengineering/contact'
   import { getCurrentAccount, type Data, type Ref } from '@hcengineering/core'
-  import { getEmbeddedLabel, type Asset, type IntlString } from '@hcengineering/platform'
+  import { getEmbeddedLabel, translate, type Asset, type IntlString } from '@hcengineering/platform'
   import { createQuery, getClient, isDisabled, MessageBox } from '@hcengineering/presentation'
   import task, { getStates } from '@hcengineering/task'
   import { typeStore } from '@hcengineering/task-resources'
   import type { Board, Project } from '@hcengineering/tracker'
   import ui, {
+    addNotification,
+    themeStore,
     BlankView,
     Header,
     Label,
@@ -31,7 +33,8 @@
   } from '@hcengineering/ui'
   import { Button, Dropdown, IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
-  import { statusStore } from '@hcengineering/view-resources'
+  import { FilterRemovedNotification, statusStore } from '@hcengineering/view-resources'
+  import viewResources from '@hcengineering/view-resources/src/plugin'
   import {
     BoardEditor,
     boardLocation,
@@ -41,6 +44,7 @@
     shareBoard
   } from '../../boards'
   import tracker from '../../plugin'
+  import { pruneBoardStatusFilters } from '../../boardStatusFilters'
   import CardTab from './settings/CardTab.svelte'
   import ColumnsTab from './settings/ColumnsTab.svelte'
   import GeneralTab from './settings/GeneralTab.svelte'
@@ -87,7 +91,32 @@
   $: editor.receive(board)
 
   async function onChange (patch: Partial<Data<Board>>): Promise<void> {
+    let removed = 0
+    if (patch.projects !== undefined && current.projects.some((id) => !patch.projects?.includes(id))) {
+      const remaining = await client.findAll(
+        task.class.Project,
+        { _id: { $in: patch.projects } },
+        { showArchived: true }
+      )
+      const allowed = new Set(
+        remaining.flatMap((project) => getStates(project, $typeStore, $statusStore.byId).map((s) => s._id))
+      )
+      patch = {
+        ...pruneBoardStatusFilters(current, allowed, (count) => {
+          removed += count
+        }),
+        ...patch
+      }
+    }
     await editor.edit(patch)
+    if (removed > 0) {
+      addNotification(
+        await translate(viewResources.string.FilterUpdated, {}, $themeStore.language),
+        current.title,
+        FilterRemovedNotification,
+        { description: await translate(tracker.string.BoardStatusFiltersCleaned, {}, $themeStore.language) }
+      )
+    }
   }
 
   // Archived projects stay on the board; the store of active projects drops them

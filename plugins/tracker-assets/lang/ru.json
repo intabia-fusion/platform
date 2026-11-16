@@ -1,5 +1,6 @@
 {
   "string": {
+    "BoardStatusFiltersCleaned": "Статусы исключённых проектов удалены из фильтров.",
     "PreventDuplicateColumnTitles": "Запретить одинаковые названия колонок",
     "PreventDuplicateColumnTitlesHint": "Проверять названия всех колонок этой доски без учёта регистра и пробелов по краям.",
     "DuplicateColumnTitle": "Колонка с таким названием уже существует",

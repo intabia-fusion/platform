@@ -1,5 +1,6 @@
 {
   "string": {
+    "BoardStatusFiltersCleaned": "已从筛选条件中移除已排除项目的状态。",
     "PreventDuplicateColumnTitles": "禁止重复的列名称",
     "PreventDuplicateColumnTitlesHint": "比较此看板中所有列的名称，忽略大小写及首尾空格。",
     "DuplicateColumnTitle": "已存在同名的列",

@@ -1,5 +1,6 @@
 {
   "string": {
+    "BoardStatusFiltersCleaned": "Statuses of removed projects were cleared from filters.",
     "PreventDuplicateColumnTitles": "Prevent duplicate column titles",
     "PreventDuplicateColumnTitlesHint": "Compare all column titles on this board ignoring case and surrounding spaces.",
     "DuplicateColumnTitle": "A column with this title already exists",
