@@ -178,6 +178,7 @@
     "AnyActivity": "N'importe",
     "Export": "Exporter",
     "PendingSignups": "Inscriptions inachevées",
+    "IncompleteOnboarding": "Configuration du compte inachevée",
     "SortRegistered": "Date d'inscription",
     "Audit": "Audit",
     "AuditTitle": "Actions des administrateurs",

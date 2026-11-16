@@ -6,6 +6,7 @@
   export let agreedPersonalData: boolean = false
   export let agreedRules: boolean = false
   export let highlight: boolean = false
+  export let compact = false
 
   let personalDatalabel = ''
   $: void translate(
@@ -56,7 +57,7 @@
   }
 </script>
 
-<label class="check-label">
+<label class="check-label" class:compact>
   <input
     type="checkbox"
     data-testid="checkbox-personal-data"
@@ -68,7 +69,7 @@
     {@html personalDatalabel}
   </span>
 </label>
-<label class="check-label">
+<label class="check-label" class:compact>
   <input
     type="checkbox"
     data-testid="checkbox-rules"
@@ -82,6 +83,17 @@
 </label>
 
 <style lang="scss">
+  .check-label.compact {
+    display: flex;
+    margin-bottom: 0.75rem;
+    font-size: 0.75rem;
+    line-height: 1.125rem;
+  }
+
+  .check-label.compact:last-child {
+    margin-bottom: 0;
+  }
+
   .check-label {
     display: inline-flex;
     gap: 0.5rem;

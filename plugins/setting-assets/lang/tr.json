@@ -271,6 +271,8 @@
     "SendCode": "Kod gönder",
     "SeatLimitReached": "Boş koltuk yok",
     "SeatLimitReachedDescription": "Çalışma alanı plan koltuk limitine ulaştı. Bu rolü atamak için bir koltuk boşaltın veya planı yükseltin.",
+    "DocumentGuest": "Belge konuğu",
+    "SystemAdministrator": "Sistem yöneticisi",
     "WebhookAccess": "Giden webhook'lar",
     "WebhookIncomingAccess": "Gelen webhook'lar",
     "WebhookIncomingPlaceholderProject": "Buradaki gerçek tanımlayıcıyı kullanmak için yukarıdan bir proje alanı seçin.",

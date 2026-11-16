@@ -1,6 +1,7 @@
 <!--
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021, 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -39,7 +40,8 @@
   import PasswordRequest from './PasswordRequest.svelte'
   import PasswordRestore from './PasswordRestore.svelte'
   import SelectWorkspace from './SelectWorkspace.svelte'
-  import SignupForm from './SignupForm.svelte'
+  import EmailFirstForm from './EmailFirstForm.svelte'
+  import RegistrationOnboarding from './RegistrationOnboarding.svelte'
   import SelectDownloads from './SelectDownloads.svelte'
   import type { Pages } from '..'
   import { pages } from '..'
@@ -95,6 +97,12 @@
       page = account != null ? 'login' : 'signup'
     }
 
+    if (page === 'signup' && (!useOTP || signUpDisabled || localLoginHidden)) {
+      page = 'login'
+      navigate({ ...loc, path: ['login', 'login'] }, true)
+      return
+    }
+
     navigateUrl = loc.query?.navigateUrl ?? undefined
   }
 
@@ -133,12 +141,12 @@
       {#if localLoginHidden}
         <ProvidersOnlyForm />
       {:else}
-        <LoginForm {navigateUrl} {signUpDisabled} {useOTP} />
+        <LoginForm {navigateUrl} {useOTP} emailFirst />
       {/if}
     {:else if page === 'signup'}
-      {#await passwordPolicyReady then _}
-        <SignupForm {navigateUrl} {signUpDisabled} {localLoginHidden} {useOTP} />
-      {/await}
+      <EmailFirstForm {navigateUrl} />
+    {:else if page === 'onboarding'}
+      <RegistrationOnboarding />
     {:else if page === 'createWorkspace'}
       <CreateWorkspaceForm />
     {:else if page === 'password'}
@@ -171,10 +179,10 @@
       {/await}
     {/if}
   </svelte:fragment>
-  <svelte:fragment slot="extra-form-content">
+  <svelte:fragment slot="footer-action">
     {#if !desktopPlatform && page !== 'downloads' && page !== 'join'}
       {@const desktopUrl = getMetadata(login.metadata.DesktopUpdatesUrl)}
-      <div class="mt-4 flex flex-row-reverse mr-4">
+      <div>
         {#if !($deviceInfo.isMobile && $deviceInfo.minWidth) && desktopUrl != null && desktopUrl !== ''}
           <BottomAction
             action={{

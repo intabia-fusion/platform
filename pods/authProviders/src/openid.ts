@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -19,7 +20,9 @@ import Router from 'koa-router'
 import { Issuer, Strategy } from 'openid-client'
 
 import { Passport } from '.'
-import { encodeState, handleProviderAuth, safeParseAuthState } from './utils'
+import { consumeAuthState, encodeState, handleProviderAuth, providerCookiePath, safeParseAuthState } from './utils'
+
+const oidcSessionKey = 'oidc:auth'
 
 export function registerOpenid (
   measureCtx: MeasureContext,
@@ -54,9 +57,12 @@ export function registerOpenid (
 
       passport.use(
         'oidc',
-        new Strategy({ client, passReqToCallback: true }, (req: any, tokenSet: any, userinfo: any, done: any) => {
-          return done(null, userinfo)
-        })
+        new Strategy(
+          { client, passReqToCallback: true, sessionKey: oidcSessionKey },
+          (req: any, tokenSet: any, userinfo: any, done: any) => {
+            return done(null, userinfo)
+          }
+        )
       )
       measureCtx.info('Registered OIDC strategy')
     })
@@ -66,21 +72,46 @@ export function registerOpenid (
 
   router.get('/auth/openid', async (ctx, next) => {
     measureCtx.info('try auth via', { provider: 'openid' })
-    const state = encodeState(ctx, brandings)
+    const path = providerCookiePath(accountsUrl)
+    const state = encodeState(ctx, brandings, 'openid', path)
+    const nonce = safeParseAuthState(state).consentState
+    ;(ctx.request as any).session = {}
 
     await passport.authenticate('oidc', {
       scope: 'openid profile email',
       state
     })(ctx, next)
+    const pending = (ctx.request as any).session[oidcSessionKey]
+    if (pending == null) ctx.throw(500)
+    ctx.cookies.set(`oauth-oidc-${nonce}`, Buffer.from(JSON.stringify(pending)).toString('base64url'), {
+      signed: true,
+      httpOnly: true,
+      sameSite: 'lax',
+      path,
+      maxAge: 10 * 60 * 1000
+    })
   })
 
   router.get(
     redirectURL,
     async (ctx, next) => {
-      const state = safeParseAuthState(ctx.query?.state)
+      const path = providerCookiePath(accountsUrl)
+      const state = consumeAuthState(ctx, 'openid', path)
+      const name = `oauth-oidc-${state.consentState}`
+      const raw = ctx.cookies.get(name, { signed: true })
+      let pending
+      try {
+        pending = JSON.parse(Buffer.from(raw ?? '', 'base64url').toString())
+      } catch {
+        ctx.throw(403)
+      }
+      if (pending == null || pending.state !== ctx.query.state) ctx.throw(403)
+      ctx.cookies.set(name, null, { signed: true, httpOnly: true, sameSite: 'lax', path })
+      ;(ctx.request as any).session = { [oidcSessionKey]: pending }
       const branding = getBranding(brandings, state?.branding)
 
       await passport.authenticate('oidc', {
+        session: false,
         failureRedirect: concatLink(branding?.front ?? frontUrl, '/login')
       })(ctx, next)
     },
@@ -104,7 +135,9 @@ export function registerOpenid (
         first,
         last,
         { type: SocialIdType.OIDC, value: ctx.state.user.sub },
-        signUpDisabled
+        signUpDisabled,
+        ctx,
+        providerCookiePath(accountsUrl)
       )
 
       if (redirectUrl !== '') {

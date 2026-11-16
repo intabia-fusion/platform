@@ -135,7 +135,7 @@ export class ApiEndpoint {
   async createAccount (email: string, password: string, firstName: string, lastName: string): Promise<any> {
     const payload = {
       method: 'signUp',
-      params: { email, password, firstName, lastName }
+      params: { email, password, firstName, lastName, consent: { personalData: true, rules: true } }
     }
     return await this.post(payload, this.getDefaultHeaders())
   }

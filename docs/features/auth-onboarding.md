@@ -1,6 +1,6 @@
 # Аутентификация, авторизация и онбординг
 
-> Сверено с кодом: коммит 39ae47eb6f, 2026-09-23.
+> Сверено с кодом: коммит 57107447b8.
 
 Подсистема отвечает за вход и регистрацию пользователя, управление токенами и ролями, создание/апгрейд воркспейсов, гостевой и публичный доступ, а также за удаление аккаунтов и воркспейсов (self-service и админское). Сущности: `Account`, `Person`, `SocialId`, `Workspace`/`WorkspaceStatus`, `Member`, `Token`, `PublicLink`. БД аккаунтов - Postgres/CockroachDB через `server/account/src/collections/postgres`.
 
@@ -59,14 +59,14 @@
 4. Генерируется токен - `generateToken()` (`token.ts`), клиент получает `{account, token, name, socialId}`.
 
 **2. Вход по коду (OTP) и регистрация без пароля.**
-1. `loginOtp()` (`operations.ts`) отправляет код на email; для незарегистрированного email ответ всё равно `{sent: true}` (анти-эниумерация).
-2. `signUpOtp()` (`operations.ts`) создаёт `Person` + `SocialId(EMAIL)`.
-3. `validateOtp()` (`operations.ts`) проверяет код и выдаёт токен. `SignupForm.svelte` передаёт пароль только при включённом флажке "Задать пароль"; регистрация без пароля не запускает проверку сложности.
+1. `EmailFirstForm.svelte` запрашивает оба согласия до передачи email в `requestEmailOtp()`. Состояние флажков сохраняется в localStorage браузера; при следующем открытии оба отмеченных согласия отображаются компактно. Состояние кода и ограничений хранится в `email_otp` по нормализованному email без создания пользовательских сущностей.
+2. `confirmEmailOtp()` получает код и согласия, после успешной проверки атомарно создаёт `Person`, `SocialId`, `Account`, записывает время согласия и сохраняет незавершённый сценарий в `Account.onboarding`. Для старых клиентов запрос кода без согласий поддерживается; создание аккаунта требует согласия при подтверждении. `validateOtp()` предназначен для входа существующего аккаунта.
+3. `RegistrationOnboarding.svelte` сначала запрашивает название пространства, предложенное по части email до `@`. `createWorkspace(..., true)` атомарно сохраняет название, регион, владельца и UUID, затем форма запрашивает имя и фамилию, пока пространство разворачивается. По приглашению пользователь подтверждает вступление на экране с названием пространства и именем пригласившего; форма запрашивает только отсутствующие поля имени. Проверка приглашения, сохранение недостающих полей и вступление выполняются транзакционно. После завершения открывается пространство.
 
 **3. OAuth (Google/GitHub/OpenID).**
-1. `pods/authProviders/src/index.ts` отдаёт список провайдеров на `GET /providers`.
+1. `pods/authProviders/src/index.ts` отдаёт список провайдеров на `GET /providers`. Существующие пользователи входят без повторного согласия.
 2. Каждый провайдер регистрирует роуты `/auth/<provider>` и `/auth/<provider>/callback` через `koa-passport` - пример: `pods/authProviders/src/google.ts` (`GoogleStrategy` из `passport-google-oauth20`).
-3. Callback резолвит/создаёт аккаунт через account-сервис и редиректит на front с токеном.
+3. Callback проверяет state сессии и определяет, существует ли аккаунт. Новым пользователям показывает согласие до создания аккаунта. Незавершённая регистрация продолжается на шаге onboarding.
 
 **4. Создание воркспейса и вход по инвайту.**
 1. `createWorkspace()` (`operations.ts`) создаёт запись `Workspace`/`WorkspaceStatus` в режиме создания.
@@ -83,6 +83,9 @@
 4. Отмена - `cancelAccountDeletion()` (`operations.ts`) или `performWorkspaceOperation('cancel-delete', ...)` (`server/account/src/serviceOperations.ts`). Подробности семантики purge, гвардов и найденных ловушек - `docs/memory/deferred-deletion.md`.
 
 **6. Admin-операции и admin-сессия.**
+
+В списке аккаунтов отдельные серверные фильтры показывают Person без Account и Account с незавершённым onboarding. Экспорт использует тот же фильтр.
+
 1. Логин под email из `ADMIN_EMAILS`/`BILLING_EMAILS` кладёт в токен `extra.admin`/`extra.billingAdmin` - `isAdminEmail()` (`server/account/src/admin.ts`).
 2. Разрушительные и приватные операции идут через единый гейт `requireAdminOp()` (`server/account/src/adminOp.ts`): human-логин (`isHumanAdminLogin`, `adminOp.ts`) + свежая `extra.mfaAt`-сессия (`hasAdminSession()`, `token.ts`, TTL `ADMIN_SESSION_TTL_SEC`) + rate-limited OTP (`verifyAdminOtpLimited()`, `adminOp.ts`).
 3. Действие пишется в аудит - `logAdminAction()`/`listAdminActions()` (`serviceOperations.ts`).
@@ -91,14 +94,16 @@
 
 ### Логин и регистрация
 - **Пароль с блокировкой после N попыток.** `login()`, `recordFailedLoginAttempt`/`isAccountPasswordLocked` - `server/account/src/operations.ts`, `server/account/src/utils.ts`.
-- **Email OTP логин/регистрация.** `loginOtp`/`validateOtp`/`signUpOtp` - `server/account/src/operations.ts`.
-- **Аналитика регистрации.** `SignupForm.svelte` задает событие `signup.submitAttempt`; `Form.svelte` различает отправку и блокировку по согласиям или валидации, включая Enter. `YandexMetrikaProvider` (`packages/analytics-providers/src/yandexMetrika.ts`) отправляет цели `signup_click`, `signup_click_blocked`, `signup_submit`, `workspace_created` на страницах входа, регистрации и создания пространства. SDK не загружается при fragment или неизвестных query-параметрах текущего URL либо referrer: разрешены только `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, `utm_content`, `utm_id`, `yclid`, `gclid`. Явные просмотры и referrer передаются без query и fragment; параметры целей ограничены известными именами и значениями. Страницы со ссылками входа, восстановления, подтверждения и приглашения не отслеживаются, пока в URL остаются их секретные параметры. При уходе счетчик останавливается через `destruct`, очередь незагруженного SDK очищается. `AnalyticsCollectorProvider` отправляет события через `/collect` после появления токена; collector передает их в OTLP через `reportOTEL`. `signup.viaOtp` используется и при запросе кода, и при его проверке, поэтому число событий не равно числу регистраций. Контракт целей: [FUSIO-1607](https://platform.intabia.ru/workbench/platform/tracker/FUSIO-1607).
-- **Пределы длины полей регистрации.** Имя, фамилия и email - 254 символа (для email это предел адреса по RFC 5321, имена уравнены с ним), константы в `foundations/core/packages/account-client/src/limits.ts`. `maxlength` у `Field` (`plugins/login-resources/src/types.ts`) не даёт набрать и вставить больше, а значение длиннее лимита (пришло из пропа или `AuthEmail`) `Form.svelte` показывает статусом `FieldTooLong` и не отправляет - молчаливой обрезки нет. `signUp`/`signUpOtp`/`signUpJoin` и `changeUsername` отклоняют такое значение с `BadRequest` (`checkFieldLength` в `server/account/src/utils.ts`), иначе лимит обходится сменой имени в профиле или инвайтом; лимит стоит на трёх полях `SignupForm` и на email в формах логина и восстановления (`LoginPasswordForm`/`LoginOtpForm`/`PasswordRequest`).
-- **Согласие на обработку ПДн и правила.** Вызов регистрации (`signUpOtp`, `signUp`, `signUpJoin`, OAuth) считается согласием; сервер согласие не проверяет и не хранит. Клиент собирает его чекбоксами `ConsentCheckboxes.svelte` в `SignupForm.svelte`/`AuthLikeForm.svelte`, отправка (кнопка и Enter) блокируется в `performAction()` `Form.svelte` по `proceedDisabled`.
+- **Email OTP логин/регистрация.** `requestEmailOtp`/`confirmEmailOtp`/`validateOtp` - `server/account/src/operations.ts`; формы - `EmailFirstForm.svelte`, `OtpForm.svelte`, `RegistrationOnboarding.svelte` и `RegistrationDetails.svelte`.
+- **Аналитика регистрации.** `SignupForm.svelte` задает событие `signup.submitAttempt`; `Form.svelte` различает отправку и блокировку по согласиям или валидации, включая Enter. `YandexMetrikaProvider` (`packages/analytics-providers/src/yandexMetrika.ts`) отправляет цели `signup_click`, `signup_click_blocked`, `signup_submit`, `workspace_created` на страницах входа, регистрации и создания пространства. SDK не загружается при fragment или неизвестных query-параметрах текущего URL либо referrer: разрешены только `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, `utm_content`, `utm_id`, `yclid`, `gclid`. Явные просмотры и referrer передаются без query и fragment; параметры целей ограничены известными именами и значениями. Страницы со ссылками входа, восстановления, подтверждения и приглашения не отслеживаются, пока в URL остаются их секретные параметры. При уходе счетчик останавливается через `destruct`, очередь незагруженного SDK очищается. `AnalyticsCollectorProvider` отправляет события через `/collect` после появления токена; collector передает их в OTLP через `reportOTEL`. `OtpForm.svelte` отправляет `signup.viaOtp` только при создании аккаунта. Контракт целей: [FUSIO-1607](https://platform.intabia.ru/workbench/platform/tracker/FUSIO-1607).
+  Новый `EmailFirstForm.svelte` не задаёт `signup.submitAttempt`: до OTP клиент не знает, является ли пользователь новым.
+- **Пределы длины полей регистрации.** Имя, фамилия и email - 254 символа (для email это предел адреса по RFC 5321, имена уравнены с ним), константы в `foundations/core/packages/account-client/src/limits.ts`. `maxlength` у `Field` (`plugins/login-resources/src/types.ts`) не даёт набрать и вставить больше, а значение длиннее лимита (пришло из пропа или `AuthEmail`) `Form.svelte` показывает статусом `FieldTooLong` и не отправляет - молчаливой обрезки нет. `signUp`/`requestEmailOtp`/`signUpJoin` и `changeUsername` отклоняют такое значение с `BadRequest` (`checkFieldLength` в `server/account/src/utils.ts`), иначе лимит обходится сменой имени в профиле или инвайтом; лимит стоит на трёх полях `SignupForm` и на email в формах логина и восстановления (`LoginPasswordForm`/`LoginOtpForm`/`PasswordRequest`).
+- **Согласие на обработку ПДн и правила.** `ConsentCheckboxes.svelte` показывает оба флажка до запроса кода при входе и регистрации, включая вход по приглашению. Состояние хранится отдельно для каждого флажка в localStorage и не заменяет серверную запись. Сервер сохраняет время в `Account.consentAcceptedOn` при создании аккаунта после подтверждения OTP.
 - **Регистрация паролем (deprecated, только dev без mail-сервиса).** `signUp()`, флаг `hasSignUp` в `getMethods()` - `operations.ts`.
 - **Восстановление и смена пароля.** `requestPasswordReset`/`restorePassword`/`changePassword`/`getPasswordPolicy` - `operations.ts`. Политика сложности пароля принадлежит account-сервису (`PASSWORD_STRICTNESS`), проверяется на сервере при записи и отдаётся клиенту через `getPasswordPolicy`.
 - **OAuth Google/GitHub/OpenID Connect.** `pods/authProviders/src/{google,github,openid}.ts`.
-- **Инвайты и access-ссылки.** `createInvite`/`sendInvite`/`resendInvite`/`createInviteLink`/`createAccessLink` (экспирация, email-маска, лимит мест, роль) - `operations.ts`. Письмо-приглашение называет отправителя: `getInviteSender()` (имя - из account-БД `person` в порядке `branding.lastNameFirst`, контакт - первый подтверждённый `EMAIL` social id, роль - `getWorkspaceRole`); клиент имя не передаёт. Из имени вычищаются control/format-символы (включая bidi и zero-width) и разделители строк -> блок в `Invite*`/`ResendInvite*` (`getInviteEmail()`, `utils.ts`); Owner/Maintainer подписываются как "Администратор пространства", остальные - "Участник пространства" (`InviteSenderRole*`), новые роли попадают в "участника". Имя в HTML экранируется, в plain-text - нет.
+- **Инвайты и access-ссылки.** `createInvite`/`sendInvite`/`resendInvite`/`createInviteLink`/`createAccessLink` (экспирация, лимит использований, роль) - `operations.ts`. Новый аккаунт может использовать ранее выданную ссылку при заполненном тарифе; индивидуальное приглашение привязано к email получателя. Письмо-приглашение называет отправителя: `getInviteSender()` (имя - из account-БД `person` в порядке `branding.lastNameFirst`, контакт - первый подтверждённый `EMAIL` social id, роль - `getWorkspaceRole`); клиент имя не передаёт. Из имени вычищаются control/format-символы (включая bidi и zero-width) и разделители строк -> блок в `Invite*`/`ResendInvite*` (`getInviteEmail()`, `utils.ts`); Owner/Maintainer подписываются как "Администратор пространства", остальные - "Участник пространства" (`InviteSenderRole*`), новые роли попадают в "участника". Имя в HTML экранируется, в plain-text - нет.
+  Новые приглашения хранят автора: `getInviteInfo` возвращает его имя вместе с пространством. Контекст показывается на всех шагах входа и подключения. У старых приглашений без автора показывается только пространство. Недействительная ссылка не открывает формы входа.
 - **Привязка social identity.** `addEmailSocialId`/`addHulyAssistantSocialId`/`refreshHulyAssistantToken`/`releaseSocialId` - `operations.ts`.
 
 ### Сессии и токены
@@ -110,7 +115,7 @@
 ### Авторизация
 - **7 ролей и их "сила".** `AccountRole`, `roleOrder`, `getRolePower()` - `foundations/core/packages/core/src/classes.ts`, `server/account/src/utils.ts`.
 - **Permission-модель класс/атрибут.** `definePermissions()` - `models/core/src/permissions.ts`.
-- **Роли участника и назначаемые роли.** `Member`, `assignableRoles` (`Guest/User/Maintainer/Owner`), `updateWorkspaceRole` - `utils.ts`; UI - категория настроек воркспейса «Участники» (`setting.ids.Members`, `models/setting/src/index.ts:369-381`) со списком сотрудников, поиском по имени и выпадающим списком роли на каждой строке (включая перевод владения через выбор роли Owner у другого участника) - `plugins/setting-resources/src/components/Members.svelte`.
+- **Роли участника и назначаемые роли.** `Member`, `assignableRoles` (`Guest/User/Maintainer/Owner`), `updateWorkspaceRole` - `utils.ts`. Настройки воркспейса «Участники» (`plugins/setting-resources/src/components/Members.svelte`) получают участников через `getWorkspaceMemberDetails`: видны также участники без активного `Employee`, имя и подтверждённый email, поиск работает по имени, email и идентификатору. Существующие роли `DocGuest` и `Admin` отображаются, но заново не назначаются. Можно назначить другого владельца.
 - **Временный грант в токене.** `PermissionsGrant` (обязательные nbf/exp) - `token.ts`.
 - **Точечные workspace-права.** `batchAssignWorkspacePermission`/`batchRevokeWorkspacePermission`/`hasWorkspacePermission`/`getWorkspacePermissions` - `operations.ts`.
 - **Password aging на воркспейс.** `updatePasswordAgingRule`/`checkPasswordAging` - `utils.ts`.
@@ -149,7 +154,7 @@
 | Регистрация паролем (deprecated, только dev без mail-сервиса) | - | - | internal | - | |
 | Восстановление и смена пароля | - | - | plan | - | отложено |
 | OAuth Google/GitHub/OpenID Connect | - | - | plan | - | отложено |
-| Инвайты и access-ссылки | getting-started/workspace-setup | getting-started/workspace-setup | stale | 0.8.60 | скрин settings-modules.png устарел (старая навигация с «Пространства», надпись «Бета-версия» вместо «Ознакомительная версия»); не описано, что письмо-приглашение называет отправителя (имя, email, роль) в теме, тексте и HTML-блоке |
+| Инвайты и access-ссылки | getting-started/workspace-setup | getting-started/workspace-setup | stale | 0.8.60 | устарел скрин settings-modules.png; не описаны отправитель письма, регистрация по ссылке, согласия до запроса кода и удаление масок email |
 | Привязка social identity | people-contacts/managing-account | - | no-en | 0.8.60 | исправлено: текст про удаление аккаунта (отложенное удаление + отмена входом) и про возврат в пространство (по новому приглашению, не только от владельца) |
 | Подписанный JSON-токен без refresh-механики | - | - | internal | - | |
 | LRU-кэш верифицированных токенов | - | - | internal | - | |
@@ -157,7 +162,7 @@
 | Admin-сессия по OTP-штампу | - | - | internal | - | |
 | 7 ролей и их "сила" | - | - | plan | - | отложено |
 | Permission-модель класс/атрибут | - | - | internal | - | |
-| Роли участника и назначаемые роли | advanced-settings/roles | advanced-settings/roles | ok | 0.8.60 | исправлено: добавлены «Гость»/«Только чтение», убран несуществующий пункт «Глобальные администраторы» и мёртвый комментарий о нём, убран раздел «Назначение ролей» (описывал Controlled Documents/Products/Trainings/TraceX - все выключены на проде) |
+| Роли участника и назначаемые роли | advanced-settings/roles | advanced-settings/roles | stale | 0.8.60 | список показывает email и участников без активного Employee, а также существующие роли DocGuest и Admin |
 | Временный грант в токене | - | - | internal | - | |
 | Точечные workspace-права | - | - | plan | - | отложено |
 | Password aging на воркспейс | - | - | plan | - | отложено |

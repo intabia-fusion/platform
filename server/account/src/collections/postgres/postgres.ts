@@ -14,22 +14,29 @@
 // limitations under the License.
 //
 import { type Sql, type TransactionSql } from 'postgres'
+import { grantsPlan, type OnboardingState } from '@hcengineering/account-client'
+import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
 
 import {
   type Data,
   type Version,
   type Person,
   type WorkspaceMemberInfo,
+  type WorkspaceMemberWithDetails,
   AccountRole,
+  roleOrder,
   aiBotAccountEmail,
   type WorkspaceUuid,
   type AccountUuid,
   type PersonUuid,
   type PersonId,
-  type SocialIdType
+  SocialIdType
 } from '@hcengineering/core'
 
 import { getMigrations } from './migrations'
+import { AccountEventType, SubscriptionStatus, SubscriptionType } from '../../types'
+import { getFreePlanLimits } from '../../freeLimits'
+import { apiKeyKind, type ApiKeySecret } from '../../apiKeys'
 import type {
   DbCollection,
   Query,
@@ -39,6 +46,7 @@ import type {
   AccountDB,
   Account,
   OTP,
+  EmailOtpState,
   OtpIssue,
   OtpPurpose,
   WorkspaceInvite,
@@ -466,7 +474,12 @@ export class AccountPostgresDbCollection
     ns?: string,
     withRetryClient?: PostgresDbCollectionOptions<Account, 'uuid'>['withRetryClient']
   ) {
-    super('account', client, { idKey: 'uuid', ns, timestampFields: ['deleteOn', 'blockedOn'], withRetryClient })
+    super('account', client, {
+      idKey: 'uuid',
+      ns,
+      timestampFields: ['deleteOn', 'blockedOn', 'consentAcceptedOn'],
+      withRetryClient
+    })
   }
 
   getPasswordsTableName (): string {
@@ -489,6 +502,8 @@ export class AccountPostgresDbCollection
         a.failed_login_attempts,
         a.delete_on,
         a.blocked_on,
+        a.consent_accepted_on,
+        a.onboarding,
         p.hash,
         p.salt
       FROM ${this.getTableName()} as a
@@ -917,6 +932,239 @@ export class PostgresAccountDB implements AccountDB {
     })
   }
 
+  async createOnboardingWorkspace (
+    account: AccountUuid,
+    data: WorkspaceData,
+    status: WorkspaceStatusData
+  ): Promise<{ workspace: WorkspaceUuid, url: string, region?: string, created: boolean, completed: boolean } | null> {
+    return await this.withRetry(async (tx) => {
+      const [row] = await tx.unsafe(
+        `SELECT onboarding, blocked_on FROM ${this.account.getTableName()} WHERE uuid = $1 FOR UPDATE`,
+        [account]
+      )
+      if (row?.blocked_on != null) return null
+      const onboarding: OnboardingState | null = row?.onboarding ?? null
+      if (onboarding?.intent.kind !== 'workspace') return null
+      if (onboarding.workspace != null) {
+        const workspace = await this.workspace.findOne({ uuid: onboarding.workspace }, tx)
+        if (workspace === null) {
+          throw new PlatformError(new Status(Severity.ERROR, platform.status.InternalServerError, {}))
+        }
+        return {
+          workspace: workspace.uuid,
+          url: workspace.url,
+          region: workspace.region,
+          created: false,
+          completed: false
+        }
+      }
+      if (
+        onboarding.stage !== 'workspace' &&
+        (onboarding.stage !== 'name' || onboarding.workspaceName !== data.name || onboarding.region !== data.region)
+      ) {
+        return null
+      }
+
+      const workspaceUuid = await this.workspace.insertOne(data, tx)
+      await this.workspaceStatus.insertOne({ ...status, workspaceUuid }, tx)
+      await tx.unsafe(
+        `INSERT INTO ${this.getWsMembersTableName()} (workspace_uuid, account_uuid, role) VALUES ($1, $2, $3)`,
+        [workspaceUuid, account, AccountRole.Owner]
+      )
+      await tx.unsafe(`UPDATE ${this.account.getTableName()} SET onboarding = $2::jsonb WHERE uuid = $1`, [
+        account,
+        {
+          ...onboarding,
+          stage: onboarding.nameConfirmed === true ? 'complete' : 'name',
+          workspaceName: data.name,
+          region: data.region,
+          workspace: workspaceUuid
+        }
+      ])
+      return {
+        workspace: workspaceUuid,
+        url: data.url,
+        region: data.region,
+        created: true,
+        completed: onboarding.nameConfirmed === true
+      }
+    })
+  }
+
+  async completeOnboardingInvite (
+    account: AccountUuid,
+    inviteId?: string,
+    expectedWorkspace?: WorkspaceUuid,
+    name?: { firstName?: string, lastName?: string },
+    expectedInviteId?: string
+  ): Promise<{ result: 'ok' | 'forbidden' | 'expired' | 'seat-limit', workspace?: WorkspaceUuid, changed?: boolean }> {
+    return await this.withRetry(async (tx) => {
+      const [row] = await tx.unsafe(
+        `SELECT onboarding, blocked_on FROM ${this.account.getTableName()} WHERE uuid = $1 FOR UPDATE`,
+        [account]
+      )
+      if (row?.blocked_on != null) return { result: 'forbidden' }
+      const onboarding: OnboardingState | null = row?.onboarding ?? null
+      if (
+        inviteId !== undefined &&
+        onboarding?.stage === 'complete' &&
+        onboarding.intent.kind === 'invite' &&
+        onboarding.intent.inviteId === inviteId &&
+        onboarding.workspace === expectedWorkspace
+      ) {
+        return { result: 'ok', workspace: onboarding.workspace, changed: false }
+      }
+      const onboardingFlow = inviteId === undefined
+      let resolvedInviteId = inviteId
+      if (onboardingFlow) {
+        if (onboarding?.intent.kind !== 'invite') return { result: 'forbidden' }
+        if (expectedInviteId !== undefined && onboarding.intent.inviteId !== expectedInviteId) {
+          return { result: 'forbidden' }
+        }
+        if (onboarding.stage === 'complete') return { result: 'ok', workspace: onboarding.workspace, changed: false }
+        if (onboarding.stage !== 'name') return { result: 'forbidden' }
+        resolvedInviteId = onboarding.intent.inviteId
+      }
+      if (resolvedInviteId === undefined) return { result: 'forbidden' }
+      const [inviteRow] = await tx.unsafe(`SELECT * FROM ${this.invite.getTableName()} WHERE id = $1 FOR UPDATE`, [
+        resolvedInviteId
+      ])
+      if (inviteRow === undefined) return { result: 'forbidden' }
+      const invite = this.invite.convertToObj(inviteRow)
+      if (expectedWorkspace !== undefined && invite.workspaceUuid !== expectedWorkspace) return { result: 'forbidden' }
+      if (invite.remainingUses === 0) return { result: 'forbidden' }
+      if (invite.expiresOn > 0 && invite.expiresOn < Date.now()) return { result: 'expired' }
+      if (invite.email != null && invite.email !== '') {
+        const email = await this.socialId.findOne(
+          {
+            personUuid: account,
+            type: SocialIdType.EMAIL,
+            verifiedOn: { $gt: 0 },
+            value: invite.email.trim().toLowerCase()
+          },
+          tx
+        )
+        if (email === null) return { result: 'forbidden' }
+      }
+
+      const [workspace] = await tx.unsafe(
+        `SELECT uuid FROM ${this.workspace.getTableName()} WHERE uuid = $1 FOR UPDATE`,
+        [invite.workspaceUuid]
+      )
+      if (workspace === undefined) return { result: 'forbidden' }
+      const [person]: Array<{ first_name: string | null, last_name: string | null }> = await tx.unsafe(
+        `SELECT first_name, last_name FROM ${this.person.getTableName()} WHERE uuid = $1 FOR UPDATE`,
+        [account]
+      )
+      if (person === undefined) return { result: 'forbidden' }
+      const hasFirstName = (person.first_name?.trim() ?? '') !== ''
+      const hasLastName = (person.last_name?.trim() ?? '') !== ''
+      const firstName = hasFirstName ? person.first_name : name?.firstName
+      const lastName = hasLastName ? person.last_name : name?.lastName
+      if (
+        onboarding != null &&
+        onboarding.stage !== 'complete' &&
+        ((firstName?.trim() ?? '') === '' || (lastName?.trim() ?? '') === '')
+      ) {
+        return { result: 'forbidden' }
+      }
+      const missingNames = {
+        ...(!hasFirstName && name?.firstName !== undefined ? { firstName: name.firstName } : {}),
+        ...(!hasLastName && name?.lastName !== undefined ? { lastName: name.lastName } : {})
+      }
+      const [existing] = await tx.unsafe(
+        `SELECT role FROM ${this.getWsMembersTableName()} WHERE workspace_uuid = $1 AND account_uuid = $2`,
+        [invite.workspaceUuid, account]
+      )
+      const oldRole = existing?.role as AccountRole | undefined
+      const changed = oldRole == null || roleOrder[oldRole] < roleOrder[invite.role]
+      let seatOverflow = false
+      const seatlessRoles = [AccountRole.Admin, AccountRole.Guest, AccountRole.DocGuest, AccountRole.ReadOnlyGuest]
+      const newOnboarding = onboarding != null && onboarding.stage !== 'complete' && oldRole == null
+      if (oldRole == null && !seatlessRoles.includes(invite.role)) {
+        const subscriptions = await this.subscription.find(
+          { workspaceUuid: invite.workspaceUuid },
+          undefined,
+          undefined,
+          tx
+        )
+        const tiers = subscriptions
+          .filter((sub) => sub.type === SubscriptionType.Tier)
+          .sort((a, b) => (b.createdOn ?? 0) - (a.createdOn ?? 0))
+        const tier = tiers.find(grantsPlan)
+        const ordinaryTier = subscriptions.find(
+          (sub) =>
+            sub.type === SubscriptionType.Tier &&
+            (sub.status === SubscriptionStatus.Active ||
+              (sub.status === SubscriptionStatus.Trialing && sub.trialEnd != null && sub.trialEnd >= Date.now()))
+        )
+        const limit = newOnboarding
+          ? tier?.limits !== undefined
+            ? (tier.limits.usersLimit ?? 0)
+            : tiers.length > 0
+              ? getFreePlanLimits().usersLimit
+              : 0
+          : (ordinaryTier?.limits?.usersLimit ?? 0)
+        if (limit > 0) {
+          const members = await tx.unsafe(
+            `SELECT m.account_uuid, m.role FROM ${this.getWsMembersTableName()} m
+             WHERE m.workspace_uuid = $1 AND m.account_uuid NOT IN
+               (SELECT person_uuid FROM ${this.socialId.getTableName()} WHERE type = 'email' AND value = $2)`,
+            [invite.workspaceUuid, aiBotAccountEmail]
+          )
+          const integrationAccounts = new Set<AccountUuid>()
+          const keys = newOnboarding
+            ? await this.integrationSecret.find(
+              { kind: apiKeyKind, workspaceUuid: invite.workspaceUuid },
+              undefined,
+              undefined,
+              tx
+            )
+            : []
+          for (const key of keys) {
+            const secret: ApiKeySecret = JSON.parse(key.secret)
+            if (secret.revokedOn !== undefined || secret.personal === true) continue
+            const social = await this.socialId.findOne({ _id: key.socialId }, tx)
+            if (social != null) integrationAccounts.add(social.personUuid as AccountUuid)
+          }
+          seatOverflow =
+            members.filter((m) => !integrationAccounts.has(m.account_uuid) && !seatlessRoles.includes(m.role)).length >=
+            limit
+          if (seatOverflow && !newOnboarding) return { result: 'seat-limit' }
+        }
+      }
+      let seatOrder: number | null = null
+      if (seatOverflow) {
+        const [row] = await tx.unsafe(
+          `SELECT COALESCE(MAX(seat_order), 0) + 1 AS next FROM ${this.getWsMembersTableName()} WHERE workspace_uuid = $1`,
+          [invite.workspaceUuid]
+        )
+        seatOrder = row.next
+      }
+      if (changed) {
+        await tx.unsafe(
+          `INSERT INTO ${this.getWsMembersTableName()} (workspace_uuid, account_uuid, role, seat_order) VALUES ($1, $2, $3, $4) ON CONFLICT (workspace_uuid, account_uuid) DO UPDATE SET role = $3`,
+          [invite.workspaceUuid, account, invite.role, seatOrder]
+        )
+      }
+      if (Object.keys(missingNames).length > 0) {
+        await this.person.update({ uuid: account }, missingNames, tx)
+      }
+      await this.invite.update({ id: invite.id }, { $inc: { remainingUses: -1 } }, tx)
+      if (onboarding != null && onboarding.stage !== 'complete') {
+        await tx.unsafe(`UPDATE ${this.account.getTableName()} SET onboarding = $2::jsonb WHERE uuid = $1`, [
+          account,
+          {
+            intent: { kind: 'invite', inviteId: invite.id },
+            stage: 'complete',
+            workspace: invite.workspaceUuid
+          }
+        ])
+      }
+      return { result: 'ok', workspace: invite.workspaceUuid, changed }
+    })
+  }
+
   async updateAllowReadOnlyGuests (workspaceId: WorkspaceUuid, readOnlyGuestsAllowed: boolean): Promise<void> {
     await this
       .client`UPDATE ${this.client(this.workspace.getTableName())} SET allow_read_only_guest = ${readOnlyGuestsAllowed} WHERE uuid = ${workspaceId}`
@@ -986,12 +1234,37 @@ export class PostgresAccountDB implements AccountDB {
 
   async getWorkspaceMembers (workspaceUuid: WorkspaceUuid): Promise<WorkspaceMemberInfo[]> {
     return await this.withRetry(async (rTx) => {
-      const res: any =
-        await rTx`SELECT account_uuid, role FROM ${this.client(this.getWsMembersTableName())} WHERE workspace_uuid = ${workspaceUuid}`
+      const res: any = await rTx.unsafe(
+        `SELECT account_uuid, role, seat_order FROM ${this.getWsMembersTableName()} WHERE workspace_uuid = $1`,
+        [workspaceUuid]
+      )
 
       return res.map((p: any) => ({
         person: p.account_uuid,
-        role: p.role
+        role: p.role,
+        ...(p.seat_order != null ? { seatOrder: p.seat_order } : {})
+      }))
+    })
+  }
+
+  async getWorkspaceMemberDetails (workspace: WorkspaceUuid): Promise<WorkspaceMemberWithDetails[]> {
+    return await this.withRetry(async (tx) => {
+      const rows = await tx.unsafe(
+        `SELECT m.account_uuid, m.role, p.first_name, p.last_name,
+          (SELECT s.value FROM ${this.socialId.getTableName()} s
+           WHERE s.person_uuid = m.account_uuid AND s.type = 'email' AND s.is_deleted = FALSE AND s.verified_on > 0
+           ORDER BY s.verified_on DESC LIMIT 1) AS email
+         FROM ${this.getWsMembersTableName()} m
+         LEFT JOIN ${this.person.getTableName()} p ON p.uuid = m.account_uuid
+         WHERE m.workspace_uuid = $1`,
+        [workspace]
+      )
+      return rows.map((row) => ({
+        person: row.account_uuid,
+        role: row.role,
+        firstName: row.first_name ?? undefined,
+        lastName: row.last_name ?? undefined,
+        email: row.email ?? undefined
       }))
     })
   }
@@ -1326,6 +1599,7 @@ export class PostgresAccountDB implements AccountDB {
           a.automatic,
           a.max_workspaces,
           a.blocked_on,
+          a.onboarding->>'stage' as onboarding_stage,
           (a.uuid IS NOT NULL) as has_account,
           p.first_name,
           p.last_name,
@@ -1425,6 +1699,9 @@ export class PostgresAccountDB implements AccountDB {
     // Filters use the CTE's aggregated columns, so they belong to the outer WHERE.
     // The CTE is person-based, so accounts must be selected explicitly (default behaviour).
     const outerWhere: string[] = [filter?.pendingOnly === true ? 'has_account = FALSE' : 'has_account = TRUE']
+    if (filter?.onboardingOnly === true) {
+      outerWhere.push("onboarding_stage IN ('workspace', 'name')")
+    }
     if (filter?.blockedOnly === true) {
       outerWhere.push('blocked_on IS NOT NULL')
     }
@@ -1755,9 +2032,205 @@ export class PostgresAccountDB implements AccountDB {
     })
   }
 
+  async setOnboardingName (
+    account: AccountUuid,
+    first: string,
+    last: string
+  ): Promise<{ onboarding: OnboardingState, completed: boolean } | null> {
+    return await this.withRetry(async (tx) => {
+      const [row] = await tx.unsafe(
+        `SELECT onboarding FROM ${this.account.getTableName()} WHERE uuid = $1 FOR UPDATE`,
+        [account]
+      )
+      if (row?.onboarding == null) return null
+      const onboarding: OnboardingState = row.onboarding
+      if (onboarding.stage === 'complete') return { onboarding, completed: false }
+      await this.person.update({ uuid: account }, { firstName: first, lastName: last }, tx)
+      if (onboarding.intent.kind === 'workspace' && onboarding.workspace != null) {
+        onboarding.stage = 'complete'
+      }
+      if (onboarding.intent.kind === 'workspace') onboarding.nameConfirmed = true
+      await tx.unsafe(`UPDATE ${this.account.getTableName()} SET onboarding = $2::jsonb WHERE uuid = $1`, [
+        account,
+        { ...onboarding }
+      ])
+      return { onboarding, completed: onboarding.stage === 'complete' }
+    })
+  }
+
+  async cleanExpiredEmailOtp (now: number): Promise<void> {
+    await this.withRetry(async (tx) => {
+      await tx.unsafe(`DELETE FROM ${this.ns}.email_otp WHERE expires_on < $1 AND created_on < $2 AND missed_on < $2`, [
+        now,
+        now - 24 * 60 * 60 * 1000
+      ])
+    })
+  }
+
+  async resetEmailOtpMisses (personUuid: PersonUuid): Promise<void> {
+    await this.withRetry(async (tx) => {
+      await tx.unsafe(
+        `UPDATE ${this.ns}.email_otp SET misses = 0, missed_on = 0
+         WHERE email IN (SELECT value FROM ${this.ns}.social_id WHERE person_uuid = $1 AND type = 'email')`,
+        [personUuid]
+      )
+    })
+  }
+
+  async withEmailOtp<T>(
+    email: string,
+    fn: (
+      state: EmailOtpState,
+      resolve: (
+        allowSignUp: boolean,
+        onboarding?: OnboardingState,
+        replaceInvite?: boolean,
+        consentAccepted?: boolean
+      ) => Promise<{ socialId: SocialId, account: Account, created: boolean } | null>,
+      verify: (account: AccountUuid) => Promise<{ socialId: SocialId, account: Account } | null>
+    ) => Promise<T>
+  ): Promise<T> {
+    return await this.withRetry(async (tx) => {
+      await tx.unsafe(
+        `INSERT INTO ${this.ns}.email_otp (email, misses, missed_on)
+         VALUES ($1,
+           COALESCE((SELECT login_otp_misses FROM ${this.ns}.social_id WHERE type = 'email' AND value = $1), 0),
+           COALESCE((SELECT login_otp_missed_on FROM ${this.ns}.social_id WHERE type = 'email' AND value = $1), 0))
+         ON CONFLICT (email) DO NOTHING`,
+        [email]
+      )
+      const [row] = await tx.unsafe(`SELECT * FROM ${this.ns}.email_otp WHERE email = $1 FOR UPDATE`, [email])
+      const state: EmailOtpState = {
+        code: row.code,
+        createdOn: Number(row.created_on),
+        expiresOn: Number(row.expires_on),
+        attempts: Number(row.attempts),
+        misses: Number(row.misses),
+        missedOn: Number(row.missed_on)
+      }
+      const previousMisses = state.misses
+      const previousMissedOn = state.missedOn
+      const resolve = async (
+        allowSignUp: boolean,
+        onboarding?: OnboardingState,
+        replaceInvite?: boolean,
+        consentAccepted?: boolean
+      ): Promise<{ socialId: SocialId, account: Account, created: boolean } | null> => {
+        let created = false
+        let socialId = await this.socialId.findOne({ type: SocialIdType.EMAIL, value: email }, tx)
+        if (socialId === null) {
+          if (!allowSignUp) return null
+          const personUuid = await this.person.insertOne({ firstName: '', lastName: '' }, tx)
+          const id = await this.socialId.insertOne(
+            {
+              type: SocialIdType.EMAIL,
+              value: email,
+              personUuid,
+              verifiedOn: Date.now()
+            },
+            tx
+          )
+          socialId = await this.socialId.findOne({ _id: id }, tx)
+        }
+        if (socialId === null) throw new Error('Failed to create email social id')
+        let account = await this.account.findOne({ uuid: socialId.personUuid as AccountUuid }, tx)
+        if (account !== null && socialId.verifiedOn == null) {
+          if (!allowSignUp) return null
+          const personUuid = await this.person.insertOne({ firstName: '', lastName: '' }, tx)
+          await this.socialId.update({ _id: socialId._id }, { personUuid, verifiedOn: Date.now() }, tx)
+          socialId = { ...socialId, personUuid, verifiedOn: Date.now() }
+          account = null
+        }
+        if (account === null) {
+          if (!allowSignUp) return null
+          const uuid = socialId.personUuid as AccountUuid
+          await this.socialId.insertOne(
+            { type: SocialIdType.HULY, value: uuid, personUuid: uuid, verifiedOn: Date.now() },
+            tx
+          )
+          const consentAcceptedOn = consentAccepted === true ? Date.now() : undefined
+          await this.account.insertOne({ uuid, automatic: false, consentAcceptedOn }, tx)
+          if (onboarding !== undefined) {
+            await tx.unsafe(`UPDATE ${this.account.getTableName()} SET onboarding = $2::jsonb WHERE uuid = $1`, [
+              uuid,
+              { ...onboarding }
+            ])
+          }
+          await this.accountEvent.insertOne(
+            { accountUuid: uuid, eventType: AccountEventType.ACCOUNT_CREATED, time: Date.now() },
+            tx
+          )
+          await this.userProfile.insertOne({ personUuid: uuid, isPublic: false }, tx)
+          await this.socialId.update({ _id: socialId._id }, { verifiedOn: Date.now() }, tx)
+          account = { uuid, automatic: false, onboarding, consentAcceptedOn }
+          created = true
+        }
+        if (socialId.verifiedOn == null) {
+          await this.socialId.update({ _id: socialId._id }, { verifiedOn: Date.now() }, tx)
+        }
+        if (!created && replaceInvite === true && onboarding?.intent.kind === 'invite') {
+          const [locked] = await tx.unsafe(
+            `SELECT onboarding FROM ${this.account.getTableName()} WHERE uuid = $1 FOR UPDATE`,
+            [account.uuid]
+          )
+          const current: OnboardingState | null = locked?.onboarding ?? null
+          if (current !== null && current.stage !== 'complete') {
+            account.onboarding = { intent: onboarding.intent, stage: 'name' }
+            await tx.unsafe(`UPDATE ${this.account.getTableName()} SET onboarding = $2::jsonb WHERE uuid = $1`, [
+              account.uuid,
+              { ...account.onboarding }
+            ])
+          }
+        }
+        return { socialId, account, created }
+      }
+      const verify = async (accountUuid: AccountUuid): Promise<{ socialId: SocialId, account: Account } | null> => {
+        const socialId = await this.socialId.findOne({ type: SocialIdType.EMAIL, value: email }, tx)
+        const account = await this.account.findOne({ uuid: accountUuid }, tx)
+        if (socialId === null || account === null) return null
+        const target = await this.account.findOne({ uuid: socialId.personUuid as AccountUuid }, tx)
+        if (target !== null && target.uuid !== accountUuid && socialId.verifiedOn != null) return null
+        if (target === null && socialId.personUuid !== (accountUuid as unknown as PersonUuid)) {
+          const secondary = await this.socialId.find({ personUuid: socialId.personUuid }, undefined, undefined, tx)
+          if (secondary.some((item) => item.verifiedOn != null)) return null
+          for (const item of secondary) {
+            await this.socialId.update(
+              { _id: item._id, personUuid: socialId.personUuid },
+              { personUuid: accountUuid },
+              tx
+            )
+          }
+          await tx.unsafe(`UPDATE ${this.person.getTableName()} SET migrated_to = $2 WHERE uuid = $1`, [
+            socialId.personUuid,
+            accountUuid
+          ])
+        }
+        const verifiedOn = Date.now()
+        await this.socialId.update({ _id: socialId._id }, { personUuid: accountUuid, verifiedOn }, tx)
+        if (account.automatic === true) await this.account.update({ uuid: accountUuid }, { automatic: false }, tx)
+        return { socialId: { ...socialId, personUuid: accountUuid, verifiedOn }, account }
+      }
+      const result = await fn(state, resolve, verify)
+      await tx.unsafe(
+        `UPDATE ${this.ns}.email_otp SET code = $2, created_on = $3, expires_on = $4,
+          attempts = $5, misses = $6, missed_on = $7 WHERE email = $1`,
+        [email, state.code, state.createdOn, state.expiresOn, state.attempts, state.misses, state.missedOn]
+      )
+      if (state.misses !== previousMisses || state.missedOn !== previousMissedOn) {
+        await tx.unsafe(
+          `UPDATE ${this.ns}.social_id SET login_otp_misses = $2, login_otp_missed_on = $3
+           WHERE type = 'email' AND value = $1`,
+          [email, state.misses, state.missedOn]
+        )
+      }
+      return result
+    })
+  }
+
   async withOtpIssue<T>(socialId: PersonId, purpose: OtpPurpose, fn: (issue: OtpIssue) => Promise<T>): Promise<T> {
     return await this.withRetry(async (rTx) => {
-      // Social id first, then its codes: bumpOtpAttempts takes them in that order too, so no deadlock.
+      // Social id first, then its codes: parallel issues queue on that lock, so they do not
+      // replace the same code concurrently.
       const [row] = await this.socialId.unsafe(
         `SELECT * FROM ${this.socialId.getTableName()} WHERE _id = $1 FOR UPDATE`,
         [socialId],
@@ -1791,43 +2264,17 @@ export class PostgresAccountDB implements AccountDB {
     })
   }
 
-  async bumpOtpAttempts (
-    socialId: PersonId,
-    purpose: OtpPurpose,
-    guess: string,
-    maxAttempts: number,
-    miss: { decayMs: number, lockMs: number }
-  ): Promise<OTP[]> {
+  async bumpOtpAttempts (socialId: PersonId): Promise<OTP[]> {
     // Parallel guesses queue on the row lock and each reads its own counter.
     return await this.withRetry(async (rTx) => {
       const ts = Date.now()
-      if (purpose === 'login') {
-        // The social id is updated below; locking it before the codes keeps the order of withOtpIssue.
-        await rTx.unsafe(`SELECT 1 FROM ${this.socialId.getTableName()} WHERE _id = $1 FOR UPDATE`, [socialId])
-      }
       const res: any = await rTx.unsafe(
         `UPDATE ${this.otp.getTableName()} SET attempts = attempts + 1
          WHERE social_id = $1 AND purpose = $2 AND expires_on > $3
          RETURNING *`,
-        [socialId, purpose, ts]
+        [socialId, 'operation', ts]
       )
-      const live: OTP[] = res.map((row: any) => this.otp.convertToObj(row))
-      // Past its cap a code refuses a guess unchecked: that is no probing, so it is not counted.
-      const open = live.filter((otp) => otp.attempts <= maxAttempts)
-      if (purpose === 'login' && open.length > 0 && open.every((otp) => otp.code !== guess)) {
-        // After the lock is over one typo must not lock again: the streak starts over.
-        await rTx.unsafe(
-          `UPDATE ${this.socialId.getTableName()}
-           SET login_otp_misses = CASE
-                 WHEN login_otp_missed_on < $3 OR (login_otp_misses >= $4 AND login_otp_missed_on < $5) THEN 1
-                 ELSE login_otp_misses + 1
-               END,
-               login_otp_missed_on = $2
-           WHERE _id = $1`,
-          [socialId, ts, ts - miss.decayMs, maxAttempts, ts - miss.lockMs]
-        )
-      }
-      return live
+      return res.map((row: any) => this.otp.convertToObj(row))
     })
   }
 

@@ -13,9 +13,9 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import logo from './assets/logo.png'
-  import intabia from './assets/wordmark-intabia.png'
-  import platform from './assets/wordmark-platform.png'
+  import logo from '../../../../plugins/login-resources/img/intabia-mark.png'
+  import intabia from '../../../../plugins/login-resources/img/intabia-wordmark.png'
+  import platform from '../../../../plugins/login-resources/img/intabia-platform-wordmark.png'
 
   export let onDark = false
 </script>
@@ -29,11 +29,37 @@
 </div>
 
 <style>
-  .brand { display: flex; align-items: center; gap: 12px; color: #000061; }
-  .on-dark { color: #ffffff; }
-  img { flex: none; }
-  .wordmark { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
-  span { display: block; background: currentColor; mask-size: contain; mask-repeat: no-repeat; mask-position: left center; }
-  .intabia { width: 85px; height: 11px; }
-  .platform { width: 120px; height: 14px; }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #000061;
+  }
+  .on-dark {
+    color: #ffffff;
+  }
+  img {
+    flex: none;
+  }
+  .wordmark {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+  span {
+    display: block;
+    background: currentColor;
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: left center;
+  }
+  .intabia {
+    width: 85px;
+    height: 11px;
+  }
+  .platform {
+    width: 120px;
+    height: 14px;
+  }
 </style>

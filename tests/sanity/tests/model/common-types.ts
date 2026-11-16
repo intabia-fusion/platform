@@ -5,13 +5,6 @@ export interface SignUpData {
   password: string
 }
 
-export interface SignUpOtpData {
-  firstName: string
-  lastName: string
-  email: string
-  phone?: string
-}
-
 export interface SignUpWithWorkspaceData {
   firstName: string
   lastName: string

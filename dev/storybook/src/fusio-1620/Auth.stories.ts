@@ -19,21 +19,30 @@ import { demoInvitation } from './demo'
 
 const meta = {
   id: 'fusio-1620-auth',
-  title: 'FUSIO-1620/Вход и регистрация',
+  title: 'Вход и регистрация/Макеты',
   component: AuthFlow,
   parameters: {
     layout: 'fullscreen',
     docs: {
       description: {
-        component: 'Локальный прототип без API и писем. Код подтверждения: 482913. Токен приглашения (inviteId): 162020261110. Ожидание повторной отправки и срок кода - 60 секунд. Пять неверных кодов блокируют повторные попытки на час. Согласия сохраняются при возврате между этапами текущего сценария.'
+        component:
+          'Локальный прототип без API и писем. Код подтверждения: 482913. Токен приглашения (inviteId): 162020261110. Ожидание повторной отправки и срок кода - 60 секунд. Пять неверных кодов блокируют повторные попытки на час. Согласия сохраняются при возврате между этапами текущего сценария.'
       }
     }
   },
   argTypes: {
     initialStep: { control: 'select', options: ['email', 'otp', 'workspace', 'name', 'done'] },
-    initialState: { control: 'select', options: ['default', 'invalid', 'expired', 'rate-limit', 'locked', 'sending', 'resend'] },
-    returning: { control: 'boolean', description: 'После подтверждения кода открывается личный кабинет без повторного ввода имени.' },
+    initialState: {
+      control: 'select',
+      options: ['default', 'invalid', 'expired', 'rate-limit', 'locked', 'sending', 'resend']
+    },
+    returning: {
+      control: 'boolean',
+      description: 'После подтверждения кода открывается личный кабинет без повторного ввода имени.'
+    },
     initialEmail: { control: 'text' },
+    initialFirstName: { control: 'text' },
+    initialLastName: { control: 'text' },
     initialInvitation: { control: 'text' },
     invitedWorkspace: { control: 'text' },
     invitedBy: { control: 'text' }
@@ -50,19 +59,28 @@ export const Email: Story = {
     const email = canvasElement.querySelector('input[type="email"]')
     const consents = canvasElement.querySelectorAll('input[type="checkbox"]')
     if (email === null || consents.length !== 2) throw new Error('Нужны email и два обязательных согласия.')
-    if (canvasElement.querySelector('input[type="password"]') !== null) throw new Error('На первом этапе пароль не запрашивается.')
+    const submit = canvasElement.querySelector<HTMLButtonElement>('button[type="submit"]')
+    if (submit?.disabled !== true) throw new Error('Отправка недоступна до согласия с обоими пунктами.')
+    if (canvasElement.querySelector('input[type="password"]') !== null) {
+      throw new Error('На первом этапе пароль не запрашивается.')
+    }
   }
 }
 export const FilledEmail: Story = { name: '02 Заполненная почта', args: { initialEmail: 'anna.smirnova@intabia.io' } }
 export const InvalidEmail: Story = { name: '03 Ошибка почты', args: { initialEmail: 'anna@', initialState: 'invalid' } }
-export const Sending: Story = { name: '04 Отправка кода', args: { initialEmail: 'anna.smirnova@intabia.io', initialState: 'sending' } }
+export const Sending: Story = {
+  name: '04 Отправка кода',
+  args: { initialEmail: 'anna.smirnova@intabia.io', initialState: 'sending' }
+}
 export const Otp: Story = {
   name: '05 Код из письма',
   args: { initialStep: 'otp', initialEmail: 'anna.smirnova@intabia.io' },
   play: ({ canvasElement }) => {
     const cells = canvasElement.querySelectorAll('input[autocomplete="one-time-code"], input[autocomplete="off"]')
     if (cells.length !== 6) throw new Error('Код должен вводиться в шесть настоящих полей.')
-    const resend = [...canvasElement.querySelectorAll('button')].find((button) => button.textContent?.includes('Отправить код повторно'))
+    const resend = [...canvasElement.querySelectorAll('button')].find((button) =>
+      button.textContent?.includes('Отправить код повторно')
+    )
     if (resend?.disabled !== true) throw new Error('Повторная отправка должна ожидать завершения таймера.')
   }
 }
@@ -70,64 +88,135 @@ export const InvalidOtp: Story = {
   name: '06 Неверный код',
   args: { ...Otp.args, initialState: 'invalid' },
   play: ({ canvasElement }) => {
-    if (canvasElement.querySelector('[role="alert"]')?.textContent?.includes('Неверный код') !== true) throw new Error('Ошибка кода должна быть доступна для чтения.')
-    if (canvasElement.querySelectorAll('input[aria-invalid="true"]').length !== 6) throw new Error('Все поля кода должны обозначать ошибку.')
+    if (canvasElement.querySelector('[role="alert"]')?.textContent?.includes('Неверный код') !== true) {
+      throw new Error('Ошибка кода должна быть доступна для чтения.')
+    }
+    if (canvasElement.querySelectorAll('input[aria-invalid="true"]').length !== 6) {
+      throw new Error('Все поля кода должны обозначать ошибку.')
+    }
   }
 }
 export const ExpiredOtp: Story = { name: '07 Истекший код', args: { ...Otp.args, initialState: 'expired' } }
-export const ResendOtp: Story = { name: '08 Повторная отправка доступна', args: { ...Otp.args, initialState: 'resend' } }
+export const ResendOtp: Story = {
+  name: '08 Повторная отправка доступна',
+  args: { ...Otp.args, initialState: 'resend' }
+}
 export const RateLimited: Story = {
   name: '09 HTTP 429',
   args: { ...Otp.args, initialState: 'rate-limit' },
   play: ({ canvasElement }) => {
     const cells = canvasElement.querySelectorAll<HTMLInputElement>('input')
-    if (cells.length !== 6 || [...cells].some((cell) => !cell.disabled)) throw new Error('HTTP 429 блокирует ввод и проверку кода до следующей попытки.')
+    if (cells.length !== 6 || [...cells].some((cell) => !cell.disabled)) {
+      throw new Error('HTTP 429 блокирует ввод и проверку кода до следующей попытки.')
+    }
   }
 }
 export const LockedOtp: Story = { name: '10 TooManyOtpAttempts', args: { ...Otp.args, initialState: 'locked' } }
-export const EmailRateLimited: Story = { name: '11 Ограничение отправки', args: { initialState: 'rate-limit', initialEmail: 'anna.smirnova@intabia.io' } }
+export const EmailRateLimited: Story = {
+  name: '11 Ограничение отправки',
+  args: { initialState: 'rate-limit', initialEmail: 'anna.smirnova@intabia.io' }
+}
 export const Workspace: Story = {
   name: '12 Создание пространства',
   args: { initialStep: 'workspace' },
   play: ({ canvasElement }) => {
     if (canvasElement.querySelector('#auth-workspace') === null) throw new Error('Нужно поле названия пространства.')
-    if (canvasElement.querySelector('#auth-invitation') !== null) throw new Error('Обычная регистрация не запрашивает токен приглашения.')
-    if (canvasElement.querySelectorAll('form').length !== 1) throw new Error('Должна оставаться только форма создания пространства.')
+    if (canvasElement.querySelector('#auth-invitation') !== null) {
+      throw new Error('Обычная регистрация не запрашивает токен приглашения.')
+    }
+    if (canvasElement.querySelectorAll('form').length !== 1) {
+      throw new Error('Должна оставаться только форма создания пространства.')
+    }
   }
 }
 export const Name: Story = { name: '13 Имя и фамилия', args: { initialStep: 'name' } }
+export const NamePrefill: Story = {
+  name: '13 Проверка названия пространства',
+  args: { initialStep: 'workspace', initialEmail: 'anna.smirnova@intabia.io' },
+  play: async ({ canvasElement }) => {
+    const workspace = canvasElement.querySelector<HTMLInputElement>('#auth-workspace')
+    if (workspace?.value !== 'anna.smirnova Личное пространство') {
+      throw new Error('Название пространства должно заполняться по адресу почты.')
+    }
+    workspace.value = 'Другая компания'
+    workspace.dispatchEvent(new Event('input', { bubbles: true }))
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    if (workspace.value !== 'Другая компания') throw new Error('Название пространства должно редактироваться.')
+    canvasElement.querySelector('form')?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    if (canvasElement.querySelector('#auth-first-name') === null) {
+      throw new Error('После пространства запрашивается имя.')
+    }
+  }
+}
 export const Done: Story = { name: '14 Регистрация завершена', args: { initialStep: 'done' } }
-export const Returning: Story = { name: '15 Повторный вход', args: { returning: true, initialEmail: 'anna.smirnova@intabia.io' } }
+export const Returning: Story = {
+  name: '15 Повторный вход',
+  args: { returning: true, initialEmail: 'anna.smirnova@intabia.io' },
+  play: ({ canvasElement }) => {
+    const consents = [...canvasElement.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')]
+    if (consents.length !== 2 || consents.some((input) => !input.checked)) {
+      throw new Error('Сохраненные согласия должны быть отмечены.')
+    }
+    if (canvasElement.querySelector('.consents.compact') === null) throw new Error('Согласия должны быть компактными.')
+  }
+}
 export const ReturningOtp: Story = { name: '16 Код повторного входа', args: { ...Otp.args, returning: true } }
 export const Mobile: Story = {
   name: '17 Узкий экран',
-  parameters: { viewport: { viewports: { phone: { name: '390 px', styles: { width: '390px', height: '844px' } } }, defaultViewport: 'phone' } }
+  parameters: {
+    viewport: {
+      viewports: { phone: { name: '390 px', styles: { width: '390px', height: '844px' } } },
+      defaultViewport: 'phone'
+    }
+  }
 }
 
 export const InvitedEmail: Story = {
   name: '18 Приглашение: почта',
-  args: { initialInvitation: demoInvitation.token, invitedBy: demoInvitation.invitedBy, invitedWorkspace: demoInvitation.workspace },
+  args: {
+    initialInvitation: demoInvitation.token,
+    invitedBy: demoInvitation.invitedBy,
+    invitedWorkspace: demoInvitation.workspace
+  },
   play: ({ canvasElement }) => {
     const context = canvasElement.querySelector('[data-testid="invitation-context"]')?.textContent ?? ''
-    if (!context.includes(demoInvitation.invitedBy) || !context.includes(demoInvitation.workspace)) throw new Error('Нужно показать отправителя и пространство приглашения.')
-    if (canvasElement.querySelector('input[type="email"]') === null) throw new Error('Приглашение начинается с подтверждения почты.')
+    if (!context.includes(demoInvitation.invitedBy) || !context.includes(demoInvitation.workspace)) {
+      throw new Error('Нужно показать отправителя и пространство приглашения.')
+    }
+    if (canvasElement.querySelector('input[type="email"]') === null) {
+      throw new Error('Приглашение начинается с подтверждения почты.')
+    }
   }
 }
 export const InvitedOtp: Story = { name: '19 Приглашение: код', args: { ...InvitedEmail.args, ...Otp.args } }
 export const InvitedName: Story = {
   name: '20 Приглашение: имя и фамилия',
   args: { ...InvitedEmail.args, initialStep: 'name' },
-  play: ({ canvasElement }) => {
-    if (canvasElement.querySelector('#auth-first-name') === null || canvasElement.querySelector('#auth-last-name') === null) throw new Error('Нужны имя и фамилия приглашенного пользователя.')
-    if (canvasElement.querySelector('#auth-workspace') !== null) throw new Error('Приглашенный пользователь не создает пространство.')
-    if (canvasElement.querySelector('[data-testid="invitation-context"]') === null) throw new Error('Контекст приглашения сохраняется при вводе имени.')
+  play: ({ canvasElement, args }) => {
+    if ((canvasElement.querySelector('#auth-first-name') !== null) !== ((args.initialFirstName?.trim() ?? '') === '')) {
+      throw new Error('Имя запрашивается только при отсутствии в профиле.')
+    }
+    if ((canvasElement.querySelector('#auth-last-name') !== null) !== ((args.initialLastName?.trim() ?? '') === '')) {
+      throw new Error('Фамилия запрашивается только при отсутствии в профиле.')
+    }
+    if (canvasElement.querySelector('#auth-workspace') !== null) {
+      throw new Error('Приглашенный пользователь не создает пространство.')
+    }
+    if (canvasElement.querySelector('[data-testid="invitation-context"]') === null) {
+      throw new Error('Контекст приглашения сохраняется при вводе имени.')
+    }
   }
 }
 export const InvalidInvitation: Story = {
   name: '21 Недействительное приглашение',
   args: { ...InvitedEmail.args, initialInvitation: 'invalid-invite', initialStep: 'workspace' },
   play: ({ canvasElement }) => {
-    if (canvasElement.querySelector('[role="alert"]')?.textContent?.includes('Приглашение не найдено') !== true) throw new Error('Нужно сообщить об ошибке приглашения.')
-    if (canvasElement.querySelector('form') !== null) throw new Error('Недействительное приглашение не допускает обход через обычную регистрацию.')
+    if (canvasElement.querySelector('[role="alert"]')?.textContent?.includes('Приглашение не найдено') !== true) {
+      throw new Error('Нужно сообщить об ошибке приглашения.')
+    }
+    if (canvasElement.querySelector('form') !== null) {
+      throw new Error('Недействительное приглашение не допускает обход через обычную регистрацию.')
+    }
   }
 }

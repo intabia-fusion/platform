@@ -34,7 +34,15 @@
 </script>
 
 {#if account === undefined}
-  <AuthFlow {returning} initialInvitation={inviteId} {invitedWorkspace} {invitedBy} on:complete={(event) => { account = event.detail }} />
+  <AuthFlow
+    {returning}
+    initialInvitation={inviteId}
+    {invitedWorkspace}
+    {invitedBy}
+    on:complete={(event) => {
+      account = event.detail
+    }}
+  />
 {:else}
   <ProfileCabinet
     email={account.email}
@@ -42,6 +50,8 @@
     lastName={account.lastName}
     workspace={account.workspace === '' ? undefined : account.workspace}
     initialSection="workspaces"
-    on:logout={() => { account = undefined }}
+    on:logout={() => {
+      account = undefined
+    }}
   />
 {/if}

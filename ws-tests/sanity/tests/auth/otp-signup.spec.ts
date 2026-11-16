@@ -15,7 +15,7 @@
 
 import { expect, test } from '@playwright/test'
 import { getClient as getAccountClient } from '@hcengineering/account-client'
-import { type PersonUuid } from '@hcengineering/core'
+import { type PersonUuid, SocialIdType } from '@hcengineering/core'
 import { generateToken } from '@hcengineering/server-token'
 import {
   closeAccountDb,
@@ -24,21 +24,15 @@ import {
   LocalUrl,
   LoginPage,
   OtpPage,
-  PlatformURI,
-  RegistrationPage,
-  SignUpPage
+  RegistrationPage
 } from '@hcengineering/tests-sanity'
 
-// This stand runs with USE_OTP on, so the forms below are the real ones users see. The mail
-// queue has no consumer here, so the code is read straight from account_db (API/AccountDb).
+// The mail queue has no consumer here, so the code is read from account_db (API/AccountDb).
 test.describe('otp signup', () => {
   const firstName = 'Test'
   const lastName = 'Person'
-  const phone = '+7-900-000-00-11'
-  const normalizedPhone = '+79000000011'
 
   let loginPage: LoginPage
-  let signUpPage: SignUpPage
   let otpPage: OtpPage
   let registrationPage: RegistrationPage
   let runId: string
@@ -47,7 +41,6 @@ test.describe('otp signup', () => {
 
   test.beforeEach(async ({ page }) => {
     loginPage = new LoginPage(page)
-    signUpPage = new SignUpPage(page)
     otpPage = new OtpPage(page)
     registrationPage = new RegistrationPage(page)
     runId = `${Date.now()}`
@@ -57,13 +50,9 @@ test.describe('otp signup', () => {
     await closeAccountDb()
   })
 
-  // Fresh addresses per run: a person left without an account would already have one next run.
+  // Fresh addresses prevent accounts and OTP rate limits from affecting later runs.
   function email (name: string): string {
     return `otp-${runId}-${name}@test.local`
-  }
-
-  async function gotoSignUp (page: import('@playwright/test').Page): Promise<void> {
-    await (await page.goto(`${PlatformURI}/login/signup`))?.finished()
   }
 
   async function personOf (value: string): Promise<PersonUuid | undefined> {
@@ -79,71 +68,51 @@ test.describe('otp signup', () => {
   test('sign up with a real code creates the account', async ({ page }) => {
     const value = email('code')
 
-    await gotoSignUp(page)
-    await signUpPage.signUpOtp({ firstName, lastName, email: value, phone })
+    await loginPage.goto()
+    await loginPage.loginWithCode(value)
     await otpPage.checkIfCodeScreenIsShown(value)
 
-    // Person exists but the account only appears once the code is entered.
-    expect(await personOf(value)).toBeDefined()
+    // Neither person nor account exists before the code is entered.
+    expect(await personOf(value)).toBeUndefined()
     expect(await accountOf(value)).toBeUndefined()
 
     const validationRequest = page.waitForRequest((request) => {
       if (request.method() !== 'POST' || !request.url().includes('/_account')) return false
-      return request.postDataJSON()?.method === 'validateOtp'
+      return request.postDataJSON()?.method === 'confirmEmailOtp'
     })
     await otpPage.enterCode(await getOtpCode(value))
     expect((await validationRequest).postDataJSON().params).not.toHaveProperty('password')
+    expect((await validationRequest).postDataJSON().params.consent).toEqual({ personalData: true, rules: true })
 
-    await page.waitForURL((url) => url.pathname.startsWith('/login/selectWorkspace'))
+    await page.waitForURL((url) => url.pathname.startsWith('/login/onboarding'))
     expect(await accountOf(value)).toBeDefined()
   })
 
   test('a wrong code is rejected and the account is not created', async ({ page }) => {
     const value = email('wrong-code')
 
-    await gotoSignUp(page)
-    await signUpPage.signUpOtp({ firstName, lastName, email: value, phone })
-    await otpPage.enterCode('000000')
+    await loginPage.goto()
+    await loginPage.loginWithCode(value)
+    const code = await getOtpCode(value)
+    await otpPage.enterCode(code === '000000' ? '000001' : '000000')
 
     await expect(otpPage.invalidCodeMessage()).toBeVisible()
     expect(await accountOf(value)).toBeUndefined()
   })
 
-  test('restarting the sign up with the same phone is not blocked', async ({ page }) => {
-    const value = email('same-phone')
-
-    await gotoSignUp(page)
-    await signUpPage.signUpOtp({ firstName, lastName, email: value, phone })
-    await otpPage.checkIfCodeScreenIsShown(value)
-
-    // Used to throw PhoneAlreadyExists on the person's own phone, locking the user out for good.
-    await gotoSignUp(page)
-    await signUpPage.signUpOtp({ firstName, lastName, email: value, phone })
-    await otpPage.checkIfCodeScreenIsShown(value)
-
-    await otpPage.enterCode(await getOtpCode(value))
-    await page.waitForURL((url) => url.pathname.startsWith('/login/selectWorkspace'))
-
-    const service = await getServiceAccountClient('tool')
-    const info = await service.getPersonInfo((await personOf(value)) as PersonUuid)
-    expect(info.phoneHint).toBe(normalizedPhone)
-    expect(info.socialIds.some((s) => s.type === 'phone')).toBe(false)
-  })
-
   test('an unfinished sign up can be completed from the login form', async ({ page }) => {
     const value = email('unfinished')
 
-    // Leave a person without an account, exactly like closing the tab before entering the code.
-    await anon.signUpOtp(value, firstName, lastName, phone)
+    // Leave an unconfirmed request, exactly like closing the tab before entering the code.
+    await anon.requestEmailOtp(value)
     expect(await accountOf(value)).toBeUndefined()
 
     await loginPage.goto()
     await loginPage.loginWithCode(value)
     await otpPage.checkIfCodeScreenIsShown(value)
 
-    // Used to throw AccountNotFound: the person had no account yet, so login was a dead end.
     await otpPage.enterCode(await getOtpCode(value))
-    await page.waitForURL((url) => url.pathname.startsWith('/login/selectWorkspace'))
+    await page.waitForURL((url) => url.pathname.startsWith('/login/onboarding'))
     expect(await accountOf(value)).toBeDefined()
   })
 
@@ -157,20 +126,22 @@ test.describe('otp signup', () => {
     await otpPage.checkIfCodeScreenIsShown(value)
     expect(await personOf(value)).toBeUndefined()
 
-    await otpPage.enterCode('000000')
+    const code = await getOtpCode(value)
+    await otpPage.enterCode(code === '000000' ? '000001' : '000000')
     await expect(otpPage.invalidCodeMessage()).toBeVisible()
   })
 
-  test('the activation link completes a sign up whose code was never entered', async ({ page }) => {
+  test('the activation link completes a legacy unconfirmed sign up', async ({ page }) => {
     const value = email('link')
 
-    await anon.signUpOtp(value, firstName, lastName, phone)
-    const person = (await personOf(value)) as PersonUuid
+    const service = await getServiceAccountClient('tool')
+    const { uuid: person } = await service.ensurePerson(SocialIdType.EMAIL, value, firstName, lastName)
     const token = generateToken(person, undefined, { confirmEmail: value }, 'secret', {
       exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60
     })
 
     await registrationPage.openConfirmLink(token)
+    await registrationPage.acceptRegistrationConsent()
 
     await page.waitForURL((url) => url.pathname.startsWith('/login/registered'))
     await registrationPage.checkRegistrationComplete(`${firstName} ${lastName}`)

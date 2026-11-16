@@ -16,6 +16,7 @@ import {
   type AccountUuid,
   type Class,
   type Doc,
+  type Person,
   type Ref,
   type WorkspaceMemberInfo,
   type WorkspaceUuid
@@ -31,6 +32,7 @@ export interface PlanLimits {
 
 /** Abstraction for fetching limits/payment status without depending on account-client. Concrete impl injected by the host (pods/server). */
 export interface LimitsProvider {
+  getPerson: (account: AccountUuid, workspace: WorkspaceUuid) => Promise<Person>
   getPlanLimits: (workspace: WorkspaceUuid) => Promise<PlanLimits>
   /** Workspace members with roles — used by seat enforcement to count privileged seats. */
   getWorkspaceMembers: (workspace: WorkspaceUuid) => Promise<WorkspaceMemberInfo[]>

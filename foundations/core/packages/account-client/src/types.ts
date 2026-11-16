@@ -17,11 +17,23 @@ import {
   IntegrationKind
 } from '@hcengineering/core'
 
+export type OnboardingIntent = { kind: 'workspace' } | { kind: 'invite', inviteId: string }
+export interface OnboardingState {
+  intent: OnboardingIntent
+  stage: 'name' | 'workspace' | 'complete'
+  workspaceName?: string
+  region?: string
+  workspace?: WorkspaceUuid
+  nameConfirmed?: boolean
+}
+
 export interface LoginInfo {
   account: AccountUuid
   name?: string
   socialId?: PersonId
   token?: string
+  onboarding?: OnboardingState
+  created?: boolean
   // Set when the account is scheduled for deletion: the client asks whether to call it off.
   deleteOn?: number
 }
@@ -94,8 +106,7 @@ export interface WorkspaceInviteInfo {
   workspace: WorkspaceUuid
   email?: string
   name?: string
-  // False when the workspace plan has no free seats: the join page must not offer sign up / sign in.
-  seatsAvailable?: boolean
+  inviterName?: string
 }
 
 export interface OtpInfo {
@@ -224,6 +235,8 @@ export interface AccountsFilter {
   inactiveDays?: number
   /** Unfinished signups only: person + social ids without an account row */
   pendingOnly?: boolean
+  /** Accounts with unfinished onboarding */
+  onboardingOnly?: boolean
   /** Blocked accounts only */
   blockedOnly?: boolean
 }

@@ -1,5 +1,6 @@
 //
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -421,6 +422,7 @@ export interface EnsureEmployeeOptions {
   createEmployee?: boolean
   // Force a specific employee role instead of deriving from person.role.
   roleOverride?: 'USER' | 'GUEST'
+  throwOnForbidden?: boolean
 }
 
 export async function ensureEmployee (
@@ -709,7 +711,11 @@ export async function ensureEmployeeForPerson (
     return personRef as Ref<Employee>
   } catch (err: any) {
     // If Forbidden error occurred, return personRef if it exists, otherwise throw error
-    if (err instanceof PlatformError && err.status.code === platform.status.Forbidden) {
+    if (
+      options?.throwOnForbidden !== true &&
+      err instanceof PlatformError &&
+      err.status.code === platform.status.Forbidden
+    ) {
       if (personRef != null) {
         ctx.info('Skip employee update for person without full access rights')
         return personRef as Ref<Employee>

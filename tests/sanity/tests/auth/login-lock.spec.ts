@@ -23,15 +23,19 @@ import { LocalUrl, PlatformURI } from '../utils'
 // Five wrong codes lock the code sign in and mail a one-time link; the link is spent on the click.
 test.describe('login code lock', () => {
   test('five wrong codes lock the code login and the mailed link signs in once', async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('lang', 'en')
+    })
     const anon = getAccountClient(LocalUrl)
     const email = `lock-${Date.now()}@test.local`
-    await anon.signUp(email, '1234', 'Lock', 'Test')
+    await anon.signUp(email, '1234', 'Lock', 'Test', { personalData: true, rules: true })
 
     const lockPart = '/login/loginLink#token='
     const mailbox = await openMailbox()
     try {
       const loginPage = new LoginPage(page)
       const otpPage = new OtpPage(page)
+      await loginPage.enableOtp()
       await loginPage.goto()
       await loginPage.loginWithCode(email)
       await otpPage.checkIfCodeScreenIsShown(email)
@@ -56,6 +60,7 @@ test.describe('login code lock', () => {
 
       await page.goto(link)
       await expect(loginPage.buttonLogin()).toBeVisible()
+      await expect(loginPage.buttonLogin()).toBeEnabled()
       await expect.poll(() => new URL(page.url()).hash).toBe('')
       // Opening the link spends nothing.
       await expect(anon.loginOtp(email)).rejects.toThrow(/TooManyOtpAttempts/)

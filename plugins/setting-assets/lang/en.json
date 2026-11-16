@@ -271,6 +271,8 @@
     "SendCode": "Send code",
     "SeatLimitReached": "No free seats",
     "SeatLimitReachedDescription": "The workspace has reached its plan seat limit. Free a seat or upgrade the plan to assign this role.",
+    "DocumentGuest": "Document guest",
+    "SystemAdministrator": "System administrator",
     "WebhookAccess": "Outgoing webhooks",
     "WebhookIncomingAccess": "Incoming webhooks",
     "WebhookIncomingPlaceholderProject": "Pick a project space above to use its real identifier here.",

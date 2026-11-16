@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -26,13 +27,14 @@
   import { onDestroy } from 'svelte'
 
   export let navigateUrl: string | undefined = undefined
-  export let signUpDisabled = false
   export let email: string | undefined = undefined
   export let caption: IntlString = login.string.LogIn
   export let subtitle: string | undefined = undefined
   export let onLogin: ((loginInfo: LoginInfo | null, status: Status) => void | Promise<void>) | undefined = undefined
   export let extraBottomActions: BottomAction[] = []
   export let signedInAs: string | undefined = undefined
+  export let agreedPersonalData = false
+  export let agreedRules = false
 
   $: fields = [
     {
@@ -87,7 +89,8 @@
     {fields}
     object={formData}
     {action}
-    {signUpDisabled}
+    bind:agreedPersonalData
+    bind:agreedRules
     bottomActions={extraBottomActions}
     secondaryButtonLabel={signedInAs !== undefined ? login.string.SelectWorkspace : undefined}
     secondaryButtonAction={() => {

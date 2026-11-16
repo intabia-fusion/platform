@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -14,9 +15,9 @@
 -->
 <script lang="ts">
   import type { Employee } from '@hcengineering/contact'
-  import contact, { formatName } from '@hcengineering/contact'
+  import contact, { combineName, formatName } from '@hcengineering/contact'
   import { EmployeePresenter } from '@hcengineering/contact-resources'
-  import type { Account } from '@hcengineering/core'
+  import type { Account, WorkspaceMemberWithDetails } from '@hcengineering/core'
   import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
   import { MessageBox, createQuery, getClient } from '@hcengineering/presentation'
   import type { DropdownIntlItem } from '@hcengineering/ui'
@@ -34,26 +35,29 @@
 
   const items: DropdownIntlItem[] = [
     { id: AccountRole.ReadOnlyGuest, label: setting.string.ReadonlyGuest },
+    { id: AccountRole.DocGuest, label: setting.string.DocumentGuest },
     { id: AccountRole.Guest, label: setting.string.Guest },
     { id: AccountRole.User, label: setting.string.User },
     { id: AccountRole.Maintainer, label: setting.string.Maintainer },
-    { id: AccountRole.Owner, label: setting.string.Owner }
+    { id: AccountRole.Owner, label: setting.string.Owner },
+    { id: AccountRole.Admin, label: setting.string.SystemAdministrator }
   ]
 
   const guestRoles = [AccountRole.ReadOnlyGuest, AccountRole.DocGuest, AccountRole.Guest]
 
   const accountClient = getAccountClient()
-  let workspaceMembers: Record<string, AccountRole> = {}
+  let workspaceMembers: Record<string, WorkspaceMemberWithDetails> = {}
   let employees: Employee[] = []
+  let pendingMembers = new Set<string>()
 
   onMount(async () => {
-    const members = await accountClient.getWorkspaceMembers()
-    workspaceMembers = members.reduce<Record<string, AccountRole>>((wm, m) => {
-      wm[m.person] = m.role
-
-      return wm
-    }, {})
+    await refreshMembers()
   })
+
+  async function refreshMembers (): Promise<void> {
+    const members = await accountClient.getWorkspaceMemberDetails()
+    workspaceMembers = Object.fromEntries(members.map((member) => [member.person, member]))
+  }
 
   query.query(contact.mixin.Employee, { active: true }, (res) => {
     employees = res
@@ -62,13 +66,17 @@
   })
 
   async function change (personUuid: string, value: AccountRole): Promise<void> {
-    if (accountClient == null) {
+    if (accountClient == null || pendingMembers.has(personUuid)) {
       return
     }
 
+    pendingMembers = new Set(pendingMembers).add(personUuid)
     try {
       await accountClient.updateWorkspaceRole(personUuid, value)
-      workspaceMembers[personUuid] = value
+      workspaceMembers = {
+        ...workspaceMembers,
+        [personUuid]: { ...workspaceMembers[personUuid], role: value }
+      }
 
       const employee = employees.find((e) => e.personUuid === personUuid)
       if (employee !== undefined) {
@@ -77,27 +85,46 @@
       }
     } catch (e: any) {
       if (e instanceof PlatformError && e.status.code === platform.status.PlanLimitExceeded) {
-        // Promoting a guest takes a seat, so a full plan refuses it server side.
         showPopup(MessageBox, {
           label: setting.string.SeatLimitReached,
           message: setting.string.SeatLimitReachedDescription,
           canSubmit: false
         })
-        // Force the dropdown back to the role the server still has.
         workspaceMembers = { ...workspaceMembers }
         return
       }
+      workspaceMembers = { ...workspaceMembers }
       Analytics.handleError(e)
+    } finally {
+      pendingMembers.delete(personUuid)
+      pendingMembers = new Set(pendingMembers)
     }
   }
   let search = ''
 
-  $: ownersCount = employees.filter(
-    (e) => e.personUuid != null && workspaceMembers[e.personUuid] === AccountRole.Owner
-  ).length
+  $: ownersCount = Object.values(workspaceMembers).filter((member) => member.role === AccountRole.Owner).length
+  $: rows = Object.values(workspaceMembers)
+    .map((member) => {
+      const employee = employees.find((e) => e.personUuid === member.person)
+      const name =
+        employee !== undefined
+          ? formatName(employee.name).trim()
+          : formatName(combineName(member.firstName ?? '', member.lastName ?? '')).trim()
+      return { member, employee, name, email: member.email ?? '' }
+    })
+    .filter((row) =>
+      `${row.name} ${row.email} ${row.member.person}`.toLocaleLowerCase().includes(search.toLocaleLowerCase())
+    )
+    .sort((a, b) => (a.name || a.email || a.member.person).localeCompare(b.name || b.email || b.member.person))
 
   function getItems (role: AccountRole, currentAccount: Account): DropdownIntlItem[] {
-    return items.filter((i) => i.id === role || hasAccountRole(currentAccount, i.id as AccountRole))
+    return items.filter(
+      (i) =>
+        i.id === role ||
+        (i.id !== AccountRole.Admin &&
+          i.id !== AccountRole.DocGuest &&
+          hasAccountRole(currentAccount, i.id as AccountRole))
+    )
   }
 </script>
 
@@ -111,31 +138,55 @@
   <div class="hulyComponent-content__column content">
     <Scroller align="center" padding="var(--spacing-3)" bottomPadding="var(--spacing-3)">
       <div class="hulyComponent-content">
-        {#each employees as employee (employee._id)}
-          {@const personUuid = employee.personUuid ?? undefined}
-          {@const role = personUuid !== undefined ? workspaceMembers[personUuid] : undefined}
-          {#if personUuid !== undefined && role !== undefined && employee.name?.includes(search)}
-            <div class="flex-row-center p-2 flex-no-shrink" data-id="owners-member-row">
-              <div class="p-1 min-w-80">
-                <EmployeePresenter value={employee} disabled={false} />
-              </div>
-              <DropdownLabelsIntl
-                label={setting.string.Role}
-                disabled={!hasAccountRole(currentAccount, role) ||
-                  (role === AccountRole.Owner && ownersCount === 1) ||
-                  currentAccount.uuid === personUuid}
-                kind="primary"
-                size="medium"
-                items={getItems(role, currentAccount)}
-                selected={role}
-                on:selected={(e) => {
-                  void change(personUuid, e.detail)
-                }}
-              />
+        {#each rows as row (row.member.person)}
+          {@const member = row.member}
+          {@const personUuid = member.person}
+          {@const role = member.role}
+          <div class="flex-row-center p-2 flex-no-shrink member-row" data-id="owners-member-row">
+            <div class="p-1 min-w-80 member-identity">
+              {#if row.employee !== undefined}
+                <EmployeePresenter value={row.employee} disabled={false} />
+              {:else}
+                <span>{row.name || row.email || personUuid}</span>
+              {/if}
+              {#if row.email !== '' && row.name !== '' && row.email !== row.name}
+                <span class="member-email">{row.email}</span>
+              {/if}
             </div>
-          {/if}
+            <DropdownLabelsIntl
+              label={setting.string.Role}
+              disabled={!hasAccountRole(currentAccount, role) ||
+                pendingMembers.has(personUuid) ||
+                (role === AccountRole.Owner && ownersCount === 1) ||
+                currentAccount.uuid === personUuid}
+              kind="primary"
+              size="medium"
+              items={getItems(role, currentAccount)}
+              selected={role}
+              on:selected={(e) => {
+                void change(personUuid, e.detail)
+              }}
+            />
+          </div>
         {/each}
       </div>
     </Scroller>
   </div>
 </div>
+
+<style lang="scss">
+  .member-row {
+    flex-wrap: wrap;
+    row-gap: var(--spacing-2);
+  }
+
+  .member-identity {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .member-email {
+    color: var(--theme-caption-color);
+    font-size: var(--font-small);
+  }
+</style>

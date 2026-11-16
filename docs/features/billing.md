@@ -1,6 +1,6 @@
 # Биллинг, подписки, лимиты, платежи
 
-> Сверено с кодом: коммит 39ae47eb6f, 2026-09-23.
+> Проверки мест, приглашения и исключение для `ensureEmployee` сверены с кодом FUSIO-1620 в коммите этой правки, 2026-11-19. Остальная карта: коммит 39ae47eb6f, 2026-09-23.
 
 Воркспейс живёт на тарифе (`Subscription`) с лимитами по местам, хранилищу, AI-токенам, встречам и трафику. Оплату проводит `pod-tbank-subscriptions` (T-Bank) через фасад `pod-payment` (там же реализованы провайдеры Stripe/Polar/Mock). Учёт использования и принудительное применение лимитов - отдельный `pod-billing`. Разовые пакеты (доп. хранилище, AI-токены) оформляются как `WorkspacePurchase`.
 
@@ -33,7 +33,7 @@
 | `WorkspacePurchase` | разовая покупка: pending/active/consumed/failed | `server/account/src/types.ts` |
 | `DEFAULT_FREE_PLAN`/`parseFreePlanLimits`/`getFreePlanLimits` | бесплатный фолбэк (5 юзеров, 2 ГБ/юзер, 100k токенов), переопределяется env `FREE_PLAN_LIMITS` | `server/account/src/freeLimits.ts` |
 | `clampToLicense` | потолок юзеров free-плана по лицензии | `server/account/src/freeLimits.ts` |
-| `assertSeatAvailable` | hard-cap по `usersLimit` перед join/invite | `server/account/src/utils.ts` |
+| `assertSeatAvailable` | проверка `usersLimit` при выдаче приглашения, повышении роли и выдаче прав | `server/account/src/utils.ts` |
 | `ProviderPool` | providerId/model/periodStart/usedTokens/purchasedTokens (пул AI-провайдера) | `services/billing/pod-billing/src/types.ts` |
 | `LimitCategory`/`LimitStatus`/`QueueWorkspaceLimitsMessage` | категории (disk/tokens/transcript/meetingMinutes/Payment/Plan/Members), статус Exhausted/Ok, очередь `LimitsChanged` | `foundations/server/packages/core/src/queue/workspace.ts` |
 | `token_balance` | купленный AI-баланс (не сгорает), отдельно от тарифного окна | таблица `billing`, см. `docs/memory/ai_token_topups.md` |
@@ -69,7 +69,7 @@
 
 ### Лимиты и usage
 - **Двух-пул AI-токены**: тарифное окно (сгорает в конце периода) + купленный баланс (не сгорает, тратится первым). - `LimitsEngine.effectiveLimit`/`settleTokenBalance`, `services/billing/pod-billing/src/limits.ts`; модель целиком - `docs/memory/ai_token_topups.md`.
-- **Seat-лимит с приоритетом ролей.** Первые N active-сотрудников по (rolePriority, createdOn) занимают места; сверх лимита - read-only, без привилегированного bypass. - `SeatLimitsMiddleware`, `foundations/server/packages/middleware/src/seatLimits.ts`.
+- **Seat-лимит с приоритетом ролей.** `assertSeatAvailable` проверяет место при выдаче и переотправке приглашения на платную роль, прямом повышении роли и выдаче гранта. При первом вступлении существующего аккаунта по приглашению проверка выполняется в транзакции. Новый аккаунт с незавершённой регистрацией может принять ранее выданное приглашение сверх лимита без вытеснения занятых мест. Обычные участники получают места по приоритету роли и UUID, сверхлимитные - после них в порядке вступления. Для участника без места транзактор допускает только собственный `ensureEmployee`, пока не созданы активный Employee и PersonSpace; остальные записи ограничены обычными правилами. - `assertSeatAvailable` и `doJoinByInvite`, `server/account/src/utils.ts`; `completeOnboardingInvite`, `server/account/src/collections/postgres/postgres.ts`; `SeatLimitsMiddleware` и `EnsureEmployeeMiddleware`, `foundations/server/packages/middleware/src/seatLimits.ts` и `ensureEmployee.ts`.
 - **Fail-open лимитов.** Ошибка аккаунт-сервиса или отсутствие данных -> `ZERO_LIMITS` (безлимит), не блокировка. - `pods/server/src/limitsProvider.ts`, `foundations/server/packages/middleware/src/planLimits.ts`.
 - **Пороговые уведомления пулов AI-провайдеров** (80%/100%) админам по email. - `createPoolNotifier`, `services/billing/pod-billing/src/notify.ts`.
 - **Учёт хранилища по типам файлов** и крупнейшим файлам/пространствам. Суммы пространств включают вложения `Attachment` и все версии файлов Drive (`FileVersion`) до сортировки и выбора десяти крупнейших. Общий список показывает размер и версии файлов Drive; кнопка удаляет файл Drive со всеми версиями после подтверждения и проверки прав. - `handleGetStats`/`collectDatalakeStats`/`handleGetLargestSpaces`, `services/billing/pod-billing/src/billing.ts`.

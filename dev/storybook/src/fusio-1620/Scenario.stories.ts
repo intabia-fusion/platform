@@ -19,14 +19,15 @@ import { demoInvitation } from './demo'
 
 const meta = {
   id: 'fusio-1620-scenario',
-  title: 'FUSIO-1620/Сценарии',
+  title: 'Вход и регистрация/Сценарии',
   component: Scenario,
   tags: ['screen', '!autodocs'],
   parameters: {
     layout: 'fullscreen',
     docs: {
       description: {
-        component: 'Интерактивный прототип на локальных данных. Обычная регистрация создаёт пространство; регистрация по ссылке показывает пригласившего и пространство, затем присоединяет к нему. Письма и запросы аккаунтов не отправляются. Код: 482913.'
+        component:
+          'Интерактивный прототип на локальных данных. Обычная регистрация создаёт пространство; регистрация по ссылке показывает пригласившего и пространство, затем присоединяет к нему. Письма и запросы аккаунтов не отправляются. Код: 482913.'
       }
     }
   },
@@ -40,7 +41,11 @@ export const Registration: Story = { name: 'Регистрация до проф
 export const Returning: Story = { name: 'Повторный вход до профиля', args: { returning: true } }
 export const Invitation: Story = {
   name: 'Регистрация по приглашению',
-  args: { inviteId: demoInvitation.token, invitedWorkspace: demoInvitation.workspace, invitedBy: demoInvitation.invitedBy }
+  args: {
+    inviteId: demoInvitation.token,
+    invitedWorkspace: demoInvitation.workspace,
+    invitedBy: demoInvitation.invitedBy
+  }
 }
 export const ReturningInvitation: Story = {
   name: 'Вход по приглашению',

@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -14,31 +15,31 @@
 -->
 
 <script lang="ts">
-  import ui, { deviceOptionsStore as deviceInfo, TimeLeft, Icon } from '@hcengineering/ui'
+  import { deviceOptionsStore as deviceInfo, TimeLeft } from '@hcengineering/ui'
   import { OK, Severity, Status } from '@hcengineering/platform'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import type { Timestamp } from '@hcengineering/core'
-  import type { LoginInfo } from '@hcengineering/account-client'
+  import type { LoginInfo, OnboardingIntent } from '@hcengineering/account-client'
+  import { Analytics } from '@hcengineering/analytics'
 
   import FormButton from './internal/FormButton.svelte'
   import Label from './internal/Label.svelte'
   import LoginCodeInput from './internal/LoginCodeInput.svelte'
-  import type { BottomAction } from '../index'
-  import { doLoginNavigate, doValidateOtp, OtpLoginSteps, loginOtp, signUpOtp } from '../index'
+  import { OtpLoginSteps } from '../index'
+  import { confirmEmailOtp, doLoginNavigate, doValidateOtp, loginOtp, requestEmailOtp } from '../utils'
   import login from '../plugin'
   import { saveAuthEmail } from '../utils'
-  import BottomActionComponent from './BottomAction.svelte'
   import StatusControl from './StatusControl.svelte'
+  import { LoginEvents } from '../analytics'
 
   export let navigateUrl: string | undefined = undefined
   export let email: string
-  export let firstname: string = ''
-  export let lastname: string = ''
   export let retryOn: Timestamp
-  export let loginState: 'login' | 'signup' | 'none' = 'none'
   export let canChangeEmail = true
-  export let password: string | undefined = undefined
   export let onLogin: ((loginInfo: LoginInfo | null, status: Status) => void | Promise<void>) | undefined = undefined
+  export let emailFirst = false
+  export let intent: OnboardingIntent | undefined = undefined
+  export let consent: { personalData: boolean, rules: boolean } | undefined = undefined
 
   const dispatch = createEventDispatcher()
 
@@ -52,6 +53,8 @@
   ]
 
   let status = OK
+  let inputBlocked = false
+  let validating = false
 
   const otpData: Record<string, string> = {
     otp1: '',
@@ -61,6 +64,7 @@
     otp5: '',
     otp6: ''
   }
+  $: codeComplete = Object.values(otpData).every((value) => value !== '')
 
   let formElement: HTMLFormElement | undefined
 
@@ -69,13 +73,27 @@
   }
 
   async function validateOtp (): Promise<void> {
+    if (!codeComplete || inputBlocked || validating) {
+      return
+    }
+    validating = true
     status = new Status(Severity.INFO, login.status.ConnectingToServer, {})
 
     const otp = otpData.otp1 + otpData.otp2 + otpData.otp3 + otpData.otp4 + otpData.otp5 + otpData.otp6
-    const [loginStatus, result] = await doValidateOtp(loginState === 'signup', email, otp, password)
+    const [loginStatus, result] = emailFirst
+      ? await confirmEmailOtp(email, otp, intent, consent)
+      : await doValidateOtp(email, otp)
+    validating = false
     status = loginStatus
+    if (typeof status.params?.retryOn === 'number' && status.params.retryOn > Date.now()) {
+      retryOn = status.params.retryOn
+      inputBlocked = true
+      canResend = false
+      timer?.restart(retryOn)
+    }
 
     if (result != null) {
+      if (emailFirst && result.created === true) Analytics.handleEvent(LoginEvents.SignUpOtp, { ok: true })
       saveAuthEmail(null)
     }
 
@@ -107,11 +125,6 @@
       if (index === -1) return
 
       target.value = value[0]
-
-      if (Object.values(otpData).every((v) => v !== '')) {
-        void validateOtp()
-        return
-      }
 
       const nextField = fields[index + 1]
       if (nextField === undefined) return
@@ -188,10 +201,6 @@
       input?.focus()
     }
 
-    if (Object.values(otpData).every((v) => v !== '')) {
-      void validateOtp()
-    }
-
     return true
   }
 
@@ -213,9 +222,15 @@
 
   async function resendCode (): Promise<void> {
     status = new Status(Severity.INFO, login.status.ConnectingToServer, {})
-    const [otpStatus, result] =
-      loginState === 'signup' ? await signUpOtp(email, firstname, lastname) : await loginOtp(email)
+    const [otpStatus, result] = emailFirst ? await requestEmailOtp(email, consent) : await loginOtp(email)
     status = otpStatus
+
+    if (typeof status.params?.retryOn === 'number' && status.params.retryOn > Date.now()) {
+      retryOn = status.params.retryOn
+      inputBlocked = true
+      canResend = false
+      timer?.restart(retryOn)
+    }
 
     if (result?.sent === true && otpStatus === OK) {
       retryOn = result.retryOn
@@ -226,64 +241,47 @@
   }
   let canResend = false
 
-  const changeEmailAction: BottomAction = {
-    caption: login.string.WrongEmail,
-    i18n: login.string.ChangeEmail,
-    func: () => {
-      dispatch('step', OtpLoginSteps.Email)
-    }
-  }
-
-  const resendCodeAction: BottomAction = {
-    caption: login.string.HaventReceivedCode,
-    i18n: login.string.ResendCode,
-    func: () => {
-      void resendCode()
-    }
-  }
-
   let timer: TimeLeft | undefined
 </script>
 
 <form
   bind:this={formElement}
   class="container"
-  style:padding={$deviceInfo.docWidth <= 480 ? '1.25rem 1rem' : '1rem 1.5rem'}
+  style:padding={$deviceInfo.docWidth <= 480 ? '1.25rem 1rem' : '1.25rem 2rem 2rem'}
+  on:submit|preventDefault={validateOtp}
 >
   <div class="header">
-    <div class="title-row">
-      <FormButton
-        type="button"
-        kind="ghost"
-        shape="round"
-        size="small"
-        on:click={() => {
-          dispatch('step', OtpLoginSteps.Email)
-        }}
-      >
-        <Icon icon={ui.icon.ChevronLeftLarge} size="small" />
-      </FormButton>
-      <div class="title"><Label label={login.string.EnterCode} variant="heading" /></div>
+    <div class="description"><Label label={login.string.SentTo} /></div>
+    <div class="recipient-row">
+      <span class="email">{email}</span>
+      {#if canChangeEmail}
+        <FormButton
+          type="button"
+          kind="ghost"
+          shape="round"
+          size="small"
+          on:click={() => {
+            dispatch('step', OtpLoginSteps.Email)
+          }}
+        >
+          <Label label={login.string.ChangeEmail} />
+        </FormButton>
+      {/if}
     </div>
-    <div class="description">
-      <Label label={login.string.SentTo} />
-      <span class="email">
-        {email}
-      </span>
-    </div>
+    <div class="title" id="otp-title"><Label label={login.string.EnterCode} variant="heading" /></div>
   </div>
 
   <div class="form">
     {#each fields as field, index (field.name)}
-      {#if index === 3}
-        <div class="separator" />
-      {/if}
       <div class="form-row">
+        <span class="visually-hidden" id={`otp-position-${index}`}>{index + 1} / {fields.length}</span>
         <LoginCodeInput
           id={field.id}
           name={field.name}
+          aria-labelledby={`otp-title otp-position-${index}`}
           size="medium"
           bind:value={otpData[field.name]}
+          disabled={inputBlocked}
           on:blur={() => {
             trim(field.name)
           }}
@@ -292,26 +290,34 @@
     {/each}
   </div>
 
-  <div class="footer mt-6">
-    <span class="flex-row-top">
-      <Label label={login.string.CanFindCode} />
-      <span class="time ml-2">
-        <TimeLeft
-          bind:this={timer}
-          time={retryOn}
-          on:timeout={() => {
-            canResend = true
-          }}
-        />
-      </span>
-    </span>
+  <div class="confirm-code">
+    <FormButton
+      type="submit"
+      label={login.string.ConfirmCode}
+      kind="contrast"
+      shape="round"
+      size="x-large"
+      width="100%"
+      loading={validating}
+      disabled={!codeComplete || inputBlocked}
+    />
+  </div>
 
-    {#if canChangeEmail}
-      <BottomActionComponent action={changeEmailAction} />
-    {/if}
-    {#if canResend}
-      <BottomActionComponent action={resendCodeAction} />
-    {/if}
+  <div class="footer">
+    <FormButton type="button" kind="ghost" width="100%" disabled={!canResend} on:click={resendCode}>
+      <Label label={login.string.ResendCode} />
+    </FormButton>
+    <div class="time" class:hidden={canResend}>
+      <Label label={login.string.ResendAvailableIn} />
+      <TimeLeft
+        bind:this={timer}
+        time={retryOn}
+        on:timeout={() => {
+          canResend = true
+          inputBlocked = false
+        }}
+      />
+    </div>
   </div>
 
   <div class="status mt-2">
@@ -320,6 +326,22 @@
 </form>
 
 <style lang="scss">
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .confirm-code {
+    margin-top: 1.25rem;
+  }
+
   .separator {
     display: block;
     width: 0.75rem;
@@ -445,5 +467,62 @@
 
   .time {
     color: var(--login-caption-color, var(--theme-caption-color));
+  }
+  .recipient-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+
+  .recipient-row .email {
+    overflow-wrap: anywhere;
+    font-weight: 600;
+  }
+
+  .header .title {
+    margin: 1.5rem 0 0;
+    text-align: left;
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 2.25rem;
+  }
+
+  .header .description {
+    justify-content: flex-start;
+    font-size: 0.875rem;
+    text-align: left;
+  }
+
+  .footer {
+    margin-top: 1rem;
+    gap: 1rem;
+  }
+
+  .time {
+    font-size: 0.8125rem;
+  }
+  .hidden {
+    visibility: hidden;
+  }
+
+  .container .form {
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+
+  .container .form .form-row {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .container .form .form-row > :global(.container) {
+    width: 100%;
+  }
+  .container .form .form-row :global(input) {
+    width: 100%;
+    height: 4.25rem;
   }
 </style>

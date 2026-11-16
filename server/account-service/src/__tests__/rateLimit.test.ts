@@ -122,18 +122,24 @@ describe('authRateLimit budgets', () => {
     for (let i = 0; i < times; i++) authRateLimit(method, {}, ip)
   }
 
-  it.each(['login', 'loginOtp', 'signUpOtp', 'validateOtp', 'loginByLink', 'join', 'requestPasswordReset'])(
-    'blocks a burst of %s',
-    (method) => {
-      expect(authRateLimit(method, {}, '1.2.3.4')).toBeUndefined()
-      hammer(method, '1.2.3.4', 1000)
-      expect(authRateLimit(method, {}, '1.2.3.4')).toBeDefined()
-    }
-  )
+  it.each([
+    'login',
+    'loginOtp',
+    'validateOtp',
+    'requestEmailOtp',
+    'confirmEmailOtp',
+    'loginByLink',
+    'join',
+    'requestPasswordReset'
+  ])('blocks a burst of %s', (method) => {
+    expect(authRateLimit(method, {}, '1.2.3.4')).toBeUndefined()
+    hammer(method, '1.2.3.4', 1000)
+    expect(authRateLimit(method, {}, '1.2.3.4')).toBeDefined()
+  })
 
   // Code methods share one budget; join checks a password through login and requestPasswordReset sends mail.
   it.each([
-    ['loginOtp', ['validateOtp', 'signUpOtp']],
+    ['loginOtp', ['validateOtp', 'requestEmailOtp', 'confirmEmailOtp']],
     ['login', ['join', 'requestPasswordReset']]
   ])('counts %s against the same budget as %p', (spent, shared) => {
     hammer(spent, '1.2.3.4', 1000)

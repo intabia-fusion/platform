@@ -271,6 +271,8 @@
     "SendCode": "Envoyer le code",
     "SeatLimitReached": "Aucune place disponible",
     "SeatLimitReachedDescription": "L'espace de travail a atteint la limite de places du forfait. Libérez une place ou mettez à niveau le forfait pour attribuer ce rôle.",
+    "DocumentGuest": "Invité aux documents",
+    "SystemAdministrator": "Administrateur système",
     "WebhookAccess": "Webhooks sortants",
     "WebhookIncomingAccess": "Webhooks entrants",
     "WebhookIncomingPlaceholderProject": "Choisissez un espace de projet ci-dessus pour utiliser son identifiant réel ici.",

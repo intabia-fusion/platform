@@ -35,6 +35,7 @@ import { type AccountDB, type SocialId } from '../types'
 import {
   createInvite,
   createInviteLink,
+  getInviteInfo,
   createWorkspace,
   sendInvite,
   getLoginInfoByToken,
@@ -45,8 +46,9 @@ import {
   confirm,
   signUp,
   signUpJoin,
+  confirmEmailOtp,
   validateOtp,
-  signUpOtp,
+  requestEmailOtp,
   restorePassword,
   requestPasswordReset,
   changePassword,
@@ -59,7 +61,10 @@ import {
   getSubscriptionById,
   leaveWorkspace,
   getWorkspaceMembers,
+  getWorkspaceMemberDetails,
   checkJoin,
+  joinByInvite,
+  completeOnboardingInvite,
   mergeSpecifiedPersons,
   canMergeSpecifiedPersons,
   getPasswordPolicy
@@ -80,6 +85,7 @@ jest.mock('@hcengineering/platform', () => {
 
 // Mock server-token
 jest.mock('@hcengineering/server-token', () => ({
+  TokenError: jest.requireActual('@hcengineering/server-token').TokenError,
   isHumanAdmin: jest.requireActual('@hcengineering/server-token').isHumanAdmin,
   hasAdminSession: jest.requireActual('@hcengineering/server-token').hasAdminSession,
   ADMIN_SESSION_TTL_SEC: jest.requireActual('@hcengineering/server-token').ADMIN_SESSION_TTL_SEC,
@@ -122,7 +128,9 @@ describe('account operations', () => {
       update: jest.fn()
     },
     getWorkspaceRole: jest.fn(),
+    completeOnboardingInvite: jest.fn(),
     getWorkspaceMembers: jest.fn(),
+    getWorkspaceMemberDetails: jest.fn(),
     unassignWorkspace: jest.fn(),
     updateWorkspaceRole: jest.fn(),
     subscription: {
@@ -157,7 +165,122 @@ describe('account operations', () => {
     })
   })
 
+  describe('getWorkspaceMemberDetails', () => {
+    test('limits personal details to workspace maintainers and owners', async () => {
+      ;(mockDb.getWorkspaceRole as jest.Mock).mockResolvedValue(AccountRole.User)
+      await expect(getWorkspaceMemberDetails(mockCtx, mockDb, null, mockToken)).rejects.toThrow()
+      expect(mockDb.getWorkspaceMemberDetails).not.toHaveBeenCalled()
+      ;(mockDb.getWorkspaceRole as jest.Mock).mockResolvedValue(AccountRole.Maintainer)
+      ;(mockDb.getWorkspaceMemberDetails as jest.Mock).mockResolvedValue([])
+      await expect(getWorkspaceMemberDetails(mockCtx, mockDb, null, mockToken)).resolves.toEqual([])
+    })
+  })
+
+  test.each(['invite-id', 'legacy-id'])('retrying completed invitation %s does not use it again', async (inviteId) => {
+    ;(mockDb.account.findOne as jest.Mock).mockResolvedValue({
+      ...mockAccount,
+      onboarding: {
+        intent: { kind: 'invite', inviteId: 'invite-id' },
+        stage: 'complete',
+        workspace: mockWorkspace.uuid
+      }
+    })
+    ;(mockDb.invite.findOne as jest.Mock).mockImplementation(async (query) =>
+      query.id === 'legacy-id' ? null : { id: 'invite-id', remainingUses: 0 }
+    )
+    ;(mockDb.completeOnboardingInvite as jest.Mock).mockResolvedValue({
+      result: 'ok',
+      workspace: mockWorkspace.uuid,
+      changed: false
+    })
+    ;(mockDb.workspace.findOne as jest.Mock).mockResolvedValue(mockWorkspace)
+    const select = jest.spyOn(utils, 'selectWorkspace').mockResolvedValue({ workspace: mockWorkspace.uuid } as any)
+    try {
+      await expect(joinByInvite(mockCtx, mockDb, null, mockToken, { inviteId })).resolves.toMatchObject({
+        workspace: mockWorkspace.uuid
+      })
+      expect(mockDb.completeOnboardingInvite).toHaveBeenCalledWith(
+        mockAccount.uuid,
+        undefined,
+        undefined,
+        undefined,
+        'invite-id'
+      )
+      expect(mockDb.invite.update).not.toHaveBeenCalled()
+    } finally {
+      select.mockRestore()
+      ;(mockDb.invite.findOne as jest.Mock).mockReset()
+    }
+  })
+
+  test.each([
+    { firstName: '' },
+    { lastName: '  ' },
+    { firstName: 5 },
+    { lastName: 'x'.repeat(MAX_PERSON_NAME_LENGTH + 1) }
+  ])('rejects invalid names before joining: %p', async (name) => {
+    await expect(
+      joinByInvite(mockCtx, mockDb, null, mockToken, { inviteId: 'invite-id', name } as any)
+    ).rejects.toMatchObject({
+      status: { code: platform.status.BadRequest }
+    })
+    await expect(completeOnboardingInvite(mockCtx, mockDb, null, mockToken, { name } as any)).rejects.toMatchObject({
+      status: { code: platform.status.BadRequest }
+    })
+    expect(mockDb.completeOnboardingInvite).not.toHaveBeenCalled()
+  })
+
+  test('passes missing names to the idempotent onboarding completion', async () => {
+    ;(mockDb.account.findOne as jest.Mock).mockResolvedValue(mockAccount)
+    ;(mockDb.completeOnboardingInvite as jest.Mock).mockResolvedValue({
+      result: 'ok',
+      workspace: mockWorkspace.uuid,
+      changed: false
+    })
+    ;(mockDb.workspace.findOne as jest.Mock).mockResolvedValue(mockWorkspace)
+    const select = jest.spyOn(utils, 'selectWorkspace').mockResolvedValue({ workspace: mockWorkspace.uuid } as any)
+    const name = { firstName: 'First', lastName: 'Last' }
+    try {
+      await completeOnboardingInvite(mockCtx, mockDb, null, mockToken, { name, inviteId: 'invite-id' })
+      expect(mockDb.completeOnboardingInvite).toHaveBeenCalledWith(
+        mockAccount.uuid,
+        undefined,
+        undefined,
+        name,
+        'invite-id'
+      )
+    } finally {
+      select.mockRestore()
+    }
+  })
+
   describe('createInvite', () => {
+    test('rejects an invitation when the workspace has no free seats', async () => {
+      ;(mockDb.account.findOne as jest.Mock).mockResolvedValue(mockAccount)
+      ;(mockDb.workspace.findOne as jest.Mock).mockResolvedValue(mockWorkspace)
+      ;(mockDb.getWorkspaceRole as jest.Mock).mockResolvedValue(AccountRole.Maintainer)
+      ;(mockDb.getWorkspaceMembers as jest.Mock).mockResolvedValue([
+        { person: mockAccount.uuid, role: AccountRole.Owner }
+      ])
+      ;(mockDb.socialId.findOne as jest.Mock).mockResolvedValue(null)
+      ;(mockDb.subscription.find as jest.Mock).mockResolvedValue([
+        {
+          type: 'tier',
+          status: 'active',
+          limits: { usersLimit: 1 }
+        }
+      ])
+      ;(mockDb.invite.insertOne as jest.Mock).mockResolvedValue('invite-id')
+
+      await expect(
+        createInvite(mockCtx, mockDb, mockBranding, mockToken, {
+          exp: 60000,
+          limit: 1,
+          role: AccountRole.User
+        })
+      ).rejects.toMatchObject({ status: { code: platform.status.PlanLimitExceeded } })
+    })
+
     test('should create invite for authorized maintainer', async () => {
       const inviteId = 'new-invite-id'
       const beforeTest = Date.now()
@@ -180,6 +303,7 @@ describe('account operations', () => {
 
       expect(mockDb.invite.insertOne).toHaveBeenCalledWith({
         workspaceUuid: mockWorkspace.uuid,
+        inviterUuid: mockAccount.uuid,
         expiresOn: expect.any(Number),
         email: 'test@example.com',
         remainingUses: 1,
@@ -206,6 +330,63 @@ describe('account operations', () => {
           role: AccountRole.Owner
         })
       ).rejects.toThrow(new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {})))
+    })
+  })
+
+  describe('getInviteInfo', () => {
+    test('returns the workspace for an older invite with no stored creator', async () => {
+      ;(mockDb.invite.findOne as jest.Mock).mockResolvedValue({
+        id: 'invite-id',
+        workspaceUuid: mockWorkspace.uuid,
+        expiresOn: Date.now() + 60000,
+        remainingUses: 1,
+        role: AccountRole.User
+      })
+      ;(mockDb.workspace.findOne as jest.Mock).mockResolvedValue(mockWorkspace)
+      await expect(getInviteInfo(mockCtx, mockDb, null, '', { inviteId: 'invite-id' })).resolves.toEqual({
+        workspace: mockWorkspace.uuid,
+        name: mockWorkspace.name
+      })
+      expect(mockDb.person.findOne).not.toHaveBeenCalled()
+    })
+
+    test('returns the stored name of the creator without exposing their email', async () => {
+      ;(mockDb.invite.findOne as jest.Mock).mockResolvedValue({
+        id: 'invite-id',
+        workspaceUuid: mockWorkspace.uuid,
+        inviterUuid: mockAccount.uuid,
+        expiresOn: Date.now() + 60000,
+        remainingUses: 1,
+        role: AccountRole.User
+      })
+      ;(mockDb.workspace.findOne as jest.Mock).mockResolvedValue(mockWorkspace)
+      ;(mockDb.person.findOne as jest.Mock).mockResolvedValue({ firstName: 'Anna', lastName: 'Smith' })
+      ;(mockDb.socialId.find as jest.Mock).mockResolvedValue([])
+      await expect(getInviteInfo(mockCtx, mockDb, null, '', { inviteId: 'invite-id' })).resolves.toEqual({
+        workspace: mockWorkspace.uuid,
+        name: mockWorkspace.name,
+        inviterName: 'Anna Smith'
+      })
+    })
+
+    test('does not expose an email when the creator has no name', async () => {
+      ;(mockDb.invite.findOne as jest.Mock).mockResolvedValue({
+        id: 'invite-id',
+        workspaceUuid: mockWorkspace.uuid,
+        inviterUuid: mockAccount.uuid,
+        expiresOn: Date.now() + 60000,
+        remainingUses: 1,
+        role: AccountRole.User
+      })
+      ;(mockDb.workspace.findOne as jest.Mock).mockResolvedValue(mockWorkspace)
+      ;(mockDb.person.findOne as jest.Mock).mockResolvedValue(null)
+      ;(mockDb.socialId.find as jest.Mock).mockResolvedValue([
+        { type: SocialIdType.EMAIL, value: 'private@example.com', verifiedOn: 1 }
+      ])
+      await expect(getInviteInfo(mockCtx, mockDb, null, '', { inviteId: 'invite-id' })).resolves.toEqual({
+        workspace: mockWorkspace.uuid,
+        name: mockWorkspace.name
+      })
     })
   })
 
@@ -1376,7 +1557,17 @@ describe('account operations', () => {
     const mockBranding = null
     const mockToken = 'test-token'
 
+    const otpState = {
+      code: null as string | null,
+      createdOn: 0,
+      expiresOn: 0,
+      attempts: 0,
+      misses: 0,
+      missedOn: 0
+    }
     const mockDb = {
+      resetEmailOtpMisses: jest.fn(),
+      withEmailOtp: async (_email: string, fn: any) => await fn(otpState),
       account: {
         findOne: jest.fn(),
         update: jest.fn()
@@ -1397,6 +1588,8 @@ describe('account operations', () => {
 
     beforeEach(() => {
       jest.clearAllMocks()
+      Object.assign(otpState, { code: null, createdOn: 0, expiresOn: 0, attempts: 0, misses: 0, missedOn: 0 })
+      jest.spyOn(utils, 'sendOtpEmail').mockResolvedValue()
     })
 
     describe('login', () => {
@@ -1448,7 +1641,7 @@ describe('account operations', () => {
           { personUuid: mockAccountId, loginOtpMisses: { $gt: 0 } },
           { loginOtpMisses: 0, loginOtpMissedOn: 0 }
         )
-        expect(mockDb.otp.deleteMany).toHaveBeenCalledWith({ socialId: 'social-id', purpose: 'login-link' })
+        expect(mockDb.otp.deleteMany).toHaveBeenCalledWith({ socialId: { $in: ['social-id'] }, purpose: 'login-link' })
       })
 
       test('should not return token if no social ids are confirmed', async () => {
@@ -1562,8 +1755,8 @@ describe('account operations', () => {
           email: mockEmail
         })
 
-        expect(result).toEqual(mockOtpInfo)
-        expect(utils.sendOtp).toHaveBeenCalledWith(mockCtx, mockDb, mockBranding, mockSocialId)
+        expect(result).toEqual({ sent: true, retryOn: expect.any(Number) })
+        expect(utils.sendOtpEmail).toHaveBeenCalledWith(mockCtx, mockBranding, expect.any(String), mockEmail)
       })
 
       test('should answer an unknown email like a known one and send the sign up letter', async () => {
@@ -1575,8 +1768,8 @@ describe('account operations', () => {
 
         const result = await loginOtp(mockCtx, mockDb, mockBranding, mockToken, { email: mockEmail })
 
-        expect(result).toEqual(info)
-        expect(utils.sendNoAccountEmail).toHaveBeenCalledWith(mockCtx, mockBranding, mockEmail, 'login')
+        expect(result).toEqual({ sent: true, retryOn: expect.any(Number) })
+        expect(utils.sendOtpEmail).toHaveBeenCalledWith(mockCtx, mockBranding, expect.any(String), mockEmail)
         expect(utils.sendOtp).not.toHaveBeenCalled()
       })
 
@@ -1597,8 +1790,8 @@ describe('account operations', () => {
 
         const result = await loginOtp(mockCtx, mockDb, mockBranding, mockToken, { email: mockEmail })
 
-        expect(result).toEqual(mockOtpInfo)
-        expect(utils.sendOtp).toHaveBeenCalledWith(mockCtx, mockDb, mockBranding, mockSocialId)
+        expect(result).toEqual({ sent: true, retryOn: expect.any(Number) })
+        expect(utils.sendOtpEmail).toHaveBeenCalledWith(mockCtx, mockBranding, expect.any(String), mockEmail)
       })
     })
 
@@ -1805,7 +1998,37 @@ describe('account operations', () => {
     const mockAccountId = 'account-uuid' as AccountUuid
     const mockPersonId = 'person-uuid' as PersonUuid
 
+    const otpState = {
+      code: null as string | null,
+      createdOn: 0,
+      expiresOn: 0,
+      attempts: 0,
+      misses: 0,
+      missedOn: 0
+    }
+    const verifyIdentity = jest.fn(async (uuid: AccountUuid) => {
+      const socialId = await utils.getEmailSocialId(mockDb as unknown as AccountDB, mockEmail)
+      const account = await mockDb.account.findOne({ uuid })
+      if (socialId === null || account === null || (socialId.verifiedOn != null && socialId.personUuid !== uuid)) {
+        return null
+      }
+      return { socialId: { ...socialId, personUuid: uuid }, account }
+    })
     const mockDb = {
+      resetEmailOtpMisses: jest.fn(),
+      withEmailOtp: async (_email: string, fn: any) =>
+        await fn(
+          otpState,
+          async (allowSignUp: boolean) => {
+            const socialId = await utils.getEmailSocialId(mockDb as unknown as AccountDB, mockEmail)
+            if (socialId === null) return null
+            const account = await mockDb.account.findOne({ uuid: socialId.personUuid as unknown as AccountUuid })
+            if (account === null && !allowSignUp) return null
+            return { socialId, account: account ?? { uuid: socialId.personUuid }, created: account === null }
+          },
+          verifyIdentity
+        ),
+      accountEvent: { insertOne: jest.fn() },
       account: {
         findOne: jest.fn(),
         update: jest.fn()
@@ -1831,6 +2054,15 @@ describe('account operations', () => {
 
     beforeEach(() => {
       jest.clearAllMocks()
+      Object.assign(otpState, {
+        code: null,
+        createdOn: 0,
+        expiresOn: 0,
+        attempts: 0,
+        misses: 0,
+        missedOn: 0
+      })
+      jest.spyOn(utils, 'sendOtpEmail').mockResolvedValue()
     })
 
     describe('createWorkspace', () => {
@@ -2045,7 +2277,8 @@ describe('account operations', () => {
           email: mockEmail,
           password: mockPassword,
           firstName: mockFirstName,
-          lastName: mockLastName
+          lastName: mockLastName,
+          consent: { personalData: true, rules: true }
         })
 
         expect(result).toEqual({
@@ -2062,7 +2295,10 @@ describe('account operations', () => {
           mockEmail,
           mockPassword,
           mockFirstName,
-          mockLastName
+          mockLastName,
+          false,
+          false,
+          true
         )
         expect(utils.confirmEmail).toHaveBeenCalledWith(mockCtx, mockDb, mockAccountId, mockEmail)
         expect(utils.confirmHulyIds).toHaveBeenCalledWith(mockCtx, mockDb, mockAccountId)
@@ -2161,9 +2397,16 @@ describe('account operations', () => {
         })
         ;(mockDb.account.findOne as jest.Mock).mockResolvedValue(null)
 
-        const result = await confirm(mockCtx, mockDb, mockBranding, mockToken)
+        await expect(confirm(mockCtx, mockDb, mockBranding, mockToken)).rejects.toMatchObject({
+          status: { params: { consentRequired: true } }
+        })
+        expect(utils.confirmEmail).not.toHaveBeenCalled()
+        expect(mockDb.shortLink.deleteMany).not.toHaveBeenCalled()
+        const result = await confirm(mockCtx, mockDb, mockBranding, mockToken, {
+          consent: { personalData: true, rules: true }
+        })
 
-        expect(utils.createAccount).toHaveBeenCalledWith(mockDb, mockAccountId, true)
+        expect(utils.createAccount).toHaveBeenCalledWith(mockDb, mockAccountId, true, false, expect.any(Number), true)
         expect(result.token).toEqual(expect.any(String))
         // Dropped so a second visit reports "already registered" instead of retrying.
         expect(mockDb.shortLink.deleteMany).toHaveBeenCalledWith({ payload: mockToken })
@@ -2198,7 +2441,16 @@ describe('account operations', () => {
       })
     })
 
-    describe('signUpOtp', () => {
+    describe('requestEmailOtp', () => {
+      test('rejects incomplete consent before issuing an OTP', async () => {
+        for (const consent of [null, {}, { personalData: true }, { personalData: true, rules: false }]) {
+          await expect(
+            requestEmailOtp(mockCtx, mockDb, mockBranding, mockToken, { email: mockEmail, consent } as any)
+          ).rejects.toMatchObject({ status: { code: platform.status.BadRequest } })
+        }
+        expect(otpState.code).toBeNull()
+      })
+
       test('should initiate signup with OTP for new user', async () => {
         const mockSocialId: SocialId = {
           _id: 'social-id' as PersonId,
@@ -2214,17 +2466,13 @@ describe('account operations', () => {
         ;(mockDb.person.insertOne as jest.Mock).mockResolvedValue(mockPersonId)
         ;(mockDb.socialId.insertOne as jest.Mock).mockResolvedValue(mockSocialId._id)
 
-        const result = await signUpOtp(mockCtx, mockDb, mockBranding, mockToken, {
+        const result = await requestEmailOtp(mockCtx, mockDb, mockBranding, mockToken, {
           email: mockEmail,
-          firstName: mockFirstName,
-          lastName: mockLastName
+          consent: { personalData: true, rules: true }
         })
 
         expect(result).toEqual({ retryOn: expect.any(Number), sent: true })
-        expect(mockDb.person.insertOne).toHaveBeenCalledWith({
-          firstName: mockFirstName,
-          lastName: mockLastName
-        })
+        expect(mockDb.person.insertOne).not.toHaveBeenCalled()
       })
 
       test('should initiate signup with OTP for existing unverified email', async () => {
@@ -2241,17 +2489,12 @@ describe('account operations', () => {
         jest.spyOn(utils, 'sendOtp').mockResolvedValue({ retryOn: Date.now() + 60000, sent: true })
         ;(mockDb.account.findOne as jest.Mock).mockResolvedValue(null)
 
-        const result = await signUpOtp(mockCtx, mockDb, mockBranding, mockToken, {
-          email: mockEmail,
-          firstName: mockFirstName,
-          lastName: mockLastName
+        const result = await requestEmailOtp(mockCtx, mockDb, mockBranding, mockToken, {
+          email: mockEmail
         })
 
         expect(result).toEqual({ retryOn: expect.any(Number), sent: true })
-        expect(mockDb.person.update).toHaveBeenCalledWith(
-          { uuid: mockPersonId },
-          { firstName: mockFirstName, lastName: mockLastName }
-        )
+        expect(mockDb.person.update).not.toHaveBeenCalled()
       })
 
       test('should not reveal an existing account and must not touch its person', async () => {
@@ -2267,11 +2510,8 @@ describe('account operations', () => {
         jest.spyOn(utils, 'sendOtp').mockResolvedValue({ retryOn: Date.now() + 60000, sent: true })
         ;(mockDb.account.findOne as jest.Mock).mockResolvedValue({ uuid: mockPersonId })
 
-        const result = await signUpOtp(mockCtx, mockDb, mockBranding, mockToken, {
-          email: mockEmail,
-          firstName: 'Attacker',
-          lastName: 'Rename',
-          phone: '+7-999-000-11-22'
+        const result = await requestEmailOtp(mockCtx, mockDb, mockBranding, mockToken, {
+          email: mockEmail
         })
 
         expect(result).toEqual({ retryOn: expect.any(Number), sent: true })
@@ -2280,79 +2520,25 @@ describe('account operations', () => {
         expect(mockDb.person.insertOne).not.toHaveBeenCalled()
       })
 
-      test('should store a normalized phone hint and never a phone social id', async () => {
-        jest.spyOn(utils, 'getEmailSocialId').mockResolvedValue(null)
-        jest.spyOn(utils, 'sendOtp').mockResolvedValue({ retryOn: Date.now() + 60000, sent: true })
-        ;(mockDb.person.insertOne as jest.Mock).mockResolvedValue(mockPersonId)
-
-        await signUpOtp(mockCtx, mockDb, mockBranding, mockToken, {
-          email: mockEmail,
-          firstName: mockFirstName,
-          lastName: mockLastName,
-          phone: '+7-900-000-00-11'
-        })
-
-        expect(mockDb.person.insertOne).toHaveBeenCalledWith({
-          firstName: mockFirstName,
-          lastName: mockLastName,
-          phoneHint: '+79000000011'
-        })
-        expect(mockDb.socialId.insertOne).toHaveBeenCalledTimes(1)
-        expect(mockDb.socialId.insertOne).toHaveBeenCalledWith(expect.objectContaining({ type: SocialIdType.EMAIL }))
-      })
-
-      test('should not block a repeated sign up with the same phone', async () => {
-        const mockSocialId: SocialId = {
-          _id: 'social-id' as PersonId,
-          personUuid: mockPersonId,
-          type: SocialIdType.EMAIL,
-          value: mockEmail,
-          key: `email:${mockEmail}`
-        }
-
-        jest.spyOn(utils, 'getEmailSocialId').mockResolvedValue(mockSocialId)
-        jest.spyOn(utils, 'sendOtp').mockResolvedValue({ retryOn: Date.now() + 60000, sent: true })
-        ;(mockDb.account.findOne as jest.Mock).mockResolvedValue(null)
-
-        const result = await signUpOtp(mockCtx, mockDb, mockBranding, mockToken, {
-          email: mockEmail,
-          firstName: mockFirstName,
-          lastName: mockLastName,
-          phone: '+79000000011'
-        })
-
-        expect(result).toEqual({ retryOn: expect.any(Number), sent: true })
-        expect(mockDb.person.update).toHaveBeenCalledWith(
-          { uuid: mockPersonId },
-          { firstName: mockFirstName, lastName: mockLastName, phoneHint: '+79000000011' }
-        )
-      })
-
       test('should fail with missing required fields', async () => {
-        const testCases = [
-          { email: '', firstName: mockFirstName },
-          { email: mockEmail, firstName: '' }
-        ]
+        const testCases = [{ email: '', firstName: mockFirstName }]
 
         for (const testCase of testCases) {
-          await expect(signUpOtp(mockCtx, mockDb, mockBranding, mockToken, testCase as any)).rejects.toThrow(
+          await expect(requestEmailOtp(mockCtx, mockDb, mockBranding, mockToken, testCase as any)).rejects.toThrow(
             new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
           )
         }
       })
 
-      test('should refuse a name or email longer than the limit', async () => {
+      test('should refuse an email longer than the limit', async () => {
         jest.spyOn(utils, 'cleanEmail').mockImplementation((value: string) => value.toLowerCase().trim())
 
-        const tooLongName = 'a'.repeat(MAX_PERSON_NAME_LENGTH + 1)
-        const testCases = [
-          { email: mockEmail, firstName: tooLongName },
-          { email: mockEmail, firstName: mockFirstName, lastName: tooLongName },
-          { email: `${'a'.repeat(MAX_EMAIL_LENGTH)}@mail.ru`, firstName: mockFirstName }
-        ]
+        const testCases = [{ email: `${'a'.repeat(MAX_EMAIL_LENGTH)}@mail.ru` }]
 
         for (const testCase of testCases) {
-          await expect(signUpOtp(mockCtx, mockDb, mockBranding, mockToken, testCase as any)).rejects.toMatchObject({
+          await expect(
+            requestEmailOtp(mockCtx, mockDb, mockBranding, mockToken, testCase as any)
+          ).rejects.toMatchObject({
             status: { code: platform.status.BadRequest }
           })
         }
@@ -2378,6 +2564,8 @@ describe('account operations', () => {
 
     describe('validateOtp', () => {
       beforeEach(() => {
+        otpState.code = '123456'
+        otpState.expiresOn = Date.now() + 60000
         jest.spyOn(utils, 'setPassword').mockResolvedValue()
       })
 
@@ -2403,25 +2591,21 @@ describe('account operations', () => {
         ;(mockDb.person.findOne as jest.Mock).mockResolvedValue(mockPerson)
         ;(mockDb.account.findOne as jest.Mock).mockResolvedValue(null)
 
-        const result = await validateOtp(mockCtx, mockDb, mockBranding, mockToken, {
+        const result = await confirmEmailOtp(mockCtx, mockDb, mockBranding, mockToken, {
           email: mockEmail,
           code: '123456',
-          password: mockPassword
+          consent: { personalData: true, rules: true }
         })
 
         expect(result).toEqual({
           account: mockPersonId,
           name: 'John Doe',
           socialId: mockSocialId._id,
-          token: expect.any(String)
+          token: expect.any(String),
+          created: true
         })
 
-        expect(mockDb.otp.deleteMany).toHaveBeenCalledWith({ socialId: mockSocialId._id, purpose: 'login' })
-        expect(mockDb.socialId.update).toHaveBeenCalledWith(
-          { _id: mockSocialId._id },
-          { verifiedOn: expect.any(Number) }
-        )
-        expect(utils.setPassword).toHaveBeenCalledWith(mockCtx, mockDb, mockBranding, mockPersonId, mockPassword)
+        expect(otpState.code).toBeNull()
       })
 
       test('should validate OTP for login', async () => {
@@ -2452,7 +2636,8 @@ describe('account operations', () => {
 
         const result = await validateOtp(mockCtx, mockDb, mockBranding, mockToken, {
           email: mockEmail,
-          code: '123456'
+          code: '123456',
+          password: 'legacy-password'
         })
 
         expect(result).toEqual({
@@ -2462,7 +2647,7 @@ describe('account operations', () => {
           token: expect.any(String)
         })
 
-        expect(mockDb.otp.deleteMany).toHaveBeenCalledWith({ socialId: mockSocialId._id, purpose: 'login' })
+        expect(otpState.code).toBeNull()
         expect(utils.setPassword).not.toHaveBeenCalled()
       })
 
@@ -2503,11 +2688,8 @@ describe('account operations', () => {
           token: expect.any(String)
         })
 
-        expect(mockDb.otp.deleteMany).toHaveBeenCalledWith({ socialId: mockSocialId._id, purpose: 'login' })
-        expect(mockDb.socialId.update).toHaveBeenCalledWith(
-          { _id: mockSocialId._id },
-          { verifiedOn: expect.any(Number) }
-        )
+        expect(verifyIdentity).toHaveBeenCalledWith(callerAccountId)
+        expect(otpState.code).toBeNull()
         expect(utils.setPassword).not.toHaveBeenCalled()
       })
 
@@ -2558,12 +2740,8 @@ describe('account operations', () => {
           token: expect.any(String)
         })
 
-        expect(mockDb.otp.deleteMany).toHaveBeenCalledWith({ socialId: mockSocialId._id, purpose: 'login' })
-        expect(utils.doMergePersons).toHaveBeenCalledWith(mockDb, callerAccountId, targetPersonId)
-        expect(mockDb.socialId.update).toHaveBeenCalledWith(
-          { _id: mockSocialId._id },
-          { verifiedOn: expect.any(Number) }
-        )
+        expect(verifyIdentity).toHaveBeenCalledWith(callerAccountId)
+        expect(otpState.code).toBeNull()
       })
 
       test('should move unverified social id to caller account', async () => {
@@ -2605,14 +2783,12 @@ describe('account operations', () => {
           token: expect.any(String)
         })
 
-        expect(mockDb.otp.deleteMany).toHaveBeenCalledWith({ socialId: mockSocialId._id, purpose: 'login' })
-        expect(mockDb.socialId.update).toHaveBeenCalledWith(
-          { _id: mockSocialId._id },
-          { personUuid: callerAccountId, verifiedOn: expect.any(Number) }
-        )
+        expect(verifyIdentity).toHaveBeenCalledWith(callerAccountId)
+        expect(otpState.code).toBeNull()
       })
 
       test('should fail if OTP is invalid', async () => {
+        otpState.code = '654321'
         const mockSocialId: SocialId = {
           _id: 'social-id' as PersonId,
           personUuid: mockPersonId,
@@ -2668,7 +2844,7 @@ describe('account operations', () => {
             code: '123456',
             action: 'verify'
           })
-        ).rejects.toThrow(new PlatformError(new Status(Severity.ERROR, platform.status.AccountAlreadyExists, {})))
+        ).rejects.toThrow(new PlatformError(new Status(Severity.ERROR, platform.status.InvalidOtp, {})))
       })
     })
   })
@@ -2687,6 +2863,7 @@ describe('account operations', () => {
     const mockNewPassword = 'new-password'
 
     const mockDb = {
+      resetEmailOtpMisses: jest.fn(),
       account: {
         findOne: jest.fn(),
         update: jest.fn()
@@ -2827,7 +3004,7 @@ describe('account operations', () => {
         ).resolves.toBeUndefined()
 
         expect(utils.sendNoAccountEmail).toHaveBeenCalledTimes(2)
-        expect(utils.sendNoAccountEmail).toHaveBeenCalledWith(mockCtx, mockBranding, mockEmail, 'recovery')
+        expect(utils.sendNoAccountEmail).toHaveBeenCalledWith(mockCtx, mockBranding, mockEmail)
         expect(global.fetch).not.toHaveBeenCalled()
       })
     })

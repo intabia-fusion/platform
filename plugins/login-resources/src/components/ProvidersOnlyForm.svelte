@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -15,11 +16,12 @@
 <script lang="ts">
   import { deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
 
-  import Tabs from './Tabs.svelte'
+  import Label from './internal/Label.svelte'
   import Providers from './Providers.svelte'
+  import login from '../plugin'
 </script>
 
 <div style:padding={$deviceInfo.docWidth <= 480 ? '.25rem 1.25rem' : '4rem 5rem'}>
-  <Tabs loginState="login" signUpDisabled={true} />
+  <Label label={login.string.LogIn} />
   <Providers />
 </div>

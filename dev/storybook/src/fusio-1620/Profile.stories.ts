@@ -22,12 +22,20 @@ const meta = {
   component: ProfileCabinet,
   parameters: {
     layout: 'fullscreen',
-    docs: { description: { component: 'Локальная демонстрация кабинета. Изменения существуют только в памяти компонента. API, реальные пространства и сессии не используются. Имя пользователя доступно только для чтения, требования к его редактированию не согласованы.' } }
+    docs: {
+      description: {
+        component:
+          'Локальная демонстрация кабинета. Изменения существуют только в памяти компонента. API, реальные пространства и сессии не используются. Имя пользователя доступно только для чтения, требования к его редактированию не согласованы.'
+      }
+    }
   },
   args: { initialSection: 'profile', initialState: 'default' },
   argTypes: {
     initialSection: { control: 'select', options: ['profile', 'workspaces'] },
-    initialState: { control: 'select', options: ['default', 'editing', 'loading', 'error', 'empty', 'save-error', 'invite-error'] }
+    initialState: {
+      control: 'select',
+      options: ['default', 'editing', 'loading', 'error', 'empty', 'save-error', 'invite-error']
+    }
   }
 } satisfies Meta<ProfileCabinet>
 
@@ -46,12 +54,20 @@ export const Editing: Story = {
     const checkbox = canvasElement.querySelector<HTMLInputElement>('input[type="checkbox"]')
     checkbox?.click()
     await new Promise((resolve) => setTimeout(resolve, 0))
-    const cancel = Array.from(canvasElement.querySelectorAll('button')).find((button) => button.textContent?.trim() === 'Отмена')
+    const cancel = Array.from(canvasElement.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === 'Отмена'
+    )
     cancel?.click()
     await new Promise((resolve) => setTimeout(resolve, 0))
-    if (canvasElement.querySelector('.public-card h2')?.textContent !== 'Анна Смирнова') throw new Error('Отмена изменила имя')
-    if (canvasElement.querySelector('.badge')?.textContent !== 'Публичный') throw new Error('Отмена изменила публичность')
-    const edit = Array.from(canvasElement.querySelectorAll('button')).find((button) => button.textContent?.trim() === 'Редактировать')
+    if (canvasElement.querySelector('.public-card h2')?.textContent !== 'Анна Смирнова') {
+      throw new Error('Отмена изменила имя')
+    }
+    if (canvasElement.querySelector('.badge')?.textContent !== 'Публичный') {
+      throw new Error('Отмена изменила публичность')
+    }
+    const edit = Array.from(canvasElement.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === 'Редактировать'
+    )
     edit?.click()
     await new Promise((resolve) => setTimeout(resolve, 0))
     if (canvasElement.querySelector('#profile-first') == null) throw new Error('Не восстановлена форма редактирования')
@@ -60,21 +76,36 @@ export const Editing: Story = {
 export const SaveError: Story = {
   name: 'Ошибка сохранения',
   args: { initialState: 'save-error' },
-  parameters: { docs: { description: { story: 'Первое сохранение показывает ошибку, повторное сохраняет локально. Форма сохраняет введённые значения.' } } }
+  parameters: {
+    docs: {
+      description: {
+        story: 'Первое сохранение показывает ошибку, повторное сохраняет локально. Форма сохраняет введённые значения.'
+      }
+    }
+  }
 }
 export const Workspaces: Story = { name: 'Пространства', args: { initialSection: 'workspaces' } }
 export const Empty: Story = {
   name: 'Нет пространств',
   args: { initialSection: 'workspaces', initialState: 'empty' },
   play: ({ canvasElement }) => {
-    const invite = Array.from(canvasElement.querySelectorAll('button')).find((button) => button.textContent?.trim() === 'Создать приглашение')
+    const invite = Array.from(canvasElement.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === 'Создать приглашение'
+    )
     if (invite !== undefined) throw new Error('Без пространства нельзя создавать приглашение')
   }
 }
 export const InviteError: Story = {
   name: 'Ошибка приглашения',
   args: { initialSection: 'workspaces', initialState: 'invite-error' },
-  parameters: { docs: { description: { story: 'Первое принятие приглашения завершается ошибкой. Повторная попытка добавляет Research только в локальный список.' } } }
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Первое принятие приглашения завершается ошибкой. Повторная попытка добавляет Research только в локальный список.'
+      }
+    }
+  }
 }
 export const Loading: Story = { name: 'Загрузка', args: { initialState: 'loading' } }
 export const LoadError: Story = { name: 'Ошибка загрузки', args: { initialState: 'error' } }

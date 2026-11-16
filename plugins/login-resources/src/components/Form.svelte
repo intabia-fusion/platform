@@ -26,13 +26,12 @@
   import { onMount } from 'svelte'
   import { Analytics } from '@hcengineering/analytics'
   import type { BottomAction } from '..'
-  import { loginTheme } from '..'
   import { makeSequential } from '../mutex'
   import type { Field } from '../types'
   import login from '../plugin'
   import BottomActionComponent from './BottomAction.svelte'
+  import ConsentCheckboxes from './ConsentCheckboxes.svelte'
   import Providers from './Providers.svelte'
-  import Tabs from './Tabs.svelte'
 
   interface Action {
     i18n: IntlString
@@ -49,8 +48,13 @@
   export let object: any
   export let ignoreInitialValidation: boolean = false
   export let withProviders: boolean = false
+  export let consentRequired: boolean = false
+  export let agreedPersonalData: boolean = false
+  export let agreedRules: boolean = false
   export let subtitle: string | undefined = undefined
-  export let signUpDisabled = false
+  export let hint: IntlString | undefined = undefined
+  export let compact = false
+  export let consentCompact: boolean | undefined = undefined
   export let isLoading: boolean = false
   export let proceedDisabled: boolean = false
   // Optional analytics event for every submit attempt; disabled-button clicks are caught on the wrapper.
@@ -119,9 +123,11 @@
 
   let inAction = false
   let submitAttempted = false
+  $: consentDisabled = consentRequired && (!agreedPersonalData || !agreedRules)
 
   // Mirrors the button's disabled condition so analytics and UI cannot drift apart.
-  $: submitDisabled = proceedDisabled || (status.severity !== Severity.OK && status.severity !== Severity.ERROR)
+  $: submitDisabled =
+    proceedDisabled || consentDisabled || (status.severity !== Severity.OK && status.severity !== Severity.ERROR)
 
   function reportAttempt (via: 'click' | 'enter', reason?: 'consents' | 'invalid'): void {
     if (submitEvent === undefined) return
@@ -134,14 +140,15 @@
   function reportBlockedPress (via: 'click' | 'enter'): void {
     // A press while the request is in flight is impatience, not a dead button.
     if (inAction) return
-    const reason = proceedDisabled ? 'consents' : via === 'click' && submitDisabled ? 'invalid' : undefined
+    const reason =
+      proceedDisabled || consentDisabled ? 'consents' : via === 'click' && submitDisabled ? 'invalid' : undefined
     if (reason !== undefined) reportAttempt(via, reason)
   }
 
   function performAction (action: Action, via: 'click' | 'enter'): void {
     if (inAction) return
     // Enter submits the form even while the button is disabled.
-    if (proceedDisabled) {
+    if (proceedDisabled || consentDisabled) {
       submitAttempted = true
       return
     }
@@ -160,10 +167,14 @@
 
   function submit (via: 'click' | 'enter'): void {
     if (inAction) return
+    if (proceedDisabled || consentDisabled) {
+      submitAttempted = true
+      return
+    }
     void validate($themeStore.language).then((res) => {
       if (res) {
         performAction(action, via)
-      } else if (via === 'enter' && !proceedDisabled) {
+      } else if (via === 'enter' && !proceedDisabled && !consentDisabled) {
         reportAttempt(via, 'invalid')
       }
     })
@@ -209,17 +220,16 @@
 
     return formatted
   }
-
-  let loginState: 'login' | 'signup' | 'none' = 'none'
-  $: loginState = caption === login.string.LogIn ? 'login' : caption === login.string.SignUp ? 'signup' : 'none'
 </script>
 
 <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 <form
   class="container"
+  class:compact
   style:padding={$deviceInfo.docWidth <= 480 ? '1.25rem 1rem' : '2rem 2rem'}
   on:keydown={(evt) => {
     if (evt.key === 'Enter') {
+      if (evt.target instanceof Element && evt.target.closest('a') !== null) return
       evt.preventDefault()
       evt.stopPropagation()
       if (!evt.repeat) {
@@ -229,25 +239,20 @@
     }
   }}
 >
-  {#if loginState !== 'none'}
-    {#if $loginTheme.showLoginTitle}
-      <div class="main-heading">
-        <Label className="login-label main-heading__label" variant="heading" label={login.string.SignToProceed} />
-      </div>
-    {/if}
-    <Tabs {loginState} {signUpDisabled} />
-  {:else}
-    {#if subtitle !== undefined}
-      <div class="fs-title">
-        {subtitle}
-      </div>
-    {/if}
-    <div class="flex-row-center">
-      {#if caption !== undefined}
-        <div class="title"><Label label={caption} /></div>
-      {/if}
-      <slot name="region-selector" />
+  <slot name="context" />
+  {#if subtitle !== undefined}
+    <div class="fs-title">
+      {subtitle}
     </div>
+  {/if}
+  <div class="flex-row-center">
+    {#if caption !== undefined}
+      <div class="title"><Label label={caption} /></div>
+    {/if}
+    <slot name="region-selector" />
+  </div>
+  {#if hint !== undefined}
+    <div class="intro"><Label label={hint} /></div>
   {/if}
   <div class="form">
     {#each fields as field (field.name)}
@@ -274,6 +279,16 @@
       </div>
     {/each}
     <slot name="after-fields" {submitAttempted} />
+    {#if consentRequired}
+      <div class="form-row">
+        <ConsentCheckboxes
+          bind:agreedPersonalData
+          bind:agreedRules
+          highlight={submitAttempted}
+          compact={consentCompact ?? compact}
+        />
+      </div>
+    {/if}
     <div class="status">
       <StatusControl {status} />
     </div>
@@ -344,32 +359,13 @@
       color: var(--login-caption-color, var(--theme-caption-color));
     }
 
-    /* Main heading (title above tabs/signup/login) */
-    .main-heading {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 28px;
-      font-style: Bold;
+    .intro {
+      margin-top: 1.25rem;
+      color: var(--login-label-color, var(--theme-caption-color));
+      font-size: 0.875rem;
+      line-height: 1.3125rem;
     }
 
-    .login-label.main-heading__label {
-      display: flex;
-      justify-content: center;
-      align-items: flex-end;
-      padding: 0 0 16px;
-      max-width: 412px;
-      width: 100%;
-      min-height: 36px;
-      font-family: 'Open Sans', sans-serif;
-      font-style: normal;
-      font-weight: var(--login-main-heading-font-weight, 700);
-      font-size: var(--login-main-heading-font-size, 28px);
-      line-height: var(--login-main-heading-line-height, 38px);
-      letter-spacing: var(--login-main-heading-letter-spacing, -0.005em);
-      text-align: center;
-      color: var(--login-heading-color, #000061) !important;
-    }
     .status {
       padding-top: 1rem;
       grid-column-start: 1;
@@ -422,14 +418,21 @@
     }
   }
 
+  .compact {
+    .form {
+      row-gap: 1.25rem;
+      margin-top: 1.25rem;
+    }
+
+    .status:empty {
+      display: none;
+    }
+  }
+
   @media (max-width: 600px) {
     .container {
       // The page scrolls as a whole; clipping here would hide tall forms.
       overflow: visible;
-
-      .main-heading {
-        font-size: 1.5rem;
-      }
 
       /* Grid stays 2-column: slotted content elsewhere hardcodes a 1/3 span. */
       .form {
