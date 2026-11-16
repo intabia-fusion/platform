@@ -237,7 +237,26 @@ test.describe('task boards', () => {
       status: 'Todo',
       rank: makeRank(issue.rank, undefined)
     })
+    // Second Project is shared with other specs. Keep equal-ranked foreign issues and their
+    // live updates out of the position assertion and the native drag's path.
+    const titleAttribute = client.getHierarchy().getAttribute(tracker.class.Issue, 'title')
     const id = await makeBoard('return-to-column', {
+      filter: JSON.stringify([
+        {
+          key: {
+            _class: tracker.class.Issue,
+            key: 'title',
+            attribute: titleAttribute,
+            label: titleAttribute.label,
+            component: 'view:component:StringFilter',
+            group: 'top'
+          },
+          value: [`${titlePrefix}return-to-column`],
+          index: 1,
+          modes: ['view:filter:FilterValueIn', 'view:filter:FilterValueNin', 'view:filter:FilterContains'],
+          mode: 'view:filter:FilterContains'
+        }
+      ]),
       orderBy: [IssuesOrdering.Manual, SortingOrder.Ascending],
       columns: [
         { id: 'queue', title: 'Queue', category: task.statusCategory.ToDo, statuses: [statusId('Todo')] },
@@ -250,10 +269,8 @@ test.describe('task boards', () => {
     await board.revealCard(issueId)
     await board.revealCard(nextId)
     const queue = board.column('queue')
+    await expect.poll(async () => await board.cardIdsIn(queue)).toEqual([issueId, nextId])
     const originalIds = await board.cardIdsIn(queue)
-    const originalIndex = originalIds.indexOf(issueId)
-    expect(originalIndex).toBeGreaterThanOrEqual(0)
-    expect(originalIndex).toBeLessThan(originalIds.indexOf(nextId))
 
     const origin = await board.card(issueId).boundingBox()
     if (origin === null) throw new Error('the dragged card has no bounding box')
@@ -288,13 +305,14 @@ test.describe('task boards', () => {
     expect(count).toBe(0)
     await page.mouse.up()
     await expect(page.locator('.kanban-container .drop-allowed, .kanban-container .drop-disabled')).toHaveCount(0)
+    await expect.poll(async () => await board.cardIdsIn(queue)).toEqual(originalIds)
 
     await board.holdCardVia(issueId, [{ over: board.column('doing') }, { over: queue }])
     await page.mouse.up()
 
     await expect(page.locator('.kanban-container .drop-allowed, .kanban-container .drop-disabled')).toHaveCount(0)
     await expect(page.locator('[data-id="kanban-drop-targets"]')).toHaveCount(0)
-    await expect.poll(async () => (await board.cardIdsIn(queue)).indexOf(issueId)).toBe(originalIndex)
+    await expect.poll(async () => await board.cardIdsIn(queue)).toEqual(originalIds)
     await expect(board.card(issueId)).toHaveCount(1)
     expect(await client.findOne(tracker.class.Issue, { _id: issueId })).toMatchObject({
       status: issue.status,

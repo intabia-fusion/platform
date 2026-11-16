@@ -62,7 +62,7 @@ for (const { alias, label } of [
       localStorage.setItem('love-visibleNav', 'true')
     })
     await page.goto(`${PlatformURI}/workbench/sanity-ws/${previousAlias}`)
-    const appPanel = page.locator('.antiPanel-application')
+    const appPanel = page.locator('.antiPanel-application:not(.sidebar-container)')
     const app = appPanel.locator(`[id="app-${label}"]`)
     await expect(appPanel.locator(`button.selected[id^="app-${previousAlias}:"]`)).toBeVisible()
     await app.click()
