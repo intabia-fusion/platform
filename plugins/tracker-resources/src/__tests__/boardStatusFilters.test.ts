@@ -24,6 +24,19 @@ const condition = (mode: string, values: string[]): string =>
   ])
 
 describe('project removal status filters', () => {
+  it('clears excluded statuses from columns while preserving shared statuses, empty columns and settings', () => {
+    const columns = [
+      { id: 'a', title: 'Doing', category: 'active', limit: 3, statuses: ['removed', 'shared'] },
+      { id: 'b', title: 'Done', category: 'won', statuses: ['removed'] }
+    ]
+    const board = { filter: '', quickFilters: [], swimlanes: [], colorRules: [], columns }
+    const result = pruneBoardStatusFilters(board as any, allowed) as any
+    expect(result.columns).toEqual([
+      { ...columns[0], statuses: ['shared'] },
+      { ...columns[1], statuses: [] }
+    ])
+    expect(columns[0].statuses).toEqual(['removed', 'shared'])
+  })
   it.each(['view:filter:FilterObjectIn', 'view:filter:FilterObjectNin'])(
     'cleans %s and keeps shared statuses',
     (mode) => {
@@ -51,7 +64,7 @@ describe('project removal status filters', () => {
   })
   it('cleans quick filters, lanes and colors as well as the main condition', () => {
     const rule = { id: 'r', condition: condition('in', ['removed', 'remaining']) }
-    const board = { filter: rule.condition, quickFilters: [rule], swimlanes: [rule], colorRules: [rule] }
+    const board = { filter: rule.condition, quickFilters: [rule], swimlanes: [rule], colorRules: [rule], columns: [] }
     const cleaned = pruneBoardStatusFilters(board as any, allowed)
     for (const value of [
       cleaned.filter,

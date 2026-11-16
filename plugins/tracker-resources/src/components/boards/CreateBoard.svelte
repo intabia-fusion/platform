@@ -43,7 +43,7 @@
   import tracker from '../../plugin'
   import { activeProjects } from '../../utils'
   import ProjectMembersTable from '../projects/settings/ProjectMembersTable.svelte'
-  import { pruneStatusCondition } from '../../boardStatusFilters'
+  import { pruneBoardColumns, pruneStatusCondition } from '../../boardStatusFilters'
   import ColumnsTab from './settings/ColumnsTab.svelte'
 
   type Step = 'general' | 'members' | 'columns'
@@ -104,6 +104,7 @@
         })
       )
       filter = pruneStatusCondition(filter, allowed)
+      columns = pruneBoardColumns(columns, allowed)
     }
     selected = next
   }

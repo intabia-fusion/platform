@@ -14,7 +14,7 @@
 //
 
 import type { Ref, Status } from '@hcengineering/core'
-import type { Board } from '@hcengineering/tracker'
+import type { Board, BoardColumn } from '@hcengineering/tracker'
 import type { Filter } from '@hcengineering/view'
 
 /** Remove unavailable statuses from saved conditions without changing unrelated filters. */
@@ -42,12 +42,17 @@ export function pruneStatusCondition (
   return changed ? (kept.length === 0 ? '' : JSON.stringify(kept)) : condition
 }
 
+export function pruneBoardColumns (columns: BoardColumn[], allowed: ReadonlySet<Ref<Status>>): BoardColumn[] {
+  return columns.map((column) => ({ ...column, statuses: column.statuses.filter((id) => allowed.has(id)) }))
+}
+
 export function pruneBoardStatusFilters (
   board: Board,
   allowed: ReadonlySet<Ref<Status>>,
   onRemoved?: (count: number) => void
-): Pick<Board, 'filter' | 'quickFilters' | 'swimlanes' | 'colorRules'> {
+): Pick<Board, 'filter' | 'quickFilters' | 'swimlanes' | 'colorRules' | 'columns'> {
   return {
+    columns: pruneBoardColumns(board.columns, allowed),
     filter: pruneStatusCondition(board.filter, allowed, onRemoved),
     quickFilters: board.quickFilters.map((rule) => ({
       ...rule,
