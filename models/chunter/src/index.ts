@@ -1,5 +1,6 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -97,6 +98,7 @@ export function createModel (builder: Builder): void {
       icon: chunter.icon.Chunter,
       alias: chunterId,
       hidden: false,
+      hasNavigator: true,
       component: chunter.component.Chat,
       position: 'top',
       order: 200,

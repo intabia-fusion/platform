@@ -379,6 +379,8 @@ import { Button } from '@hcengineering/ui/kit'
 `Asset` `ui.icon.<Имя>` (`ui:icon:Plus`): его можно передать в `icon` любого компонента (`IconButton`, `Icon`,
 `Action`) и записать в модель, как `activity.icon.Emoji`. Svelte-компонентов иконок в ките нет.
 
+- `ArrowBarToRight` / `ArrowBarToLeft` — стрелка к вертикальной черте; кнопка меню использует направление вправо для открытия и влево для скрытия.
+
 - Новая иконка: символ в `assets/icons.svg`, id в `uis.icon` (`src/plugin.ts`) и строка в `registerIcons`
   (`src/icons.ts`). Регистрирует спрайт `uiIcons()` рядом с `uiStrings()` в `dev/prod/src/platform.ts` и
   `desktop/src/ui/platform.ts` (webpack отдаёт адрес файла через `require`); Storybook вызывает

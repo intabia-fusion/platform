@@ -475,6 +475,7 @@ export function createModel (builder: Builder): void {
       alias: notificationId,
       hidden: true,
       locationResolver: notification.resolver.Location,
+      hasNavigator: true,
       component: notification.component.Inbox,
       order: 50
     },

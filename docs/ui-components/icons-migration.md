@@ -5,7 +5,7 @@
 
 ## Итог
 
-- В исходниках 410 иконок (`node dev/storybook/scripts/platform-icons.mjs`): 242 символа спрайта кита, 116 символов
+- В исходниках 412 иконок (`node dev/storybook/scripts/platform-icons.mjs`): 244 символа спрайта кита, 116 символов
   спрайтов плагинов, 39 Svelte-компонентов, 4 svg-строки в `.ts`, 9 data URI в стилях.
 - Кит - спрайт `packages/ui/assets/icons.svg`, ключи `ui.icon.*`. Все символы - сетка 32, линия 2, только заливка
   `currentColor`.
