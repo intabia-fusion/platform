@@ -14,7 +14,7 @@
 //
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// Recording kit: the same `kit.*` API as dev/design/kit, but it builds a tree of nodes instead of Penpot shapes.
+// Recording kit builds a tree of nodes from screen scripts.
 // Screen scripts of dev/design/screens run unchanged. Component nodes carry domain props of the Storybook kit
 // (src/design/kit); primitives (box, text) stay layout nodes. No imports: runs in the browser and in Node (type stripping).
 
@@ -22,13 +22,13 @@ export interface RNode {
   id: string
   // Component name of src/design/kit, or a primitive: box, text, slot
   c: string
-  // Layer name the Penpot kit gives the shape
+  // Layer name
   name: string
   props: Record<string, any>
   children: RNode[]
   // Named slot of the parent component
   slot?: string
-  // Position of a screen frame on the page canvas, as the Penpot kit places it
+  // Position of a screen frame on the page canvas
   pos?: { x: number, y: number }
   // Absolute position inside the parent, set by kit.at
   at?: { x: number, y: number }
@@ -67,7 +67,7 @@ function col (v: any): string | undefined {
 
 const flat = (kids: any[]): RNode[] => kids.flat(Infinity).filter((k) => k !== undefined && k !== null && k !== false)
 
-// Pages persist across the build entries of a file, as pages of a Penpot file do
+// Pages persist across the build entries of a file.
 export function createRecorder (tokensText: string): { pages: RPage[], run: (input: RecordInput) => Promise<unknown> } {
   const TOKENS = JSON.parse(tokensText.slice(tokensText.indexOf('{')))
   const pages: RPage[] = []
@@ -121,7 +121,6 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
   }
 
   // Advance widths of IBM Plex Sans (the product font) per 100px for ASCII 32..126, measured on the stand;
-  // Kept consistent with dev/design/kit/40-tracker.js for screen scripts shared with Penpot.
   const PLEX = [
     24, 28, 42, 71, 60, 93, 69, 24, 34, 34, 45, 60, 27, 40, 27, 38, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 29, 29, 60,
     60, 60, 48, 89, 64, 65, 62, 67, 58, 56, 70, 71, 40, 51, 63, 50, 81, 71, 71, 61, 71, 64, 58, 57, 68, 61, 89, 61, 59,
@@ -773,12 +772,10 @@ export function createRecorder (tokensText: string): { pages: RPage[], run: (inp
   }
   kit.settle = async () => {}
 
-  const penpot = { root: { appendChild: () => {} } }
-
   async function run (input: RecordInput): Promise<unknown> {
     const code = input.scripts.map((s) => s.source).join('\n')
-    const fn = new AsyncFunction('kit', 'T', 'D', 'P', 'PB', 'PT', 'TOKENS', 'DEMO', 'penpot', code)
-    return await fn(kit, T, D, P, PB, PT, TOKENS, input.demo, penpot)
+    const fn = new AsyncFunction('kit', 'T', 'D', 'P', 'PB', 'PT', 'TOKENS', 'DEMO', code)
+    return await fn(kit, T, D, P, PB, PT, TOKENS, input.demo)
   }
   return { pages, run }
 }

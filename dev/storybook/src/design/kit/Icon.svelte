@@ -26,7 +26,7 @@
   // CSS color; the text color when absent
   export let color: string | undefined = undefined
 
-  // 'ui/<File>' is a Svelte icon of packages/ui, as the Penpot kit names them
+  // 'ui/<File>' is a Svelte icon of packages/ui.
   const uiIcons = import.meta.glob<any>('../../../../../packages/ui/src/components/icons/*.svelte', {
     eager: true,
     import: 'default'

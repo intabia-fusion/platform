@@ -16,7 +16,7 @@
 import { getPlatformColorDef, PaletteColorIndexes } from '@hcengineering/ui'
 import type { StatusCategory } from './types'
 
-// Palette color of a status category when the status has none (kit.CATEGORY of the Penpot kit)
+// Palette color of a status category when the status has none.
 export const categoryColor: Record<StatusCategory, string> = {
   backlog: 'Cloud',
   todo: 'Porpoise',

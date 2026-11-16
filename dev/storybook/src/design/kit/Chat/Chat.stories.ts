@@ -22,7 +22,7 @@ import MessageInput from './MessageInput.svelte'
 import NewMarker from './NewMarker.svelte'
 
 const meta: Meta = {
-  title: 'Kit (pen.dev)/Chat',
+  title: 'Kit/Chat',
   tags: ['!autodocs'],
   parameters: { layout: 'padded', controls: { disable: true } }
 }

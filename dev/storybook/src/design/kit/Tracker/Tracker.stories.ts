@@ -26,7 +26,7 @@ import NewIssuePopup from './NewIssuePopup.svelte'
 import FramedSections from '../FramedSections.svelte'
 
 const meta: Meta = {
-  title: 'Kit (pen.dev)/Tracker',
+  title: 'Kit/Tracker',
   tags: ['!autodocs'],
   parameters: { layout: 'padded', controls: { disable: true } }
 }

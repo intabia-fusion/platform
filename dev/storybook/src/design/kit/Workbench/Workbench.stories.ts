@@ -34,7 +34,7 @@ import TopBar from './TopBar.svelte'
 import { railApps, sidebarWidgets } from './apps'
 
 const meta: Meta = {
-  title: 'Kit (pen.dev)/Workbench',
+  title: 'Kit/Workbench',
   tags: ['!autodocs'],
   parameters: { layout: 'padded', controls: { disable: true } }
 }

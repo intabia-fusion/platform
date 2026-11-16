@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  // Screen frames of recorded pages on one canvas at the x, y of the Penpot kit, with zoom and pan.
+  // Screen frames of recorded pages on one canvas, with zoom and pan.
   // Frames render when they come near the viewport: 19 full-size workbenches at once are too heavy.
   import { onMount } from 'svelte'
   import { themeStore } from '@hcengineering/ui'

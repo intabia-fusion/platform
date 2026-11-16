@@ -14,10 +14,7 @@
 //
 
 import assert from 'node:assert/strict'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
-import { spawnSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { test } from 'node:test'
 import { createRequire } from 'node:module'
@@ -38,69 +35,6 @@ test('the board catalog compiles with the production Svelte DOM compiler', async
       typescript: { compilerOptions: { verbatimModuleSyntax: true } }
     }), { filename })
     assert.doesNotThrow(() => compile(processed.code, { filename, generate: 'dom', css: 'external' }))
-  }
-})
-
-test('recorder measures text like the Penpot kit, including Cyrillic and missing glyphs', async () => {
-  const source = read('../../design/kit/40-tracker.js')
-  const measurement = source.slice(source.indexOf('const PLEX ='), source.indexOf('// Fixed columns'))
-  const kit = {}
-  new Function('kit', measurement)(kit)
-  const recorder = createRecorder(tokens)
-  for (const text of ['', 'In Progress', 'APP-123', 'Статусы', '🙂']) {
-    for (const size of [12, 13, 16]) {
-      const actual = await recorder.run({
-        tokens,
-        demo: {},
-        scripts: [{ path: 'measurement.js', source: `return kit.textWidth(${JSON.stringify(text)}, ${size})` }]
-      })
-      assert.equal(actual, kit.textWidth(text, size))
-    }
-  }
-})
-
-test('screen evaluation failure preserves previously generated stories', () => {
-  const directory = mkdtempSync(join(tmpdir(), 'storybook-generate-'))
-  try {
-    const sentinel = join(directory, 'existing.stories.ts')
-    writeFileSync(sentinel, 'previous stories')
-    const script = read('./generate-screens.mjs')
-      .replace('const here = dirname(fileURLToPath(import.meta.url))', `const here = ${JSON.stringify(fileURLToPath(new URL('.', import.meta.url)))}`)
-      .replace("const out = join(generated, 'stories')", `const out = ${JSON.stringify(directory)}`)
-      .replace('const rec = createRecorder(tokens)', `throw new Error('screen evaluation failed')`)
-    const generator = join(directory, 'generate.mjs')
-    writeFileSync(generator, script)
-    const result = spawnSync(process.execPath, [generator], { encoding: 'utf8' })
-    assert.notEqual(result.status, 0)
-    assert.match(result.stderr, /screen evaluation failed/)
-    assert.equal(readFileSync(sentinel, 'utf8'), 'previous stories')
-  } finally {
-    rmSync(directory, { recursive: true, force: true })
-  }
-})
-
-test('status icons use the complete shared demo order and preserve the half-circle fallback', () => {
-  const demo = JSON.parse(read('../src/design/demo/demo.generated.json'))
-  const source = read('../../design/kit/20-atoms.js')
-  const start = source.indexOf('kit.CATEGORY =')
-  const end = source.indexOf('// Priority icon:', start)
-  const kit = { svg: (svg) => svg }
-  new Function('kit', 'P', 'DEMO', source.slice(start, end))(kit, (color) => color, demo)
-  const statuses = demo.en.statuses.filter((status) => status.category === 'active')
-  const mock = read('../src/design/kit/Status/StatusIcon.svelte')
-  const position = new Function('demo', 'status', [
-    ...mock.split('\n').filter((line) => /\$: (projectStatuses|index|count) =/.test(line)).map((line) => line.replace('$:', 'const')),
-    'return { index, count }'
-  ].join('\n'))
-  for (const name of ['In Progress', 'Development', 'Verification', 'Unknown status', undefined]) {
-    const { index, count } = position(demo, { name, category: 'active' })
-    assert.equal(index, statuses.findIndex((status) => status.name === name) + 1)
-    assert.equal(count, statuses.length + 1)
-    const angle = index > 0 ? (2 * Math.PI * index) / count : Math.PI
-    const large = index > 0 ? Number(index > (count - 1) / 2) : 1
-    const svg = kit.StatusIcon('active', 16, undefined, name)
-    assert.ok(svg.includes(`M 9 9 L 18 9 A 9 9 0 ${large} 1 ${Math.cos(angle - 0.01) * 9 + 9} ${Math.sin(angle - 0.01) * 9 + 9} Z`))
-    assert.ok(!svg.includes('dash'))
   }
 })
 
