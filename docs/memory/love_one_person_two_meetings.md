@@ -41,3 +41,9 @@ Love-сервис отработал корректно. Комната A был
 ## Побочный дефект того же заслона (2026-09-08)
 
 Проверка "меня перенесли из моей комнаты" в `ControlExt.svelte` читала внешнюю `myRoomAttached` - её не было в зависимостях реактивного выражения, выполнялась на такт раньше пересчёта. Вторая вкладка через 50 мс после коннекта звала `leaveMeeting()`. Фикс: `myRoomAttached` добавлена в список зависимостей `$: checkActiveMeeting(...)`. Детали и воспроизведение - [sanity-flaky-tests.md](sanity-flaky-tests.md), раздел "love multitab".
+
+## Порядок снимков участников (2026-11-02)
+
+- `LiveQuery` не ждет завершения async callback; задержанный `filterParticipantInfo` мог заменить новый `infos` старым, хотя `allInfos` уже обновился. Управляемое обратное завершение воспроизводится в `plugins/love-resources/src/__tests__/stores.dedup.test.ts`.
+- Проверка актуальности по ссылке опирается на новый массив при каждом `getResult` (`foundations/core/packages/query/src/results.ts:95`); `allInfos` обновляет только callback в `stores.ts`. Диагностика UI-симптома и границы доказательств - [sanity-flaky-tests.md](sanity-flaky-tests.md), серия `20261102-151956 .. 153630`.
+- `currentMeetingMinutes` выведен из общего presence, который схлопывает сессии person. Для кнопки локального выхода `EditMeetingMinutes` использует `currentMeeting` вместе с `lkSessionConnected`; ID задается до подключения, а обновление LK и connecting-сторов пересчитывает условие Svelte. Диагностика - [sanity-flaky-tests.md](sanity-flaky-tests.md), серия `20261102-162918 .. 164451`.

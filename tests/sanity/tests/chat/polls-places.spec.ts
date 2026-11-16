@@ -135,7 +135,11 @@ test.describe('Poll placement tests', () => {
     const dialog = forwardDialog(page)
     await expect(dialog).toBeVisible()
     await dialog.getByPlaceholder('Search').fill(target)
-    await dialog.getByText(target, { exact: true }).click()
+    const rows = dialog.locator('.forward-modal__chats button.row')
+    await expect(rows).toHaveCount(1)
+    await expect(rows).toContainText(target)
+    await rows.click()
+    await expect(dialog.locator('.forward-modal__selected-chats')).toContainText(target)
     await dialog.getByRole('button', { name: 'Forward', exact: true }).click()
     await expect(dialog).toBeHidden()
   }
@@ -204,8 +208,11 @@ test.describe('Poll placement tests', () => {
       const messages = await chat.me.client
         .findAll('chunter:class:ChatMessage' as Ref<Class<AttachedDoc>>, { attachedTo: target._id })
         .catch((readError) => ({ error: String(readError) }))
+      const forwards = await chat.me.client
+        .findAll('chunter:class:ChatMessage' as Ref<Class<AttachedDoc>>, { forwardedMessage: sent.message } as any)
+        .catch((readError) => ({ error: String(readError) }))
       await test.info().attach('forwarded-poll-messages', {
-        body: JSON.stringify({ sourceMessage: sent.message, target: target._id, messages }, null, 2),
+        body: JSON.stringify({ sourceMessage: sent.message, target: target._id, messages, forwards }, null, 2),
         contentType: 'application/json'
       })
       throw error

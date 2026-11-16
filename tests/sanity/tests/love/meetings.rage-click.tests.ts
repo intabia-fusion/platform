@@ -259,8 +259,11 @@ async function openCalendarEventPanel (page: Page, eventTitle: string): Promise<
   // (models/calendar/src/index.ts `calendar.ids.CalendarWidget`), opened the same way as Love's
   // own Office widget: `AppItem`'s root button id is `'app-' + label` (packages/workbench-
   // resources/.../AppItem.svelte), where `label` is the untranslated IntlString id.
-  await (await page.goto(`${PlatformURI}/workbench/${MEETINGS_WS}`))?.finished()
-  await page.locator('[id="app-calendar\\:string\\:Calendar"]').click()
+  if (!page.url().startsWith(`${PlatformURI}/workbench/${MEETINGS_WS}`)) {
+    await (await page.goto(`${PlatformURI}/workbench/${MEETINGS_WS}`))?.finished()
+  }
+  const calendar = page.locator('[id="app-calendar\\:string\\:Calendar"]')
+  if (!(await calendar.evaluate((button) => button.classList.contains('selected')))) await calendar.click()
   // Default view is CalendarMode.Days (DayCalendar.svelte), where events render as
   // `.event-container` (EventElement.svelte) - Day.svelte's `.event` class belongs to the Month
   // grid, which is not the default.
@@ -640,6 +643,10 @@ export function registerRageClickTests (): void {
         await expect(startBtn).toBeVisible({ timeout: 15000 })
         await startBtn.click()
         await expect(connectedMarker(page)).toHaveCount(1, { timeout: 30000 })
+        // The reconnect marker is written after the final navigation, which can replace the calendar panel.
+        await expect
+          .poll(() => page.evaluate(() => sessionStorage.getItem('love.activeMeeting')), { timeout: 15000 })
+          .toBe(setup.meetingId)
 
         await openCalendarEventPanel(page, setup.eventTitle)
         const endBtn = page.getByRole('button', { name: 'End meeting', exact: true })

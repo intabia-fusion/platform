@@ -172,8 +172,7 @@ export class SettingsPage extends CommonPage {
     await this.statusNameInput().fill(newName)
     if (color !== undefined) await this.selectColorButton(color).click()
     await this.asideFooterButton('Save').click()
-    // The panel closes when the save lands; a rename in place keeps the id, so a click on the
-    // renamed row before that is a no-op and the next action hits the closing panel.
+    // The save closes the panel when it finishes, also one reopened for the same status meanwhile.
     await expect(this.statusNameInput()).toBeHidden()
   }
 

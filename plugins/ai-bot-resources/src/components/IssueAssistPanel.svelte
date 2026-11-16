@@ -87,7 +87,12 @@
 
   // The thread carries the chat input, so it is opened together with the panel and not on the
   // first preset - otherwise the user stares at a panel with nothing to type into.
-  $: if ($issueAssistOpened && conversation === undefined && objectId !== undefined) {
+  $: if (
+    $issueAssistOpened &&
+    $aiBotSocialIdentityStore !== undefined &&
+    conversation === undefined &&
+    objectId !== undefined
+  ) {
     void openConversation()
   }
 

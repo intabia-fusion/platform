@@ -144,6 +144,9 @@ test.describe('Rage click: training', () => {
     await expect(page).toHaveURL(/training\/attempts\//, { timeout: 10000 })
     // 0 questions -> score 0 < passingScore 100 -> the attempt fails, which is what unlocks Retry.
     await page.getByRole('button', { name: 'Submit', exact: true }).click()
+    await expect(
+      page.locator('div.panel-instance').last().locator('.hulyHeader-titleGroup').getByText('Failed', { exact: true })
+    ).toBeVisible({ timeout: 10000 })
     await expect(page.getByRole('button', { name: 'Retry', exact: true })).toBeVisible({ timeout: 10000 })
 
     await openMyRequest(page, title)
@@ -165,6 +168,9 @@ test.describe('Rage click: training', () => {
     await page.getByRole('button', { name: 'Take training', exact: true }).click()
     await expect(page).toHaveURL(/training\/attempts\//, { timeout: 10000 })
     await page.getByRole('button', { name: 'Submit', exact: true }).click()
+    await expect(
+      page.locator('div.panel-instance').last().locator('.hulyHeader-titleGroup').getByText('Failed', { exact: true })
+    ).toBeVisible({ timeout: 10000 })
 
     // Still on the failed attempt's own page (TrainingAttemptPanel), which carries its own Retry button.
     const retryButton = page.getByRole('button', { name: 'Retry', exact: true })

@@ -647,6 +647,7 @@ export class IssuesPage extends CommonTrackerPage {
       }
       await this.issueByName(issueName).click({ button: 'right' })
       await this.openSubmenu('Change')
+      await expect(this.popupSpanLabel(action)).toBeVisible({ timeout: 3000 })
       await this.openSubmenu(action)
       await expect(this.page.locator('div.selectPopup')).toBeVisible({ timeout: 3000 })
     }).toPass({ intervals: retryIntervals, timeout: 20000 })

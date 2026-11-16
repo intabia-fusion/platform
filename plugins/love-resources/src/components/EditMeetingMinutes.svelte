@@ -23,8 +23,8 @@
   import { createEventDispatcher, onMount } from 'svelte'
 
   import love from '../plugin'
-  import { joinMeeting, leaveMeeting } from '../meetings'
-  import { currentMeetingMinutes, infos, myConnectingSessionId, rooms, connectingToMeeting } from '../stores'
+  import { currentMeeting, joinMeeting, leaveMeeting } from '../meetings'
+  import { infos, myConnectingSessionId, rooms, connectingToMeeting } from '../stores'
   import { lkIsConnecting, lkSessionConnected } from '../liveKitClient'
   import { getMetadata } from '@hcengineering/platform'
   import { AccountRole, type Ref } from '@hcengineering/core'
@@ -135,7 +135,8 @@
     // Show during connecting with spinner
     if (connecting) return true
     // Do not show connect button if we are already connected to the room
-    if (isConnected && $currentMeetingMinutes?._id === object._id) return false
+    // ParticipantInfo may point to another tab's meeting.
+    if (isConnected && currentMeeting === object._id) return false
 
     return true
   }
