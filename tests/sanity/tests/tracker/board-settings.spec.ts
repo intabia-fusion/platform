@@ -493,12 +493,23 @@ test.describe('board settings', () => {
   test('colors: the example shows a card with the border of each rule that has an issue, and says so for the rest', async ({
     page
   }, testInfo) => {
+    const board = await client.findOne(tracker.class.Board, { _id: boardId })
+    if (board === undefined) throw new Error('no board')
+    await createIssue(client, ctx, { title: `${titlePrefix}cancelled-outside-preview`, status: 'Cancelled' })
+    const { _id, _class, space, modifiedOn, modifiedBy, createdOn, createdBy, ...data } = board
+    // Cancelled issues can exist in this shared project, but none belong to this board's scope.
+    const id = await client.createDoc(tracker.class.Board, core.space.Workspace, {
+      ...data,
+      title: `${titlePrefix}color-preview`,
+      filter: statusCondition(statusId('Backlog'), statusId('In Progress'))
+    })
     const boards = new BoardsPage(page)
-    await openTab(boards, 'colorRules')
+    await (await page.goto(boards.boardUrl(id, true, 'colorRules')))?.finished()
+    await expect(boards.settings()).toBeVisible()
     const example = page.locator('[data-id="boardColorExample"]')
     await expect(example).toBeVisible()
     await expect(example.locator('[data-id="boardColorSample"]')).toHaveCount(2)
-    // Any issue of the rule's status may stand for it: the project also holds seeded and boards.spec.ts issues
+    // Any issue of the rule's status in the board's scope may stand for it.
     await expect(example.locator('[data-id="boardColorSample"] .tracker-card.accent')).toHaveCount(2)
     await expect(example.locator('[data-id="boardColorSampleNone"]')).toHaveCount(1)
     await expect(example.locator('[data-id="boardColorSampleNone"]')).toContainText(
@@ -506,7 +517,7 @@ test.describe('board settings', () => {
     )
     try {
       for (const density of cardDensities) {
-        await client.updateDoc(tracker.class.Board, core.space.Workspace, boardId, { density })
+        await client.updateDoc(tracker.class.Board, core.space.Workspace, id, { density })
         await expect(example.locator(`.tracker-card[data-density="${density}"]`)).toHaveCount(2)
         await expect
           .poll(
@@ -530,7 +541,7 @@ test.describe('board settings', () => {
         })
       }
     } finally {
-      await client.updateDoc(tracker.class.Board, core.space.Workspace, boardId, { density: 'normal' })
+      await client.updateDoc(tracker.class.Board, core.space.Workspace, id, { density: 'normal' })
     }
   })
 
