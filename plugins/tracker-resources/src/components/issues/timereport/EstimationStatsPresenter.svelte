@@ -17,6 +17,7 @@
 
   import type { Issue } from '@hcengineering/tracker'
   import { reduceChildInfoTree } from '@hcengineering/tracker'
+  import { FixedColumn } from '@hcengineering/view-resources'
   import EstimationProgressCircle from './EstimationProgressCircle.svelte'
   import TimePresenter from './TimePresenter.svelte'
 
@@ -24,12 +25,14 @@
   export let estimation: number | undefined = undefined
   export let kind: 'normal' | 'list' = 'normal'
   export let showReportedTime = false
+  export let widthScope: 'issue' | 'subissue' = 'issue'
 
   $: _estimation = estimation ?? value.estimation
 
   $: childInfos = value.childInfo ?? []
   $: treeResult = reduceChildInfoTree(childInfos, 0, 0)
   $: reported = value.reportedTime + treeResult.totalReportedTime
+  $: estimationValue = kind === 'list' ? Math.max(value.estimation, treeResult.totalEstimation) : value.estimation
   $: hasProgress =
     reported !== 0 &&
     (_estimation !== 0 || (kind === 'list' && childInfos.length > 0 && treeResult.totalEstimation !== 0))
@@ -38,34 +41,52 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div class="estimation-container" class:combined={showReportedTime} on:click>
-  <div class="icon" class:empty={showReportedTime && !hasProgress}>
-    <EstimationProgressCircle
-      items={[
-        { value: reported, max: _estimation },
-        ...(kind === 'list' && childInfos.length > 0 ? [{ value: reported, max: treeResult.totalEstimation }] : [])
-      ]}
-    />
-  </div>
-  <span class="overflow-label label flex-row-center flex-nowrap {kind}">
-    {#if showReportedTime}
-      <div
-        class="flex flex-nowrap"
-        class:showError={value.estimation !== 0 && value.reportedTime + treeResult.totalReportedTime > value.estimation}
-      >
-        <TimePresenter value={value.reportedTime + treeResult.totalReportedTime} roundedHours={showReportedTime} />
-      </div>
+  {#if showReportedTime}
+    <span class="overflow-label label flex-row-center flex-nowrap {kind}">
+      <FixedColumn key={`${widthScope}-time-icon`}>
+        <div class="icon" class:empty={!hasProgress}>
+          <EstimationProgressCircle
+            items={[
+              { value: reported, max: _estimation },
+              ...(kind === 'list' && childInfos.length > 0
+                ? [{ value: reported, max: treeResult.totalEstimation }]
+                : [])
+            ]}
+          />
+        </div>
+      </FixedColumn>
+      <FixedColumn key={`${widthScope}-time-reported`} justify="right">
+        <div class:showError={value.estimation !== 0 && reported > value.estimation}>
+          <TimePresenter value={reported} roundedHours />
+        </div>
+      </FixedColumn>
       <span>/</span>
-    {/if}
-    <div
-      class="flex flex-nowrap"
-      class:showWarning={value.estimation !== 0 && treeResult.totalEstimation > value.estimation}
-    >
-      <TimePresenter
-        value={kind === 'list' ? Math.max(value.estimation, treeResult.totalEstimation) : value.estimation}
-        roundedHours={showReportedTime}
+      <FixedColumn key={`${widthScope}-time-estimation`} justify="right">
+        <div class:showWarning={value.estimation !== 0 && treeResult.totalEstimation > value.estimation}>
+          <TimePresenter value={estimationValue} roundedHours />
+        </div>
+      </FixedColumn>
+    </span>
+  {:else}
+    <div class="icon">
+      <EstimationProgressCircle
+        items={[
+          { value: reported, max: _estimation },
+          ...(kind === 'list' && childInfos.length > 0 ? [{ value: reported, max: treeResult.totalEstimation }] : [])
+        ]}
       />
     </div>
-  </span>
+    <span class="overflow-label label flex-row-center flex-nowrap {kind}">
+      <div
+        class="flex flex-nowrap"
+        class:showWarning={value.estimation !== 0 && treeResult.totalEstimation > value.estimation}
+      >
+        <TimePresenter
+          value={kind === 'list' ? Math.max(value.estimation, treeResult.totalEstimation) : value.estimation}
+        />
+      </div>
+    </span>
+  {/if}
 </div>
 
 <style lang="scss">
@@ -100,14 +121,15 @@
       justify-content: center;
 
       .icon {
-        margin-right: 0.25rem;
+        margin-right: 0.125rem;
 
         &.empty {
-          display: none;
+          visibility: hidden;
         }
       }
       .label {
         margin-left: 0;
+        font-variant-numeric: tabular-nums;
       }
     }
     &:hover {

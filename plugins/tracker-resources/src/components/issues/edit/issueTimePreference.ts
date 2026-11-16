@@ -35,7 +35,10 @@ export function normalizeIssueTimeConfig (config: Viewlet['config'], source: Vie
     (column) => typeof column !== 'string' && column.props?.showReportedTime === true
   )
   if (sourceEstimation === undefined || typeof sourceEstimation === 'string') return config
-  const estimation = sourceEstimation
+  const estimation =
+    source.variant === 'subissue'
+      ? { ...sourceEstimation, props: { ...sourceEstimation.props, widthScope: 'subissue' } }
+      : sourceEstimation
   const hasEstimation = config.some(
     (column) => typeof column !== 'string' && column.displayProps?.key === estimation.displayProps?.key
   )

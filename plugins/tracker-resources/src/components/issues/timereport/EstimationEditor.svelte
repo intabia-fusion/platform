@@ -36,6 +36,7 @@
   export let width: string | undefined = undefined
   export let focusIndex: number | undefined = undefined
   export let showReportedTime = false
+  export let widthScope: 'issue' | 'subissue' = 'issue'
 
   const client = getClient()
   const dispatch = createEventDispatcher()
@@ -78,8 +79,14 @@
 
 {#if value}
   {#if kind === 'list' && '_class' in value}
-    <FixedColumn key={showReportedTime ? 'subissue-estimation-total' : 'estimation-editor-total'}>
-      <EstimationStatsPresenter {value} {kind} {showReportedTime} on:click={handleestimationEditorOpened} />
+    <FixedColumn key={showReportedTime ? `${widthScope}-estimation-total` : 'estimation-editor-total'}>
+      <EstimationStatsPresenter
+        {value}
+        {kind}
+        {showReportedTime}
+        {widthScope}
+        on:click={handleestimationEditorOpened}
+      />
     </FixedColumn>
   {:else}
     <Button

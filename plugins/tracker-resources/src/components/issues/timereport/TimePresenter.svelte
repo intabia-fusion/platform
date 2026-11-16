@@ -25,6 +25,7 @@
 
   $: exactLabel = formatDuration(value, $themeStore.language)
   $: label = roundedHours ? formatDurationRoundedHours(value, $themeStore.language) : exactLabel
+  $: digits = label.match(/^\d+/)?.[0].length ?? 0
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -33,11 +34,14 @@
   {id}
   class:link={kind === 'link'}
   class:fs-bold={accent}
-  class:rounded={roundedHours && isDurationRounded(value)}
   on:click
   use:tooltip={{ label: getEmbeddedLabel(exactLabel) }}
 >
-  {label}
+  {#if roundedHours && isDurationRounded(value)}
+    <span class="rounded">{label.slice(0, digits)}</span>{label.slice(digits)}
+  {:else}
+    {label}
+  {/if}
 </span>
 
 <style lang="scss">

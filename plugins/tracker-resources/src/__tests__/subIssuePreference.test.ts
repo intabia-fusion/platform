@@ -27,6 +27,14 @@ const previous = { key: '', displayProps: { key: 'subestimation' } }
 const reported = { key: 'reportedTime', displayProps: { key: 'subreportedTime' } }
 const source = { config: [combined] } as unknown as Viewlet
 
+it('isolates subissue widths for saved and live configurations', () => {
+  const subissues = { variant: 'subissue', config: [combined] } as unknown as Viewlet
+  const expected = { ...combined, props: { ...combined.props, widthScope: 'subissue' } }
+  expect(normalizeIssueTimeConfig([previous] as unknown as Viewlet['config'], subissues)).toEqual([expected])
+  expect(normalizeIssueTimeConfig(subissues.config, subissues)).toEqual([expected])
+  expect(normalizeIssueTimeConfig(source.config, source)).toEqual([combined])
+})
+
 it('replaces the old columns with one combined column and preserves unrelated columns', () => {
   for (const columns of [[reported], [previous], [reported, previous]]) {
     const pref = { config: ['title', ...columns, 'assignee'] } as unknown as ViewletPreference

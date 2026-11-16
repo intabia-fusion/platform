@@ -263,12 +263,15 @@ export function issueConfig (
   ]
 }
 
-function combineTimeColumns (config: (BuildModelKey | string)[]): (BuildModelKey | string)[] {
+function combineTimeColumns (config: (BuildModelKey | string)[], subissue = false): (BuildModelKey | string)[] {
   return config
     .filter((column) => typeof column === 'string' || column.key !== 'reportedTime')
     .map((column) =>
       typeof column !== 'string' && column.presenter === tracker.component.EstimationEditor
-        ? { ...column, props: { ...column.props, showReportedTime: true } }
+        ? {
+            ...column,
+            props: { ...column.props, showReportedTime: true, ...(subissue ? { widthScope: 'subissue' } : {}) }
+          }
         : column
     )
 }
@@ -427,7 +430,7 @@ export function defineViewlets (builder: Builder): void {
           'modifiedBy'
         ]
       },
-      config: combineTimeColumns(issueConfig('sub', true, true))
+      config: combineTimeColumns(issueConfig('sub', true, true), true)
     },
     tracker.viewlet.SubIssues
   )
