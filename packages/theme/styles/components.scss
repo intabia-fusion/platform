@@ -202,6 +202,7 @@
     &::after {
       content: attr(data-name);
       transform: translate(-50%, -50%);
+      white-space: nowrap;
     }
   }
 

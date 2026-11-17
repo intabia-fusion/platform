@@ -47,41 +47,49 @@ export async function canReadNotifyContext (doc: DocNotifyContext): Promise<bool
 }
 
 export async function readNotifyContext (doc: DocNotifyContext): Promise<void> {
+  await readNotifyContexts([doc])
+}
+
+export async function readNotifyContexts (docs: DocNotifyContext[]): Promise<void> {
+  if (docs.length === 0) return
   const inboxClient = NotificationClientImpl.getClient()
   const me = getCurrentAccount()
+  const states = await Promise.all(docs.map(async (doc) => await inboxClient.getReadState(doc.objectId)))
   const ops = getClient().apply(undefined, 'readNotifyContext', true)
   try {
-    const reactionIds = doc.unreadReactions?.map((it) => it.id) ?? []
-    const commonIds = doc.unreadCommons?.map((it) => it.id) ?? []
-    const mentionIds = doc.unreadMentions?.map((it) => it.id) ?? []
+    for (const [i, doc] of docs.entries()) {
+      const reactionIds = doc.unreadReactions?.map((it) => it.id) ?? []
+      const commonIds = doc.unreadCommons?.map((it) => it.id) ?? []
+      const mentionIds = doc.unreadMentions?.map((it) => it.id) ?? []
 
-    if (reactionIds.length > 0 || commonIds.length > 0 || mentionIds.length > 0) {
-      await ops.createDoc(notification.class.ReadNotificationAction, doc.space, {
-        attachedTo: doc.objectId,
-        attachedToClass: doc.objectClass,
-        account: me.uuid,
-        reactionIds,
-        commonIds,
-        mentionIds
-      })
-    }
+      if (reactionIds.length > 0 || commonIds.length > 0 || mentionIds.length > 0) {
+        await ops.createDoc(notification.class.ReadNotificationAction, doc.space, {
+          attachedTo: doc.objectId,
+          attachedToClass: doc.objectClass,
+          account: me.uuid,
+          reactionIds,
+          commonIds,
+          mentionIds
+        })
+      }
 
-    const state = await inboxClient.getReadState(doc.objectId)
-    if (state != null) {
-      await ops.updateCollection(
-        state._class,
-        state.space,
-        state._id,
-        state.attachedTo,
-        state.attachedToClass,
-        'readStates',
-        {
-          [me.uuid]: {
-            messageId: generateId<ActivityMessage>(),
-            timestamp: Date.now()
+      const state = states[i]
+      if (state != null) {
+        await ops.updateCollection(
+          state._class,
+          state.space,
+          state._id,
+          state.attachedTo,
+          state.attachedToClass,
+          'readStates',
+          {
+            [me.uuid]: {
+              messageId: generateId<ActivityMessage>(),
+              timestamp: Date.now()
+            }
           }
-        }
-      )
+        )
+      }
     }
   } finally {
     await ops.commit()
