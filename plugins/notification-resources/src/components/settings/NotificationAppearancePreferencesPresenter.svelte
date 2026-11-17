@@ -1,8 +1,9 @@
 <script lang="ts">
+  import { Toggle } from '@hcengineering/ui/kit'
   import type { Data } from '@hcengineering/core'
   import core, { Doc, Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { Grid, Label, Toggle } from '@hcengineering/ui'
+  import { Grid, Label } from '@hcengineering/ui'
   import type { NotificationAppearancePreference } from '@hcengineering/notification'
   import notification from '@hcengineering/notification'
 
@@ -43,7 +44,9 @@
       </div>
       <div class="toggle">
         <Toggle
-          on={$appearancePreferences?.showChatBadge ?? defaultData.showChatBadge}
+          size="small"
+          tooltip={{ label: notification.string.ShowChatBadge }}
+          checked={$appearancePreferences?.showChatBadge ?? defaultData.showChatBadge}
           on:change={updater('showChatBadge')}
         />
       </div>

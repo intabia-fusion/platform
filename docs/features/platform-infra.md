@@ -147,19 +147,19 @@
 | "Client statistics" (ServerManager) | - | - | plan | - | отложено |
 | Расширенный Help & Support | advanced-settings/main-menu | - | no-en | 0.8.60 | |
 | Intabia-акцентные темы | - | - | plan | - | отложено |
-| Категории настроек аккаунта и воркспейса | getting-started/workspace-setup, people-contacts/managing-account | getting-started/workspace-setup | partial | 0.8.60 | частично выключено на проде: integrations, mailboxes, export - категории Settings > Integrations и Settings > Mailboxes скрыты целиком, Settings > Export скрыта (CSV-экспорт из тулбара и экспорт в другой workspace доступны отдельно); ru workspace-setup:85 называет выключенные модули «Бета-версия», в коде «Ознакомительная версия» (ConfigBeta) - страница не правлена, вне зоны этой сверки |
+| Категории настроек аккаунта и воркспейса | getting-started/workspace-setup, people-contacts/managing-account | getting-started/workspace-setup | stale | 0.8.60 | частично выключено на проде: integrations, mailboxes, export - категории Settings > Integrations и Settings > Mailboxes скрыты целиком, Settings > Export скрыта (CSV-экспорт из тулбара и экспорт в другой workspace доступны отдельно); ru workspace-setup:85 называет выключенные модули «Бета-версия», в коде «Ознакомительная версия» (ConfigBeta) - страница не правлена, вне зоны этой сверки; переключатели настроек приведены к маленькому размеру UI-кита |
 | Интеграции | - | - | off | - | выключено на проде: integrations (категория Settings > Integrations скрыта целиком; API-ключи и вебхуки - отдельная категория без `feature`, не затронута, расхождений с кодом не найдено) |
 | Раздел по умолчанию | - | - | plan | - | отложено |
-| Управление типами спейсов и ролями | advanced-settings/space-types, advanced-settings/roles | advanced-settings/space-types, advanced-settings/roles | stale | 0.8.60 | длинное название класса в свойствах типа сокращается многоточием с подсказкой; название типа проекта ограничено 32 символами при создании и переименовании; поле названия в заголовке занимает доступную ширину |
+| Управление типами спейсов и ролями | advanced-settings/space-types, advanced-settings/roles | advanced-settings/space-types, advanced-settings/roles | stale | 0.8.60 | длинное название класса в свойствах типа сокращается многоточием с подсказкой; название типа проекта ограничено 32 символами при создании и переименовании; поле названия в заголовке занимает доступную ширину; переключатели настроек приведены к маленькому размеру UI-кита |
 | Открытие созданного типа | advanced-settings/space-types | advanced-settings/space-types | partial | 0.8.60 | страница не говорит явно, что после создания типа пространства происходит автоматический переход в созданный тип - это только подразумевается |
-| Редактор классов (Classes) | advanced-settings/classes-enums | advanced-settings/classes-enums | ok | 0.8.60 | |
+| Редактор классов (Classes) | advanced-settings/classes-enums | advanced-settings/classes-enums | stale | 0.8.60 | переключатели настроек приведены к маленькому размеру UI-кита |
 | Перечисления (Enum) | advanced-settings/classes-enums | advanced-settings/classes-enums | ok | 0.8.60 | |
 | Удаление кастомного атрибута | advanced-settings/classes-enums | advanced-settings/classes-enums | partial | 0.8.60 | не описан запрос подтверждения (MessageBox) с указанием затронутых workflow/экранов при удалении атрибута, используемого в правилах перехода |
 | Самостоятельное удаление воркспейса/аккаунта | getting-started/workspace-setup, people-contacts/managing-account | getting-started/workspace-setup | partial | 0.8.60 | не описаны OTP-подтверждение по коду, grace/readonly-периоды после удаления и guard на единственного владельца - страницы упоминают только сам факт удаления |
 | OTP-подтверждение чувствительных операций | - | - | plan | - | отложено |
 | Server-пакет `server-setting` | - | - | internal | - | |
 | Базовый тип `Preference`/`SpacePreference` | - | - | internal | - | |
-| Desktop-уведомления | communication/notifications | communication/notifications | ok | 0.8.60 | |
+| Desktop-уведомления | communication/notifications | communication/notifications | stale | 0.8.60 | переключатели настроек приведены к маленькому размеру UI-кита |
 | Тема и акцентный цвет | - | - | plan | - | отложено |
 | Экспорт в файл (Drive) | - | - | off | - | выключено на проде: export |
 | Быстрый CSV-экспорт текущей выборки | - | - | plan | - | отложено |

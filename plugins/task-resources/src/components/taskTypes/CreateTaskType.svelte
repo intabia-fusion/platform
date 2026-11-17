@@ -22,8 +22,8 @@
   import type { ProjectType, ProjectTypeDescriptor, Task, TaskType, TaskTypeDescriptor } from '@hcengineering/task'
   import { createProjectTypeStates, findStatusAttr } from '@hcengineering/task'
   import type { DropdownIntlItem } from '@hcengineering/ui'
-  import ui, { Icon, Modal, ModernEditbox, Label, Toggle } from '@hcengineering/ui'
-  import { IconButton, MenuButton } from '@hcengineering/ui/kit'
+  import ui, { Icon, Modal, ModernEditbox, Label } from '@hcengineering/ui'
+  import { Toggle, IconButton, MenuButton } from '@hcengineering/ui/kit'
   import { clearSettingsStore } from '@hcengineering/setting-resources'
 
   import task from '../../plugin'
@@ -279,7 +279,7 @@
           tooltip={{ label: task.string.AllowRootTaskTooltip }}
         />
       </span>
-      <Toggle bind:on={isRootTaskType} />
+      <Toggle size="small" tooltip={{ label: task.string.AllowRootTask }} bind:checked={isRootTaskType} />
     </div>
 
     <div class="hulyModal-content__settingsSet-line">
@@ -292,7 +292,7 @@
           tooltip={{ label: task.string.AllowAnyParentTooltip }}
         />
       </span>
-      <Toggle bind:on={allowAnyParent} />
+      <Toggle size="small" tooltip={{ label: task.string.AllowAnyParentSubtask }} bind:checked={allowAnyParent} />
     </div>
 
     {#if !allowAnyParent}

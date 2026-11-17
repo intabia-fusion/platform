@@ -12,6 +12,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import { Toggle } from '@hcengineering/ui/kit'
   import { onDestroy } from 'svelte'
   import type { Ref } from '@hcengineering/core'
   import type { TaskType } from '@hcengineering/task'
@@ -24,7 +25,6 @@
     Loading,
     resolvePaletteColor,
     themeStore,
-    Toggle,
     Icon
   } from '@hcengineering/ui'
 
@@ -504,7 +504,7 @@
           <span class="option-label font-normal-12">
             <Label label={plugin.string.GroupAny} />
           </span>
-          <Toggle bind:on={groupAny} />
+          <Toggle size="small" tooltip={{ label: plugin.string.GroupAny }} bind:checked={groupAny} />
         </div>
       {/if}
 
@@ -512,7 +512,7 @@
         <span class="option-label font-normal-12">
           <Label label={plugin.string.MergeArrows} />
         </span>
-        <Toggle bind:on={compactLayout} />
+        <Toggle size="small" tooltip={{ label: plugin.string.MergeArrows }} bind:checked={compactLayout} />
       </div>
     </div>
   </div>

@@ -36,10 +36,9 @@
     Modal,
     ModernEditbox,
     showPopup,
-    themeStore,
-    Toggle
+    themeStore
   } from '@hcengineering/ui'
-  import { IconButton } from '@hcengineering/ui/kit'
+  import { Toggle, IconButton } from '@hcengineering/ui/kit'
   import { IconPicker } from '@hcengineering/view-resources'
   import view from '@hcengineering/view-resources/src/plugin'
 
@@ -327,15 +326,26 @@
     <span class="label">
       <Label label={view.string.AutomationOnly} />
     </span>
-    <Toggle bind:on={automationOnly} disabled={attribute.isCustom !== true} />
+    <Toggle
+      size="small"
+      tooltip={{ label: view.string.AutomationOnly }}
+      bind:checked={automationOnly}
+      disabled={attribute.isCustom !== true}
+    />
     <span class="label">
       <Label label={setting.string.Required} />
     </span>
-    <Toggle bind:on={required} {disabled} />
+    <Toggle size="small" tooltip={{ label: setting.string.Required }} bind:checked={required} {disabled} />
     <span class="label">
       <Label label={setting.string.Restricted} />
     </span>
-    <Toggle on={isRestricted} disabled={isRestricted || attribute.isCustom !== true} on:change={changeRestricted} />
+    <Toggle
+      size="small"
+      tooltip={{ label: setting.string.Restricted }}
+      checked={isRestricted}
+      disabled={isRestricted || attribute.isCustom !== true}
+      on:change={changeRestricted}
+    />
   </div>
 </Modal>
 

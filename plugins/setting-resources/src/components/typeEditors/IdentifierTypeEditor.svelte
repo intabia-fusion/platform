@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -17,8 +18,8 @@
   import core, { IndexKind, Type } from '@hcengineering/core'
   import { TypeIdentifier } from '@hcengineering/model'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { EditBox, Label, Toggle, Button } from '@hcengineering/ui'
-  import { IconButton } from '@hcengineering/ui/kit'
+  import { EditBox, Label, Button } from '@hcengineering/ui'
+  import { Toggle, IconButton } from '@hcengineering/ui/kit'
   import { createEventDispatcher } from 'svelte'
   import setting from '../../plugin'
 
@@ -98,7 +99,12 @@
 <span class="label">
   <Label label={setting.string.ShowInTitle} />
 </span>
-<Toggle bind:on={showInPresenter} on:change={changeShowing} />
+<Toggle
+  size="small"
+  tooltip={{ label: setting.string.ShowInTitle }}
+  bind:checked={showInPresenter}
+  on:change={changeShowing}
+/>
 
 <style lang="scss">
   .duplicated-identifier {

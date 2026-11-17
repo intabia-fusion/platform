@@ -1,8 +1,9 @@
 <script lang="ts">
+  import { Toggle } from '@hcengineering/ui/kit'
   import core, { getCurrentAccount } from '@hcengineering/core'
   import type { DevicesPreference } from '@hcengineering/love'
   import { getClient } from '@hcengineering/presentation'
-  import { Breadcrumb, Header, Label, Toggle } from '@hcengineering/ui'
+  import { Breadcrumb, Header, Label } from '@hcengineering/ui'
   import love from '../plugin'
   import { ensureOfficeDetailsLoaded, myPreferences } from '../stores'
   import { liveKitClient } from '../utils'
@@ -89,7 +90,9 @@
       <div class="flex-row-center flex-gap-4">
         <Label label={love.string.StartWithMutedMic} />
         <Toggle
-          on={!($myPreferences?.micEnabled ?? true)}
+          size="small"
+          tooltip={{ label: love.string.StartWithMutedMic }}
+          checked={!($myPreferences?.micEnabled ?? true)}
           on:change={(e) => {
             void saveMicPreference($myPreferences, e.detail)
           }}
@@ -98,7 +101,9 @@
       <div class="flex-row-center flex-gap-4">
         <Label label={love.string.StartWithoutVideo} />
         <Toggle
-          on={!($myPreferences?.camEnabled ?? true)}
+          size="small"
+          tooltip={{ label: love.string.StartWithoutVideo }}
+          checked={!($myPreferences?.camEnabled ?? true)}
           on:change={(e) => {
             void saveCamPreference($myPreferences, e.detail)
           }}
@@ -107,7 +112,9 @@
       <div class="flex-row-center flex-gap-4">
         <Label label={love.string.NoiseCancellation} />
         <Toggle
-          on={$myPreferences?.noiseCancellation ?? true}
+          size="small"
+          tooltip={{ label: love.string.NoiseCancellation }}
+          checked={$myPreferences?.noiseCancellation ?? true}
           on:change={(e) => {
             void saveNoiseCancellationPreference($myPreferences, e.detail)
           }}
@@ -116,7 +123,9 @@
       <div class="flex-row-center flex-gap-4">
         <Label label={love.string.SpeakingWhileMutedAlert} />
         <Toggle
-          on={$myPreferences?.speakingWhileMutedAlert ?? true}
+          size="small"
+          tooltip={{ label: love.string.SpeakingWhileMutedAlert }}
+          checked={$myPreferences?.speakingWhileMutedAlert ?? true}
           on:change={(e) => {
             void saveSpeakingWhileMutedPreference($myPreferences, e.detail)
           }}

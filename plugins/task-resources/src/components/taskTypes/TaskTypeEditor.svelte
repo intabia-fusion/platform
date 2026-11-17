@@ -39,14 +39,13 @@
     secondNavSeparators,
     Label,
     Scroller,
-    ToggleWithLabel,
     ModernEditbox,
     getCurrentLocation,
     navigate,
     resolvePaletteColor,
     showPopup
   } from '@hcengineering/ui'
-  import { Button, Callout, IconButton } from '@hcengineering/ui/kit'
+  import { Toggle, Button, Callout, IconButton } from '@hcengineering/ui/kit'
   import { IconPicker, deleteObjects, statusStore } from '@hcengineering/view-resources'
   import setting from '@hcengineering/setting'
   import workflow from '@hcengineering/workflow'
@@ -498,9 +497,10 @@
           </div>
 
           <div class="flex-row-center mt-4 ml-4 mr-4 gap-4">
-            <ToggleWithLabel
+            <Toggle
+              size="small"
               label={plugin.string.ShowParentTasks}
-              on={taskType.showParentTasks ?? false}
+              checked={taskType.showParentTasks ?? false}
               disabled={readonly}
               on:change={(evt) => {
                 if (taskType === undefined) {

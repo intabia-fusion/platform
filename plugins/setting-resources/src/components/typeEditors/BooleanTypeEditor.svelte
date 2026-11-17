@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,10 +14,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import { Toggle } from '@hcengineering/ui/kit'
   import type { AnyAttribute, Type } from '@hcengineering/core'
   import core from '@hcengineering/core'
   import { TypeBoolean } from '@hcengineering/model'
-  import { Label, Toggle } from '@hcengineering/ui'
+  import { Label } from '@hcengineering/ui'
   import { BooleanEditor } from '@hcengineering/view-resources'
   import { createEventDispatcher, onMount } from 'svelte'
   import setting from '../../plugin'
@@ -61,4 +63,9 @@
 <span class="label">
   <Label label={setting.string.ShowInTitle} />
 </span>
-<Toggle bind:on={showInPresenter} on:change={changeShowing} />
+<Toggle
+  size="small"
+  tooltip={{ label: setting.string.ShowInTitle }}
+  bind:checked={showInPresenter}
+  on:change={changeShowing}
+/>

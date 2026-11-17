@@ -371,7 +371,7 @@ SQL (services/db-migrator/migrations), по файлу на флавор БД, �
 | `NotificationClientImpl` | - | - | internal | - | |
 | Inbox UI | communication/inbox | communication/inbox | ok | 0.8.60 | |
 | Actions | communication/inbox | communication/inbox | ok | 0.8.60 | |
-| Настройки | communication/notifications | communication/notifications | stale | 0.8.60 | не описан канал Email в "Основное" и в группах (баг: `gmail` в `DISABLED_FEATURES` не прячет `EmailNotificationProvider`, ждёт решения пользователя) |
+| Настройки | communication/notifications | communication/notifications | stale | 0.8.60 | не описан канал Email в "Основное" и в группах (баг: `gmail` в `DISABLED_FEATURES` не прячет `EmailNotificationProvider`, ждёт решения пользователя); переключатели настроек приведены к маленькому размеру UI-кита |
 | Открытие документа = прочитано | communication/inbox | communication/inbox | partial | 0.8.60 | не упомянуты `readDoc` при выходе из документа/задачи и `readNotificationsWithoutMessage` при выборе канала в inbox |
 | Звук | communication/notifications | communication/notifications | ok | 0.8.60 | |
 | Фокус окна | - | - | internal | - | |

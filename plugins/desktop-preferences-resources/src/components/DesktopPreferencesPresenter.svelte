@@ -1,7 +1,8 @@
 <script lang="ts">
+  import { Toggle } from '@hcengineering/ui/kit'
   import core, { Doc, Ref } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { Grid, Label, Toggle } from '@hcengineering/ui'
+  import { Grid, Label } from '@hcengineering/ui'
 
   import type { PreferenceKey } from '@hcengineering/desktop-preferences'
   import desktopPreferences from '@hcengineering/desktop-preferences'
@@ -39,14 +40,21 @@
         <Label label={desktopPreferences.string.ShowNotifications} />
       </div>
       <div class="toggle">
-        <Toggle on={$activePreferences.showNotifications} on:change={updater('showNotifications')} />
+        <Toggle
+          size="small"
+          tooltip={{ label: desktopPreferences.string.ShowNotifications }}
+          checked={$activePreferences.showNotifications}
+          on:change={updater('showNotifications')}
+        />
       </div>
       <div class="flex" class:disabled={!$activePreferences.showNotifications}>
         <Label label={desktopPreferences.string.PlaySound} />
       </div>
       <div class="toggle">
         <Toggle
-          on={$activePreferences.playSound}
+          size="small"
+          tooltip={{ label: desktopPreferences.string.PlaySound }}
+          checked={$activePreferences.playSound}
           disabled={!$activePreferences.showNotifications}
           on:change={updater('playSound')}
         />
@@ -55,13 +63,23 @@
         <Label label={desktopPreferences.string.BounceAppIcon} />
       </div>
       <div class="toggle">
-        <Toggle on={$activePreferences.bounceAppIcon} on:change={updater('bounceAppIcon')} />
+        <Toggle
+          size="small"
+          tooltip={{ label: desktopPreferences.string.BounceAppIcon }}
+          checked={$activePreferences.bounceAppIcon}
+          on:change={updater('bounceAppIcon')}
+        />
       </div>
       <div class="flex">
         <Label label={desktopPreferences.string.ShowBadge} />
       </div>
       <div class="toggle">
-        <Toggle on={$activePreferences.showUnreadCounter} on:change={updater('showUnreadCounter')} />
+        <Toggle
+          size="small"
+          tooltip={{ label: desktopPreferences.string.ShowBadge }}
+          checked={$activePreferences.showUnreadCounter}
+          on:change={updater('showUnreadCounter')}
+        />
       </div>
     </Grid>
   </div>
