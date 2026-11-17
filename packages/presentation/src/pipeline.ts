@@ -427,7 +427,7 @@ export class OptimizeQueryMiddleware extends BasePresentationMiddleware implemen
         if (vobj.$in?.length === 0) {
           // Emopty in, will always return []
           return toFindResult([], 0)
-        } else if (vobj.$in?.length === 1 && Object.keys(vobj).length === 1) {
+        } else if (vobj.$in?.length === 1 && vobj.$in[0] !== undefined && Object.keys(vobj).length === 1) {
           ;(fQuery as any)[k] = vobj.$in[0]
         } else if (vobj.$nin?.length === 1 && Object.keys(vobj).length === 1) {
           ;(fQuery as any)[k] = { $ne: vobj.$nin[0] }

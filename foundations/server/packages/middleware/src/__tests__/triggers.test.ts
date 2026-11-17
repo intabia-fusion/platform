@@ -199,6 +199,7 @@ describe('TriggersMiddleware parallel trigger findAll', () => {
 describe('TriggersMiddleware collection counters', () => {
   const attributes: Record<string, any> = {
     message: { type: { _class: core.class.TypeMarkup } },
+    relations: { type: { _class: core.class.ArrOf } },
     applets: { type: { _class: core.class.Collection } }
   }
   const hierarchy = {
@@ -245,6 +246,20 @@ describe('TriggersMiddleware collection counters', () => {
       { $inc: { _reactions: -1 } },
       { $inc: { undeclared: -1 } }
     ])
+  })
+
+  it('does not change a relations array when an activity reference is created', async () => {
+    const relations = [{ _id: 'related-issue', _class: 'issue' }]
+    const issue = { ...parent, relations }
+    const tx = {
+      ...removal('relations'),
+      _class: core.class.TxCreateDoc,
+      objectClass: 'activity:class:ActivityReference'
+    }
+    const result = await (middleware as any).processCollection(ctx, [tx], async () => [issue])
+
+    expect(result).toEqual([])
+    expect(issue.relations).toEqual([{ _id: 'related-issue', _class: 'issue' }])
   })
 })
 
