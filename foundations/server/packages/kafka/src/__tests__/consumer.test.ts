@@ -15,10 +15,18 @@
 import { QueueTopic } from '@hcengineering/server-core'
 
 // jest.mock factory may only reference vars prefixed with `mock`.
-const mockState: any = { eachBatch: undefined, listeners: {} }
+const mockState: any = {
+  eachBatch: undefined,
+  listeners: {},
+  topics: ['workspace'],
+  adminConnectFails: 0,
+  createFails: 0,
+  created: []
+}
 const mockConsumer = {
   connect: jest.fn(async () => {}),
   subscribe: jest.fn(async () => {}),
+  stop: jest.fn(async () => {}),
   disconnect: jest.fn(async () => {}),
   events: {
     FETCH: 'consumer.fetch',
@@ -46,7 +54,24 @@ jest.mock('kafkajs', () => ({
   Kafka: jest.fn().mockImplementation(() => ({
     consumer: jest.fn(() => mockConsumer),
     producer: jest.fn(() => ({})),
-    admin: jest.fn(() => ({}))
+    admin: jest.fn(() => ({
+      connect: jest.fn(async () => {
+        if (mockState.adminConnectFails > 0) {
+          mockState.adminConnectFails--
+          throw new Error('Connection error')
+        }
+      }),
+      disconnect: jest.fn(async () => {}),
+      listTopics: jest.fn(async () => mockState.topics),
+      createTopics: jest.fn(async ({ topics }: { topics: Array<{ topic: string, numPartitions: number }> }) => {
+        if (mockState.createFails > 0) {
+          mockState.createFails--
+          throw new Error('Not authorized')
+        }
+        mockState.created.push(...topics)
+        mockState.topics = [...mockState.topics, ...topics.map((t) => t.topic)]
+      })
+    }))
   })),
   CompressionTypes: { GZIP: 1 },
   Partitioners: { DefaultPartitioner: jest.fn() }
@@ -115,6 +140,10 @@ const sleep = async (ms: number): Promise<void> => {
 
 beforeEach(() => {
   jest.clearAllMocks()
+  mockState.topics = ['workspace']
+  mockState.adminConnectFails = 0
+  mockState.created = []
+  mockState.createFails = 0
 })
 
 describe('kafka client', () => {
@@ -354,5 +383,55 @@ describe('dead queue watchdog', () => {
     )
     await sleep(40)
     expect(onDead).not.toHaveBeenCalled()
+  })
+})
+
+describe('missing topics', () => {
+  it('creates the missing regional topics before subscribing to all of them', async () => {
+    const q = createPlatformQueue(config)
+    const handle = q.createBatchConsumer(ctx, QueueTopic.Workspace, 'grp', jest.fn(), { regions: ['', 'eu'] })
+    await sleep(20)
+    expect(mockState.created).toEqual([{ topic: 'eu.workspace', numPartitions: 1 }])
+    expect(mockConsumer.subscribe).toHaveBeenCalledTimes(1)
+    expect(mockConsumer.subscribe).toHaveBeenCalledWith({
+      topics: ['workspace', 'eu.workspace'],
+      fromBeginning: undefined
+    })
+    await handle.close()
+  })
+
+  it('creates a missing own-region topic with its configured partitions', async () => {
+    mockState.topics = []
+    const q = createPlatformQueue(config)
+    const handle = q.createConsumer(ctx, QueueTopic.Fulltext, 'grp', jest.fn(), { deadTimeout: 0 })
+    await sleep(20)
+    expect(mockState.created).toEqual([{ topic: 'fulltext', numPartitions: 5 }])
+    expect(mockConsumer.subscribe).toHaveBeenCalledWith({ topics: ['fulltext'], fromBeginning: undefined })
+    await handle.close()
+  })
+
+  it('does not subscribe until a failed topic creation succeeds', async () => {
+    mockState.createFails = 1
+    const q = createPlatformQueue(config)
+    const handle = q.createBatchConsumer(ctx, QueueTopic.Workspace, 'grp', jest.fn(), {
+      regions: ['', 'eu'],
+      deadTimeout: 0
+    })
+    await sleep(20)
+    expect(mockConsumer.subscribe).not.toHaveBeenCalled()
+    await sleep(250)
+    expect(mockState.created).toEqual([{ topic: 'eu.workspace', numPartitions: 1 }])
+    expect(mockConsumer.subscribe).toHaveBeenCalledTimes(1)
+    await handle.close()
+  })
+
+  it('retries when the admin connect fails', async () => {
+    mockState.adminConnectFails = 1
+    const q = createPlatformQueue(config)
+    const handle = q.createBatchConsumer(ctx, QueueTopic.Workspace, 'grp', jest.fn(), { deadTimeout: 0 })
+    await sleep(250)
+    expect(mockConsumer.subscribe).toHaveBeenCalledWith({ topics: ['workspace'], fromBeginning: undefined })
+    expect(mockConsumer.run).toHaveBeenCalledTimes(1)
+    await handle.close()
   })
 })

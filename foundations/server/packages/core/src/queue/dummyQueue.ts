@@ -29,7 +29,7 @@ class DummyQueueProducer<T> implements PlatformQueueProducer<T> {
  * A stub PlatformQueue for testing.
  */
 export class DummyQueue implements PlatformQueue {
-  getProducer<T>(ctx: MeasureContext, topic: QueueTopic | string): PlatformQueueProducer<T> {
+  getProducer<T>(ctx: MeasureContext, topic: QueueTopic | string, region?: string): PlatformQueueProducer<T> {
     return new DummyQueueProducer<T>()
   }
 
@@ -39,7 +39,7 @@ export class DummyQueue implements PlatformQueue {
 
   async shutdown (): Promise<void> {}
 
-  async createTopic (topics: string | string[], partitions: number): Promise<void> {}
+  async createTopic (topics: string | string[], partitions: number, regions?: string[]): Promise<void> {}
 
   createConsumer<T>(
     ctx: MeasureContext,

@@ -29,6 +29,7 @@ jest.mock('@hcengineering/account', () => ({
   getAccountDB: jest.fn(async () => [{}, jest.fn()]),
   getMethods: jest.fn(() => ({ login: mockLogin })),
   initRegionConfig: jest.fn(),
+  getRegions: jest.fn(() => [{ region: '' }]),
   cleanExpiredOtp: jest.fn(),
   sweepScheduledDeletions: jest.fn(async () => {})
 }))
@@ -38,6 +39,7 @@ jest.mock('@hcengineering/auth-providers', () => ({ registerProviders: jest.fn()
 jest.mock('@hcengineering/kafka', () => ({
   getPlatformQueue: jest.fn(() => ({
     getProducer: jest.fn(() => ({ send: jest.fn(), close: jest.fn() })),
+    createTopic: jest.fn().mockResolvedValue(undefined),
     createBatchConsumer: jest.fn(() => ({ close: jest.fn() })),
     shutdown: jest.fn()
   }))

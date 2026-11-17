@@ -435,3 +435,31 @@ describe('updatePlan -> resolveLimits (via attachLimits on the persisted respons
 
 // A plan missing windowMonthLimit no longer warns here - config.ts refuses to start the pod.
 // See config.test.ts.
+
+describe('GET /api/v1/ready', () => {
+  async function status (isReady?: () => boolean): Promise<number> {
+    const { app } = await createServer(
+      makeCtx(),
+      config,
+      publish,
+      logOperation,
+      publishPurchaseActivated,
+      undefined,
+      isReady
+    )
+    const { res, done } = makeRes()
+    getHandler(app, 'get', '/api/v1/ready')({}, res)
+    return (await done).statusCode
+  }
+
+  it('is 503 until the consumers are ready, then 200', async () => {
+    let ready = false
+    expect(await status(() => ready)).toBe(503)
+    ready = true
+    expect(await status(() => ready)).toBe(200)
+  })
+
+  it('is 200 without a readiness callback', async () => {
+    expect(await status()).toBe(200)
+  })
+})
