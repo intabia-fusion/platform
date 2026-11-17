@@ -199,6 +199,7 @@ export async function getSecondPageByInvite (
  * handler. Repeated `locator.click()` waits for the button to be enabled again, so it cannot reproduce it.
  */
 export async function rageClick (locator: Locator, count = 3): Promise<void> {
+  await expect(locator).toBeEnabled()
   await locator.evaluate((el, n) => {
     for (let i = 0; i < n; i++) (el as HTMLElement).click()
   }, count)

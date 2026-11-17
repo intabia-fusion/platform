@@ -29,7 +29,7 @@ export { serverTrackerId } from '@hcengineering/server-tracker'
 export function createModel (builder: Builder): void {
   builder.mixin(tracker.class.Issue, core.class.Class, serverActivity.mixin.IdentifierPresenter, {
     presenter: serverTracker.function.IssueIdentifierPresenter,
-    triggerFields: ['seqNumber', 'prefix']
+    triggerFields: ['identifier', 'number']
   })
 
   builder.mixin(tracker.class.Issue, core.class.Class, serverActivity.mixin.UrlPresenter, {

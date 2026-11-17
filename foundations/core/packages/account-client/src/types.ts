@@ -434,6 +434,7 @@ export interface PaymentOperationStats {
   totalAmount: number
   totalErrors: number
   workspaces: Array<{ workspaceUuid: string, charges: number, amount: number, errors: number }>
+  byProvider?: Array<{ provider: string, charges: number, amount: number, errors: number }>
 }
 
 export interface PaymentOperationFilter {
@@ -443,6 +444,7 @@ export interface PaymentOperationFilter {
   operation?: PaymentOperationKind
   status?: string
   provider?: string
+  paymentId?: string
   limit?: number
   offset?: number
 }
@@ -496,8 +498,19 @@ export interface WorkspacesPagedResult {
 
 export interface BillingPlanSummary {
   plan: string
+  status?: string
+  category?: 'trial' | 'free' | 'manual' | 'paid' | 'other'
   workspaces: number
   seats: number
+}
+
+export interface ManualWorkspaceSummary {
+  workspaceUuid: WorkspaceUuid
+  name: string
+  url: string
+  plan: string
+  status: string
+  seats: number // Current members occupying paid seats; excludes guest roles, admins and the AI bot.
 }
 
 export interface WorkspacesSummary {
@@ -506,6 +519,7 @@ export interface WorkspacesSummary {
   byRegion: Record<string, number>
   byVersion: Record<string, number>
   billing: BillingPlanSummary[]
+  manualWorkspaces?: ManualWorkspaceSummary[]
 }
 
 export interface RegistrationStatsPoint {

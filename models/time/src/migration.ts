@@ -26,6 +26,7 @@ import {
   createDefaultSpace
 } from '@hcengineering/model'
 import { DOMAIN_EVENT } from '@hcengineering/model-calendar'
+import { DOMAIN_DOC_NOTIFY, type DocNotifyContext } from '@hcengineering/notification'
 import core, { DOMAIN_SPACE } from '@hcengineering/model-core'
 import tags from '@hcengineering/tags'
 import { timeId, ToDoPriority, type ToDo, type WorkSlot } from '@hcengineering/time'
@@ -156,6 +157,11 @@ async function fillProps (client: MigrationClient): Promise<void> {
   await client.update(DOMAIN_TIME, { priority: { $exists: false } }, { priority: ToDoPriority.NoPriority })
 }
 
+async function removeToDoContexts (client: MigrationClient): Promise<void> {
+  const classes = client.hierarchy.getDescendants(time.class.ToDo)
+  await client.deleteMany<DocNotifyContext>(DOMAIN_DOC_NOTIFY, { objectClass: { $in: classes } })
+}
+
 export const timeOperation: MigrateOperation = {
   async migrate (client: MigrationClient, mode): Promise<void> {
     await tryMigrate(mode, client, timeId, [
@@ -170,6 +176,11 @@ export const timeOperation: MigrateOperation = {
         state: 'move-workslots-to-target-space',
         mode: 'upgrade',
         func: moveWorkSlotsToTargetSpace
+      },
+      {
+        state: 'remove-todo-contexts-v1',
+        mode: 'upgrade',
+        func: removeToDoContexts
       }
     ])
   },

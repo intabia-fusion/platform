@@ -69,8 +69,11 @@ class ActivityMiddleware extends BaseMiddleware {
       if (!TxProcessor.isExtendsCUD(_tx._class)) continue
       const tx = _tx as TxCUD<Doc>
 
-      // The middleware trusts `editable`, `snapshotFields` and the like of the applet kind.
-      if (hierarchy.isDerived(tx.objectClass, activity.class.Applet)) {
+      // A document's preview is derived data, the triggers of server-activity-resources write it.
+      if (tx.objectClass === core.class.DocPreview) {
+        this.throwForbidden(ctx, tx, ForbiddenKind.SystemOnly, 'DocPreview is written by triggers only')
+      } else if (hierarchy.isDerived(tx.objectClass, activity.class.Applet)) {
+        // The middleware trusts `editable`, `snapshotFields` and the like of the applet kind.
         this.throwForbidden(ctx, tx, ForbiddenKind.SystemOnly, 'Applet kinds come from the model only')
       } else if (hierarchy.isDerived(tx.objectClass, activity.class.PollAnswer)) {
         this.throwForbidden(ctx, tx, ForbiddenKind.SystemOnly, 'PollAnswer is written by the activity service only')

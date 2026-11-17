@@ -81,8 +81,8 @@ export class CommonTrackerPage extends CalendarPage {
   task5 = (): Locator => this.page.getByRole('link', { name: 'Explore all Huly has to offer' })
 
   // Actions
-  async selectPanelAndViewlet (panel: string, viewletSelector: string): Promise<void> {
-    await this.page.click(`text="${panel}"`)
+  async selectPanelAndViewlet (panel: Locator, viewletSelector: string): Promise<void> {
+    await panel.click()
     await this.page.click(viewletSelector)
   }
 
@@ -105,8 +105,8 @@ export class CommonTrackerPage extends CalendarPage {
     await this.page.keyboard.press('Escape')
   }
 
-  async verifyViewOption (panel: string, viewletSelector: string): Promise<void> {
-    await this.page.click(`text="${panel}"`)
+  async verifyViewOption (panel: Locator, viewletSelector: string): Promise<void> {
+    await panel.click()
     const viewlet = this.page.locator(viewletSelector)
     await expect(viewlet.locator('input')).toBeChecked()
     await this.viewButton().click()

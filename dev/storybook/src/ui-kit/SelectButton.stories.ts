@@ -62,7 +62,7 @@ const meta: Meta<Args> = {
     docs: {
       description: {
         component:
-          '**Когда:** у кнопки есть значение, которое меняют в попапе места: поле атрибута, исполнитель, приоритет, дата в форме. **Не этот компонент:** действие без значения - `Button`; выбор из готового списка вместе с попапом - `Dropdown`; значение только для чтения - презентер.\n\nТолько триггер: попап открывает место по `on:click`, привязывает к `element` и держит `pressed`, пока он открыт (`aria-expanded`). Плейсхолдер - вторичным цветом, у выключенной - цветом disabled. Только иконка без текста и шеврона - квадрат (компактная карточка). `fullWidth`, `justify`, `wrap`, `chevron` (`hover` - стрелка при наведении).'
+          '**Когда:** у кнопки есть значение, которое меняют в попапе места: поле атрибута, исполнитель, приоритет, дата в форме. **Не этот компонент:** действие без значения - `Button`; выбор из готового списка вместе с попапом - `Dropdown`; значение только для чтения - презентер.\n\nТолько триггер: попап открывает место по `on:click`, привязывает к `element` и держит `pressed`, пока он открыт (`aria-expanded`). Плейсхолдер - вторичным цветом, у выключенной - цветом disabled. Только иконка без текста и шеврона - квадрат (компактная карточка). `fullWidth`, `justify`, `wrap`, `chevron` (`hover` - стрелка при наведении); `field` - значение формы рядом с текстовыми полями: заливка и рамка полей ввода (`--input-*`).'
       }
     }
   },
@@ -113,6 +113,17 @@ export const Variants: Story = {
             { title: 'loading', props: { ...high, loading: true } }
           ],
           props: { chevron: true }
+        },
+        {
+          title: 'Field',
+          component: SelectButton,
+          rows: [{ title: 'secondary', props: { kind: 'secondary' } }],
+          columns: [
+            { title: 'button', props: {} },
+            { title: 'field', props: { field: true } },
+            { title: 'field, placeholder', props: { ...noPriority, field: true } }
+          ],
+          props: { ...high, chevron: true }
         },
         {
           title: 'Chevron',

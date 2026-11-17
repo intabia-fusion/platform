@@ -5,7 +5,7 @@ import { retryIntervals } from '../retry'
 
 export class SettingsPage extends CommonPage {
   profileButton = (): Locator => this.page.locator('#profile-button')
-  settingsButton = (): Locator => this.page.locator('button:has-text("Settings")').first()
+  settingsButton = (): Locator => this.page.getByRole('button', { name: 'Settings', exact: true })
   spaceTypesHeader = (): Locator => this.page.locator('button.hulyNavGroup-header', { hasText: 'Space types' })
   newSpaceTypeButton = (): Locator => this.page.locator('#new-space-type')
   popupSelectSpaceTypeButton = (): Locator =>
@@ -49,7 +49,7 @@ export class SettingsPage extends CommonPage {
     this.page
       .locator('div.hulyTableAttr-header', { hasText: 'Task types' })
       .locator('xpath=..')
-      .locator('div.hulyTableAttr-content button.hulyTableAttr-content__row')
+      .locator('div.hulyTableAttr-content button[data-id="task-type-open"]')
       .filter({ has: this.page.getByText(value, { exact: true }) })
 
   deleteStateButton = (): Locator =>
@@ -172,8 +172,7 @@ export class SettingsPage extends CommonPage {
     await this.statusNameInput().fill(newName)
     if (color !== undefined) await this.selectColorButton(color).click()
     await this.asideFooterButton('Save').click()
-    // The panel closes when the save lands; a rename in place keeps the id, so a click on the
-    // renamed row before that is a no-op and the next action hits the closing panel.
+    // The save closes the panel when it finishes, also one reopened for the same status meanwhile.
     await expect(this.statusNameInput()).toBeHidden()
   }
 

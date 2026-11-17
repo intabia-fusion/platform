@@ -15,23 +15,19 @@
 
 import { AccountUuid, Doc, Ref } from '@hcengineering/core'
 import { NotificationIntl, NotificationType } from '@hcengineering/notification'
-import { getSenderName, Sender } from '@hcengineering/server-notification'
+import { getSenderName, type Receiver, Sender } from '@hcengineering/server-notification'
 import { IntlString } from '@hcengineering/platform'
 import {
-  getDocIcon as _getDocIcon,
   getDocIdentifier as _getDocIdentifier,
-  getDocLabel as _getDocLabel,
   getDocTitle as _getDocTitle,
   getDocUrl as _getDocUrl,
-  getIconPresenter,
   getTitlePresenter,
-  Icon,
   PresenterControl
 } from '@hcengineering/server-activity'
 import activity, { ActivityMessage } from '@hcengineering/activity'
 import chunter, { type ThreadMessage } from '@hcengineering/chunter'
 
-import { Client, ObjectDisplayData, TxCache } from '../types'
+import { Client, ContextRefs, TxCache } from '../types'
 import Cache from '../cache'
 import { toNotificationMessage } from './misc'
 
@@ -113,63 +109,16 @@ export async function getDocUrl (client: Client, txCache: TxCache, doc: Doc): Pr
   return await withCache(txCache.urlByDoc, doc._id, () => _getDocUrl(getPresenterControl(client), doc))
 }
 
-export async function getDocLabel (client: Client, txCache: TxCache, doc: Doc): Promise<IntlString | undefined> {
-  return await withCache(txCache.labelByDoc, doc._id, () => _getDocLabel(getPresenterControl(client), doc))
-}
-
-export async function getDocIcon (
-  client: Client,
-  txCache: TxCache,
-  doc: Doc,
-  account: AccountUuid
-): Promise<Icon | undefined> {
-  const presenter = getIconPresenter(doc._class, client.hierarchy)
-  const personalized = account != null && presenter?.personalized === true
-  const key = personalized ? account : ''
-
-  return await withPersonalizedCache(txCache.iconByDoc, doc._id, key, () =>
-    _getDocIcon(getPresenterControl(client), doc, { account })
-  )
-}
-
-// ---- Aggregate display data ----
-
-export async function getObjectDisplayData (
-  client: Client,
-  cache: Cache,
-  txCache: TxCache,
-  doc: Doc,
-  account: AccountUuid
-): Promise<ObjectDisplayData> {
-  const title = (await getDocTitle(client, txCache, doc, account)) ?? ''
-  const label = await getDocLabel(client, txCache, doc)
-  const identifier = await getDocIdentifier(client, txCache, doc)
-  const icon = await getDocIcon(client, txCache, doc, account)
-
-  const displayData: ObjectDisplayData = {
-    objectTitle: title,
-    objectIdentifier: identifier,
-    objectIcon: icon,
-    objectLabel: label
+// A thread shows its parent document's preview; a document without one leaves the ref unset.
+export async function getContextRefs (client: Client, cache: Cache, doc: Doc): Promise<ContextRefs> {
+  const message = client.hierarchy.isDerived(doc._class, activity.class.ActivityMessage)
+    ? (doc as ActivityMessage)
+    : undefined
+  const preview = await cache.getDocPreviewId(message?.attachedTo ?? doc._id, message?.attachedToClass ?? doc._class)
+  return {
+    ...(preview != null ? { preview } : {}),
+    ...(message != null ? { message: toNotificationMessage(message, client.hierarchy) } : {})
   }
-
-  if (client.hierarchy.isDerived(doc._class, activity.class.ActivityMessage)) {
-    const message = doc as ActivityMessage
-    const parentId = message.attachedTo
-    const parentClass = message.attachedToClass
-    const parentDoc = await cache.getDoc(parentId, parentClass)
-    if (parentDoc != null) {
-      displayData.parentObjectId = parentId
-      displayData.parentObjectClass = parentClass
-      displayData.parentObjectTitle = (await getDocTitle(client, txCache, parentDoc, account)) ?? ''
-      displayData.parentObjectLabel = await getDocLabel(client, txCache, parentDoc)
-      displayData.parentObjectIdentifier = await getDocIdentifier(client, txCache, parentDoc)
-      displayData.parentObjectIcon = await getDocIcon(client, txCache, parentDoc, account)
-    }
-    displayData.object = toNotificationMessage(message, client.hierarchy)
-  }
-
-  return displayData
 }
 
 export async function getBaseDisplayParams (
@@ -178,18 +127,21 @@ export async function getBaseDisplayParams (
   type: NotificationType | undefined,
   doc: Doc,
   sender: Sender,
-  receiverLang: string
+  receiver: Pick<Receiver, 'account' | 'language'>
 ): Promise<Pick<NotificationIntl, 'intlParams' | 'intlParamsNotLocalized'>> {
   const intlParams: Record<string, string | number> = {}
   const intlParamsNotLocalized: Record<string, IntlString> = {}
 
-  const title = await getDocTitle(client, txCache, doc, undefined, receiverLang)
+  // As the receiver sees it: a direct chat is named after the other side
+  const title = await getDocTitle(client, txCache, doc, receiver.account, receiver.language)
   const url = await getDocUrl(client, txCache, doc)
   const identifier = await getDocIdentifier(client, txCache, doc)
 
   if (title != null) {
-    intlParams.title = title
-    intlParams.doc = title
+    // A notification writes a channel with its hash, the title gives the bare name
+    const shown = client.hierarchy.isDerived(doc._class, chunter.class.Channel) ? `#${title}` : title
+    intlParams.title = shown
+    intlParams.doc = shown
   }
   if (url != null && url.length > 0) {
     intlParams.url = url

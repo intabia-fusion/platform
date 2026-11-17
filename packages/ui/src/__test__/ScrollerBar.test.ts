@@ -17,6 +17,7 @@ import { tick } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { ComponentProps } from 'svelte'
 import ScrollerBar from '../components/ScrollerBar.svelte'
+import Scroller from '../components/Scroller.svelte'
 
 let target: HTMLElement
 
@@ -141,5 +142,40 @@ describe('ScrollerBar', () => {
     expect(bar.classList.contains('hovered')).toBe(false)
     expect(track.classList.contains('hovered')).toBe(false)
     expect(document.body.style.userSelect).toBe('auto')
+  })
+})
+
+describe('Scroller dynamic horizontal content', () => {
+  it('shows and resizes the horizontal thumb when siblings are appended', async () => {
+    const host = document.createElement('div')
+    document.body.appendChild(host)
+    const component = new Scroller({ target: host, props: { horizontal: true } })
+    try {
+      await settle()
+      const scroller = host.querySelector('.scroll') as HTMLElement
+      const box = host.querySelector('.box') as HTMLElement
+      setGeometry(scroller, 200, 200, 0)
+      const first = document.createElement('div')
+      box.appendChild(first)
+      await new Promise((resolve) => setTimeout(resolve, 60))
+      expect(host.querySelector('.bar-horizontal')).toBeNull()
+
+      setGeometry(scroller, 200, 400, 0)
+      box.appendChild(document.createElement('div'))
+      await new Promise((resolve) => setTimeout(resolve, 60))
+      expect(box.firstElementChild).toBe(first)
+      const bar = host.querySelector('.bar-horizontal') as HTMLElement
+      expect(bar).not.toBeNull()
+      expect(bar.style.visibility).toBe('visible')
+      expect(bar.style.width).toBe('98px')
+
+      setGeometry(scroller, 200, 800, 0)
+      box.appendChild(document.createElement('div'))
+      await new Promise((resolve) => setTimeout(resolve, 60))
+      expect(bar.style.width).toBe('49px')
+    } finally {
+      component.$destroy()
+      host.remove()
+    }
   })
 })

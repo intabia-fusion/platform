@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2020 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 // Copyright © 2023 Hardcore Engineering Inc.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
@@ -114,7 +115,12 @@
       if (ev.detail !== undefined) collapsed = !ev.detail
     }}
   >
-    <svelte:fragment slot="extra"><slot name="extra" /></svelte:fragment>
+    <svelte:fragment slot="extra">
+      <slot name="extra" />
+      {#if $$slots.headerActions}
+        <div class="header-actions"><slot name="headerActions" /></div>
+      {/if}
+    </svelte:fragment>
     <svelte:fragment slot="tools">
       {#if inlineActions.length > 0}
         {#each inlineActions as action}
@@ -242,3 +248,16 @@
     <svelte:fragment slot="visible"><slot name="visible" /></svelte:fragment>
   </NavItem>
 {/if}
+
+<style lang="scss">
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-0_5);
+    margin-left: var(--spacing-1);
+
+    &:empty {
+      display: none;
+    }
+  }
+</style>

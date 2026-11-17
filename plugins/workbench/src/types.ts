@@ -1,6 +1,7 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -43,6 +44,9 @@ export interface Application extends Doc {
 
   // Also attached ApplicationNavModel will be joined after this one main.
   navigatorModel?: NavigatorModel
+
+  // The application component renders its own menu instead of using navigatorModel.
+  hasNavigator?: boolean
 
   locationResolver?: Resource<(loc: Location) => Promise<ResolvedLocation | undefined>>
   locationDataResolver?: Resource<(loc: Location) => Promise<LocationData>>
@@ -140,6 +144,7 @@ export interface SpacesNavModel {
   addSpaceLabel?: IntlString
   createComponent?: AnyComponent
   icon?: Asset
+  catalog?: { id: string, label: IntlString, icon: Asset }
 
   // Child special items.
   specials?: SpecialNavModel[]
@@ -166,6 +171,8 @@ export interface NavigatorModel {
   spaces: SpacesNavModel[]
   specials?: SpecialNavModel[]
   groups?: GroupsNavModel[]
+  // Components shown under the specials, above the saved filters
+  sections?: AnyComponent[]
   hideStarred?: boolean
 }
 
@@ -187,6 +194,8 @@ export interface SpecialNavModel {
   // If defined, will be used to find spaces for visibleIf
   spaceClass?: Ref<Class<Space>>
   checkIsDisabled?: Resource<() => Promise<boolean>>
+  // Opens by its id but has no item in the navigator
+  hidden?: boolean
   // Returns a store so the count can follow its own data instead of being recomputed from the
   // unread total, which is a sum and misses changes that cancel out.
   notificationsCountProvider?: Resource<() => Promise<NavCountStore>>

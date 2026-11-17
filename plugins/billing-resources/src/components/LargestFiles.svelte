@@ -12,38 +12,74 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { SortingOrder, type Ref, type Space } from '@hcengineering/core'
-  import { createQuery, getClient } from '@hcengineering/presentation'
+  import { SortingOrder, type Ref, type Space, type WithLookup } from '@hcengineering/core'
+  import { createQuery, getClient, refreshQueries } from '@hcengineering/presentation'
   import attachment, { type Attachment } from '@hcengineering/attachment'
+  import drive, { type Drive, type File, type FileVersion } from '@hcengineering/drive'
   import ui, { Button, Loading, showPopup } from '@hcengineering/ui'
   import { filesize } from 'filesize'
-  import { deleteObjects, FixedColumn, ObjectPresenter } from '@hcengineering/view-resources'
+  import { deleteObjects, FixedColumn, getActions, invokeAction, ObjectPresenter } from '@hcengineering/view-resources'
   import contact from '@hcengineering/contact'
+  import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
+  import billing from '../plugin'
 
   export let space: Ref<Space> | undefined = undefined
 
   const limit = 20
 
-  let files: Attachment[] = []
-  let loading = true
+  let attachments: Attachment[] | undefined
+  let versions: Array<WithLookup<FileVersion>> | undefined
+  let deletingFiles = new Set<Ref<File>>()
+  $: files = [...(attachments ?? []), ...(versions ?? [])].sort((a, b) => b.size - a.size).slice(0, limit)
+  $: loading = attachments === undefined || versions === undefined
 
   const attachmentQuery = createQuery()
+  const versionQuery = createQuery()
+  const client = getClient()
 
   $: attachmentQuery.query(
     attachment.class.Attachment,
     space != null ? { space } : {},
     (res) => {
-      files = res
-      loading = false
+      attachments = res
     },
     {
       sort: { size: SortingOrder.Descending },
       limit
     }
   )
-  const h = getClient().getHierarchy()
+  $: versionQuery.query(
+    drive.class.FileVersion,
+    space != null ? { space: space as Ref<Drive> } : {},
+    (res) => {
+      versions = res
+    },
+    { lookup: { attachedTo: drive.class.File }, sort: { size: SortingOrder.Descending }, limit }
+  )
   const dispatch = createEventDispatcher()
+
+  function isVersion (file: Attachment | WithLookup<FileVersion>): file is WithLookup<FileVersion> {
+    return file._class === drive.class.FileVersion
+  }
+
+  async function deleteDriveFile (file: File, event: MouseEvent): Promise<void> {
+    if (deletingFiles.has(file._id)) return
+    deletingFiles.add(file._id)
+    deletingFiles = deletingFiles
+    try {
+      const actions = await getActions(client, file)
+      const action = actions.find((item) => item.target === drive.class.File && item.action === view.actionImpl.Delete)
+      if (action === undefined) return
+      await invokeAction(file, event, action, {
+        confirmation: billing.string.DeleteDriveFileConfirm,
+        afterDelete: async () => dispatch('refresh')
+      })
+    } finally {
+      deletingFiles.delete(file._id)
+      deletingFiles = deletingFiles
+    }
+  }
 </script>
 
 {#if loading}
@@ -54,43 +90,78 @@
       <div class="file-row flex flex-between">
         <span class="file-index">{i + 1}.</span>
         <div class="flex flex-row-center flex-grow">
-          <FixedColumn key="file-link">
-            <ObjectPresenter _class={file._class} value={file} objectId={file._id} inline props={{ showSize: false }} />
-          </FixedColumn>
-          <div class="file-type">
-            <FixedColumn key="source-link">
+          {#if isVersion(file)}
+            <FixedColumn key="file-link">{file.title}</FixedColumn>
+            <ObjectPresenter _class={file._class} value={file} objectId={file._id} />
+          {:else}
+            <FixedColumn key="file-link">
               <ObjectPresenter
-                _class={file.attachedToClass}
-                objectId={file.attachedTo}
+                _class={file._class}
+                value={file}
+                objectId={file._id}
                 inline
-                props={{ kind: 'list' }}
+                props={{ showSize: false }}
               />
             </FixedColumn>
-          </div>
+          {/if}
+          {#if !isVersion(file)}
+            <div class="file-type">
+              <FixedColumn key="source-link">
+                <ObjectPresenter
+                  _class={file.attachedToClass}
+                  objectId={file.attachedTo}
+                  inline
+                  props={{ kind: 'list' }}
+                />
+              </FixedColumn>
+            </div>
+          {/if}
         </div>
         <span class="file-size">{filesize(file.size, { spacer: ' ' })}</span>
-        <Button
-          icon={ui.icon.Trash}
-          on:click={() => {
-            showPopup(
-              contact.component.DeleteConfirmationPopup,
-              {
-                object: file,
-                skipCheck: true,
-                confirmation: undefined,
-                deleteAction: async () => {
-                  try {
-                    await deleteObjects(getClient(), [file], true)
-                    dispatch('delete', file.size)
-                  } catch (e) {
-                    console.error(e)
+        {#if isVersion(file)}
+          {@const parent = file.$lookup?.attachedTo}
+          {#if parent !== undefined}
+            {#await getActions(client, parent) then actions}
+              {@const action = actions.find(
+                (item) => item.target === drive.class.File && item.action === view.actionImpl.Delete
+              )}
+              {#if action !== undefined}
+                <Button
+                  icon={ui.icon.Trash}
+                  label={view.string.Delete}
+                  loading={deletingFiles.has(parent._id)}
+                  on:click={(event) => deleteDriveFile(parent, event)}
+                />
+              {/if}
+            {/await}
+          {/if}
+        {:else}
+          <Button
+            icon={ui.icon.Trash}
+            label={view.string.Delete}
+            on:click={() => {
+              showPopup(
+                contact.component.DeleteConfirmationPopup,
+                {
+                  object: file,
+                  skipCheck: true,
+                  confirmation: undefined,
+                  deleteAction: async () => {
+                    try {
+                      await deleteObjects(getClient(), [file], true)
+                      attachments = attachments?.filter((item) => item._id !== file._id)
+                      dispatch('delete', file.size)
+                      await refreshQueries([attachment.class.Attachment])
+                    } catch (e) {
+                      console.error(e)
+                    }
                   }
-                }
-              },
-              undefined
-            )
-          }}
-        />
+                },
+                undefined
+              )
+            }}
+          />
+        {/if}
       </div>
     {/each}
   </div>

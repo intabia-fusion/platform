@@ -19,6 +19,26 @@ TypeScript/Svelte 4 monorepo. pnpm workspaces, Node 24 (`.nvmrc`; engines accept
 
 Projects sit 2-3 levels deep, each with its own `package.json`.
 
+## Agent skills
+
+Общие навыки находятся в `.agents/skills/<name>/SKILL.md`. `.claude/skills` - относительный симлинк на этот каталог.
+Codex и pi читают `.agents/skills`; для других агентов подключайте этот каталог поддерживаемым ими способом.
+Не создавайте отдельные копии инструкций для каждого агента. Инструменты и модели выбирайте из доступных в текущей сессии.
+Навыки работы с планами находятся в `../foundation-tasks/.agents/skills`; их пользовательские ссылки устанавливает `../foundation-tasks/scripts/install-skills.sh`.
+
+## Continuing work and browser verification
+
+- A status question does not pause the task. Answer briefly and continue the remaining authorized work; a completed implementation stage still needs its agreed checks. Honor explicit pause and resume requests.
+- Verify Browser MCP with an actual tool call after a browser or session restart. An available tool is not proof of a live connection; a requested profile is not captured until the tool confirms it.
+- Reuse the authenticated browser session. Use a separate tab for automated checks and viewport changes; preserve the user's original tab and restore browser emulation afterward.
+- If an interaction still hangs after a fix, collect and inspect a performance profile of the reproduced hang before making another performance change. Read large traces incrementally.
+
+## Shared UI changes
+
+- Changes to a board-specific view must also preserve the ordinary project kanban. Check flat columns and swim lanes, single-status and merged columns, and collapsed columns when changing the shared kanban engine.
+- Native drag checks must include holding and releasing without movement, returning directly or through another column, Escape, and dragging after scrolling. Cancellation must clear indicators without a click, document write, or rank change; intentional moves and reordering must still work.
+- When extracting a TypeScript controller, move ownership of behavior and internal state together. Keep the component's public contract and a narrow input/output boundary; do not mirror every field through reactive assignments.
+
 ## Where features live
 
 Before searching the code for a feature, open the feature map [`docs/features/README.md`](docs/features/README.md): one file per product area (tracker, chat, meetings, documents/QMS, AI, billing, ...) with the packages, data model, main flows with files and symbols, and a "where to look if you need to..." list. How the pieces fit together (plugin layers, client -> transactor -> DB path, pods and services): [`docs/architecture.md`](docs/architecture.md).
@@ -44,6 +64,16 @@ The catalog is maintained with the code, in the same PR: adding, renaming or rem
 Use `pnpm build:*` from the repo root. All accept `--to PKG` to scope to a package + dependencies.
 
 Type checking is **part of the build**: one native `tsc` (TypeScript 7) pass per package emits `lib/` and `types/` together. There is no separate validate phase.
+
+### Verification and reporting
+
+- Report the command, package scope and commit SHA for each verification result. State whether uncommitted changes were included. Distinguish local checks from remote CI; a local pass does not make a PR green.
+- Before reporting CI status, inspect the current PR head, individual checks and failed-step logs. Report pending checks explicitly. A run for an earlier SHA does not validate the current changes.
+- Identify the failing phase before changing code. Distinguish product or test failures from dependency installation, DNS and runner failures. If setup failed before tests started, report that the tests did not run.
+- Passing Jest tests does not prove the package compiles or passes lint. Run the scoped build and lint after test changes, including changes confined to test files.
+- For Svelte changes, verify the affected runtime behavior as well as compilation. Dynamic presenters, action availability and visible controls require runtime checks. Confirm that the running frontend includes the changes being tested.
+- For a bug fix, verify that the regression test fails before the fix and passes afterward. A test-only stage may intentionally remain red; report that state explicitly and do not call the fix complete.
+- When adding translation keys, add them to every supported locale of the affected package. Check JSON validity and key presence across those locale files.
 
 ```bash
 pnpm install --frozen-lockfile    # Install deps
@@ -106,6 +136,7 @@ Two TypeScript versions are in play: packages depend on 6.0.3, which eslint, ts-
 Do NOT:
 - Run `pnpm build` without `--to` for error checking (hits unrelated broken packages).
 - Run `pnpm run format` (user handles it).
+- Run `git commit` or `git push` (the user reviews the changes first and commits them).
 
 ### Docker Workflow
 
@@ -117,6 +148,8 @@ docker compose -f dev/docker-compose.yaml up -d aibot --force-recreate
 ```
 
 UI via `pnpm build:watch` auto-picks changes, no container restart needed.
+
+Container-backed sanity serves a built frontend image. Before visual verification, check which image is running and whether it includes the current changes. Use `pnpm docker:build --to @hcengineering/pod-front` for a scoped image build, not `pnpm docker --to ...`. When updating only the frontend, recreate `front0` with `--no-deps` so the other stand services keep their versions.
 
 ## Changelog
 
@@ -209,6 +242,8 @@ Flags:
 - Extra playwright flags pass through `pnpm run uitest` unchanged.
 
 Do not run bare `npx playwright test` - without `pnpm run uitest`'s env wiring and `-c ./tests/playwright.config.ts` neither dotenv nor `storageState` load, and every test fails on login with `BadRequest`.
+
+The seeded Default project and project type are shared mutable fixtures: other specs add task types and statuses in existing categories. Use test-owned data or derive expectations from the actual fixture; do not assume fixed status counts or unique categories. A test that passes alone must also handle the fixture changes from the full suite; see `docs/memory/sanity-flaky-tests.md` for confirmed cases.
 
 ### Tracing and retries
 

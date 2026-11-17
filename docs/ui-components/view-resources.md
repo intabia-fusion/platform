@@ -14,7 +14,7 @@
 
 Легенда "Доступ" в таблицах ниже: `import` - только именованный экспорт; `view.component.X` - только через реестр (X указан, если id отличается от имени файла); `both` - оба способа; `internal` - не экспортируется и не зарегистрирован.
 
-- `plugins/view/src/index.ts`: ActionsPopup, ObjectPresenter, EditDoc, SpacePresenter, BooleanTruePresenter, ValueSelector, GrowPresenter (list/GrowPresenter.svelte), DividerPresenter (list/DividerPresenter.svelte), AttachedDocPanel, ObjectMention, SearchSelector, FoldersBrowser (folders/FoldersBrowser.svelte), PersonIdPresenter, PersonIdFilter (filter/PersonIdFilter.svelte), RolePresenter, ReadOnlyNotification, ForbiddenNotification, DatePresenter, DateEditor, SidebarPreviewWidget
+- `plugins/view/src/index.ts`: ActionsPopup, ObjectPresenter, EditDoc, SpacePresenter, BooleanTruePresenter, ValueSelector, GrowPresenter (list/GrowPresenter.svelte), DividerPresenter (list/DividerPresenter.svelte), AttachedDocPanel, ObjectMention, SearchSelector, FoldersBrowser (folders/FoldersBrowser.svelte), AccountUuidPresenter, PersonIdPresenter, PersonIdFilter (filter/PersonIdFilter.svelte), RolePresenter, ReadOnlyNotification, ForbiddenNotification, DatePresenter, DateEditor, SidebarPreviewWidget
 - `plugins/view-resources/src/plugin.ts`: ObjectFilter (filter/ObjectFilter.svelte), DateFilter (filter/DateFilter.svelte), ValueFilter (filter/ValueFilter.svelte), ArrayFilter (filter/ArrayFilter.svelte), StringFilter (filter/StringFilter.svelte), TimestampFilter (filter/TimestampFilter.svelte), FilterTypePopup (filter/FilterTypePopup.svelte), ArrayEditor, SpaceTypeSelector, MasterDetailBrowser (masterDetail/MasterDetailBrowser.svelte), NumberEditor, NumberPresenter, IdPresenter
 - `models/view/src/plugin.ts`: StringEditor, StringEditorPopup (EditBoxPopup.svelte), StringPresenter, HyperlinkPresenter, HyperlinkEditor, HyperlinkEditorPopup, IntlStringPresenter, FileSizePresenter, MarkupDiffPresenter, MarkupPresenter, BooleanPresenter, BooleanEditor, TimestampPresenter, DateTimePresenter, TableBrowser, RelationshipTableBrowser, YoutubePresenter (linkPresenters/YoutubePresenter.svelte), GithubPresenter (linkPresenters/GithubPresenter.svelte), ClassPresenter, ClassRefPresenter, EnumEditor, EnumArrayEditor, HTMLEditor, CollaborativeHTMLEditor, CollaborativeDocEditor, MarkupEditor, MarkupEditorPopup, ListView (list/ListView.svelte), SpaceRefPresenter, EnumPresenter, StatusPresenter (status/StatusPresenter.svelte), StatusRefPresenter (status/StatusRefPresenter.svelte), PersonArrayEditor, PersonIdFilterValuePresenter (filter/PersonIdFilterValuePresenter.svelte), DateFilterPresenter (filter/DateFilterPresenter.svelte), StringFilterPresenter (filter/StringFilterPresenter.svelte), AudioViewer (viewer/AudioViewer.svelte), ImageViewer (viewer/ImageViewer.svelte), VideoViewer (viewer/VideoViewer.svelte), PDFViewer (viewer/PDFViewer.svelte), TextViewer (viewer/TextViewer.svelte), BaseDocPresenter, MasterDetailView (masterDetail/MasterDetailView.svelte), AssociationPresenter, TreeView, AddRelationPopup (relation/AddRelationPopup.svelte)
 
@@ -84,6 +84,7 @@
 | DocNavLink.svelte | Обёртка-ссылка на документ, открывает компонент | object, component, inline, props | import |
 | DocReferencePresenter.svelte | Презентер значения RelatedDocument | value, compact | import |
 | navigator/NavLink.svelte | Ссылка навигации app/space/special | app, space, special, restoreLastLocation | import |
+| AccountUuidPresenter.svelte | Презентер AccountUuid: находит Person по personUuid, показывает аватар и имя | value, shouldShowName, shouldShowAvatar | registry |
 | PersonIdPresenter.svelte | Презентер PersonId, аватар и имя | value, shouldShowName, shouldShowAvatar | both |
 | BaseDocPresenter.svelte | Базовый компактный презентер Doc | object, value, size | both |
 
@@ -97,7 +98,7 @@
 | RelationshipTable.svelte | Таблица связанных документов по Association | _class, query, config, viewOptions | internal |
 | RelationshipTableBrowser.svelte | Обёртка над RelationshipTable, грузит viewlet | _class, query, viewlet | view.component.RelationshipTableBrowser |
 | list/List.svelte | Список документов с категориями/группировкой | _class, query, viewOptions, config | import |
-| list/ListView.svelte | Обёртка над List, слушает клавиатуру | _class, viewlet, config, viewOptions | both |
+| list/ListView.svelte | Обёртка над List, слушает клавиатуру; `viewlet.props.columnWidths` задаёт сетку колонок, `minRowWidth` — минимум для горизонтальной прокрутки | _class, viewlet, config, viewOptions | both |
 | list/ListPresenter.svelte | Презентер значения одного атрибута в строке | docObject, attributeModel, value, onChange | import |
 | list/ListCategories.svelte | Рекурсивный рендер категорий списка | docs, categoryRefsMap, viewOptions | internal |
 | list/ListCategory.svelte | Одна категория списка, рекурсия по вложенным | category, itemProj, itemModels | internal |
@@ -120,13 +121,13 @@
 | AttachedDocPanel.svelte | Панель редактирования AttachedDoc | _id, _class, embedded | view.component.AttachedDocPanel |
 | ParentsNavigator.svelte | Хлебные крошки родителей документа | element, maxWidth | import |
 | UpDownNavigator.svelte | Кнопки перехода к соседнему документу | element | both |
-| SpaceHeader.svelte | Заголовок страницы пространства | space, _class, viewlet, viewlets | import |
+| SpaceHeader.svelte | Заголовок страницы пространства; слот `afterSearch` - контролы после поиска в строке фильтра | space, _class, viewlet, viewlets, defaultViewletDescriptor | import |
 | DocsNavigator.svelte | Список ссылок на документы | elements, maxWidth | both |
 | ClassAttributeBar.svelte | Панель кастомных атрибутов класса объекта | object, _class, to, ignoreKeys | import |
 | DocAttributeBar.svelte | Панель атрибутов документа по всем миксинам | object, mixins, ignoreKeys | import |
-| navigator/TreeElement.svelte | Базовый элемент дерева навигации | _id, icon, label, actions | import |
+| navigator/TreeElement.svelte | Базовый элемент дерева навигации | _id, icon, label, actions; слот `headerActions` всегда виден в заголовке группы | import |
 | navigator/TreeItem.svelte | Лист дерева навигации | _id, icon, label, actions | import |
-| navigator/TreeNode.svelte | Узел-секция дерева навигации, группа | _id, title, actions, collapsed | import |
+| navigator/TreeNode.svelte | Узел-секция дерева навигации, группа | _id, title, actions, collapsed; слот `headerActions` для постоянных кнопок заголовка | import |
 | folders/FoldersBrowser.svelte | Браузер иерархии папок по parent/title | _class, query, titleKey, parentKey | both |
 | folders/FolderTreeLevel.svelte | Один уровень рекурсивного дерева папок | folders, folderById, descendants, level | internal |
 | masterDetail/MasterDetailBrowser.svelte | Layout master-detail: список и деталь | masterComponent, detailComponent, query | view.component.MasterDetailBrowser |
@@ -167,8 +168,9 @@
 |---|---|---|---|
 | filter/FilterBar.svelte | Панель активных фильтров вьюлета | _class, space, query, viewOptions | import |
 | filter/FilterButton.svelte | Кнопка "Filter", открывает FilterTypePopup | _class, space, viewOptions, adaptive | import |
-| filter/FilterTypePopup.svelte | Popup выбора атрибута фильтра | _class, target, filter, index | view.component.FilterTypePopup |
-| filter/FilterSection.svelte | Один активный фильтр в FilterBar | filter, space | internal |
+| filter/FilterTypePopup.svelte | Popup выбора атрибута фильтра; `hiddenKeys` убирает атрибуты верхнего уровня | _class, target, filter, index, hiddenKeys | view.component.FilterTypePopup |
+| filter/FilterConditions.svelte | Условия (JSON `Filter[]`) строкой чипов, с кнопкой добавления (иконка или подпись `addLabel`); крестики - `removable`; `hiddenKeys` не предлагает атрибуты для нового условия (сохранённые показываются); настройки досок | value, _class, space, disabled, removable, addLabel, hiddenKeys | import |
+| filter/FilterSection.svelte | Один активный фильтр в FilterBar | filter, space, hideRemove | internal |
 | filter/FilterSave.svelte | Сохранить фильтры как отдельный вид | viewOptions, _class | internal |
 | filter/ModeSelector.svelte | Селектор режима фильтра | filter | internal |
 | filter/ArrayFilter.svelte | Фильтр по значению ArrOf-атрибута | _class, filter, onChange | view.component.ArrayFilter |

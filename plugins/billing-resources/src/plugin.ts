@@ -19,6 +19,7 @@ import { type IntlString, mergeIds } from '@hcengineering/platform'
 
 export default mergeIds(billingId, billing, {
   string: {
+    DeleteDriveFileConfirm: '' as IntlString,
     AllPlans: '' as IntlString,
     ActivePlan: '' as IntlString,
     ResourceUsage: '' as IntlString,

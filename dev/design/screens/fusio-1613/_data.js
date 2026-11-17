@@ -26,6 +26,7 @@ const BOARD = (() => {
   const card = (i, o = {}) => ({
     id: i.id,
     cat: category(i.status),
+    statusName: i.status,
     title: i.title,
     priority: i.priority,
     ...(i.assignee !== undefined ? { assignee: avatar(i.assignee) } : {}),

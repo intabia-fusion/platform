@@ -15,6 +15,7 @@
     "AnyStatus": "Jeder Status",
     "AnyTaskType": "Beliebiger Aufgabentyp",
     "Workflows": "Workflows",
+    "NoOutgoingTransitions": "Keine Übergänge",
     "DeleteWorkflow": "Workflow löschen",
     "DeleteWorkflowConfirm": "Sind Sie sicher, dass Sie diesen Workflow löschen möchten?",
     "DeleteWorkflowTransition": "Übergang löschen",

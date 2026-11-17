@@ -108,7 +108,7 @@
 
 | Component | Purpose | Key props |
 |---|---|---|
-| Header | Шапка с адаптивным схлопыванием search/actions/extra | `type`, `adaptive`, `hideSearch`, `hideActions`, `doubleRowWidth` |
+| Header | Шапка с адаптивным схлопыванием search/actions/extra; default slot получает `doubleRow` текущей разметки | `type`, `adaptive`, `hideSearch`, `hideActions`, `doubleRowWidth` |
 | TabList | Вкладки со скроллом, multiselect и иконками | `selected`, `items`, `kind`, `multiselect`, `onlyIcons` |
 | Tabs | Вкладки + рендер Component поверх TabsControl | `model`, `selected`, `padding`, `size` |
 | TabsControl | Низкоуровневый рендер полосы вкладок, внутри Tabs | `model`, `selected`, `gap`, `maxTabWidth` |

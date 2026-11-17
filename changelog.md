@@ -2,6 +2,55 @@
 
 Changelog.
 
+## [0.8.72] - 2026-11-13
+
+* 🚀 FEATURES: · FUSIO-1733: Add an optional board setting to prevent duplicate column titles, with client and server validation ([#669](https://github.com/hcengineering/platform/issues/669)) · FUSIO-1780: Show workspace limit warnings, include Drive file versions in storage usage, support deleting Drive files from the largest-files list and estimate unused storage in the admin panel ([#672](https://github.com/hcengineering/platform/issues/672))
+* 🐛 BUG FIXES: · FUSIO-1705: Repair stale activity reference classes after task type changes and avoid rendering references to unknown classes ([#658](https://github.com/hcengineering/platform/issues/658)) · FUSIO-1757: Align project list columns and controls and show full project names in tooltips ([#673](https://github.com/hcengineering/platform/issues/673)) · FUSIO-1780: Refresh and republish resource limit states, recalculate storage usage after large blob deletions and check limits before starting new recordings or transcriptions while allowing active sessions to continue ([#672](https://github.com/hcengineering/platform/issues/672)) · FUSIO-1617: Close the previous workspace panel when switching workspaces to prevent errors from custom task types ([#670](https://github.com/hcengineering/platform/issues/670))
+
+## [0.8.71] - 2026-11-10
+
+* 🐛 BUG FIXES: · FUSIO-1768: Prevent successful-payment receipt emails from failing when the transaction ID is numeric ([76a3c5bc59](https://github.com/intabia-fusion/platform/commit/76a3c5bc59a6b00e2cbcad6d2ca31f5e59333492))
+
+## [0.8.70] - 2026-11-10
+
+* 🐛 BUG FIXES: · Give Kanban drop-target card previews an opaque background, border and rounded corners so underlying cards do not show through ([d6c269f977](https://github.com/intabia-fusion/platform/commit/d6c269f977c2e27ff5b2bb7f18ecce1014afa077))
+
+## [0.8.69] - 2026-11-10
+
+* 🚀 FEATURES: · Show missing task type statuses, add compatible existing statuses, align status order and identify workflow statuses without outgoing transitions ([#666](https://github.com/hcengineering/platform/issues/666))
+* 🐛 BUG FIXES: · FUSIO-1763: Fix board card dragging, reordering and cancellation across merged columns and swim lanes; show Kanban loading progress ([#666](https://github.com/hcengineering/platform/issues/666)) · FUSIO-1635: Render and escape multiline code blocks without a recognized language ([#664](https://github.com/hcengineering/platform/issues/664))
+
+## [0.8.68] - 2026-11-09
+
+* 🚀 FEATURES: · FUSIO-1596: Open downloaded files or reveal them in the desktop file manager, with confirmation for executable and unknown file types ([#633](https://github.com/hcengineering/platform/issues/633)) · Add subscription categories, manual seat counts and payment history with confirmed payment and refund totals to the admin dashboard ([#657](https://github.com/hcengineering/platform/issues/657)) · FUSIO-1607: Track signup submission attempts and blocked actions while excluding sensitive URLs from analytics ([#646](https://github.com/hcengineering/platform/issues/646))
+* 🐛 BUG FIXES: · FUSIO-1636: Apply presentation ordering to task sorting and prevent conflicts with grouping fields ([#644](https://github.com/hcengineering/platform/issues/644)) · FUSIO-1639: Show the selected sorting direction in dropdown menus ([#663](https://github.com/hcengineering/platform/issues/663)) · FUSIO-1279: Preserve trial and free plan banners after unsuccessful checkout and prevent unpaid drafts from granting a paid plan ([#634](https://github.com/hcengineering/platform/issues/634)) · FUSIO-1745: Persist fallback ReadState before creating its Chat reference ([#662](https://github.com/hcengineering/platform/issues/662))
+* 🧩 OTHER: · Keep the admin billing rage-click test pool from limiting parallel AI tests ([#660](https://github.com/hcengineering/platform/issues/660))
+
+## [0.8.67] - 2026-11-08
+
+* 🐛 BUG FIXES: · FUSIO-1727: Fix board header overflow, filtered status counts and ambiguous status names; improve Kanban drag cancellation, scrolling and fullscreen column sizing ([#659](https://github.com/hcengineering/platform/issues/659)) · FUSIO-1648: Limit project type names and keep long names within settings layouts ([#652](https://github.com/hcengineering/platform/issues/652))
+
+## [0.8.66] - 2026-11-06
+
+* 🚀 FEATURES: · FUSIO-1692: Add chat navigator sorting by last message or name, with manual ordering in supported sections ([#655](https://github.com/hcengineering/platform/issues/655)) · FUSIO-1638: Show calendar dates and full timestamp tooltips for issue creation and modification dates ([#639](https://github.com/hcengineering/platform/issues/639))
+* 🐛 BUG FIXES: · FUSIO-1704: Allow OTP registration without a password when password complexity rules are enabled ([#653](https://github.com/hcengineering/platform/issues/653)) · FUSIO-1661: Clarify the Russian label for manual sorting ([#651](https://github.com/hcengineering/platform/issues/651))
+
+## [0.8.65] - 2026-11-02
+
+* 🚀 FEATURES: FUSIO-1615: Add a board catalog, personal navigation lists and board sharing ([#650](https://github.com/intabia-fusion/platform/pull/650))
+* 🐛 BUG FIXES: FUSIO-1679: Render active status icons consistently using the project status order ([#649](https://github.com/intabia-fusion/platform/pull/649)); FUSIO-1680: Restore horizontal scrolling in board creation and settings ([#650](https://github.com/intabia-fusion/platform/pull/650)); FUSIO-1681: Show unique project members and support changing owner and member roles ([#650](https://github.com/intabia-fusion/platform/pull/650)); FUSIO-1683: Fix board settings, access hints, notifications and color rule previews ([#650](https://github.com/intabia-fusion/platform/pull/650)); FUSIO-1615: Fix archived project restoration and issue template project switching ([#650](https://github.com/intabia-fusion/platform/pull/650))
+
+## [0.8.64] - 2026-11-01
+
+* 🚀 FEATURES: · FUSIO-1621: Add configurable boards and redesign project creation and settings ([#626](https://github.com/hcengineering/platform/issues/626)) · FUSIO-1677: Add document previews and open documents inside chat ([#642](https://github.com/hcengineering/platform/issues/642)) · Show typing indicators in the chat navigator ([#643](https://github.com/hcengineering/platform/issues/643)) · FUSIO-1012: Include sender details in workspace invitation emails ([#640](https://github.com/hcengineering/platform/issues/640))
+* 🐛 BUG FIXES: · FUSIO-1569: Preserve historical activity entries when changing issue type ([#630](https://github.com/hcengineering/platform/issues/630)) · FUSIO-1629: Validate name and email length during registration ([#647](https://github.com/hcengineering/platform/issues/647))
+* 🧩 OTHER: · Wait for loaded tabs in the rage-click test ([#648](https://github.com/hcengineering/platform/issues/648))
+
+## [0.8.63] - 2026-10-30
+
+* 🐛 BUG FIXES: · FUSIO-1526: Enforce password policy on the server ([#611](https://github.com/hcengineering/platform/issues/611)) · FUSIO-1584: Prevent repeated asynchronous button actions ([#582](https://github.com/hcengineering/platform/issues/582)) · FUSIO-1618: Apply template subtasks after attaching an image ([#629](https://github.com/hcengineering/platform/issues/629))
+* 🧩 OTHER: · FUSIO-1081: Trace push notification delivery and delays ([#638](https://github.com/hcengineering/platform/issues/638))
+
 ## [0.8.62] - 2026-10-28
 
 * 🚀 FEATURES: · Applets and polls in chat ([#628](https://github.com/hcengineering/platform/issues/628)) · FUSIO-1434, FUSIO-1027, FUSIO-1388, FUSIO-1589: Attachments browser and redesign ([#621](https://github.com/hcengineering/platform/issues/621)) · FUSIO-1594: Auto documentation ([#620](https://github.com/hcengineering/platform/issues/620)) · FUSIO-1594: Mail fixes and disabled features handling ([#631](https://github.com/hcengineering/platform/issues/631))

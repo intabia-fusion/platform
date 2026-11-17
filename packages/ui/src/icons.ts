@@ -21,6 +21,8 @@ import ui from './plugin'
 export function registerIcons (sprite: string): void {
   loadMetadata(ui.icon, {
     Archive: `${sprite}#archive`,
+    ArrowBarToLeft: `${sprite}#arrow-bar-to-left`,
+    ArrowBarToRight: `${sprite}#arrow-bar-to-right`,
     ArrowBendUpLeft: `${sprite}#arrow-bend-up-left`,
     ArrowBendUpRight: `${sprite}#arrow-bend-up-right`,
     ArrowClockwise: `${sprite}#arrow-clockwise`,

@@ -34,6 +34,7 @@
   import { ViewletsSettingButton, restrictionStore } from '@hcengineering/view-resources'
 
   import tracker from '../../../plugin'
+  import { normalizeIssueTimeConfig } from './issueTimePreference'
   import CreateIssue from '../../CreateIssue.svelte'
   import SubIssueList from './SubIssueList.svelte'
 
@@ -78,6 +79,10 @@
 
   const client = getClient()
 
+  function normalizeConfig (config: Viewlet['config'], source: Viewlet): Viewlet['config'] {
+    return normalizeIssueTimeConfig(config, source)
+  }
+
   $: viewlet &&
     objectConfigurations.query(
       view.class.Viewlet,
@@ -99,7 +104,10 @@
         attachedTo: { $in: configurationRaw.map((it) => it._id) }
       },
       (res) => {
-        preference = res
+        preference = res.map((pref) => {
+          const source = configurationRaw.find((item) => item._id === pref.attachedTo)
+          return source !== undefined ? { ...pref, config: normalizeConfig(pref.config, source) } : pref
+        })
       }
     )
 
@@ -111,7 +119,7 @@
     const newConfigurations: Record<Ref<Class<Doc>>, Viewlet['config']> = {}
 
     for (const v of configurationRaw) {
-      newConfigurations[v.attachTo] = v.config
+      newConfigurations[v.attachTo] = normalizeConfig(v.config, v)
     }
 
     // Add viewlet configurations.
@@ -212,7 +220,14 @@
     {#if hasSubIssues}
       <slot name="buttons" />
       <div class="w-1 flex-no-shrink" />
-      <ViewletsSettingButton bind:viewOptions viewletQuery={{ _id: viewletId }} kind="ghost" noGap bind:viewlet />
+      <ViewletsSettingButton
+        bind:viewOptions
+        viewletQuery={{ _id: viewletId }}
+        kind="ghost"
+        noGap
+        bind:viewlet
+        {normalizeConfig}
+      />
     {/if}
   </div>
 </div>
@@ -233,7 +248,7 @@
           focusIndex={focusIndex === -1 ? -1 : focusIndex + 1}
           {configurations}
           {preference}
-          {viewlet}
+          viewlet={{ ...viewlet, config: normalizeConfig(viewlet.config, viewlet) }}
           {viewOptions}
           {query}
           compactMode={listWidth <= 600}

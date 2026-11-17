@@ -91,7 +91,7 @@
 ## Фичи
 
 ### Обычные документы (`document`)
-- **Шапка и меню документа.** Порядок как у задачи: ИИ, сводка реакций, ссылка (после копирования на 1.5 с галочка и «Скопировано»), «В боковую панель», «Ещё», затем боковые панели «Обратные ссылки» и «История» (отделены разделителем). Ширина текста - кнопка в правом поле контента (`maxWidthToggle="gutter"`). Меню «Ещё» одно для открытого документа и списков: раскладка в mixin `view.mixin.ActionMenu` на `document.class.Document` (открыть, новая вкладка, боковая панель; вложенный документ; блокировка, перенос; Копировать ▸ ссылку/Markdown, публичная ссылка, печать; удаление). - plugins/document-resources/src/components/EditDoc.svelte; models/document/src/index.ts.
+- **Шапка и меню документа.** Порядок как у задачи: ИИ, сводка реакций, ссылка (после копирования на 1.5 с галочка и «Скопировано»), «В боковую панель», «Ещё», затем боковые панели «Обратные ссылки» и «История» (отделены разделителем). Ширина текста - кнопка в правом поле контента (`maxWidthToggle="gutter"`). Обратные ссылки ищут источник по родительскому классу домена; ссылка с удалённым классом сохраняет текст без навигации и не вызывает ошибку при открытии (`ActivityReferencePresenter.svelte`, `referenceQuery.ts`, activity-resources). Меню «Ещё» одно для открытого документа и списков: раскладка в mixin `view.mixin.ActionMenu` на `document.class.Document` (открыть, новая вкладка, боковая панель; вложенный документ; блокировка, перенос; Копировать ▸ ссылку/Markdown, публичная ссылка, печать; удаление). - plugins/document-resources/src/components/EditDoc.svelte; models/document/src/index.ts.
 - **Основной текст в поиске.** `contentField: 'content'` у `document.class.Document` (`models/server-document/src/index.ts`): текст содержимого - в `fulltextSummary`, заголовок и прочие атрибуты - в `fulltextExtra`. У `DocumentMeta` основного текста нет (тело - отдельный `ControlledDocument`), весь её текст в `fulltextExtra`.
 - **Иерархия документов в teamspace.** Дерево с drag&drop (`DropMarker`/`DropArea`), блокировка документа при редактировании (`lockedBy`). - `plugins/document-resources/src/components/navigator/DocHierarchy.svelte`, `plugins/document-resources/src/components/EditDoc.svelte`.
 - **Перенос в другой teamspace.** `moveDocument*` шлёт только изменившиеся `space`/`parent`, смена пространства и родителя пишется в активность. Сообщения активности переезжают в новое пространство в `services/activity` (`getMovedMessagesTxes`). - `plugins/document-resources/src/utils.ts`, `services/activity/src/activity.ts`, `docs/memory/activity_space_move.md`.
@@ -136,7 +136,7 @@
 
 | Фича | ru | en | Статус | Сверено | Расхождение |
 | --- | --- | --- | --- | --- | --- |
-| Шапка и меню документа | knowledge-management/documents | knowledge-management/documents | partial | 0.8.60 | не описана структура шапки/меню открытого документа (ИИ, реакции, копирование ссылки, боковая панель «История») |
+| Шапка и меню документа | knowledge-management/documents | knowledge-management/documents | stale | 0.8.60 | не описаны структура шапки/меню и отображение обратной ссылки с удалённым типом источника |
 | Основной текст в поиске | - | - | internal | - | |
 | Иерархия документов в teamspace | knowledge-management/documents | knowledge-management/documents | partial | 0.8.60 | не описан drag&drop для изменения порядка/вложенности документов в дереве и блокировка документа при одновременном редактировании (`lockedBy`) |
 | История версий и восстановление содержимого | - | - | off | - | не документируем |

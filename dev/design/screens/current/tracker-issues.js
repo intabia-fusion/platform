@@ -34,6 +34,7 @@ const groups = ['In Progress', 'Todo', 'Backlog', 'Done', 'Canceled'].map((name)
     return {
       id: i.id,
       cat: st.category,
+      statusName: st.name,
       title: i.title,
       priority: i.priority,
       ...(person !== undefined ? { assignee: [person.initials, person.color] } : {}),

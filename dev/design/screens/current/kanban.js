@@ -32,6 +32,7 @@ const cols = DEMO.en.statuses.slice(0, 5).map((st) => {
     return {
       id: i.id,
       cat: st.category,
+      statusName: i.status,
       title: i.title,
       priority: i.priority,
       ...(parent !== undefined ? { parent: parent.title.length > 30 ? parent.title.slice(0, 30) + '…' : parent.title } : {}),

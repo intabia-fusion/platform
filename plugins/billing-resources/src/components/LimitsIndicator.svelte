@@ -53,8 +53,16 @@
     // Endpoint keys by workspace UUID; the URL segment is the slug, so read the resolved UUID.
     const wsUuid = getMetadata(presentation.metadata.WorkspaceUuid)
     const client = getBillingClient()
+    if (wsUuid === undefined || client === null) return
+    try {
+      const limitStates = await client.getWorkspaceLimitStates(wsUuid)
+      if (getMetadata(presentation.metadata.WorkspaceUuid) !== wsUuid) return
+      subscriptionStore.update((store) => ({ ...store, limitStates }))
+    } catch (err) {
+      console.error('[LimitsIndicator] limit states fetch failed', err)
+    }
     // pod-billing answers token windows to the workspace owner only (401 for the rest)
-    if (wsUuid === undefined || client === null || getCurrentAccount().role !== AccountRole.Owner) return
+    if (getCurrentAccount().role !== AccountRole.Owner) return
     try {
       windows = await client.getWorkspaceTokenWindows(wsUuid)
     } catch (err) {

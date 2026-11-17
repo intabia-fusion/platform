@@ -3,6 +3,7 @@ lib/
 _api-extractor-temp/
 temp/
 .idea
+.work
 pods/workspace/init/
 pods/workspace/init-scripts/
 
@@ -126,4 +127,3 @@ tests/sanity/step-report.ndjson
 .profile-tests
 .tmp-shots/
 coverage-stand.json
-dev/pen/.state.json

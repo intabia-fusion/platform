@@ -1000,5 +1000,23 @@
     "id": "e03fb8bb3d83",
     "handler": "on:click={closeTab}",
     "reason": "Closing a widget tab by id is idempotent; a repeat closes nothing."
+  },
+  {
+    "file": "plugins/tracker-resources/src/components/boards/settings/ColumnsTab.svelte",
+    "id": "26913bc88b10",
+    "handler": "on:click={addColumn}",
+    "reason": "Only translate() of the default title is awaited; each click is meant to add one column, the save goes through the board editor queue."
+  },
+  {
+    "file": "plugins/tracker-resources/src/components/boards/settings/RulesTab.svelte",
+    "id": "20e7b1e36068",
+    "handler": "on:click={add}",
+    "reason": "Only translate() of default titles is awaited; each click is meant to add one rule, the save goes through the board editor queue."
+  },
+  {
+    "file": "plugins/tracker-resources/src/components/projects/settings/ArchiveSection.svelte",
+    "id": "8de4e16393dd",
+    "handler": "on:click={async () => {",
+    "reason": "deleteProject reads one issue and opens a confirmation MessageBox; the archive or delete runs in the popup action. Worst case is two stacked confirmations, no mutation."
   }
 ]

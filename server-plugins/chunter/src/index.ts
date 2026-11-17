@@ -23,7 +23,12 @@ import {
   TriggerFunc
 } from '@hcengineering/server-core'
 import { TypeMatchFuncResource } from '@hcengineering/server-notification'
-import { IconPresenterFn, IntlStringPresenterFn, StringPresenterFn } from '@hcengineering/server-activity'
+import {
+  IconPresenterFn,
+  IntlStringPresenterFn,
+  PropsPresenterFn,
+  StringPresenterFn
+} from '@hcengineering/server-activity'
 
 export const serverChunterId = 'server-chunter' as Plugin
 export { ChunterMiddleware } from './middleware'
@@ -33,6 +38,7 @@ export default plugin(serverChunterId, {
     ChunterTrigger: '' as Resource<TriggerFunc>,
     OnUserStatus: '' as Resource<TriggerFunc>,
     OnCollaboratorAdded: '' as Resource<TriggerFunc>,
+    OnChatDocRemoved: '' as Resource<TriggerFunc>,
     OnCollaboratorRemoved: '' as Resource<TriggerFunc>,
     OnPersonNameChanged: '' as Resource<TriggerFunc>,
     OnChannelJoin: '' as Resource<TriggerFunc>,
@@ -48,6 +54,7 @@ export default plugin(serverChunterId, {
     ChatSearchTitleProvider: '' as Resource<SearchPresenterProvider>,
     ChannelIconPresenter: '' as Resource<IconPresenterFn>,
     DirectIconPresenter: '' as Resource<IconPresenterFn>,
+    DirectPropsPresenter: '' as Resource<PropsPresenterFn>,
     ChatMessageSearchTitleProvider: '' as Resource<SearchPresenterProvider>,
     ChatMessageSearchFacets: '' as Resource<SearchFacetsProvider>,
     JoinChannelTypeMatch: '' as TypeMatchFuncResource

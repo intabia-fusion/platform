@@ -15,6 +15,11 @@ import serverView from '@hcengineering/server-view'
 export { serverDocumentId } from '@hcengineering/server-document'
 
 export function createModel (builder: Builder): void {
+  builder.mixin(document.class.Document, core.class.Class, serverActivity.mixin.IconPresenter, {
+    presenter: serverActivity.function.FieldsIconPresenter,
+    triggerFields: ['icon', 'color']
+  })
+
   builder.mixin(document.class.Document, core.class.Class, serverActivity.mixin.UrlPresenter, {
     presenter: serverDocument.function.DocumentUrlPresenter
   })

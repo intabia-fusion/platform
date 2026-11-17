@@ -25,7 +25,8 @@ import { defaultPriorities, issuePriorities } from './types'
 export const UNASSIGNED_SWIM = '__swim_unassigned__'
 
 // Fields that must not be changed via drag (project immutable).
-const IMMUTABLE_SWIM_FIELDS = new Set<string>(['space'])
+// Board lanes are filters: no single value puts a card into one, so cards stay in their lane.
+const IMMUTABLE_SWIM_FIELDS = new Set<string>(['space', 'board'])
 
 const labelKey = (label: string): string => label.toLowerCase().trim()
 

@@ -14,7 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Doc } from '@hcengineering/core'
+  import type { Doc, Ref } from '@hcengineering/core'
   import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
   import ui, { Scroller, Label, showPopup, Menu, SearchInput } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
@@ -36,47 +36,21 @@
 
   export let object: Doc | undefined
   export let chat: Chat | undefined
+  export let selectedId: Ref<Doc> | undefined
   export let currentSpecial: SpecialNavModel | undefined
 
-  const me = getCurrentAccount()
-  const pinnedChatsQuery = createQuery()
   const employeesQuery = createQuery()
 
   let search: string = ''
 
   let employees: Employee[] = []
-  let pinned: Chat[] = []
 
-  let pinnedLoaded = false
   let loadedGroups = new Set<string>()
-  $: firstWaveLoaded =
-    pinnedLoaded && chatNavGroupModels.every((model) => model.deferred === true || loadedGroups.has(model.id))
+  $: firstWaveLoaded = chatNavGroupModels.every((model) => model.deferred === true || loadedGroups.has(model.id))
 
-  function isGroupActive (model: ChatNavGroupModel, pinnedLoaded: boolean, firstWaveLoaded: boolean): boolean {
-    if (model.deferred === true) return firstWaveLoaded
-    if (model.id === 'starred') return pinnedLoaded
-    return true
+  function isGroupActive (model: ChatNavGroupModel, firstWaveLoaded: boolean): boolean {
+    return model.deferred !== true || firstWaveLoaded
   }
-
-  $: pinnedChatsQuery.query(
-    chunter.class.Chat,
-    {
-      pinned: true,
-      account: me.uuid,
-      ...(search !== ''
-        ? {
-            $search: `*${search}*`,
-            $searchIn: ['title', 'identifier']
-          }
-        : {
-            hidden: false
-          })
-    },
-    (res) => {
-      pinned = res
-      pinnedLoaded = true
-    }
-  )
 
   $: if (search !== '') {
     employeesQuery.query(
@@ -169,11 +143,11 @@
     <ChatNavGroup
       {object}
       {chat}
+      {selectedId}
       {model}
-      {pinned}
       {search}
       {employees}
-      active={isGroupActive(model, pinnedLoaded, firstWaveLoaded)}
+      active={isGroupActive(model, firstWaveLoaded)}
       on:loaded={() => {
         loadedGroups = loadedGroups.add(model.id)
       }}

@@ -1,6 +1,6 @@
 # Платформа: рабочее место, настройки, экспорт, бэкап, desktop
 
-> Сверено с кодом: коммит 39ae47eb6f, 2026-09-23.
+> Сверено с кодом: коммит 16da753f62, 2026-10-26.
 
 Пользовательский каркас платформы: левая панель приложений и навигатор (workbench), сайдбар с виджетами и вкладками, настройки аккаунта/воркспейса (setting), персональные предпочтения (preference), экспорт данных в файл или в другой воркспейс, резервное копирование/восстановление и Electron-приложение для десктопа. Сущности: `Application`, `Widget`/`WidgetPreference`, `WorkbenchTab`, `SettingsCategory`, `Integration`, `Preference`, `BackupInfo`.
 
@@ -21,7 +21,7 @@
 | models/desktop-preferences | `models/desktop-preferences/src` | `TDesktopNotificationPreference`, группа в Notification Preferences |
 | plugins/desktop-preferences | `plugins/desktop-preferences/src` | типы desktop-уведомлений |
 | models/desktop-downloads | `models/desktop-downloads/src` | регистрация `WorkbenchExtension` для панели загрузок |
-| plugins/desktop-downloads | `plugins/desktop-downloads/src` | `DownloadItem`, IPC-функция `HandleDownloadItem` |
+| plugins/desktop-downloads | `plugins/desktop-downloads/src` | `DownloadItem`, IPC-функция `HandleDownloadItem`, сеттер действий `setDownloadItemActions` |
 | plugins/export | `plugins/export/src` | типы (`TransformConfig`, `RelationDefinition`, `ExportResultRecord`), plugin-id |
 | plugins/export-resources | `plugins/export-resources/src` | UI (`ExportSettings`, `ExportButton`, `ExportToWorkspaceModal`) + клиент к pod-export |
 | services/export/pod-export | `services/export/pod-export/src` | сервис экспорта: `/exportAsync`, `/exportSync`, `/export-to-workspace` |
@@ -36,7 +36,7 @@
 
 | Символ | Смысл | Файл |
 | --- | --- | --- |
-| `Application` (`TApplication`) | приложение левой панели: label/icon/alias/position/hidden/accessLevel/order | `models/workbench/src/index.ts` |
+| `Application` (`TApplication`) | приложение левой панели: label/icon/alias/position/hidden/accessLevel/order/hasNavigator | `models/workbench/src/index.ts` |
 | `ApplicationNavModel` | навигационная модель, расширяет `Application` (`extends: Ref<Application>`) | `models/workbench/src/index.ts` |
 | `HiddenApplication` | персональный `Preference`, скрывает приложение из панели | `models/workbench/src/index.ts` |
 | `SpaceView` (mixin) | вешает `ViewConfiguration` на класс спейса | `models/workbench/src/index.ts` |
@@ -52,13 +52,18 @@
 | `Preference`/`SpacePreference` | базовый персональный настройка (`attachedTo`) и её сужение до `Ref<Space>` | `models/preference/src/index.ts` |
 | `DesktopNotificationPreference` | showNotifications/playSound/bounceAppIcon/showUnreadCounter | `models/desktop-preferences/src/index.ts` |
 | `DownloadItem` | состояние загрузки в desktop: key/state/receivedBytes/totalBytes/savePath | `plugins/desktop-downloads/src/types.ts` |
+| `DownloadActionStatus` | результат действия над загрузкой: ok/missing/failed/cancelled/unknown/unavailable | `plugins/desktop-downloads/src/types.ts` |
 | `TransformConfig`/`RelationDefinition`/`ExportResultRecord` | правила трансформации при экспорте между воркспейсами, лог результата | `plugins/export/src/types.ts` |
 | `BackupInfo` (+ `revision`) | индекс бэкапа: снапшоты, домены, ревизия для контроля конкурентной записи | `server/backup/src/types.ts` |
 | `BackupConfig.DeletedRetentionDays` | сколько дней хранить архив удалённого воркспейса (0 = не чистить) | `server/backup/src/service.ts` |
 
 ## Как работает
 
-1. **Переключение приложения в левой панели.** Клик по иконке в `Applications.svelte` (`<NavLink app={app.alias}>`) меняет location -> `Workbench.svelte` вызывает `buildNavModel` (`plugins/workbench-resources/src/utils.ts`), который мёрджит `Application` с найденным по `extends` `ApplicationNavModel` в единый `NavigatorModel`. Программная навигация (шорткаты, действия) идёт через action `Navigate` (`createNavigateAction`, `models/workbench/src/index.ts`, impl `workbench.actionImpl.Navigate`).
+При смене воркспейса `setClient` (packages/presentation/src/utils.ts) до запросов новой модели закрывает глобальную панель через `closePanel(false)`: сбрасываются `panelstore` и внутренний URI панели (packages/ui/src/panelup.ts), адрес назначения сохраняется. Поэтому панель задачи с кастомным классом из предыдущего воркспейса не монтируется с новой иерархией. Повторное подключение к тому же воркспейсу сохраняет панель. Регрессия: packages/presentation/src/___tests___/liveQuery.test.ts.
+
+`SpacesNavModel.catalog` добавляет постоянную кнопку каталога после кнопки создания в заголовке раздела. `SpacesNav` передает ее через слот `headerActions` у `TreeNode` и `TreeElement`; кнопки доступны при свернутом и пустом разделе. Пустой контейнер действий `NavGroup` не появляется при наведении и не сдвигает соседние кнопки. В трекере каталог проектов открывается по прежнему адресу `all-projects`.
+
+1. **Переключение приложения в левой панели.** Клик по иконке в `Applications.svelte` (`<NavLink app={app.alias}>`) меняет location -> `Workbench.svelte` вызывает `buildNavModel` (`plugins/workbench-resources/src/utils.ts`), который мёрджит `Application` с найденным по `extends` `ApplicationNavModel` в единый `NavigatorModel`. Повторный клик по активному приложению (включая отдельную кнопку уведомлений) ничего не меняет: маршрут, текущий контекст и видимость меню сохраняются. Меню переключается отдельной кнопкой: стрелка вправо открывает, влево скрывает. Кнопка есть только у приложения с `NavigatorModel` или собственным меню компонента (`hasNavigator: true`); до обновления модели собственные меню чата, уведомлений, планировщика, настроек, HR и процессов определяются по alias (`hasApplicationNavigator`, `navigation.ts`); в «Офисе» её нет. Программная навигация (шорткаты, действия) идёт через action `Navigate` (`createNavigateAction`, `models/workbench/src/index.ts`, impl `workbench.actionImpl.Navigate`).
 2. **Открытие виджета сайдбара.** `WidgetsBar.svelte` вызывает `openWidget` из `sidebar.ts`; первое включение виджета создаёт `WidgetPreference` (`AddWidgetsPopup.svelte`). Открытие объекта внутри виджета - `createWidgetTab` (`sidebar.ts`): для существующего `id` таб фокусируется, иначе заменяет preview-таб виджета или добавляется новым (модель состояний - `docs/memory/sidebar-widget-tabs.md`).
 3. **Подключение к воркспейсу и фильтр DISABLED_FEATURES.** `connect()` в `plugins/workbench-resources/src/connect.ts` селектит воркспейс, затем считает `effectiveDisabledFeatures = globalDisabledFeatures \ workspace.disabledFeaturesOverride` (`connect.ts`) и кладёт результат в `presentation.metadata.DisabledFeatures` - им пользуется `isDisabled()` (`packages/presentation/src/utils.ts`), скрывающий категории в `Settings.svelte`, и `ConfigurationManager.has()` (`packages/presentation/src/configuration.ts`): ресурсы выключенного плагина для `hasResource()` недоступны. Запрос social id воркспейса запускается параллельно с открытием сокета (`socialIdsPromise`, `connect.ts`) и дожидается только перед `ensureEmployee` (`connect.ts`).
 4. **Отложенное удаление воркспейса/аккаунта (self-service).** Кнопка "Delete workspace" в `General.svelte` (видна только владельцу, `General.svelte`) и "Delete account" в `Profile.svelte` запрашивают код подтверждения через общий `OtpConfirmDialog` (`packages/presentation/src/components/OtpConfirmDialog.svelte`, вызывается из `requestOperationOtpCode`, `plugins/setting-resources/src/utils.ts`), затем зовут account-API (`deleteAccount`, `getDeletionPolicy`, `canDeleteAccount`). Полная механика grace/readonly-периодов, писем и guard "последний owner" - в server/account, см. `docs/memory/deferred-deletion.md`.
@@ -69,9 +74,10 @@
 
 ### Workbench
 
-- **Виджеты сайдбара (Fixed/Flexible/Configurable).** Панель `WidgetsBar.svelte` + попап `AddWidgetsPopup.svelte` управляют включением через `WidgetPreference`. - `models/workbench/src/index.ts`, `plugins/workbench-resources/src/components/sidebar/widgets/`.
+- **Виджеты сайдбара (Fixed/Flexible/Configurable).** В полном экране явное открытие вкладки показывает сайдбар, включая повторное открытие той же карточки через Space (`sidebarOpenSequence`, `createWidgetTab`, `openWidgetTab`). Панель `WidgetsBar.svelte` + попап `AddWidgetsPopup.svelte` управляют включением через `WidgetPreference`. - `models/workbench/src/index.ts`, `plugins/workbench-resources/src/components/sidebar/widgets/`.
 - **Три состояния вкладки виджета** (preview/kept/pinned), детерминированные id по объекту. - `plugins/workbench-resources/src/sidebar.ts`, см. `docs/memory/sidebar-widget-tabs.md`.
 - **Вкладки воркбенча на аккаунт** (`WorkbenchTab`) с pin/unpin/close. - `WorkbenchTabs.svelte`, `WorkbenchTabPresenter.svelte`, actions `PinTab`/`UnpinTab`/`CloseTab`/`CloseCurrentTab` (`models/workbench/src/index.ts`).
+- **Повторный клик по активному приложению.** Не запускает навигацию и пользовательские обработчики, не переключает меню и не возвращает в предыдущий модуль. Проверка активности есть в `Applications.svelte` и у отдельной кнопки уведомлений в `Workbench.svelte`. Кнопка меню скрыта у приложений без навигатора через `visibility: hidden`, сохраняя место в панели, чтобы соседние кнопки не смещались; `Application.hasNavigator` отмечает собственные меню компонентов.
 - **Видимость приложений и меню выбора воркспейса.** `AppSwitcher.svelte` импортирован в `Workbench.svelte`, но нигде не рендерится - мёртвый код. Реальный путь переключения видимости приложений (скрыть/показать через `HiddenApplication`, `hideApplication`/`showApplication`) - категория настроек "Настройки бокового меню" (`SidebarMenuSettings.svelte`, группа `settings-account`, `setting.ids.SidebarMenuSettings`). Клик по логотипу воркспейса открывает `SelectWorkspaceMenu` для перехода между воркспейсами, в которых состоит пользователь. - `SidebarMenuSettings.svelte`, `SelectWorkspaceMenu.svelte`, `plugins/workbench-resources/src/utils.ts` (`hideApplication`/`showApplication`), `models/workbench/src/index.ts` (`THiddenApplication`), `models/setting/src/index.ts` (категория `sidebarMenu`).
 - **"Client statistics" (ServerManager).** Попап агрегированной клиентской статистики сессии, доступен из настроек/действий. - `models/workbench/src/index.ts`, `ServerManager.svelte`.
 - **Расширенный Help & Support.** Help Center, Keyboard Shortcuts, Contact Support, Open Platform Guide. - `HelpAndSupport.svelte`, строки в `plugins/workbench-resources/src/plugin.ts`.
@@ -117,6 +123,7 @@
 - **Персистентная сессия с патчем cookie SameSite.** Partition `persist:huly`/`persist:huly_dev`, `handleSetCookie` на `onHeadersReceived`. - `desktop/src/main/start.ts`.
 - **Трей, автозапуск, сохранение геометрии окна.** `TrayController`/`Settings` классы. - `desktop/src/main/tray.ts`, `desktop/src/main/settings.ts`.
 - **Пайплайн загрузок.** `will-download` в main-процессе генерирует ключ и шлёт прогресс/завершение в renderer через `IpcMessage.HandleDownloadItem`, модель `DownloadItem`. - `desktop/src/main/start.ts`, `plugins/desktop-downloads/src/types.ts`.
+- **Показать загрузку в папке / открыть файл.** В строке завершённой загрузки (попап у иконки в статус-баре) две кнопки `IconButton` по наведению: `RevealDownloadItem` -> `shell.showItemInFolder`, `OpenDownloadItem` -> `shell.openPath`. Renderer называет загрузку только по `key`; main держит `Map<key, savePath>`, которую наполняет `done` со статусом `completed`, и возвращает статус (`ok`/`missing`/`failed`/`cancelled`/`unknown`) - путь из renderer не принимается. Открыть одним кликом можно только безопасные типы (`isSafeToOpen`), остальное main подтверждает нативным диалогом; ошибка рисуется в самой строке (`FileMissing`/`OpenFailed`). OpenDocument (`odt`/`ods`/`odp`) требует подтверждения из-за поддержки макросов. На Linux без `DBUS_SESSION_BUS_ADDRESS` вместо выделения открывается папка; ошибка открытия возвращает `failed`. macOS-сборка включает карантин скачанных файлов через `build.mac.extendInfo.LSFileQuarantineEnabled` в `desktop-package/package.json`. Ошибка IPC отображается в строке, повторные действия блокируются до завершения текущего. Мост регистрирует `desktop/src/ui/index.ts` (`setDownloadItemActions`). - `desktop/src/main/revealDownload.ts`, `desktop/src/main/downloadFileTypes.ts`, `plugins/desktop-downloads-resources/src/components/FileDownloadStatusPopup.svelte`; детали - `docs/memory/desktop-reveal-download.md`.
 - **Пакетная загрузка в папку.** `downloadFiles` (presentation) в десктопе зовёт обработчик из `setDownloadFilesHandler` (`desktop/src/ui/index.ts`) -> `IpcMessage.DownloadToFolder`. Main (`downloadToFolder`) один раз спрашивает папку, каждому файлу подбирает свободное имя (занятое на диске или ещё докачиваемое, без учёта регистра, получает суффикс « (1)»; недопустимое для Windows исправляется, длинное обрезается), запоминает путь по адресу и сам запускает `downloadURL`. В `will-download` `applyBatchSavePath` ставит `setSavePath` по цепочке адресов, иначе Electron спросил бы про каждый файл. Путь незапущенной загрузки забывается через минуту. - `desktop/src/main/batchDownload.ts`; детали - `docs/memory/desktop-batch-download.md`.
 - **Скриншаринг и бейдж непрочитанных.** `SetBadge` на иконке/доке, `GetScreenSources`/`GetScreenAccess` (desktopCapturer). - `desktop/src/main/start.ts`.
 - **Автообновление (electron-updater) с диалогом на русском.** Канал через `resolveUpdateFeed` (`updateChannel.ts`), диалог "Обновить и перезапустить" - `desktop/src/main/start.ts`. Полная цепочка до дист-сервера и разобранные баги multi-range/ дефолтного канала - `docs/memory/desktop-update-system.md`.
@@ -132,17 +139,18 @@
 
 | Фича | ru | en | Статус | Сверено | Расхождение |
 | --- | --- | --- | --- | --- | --- |
-| Виджеты сайдбара (Fixed/Flexible/Configurable) | getting-started/learn-the-basics, communication/sending-messages | getting-started/learn-the-basics, communication/sending-messages | partial | 0.8.60 | страница показывает только значки Планировщика/Офиса (Fixed) и закреплённые чаты (Flexible) в правой панели, без названий типов; кнопка добавления виджета (`AddWidgetsPopup`) на проде недостижима (нет ни одного Configurable-виджета), описывать её не нужно |
+| Виджеты сайдбара (Fixed/Flexible/Configurable) | getting-started/learn-the-basics, communication/sending-messages | getting-started/learn-the-basics, communication/sending-messages | stale | 0.8.60 | явное открытие вкладки показывает сайдбар в полном экране; страница показывает только значки Планировщика/Офиса (Fixed) и закреплённые чаты (Flexible) в правой панели, без названий типов; кнопка добавления виджета (`AddWidgetsPopup`) на проде недостижима (нет ни одного Configurable-виджета), описывать её не нужно |
 | Три состояния вкладки виджета | - | - | plan | - | отложено |
 | Вкладки воркбенча на аккаунт | getting-started/learn-the-basics | getting-started/learn-the-basics | partial | 0.8.60 | закрепление и закрытие вкладок страница не описывает |
-| Видимость приложений и меню выбора воркспейса | advanced-settings/main-menu | - | no-en | 0.8.60 | |
+| Повторный клик по активному приложению | - | - | plan | - | |
+| Видимость приложений и меню выбора воркспейса | advanced-settings/main-menu | - | stale | 0.8.60 | при смене воркспейса закрывается панель объекта предыдущего воркспейса, включая задачи кастомного типа |
 | "Client statistics" (ServerManager) | - | - | plan | - | отложено |
 | Расширенный Help & Support | advanced-settings/main-menu | - | no-en | 0.8.60 | |
 | Intabia-акцентные темы | - | - | plan | - | отложено |
 | Категории настроек аккаунта и воркспейса | getting-started/workspace-setup, people-contacts/managing-account | getting-started/workspace-setup | partial | 0.8.60 | частично выключено на проде: integrations, mailboxes, export - категории Settings > Integrations и Settings > Mailboxes скрыты целиком, Settings > Export скрыта (CSV-экспорт из тулбара и экспорт в другой workspace доступны отдельно); ru workspace-setup:85 называет выключенные модули «Бета-версия», в коде «Ознакомительная версия» (ConfigBeta) - страница не правлена, вне зоны этой сверки |
 | Интеграции | - | - | off | - | выключено на проде: integrations (категория Settings > Integrations скрыта целиком; API-ключи и вебхуки - отдельная категория без `feature`, не затронута, расхождений с кодом не найдено) |
 | Раздел по умолчанию | - | - | plan | - | отложено |
-| Управление типами спейсов и ролями | advanced-settings/space-types, advanced-settings/roles | advanced-settings/space-types, advanced-settings/roles | ok | 0.8.60 | |
+| Управление типами спейсов и ролями | advanced-settings/space-types, advanced-settings/roles | advanced-settings/space-types, advanced-settings/roles | stale | 0.8.60 | длинное название класса в свойствах типа сокращается многоточием с подсказкой; название типа проекта ограничено 32 символами при создании и переименовании; поле названия в заголовке занимает доступную ширину |
 | Открытие созданного типа | advanced-settings/space-types | advanced-settings/space-types | partial | 0.8.60 | страница не говорит явно, что после создания типа пространства происходит автоматический переход в созданный тип - это только подразумевается |
 | Редактор классов (Classes) | advanced-settings/classes-enums | advanced-settings/classes-enums | ok | 0.8.60 | |
 | Перечисления (Enum) | advanced-settings/classes-enums | advanced-settings/classes-enums | ok | 0.8.60 | |
@@ -165,6 +173,7 @@
 | Персистентная сессия с патчем cookie SameSite | - | - | internal | - | |
 | Трей, автозапуск, сохранение геометрии окна | - | - | plan | - | отложено |
 | Пайплайн загрузок | - | - | internal | - | |
+| Панель загрузок в десктопе (иконка в статус-баре, «Показать в папке»/«Открыть файл») | - | - | plan | - | в браузере панели нет; в desktop это попап текущей сессии, история загрузок между перезапусками не сохраняется |
 | Скриншаринг и бейдж непрочитанных | - | - | plan | - | отложено |
 | Автообновление (electron-updater) с диалогом на русском | - | - | plan | - | отложено |
 | macOS-подпись и нотаризация | - | - | internal | - | |
@@ -206,6 +215,7 @@
 - [../connection_reconnect.md](../connection_reconnect.md) - жизненный цикл клиентского WebSocket-соединения (использует `connect()` из workbench-resources).
 - [../macos_signing.md](../macos_signing.md) - подпись и нотаризация desktop-сборки для macOS.
 - [../memory/desktop-update-system.md](../memory/desktop-update-system.md) - цепочка автообновления Electron-приложения и разобранные баги.
+- [../memory/desktop-reveal-download.md](../memory/desktop-reveal-download.md) - «показать в папке»/«открыть файл» для скачанного: проверка пути, Linux/DBus.
 - [../memory/sidebar-widget-tabs.md](../memory/sidebar-widget-tabs.md) - модель состояний вкладок сайдбар-виджетов.
 - [../memory/backup_index_revision_guard.md](../memory/backup_index_revision_guard.md) - аренда бэкапа и защита индекса от конкурентной записи.
 - [../memory/deferred-deletion.md](../memory/deferred-deletion.md) - отложенное удаление воркспейсов/аккаунтов, grace/readonly-периоды.

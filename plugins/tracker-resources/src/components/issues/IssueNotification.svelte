@@ -63,7 +63,7 @@
       {#if issue}
         <IssuePresenter value={issue} />
       {/if}
-      <span class="overflow-label">
+      <span class="issue-title lines-limit-2" title={subTitle}>
         {subTitle}
       </span>
       <span class="content-dark-color">
@@ -77,3 +77,9 @@
     <Button icon={view.icon.CopyLink} label={tracker.string.CopyIssueUrl} on:click={handleCopyUrl} />
   </svelte:fragment>
 </NotificationToast>
+
+<style lang="scss">
+  .issue-title {
+    overflow-wrap: anywhere;
+  }
+</style>

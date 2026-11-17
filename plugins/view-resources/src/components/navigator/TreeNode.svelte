@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2020 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -72,5 +73,6 @@
 >
   <slot />
   <svelte:fragment slot="extra"><slot name="extra" /></svelte:fragment>
+  <svelte:fragment slot="headerActions"><slot name="headerActions" /></svelte:fragment>
   <svelte:fragment slot="visible"><slot name="visible" /></svelte:fragment>
 </TreeElement>

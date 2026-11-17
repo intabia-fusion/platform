@@ -1,5 +1,6 @@
 //
 // Copyright © 2022-2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -22,6 +23,7 @@ import {
   CollectionSize,
   Data,
   Doc,
+  type Enum,
   Markup,
   type TxOperations,
   Mixin,
@@ -33,7 +35,7 @@ import {
   Type,
   type Permission
 } from '@hcengineering/core'
-import { Asset, IntlString, Plugin, Resource, plugin } from '@hcengineering/platform'
+import { Asset, IntlString, Plugin, Resource, type StatusCode, plugin } from '@hcengineering/platform'
 import { Preference } from '@hcengineering/preference'
 import { TagCategory, TagElement, TagReference } from '@hcengineering/tags'
 import { ToDo, WorkSlot } from '@hcengineering/time'
@@ -48,8 +50,10 @@ import {
 } from '@hcengineering/task'
 import { AnyComponent, ComponentExtensionId, Location, ResolvedLocation } from '@hcengineering/ui'
 import { Action, ActionCategory, IconProps } from '@hcengineering/view'
+import type { Board, BoardNavigationPreference, BoardPreference } from './boards'
 
 export * from './analytics'
+export * from './boards'
 export * from './duration'
 export * from './ops'
 
@@ -492,6 +496,10 @@ export interface Component extends Doc {
  * @public
  */
 export const trackerId = 'tracker' as Plugin
+
+/** @public */
+export const projectSettingsId = 'project-settings'
+
 export * from './analytics'
 
 /** Input of the shared issue-creation helper (tracker.function.CreateIssue). */
@@ -530,6 +538,9 @@ const pluginState = plugin(trackerId, {
     TypeRemainingTime: '' as Ref<Class<Type<number>>>,
     RelatedIssueTarget: '' as Ref<Class<RelatedIssueTarget>>,
     ProjectTargetPreference: '' as Ref<Class<ProjectTargetPreference>>,
+    Board: '' as Ref<Class<Board>>,
+    BoardPreference: '' as Ref<Class<BoardPreference>>,
+    BoardNavigationPreference: '' as Ref<Class<BoardNavigationPreference>>,
     IssueTaskType: '' as Ref<Class<Issue>>
   },
   mixin: {
@@ -541,7 +552,11 @@ const pluginState = plugin(trackerId, {
     IssueDraftChild: '',
     ClassingProjectType: '' as Ref<ProjectType>
   },
+  enum: {
+    BoardVisibility: '' as Ref<Enum>
+  },
   status: {
+    DuplicateColumnTitle: '' as StatusCode,
     Backlog: '' as Ref<Status>,
     Todo: '' as Ref<Status>,
     InProgress: '' as Ref<Status>,
@@ -560,9 +575,11 @@ const pluginState = plugin(trackerId, {
     RelatedIssueTemplates: '' as AnyComponent,
     EditIssue: '' as AnyComponent,
     CreateIssue: '' as AnyComponent,
+    BoardCatalogPresenter: '' as AnyComponent,
     ProjectPresenter: '' as AnyComponent,
     CreateIssueTemplate: '' as AnyComponent,
     CreateProject: '' as AnyComponent,
+    ProjectSettings: '' as AnyComponent,
     IssueStatusPresenter: '' as AnyComponent,
     LabelsView: '' as AnyComponent
   },

@@ -1,5 +1,6 @@
 {
   "string": {
+    "DeleteDriveFileConfirm": "Smazat soubor a všechny jeho verze?",
     "Billing": "Fakturace",
     "Subscriptions": "Předplatné",
     "AllPlans": "Všechny tarify",

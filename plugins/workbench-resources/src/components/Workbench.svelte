@@ -47,6 +47,7 @@
     deviceOptionsStore as deviceInfo,
     Dock,
     getCurrentLocation,
+    getCurrentResolvedLocation,
     getLocation,
     isSameSegments,
     Label,
@@ -90,8 +91,9 @@
   import { get } from 'svelte/store'
 
   import { subscribeMobile } from '../mobile'
+  import { hasApplicationNavigator } from '../navigation'
   import workbench from '../plugin'
-  import { buildNavModel, isAllowedToRole, logOut, workspacesStore } from '../utils'
+  import { buildNavModel, fullscreenStore, isAllowedToRole, logOut, workspacesStore } from '../utils'
   import AccountPopup from './AccountPopup.svelte'
   import AppItem from './AppItem.svelte'
   import AppSwitcher from './AppSwitcher.svelte'
@@ -103,7 +105,7 @@
   import SelectWorkspaceMenu from './SelectWorkspaceMenu.svelte'
   import SpaceView from './SpaceView.svelte'
   import WidgetsBar from './sidebar/Sidebar.svelte'
-  import { sidebarStore, SidebarVariant, syncSidebarState } from '../sidebar'
+  import { sidebarStore, sidebarOpenSequence, SidebarVariant, syncSidebarState } from '../sidebar'
   import {
     getTabDataByLocation,
     getTabLocation,
@@ -354,10 +356,17 @@
         loc.path[3] = currentSpace ?? currentSpecial ?? resolved.defaultLocation.path[3]
         if (loc.path[3] !== undefined && isSameApp) {
           // setting space special/aside only if it belongs to the same app
+          // The panel opens over the page: its sub-path (a board id) is not in the short link
+          const prev = getCurrentResolvedLocation()
           if (currentSpace != null) {
             loc.path[4] = currentSpecial ?? resolved.defaultLocation.path[4]
+            if (prev.path[3] === loc.path[3] && prev.path[4] === loc.path[4]) loc.path.push(...prev.path.slice(5))
           } else if (currentSpecial != null) {
             loc.path[4] = resolved.defaultLocation.path[4]
+            if (prev.path[3] === loc.path[3] && prev.path[4] !== undefined) {
+              loc.path.length = 4
+              loc.path.push(...prev.path.slice(4))
+            }
           }
         } else {
           loc.path.length = 4
@@ -738,25 +747,11 @@
   $: checkInboxPopup($popupstore)
 
   let inboxPopup: PopupResult | undefined = undefined
-  let lastLoc: Location | undefined = undefined
 
   $: inboxProps = {
     selected: currentAppAlias === notificationId || inboxPopup !== undefined,
     navigator: (currentAppAlias === notificationId || inboxPopup !== undefined) && $deviceInfo.navigator.visible,
-    notify: hasInboxNotifications,
-    onClick: (e: MouseEvent) => {
-      if (e.metaKey || e.ctrlKey) return
-      if (!$deviceInfo.navigator.visible && $deviceInfo.navigator.float && currentAppAlias === notificationId) {
-        void toggleNav()
-      } else if (currentAppAlias === notificationId && lastLoc !== undefined) {
-        e.preventDefault()
-        e.stopPropagation()
-        navigate(lastLoc)
-        lastLoc = undefined
-      } else {
-        lastLoc = $location
-      }
-    }
+    notify: hasInboxNotifications
   }
 
   $: customAppProps = new Map([[notificationId, inboxProps]])
@@ -764,7 +759,21 @@
   defineSeparators('workbench', workbenchSeparators)
   defineSeparators('main', mainSeparators)
 
-  $: mainNavigator = currentApplication != null && navigatorModel != null && $deviceInfo.navigator.visible
+  $: mainNavigator =
+    currentApplication != null && navigatorModel != null && $deviceInfo.navigator.visible && !$fullscreenStore
+
+  // Full screen hides the sidebar it found open, but not the one opened in it (e.g. a task from a board)
+  let fullscreenSidebar = false
+  let lastSidebarVariant = $sidebarStore.variant
+  let lastSidebarOpenSequence = $sidebarOpenSequence
+  $: {
+    if (!$fullscreenStore) fullscreenSidebar = false
+    else if ($sidebarStore.variant !== lastSidebarVariant || $sidebarOpenSequence !== lastSidebarOpenSequence) {
+      fullscreenSidebar = $sidebarStore.variant === SidebarVariant.EXPANDED
+    }
+    lastSidebarVariant = $sidebarStore.variant
+    lastSidebarOpenSequence = $sidebarOpenSequence
+  }
   $: elementPanel = $deviceInfo.replacedPanel ?? contentPanel
 
   $: deactivated =
@@ -818,6 +827,7 @@
     <div
       class="antiPanel-application {$deviceInfo.navigator.direction} no-print"
       class:lastDivider={!$deviceInfo.navigator.visible}
+      class:fullscreen-hidden={$fullscreenStore}
     >
       <div
         class="hamburger-container clear-mins"
@@ -835,9 +845,13 @@
         >
           <Logo mini={appsMini} workspace={windowWorkspaceName ?? $resolvedLocationStore.path[1]} />
         </div>
-        <div class="topmenu-container clear-mins flex-no-shrink" class:mini={appsMini}>
+        <div
+          class="topmenu-container clear-mins flex-no-shrink"
+          class:mini={appsMini}
+          class:unavailable={!hasApplicationNavigator(currentApplication, navigatorModel)}
+        >
           <AppItem
-            icon={ui.icon.Equals}
+            icon={$deviceInfo.navigator.visible ? ui.icon.ArrowBarToLeft : ui.icon.ArrowBarToRight}
             label={$deviceInfo.navigator.visible ? workbench.string.HideMenu : workbench.string.ShowMenu}
             selected={!$deviceInfo.navigator.visible}
             size={appsMini ? 'small' : 'medium'}
@@ -845,19 +859,8 @@
           />
         </div>
         {#if !isExcludedApp(notificationId)}
-          <NavLink
-            app={notificationId}
-            shrink={0}
-            disabled={!$deviceInfo.navigator.visible &&
-              $deviceInfo.navigator.float &&
-              currentAppAlias === notificationId}
-          >
-            <AppItem
-              icon={notification.icon.Notifications}
-              label={notification.string.Inbox}
-              {...inboxProps}
-              on:click={inboxProps.onClick}
-            />
+          <NavLink app={notificationId} shrink={0} disabled={currentAppAlias === notificationId}>
+            <AppItem icon={notification.icon.Notifications} label={notification.string.Inbox} {...inboxProps} />
           </NavLink>
         {/if}
         <Applications
@@ -865,7 +868,6 @@
           active={currentApplication?._id}
           direction={$deviceInfo.navigator.direction}
           {customAppProps}
-          on:toggleNav={toggleNav}
         />
       </div>
       <div
@@ -914,7 +916,7 @@
         application: currentApplication?._id
       }}
     />
-    <div class="flex-row-center w-full h-full">
+    <div class="flex-row-center w-full h-full" class:fullscreen={$fullscreenStore && !fullscreenSidebar}>
       <div
         class="workbench-container inner"
         class:rounded={$sidebarStore.variant === SidebarVariant.EXPANDED}
@@ -1071,6 +1073,13 @@
 {/if}
 
 <style lang="scss">
+  .fullscreen-hidden {
+    display: none !important;
+  }
+  // Hidden, not unmounted: widgets such as a call keep running
+  .fullscreen > :global(:not(.workbench-container)) {
+    display: none !important;
+  }
   .workbench-container {
     position: relative;
     display: flex;
@@ -1142,6 +1151,10 @@
       .topmenu-container {
         margin-bottom: 1rem;
       }
+    }
+
+    .topmenu-container.unavailable {
+      visibility: hidden;
     }
 
     .logo-container,

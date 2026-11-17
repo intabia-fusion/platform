@@ -87,7 +87,12 @@ test.describe('otp signup', () => {
     expect(await personOf(value)).toBeDefined()
     expect(await accountOf(value)).toBeUndefined()
 
+    const validationRequest = page.waitForRequest((request) => {
+      if (request.method() !== 'POST' || !request.url().includes('/_account')) return false
+      return request.postDataJSON()?.method === 'validateOtp'
+    })
     await otpPage.enterCode(await getOtpCode(value))
+    expect((await validationRequest).postDataJSON().params).not.toHaveProperty('password')
 
     await page.waitForURL((url) => url.pathname.startsWith('/login/selectWorkspace'))
     expect(await accountOf(value)).toBeDefined()

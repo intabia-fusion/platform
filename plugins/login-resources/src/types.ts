@@ -23,6 +23,7 @@ export interface Field {
   password?: boolean
   optional?: boolean
   inputmode?: 'email' | 'tel'
+  maxLength?: number
   short?: boolean
   disabled?: boolean
   rules?: Array<{

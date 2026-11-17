@@ -23,8 +23,14 @@
   import { getResource } from '@hcengineering/platform'
   import presentation, { MessageBox, createQuery, getClient } from '@hcengineering/presentation'
   import { ClassAttributes, clearSettingsStore, settingsStore } from '@hcengineering/setting-resources'
-  import type { ProjectType, TaskType } from '@hcengineering/task'
-  import task, { calculateStatuses, findStatusAttr } from '@hcengineering/task'
+  import type { ProjectType, Task, TaskType } from '@hcengineering/task'
+  import task, {
+    calculateStatuses,
+    findStatusAttr,
+    getMissingTaskTypeStatuses,
+    alignTaskTypeStatusOrder,
+    hasTaskTypeStatusOrderMismatch
+  } from '@hcengineering/task'
   import ui, {
     Icon,
     NavItem,
@@ -40,7 +46,7 @@
     resolvePaletteColor,
     showPopup
   } from '@hcengineering/ui'
-  import { Button, IconButton } from '@hcengineering/ui/kit'
+  import { Button, Callout, IconButton } from '@hcengineering/ui/kit'
   import { IconPicker, deleteObjects, statusStore } from '@hcengineering/view-resources'
   import setting from '@hcengineering/setting'
   import workflow from '@hcengineering/workflow'
@@ -53,6 +59,7 @@
   import AddExistingStatusPopup from '../state/AddExistingStatusPopup.svelte'
   import TaskTypeIcon from './TaskTypeIcon.svelte'
   import TaskTypeHierarchySection from './TaskTypeHierarchySection.svelte'
+  import MissingTaskTypeStatuses from './MissingTaskTypeStatuses.svelte'
 
   export let spaceType: ProjectType
   export let objectId: Ref<TaskType>
@@ -80,6 +87,30 @@
   $: color = resolvePaletteColor(taskType?.color)
   $: descriptor = client.getModel().findAllSync(task.class.TaskTypeDescriptor, { _id: taskType?.descriptor })
   $: states = (taskType?.statuses.map((p) => $statusStore.byId.get(p)).filter((p) => p !== undefined) as Status[]) ?? []
+
+  $: statusOrderMismatch = hasTaskTypeStatusOrderMismatch(spaceType, taskType, $taskTypeStore, $statusStore.byId)
+  let tasksWithMissingStatus: Array<Pick<Task, 'kind' | 'status'>> = []
+  const missingStatusQuery = createQuery()
+  $: if (taskType !== undefined) {
+    missingStatusQuery.query(
+      task.class.Task,
+      {
+        kind: taskType._id,
+        status: { $nin: taskType.statuses }
+      },
+      (res) => {
+        tasksWithMissingStatus = res
+      },
+      { projection: { kind: 1, status: 1 } }
+    )
+  } else {
+    missingStatusQuery.unsubscribe()
+    tasksWithMissingStatus = []
+  }
+  $: missingStatusIds =
+    getMissingTaskTypeStatuses(tasksWithMissingStatus, new Map(taskTypes.map((item) => [item._id, item]))).get(
+      objectId
+    ) ?? []
 
   let tasksCounter: number = 0
   let loading: boolean = true
@@ -194,6 +225,7 @@
   }
 
   let isDeleting = false
+  let isAligning = false
 
   $: canDelete = !loading && !isDeleting && tasksCounter === 0 && taskTypes.length > 1
 
@@ -379,6 +411,31 @@
                 />
               </div>
             </div>
+            {#if statusOrderMismatch}
+              <div class="m-4 status-order-warning">
+                <Callout tone="warning" label={plugin.string.TaskTypeStatusOrderWarning}>
+                  <Button
+                    slot="actions"
+                    kind="secondary"
+                    size="small"
+                    label={plugin.string.AlignTaskTypeStatusOrder}
+                    disabled={readonly}
+                    loading={isAligning}
+                    on:click={async () => {
+                      if (taskType === undefined || readonly || isAligning) return
+                      isAligning = true
+                      try {
+                        await client.diffUpdate(taskType, {
+                          statuses: alignTaskTypeStatusOrder(spaceType, taskType, $taskTypeStore, $statusStore.byId)
+                        })
+                      } finally {
+                        isAligning = false
+                      }
+                    }}
+                  />
+                </Callout>
+              </div>
+            {/if}
             <StatesProjectEditor
               {taskType}
               type={spaceType}
@@ -429,6 +486,11 @@
                 })
               }}
             />
+            {#if missingStatusIds.length > 0}
+              <div class="m-4 missing-statuses-row">
+                <MissingTaskTypeStatuses type={spaceType} {taskType} ids={missingStatusIds} disabled={readonly} />
+              </div>
+            {/if}
           </div>
 
           <div id="hierarchy" bind:this={sectionRefs.hierarchy}>
@@ -459,6 +521,20 @@
 {/if}
 
 <style lang="scss">
+  .missing-statuses-row {
+    align-self: stretch;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .status-order-warning {
+    align-self: stretch;
+  }
+
+  .status-order-warning :global(.callout__actions) {
+    align-self: center;
+  }
+
   .name {
     width: 100%;
     font-weight: 500;

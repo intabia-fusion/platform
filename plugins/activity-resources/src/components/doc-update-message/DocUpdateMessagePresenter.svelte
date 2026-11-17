@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -34,7 +35,7 @@
   import DocUpdateMessageContent from './DocUpdateMessageContent.svelte'
   import DocUpdateMessageHeader from './DocUpdateMessageHeader.svelte'
 
-  import { getAttributeModel, getCollectionAttribute } from '../../activityMessagesUtils'
+  import { getAttributeModel, getCollectionAttribute, getMessageObjectQueryClass } from '../../activityMessagesUtils'
   import { getIsTextType } from '../../utils'
   import type { Person } from '@hcengineering/contact'
 
@@ -69,7 +70,8 @@
   let collectionName: IntlString | undefined = undefined
 
   $: collectionAttribute = getCollectionAttribute(hierarchy, value.attachedToClass, value.updateCollection)
-  $: clazz = hierarchy.findClass(value.objectClass)
+  $: clazz = hierarchy.findClass(value.objectClass) ?? hierarchy.findClass(value.attachedToClass)
+  $: objectQueryClass = getMessageObjectQueryClass(hierarchy, value)
 
   $: objectName = (collectionAttribute?.type as Collection<AttachedDoc>)?.itemLabel ?? clazz?.label
   $: collectionName = collectionAttribute?.label
@@ -112,7 +114,7 @@
     person = undefined
   }
 
-  $: void loadObject(value.objectId, value.objectClass, doc)
+  $: void loadObject(value.objectId, objectQueryClass, doc)
   $: void loadParentObject(value, parentMessage, doc)
 
   async function loadObject (_id: Ref<Doc>, _class: Ref<Class<Doc>>, doc?: Doc): Promise<void> {
@@ -122,7 +124,7 @@
       return
     }
 
-    isObjectRemoved = await checkIsObjectRemoved(client, _id, client.getHierarchy().getParentClass(_class))
+    isObjectRemoved = await checkIsObjectRemoved(client, _id, _class)
 
     if (isObjectRemoved) {
       object = await buildRemovedDoc(client, _id, _class)
@@ -163,7 +165,9 @@
     })
   }
 
-  $: if (object != null && value.objectClass !== object._class) {
+  // The object may legitimately have another class than the message if the doc changed class later
+  // (a task type change), only the id has to match the message.
+  $: if (object != null && object._id !== value.objectId) {
     object = undefined
   }
 </script>

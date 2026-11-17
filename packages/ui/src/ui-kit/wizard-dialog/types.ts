@@ -30,6 +30,11 @@ export interface WizardDialogProps<Id extends string = string> {
   /** `true` by default: the submit on the last step is enabled. */
   canSubmit?: boolean
   submitLabel?: IntlString
+  /**
+   * The submit is offered on every step, when the later steps are optional: Back and Next stand together on the left,
+   * the submit on the right is secondary before the last step and positive on it.
+   */
+  earlySubmit?: boolean
   /** The submit is running: Back and the submit are blocked, the submit shows a spinner. */
   loading?: boolean
   /** `x-large` by default. */

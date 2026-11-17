@@ -151,6 +151,7 @@
             on:delete={(evt) => {
               spaceInfo.size -= evt.detail
             }}
+            on:refresh={loadLargestSpaces}
           />
         </Expandable>
       {/each}

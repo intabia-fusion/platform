@@ -15,7 +15,8 @@
     "test": "vitest run --silent",
     "_phase:test": "vitest run --silent",
     "_phase:build": "compile build-ui",
-    "_phase:format": "format src"
+    "_phase:format": "format src",
+    "bench": "vitest bench --run"
   },
   "devDependencies": {
     "svelte-loader": "catalog:",

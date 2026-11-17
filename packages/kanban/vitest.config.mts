@@ -1,11 +1,13 @@
 import { svelte } from '@sveltejs/vite-plugin-svelte'
-import { existsSync, readFileSync } from 'fs'
+import { existsSync, mkdirSync, readFileSync } from 'fs'
 import { createRequire } from 'module'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
 import { defineConfig, type Plugin } from 'vitest/config'
 
 const here = dirname(fileURLToPath(import.meta.url))
+const cpuProfileDir = process.env.KANBAN_CPU_PROFILE_DIR
+if (cpuProfileDir) mkdirSync(cpuProfileDir, { recursive: true })
 
 // Workspace packages point `main` at raw TypeScript, which vite refuses as a package entry.
 // Resolved from the importer: the board pulls ui and presentation, which pull packages kanban does not list.
@@ -35,6 +37,9 @@ export default defineConfig({
   resolve: { conditions: ['browser'] },
   test: {
     environment: 'jsdom',
+    poolOptions: cpuProfileDir
+      ? { forks: { execArgv: ['--cpu-prof', `--cpu-prof-dir=${cpuProfileDir}`] } }
+      : undefined,
     setupFiles: ['src/__test__/setup.ts'],
     include: ['src/**/*.{test,spec}.ts'],
     coverage: {

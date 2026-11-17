@@ -20,8 +20,11 @@ import { Class, Mixin, Ref } from '@hcengineering/core'
 import {
   AttributePresenter,
   IconPresenter,
+  IconPresenterFn,
   IdentifierPresenter,
   LabelPresenter,
+  NoPreview,
+  PropsPresenter,
   TitlePresenter,
   UrlPresenter
 } from './types'
@@ -31,10 +34,17 @@ export const serverActivityId = 'server-activity' as Plugin
 export const serverActivityPlugin = plugin(serverActivityId, {
   trigger: {
     OnDocRemoved: '' as Resource<TriggerFunc>,
+    OnDocPreviewRemoved: '' as Resource<TriggerFunc>,
+    OnDocCreated: '' as Resource<TriggerFunc>,
+    OnDocUpdated: '' as Resource<TriggerFunc>,
+    OnDocPreviewMoved: '' as Resource<TriggerFunc>,
     OnDocClassChanged: '' as Resource<TriggerFunc>,
     OnActivityMessageRemoved: '' as Resource<TriggerFunc>,
     OnAppletRemoved: '' as Resource<TriggerFunc>,
     ReferenceTrigger: '' as Resource<TriggerFunc>
+  },
+  function: {
+    FieldsIconPresenter: '' as Resource<IconPresenterFn>
   },
   class: {
     AttributePresenter: '' as Ref<Class<AttributePresenter>>
@@ -44,6 +54,8 @@ export const serverActivityPlugin = plugin(serverActivityId, {
     LabelPresenter: '' as Ref<Mixin<LabelPresenter>>,
     UrlPresenter: '' as Ref<Mixin<UrlPresenter>>,
     IdentifierPresenter: '' as Ref<Mixin<IdentifierPresenter>>,
-    IconPresenter: '' as Ref<Mixin<IconPresenter>>
+    IconPresenter: '' as Ref<Mixin<IconPresenter>>,
+    NoPreview: '' as Ref<Mixin<NoPreview>>,
+    PropsPresenter: '' as Ref<Mixin<PropsPresenter>>
   }
 })

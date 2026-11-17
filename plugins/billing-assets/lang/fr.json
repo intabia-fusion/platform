@@ -1,5 +1,6 @@
 {
   "string": {
+    "DeleteDriveFileConfirm": "Supprimer le fichier et toutes ses versions ?",
     "Billing": "Facturation",
     "Subscriptions": "Abonnements",
     "AllPlans": "Tous les plans",

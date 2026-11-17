@@ -40,7 +40,7 @@ import { translate, IntlString } from '@hcengineering/platform'
 import { isEmptyMarkup, markupToText } from '@hcengineering/text-core'
 import { markupToHtml } from '@hcengineering/text-html'
 
-import { Client, ObjectDisplayData, NotificationSettings, NotifyProviders, Result, TxCache } from '../types'
+import { Client, ContextRefs, NotificationSettings, NotifyProviders, Result, TxCache } from '../types'
 import config from '../config'
 import { getCreateContextTx, getNotificationUrl, getDomain, getNotificationLocation } from '../utils/utils'
 import { isNotificationRecorded } from '../utils/context'
@@ -53,7 +53,7 @@ interface CreateNotificationData {
   objectSpace: Ref<Space>
   group?: Ref<Doc>
 
-  objectDisplayData: ObjectDisplayData
+  contextRefs: ContextRefs
 
   notifyProviders: NotifyProviders
   notification: ContextNotification
@@ -116,7 +116,7 @@ async function queueNotification (
     objectSpace,
     notifyProviders,
     intl,
-    objectDisplayData,
+    contextRefs,
     pushSubscriptions
   } = data
 
@@ -242,6 +242,10 @@ async function queueNotification (
     const updateTx = txFactory.createTxUpdateDoc(context._class, context.space, context._id, {})
 
     updateTx.operations.lastNotify = Math.max(modifiedOn, updateTx.operations.lastNotify ?? 0)
+    // A context made before its document had a preview gets the ref with its next notification
+    if (context.preview == null && contextRefs.preview != null) {
+      updateTx.operations.preview = contextRefs.preview
+    }
     updateTx.operations.$push = {
       latestNotifications: { $each: [notification], $position: 0, $slice: config.LatestNotificationsSliceSize }
     }
@@ -286,7 +290,7 @@ async function queueNotification (
       receiver,
       result,
       client.txFactory,
-      objectDisplayData
+      contextRefs
     )
 
     createTx.attributes.lastNotify = Math.max(createTx.attributes.lastNotify ?? 0, modifiedOn)

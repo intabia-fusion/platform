@@ -99,6 +99,7 @@
   }
 
   let permissionsStore: Readable<PermissionsStore> | undefined = undefined
+  export let compactDivider = false
 
   onMount(async () => {
     permissionsStore = await getResource(contact.store.Permissions)
@@ -116,7 +117,7 @@
 </script>
 
 {#if dp?.dividerBefore === true && !hideDivider}
-  <DividerPresenter />
+  <DividerPresenter compact={compactDivider || attributeModel.props?.showReportedTime === true} />
 {/if}
 {#if dp?.fixed}
   <FixedColumn key={`list_item_${dp.key}`} justify={dp.fixed}>

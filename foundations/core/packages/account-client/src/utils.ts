@@ -41,6 +41,19 @@ export function grantsPlan (sub: Pick<Subscription, 'status' | 'providerData' | 
   return PLAN_GRANTING_STATUSES.includes(sub.status)
 }
 
+/**
+ * A checkout draft: a payment link was issued for a first payment that never settled. `pending` marks
+ * an open draft, `draft` keeps the mark once it is closed unpaid (the provider stamps both).
+ * A draft is not a plan state: it grants nothing and says nothing about the workspace's own tier, so
+ * it must not decide the plan/limit/banner tier — only the real subscriptions around it can.
+ */
+export function isCheckoutDraft (sub: Pick<Subscription, 'provider' | 'status' | 'providerData'> | undefined): boolean {
+  const data = sub?.providerData as Record<string, any> | undefined
+  if (data?.pending === true || data?.draft === true) return true
+  // Older unpaid checkouts were closed as ABANDONED before the draft marker existed.
+  return sub?.provider === 'tbank' && sub.status === SubscriptionStatus.Canceled && data?.status === 'ABANDONED'
+}
+
 // Free plan = no granting tier, the free-billing provider, or the 'free' plan by name (admin/manual
 // free tiers carry provider='manual', so provider alone misses them).
 export function isFreePlan (tier: Pick<Subscription, 'plan' | 'provider'> | undefined): boolean {

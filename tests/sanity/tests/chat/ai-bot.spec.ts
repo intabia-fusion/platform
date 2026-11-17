@@ -7,7 +7,9 @@ import { ChunterPage } from '../model/chunter-page'
 import { LeftSideMenuPage } from '../model/left-side-menu-page'
 import { LoginPage } from '../model/login-page'
 import { SelectWorkspacePage } from '../model/select-workspace-page'
-import { PlatformURI, generateTestData } from '../utils'
+import { LocalUrl, PlatformURI, generateTestData, generateUser } from '../utils'
+import { joinWorkspace, openMemberPage } from '../API/ChatApi'
+import { AccountRole } from '@hcengineering/core'
 import { waitStable, retryIntervals } from '../retry'
 
 // Base ai-bot suite on the `low` level: mock provider in echo mode (tests/config-aibot.yaml)
@@ -94,28 +96,69 @@ test.describe('ai-bot direct chat', () => {
     await expect(reply).toContainText('tools')
   })
 
-  test('monthly token window limit blocks the bot with a limit message', async ({ page }) => {
+  test('monthly token limit blocks the bot and shows the badge to workspace members', async ({
+    page,
+    browser,
+    request
+  }) => {
     // Tiny monthly window: first request (used 0 < 1) proceeds and bills, next one is blocked.
     await setWorkspacePlanByUuid(wsInfo.workspace, 'business', { windowMonth: 1, status: 'active', users: 10 })
-    await openBotDirect(leftSideMenuPage, chunterPage, channelPage)
+    const member = await joinWorkspace(wsInfo, generateUser())
+    expect((await member.client.getAccount()).role).toBe(AccountRole.User)
+    const memberBrowser = await openMemberPage(browser, member)
+    try {
+      const badge = '[data-id="billingWorkspaceLimitsExhausted"]'
+      for (const session of [page, memberBrowser.page]) {
+        const limits = session.waitForResponse(
+          (response) => response.url().includes(`/api/v1/${wsInfo.workspace}/limits`) && response.status() === 200
+        )
+        await session.reload()
+        await limits
+        await expect(session.locator('[data-id="billingLimitsIndicator"]')).toBeVisible()
+        await expect(session.locator(badge)).toHaveCount(0)
+      }
+      await openBotDirect(leftSideMenuPage, chunterPage, channelPage)
 
-    await test.step('First request goes through', async () => {
-      await channelPage.sendMessage('hello')
-      await expect(page.locator('.hulyComponent .activityMessage', { hasText: 'echo' }).first()).toBeVisible({
-        timeout: BOT_REPLY_TIMEOUT
-      })
-    })
-
-    // Usage propagates through the billing queue, so keep sending until the block appears.
-    await test.step('Next request is blocked with the monthly limit message', async () => {
-      // aibot AI_DEFAULT_LANGUAGE defaults to 'ru', so the block message is Russian.
-      const blockText = 'Закончились токены ИИ'
-      await expect(async () => {
-        await channelPage.sendMessage('ping again')
-        await expect(page.locator('.hulyComponent .activityMessage', { hasText: blockText })).toBeVisible({
-          timeout: 10000
+      await test.step('First request goes through', async () => {
+        await channelPage.sendMessage('hello')
+        await expect(page.locator('.hulyComponent .activityMessage', { hasText: 'echo' }).first()).toBeVisible({
+          timeout: BOT_REPLY_TIMEOUT
         })
-      }).toPass({ intervals: retryIntervals, timeout: 30000 })
-    })
+      })
+
+      await test.step('Exhaustion reaches both open sessions and a new session', async () => {
+        await expect(page.locator(badge)).toBeVisible({ timeout: 30000 })
+        await expect(memberBrowser.page.locator(badge)).toBeVisible({ timeout: 30000 })
+        const reopened = await openMemberPage(browser, member)
+        try {
+          await expect(reopened.page.locator(badge)).toBeVisible({ timeout: 30000 })
+        } finally {
+          await reopened.context.close()
+        }
+      })
+
+      await test.step('Further requests are blocked without a chat notice', async () => {
+        await expect
+          .poll(
+            async () => {
+              const response = await request.post(`${LocalUrl.replace(/_account\/?$/, '_aibot')}/events`, {
+                headers: { Authorization: `Bearer ${wsInfo.token}` },
+                data: []
+              })
+              return response.status()
+            },
+            { timeout: 30000 }
+          )
+          .toBe(402)
+        await channelPage.sendMessage('ping again')
+        const echoes = page.locator('.hulyComponent .activityMessage', { hasText: 'echo' })
+        const notices = page.locator('.hulyComponent .activityMessage', { hasText: 'Закончились токены ИИ' })
+        expect(
+          await waitStable(async () => `${await echoes.count()}:${await notices.count()}`, { stableFor: 5000 })
+        ).toBe('1:0')
+      })
+    } finally {
+      await memberBrowser.context.close()
+    }
   })
 })

@@ -115,6 +115,7 @@ services:
     depends_on:
       redpanda:
         condition: service_healthy
+    restart: unless-stopped
   minio:
     image: "pgsty/silo:RELEASE.2026-09-16T00-00-00Z"
     command: server /data --address ":9000" --console-address ":9001"
@@ -1026,6 +1027,7 @@ services:
       - ACCOUNTS_URL=http://account:3000
       - SECRET=secret
       - APP_NAME=Platform
+    restart: unless-stopped
   mail_client:
     image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/mail:${DOCKER_TAG:-latest}"
     depends_on:
@@ -1042,6 +1044,7 @@ services:
       - SMTP_PORT=1025
       - SMTP_TLS_MODE=ignore
       - SMTP_ALLOW_SELF_SIGNED=true
+    restart: unless-stopped
   mailpit:
     image: axllent/mailpit
     restart: unless-stopped
@@ -1180,6 +1183,7 @@ services:
       - FRONT_URL=http://localhost:8087
       - STATS_URL=http://stats:4900
       - BRANDING_PATH=/var/cfg/branding.json
+    restart: unless-stopped
   notification:
     image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/notification:${DOCKER_TAG:-latest}"
     depends_on:

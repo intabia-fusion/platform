@@ -3,6 +3,11 @@
 //
 
 import { decideLevel, type WindowUsage } from '../workspace/windowLimit'
+import { WorkspaceClient } from '../workspace/workspaceClient'
+import * as billing from '../billing'
+import aiBot from '@hcengineering/ai-bot'
+
+jest.mock('../config', () => ({ __esModule: true, default: { AIProviders: [], DefaultLanguage: 'ru' } }))
 
 const usage = (used: number, limit: number, isFree = true, balance = 0): WindowUsage => ({
   month: { used, limit },
@@ -10,6 +15,39 @@ const usage = (used: number, limit: number, isFree = true, balance = 0): WindowU
   plan: isFree ? 'free' : 'business',
   isFree,
   hasPackages: false
+})
+
+it.each([
+  ['limit', usage(1, 1), false],
+  ['unavailable', { ...usage(0, 0), unavailable: true }, true]
+])('handles %s without invoking the model', async (_reason, window, notified) => {
+  const getWindows = jest.spyOn(billing, 'getWorkspaceWindows').mockResolvedValue(window as WindowUsage)
+  const client: any = Object.create(WorkspaceClient.prototype)
+  client.getMemory = jest.fn().mockResolvedValue({})
+  client.setTypingStatus = jest.fn().mockResolvedValue(undefined)
+  client.notifyLimit = jest.fn().mockResolvedValue(undefined)
+  client.ctx = {}
+  client.wsIds = { uuid: 'workspace' }
+  const llm = { chatCompletion: jest.fn() }
+  const args = {
+    llm,
+    personUuid: 'person',
+    contextMode: 'direct',
+    objectId: 'chat',
+    objectClass: 'class',
+    messageClass: 'message',
+    space: 'space',
+    prompt: {},
+    promptTokens: 0,
+    level: 'low'
+  }
+
+  await client.generateAndReply({ collection: 'messages' }, args)
+
+  expect(client.notifyLimit).toHaveBeenCalledTimes(notified ? 1 : 0)
+  if (notified) expect(client.notifyLimit.mock.calls[0][3]).toBe(aiBot.string.AIServiceUnavailable)
+  expect(llm.chatCompletion).not.toHaveBeenCalled()
+  getWindows.mockRestore()
 })
 
 describe('decideLevel', () => {

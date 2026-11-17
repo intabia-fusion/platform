@@ -15,14 +15,17 @@
 <script lang="ts">
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import { themeStore, tooltip } from '@hcengineering/ui'
-  import { formatDuration } from '@hcengineering/tracker'
+  import { formatDuration, formatDurationRoundedHours, isDurationRounded } from '@hcengineering/tracker'
 
   export let id: string | undefined = undefined
   export let kind: 'link' | undefined = undefined
   export let value: number
   export let accent: boolean = false
+  export let roundedHours: boolean = false
 
-  $: label = formatDuration(value, $themeStore.language)
+  $: exactLabel = formatDuration(value, $themeStore.language)
+  $: label = roundedHours ? formatDurationRoundedHours(value, $themeStore.language) : exactLabel
+  $: digits = label.match(/^\d+/)?.[0].length ?? 0
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -32,12 +35,21 @@
   class:link={kind === 'link'}
   class:fs-bold={accent}
   on:click
-  use:tooltip={{ label: getEmbeddedLabel(label) }}
+  use:tooltip={{ label: getEmbeddedLabel(exactLabel) }}
 >
-  {label}
+  {#if roundedHours && isDurationRounded(value)}
+    <span class="rounded">{label.slice(0, digits)}</span>{label.slice(digits)}
+  {:else}
+    {label}
+  {/if}
 </span>
 
 <style lang="scss">
+  .rounded {
+    text-decoration-line: underline;
+    text-decoration-style: dotted;
+    text-underline-offset: 0.125rem;
+  }
   .link {
     white-space: nowrap;
 

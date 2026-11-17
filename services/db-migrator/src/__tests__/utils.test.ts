@@ -128,9 +128,11 @@ describe('shipped migrations', () => {
     for (const file of sqlFiles.filter((f) => f.endsWith('.crdb.sql'))) {
       const content = statements(file).join('\n')
       const added = Array.from(content.matchAll(/ADD COLUMN IF NOT EXISTS "?(\w+)"?/g), (m) => m[1])
-      for (const column of added) {
+      // One name may be added to several tables; every mention has to be one of those additions
+      for (const column of new Set(added)) {
         const uses = content.split(new RegExp(`\\b${column}\\b`)).length - 1
-        expect({ file, column, uses }).toEqual({ file, column, uses: 1 })
+        const additions = added.filter((it) => it === column).length
+        expect({ file, column, uses }).toEqual({ file, column, uses: additions })
       }
     }
   })
@@ -142,11 +144,11 @@ describe('shipped migrations', () => {
       const hasPg = ofNumber.some((f) => f.endsWith('.pg.sql') || !f.endsWith('.crdb.sql'))
       const hasCrdb = ofNumber.some((f) => f.endsWith('.crdb.sql'))
       // Cockroach-only splits of what Postgres does in one file: 0006-0009 of 0001-0005, 0012-0013
-      // of 0011, 0016 of 0014.
+      // of 0011, 0016 of 0014, 0019 of 0018.
       expect({ n, hasCrdb }).toEqual({ n, hasCrdb: true })
       expect({ n, hasPg }).toEqual({
         n,
-        hasPg: !['0006', '0007', '0008', '0009', '0012', '0013', '0016'].includes(n)
+        hasPg: !['0006', '0007', '0008', '0009', '0012', '0013', '0016', '0019'].includes(n)
       })
     }
   })

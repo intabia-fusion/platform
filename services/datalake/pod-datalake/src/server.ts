@@ -33,6 +33,8 @@ import {
   type RequestWithAuth,
   keepAlive,
   withAdminAuthorization,
+  withStorageAdminAuthorization,
+  withSystemAuthorization,
   withAuthorization,
   withBlob,
   withWorkspace,
@@ -63,6 +65,7 @@ import { DatalakeImpl } from './datalake/datalake'
 import { Config } from './config'
 import { LimitsState } from './limits'
 import { createWorkspaceCleaner } from './workspace'
+import { cleanupDatalake, getStorageCleanupSummary } from './cleanup'
 import { createBucket, createClient, S3Bucket } from './s3'
 import { TemporaryDir } from './tempdir'
 
@@ -163,6 +166,18 @@ export async function createServer (
   if (config.Readonly) {
     app.use(withReadonly)
   }
+
+  app.post('/admin/storage/cleanup', withSystemAuthorization, (_req, res, next) => {
+    void cleanupDatalake(ctx, db, buckets)
+      .then((result) => res.json(result))
+      .catch(next)
+  })
+
+  app.get('/admin/storage/unused', withStorageAdminAuthorization, (_req, res, next) => {
+    void getStorageCleanupSummary(db)
+      .then((summary) => res.json(summary))
+      .catch(next)
+  })
 
   app.get(
     '/stats/:workspace',

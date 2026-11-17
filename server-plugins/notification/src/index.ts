@@ -112,9 +112,9 @@ export default plugin(serverNotificationId, {
     OnAttributeCreate: '' as Resource<TriggerFunc>,
     OnAttributeUpdate: '' as Resource<TriggerFunc>,
     OnDocRemove: '' as Resource<TriggerFunc>,
-    OnDocUpdate: '' as Resource<TriggerFunc>,
     OnDocCreated: '' as Resource<TriggerFunc>,
     OnDocSpaceChanged: '' as Resource<TriggerFunc>,
+    OnSpaceAccessChanged: '' as Resource<TriggerFunc>,
     OnDocClassChanged: '' as Resource<TriggerFunc>,
     OnEmployeeDeactivate: '' as Resource<TriggerFunc>
   },

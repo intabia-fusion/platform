@@ -4,11 +4,13 @@ import core, {
   type Class,
   type Collection,
   type Doc,
+  type DocumentQuery,
   type FindResult,
   type Hierarchy,
   type ObjQueryType,
   type Ref,
-  type RefTo
+  type RefTo,
+  type TxOperations
 } from '@hcengineering/core'
 import { getResource } from '@hcengineering/platform'
 import { createQuery, getClient, type LiveQuery } from '@hcengineering/presentation'
@@ -365,3 +367,118 @@ export function sortFilterValues<T> (values: T[], checkIsSelected: (value: T) =>
  * @type {200}
  */
 export const FILTER_DEBOUNCE_MS: 200 = 200
+
+/**
+ * Adds the conditions of `filters` to a copy of `query`: the query the filter bar sends to the list.
+ * @public
+ */
+export async function filtersToQuery (
+  client: TxOperations,
+  query: DocumentQuery<Doc>,
+  filters: Filter[],
+  onUpdate: () => void
+): Promise<DocumentQuery<Doc>> {
+  const hierarchy = client.getHierarchy()
+  const newQuery = hierarchy.clone(query)
+  for (const filter of filters) {
+    const mode = await client.findOne(view.class.FilterMode, { _id: filter.mode })
+    if (mode === undefined) continue
+    const result = await getResource(mode.result)
+    const newValue = await result(filter, onUpdate)
+
+    if (Object.keys(newValue).length === 0) continue
+
+    let filterKey = filter.key.key
+
+    const attr = hierarchy.getAttribute(filter.key._class, filter.key.key)
+    if (hierarchy.isMixin(attr.attributeOf)) {
+      filterKey = attr.attributeOf + '.' + filter.key.key
+    }
+
+    if (newQuery[filterKey] === null || newQuery[filterKey] === undefined) {
+      newQuery[filterKey] = newValue
+      continue
+    }
+    let merged = false
+    for (const key in newValue) {
+      if (newQuery[filterKey][key] === undefined) {
+        if (key === '$in' && typeof newQuery[filterKey] === 'string') {
+          newQuery[filterKey] = { $in: newValue[key].filter((p: any) => p === newQuery[filterKey]) }
+        } else {
+          newQuery[filterKey][key] = newValue[key]
+        }
+        merged = true
+        continue
+      }
+      if (key === '$in') {
+        newQuery[filterKey][key] = newQuery[filterKey][key].filter((p: any) => newValue[key].includes(p))
+        merged = true
+        continue
+      }
+      if (key === '$nin') {
+        newQuery[filterKey][key] = [...newQuery[filterKey][key], ...newValue[key]]
+        merged = true
+        continue
+      }
+      if (key === '$lt') {
+        newQuery[filterKey][key] = newQuery[filterKey][key] < newValue[key] ? newQuery[filterKey][key] : newValue[key]
+        merged = true
+        continue
+      }
+      if (key === '$gt') {
+        newQuery[filterKey][key] = newQuery[filterKey][key] > newValue[key] ? newQuery[filterKey][key] : newValue[key]
+        merged = true
+        continue
+      }
+    }
+    if (!merged) {
+      Object.assign(newQuery[filterKey], newValue)
+    }
+  }
+  return newQuery
+}
+
+// Conditions are saved as JSON of `Filter[]`, as a saved view keeps them.
+function isRecord (value: unknown): value is Record<string, any> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+// Stored conditions are user data; the filter components crash on any other shape
+function isFilter (value: unknown): value is Filter {
+  if (!isRecord(value) || !isRecord(value.key)) return false
+  const key = value.key
+  return (
+    typeof key._class === 'string' &&
+    typeof key.key === 'string' &&
+    typeof key.label === 'string' &&
+    typeof key.component === 'string' &&
+    isRecord(key.attribute) &&
+    isRecord(key.attribute.type) &&
+    typeof value.mode === 'string' &&
+    Array.isArray(value.value) &&
+    (value.nested === undefined || isFilter(value.nested))
+  )
+}
+
+// Malformed conditions are dropped; a missing or repeated index (it keys live queries) is renewed
+export function parseFilters (value: string): Filter[] {
+  if (value === '') return []
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(value)
+  } catch {
+    return []
+  }
+  if (!Array.isArray(parsed)) return []
+  const indexes = new Set<number>()
+  return parsed.filter(isFilter).map((filter) => {
+    let index = filter.index
+    while (typeof index !== 'number' || indexes.has(index)) index = Math.floor(Math.random() * 1_000_000_000) + 1
+    indexes.add(index)
+    return index === filter.index ? filter : { ...filter, index }
+  })
+}
+
+export function serializeFilters (filters: Filter[]): string {
+  return filters.length === 0 ? '' : JSON.stringify(filters)
+}

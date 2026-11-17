@@ -88,15 +88,8 @@ export class RecordingProcessor {
     meetingId: Ref<MeetingMinutes>,
     wsIds: WorkspaceIds,
     meetingTitle: string,
-    opts: { builtInLayout?: boolean } = {}
+    opts: { builtInLayout?: boolean, continuation?: boolean } = {}
   ): Promise<StartRecordingVerdict> {
-    // Egress writes straight to S3, past the datalake gate. Skip rather than throw: the queue
-    // consumer calls this too, and a throw there means endless redelivery.
-    if (this.limitsState?.isExhausted(workspaceId) === true) {
-      this.ctx.warn('Cannot start recording: workspace disk/payment limit exhausted', { workspaceId, roomName })
-      return { started: false, reason: 'limits-exhausted' }
-    }
-
     // Check if LiveKit room exists before starting recording
     const existingRooms = await this.roomClient.listRooms([roomName])
     if (existingRooms === undefined || existingRooms.length === 0) {
@@ -127,6 +120,14 @@ export class RecordingProcessor {
         await wsClient.updateMeetingRecordingState(meetingDoc, RecordingState.Recording)
       }
       return { started: false, reason: 'already-running' }
+    }
+
+    // Egress writes straight to S3, past the datalake gate. Skip rather than throw: the queue
+    // consumer calls this too, and a throw there means endless redelivery.
+    if (opts.continuation !== true) await this.limitsState?.refresh(workspaceId)
+    if (opts.continuation !== true && this.limitsState?.isExhausted(workspaceId) === true) {
+      this.ctx.warn('Cannot start recording: workspace disk/payment limit exhausted', { workspaceId, roomName })
+      return { started: false, reason: 'limits-exhausted' }
     }
 
     meetingTitle = meetingTitle.replace(/[^a-zA-Z0-9_-]/g, '_')
@@ -239,7 +240,9 @@ export class RecordingProcessor {
       // The ids egress_ended saves the file with.
       const wsIds = { uuid: workspaceId, url: '' }
       const verdict = await this.startRecording(roomName, workspaceId, meetingId, wsIds, meeting.name, {
-        builtInLayout: true
+        builtInLayout: true,
+        // Template recovery continues a recording admitted before the failed egress.
+        continuation: true
       })
       return verdict.started || verdict.reason === 'already-running'
     } catch (err: any) {
@@ -297,17 +300,9 @@ export class RecordingProcessor {
     roomName: string,
     workspaceId: WorkspaceUuid,
     meetingId: Ref<MeetingMinutes>,
-    wsLoginInfo: WorkspaceLoginInfo
+    wsLoginInfo: WorkspaceLoginInfo,
+    limitsChecked = false
   ): Promise<void> {
-    // Audio (transcription) recording also lands in S3 — same disk/payment gate as video.
-    if (this.limitsState?.isExhausted(workspaceId) === true) {
-      this.ctx.warn('Cannot start audio recording: workspace disk/payment limit exhausted', {
-        workspaceId,
-        roomName
-      })
-      return
-    }
-
     // Check if LiveKit room exists before starting audio recording
     const existingRooms = await this.roomClient.listRooms([roomName])
     if (existingRooms === undefined || existingRooms.length === 0) {
@@ -333,6 +328,16 @@ export class RecordingProcessor {
         this.ctx.warn('Audio recording already in progress for this meeting', {
           meetingId,
           existingEgressId: running.egressId
+        })
+        return
+      }
+
+      // Audio (transcription) recording also lands in S3 — same disk/payment gate as video.
+      if (!limitsChecked) await this.limitsState?.refresh(workspaceId)
+      if (!limitsChecked && this.limitsState?.isTranscriptionExhausted(workspaceId) === true) {
+        this.ctx.warn('Cannot start audio recording: workspace disk/payment limit exhausted', {
+          workspaceId,
+          roomName
         })
         return
       }

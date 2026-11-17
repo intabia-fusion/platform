@@ -16,10 +16,35 @@
 
 import { readOnlyGuestAccountUuid, systemAccountUuid } from '@hcengineering/core'
 import { extractToken } from '@hcengineering/server-client'
-import { Token } from '@hcengineering/server-token'
+import { ADMIN_SESSION_TTL_SEC, hasAdminSession, Token } from '@hcengineering/server-token'
 import { type Response, type Request, type NextFunction, RequestHandler } from 'express'
 import { validate } from 'uuid'
 import { ApiError } from './error'
+
+export const withSystemAuthorization: RequestHandler = (req, res, next) => {
+  try {
+    const token = extractToken(req.headers)
+    if (token?.account !== systemAccountUuid) throw new ApiError(401, 'Unauthorized')
+    next()
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const withStorageAdminAuthorization: RequestHandler = (req, res, next) => {
+  const token = extractToken(req.headers)
+  if (
+    token === undefined ||
+    (token.extra?.admin !== 'true' && token.extra?.billingAdmin !== 'true') ||
+    token.account === systemAccountUuid ||
+    token.extra?.service !== undefined ||
+    !hasAdminSession(token, ADMIN_SESSION_TTL_SEC)
+  ) {
+    res.sendStatus(403)
+    return
+  }
+  next()
+}
 
 export interface KeepAliveOptions {
   timeout: number

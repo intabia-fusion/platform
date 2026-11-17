@@ -22,6 +22,8 @@ export const iconGroups: Array<{ title: string, keys: string[] }> = [
       'ArrowDown',
       'ArrowLeft',
       'ArrowRight',
+      'ArrowBarToLeft',
+      'ArrowBarToRight',
       'ArrowUpRight',
       'ArrowFatUp',
       'ArrowUpLines',

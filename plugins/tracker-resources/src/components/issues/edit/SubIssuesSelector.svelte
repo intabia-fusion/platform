@@ -15,13 +15,14 @@
 -->
 <script lang="ts">
   import type { IdMap, Ref, StatusCategory, WithLookup } from '@hcengineering/core'
+  import type { Asset } from '@hcengineering/platform'
   import core, { SortingOrder, toIdMap } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import task, { getStates } from '@hcengineering/task'
   import { typeStore } from '@hcengineering/task-resources'
   import type { Issue, Project } from '@hcengineering/tracker'
   import type { ButtonKind, ButtonSize } from '@hcengineering/ui'
-  import { Button, ProgressCircle, SelectPopup, closeTooltip } from '@hcengineering/ui'
+  import { Button, Icon, ProgressCircle, SelectPopup, closeTooltip } from '@hcengineering/ui'
   import { openDoc, openDocFromRef, statusStore } from '@hcengineering/view-resources'
   import tracker from '../../../plugin'
   import { listIssueStatusOrder } from '../../../utils'
@@ -35,6 +36,8 @@
   export let justify: 'left' | 'center' = 'left'
   export let width: string | undefined = 'min-content'
   export let compactMode: boolean = false
+  // Shown instead of the progress circle
+  export let icon: Asset | undefined = undefined
 
   let btn: HTMLElement
 
@@ -169,7 +172,11 @@
           <div class="flex-row-center content-color text-sm pointer-events-none">
             {#if !compactMode}
               <div class="mr-1-5">
-                <ProgressCircle bind:value={countComplete} bind:max={subIssues.length} size="small" primary />
+                {#if icon !== undefined}
+                  <Icon {icon} size="small" />
+                {:else}
+                  <ProgressCircle bind:value={countComplete} bind:max={subIssues.length} size="small" primary />
+                {/if}
               </div>
             {/if}
             {countComplete}/{subIssues.length}

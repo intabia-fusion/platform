@@ -146,22 +146,13 @@ test.describe('tracker layout tests', () => {
       let orderedIssueNames: string[]
 
       if (order === 'Priority') {
+        // The board orders priorities by weight, the same order as the priority groups: "No priority" last.
+        const priorityOrder = ['Urgent', 'High', 'Medium', 'Low', 'No priority']
         orderedIssueNames = [...issuesProps]
-          .sort((propsLeft, propsRight) => {
-            if (propsLeft.priority === undefined || propsRight.priority === undefined) {
-              return -1
-            }
-
-            if (propsLeft.priority === propsRight.priority) {
-              return 0
-            } else if (
-              PRIORITIES.findIndex((p) => p === propsLeft.priority) -
-                PRIORITIES.findIndex((p) => p === propsRight.priority) >
-              0
-            ) {
-              return 1
-            }
-            return -1
+          .sort((left, right) => {
+            const leftIndex = priorityOrder.indexOf(left.priority ?? '')
+            const rightIndex = priorityOrder.indexOf(right.priority ?? '')
+            return leftIndex - rightIndex
           })
           .map((p) => p.name)
       } else {

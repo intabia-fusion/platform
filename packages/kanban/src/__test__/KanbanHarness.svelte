@@ -29,7 +29,9 @@
 
 <Kanban bind:this={kanban} {...props} on:obj-focus>
   <svelte:fragment slot="card" let:object let:dragged>
-    <span data-test="card-body" data-dragged={dragged ? 'true' : 'false'}>{object._id}</span>
+    {#if object !== undefined}
+      <span data-test="card-body" data-dragged={dragged ? 'true' : 'false'}>{object._id}</span>
+    {/if}
   </svelte:fragment>
   <svelte:fragment slot="header" let:state let:count let:collapsed let:blocked let:toggle let:members let:merge>
     <!-- svelte-ignore a11y-click-events-have-key-events -->

@@ -15,7 +15,8 @@
 
 import { expect, test } from '../fixtures'
 import tracker, { IssuePriority, type Issue } from '@hcengineering/tracker'
-import { type Ref, type TxOperations } from '@hcengineering/core'
+import core, { type Class, type Ref, type TxOperations } from '@hcengineering/core'
+import task, { createStatusAtomic, type ProjectType, type TaskType } from '@hcengineering/task'
 import {
   connectTracker,
   createComponent,
@@ -737,13 +738,16 @@ test.describe('Kanban board', () => {
         await board.revealCard(cardId)
         // After projection refresh, cards must land in their priority lane — not
         // the unassigned bucket. Lane id is the priority enum value as string.
-        const lane = await page
-          .locator(`[data-id="kanban-swimlane"]:has([data-card-id="${cardId}"])`)
-          .first()
-          .getAttribute('data-swimlane-id')
-        expect(lane, `iteration ${i}: card must be in some priority lane, not unassigned`).not.toBe(
-          '__swim_unassigned__'
-        )
+        // Polled: until the query with the priority projection answers, every card sits unassigned.
+        const laneOf = async (): Promise<string | null> =>
+          await page
+            .locator(`[data-id="kanban-swimlane"]:has([data-card-id="${cardId}"])`)
+            .first()
+            .getAttribute('data-swimlane-id')
+        await expect
+          .poll(laneOf, { message: `iteration ${i}: card must be in some priority lane, not unassigned` })
+          .not.toBe('__swim_unassigned__')
+        const lane = await laneOf()
         expect(lane).not.toBeNull()
         if (lane !== null) {
           await board.expectCardInSwimLaneCell(cardId, lane, backlog)
@@ -920,7 +924,12 @@ test.describe('Kanban board', () => {
       const done = ctx.statuses.get('Done') as string
       const open = await board.boardLayout()
       await board.expectCardInColumn(doneCard, done)
-      const count = await board.columnHeader(done).locator('.counter').innerText()
+      // Other specs add Done issues to this project meanwhile: a count read before collapsing goes stale.
+      const doneCount = async (): Promise<string> =>
+        String(
+          (await client.findAll(tracker.class.Issue, { space: ctx.project._id, status: ctx.statuses.get('Done') }))
+            .length
+        )
 
       await board.collapseColumn(done)
       // The column leaves its place; the stack ends the board and has no cards or tools.
@@ -928,7 +937,8 @@ test.describe('Kanban board', () => {
       await expect(board.collapsedColumn(done)).toBeVisible()
       await expect(board.card(doneCard)).toHaveCount(0)
       await expect(board.collapsedColumn(done).locator('.tools')).toHaveCount(0)
-      await expect(board.collapsedColumn(done).locator('.counter')).toHaveText(count)
+      const stackCounter = board.collapsedColumn(done).locator('.counter')
+      await expect.poll(async () => (await stackCounter.innerText()) === (await doneCount())).toBe(true)
       // Kept per viewlet and grouping.
       const stored = await board.storedColumns('collapsed')
       expect(Object.keys(stored)).toEqual([expect.stringMatching(/^kanban-column-collapsed-.+-status$/)])
@@ -954,7 +964,6 @@ test.describe('Kanban board', () => {
       const stacked = board.collapsedColumn(done)
       await expect(stacked).toBeVisible()
       const counter = stacked.locator('.counter')
-      const before = Number(await counter.innerText())
 
       await dragUntilStatus(client, cardId, done, async () => {
         const preview = async (): Promise<void> => {
@@ -970,7 +979,14 @@ test.describe('Kanban board', () => {
       await expect(stacked).toBeVisible()
       await expect(board.column(done)).toHaveCount(0)
       await expect(board.card(cardId)).toHaveCount(0)
-      await expect(counter).toHaveText(String(before + 1))
+      await expect
+        .poll(async () => {
+          const count = (
+            await client.findAll(tracker.class.Issue, { space: ctx.project._id, status: ctx.statuses.get('Done') })
+          ).length
+          return (await counter.innerText()) === String(count)
+        })
+        .toBe(true)
     })
 
     test('swim lanes: a card dropped on a stacked column keeps its own lane', async ({ page }) => {
@@ -999,7 +1015,16 @@ test.describe('Kanban board', () => {
             timeout: 2000
           })
         }
-        await board.dragCardVia(cardId, [{ over: board.swimLaneCell(otherLane, backlog), check: inOtherLane }], stacked)
+        // Off the left edge before the stack scrolls into view: a pointer left there auto-scrolls the board back
+        const todo = ctx.statuses.get('Todo') as string
+        await board.dragCardVia(
+          cardId,
+          [
+            { over: board.swimLaneCell(otherLane, backlog), check: inOtherLane },
+            { over: board.swimLaneCell(otherLane, todo) }
+          ],
+          stacked
+        )
       })
 
       expect((await client.findOne(tracker.class.Issue, { _id: cardId }))?.priority).toBe(IssuePriority.Low)
@@ -1134,6 +1159,139 @@ test.describe('Kanban board', () => {
       await expect.poll(async () => await board.cardIdsIn(merged)).toEqual(placed)
     })
 
+    test('merge columns by category groups owned statuses and reset keeps other boards groups', async ({ page }) => {
+      const projectTypeId = generateId() as Ref<ProjectType>
+      const taskTypeId = generateId() as Ref<TaskType>
+      const projectId = generateId() as typeof ctx.project._id
+      const fixturePrefix = `${titlePrefix}category-`
+      const sourceType = await client.findOne(task.class.ProjectType, { _id: ctx.project.type })
+      const sourceTask = await client.findOne(task.class.TaskType, { _id: ctx.taskType })
+      const sourceStatus = await client.findOne(tracker.class.IssueStatus, { _id: ctx.statuses.get('Backlog') })
+      if (sourceType === undefined || sourceTask === undefined || sourceStatus === undefined) {
+        throw new Error('Missing tracker project type, task type or Backlog status')
+      }
+      expect(sourceStatus.category).toBeDefined()
+      const ownedStatuses: Array<typeof sourceStatus._id> = []
+      try {
+        await client.createDoc(
+          task.class.ProjectType,
+          sourceType.space,
+          {
+            name: fixturePrefix,
+            description: '',
+            descriptor: sourceType.descriptor,
+            targetClass: sourceType.targetClass,
+            roles: 0,
+            tasks: [taskTypeId],
+            statuses: [],
+            classic: sourceType.classic
+          },
+          projectTypeId
+        )
+        await client.createDoc(
+          task.class.TaskType,
+          sourceTask.space,
+          {
+            name: fixturePrefix,
+            parent: projectTypeId,
+            descriptor: sourceTask.descriptor,
+            ofClass: sourceTask.ofClass,
+            // Removing this fixture must not delete the shared task type's generated class.
+            targetClass: sourceTask.ofClass,
+            statusClass: sourceTask.statusClass,
+            statusCategories: sourceTask.statusCategories,
+            isRootTaskType: true,
+            statuses: []
+          },
+          taskTypeId
+        )
+        for (const name of ['First', 'Second']) {
+          const status = await createStatusAtomic(
+            client,
+            projectTypeId,
+            tracker.class.IssueStatus,
+            {
+              name: `${fixturePrefix}${name}`,
+              ofAttribute: sourceStatus.ofAttribute,
+              category: sourceStatus.category
+            },
+            [{ taskType: taskTypeId, place: (statuses, id) => [...statuses, id] }]
+          )
+          expect(status.reused).toBe(false)
+          ownedStatuses.push(status.id as typeof sourceStatus._id)
+        }
+        await client.createDoc(
+          tracker.class.Project,
+          core.space.Space,
+          {
+            name: fixturePrefix,
+            description: '',
+            private: false,
+            archived: false,
+            members: ctx.project.members,
+            type: projectTypeId,
+            identifier: `MC${generateId(6)}`,
+            sequence: 0,
+            defaultTimeReportDay: ctx.project.defaultTimeReportDay
+          },
+          projectId
+        )
+        const ownedContext = await getProjectContext(client, projectId)
+        const cards = []
+        for (const status of ownedStatuses) {
+          cards.push(await createIssue(client, ownedContext, { title: `${fixturePrefix}${status}`, status }))
+        }
+        await openTrackerBoard(page, projectId)
+        const board = new KanbanBoardPage(page)
+        const [first, second] = ownedStatuses
+        await board.mergeColumns(first, `${fixturePrefix}Second`)
+        const [key] = Object.keys(await board.storedColumns('merged'))
+        expect(key).toBeDefined()
+        const foreign = ['foreign-status-done', 'foreign-status-canceled']
+        await page.evaluate(
+          ([k, groups]) => {
+            localStorage.setItem(k, groups)
+          },
+          [key, JSON.stringify([foreign])]
+        )
+        await openTrackerBoard(page, projectId, true)
+        await expect(board.column(first)).toBeVisible()
+        await expect(board.column(second)).toBeVisible()
+        await board.openMoreActions()
+        await expect(board.moreActionsItem('Merge columns by category')).toBeVisible()
+        await board.moreActionsItem('Merge columns by category').click()
+        await expect(board.column(first)).toBeVisible()
+        await expect(board.column(second)).toHaveCount(0)
+        await expect(board.columnHeader(first)).toHaveClass(/merged/)
+        for (const card of cards) await board.expectCardInColumn(card, first)
+        const merged = async (): Promise<unknown> => (await board.storedColumns('merged'))[key]
+        await expect.poll(merged).toEqual([foreign, [first, second]])
+        await board.openMoreActions()
+        await board.moreActionsItem('Reset merged columns').click()
+        await expect(board.column(second)).toBeVisible()
+        await board.expectCardInColumn(cards[0], first)
+        await board.expectCardInColumn(cards[1], second)
+        await expect.poll(merged).toEqual([foreign])
+      } finally {
+        await deleteIssuesByTitlePrefix(client, fixturePrefix)
+        for (const doc of [
+          await client.findOne(tracker.class.Project, { _id: projectId }),
+          await client.findOne(task.class.TaskType, { _id: taskTypeId }),
+          await client.findOne(task.class.ProjectType, { _id: projectTypeId }),
+          ...(await client.findAll(tracker.class.IssueStatus, { _id: { $in: ownedStatuses } }))
+        ]) {
+          if (doc !== undefined) await client.remove(doc)
+        }
+      }
+      expect(await client.findOne(core.class.Class, { _id: sourceTask.targetClass })).toBeDefined()
+      const sharedCard = await createIssue(client, ctx, {
+        title: `${titlePrefix}after-category-cleanup`,
+        status: 'Backlog',
+        _class: sourceTask.targetClass as Ref<Class<Issue>>
+      })
+      expect((await client.findOne(tracker.class.Issue, { _id: sharedCard }))?._class).toBe(sourceTask.targetClass)
+    })
+
     test('reset merged columns shows only when this board has a merged column and keeps other boards groups', async ({
       page
     }) => {
@@ -1141,7 +1299,6 @@ test.describe('Kanban board', () => {
       const board = new KanbanBoardPage(page)
       const done = ctx.statuses.get('Done') as string
       const canceled = ctx.statuses.get('Cancelled') as string
-      const states = await board.boardLayout()
       // The viewlet is shared by all projects: its key also holds the groups of other boards.
       const foreign = ['foreign-status-done', 'foreign-status-canceled']
       const merged = async (): Promise<unknown> => Object.values(await board.storedColumns('merged'))[0]
@@ -1161,7 +1318,6 @@ test.describe('Kanban board', () => {
       // Only another board's group is stored: nothing is merged here, nothing to reset.
       await expect(board.column(canceled)).toBeVisible()
       await board.openMoreActions()
-      await expect(board.moreActionsItem('Merge columns by category')).toBeVisible()
       await expect(board.moreActionsItem('Reset merged columns')).toHaveCount(0)
       await page.keyboard.press('Escape')
 
@@ -1171,18 +1327,6 @@ test.describe('Kanban board', () => {
       await board.moreActionsItem('Reset merged columns').click()
       await expect(board.column(canceled)).toBeVisible()
       await expect.poll(merged).toEqual([foreign])
-
-      // Merging by category replaces this board's groups only.
-      const statuses = await client.findAll(tracker.class.IssueStatus, {})
-      const byCategory = new Map<string, string[]>()
-      for (const id of states) {
-        const category = statuses.find((status) => status._id === id)?.category
-        if (category !== undefined) byCategory.set(category, [...(byCategory.get(category) ?? []), id])
-      }
-      await board.mergeColumns(done, 'Canceled')
-      await board.openMoreActions()
-      await board.moreActionsItem('Merge columns by category').click()
-      await expect.poll(merged).toEqual([foreign, ...Array.from(byCategory.values()).filter((ids) => ids.length > 1)])
     })
 
     test('swim lane count does not count a merged status twice', async ({ page }) => {

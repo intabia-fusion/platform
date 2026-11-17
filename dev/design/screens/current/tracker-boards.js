@@ -1,5 +1,12 @@
 // Task boards of the tracker (FUSIO-1613, accepted): board view, board switcher, column statuses, kanban with lanes.
-// Imported from the hand-edited fusio-1613.pen by dev/pen/import.mjs; the cards are kit.IssueCard, the card density is its `density`.
+// Imported from the hand-edited fusio-1613.pen; the cards are kit.IssueCard, the card density is its `density`.
+
+const boardIssueStatuses = new Map(DEMO.ru.projects.flatMap((project) => project.issues).map((issue) => [issue.id, issue.status]))
+
+const boardColumnStatuses = new Map(DEMO.ru.boards.find((board) => board.key === 'main').columns.map((column) => [
+  column.title,
+  column.statuses.map((name) => [name, DEMO.ru.statuses.find((status) => status.name === name).category])
+]))
 
 await kit.page('Task boards')
 {
@@ -8,10 +15,11 @@ await kit.page('Task boards')
     nav: [
       { item: 'My issues', icon: 'timeline' },
       { item: 'All issues', icon: 'check' },
-      { item: 'Доски', icon: 'board', selected: true },
-      { item: 'Тестирование', indent: true },
-      { item: 'Мой спринт', indent: true },
-      { group: 'Your projects', add: true },
+      { group: 'Доски', add: true, catalog: { label: 'Все доски', icon: 'kit/BulletList' } },
+      { item: 'Основная доска', icon: 'board', selected: true },
+      { item: 'Тестирование', icon: 'board' },
+      { item: 'Мой спринт', icon: 'board' },
+      { group: 'Проекты', add: true, catalog: { label: 'Все проекты', icon: 'kit/BulletList' } },
       { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
@@ -30,7 +38,7 @@ await kit.page('Task boards')
     ),
     actions: [
       kit.Notice('1 статус без колонки · 1 задача не видна', 'warning', { pill: true }),
-      kit.Button({ kind: 'ghost', size: 'medium', label: 'Настройки доски', icon: 'gear', name: 'Board settings' })
+      kit.IconButton('kit/DotsVertical', { kind: 'secondary', size: 'small', name: 'Board actions' })
     ],
     filters: [
       sep,
@@ -38,43 +46,42 @@ await kit.page('Task boards')
       kit.QuickFilter('Разработка', false),
       kit.QuickFilter('Тестирование', true),
       kit.QuickFilter('iOS', false),
-      kit.QuickFilter('Срочные', false),
-      kit.QuickFilter('Блокеры', false)
+      kit.QuickFilter('Срочные', false)
     ],
     tabs: []
   })
   kit.at(main, kit.add(
-    kit.box('Board', { w: 1515, h: 931, dir: 'column', gap: 8, pad: [12, 16, 0, 16] }),
+    kit.box('Board', { w: 1515, h: 931, dir: 'column', gap: 8, pad: [24, 24, 0, 24] }),
     kit.add(
-      kit.box('Column headers', { w: 1483, dir: 'row', gap: 12, vs: 'auto' }),
+      kit.box('Column headers', { w: 1920, dir: 'row', gap: 0, pad: [0, 0, 9, 0], vs: 'auto' }),
       kit.add(
-        kit.box('Column To Do', { w: 234, dir: 'column', gap: 6, vs: 'auto' }),
-        kit.ColumnHeader('To Do', 'todo', 9, 234)
+        kit.box('Column To Do', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
+        kit.ColumnHeader('To Do', 'todo', 9, 292)
       ),
       kit.add(
-        kit.box('Column On Hold', { w: 234, dir: 'column', gap: 6, vs: 'auto' }),
-        kit.ColumnHeader('On Hold', 'todo', 1, 234)
+        kit.box('Column On Hold', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
+        kit.ColumnHeader('On Hold', 'todo', 1, 292)
       ),
       kit.add(
-        kit.box('Column In Progress', { w: 234, dir: 'column', gap: 6, vs: 'auto' }),
-        kit.ColumnHeader('In Progress', 'active', 10, 234, { limit: 8, over: true })
+        kit.box('Column In Progress', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
+        kit.ColumnHeader('In Progress', 'active', 10, 292, { limit: 8, over: true, statuses: boardColumnStatuses.get('In Progress') })
       ),
       kit.add(
-        kit.box('Column Peer Review', { w: 234, dir: 'column', gap: 6, vs: 'auto' }),
-        kit.ColumnHeader('Peer Review', 'active', 2, 234)
+        kit.box('Column Peer Review', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
+        kit.ColumnHeader('Peer Review', 'active', 2, 292)
       ),
       kit.add(
-        kit.box('Column Ready for QA', { w: 234, dir: 'column', gap: 6, vs: 'auto' }),
-        kit.ColumnHeader('Ready for QA', 'active', 1, 234, { limit: 12 })
+        kit.box('Column Ready for QA', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
+        kit.ColumnHeader('Ready for QA', 'active', 1, 292, { limit: 12 })
       ),
       kit.add(
-        kit.box('Column Done', { w: 234, dir: 'column', gap: 6, vs: 'auto' }),
-        kit.ColumnHeader('Done', 'won', 9, 234)
+        kit.box('Column Done', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
+        kit.ColumnHeader('Done', 'won', 9, 292)
       )
     ),
     kit.add(
       kit.box('Swimlane Внеочередные', {
-        w: 1483,
+        w: 1920,
         h: 32,
         dir: 'row',
         gap: 8,
@@ -89,9 +96,9 @@ await kit.page('Task boards')
       kit.text('Приоритет = Urgent', { size: 12, color: T('theme-darker-color') })
     ),
     kit.add(
-      kit.box('Lane cells', { w: 1483, dir: 'row', gap: 12, vs: 'auto' }),
+      kit.box('Lane cells', { w: 1920, dir: 'row', gap: 28, pad: [0, 14, 0, 14], vs: 'auto' }),
       kit.box('cell', {
-        w: 234,
+        w: 292,
         h: 56,
         dir: 'column',
         gap: 8,
@@ -101,7 +108,7 @@ await kit.page('Task boards')
         clip: false
       }),
       kit.box('cell', {
-        w: 234,
+        w: 292,
         h: 56,
         dir: 'column',
         gap: 8,
@@ -112,7 +119,7 @@ await kit.page('Task boards')
       }),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -123,6 +130,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-6',
+          statusName: boardIssueStatuses.get('APP-6'),
           cat: 'active',
           title: 'Интеграция с платёжным провайдером',
           assignee: ['ПИ', 'Watermelon'],
@@ -130,10 +138,10 @@ await kit.page('Task boards')
           priority: 'urgent',
           milestone: 'Релиз 1.0',
           labels: [['срочно', 'Pink']]
-        })
+        }, 276)
       ),
       kit.box('cell', {
-        w: 234,
+        w: 292,
         h: 56,
         dir: 'column',
         gap: 8,
@@ -143,7 +151,7 @@ await kit.page('Task boards')
         clip: false
       }),
       kit.box('cell', {
-        w: 234,
+        w: 292,
         h: 56,
         dir: 'column',
         gap: 8,
@@ -154,7 +162,7 @@ await kit.page('Task boards')
       }),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -165,6 +173,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-7',
+          statusName: boardIssueStatuses.get('APP-7'),
           cat: 'won',
           title: 'Баг: краш при открытии профиля на Android 12',
           assignee: ['ВО', 'Crocodile'],
@@ -172,12 +181,12 @@ await kit.page('Task boards')
           priority: 'urgent',
           milestone: 'Релиз 1.0',
           labels: [['баг', 'Firework']]
-        })
+        }, 276)
       )
     ),
     kit.add(
       kit.box('Swimlane Все остальные', {
-        w: 1483,
+        w: 1920,
         h: 32,
         dir: 'row',
         gap: 8,
@@ -191,10 +200,10 @@ await kit.page('Task boards')
       kit.Count(37)
     ),
     kit.add(
-      kit.box('Lane cells', { w: 1483, dir: 'row', gap: 12, vs: 'auto' }),
+      kit.box('Lane cells', { w: 1920, dir: 'row', gap: 28, pad: [0, 14, 0, 14], vs: 'auto' }),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -205,24 +214,26 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'MKT-2',
+          statusName: boardIssueStatuses.get('MKT-2'),
           cat: 'todo',
           title: 'Подготовить пресс-релиз о запуске приложения',
           assignee: ['СА', 'Sky'],
           est: '4h',
           priority: 'medium'
-        }),
+        }, 276),
         kit.IssueCard({
           id: 'MKT-5',
+          statusName: boardIssueStatuses.get('MKT-5'),
           cat: 'todo',
           title: 'Email-рассылка по базе подписчиков',
           assignee: ['СА', 'Sky'],
           est: '3h',
           priority: 'high'
-        })
+        }, 276)
       ),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -233,16 +244,17 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-22',
+          statusName: boardIssueStatuses.get('APP-22'),
           cat: 'todo',
           title: 'Поддержка Apple Pay',
           assignee: ['ПИ', 'Watermelon'],
           est: '8h',
           priority: 'medium'
-        })
+        }, 276)
       ),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -253,14 +265,16 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'MKT-1',
+          statusName: boardIssueStatuses.get('MKT-1'),
           cat: 'active',
           title: 'Запуск рекламной кампании в соцсетях',
           assignee: ['СА', 'Sky'],
           est: '16h',
           priority: 'high'
-        }),
+        }, 276),
         kit.IssueCard({
           id: 'APP-3',
+          statusName: boardIssueStatuses.get('APP-3'),
           cat: 'active',
           title: 'Push-уведомления о статусе заказа',
           assignee: ['ПИ', 'Watermelon'],
@@ -270,11 +284,11 @@ await kit.page('Task boards')
           component: 'iOS',
           milestone: 'Релиз 1.0',
           labels: [['срочно', 'Pink']]
-        })
+        }, 276)
       ),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -285,26 +299,28 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-27',
+          statusName: boardIssueStatuses.get('APP-27'),
           cat: 'active',
           title: 'Проверка количества товара в корзине',
           assignee: ['ПИ', 'Watermelon'],
           est: '3h',
           priority: 'high',
           accent: P('Firework')
-        }),
+        }, 276),
         kit.IssueCard({
           id: 'APP-28',
+          statusName: boardIssueStatuses.get('APP-28'),
           cat: 'active',
           title: 'Рефакторинг API-клиента',
           assignee: ['ПИ', 'Watermelon'],
           est: '5h',
           priority: 'medium',
           accent: P('Firework')
-        })
+        }, 276)
       ),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -315,17 +331,18 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-29',
+          statusName: boardIssueStatuses.get('APP-29'),
           cat: 'active',
           title: 'Ссылки на товар из внешних источников',
           assignee: ['КМ', 'Grass'],
           est: '3h',
           priority: 'medium',
           accent: P('Orange')
-        })
+        }, 276)
       ),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -336,13 +353,14 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'MKT-4',
+          statusName: boardIssueStatuses.get('MKT-4'),
           cat: 'won',
           title: 'Обновить лендинг на сайте',
           assignee: ['КМ', 'Grass'],
           est: '6h',
           priority: 'medium'
-        }),
-        kit.IssueCard({ id: 'MKT-6', cat: 'lost', title: 'Партнёрство с блогерами-техноблогерами', priority: 'low' })
+        }, 276),
+        kit.IssueCard({ id: 'MKT-6', statusName: boardIssueStatuses.get('MKT-6'), cat: 'lost', title: 'Партнёрство с блогерами-техноблогерами', priority: 'low' }, 276)
       )
     )
   ), 0, 113)
@@ -367,12 +385,12 @@ await kit.page('Task boards')
     kit.add(
       kit.row('legend item', 6),
       kit.Swatch(P('Orange'), 14),
-      kit.text('рамка карточки: Ready for QA дольше 5 дней', { size: 12, color: T('theme-dark-color') })
+      kit.text('рамка карточки: статус Ready for QA', { size: 12, color: T('theme-dark-color') })
     ),
     kit.add(
       kit.row('legend item', 6),
       kit.Swatch(P('Firework'), 14),
-      kit.text('рамка карточки: Peer Review дольше 3 дней', { size: 12, color: T('theme-dark-color') })
+      kit.text('рамка карточки: статус Peer Review', { size: 12, color: T('theme-dark-color') })
     )
   ), 16, 1000)
 }
@@ -382,7 +400,7 @@ await kit.page('Task boards')
     nav: [
       { item: 'My issues', icon: 'timeline' },
       { item: 'All issues', icon: 'check' },
-      { group: 'Доски', add: true },
+      { group: 'Доски', add: true, catalog: { label: 'Все доски', icon: 'kit/BulletList' } },
       { item: 'Основная доска', icon: 'board', selected: true },
       { item: 'Релиз 1.0', icon: 'board' },
       { item: 'Тестирование', icon: 'board' },
@@ -394,7 +412,7 @@ await kit.page('Task boards')
       { item: 'Просроченные', indent: true },
       { item: 'Без оценки', indent: true },
       { item: 'Созданные мной за неделю', indent: true },
-      { group: 'Your projects', add: true },
+      { group: 'Проекты', add: true, catalog: { label: 'Все проекты', icon: 'kit/BulletList' } },
       { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
@@ -413,7 +431,7 @@ await kit.page('Task boards')
     ),
     actions: [
       kit.Notice('1 статус без колонки · 1 задача не видна', 'warning', { pill: true }),
-      kit.Button({ kind: 'ghost', size: 'medium', label: 'Настройки доски', icon: 'gear', name: 'Board settings' })
+      kit.IconButton('kit/DotsVertical', { kind: 'secondary', size: 'small', name: 'Board actions' })
     ],
     filters: [
       sep2,
@@ -421,43 +439,42 @@ await kit.page('Task boards')
       kit.QuickFilter('Разработка', false),
       kit.QuickFilter('Тестирование', true),
       kit.QuickFilter('iOS', false),
-      kit.QuickFilter('Срочные', false),
-      kit.QuickFilter('Блокеры', false)
+      kit.QuickFilter('Срочные', false)
     ],
     tabs: []
   })
   kit.at(main, kit.add(
-    kit.box('Board', { w: 1515, h: 931, dir: 'column', gap: 8, pad: [12, 16, 0, 16] }),
+    kit.box('Board', { w: 1515, h: 931, dir: 'column', gap: 8, pad: [24, 24, 0, 24] }),
     kit.add(
-      kit.box('Column headers', { w: 1483, dir: 'row', gap: 12, vs: 'auto' }),
+      kit.box('Column headers', { w: 1920, dir: 'row', gap: 0, pad: [0, 0, 9, 0], vs: 'auto' }),
       kit.add(
-        kit.box('Column To Do', { w: 234, dir: 'column', gap: 6, vs: 'auto' }),
-        kit.ColumnHeader('To Do', 'todo', 9, 234)
+        kit.box('Column To Do', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
+        kit.ColumnHeader('To Do', 'todo', 9, 292)
       ),
       kit.add(
-        kit.box('Column On Hold', { w: 234, dir: 'column', gap: 6, vs: 'auto' }),
-        kit.ColumnHeader('On Hold', 'todo', 1, 234)
+        kit.box('Column On Hold', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
+        kit.ColumnHeader('On Hold', 'todo', 1, 292)
       ),
       kit.add(
-        kit.box('Column In Progress', { w: 234, dir: 'column', gap: 6, vs: 'auto' }),
-        kit.ColumnHeader('In Progress', 'active', 10, 234, { limit: 8, over: true })
+        kit.box('Column In Progress', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
+        kit.ColumnHeader('In Progress', 'active', 10, 292, { limit: 8, over: true, statuses: boardColumnStatuses.get('In Progress') })
       ),
       kit.add(
-        kit.box('Column Peer Review', { w: 234, dir: 'column', gap: 6, vs: 'auto' }),
-        kit.ColumnHeader('Peer Review', 'active', 2, 234)
+        kit.box('Column Peer Review', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
+        kit.ColumnHeader('Peer Review', 'active', 2, 292)
       ),
       kit.add(
-        kit.box('Column Ready for QA', { w: 234, dir: 'column', gap: 6, vs: 'auto' }),
-        kit.ColumnHeader('Ready for QA', 'active', 1, 234, { limit: 12 })
+        kit.box('Column Ready for QA', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
+        kit.ColumnHeader('Ready for QA', 'active', 1, 292, { limit: 12 })
       ),
       kit.add(
-        kit.box('Column Done', { w: 234, dir: 'column', gap: 6, vs: 'auto' }),
-        kit.ColumnHeader('Done', 'won', 9, 234)
+        kit.box('Column Done', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
+        kit.ColumnHeader('Done', 'won', 9, 292)
       )
     ),
     kit.add(
       kit.box('Swimlane Внеочередные', {
-        w: 1483,
+        w: 1920,
         h: 32,
         dir: 'row',
         gap: 8,
@@ -472,9 +489,9 @@ await kit.page('Task boards')
       kit.text('Приоритет = Urgent', { size: 12, color: T('theme-darker-color') })
     ),
     kit.add(
-      kit.box('Lane cells', { w: 1483, dir: 'row', gap: 12, vs: 'auto' }),
+      kit.box('Lane cells', { w: 1920, dir: 'row', gap: 28, pad: [0, 14, 0, 14], vs: 'auto' }),
       kit.box('cell', {
-        w: 234,
+        w: 292,
         h: 56,
         dir: 'column',
         gap: 8,
@@ -484,7 +501,7 @@ await kit.page('Task boards')
         clip: false
       }),
       kit.box('cell', {
-        w: 234,
+        w: 292,
         h: 56,
         dir: 'column',
         gap: 8,
@@ -495,7 +512,7 @@ await kit.page('Task boards')
       }),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -506,6 +523,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-6',
+          statusName: boardIssueStatuses.get('APP-6'),
           cat: 'active',
           title: 'Интеграция с платёжным провайдером',
           assignee: ['ПИ', 'Watermelon'],
@@ -513,10 +531,10 @@ await kit.page('Task boards')
           priority: 'urgent',
           milestone: 'Релиз 1.0',
           labels: [['срочно', 'Pink']]
-        })
+        }, 276)
       ),
       kit.box('cell', {
-        w: 234,
+        w: 292,
         h: 56,
         dir: 'column',
         gap: 8,
@@ -526,7 +544,7 @@ await kit.page('Task boards')
         clip: false
       }),
       kit.box('cell', {
-        w: 234,
+        w: 292,
         h: 56,
         dir: 'column',
         gap: 8,
@@ -537,7 +555,7 @@ await kit.page('Task boards')
       }),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -548,6 +566,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-7',
+          statusName: boardIssueStatuses.get('APP-7'),
           cat: 'won',
           title: 'Баг: краш при открытии профиля на Android 12',
           assignee: ['ВО', 'Crocodile'],
@@ -555,12 +574,12 @@ await kit.page('Task boards')
           priority: 'urgent',
           milestone: 'Релиз 1.0',
           labels: [['баг', 'Firework']]
-        })
+        }, 276)
       )
     ),
     kit.add(
       kit.box('Swimlane Все остальные', {
-        w: 1483,
+        w: 1920,
         h: 32,
         dir: 'row',
         gap: 8,
@@ -574,10 +593,10 @@ await kit.page('Task boards')
       kit.Count(37)
     ),
     kit.add(
-      kit.box('Lane cells', { w: 1483, dir: 'row', gap: 12, vs: 'auto' }),
+      kit.box('Lane cells', { w: 1920, dir: 'row', gap: 28, pad: [0, 14, 0, 14], vs: 'auto' }),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -588,24 +607,26 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'MKT-2',
+          statusName: boardIssueStatuses.get('MKT-2'),
           cat: 'todo',
           title: 'Подготовить пресс-релиз о запуске приложения',
           assignee: ['СА', 'Sky'],
           est: '4h',
           priority: 'medium'
-        }),
+        }, 276),
         kit.IssueCard({
           id: 'MKT-5',
+          statusName: boardIssueStatuses.get('MKT-5'),
           cat: 'todo',
           title: 'Email-рассылка по базе подписчиков',
           assignee: ['СА', 'Sky'],
           est: '3h',
           priority: 'high'
-        })
+        }, 276)
       ),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -616,16 +637,17 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-22',
+          statusName: boardIssueStatuses.get('APP-22'),
           cat: 'todo',
           title: 'Поддержка Apple Pay',
           assignee: ['ПИ', 'Watermelon'],
           est: '8h',
           priority: 'medium'
-        })
+        }, 276)
       ),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -636,14 +658,16 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'MKT-1',
+          statusName: boardIssueStatuses.get('MKT-1'),
           cat: 'active',
           title: 'Запуск рекламной кампании в соцсетях',
           assignee: ['СА', 'Sky'],
           est: '16h',
           priority: 'high'
-        }),
+        }, 276),
         kit.IssueCard({
           id: 'APP-3',
+          statusName: boardIssueStatuses.get('APP-3'),
           cat: 'active',
           title: 'Push-уведомления о статусе заказа',
           assignee: ['ПИ', 'Watermelon'],
@@ -653,11 +677,11 @@ await kit.page('Task boards')
           component: 'iOS',
           milestone: 'Релиз 1.0',
           labels: [['срочно', 'Pink']]
-        })
+        }, 276)
       ),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -668,26 +692,28 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-27',
+          statusName: boardIssueStatuses.get('APP-27'),
           cat: 'active',
           title: 'Проверка количества товара в корзине',
           assignee: ['ПИ', 'Watermelon'],
           est: '3h',
           priority: 'high',
           accent: P('Firework')
-        }),
+        }, 276),
         kit.IssueCard({
           id: 'APP-28',
+          statusName: boardIssueStatuses.get('APP-28'),
           cat: 'active',
           title: 'Рефакторинг API-клиента',
           assignee: ['ПИ', 'Watermelon'],
           est: '5h',
           priority: 'medium',
           accent: P('Firework')
-        })
+        }, 276)
       ),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -698,17 +724,18 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-29',
+          statusName: boardIssueStatuses.get('APP-29'),
           cat: 'active',
           title: 'Ссылки на товар из внешних источников',
           assignee: ['КМ', 'Grass'],
           est: '3h',
           priority: 'medium',
           accent: P('Orange')
-        })
+        }, 276)
       ),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -719,13 +746,14 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'MKT-4',
+          statusName: boardIssueStatuses.get('MKT-4'),
           cat: 'won',
           title: 'Обновить лендинг на сайте',
           assignee: ['КМ', 'Grass'],
           est: '6h',
           priority: 'medium'
-        }),
-        kit.IssueCard({ id: 'MKT-6', cat: 'lost', title: 'Партнёрство с блогерами-техноблогерами', priority: 'low' })
+        }, 276),
+        kit.IssueCard({ id: 'MKT-6', statusName: boardIssueStatuses.get('MKT-6'), cat: 'lost', title: 'Партнёрство с блогерами-техноблогерами', priority: 'low' }, 276)
       )
     )
   ), 0, 113)
@@ -750,18 +778,18 @@ await kit.page('Task boards')
     kit.add(
       kit.row('legend item', 6),
       kit.Swatch(P('Orange'), 14),
-      kit.text('рамка карточки: Ready for QA дольше 5 дней', { size: 12, color: T('theme-dark-color') })
+      kit.text('рамка карточки: статус Ready for QA', { size: 12, color: T('theme-dark-color') })
     ),
     kit.add(
       kit.row('legend item', 6),
       kit.Swatch(P('Firework'), 14),
-      kit.text('рамка карточки: Peer Review дольше 3 дней', { size: 12, color: T('theme-dark-color') })
+      kit.text('рамка карточки: статус Peer Review', { size: 12, color: T('theme-dark-color') })
     )
   ), 16, 1000)
   kit.at(main, kit.Menu(
     [
       { header: 'Мобильное приложение · APP' },
-      { label: 'Релиз 1.0', icon: 'board', hint: 'Веха' },
+      { label: 'Релиз 1.0', icon: 'board' },
       { label: 'Тестирование', icon: 'kit/PushPin', hint: 'в навигаторе' },
       '-',
       { header: 'Несколько проектов' },
@@ -774,7 +802,7 @@ await kit.page('Task boards')
       { label: 'Настройки доски', icon: 'gear' }
     ],
     { w: 320, name: 'Board selector popup' }
-  ), 140, 46)
+  ), 208, 46)
 }
 {
   const { main } = kit.Workbench('Доска - вход в настройки', 0, 1200, {
@@ -782,10 +810,11 @@ await kit.page('Task boards')
     nav: [
       { item: 'My issues', icon: 'timeline' },
       { item: 'All issues', icon: 'check' },
-      { item: 'Доски', icon: 'board', selected: true },
-      { item: 'Тестирование', indent: true },
-      { item: 'Мой спринт', indent: true },
-      { group: 'Your projects', add: true },
+      { group: 'Доски', add: true, catalog: { label: 'Все доски', icon: 'kit/BulletList' } },
+      { item: 'Основная доска', icon: 'board', selected: true },
+      { item: 'Тестирование', icon: 'board' },
+      { item: 'Мой спринт', icon: 'board' },
+      { group: 'Проекты', add: true, catalog: { label: 'Все проекты', icon: 'kit/BulletList' } },
       { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
@@ -804,7 +833,7 @@ await kit.page('Task boards')
     ),
     actions: [
       kit.Notice('1 статус без колонки · 1 задача не видна', 'warning', { pill: true }),
-      kit.Button({ kind: 'ghost', size: 'medium', label: 'Настройки доски', icon: 'gear', name: 'Board settings' })
+      kit.IconButton('kit/DotsVertical', { kind: 'secondary', size: 'small', name: 'Board actions' })
     ],
     filters: [
       sep3,
@@ -812,43 +841,42 @@ await kit.page('Task boards')
       kit.QuickFilter('Разработка', false),
       kit.QuickFilter('Тестирование', true),
       kit.QuickFilter('iOS', false),
-      kit.QuickFilter('Срочные', false),
-      kit.QuickFilter('Блокеры', false)
+      kit.QuickFilter('Срочные', false)
     ],
     tabs: []
   })
   kit.at(main, kit.add(
-    kit.box('Board', { w: 1515, h: 931, dir: 'column', gap: 8, pad: [12, 16, 0, 16] }),
+    kit.box('Board', { w: 1515, h: 931, dir: 'column', gap: 8, pad: [24, 24, 0, 24] }),
     kit.add(
-      kit.box('Column headers', { w: 1483, dir: 'row', gap: 12, vs: 'auto' }),
+      kit.box('Column headers', { w: 1920, dir: 'row', gap: 0, pad: [0, 0, 9, 0], vs: 'auto' }),
       kit.add(
-        kit.box('Column To Do', { w: 234, dir: 'column', gap: 6, vs: 'auto' }),
-        kit.ColumnHeader('To Do', 'todo', 9, 234)
+        kit.box('Column To Do', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
+        kit.ColumnHeader('To Do', 'todo', 9, 292)
       ),
       kit.add(
-        kit.box('Column On Hold', { w: 234, dir: 'column', gap: 6, vs: 'auto' }),
-        kit.ColumnHeader('On Hold', 'todo', 1, 234)
+        kit.box('Column On Hold', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
+        kit.ColumnHeader('On Hold', 'todo', 1, 292)
       ),
       kit.add(
-        kit.box('Column In Progress', { w: 234, dir: 'column', gap: 6, vs: 'auto' }),
-        kit.ColumnHeader('In Progress', 'active', 10, 234, { limit: 8, over: true })
+        kit.box('Column In Progress', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
+        kit.ColumnHeader('In Progress', 'active', 10, 292, { limit: 8, over: true, statuses: boardColumnStatuses.get('In Progress') })
       ),
       kit.add(
-        kit.box('Column Peer Review', { w: 234, dir: 'column', gap: 6, vs: 'auto' }),
-        kit.ColumnHeader('Peer Review', 'active', 2, 234)
+        kit.box('Column Peer Review', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
+        kit.ColumnHeader('Peer Review', 'active', 2, 292)
       ),
       kit.add(
-        kit.box('Column Ready for QA', { w: 234, dir: 'column', gap: 6, vs: 'auto' }),
-        kit.ColumnHeader('Ready for QA', 'active', 1, 234, { limit: 12 })
+        kit.box('Column Ready for QA', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
+        kit.ColumnHeader('Ready for QA', 'active', 1, 292, { limit: 12 })
       ),
       kit.add(
-        kit.box('Column Done', { w: 234, dir: 'column', gap: 6, vs: 'auto' }),
-        kit.ColumnHeader('Done', 'won', 9, 234)
+        kit.box('Column Done', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
+        kit.ColumnHeader('Done', 'won', 9, 292)
       )
     ),
     kit.add(
       kit.box('Swimlane Внеочередные', {
-        w: 1483,
+        w: 1920,
         h: 32,
         dir: 'row',
         gap: 8,
@@ -863,9 +891,9 @@ await kit.page('Task boards')
       kit.text('Приоритет = Urgent', { size: 12, color: T('theme-darker-color') })
     ),
     kit.add(
-      kit.box('Lane cells', { w: 1483, dir: 'row', gap: 12, vs: 'auto' }),
+      kit.box('Lane cells', { w: 1920, dir: 'row', gap: 28, pad: [0, 14, 0, 14], vs: 'auto' }),
       kit.box('cell', {
-        w: 234,
+        w: 292,
         h: 56,
         dir: 'column',
         gap: 8,
@@ -875,7 +903,7 @@ await kit.page('Task boards')
         clip: false
       }),
       kit.box('cell', {
-        w: 234,
+        w: 292,
         h: 56,
         dir: 'column',
         gap: 8,
@@ -886,7 +914,7 @@ await kit.page('Task boards')
       }),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -897,6 +925,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-6',
+          statusName: boardIssueStatuses.get('APP-6'),
           cat: 'active',
           title: 'Интеграция с платёжным провайдером',
           assignee: ['ПИ', 'Watermelon'],
@@ -904,10 +933,10 @@ await kit.page('Task boards')
           priority: 'urgent',
           milestone: 'Релиз 1.0',
           labels: [['срочно', 'Pink']]
-        })
+        }, 276)
       ),
       kit.box('cell', {
-        w: 234,
+        w: 292,
         h: 56,
         dir: 'column',
         gap: 8,
@@ -917,7 +946,7 @@ await kit.page('Task boards')
         clip: false
       }),
       kit.box('cell', {
-        w: 234,
+        w: 292,
         h: 56,
         dir: 'column',
         gap: 8,
@@ -928,7 +957,7 @@ await kit.page('Task boards')
       }),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -939,6 +968,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-7',
+          statusName: boardIssueStatuses.get('APP-7'),
           cat: 'won',
           title: 'Баг: краш при открытии профиля на Android 12',
           assignee: ['ВО', 'Crocodile'],
@@ -946,12 +976,12 @@ await kit.page('Task boards')
           priority: 'urgent',
           milestone: 'Релиз 1.0',
           labels: [['баг', 'Firework']]
-        })
+        }, 276)
       )
     ),
     kit.add(
       kit.box('Swimlane Все остальные', {
-        w: 1483,
+        w: 1920,
         h: 32,
         dir: 'row',
         gap: 8,
@@ -965,10 +995,10 @@ await kit.page('Task boards')
       kit.Count(37)
     ),
     kit.add(
-      kit.box('Lane cells', { w: 1483, dir: 'row', gap: 12, vs: 'auto' }),
+      kit.box('Lane cells', { w: 1920, dir: 'row', gap: 28, pad: [0, 14, 0, 14], vs: 'auto' }),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -979,24 +1009,26 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'MKT-2',
+          statusName: boardIssueStatuses.get('MKT-2'),
           cat: 'todo',
           title: 'Подготовить пресс-релиз о запуске приложения',
           assignee: ['СА', 'Sky'],
           est: '4h',
           priority: 'medium'
-        }),
+        }, 276),
         kit.IssueCard({
           id: 'MKT-5',
+          statusName: boardIssueStatuses.get('MKT-5'),
           cat: 'todo',
           title: 'Email-рассылка по базе подписчиков',
           assignee: ['СА', 'Sky'],
           est: '3h',
           priority: 'high'
-        })
+        }, 276)
       ),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -1007,16 +1039,17 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-22',
+          statusName: boardIssueStatuses.get('APP-22'),
           cat: 'todo',
           title: 'Поддержка Apple Pay',
           assignee: ['ПИ', 'Watermelon'],
           est: '8h',
           priority: 'medium'
-        })
+        }, 276)
       ),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -1027,14 +1060,16 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'MKT-1',
+          statusName: boardIssueStatuses.get('MKT-1'),
           cat: 'active',
           title: 'Запуск рекламной кампании в соцсетях',
           assignee: ['СА', 'Sky'],
           est: '16h',
           priority: 'high'
-        }),
+        }, 276),
         kit.IssueCard({
           id: 'APP-3',
+          statusName: boardIssueStatuses.get('APP-3'),
           cat: 'active',
           title: 'Push-уведомления о статусе заказа',
           assignee: ['ПИ', 'Watermelon'],
@@ -1044,11 +1079,11 @@ await kit.page('Task boards')
           component: 'iOS',
           milestone: 'Релиз 1.0',
           labels: [['срочно', 'Pink']]
-        })
+        }, 276)
       ),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -1059,26 +1094,28 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-27',
+          statusName: boardIssueStatuses.get('APP-27'),
           cat: 'active',
           title: 'Проверка количества товара в корзине',
           assignee: ['ПИ', 'Watermelon'],
           est: '3h',
           priority: 'high',
           accent: P('Firework')
-        }),
+        }, 276),
         kit.IssueCard({
           id: 'APP-28',
+          statusName: boardIssueStatuses.get('APP-28'),
           cat: 'active',
           title: 'Рефакторинг API-клиента',
           assignee: ['ПИ', 'Watermelon'],
           est: '5h',
           priority: 'medium',
           accent: P('Firework')
-        })
+        }, 276)
       ),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -1089,17 +1126,18 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-29',
+          statusName: boardIssueStatuses.get('APP-29'),
           cat: 'active',
           title: 'Ссылки на товар из внешних источников',
           assignee: ['КМ', 'Grass'],
           est: '3h',
           priority: 'medium',
           accent: P('Orange')
-        })
+        }, 276)
       ),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -1110,13 +1148,14 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'MKT-4',
+          statusName: boardIssueStatuses.get('MKT-4'),
           cat: 'won',
           title: 'Обновить лендинг на сайте',
           assignee: ['КМ', 'Grass'],
           est: '6h',
           priority: 'medium'
-        }),
-        kit.IssueCard({ id: 'MKT-6', cat: 'lost', title: 'Партнёрство с блогерами-техноблогерами', priority: 'low' })
+        }, 276),
+        kit.IssueCard({ id: 'MKT-6', statusName: boardIssueStatuses.get('MKT-6'), cat: 'lost', title: 'Партнёрство с блогерами-техноблогерами', priority: 'low' }, 276)
       )
     )
   ), 0, 113)
@@ -1141,21 +1180,18 @@ await kit.page('Task boards')
     kit.add(
       kit.row('legend item', 6),
       kit.Swatch(P('Orange'), 14),
-      kit.text('рамка карточки: Ready for QA дольше 5 дней', { size: 12, color: T('theme-dark-color') })
+      kit.text('рамка карточки: статус Ready for QA', { size: 12, color: T('theme-dark-color') })
     ),
     kit.add(
       kit.row('legend item', 6),
       kit.Swatch(P('Firework'), 14),
-      kit.text('рамка карточки: Peer Review дольше 3 дней', { size: 12, color: T('theme-dark-color') })
+      kit.text('рамка карточки: статус Peer Review', { size: 12, color: T('theme-dark-color') })
     )
   ), 16, 1000)
-  kit.at(main, kit.add(
-    kit.box(
-      'Tooltip',
-      { w: 350, h: 28, dir: 'row', pad: [0, 10, 0, 10], align: 'center', fill: T('theme-tooltip-bg'), radius: 4 }
-    ),
-    kit.text('Настройки доски: колонки, дорожки, фильтры, цвета', { size: 12, color: T('theme-tooltip-color') })
-  ), 1108, 52)
+  kit.at(main, kit.Menu(
+    [{ label: 'Настройки доски', icon: 'gear' }],
+    { w: 240, name: 'Board actions menu' }
+  ), 1210, 52)
 }
 {
   const { main } = kit.Workbench('Доска - статусы без колонки', 2020, 1200, {
@@ -1163,10 +1199,11 @@ await kit.page('Task boards')
     nav: [
       { item: 'My issues', icon: 'timeline' },
       { item: 'All issues', icon: 'check' },
-      { item: 'Доски', icon: 'board', selected: true },
-      { item: 'Тестирование', indent: true },
-      { item: 'Мой спринт', indent: true },
-      { group: 'Your projects', add: true },
+      { group: 'Доски', add: true, catalog: { label: 'Все доски', icon: 'kit/BulletList' } },
+      { item: 'Основная доска', icon: 'board', selected: true },
+      { item: 'Тестирование', icon: 'board' },
+      { item: 'Мой спринт', icon: 'board' },
+      { group: 'Проекты', add: true, catalog: { label: 'Все проекты', icon: 'kit/BulletList' } },
       { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
@@ -1185,7 +1222,7 @@ await kit.page('Task boards')
     ),
     actions: [
       kit.Notice('1 статус без колонки · 1 задача не видна', 'warning', { pill: true }),
-      kit.Button({ kind: 'ghost', size: 'medium', label: 'Настройки доски', icon: 'gear', name: 'Board settings' })
+      kit.IconButton('kit/DotsVertical', { kind: 'secondary', size: 'small', name: 'Board actions' })
     ],
     filters: [
       sep4,
@@ -1193,43 +1230,42 @@ await kit.page('Task boards')
       kit.QuickFilter('Разработка', false),
       kit.QuickFilter('Тестирование', true),
       kit.QuickFilter('iOS', false),
-      kit.QuickFilter('Срочные', false),
-      kit.QuickFilter('Блокеры', false)
+      kit.QuickFilter('Срочные', false)
     ],
     tabs: []
   })
   kit.at(main, kit.add(
-    kit.box('Board', { w: 1515, h: 931, dir: 'column', gap: 8, pad: [12, 16, 0, 16] }),
+    kit.box('Board', { w: 1515, h: 931, dir: 'column', gap: 8, pad: [24, 24, 0, 24] }),
     kit.add(
-      kit.box('Column headers', { w: 1483, dir: 'row', gap: 12, vs: 'auto' }),
+      kit.box('Column headers', { w: 1920, dir: 'row', gap: 0, pad: [0, 0, 9, 0], vs: 'auto' }),
       kit.add(
-        kit.box('Column To Do', { w: 234, dir: 'column', gap: 6, vs: 'auto' }),
-        kit.ColumnHeader('To Do', 'todo', 9, 234)
+        kit.box('Column To Do', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
+        kit.ColumnHeader('To Do', 'todo', 9, 292)
       ),
       kit.add(
-        kit.box('Column On Hold', { w: 234, dir: 'column', gap: 6, vs: 'auto' }),
-        kit.ColumnHeader('On Hold', 'todo', 1, 234)
+        kit.box('Column On Hold', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
+        kit.ColumnHeader('On Hold', 'todo', 1, 292)
       ),
       kit.add(
-        kit.box('Column In Progress', { w: 234, dir: 'column', gap: 6, vs: 'auto' }),
-        kit.ColumnHeader('In Progress', 'active', 10, 234, { limit: 8, over: true })
+        kit.box('Column In Progress', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
+        kit.ColumnHeader('In Progress', 'active', 10, 292, { limit: 8, over: true, statuses: boardColumnStatuses.get('In Progress') })
       ),
       kit.add(
-        kit.box('Column Peer Review', { w: 234, dir: 'column', gap: 6, vs: 'auto' }),
-        kit.ColumnHeader('Peer Review', 'active', 2, 234)
+        kit.box('Column Peer Review', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
+        kit.ColumnHeader('Peer Review', 'active', 2, 292)
       ),
       kit.add(
-        kit.box('Column Ready for QA', { w: 234, dir: 'column', gap: 6, vs: 'auto' }),
-        kit.ColumnHeader('Ready for QA', 'active', 1, 234, { limit: 12 })
+        kit.box('Column Ready for QA', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
+        kit.ColumnHeader('Ready for QA', 'active', 1, 292, { limit: 12 })
       ),
       kit.add(
-        kit.box('Column Done', { w: 234, dir: 'column', gap: 6, vs: 'auto' }),
-        kit.ColumnHeader('Done', 'won', 9, 234)
+        kit.box('Column Done', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
+        kit.ColumnHeader('Done', 'won', 9, 292)
       )
     ),
     kit.add(
       kit.box('Swimlane Внеочередные', {
-        w: 1483,
+        w: 1920,
         h: 32,
         dir: 'row',
         gap: 8,
@@ -1244,9 +1280,9 @@ await kit.page('Task boards')
       kit.text('Приоритет = Urgent', { size: 12, color: T('theme-darker-color') })
     ),
     kit.add(
-      kit.box('Lane cells', { w: 1483, dir: 'row', gap: 12, vs: 'auto' }),
+      kit.box('Lane cells', { w: 1920, dir: 'row', gap: 28, pad: [0, 14, 0, 14], vs: 'auto' }),
       kit.box('cell', {
-        w: 234,
+        w: 292,
         h: 56,
         dir: 'column',
         gap: 8,
@@ -1256,7 +1292,7 @@ await kit.page('Task boards')
         clip: false
       }),
       kit.box('cell', {
-        w: 234,
+        w: 292,
         h: 56,
         dir: 'column',
         gap: 8,
@@ -1267,7 +1303,7 @@ await kit.page('Task boards')
       }),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -1278,6 +1314,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-6',
+          statusName: boardIssueStatuses.get('APP-6'),
           cat: 'active',
           title: 'Интеграция с платёжным провайдером',
           assignee: ['ПИ', 'Watermelon'],
@@ -1285,10 +1322,10 @@ await kit.page('Task boards')
           priority: 'urgent',
           milestone: 'Релиз 1.0',
           labels: [['срочно', 'Pink']]
-        })
+        }, 276)
       ),
       kit.box('cell', {
-        w: 234,
+        w: 292,
         h: 56,
         dir: 'column',
         gap: 8,
@@ -1298,7 +1335,7 @@ await kit.page('Task boards')
         clip: false
       }),
       kit.box('cell', {
-        w: 234,
+        w: 292,
         h: 56,
         dir: 'column',
         gap: 8,
@@ -1309,7 +1346,7 @@ await kit.page('Task boards')
       }),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -1320,6 +1357,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-7',
+          statusName: boardIssueStatuses.get('APP-7'),
           cat: 'won',
           title: 'Баг: краш при открытии профиля на Android 12',
           assignee: ['ВО', 'Crocodile'],
@@ -1327,12 +1365,12 @@ await kit.page('Task boards')
           priority: 'urgent',
           milestone: 'Релиз 1.0',
           labels: [['баг', 'Firework']]
-        })
+        }, 276)
       )
     ),
     kit.add(
       kit.box('Swimlane Все остальные', {
-        w: 1483,
+        w: 1920,
         h: 32,
         dir: 'row',
         gap: 8,
@@ -1346,10 +1384,10 @@ await kit.page('Task boards')
       kit.Count(37)
     ),
     kit.add(
-      kit.box('Lane cells', { w: 1483, dir: 'row', gap: 12, vs: 'auto' }),
+      kit.box('Lane cells', { w: 1920, dir: 'row', gap: 28, pad: [0, 14, 0, 14], vs: 'auto' }),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -1360,24 +1398,26 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'MKT-2',
+          statusName: boardIssueStatuses.get('MKT-2'),
           cat: 'todo',
           title: 'Подготовить пресс-релиз о запуске приложения',
           assignee: ['СА', 'Sky'],
           est: '4h',
           priority: 'medium'
-        }),
+        }, 276),
         kit.IssueCard({
           id: 'MKT-5',
+          statusName: boardIssueStatuses.get('MKT-5'),
           cat: 'todo',
           title: 'Email-рассылка по базе подписчиков',
           assignee: ['СА', 'Sky'],
           est: '3h',
           priority: 'high'
-        })
+        }, 276)
       ),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -1388,16 +1428,17 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-22',
+          statusName: boardIssueStatuses.get('APP-22'),
           cat: 'todo',
           title: 'Поддержка Apple Pay',
           assignee: ['ПИ', 'Watermelon'],
           est: '8h',
           priority: 'medium'
-        })
+        }, 276)
       ),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -1408,14 +1449,16 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'MKT-1',
+          statusName: boardIssueStatuses.get('MKT-1'),
           cat: 'active',
           title: 'Запуск рекламной кампании в соцсетях',
           assignee: ['СА', 'Sky'],
           est: '16h',
           priority: 'high'
-        }),
+        }, 276),
         kit.IssueCard({
           id: 'APP-3',
+          statusName: boardIssueStatuses.get('APP-3'),
           cat: 'active',
           title: 'Push-уведомления о статусе заказа',
           assignee: ['ПИ', 'Watermelon'],
@@ -1425,11 +1468,11 @@ await kit.page('Task boards')
           component: 'iOS',
           milestone: 'Релиз 1.0',
           labels: [['срочно', 'Pink']]
-        })
+        }, 276)
       ),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -1440,26 +1483,28 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-27',
+          statusName: boardIssueStatuses.get('APP-27'),
           cat: 'active',
           title: 'Проверка количества товара в корзине',
           assignee: ['ПИ', 'Watermelon'],
           est: '3h',
           priority: 'high',
           accent: P('Firework')
-        }),
+        }, 276),
         kit.IssueCard({
           id: 'APP-28',
+          statusName: boardIssueStatuses.get('APP-28'),
           cat: 'active',
           title: 'Рефакторинг API-клиента',
           assignee: ['ПИ', 'Watermelon'],
           est: '5h',
           priority: 'medium',
           accent: P('Firework')
-        })
+        }, 276)
       ),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -1470,17 +1515,18 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-29',
+          statusName: boardIssueStatuses.get('APP-29'),
           cat: 'active',
           title: 'Ссылки на товар из внешних источников',
           assignee: ['КМ', 'Grass'],
           est: '3h',
           priority: 'medium',
           accent: P('Orange')
-        })
+        }, 276)
       ),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -1491,13 +1537,14 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'MKT-4',
+          statusName: boardIssueStatuses.get('MKT-4'),
           cat: 'won',
           title: 'Обновить лендинг на сайте',
           assignee: ['КМ', 'Grass'],
           est: '6h',
           priority: 'medium'
-        }),
-        kit.IssueCard({ id: 'MKT-6', cat: 'lost', title: 'Партнёрство с блогерами-техноблогерами', priority: 'low' })
+        }, 276),
+        kit.IssueCard({ id: 'MKT-6', statusName: boardIssueStatuses.get('MKT-6'), cat: 'lost', title: 'Партнёрство с блогерами-техноблогерами', priority: 'low' }, 276)
       )
     )
   ), 0, 113)
@@ -1522,12 +1569,12 @@ await kit.page('Task boards')
     kit.add(
       kit.row('legend item', 6),
       kit.Swatch(P('Orange'), 14),
-      kit.text('рамка карточки: Ready for QA дольше 5 дней', { size: 12, color: T('theme-dark-color') })
+      kit.text('рамка карточки: статус Ready for QA', { size: 12, color: T('theme-dark-color') })
     ),
     kit.add(
       kit.row('legend item', 6),
       kit.Swatch(P('Firework'), 14),
-      kit.text('рамка карточки: Peer Review дольше 3 дней', { size: 12, color: T('theme-dark-color') })
+      kit.text('рамка карточки: статус Peer Review', { size: 12, color: T('theme-dark-color') })
     )
   ), 16, 1000)
   const unmappedStatusesPopoverShadow = kit.add(
@@ -1567,7 +1614,7 @@ await kit.page('Task boards')
       color: { color: '#000000', opacity: 0.149 }
     }
   ]
-  kit.at(main, unmappedStatusesPopoverShadow, 1038, 50)
+  kit.at(main, unmappedStatusesPopoverShadow, 1000, 50)
 }
 {
   const { main } = kit.Workbench('Доска - статусы колонки', 0, 2400, {
@@ -1575,10 +1622,11 @@ await kit.page('Task boards')
     nav: [
       { item: 'My issues', icon: 'timeline' },
       { item: 'All issues', icon: 'check' },
-      { item: 'Доски', icon: 'board', selected: true },
-      { item: 'Тестирование', indent: true },
-      { item: 'Мой спринт', indent: true },
-      { group: 'Your projects', add: true },
+      { group: 'Доски', add: true, catalog: { label: 'Все доски', icon: 'kit/BulletList' } },
+      { item: 'Основная доска', icon: 'board', selected: true },
+      { item: 'Тестирование', icon: 'board' },
+      { item: 'Мой спринт', icon: 'board' },
+      { group: 'Проекты', add: true, catalog: { label: 'Все проекты', icon: 'kit/BulletList' } },
       { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
@@ -1597,7 +1645,7 @@ await kit.page('Task boards')
     ),
     actions: [
       kit.Notice('1 статус без колонки · 1 задача не видна', 'warning', { pill: true }),
-      kit.Button({ kind: 'ghost', size: 'medium', label: 'Настройки доски', icon: 'gear', name: 'Board settings' })
+      kit.IconButton('kit/DotsVertical', { kind: 'secondary', size: 'small', name: 'Board actions' })
     ],
     filters: [
       sep5,
@@ -1605,43 +1653,42 @@ await kit.page('Task boards')
       kit.QuickFilter('Разработка', false),
       kit.QuickFilter('Тестирование', true),
       kit.QuickFilter('iOS', false),
-      kit.QuickFilter('Срочные', false),
-      kit.QuickFilter('Блокеры', false)
+      kit.QuickFilter('Срочные', false)
     ],
     tabs: []
   })
   kit.at(main, kit.add(
-    kit.box('Board', { w: 1515, h: 931, dir: 'column', gap: 8, pad: [12, 16, 0, 16] }),
+    kit.box('Board', { w: 1515, h: 931, dir: 'column', gap: 8, pad: [24, 24, 0, 24] }),
     kit.add(
-      kit.box('Column headers', { w: 1483, dir: 'row', gap: 12, vs: 'auto' }),
+      kit.box('Column headers', { w: 1920, dir: 'row', gap: 0, pad: [0, 0, 9, 0], vs: 'auto' }),
       kit.add(
-        kit.box('Column To Do', { w: 234, dir: 'column', gap: 6, vs: 'auto' }),
-        kit.ColumnHeader('To Do', 'todo', 9, 234)
+        kit.box('Column To Do', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
+        kit.ColumnHeader('To Do', 'todo', 9, 292)
       ),
       kit.add(
-        kit.box('Column On Hold', { w: 234, dir: 'column', gap: 6, vs: 'auto' }),
-        kit.ColumnHeader('On Hold', 'todo', 1, 234)
+        kit.box('Column On Hold', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
+        kit.ColumnHeader('On Hold', 'todo', 1, 292)
       ),
       kit.add(
-        kit.box('Column In Progress', { w: 234, dir: 'column', gap: 6, vs: 'auto' }),
-        kit.ColumnHeader('In Progress', 'active', 10, 234, { limit: 8, over: true })
+        kit.box('Column In Progress', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
+        kit.ColumnHeader('In Progress', 'active', 10, 292, { limit: 8, over: true, statuses: boardColumnStatuses.get('In Progress') })
       ),
       kit.add(
-        kit.box('Column Peer Review', { w: 234, dir: 'column', gap: 6, vs: 'auto' }),
-        kit.ColumnHeader('Peer Review', 'active', 2, 234)
+        kit.box('Column Peer Review', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
+        kit.ColumnHeader('Peer Review', 'active', 2, 292)
       ),
       kit.add(
-        kit.box('Column Ready for QA', { w: 234, dir: 'column', gap: 6, vs: 'auto' }),
-        kit.ColumnHeader('Ready for QA', 'active', 1, 234, { limit: 12 })
+        kit.box('Column Ready for QA', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
+        kit.ColumnHeader('Ready for QA', 'active', 1, 292, { limit: 12 })
       ),
       kit.add(
-        kit.box('Column Done', { w: 234, dir: 'column', gap: 6, vs: 'auto' }),
-        kit.ColumnHeader('Done', 'won', 9, 234)
+        kit.box('Column Done', { w: 320, dir: 'column', gap: 6, pad: [0, 14, 0, 14], vs: 'auto' }),
+        kit.ColumnHeader('Done', 'won', 9, 292)
       )
     ),
     kit.add(
       kit.box('Swimlane Внеочередные', {
-        w: 1483,
+        w: 1920,
         h: 32,
         dir: 'row',
         gap: 8,
@@ -1656,9 +1703,9 @@ await kit.page('Task boards')
       kit.text('Приоритет = Urgent', { size: 12, color: T('theme-darker-color') })
     ),
     kit.add(
-      kit.box('Lane cells', { w: 1483, dir: 'row', gap: 12, vs: 'auto' }),
+      kit.box('Lane cells', { w: 1920, dir: 'row', gap: 28, pad: [0, 14, 0, 14], vs: 'auto' }),
       kit.box('cell', {
-        w: 234,
+        w: 292,
         h: 56,
         dir: 'column',
         gap: 8,
@@ -1668,7 +1715,7 @@ await kit.page('Task boards')
         clip: false
       }),
       kit.box('cell', {
-        w: 234,
+        w: 292,
         h: 56,
         dir: 'column',
         gap: 8,
@@ -1679,7 +1726,7 @@ await kit.page('Task boards')
       }),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -1690,6 +1737,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-6',
+          statusName: boardIssueStatuses.get('APP-6'),
           cat: 'active',
           title: 'Интеграция с платёжным провайдером',
           assignee: ['ПИ', 'Watermelon'],
@@ -1697,10 +1745,10 @@ await kit.page('Task boards')
           priority: 'urgent',
           milestone: 'Релиз 1.0',
           labels: [['срочно', 'Pink']]
-        })
+        }, 276)
       ),
       kit.box('cell', {
-        w: 234,
+        w: 292,
         h: 56,
         dir: 'column',
         gap: 8,
@@ -1710,7 +1758,7 @@ await kit.page('Task boards')
         clip: false
       }),
       kit.box('cell', {
-        w: 234,
+        w: 292,
         h: 56,
         dir: 'column',
         gap: 8,
@@ -1721,7 +1769,7 @@ await kit.page('Task boards')
       }),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -1732,6 +1780,7 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-7',
+          statusName: boardIssueStatuses.get('APP-7'),
           cat: 'won',
           title: 'Баг: краш при открытии профиля на Android 12',
           assignee: ['ВО', 'Crocodile'],
@@ -1739,12 +1788,12 @@ await kit.page('Task boards')
           priority: 'urgent',
           milestone: 'Релиз 1.0',
           labels: [['баг', 'Firework']]
-        })
+        }, 276)
       )
     ),
     kit.add(
       kit.box('Swimlane Все остальные', {
-        w: 1483,
+        w: 1920,
         h: 32,
         dir: 'row',
         gap: 8,
@@ -1758,10 +1807,10 @@ await kit.page('Task boards')
       kit.Count(37)
     ),
     kit.add(
-      kit.box('Lane cells', { w: 1483, dir: 'row', gap: 12, vs: 'auto' }),
+      kit.box('Lane cells', { w: 1920, dir: 'row', gap: 28, pad: [0, 14, 0, 14], vs: 'auto' }),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -1772,24 +1821,26 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'MKT-2',
+          statusName: boardIssueStatuses.get('MKT-2'),
           cat: 'todo',
           title: 'Подготовить пресс-релиз о запуске приложения',
           assignee: ['СА', 'Sky'],
           est: '4h',
           priority: 'medium'
-        }),
+        }, 276),
         kit.IssueCard({
           id: 'MKT-5',
+          statusName: boardIssueStatuses.get('MKT-5'),
           cat: 'todo',
           title: 'Email-рассылка по базе подписчиков',
           assignee: ['СА', 'Sky'],
           est: '3h',
           priority: 'high'
-        })
+        }, 276)
       ),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -1800,16 +1851,17 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-22',
+          statusName: boardIssueStatuses.get('APP-22'),
           cat: 'todo',
           title: 'Поддержка Apple Pay',
           assignee: ['ПИ', 'Watermelon'],
           est: '8h',
           priority: 'medium'
-        })
+        }, 276)
       ),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -1820,14 +1872,16 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'MKT-1',
+          statusName: boardIssueStatuses.get('MKT-1'),
           cat: 'active',
           title: 'Запуск рекламной кампании в соцсетях',
           assignee: ['СА', 'Sky'],
           est: '16h',
           priority: 'high'
-        }),
+        }, 276),
         kit.IssueCard({
           id: 'APP-3',
+          statusName: boardIssueStatuses.get('APP-3'),
           cat: 'active',
           title: 'Push-уведомления о статусе заказа',
           assignee: ['ПИ', 'Watermelon'],
@@ -1837,11 +1891,11 @@ await kit.page('Task boards')
           component: 'iOS',
           milestone: 'Релиз 1.0',
           labels: [['срочно', 'Pink']]
-        })
+        }, 276)
       ),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -1852,26 +1906,28 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-27',
+          statusName: boardIssueStatuses.get('APP-27'),
           cat: 'active',
           title: 'Проверка количества товара в корзине',
           assignee: ['ПИ', 'Watermelon'],
           est: '3h',
           priority: 'high',
           accent: P('Firework')
-        }),
+        }, 276),
         kit.IssueCard({
           id: 'APP-28',
+          statusName: boardIssueStatuses.get('APP-28'),
           cat: 'active',
           title: 'Рефакторинг API-клиента',
           assignee: ['ПИ', 'Watermelon'],
           est: '5h',
           priority: 'medium',
           accent: P('Firework')
-        })
+        }, 276)
       ),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -1882,17 +1938,18 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'APP-29',
+          statusName: boardIssueStatuses.get('APP-29'),
           cat: 'active',
           title: 'Ссылки на товар из внешних источников',
           assignee: ['КМ', 'Grass'],
           est: '3h',
           priority: 'medium',
           accent: P('Orange')
-        })
+        }, 276)
       ),
       kit.add(
         kit.box('cell', {
-          w: 234,
+          w: 292,
           dir: 'column',
           gap: 8,
           pad: [8, 8, 8, 8],
@@ -1903,13 +1960,14 @@ await kit.page('Task boards')
         }),
         kit.IssueCard({
           id: 'MKT-4',
+          statusName: boardIssueStatuses.get('MKT-4'),
           cat: 'won',
           title: 'Обновить лендинг на сайте',
           assignee: ['КМ', 'Grass'],
           est: '6h',
           priority: 'medium'
-        }),
-        kit.IssueCard({ id: 'MKT-6', cat: 'lost', title: 'Партнёрство с блогерами-техноблогерами', priority: 'low' })
+        }, 276),
+        kit.IssueCard({ id: 'MKT-6', statusName: boardIssueStatuses.get('MKT-6'), cat: 'lost', title: 'Партнёрство с блогерами-техноблогерами', priority: 'low' }, 276)
       )
     )
   ), 0, 113)
@@ -1934,68 +1992,62 @@ await kit.page('Task boards')
     kit.add(
       kit.row('legend item', 6),
       kit.Swatch(P('Orange'), 14),
-      kit.text('рамка карточки: Ready for QA дольше 5 дней', { size: 12, color: T('theme-dark-color') })
+      kit.text('рамка карточки: статус Ready for QA', { size: 12, color: T('theme-dark-color') })
     ),
     kit.add(
       kit.row('legend item', 6),
       kit.Swatch(P('Firework'), 14),
-      kit.text('рамка карточки: Peer Review дольше 3 дней', { size: 12, color: T('theme-dark-color') })
+      kit.text('рамка карточки: статус Peer Review', { size: 12, color: T('theme-dark-color') })
     )
   ), 16, 1000)
+  // Chips of auto width wrap into rows of the 22rem popup (352px, padding 8), gap 4
+  const popupStatuses = [['In Progress', 6], ['Development', 1], ['Prototyping', 1], ['Integration', 1], ['Verification', 0], ['Approval', 1]]
+  const chipWidth = ([n, c]) => 6 + 8 + 12 + 4 + kit.textWidth(n, 12) + 4 + kit.textWidth(String(c), 12)
+  const chipRows = [[]]
+  let rowWidth = 0
+  for (const st of popupStatuses) {
+    const cw = chipWidth(st)
+    if (chipRows.at(-1).length > 0 && rowWidth + 4 + cw > 336) {
+      chipRows.push([])
+      rowWidth = 0
+    }
+    rowWidth += (chipRows.at(-1).length > 0 ? 4 : 0) + cw
+    chipRows.at(-1).push(st)
+  }
+  const popupWidth = Math.max(...chipRows.map((r) => r.reduce((sum, st) => sum + chipWidth(st), 0) + 4 * (r.length - 1))) + 16
   const columnStatusesPopoverShadow = kit.add(
     kit.box('Column statuses popover', {
-      w: 260,
+      w: popupWidth,
       dir: 'column',
-      gap: 10,
-      pad: [16, 16, 16, 16],
+      gap: 8,
+      pad: [8, 8, 8, 8],
       vs: 'auto',
       fill: T('theme-popup-color'),
       stroke: T('theme-popup-divider'),
-      radius: 8
+      radius: 12
     }),
     kit.text('Статусы колонки', { size: 12, weight: 500, color: T('theme-darker-color') }),
-    kit.StatusChip(
-      'In Progress',
-      'active',
-      { count: 6, w: 228, h: 32, fill: T('theme-popup-color'), stroke: T('theme-button-border'), size: 13 }
-    ),
-    kit.StatusChip(
-      'Development',
-      'active',
-      { count: 1, w: 228, h: 32, fill: T('theme-popup-color'), stroke: T('theme-button-border'), size: 13 }
-    ),
-    kit.StatusChip(
-      'Prototyping',
-      'active',
-      { count: 1, w: 228, h: 32, fill: T('theme-popup-color'), stroke: T('theme-button-border'), size: 13 }
-    ),
-    kit.StatusChip(
-      'Integration',
-      'active',
-      { count: 1, w: 228, h: 32, fill: T('theme-popup-color'), stroke: T('theme-button-border'), size: 13 }
-    ),
-    kit.StatusChip(
-      'Verification',
-      'active',
-      { count: 0, w: 228, h: 32, fill: T('theme-popup-color'), stroke: T('theme-button-border'), size: 13 }
-    ),
-    kit.StatusChip(
-      'Approval',
-      'active',
-      { count: 1, w: 228, h: 32, fill: T('theme-popup-color'), stroke: T('theme-button-border'), size: 13 }
+    kit.add(
+      kit.col('chips', 4),
+      chipRows.map((r) => kit.add(
+        kit.row('chips row', 4),
+        r.map(([n, c]) => kit.StatusChip(n, 'active', { count: c, pill: true }))
+      ))
     )
   )
   columnStatusesPopoverShadow.shadows = [
     {
       style: 'drop-shadow',
       offsetX: 0,
-      offsetY: 8,
-      blur: 24,
+      offsetY: 0,
+      blur: 8,
       spread: 0,
-      color: { color: '#000000', opacity: 0.149 }
+      color: { color: '#000000', opacity: 0.2 }
     }
   ]
-  kit.at(main, columnStatusesPopoverShadow, 508, 169)
+  // The product tooltip points at the column: a rotated square behind the popup, centered on the column header (x 664 + 14, w 292)
+  kit.at(main, kit.box('Tooltip arrow', { w: 14, h: 14, fill: T('theme-popup-color'), stroke: T('theme-popup-divider'), rot: 45, clip: false }), 817, 163)
+  kit.at(main, columnStatusesPopoverShadow, 824 - Math.round(popupWidth / 2), 169)
 }
 {
   const { main } = kit.Workbench('Стало - канбан', 2020, 2400, {
@@ -2020,182 +2072,28 @@ await kit.page('Task boards')
     ]
   })
   kit.SpaceHeader(main, { view: 'board', title: 'All issues', titleIcon: 'kit/CheckSquare' })
-  kit.at(main, kit.add(
-    kit.box('Kanban', { w: 2264, h: 930, dir: 'row', pad: [24, 0, 0, 24] }),
-    kit.KanbanColumn(
-      {
-        name: 'Todo',
-        cat: 'todo',
-        count: 2,
-        cards: [
-          {
-            id: 'MKT-2',
-            cat: 'todo',
-            title: 'Подготовить пресс-релиз о запуске приложения',
-            assignee: ['СА', 'Sky'],
-            est: '4h',
-            priority: 'medium'
-          },
-          {
-            id: 'MKT-5',
-            cat: 'todo',
-            title: 'Email-рассылка по базе подписчиков',
-            assignee: ['СА', 'Sky'],
-            est: '3h',
-            priority: 'high'
-          }
-        ]
-      },
-      320,
-      898
-    ),
-    kit.KanbanColumn(
-      {
-        name: 'On Hold',
-        cat: 'todo',
-        count: 1,
-        cards: [
-          {
-            id: 'APP-22',
-            cat: 'todo',
-            title: 'Поддержка Apple Pay',
-            assignee: ['ПИ', 'Watermelon'],
-            est: '8h',
-            priority: 'medium'
-          }
-        ]
-      },
-      320,
-      898
-    ),
-    kit.KanbanColumn(
-      {
-        name: 'In Progress',
-        cat: 'active',
-        count: 3,
-        tools: true,
-        cards: [
-          {
-            id: 'APP-6',
-            cat: 'active',
-            title: 'Интеграция с платёжным провайдером',
-            assignee: ['ПИ', 'Watermelon'],
-            est: '21h',
-            priority: 'urgent',
-            milestone: 'Релиз 1.0',
-            labels: [['срочно', 'Pink']]
-          },
-          {
-            id: 'MKT-1',
-            cat: 'active',
-            title: 'Запуск рекламной кампании в соцсетях',
-            assignee: ['СА', 'Sky'],
-            est: '16h',
-            priority: 'high'
-          },
-          {
-            id: 'APP-3',
-            cat: 'active',
-            title: 'Push-уведомления о статусе заказа',
-            assignee: ['ПИ', 'Watermelon'],
-            est: '13h',
-            priority: 'high',
-            sub: '1/2',
-            component: 'iOS',
-            milestone: 'Релиз 1.0',
-            labels: [['срочно', 'Pink']]
-          }
-        ]
-      },
-      320,
-      898
-    ),
-    kit.KanbanColumn(
-      {
-        name: 'Peer Review',
-        cat: 'active',
-        count: 2,
-        cards: [
-          {
-            id: 'APP-27',
-            cat: 'active',
-            title: 'Проверка количества товара в корзине',
-            assignee: ['ПИ', 'Watermelon'],
-            est: '3h',
-            priority: 'high'
-          },
-          {
-            id: 'APP-28',
-            cat: 'active',
-            title: 'Рефакторинг API-клиента',
-            assignee: ['ПИ', 'Watermelon'],
-            est: '5h',
-            priority: 'medium'
-          }
-        ]
-      },
-      320,
-      898
-    ),
-    kit.KanbanColumn(
-      {
-        name: 'Ready for QA',
-        cat: 'active',
-        count: 1,
-        cards: [
-          {
-            id: 'APP-29',
-            cat: 'active',
-            title: 'Ссылки на товар из внешних источников',
-            assignee: ['КМ', 'Grass'],
-            est: '3h',
-            priority: 'medium'
-          }
-        ]
-      },
-      320,
-      898
-    ),
-    kit.KanbanColumn(
-      {
-        name: 'Done',
-        cat: 'won',
-        count: 2,
-        cards: [
-          {
-            id: 'APP-7',
-            cat: 'won',
-            title: 'Баг: краш при открытии профиля на Android 12',
-            assignee: ['ВО', 'Crocodile'],
-            est: '3h',
-            priority: 'urgent',
-            milestone: 'Релиз 1.0',
-            labels: [['баг', 'Firework']]
-          },
-          {
-            id: 'MKT-4',
-            cat: 'won',
-            title: 'Обновить лендинг на сайте',
-            assignee: ['КМ', 'Grass'],
-            est: '6h',
-            priority: 'medium'
-          }
-        ]
-      },
-      320,
-      898
-    ),
-    kit.KanbanColumn(
-      {
-        name: 'Canceled',
-        cat: 'lost',
-        count: 1,
-        cards: [{ id: 'MKT-6', cat: 'lost', title: 'Партнёрство с блогерами-техноблогерами', priority: 'low' }]
-      },
-      320,
-      898
-    )
-  ), 2, 114)
+  // Columns follow the demo statuses: by category, the demo order inside it; the first five fit the window
+  const d = DEMO.ru
+  const columns = ['backlog', 'todo', 'active', 'won', 'lost'].flatMap((cat) => d.statuses.filter((st) => st.category === cat)).slice(0, 5)
+  const issues = d.projects.flatMap((project) => project.issues)
+  const person = (name) => d.people.find((it) => it.name === name)
+  const cardOf = (i, cat) => ({
+    id: i.id,
+    cat,
+    statusName: i.status,
+    title: i.title,
+    priority: i.priority,
+    ...(person(i.assignee) !== undefined ? { assignee: [person(i.assignee).initials, person(i.assignee).color] } : {}),
+    ...(i.component !== undefined ? { component: i.component } : {}),
+    ...(i.milestone !== undefined ? { milestone: i.milestone } : {}),
+    ...(i.estimation !== undefined ? { est: i.estimation + 'h' } : {})
+  })
+  const board = kit.box('Kanban', { w: 2264, h: 930, dir: 'row', pad: [24, 0, 0, 24] })
+  for (const st of columns) {
+    const all = issues.filter((i) => i.status === st.name)
+    kit.add(board, kit.KanbanColumn({ name: st.name, cat: st.category, count: all.length, cards: all.slice(0, 4).map((i) => cardOf(i, st.category)) }, 320, 898))
+  }
+  kit.at(main, board, 2, 114)
 }
 {
   const { main } = kit.Workbench('Стало - канбан с дорожками', 0, 3600, {
@@ -2220,489 +2118,39 @@ await kit.page('Task boards')
     ]
   })
   kit.SpaceHeader(main, { view: 'board', title: 'All issues', titleIcon: 'kit/CheckSquare' })
-  kit.at(main, kit.add(
-    kit.box('Kanban', { w: 2264, h: 930, dir: 'column', gap: 8, pad: [24, 24, 0, 24] }),
-    kit.add(
-      kit.row('Column headers', 0, { align: 'start', clip: false }),
-      kit.KanbanColumn({ name: 'Todo', cat: 'todo', count: 2, cards: [] }, 320, 44),
-      kit.KanbanColumn({ name: 'On Hold', cat: 'todo', count: 1, cards: [] }, 320, 44),
-      kit.KanbanColumn({ name: 'In Progress', cat: 'active', count: 3, tools: true, cards: [] }, 320, 44),
-      kit.KanbanColumn({ name: 'Peer Review', cat: 'active', count: 2, cards: [] }, 320, 44),
-      kit.KanbanColumn({ name: 'Ready for QA', cat: 'active', count: 1, cards: [] }, 320, 44),
-      kit.KanbanColumn({ name: 'Done', cat: 'won', count: 2, cards: [] }, 320, 44),
-      kit.KanbanColumn({ name: 'Canceled', cat: 'lost', count: 1, cards: [] }, 320, 44)
-    ),
-    kit.add(
-      kit.box('Swimlane Urgent', {
-        w: 2214,
-        h: 32,
-        dir: 'row',
-        gap: 8,
-        pad: [0, 8, 0, 8],
-        align: 'center',
-        fill: T('theme-list-row-color'),
-        radius: 4
-      }),
-      kit.icon('chevronD'),
-      kit.text('Urgent', { weight: 600, name: 'Внеочередные' }),
-      kit.Count(2)
-    ),
-    kit.add(
-      kit.row('Lane cells', 26, { align: 'start', pad: [0, 13, 0, 13], clip: false }),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      }),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      }),
-      kit.add(
-        kit.box('cell', {
-          w: 294,
-          dir: 'column',
-          gap: 8,
-          pad: [8, 8, 8, 8],
-          vs: 'auto',
-          fill: T('theme-kanban-card-bg-color'),
-          radius: 8,
-          clip: false
-        }),
-        kit.IssueCard({
-          id: 'APP-6',
-          cat: 'active',
-          title: 'Интеграция с платёжным провайдером',
-          assignee: ['ПИ', 'Watermelon'],
-          est: '21h',
-          priority: 'urgent',
-          milestone: 'Релиз 1.0',
-          labels: [['срочно', 'Pink']]
-        })
-      ),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      }),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      }),
-      kit.add(
-        kit.box('cell', {
-          w: 294,
-          dir: 'column',
-          gap: 8,
-          pad: [8, 8, 8, 8],
-          vs: 'auto',
-          fill: T('theme-kanban-card-bg-color'),
-          radius: 8,
-          clip: false
-        }),
-        kit.IssueCard({
-          id: 'APP-7',
-          cat: 'won',
-          title: 'Баг: краш при открытии профиля на Android 12',
-          assignee: ['ВО', 'Crocodile'],
-          est: '3h',
-          priority: 'urgent',
-          milestone: 'Релиз 1.0',
-          labels: [['баг', 'Firework']]
-        })
-      ),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      })
-    ),
-    kit.add(
-      kit.box('Swimlane High', {
-        w: 2214,
-        h: 32,
-        dir: 'row',
-        gap: 8,
-        pad: [0, 8, 0, 8],
-        align: 'center',
-        fill: T('theme-list-row-color'),
-        radius: 4
-      }),
-      kit.icon('chevronD'),
-      kit.text('High', { weight: 600, name: 'Внеочередные' }),
-      kit.Count(4)
-    ),
-    kit.add(
-      kit.row('Lane cells', 26, { align: 'start', pad: [0, 13, 0, 13], clip: false }),
-      kit.add(
-        kit.box('cell', {
-          w: 294,
-          dir: 'column',
-          gap: 8,
-          pad: [8, 8, 8, 8],
-          vs: 'auto',
-          fill: T('theme-kanban-card-bg-color'),
-          radius: 8,
-          clip: false
-        }),
-        kit.IssueCard({
-          id: 'MKT-5',
-          cat: 'todo',
-          title: 'Email-рассылка по базе подписчиков',
-          assignee: ['СА', 'Sky'],
-          est: '3h',
-          priority: 'high'
-        })
-      ),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      }),
-      kit.add(
-        kit.box('cell', {
-          w: 294,
-          dir: 'column',
-          gap: 8,
-          pad: [8, 8, 8, 8],
-          vs: 'auto',
-          fill: T('theme-kanban-card-bg-color'),
-          radius: 8,
-          clip: false
-        }),
-        kit.IssueCard({
-          id: 'MKT-1',
-          cat: 'active',
-          title: 'Запуск рекламной кампании в соцсетях',
-          assignee: ['СА', 'Sky'],
-          est: '16h',
-          priority: 'high'
-        }),
-        kit.IssueCard({
-          id: 'APP-3',
-          cat: 'active',
-          title: 'Push-уведомления о статусе заказа',
-          assignee: ['ПИ', 'Watermelon'],
-          est: '13h',
-          priority: 'high',
-          sub: '1/2',
-          component: 'iOS',
-          milestone: 'Релиз 1.0',
-          labels: [['срочно', 'Pink']]
-        })
-      ),
-      kit.add(
-        kit.box('cell', {
-          w: 294,
-          dir: 'column',
-          gap: 8,
-          pad: [8, 8, 8, 8],
-          vs: 'auto',
-          fill: T('theme-kanban-card-bg-color'),
-          radius: 8,
-          clip: false
-        }),
-        kit.IssueCard({
-          id: 'APP-27',
-          cat: 'active',
-          title: 'Проверка количества товара в корзине',
-          assignee: ['ПИ', 'Watermelon'],
-          est: '3h',
-          priority: 'high'
-        })
-      ),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      }),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      }),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      })
-    ),
-    kit.add(
-      kit.box('Swimlane Medium', {
-        w: 2214,
-        h: 32,
-        dir: 'row',
-        gap: 8,
-        pad: [0, 8, 0, 8],
-        align: 'center',
-        fill: T('theme-list-row-color'),
-        radius: 4
-      }),
-      kit.icon('chevronD'),
-      kit.text('Medium', { weight: 600, name: 'Внеочередные' }),
-      kit.Count(5)
-    ),
-    kit.add(
-      kit.row('Lane cells', 26, { align: 'start', pad: [0, 13, 0, 13], clip: false }),
-      kit.add(
-        kit.box('cell', {
-          w: 294,
-          dir: 'column',
-          gap: 8,
-          pad: [8, 8, 8, 8],
-          vs: 'auto',
-          fill: T('theme-kanban-card-bg-color'),
-          radius: 8,
-          clip: false
-        }),
-        kit.IssueCard({
-          id: 'MKT-2',
-          cat: 'todo',
-          title: 'Подготовить пресс-релиз о запуске приложения',
-          assignee: ['СА', 'Sky'],
-          est: '4h',
-          priority: 'medium'
-        })
-      ),
-      kit.add(
-        kit.box('cell', {
-          w: 294,
-          dir: 'column',
-          gap: 8,
-          pad: [8, 8, 8, 8],
-          vs: 'auto',
-          fill: T('theme-kanban-card-bg-color'),
-          radius: 8,
-          clip: false
-        }),
-        kit.IssueCard({
-          id: 'APP-22',
-          cat: 'todo',
-          title: 'Поддержка Apple Pay',
-          assignee: ['ПИ', 'Watermelon'],
-          est: '8h',
-          priority: 'medium'
-        })
-      ),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      }),
-      kit.add(
-        kit.box('cell', {
-          w: 294,
-          dir: 'column',
-          gap: 8,
-          pad: [8, 8, 8, 8],
-          vs: 'auto',
-          fill: T('theme-kanban-card-bg-color'),
-          radius: 8,
-          clip: false
-        }),
-        kit.IssueCard({
-          id: 'APP-28',
-          cat: 'active',
-          title: 'Рефакторинг API-клиента',
-          assignee: ['ПИ', 'Watermelon'],
-          est: '5h',
-          priority: 'medium'
-        })
-      ),
-      kit.add(
-        kit.box('cell', {
-          w: 294,
-          dir: 'column',
-          gap: 8,
-          pad: [8, 8, 8, 8],
-          vs: 'auto',
-          fill: T('theme-kanban-card-bg-color'),
-          radius: 8,
-          clip: false
-        }),
-        kit.IssueCard({
-          id: 'APP-29',
-          cat: 'active',
-          title: 'Ссылки на товар из внешних источников',
-          assignee: ['КМ', 'Grass'],
-          est: '3h',
-          priority: 'medium'
-        })
-      ),
-      kit.add(
-        kit.box('cell', {
-          w: 294,
-          dir: 'column',
-          gap: 8,
-          pad: [8, 8, 8, 8],
-          vs: 'auto',
-          fill: T('theme-kanban-card-bg-color'),
-          radius: 8,
-          clip: false
-        }),
-        kit.IssueCard({
-          id: 'MKT-4',
-          cat: 'won',
-          title: 'Обновить лендинг на сайте',
-          assignee: ['КМ', 'Grass'],
-          est: '6h',
-          priority: 'medium'
-        })
-      ),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      })
-    ),
-    kit.add(
-      kit.box('Swimlane Low', {
-        w: 2214,
-        h: 32,
-        dir: 'row',
-        gap: 8,
-        pad: [0, 8, 0, 8],
-        align: 'center',
-        fill: T('theme-list-row-color'),
-        radius: 4
-      }),
-      kit.icon('chevronD'),
-      kit.text('Low', { weight: 600, name: 'Внеочередные' }),
-      kit.Count(1)
-    ),
-    kit.add(
-      kit.row('Lane cells', 26, { align: 'start', pad: [0, 13, 0, 13], clip: false }),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      }),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      }),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      }),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      }),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      }),
-      kit.box('cell', {
-        w: 294,
-        h: 56,
-        dir: 'column',
-        gap: 8,
-        pad: [8, 8, 8, 8],
-        fill: T('theme-kanban-card-bg-color'),
-        radius: 8,
-        clip: false
-      }),
-      kit.add(
-        kit.box('cell', {
-          w: 294,
-          dir: 'column',
-          gap: 8,
-          pad: [8, 8, 8, 8],
-          vs: 'auto',
-          fill: T('theme-kanban-card-bg-color'),
-          radius: 8,
-          clip: false
-        }),
-        kit.IssueCard({ id: 'MKT-6', cat: 'lost', title: 'Партнёрство с блогерами-техноблогерами', priority: 'low' })
-      )
-    )
-  ), 2, 114)
+  // Columns follow the demo statuses: by category, the demo order inside it; the first five fit the window
+  const d = DEMO.ru
+  const columns = ['backlog', 'todo', 'active', 'won', 'lost'].flatMap((cat) => d.statuses.filter((st) => st.category === cat)).slice(0, 5)
+  const issues = d.projects.flatMap((project) => project.issues)
+  const person = (name) => d.people.find((it) => it.name === name)
+  const cardOf = (i, cat) => ({
+    id: i.id,
+    cat,
+    statusName: i.status,
+    title: i.title,
+    priority: i.priority,
+    ...(person(i.assignee) !== undefined ? { assignee: [person(i.assignee).initials, person(i.assignee).color] } : {}),
+    ...(i.component !== undefined ? { component: i.component } : {}),
+    ...(i.milestone !== undefined ? { milestone: i.milestone } : {}),
+    ...(i.estimation !== undefined ? { est: i.estimation + 'h' } : {})
+  })
+  const board = kit.box('Kanban', { w: 2264, h: 930, dir: 'column', gap: 8, pad: [24, 24, 0, 24] })
+  kit.add(board, kit.add(
+    kit.row('Column headers', 0, { align: 'start', clip: false }),
+    columns.map((st) => kit.KanbanColumn({ name: st.name, cat: st.category, count: issues.filter((i) => i.status === st.name).length, cards: [] }, 320, 44))
+  ))
+  // The lane header is tinted by the priority, as in the product
+  for (const [level, title, pal] of [['urgent', 'Urgent', 'Orange'], ['high', 'High', 'Sunshine'], ['medium', 'Medium', 'Ocean']]) {
+    const inLane = issues.filter((i) => i.priority === level)
+    const head = kit.box('Swimlane ' + title, { w: 2214, h: 32, dir: 'row', gap: 8, pad: [0, 8, 0, 8], align: 'center', fill: PB(pal), radius: 4 })
+    kit.add(head, kit.icon('chevronD', PT(pal)), kit.PriorityIcon(level), kit.text(title, { weight: 600, color: PT(pal) }), kit.Count(inLane.length))
+    const row = kit.row('Lane cells', 26, { align: 'start', pad: [0, 13, 0, 13], clip: false })
+    for (const st of columns) {
+      const cards = inLane.filter((i) => i.status === st.name).slice(0, 2).map((i) => kit.IssueCard(cardOf(i, st.category), 278))
+      kit.add(row, kit.add(kit.box('cell', { w: 294, h: 56, dir: 'column', gap: 8, pad: [8, 8, 8, 8], vs: cards.length > 0 ? 'auto' : 'fix', fill: T('theme-kanban-card-bg-color'), radius: 8, clip: false }), cards))
+    }
+    kit.add(board, head, row)
+  }
+  kit.at(main, board, 2, 114)
 }
 await kit.settle()

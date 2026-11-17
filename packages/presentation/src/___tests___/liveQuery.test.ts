@@ -21,6 +21,8 @@ import core, {
   type WorkspaceUuid
 } from '@hcengineering/core'
 import { setMetadata } from '@hcengineering/platform'
+import { type AnyComponent, closePanel, panelstore, showPanel } from '@hcengineering/ui'
+import { get } from 'svelte/store'
 import presentation from '../plugin'
 import { createQuery, onWorkspaceChange, refreshClient, setClient } from '../utils'
 
@@ -59,7 +61,15 @@ jest.mock('svelte/store', () => {
   }
   return { writable, get, derived: () => writable(undefined), readable: writable }
 })
-jest.mock('@hcengineering/ui', () => ({ getRawCurrentLocation: () => ({ path: [] }), workspaceId: undefined }))
+jest.mock('../../../ui/src/location', () => ({
+  getLocation: () => ({ path: ['workbench', 'ws-b'], fragment: 'destination-panel' }),
+  navigate: jest.fn()
+}))
+jest.mock('@hcengineering/ui', () => ({
+  ...jest.requireActual('../../../ui/src/panelup'),
+  getRawCurrentLocation: () => ({ path: [] }),
+  workspaceId: undefined
+}))
 // Records subscriptions and answers each with its own query.
 jest.mock('@hcengineering/query', () => ({
   LiveQuery: class {
@@ -215,5 +225,55 @@ describe('LiveQuery', () => {
     setMetadata(presentation.metadata.WorkspaceUuid, 'ws-b' as WorkspaceUuid)
     await setClient(client)
     expect(changed).toHaveBeenCalledTimes(1)
+  })
+
+  it('clears the previous workspace panel before querying the new model and allows reopening it', async () => {
+    const client = { findAll: async () => [], notify: () => {}, close: async () => {} } as unknown as Client
+    const component = 'tracker:component:EditIssue' as AnyComponent
+    const customClass = '69fab7abf8f82b72b7f554b3'
+
+    setMetadata(presentation.metadata.WorkspaceUuid, 'panel-ws-a' as WorkspaceUuid)
+    await setClient(client)
+    showPanel(component, 'custom-issue', customClass, undefined, undefined, false)
+    expect(get(panelstore).panel?._class).toBe(customClass)
+    const navigate = jest.requireMock('../../../ui/src/location').navigate as jest.Mock
+    navigate.mockClear()
+
+    const findAll = jest.fn(async () => {
+      expect(get(panelstore).panel).toBeUndefined()
+      return []
+    })
+    setMetadata(presentation.metadata.WorkspaceUuid, 'panel-ws-b' as WorkspaceUuid)
+    await setClient({ ...client, findAll } as unknown as Client)
+
+    expect(findAll).toHaveBeenCalled()
+    expect(get(panelstore).panel).toBeUndefined()
+    expect(navigate).not.toHaveBeenCalled()
+
+    setMetadata(presentation.metadata.WorkspaceUuid, 'panel-ws-a' as WorkspaceUuid)
+    await setClient(client)
+    showPanel(component, 'custom-issue', customClass, undefined, undefined, false)
+    expect(get(panelstore).panel).toMatchObject({ component, _id: 'custom-issue', _class: customClass })
+    closePanel(false)
+  })
+
+  it('preserves an open panel when refreshing the client in the same workspace', async () => {
+    const client = { findAll: async () => [], notify: () => {}, close: async () => {} } as unknown as Client
+    setMetadata(presentation.metadata.WorkspaceUuid, 'panel-same-ws' as WorkspaceUuid)
+    await setClient(client)
+    showPanel(
+      'tracker:component:EditIssue' as AnyComponent,
+      'issue',
+      'tracker:class:Issue',
+      undefined,
+      undefined,
+      false
+    )
+    const panel = get(panelstore).panel
+
+    await setClient(client)
+
+    expect(get(panelstore).panel).toBe(panel)
+    closePanel(false)
   })
 })

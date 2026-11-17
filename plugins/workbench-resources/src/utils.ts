@@ -44,6 +44,9 @@ import { derived, writable } from 'svelte/store'
 
 export const workspaceCreating = writable<number | undefined>(undefined)
 
+// Hides the app panel, the navigator and the widgets bar; the section that turns it on turns it off when it closes
+export const fullscreenStore = writable<boolean>(false)
+
 export function getSpecialSpaceClass (model: NavigatorModel): Array<Ref<Class<Space>>> {
   const spaceResult = model.spaces.map((x) => x.spaceClass)
   const result = (model.specials ?? [])
@@ -222,6 +225,7 @@ export async function buildNavModel (
       }
       const newSpaces = (nm.spaces ?? []).filter((it) => !spaces.some((sp) => sp.id === it.id))
       newNavModel = {
+        ...newNavModel,
         spaces: [...spaces, ...newSpaces],
         specials: [...(newNavModel?.specials ?? []), ...(nm.specials ?? [])]
       }

@@ -17,6 +17,8 @@
   import type { ActivityMessage } from '@hcengineering/activity'
 
   import Channel from './Channel.svelte'
+  import { getChatTarget } from '../utils'
+  import { isArchived } from './chat/utils'
   import { ThreadView } from '../index'
 
   export let height: string
@@ -37,13 +39,14 @@
     {#key object._id}
       <slot name="header" />
       <Channel
+        target={getChatTarget(object)}
         {object}
         syncLocation={false}
         freeze={threadId !== undefined}
         {collection}
         {withInput}
         {onReply}
-        {readonly}
+        readonly={readonly || isArchived(object)}
       />
     {/key}
   </div>

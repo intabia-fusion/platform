@@ -30,7 +30,7 @@
   export let shrink: number = 1
   export let disabled: boolean = false
 
-  import { activeProjects, selectedTaskTypeStore, selectedTypeStore, taskTypeStore, typeStore } from '../../index'
+  import { activeProjects, taskTypeStore, typeStore } from '../../index'
   import { getSuffixes } from '../../utils'
 
   // Group values of the list or kanban this header belongs to
@@ -49,16 +49,6 @@
   {#if onChange !== undefined && state !== undefined}
     <StateEditor value={state._id} {space} {onChange} {kind} {size} {shouldShowName} {shrink} {disabled} />
   {:else}
-    <StatePresenter
-      value={state}
-      {space}
-      {shouldShowName}
-      {disabled}
-      {shrink}
-      {nameSuffix}
-      on:accent-color
-      taskType={$selectedTaskTypeStore}
-      projectType={$selectedTypeStore}
-    />
+    <StatePresenter value={state} {space} {shouldShowName} {disabled} {shrink} {nameSuffix} on:accent-color />
   {/if}
 {/if}

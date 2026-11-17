@@ -24,7 +24,10 @@ export class TemplatesPage extends CalendarPage {
     this.buttonPopupNextStep = page.locator('div.popup button[type="submit"]')
     this.inputNewTemplateTitle = page.locator('div[id="doc-title"] input')
     this.inputNewTemplateDescription = page.locator('div[id="doc-description"] input')
-    this.inputNewTemplateCreateDaft = page.locator('div.footer div.footerButtons button[type="button"]')
+    this.inputNewTemplateCreateDaft = page
+      .locator('div.footer div.footerButtons button[type="button"]')
+      // Back stands before Next or the submit: the main button is the last one
+      .last()
     this.buttonNewTemplateCategory = page.locator('div.popup div.sectionContent button')
     this.buttonNewTemplateCustomReason = page.locator('div.radio div.antiRadio:last-child')
     this.inputNewTemplateCustomReason = page.locator('div.popup div[id="doc-reason"] input')

@@ -14,6 +14,7 @@
 -->
 <script lang="ts">
   import type { IntlString } from '@hcengineering/platform'
+  import { SortingOrder } from '@hcengineering/core'
   import { createEventDispatcher, tick } from 'svelte'
 
   import { deviceOptionsStore, resizeObserver } from '..'
@@ -32,6 +33,8 @@
   export let enableSearch: boolean = true
   export let params: Record<string, any> = {}
   export let categoryKind: 'divider' | 'heading' = 'divider'
+  // Set when the list chooses a sort field: the chosen item then shows the direction, not a check.
+  export let sortOrder: SortingOrder | undefined = undefined
 
   const dispatch = createEventDispatcher<{
     update: DropdownTextItem['id'] | Array<DropdownTextItem['id']>
@@ -181,7 +184,14 @@
 
         {#if isSelected(selected, item)}
           <span class="hulyPopup-row__icon">
-            <Icon icon={plugin.icon.Check} size="small" />
+            <Icon
+              icon={sortOrder === undefined
+                ? plugin.icon.Check
+                : sortOrder === SortingOrder.Ascending
+                  ? plugin.icon.ChevronUpSmall
+                  : plugin.icon.ChevronDownSmall}
+              size="small"
+            />
           </span>
         {/if}
       </button>

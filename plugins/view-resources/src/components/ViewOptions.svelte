@@ -1,12 +1,20 @@
 <script lang="ts">
   import { getClient } from '@hcengineering/presentation'
-  import type { DropdownIntlItem } from '@hcengineering/ui'
+  import type { IntlString, DropdownIntlItem } from '@hcengineering/platform'
   import ui, { Button, DropdownLabelsIntl, Label, Toggle } from '@hcengineering/ui'
-  import type { Viewlet, ViewOptions, ViewOptionsModel, ViewOptionModel, GroupingKey } from '@hcengineering/view'
+  import { Slider } from '@hcengineering/ui/kit'
+  import type {
+    GroupingKey,
+    OrderOption,
+    Viewlet,
+    ViewOptions,
+    ViewOptionsModel,
+    ViewOptionModel
+  } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import view from '../plugin'
   import { buildConfigLookup, canResolveAttribute, getKeyLabel } from '../utils'
-  import { isDropdownType, isToggleType, noCategory, MAX_GROUPING_DEPTH, getDefaults } from '../viewOptions'
+  import { isDropdownType, isSliderType, isToggleType, noCategory, MAX_GROUPING_DEPTH, getDefaults } from '../viewOptions'
   import { SortingOrder } from '@hcengineering/core'
 
   export let viewlet: Viewlet
@@ -28,15 +36,31 @@
   const getKey = (k: GroupingKey): string => (typeof k === 'string' ? k : k.key)
   const isHidden = (k: GroupingKey): boolean => (typeof k === 'string' ? false : (k.hidden ?? false))
 
-  const orderBy = config.orderBy
-    .filter((p) => p[0] === 'rank' || canResolveAttribute(hierarchy, viewlet.attachTo, p[0], lookup))
-    .map((p) => {
-      const key = p[0]
-      return {
-        id: key,
-        label: key === 'rank' ? view.string.Manual : getKeyLabel(client, viewlet.attachTo, key, lookup)
-      }
-    })
+  const sortItem = (key: string): { id: string, label: IntlString } => ({
+    id: key,
+    label: key === 'rank' ? view.string.Manual : getKeyLabel(client, viewlet.attachTo, key, lookup)
+  })
+
+  $: groupedKeys = new Set(viewOptions.groupBy)
+  $: orderBy = (() => {
+    const sortable = config.orderBy
+      .filter((p) => p[0] === 'rank' || canResolveAttribute(hierarchy, viewlet.attachTo, p[0], lookup))
+      .filter((p) => !groupedKeys.has(p[0]))
+
+    return (sortable.length > 0 ? sortable : config.orderBy.slice(0, 1)).map((p) => sortItem(p[0]))
+  })()
+
+  function defaultOrdering (): OrderOption | undefined {
+    return config.orderBy.find((p) => !viewOptions.groupBy.includes(p[0])) ?? config.orderBy[0]
+  }
+
+  $: if (viewOptions.orderBy?.[0] !== undefined && viewOptions.groupBy.includes(viewOptions.orderBy[0])) {
+    const next = defaultOrdering()
+    if (next !== undefined && !viewOptions.groupBy.includes(next[0])) {
+      viewOptions.orderBy = [...next] as OrderOption
+      dispatch('update', { key: 'orderBy', value: viewOptions.orderBy })
+    }
+  }
 
   function selectGrouping (value: string, i: number) {
     groups[i] = value
@@ -127,6 +151,7 @@
         size="medium"
         items={orderBy}
         selected={viewOptions.orderBy?.[0]}
+        sortOrder={viewOptions.orderBy?.[1]}
         width="10rem"
         justify="left"
         on:selected={(e) => {
@@ -157,7 +182,7 @@
         if (isToggleType(model)) changeToggle(model)
       }}
     >
-      <span class="overflow-label"><Label label={model.label} /></span>
+      <span class="overflow-label" id={`viewOption-label-${model.key}`}><Label label={model.label} /></span>
       {#if isToggleType(model)}
         <Toggle
           on={viewOptions[model.key] ?? model.defaultValue}
@@ -184,6 +209,25 @@
             dispatch('update', { key: model.key, value: e.detail })
           }}
         />
+      {:else if isSliderType(model)}
+        {@const index = model.values.findIndex((v) => v.id === (viewOptions[model.key] ?? model.defaultValue))}
+        <div class="slider" data-id={`viewOption-${model.key}`}>
+          <Slider
+            value={Math.max(index, 0)}
+            min={0}
+            max={model.values.length - 1}
+            step={1}
+            size="small"
+            aria-labelledby={`viewOption-label-${model.key}`}
+            on:change={(e) => {
+              viewOptions[model.key] = model.values[e.detail].id
+              dispatch('update', { key: model.key, value: viewOptions[model.key] })
+            }}
+          />
+          <span class="slider-caption">
+            <Label label={index >= 0 ? model.values[index].label : (model.defaultLabel ?? model.label)} />
+          </span>
+        </div>
       {/if}
     </div>
   {/each}
@@ -196,8 +240,17 @@
 </div>
 
 <style lang="scss">
-  // A small action in the corner of the menu, like the ones next to the filters, not a full-width
-  // row that reads as one more setting.
+  .slider {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-0_5);
+    width: 10rem;
+  }
+  .slider-caption {
+    font-size: 0.75rem;
+    color: var(--global-secondary-TextColor);
+  }
   .reset-row {
     justify-content: flex-end;
   }

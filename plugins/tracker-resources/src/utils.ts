@@ -358,7 +358,8 @@ export async function getAllPriority (
   onUpdate: () => void,
   queryId: Ref<Doc>
 ): Promise<any[] | undefined> {
-  return defaultPriorities
+  // A copy: the caller sorts the values in place, and `defaultPriorities` is shared.
+  return [...defaultPriorities]
 }
 
 export async function getAllComponents (

@@ -95,7 +95,8 @@ export {
   TaskTypeIcon,
   TypeStatesPopup,
   TaskTypeDiagramPopup,
-  ProjectTypeSettingsLink
+  ProjectTypeSettingsLink,
+  ProjectTypeStatusesSectionEditor
 }
 
 async function editStatuses (object: Project, ev: Event): Promise<void> {

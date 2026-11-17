@@ -203,12 +203,14 @@ const view = plugin(viewId, {
     SearchSelector: '' as AnyComponent,
     FoldersBrowser: '' as AnyComponent,
     PersonIdPresenter: '' as AnyComponent,
+    AccountUuidPresenter: '' as AnyComponent,
     PersonIdFilter: '' as AnyComponent,
     RolePresenter: '' as AnyComponent,
     ReadOnlyNotification: '' as AnyComponent,
     ForbiddenNotification: '' as AnyComponent,
     DatePresenter: '' as AnyComponent,
     DateEditor: '' as AnyComponent,
+    TimestampLabel: '' as AnyComponent,
     SidebarPreviewWidget: '' as AnyComponent
   },
   ids: {

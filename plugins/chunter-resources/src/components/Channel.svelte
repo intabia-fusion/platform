@@ -26,8 +26,10 @@
   import chunter from '../plugin'
   import { ChatViewport } from '../chatViewport'
   import ReverseChannelScrollView from './ReverseChannelScrollView.svelte'
+  import type { ChatTarget } from '../utils'
 
-  export let object: Doc
+  export let target: ChatTarget
+  export let object: Doc | undefined = undefined
   export let syncLocation = true
   export let autofocus = true
   export let freeze = false
@@ -65,9 +67,9 @@
     chatViewport = undefined
   })
 
-  $: isDocChannel = !hierarchy.isDerived(object._class, chunter.class.ChunterSpace)
+  $: isDocChannel = !hierarchy.isDerived(target._class, chunter.class.ChunterSpace)
 
-  $: updateViewport(object._id, selectedMessageId)
+  $: updateViewport(target._id, selectedMessageId)
 
   // The viewport is acquired once per component, otherwise a second call would take a reference
   // that onDestroy never releases.
@@ -86,8 +88,8 @@
 
 {#if chatViewport}
   <ReverseChannelScrollView
-    channel={object}
     bind:selectedMessageId
+    {target}
     {object}
     collection={collection ?? (isDocChannel ? 'comments' : 'messages')}
     viewport={chatViewport}

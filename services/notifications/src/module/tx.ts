@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import core, { Doc, TxCreateDoc, TxCUD, TxProcessor } from '@hcengineering/core'
+import core, { AttachedDoc, Doc, TxCreateDoc, TxCUD, TxProcessor } from '@hcengineering/core'
 import activity, { Reaction } from '@hcengineering/activity'
 import notification, {
   CommonNotification,
@@ -23,6 +23,7 @@ import notification, {
 } from '@hcengineering/notification'
 import serverNotification, {
   CreateNotificationResult,
+  type Receiver,
   truncateMessage,
   Sender,
   TypeMatch
@@ -38,7 +39,7 @@ import {
   getCollaboratorAccounts,
   getMode,
   getNotifiedUsers,
-  getObjectDisplayData,
+  getContextRefs,
   getTxNotifyProviders,
   getTypeMatchClient,
   isMatchedTxType,
@@ -97,10 +98,7 @@ export async function handleTxNotification (
   if (matched.length === 0) return
 
   for (const matchedType of matched) {
-    const doc =
-      hierarchy.isDerived(txObject._class, activity.class.ActivityMessage) || matchedType.attachToParent === true
-        ? (txAttachedToDoc ?? txObject)
-        : txObject
+    const doc = await getNotifiedDoc(client, cache, txAttachedToDoc, txObject, matchedType)
 
     const space = await cache.getDocSpace(doc)
     if (space == null) {
@@ -123,7 +121,9 @@ export async function handleTxNotification (
       if (isMuted(mode)) continue
 
       const context = contexts.find((it) => it.user === receiver.account)
-      const notifyProviders = await getTxNotifyProviders(client, tx, doc, receiver, settings, [matchedType], mode)
+      // A type attached to the parent still matches its own object, only the context moves
+      const matchDoc = matchedType.attachToParent === true ? txObject : doc
+      const notifyProviders = await getTxNotifyProviders(client, tx, matchDoc, receiver, settings, [matchedType], mode)
 
       const types = notifyProviders[notification.providers.InboxNotificationProvider] ?? []
       const type = types[0] as TxNotificationType
@@ -145,7 +145,7 @@ export async function handleTxNotification (
         doc,
         txObject,
         sender,
-        receiver.language
+        receiver
       )
 
       const commonNotification: CommonNotification = {
@@ -158,7 +158,7 @@ export async function handleTxNotification (
         createdBy: tx.createdBy ?? tx.modifiedBy
       }
 
-      const objectDisplayData = await getObjectDisplayData(client, cache, txCache, doc, receiver.account)
+      const contextRefs = await getContextRefs(client, cache, doc)
       const pushSubscriptions = await cache.getPushSubscriptions(receiver.account)
       await pushNotification(client, txCache, result, context, {
         unreadCommon: commonNotification,
@@ -169,12 +169,30 @@ export async function handleTxNotification (
         notification: commonNotification,
         intl,
         notifyProviders,
-        objectDisplayData,
+        contextRefs,
         pushSubscriptions,
         settings
       })
     }
   }
+}
+
+// A message and a type attached to the parent notify in the parent's context
+export async function getNotifiedDoc (
+  client: Client,
+  cache: Cache,
+  txAttachedToDoc: Doc | undefined,
+  txObject: Doc,
+  type: TxNotificationType
+): Promise<Doc> {
+  if (client.hierarchy.isDerived(txObject._class, activity.class.ActivityMessage)) return txAttachedToDoc ?? txObject
+  if (type.attachToParent !== true) return txObject
+  if (txAttachedToDoc != null) return txAttachedToDoc
+  // An update tx carries no attachedTo, the doc itself still knows its parent
+  const { attachedTo, attachedToClass } = txObject as Partial<AttachedDoc>
+  const parent =
+    attachedTo != null && attachedToClass != null ? await cache.getDoc(attachedTo, attachedToClass) : undefined
+  return parent ?? txObject
 }
 
 async function getIntl (
@@ -187,7 +205,7 @@ async function getIntl (
   doc: Doc,
   txObject: Doc,
   sender: Sender,
-  receiverLang: string
+  receiver: Pick<Receiver, 'account' | 'language'>
 ): Promise<NotificationIntl> {
   if (mixin.intlProvider != null) {
     const f = await getResource(mixin.intlProvider)
@@ -199,7 +217,7 @@ async function getIntl (
       type,
       doc,
       sender,
-      receiverLang
+      receiver
     )
     for (const [k, v] of Object.entries(data.intl?.intlParams ?? {})) {
       intlParams[k] = v

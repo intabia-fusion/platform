@@ -90,6 +90,29 @@ describe('workspace deletion marks the blobs', () => {
   })
 })
 
+describe('blob deletion events', () => {
+  it.each(['single', 'batch'])('includes the original size for %s deletion', async (mode) => {
+    const db = {
+      execute: jest.fn().mockResolvedValue([
+        { name: 'large', size: 50_000_001 },
+        { name: 'small', size: 4 }
+      ]),
+      deleteBlob: jest.fn(),
+      deleteBlobList: jest.fn()
+    } as unknown as BlobDB
+    const producer = { send: jest.fn() }
+    const datalake = new DatalakeImpl(db, [], producer as any, {
+      cacheControl: '',
+      cache: { enabled: false } as any
+    })
+    await datalake.delete(ctx, workspace, mode === 'single' ? 'large' : ['large', 'small'])
+    const events = producer.send.mock.calls[0][2]
+    expect(events[0]).toMatchObject({ objectId: 'large', meta: { size: 50_000_001 } })
+    expect(events).toHaveLength(mode === 'single' ? 1 : 2)
+    if (mode === 'batch') expect(events[1]).toMatchObject({ objectId: 'small', meta: { size: 4 } })
+  })
+})
+
 describe('a marked blob stops being served', () => {
   const name = 'note.txt'
   const record = {

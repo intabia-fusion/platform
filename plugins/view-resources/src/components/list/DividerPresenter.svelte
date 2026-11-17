@@ -1,4 +1,8 @@
-<span class="root" />
+<script lang="ts">
+  export let compact = false
+</script>
+
+<span class="root" class:compact />
 
 <style lang="scss">
   .root {
@@ -8,5 +12,8 @@
     height: 1.5rem;
     min-width: 1px;
     background-color: var(--theme-list-divider-color);
+  }
+  .root.compact {
+    margin: 0 0.125rem 0 0.25rem;
   }
 </style>

@@ -62,6 +62,7 @@ import {
   isServiceToken,
   getPersonName,
   getInviteEmail,
+  getInviteSender,
   getFrontUrl,
   getSocialIdByKey,
   getWorkspaceInvite,
@@ -2243,6 +2244,112 @@ describe('account utils', () => {
         subject: expect.any(String),
         to: 'test@example.com'
       })
+    })
+
+    test('names the workspace when the inviter is unknown', async () => {
+      const result = await getInviteEmail(mockBranding, 'test@example.com', 'invite-id', mockWorkspace, 24)
+
+      expect(result.text).toContain('"senderName":"Test Workspace"')
+      expect(result.text).toContain('InviteSenderRoleMember')
+    })
+
+    test('names the inviter in text, html and subject', async () => {
+      const result = await getInviteEmail(mockBranding, 'test@example.com', 'invite-id', mockWorkspace, 24, false, {
+        name: 'Иван Петров',
+        email: 'ivan@example.com',
+        role: AccountRole.Maintainer
+      })
+
+      expect(result.text).toContain('"senderName":"Иван Петров"')
+      expect(result.text).toContain('ivan@example.com, ')
+      expect(result.text).toContain('InviteSenderRoleAdmin')
+      expect(result.html).toContain('"senderName":"Иван Петров"')
+      expect(result.html).toContain('"senderLabel"')
+      expect(result.subject).toContain('"senderName":"Иван Петров"')
+    })
+
+    test('calls everyone below owner and maintainer a member', async () => {
+      const result = await getInviteEmail(mockBranding, 'test@example.com', 'invite-id', mockWorkspace, 24, true, {
+        name: 'Пётр',
+        email: 'petr@example.com',
+        role: AccountRole.User
+      })
+
+      expect(result.text).toContain('InviteSenderRoleMember')
+      expect(result.text).not.toContain('InviteSenderRoleAdmin')
+    })
+
+    test('escapes the inviter name for html but not for the text part', async () => {
+      const result = await getInviteEmail(mockBranding, 'test@example.com', 'invite-id', mockWorkspace, 24, false, {
+        name: 'Ivan <b>Petrov</b>',
+        email: 'ivan@example.com',
+        role: AccountRole.Owner
+      })
+
+      expect(result.text).toContain('"senderName":"Ivan <b>Petrov</b>"')
+      expect(result.html).toContain('"senderName":"Ivan &lt;b&gt;Petrov&lt;/b&gt;"')
+    })
+  })
+
+  describe('getInviteSender', () => {
+    const db = (person: unknown, emails: unknown[]): AccountDB =>
+      ({
+        person: { findOne: jest.fn().mockResolvedValue(person) },
+        socialId: { find: jest.fn().mockResolvedValue(emails) }
+      }) as unknown as AccountDB
+
+    const email = { type: SocialIdType.EMAIL, value: 'ivan@example.com', verifiedOn: Date.now() }
+
+    test('takes the name from the person and the contact from a verified email', async () => {
+      const sender = await getInviteSender(
+        db({ firstName: 'Ivan', lastName: 'Petrov' }, [email]),
+        'accounts-uuid' as AccountUuid,
+        AccountRole.Owner
+      )
+
+      expect(sender).toEqual({ name: 'Ivan Petrov', email: 'ivan@example.com', role: AccountRole.Owner })
+    })
+
+    test('falls back to the email when the person has no name', async () => {
+      const sender = await getInviteSender(db(undefined, [email]), 'accounts-uuid' as AccountUuid, AccountRole.User)
+
+      expect(sender).toEqual({ name: 'ivan@example.com', email: 'ivan@example.com', role: AccountRole.User })
+    })
+
+    test('puts the last name first when the branding asks for it', async () => {
+      const sender = await getInviteSender(
+        db({ firstName: 'Ivan', lastName: 'Petrov' }, [email]),
+        'accounts-uuid' as AccountUuid,
+        AccountRole.User,
+        true
+      )
+
+      expect(sender?.name).toBe('Petrov Ivan')
+    })
+
+    test('strips bidi, zero-width and line separators from the name', async () => {
+      const sender = await getInviteSender(
+        db({ firstName: 'Ivan\u202E', lastName: '\u2066Petrov\u200B\u2028Jr' }, [email]),
+        'accounts-uuid' as AccountUuid,
+        AccountRole.User
+      )
+
+      expect(sender?.name).toBe('Ivan Petrov Jr')
+    })
+
+    test('keeps the name on one line and bounded', async () => {
+      const sender = await getInviteSender(
+        db({ firstName: '  Ivan\n\t', lastName: `Petrov ${'x'.repeat(200)}` }, [email]),
+        'accounts-uuid' as AccountUuid,
+        AccountRole.User
+      )
+
+      expect(sender?.name.startsWith('Ivan Petrov xxx')).toBe(true)
+      expect(sender?.name.length).toBeLessThanOrEqual(120)
+    })
+
+    test('has nobody to name when the account is gone', async () => {
+      expect(await getInviteSender(db(undefined, []), 'accounts-uuid' as AccountUuid, null)).toBeUndefined()
     })
   })
 

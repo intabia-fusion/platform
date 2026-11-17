@@ -13,11 +13,10 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Class, Doc, Ref } from '@hcengineering/core'
-  import { reduceCalls } from '@hcengineering/core'
-  import { getDocTitle, openDoc } from '@hcengineering/view-resources'
+  import type { AccountUuid, Class, Doc, DocPreview, Ref } from '@hcengineering/core'
+  import { getDocTitle, getPreviewTitle, openDoc, previewMembers, PreviewIcon } from '@hcengineering/view-resources'
   import { ComponentExtensions, getClient } from '@hcengineering/presentation'
-  import type { Channel, DirectMessage } from '@hcengineering/chunter'
+  import type { Channel } from '@hcengineering/chunter'
   import type { ActivityMessagesFilter, WithReferences } from '@hcengineering/activity'
   import type { Person } from '@hcengineering/contact'
   import contact from '@hcengineering/contact'
@@ -27,12 +26,13 @@
 
   import Header from './Header.svelte'
   import chunter from '../plugin'
-  import { getObjectIcon, getChannelName, getDmPersons } from '../utils'
+  import { getObjectIcon, getChannelName, getDmPersons, isDirectMessage } from '../utils'
   import PinnedMessages from './PinnedMessages.svelte'
 
   export let _id: Ref<Doc>
   export let _class: Ref<Class<Doc>>
   export let object: WithReferences<Doc> | undefined
+  export let preview: DocPreview | undefined = undefined
   export let allowClose: boolean = false
   export let canOpen: boolean = false
   export let withAside: boolean = false
@@ -54,46 +54,88 @@
 
   $: void updateDescription(_id, _class, object)
 
-  $: void getChannelName(_id, _class, object, $languageStore).then((res) => {
-    title = res
-  })
+  // A late answer for a chat left meanwhile is dropped
+  let titleAsk = 0
+  let descriptionAsk = 0
+  let directPersonAsk = 0
+
+  // Until the document comes, its preview names it
+  async function updateTitle (
+    _id: Ref<Doc>,
+    _class: Ref<Class<Doc>>,
+    object: Doc | undefined,
+    preview: DocPreview | undefined,
+    lang: string
+  ): Promise<void> {
+    const ask = ++titleAsk
+    let res: string | undefined
+    if (object != null) res = await getChannelName(_id, _class, object, lang)
+    else if (preview?.objectId === _id) res = await getPreviewTitle(client, preview, lang).catch(() => undefined)
+    if (ask === titleAsk) title = res
+  }
+  $: void updateTitle(_id, _class, object, preview, $languageStore)
 
   async function updateDescription (_id: Ref<Doc>, _class: Ref<Class<Doc>>, object?: Doc): Promise<void> {
+    const ask = ++descriptionAsk
+    let res: string | undefined
     if (hierarchy.isDerived(_class, chunter.class.DirectMessage) || hierarchy.isDerived(_class, contact.class.Person)) {
-      description = undefined
+      res = undefined
     } else if (hierarchy.isDerived(_class, chunter.class.Channel)) {
-      description = (object as Channel)?.topic
-    } else {
-      const hasId = hierarchy.classHierarchyMixin(_class, view.mixin.ObjectIdentifier) !== undefined
-      description = hasId ? await getDocTitle(client, _id, _class, object) : undefined
+      res = (object as Channel)?.topic
+    } else if (object != null && hierarchy.classHierarchyMixin(_class, view.mixin.ObjectIdentifier) != null) {
+      res = await getDocTitle(client, _id, _class, object)
     }
+    if (ask === descriptionAsk) description = res
   }
 
   // A direct with no messages yet has no author to click, so the header is the only way to the person card.
   let directPerson: Person | undefined = undefined
-  // Serialized, so a slower answer for the previous direct cannot land on the one opened since.
-  const updateDirectPerson = reduceCalls(async (object: Doc | undefined, _class: Ref<Class<Doc>>): Promise<void> => {
-    if (object === undefined || !hierarchy.isDerived(_class, chunter.class.DirectMessage)) {
+  let directPersonOf: Ref<Doc> | undefined = undefined
+
+  async function updateDirectPerson (_id: Ref<Doc>, members: AccountUuid[] | undefined): Promise<void> {
+    const ask = ++directPersonAsk
+    // The previous direct's person must not stay clickable while the new one loads
+    if (directPersonOf !== _id) directPerson = undefined
+    directPersonOf = _id
+    if (members == null) {
       directPerson = undefined
       return
     }
-    const dm = object as DirectMessage
-    const res = await getDmPersons(client, dm.members)
-    directPerson = dm.members.length === 2 && res.length === 1 ? res[0] : undefined
-  })
-  $: void updateDirectPerson(object, _class)
+    const res = await getDmPersons(client, members)
+    if (ask === directPersonAsk) directPerson = members.length === 2 && res.length === 1 ? res[0] : undefined
+  }
+
+  // The preview of the click carries the members before the direct comes
+  function getDirectMembers (
+    _id: Ref<Doc>,
+    object: Doc | undefined,
+    preview: DocPreview | undefined
+  ): AccountUuid[] | undefined {
+    if (object != null) return isDirectMessage(object) ? object.members : undefined
+    if (preview?.objectId !== _id || !hierarchy.isDerived(preview.objectClass, chunter.class.DirectMessage)) {
+      return undefined
+    }
+    return previewMembers(preview)
+  }
+
+  $: void updateDirectPerson(_id, getDirectMembers(_id, object, preview))
 
   $: isPerson =
     hierarchy.isDerived(_class, chunter.class.DirectMessage) || hierarchy.isDerived(_class, contact.class.Person)
+
+  // Before the document its preview draws the icon; a chat opened by its link knows no concrete class yet
+  $: byPreview = object == null && preview?.objectId === _id
+  $: icon = byPreview ? PreviewIcon : _class === chunter.class.ChunterSpace ? undefined : getObjectIcon(_class)
+  $: iconProps = byPreview ? { value: preview } : { value: object, showStatus: true, editable: true }
 </script>
 
 <Header
   bind:filters
   {object}
-  icon={getObjectIcon(_class)}
-  iconProps={{ value: object, showStatus: true, editable: true }}
+  {icon}
+  {iconProps}
   label={title}
-  intlLabel={chunter.string.Channel}
+  intlLabel={_class === chunter.class.ChunterSpace ? undefined : chunter.string.Channel}
   {description}
   titleKind={isPerson ? 'default' : 'breadcrumbs'}
   withFilters={false}

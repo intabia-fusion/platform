@@ -154,10 +154,9 @@ export async function notifyPaymentSucceeded (
       const lang = resolveLang(locale)
       const planLabel = await mail.planLabel(sub.plan, sub.type, lang)
       // Transaction id: recurrent charges set lastChargePaymentId; the initial checkout sets paymentId.
-      const txId =
-        (sub.providerData?.lastChargePaymentId as string | undefined) ??
-        (sub.providerData?.paymentId as string | undefined) ??
-        sub.providerSubscriptionId
+      const txId = String(
+        sub.providerData?.lastChargePaymentId ?? sub.providerData?.paymentId ?? sub.providerSubscriptionId
+      )
       // Payment moment == period start: both purchase activation and renewal set periodStart to now.
       const support = buildSupportFooter(mail, lang)
       const currency = await mail.planCurrency(sub.plan, sub.type)

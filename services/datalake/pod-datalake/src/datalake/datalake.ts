@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -136,6 +137,13 @@ export class DatalakeImpl implements Datalake {
   }
 
   async delete (ctx: MeasureContext, workspace: WorkspaceUuid, name: string | string[]): Promise<void> {
+    const names = Array.isArray(name) ? name : [name]
+    const blobs = await this.db.execute<Array<{ name: string, size: number }>>(
+      `SELECT b.name, d.size FROM blob.blob b JOIN blob.data d USING (hash, location)
+       WHERE b.workspace = $1 AND b.name = ANY($2) AND b.deleted_at IS NULL`,
+      [workspace, names]
+    )
+    const sizes = new Map(blobs.map((blob) => [blob.name, blob.size]))
     if (Array.isArray(name)) {
       await this.db.deleteBlobList(ctx, { workspace, names: name })
     } else {
@@ -143,7 +151,7 @@ export class DatalakeImpl implements Datalake {
     }
 
     try {
-      const events = Array.isArray(name) ? name.map((n) => blobEvents.deleted(n)) : [blobEvents.deleted(name)]
+      const events = names.map((n) => blobEvents.deleted(n, sizes.get(n)))
       await this.producer.send(ctx, workspace, events)
     } catch (err) {
       ctx.error('failed to send blob deleted event', { workspace, name, err })

@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -15,12 +16,35 @@
 <script lang="ts">
   import type { DocumentQuery, Ref } from '@hcengineering/core'
   import type { IssueTemplate, Project } from '@hcengineering/tracker'
+  import ui, { getCurrentLocation } from '@hcengineering/ui'
+  import { Button } from '@hcengineering/ui/kit'
+  import { openProjectSettings, openProjectSection } from '../../projectSettings'
   import tracker from '../../plugin'
   import IssueTemplatesView from './IssueTemplatesView.svelte'
 
-  export let currentSpace: Ref<Project>
+  export let currentSpace: Ref<Project> | undefined = undefined
 
-  const query: DocumentQuery<IssueTemplate> = { space: currentSpace }
+  $: query = (currentSpace === undefined ? {} : { space: currentSpace }) satisfies DocumentQuery<IssueTemplate>
+  const fromSettings = getCurrentLocation().query?.fromProjectSettings
 </script>
 
-<IssueTemplatesView {query} space={currentSpace} title={tracker.string.IssueTemplates} />
+<IssueTemplatesView {query} space={currentSpace} title={tracker.string.IssueTemplates}>
+  <svelte:fragment slot="afterHeader">
+    {#if currentSpace !== undefined && fromSettings === 'issues'}
+      <div class="p-3">
+        <Button
+          data-id="templatesBackToSettings"
+          kind="ghost"
+          size="small"
+          icon={ui.icon.ChevronLeftLarge}
+          label={tracker.string.ProjectSettings}
+          on:click={() => {
+            if (currentSpace === undefined) return
+            openProjectSettings(currentSpace)
+            openProjectSection('issues')
+          }}
+        />
+      </div>
+    {/if}
+  </svelte:fragment>
+</IssueTemplatesView>

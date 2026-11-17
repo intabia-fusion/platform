@@ -15,6 +15,8 @@
 
 import {
   AccountRole,
+  aiBotAccountEmail,
+  SocialIdType,
   generateId,
   generateUuid,
   MeasureMetricsContext,
@@ -108,6 +110,141 @@ describe.each(realDbFlavors)('subscription-real [$flavor]', ({ flavor: dbFlavor,
       ...overrides
     }
   }
+
+  it('separates trial seats from paid seats and does not assume missing amounts are paid', async () => {
+    for (const [id, provider, status, amount, seats] of [
+      ['trial', 'trial', SubscriptionStatus.Trialing, undefined, 20],
+      ['trial-provider', 'trial', SubscriptionStatus.Active, 1000, 15],
+      ['paid', 'tbank', SubscriptionStatus.Active, 1000, 7],
+      ['free', 'free', SubscriptionStatus.Active, undefined, 5],
+      ['unknown', 'unknown', SubscriptionStatus.Active, undefined, 3]
+    ] as const) {
+      const workspaceUuid = await crAccount.createWorkspace(
+        { url: `summary-${id}-${generateUuid()}`, name: id, allowGuestSignUp: true, allowReadOnlyGuest: true },
+        { isDisabled: false, mode: 'active', versionMajor: 0, versionMinor: 7, versionPatch: 0 }
+      )
+      const limits: SubscriptionData['limits'] = {
+        usersLimit: seats,
+        storageLimitGB: 0,
+        trafficLimitGB: 0,
+        meetingMinutesLimit: 0,
+        tokenLimit: 0
+      }
+      if (id === 'paid') {
+        await crAccount.subscription.insertOne({
+          ...makeSub({
+            workspaceUuid,
+            providerSubscriptionId: 'older-paid',
+            provider,
+            type: SubscriptionType.Tier,
+            plan: 'older-business',
+            status,
+            amount,
+            limits: { ...limits, usersLimit: 99 }
+          }),
+          createdOn: 1,
+          updatedOn: 1
+        })
+      }
+      await crAccount.subscription.insertOne(
+        makeSub({
+          workspaceUuid,
+          providerSubscriptionId: id,
+          provider,
+          type: SubscriptionType.Tier,
+          plan: 'business',
+          status,
+          amount,
+          providerData: id === 'paid' ? { quantity: 11 } : undefined,
+          limits
+        })
+      )
+    }
+
+    const { billing } = await crAccount.getWorkspacesSummary()
+    expect(billing).toEqual(
+      expect.arrayContaining([
+        { plan: 'business', status: 'trialing', category: 'trial', workspaces: 1, seats: 20 },
+        { plan: 'business', status: 'active', category: 'trial', workspaces: 1, seats: 15 },
+        { plan: 'business', status: 'active', category: 'paid', workspaces: 1, seats: 11 },
+        { plan: 'business', status: 'active', category: 'free', workspaces: 1, seats: 5 },
+        { plan: 'business', status: 'active', category: 'other', workspaces: 1, seats: 3 }
+      ])
+    )
+    expect(billing).toHaveLength(5)
+  })
+
+  it('counts actual paid-seat members for manual tiers and lists manual trials', async () => {
+    const workspaceUuid = await crAccount.createWorkspace(
+      { url: `manual-${generateUuid()}`, name: 'Manual seats', allowGuestSignUp: true, allowReadOnlyGuest: true },
+      { isDisabled: false, mode: 'active', versionMajor: 0, versionMinor: 7, versionPatch: 0 }
+    )
+    for (const role of [
+      AccountRole.Owner,
+      AccountRole.Maintainer,
+      AccountRole.User,
+      AccountRole.Guest,
+      AccountRole.ReadOnlyGuest
+    ]) {
+      const person = generateUuid() as AccountUuid
+      await crAccount.person.insertOne({ uuid: person, firstName: 'Seat', lastName: role })
+      await createAccount(crAccount, person, true)
+      await crAccount.assignWorkspace(person, workspaceUuid, role)
+    }
+    const docGuest = generateUuid() as AccountUuid
+    await crAccount.person.insertOne({ uuid: docGuest, firstName: 'Document', lastName: 'Guest' })
+    await createAccount(crAccount, docGuest, true)
+    await (
+      await crClient.getClient()
+    ).unsafe(
+      `INSERT INTO ${crAccount.getWsMembersTableName()} (workspace_uuid, account_uuid, role) VALUES ($1, $2, 'DOCGUEST')`,
+      [workspaceUuid, docGuest]
+    )
+    const bot = generateUuid() as AccountUuid
+    await crAccount.person.insertOne({ uuid: bot, firstName: 'AI', lastName: 'Bot' })
+    await createAccount(crAccount, bot, true)
+    await crAccount.socialId.insertOne({ type: SocialIdType.EMAIL, value: aiBotAccountEmail, personUuid: bot })
+    await crAccount.assignWorkspace(bot, workspaceUuid, AccountRole.User)
+    const limits: SubscriptionData['limits'] = {
+      usersLimit: 1000,
+      storageLimitGB: 0,
+      trafficLimitGB: 0,
+      meetingMinutesLimit: 0,
+      tokenLimit: 0
+    }
+    const id = await crAccount.subscription.insertOne(
+      makeSub({
+        workspaceUuid,
+        provider: 'manual',
+        providerSubscriptionId: 'manual-seats',
+        type: SubscriptionType.Tier,
+        plan: 'business',
+        status: SubscriptionStatus.Active,
+        amount: 0,
+        providerData: { quantity: 999 },
+        limits
+      })
+    )
+
+    for (const status of [SubscriptionStatus.Active, SubscriptionStatus.Trialing]) {
+      await crAccount.subscription.update({ id }, { status })
+      const summary = await crAccount.getWorkspacesSummary()
+      expect(summary.billing).toEqual([
+        {
+          plan: 'business',
+          status,
+          category: status === SubscriptionStatus.Trialing ? 'trial' : 'manual',
+          workspaces: 1,
+          seats: 3
+        }
+      ])
+      expect(summary.manualWorkspaces).toEqual([
+        expect.objectContaining({ workspaceUuid, name: 'Manual seats', plan: 'business', status, seats: 3 })
+      ])
+    }
+    await crAccount.subscription.update({ id }, { status: SubscriptionStatus.Canceled })
+    expect((await crAccount.getWorkspacesSummary()).manualWorkspaces).toEqual([])
+  })
 
   describe('getSubscriptionsByProvider', () => {
     it('default statuses filter: active+pastdue, excludes canceled and other providers', async () => {

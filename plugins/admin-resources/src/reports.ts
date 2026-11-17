@@ -20,6 +20,7 @@ import type {
   WorkspaceInfoWithBilling
 } from '@hcengineering/account-client'
 
+import { classifySubscription, currentTierSubscriptions } from './subscriptionMetrics'
 import { getAccountClient, getAllSubscriptions, listWorkspacesPaged, requestAdminOtpCode } from './utils'
 
 const PAGE = 1000
@@ -387,19 +388,32 @@ async function workspacesReport (): Promise<Report> {
 /** Paid tier subscriptions with workspace info */
 async function paidReport (): Promise<Report> {
   const [subs, workspaces] = await Promise.all([getAllSubscriptions(), fetchAllWorkspaces()])
+  if (subs === null) throw new Error('Subscriptions could not be loaded')
   const wsById = new Map(workspaces.map((w) => [w.uuid as string, w]))
-  const paid = subs.filter(
-    (s) => s.type === 'tier' && s.provider !== 'free' && s.provider !== 'trial' && Number(s.amount ?? 0) > 0
-  )
+  const paid = currentTierSubscriptions(subs).filter((s) => {
+    const category = classifySubscription(s)
+    return category === 'paid' || (s.provider === 'manual' && category !== 'trial' && category !== 'free')
+  })
+  const manual = paid.filter((s) => s.provider === 'manual')
+  const summary = manual.length > 0 ? await getAccountClient().getWorkspacesSummary() : undefined
+  const manualSeats = new Map(summary?.manualWorkspaces?.map((w) => [w.workspaceUuid, w.seats]))
+  if (manual.some((s) => !manualSeats.has(s.workspaceUuid))) {
+    throw new Error('Manual workspace member counts could not be loaded')
+  }
+  const seatsOf = (s: (typeof paid)[number]): number =>
+    s.provider === 'manual'
+      ? (manualSeats.get(s.workspaceUuid) as number)
+      : Number(s.providerData?.quantity ?? s.limits?.usersLimit ?? 0)
   const rows = paid.map((s) => {
     const ws = wsById.get(s.workspaceUuid)
     return [
       s.workspaceUuid,
       ws?.name ?? '',
       s.plan,
-      Number(s.providerData?.quantity ?? s.limits?.usersLimit ?? 0),
+      seatsOf(s),
       s.status,
-      Math.round(Number(s.amount ?? 0) / 100),
+      Number(s.amount ?? 0),
+      s.provider === 'tbank' ? 'RUB' : '',
       s.provider,
       fmtDate(s.periodStart ?? s.createdOn),
       fmtDate(s.periodEnd),
@@ -408,22 +422,21 @@ async function paidReport (): Promise<Report> {
       daysSince(ws?.lastVisit)
     ]
   })
-  const current = paid.filter((s) => ['active', 'past_due', 'readonly'].includes(s.status))
-  const seatsOf = (s: (typeof paid)[number]): number => Number(s.providerData?.quantity ?? s.limits?.usersLimit ?? 0)
-  const monthlyRub = current.reduce((sum, s) => sum + Math.round(Number(s.amount ?? 0) / 100), 0)
-  const payers = new Set(current.map((s) => s.payerEmail).filter((p) => p != null)).size
+  const current = paid
+  const payers = new Set(current.map((s) => s.payerEmail).filter((p) => p != null && p !== '')).size
 
   return {
     name: stamp('paid-workspaces'),
     title: 'Платные пространства',
-    sub: `${current.length} действующих платных подписок`,
+    sub: `${current.length} действующих подписок, включая manual. Текущий срез без пробных подписок. Manual учитывается вне банковского журнала.`,
     headers: [
       'workspace_uuid',
       'workspace',
       'plan',
       'seats',
       'status',
-      'amount_rub',
+      'amount_minor_units',
+      'currency',
       'provider',
       'period_start',
       'period_end',
@@ -435,21 +448,15 @@ async function paidReport (): Promise<Report> {
     kpis: [
       { n: new Set(current.map((s) => s.workspaceUuid)).size, l: 'Платных пространств', cls: 'acc' },
       { n: current.reduce((sum, s) => sum + seatsOf(s), 0), l: 'Платных мест', cls: 'tea' },
-      { n: `${monthlyRub.toLocaleString('ru')} ₽`, l: 'Сумма действующих подписок' },
-      { n: payers, l: 'Плательщиков' }
+      { n: current.length, l: 'Действующих платных подписок' },
+      { n: payers, l: 'Контактов плательщиков' }
     ],
-    charts: [
-      {
-        title: 'Начало платных периодов по месяцам',
-        cls: 'acc',
-        points: monthlySeries(paid.map((s) => Number(s.periodStart ?? s.createdOn)))
-      }
-    ],
+    charts: [],
     pdfTables: [
       {
         title: 'Действующие платные подписки',
-        sub: 'По окончанию периода',
-        headers: ['Пространство', 'Тариф', 'Мест', 'Статус', 'Сумма', 'Конец периода', 'Плательщик'],
+        sub: 'По окончанию периода. Manual: фактические участники, оплата вне банковского журнала. Сумма подписки не подтверждает оплату.',
+        headers: ['Пространство', 'Тариф', 'Мест', 'Статус', 'Сумма подписки', 'Конец периода', 'Плательщик'],
         rows: [...current]
           .sort((a, b) => Number(a.periodEnd ?? 0) - Number(b.periodEnd ?? 0))
           .map((s) => [
@@ -457,7 +464,11 @@ async function paidReport (): Promise<Report> {
             s.plan,
             seatsOf(s),
             s.status,
-            `${Math.round(Number(s.amount ?? 0) / 100).toLocaleString('ru')} ₽`,
+            s.provider === 'manual'
+              ? 'Вне банковского журнала'
+              : s.provider === 'tbank'
+                ? `${(Number(s.amount ?? 0) / 100).toLocaleString('ru')} ₽`
+                : `${Number(s.amount ?? 0)} мин. ед. (валюта неизвестна)`,
             fmtDay(s.periodEnd),
             s.payerEmail ?? '-'
           ])

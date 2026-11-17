@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { Icon, Label, navigate, showPopup, tooltip } from '@hcengineering/ui'
+  import ui, { Icon, Label, navigate, showPopup, tooltip } from '@hcengineering/ui'
   import billing from '@hcengineering/billing'
   import login, { loginId, type Pages } from '@hcengineering/login'
   import {
@@ -22,7 +22,8 @@
     isLimited,
     isPasswordAgain,
     onTrial,
-    trialDaysLeft
+    trialDaysLeft,
+    workspaceLimitsExhausted
   } from '../stores/subscription'
   import { upgradePlan } from '../utils'
   import { MessageBox } from '@hcengineering/presentation'
@@ -103,6 +104,21 @@
   >
     <Icon icon={billing.icon.Billing} size="small" />
     <span><Label label={billing.string.FreePlan} /></span>
+  </button>
+{/if}
+
+{#if $workspaceLimitsExhausted}
+  <button
+    type="button"
+    class="read-only-indicator"
+    data-id="billingWorkspaceLimitsExhausted"
+    use:tooltip={{ label: billing.string.LimitReached, direction: 'bottom' }}
+    on:click={() => {
+      upgradePlan().catch(console.error)
+    }}
+  >
+    <Icon icon={billing.icon.Billing} size="small" />
+    <span><Label label={ui.string.WorkspaceLimitsExhausted} /></span>
   </button>
 {/if}
 

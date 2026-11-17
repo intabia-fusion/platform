@@ -29,10 +29,9 @@ import {
   type DirectMessage,
   type ThreadMessage
 } from '@hcengineering/chunter'
-import contact, { type Employee, getCurrentEmployee, getName, type Person } from '@hcengineering/contact'
-import { employeeByAccountStore, PersonIcon } from '@hcengineering/contact-resources'
+import contact, { type Employee, type Person } from '@hcengineering/contact'
+import { getParticipantsName, PersonIcon } from '@hcengineering/contact-resources'
 import core, {
-  systemAccountUuid,
   AccountRole,
   type AccountUuid,
   type Class,
@@ -63,7 +62,7 @@ import {
   showPopup
 } from '@hcengineering/ui'
 import { classIcon, getDocIdentifier, getDocLabel, getDocTitle } from '@hcengineering/view-resources'
-import { get, type Readable, type Unsubscriber } from 'svelte/store'
+import { get, type Readable } from 'svelte/store'
 import love, { type MeetingMinutes } from '@hcengineering/love'
 import { isEmptyMarkup } from '@hcengineering/text'
 import { notificationId } from '@hcengineering/notification'
@@ -119,70 +118,7 @@ export async function getDmName (client: Client, space?: DirectMessage): Promise
     return ''
   }
 
-  return await buildDmName(client, space.name, space.members)
-}
-
-export async function buildDmName (client: Client, name: string, accounts: AccountUuid[]): Promise<string> {
-  if (accounts.length === 0) {
-    return name
-  }
-
-  if (accounts.length > 2 && name.trim().length > 0) {
-    return name
-  }
-
-  let unsub: Unsubscriber | undefined
-  const employeeByAccountPromise = new Promise<Map<AccountUuid, Employee | undefined>>((resolve) => {
-    unsub = employeeByAccountStore.subscribe((p) => {
-      resolve(p)
-    })
-  })
-
-  const me = getCurrentEmployee()
-  const employeeByAccount = await employeeByAccountPromise
-
-  unsub?.()
-
-  const names: string[] = []
-  const processedPersons: Array<Ref<Person>> = []
-
-  let myName = ''
-
-  // Non-employees (bots, guests, deactivated) are not in the store: one query for all of them.
-  const missing = accounts.filter((acc) => employeeByAccount.get(acc) === undefined)
-  const personByAccount = new Map<AccountUuid, Person>()
-  if (missing.length > 0) {
-    for (const person of await client.findAll(contact.class.Person, { personUuid: { $in: missing } })) {
-      if (person.personUuid != null) personByAccount.set(person.personUuid as AccountUuid, person)
-    }
-  }
-
-  for (const acc of accounts) {
-    if (acc === systemAccountUuid) {
-      names.push(await translate(core.string.System, {}))
-      continue
-    }
-    const employee = employeeByAccount.get(acc) ?? personByAccount.get(acc)
-
-    if (employee === undefined) {
-      continue
-    }
-
-    if (processedPersons.includes(employee._id)) {
-      continue
-    }
-
-    if (me === employee._id) {
-      myName = getName(client.getHierarchy(), employee)
-      processedPersons.push(employee._id)
-      continue
-    }
-
-    names.push(getName(client.getHierarchy(), employee))
-    processedPersons.push(employee._id)
-  }
-
-  return names.length > 0 ? names.join(', ') : myName
+  return await getParticipantsName(client, space.name, space.members)
 }
 
 export async function canDeleteMessage (doc?: ChatMessage): Promise<boolean> {
@@ -360,8 +296,19 @@ export function isThreadMessage (message: ActivityMessage): message is ThreadMes
   return message._class === chunter.class.ThreadMessage
 }
 
+export function isDirectMessage (doc: Doc): doc is DirectMessage {
+  return getClient().getHierarchy().isDerived(doc._class, chunter.class.DirectMessage)
+}
+
 export function getChannelSpace (_class: Ref<Class<Doc>>, _id: Ref<Doc>, space: Ref<Space>): Ref<Space> {
   return getClient().getHierarchy().isDerived(_class, core.class.Space) ? (_id as Ref<Space>) : space
+}
+
+// The chat a message goes to: `space` is the message's, so a chat space stands for itself
+export type ChatTarget = Pick<Doc, '_id' | '_class' | 'space'>
+
+export function getChatTarget (doc: Doc): ChatTarget {
+  return { _id: doc._id, _class: doc._class, space: getChannelSpace(doc._class, doc._id, doc.space) }
 }
 
 export async function translateMessage (message: ChatMessage): Promise<void> {

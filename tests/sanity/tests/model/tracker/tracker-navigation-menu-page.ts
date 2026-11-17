@@ -13,10 +13,13 @@ export class TrackerNavigationMenuPage extends CommonPage {
   yoursProjectsMenuSelector = '#navGroup-tree-projects'
   starredProjectsMenuSelector = '#navGroup-tree-stared'
 
-  buttonCreateProject = (): Locator => this.page.locator(this.yoursProjectsMenuSelector).locator('xpath=../button[1]')
+  buttonCreateProject = (): Locator => this.page.getByRole('button', { name: 'Create project', exact: true })
   buttonProjectsParent = (): Locator => this.page.locator('button.hulyNavGroup-header span')
+  // The href carries the project id, not its name: only the Default project id contains its name
   templateLinkForProject = (projectName: string): Locator =>
-    this.page.locator(`a[href$="templates"][href*="${projectName}"]`)
+    this.page
+      .getByRole('button', { name: projectName, exact: true })
+      .locator('xpath=following-sibling::div[1]/a[contains(@href, "templates")]')
 
   starredProjectsInMenu = (): Locator => this.page.locator(`${this.starredProjectsMenuSelector} span`)
 
@@ -38,17 +41,25 @@ export class TrackerNavigationMenuPage extends CommonPage {
   newIssue = (): Locator => this.page.locator('button', { hasText: 'New issue' })
   myIssues = (): Locator => this.page.getByRole('link', { name: 'My issues', exact: true })
   allIssues = (): Locator => this.page.getByRole('link', { name: 'All issues', exact: true })
-  allProjects = (): Locator => this.page.getByRole('link', { name: 'All projects' })
+  allProjects = (): Locator =>
+    this.page.locator('.hulyNavGroup-header').getByRole('button', { name: 'All projects', exact: true })
+
   issues = (): Locator => this.page.getByRole('link', { name: 'Issues', exact: true })
   components = (): Locator => this.page.getByRole('link', { name: 'Components' })
   milestone = (): Locator => this.page.getByRole('link', { name: 'Milestones' })
   templates = (): Locator => this.page.getByRole('link', { name: 'Templates' })
 
-  createProjectButton = (): Locator => this.buttonCreateProject().locator('#tree-projects')
+  createProjectButton = (): Locator => this.buttonCreateProject()
 
   async pressCreateProjectButton (): Promise<void> {
-    await this.buttonCreateProject().hover()
-    await this.createProjectButton().click()
+    const form = this.page.locator('form[data-id="project-create-wizard"]')
+    await retry(async () => {
+      if (await form.isVisible()) return
+      await this.page.mouse.move(0, 0)
+      await this.buttonCreateProject().hover({ timeout: 2000 })
+      await this.createProjectButton().click({ timeout: 2000 })
+      await expect(form).toBeVisible({ timeout: 2000 })
+    })
   }
 
   async checkProjectExist (projectName: string): Promise<void> {

@@ -141,6 +141,8 @@ cd sanity
 pnpm run uitest
 ```
 
+The docs stand also provides the MCP experiment baseline in `demo-ws` (`demo1` / `1234`): the `SUP-1`-`SUP-4` issues in "Поддержка клиентов" and "План выпуска" in "База знаний". Before each independent run, recreate the complete stand with `cd tests && ./prepare-pg.sh --docs`; this removes the existing stand volumes and seeds the demo workspace again. Running `generate-demo-data` again on a modified workspace has not been established as a reset.
+
 `prepare-cockroach.sh` is the CockroachDB variant of the same stand. After changing application code, rebuild (`pnpm docker:build`) and re-run `./prepare-pg.sh` - Playwright tests exercise the built bundle, not the source tree.
 
 `scripts/persona-stand.sh` brings up a stand for persona UX runs (skill `persona-test` in foundation-tasks) beside the sanity one: compose project `persona`, overlays `tests/docker-compose.mail.yaml` and `tests/docker-compose.persona.yaml`, which publish only nginx on 8084 and mailpit on 8025 (sign-up codes go through the `mail` service in queue mode, as on prod). Russian branding (`tests/branding-persona.json`), prod themes, `DISABLED_FEATURES` and `rating`, no seeded accounts. From the prod chart (`CHART=`, default `../fusion-deployment/charts/fusion`) it takes the landing, docs and legal images, `files/plan-config.yaml` and the landing routes, which go into `tests/.persona/nginx-landing.conf` through the `include /etc/nginx/extra/*.conf` hook in `tests/nginx.conf`. LiveKit on the host is shared with the sanity stand.

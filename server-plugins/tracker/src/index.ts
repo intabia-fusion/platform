@@ -20,6 +20,8 @@ import { TriggerFunc } from '@hcengineering/server-core'
 import { NotificationIntlProvider } from '@hcengineering/server-notification'
 import { IconPresenterFn, type StringPresenterFn, type AttributePresenterFn } from '@hcengineering/server-activity'
 
+export { BoardMiddleware } from './boardMiddleware'
+
 /**
  * @public
  */

@@ -1,5 +1,5 @@
 // Project settings of the tracker as a page (FUSIO-1613, accepted): the project popup is gone, boards are not a tab.
-// Imported from the hand-edited fusio-1613.pen by dev/pen/import.mjs.
+// Imported from the hand-edited fusio-1613.pen.
 
 await kit.page('Project settings')
 {
@@ -8,10 +8,11 @@ await kit.page('Project settings')
     nav: [
       { item: 'My issues', icon: 'timeline' },
       { item: 'All issues', icon: 'check' },
-      { item: 'Доски', icon: 'board' },
-      { item: 'Тестирование', indent: true },
-      { item: 'Мой спринт', indent: true },
-      { group: 'Your projects', add: true },
+      { group: 'Доски', add: true, catalog: { label: 'Все доски', icon: 'kit/BulletList' } },
+      { item: 'Основная доска', icon: 'board' },
+      { item: 'Тестирование', icon: 'board' },
+      { item: 'Мой спринт', icon: 'board' },
+      { group: 'Проекты', add: true, catalog: { label: 'Все проекты', icon: 'kit/BulletList' } },
       { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
@@ -24,18 +25,20 @@ await kit.page('Project settings')
   })
   const contentBox7 = kit.SettingsLayout(main, {
     back: 'К проекту',
-    title: 'Настройки проекта',
+    title: 'Настройки проекта - Мобильное приложение',
     tabs: [
       ['Основное', 'gear'],
       ['Участники и доступ', 'users'],
       ['Задачи', 'check'],
-      ['Статусы и workflow', 'timeline'],
-      ['Архив', 'trash']
+      ['Статусы', 'timeline'],
+      ['Workflow', 'timeline'],
+      ['Архивация', 'trash']
     ],
     tab: 'Основное',
     close: true
   })
   kit.add(contentBox7, kit.SectionTitle('Основное', 'Изменения сохраняются сразу.', 720))
+  kit.add(contentBox7, kit.FormRow('Название', kit.Input({ w: 420, value: 'Мобильное приложение' })))
   kit.add(contentBox7, kit.FormRow(
     'Тип проекта',
     kit.add(
@@ -45,7 +48,6 @@ await kit.page('Project settings')
     ),
     { hint: 'Статусы и типы задач берутся из типа' }
   ))
-  kit.add(contentBox7, kit.FormRow('Название', kit.Input({ w: 420, value: 'Мобильное приложение' })))
   kit.add(contentBox7, kit.FormRow('Идентификатор', kit.Input({ w: 160, value: 'APP' }), { hint: 'Префикс номеров задач: APP-6' }))
   kit.add(contentBox7, kit.FormRow(
     'Описание',
@@ -141,10 +143,11 @@ await kit.page('Project settings')
     nav: [
       { item: 'My issues', icon: 'timeline' },
       { item: 'All issues', icon: 'check' },
-      { item: 'Доски', icon: 'board' },
-      { item: 'Тестирование', indent: true },
-      { item: 'Мой спринт', indent: true },
-      { group: 'Your projects', add: true },
+      { group: 'Доски', add: true, catalog: { label: 'Все доски', icon: 'kit/BulletList' } },
+      { item: 'Основная доска', icon: 'board' },
+      { item: 'Тестирование', icon: 'board' },
+      { item: 'Мой спринт', icon: 'board' },
+      { group: 'Проекты', add: true, catalog: { label: 'Все проекты', icon: 'kit/BulletList' } },
       { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
@@ -157,13 +160,14 @@ await kit.page('Project settings')
   })
   const contentBox8 = kit.SettingsLayout(main, {
     back: 'К проекту',
-    title: 'Настройки проекта',
+    title: 'Настройки проекта - Мобильное приложение',
     tabs: [
       ['Основное', 'gear'],
       ['Участники и доступ', 'users'],
       ['Задачи', 'check'],
-      ['Статусы и workflow', 'timeline'],
-      ['Архив', 'trash']
+      ['Статусы', 'timeline'],
+      ['Workflow', 'timeline'],
+      ['Архивация', 'trash']
     ],
     tab: 'Участники и доступ',
     close: true
@@ -215,10 +219,11 @@ await kit.page('Project settings')
     nav: [
       { item: 'My issues', icon: 'timeline' },
       { item: 'All issues', icon: 'check' },
-      { item: 'Доски', icon: 'board' },
-      { item: 'Тестирование', indent: true },
-      { item: 'Мой спринт', indent: true },
-      { group: 'Your projects', add: true },
+      { group: 'Доски', add: true, catalog: { label: 'Все доски', icon: 'kit/BulletList' } },
+      { item: 'Основная доска', icon: 'board' },
+      { item: 'Тестирование', icon: 'board' },
+      { item: 'Мой спринт', icon: 'board' },
+      { group: 'Проекты', add: true, catalog: { label: 'Все проекты', icon: 'kit/BulletList' } },
       { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
@@ -231,13 +236,14 @@ await kit.page('Project settings')
   })
   const contentBox9 = kit.SettingsLayout(main, {
     back: 'К проекту',
-    title: 'Настройки проекта',
+    title: 'Настройки проекта - Мобильное приложение',
     tabs: [
       ['Основное', 'gear'],
       ['Участники и доступ', 'users'],
       ['Задачи', 'check'],
-      ['Статусы и workflow', 'timeline'],
-      ['Архив', 'trash']
+      ['Статусы', 'timeline'],
+      ['Workflow', 'timeline'],
+      ['Архивация', 'trash']
     ],
     tab: 'Задачи',
     close: true
@@ -254,15 +260,16 @@ await kit.page('Project settings')
   ))
 }
 {
-  const { main } = kit.Workbench('Настройки проекта - Статусы и workflow', 2020, 1200, {
+  const { main } = kit.Workbench('Настройки проекта - Статусы', 2020, 1200, {
     tab: 'Настройки проекта',
     nav: [
       { item: 'My issues', icon: 'timeline' },
       { item: 'All issues', icon: 'check' },
-      { item: 'Доски', icon: 'board' },
-      { item: 'Тестирование', indent: true },
-      { item: 'Мой спринт', indent: true },
-      { group: 'Your projects', add: true },
+      { group: 'Доски', add: true, catalog: { label: 'Все доски', icon: 'kit/BulletList' } },
+      { item: 'Основная доска', icon: 'board' },
+      { item: 'Тестирование', icon: 'board' },
+      { item: 'Мой спринт', icon: 'board' },
+      { group: 'Проекты', add: true, catalog: { label: 'Все проекты', icon: 'kit/BulletList' } },
       { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
@@ -275,19 +282,20 @@ await kit.page('Project settings')
   })
   const contentBox10 = kit.SettingsLayout(main, {
     back: 'К проекту',
-    title: 'Настройки проекта',
+    title: 'Настройки проекта - Мобильное приложение',
     tabs: [
       ['Основное', 'gear'],
       ['Участники и доступ', 'users'],
       ['Задачи', 'check'],
-      ['Статусы и workflow', 'timeline'],
-      ['Архив', 'trash']
+      ['Статусы', 'timeline'],
+      ['Workflow', 'timeline'],
+      ['Архивация', 'trash']
     ],
-    tab: 'Статусы и workflow',
+    tab: 'Статусы',
     close: true
   })
   kit.add(contentBox10, kit.SectionTitle(
-    'Статусы и workflow',
+    'Статусы',
     'Статусы задаются типом проекта «Default» и общие для всех его проектов. Доски группируют эти статусы в колонки.',
     760
   ))
@@ -343,7 +351,7 @@ await kit.page('Project settings')
           fill: T('theme-list-row-color'),
           radius: 6
         }),
-        kit.StatusIcon('active'),
+        kit.StatusIcon('active', 14, undefined, 'In Progress'),
         kit.text('In Progress')
       )
     ),
@@ -386,20 +394,63 @@ await kit.page('Project settings')
   ))
   kit.add(contentBox10, kit.add(
     kit.row('actions', 8),
-    kit.Button({ kind: 'secondary', size: 'small', label: 'Изменить статусы в типе проекта', icon: 'gear' }),
-    kit.Button({ kind: 'ghost', size: 'small', label: 'Workflow mapping', icon: 'timeline' })
+    kit.Button({ kind: 'secondary', size: 'small', label: 'Изменить статусы в типе проекта', icon: 'gear' })
   ))
 }
 {
-  const { main } = kit.Workbench('Настройки проекта - Архив', 0, 2400, {
+  const { main } = kit.Workbench('Настройки проекта - Workflow', 0, 3600, {
     tab: 'Настройки проекта',
     nav: [
       { item: 'My issues', icon: 'timeline' },
       { item: 'All issues', icon: 'check' },
-      { item: 'Доски', icon: 'board' },
-      { item: 'Тестирование', indent: true },
-      { item: 'Мой спринт', indent: true },
-      { group: 'Your projects', add: true },
+      { group: 'Доски', add: true, catalog: { label: 'Все доски', icon: 'kit/BulletList' } },
+      { item: 'Основная доска', icon: 'board' },
+      { item: 'Тестирование', icon: 'board' },
+      { item: 'Мой спринт', icon: 'board' },
+      { group: 'Проекты', add: true, catalog: { label: 'Все проекты', icon: 'kit/BulletList' } },
+      { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
+      { item: 'Issues', icon: 'check', indent: true },
+      { item: 'Components', icon: 'component', indent: true },
+      { item: 'Milestones', icon: 'milestone', indent: true },
+      { space: 'Маркетинг', icon: 'kit/HouseFill', color: 'Porpoise' },
+      { item: 'Issues', icon: 'check', indent: true },
+      { item: 'Components', icon: 'component', indent: true },
+      { item: 'Milestones', icon: 'milestone', indent: true }
+    ]
+  })
+  const contentBox10 = kit.SettingsLayout(main, {
+    back: 'К проекту',
+    title: 'Настройки проекта - Мобильное приложение',
+    tabs: [
+      ['Основное', 'gear'],
+      ['Участники и доступ', 'users'],
+      ['Задачи', 'check'],
+      ['Статусы', 'timeline'],
+      ['Workflow', 'timeline'],
+      ['Архивация', 'trash']
+    ],
+    tab: 'Workflow',
+    close: true
+  })
+  kit.add(contentBox10, kit.SectionTitle(
+    'Workflow',
+    'Какой workflow управляет переходами статусов для каждого типа задач. Изменения применяются сразу.',
+    760
+  ))
+  kit.add(contentBox10, kit.FormRow('Задача', kit.SelectButton({ label: 'Без workflow', field: true, chevron: true, w: 240 })))
+  kit.add(contentBox10, kit.Button({ kind: 'secondary', size: 'small', label: 'Настроить workflow', icon: 'gear' }))
+}
+{
+  const { main } = kit.Workbench('Настройки проекта - Архивация', 0, 2400, {
+    tab: 'Настройки проекта',
+    nav: [
+      { item: 'My issues', icon: 'timeline' },
+      { item: 'All issues', icon: 'check' },
+      { group: 'Доски', add: true, catalog: { label: 'Все доски', icon: 'kit/BulletList' } },
+      { item: 'Основная доска', icon: 'board' },
+      { item: 'Тестирование', icon: 'board' },
+      { item: 'Мой спринт', icon: 'board' },
+      { group: 'Проекты', add: true, catalog: { label: 'Все проекты', icon: 'kit/BulletList' } },
       { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
@@ -412,23 +463,24 @@ await kit.page('Project settings')
   })
   const contentBox11 = kit.SettingsLayout(main, {
     back: 'К проекту',
-    title: 'Настройки проекта',
+    title: 'Настройки проекта - Мобильное приложение',
     tabs: [
       ['Основное', 'gear'],
       ['Участники и доступ', 'users'],
       ['Задачи', 'check'],
-      ['Статусы и workflow', 'timeline'],
-      ['Архив', 'trash']
+      ['Статусы', 'timeline'],
+      ['Workflow', 'timeline'],
+      ['Архивация', 'trash']
     ],
-    tab: 'Архив',
+    tab: 'Архивация',
     close: true
   })
   kit.add(contentBox11, kit.SectionTitle(
-    'Архив',
+    'Архивация',
     'Архивный проект скрыт из навигации, задачи остаются доступны по ссылке и в поиске.',
     720
   ))
-  kit.add(contentBox11, kit.Notice('Проект можно вернуть из архива в «All projects».', 'info', { w: 720 }))
+  kit.add(contentBox11, kit.Notice('Архивный проект можно восстановить здесь или в списке всех проектов.', 'info', { w: 720 }))
   kit.add(contentBox11, kit.Button({ kind: 'negative', size: 'small', label: 'Архивировать проект', icon: 'trash' }))
 }
 {
@@ -437,10 +489,11 @@ await kit.page('Project settings')
     nav: [
       { item: 'My issues', icon: 'timeline' },
       { item: 'All issues', icon: 'check' },
-      { item: 'Доски', icon: 'board' },
-      { item: 'Тестирование', indent: true },
-      { item: 'Мой спринт', indent: true },
-      { group: 'Your projects', add: true },
+      { group: 'Доски', add: true, catalog: { label: 'Все доски', icon: 'kit/BulletList' } },
+      { item: 'Основная доска', icon: 'board' },
+      { item: 'Тестирование', icon: 'board' },
+      { item: 'Мой спринт', icon: 'board' },
+      { group: 'Проекты', add: true, catalog: { label: 'Все проекты', icon: 'kit/BulletList' } },
       { space: 'Мобильное приложение', icon: 'kit/HouseFill', color: 'Porpoise' },
       { item: 'Issues', icon: 'check', indent: true },
       { item: 'Components', icon: 'component', indent: true },
@@ -456,13 +509,14 @@ await kit.page('Project settings')
   })
   const contentBox12 = kit.SettingsLayout(main, {
     back: 'К проекту',
-    title: 'Настройки проекта',
+    title: 'Настройки проекта - Мобильное приложение',
     tabs: [
       ['Основное', 'gear'],
       ['Участники и доступ', 'users'],
       ['Задачи', 'check'],
-      ['Статусы и workflow', 'timeline'],
-      ['Архив', 'trash']
+      ['Статусы', 'timeline'],
+      ['Workflow', 'timeline'],
+      ['Архивация', 'trash']
     ],
     tab: 'Задачи',
     close: true

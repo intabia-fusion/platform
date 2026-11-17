@@ -19,6 +19,11 @@ import { type UserMeetingInvite } from '@hcengineering/love'
 
 jest.mock('svelte/store', () => require('./svelteStoreDouble'))
 
+jest.mock('../liveKitClient', () => {
+  const { writable } = require('svelte/store')
+  return { lkSessionConnected: writable(false) }
+})
+
 let sessionId: string | undefined = 'tab-sender'
 
 jest.mock('@hcengineering/platform', () => ({

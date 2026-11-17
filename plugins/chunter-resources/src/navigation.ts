@@ -23,7 +23,7 @@ import {
 } from '@hcengineering/chunter'
 import { notificationId } from '@hcengineering/notification'
 import workbench, { type Widget, workbenchId, type LocationData } from '@hcengineering/workbench'
-import { classIcon, getObjectLinkFragment, getObjectLinkId, parseLinkId } from '@hcengineering/view-resources'
+import { classIcon, getObjectLinkId, parseLinkId } from '@hcengineering/view-resources'
 import presentation, { getClient } from '@hcengineering/presentation'
 import view, { encodeObjectURI, type LinkIdProvider } from '@hcengineering/view'
 import {
@@ -114,28 +114,19 @@ export async function openSearchResult (doc: SearchResultDoc['doc']): Promise<vo
   const placeClass = isThread ? doc.objectClass : doc.attachedToClass
   if (placeId == null || placeClass == null) return
 
-  const isSpace = hierarchy.hasClass(placeClass) && hierarchy.isDerived(placeClass, chunter.class.ChunterSpace)
-  if (isSpace) {
-    const id = await getObjectLinkId(providers, placeId, placeClass)
-    loc.path[3] = encodeChatURI(id, placeClass)
-    if (root != null) {
-      loc.path[4] = root
-      loc.path.length = 5
-    } else {
-      loc.path[4] = ''
-      loc.path.length = 4
-    }
-    loc.query = { ...loc.query, message: root ?? doc._id }
-    navigate(loc)
+  // A document opens in its panel inside the chat, as from the navigator; its activity goes to the message
+  const id = await getObjectLinkId(providers, placeId, placeClass)
+  loc.path[2] = chunterId
+  loc.path[3] = encodeChatURI(id, placeClass)
+  if (root != null) {
+    loc.path[4] = root
+    loc.path.length = 5
   } else {
-    // An issue or a document opens in full, as from the chat navigator; its activity goes to the message.
-    const place = await client.findOne(placeClass, { _id: placeId as Ref<Doc> })
-    if (place == null) return
-    const panel = hierarchy.classHierarchyMixin(place._class, view.mixin.ObjectPanel)
-    const target = await getObjectLinkFragment(hierarchy, place, {}, panel?.component ?? view.component.EditDoc)
-    target.query = { ...target.query, message: root ?? doc._id }
-    navigate(target)
+    loc.path[4] = ''
+    loc.path.length = 4
   }
+  loc.query = { ...loc.query, message: root ?? doc._id }
+  navigate(loc)
 
   if (root != null) {
     // From the location alone a thread opens only into a free sidebar; a result asked for always opens.

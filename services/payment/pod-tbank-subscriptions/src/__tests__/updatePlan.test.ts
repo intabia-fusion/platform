@@ -431,6 +431,8 @@ describe('handleUpdatePlan proration (live paid sub with a saved card)', () => {
     // full.
     const draft = storage.upsert.mock.calls.map((c: any[]) => c[0]).find((s: any) => s.providerData?.pending === true)
     expect(draft.amount).toBe(720000)
+    // Every checkout draft carries the marker the banner filter keys off (isCheckoutDraft).
+    expect(draft.providerData.draft).toBe(true)
     // Renewal date is unchanged — adding seats mid-period must not reset the period to now+30d.
     expect(draft.periodEnd).toBe(liveTier.periodEnd)
     // init_charge is audited at the same delta amount actually charged now.

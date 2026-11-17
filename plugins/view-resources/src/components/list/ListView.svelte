@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -85,6 +86,7 @@
     bind:divScroll
     fade={{ multipler: { top: 2.75 * viewOptions.groupBy.length, bottom: 0 } }}
     padding="0 1rem"
+    horizontal={viewlet.props?.columnWidths !== undefined}
     noFade
     checkForHeaders
   >
@@ -97,15 +99,16 @@
       {config}
       {configurations}
       {options}
+      {viewlet}
       {createItemDialog}
       {createItemDialogProps}
       {baseMenuClass}
       {createItemLabel}
       {createItemEvent}
       {viewOptions}
-      {props}
+      props={{ ...props, columnWidths: viewlet.props?.columnWidths, minRowWidth: viewlet.props?.minRowWidth }}
       {listProvider}
-      compactMode={listWidth <= 800}
+      compactMode={viewlet.props?.columnWidths === undefined && listWidth <= 800}
       viewOptionsConfig={viewOptionsConfig ?? viewlet.viewOptions?.other}
       selectedObjectIds={$selection ?? []}
       selection={listProvider.current($focusStore)}

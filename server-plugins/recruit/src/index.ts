@@ -33,6 +33,9 @@ export default plugin(serverRecruitId, {
     VacancyIdentifierPresenter: '' as Resource<StringPresenterFn>,
     ApplicationUrlPresenter: '' as Resource<StringPresenterFn>,
     ApplicationIdentifierPresenter: '' as Resource<StringPresenterFn>,
+    ApplicationTitlePresenter: '' as Resource<StringPresenterFn>,
+    ReviewIdentifierPresenter: '' as Resource<StringPresenterFn>,
+    ReviewTitlePresenter: '' as Resource<StringPresenterFn>,
     LinkIdProvider: '' as Resource<(doc: Doc) => Promise<string>>
   },
   trigger: {

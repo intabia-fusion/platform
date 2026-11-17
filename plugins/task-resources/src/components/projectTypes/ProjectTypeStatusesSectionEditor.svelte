@@ -380,10 +380,10 @@
         />
       {/if}
       <FixedColumn key={`${col}-tasks`} justify="right">
-        <span class="font-medium-14">{counts.get(state._id) ?? 0}</span>
+        <span class="font-regular-14">{counts.get(state._id) ?? 0}</span>
       </FixedColumn>
       <FixedColumn key={`${col}-workflows`} justify="right">
-        <span class="font-medium-14">{workflowCounts.get(state._id) ?? 0}</span>
+        <span class="font-regular-14">{workflowCounts.get(state._id) ?? 0}</span>
       </FixedColumn>
     </svelte:fragment>
   </StatesProjectEditor>

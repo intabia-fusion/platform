@@ -28,6 +28,7 @@ import {
   type Collection,
   type Doc,
   type DocData,
+  type DocPreview,
   type Domain,
   DOMAIN_BLOB,
   DOMAIN_MODEL,
@@ -37,6 +38,7 @@ import {
   type Obj,
   type Permission,
   type PluginConfiguration,
+  type PreviewSnapshot,
   type Ref,
   type Role,
   roleOrder,
@@ -1101,4 +1103,9 @@ export function selectUrl (urls: string, workspaceId: string): string {
 
   const hash = hashWorkspace(workspaceId)
   return urlList[Math.abs(hash % urlList.length)]
+}
+
+export function toPreviewSnapshot (preview: DocPreview): PreviewSnapshot {
+  const { objectId, objectClass, title, identifier, label, icon, props, modifiedOn } = preview
+  return { objectId, objectClass, title, identifier, label, icon, props, modifiedOn }
 }

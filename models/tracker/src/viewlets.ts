@@ -1,5 +1,6 @@
 //
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -19,7 +20,7 @@ import { type Builder } from '@hcengineering/model'
 import core from '@hcengineering/model-core'
 import presentation from '@hcengineering/model-presentation'
 import task from '@hcengineering/model-task'
-import view, { showColorsViewOption } from '@hcengineering/model-view'
+import view, { createAttributePresenter, showColorsViewOption } from '@hcengineering/model-view'
 import tags from '@hcengineering/tags'
 import { type ViewOptionModel, type BuildModelKey, type ViewOptionsModel } from '@hcengineering/view'
 import tracker from './plugin'
@@ -96,13 +97,21 @@ export const issuesOptions = (kanban: boolean): ViewOptionsModel => ({
               { id: 'space', label: tracker.string.Project }
             ],
             label: tracker.string.SwimLaneBy
-          },
-          {
-            key: 'compactMode',
-            type: 'toggle' as const,
-            defaultValue: false,
-            label: tracker.string.CompactMode
           }
+          // {
+          //   key: 'density',
+          //   type: 'slider' as const,
+          //   // Not a step: the board decides until the user moves the slider
+          //   defaultValue: 'default',
+          //   defaultLabel: tracker.string.DensityDefault,
+          //   values: [
+          //     { id: 'detailed', label: tracker.string.DensityDetailed },
+          //     { id: 'normal', label: tracker.string.DensityNormal },
+          //     { id: 'compact', label: tracker.string.DensityCompact },
+          //     { id: 'dense', label: tracker.string.DensityDense }
+          //   ],
+          //   label: tracker.string.CardDensity
+          // }
         ]
       : [])
   ]
@@ -235,12 +244,15 @@ export function issueConfig (
     },
     {
       key: 'createdOn',
-      displayProps: { key: key + 'created', fixed: 'left', dividerBefore: true }
+      presenter: view.component.TimestampLabel,
+      displayProps: { key: key + 'created', fixed: 'center', dividerBefore: true },
+      props: { label: tracker.string.CreationDate }
     },
     {
       key: 'modifiedOn',
-      presenter: tracker.component.ModificationDatePresenter,
-      displayProps: { key: key + 'modified', fixed: 'left', dividerBefore: true }
+      presenter: view.component.TimestampLabel,
+      displayProps: { key: key + 'modified', fixed: 'center', dividerBefore: true },
+      props: { label: tracker.string.ModificationDate }
     },
     {
       key: 'assignee',
@@ -251,7 +263,81 @@ export function issueConfig (
   ]
 }
 
+function combineTimeColumns (config: (BuildModelKey | string)[], subissue = false): (BuildModelKey | string)[] {
+  return config
+    .filter((column) => typeof column === 'string' || column.key !== 'reportedTime')
+    .map((column) =>
+      typeof column !== 'string' && column.presenter === tracker.component.EstimationEditor
+        ? {
+            ...column,
+            props: { ...column.props, showReportedTime: true, ...(subissue ? { widthScope: 'subissue' } : {}) }
+          }
+        : column
+    )
+}
+
 export function defineViewlets (builder: Builder): void {
+  builder.createDoc(
+    core.class.Enum,
+    core.space.Model,
+    {
+      name: 'BoardVisibility',
+      enumValues: ['all', 'me']
+    },
+    tracker.enum.BoardVisibility
+  )
+  createAttributePresenter(
+    builder,
+    tracker.component.BoardCatalogPresenter,
+    tracker.class.Board,
+    'visibility',
+    'attribute'
+  )
+  createAttributePresenter(builder, view.component.AccountUuidPresenter, tracker.class.Board, 'author', 'attribute')
+  builder.mixin(tracker.class.Board, core.class.Class, view.mixin.ClassFilters, {
+    filters: ['title', 'author', 'visibility']
+  })
+  builder.createDoc(
+    view.class.Viewlet,
+    core.space.Model,
+    {
+      attachTo: tracker.class.Board,
+      descriptor: view.viewlet.Table,
+      props: { readonly: true },
+      viewOptions: {
+        groupBy: [],
+        orderBy: [
+          ['title', SortingOrder.Ascending],
+          ['author', SortingOrder.Ascending],
+          ['visibility', SortingOrder.Ascending],
+          ['modifiedOn', SortingOrder.Descending],
+          ['createdOn', SortingOrder.Descending]
+        ],
+        other: []
+      },
+      configOptions: { hiddenKeys: ['title'], sortable: true },
+      config: [
+        {
+          key: '',
+          label: tracker.string.Name,
+          sortingKey: 'title',
+          presenter: tracker.component.BoardCatalogPresenter,
+          props: { field: 'title' },
+          displayProps: { key: 'title' }
+        },
+        'author',
+        'visibility',
+        {
+          key: '',
+          label: view.string.MoreActions,
+          presenter: tracker.component.BoardCatalogPresenter,
+          props: { field: 'actions' },
+          displayProps: { key: 'actions', fixed: 'right', dividerBefore: true }
+        }
+      ]
+    },
+    tracker.viewlet.BoardList
+  )
   builder.createDoc(
     view.class.ViewletDescriptor,
     core.space.Model,
@@ -283,6 +369,7 @@ export function defineViewlets (builder: Builder): void {
           'component',
           'milestone',
           'estimation',
+          'reportedTime',
           'remainingTime',
           'status',
           'dueDate',
@@ -291,7 +378,7 @@ export function defineViewlets (builder: Builder): void {
           'modifiedBy'
         ]
       },
-      config: issueConfig()
+      config: combineTimeColumns(issueConfig())
     },
     tracker.viewlet.IssueList
   )
@@ -337,12 +424,13 @@ export function defineViewlets (builder: Builder): void {
           'dueDate',
           'milestone',
           'estimation',
+          'reportedTime',
           'remainingTime',
           'createdBy',
           'modifiedBy'
         ]
       },
-      config: issueConfig('sub', true, true)
+      config: combineTimeColumns(issueConfig('sub', true, true), true)
     },
     tracker.viewlet.SubIssues
   )
@@ -553,8 +641,9 @@ export function defineViewlets (builder: Builder): void {
         { key: '', displayProps: { grow: true } },
         {
           key: 'modifiedOn',
-          presenter: tracker.component.ModificationDatePresenter,
-          displayProps: { fixed: 'right', dividerBefore: true }
+          presenter: view.component.TimestampLabel,
+          displayProps: { fixed: 'right', dividerBefore: true },
+          props: { label: tracker.string.ModificationDate }
         },
         {
           key: 'assignee',
@@ -706,16 +795,17 @@ export function defineViewlets (builder: Builder): void {
             openIssues: true
           }
         },
-        'members',
         {
           key: 'defaultAssignee',
           props: { kind: 'list' }
         },
         {
           key: 'modifiedOn',
-          presenter: tracker.component.ModificationDatePresenter,
-          displayProps: { fixed: 'right', dividerBefore: true }
-        }
+          presenter: view.component.TimestampLabel,
+          displayProps: { fixed: 'right', dividerBefore: true },
+          props: { label: tracker.string.ModificationDate }
+        },
+        'members'
       ],
       options: {
         showArchived: true
@@ -730,6 +820,10 @@ export function defineViewlets (builder: Builder): void {
     {
       attachTo: tracker.class.Project,
       descriptor: view.viewlet.List,
+      props: {
+        columnWidths: ['minmax(12rem, 4fr)', 'minmax(9rem, 2fr)', 'minmax(6rem, 1fr)', 'minmax(10rem, 2fr)'],
+        minRowWidth: '44rem'
+      },
       viewOptions: projectListOptions,
       configOptions: {
         strict: true,
@@ -744,16 +838,17 @@ export function defineViewlets (builder: Builder): void {
             shouldUseMargin: true
           }
         },
-        'members',
         {
           key: 'defaultAssignee',
           props: { kind: 'list' }
         },
         {
           key: 'modifiedOn',
-          presenter: tracker.component.ModificationDatePresenter,
-          displayProps: { fixed: 'right', dividerBefore: true }
-        }
+          presenter: view.component.TimestampLabel,
+          displayProps: { fixed: 'right', dividerBefore: true },
+          props: { label: tracker.string.ModificationDate }
+        },
+        'members'
       ],
       options: {
         showArchived: true

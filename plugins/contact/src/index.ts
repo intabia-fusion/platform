@@ -17,6 +17,7 @@
 import {
   AttachedDoc,
   Class,
+  Client,
   Collection,
   Doc,
   PersonId,
@@ -308,7 +309,8 @@ export const contactPlugin = plugin(contactId, {
     GetFileUrl: '' as Resource<GetAvatarUrl>,
     GetGravatarUrl: '' as Resource<GetAvatarUrl>,
     GetExternalUrl: '' as Resource<GetAvatarUrl>,
-    CollaboratorsApplier: '' as Resource<AttributeApplierFn>
+    CollaboratorsApplier: '' as Resource<AttributeApplierFn>,
+    GetParticipantsName: '' as Resource<(client: Client, title: string, accounts: AccountUuid[]) => Promise<string>>
   },
   icon: {
     ContactApplication: '' as Asset,

@@ -43,7 +43,7 @@ import notification, {
   UnreadMessageChunk
 } from '@hcengineering/notification'
 import activity, { ActivityMessage } from '@hcengineering/activity'
-import { truncateMessage, Sender } from '@hcengineering/server-notification'
+import { truncateMessage, type Receiver, Sender } from '@hcengineering/server-notification'
 import { markupToText } from '@hcengineering/text-core'
 
 import { Client, NotifyProviders, Result, TxCache } from '../types'
@@ -51,7 +51,7 @@ import Cache from '../cache'
 import { cancelHeldPushes, pushDismissMessage, pushDismissAllMessage, dismissScopeOf, mentionIdsOf } from './dismiss'
 import { pushNotification } from './notification'
 import { cancelAccountLetters } from '../heldLetter'
-import { getAllowedProviders, getBaseDisplayParams, getEmptyTxCache, getObjectDisplayData } from '../utils/utils'
+import { getAllowedProviders, getBaseDisplayParams, getEmptyTxCache, getContextRefs } from '../utils/utils'
 
 const READ_STATE_CHUNK = 500
 
@@ -360,7 +360,7 @@ export async function handleCreateNotificationAction (
 
   const context = await cache.getContext(doc._id, action.account)
 
-  const objectDisplayData = await getObjectDisplayData(client, cache, getEmptyTxCache(), doc, action.account)
+  const contextRefs = await getContextRefs(client, cache, doc)
   const pushSubscriptions = await cache.getPushSubscriptions(action.account)
   const sender = await cache.getSender(action.createdBy ?? action.modifiedBy)
 
@@ -372,7 +372,7 @@ export async function handleCreateNotificationAction (
     type,
     doc,
     sender,
-    receiver.language
+    receiver
   )
   const commonNotification: CommonNotification = {
     ...action.notification,
@@ -393,7 +393,7 @@ export async function handleCreateNotificationAction (
     objectId: doc._id,
     objectClass: doc._class,
     objectSpace: doc.space,
-    objectDisplayData,
+    contextRefs,
     notification: commonNotification,
     pushSubscriptions,
     settings,
@@ -412,7 +412,7 @@ async function getIntl (
   type: NotificationType | undefined,
   doc: Doc,
   sender: Sender,
-  receiverLang: string
+  receiver: Pick<Receiver, 'account' | 'language'>
 ): Promise<NotificationIntl> {
   const { intlParams, intlParamsNotLocalized = {} } = await getBaseDisplayParams(
     client,
@@ -420,7 +420,7 @@ async function getIntl (
     type,
     doc,
     sender,
-    receiverLang
+    receiver
   )
   for (const [k, v] of Object.entries(intl?.intlParams ?? {})) {
     intlParams[k] = v

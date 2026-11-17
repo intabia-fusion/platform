@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -18,6 +19,11 @@
   import { createEventDispatcher } from 'svelte'
 
   import type { CardDragEvent, DocWithRank, Item } from '../types'
+  import { createRowInteraction, visibleCards, hasHiddenCards, loadedCard } from '../row'
+
+  interface $$Slots {
+    card: { object: DocWithRank, dragged: boolean }
+  }
 
   export let stateObjects: Item[]
   export let isDragging: boolean
@@ -31,6 +37,7 @@
   export let loaded: IdMap<DocWithRank>
   export let limit: number
   export let onShowMore: () => void
+  export let modern: boolean = false
 
   export let cardDragOver: (evt: CardDragEvent, object: Item) => void
   export let cardDrop: (evt: CardDragEvent, object: Item) => void
@@ -38,47 +45,25 @@
   export let showMenu: (evt: MouseEvent, object: Item) => void
 
   const dispatch = createEventDispatcher()
+  const interaction = createRowInteraction()
 
-  function toAny (object: any): any {
-    return object
-  }
-
-  const stateRefs: HTMLElement[] = []
-
-  $: stateRefs.length = visibleObjects.length
   export function scroll (item: Item): void {
-    const pos = visibleObjects.findIndex((it) => it._id === item._id)
-    if (pos >= 0) {
-      stateRefs[pos]?.scrollIntoView({ behavior: 'auto', block: 'nearest' })
-    }
+    interaction.scroll(item)
   }
 
-  function getObject (_id: Ref<DocWithRank>, loaded: IdMap<DocWithRank>): DocWithRank | undefined {
-    return loaded.get(_id) ?? (_id === dragCard?._id ? dragCard : undefined)
-  }
-
-  $: visibleObjects = stateObjects.filter((o, i) => i < limit || o._id === dragCard?._id)
-  $: hasMoreToShow = stateObjects.some((o, i) => i >= limit && o._id !== dragCard?._id)
-
-  // Force native HTML5 drag image to be the whole card wrapper instead of the
-  // narrow inner element (e.g. an anchor in the title) the user may have
-  // grabbed onto.
-  function forceWrapperDragImage (evt: DragEvent): void {
-    const target = evt.currentTarget
-    if (!(target instanceof HTMLElement) || evt.dataTransfer === null) return
-    const rect = target.getBoundingClientRect()
-    evt.dataTransfer.setDragImage(target, evt.clientX - rect.left, evt.clientY - rect.top)
-  }
+  $: visibleObjects = visibleCards(stateObjects, limit, dragCard)
+  $: hasMoreToShow = hasHiddenCards(stateObjects, limit, dragCard)
 </script>
 
-{#each visibleObjects as objectRef, i (objectRef._id)}
+{#each visibleObjects as objectRef (objectRef._id)}
   {@const dragged = isDragging && objectRef._id === dragCard?._id}
-  {@const object = getObject(objectRef._id, loaded)}
+  {@const object = loadedCard(objectRef._id, loaded, dragCard)}
   {#if object !== undefined}
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div
-      bind:this={stateRefs[i]}
-      class="p-1 flex-no-shrink border-radius-1 clear-mins"
+      use:interaction.cardElement={objectRef._id}
+      class="flex-no-shrink border-radius-1 clear-mins"
+      class:p-1={!modern}
       on:dragover|preventDefault={(evt) => {
         cardDragOver(evt, object)
       }}
@@ -86,12 +71,17 @@
         cardDrop(evt, object)
       }}
     >
+      <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
       <div
         class="card-container"
+        class:modern
         data-id="kanban-card"
         data-card-id={object._id}
         class:selection={selection !== undefined ? objects[selection]?._id === object._id : false}
         class:checked={checkedSet.has(object._id)}
+        on:pointerdown|capture={interaction.pointerDown}
+        on:pointercancel={interaction.pointerCancel}
+        on:click|capture={interaction.click}
         on:mouseover={mouseAttractor(() => dispatch('obj-focus', object))}
         on:mouseenter={mouseAttractor(() => dispatch('obj-focus', object))}
         on:focus={() => {}}
@@ -102,7 +92,7 @@
         class:draggable={true}
         class:dragged
         on:dragstart={(evt) => {
-          forceWrapperDragImage(evt)
+          interaction.dragStart(evt)
           onDragStart(object, state)
         }}
         on:dragend={() => {
@@ -110,16 +100,19 @@
         }}
       >
         <Lazy>
-          <slot name="card" object={toAny(object)} {dragged} />
+          <slot name="card" {object} {dragged} />
         </Lazy>
       </div>
     </div>
   {/if}
 {/each}
 {#if hasMoreToShow}
-  <div class="p-1 flex-no-shrink clear-mins" data-id="kanban-show-more">
-    <div class="card-container flex-center flex-row-center p-4 gap-2 no-word-wrap">
-      <span class="caption-color">{visibleObjects.length}</span> <span>/</span><span>{stateObjects.length}</span>
+  <div class="flex-no-shrink clear-mins" class:p-1={!modern} data-id="kanban-show-more">
+    <!-- Wraps in a narrow column: the counter and the button do not fit a board column on one line -->
+    <div class="card-container show-more flex-center flex-row-center p-4 gap-2 no-word-wrap">
+      <span class="flex-row-center gap-2">
+        <span class="caption-color">{visibleObjects.length}</span><span>/</span><span>{stateObjects.length}</span>
+      </span>
       <Button
         size="small"
         icon={ui.icon.DotsHorizontal}
@@ -132,10 +125,27 @@
 {/if}
 
 <style lang="scss">
+  .show-more {
+    flex-wrap: wrap;
+  }
   .card-container {
     background-color: var(--theme-kanban-card-bg-color);
     border: 1px solid var(--theme-kanban-card-border);
     border-radius: 0.25rem;
+
+    &.modern {
+      background-color: var(--theme-popup-color);
+      border: 1px solid var(--theme-divider-color);
+      border-radius: 0.5rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    }
+
+    // Mouse and keyboard focus look the same, as a hovered file card of the drive: a brand tinted border
+    // and a deeper shadow, the background stays
+    &.modern.selection {
+      border-color: color-mix(in srgb, var(--button-brand-BackgroundColor) 30%, var(--global-ui-BorderColor));
+      box-shadow: 0 0.125rem 0.375rem color-mix(in srgb, var(--global-popover-ShadowColor) 65%, transparent);
+    }
 
     &.checked {
       background-color: var(--highlight-select);
@@ -150,10 +160,9 @@
       /* Use accent-aware edit border and inset box-shadow so the animated border uses
          the same accent token that the theme provides (avoids abrupt color jumps). */
       box-shadow: inset 0 0 1px 1px var(--primary-edit-border-color, var(--primary-button-default));
-
-      &:hover {
-        background-color: var(--highlight-hover);
-      }
+    }
+    &.selection:not(.modern):hover {
+      background-color: var(--highlight-hover);
     }
     &.checked.selection:hover {
       background-color: var(--highlight-select-hover);

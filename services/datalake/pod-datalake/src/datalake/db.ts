@@ -120,6 +120,8 @@ export async function createDb (ctx: MeasureContext, connectionString: string): 
 }
 
 export interface BlobDB {
+  execute: <T extends any[] = (Row & Iterable<Row>)[]>(query: string, params?: any[]) => Promise<T>
+  removeData: (ctx: MeasureContext, dataId: BlobDataId) => Promise<void>
   getData: (ctx: MeasureContext, dataId: BlobDataId) => Promise<BlobDataRecord | null>
   getBlob: (ctx: MeasureContext, blobId: BlobId) => Promise<BlobWithDataRecord | null>
   listBlobs: (ctx: MeasureContext, workspace: string, options: ListBlobOptions) => Promise<ListBlobResult>
@@ -149,6 +151,15 @@ export class PostgresDB implements BlobDB {
   async execute<T extends any[] = (Row & Iterable<Row>)[]>(query: string, params?: any[]): Promise<T> {
     query = params !== undefined && params.length > 0 ? injectVars(query, params) : query
     return await this.sql.unsafe<T>(query)
+  }
+
+  async removeData (ctx: MeasureContext, dataId: BlobDataId): Promise<void> {
+    await this.sql.begin(async (tx) => {
+      await tx`DELETE FROM blob.meta m USING blob.blob r WHERE m.workspace = r.workspace AND m.name = r.name
+        AND r.hash = ${dataId.hash} AND r.location = ${dataId.location}`
+      await tx`DELETE FROM blob.blob WHERE hash = ${dataId.hash} AND location = ${dataId.location}`
+      await tx`DELETE FROM blob.data WHERE hash = ${dataId.hash} AND location = ${dataId.location}`
+    })
   }
 
   async initSchema (ctx: MeasureContext): Promise<void> {
@@ -529,6 +540,14 @@ export class RetryDB implements BlobDB {
     private readonly options: RetryOptions
   ) {}
 
+  async execute<T extends any[] = (Row & Iterable<Row>)[]>(query: string, params?: any[]): Promise<T> {
+    return await this.db.execute<T>(query, params)
+  }
+
+  async removeData (ctx: MeasureContext, dataId: BlobDataId): Promise<void> {
+    await this.db.removeData(ctx, dataId)
+  }
+
   async getData (ctx: MeasureContext, dataId: BlobDataId): Promise<BlobDataRecord | null> {
     return await retry(() => this.db.getData(ctx, dataId), this.options)
   }
@@ -595,6 +614,14 @@ export class LoggedDB implements BlobDB {
     private readonly ctx: MeasureContext,
     private readonly db: BlobDB
   ) {}
+
+  async execute<T extends any[] = (Row & Iterable<Row>)[]>(query: string, params?: any[]): Promise<T> {
+    return await this.db.execute<T>(query, params)
+  }
+
+  async removeData (ctx: MeasureContext, dataId: BlobDataId): Promise<void> {
+    await ctx.with('db.removeData', {}, () => this.db.removeData(this.ctx, dataId))
+  }
 
   async getData (ctx: MeasureContext, dataId: BlobDataId): Promise<BlobDataRecord | null> {
     const params = { location: dataId.location }

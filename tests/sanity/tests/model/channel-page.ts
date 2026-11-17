@@ -53,6 +53,11 @@ export class ChannelPage extends CommonPage {
   readonly chooseChannel = (channel: string): Locator =>
     this.page.locator('div.antiPanel-navigator').getByRole('button', { name: channel })
 
+  // A document opened from the chat takes the place of the conversation, not a panel over the app
+  readonly docPanel = (title: string): Locator => this.page.locator('.hulyComponent .popupPanel', { hasText: title })
+  readonly overlayPanel = (): Locator => this.page.locator('.panel-instance .popupPanel')
+  readonly navigator = (): Locator => this.page.locator('div.antiPanel-navigator')
+
   readonly openedChannelHeader = (channel: string): Locator =>
     this.page.locator('.hulyHeader-container .hulyHeader-titleGroup').filter({ hasText: channel }).first()
 
@@ -247,11 +252,18 @@ export class ChannelPage extends CommonPage {
   // last(): dozens of specs send 'Test message' here, and the newest is the one just sent.
   private async clickMessageAction (message: string, dataIdSelector: string): Promise<void> {
     const button = this.messageActionButton(message, dataIdSelector)
+    const row = this.textMessage(message).last()
     await retry(async () => {
-      await this.textMessage(message).last().hover()
+      await row.hover()
+      // Scrolling briefly disables pointer events; moving onto the toolbar then would drop hover.
+      await expect(row).toHaveCSS('pointer-events', 'auto')
       await expect(button).toBeVisible({ timeout: 2000 })
       await button.click({ timeout: 5000 })
     })
+  }
+
+  async clickReplyToMessage (message: string): Promise<void> {
+    await this.clickMessageAction(message, 'data-id$="ReplyToMessage"')
   }
 
   async clickEditMessageButton (editedMessage: string): Promise<void> {

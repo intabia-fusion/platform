@@ -24,6 +24,7 @@
   import view from '@hcengineering/view'
 
   import DocUpdateMessageObjectValue from './DocUpdateMessageObjectValue.svelte'
+  import { getMessageObjectQueryClass } from '../../activityMessagesUtils'
 
   export let message: DocUpdateMessage
   export let viewlet: DocUpdateMessageViewlet | undefined
@@ -43,9 +44,13 @@
 
   $: valueMessages = message.history?.length && !isOwn ? message.history : [message as DocUpdateMessageHistory]
 
-  $: objectsQuery.query(message.objectClass, { _id: { $in: valueMessages.map((it) => it.objectId) } }, (res) => {
-    objects = res
-  })
+  $: objectsQuery.query(
+    getMessageObjectQueryClass(hierarchy, message),
+    { _id: { $in: valueMessages.map((it) => it.objectId) } },
+    (res) => {
+      objects = res
+    }
+  )
 
   // New attachments show as tiles under the header; removed ones are gone, so their names fit one line.
   $: isAttachment = hierarchy.isDerived(message.objectClass, attachment.class.Attachment)

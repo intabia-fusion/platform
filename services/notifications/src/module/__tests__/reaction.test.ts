@@ -55,6 +55,7 @@ describe('handleReaction', () => {
   }
   let mockCache: {
     getDoc: jest.Mock
+    getDocPreviewId: jest.Mock
     getAccountBySocialId: jest.Mock
     getReceivers: jest.Mock
     getSettings: jest.Mock
@@ -99,6 +100,7 @@ describe('handleReaction', () => {
 
     mockCache = {
       getDoc: jest.fn(),
+      getDocPreviewId: jest.fn().mockResolvedValue('preview-1'),
       getAccountBySocialId: jest.fn(),
       getReceivers: jest.fn(),
       getSettings: jest.fn(),
@@ -111,9 +113,7 @@ describe('handleReaction', () => {
     txCache = {
       titleByDoc: new Map(),
       urlByDoc: new Map(),
-      labelByDoc: new Map(),
       identifierByDoc: new Map(),
-      iconByDoc: new Map(),
       templates: new Map()
     }
 

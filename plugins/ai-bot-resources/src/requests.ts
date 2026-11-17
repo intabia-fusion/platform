@@ -23,8 +23,9 @@ import {
 } from '@hcengineering/ai-bot'
 import { type Class, concatLink, type Doc, type Markup, type Ref } from '@hcengineering/core'
 import { type MeetingMinutes, type RoomLanguage } from '@hcengineering/love'
-import { getMetadata } from '@hcengineering/platform'
+import { getMetadata, Severity, Status } from '@hcengineering/platform'
 import presentation from '@hcengineering/presentation'
+import ui, { addStatusNotification } from '@hcengineering/ui'
 
 import aiBot from './plugin'
 
@@ -121,6 +122,9 @@ export async function connectMeeting (
       body: JSON.stringify(req)
     })
     if (!resp.ok) {
+      if (resp.status === 413) {
+        await addStatusNotification(new Status(Severity.WARNING, ui.string.WorkspaceLimitsExhausted, {}))
+      }
       console.error('Failed to connect the assistant to the meeting', resp.status)
     }
   } catch (error) {

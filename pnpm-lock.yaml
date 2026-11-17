@@ -465,8 +465,8 @@ catalogs:
       specifier: ^8.0.1
       version: 8.1.1
     electron:
-      specifier: ^44.7.0
-      version: 44.7.0
+      specifier: ^45.2.3
+      version: 45.2.3
     electron-squirrel-startup:
       specifier: ~1.0.0
       version: 1.0.1
@@ -1748,7 +1748,7 @@ importers:
         version: 8.1.1(webpack@5.111.1)
       electron:
         specifier: 'catalog:'
-        version: 44.7.0(supports-color@8.1.1)
+        version: 45.2.3(supports-color@8.1.1)
       esbuild:
         specifier: 'catalog:'
         version: 0.28.2
@@ -1905,7 +1905,7 @@ importers:
         version: 7.0.3
       electron:
         specifier: 'catalog:'
-        version: 44.7.0(supports-color@8.1.1)
+        version: 45.2.3(supports-color@8.1.1)
       electron-builder:
         specifier: ^26.16.0
         version: 26.16.0(supports-color@8.1.1)
@@ -8409,6 +8409,9 @@ importers:
       '@hcengineering/model-notification':
         specifier: workspace:^0.7.0
         version: link:../notification
+      '@hcengineering/model-preference':
+        specifier: workspace:^0.7.0
+        version: link:../preference
       '@hcengineering/model-presentation':
         specifier: workspace:^0.7.0
         version: link:../presentation
@@ -13552,6 +13555,9 @@ importers:
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
+      '@hcengineering/server-activity':
+        specifier: workspace:^0.7.0
+        version: link:../../server-plugins/activity
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
@@ -18409,7 +18415,7 @@ importers:
         version: 8.70.0(eslint@8.57.1(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3)
       '@vitest/coverage-v8':
         specifier: 'catalog:'
-        version: 3.2.7(supports-color@8.1.1)(vitest@3.2.7(@types/node@24.13.3)(jsdom@25.0.1(bufferutil@4.1.0)(supports-color@8.1.1)(utf-8-validate@6.0.6))(sass@1.93.3)(supports-color@8.1.1)(terser@5.51.2))
+        version: 3.2.7(supports-color@8.1.1)(vitest@3.2.7(@types/debug@4.1.12)(@types/node@24.13.3)(jsdom@25.0.1(bufferutil@4.1.0)(supports-color@8.1.1)(utf-8-validate@6.0.6))(sass@1.93.3)(supports-color@8.1.1)(terser@5.51.2))
       eslint:
         specifier: 'catalog:'
         version: 8.57.1(supports-color@8.1.1)
@@ -18460,7 +18466,7 @@ importers:
         version: 5.4.21(@types/node@24.13.3)(sass@1.93.3)(terser@5.51.2)
       vitest:
         specifier: 'catalog:'
-        version: 3.2.7(@types/node@24.13.3)(jsdom@25.0.1(bufferutil@4.1.0)(supports-color@8.1.1)(utf-8-validate@6.0.6))(sass@1.93.3)(supports-color@8.1.1)(terser@5.51.2)
+        version: 3.2.7(@types/debug@4.1.12)(@types/node@24.13.3)(jsdom@25.0.1(bufferutil@4.1.0)(supports-color@8.1.1)(utf-8-validate@6.0.6))(sass@1.93.3)(supports-color@8.1.1)(terser@5.51.2)
 
   plugins/billing:
     dependencies:
@@ -19286,6 +19292,9 @@ importers:
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
+      '@hcengineering/preference':
+        specifier: workspace:^0.7.0
+        version: link:../preference
       '@hcengineering/retry':
         specifier: workspace:^0.7.17
         version: link:../../foundations/core/packages/retry
@@ -19468,6 +19477,9 @@ importers:
       '@hcengineering/presentation':
         specifier: workspace:^0.7.0
         version: link:../../packages/presentation
+      '@hcengineering/rank':
+        specifier: workspace:^0.7.17
+        version: link:../../foundations/core/packages/rank
       '@hcengineering/text':
         specifier: workspace:^0.7.18
         version: link:../../foundations/core/packages/text
@@ -20482,9 +20494,15 @@ importers:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
         version: link:../../foundations/utils/packages/platform-rig
+      '@hcengineering/theme':
+        specifier: workspace:^0.7.0
+        version: link:../../packages/theme
       '@stylistic/eslint-plugin':
         specifier: 'catalog:'
         version: 3.1.0(eslint@8.57.1(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3)
+      '@sveltejs/vite-plugin-svelte':
+        specifier: 'catalog:'
+        version: 3.1.2(supports-color@8.1.1)(svelte@4.2.20)(vite@5.4.21(@types/node@24.13.3)(sass@1.93.3)(terser@5.51.2))
       '@types/jest':
         specifier: 'catalog:'
         version: 29.5.14
@@ -20518,6 +20536,9 @@ importers:
       jest:
         specifier: 'catalog:'
         version: 29.7.0(@types/node@24.13.3)(supports-color@8.1.1)(ts-node@10.9.2(@swc/core@1.16.2(@swc/helpers@0.5.19))(@types/node@24.13.3)(typescript@6.0.3))
+      jsdom:
+        specifier: 'catalog:'
+        version: 25.0.1(bufferutil@4.1.0)(supports-color@8.1.1)(utf-8-validate@6.0.6)
       prettier:
         specifier: 'catalog:'
         version: 3.6.2
@@ -20545,6 +20566,12 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
+      vite:
+        specifier: 'catalog:'
+        version: 5.4.21(@types/node@24.13.3)(sass@1.93.3)(terser@5.51.2)
+      vitest:
+        specifier: 'catalog:'
+        version: 3.2.7(@types/debug@4.1.12)(@types/node@24.13.3)(jsdom@25.0.1(bufferutil@4.1.0)(supports-color@8.1.1)(utf-8-validate@6.0.6))(sass@1.93.3)(supports-color@8.1.1)(terser@5.51.2)
 
   plugins/desktop-preferences:
     dependencies:
@@ -37054,6 +37081,9 @@ importers:
 
   server-plugins/tracker:
     dependencies:
+      '@hcengineering/contact':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/contact
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
@@ -37069,6 +37099,9 @@ importers:
       '@hcengineering/server-notification':
         specifier: workspace:^0.7.0
         version: link:../notification
+      '@hcengineering/tracker':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/tracker
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -39807,6 +39840,9 @@ importers:
       '@hcengineering/datalake':
         specifier: workspace:^0.7.17
         version: link:../../../foundations/server/packages/datalake
+      '@hcengineering/drive':
+        specifier: workspace:^0.7.0
+        version: link:../../../plugins/drive
       '@hcengineering/kafka':
         specifier: workspace:^0.7.19
         version: link:../../../foundations/server/packages/kafka
@@ -51259,8 +51295,8 @@ packages:
   electron-windows-badge@1.1.0:
     resolution: {integrity: sha512-hWFbUk9u3fQHcKzTAcjZAN7XH9bL9oH9g20RRDU/DVDNqdMI03GzlBZfR/R8R1krYu9AT4biLqSCAxnt9LMAfA==}
 
-  electron@44.7.0:
-    resolution: {integrity: sha512-aUq9/zLAAFYc+a9gy6cd0C3Y/N/RmovLCD8TV8LhIzNhuND6HEgsu96jJz9cbAxvckSPv+Trf2PKEjktoZgFkw==}
+  electron@45.2.3:
+    resolution: {integrity: sha512-Vurzu5UOA5nTGT4LqIwXD16QFGrOZdiXxF+1UP4KNsAOo/YtDcT3/u0jhP4WSwNJ0iLrLDi85hzBJ0arnGDhyw==}
     engines: {node: '>= 22.12.0'}
     hasBin: true
 
@@ -62623,7 +62659,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@vitest/coverage-v8@3.2.7(supports-color@8.1.1)(vitest@3.2.7(@types/node@24.13.3)(jsdom@25.0.1(bufferutil@4.1.0)(supports-color@8.1.1)(utf-8-validate@6.0.6))(sass@1.93.3)(supports-color@8.1.1)(terser@5.51.2))':
+  '@vitest/coverage-v8@3.2.7(supports-color@8.1.1)(vitest@3.2.7(@types/debug@4.1.12)(@types/node@24.13.3)(jsdom@25.0.1(bufferutil@4.1.0)(supports-color@8.1.1)(utf-8-validate@6.0.6))(sass@1.93.3)(supports-color@8.1.1)(terser@5.51.2))':
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@bcoe/v8-coverage': 1.0.2
@@ -62638,7 +62674,7 @@ snapshots:
       std-env: 3.10.0
       test-exclude: 7.0.2
       tinyrainbow: 2.0.0
-      vitest: 3.2.7(@types/node@24.13.3)(jsdom@25.0.1(bufferutil@4.1.0)(supports-color@8.1.1)(utf-8-validate@6.0.6))(sass@1.93.3)(supports-color@8.1.1)(terser@5.51.2)
+      vitest: 3.2.7(@types/debug@4.1.12)(@types/node@24.13.3)(jsdom@25.0.1(bufferutil@4.1.0)(supports-color@8.1.1)(utf-8-validate@6.0.6))(sass@1.93.3)(supports-color@8.1.1)(terser@5.51.2)
     transitivePeerDependencies:
       - supports-color
 
@@ -64843,7 +64879,7 @@ snapshots:
 
   electron-windows-badge@1.1.0: {}
 
-  electron@44.7.0(supports-color@8.1.1):
+  electron@45.2.3(supports-color@8.1.1):
     dependencies:
       '@electron-internal/extract-zip': 1.0.5
       '@electron/get': 5.1.0(supports-color@8.1.1)
@@ -71413,7 +71449,7 @@ snapshots:
       - supports-color
       - terser
 
-  vitest@3.2.7(@types/node@24.13.3)(jsdom@25.0.1(bufferutil@4.1.0)(supports-color@8.1.1)(utf-8-validate@6.0.6))(sass@1.93.3)(supports-color@8.1.1)(terser@5.51.2):
+  vitest@3.2.7(@types/debug@4.1.12)(@types/node@24.13.3)(jsdom@25.0.1(bufferutil@4.1.0)(supports-color@8.1.1)(utf-8-validate@6.0.6))(sass@1.93.3)(supports-color@8.1.1)(terser@5.51.2):
     dependencies:
       '@types/chai': 5.2.3
       '@vitest/expect': 3.2.7
@@ -71439,6 +71475,7 @@ snapshots:
       vite-node: 3.2.4(@types/node@24.13.3)(sass@1.93.3)(supports-color@8.1.1)(terser@5.51.2)
       why-is-node-running: 2.3.0
     optionalDependencies:
+      '@types/debug': 4.1.12
       '@types/node': 24.13.3
       jsdom: 25.0.1(bufferutil@4.1.0)(supports-color@8.1.1)(utf-8-validate@6.0.6)
     transitivePeerDependencies:

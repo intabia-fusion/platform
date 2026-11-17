@@ -712,5 +712,6 @@
     padding: 0.5rem;
     overflow-x: auto;
     overflow-y: hidden;
+    scrollbar-width: thin;
   }
 </style>

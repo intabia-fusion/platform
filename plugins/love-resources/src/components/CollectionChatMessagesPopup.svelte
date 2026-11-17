@@ -18,7 +18,7 @@
   import { createQuery, getClient } from '@hcengineering/presentation'
   import type { ChatMessage } from '@hcengineering/chunter'
   import chunter from '@hcengineering/chunter'
-  import { ChatMessageInput } from '@hcengineering/chunter-resources'
+  import { ChatMessageInput, getChatTarget } from '@hcengineering/chunter-resources'
   import ChatMessagePresenter from '@hcengineering/chunter-resources/src/components/chat-message/ChatMessagePresenter.svelte'
   import { closeTooltip, Label, Lazy, Spinner, resizeObserver } from '@hcengineering/ui'
   import { ObjectPresenter, DocNavLink } from '@hcengineering/view-resources'
@@ -112,7 +112,7 @@
   {#if collection === 'messages' && object}
     <div class="input">
       <ChatMessageInput
-        {object}
+        target={getChatTarget(object)}
         {collection}
         on:focus={() => {
           isTextMode = true

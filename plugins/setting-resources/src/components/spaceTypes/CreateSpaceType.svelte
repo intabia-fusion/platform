@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -34,6 +35,7 @@
   const hierarchy = client.getHierarchy()
 
   let name: string = ''
+  let nameLimit: number | undefined = 0
   let descriptor: SpaceTypeDescriptor | undefined = undefined
   let handleTypeCreated: (() => Promise<Ref<SpaceType> | undefined>) | undefined
 
@@ -87,6 +89,7 @@
   $: void loadExtraComponent(typeCreator)
 
   async function loadExtraComponent (tc: SpaceTypeCreator | undefined): Promise<void> {
+    nameLimit = 0
     if (tc === undefined) {
       extraComponent = undefined
       handleTypeCreated = undefined
@@ -101,7 +104,10 @@
     descriptor = descriptors.find((it) => it._id === evt.detail)
   }
 
-  $: canSave = name.trim().length > 0 && descriptor !== undefined
+  $: canSave =
+    name.trim().length > 0 &&
+    descriptor !== undefined &&
+    (nameLimit === undefined || nameLimit === 0 || name.length <= nameLimit)
 </script>
 
 <Card
@@ -132,6 +138,7 @@
   <div class="flex-col flex-gap-2">
     <EditBox
       bind:value={name}
+      limit={nameLimit ?? 0}
       placeholder={core.string.SpaceType}
       kind="large-style"
       focusIndex={1}
@@ -140,7 +147,7 @@
     />
 
     {#if extraComponent !== undefined}
-      <svelte:component this={extraComponent} {name} {descriptor} bind:handleTypeCreated />
+      <svelte:component this={extraComponent} {name} {descriptor} bind:handleTypeCreated bind:nameLimit />
     {/if}
   </div>
 </Card>

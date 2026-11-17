@@ -99,6 +99,12 @@
 - **Экранный рекордер воркспейса.** Записывает экран через `MediaRecorder`, чанкует и заливает в Drive; не связан с LiveKit Egress встречи. - `class Recorder`, `plugins/recorder-resources/src/recorder.ts`; `models/recorder/src/plugin.ts` (merge `WorkbenchExtension`).
 - **Выбор микрофона/камеры.** `toggleCamState`/`toggleMicState`, `WorkbenchExtension` для попапа устройств. - `plugins/media-resources/src/utils.ts`.
 
+Запись проверяет persisted disk-лимит через `BillingClient.getWorkspaceLimitStates` перед ручным и автоматическим стартом.
+Транскрипция дополнительно проверяет tokens/transcript до изменения metadata при новом старте.
+Исчерпание не останавливает текущую запись или транскрипцию. Повторные запросы и внутреннее восстановление записи продолжают разрешенную сессию.
+Payment приходит через события; без `BILLING_URL` все проверки используют только события.
+Ошибка billing запрещает новый старт.
+
 ## Пользовательская документация
 
 | Фича | ru | en | Статус | Сверено | Расхождение |

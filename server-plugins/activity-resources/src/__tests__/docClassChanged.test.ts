@@ -37,9 +37,25 @@ function makeControl (messages: Doc[]): TriggerControl {
   return {
     ctx: { error: jest.fn(), info: jest.fn(), newChild: jest.fn().mockReturnThis() },
     txFactory,
-    hierarchy: { isDerived: (a: any, b: any) => a === b },
-    findAll: jest.fn().mockImplementation(async (_ctx, _class) => {
-      return _class === activity.class.ActivityMessage ? toFindResult(messages) : toFindResult([])
+    hierarchy: {
+      isDerived: (a: any, b: any) => a === b,
+      isMixin: () => false,
+      classHierarchyMixin: () => undefined,
+      getAncestors: (_class: any) => [_class],
+      getDomain: () => 'tracker',
+      findDomain: () => 'tracker'
+    },
+    modelDb: { findAllSync: () => [] },
+    findAll: jest.fn().mockImplementation(async (_ctx, _class, query) => {
+      const candidates =
+        _class === activity.class.ActivityReference
+          ? messages.filter((message) => message._class === activity.class.ActivityReference)
+          : messages
+      return toFindResult(
+        candidates.filter((message) => {
+          return Object.entries(query).every(([key, value]) => (message as any)[key] === value)
+        })
+      )
     })
   } as any as TriggerControl
 }
@@ -75,7 +91,15 @@ describe('OnDocClassChanged (activity)', () => {
 
     expect(result).toHaveLength(1)
     expect((result[0].operations as any).attachedToClass).toBe(newClass)
-    expect((result[0].operations as any).objectClass).toBe(newClass)
+  })
+
+  it('keeps the class the message was written with', async () => {
+    const control = makeControl([makeMessage()])
+
+    const result = (await OnDocClassChanged([classChangeTx()], control)) as TxUpdateDoc<Doc>[]
+
+    // A task created as one type must keep reading as that type after the task is converted.
+    expect((result[0].operations as any).objectClass).toBeUndefined()
   })
 
   it('ignores updates that do not carry a class', async () => {
@@ -93,8 +117,8 @@ describe('OnDocClassChanged (activity)', () => {
     expect(await OnDocClassChanged([tx as TxCUD<Doc>], control)).toEqual([])
   })
 
-  it('leaves alone a message that already points at the new class', async () => {
-    const control = makeControl([makeMessage({ attachedToClass: newClass, objectClass: newClass })])
+  it('leaves alone a message that is already attached to the new class', async () => {
+    const control = makeControl([makeMessage({ attachedToClass: newClass })])
 
     expect(await OnDocClassChanged([classChangeTx()], control)).toEqual([])
   })
@@ -104,5 +128,73 @@ describe('OnDocClassChanged (activity)', () => {
     const tx = txFactory.createTxRemoveDoc(oldClass, 'space-1' as any, objectId)
 
     expect(await OnDocClassChanged([tx as TxCUD<Doc>], control)).toEqual([])
+  })
+})
+
+describe('OnDocClassChanged (references)', () => {
+  function makeReference (over: Record<string, any> = {}): Doc {
+    return makeMessage({
+      _class: activity.class.ActivityReference,
+      attachedTo: 'document-1',
+      attachedToClass: 'document:class:Document',
+      srcDocId: objectId,
+      srcDocClass: oldClass,
+      ...over
+    })
+  }
+
+  it('repoints an outgoing backlink stored under another document', async () => {
+    const control = makeControl([makeReference()])
+    const result = (await OnDocClassChanged([classChangeTx()], control)) as TxUpdateDoc<Doc>[]
+    expect(result).toHaveLength(1)
+    expect(result[0].operations).toEqual({ srcDocClass: newClass })
+    expect((control.findAll as jest.Mock).mock.calls.map(([, clazz, query]) => ({ clazz, query }))).toEqual([
+      { clazz: activity.class.ActivityMessage, query: { attachedTo: objectId } },
+      { clazz: activity.class.ActivityReference, query: { srcDocId: objectId } }
+    ])
+  })
+
+  it('repoints both source pointers for a mention in the task description', async () => {
+    const control = makeControl([
+      makeReference({
+        attachedDocId: objectId,
+        attachedDocClass: oldClass
+      })
+    ])
+    const result = (await OnDocClassChanged([classChangeTx()], control)) as TxUpdateDoc<Doc>[]
+    expect(result).toHaveLength(1)
+    expect(result[0].operations).toEqual({ srcDocClass: newClass, attachedDocClass: newClass })
+  })
+
+  it('preserves the comment class when the parent task changes class', async () => {
+    const control = makeControl([
+      makeReference({ attachedDocId: 'comment-1', attachedDocClass: 'chunter:class:ChatMessage' })
+    ])
+    const result = (await OnDocClassChanged([classChangeTx()], control)) as TxUpdateDoc<Doc>[]
+    expect(result).toHaveLength(1)
+    expect(result[0].operations).toEqual({ srcDocClass: newClass })
+  })
+
+  it('combines all pointers to the same object into one update', async () => {
+    const control = makeControl([
+      makeReference({
+        attachedTo: objectId,
+        attachedToClass: oldClass,
+        attachedDocId: objectId,
+        attachedDocClass: oldClass
+      })
+    ])
+    const result = (await OnDocClassChanged([classChangeTx()], control)) as TxUpdateDoc<Doc>[]
+    expect(result).toHaveLength(1)
+    expect(result[0].operations).toEqual({
+      attachedToClass: newClass,
+      srcDocClass: newClass,
+      attachedDocClass: newClass
+    })
+  })
+
+  it('does not rewrite an unrelated pointer or the historical class', async () => {
+    const control = makeControl([makeReference({ srcDocClass: newClass })])
+    expect(await OnDocClassChanged([classChangeTx()], control)).toEqual([])
   })
 })

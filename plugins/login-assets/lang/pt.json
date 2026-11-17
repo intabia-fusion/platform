@@ -1,5 +1,6 @@
 {
   "status": {
+    "FieldTooLong": "O campo {field} não pode ter mais de {count} caracteres",
     "RequiredField": "Campo obrigatório {field}",
     "FieldsDoNotMatch": "{field} não coincidem com {field2}",
     "ConnectingToServer": "A ligar ao servidor....",

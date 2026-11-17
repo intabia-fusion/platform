@@ -126,7 +126,8 @@ const categories: Record<string, readonly string[]> = {
     'exact',
     'compact',
     'navigation',
-    'indicator'
+    'indicator',
+    'field'
   ],
   state: [
     'disabled',

@@ -193,6 +193,35 @@ export class KanbanBoardPage extends CommonTrackerPage {
     await this.dragPointer(this.card(cardId), target)
   }
 
+  // Holds the card over a column of a board, revealing its landing spots, and drops it on the spot
+  // that sets `dropTargetId`. The spots show only while the card is over the column, so the drop is
+  // aimed at the spot after the column's dragover, not before it.
+  async dropCardOnDropTarget (cardId: string, targetState: string, dropTargetId: string): Promise<void> {
+    await this.revealCard(cardId)
+    await this.ensureVisible(this.card(cardId))
+    await this.grabCard(this.card(cardId))
+    try {
+      await this.hoverHeld(this.column(targetState))
+      const spot = this.page.locator(
+        `[data-id="kanban-column"][data-state="${targetState}"] [data-drop-target="${dropTargetId}"]`
+      )
+      await expect(spot).toBeVisible({ timeout: 5000 })
+      const box = await spot.boundingBox()
+      if (box === null) throw new Error(`landing spot ${dropTargetId} has no bounding box`)
+      const x = box.x + box.width / 2
+      const y = box.y + box.height / 2
+      // Nudge on the spot so its dragover fires before the release, as dragPointer does for a column.
+      await this.page.mouse.move(x, y, { steps: 5 })
+      await this.page.mouse.move(x + 2, y + 2)
+      await this.page.mouse.move(x, y)
+      await this.page.waitForTimeout(150)
+      await this.page.mouse.up()
+      await this.moveOn({ x, y })
+    } finally {
+      await this.page.mouse.up()
+    }
+  }
+
   async dragCardToSwimLaneCell (cardId: string, laneId: string, targetState: string): Promise<void> {
     await this.revealCard(cardId)
     await this.ensureVisible(this.card(cardId))
@@ -405,6 +434,18 @@ export class KanbanBoardPage extends CommonTrackerPage {
     await this.grabCard(source)
     try {
       await this.carryOver(via)
+      // A waypoint point sits at a cell's edge, so in the first column the held card rests within 60px
+      // of the board's side (EDGE_PX in Kanban.svelte) and the board keeps scrolling back, undoing the
+      // scrollIntoView below - the target then measured off screen on every attempt. Park mid-board;
+      // a single-hop move sends no dragover, so the board would never learn the pointer left the edge.
+      if (via.length > 0) {
+        const board = await this.page.locator('.kanban-container').first().boundingBox()
+        if (board !== null) {
+          const mid = { x: board.x + board.width / 2, y: board.y + board.height / 2 }
+          await this.page.mouse.move(mid.x, mid.y, { steps: 5 })
+          await this.page.mouse.move(mid.x + 2, mid.y + 2)
+        }
+      }
       // The board scrolls horizontally and does not fit five columns, so bring the target into view
       // only after the card is grabbed: hovering the source scrolls it back and a box measured
       // before that points outside the viewport. Scroll through the DOM - scrollIntoViewIfNeeded

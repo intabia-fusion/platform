@@ -15,10 +15,9 @@
 <script lang="ts">
   import { Label, themeStore } from '@hcengineering/ui'
   import type { IntlString } from '@hcengineering/platform'
-  import type { SubscriptionInfo } from '@hcengineering/account-client'
 
   import adminRes from '../plugin'
-  import { getAllSubscriptions, getRegistrationStats } from '../utils'
+  import { getRegistrationStats } from '../utils'
 
   export let refreshTick: number = 0
 
@@ -31,8 +30,6 @@
   }
   let wsMonths: MonthPoint[] = []
   let accMonths: MonthPoint[] = []
-  let paidMonths: MonthPoint[] = []
-  let trialMonths: MonthPoint[] = []
 
   function monthStartUTC (now: Date, back: number): number {
     return Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - back, 1)
@@ -41,7 +38,7 @@
   async function load (): Promise<void> {
     const now = new Date()
     const from = monthStartUTC(now, MONTHS - 1)
-    const [stats, subs] = await Promise.all([getRegistrationStats(from, Date.now()), getAllSubscriptions()])
+    const stats = await getRegistrationStats(from, Date.now())
     if (stats != null) {
       const toMonths = (points: Array<{ day: string, count: number }>): MonthPoint[] => {
         const byMonth = new Map<string, number>()
@@ -59,62 +56,6 @@
       wsMonths = toMonths(stats.workspaces)
       accMonths = toMonths(stats.accounts)
     }
-
-    // Numbers are wrapped: INT8 columns arrive as strings from the PG driver.
-    const nowMs = Date.now()
-    const stillActive = ['active', 'past_due', 'readonly']
-    const paid = subs.filter(
-      (s) =>
-        s.type === 'tier' &&
-        s.status !== 'trialing' &&
-        s.provider !== 'free' &&
-        s.provider !== 'trial' &&
-        Number(s.amount ?? 0) > 0
-    )
-    paidMonths = seatsByMonth(now, paid, (s) => [
-      Number(s.periodStart ?? s.createdOn),
-      stillActive.includes(s.status) ? nowMs : Number(s.periodEnd ?? s.canceledAt ?? s.updatedOn)
-    ])
-
-    // Trial workspaces: currently trialing, or a past trial (trialEnd set)
-    const trial = subs.filter((s) => s.type === 'tier' && (s.status === 'trialing' || s.trialEnd != null))
-    trialMonths = seatsByMonth(now, trial, (s) => [
-      Number(s.createdOn),
-      s.status === 'trialing' ? nowMs : Number(s.trialEnd ?? s.canceledAt ?? s.updatedOn)
-    ])
-  }
-
-  // Per month: workspaces (deduped) and their seats, for subscriptions whose interval overlaps the month.
-  // Dedup keeps the latest overlapping row per workspace — plan changes/renewals leave several rows.
-  function seatsByMonth (
-    now: Date,
-    subs: SubscriptionInfo[],
-    intervalOf: (s: SubscriptionInfo) => [number, number]
-  ): MonthPoint[] {
-    const res: MonthPoint[] = []
-    for (let i = MONTHS - 1; i >= 0; i--) {
-      const mStart = monthStartUTC(now, i)
-      const mEnd = monthStartUTC(now, i - 1)
-      const perWs = new Map<string, { from: number, seats: number }>()
-      for (const s of subs) {
-        const [from, to] = intervalOf(s)
-        if (from >= mEnd || to < mStart) continue
-        const prev = perWs.get(s.workspaceUuid)
-        if (prev === undefined || from > prev.from) {
-          perWs.set(s.workspaceUuid, {
-            from,
-            seats: Number(s.providerData?.quantity ?? s.limits?.usersLimit ?? 0)
-          })
-        }
-      }
-      const seats = [...perWs.values()].reduce((sum, v) => sum + v.seats, 0)
-      res.push({
-        month: new Date(mStart).toISOString().slice(0, 7),
-        count: seats,
-        label: `${perWs.size} / ${seats}`
-      })
-    }
-    return res
   }
 
   let prevTick = -1
@@ -157,18 +98,6 @@
       points: wsMonths,
       grad: 'ws-grad',
       color: 'var(--positive-button-default, #22c55e)'
-    },
-    {
-      title: adminRes.string.PaidSeatsPerMonth,
-      points: paidMonths,
-      grad: 'paid-grad',
-      color: '#8b5cf6'
-    },
-    {
-      title: adminRes.string.TrialSeatsPerMonth,
-      points: trialMonths,
-      grad: 'trial-grad',
-      color: '#f59e0b'
     }
   ] as Chart[]
 </script>
@@ -211,6 +140,7 @@
       </svg>
     </div>
   {/each}
+  <div class="fs-caption"><Label label={adminRes.string.SubscriptionHistoryUnavailable} /></div>
 </div>
 
 <style lang="scss">

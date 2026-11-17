@@ -157,7 +157,8 @@ import {
   permissionsStore,
   resolveLocation,
   resolveLocationData,
-  collaboratorsApplier
+  collaboratorsApplier,
+  getParticipantsName
 } from './utils'
 
 export * from './utils'
@@ -436,6 +437,7 @@ export default async (): Promise<Resources> => ({
     ) => await queryContact(contact.class.Organization, client, query, filter)
   },
   function: {
+    GetParticipantsName: getParticipantsName,
     GetFileUrl: async (person: Data<WithLookup<AvatarInfo>>, name: string, width: number) => {
       if (person.avatar == null) {
         return {

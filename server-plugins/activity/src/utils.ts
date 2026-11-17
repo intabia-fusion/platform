@@ -13,7 +13,7 @@
  limitations under the License.
  */
 
-import { Class, Doc, Hierarchy, Ref } from '@hcengineering/core'
+import { Class, Doc, Hierarchy, notEmpty, Ref } from '@hcengineering/core'
 import activity, { type ActivityMessage, DocUpdateMessage } from '@hcengineering/activity'
 import { getResource, IntlString, translate } from '@hcengineering/platform'
 import { isEmptyMarkup, markupToText } from '@hcengineering/text-core'
@@ -26,6 +26,7 @@ import type {
   LabelPresenter,
   PresenterControl,
   PresenterOptions,
+  PropsPresenter,
   TitlePresenter,
   UrlPresenter
 } from './types'
@@ -54,6 +55,10 @@ export function getLabelPresenter (_class: Ref<Class<Doc>>, hierarchy: Hierarchy
 
 export function getIconPresenter (_class: Ref<Class<Doc>>, hierarchy: Hierarchy): IconPresenter | undefined {
   return hierarchy.classHierarchyMixin(_class, serverActivity.mixin.IconPresenter)
+}
+
+export function getPropsPresenter (_class: Ref<Class<Doc>>, hierarchy: Hierarchy): PropsPresenter | undefined {
+  return hierarchy.classHierarchyMixin(_class, serverActivity.mixin.PropsPresenter)
 }
 
 export async function getDocTitle (
@@ -105,10 +110,17 @@ export async function getDocTitle (
     )(doc, control, options)
   }
 
-  const clazz = control.hierarchy.getClass(doc._class)
-  if (clazz.titleKey != null) {
-    return (doc as any)[clazz.titleKey] ?? undefined
+  const titleKey = getTitleKey(control.hierarchy, doc._class)
+  if (titleKey != null) {
+    return (doc as any)[titleKey] ?? undefined
   }
+}
+
+export function getTitleKey (hierarchy: Hierarchy, _class: Ref<Class<Doc>>): string | undefined {
+  return hierarchy
+    .getAncestors(_class)
+    .map((it) => hierarchy.findClass(it)?.titleKey)
+    .find(notEmpty)
 }
 
 export async function getDocLabel (control: PresenterControl, doc: Doc): Promise<IntlString | undefined> {
@@ -134,6 +146,14 @@ export async function getDocUrl (control: PresenterControl, doc: Doc): Promise<s
   if (UrlPresenter === undefined) return
   return await (
     await getResource(UrlPresenter.presenter)
+  )(doc, control)
+}
+
+export async function getDocProps (control: PresenterControl, doc: Doc): Promise<Record<string, any> | undefined> {
+  const presenter = getPropsPresenter(doc._class, control.hierarchy)
+  if (presenter == null) return
+  return await (
+    await getResource(presenter.presenter)
   )(doc, control)
 }
 

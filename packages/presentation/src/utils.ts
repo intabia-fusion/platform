@@ -70,6 +70,7 @@ import { LiveQuery as LQ } from '@hcengineering/query'
 import {
   type AnyComponent,
   type AnySvelteComponent,
+  closePanel,
   getRawCurrentLocation,
   isSafari,
   workspaceId
@@ -93,7 +94,8 @@ let pipeline: PresentationPipeline
 export type TxListener = (tx: Tx[]) => void
 const txListeners: TxListener[] = []
 
-const alwaysDisabled: string[] = ['relation', 'caldav']
+// Not ready: board settings without a model field, and anything that needs time in status
+const alwaysDisabled: string[] = ['relation', 'caldav', 'tracker-board-next', 'tracker-issue-stats']
 
 /**
  * @public
@@ -559,6 +561,7 @@ export async function setClient (_client: Client): Promise<void> {
   pendingCreatedDocs.set({})
   const workspace = getMetadata(plugin.metadata.WorkspaceUuid)
   if (clientWorkspace !== undefined && clientWorkspace !== workspace) {
+    closePanel(false)
     for (const l of workspaceChangeListeners) {
       l()
     }

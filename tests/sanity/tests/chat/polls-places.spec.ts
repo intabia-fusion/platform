@@ -135,7 +135,11 @@ test.describe('Poll placement tests', () => {
     const dialog = forwardDialog(page)
     await expect(dialog).toBeVisible()
     await dialog.getByPlaceholder('Search').fill(target)
-    await dialog.getByText(target, { exact: true }).click()
+    const rows = dialog.locator('.forward-modal__chats button.row')
+    await expect(rows).toHaveCount(1)
+    await expect(rows).toContainText(target)
+    await rows.click()
+    await expect(dialog.locator('.forward-modal__selected-chats')).toContainText(target)
     await dialog.getByRole('button', { name: 'Forward', exact: true }).click()
     await expect(dialog).toBeHidden()
   }
@@ -198,7 +202,21 @@ test.describe('Poll placement tests', () => {
     await forwardTo(page, question, target.name)
     await openChannel(page, target)
     const forwarded = page.locator('.forwarded-message:not([inert] *)').filter({ hasText: question })
-    await expect(forwarded).toBeVisible()
+    try {
+      await expect(forwarded).toBeVisible()
+    } catch (error) {
+      const messages = await chat.me.client
+        .findAll('chunter:class:ChatMessage' as Ref<Class<AttachedDoc>>, { attachedTo: target._id })
+        .catch((readError) => ({ error: String(readError) }))
+      const forwards = await chat.me.client
+        .findAll('chunter:class:ChatMessage' as Ref<Class<AttachedDoc>>, { forwardedMessage: sent.message } as any)
+        .catch((readError) => ({ error: String(readError) }))
+      await test.info().attach('forwarded-poll-messages', {
+        body: JSON.stringify({ sourceMessage: sent.message, target: target._id, messages, forwards }, null, 2),
+        contentType: 'application/json'
+      })
+      throw error
+    }
     await forwarded.getByRole('radio', { name: 'Sushi' }).click()
     await expect(forwarded.locator('.poll-option__result').first()).toBeVisible()
 
@@ -250,8 +268,7 @@ test.describe('Poll placement tests', () => {
     await sendPoll(chat.me, chat.channel, question, { options: ['Pizza', 'Sushi'] })
     await expect(polls.poll(question)).toBeVisible()
 
-    await channelPage.textMessage(question).last().hover()
-    await channelPage.messageActionButton(question, 'data-id$="ReplyToMessage"').click()
+    await channelPage.clickReplyToMessage(question)
     const quote = page.locator('.reply:not([inert] *)').filter({ hasText: 'Reply to' })
     await expect(quote).toContainText(question)
     await expect(quote.locator('.applet-preview')).toBeVisible()
@@ -466,8 +483,7 @@ test.describe('Poll placement tests', () => {
     // Forwarded first: the quoting answer repeats the text, and the message actions take the last match.
     await forwardTo(page, text, target.name)
 
-    await channelPage.textMessage(text).last().hover()
-    await channelPage.messageActionButton(text, 'data-id$="ReplyToMessage"').click()
+    await channelPage.clickReplyToMessage(text)
     const answer = `Answer ${uniq}`
     await channelPage.sendMessage(answer)
     await checkNoAppletBlock(message(page, answer).locator('.forwarded-message__content'), text)

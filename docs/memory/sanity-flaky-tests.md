@@ -4,19 +4,39 @@
 
 ## Diagnosing
 
+- CI `43855636060`, `report-time-from-main-view`: все три попытки искали удаленный `.reported-container`; снимки показывали ожидаемое время в объединенной колонке. Проверка привязана к строке задачи и читает факт перед `/`.
+
+- `polls-form.spec.ts`, horizontal drafts: `AppletTile` is 18rem wide. Requiring the whole tile inside the strip gives a false failure when the strip is narrower (Chromium: 288px tile in a 240px strip). After viewport changes, recompute the scroll end on each poll; verify the last tile's right edge is reachable rather than requiring full containment.
+- Workbench renders `.antiPanel-application` for both the apps panel and `#sidebar`; Office has the same `app-love:string:Office` id in both. Scope app navigation to `.antiPanel-application:not(.sidebar-container)` (`tests/sanity/tests/workbench.spec.ts`).
+- `TrackerApi.createIssue` defaults to the same `makeRank(undefined, undefined)` for every issue. The board return-drag test uses shared Second Project; an absolute DOM index also depends on foreign issues and live updates. Its position fixture must filter to its two owned cards and wait for their initial order.
+- Local `ai-bot.spec.ts` monthly limit failure, 2026-11-11: all three attempts received the first echo and showed the exhausted badge, but no chat refusal. `AIControl.processEvent` rejects queued events at the token gate before the window check. The badge is the intended notification; neither token-block path writes a chat notice.
+- `board-settings.spec.ts` at 1280×800: a revealed column had viewport area ratio `0.9408397078514099` on all three CI attempts. `ColumnsTab` can extend below the viewport; horizontal reveal must check the full column width against `.scroll` and the header against the viewport, not demand area ratio 1 for the whole column. Standalone regression: `board-column-visibility.spec.ts`.
+- CI `42662485899`, `direct-chat.spec.ts`: hovering a long message scrolls the chat; `Scroller.svelte` disables pointer events for 300 ms afterward. The Reply click started 12 ms after hover and lost the hover toolbar. Message actions must wait for the row's computed `pointer-events: auto` before moving the pointer onto the toolbar.
+- `direct-chat.spec.ts`, `Multiline code remains visible`: CI rendering appends one space after the complete code in `pre > code.textContent` (`</script> `), identically on all three attempts. Compare after removing at most one final space; preserve leading indentation, internal whitespace and line breaks.
+- CI `42617439731`: the board header test pressed `x` before its card acquired selection focus. `mouseAttractor` (`packages/ui/src/utils.ts:239`) needs different pointer coordinates; one `hover()` can leave both entry events at the same point. Hover at two positions and wait for `.selection` before toggling selection. Reproduced locally; the corrected test passed 8/8 repeats.
+- CI `42447213534`: `rage-click/admin-billing.spec.ts` seeded `mock/mock-model` as a purchased pool with 1000 tokens. Billing includes earlier usage from the current hour (`services/billing/pod-billing/src/usage.ts:117-119`); aibot then rejected all six edit/task proposal attempts with `AI provider pool exhausted`.
+- `kanban.spec.ts` uses the shared Default project. `settings.spec.ts` adds a task type there and renames two statuses, creating additional statuses in existing categories. Run `20261107-014207` failed the reset-merge test with 7 statuses and 5 categories. The reset test must not assume category uniqueness or assert the unrelated merge-by-category menu item; a separate E2E checks category merging with owned statuses.
+- CI `42392235702`: copying another TaskType's generated `targetClass` into a temporary TaskType made cleanup delete the shared class through `OnTaskTypeRemove` (`server-plugins/task-resources/src/index.ts`), breaking subsequent issue creation. A fixture without its own class uses `targetClass === ofClass`; after cleanup, check that the shared class exists and `createIssue` still works with it.
+
 Playwright marks a test flaky when a retry passes, so the cause is in the *first* attempt. `node analyze_failures.js runs/<stamp>/playwright-report.json` - what failed. `node analyze_steps.js runs/<stamp>/step-report.ndjson` - where time went; a step with small p50 and huge max is the next flake. `test-results/<test>/error-context.md` - call log. Two opposite diagnoses: `waiting for <locator>` = the control was never there; `intercepts pointer events` = it was covered.
 
 Service logs for the failure window: `startTime` in the report is UTC, containers log UTC, host `date` is local - `docker logs --since <ISO>Z --until <ISO>Z sanity-<svc>-1`. Client-side causes (who called disconnect, console errors) are visible only in a trace: repro with `--trace on`. The JSON reporter carries no steps and `error-context.md` no snapshot for those.
 
 ## Recurring shapes
 
+- Kanban selection uses category-query projections (`plugins/tracker-resources/src/components/issues/KanbanView.svelte:341`, `plugins/view-resources/src/selection.ts:205`); header statistics require `estimation`, `reportedTime`, `remainingTime` (`plugins/tracker-resources/src/components/issues/IssuesView.svelte:235`). Missing fields leave cards checked but remove them from statistics.
+
 - **`locator.count()` never waits.** Arithmetic on it needs a settled read (`waitStable`). But settled is not the same as non-empty: a just-filtered list is stably 0 for a moment, which reads exactly like "matched nothing" (`checkAllIssuesInStatus` waits for the first row first).
 - **Controls that exist only while hovered or just opened.** Hover/open and use in two separate statements → a re-render between them leaves the second waiting out the whole test timeout. Retry the pair: hover → assert visible → click.
 - **An action with no timeout of its own inside `toPass`** blocks until the test dies and the retry loop never gets a turn. Same for an inner wait *longer* than the test timeout: the failure arrives as a bare "Test timeout exceeded" with no locator named.
+- **Контекстное меню задачи меняет положение после загрузки пунктов.** В `issues.spec.ts` три движения мыши по старым координатам закрыли подменю Change; `hover` пункта Status занял 20 с. Проверка появления нужного пункта внутри `openSubmenuOnIssue` возвращает управление `toPass`. Серия `20261103-124858..130502`; после исправления 8/8 на 5 воркерах.
+- **Список получателей пересчитывается после Search.** В `polls-places.spec.ts` строка target сместилась между разрешением точного локатора и кликом: под курсором оказался general. Ожидание одной строки с уникальным target перед единственным кликом и проверка выбранного чипа устранили гонку. До исправления 15/16 за 37,6 с; после 16/16 без повторов за 30,3 с на 5 воркерах. Оба полных файла: 23 passed, 1 skipped (`Set parent issue` отключен заранее), 0 failed, без повторов, 1.2 min. Сборка `tests/sanity` и ESLint обоих измененных файлов прошли.
 - **Timeouts are a measured maximum times a few, not "a minute just in case."** A minute only means the failure lands a minute later. ai-bot mock replies measured ≤4.9s against 60s bounds.
 - **A click that is not idempotent.** Rows toggle selection, rooms deselect. Retry the *wait*, not the click, or return early when the target state already holds.
+- **A process row does not prove creation navigation finished.** In `ProcessesSection.svelte:add`, a breadcrumb click before State/Transition creation finishes is overwritten by the final `handleSelect`; wait for the editor's "Add state" button first (`rage-click/process.spec.ts`).
 - **A click that opens nothing.** A row being re-ordered or moved between groups is replaced under the pointer. Retry the click until the panel really shows what was asked (`openIssueByName`, `openToDoByName`, `openDocumentForTeamspace`).
 - **Save in a settings aside is async; the aside closes when it lands.** `SettingsPage.changeState` did not wait for that (`addState` did). `project-type-statuses` "a status added, renamed or deleted..." (1/622, run 20261028-140205): the rename is in place (`canRenameStatusInPlace`, same `_id`), so the row and the list header show the new name after the first `client.update` while the `_type.statuses` update is still pending. The test then clicks the renamed row - a no-op in `StatesProjectEditor.handleSelect`, the id is already `opened` - and `deleteState` clicks Delete in the old aside, which `closeIfStillOpen` then removes: "element is not stable" -> "detached", no aside for 30s. `changeState` now waits for `statusNameInput()` hidden. Checked: the three settings/status specs x8 on 6 workers, 160/160.
+- **Office app and sidebar widget share `id="app-love:string:Office"`.** Workbench navigation tests must scope app buttons to `.antiPanel-application`; a page-wide id locator fails strict mode with both buttons present (`workbench.spec.ts`, CI: all 3 attempts failed).
 - **Positional selectors** (`nth-child(2)`, `.nth(1)`, `first()`) shift when surrounding data change.
 - **A faker word is not an identifier.** Its list is finite, and `getByRole(name)` matches by substring. Four flakes from this: `Save` vs `autosave`, `IntegrationAlreadyExists`, workspace url collisions, `Edit` vs a channel named `Ampeditd...`. Use `generateId()` for identifiers and `exact: true` for fixed UI labels.
 - **A non-selective filter.** `selectMenuItem` filters by the first word, so parallel workers' objects stay in the list. Match the whole name; `selectAssignee` delegates to it for that reason.
@@ -198,6 +218,7 @@ Everything the drop checks must compare, learned over three rounds:
 - **Re-measure inside the held drag** (up to 4 times): taking the card out of its own cell rearranges the board, so the target moves after it was measured.
 - `grabCard()` retries the grab three times; `expectCardInColumn` calls `revealCard` first (past a column's limit the card is not in the DOM at all) and `revealCard` round-robins over all "Show more" buttons instead of always expanding the leftmost column.
 - Six status columns need ~2000px: `test.use({ viewport: { width: 2200, height: 1000 } })`.
+- **Held card at rest <60px from the board side autoscrolls it** (`EDGE_PX` in `Kanban.svelte`): a waypoint at `left + 3` of the first column undid `scrollIntoView` of the target. `dragPointer` parks mid-board after waypoints with `steps: 5` (a one-hop move sends no dragover). Skipping side points in `visiblePointOf` broke `legacy drop on self`.
 - `dragUntilField(read, target, drag)` reads the field *after* the drag, swallows the drag error and polls at `[100, 200, 300, 500]` with a 40s bound - shorter than the test timeout, so the poll gets to report its own error.
 
 ## love / LiveKit
@@ -294,3 +315,34 @@ Kept, with the reason (a condition would be a guess):
 - `getInviteLink` waited 5s for `appHeader`, which a fresh workspace never renders (`workspace/create.spec.ts` x2, 5005ms each); it now waits for `#profile-button`, which the toPass below clicks anyway. Join-link tests 4.0s/4.3s after.
 - `auth.setup.ts`: three tests ran on one worker (~1.2s each); `describe.configure({ mode: 'parallel' })`, setup 3 passed in 2.9s on 3 workers.
 - Re-running plan.spec many times (and `--repeat-each`) piles up `Plan work for several days-*` todos, and `Add several slots for the same day` then goes missing from the "All" list (todo is in the DB; fails the same on the original code). Needs a stand restore.
+
+## Run series 20261020-130621 .. 133105
+
+- kanban counters/lanes: other workers add issues to `DefaultProject` and the swim-lane projection lands late - poll live values (DB count, lane id), never compare to a value read earlier.
+- `changeState` must wait for the panel to close: a finishing save closes the panel reopened for the same status. Love invite race is a product bug: `love_invite_before_participant_info.md`.
+
+## Run series 20261102-112911 .. 120217
+
+- Все 68 неудачных AI-попыток совпали с `AI provider pool exhausted` для `mock`: по прогонам 0, 6, 9, 4, 49. Это отказ до вызова модели, а не задержка ответа.
+- `rage-click/admin-billing.spec.ts` задавал рабочему пулу `mock/mock-model` бюджет 1000 и добавлял 50, оставляя общий лимит 1050. Сброс пула не исключает расход предыдущих прогонов того же часа: `UsageWorker.recomputeProviderPools` (`services/billing/pod-billing/src/usage.ts`) округляет `periodStart` вниз до часа. Бюджет поднят до 1_000_000_000; пополнение проверено 8/8 за 12.9 с, пять AI-спек - 18/18 без ретраев за 26.4 с.
+- `rage-click/process.spec.ts` "Screen + Add Tab": в 120217 `initialCount` прочитан как 0 до загрузки штатной вкладки `General`; после одного добавления показаны 2 вкладки при ожидании 1. Соседний тест удаления вкладок сначала ждет `toHaveCount(1)`.
+
+## Run series 20261102-132338 .. 135743
+
+- В нагрузочной трассе `documents-training` после Submit кнопка Retry появилась при Draft, исчезла через 100 мс и вернулась при Failed еще через 116 мс. Видимость Retry не подтверждает завершение Submit; оба сценария Retry ждут Failed в заголовке текущей попытки.
+- `EditMeetingData` "End Meeting": `connectedMarker` появляется до последнего `navigateToMeetingMinutes` в `connectToMeeting`. Повторный `page.goto` запускает автоподключение с такой же навигацией; она замещала уже открытое календарное событие. `love.activeMeeting` записывается после последней навигации; календарь внутри того же workbench открывается без перезагрузки.
+- `EditMeetingMinutes` "Leave Room" воспроизведен с совпадающими ID в `/getToken` и открытом протоколе: виджет подключен, но панель показывает Join meeting. Трасса не раскрывает, какое из условий `showConnectionButton` сработало; версия об открытии старого протокола не подтвердилась.
+- Проверки тестовых правок: нагрузочный набор 89/92 до изменений и 92/92 после, оба около 1.5 мин; окончательные ожидания Training Retry и Love End Meeting - 24/24 без ретраев. Полные файлы Kanban и Training - 40 passed, один ранее отключенный тест Manual order, 1.8 мин; build и ESLint прошли.
+
+## Run series 20261102-151956 .. 153630
+
+- Add Tab повторил ожидание 1 при фактических 2: штатная `General` не попала в начальный счетчик. После ожидания штатной вкладки - 8/8 без ретраев за 25.5 с.
+- Обратное завершение фильтрации двух снимков `ParticipantInfo` воспроизведено unit-тестом: старый callback заменял новый `infos`. Регресс упал до фикса и прошел после. Источник и гарантия новых массивов - [love_one_person_two_meetings.md](love_one_person_two_meetings.md). Связь этого порядка с конкретным флаком Leave Room трассой не доказана.
+- Первый пустой ответ AI identity завершает загрузку, но позднее появление identity должно повторно открыть issue-draft: [ai_bot_context_and_settings.md](ai_bot_context_and_settings.md). Связь с конкретным флаком `.assist div.text-editor-view` без трассы первой попытки не доказана.
+- Проверки: Process, Relations и Gmail - 27/27 без ретраев за 46.8 с; `stores.dedup` и `stores.lazy` - 5/5. Полный Jest-пакет Love: 26 passed, 7 failed в двух наборах на импорте `MediaExt.svelte` (`Unexpected token '<'`). Сборка и линт четырех измененных продуктовых пакетов и `tests/sanity` прошли; браузерная проверка продуктовых правок требует пересборки front.
+
+## Run series 20261102-162918 .. 164451
+
+- Единственный флак - Leave Room в панели протокола. Snapshot показывает активную Join meeting без disabled, хотя виджет показывает Leave room; loading этой кнопки означал бы disabled, поэтому зависший connecting не объясняет состояние снимка.
+- Панель сравнивала протокол с `currentMeetingMinutes` из общего presence. Условие локального выхода использует `currentMeeting` с `lkSessionConnected`; остальные guards сохранены. Источники состояний - [love_one_person_two_meetings.md](love_one_person_two_meetings.md).
+- До пересборки front целевой тест прошел 8/8 без ретраев за 23.1 с; это базовый прогон старого UI. Сборка и линт `love-resources` прошли. Исправленный UI в браузере еще не проверен.

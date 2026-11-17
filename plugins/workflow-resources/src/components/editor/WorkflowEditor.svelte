@@ -16,7 +16,7 @@
   import type { Ref, Status, WithLookup } from '@hcengineering/core'
   import core, { notEmpty } from '@hcengineering/core'
   import type { Asset } from '@hcengineering/platform'
-  import { Severity, Status as PlatformStatus, setPlatformStatus } from '@hcengineering/platform'
+  import { Severity, Status as PlatformStatus, getEmbeddedLabel, setPlatformStatus } from '@hcengineering/platform'
   import {
     copyTextToClipboard,
     createQuery,
@@ -29,10 +29,25 @@
   import task from '@hcengineering/task'
   import { taskTypeStore } from '@hcengineering/task-resources'
   import type { TabItem } from '@hcengineering/ui'
-  import ui, { type DropdownIntlItem, EditBox, Loading, Modal, Scroller, showPopup, Switcher } from '@hcengineering/ui'
-  import { IconButton, MenuButton } from '@hcengineering/ui/kit'
+  import ui, {
+    type DropdownIntlItem,
+    EditBox,
+    Label,
+    Loading,
+    Modal,
+    Scroller,
+    showPopup,
+    Switcher
+  } from '@hcengineering/ui'
+  import { Chip, IconButton, MenuButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
-  import { exportWorkflow, removeWorkflow, type Workflow, type WorkflowTransition } from '@hcengineering/workflow'
+  import {
+    exportWorkflow,
+    findStatusesWithoutOutgoingTransitions,
+    removeWorkflow,
+    type Workflow,
+    type WorkflowTransition
+  } from '@hcengineering/workflow'
 
   import { navigateToWorkflow } from '../../location'
   import plugin from '../../plugin'
@@ -42,6 +57,7 @@
   import TransitionsEditor from './TransitionsEditor.svelte'
   import WorkflowDiagram from './WorkflowDiagram.svelte'
   import WorkflowUsedProjects from './WorkflowUsedProjects.svelte'
+  import { FixedColumn } from '@hcengineering/view-resources'
 
   export let spaceType: ProjectType
   export let objectId: Ref<Workflow>
@@ -126,6 +142,20 @@
 
   let transitions: WorkflowTransition[] = []
   $: transitions = (workflow?.$lookup?.transitions ?? []) as WorkflowTransition[]
+  $: noOutgoing =
+    taskType === undefined || isStatusesLoading || taskType.statuses.some((id) => !statuses.some((s) => s._id === id))
+      ? []
+      : findStatusesWithoutOutgoingTransitions(
+          taskType.statuses,
+          transitions,
+          statuses
+            .filter(
+              (status) => status.category === task.statusCategory.Won || status.category === task.statusCategory.Lost
+            )
+            .map((status) => status._id)
+        )
+          .map((id) => statuses.find((status) => status._id === id))
+          .filter((status): status is Status => status !== undefined)
 
   async function saveName (): Promise<void> {
     if (workflow !== undefined) {
@@ -294,17 +324,49 @@
           {#if taskType != null}
             {#if effectiveViewMode === 'editor'}
               <div class="hulyComponent-content flex-col-center flex-gap-4">
-                <InitialStatusesEditor {readonly} {workflow} {statuses} />
+                <div class="initial-statuses-group">
+                  <InitialStatusesEditor {readonly} {workflow} {statuses} />
+                  {#if noOutgoing.length > 0}
+                    <div class="no-outgoing flex-row-center flex-wrap flex-gap-2" data-id="workflow-no-outgoing">
+                      <FixedColumn key="workflow.label">
+                        <Label label={plugin.string.NoOutgoingTransitions} />:
+                      </FixedColumn>
+                      <div class="selector flex-grow min-w-0 gap-2">
+                        {#each noOutgoing as status (status._id)}
+                          <Chip label={getEmbeddedLabel(status.name)} size="extra-small" kind="neutral" />
+                        {/each}
+                      </div>
+                    </div>
+                  {/if}
+                </div>
                 <TransitionsEditor {readonly} {workflow} {transitions} {statuses} {taskType} />
               </div>
             {:else if effectiveViewMode === 'diagram'}
+              {#if noOutgoing.length > 0}
+                <div class="no-outgoing flex-row-center flex-wrap flex-gap-2" data-id="workflow-no-outgoing">
+                  <Label label={plugin.string.NoOutgoingTransitions} />:
+                  {#each noOutgoing as status (status._id)}
+                    <Chip label={getEmbeddedLabel(status.name)} size="extra-small" kind="neutral" />
+                  {/each}
+                </div>
+              {/if}
               <div class="hulyComponent-content embedded-diagram">
                 <WorkflowDiagram {workflow} {statuses} {transitions} embedded />
               </div>
             {:else if effectiveViewMode === 'split'}
               <div class="hulyComponent-content split-layout withoutMaxWidth">
                 <div class="split-column left">
-                  <InitialStatusesEditor {readonly} {workflow} {statuses} />
+                  <div class="initial-statuses-group">
+                    <InitialStatusesEditor {readonly} {workflow} {statuses} />
+                    {#if noOutgoing.length > 0}
+                      <div class="no-outgoing flex-row-center flex-wrap flex-gap-2" data-id="workflow-no-outgoing">
+                        <Label label={plugin.string.NoOutgoingTransitions} />:
+                        {#each noOutgoing as status (status._id)}
+                          <Chip label={getEmbeddedLabel(status.name)} size="extra-small" kind="neutral" />
+                        {/each}
+                      </div>
+                    {/if}
+                  </div>
                   <TransitionsEditor {readonly} {workflow} {transitions} {statuses} {taskType} />
                 </div>
                 <div class="split-divider" />
@@ -348,6 +410,17 @@
     width: 100%;
     height: calc(100vh - 12rem);
     max-height: calc(100vh - 12rem);
+  }
+
+  .initial-statuses-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+
+    .no-outgoing {
+      padding: 0.25rem 0.5rem;
+    }
   }
 
   .split-layout {

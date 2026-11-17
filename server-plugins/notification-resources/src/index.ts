@@ -22,7 +22,6 @@ import core, {
   Doc,
   Ref,
   Space,
-  DocumentUpdate,
   Tx,
   TxCreateDoc,
   TxCUD,
@@ -31,20 +30,11 @@ import core, {
   TxRemoveDoc,
   TxUpdateDoc
 } from '@hcengineering/core'
-import notification, { DocNotifyContext } from '@hcengineering/notification'
+import notification from '@hcengineering/notification'
 import { type TriggerControl } from '@hcengineering/server-core'
-import {
-  getTitlePresenter,
-  getIdentifierPresenter,
-  getIconPresenter,
-  getDocIcon,
-  isActivityDoc,
-  getDocIdentifier,
-  getDocTitle,
-  getLabelPresenter,
-  getDocLabel
-} from '@hcengineering/server-activity'
+import { isActivityDoc } from '@hcengineering/server-activity'
 
+import { moveContexts, OnSpaceAccessChanged } from './snapshot'
 import {
   generateAttributeNotificationType,
   getClassNotificationGroup,
@@ -149,98 +139,20 @@ async function OnDocCreated (txes: TxCreateDoc<Doc>[], control: TriggerControl):
 async function OnDocSpaceChanged (txes: TxUpdateDoc<Doc>[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []
 
+  const moved = new Set<Ref<Doc>>()
   for (const tx of txes) {
-    if (!isActivityDoc(tx.objectClass, control.hierarchy)) continue
     const space = tx.operations.space
     if (space == null) continue
+    if (!moved.has(tx.objectId)) result.push(...(await moveContexts(control, tx.objectId, tx.objectClass)))
+    moved.add(tx.objectId)
 
+    if (!isActivityDoc(tx.objectClass, control.hierarchy)) continue
     const state = (await control.findAll(control.ctx, notification.class.ReadState, { attachedTo: tx.objectId }))[0]
     if (state == null) continue
     result.push(control.txFactory.createTxUpdateDoc(state._class, state.space, state._id, { space }))
   }
 
   return result
-}
-
-async function OnDocUpdate (txes: TxUpdateDoc<Doc>[], control: TriggerControl): Promise<Tx[]> {
-  const res: Tx[] = []
-
-  for (const tx of txes) {
-    const titleKey = control.hierarchy.findClass(tx.objectClass)?.titleKey
-    const titlePresenter = getTitlePresenter(tx.objectClass, control.hierarchy)
-    const labelPresenter = getLabelPresenter(tx.objectClass, control.hierarchy)
-    const iconPresenter = getIconPresenter(tx.objectClass, control.hierarchy)
-    const identifierPresenter = getIdentifierPresenter(tx.objectClass, control.hierarchy)
-
-    const keys = new Set<string>()
-    for (const [key, value] of Object.entries(tx.operations)) {
-      if (key.startsWith('$')) {
-        if (value != null && typeof value === 'object') {
-          Object.keys(value).forEach((field) => {
-            keys.add(field)
-            keys.add(field.split('.')[0])
-          })
-        }
-      } else {
-        keys.add(key)
-        keys.add(key.split('.')[0])
-      }
-    }
-
-    const updateTitle =
-      titlePresenter?.triggerFields.some((key) => keys.has(key)) ?? (titleKey != null && keys.has(titleKey))
-    const updateIdentifier = identifierPresenter?.triggerFields.some((key) => keys.has(key)) ?? false
-    const updateIcon = iconPresenter?.triggerFields.some((key) => keys.has(key)) ?? false
-    const updateLabel = labelPresenter?.triggerFields.some((key) => keys.has(key)) ?? false
-
-    if (!updateIcon && !updateIdentifier && !updateTitle && !updateLabel) continue
-
-    const doc = (await control.findAll(control.ctx, tx.objectClass, { _id: tx.objectId }))[0]
-    if (doc == null) continue
-
-    const contexts = await control.findAll(control.ctx, notification.class.DocNotifyContext, { objectId: tx.objectId })
-    const contextsByParent = await control.findAll(control.ctx, notification.class.DocNotifyContext, {
-      parentObjectId: tx.objectId
-    })
-    if (contexts.length === 0 && contextsByParent.length === 0) continue
-
-    const objectOps: DocumentUpdate<DocNotifyContext> = {}
-    const parentOps: DocumentUpdate<DocNotifyContext> = {}
-
-    if (updateTitle) {
-      const title = await getDocTitle(control, doc)
-      objectOps.objectTitle = title
-      parentOps.parentObjectTitle = title
-    }
-
-    if (updateIdentifier) {
-      const identifier = await getDocIdentifier(control, doc)
-      objectOps.objectIdentifier = identifier
-      parentOps.parentObjectIdentifier = identifier
-    }
-
-    if (updateIcon) {
-      const icon = await getDocIcon(control, doc)
-      objectOps.objectIcon = icon
-      parentOps.parentObjectIcon = icon
-    }
-
-    if (updateLabel) {
-      const label = await getDocLabel(control, doc)
-      objectOps.objectLabel = label
-      parentOps.parentObjectLabel = label
-    }
-
-    for (const context of contexts) {
-      res.push(control.txFactory.createTxUpdateDoc(context._class, context.space, context._id, objectOps))
-    }
-
-    for (const context of contextsByParent) {
-      res.push(control.txFactory.createTxUpdateDoc(context._class, context.space, context._id, parentOps))
-    }
-  }
-
-  return res
 }
 
 export { getClassNotificationGroup, generateAttributeNotificationType } from './utils'
@@ -269,9 +181,9 @@ export default async () => ({
     OnAttributeCreate,
     OnAttributeUpdate,
     OnDocCreated,
-    OnDocUpdate,
     OnDocRemove,
     OnDocSpaceChanged,
+    OnSpaceAccessChanged,
     OnDocClassChanged,
     OnEmployeeDeactivate
   },

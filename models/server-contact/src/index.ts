@@ -49,6 +49,11 @@ export function createModel (builder: Builder): void {
     isAsync: false
   })
 
+  builder.mixin(contact.class.Channel, core.class.Class, serverActivity.mixin.IconPresenter, {
+    presenter: serverActivity.function.FieldsIconPresenter,
+    triggerFields: ['provider']
+  })
+
   builder.mixin(contact.class.Contact, core.class.Class, serverActivity.mixin.IconPresenter, {
     presenter: serverContact.function.ContactIconPresenter,
     triggerFields: []

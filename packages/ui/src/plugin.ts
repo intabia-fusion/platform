@@ -27,6 +27,8 @@ export const uiId = 'ui' as Plugin
 export const uis = plugin(uiId, {
   icon: {
     Archive: '' as Asset,
+    ArrowBarToLeft: '' as Asset,
+    ArrowBarToRight: '' as Asset,
     ArrowBendUpLeft: '' as Asset,
     ArrowBendUpRight: '' as Asset,
     ArrowClockwise: '' as Asset,
@@ -434,6 +436,7 @@ export const uis = plugin(uiId, {
     Connection: '' as IntlString,
     Connected: '' as IntlString,
     Reconnecting: '' as IntlString,
+    WorkspaceLimitsExhausted: '' as IntlString,
     RateLimit: '' as IntlString,
     RateLimitValue: '' as IntlString,
     RateLimitUsage: '' as IntlString,

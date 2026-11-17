@@ -124,9 +124,7 @@ describe('result utils', () => {
       const cache = getEmptyTxCache()
       expect(cache.titleByDoc).toBeInstanceOf(Map)
       expect(cache.urlByDoc).toBeInstanceOf(Map)
-      expect(cache.labelByDoc).toBeInstanceOf(Map)
       expect(cache.identifierByDoc).toBeInstanceOf(Map)
-      expect(cache.iconByDoc).toBeInstanceOf(Map)
       expect(cache.templates).toBeInstanceOf(Map)
 
       expect(cache.titleByDoc.size).toBe(0)

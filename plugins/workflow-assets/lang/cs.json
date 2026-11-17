@@ -15,6 +15,7 @@
     "AnyStatus": "Jakýkoli stav",
     "AnyTaskType": "Libovolný typ úkolu",
     "Workflows": "Workflows",
+    "NoOutgoingTransitions": "Bez přechodů",
     "DeleteWorkflow": "Smazat workflow",
     "DeleteWorkflowConfirm": "Opravdu chcete toto workflow smazat?",
     "DeleteWorkflowTransition": "Smazat přechod",

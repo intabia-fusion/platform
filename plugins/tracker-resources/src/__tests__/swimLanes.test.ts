@@ -197,10 +197,11 @@ describe('sortSwimLanes', () => {
 describe('swimLaneUpdateProps', () => {
   const doc = task({ space: 'p2' })
 
-  it('gives no update without a field or for the project', () => {
+  it('gives no update without a field, for the project or for a board lane', () => {
     expect(swimLaneUpdateProps('none', doc, swim('u1', 'u1'), components)).toBeUndefined()
     expect(swimLaneUpdateProps('', doc, swim('u1', 'u1'), components)).toBeUndefined()
     expect(swimLaneUpdateProps('space', doc, swim('p1', 'p1'), components)).toBeUndefined()
+    expect(swimLaneUpdateProps('board', doc, swim('lane-1', 'lane-1'), components)).toBeUndefined()
   })
 
   it('writes the lane value to the field', () => {

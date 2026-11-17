@@ -1,0 +1,8 @@
+class: tracker:class:Project
+title: Поддержка клиентов
+identifier: SUP
+emoji: 💬
+private: false
+autoJoin: true
+description: "Обращения клиентов, ответы на частые вопросы и работа команды поддержки."
+defaultIssueStatus: Todo

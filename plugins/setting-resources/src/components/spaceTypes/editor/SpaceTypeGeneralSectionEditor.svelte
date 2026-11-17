@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -28,6 +29,7 @@
   export let type: SpaceType | undefined
   export let descriptor: SpaceTypeDescriptor | undefined
   export let disabled: boolean = true
+  export let nameLimit: number = 0
 
   const client = getClient()
   let shortDescription = type?.shortDescription ?? ''
@@ -113,7 +115,7 @@
   {@const dIcon = descriptor.icon === '' ? settingRes.icon.Setting : descriptor.icon}
   <div class="hulyComponent-content__column-group">
     <div class="hulyComponent-content__header">
-      <div class="flex gap-1">
+      <div class="type-title flex gap-1">
         <IconButton
           icon={dIcon}
           size="large"
@@ -124,15 +126,17 @@
         <ModernEditbox
           kind="ghost"
           size="large"
+          width="100%"
           label={settingRes.string.SpaceTypeTitle}
           value={type?.name ?? ''}
+          limit={nameLimit}
           {disabled}
           on:blur={(evt) => {
             void attributeUpdated('name', evt.detail)
           }}
         />
       </div>
-      <div class="flex-row">
+      <div class="flex-row flex-no-shrink">
         <Button
           icon={ui.icon.ArrowSquareOut}
           label={settingRes.string.CountSpaces}
@@ -189,3 +193,11 @@
     <slot name="extra" />
   </div>
 {/if}
+
+<style lang="scss">
+  .type-title {
+    flex: 1;
+    min-width: 0;
+    margin-right: var(--spacing-4);
+  }
+</style>

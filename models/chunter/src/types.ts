@@ -35,18 +35,23 @@ import type {
   DirectMessage,
   ObjectChatPanel,
   ThreadMessage,
-  Chat
+  Chat,
+  ChatNavSort,
+  ChatNavSortPreference
 } from '@hcengineering/chunter'
 import {
   type AccountUuid,
   type Class,
   type Doc,
+  type DocPreview,
   type Domain,
   IndexKind,
+  type Rank,
   type Ref,
   type Timestamp
 } from '@hcengineering/core'
 import type { ReadState } from '@hcengineering/notification'
+import preference, { TPreference } from '@hcengineering/model-preference'
 import contact, { type ChannelProvider as SocialChannelProvider, type PersonSpace } from '@hcengineering/contact'
 import activity, { type ActivityMessage } from '@hcengineering/activity'
 import { TActivityMessage } from '@hcengineering/model-activity'
@@ -149,5 +154,12 @@ export class TChat extends TAttachedDoc implements Chat {
   account!: AccountUuid
   pinned!: boolean
   hidden!: boolean
+  preview?: Ref<DocPreview>
   readState?: Ref<ReadState>
+  rank?: Rank
+}
+
+@Model(chunter.class.ChatNavSortPreference, preference.class.Preference)
+export class TChatNavSortPreference extends TPreference implements ChatNavSortPreference {
+  sort!: ChatNavSort
 }

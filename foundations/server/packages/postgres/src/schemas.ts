@@ -117,6 +117,11 @@ const chatSchema: Schema = {
     notNull: true,
     index: true
   },
+  preview: {
+    type: 'text',
+    notNull: false,
+    index: false
+  },
   readState: {
     type: 'text',
     notNull: false,
@@ -267,13 +272,7 @@ const dncSchema: Schema = {
     notNull: true,
     index: false
   },
-  // customIndexes below; a single-column index on top of them would only cost writes.
-  parentObjectId: {
-    type: 'text',
-    notNull: false,
-    index: false
-  },
-  parentObjectClass: {
+  preview: {
     type: 'text',
     notNull: false,
     index: false
@@ -442,6 +441,40 @@ const docReadStateSchema: Schema = {
   }
 }
 
+const docPreviewSchema: Schema = {
+  ...baseSchema,
+  objectId: {
+    type: 'text',
+    notNull: true,
+    index: false
+  },
+  objectClass: {
+    type: 'text',
+    notNull: true,
+    index: false
+  },
+  objectDomain: {
+    type: 'text',
+    notNull: true,
+    index: false
+  },
+  title: {
+    type: 'text',
+    notNull: true,
+    index: false
+  },
+  identifier: {
+    type: 'text',
+    notNull: false,
+    index: false
+  },
+  archived: {
+    type: 'bool',
+    notNull: true,
+    index: false
+  }
+}
+
 const activitySchema: Schema = {
   ...defaultSchema,
   forwardedMessage: {
@@ -498,6 +531,12 @@ export const customIndexes: Record<string, Record<CustomIndexType, string[]>[]> 
       custom: []
     }
   ],
+  [translateDomain('doc-preview')]: [
+    {
+      unique: ['objectDomain', 'objectId'],
+      custom: []
+    }
+  ],
   [translateDomain('notification_read_state')]: [
     {
       unique: ['attachedTo', 'attachedToClass'],
@@ -512,7 +551,8 @@ export const customIndexes: Record<string, Record<CustomIndexType, string[]>[]> 
       unique: ['user', 'objectId', 'objectClass'],
       custom: [
         'CREATE INDEX IF NOT EXISTS notification_dnc_workspaceId_objectId__index ON notification_dnc ("workspaceId", "objectId");',
-        'CREATE INDEX IF NOT EXISTS notification_dnc_workspaceId_parentObjectId__index ON notification_dnc ("workspaceId", "parentObjectId");',
+        'CREATE INDEX IF NOT EXISTS notification_dnc_workspaceId_objectSpace__index ON notification_dnc ("workspaceId", "objectSpace");',
+        'CREATE INDEX IF NOT EXISTS notification_dnc_workspaceId_preview__index ON notification_dnc ("workspaceId", "preview");',
         'CREATE INDEX IF NOT EXISTS notification_dnc_workspaceId_user_lastNotify_desc__index ON notification_dnc ("workspaceId", "user", "lastNotify" DESC);',
         'CREATE INDEX IF NOT EXISTS notification_dnc_workspaceId_user_unread__index ON notification_dnc ("workspaceId", "user", "unreadCount") WHERE "unreadCount" > 0;',
         'CREATE INDEX IF NOT EXISTS notification_dnc_workspaceId_user_objectClass__index ON notification_dnc ("workspaceId", "user", "objectClass");',
@@ -584,6 +624,7 @@ export const domainSchemas: Record<string, Schema> = {
   kanban: defaultSchema,
   [translateDomain('attachment')]: attachmentSchema,
   [translateDomain('notification_read_state')]: docReadStateSchema,
+  [translateDomain('doc-preview')]: docPreviewSchema,
   [translateDomain('activity')]: activitySchema,
   [translateDomain('applet')]: appletSchema,
   [translateDomain('poll-answer')]: pollAnswerSchema

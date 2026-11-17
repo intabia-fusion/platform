@@ -20,7 +20,8 @@ import {
   type Version,
   type Person,
   type WorkspaceMemberInfo,
-  type AccountRole,
+  AccountRole,
+  aiBotAccountEmail,
   type WorkspaceUuid,
   type AccountUuid,
   type PersonUuid,
@@ -1678,11 +1679,41 @@ export class PostgresAccountDB implements AccountDB {
         []
       )
       const billing: any = await rTx.unsafe(
-        `SELECT plan, COUNT(*) AS workspaces, COALESCE(SUM((limits->>'users_limit')::int), 0) AS seats
-         FROM ${this.subscription.getTableName()}
-         WHERE type = 'tier' AND status IN ('active', 'trialing')
-         GROUP BY plan ORDER BY seats DESC`,
-        []
+        `SELECT plan, status,
+           CASE
+             WHEN status = 'trialing' OR provider = 'trial' THEN 'trial'
+             WHEN provider = 'free' OR plan = 'free' THEN 'free'
+             WHEN provider = 'manual' THEN 'manual'
+             WHEN amount > 0 AND provider NOT IN ('free', 'trial', '') THEN 'paid'
+             ELSE 'other'
+           END AS category,
+           COUNT(*) AS workspaces,
+           COALESCE(SUM(CASE WHEN provider = 'manual' THEN members.seats
+             ELSE COALESCE((provider_data->>'quantity')::int, (limits->>'users_limit')::int) END), 0) AS seats,
+           json_agg(json_build_object(
+             'workspaceUuid', current_tiers.workspace_uuid, 'name', w.name, 'url', w.url,
+             'plan', plan, 'status', status, 'seats', members.seats
+           )) FILTER (WHERE provider = 'manual') AS manual_workspaces
+         FROM (
+           SELECT DISTINCT ON (workspace_uuid) * FROM ${this.subscription.getTableName()}
+           WHERE type = 'tier' AND status IN ('active', 'trialing')
+           ORDER BY workspace_uuid, created_on DESC, id DESC
+         ) current_tiers
+         INNER JOIN ${this.workspace.getTableName()} w ON w.uuid = current_tiers.workspace_uuid
+         LEFT JOIN LATERAL (
+           SELECT COUNT(*) AS seats FROM ${this.getWsMembersTableName()} m
+           WHERE provider = 'manual' AND m.workspace_uuid = current_tiers.workspace_uuid
+             AND NOT (m.role::text = ANY($1::text[]))
+             AND NOT EXISTS (
+               SELECT 1 FROM ${this.socialId.getTableName()} bot
+               WHERE bot.type = 'email' AND bot.value = $2 AND bot.person_uuid = m.account_uuid
+             )
+         ) members ON TRUE
+         GROUP BY plan, status, category ORDER BY seats DESC`,
+        [
+          [AccountRole.Admin, AccountRole.Guest, AccountRole.DocGuest, 'DOCGUEST', AccountRole.ReadOnlyGuest],
+          aiBotAccountEmail
+        ]
       )
       const toRecord = (rows: any[]): Record<string, number> =>
         Object.fromEntries(rows.map((r) => [r.key, Number(r.count)]))
@@ -1692,7 +1723,14 @@ export class PostgresAccountDB implements AccountDB {
         byMode: modes,
         byRegion: toRecord(byRegion),
         byVersion: toRecord(byVersion),
-        billing: billing.map((r: any) => ({ plan: r.plan, workspaces: Number(r.workspaces), seats: Number(r.seats) }))
+        manualWorkspaces: billing.flatMap((r: any) => r.manual_workspaces ?? []),
+        billing: billing.map((r: any) => ({
+          plan: r.plan,
+          status: r.status,
+          category: r.category,
+          workspaces: Number(r.workspaces),
+          seats: Number(r.seats)
+        }))
       }
     })
   }
@@ -2204,13 +2242,17 @@ export class PostgresAccountDB implements AccountDB {
       args.push(filter.provider)
       where.push(`provider = $${args.length}`)
     }
+    if (filter.paymentId !== undefined) {
+      args.push(filter.paymentId)
+      where.push(`payment_id = $${args.length}`)
+    }
     const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : ''
     args.push(Math.min(filter.limit ?? 100, 500))
     const limitSql = `LIMIT $${args.length}`
     args.push(filter.offset ?? 0)
     const offsetSql = `OFFSET $${args.length}`
     const rows = await this.paymentOperation.unsafe(
-      `SELECT * FROM ${table} ${whereSql} ORDER BY created_on DESC ${limitSql} ${offsetSql}`,
+      `SELECT * FROM ${table} ${whereSql} ORDER BY created_on DESC, id DESC ${limitSql} ${offsetSql}`,
       args
     )
     return (rows as Array<Record<string, any>>).map((r) => this.paymentOperation.convertToObj(r))
@@ -2221,19 +2263,23 @@ export class PostgresAccountDB implements AccountDB {
   async getPaymentOperationStats (from: number, to: number): Promise<PaymentOperationStats> {
     const table = this.paymentOperation.getTableName()
     const rows = await this.paymentOperation.unsafe(
-      `SELECT workspace_uuid, operation, status, amount, payment_id FROM ${table}
-       WHERE created_on >= $1 AND created_on < $2`,
+      `SELECT workspace_uuid, provider, operation, status, amount, payment_id FROM ${table}
+       WHERE created_on >= $1 AND created_on < $2 ORDER BY created_on ASC, id ASC`,
       [from, to]
     )
     const byWorkspace = new Map<string, { charges: number, amount: number, errors: number }>()
+    const byProvider = new Map<string, { charges: number, amount: number, errors: number }>()
     let totalCharges = 0
     let totalAmount = 0
     let totalErrors = 0
     // Webhooks are delivered at-least-once: count each (payment, status) charge only once.
+    // A recurrent charge and its webhook describe the same provider payment.
     const seenCharges = new Set<string>()
     for (const r of rows as Array<Record<string, any>>) {
       const ws = (r.workspace_uuid as string) ?? 'unknown'
       const entry = byWorkspace.get(ws) ?? { charges: 0, amount: 0, errors: 0 }
+      const provider = (r.provider as string) ?? 'unknown'
+      const providerEntry = byProvider.get(provider) ?? { charges: 0, amount: 0, errors: 0 }
       const status = (r.status as string) ?? ''
       // Real charged money: tbank confirms via the webhook row (init_charge stays NEW).
       let isCharge =
@@ -2241,7 +2287,7 @@ export class PostgresAccountDB implements AccountDB {
         (r.operation === 'charge_recurrent' && status === 'success') ||
         (r.operation === 'init_charge' && status === 'CONFIRMED')
       if (isCharge && r.payment_id != null) {
-        const key = `${r.payment_id}|${r.operation}|${status}|${r.amount ?? ''}`
+        const key = JSON.stringify([r.provider, r.payment_id])
         if (seenCharges.has(key)) isCharge = false
         seenCharges.add(key)
       }
@@ -2249,14 +2295,18 @@ export class PostgresAccountDB implements AccountDB {
       if (isCharge) {
         entry.charges++
         entry.amount += Number(r.amount ?? 0)
+        providerEntry.charges++
+        providerEntry.amount += Number(r.amount ?? 0)
         totalCharges++
         totalAmount += Number(r.amount ?? 0)
       }
       if (isError) {
         entry.errors++
+        providerEntry.errors++
         totalErrors++
       }
       byWorkspace.set(ws, entry)
+      byProvider.set(provider, providerEntry)
     }
     return {
       from,
@@ -2264,6 +2314,7 @@ export class PostgresAccountDB implements AccountDB {
       totalCharges,
       totalAmount,
       totalErrors,
+      byProvider: Array.from(byProvider.entries()).map(([provider, s]) => ({ provider, ...s })),
       workspaces: Array.from(byWorkspace.entries()).map(([workspaceUuid, s]) => ({ workspaceUuid, ...s }))
     }
   }
@@ -2272,12 +2323,13 @@ export class PostgresAccountDB implements AccountDB {
   async getPaymentMonthlyStats (from: number, to: number): Promise<PaymentMonthlyStats[]> {
     const table = this.paymentOperation.getTableName()
     const rows = await this.paymentOperation.unsafe(
-      `SELECT created_on, operation, status, amount, payment_id FROM ${table}
-       WHERE created_on >= $1 AND created_on < $2`,
+      `SELECT created_on, provider, operation, status, amount, payment_id FROM ${table}
+       WHERE created_on >= $1 AND created_on < $2 ORDER BY created_on ASC, id ASC`,
       [from, to]
     )
     const byMonth = new Map<string, PaymentMonthlyStats>()
     // Webhooks are delivered at-least-once: count each (payment, status) charge only once.
+    // A recurrent charge and its webhook describe the same provider payment.
     const seenCharges = new Set<string>()
     for (const r of rows as Array<Record<string, any>>) {
       const month = new Date(Number(r.created_on)).toISOString().slice(0, 7)
@@ -2289,7 +2341,7 @@ export class PostgresAccountDB implements AccountDB {
         (r.operation === 'charge_recurrent' && status === 'success') ||
         (r.operation === 'init_charge' && status === 'CONFIRMED')
       if (isCharge && r.payment_id != null) {
-        const key = `${r.payment_id}|${r.operation}|${status}|${r.amount ?? ''}`
+        const key = JSON.stringify([r.provider, r.payment_id])
         if (seenCharges.has(key)) isCharge = false
         seenCharges.add(key)
       }

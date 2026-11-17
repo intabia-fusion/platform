@@ -221,18 +221,31 @@
   <div class="hulyTableAttr-header font-medium-12" class:withButton={showHierarchy || mixinHeader}>
     {#if showHeader}
       {#if showHierarchy}
-        <Button icon={ui.icon.Sliders} kind="secondary" size="small" {disabled} hasMenu>
-          <Label label={settings.string.ClassColon} />
-          {#if mixinBase !== undefined}
-            <ObjectPresenter _class={mixinBase._class} objectId={mixinBase._id} value={mixinBase} />
-            <span class="content-halfcontent-color mx-1">·</span>
-          {/if}
-          <ObjectPresenter
-            _class={clazzHierarchy._class}
-            objectId={clazzHierarchy._id}
-            value={clazz ?? clazzHierarchy}
-          />
-        </Button>
+        <div class="class-caption">
+          <Button
+            icon={ui.icon.Sliders}
+            kind="secondary"
+            size="small"
+            {disabled}
+            hasMenu
+            tooltip={{ label: (clazz ?? clazzHierarchy).label }}
+          >
+            <span class="class-prefix">
+              <Label label={settings.string.ClassColon} />
+              {#if mixinBase !== undefined}
+                <ObjectPresenter _class={mixinBase._class} objectId={mixinBase._id} value={mixinBase} />
+                <span class="content-halfcontent-color mx-1">·</span>
+              {/if}
+            </span>
+            <span class="class-name">
+              <ObjectPresenter
+                _class={clazzHierarchy._class}
+                objectId={clazzHierarchy._id}
+                value={clazz ?? clazzHierarchy}
+              />
+            </span>
+          </Button>
+        </div>
       {:else if mixinHeader && clazz !== undefined}
         <div class="flex-row-center flex-gap-2">
           <Button icon={ui.icon.Sliders} kind="secondary" size="small" {disabled} hasMenu>
@@ -348,6 +361,31 @@
 </div>
 
 <style lang="scss">
+  .class-caption {
+    min-width: 0;
+    margin-right: var(--spacing-2);
+
+    :global(> button) {
+      max-width: 100%;
+    }
+  }
+  .class-name {
+    min-width: 0;
+    overflow: hidden;
+
+    :global(> div) {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+  .class-prefix {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-1);
+    flex-shrink: 0;
+  }
   .hulyInput-body {
     flex-grow: 1;
     flex-shrink: 0;

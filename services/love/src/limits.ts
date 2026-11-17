@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
+import { type BillingClient } from '@hcengineering/billing-client'
 import { generateId, type MeasureContext, type WorkspaceUuid } from '@hcengineering/core'
 import {
   type ConsumerHandle,
@@ -33,9 +34,15 @@ export class LimitsState {
   private readonly diskExhausted = new Set<WorkspaceUuid>()
   private readonly paymentExhausted = new Set<WorkspaceUuid>()
 
+  private readonly transcriptionExhausted = new Map<WorkspaceUuid, Set<string>>()
+
   private readonly consumer: ConsumerHandle
 
-  constructor (ctx: MeasureContext, queue: PlatformQueue) {
+  constructor (
+    ctx: MeasureContext,
+    queue: PlatformQueue,
+    private readonly billingClient?: BillingClient
+  ) {
     this.consumer = queue.createBatchConsumer<QueueWorkspaceMessage>(
       ctx,
       QueueTopic.Workspace,
@@ -48,6 +55,12 @@ export class LimitsState {
           let set: Set<WorkspaceUuid> | undefined
           if (category === LimitCategory.Disk) set = this.diskExhausted
           else if (category === LimitCategory.Payment) set = this.paymentExhausted
+          if (category === LimitCategory.Tokens || category === LimitCategory.Transcript) {
+            const categories = this.transcriptionExhausted.get(m.workspace) ?? new Set<string>()
+            if (status === LimitStatus.Exhausted) categories.add(category)
+            else categories.delete(category)
+            this.transcriptionExhausted.set(m.workspace, categories)
+          }
           if (set === undefined) continue
 
           if (status === LimitStatus.Exhausted) {
@@ -64,6 +77,27 @@ export class LimitsState {
   /** True when starting a recording should be blocked for this workspace (disk or payment exhausted). */
   isExhausted (workspace: WorkspaceUuid): boolean {
     return this.diskExhausted.has(workspace) || this.paymentExhausted.has(workspace)
+  }
+
+  async refresh (workspace: WorkspaceUuid): Promise<void> {
+    if (this.billingClient === undefined) return
+    const states = await this.billingClient.getWorkspaceLimitStates(workspace)
+    for (const { category, exhausted } of states) {
+      if (category === LimitCategory.Disk) {
+        if (exhausted) this.diskExhausted.add(workspace)
+        else this.diskExhausted.delete(workspace)
+      }
+      if (category === LimitCategory.Tokens || category === LimitCategory.Transcript) {
+        const categories = this.transcriptionExhausted.get(workspace) ?? new Set<string>()
+        if (exhausted) categories.add(category)
+        else categories.delete(category)
+        this.transcriptionExhausted.set(workspace, categories)
+      }
+    }
+  }
+
+  isTranscriptionExhausted (workspace: WorkspaceUuid): boolean {
+    return this.isExhausted(workspace) || (this.transcriptionExhausted.get(workspace)?.size ?? 0) > 0
   }
 
   async close (): Promise<void> {

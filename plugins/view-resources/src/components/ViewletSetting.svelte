@@ -53,6 +53,8 @@
 
   export let viewlet: Viewlet
   export let defaultConfig: (BuildModelKey | string)[] | undefined = undefined
+  export let normalizeConfig: ((config: Viewlet['config'], viewlet: Viewlet) => Viewlet['config']) | undefined =
+    undefined
 
   let preferences: ViewletPreference[] = []
   let selected = viewlet._id
@@ -84,7 +86,12 @@
         attachedTo: { $in: Array.from(viewlets.map((it) => it._id)) }
       },
       (res) => {
-        preferences = res
+        preferences = res.map((pref) => {
+          const source = viewlets.find((item) => item._id === pref.attachedTo)
+          return source !== undefined && normalizeConfig !== undefined
+            ? { ...pref, config: normalizeConfig(pref.config, source) }
+            : pref
+        })
         loading = false
       }
     )
@@ -113,7 +120,8 @@
   }
 
   function getBaseConfig (viewlet: Viewlet): Config[] {
-    const config = defaultConfig ?? viewlet.config
+    const base = defaultConfig ?? viewlet.config
+    const config = normalizeConfig?.(base, viewlet) ?? base
     const lookup = buildConfigLookup(hierarchy, viewlet.attachTo, config, viewlet.options?.lookup)
     const result: Config[] = []
     const clazz = hierarchy.getClass(viewlet.attachTo)

@@ -27,7 +27,7 @@ import workbench from '@hcengineering/model-workbench'
 import converter from '@hcengineering/converter'
 import notification, { type MessageNotificationType } from '@hcengineering/notification'
 import setting from '@hcengineering/setting'
-import pluginState, { trackerId } from '@hcengineering/tracker'
+import pluginState, { projectSettingsId, trackerId } from '@hcengineering/tracker'
 
 import type { TaskStatusFactory } from '@hcengineering/task'
 import { PaletteColorIndexes } from '@hcengineering/ui/src/colors'
@@ -46,6 +46,9 @@ import {
   TMilestone,
   TProject,
   TProjectTargetPreference,
+  TBoard,
+  TBoardPreference,
+  TBoardNavigationPreference,
   TRelatedIssueTarget,
   TTimeSpendReport,
   TTypeEstimation,
@@ -332,6 +335,7 @@ function defineApplication (
       hidden: false,
       locationResolver: tracker.resolver.Location,
       navigatorModel: {
+        sections: [tracker.component.BoardsNav],
         specials: [
           {
             id: opt.myIssuesId,
@@ -368,7 +372,15 @@ function defineApplication (
             }
           },
           {
+            id: 'boards',
+            hidden: true,
+            label: tracker.string.TaskBoards,
+            icon: tracker.icon.Issues,
+            component: tracker.component.BoardPage
+          },
+          {
             id: 'all-projects',
+            hidden: true,
             component: workbench.component.SpecialView,
             icon: view.icon.List,
             accessLevel: AccountRole.User,
@@ -380,6 +392,14 @@ function defineApplication (
               icon: view.icon.List,
               label: tracker.string.AllProjects
             }
+          },
+          {
+            id: 'all-templates',
+            component: tracker.component.IssueTemplates,
+            icon: tracker.icon.IssueTemplates,
+            accessLevel: AccountRole.User,
+            label: tracker.string.IssueTemplates,
+            position: 'bottom'
           },
           {
             id: opt.labelsId,
@@ -394,6 +414,7 @@ function defineApplication (
         spaces: [
           {
             id: 'projects',
+            catalog: { id: 'all-projects', label: tracker.string.AllProjects, icon: view.icon.List },
             label: tracker.string.Projects,
             spaceClass: tracker.class.Project,
             addSpaceLabel: tracker.string.CreateProject,
@@ -433,6 +454,12 @@ function defineApplication (
                 label: tracker.string.IssueTemplates,
                 icon: tracker.icon.IssueTemplates,
                 component: tracker.component.IssueTemplates
+              },
+              {
+                id: projectSettingsId,
+                label: tracker.string.ProjectSettings,
+                icon: view.icon.Setting,
+                component: tracker.component.ProjectSettings
               }
             ]
           }
@@ -460,7 +487,10 @@ export function createModel (builder: Builder): void {
     TRelatedIssueTarget,
     TTypeEstimation,
     TTypeRemainingTime,
-    TProjectTargetPreference
+    TProjectTargetPreference,
+    TBoard,
+    TBoardPreference,
+    TBoardNavigationPreference
   )
 
   builder.mixin(tracker.class.Project, core.class.Class, activity.mixin.ActivityDoc, {})

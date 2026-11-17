@@ -18,6 +18,7 @@ import core, {
   type Branding,
   type Client,
   coreId,
+  type Doc,
   DOMAIN_BENCHMARK,
   DOMAIN_MIGRATION,
   DOMAIN_MODEL,
@@ -33,6 +34,7 @@ import core, {
   platformNowDiff,
   type Ref,
   type Tx,
+  type TxCUD,
   type TxOperations,
   type WithLookup,
   type WorkspaceIds,
@@ -270,7 +272,8 @@ export async function upgradeModel (
   }
 
   const newModelRes = await ctx.with('load-model', {}, (ctx) => pipeline.loadModel(ctx, 0))
-  const newModel = Array.isArray(newModelRes) ? newModelRes : newModelRes.transactions
+  const loadedModel = Array.isArray(newModelRes) ? newModelRes : newModelRes.transactions
+  const newModel = mode === 'upgrade' ? await oldModelFirst(pipeline, txes, loadedModel) : loadedModel
 
   const { hierarchy, modelDb, model } = await buildModel(ctx, newModel)
   const { migrateClient: preMigrateClient } = await prepareMigrationClient(
@@ -388,6 +391,28 @@ export async function upgradeModel (
 
   await sendTransactorEvent(wsIds.uuid, 'force-close')
   return model
+}
+
+// Until core `clean-old-model` runs, an old backup keeps its old system model: applied after the current one it
+// replaces the classes and drops the mixins migrations read, while the old-only classes are still needed
+async function oldModelFirst (pipeline: Pipeline, system: Tx[], model: Tx[]): Promise<Tx[]> {
+  const lowLevel = pipeline.context.lowLevelStorage
+  if (lowLevel === undefined) return model
+  const cleaned = await lowLevel.rawFindAll<MigrationState>(
+    DOMAIN_MIGRATION,
+    { _class: core.class.MigrationState, plugin: coreId, state: 'clean-old-model' },
+    { limit: 1 }
+  )
+  if (cleaned.length > 0) return model
+  const systemIds = new Set(system.map((it) => it._id))
+  const kept = new Set<string>(['core:class:Account', 'contact:class:PersonAccount'])
+  const isOld = (tx: Tx): boolean =>
+    !systemIds.has(tx._id) && tx.modifiedBy === core.account.System && !kept.has((tx as TxCUD<Doc>).objectClass)
+  return [
+    ...model.filter(isOld),
+    ...model.filter((tx) => systemIds.has(tx._id)),
+    ...model.filter((tx) => !isOld(tx) && !systemIds.has(tx._id))
+  ]
 }
 
 async function prepareMigrationClient (

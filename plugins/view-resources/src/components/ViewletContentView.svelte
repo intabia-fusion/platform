@@ -24,6 +24,8 @@
   export let createItemEvent: string | undefined = undefined
   export let createItemDialogProps = { shouldSaveDraft: true }
   export let emptyState: BlankViewProps | undefined = undefined
+  export let normalizeConfig: ((config: Viewlet['config'], viewlet: Viewlet) => Viewlet['config']) | undefined =
+    undefined
 
   const hierarchy = getClient().getHierarchy()
 
@@ -61,7 +63,12 @@
         attachedTo: { $in: configurationRaw.map((it) => it._id) }
       },
       (res) => {
-        preference = res
+        preference = res.map((pref) => {
+          const source = configurationRaw.find((item) => item._id === pref.attachedTo)
+          return source !== undefined && normalizeConfig !== undefined
+            ? { ...pref, config: normalizeConfig(pref.config, source) }
+            : pref
+        })
         preferencesLoading = false
         loading = configurationsLoading || preferencesLoading
       }
@@ -71,11 +78,18 @@
   $: fetchConfigurations(viewlet)
   $: fetchPreferences(configurationRaw)
 
-  $: configurations = buildViewletConfigurations(viewlet, configurationRaw, preference)
+  $: normalizedConfigurations = configurationRaw.map((source) => ({
+    ...source,
+    config: normalizeConfig?.(source.config, source) ?? source.config
+  }))
+  $: configurations = buildViewletConfigurations(viewlet, normalizedConfigurations, preference)
 
   $: currentPreference = preference.find((it) => it.attachedTo === viewlet._id)
   $: config = injectDescendantAttributes(
-    injectCustomAttributes(currentPreference?.config ?? viewlet.config, currentPreference?.customAttributes),
+    injectCustomAttributes(
+      currentPreference?.config ?? normalizeConfig?.(viewlet.config, viewlet) ?? viewlet.config,
+      currentPreference?.customAttributes
+    ),
     currentPreference?.descendantAttributes
   )
 </script>

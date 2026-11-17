@@ -13,47 +13,37 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import { getEmbeddedLabel } from '@hcengineering/platform'
+  import { Radio } from '@hcengineering/ui/kit'
+  import type { RadioKind, RadioSize } from '@hcengineering/ui/kit'
+
   export let on: boolean = false
   export let label: string
+  // The product Radio has no second line, the hint is drawn under the label
   export let hint: string | undefined = undefined
+  export let size: RadioSize | undefined = undefined
+  export let kind: RadioKind | undefined = undefined
+  export let disabled: boolean = false
 </script>
 
 <div class="kit-radio">
-  <div class="dot" class:on />
-  <div class="text">
-    <span class="label">{label}</span>
-    {#if hint !== undefined}<span class="hint">{hint}</span>{/if}
-  </div>
+  <Radio value="a" group={on ? 'a' : null} {size} {kind} {disabled} label={getEmbeddedLabel(label)} />
+  {#if hint !== undefined}<span class="hint" class:small={size === 'small'}>{hint}</span>{/if}
 </div>
 
 <style lang="scss">
   .kit-radio {
     display: inline-flex;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-  .dot {
-    flex-shrink: 0;
-    box-sizing: border-box;
-    width: 1rem;
-    height: 1rem;
-    border: 1px solid var(--theme-button-border);
-    border-radius: 50%;
-
-    &.on {
-      border: 5px solid var(--primary-button-default);
-    }
-  }
-  .text {
-    display: flex;
     flex-direction: column;
-    gap: 0.125rem;
-  }
-  .label {
-    color: var(--theme-caption-color);
+    gap: var(--spacing-0_25);
   }
   .hint {
+    padding-left: calc(1rem + var(--spacing-1));
     font-size: 0.75rem;
-    color: var(--theme-darker-color);
+    color: var(--global-secondary-TextColor);
+
+    &.small {
+      padding-left: calc(0.875rem + var(--spacing-0_75));
+    }
   }
 </style>

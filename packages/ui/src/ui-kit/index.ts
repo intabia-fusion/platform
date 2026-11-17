@@ -69,6 +69,7 @@ export { default as TextArea } from './text-area/TextArea.svelte'
 export { default as TextInput } from './text-input/TextInput.svelte'
 export { default as Toast } from './toast/Toast.svelte'
 export { default as Toggle } from './toggle/Toggle.svelte'
+export { default as TypingIndicator } from './typing/TypingIndicator.svelte'
 export { default as WizardDialog } from './wizard-dialog/WizardDialog.svelte'
 export { default as WorkbenchTab } from './workbench-tab/WorkbenchTab.svelte'
 export { default as WorkspaceLogo } from './workspace-logo/WorkspaceLogo.svelte'
@@ -219,7 +220,7 @@ export type { SpinnerKind, SpinnerProps, SpinnerSize } from './spinner/types'
 export type { SplitButtonEvents, SplitButtonKind, SplitButtonProps, SplitButtonSize } from './split-button/types'
 export type { StatusIconKind, StatusIconProps, StatusIconSize, StatusIconTone } from './status-icon/types'
 export type { CalloutProps, CalloutTone } from './callout/types'
-export type { SettingRowProps, SettingRowSlots, SettingRowVariant } from './setting-row/types'
+export type { SettingRowKind, SettingRowProps, SettingRowSlots, SettingRowVariant } from './setting-row/types'
 export type { MonthViewProps, MonthViewWeekdayFormat } from './month-view/types'
 export type { YearViewProps } from './year-view/types'
 export type { StatusMessageProps } from './status-message/types'
@@ -243,6 +244,7 @@ export type {
   ToggleProps,
   ToggleSize
 } from './toggle/types'
+export type { TypingIndicatorProps } from './typing/types'
 export type { WizardDialogProps, WizardDialogEvents, WizardDialogSlots } from './wizard-dialog/types'
 export type {
   WorkbenchTabEvents,

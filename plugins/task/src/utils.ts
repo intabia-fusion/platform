@@ -272,6 +272,49 @@ export function getStatusIconPosition (
   return { index: unique.indexOf(statusId) + 1, count: unique.length + 1 }
 }
 
+export function hasTaskTypeStatusOrderMismatch (
+  type: ProjectType,
+  taskType: Pick<TaskType, 'statuses'> | undefined,
+  taskTypes: IdMap<TaskType>,
+  statuses: IdMap<Status>
+): boolean {
+  const rank = getProjectStatusRank([type], taskTypes)
+  const previous = new Map<Ref<StatusCategory>, number>()
+  for (const id of taskType?.statuses ?? []) {
+    const category = statuses.get(id)?.category
+    const position = rank.get(id)
+    if (category === undefined || position === undefined) continue
+    if (position < (previous.get(category) ?? -1)) return true
+    previous.set(category, position)
+  }
+  return false
+}
+
+export function alignTaskTypeStatusOrder (
+  type: ProjectType,
+  taskType: Pick<TaskType, 'statuses'>,
+  taskTypes: IdMap<TaskType>,
+  statuses: IdMap<Status>
+): Array<Ref<Status>> {
+  const rank = getProjectStatusRank([type], taskTypes)
+  const ordered = [...taskType.statuses]
+  const categories = new Map<Ref<StatusCategory>, number[]>()
+  for (const [index, id] of ordered.entries()) {
+    const category = statuses.get(id)?.category
+    if (category === undefined || !rank.has(id)) continue
+    const positions = categories.get(category) ?? []
+    positions.push(index)
+    categories.set(category, positions)
+  }
+  for (const positions of categories.values()) {
+    const sorted = positions.map((index) => ordered[index]).sort((a, b) => (rank.get(a) ?? 0) - (rank.get(b) ?? 0))
+    positions.forEach((index, i) => {
+      ordered[index] = sorted[i]
+    })
+  }
+  return ordered
+}
+
 /**
  * @public
  * Position of a status among the statuses of its category in the order of one task type (`TaskType.statuses`),
@@ -298,6 +341,21 @@ export function getSingleQueryKind (kind: unknown): Ref<TaskType> | undefined {
   return Array.isArray(list) && list.length === 1 && typeof list[0] === 'string'
     ? (list[0] as Ref<TaskType>)
     : undefined
+}
+
+export function getMissingTaskTypeStatuses (
+  tasks: Array<Pick<Task, 'kind' | 'status'>>,
+  taskTypes: IdMap<TaskType>
+): Map<Ref<TaskType>, Array<Ref<Status>>> {
+  const result = new Map<Ref<TaskType>, Array<Ref<Status>>>()
+  for (const task of tasks) {
+    const taskType = taskTypes.get(task.kind)
+    if (taskType === undefined || taskType.statuses.includes(task.status)) continue
+    const ids = result.get(task.kind) ?? []
+    if (!ids.includes(task.status)) ids.push(task.status)
+    result.set(task.kind, ids)
+  }
+  return result
 }
 
 /**
@@ -694,12 +752,7 @@ export function chooseMergeTarget (
 
 /**
  * @public
- * Disambiguation for statuses shown together under one name: for every status whose trimmed, case-insensitive
- * name is shared with another listed status, the name of its project type, or of its project when that type has
- * exactly one project. A status listed by several project types takes the first of them by name. When several
- * statuses of one name get the same label (they come from one project type or project), the names of the task
- * types that list the status are used instead. Statuses with a unique name, or without a project type, get no
- * entry.
+ * Task type names distinguish statuses sharing a name; project labels support legacy types without task types.
  */
 export function getStatusNameSuffixes (
   statuses: Status[],
@@ -722,20 +775,25 @@ export function getStatusNameSuffixes (
   for (const group of byName.values()) {
     const unique = group.filter((it, idx, arr) => arr.findIndex((p) => p._id === it._id) === idx)
     if (unique.length < 2) continue
-    const labels = new Map<Ref<Status>, { label: string, type: Ref<ProjectType> }>()
+    const labels = new Map<Ref<Status>, { suffix: string, project: string }>()
     for (const s of unique) {
-      const type = sortedTypes.find((t) => t.statuses.some((it) => it._id === s._id))
+      const statusTypes = sortedTypes.filter((t) => t.statuses.some((it) => it._id === s._id))
+      const type = statusTypes[0]
       if (type === undefined) continue
       const typeProjects = projectsByType.get(type._id) ?? []
-      labels.set(s._id, { label: typeProjects.length === 1 ? typeProjects[0].name : type.name, type: type._id })
+      const label = typeProjects.length === 1 ? typeProjects[0].name : type.name
+      const names = [
+        ...new Set(
+          taskTypeList
+            .filter((tt) => statusTypes.some((t) => t._id === tt.parent) && tt.statuses.includes(s._id))
+            .map((tt) => tt.name)
+        )
+      ].sort((a, b) => a.localeCompare(b))
+      labels.set(s._id, { suffix: names.length > 0 ? names.join(', ') : label, project: label })
     }
-    for (const [id, { label, type }] of labels) {
-      const clash = [...labels].some(([other, it]) => other !== id && it.label === label)
-      const names = taskTypeList
-        .filter((tt) => tt.parent === type && tt.statuses.includes(id))
-        .map((tt) => tt.name)
-        .sort((a, b) => a.localeCompare(b))
-      result.set(id, clash && names.length > 0 ? names.join(', ') : label)
+    for (const [id, { suffix, project }] of labels) {
+      const clash = [...labels].some(([other, label]) => other !== id && label.suffix === suffix)
+      result.set(id, clash && suffix !== project ? `${suffix}, ${project}` : suffix)
     }
   }
   return result

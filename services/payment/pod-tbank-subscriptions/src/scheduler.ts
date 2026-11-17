@@ -335,7 +335,9 @@ async function cleanupAbandonedSubscriptions (ctx: MeasureContext, storage: Subs
           ...freshSub.providerData,
           modifiedAt: now,
           status: 'ABANDONED',
-          pending: false
+          pending: false,
+          // Kept onto the closed row: a draft is never a plan state (see isCheckoutDraft).
+          draft: true
         }
       })
       cleaned++

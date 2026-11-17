@@ -15,6 +15,7 @@
     "AnyStatus": "任意のステータス",
     "AnyTaskType": "任意のタスクタイプ",
     "Workflows": "ワークフロー",
+    "NoOutgoingTransitions": "遷移なし",
     "DeleteWorkflow": "ワークフローを削除",
     "DeleteWorkflowConfirm": "このワークフローを削除してもよろしいですか？",
     "DeleteWorkflowTransition": "トランジションを削除",

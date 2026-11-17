@@ -32,20 +32,20 @@ Object.entries(grammars).forEach((grammar) => {
 /** @public */
 export interface HighlightOptions {
   auto?: boolean
-  language: string | undefined
+  language: string | null | undefined
 }
 
 /** @public */
 export function highlightText (text: string, options: HighlightOptions): string {
-  // Always use highlighter — it sanitizes the input.
+  // Always use the highlighter so code is HTML-escaped even without a known language.
   const { language, auto } = options
-  const validLanguage = language !== undefined && hljs.getLanguage(language) !== undefined
+  const validLanguage = language != null && hljs.getLanguage(language) !== undefined
 
   const { value: highlighted } = validLanguage
     ? hljs.highlight(text, { language })
     : auto === true
       ? hljs.highlightAuto(text)
-      : { value: text }
+      : hljs.highlight(text, { language: 'plaintext' })
 
   return normalizeHighlightTags(highlighted)
 }

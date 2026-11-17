@@ -33,7 +33,7 @@ export class TemplatePage extends CommonTrackerPage {
     this.page.locator('span.issuePresenterRoot > span').filter({ hasText: templateName })
 
   profileButton = (): Locator => this.page.locator('#profile-button')
-  settingsButton = (): Locator => this.page.locator('button:has-text("Settings")')
+  settingsButton = (): Locator => this.page.getByRole('button', { name: 'Settings', exact: true })
   notificationsButton = (): Locator => this.page.getByRole('button', { name: 'Notifications' })
   textTemplatesLink = (): Locator => this.page.locator('text="Text Templates"')
   createTemplateButton = (): Locator => this.page.locator('#create-template')

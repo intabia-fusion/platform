@@ -6,7 +6,8 @@ import love, {
   callTraceParent,
   newCallTraceId
 } from '@hcengineering/love'
-import { getMetadata } from '@hcengineering/platform'
+import { getMetadata, Severity, Status } from '@hcengineering/platform'
+import ui, { addStatusNotification } from '@hcengineering/ui'
 import { getPlatformToken } from './utils'
 import { getCurrentEmployee } from '@hcengineering/contact'
 import { getPersonByPersonRef } from '@hcengineering/contact-resources'
@@ -23,9 +24,6 @@ export class LoveServiceError extends Error {
   constructor (
     readonly status: number,
     message: string,
-    // Parsed response body, when it was JSON. `resolveSession` explains a refusal here
-    // (`{ error: 'Meeting is not open', nextOccurrence }`), and the caller needs it to answer
-    // the user in words instead of a runtime error.
     readonly body?: Record<string, any>
   ) {
     super(message)
@@ -129,6 +127,9 @@ export class LoveClient {
       // 409 means somebody else already flipped it, or the flip is still settling - the
       // document carries the real state, so surface it instead of failing silently.
       if (!res.ok) {
+        if (res.status === 413) {
+          await addStatusNotification(new Status(Severity.WARNING, ui.string.WorkspaceLimitsExhausted, {}))
+        }
         throw new LoveServiceError(res.status, `${path} failed: ${res.status}`)
       }
     } catch (err: any) {

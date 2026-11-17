@@ -12,6 +12,7 @@
 - [chat-viewport.md](chat-viewport.md) - Чат: загрузка окна и чтение при скролле
 - [chat-message-rights.md](chat-message-rights.md) - Чат: права на правку и удаление сообщений на сервере
 - [chat-polls.md](chat-polls.md) - Чат: опросы (апплеты): путь голоса, права, модель и хранение, уведомления, клиент
+- [activity-history-class.md](activity-history-class.md) - Активность: класс записи истории не меняется при смене типа задачи
 - [content-reports.md](content-reports.md) - Чат: жалобы и опция воркспейса для них
 - [attachment_search_facets.md](attachment_search_facets.md) - Чат: поиск вложений, фасеты и привязка к чату
 - [notifications-embedded-model.md](notifications-embedded-model.md) - Уведомления: встроенная модель и сервис
@@ -44,12 +45,15 @@
 - [billing_dev_stand_quirks.md](billing_dev_stand_quirks.md) - Billing dev stand quirks
 - [billing_mail_layout.md](billing_mail_layout.md) - Письма подписок: свой макет по образцу OTP, PRODUCT_NAME
 - [tbank_api_spec.md](tbank_api_spec.md) - T-Bank Acquiring API - особенности реализации
+- [trial-banner-checkout-draft.md](trial-banner-checkout-draft.md) - плашка триала пропадала из-за черновика чекаута; REJECTED по черновику -> Canceled
 
 ## Аккаунты и вход - [auth-onboarding.md](../features/auth-onboarding.md)
 
 - [account_db_migrations.md](account_db_migrations.md) - Account DB migrations
+- [auth-email-storage.md](auth-email-storage.md) - AuthEmail: почему читается напрямую из localStorage, а не через fetchMetadataLocalStorage
 - [admin_plugin_refactor.md](admin_plugin_refactor.md) - Admin plugin gotchas
 - [deferred-deletion.md](deferred-deletion.md) - Отложенное удаление пространств и аккаунтов
+- [login-signup-analytics.md](login-signup-analytics.md) - Регистрация: клики кнопки и цели Метрики
 
 ## Планировщик и календарь - [planner-calendar.md](../features/planner-calendar.md)
 
@@ -88,6 +92,7 @@
 - [pod_log_volume.md](pod_log_volume.md) - Pod log volume: what was actually filling it
 - [postgres-reverse-lookup-sort.md](postgres-reverse-lookup-sort.md) - Postgres: sort by reverse lookup field
 - [postgres-lookup-projection.md](postgres-lookup-projection.md) - Postgres: проекция по lookup (`$lookup.<path>.<field>` в projection)
+- [doc-preview-backfill.md](doc-preview-backfill.md) - DocPreview: миграции и их порядок, классы с превью, триггеры, доступ, навигатор и шапка чата
 - [rpc-json-protocol.md](rpc-json-protocol.md) - RPC: протокол транзактора
 - [stats-slow-sql-tool.md](stats-slow-sql-tool.md) - Stats SQL analysis tools (dev/tool)
 - [transactor-workspace-memory.md](transactor-workspace-memory.md) - Память транзактора на пространство
@@ -98,7 +103,6 @@
 - [dependency-upgrade-tooling.md](dependency-upgrade-tooling.md) - Dependency upgrade tooling
 - [eslint8_upgrade_fix_patterns.md](eslint8_upgrade_fix_patterns.md) - @typescript-eslint 6->8 fix patterns
 - [fast-build-tooling.md](fast-build-tooling.md) - fast-build tooling (`@intabia-fusion/yama`)
-- [penpot.md](penpot.md) - Penpot 2.18.3: измерение текста, flex sizing, варианты, токены, export/import RPC
 - [fast_build_cache_external_deps.md](fast_build_cache_external_deps.md) - fast-build cache ignores external dependencies
 - [go-docker-build.md](go-docker-build.md) - Go docker builds (foundations/stream)
 - [svelte-type-imports.md](svelte-type-imports.md) - Type imports in .svelte, eslint rules, the no-duplicates fixer bug и пробел проверки относительно Storybook

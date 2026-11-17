@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -42,6 +43,11 @@
   const client = getClient()
 
   let newIssue: IssueTemplateChild = childIssue !== undefined ? { ...childIssue } : getIssueDefaults()
+  let previousProject = projectId
+  $: if (projectId !== previousProject) {
+    previousProject = projectId
+    newIssue = { ...newIssue, component: null, milestone: null, kind: undefined }
+  }
   let thisRef: HTMLDivElement | undefined
   let focusIssueTitle: () => void
   let labels: TagElement[] = []

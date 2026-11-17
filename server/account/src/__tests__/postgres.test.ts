@@ -640,6 +640,112 @@ describe('PostgresAccountDB', () => {
     })
   })
 
+  describe('payment charge deduplication', () => {
+    it.each([
+      [
+        'recurrent success and confirmation',
+        [
+          { provider: 'tbank', operation: 'charge_recurrent', status: 'success', payment_id: 'p1', amount: 100 },
+          { provider: 'tbank', operation: 'webhook', status: 'CONFIRMED', payment_id: 'p1', amount: 200 }
+        ],
+        1,
+        100
+      ],
+      [
+        'duplicate webhook',
+        [
+          { provider: 'tbank', operation: 'webhook', status: 'CONFIRMED', payment_id: 'p1', amount: 100 },
+          { provider: 'tbank', operation: 'webhook', status: 'CONFIRMED', payment_id: 'p1', amount: 100 }
+        ],
+        1,
+        100
+      ],
+      [
+        'same payment id from different providers',
+        [
+          { provider: 'tbank', operation: 'webhook', status: 'CONFIRMED', payment_id: 'p1', amount: 100 },
+          { provider: 'stripe', operation: 'webhook', status: 'CONFIRMED', payment_id: 'p1', amount: 200 }
+        ],
+        2,
+        300
+      ],
+      [
+        'payments without ids',
+        [
+          { provider: 'tbank', operation: 'webhook', status: 'CONFIRMED', payment_id: null, amount: 100 },
+          { provider: 'tbank', operation: 'webhook', status: 'CONFIRMED', payment_id: null, amount: 200 }
+        ],
+        2,
+        300
+      ]
+    ])('counts %s in daily and monthly stats', async (_name, rows, charges, amount) => {
+      mockClient.unsafe.mockResolvedValue(
+        rows.map((row) => ({
+          ...row,
+          workspace_uuid: 'ws1',
+          created_on: Date.UTC(2026, 10, 1)
+        }))
+      )
+
+      const daily = await accountDb.getPaymentOperationStats(0, Date.UTC(2027, 0, 1))
+      expect(daily.totalCharges).toBe(charges)
+      expect(daily.totalAmount).toBe(amount)
+      expect(daily.workspaces).toEqual([{ workspaceUuid: 'ws1', charges, amount, errors: 0 }])
+      const monthly = await accountDb.getPaymentMonthlyStats(0, Date.UTC(2027, 0, 1))
+      expect(monthly).toEqual([{ month: '2026-11', charges, amount, errors: 0, cancels: 0, refunds: 0 }])
+    })
+  })
+
+  it('requests payment rows in chronological order before choosing the charged month', async () => {
+    const october = Date.UTC(2026, 9, 31, 23, 59)
+    const november = Date.UTC(2026, 10, 1)
+    mockClient.unsafe.mockResolvedValue([
+      {
+        provider: 'tbank',
+        operation: 'charge_recurrent',
+        status: 'success',
+        payment_id: 'month-boundary',
+        amount: 100,
+        created_on: october
+      },
+      {
+        provider: 'tbank',
+        operation: 'webhook',
+        status: 'CONFIRMED',
+        payment_id: 'month-boundary',
+        amount: 200,
+        created_on: november
+      }
+    ])
+
+    const daily = await accountDb.getPaymentOperationStats(october, november + 1000)
+    expect(daily.totalCharges).toBe(1)
+    expect(daily.totalAmount).toBe(100)
+    expect(await accountDb.getPaymentMonthlyStats(october, november + 1000)).toEqual([
+      { month: '2026-10', charges: 1, amount: 100, errors: 0, cancels: 0, refunds: 0 },
+      { month: '2026-11', charges: 0, amount: 0, errors: 0, cancels: 0, refunds: 0 }
+    ])
+    for (const [sql] of mockClient.unsafe.mock.calls) {
+      expect(sql).toContain('ORDER BY created_on ASC, id ASC')
+    }
+  })
+
+  it('loads one provider payment with stable paging and bound identifiers', async () => {
+    await accountDb.getPaymentOperations({
+      provider: 'tbank',
+      paymentId: "payment'identifier",
+      to: 100,
+      limit: 25,
+      offset: 25
+    })
+
+    const [sql, args] = mockClient.unsafe.mock.calls[0]
+    expect(sql).toContain('created_on < $1 AND provider = $2 AND payment_id = $3')
+    expect(sql).toContain('ORDER BY created_on DESC, id DESC LIMIT $4 OFFSET $5')
+    expect(sql).not.toContain("payment'identifier")
+    expect(args).toEqual([100, 'tbank', "payment'identifier", 25, 25])
+  })
+
   // unsafe() bypasses the collection mapping, so these must route through convertToObj
   describe('raw query timestamp conversion', () => {
     it('listAdminActions returns createdOn as a number and strips the window count', async () => {

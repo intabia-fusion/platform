@@ -22,7 +22,7 @@
 | onboard-resources | `plugins/onboard-resources/src` | UI мастера онбординга (шаги Workspace/User/Finish) |
 | onboard-assets | `plugins/onboard-assets` | статические ресурсы онбординга |
 | admin | `plugins/admin/src` | клиентский плагин админ-панели |
-| admin-resources | `plugins/admin-resources/src` | UI админки: вкладки Accounts/Workspaces/Billing/Audit/General |
+| admin-resources | `plugins/admin-resources/src` | UI админки: вкладки General/Workspaces/Accounts/Payments/Statistics/Storage/Audit/AI |
 | guest | `plugins/guest/src` | клиентский плагин публичных ссылок |
 | guest-resources | `plugins/guest-resources/src` | UI публичных ссылок, гостевой вход |
 | model-guest | `models/guest/src` | модель класса `PublicLink` |
@@ -61,7 +61,7 @@
 **2. Вход по коду (OTP) и регистрация без пароля.**
 1. `loginOtp()` (`operations.ts`) отправляет код на email; для незарегистрированного email ответ всё равно `{sent: true}` (анти-эниумерация).
 2. `signUpOtp()` (`operations.ts`) создаёт `Person` + `SocialId(EMAIL)`.
-3. `validateOtp()` (`operations.ts`) проверяет код и выдаёт токен.
+3. `validateOtp()` (`operations.ts`) проверяет код и выдаёт токен. `SignupForm.svelte` передаёт пароль только при включённом флажке "Задать пароль"; регистрация без пароля не запускает проверку сложности.
 
 **3. OAuth (Google/GitHub/OpenID).**
 1. `pods/authProviders/src/index.ts` отдаёт список провайдеров на `GET /providers`.
@@ -92,11 +92,13 @@
 ### Логин и регистрация
 - **Пароль с блокировкой после N попыток.** `login()`, `recordFailedLoginAttempt`/`isAccountPasswordLocked` - `server/account/src/operations.ts`, `server/account/src/utils.ts`.
 - **Email OTP логин/регистрация.** `loginOtp`/`validateOtp`/`signUpOtp` - `server/account/src/operations.ts`.
+- **Аналитика регистрации.** `SignupForm.svelte` задает событие `signup.submitAttempt`; `Form.svelte` различает отправку и блокировку по согласиям или валидации, включая Enter. `YandexMetrikaProvider` (`packages/analytics-providers/src/yandexMetrika.ts`) отправляет цели `signup_click`, `signup_click_blocked`, `signup_submit`, `workspace_created` на страницах входа, регистрации и создания пространства. SDK не загружается при fragment или неизвестных query-параметрах текущего URL либо referrer: разрешены только `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, `utm_content`, `utm_id`, `yclid`, `gclid`. Явные просмотры и referrer передаются без query и fragment; параметры целей ограничены известными именами и значениями. Страницы со ссылками входа, восстановления, подтверждения и приглашения не отслеживаются, пока в URL остаются их секретные параметры. При уходе счетчик останавливается через `destruct`, очередь незагруженного SDK очищается. `AnalyticsCollectorProvider` отправляет события через `/collect` после появления токена; collector передает их в OTLP через `reportOTEL`. `signup.viaOtp` используется и при запросе кода, и при его проверке, поэтому число событий не равно числу регистраций. Контракт целей: [FUSIO-1607](https://platform.intabia.ru/workbench/platform/tracker/FUSIO-1607).
+- **Пределы длины полей регистрации.** Имя, фамилия и email - 254 символа (для email это предел адреса по RFC 5321, имена уравнены с ним), константы в `foundations/core/packages/account-client/src/limits.ts`. `maxlength` у `Field` (`plugins/login-resources/src/types.ts`) не даёт набрать и вставить больше, а значение длиннее лимита (пришло из пропа или `AuthEmail`) `Form.svelte` показывает статусом `FieldTooLong` и не отправляет - молчаливой обрезки нет. `signUp`/`signUpOtp`/`signUpJoin` и `changeUsername` отклоняют такое значение с `BadRequest` (`checkFieldLength` в `server/account/src/utils.ts`), иначе лимит обходится сменой имени в профиле или инвайтом; лимит стоит на трёх полях `SignupForm` и на email в формах логина и восстановления (`LoginPasswordForm`/`LoginOtpForm`/`PasswordRequest`).
 - **Согласие на обработку ПДн и правила.** Вызов регистрации (`signUpOtp`, `signUp`, `signUpJoin`, OAuth) считается согласием; сервер согласие не проверяет и не хранит. Клиент собирает его чекбоксами `ConsentCheckboxes.svelte` в `SignupForm.svelte`/`AuthLikeForm.svelte`, отправка (кнопка и Enter) блокируется в `performAction()` `Form.svelte` по `proceedDisabled`.
 - **Регистрация паролем (deprecated, только dev без mail-сервиса).** `signUp()`, флаг `hasSignUp` в `getMethods()` - `operations.ts`.
 - **Восстановление и смена пароля.** `requestPasswordReset`/`restorePassword`/`changePassword`/`getPasswordPolicy` - `operations.ts`. Политика сложности пароля принадлежит account-сервису (`PASSWORD_STRICTNESS`), проверяется на сервере при записи и отдаётся клиенту через `getPasswordPolicy`.
 - **OAuth Google/GitHub/OpenID Connect.** `pods/authProviders/src/{google,github,openid}.ts`.
-- **Инвайты и access-ссылки.** `createInvite`/`sendInvite`/`resendInvite`/`createInviteLink`/`createAccessLink` (экспирация, email-маска, лимит мест, роль) - `operations.ts`.
+- **Инвайты и access-ссылки.** `createInvite`/`sendInvite`/`resendInvite`/`createInviteLink`/`createAccessLink` (экспирация, email-маска, лимит мест, роль) - `operations.ts`. Письмо-приглашение называет отправителя: `getInviteSender()` (имя - из account-БД `person` в порядке `branding.lastNameFirst`, контакт - первый подтверждённый `EMAIL` social id, роль - `getWorkspaceRole`); клиент имя не передаёт. Из имени вычищаются control/format-символы (включая bidi и zero-width) и разделители строк -> блок в `Invite*`/`ResendInvite*` (`getInviteEmail()`, `utils.ts`); Owner/Maintainer подписываются как "Администратор пространства", остальные - "Участник пространства" (`InviteSenderRole*`), новые роли попадают в "участника". Имя в HTML экранируется, в plain-text - нет.
 - **Привязка social identity.** `addEmailSocialId`/`addHulyAssistantSocialId`/`refreshHulyAssistantToken`/`releaseSocialId` - `operations.ts`.
 
 ### Сессии и токены
@@ -129,6 +131,7 @@
 - **Аренда бэкапа перед удалением.** `updateBackupLease`/`workspace_status.backup_lease_until` - см. `docs/memory/deferred-deletion.md`. Детальная механика, миграции v43-v47, найденные баги - `docs/memory/deferred-deletion.md`, `docs/memory/account_db_migrations.md`.
 
 ### Администрирование и self-host
+- **Очистка хранилища.** Глобальная вкладка `StorageTab.svelte` показывает только объекты, не используемые ни в одном пространстве, и разбивку по MIME. Расчет и удаление идут через account RPC `adminGetStorageCleanup`/`adminRequestStorageCleanup`; удаление требует admin-OTP. При открытии вкладка получает последнее задание, затем опрашивает его по `jobId` до завершения: новый расчет другого администратора не заменяет текущее задание. Прямых вызовов S3 или datalake из браузера нет.
 - **Единый admin-гейт.** `requireAdminOp`/`isHumanAdminLogin` - `server/account/src/adminOp.ts`.
 - **Self-host лицензия.** `LicenseEdition` (dev/community/licensed), `COMMUNITY_MAX_USERS = 15`, RSA-подпись - `foundations/core/packages/token/src/license.ts`.
 - **Бесплатные лимиты self-host.** `parseFreePlanLimits`/`getFreePlanLimits` - `server/account/src/freeLimits.ts`.
@@ -141,11 +144,12 @@
 | --- | --- | --- | --- | --- | --- |
 | Пароль с блокировкой после N попыток | - | - | plan | - | отложено |
 | Email OTP логин/регистрация | - | - | plan | - | отложено |
+| Аналитика регистрации | - | - | internal | - | |
 | Согласие на обработку ПДн и правила | - | - | plan | - | отложено |
 | Регистрация паролем (deprecated, только dev без mail-сервиса) | - | - | internal | - | |
 | Восстановление и смена пароля | - | - | plan | - | отложено |
 | OAuth Google/GitHub/OpenID Connect | - | - | plan | - | отложено |
-| Инвайты и access-ссылки | getting-started/workspace-setup | getting-started/workspace-setup | stale | 0.8.60 | скрин settings-modules.png устарел (старая навигация с «Пространства», надпись «Бета-версия» вместо «Ознакомительная версия») |
+| Инвайты и access-ссылки | getting-started/workspace-setup | getting-started/workspace-setup | stale | 0.8.60 | скрин settings-modules.png устарел (старая навигация с «Пространства», надпись «Бета-версия» вместо «Ознакомительная версия»); не описано, что письмо-приглашение называет отправителя (имя, email, роль) в теме, тексте и HTML-блоке |
 | Привязка social identity | people-contacts/managing-account | - | no-en | 0.8.60 | исправлено: текст про удаление аккаунта (отложенное удаление + отмена входом) и про возврат в пространство (по новому приглашению, не только от владельца) |
 | Подписанный JSON-токен без refresh-механики | - | - | internal | - | |
 | LRU-кэш верифицированных токенов | - | - | internal | - | |
@@ -168,6 +172,7 @@
 | Отмена удаления | - | - | plan | - | отложено |
 | Немедленное удаление и блокировка админом | - | - | internal | - | |
 | Аренда бэкапа перед удалением | - | - | internal | - | |
+| Очистка хранилища | - | - | plan | - | |
 | Единый admin-гейт | - | - | internal | - | |
 | Self-host лицензия | - | - | plan | - | отложено |
 | Бесплатные лимиты self-host | - | - | plan | - | отложено |

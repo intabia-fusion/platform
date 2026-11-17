@@ -27,7 +27,10 @@ import serverActivity, {
   type LabelPresenter,
   type AttributePresenter,
   type AttributePresenterFn,
-  type IconPresenter
+  type IconPresenter,
+  type NoPreview,
+  type PropsPresenter,
+  type PropsPresenterFn
 } from '@hcengineering/server-activity'
 import { TClass, TDoc } from '@hcengineering/model-core'
 import activity from '@hcengineering/activity'
@@ -69,6 +72,15 @@ export class TIconPresenter extends TClass implements IconPresenter {
   personalized?: boolean
 }
 
+@Mixin(serverActivity.mixin.PropsPresenter, core.class.Class)
+export class TPropsPresenter extends TClass implements PropsPresenter {
+  presenter!: Resource<PropsPresenterFn>
+  triggerFields!: string[]
+}
+
+@Mixin(serverActivity.mixin.NoPreview, core.class.Class)
+export class TNoPreview extends TClass implements NoPreview {}
+
 @Model(serverActivity.class.AttributePresenter, core.class.Doc, DOMAIN_MODEL)
 export class TAttributePresenter extends TDoc implements AttributePresenter {
   attribute!: string
@@ -82,12 +94,46 @@ export function createModel (builder: Builder): void {
     TTitlePresenter,
     TAttributePresenter,
     TIconPresenter,
-    TLabelPresenter
+    TLabelPresenter,
+    TNoPreview,
+    TPropsPresenter
   )
 
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {
     trigger: serverActivity.trigger.OnDocRemoved,
     isAsync: true
+  })
+
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverActivity.trigger.OnDocPreviewRemoved,
+    txMatch: {
+      _class: core.class.TxRemoveDoc
+    },
+    isAsync: false
+  })
+
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverActivity.trigger.OnDocCreated,
+    txMatch: {
+      _class: core.class.TxCreateDoc
+    },
+    isAsync: false
+  })
+
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverActivity.trigger.OnDocUpdated,
+    txMatch: {
+      _class: core.class.TxUpdateDoc
+    },
+    isAsync: true
+  })
+
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverActivity.trigger.OnDocPreviewMoved,
+    txMatch: {
+      _class: core.class.TxUpdateDoc
+    },
+    isAsync: false
   })
 
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {

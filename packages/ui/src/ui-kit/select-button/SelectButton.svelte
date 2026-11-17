@@ -46,6 +46,7 @@
   export let fullWidth: boolean = false
   export let justify: SelectButtonJustify = 'start'
   export let wrap: boolean = false
+  export let field: boolean = false
   export let disabled: boolean = false
   export let loading: boolean = false
   export let element: HTMLButtonElement | undefined = undefined
@@ -85,6 +86,7 @@
   class:select-button--full-width={fullWidth}
   class:select-button--center={justify === 'center'}
   class:select-button--wrap={wrap}
+  class:select-button--field={field}
 >
   {#if iconOnly}
     <Button
@@ -248,6 +250,13 @@
       .select-button__chevron {
         color: var(--global-secondary-TextColor);
       }
+    }
+    // A value of a form takes the field fill and border, as DateInput and TextInput; tokens inherit to the button.
+    &--field {
+      --kit-button-secondary-BackgroundColor: var(--input-BackgroundColor);
+      --kit-button-secondary-hover-BackgroundColor: var(--input-hover-BackgroundColor);
+      --kit-button-secondary-active-BackgroundColor: var(--input-hover-BackgroundColor);
+      --kit-button-secondary-BorderColor: var(--input-BorderColor, transparent);
     }
     &--chevron-hover {
       .select-button__chevron {

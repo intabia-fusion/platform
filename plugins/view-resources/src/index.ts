@@ -36,6 +36,7 @@ import ColorsPopup from './components/ColorsPopup.svelte'
 import DateEditor from './components/DateEditor.svelte'
 import DatePresenter from './components/DatePresenter.svelte'
 import DateTimePresenter from './components/DateTimePresenter.svelte'
+import TimestampLabel from './components/TimestampLabel.svelte'
 import DocAttributeBar from './components/DocAttributeBar.svelte'
 import ClassSettingButton from './components/ClassSettingButton.svelte'
 import DocNavLink from './components/DocNavLink.svelte'
@@ -65,6 +66,7 @@ import ObjectMention from './components/ObjectMention.svelte'
 import ObjectPresenter from './components/ObjectPresenter.svelte'
 import PersonArrayEditor from './components/PersonArrayEditor.svelte'
 import PersonIdPresenter from './components/PersonIdPresenter.svelte'
+import AccountUuidPresenter from './components/AccountUuidPresenter.svelte'
 import IdPresenter from './components/IdPresenter.svelte'
 import ReadOnlyNotification from './components/ReadOnlyNotification.svelte'
 import RolePresenter from './components/RolePresenter.svelte'
@@ -89,6 +91,7 @@ import ArrayFilter from './components/filter/ArrayFilter.svelte'
 import DateFilter from './components/filter/DateFilter.svelte'
 import DateFilterPresenter from './components/filter/DateFilterPresenter.svelte'
 import FilterBar from './components/filter/FilterBar.svelte'
+import FilterConditions from './components/filter/FilterConditions.svelte'
 import FilterTypePopup from './components/filter/FilterTypePopup.svelte'
 import ObjectFilter from './components/filter/ObjectFilter.svelte'
 import PersonIdFilter from './components/filter/PersonIdFilter.svelte'
@@ -177,6 +180,7 @@ export { default as ObjectBoxPopup } from './components/ObjectBoxPopup.svelte'
 export { default as ObjectPresenter } from './components/ObjectPresenter.svelte'
 export { default as ObjectSearchBox } from './components/ObjectSearchBox.svelte'
 export { default as ParentsNavigator } from './components/ParentsNavigator.svelte'
+export { default as PreviewIcon } from './components/PreviewIcon.svelte'
 export { default as PersonIdPresenter } from './components/PersonIdPresenter.svelte'
 export { default as RelationsEditor } from './components/RelationsEditor.svelte'
 export { default as SpaceTypeSelector } from './components/SpaceTypeSelector.svelte'
@@ -205,10 +209,12 @@ export * from './icons'
 export * from './middleware'
 export * from './objectIterator'
 export * from './selection'
+export * from './sortRules'
 export * from './status'
 export * from './utils'
 export * from './permissions'
 export * from './savedViews'
+export * from './preview'
 export {
   buildCategoryReferenceLookups,
   buildModel,
@@ -249,6 +255,7 @@ export {
   EditDoc,
   EnumEditor,
   FilterBar,
+  FilterConditions,
   HTMLPresenter,
   HyperlinkEditor,
   IconPicker,
@@ -311,6 +318,7 @@ export default async (): Promise<Resources> => ({
     DateEditor,
     DatePresenter,
     DateTimePresenter,
+    TimestampLabel,
     RolePresenter,
     ObjectPresenter,
     EditDoc,
@@ -344,6 +352,7 @@ export default async (): Promise<Resources> => ({
     StatusRefPresenter,
     PersonArrayEditor,
     PersonIdPresenter,
+    AccountUuidPresenter,
     PersonIdFilter,
     PersonIdFilterValuePresenter,
     DateFilterPresenter,

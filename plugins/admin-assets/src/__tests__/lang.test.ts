@@ -25,6 +25,7 @@ const sameAsEnglish = new Set([
   'Name',
   'OtpCode',
   'Page',
+  'PaymentJournal',
   'Plan',
   'Provider',
   'Region',
@@ -39,7 +40,8 @@ const sameAsEnglish = new Set([
   'Tx',
   'Type',
   'Url',
-  'Uuid'
+  'Uuid',
+  'Version'
 ])
 
 async function load (lang: string): Promise<Record<string, string>> {

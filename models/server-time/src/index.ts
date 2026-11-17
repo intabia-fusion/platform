@@ -18,6 +18,7 @@ import { Mixin, type Builder } from '@hcengineering/model'
 import core, { type Tx } from '@hcengineering/core'
 import { TClass } from '@hcengineering/model-core'
 import { type Resource } from '@hcengineering/platform'
+import serverActivity from '@hcengineering/server-activity'
 import serverCore, { type TriggerControl } from '@hcengineering/server-core'
 import tracker from '@hcengineering/tracker'
 import serverTime, { type ToDoFactory } from '@hcengineering/server-time'
@@ -73,6 +74,8 @@ export function createModel (builder: Builder): void {
   builder.mixin(tracker.class.Issue, core.class.Class, serverTime.mixin.ToDoFactory, {
     factory: serverTime.function.IssueToDoFactory
   })
+
+  builder.mixin(time.class.ToDo, core.class.Class, serverActivity.mixin.NoPreview, {})
 
   builder.mixin(time.class.ToDo, core.class.Class, serverCore.mixin.SearchPresenter, {
     title: [['title']],

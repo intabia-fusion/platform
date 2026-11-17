@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -1047,9 +1048,9 @@ export class WorkspaceClient {
     // that excludes the fallback-eligible level (low) would hard-block instead of degrading.
     const decision = decideLevel(requestedLevel, windows)
     if (decision.action === 'block') {
+      if (decision.reason === 'limit') return
       const lang = event.language ?? config.DefaultLanguage
-      const message =
-        decision.reason === 'unavailable' ? aiBot.string.AIServiceUnavailable : aiBot.string.TokenLimitReachedMonth
+      const message = aiBot.string.AIServiceUnavailable
       // Replaces "is typing" with the reason right away, so the user reads it while the refusal
       // message is still being written.
       await this.setTypingStatus(objectId, space, message)

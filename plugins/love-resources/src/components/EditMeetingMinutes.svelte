@@ -23,7 +23,7 @@
   import { createEventDispatcher, onMount } from 'svelte'
 
   import love from '../plugin'
-  import { joinMeeting, joinMeetingBySession, leaveMeeting } from '../meetings'
+  import { joinMeeting, joinMeetingBySession, currentMeeting, leaveMeeting } from '../meetings'
   import { currentMeetingMinutes, infos, myConnectingSessionId, rooms, connectingToMeeting } from '../stores'
   import { lkIsConnecting, lkSessionConnected } from '../liveKitClient'
   import { getMetadata } from '@hcengineering/platform'
@@ -51,12 +51,12 @@
     currentName = object.name
   }
 
-  async function changeName(): Promise<void> {
+  async function changeName (): Promise<void> {
     await client.diffUpdate(object, { name: newName })
   }
 
   let togglingPrivate = false
-  async function togglePrivate(): Promise<void> {
+  async function togglePrivate (): Promise<void> {
     if (togglingPrivate) return
     togglingPrivate = true
     try {
@@ -86,7 +86,7 @@
   })
 
   let joining = false
-  async function join(): Promise<void> {
+  async function join (): Promise<void> {
     if (joining) return
     joining = true
     try {
@@ -101,14 +101,11 @@
   $: hasPendingJoinInThisSession =
     $myConnectingSessionId !== null && $myConnectingSessionId === currentSessionId && $lkIsConnecting
 
-  async function connect(): Promise<void> {
+  async function connect (): Promise<void> {
     if ($connectingToMeeting) return
     await joinMeeting(object)
   }
 
-  // A finished session is the past gathering, not the meeting: the button has to lead to whatever
-  // is open now - the next occurrence of the series, or a permanent meeting at any time. A guest and
-  // a read-only viewer get nothing, as with the live session above.
   $: canJoinCurrent =
     object.status === MeetingStatus.Finished &&
     currentAccount.role !== AccountRole.Guest &&
@@ -116,7 +113,7 @@
     (object.meeting !== undefined || object.eventId !== undefined)
 
   let joiningCurrent = false
-  async function joinCurrent(): Promise<void> {
+  async function joinCurrent (): Promise<void> {
     if (joiningCurrent) return
     joiningCurrent = true
     try {
@@ -128,7 +125,7 @@
   }
 
   let leavingRoom = false
-  async function handleLeaveRoom(): Promise<void> {
+  async function handleLeaveRoom (): Promise<void> {
     if (leavingRoom) return
     leavingRoom = true
     try {
@@ -138,7 +135,7 @@
     }
   }
 
-  function showConnectionButton(
+  function showConnectionButton (
     object: MeetingMinutes,
     connecting: boolean,
     isConnected: boolean,
@@ -154,16 +151,11 @@
     // Show during connecting with spinner
     if (connecting) return true
     // Do not show connect button if we are already connected to the room
-    if (isConnected && $currentMeetingMinutes?._id === object._id) return false
+    // ParticipantInfo may point to another tab's meeting.
+    if (isConnected && currentMeeting === object._id) return false
 
     return true
   }
-
-  // The live session and the document this panel shows are not always the same document: the card
-  // was opened before the call, and the service may have opened another session for the same
-  // meeting. `currentMeetingMinutes` is derived from my own ParticipantInfo, which the live query may
-  // not have delivered yet, so a connected client with no named session still counts as being here -
-  // the panel was opened for the session just joined.
   $: sameMeeting =
     $currentMeetingMinutes !== undefined &&
     ($currentMeetingMinutes._id === object._id ||
@@ -171,7 +163,7 @@
       (object.eventId !== undefined && $currentMeetingMinutes.eventId === object.eventId))
   $: inThisCall = $lkSessionConnected && (sameMeeting || $currentMeetingMinutes === undefined)
 
-  function getInfo(mm: Ref<MeetingMinutes>, info: ParticipantInfo[]): ParticipantInfo[] {
+  function getInfo (mm: Ref<MeetingMinutes>, info: ParticipantInfo[]): ParticipantInfo[] {
     return info.filter((p) => p.meeting === mm)
   }
 

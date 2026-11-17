@@ -27,6 +27,7 @@ const subIssue = (i) => {
   return {
     id: i.id,
     cat: s.category,
+    statusName: s.name,
     color: s.color,
     title: i.title,
     priority: i.priority,

@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -22,7 +23,7 @@
   export let disabled: boolean = true
 </script>
 
-<SpaceTypeGeneralSectionEditor {type} {descriptor} {disabled}>
+<SpaceTypeGeneralSectionEditor {type} {descriptor} {disabled} nameLimit={32}>
   <svelte:fragment slot="extra">
     {#if descriptor?.editor}
       <Component is={descriptor.editor} props={{ type }} {disabled} />

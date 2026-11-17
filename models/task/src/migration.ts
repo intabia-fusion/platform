@@ -71,6 +71,7 @@ import {
 
 import { DOMAIN_TASK } from '.'
 import task from './plugin'
+import { migrateTaskReferenceClasses } from './referenceClasses'
 
 /**
  * @public
@@ -783,6 +784,13 @@ export const taskOperation: MigrateOperation = {
         state: 'delete-orphaned-task-type-classes-v1',
         mode: 'upgrade',
         func: deleteOrphanedTaskTypeClasses
+      },
+      {
+        state: 'repair-task-reference-classes-v1',
+        mode: 'upgrade',
+        func: async (client) => {
+          await migrateTaskReferenceClasses(client, DOMAIN_TASK, DOMAIN_ACTIVITY)
+        }
       }
     ])
   },

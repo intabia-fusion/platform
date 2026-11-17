@@ -16,7 +16,7 @@
 import core, { Doc, DocumentUpdate, Ref, TxCreateDoc, TxCUD, TxProcessor, TxRemoveDoc } from '@hcengineering/core'
 import activity, { ActivityMessage, Reaction } from '@hcengineering/activity'
 import { type ChatMessage } from '@hcengineering/chunter'
-import { truncateMessage, Sender } from '@hcengineering/server-notification'
+import { truncateMessage, type Receiver, Sender } from '@hcengineering/server-notification'
 import { isEmptyMarkup, markupToText } from '@hcengineering/text-core'
 import notification, {
   DocNotifyContext,
@@ -35,7 +35,7 @@ import {
   getApplets,
   getBaseDisplayParams,
   getLastNotify,
-  getObjectDisplayData,
+  getContextRefs,
   getPushGroup,
   hasReactionNotification,
   hasUnreadReaction,
@@ -113,7 +113,7 @@ async function handleCreateReaction (
   const sender = await cache.getSender(reaction.modifiedBy)
   const notifyProviders: NotifyProviders = Object.fromEntries(providers.map((p) => [p, [type]]))
 
-  const objectDisplayData = await getObjectDisplayData(client, cache, txCache, doc, receiver.account)
+  const contextRefs = await getContextRefs(client, cache, doc)
   const attachments = await getAttachments(message, client)
   const applets = await getApplets(message, client, { trustCounter: true })
   const pushSubscriptions = await cache.getPushSubscriptions(receiver.account)
@@ -128,7 +128,7 @@ async function handleCreateReaction (
     objectClass: doc._class,
     objectSpace: doc.space,
     group: getPushGroup(client, message),
-    objectDisplayData,
+    contextRefs,
     notification: {
       id: reaction._id,
       type: 'reaction',
@@ -141,16 +141,7 @@ async function handleCreateReaction (
       createdOn: reaction.createdOn ?? reaction.modifiedOn,
       createdBy: reaction.createdBy ?? reaction.modifiedBy
     },
-    intl: await getReactionNotificationContent(
-      client,
-      txCache,
-      type,
-      doc,
-      message,
-      reaction,
-      sender,
-      receiver.language
-    ),
+    intl: await getReactionNotificationContent(client, txCache, type, doc, message, reaction, sender, receiver),
     notifyProviders,
     pushSubscriptions,
     settings,
@@ -225,7 +216,7 @@ async function getReactionNotificationContent (
   message: ActivityMessage,
   reaction: Reaction,
   sender: Sender,
-  receiverLang: string
+  receiver: Pick<Receiver, 'account' | 'language'>
 ): Promise<NotificationIntl> {
   const { intlParams, intlParamsNotLocalized = {} } = await getBaseDisplayParams(
     client,
@@ -233,7 +224,7 @@ async function getReactionNotificationContent (
     type,
     doc,
     sender,
-    receiverLang
+    receiver
   )
 
   if (message.message != null && !isEmptyMarkup(message.message)) {

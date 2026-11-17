@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { type WorkspaceUuid } from '@hcengineering/core'
+import core, { type WorkspaceUuid } from '@hcengineering/core'
+import { QueueTopic } from '@hcengineering/server-core'
+import { UsageWorker } from '../usage'
 import { BillingMessageKind } from '../types'
 
 const consumers: Record<string, any> = {}
@@ -113,6 +115,28 @@ describe('main billing-usage consumer', () => {
 
   it('registered the billing-usage consumer', () => {
     expect(handler).toBeInstanceOf(Function)
+  })
+
+  it('refreshes usage and limits only after deleting a blob larger than 50 MB', async () => {
+    const worker = (UsageWorker as jest.Mock).mock.results[0].value
+    const message = (objectClass: string, size?: number, txClass = core.class.TxRemoveDoc): any => ({
+      workspace: WS,
+      value: { _class: txClass, objectClass, meta: { size } }
+    })
+    await consumers[QueueTopic.Tx](
+      ctx,
+      [
+        message(core.class.Doc, 60_000_000),
+        message(core.class.Blob, 60_000_000, core.class.TxCreateDoc),
+        message(core.class.Blob),
+        message(core.class.Blob, 49_999_999),
+        message(core.class.Blob, 50_000_000)
+      ],
+      queueControl
+    )
+    expect(worker.recomputeWorkspacesNow).not.toHaveBeenCalled()
+    await consumers[QueueTopic.Tx](ctx, [message(core.class.Blob, 50_000_001)], queueControl)
+    expect(worker.recomputeWorkspacesNow).toHaveBeenCalledWith(ctx, [WS], queueControl.heartbeat)
   })
 
   it('pushes AiTokensDetail data to db on a valid array', async () => {

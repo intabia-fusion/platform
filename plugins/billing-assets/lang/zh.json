@@ -1,5 +1,6 @@
 {
   "string": {
+    "DeleteDriveFileConfirm": "删除文件及其所有版本？",
     "Billing": "计费",
     "Subscriptions": "订阅",
     "AllPlans": "所有计划",

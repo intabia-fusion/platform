@@ -17,7 +17,7 @@ import { Button } from '@hcengineering/ui/kit'
 | DateSelect | Дата, которую можно поменять: `SelectButton` открывает `DatePopup`; secondary с заливкой и рамкой полей ввода (`--input-*`), как DateInput, остальные SelectButton - кнопочные | `value`, `mode`, `placeholder`, `tone`, `readonly`, `on:change` |
 | DateLabel | Дата только для показа: текст строки с иконкой календаря | `value`, `mode`, `showIcon`, `icon`, `tone` |
 | IconBox | Декоративная плашка с иконкой вида объекта (у поля названия в диалоге создания); с `color` - знак апплета или настройки на плашке цвета палитры | `icon`, `iconProps`, `iconSize`, `size`, `shape`, `color` |
-| SelectButton | Триггер селектора: значение или плейсхолдер, попап открывает место; `kind="chip"` - пилюля строки списка без шеврона (веха, компонент, срок в списке задач) | `label` / slot, `placeholder`, `icon`, `kind`, `size`, `chevron`, `pressed` |
+| SelectButton | Триггер селектора: значение или плейсхолдер, попап открывает место; `kind="chip"` - пилюля строки списка без шеврона (веха, компонент, срок в списке задач); `field` - вид поля ввода в форме | `label` / slot, `placeholder`, `icon`, `kind`, `size`, `chevron`, `pressed`, `field` |
 | ButtonGroup | Переключатели, из которых включён не больше одного (боковые панели документа) | `items`, `selected`, `allowDeselect`, `kind`, `size`, `iconSize`, `on:select` |
 | SplitButton | Главное действие и меню связанных, склеенные в один контрол | `label`, `icon`, `kind`, `size`, `items`, `on:click`, `on:selected` |
 | SegmentedControl | Значение или режим одного содержимого из 2-5 вариантов, выбран всегда ровно один (`radiogroup`); трек - половина `--global-ui-hover-BackgroundColor`, как плашки крошек; `iconOnly` прячет подпись и бейдж только у сегментов с иконкой; не помещается - сегменты прокручиваются (без полосы), вокруг трека запас под обводку фокуса без сдвига раскладки | `items` (`badge`), `selected`, `size`, `iconOnly`, `on:select` |
@@ -37,7 +37,7 @@ import { Button } from '@hcengineering/ui/kit'
 | CodeInput | Код по ячейкам: вставка и `one-time-code` раскладываются, переход между ячейками | `value`, `length`, `size`, `numeric`, `separator`, `error`, `on:input`, `on:complete` |
 | Dialog | Диалог: шапка с заголовком и закрытием, тело, футер с главным действием и отменой | `label`, `width`, `padding`, `embedded`, `footer`, `submitLabel`, `submitKind`, `canSubmit`, `loading`, `on:submit`, `on:cancel` (отменяемое), `on:close`, `closeConfirmationIntl` (вопрос перед любым закрытием), `dividers` (`false` - без линий у шапки и футера, для короткого вопроса), `aria-describedby`; `canClose()` для хоста попапа; модальный: фокус внутри, Tab по кругу, возврат фокуса |
 | Steps | Индикатор шагов (`ol`, `aria-current="step"`) | `items`, `selected` |
-| WizardDialog | Диалог-мастер: шаги слева, «Назад» / «Далее» / главное действие | `label`, `steps`, `selected`, `canProceed`, `canSubmit`, `on:select` (отменяемое), `on:submit` |
+| WizardDialog | Диалог-мастер: шаги слева, «Назад» (на первом шаге выключена, не скрыта), «Далее» и главное действие вместе справа в футере; с `earlySubmit` главное действие есть на каждом шаге (вторичное до последнего, `positive` на последнем) - когда следующие шаги необязательны | `label`, `steps`, `selected`, `canProceed`, `canSubmit`, `earlySubmit`, `on:select` (отменяемое), `on:submit` |
 | Menu | Список в попапе: иконка, цвет, описание, галочка, подменю, поиск, мультивыбор, заголовки групп; буквы на строке ищут по началу подписи, ↑ из поля поиска - на последнюю строку | `items` (`MenuItem`), `selected`, `multiselect`, `withSearch`, `headings` (`lines` / `divider` / `plain`), `width`, `embedded`, `loading`, `on:close`, `on:update`, слоты `header` / `actions` |
 | Spinner | Признак занятости рядом с элементом; с подписью - `role="status"` | `size`, `kind` (`neutral` / `brand`), `inheritColor`, `label` |
 | Loading | Заглушка области: спиннер посередине, появляется с задержкой; одна область `role="status"` (текст вставляется после неё), подпись `label` или скрытое «Loading»; без `aria-busy` | `size`, `label`, `delay`, слот `actions` |
@@ -46,7 +46,7 @@ import { Button } from '@hcengineering/ui/kit'
 | ProgressCircle | Кольцо прогресса | `value`, `min`, `max`, `size`, обязателен `aria-label` / `aria-labelledby` |
 | StatusIcon | Состояние значком или точкой; `negative` - красный опасного действия (нет, отклонено), `error` - красный ошибки; `kind="outline"` - кольцо без заливки бледным оттенком тона (60%) | `tone`, `kind` (`solid` / `outline`), `size`, `dot`, `tooltip` |
 | Callout | Плашка с пояснением в форме или диалоге: значок, текст, заголовок, кнопки справа | `tone` (`info` / `positive` / `warning` / `error`), `label`, `title`, слоты по умолчанию / `actions` |
-| SettingRow | Строка настройки в форме или диалоге: подпись капсом слева, контрол справа, линия под строкой (над первой нет); `variant="list"` - пункт списка переключателей: иконка на плашке `IconBox`, подпись и описание второй строкой, контрол в конце, линии между пунктами от подписи | `label`, `variant` (`form` / `list`), `hint` (кнопка-«i» с подсказкой), `stacked` (подпись над контролом), слот `details` (чипы под строкой); у `list` - `icon`, `color`, `description`, `disabled`; `let:labelId`, `let:descriptionId` (только у `list` с `description`), `let:controlId` (подпись `list` - `<label for>` этого id) |
+| SettingRow | Строка настройки в форме или диалоге: подпись капсом слева, контрол справа, линия под строкой (над первой нет); `kind="column"` - страница настроек: подпись обычным регистром в колонке 13.75rem, подсказка текстом под ней, контрол сразу за колонкой, без линии; `variant="list"` - пункт списка переключателей: иконка на плашке `IconBox`, подпись и описание второй строкой, контрол в конце, линии между пунктами от подписи | `label`, `variant` (`form` / `list`), `kind` (`line` / `column`, только `form`), `hint` (кнопка-«i» с подсказкой, у `column` - текст), `hintParams`, `stacked` (подпись над контролом), `fullWidth` (контрол занимает остаток строки, и у `column`), слот `details` (чипы под строкой); у `list` - `icon`, `color`, `description`, `disabled`; `let:labelId`, `let:descriptionId` (только у `list` с `description`), `let:controlId` (подпись `list` - `<label for>` этого id) |
 | MonthView | Вид «месяц» приложения: таблица целых недель на всю высоту, шапка дней недели прилипает, номер дня - кнопка, под ним содержимое места | `month`, `value`, `weeks`, `rowHeight`, `weekdayFormat`, слот `day` (`date`, `today`, `selected`, `outside`), `on:select`, `on:navigate` |
 | YearView | Вид «год» приложения: 12 `Calendar` без стрелок и года сеткой по ширине, выходные подсвечены, прокручивается сам | `year`, `value`, `marked`, `dayTooltip`, `on:select` |
 | StatusMessage | Строка результата `Status` под формой | `status`, `wrap` |
@@ -55,6 +55,7 @@ import { Button } from '@hcengineering/ui/kit'
 | Section | Секция с заголовком и действиями | `label`, `icon`, `level` (2–4, уровень заголовка), слот `actions` |
 | EmptyState | Пустое состояние: `large` - заполняет место по высоте и ширине и сам ставит заглушку по центру (текст не шире 30rem), иконка на плашке по `kind` (`brand` по умолчанию - круг тона выбора, `plate` - нейтральный квадрат); `small` - светлая рамка в секции, с `action` - вся плашка пунктирная кнопка добавления | `label`, `description`, `icon`, `size` (`large` / `small`), `kind`, `action` + `on:click`, слот действий |
 | Kbd | Сочетание клавиш; подложка клавиши `--global-ui-hover-BackgroundColor`, как у легаси | `keys` |
+| TypingIndicator | Кто-то печатает: иконка объекта или аватар (слот) со светлой пилюлей трёх точек цвета бренда в правом нижнем углу, пилюля закрывает точку присутствия; декоративная, кто печатает - называет место; при `prefers-reduced-motion` точки только мерцают | `typing` |
 | WorkspaceLogo | Логотип или буква воркспейса, точка уведомления; `notify` озвучивается в имени | `name`, `src`, `size`, `notify`; буква на заливке primary |
 | Link | Ссылка (`a` с `href`, иначе `button`): цвет основного текста, у `href` тонкое подчёркивание в покое, при наведении сплошное | `label`, `href`, `external`, `icon`, `disabled`, `truncate` (`end` / `middle` - многоточие посередине, конец имени целиком), `on:click` |
 | NavItem | Строка навигатора: иконка, счётчик, выбранная, вложенность, раскрытие; hover - бледнее выбранной (55% `--button-selected-BackgroundColor`), между строками 1px; плашка иконки `object` без рамки | `label`, `identifier` (12px / 500 перед названием, название обрезается), `description`, `kind` (`link` / `object` / `anchor`), `icon`, `count`, `selected`, `level`, `expandable`, `open`, слоты `actions` / `children` |
@@ -243,6 +244,7 @@ import { Button } from '@hcengineering/ui/kit'
   По содержимому не сжимается во flex-строке (как `Button`), ширину ограничивает место (`max-width: 100%`).
   Саму ширину задаёт место. `wrap` - значение переносится, высота растёт от высоты размера. `justify: 'center'` ставит посередине только текст, иконка и шеврон остаются по краям.
   Действие рядом (открыть объект) - отдельный `IconButton` вне кнопки.
+- `field` - значение формы рядом с `TextInput` / `TextArea`: у `secondary` заливка и рамка полей ввода (`--input-*`), как у `DateSelect` (он ставит `field` сам).
 
 ### SplitButton
 
@@ -376,6 +378,8 @@ import { Button } from '@hcengineering/ui/kit'
 Хранение - один спрайт `packages/ui/assets/icons.svg`, по `<symbol>` на иконку, символы по алфавиту id. Иконка - это
 `Asset` `ui.icon.<Имя>` (`ui:icon:Plus`): его можно передать в `icon` любого компонента (`IconButton`, `Icon`,
 `Action`) и записать в модель, как `activity.icon.Emoji`. Svelte-компонентов иконок в ките нет.
+
+- `ArrowBarToRight` / `ArrowBarToLeft` — стрелка к вертикальной черте; кнопка меню использует направление вправо для открытия и влево для скрытия.
 
 - Новая иконка: символ в `assets/icons.svg`, id в `uis.icon` (`src/plugin.ts`) и строка в `registerIcons`
   (`src/icons.ts`). Регистрирует спрайт `uiIcons()` рядом с `uiStrings()` в `dev/prod/src/platform.ts` и

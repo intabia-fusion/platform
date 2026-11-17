@@ -1,11 +1,17 @@
-import { test } from '../fixtures'
+import { expect, test } from '../fixtures'
 import { PlatformSetting, PlatformURI } from '../utils'
 import { TrackerNavigationMenuPage } from '../model/tracker/tracker-navigation-menu-page'
 import { NewProjectPage } from '../model/tracker/new-project-page'
 import { NewProject } from '../model/tracker/types'
-import { EditProjectPage } from '../model/tracker/edit-project-page'
+import { ProjectSettingsPage } from '../model/tracker/project-settings-page'
 import { AllProjectsPage } from '../model/tracker/all-projects-page'
 import { generateProjectId } from './tracker.utils'
+import { TemplatePage } from '../model/tracker/templates-page'
+import { connectTracker, findProjectByName } from '../API/TrackerApi'
+import tracker, { IssuePriority, type Project } from '@hcengineering/tracker'
+import contact, { AvatarType, type Person } from '@hcengineering/contact'
+import { systemAccountUuid, type AccountUuid, type Ref } from '@hcengineering/core'
+import { randomUUID } from 'node:crypto'
 
 test.use({
   storageState: PlatformSetting
@@ -14,13 +20,13 @@ test.use({
 test.describe('Tracker Projects tests', () => {
   let trackerNavigationMenuPage: TrackerNavigationMenuPage
   let newProjectPage: NewProjectPage
-  let editProjectPage: EditProjectPage
+  let projectSettingsPage: ProjectSettingsPage
   let allProjectsPage: AllProjectsPage
 
   test.beforeEach(async ({ page }) => {
     trackerNavigationMenuPage = new TrackerNavigationMenuPage(page)
     newProjectPage = new NewProjectPage(page)
-    editProjectPage = new EditProjectPage(page)
+    projectSettingsPage = new ProjectSettingsPage(page)
     allProjectsPage = new AllProjectsPage(page)
     await (await page.goto(`${PlatformURI}/workbench/sanity-ws`))?.finished()
   })
@@ -56,6 +62,446 @@ test.describe('Tracker Projects tests', () => {
     })
   })
 
+  test('User can go through the create project wizard steps', async () => {
+    const projectId = generateProjectId()
+    const data: NewProject = { title: `WizardProject-${projectId}`, identifier: projectId }
+
+    await test.step('User prepare a project with the identifier', async () => {
+      await trackerNavigationMenuPage.pressCreateProjectButton()
+      await newProjectPage.createNewProject(data)
+      await trackerNavigationMenuPage.checkProjectExist(data.title)
+    })
+
+    await test.step('A taken identifier blocks Next and Create', async () => {
+      await trackerNavigationMenuPage.pressCreateProjectButton()
+      await expect(newProjectPage.popupHeader()).toBeVisible()
+      await newProjectPage.inputTitle().fill(`${data.title}-2`)
+      await newProjectPage.inputIdentifier().fill(projectId)
+      await expect(newProjectPage.identifierExists()).toBeVisible()
+      await expect(newProjectPage.buttonNext()).toBeDisabled()
+      await expect(newProjectPage.buttonCreateProject()).toBeDisabled()
+    })
+
+    await test.step('A free identifier lets the wizard go forward and back', async () => {
+      await newProjectPage.inputIdentifier().fill(generateProjectId())
+      await expect(newProjectPage.identifierExists()).toBeHidden()
+      await newProjectPage.goToStep('workflow')
+      await expect(newProjectPage.buttonCreateProject()).toBeEnabled()
+      await newProjectPage.buttonBack().click()
+      await expect(newProjectPage.step('issues')).toBeVisible()
+      await expect(newProjectPage.defaultIssueStatusButton()).toBeVisible()
+    })
+
+    await test.step('The creator cannot remove themselves or drop the owner role', async () => {
+      await newProjectPage.buttonBack().click()
+      await expect(newProjectPage.step('members')).toBeVisible()
+      const own = newProjectPage.root().locator('[data-id="project-settings-member"]')
+      await expect(own).toHaveCount(1)
+      await expect(newProjectPage.memberRoles(own)).toBeDisabled()
+      await expect(newProjectPage.memberMenu(own)).toBeDisabled()
+    })
+
+    await test.step('Summary shows the project and its people', async () => {
+      await newProjectPage.goToStep('summary')
+      await expect(newProjectPage.buttonNext()).toBeHidden()
+      await expect(newProjectPage.summaryHead()).toContainText(`${data.title}-2`)
+      await expect(newProjectPage.summaryOwners()).toContainText('Owners (1)')
+      await expect(newProjectPage.summaryMembers()).toContainText(/Members \(\d+\)/)
+      await newProjectPage.buttonBack().click()
+      await expect(newProjectPage.step('workflow')).toBeVisible()
+      await newProjectPage.buttonClose().click()
+      await expect(newProjectPage.root()).toBeHidden()
+    })
+  })
+
+  test('User can create a project based on another one', async ({ page }) => {
+    const baseId = generateProjectId()
+    const base: NewProject = { title: `BaseProject-${baseId}`, identifier: baseId }
+    const copyId = generateProjectId()
+    const copy: NewProject = { title: `CopyProject-${copyId}`, identifier: copyId }
+    const member = 'Rosamund'
+    const templates = ['Bug report', 'New page', 'Weekly report'].map((it) => `${it}-${baseId}`)
+    const templatePage = new TemplatePage(page)
+
+    await test.step('Prepare the base: a member and three templates', async () => {
+      await trackerNavigationMenuPage.pressCreateProjectButton()
+      await newProjectPage.createNewProject(base)
+      await trackerNavigationMenuPage.openIssuesForProject(base.title)
+      await projectSettingsPage.openFromProject()
+      await projectSettingsPage.addMember(member)
+      await projectSettingsPage.buttonClose().click()
+
+      const { client } = await connectTracker()
+      const project = await findProjectByName(client, base.title)
+      if (project === undefined) throw new Error(`Project "${base.title}" not found`)
+      for (const title of templates) {
+        await client.createDoc(tracker.class.IssueTemplate, project._id, {
+          title,
+          description: '',
+          priority: IssuePriority.NoPriority,
+          assignee: null,
+          component: null,
+          milestone: null,
+          estimation: 0,
+          children: [],
+          comments: 0,
+          attachments: 0,
+          relations: []
+        })
+      }
+    })
+
+    await test.step('Choose the base and take two templates of three', async () => {
+      await trackerNavigationMenuPage.pressCreateProjectButton()
+      await expect(newProjectPage.popupHeader()).toBeVisible()
+      await newProjectPage.chooseBase(base.title)
+      await newProjectPage.inputTitle().fill(copy.title)
+      await newProjectPage.inputIdentifier().fill(copy.identifier)
+      await newProjectPage.goToStep('copy')
+      await expect(newProjectPage.copyBase()).toContainText(base.title)
+      await expect(newProjectPage.copyCheckbox('members')).toBeChecked()
+      for (const title of templates) await expect(newProjectPage.copyTemplate(title)).toBeChecked()
+      await newProjectPage.copyTemplate(templates[2]).uncheck()
+      await expect(newProjectPage.copyCheckbox('templates')).not.toBeChecked()
+    })
+
+    await test.step('Members come from the base and the summary tells what is copied', async () => {
+      await newProjectPage.goToStep('members')
+      await expect(newProjectPage.membersFromBase()).toBeVisible()
+      await expect(newProjectPage.memberRow(member)).toBeVisible()
+      await newProjectPage.goToStep('summary')
+      await expect(newProjectPage.summaryBase()).toContainText(base.title)
+      await expect(newProjectPage.summaryBase()).toContainText('2 of 3')
+      await expect(newProjectPage.summaryMembers()).toContainText(member)
+      await newProjectPage.buttonCreateProject().click()
+      await expect(newProjectPage.root()).toBeHidden()
+    })
+
+    await test.step('The new project has the chosen templates and the members', async () => {
+      await trackerNavigationMenuPage.checkProjectExist(copy.title)
+      await trackerNavigationMenuPage.openTemplateForProject(copy.title)
+      await expect(templatePage.directTemplateLocator(templates[0])).toBeVisible()
+      await expect(templatePage.directTemplateLocator(templates[1])).toBeVisible()
+      await expect(templatePage.directTemplateLocator(templates[2])).toBeHidden()
+      await trackerNavigationMenuPage.openIssuesForProject(copy.title)
+      await projectSettingsPage.openFromProject()
+      await projectSettingsPage.openSection('members')
+      await expect(projectSettingsPage.memberRow(member)).toBeVisible()
+    })
+  })
+
+  test('FUSIO-1681: copied members without Employee stay visible and roles persist', async ({ page }, testInfo) => {
+    const sourceId = generateProjectId()
+    const sourceName = `MemberSource-${sourceId}`
+    const copyId = generateProjectId()
+    const copyName = `MemberCopy-${copyId}`
+    const personAccount = randomUUID() as AccountUuid
+    const unknownAccount = randomUUID() as AccountUuid
+    const personName = `Regression-${sourceId}`
+    const { client } = await test.step('Connect tracker API for the member fixture', async () => await connectTracker())
+    let personId: Ref<Person> | undefined
+
+    try {
+      personId = await test.step('Create a Person without Employee through the API', async () => {
+        return await client.createDoc(contact.class.Person, contact.space.Contacts, {
+          name: personName,
+          personUuid: personAccount,
+          avatarType: AvatarType.COLOR
+        })
+      })
+      await test.step('Create the isolated source project', async () => {
+        await trackerNavigationMenuPage.pressCreateProjectButton()
+        await newProjectPage.createNewProject({ title: sourceName, identifier: sourceId })
+      })
+      const source = await findProjectByName(client, sourceName)
+      if (source === undefined) throw new Error(`Project "${sourceName}" not found`)
+      const creator = source.owners?.[0]
+      if (creator === undefined) throw new Error('The source project has no creator owner')
+      const members = [creator, personAccount, systemAccountUuid, unknownAccount]
+      const owners = [creator, personAccount]
+      await client.updateDoc(tracker.class.Project, source.space, source._id, { members, owners })
+
+      const expectedRows = [
+        { account: creator, label: 'Appleseed', owner: true },
+        { account: personAccount, label: personName, owner: true },
+        { account: systemAccountUuid, label: 'System', owner: false },
+        { account: unknownAccount, label: unknownAccount, owner: false }
+      ]
+      const storedSource = await findProjectByName(client, sourceName)
+      const people = await client.findAll(contact.class.Person, { personUuid: { $in: members } })
+      const employees = await client.findAll(contact.mixin.Employee, { personUuid: { $in: members } })
+      await testInfo.attach('FUSIO-1681-member-fixture', {
+        contentType: 'application/json',
+        body: JSON.stringify(
+          {
+            source: { id: source._id, members: storedSource?.members, owners: storedSource?.owners },
+            expectedRows: expectedRows.map((row) => ({
+              ...row,
+              persons: people.filter((person) => person.personUuid === row.account).map((person) => person._id),
+              employees: employees
+                .filter((employee) => employee.personUuid === row.account)
+                .map((employee) => employee._id)
+            }))
+          },
+          null,
+          2
+        )
+      })
+      expect(people.filter((person) => person.personUuid === personAccount)).toHaveLength(1)
+      expect(employees.filter((employee) => employee.personUuid === personAccount)).toHaveLength(0)
+      expect(people.filter((person) => person.personUuid === unknownAccount)).toHaveLength(0)
+      expect(storedSource?.members).toEqual(members)
+      expect(storedSource?.owners).toEqual(owners)
+
+      await trackerNavigationMenuPage.pressCreateProjectButton()
+      await newProjectPage.chooseBase(sourceName)
+      await newProjectPage.inputTitle().fill(copyName)
+      await newProjectPage.inputIdentifier().fill(copyId)
+      await newProjectPage.goToStep('members')
+      await expect(newProjectPage.root().locator('[data-id="project-settings-member"]')).toHaveCount(4)
+      await expect(newProjectPage.step('members').locator('.members-title')).toHaveText('Members · 4')
+      for (const row of expectedRows) {
+        await expect(newProjectPage.memberRow(row.label)).toHaveCount(1)
+        await expect(newProjectPage.memberRow(row.label).locator('.cell.person')).toContainText(row.label)
+      }
+
+      await newProjectPage.goToStep('summary')
+      await expect(newProjectPage.summaryOwners()).toContainText('Owners (2)')
+      await expect(newProjectPage.summaryMembers()).toContainText('Members (2)')
+      for (const row of expectedRows) {
+        const summary = row.owner ? newProjectPage.summaryOwners() : newProjectPage.summaryMembers()
+        await expect(summary).toContainText(row.label)
+        expect((await summary.innerText()).split(row.label)).toHaveLength(2)
+        await expect(row.owner ? newProjectPage.summaryMembers() : newProjectPage.summaryOwners()).not.toContainText(
+          row.label
+        )
+      }
+      await newProjectPage.buttonCreateProject().click()
+      await expect(newProjectPage.root()).toBeHidden()
+      await expect
+        .poll(async () => {
+          const project = await findProjectByName(client, copyName)
+          return { members: project?.members, owners: project?.owners }
+        })
+        .toEqual({ members, owners })
+
+      await trackerNavigationMenuPage.openIssuesForProject(copyName)
+      await projectSettingsPage.openFromProject()
+      await projectSettingsPage.openSection('members')
+      await expect(projectSettingsPage.root().locator('[data-id="project-settings-member"]')).toHaveCount(4)
+      await expect(projectSettingsPage.root().locator('.members-title')).toHaveText('Members · 4')
+      for (const row of expectedRows) await expect(projectSettingsPage.memberRow(row.label)).toHaveCount(1)
+
+      for (const role of ['Member', 'Owner', 'Member']) {
+        await projectSettingsPage.setMemberRoles(personName, [role])
+        await expect(projectSettingsPage.memberRow(personName).locator('[data-id="project-member-roles"]')).toHaveText(
+          role
+        )
+        const expectedOwners = role === 'Owner' ? owners : [creator]
+        await expect
+          .poll(async () => {
+            const project = await findProjectByName(client, copyName)
+            return { members: project?.members, owners: project?.owners }
+          })
+          .toEqual({ members, owners: expectedOwners })
+        await page.reload()
+        await expect(projectSettingsPage.memberRow(personName).locator('[data-id="project-member-roles"]')).toHaveText(
+          role
+        )
+        await expect(projectSettingsPage.root().locator('[data-id="project-settings-member"]')).toHaveCount(4)
+      }
+    } finally {
+      try {
+        if (await newProjectPage.root().isVisible()) await newProjectPage.buttonClose().click()
+        for (const name of [copyName, sourceName]) {
+          const project = await findProjectByName(client, name)
+          if (project !== undefined) await client.removeDoc(tracker.class.Project, project.space, project._id)
+        }
+        if (personId !== undefined) {
+          const person = await client.findOne(contact.class.Person, { _id: personId })
+          if (person?.profile !== undefined) {
+            const profile = await client.findOne(contact.class.UserProfile, { _id: person.profile })
+            if (profile !== undefined) await client.removeDoc(profile._class, profile.space, profile._id)
+          }
+          await client.removeDoc(contact.class.Person, contact.space.Contacts, personId)
+        }
+      } finally {
+        await client.close()
+      }
+    }
+  })
+
+  test('User can create a project based on an archived one with its components', async ({ page }) => {
+    const baseId = generateProjectId()
+    const base: NewProject = { title: `ArchivedBase-${baseId}`, identifier: baseId }
+    const copyId = generateProjectId()
+    const copy: NewProject = { title: `ArchivedCopy-${copyId}`, identifier: copyId }
+    const componentLabel = `Component-${baseId}`
+    const templateTitle = `Template-${baseId}`
+    const { client } = await connectTracker()
+
+    await test.step('Prepare an archived base with a template that refers to its component', async () => {
+      await trackerNavigationMenuPage.pressCreateProjectButton()
+      await newProjectPage.createNewProject(base)
+      await trackerNavigationMenuPage.checkProjectExist(base.title)
+      const project = await findProjectByName(client, base.title)
+      if (project === undefined) throw new Error(`Project "${base.title}" not found`)
+      const component = await client.createDoc(tracker.class.Component, project._id, {
+        label: componentLabel,
+        description: '',
+        lead: null,
+        comments: 0,
+        attachments: 0
+      })
+      await client.createDoc(tracker.class.IssueTemplate, project._id, {
+        title: templateTitle,
+        description: '',
+        priority: IssuePriority.NoPriority,
+        assignee: null,
+        component,
+        milestone: null,
+        estimation: 0,
+        children: [],
+        comments: 0,
+        attachments: 0,
+        relations: []
+      })
+      await client.updateDoc(tracker.class.Project, project.space, project._id, { archived: true })
+    })
+
+    await test.step('The archived identifier is taken and the base shows only with the toggle', async () => {
+      await trackerNavigationMenuPage.pressCreateProjectButton()
+      await expect(newProjectPage.popupHeader()).toBeVisible()
+      await newProjectPage.inputIdentifier().fill(base.identifier)
+      await expect(newProjectPage.identifierExists()).toBeVisible()
+      await newProjectPage.modeSegment('base').click()
+      await newProjectPage.baseButton().click()
+      await expect(newProjectPage.basePopup()).toBeVisible()
+      await expect(newProjectPage.basePopupRow(base.title)).toBeHidden()
+      await newProjectPage.baseShowArchived().click()
+      await newProjectPage.basePopupRow(base.title).click()
+      await expect(newProjectPage.baseButton()).toContainText(base.title)
+    })
+
+    await test.step('Take the components with the template and create', async () => {
+      await newProjectPage.inputTitle().fill(copy.title)
+      await newProjectPage.inputIdentifier().fill(copy.identifier)
+      await newProjectPage.goToStep('copy')
+      await expect(newProjectPage.copyTemplate(templateTitle)).toBeChecked()
+      await newProjectPage.copyCheckbox('components').check()
+      await newProjectPage.goToStep('summary')
+      await newProjectPage.buttonCreateProject().click()
+      await expect(newProjectPage.root()).toBeHidden()
+      await trackerNavigationMenuPage.checkProjectExist(copy.title)
+    })
+
+    await test.step('The template copy refers to the component copy of the new project', async () => {
+      const project = await findProjectByName(client, copy.title)
+      if (project === undefined) throw new Error(`Project "${copy.title}" not found`)
+      await expect(async () => {
+        const component = await client.findOne(tracker.class.Component, { space: project._id, label: componentLabel })
+        const template = await client.findOne(tracker.class.IssueTemplate, { space: project._id, title: templateTitle })
+        expect(component).toBeDefined()
+        expect(template?.component).toBe(component?._id)
+      }).toPass()
+    })
+  })
+
+  test('FUSIO-1682: archived project keeps its template context and can be restored', async ({ page }, testInfo) => {
+    const identifier = generateProjectId()
+    const title = `ArchivedSettings-${identifier}`
+    const templateTitle = `ArchivedTemplate-${identifier}`
+    const { client } = await connectTracker()
+    let project: Project | undefined
+    const templates = new TemplatePage(page)
+    try {
+      await trackerNavigationMenuPage.pressCreateProjectButton()
+      await newProjectPage.createNewProject({ title, identifier })
+      project = await findProjectByName(client, title)
+      if (project === undefined) throw new Error(`Project "${title}" not found`)
+      await client.updateDoc(tracker.class.Project, project.space, project._id, { archived: true })
+      const settings = `${PlatformURI}/workbench/sanity-ws/tracker/${project._id}/project-settings`
+      await page.goto(`${settings}?section=issues`)
+      await expect(page.locator('[data-id="project-settings-title"]')).toContainText(title)
+      await expect(page.locator('[data-id="project-archived"]')).toBeVisible()
+      await page.locator('[data-id="btnOpenIssueTemplates"]').click()
+      await expect(page.locator('[data-id="templatesBackToSettings"]')).toBeVisible()
+      await templates.buttonNewTemplate().click()
+      await expect(page.locator('[data-id="template-project-context"]')).toContainText(title)
+      await templates.inputIssueTitle().fill(templateTitle)
+      await templates.buttonSaveTemplate().click()
+      const projectId = project._id
+      await expect
+        .poll(async () => {
+          return (await client.findOne(tracker.class.IssueTemplate, { title: templateTitle }, { showArchived: true }))
+            ?.space
+        })
+        .toBe(projectId)
+      await testInfo.attach('archived-template-project', {
+        contentType: 'application/json',
+        body: JSON.stringify({
+          project: projectId,
+          archived: true,
+          template: await client.findOne(tracker.class.IssueTemplate, { space: projectId, title: templateTitle })
+        })
+      })
+      await page.locator('[data-id="templatesBackToSettings"]').click()
+      await expect(page).toHaveURL(`${settings}?section=issues`)
+      await page.goto(`${PlatformURI}/workbench/sanity-ws/tracker/all-templates`)
+      await expect(templates.directTemplateLocator(templateTitle)).toBeVisible()
+      await page.goto(`${settings}?section=archive`)
+      await expect(page.locator('[data-id="btnArchiveProject"]')).toHaveCount(0)
+      await page.locator('[data-id="btnRestoreProject"]').click()
+      await page.locator('.msgbox-container').getByRole('button', { name: 'Ok', exact: true }).click()
+      await expect.poll(async () => (await findProjectByName(client, title))?.archived).toBe(false)
+      await expect(page.locator('[data-id="project-archived"]')).toHaveCount(0)
+    } finally {
+      try {
+        if (project !== undefined) {
+          for (const template of await client.findAll(tracker.class.IssueTemplate, { space: project._id })) {
+            await client.removeDoc(template._class, template.space, template._id)
+          }
+          await client.removeDoc(project._class, project.space, project._id)
+        }
+      } finally {
+        await client.close()
+      }
+    }
+  })
+
+  test('FUSIO-1683: Russian project labels distinguish the archive action and section', async ({ page }) => {
+    const identifier = generateProjectId()
+    const title = `ArchiveLabels-${identifier}`
+    const { client } = await connectTracker()
+    let project: Project | undefined
+    try {
+      await trackerNavigationMenuPage.pressCreateProjectButton()
+      await newProjectPage.createNewProject({ title, identifier })
+      project = await findProjectByName(client, title)
+      if (project === undefined) throw new Error(`Project "${title}" not found`)
+      await page.evaluate(() => {
+        localStorage.setItem('lang', 'ru')
+      })
+      await page.goto(`${PlatformURI}/workbench/sanity-ws/tracker/${project._id}/project-settings?section=archive`)
+      await expect(projectSettingsPage.navItem('archive')).toHaveText('Архивация')
+      await expect(projectSettingsPage.buttonArchive()).toHaveText('Архивировать проект')
+      const row = trackerNavigationMenuPage.buttonProjectsParent().filter({ hasText: title })
+      await row.hover()
+      await row.locator('xpath=../..').locator('div[class*="tools"] button').click()
+      await expect(page.getByText('Архивировать', { exact: true })).toBeVisible()
+    } finally {
+      try {
+        if (project !== undefined) await client.removeDoc(project._class, project.space, project._id)
+      } finally {
+        await client.close()
+        await page.evaluate(() => {
+          localStorage.setItem('lang', 'en')
+        })
+        await page.reload()
+      }
+    }
+  })
+
   test('User can edit project', async () => {
     const projectId = generateProjectId()
 
@@ -83,14 +529,120 @@ test.describe('Tracker Projects tests', () => {
       await trackerNavigationMenuPage.checkProjectExist(editProjectData.title)
     })
 
-    await test.step('User edit project', async () => {
-      await trackerNavigationMenuPage.makeActionWithProject(editProjectData.title, 'Edit project')
-      await editProjectPage.checkProject(editProjectData)
-      await editProjectPage.updateProject(updateProjectData)
-      await trackerNavigationMenuPage.makeActionWithProject(updateProjectData.title, 'Edit project')
-      await editProjectPage.checkProject(updateProjectData)
-      await editProjectPage.buttonSaveProject().click()
-      await editProjectPage.popupHeader().waitFor({ state: 'hidden' })
+    await test.step('User opens project settings from the menu', async () => {
+      await trackerNavigationMenuPage.makeActionWithProject(editProjectData.title, 'Project settings')
+      await expect(projectSettingsPage.root()).toBeVisible()
+      await projectSettingsPage.checkGeneral(editProjectData)
+      await projectSettingsPage.checkIssueDefaults(editProjectData)
+    })
+
+    await test.step('Changes are saved at once, without a save button', async () => {
+      await projectSettingsPage.openSection('general')
+      await projectSettingsPage.setTitle(updateProjectData.title)
+      await projectSettingsPage.setDescription(updateProjectData.description ?? '')
+      await trackerNavigationMenuPage.checkProjectExist(updateProjectData.title)
+      await projectSettingsPage.setIssueDefaults(updateProjectData)
+    })
+
+    await test.step('User sees the saved values after reopening the settings', async () => {
+      await projectSettingsPage.buttonBack().click()
+      await trackerNavigationMenuPage.makeActionWithProject(updateProjectData.title, 'Project settings')
+      await projectSettingsPage.checkGeneral(updateProjectData)
+      await projectSettingsPage.checkIssueDefaults(updateProjectData)
+    })
+  })
+
+  test('User can open project settings with the gear and leave them', async () => {
+    const projectId = generateProjectId()
+    const data: NewProject = { title: `GearProject-${projectId}`, identifier: projectId }
+
+    await test.step('User prepare project', async () => {
+      await trackerNavigationMenuPage.pressCreateProjectButton()
+      await newProjectPage.createNewProject(data)
+      await trackerNavigationMenuPage.checkProjectExist(data.title)
+    })
+
+    await test.step('Gear opens the settings, "Back to project" returns to the issues', async () => {
+      await trackerNavigationMenuPage.openIssuesForProject(data.title)
+      await projectSettingsPage.openFromProject()
+      await projectSettingsPage.buttonBack().click()
+      await expect(projectSettingsPage.root()).toBeHidden()
+      await expect(projectSettingsPage.buttonOpenSettings()).toBeVisible()
+    })
+
+    await test.step('Cross closes the settings', async () => {
+      await projectSettingsPage.openFromProject()
+      await projectSettingsPage.buttonClose().click()
+      await expect(projectSettingsPage.root()).toBeHidden()
+    })
+  })
+
+  test('User can make project private in settings', async () => {
+    const projectId = generateProjectId()
+    const data: NewProject = { title: `PrivateProject-${projectId}`, identifier: projectId }
+
+    await trackerNavigationMenuPage.pressCreateProjectButton()
+    await newProjectPage.createNewProject(data)
+    await trackerNavigationMenuPage.checkProjectExist(data.title)
+    await trackerNavigationMenuPage.openIssuesForProject(data.title)
+    await projectSettingsPage.openFromProject()
+
+    await projectSettingsPage.setPrivate(true)
+    // The value survives a switch between sections
+    await projectSettingsPage.openSection('general')
+    await projectSettingsPage.openSection('members')
+    await expect(projectSettingsPage.togglePrivate()).toBeChecked()
+    await projectSettingsPage.setPrivate(false)
+  })
+
+  test('User can add a member and make them an owner in settings', async () => {
+    const projectId = generateProjectId()
+    const data: NewProject = { title: `OwnerProject-${projectId}`, identifier: projectId }
+    const member = 'Rosamund'
+
+    await trackerNavigationMenuPage.pressCreateProjectButton()
+    await newProjectPage.createNewProject(data)
+    await trackerNavigationMenuPage.openIssuesForProject(data.title)
+    await projectSettingsPage.openFromProject()
+
+    await projectSettingsPage.addMember(member)
+    await expect(projectSettingsPage.memberRow(member)).toContainText('Member')
+    await projectSettingsPage.setMemberRoles(member, ['Owner'])
+    await expect(projectSettingsPage.memberRow(member)).toContainText('Owner')
+  })
+
+  test('User can see statuses of the project type and archive the project in settings', async ({ page }) => {
+    const projectId = generateProjectId()
+    const data: NewProject = { title: `SettingsArchive-${projectId}`, identifier: projectId }
+
+    await trackerNavigationMenuPage.pressCreateProjectButton()
+    await newProjectPage.createNewProject(data)
+    await trackerNavigationMenuPage.checkProjectExist(data.title)
+    await trackerNavigationMenuPage.openIssuesForProject(data.title)
+    await projectSettingsPage.openFromProject()
+
+    await test.step('Statuses section lists the statuses of the type', async () => {
+      await projectSettingsPage.openSection('statuses')
+      await expect(projectSettingsPage.statusRows().first()).toBeVisible()
+      await expect(projectSettingsPage.statusRows().filter({ hasText: 'Backlog' })).toHaveCount(1)
+    })
+
+    const settingsUrl = page.url()
+    await test.step('Archive section archives the project', async () => {
+      await projectSettingsPage.archiveProject()
+      await trackerNavigationMenuPage.checkProjectNotExist(data.title)
+      await trackerNavigationMenuPage.openAllProjects()
+      await allProjectsPage.checkProjectExistInTable(`${data.title} (archived)`)
+      await expect(page.locator('[data-id="project-settings"]')).toBeHidden()
+    })
+
+    await test.step('An archived project opens its settings by address and saves changes', async () => {
+      await page.goto(settingsUrl)
+      await projectSettingsPage.openSection('general')
+      await expect(projectSettingsPage.inputTitle()).toHaveValue(data.title)
+      await projectSettingsPage.setDescription('Archived project description')
+      await page.reload()
+      await expect(projectSettingsPage.inputDescription()).toHaveValue('Archived project description')
     })
   })
 

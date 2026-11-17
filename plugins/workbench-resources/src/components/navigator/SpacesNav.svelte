@@ -1,6 +1,7 @@
 <!--
 // Copyright © 2020 Anticrm Platform Contributors.
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -23,6 +24,7 @@
   import type { Action, AnyComponent } from '@hcengineering/ui'
   import ui, { getCurrentResolvedLocation, navigate, showPopup } from '@hcengineering/ui'
   import { TreeNode } from '@hcengineering/view-resources'
+  import { IconButton } from '@hcengineering/ui/kit'
   import type { SpacesNavModel } from '@hcengineering/workbench'
   import { createEventDispatcher } from 'svelte'
   import { NotificationClientImpl } from '@hcengineering/notification-resources'
@@ -86,6 +88,7 @@
     const result = hasSpaceBrowser ? [browseSpaces] : []
     if (
       hasAccountRole(getCurrentAccount(), AccountRole.User) &&
+      model.catalog === undefined &&
       model.addSpaceLabel !== undefined &&
       model.createComponent !== undefined
     ) {
@@ -137,6 +140,41 @@
   {empty}
   {visible}
 >
+  <svelte:fragment slot="headerActions">
+    {#if model.catalog !== undefined}
+      {#if hasAccountRole(getCurrentAccount(), AccountRole.User) && model.addSpaceLabel !== undefined && model.createComponent !== undefined}
+        <IconButton
+          icon={ui.icon.Plus}
+          size="extra-small"
+          kind="tertiary"
+          tooltip={{ label: model.addSpaceLabel, direction: 'top' }}
+          on:click={(event) => {
+            event.stopPropagation()
+            if (model.addSpaceLabel !== undefined && model.createComponent !== undefined) {
+              void addSpace(model.addSpaceLabel, model.createComponent).action([], event)
+            }
+          }}
+        />
+      {/if}
+      <IconButton
+        icon={model.catalog.icon}
+        size="extra-small"
+        kind="tertiary"
+        tooltip={{ label: model.catalog.label, direction: 'top' }}
+        on:click={(event) => {
+          event.stopPropagation()
+          if (model.catalog === undefined) return
+          const loc = getCurrentResolvedLocation()
+          loc.path[3] = model.catalog.id
+          loc.path.length = 4
+          loc.query = undefined
+          loc.fragment = undefined
+          dispatch('open')
+          navigate(loc)
+        }}
+      />
+    {/if}
+  </svelte:fragment>
   {#each filteredSpaces as space, i (space._id)}
     {#if separate && model.specials && i !== 0}<TreeSeparator line />{/if}
     <SpacesNavItem
