@@ -13,9 +13,9 @@
 // limitations under the License.
 //
 
-import core, { type Class, type Doc, type DocumentQuery, type Ref, type TxOperations } from '@hcengineering/core'
+import core, { type Class, type Doc, type DocumentQuery, type Ref, type TxOperations, type CategoryType } from '@hcengineering/core'
 import { sortNamedCategories } from '../categorySorting'
-import { concatCategories } from '../categoryUtils'
+import { concatCategories, dedupeCategories } from '../categoryUtils'
 
 interface NamedDoc extends Doc {
   name?: string
@@ -129,5 +129,13 @@ describe('sortNamedCategories', () => {
     const result = concatCategories(['u1', undefined], ['u2', undefined])
     expect(result).toStrictEqual(['u1', 'u2', undefined])
     expect(result.length).toBe(3)
+  })
+
+  it('drops duplicate categories so a keyed list can render them', () => {
+    // Two objects without a name used to give two `undefined` keys and throw inside the each block.
+    const nameless = { values: [] } as unknown as CategoryType
+    const otherNameless = { values: [] } as unknown as CategoryType
+    expect(dedupeCategories([undefined, undefined, nameless, otherNameless])).toStrictEqual([undefined, nameless])
+    expect(dedupeCategories(['u1', 'u1', 'u2'])).toStrictEqual(['u1', 'u2'])
   })
 })

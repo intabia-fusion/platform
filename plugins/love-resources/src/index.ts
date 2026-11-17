@@ -7,7 +7,8 @@ import {
   hasAccountRole,
   type AccountUuid,
   type Client,
-  type Doc
+  type Doc,
+  type Ref
 } from '@hcengineering/core'
 import { registerEventCardResolver } from '@hcengineering/calendar-resources'
 import { type MeetingEventLink, type MeetingMinutes, type PermanentMeeting } from '@hcengineering/love'
@@ -42,6 +43,7 @@ import PermanentMeetingPresenter from './components/PermanentMeetingPresenter.sv
 import PermanentMeetingNextPresenter from './components/PermanentMeetingNextPresenter.svelte'
 import PermanentMeetingLastSessionPresenter from './components/PermanentMeetingLastSessionPresenter.svelte'
 import PermanentMeetingGroupPresenter from './components/PermanentMeetingGroupPresenter.svelte'
+import PermanentMeetingsHeaderActions from './components/PermanentMeetingsHeaderActions.svelte'
 import MeetingGroupPopup from './components/MeetingGroupPopup.svelte'
 import EditRoom from './components/EditRoom.svelte'
 import FloorAttributePresenter from './components/FloorAttributePresenter.svelte'
@@ -181,18 +183,19 @@ async function editMeetingSettings (object: Doc): Promise<void> {
 }
 
 /**
- * A view action: the selected meetings come from the view, the popup names the group.
+ * A view action: the checked meetings come in as the preselection, and the dialog can also create a
+ * group from scratch - so it stays available with nothing checked.
  */
-async function canMergeIntoGroup (docs?: Doc | Doc[]): Promise<boolean> {
-  const list = Array.isArray(docs) ? docs : docs === undefined ? [] : [docs]
-  return list.some((it) => it._class === love.class.PermanentMeeting)
+async function canMergeIntoGroup (): Promise<boolean> {
+  return true
 }
 
 async function mergeIntoGroup (docs: Doc | Doc[] | undefined): Promise<void> {
-  if (docs === undefined) return
-  const list = Array.isArray(docs) ? docs : [docs]
-  if (list.length === 0) return
-  showPopup(MeetingGroupPopup, {}, 'center')
+  const list = docs === undefined ? [] : Array.isArray(docs) ? docs : [docs]
+  const ids = list
+    .filter((it) => it._class === love.class.PermanentMeeting)
+    .map((it) => it._id as Ref<PermanentMeeting>)
+  showPopup(MeetingGroupPopup, { preselected: ids }, 'center')
 }
 
 /**
@@ -251,6 +254,7 @@ export default async (): Promise<Resources> => ({
     PermanentMeetingNextPresenter,
     PermanentMeetingLastSessionPresenter,
     PermanentMeetingGroupPresenter,
+    PermanentMeetingsHeaderActions,
     EditRoom,
     FloorAttributePresenter,
     FloorView,

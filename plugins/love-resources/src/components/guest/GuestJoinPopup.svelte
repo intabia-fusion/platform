@@ -34,12 +34,14 @@
   export let workspaceName: string | undefined
   // Set only when /guestInfo answered `passwordRequired: true` - the field stays hidden otherwise.
   export let passwordRequired: boolean = false
+  // Prefilled when the guest opened a link copied together with its password.
+  export let initialPassword: string | undefined = undefined
 
   const identityKey = 'platform.love_uniq_person_identity'
 
   let firstName: string = ''
   let lastName: string = ''
-  let password: string = ''
+  let password: string = initialPassword ?? ''
   let error: string | null = null
   let errorLabel: IntlString | null = null
   let videoContainer: HTMLDivElement | null = null

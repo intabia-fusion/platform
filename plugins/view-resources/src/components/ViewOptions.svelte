@@ -1,12 +1,12 @@
 <script lang="ts">
   import { getClient } from '@hcengineering/presentation'
   import type { DropdownIntlItem } from '@hcengineering/ui'
-  import { DropdownLabelsIntl, Label, Toggle } from '@hcengineering/ui'
+  import ui, { Button, DropdownLabelsIntl, Label, Toggle } from '@hcengineering/ui'
   import type { Viewlet, ViewOptions, ViewOptionsModel, ViewOptionModel, GroupingKey } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import view from '../plugin'
   import { buildConfigLookup, canResolveAttribute, getKeyLabel } from '../utils'
-  import { isDropdownType, isToggleType, noCategory, MAX_GROUPING_DEPTH } from '../viewOptions'
+  import { isDropdownType, isToggleType, noCategory, MAX_GROUPING_DEPTH, getDefaults } from '../viewOptions'
   import { SortingOrder } from '@hcengineering/core'
 
   export let viewlet: Viewlet
@@ -77,6 +77,12 @@
   const changeToggle = (model: ViewOptionModel) => {
     viewOptions[model.key] = !viewOptions[model.key]
     dispatch('update', { key: model.key, value: viewOptions[model.key] })
+  }
+
+  // Back to what the viewlet declares: a saved grouping is easy to make and impossible to undo
+  // otherwise, since every pick writes another preference.
+  function resetToDefaults (): void {
+    dispatch('update', { key: '__reset', value: getDefaults(viewlet.viewOptions) })
   }
 
   // checking if selector provides multiple choice options
@@ -182,5 +188,17 @@
     </div>
   {/each}
   <slot name="extra" />
+  <div class="antiCard-menu__divider" />
+  <div class="antiCard-menu__item reset-row">
+    <Button size="small" kind="ghost" label={ui.string.Reset} dataId="view-options-reset" on:click={resetToDefaults} />
+  </div>
   <div class="antiCard-menu__spacer" />
 </div>
+
+<style lang="scss">
+  // A small action in the corner of the menu, like the ones next to the filters, not a full-width
+  // row that reads as one more setting.
+  .reset-row {
+    justify-content: flex-end;
+  }
+</style>

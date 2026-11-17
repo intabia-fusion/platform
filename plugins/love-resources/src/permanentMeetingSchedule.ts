@@ -40,6 +40,7 @@ import core, {
 import {
   defaultMeetingAccess,
   type MeetingEventLink,
+  type MeetingGroup,
   type PermanentMeeting,
   type RoomLanguage,
   RoomType
@@ -72,6 +73,8 @@ export interface PermanentMeetingInput {
   reminderBefore: number
   /** Plain-text guest password to set, '' to leave it as is, null to remove. */
   guestPassword?: string | null
+  /** Group the meeting is created in, when the dialog was opened from a group header. */
+  group?: Ref<MeetingGroup>
 }
 
 export async function findPrimaryCalendarId (client: Client): Promise<Ref<Calendar> | undefined> {  const acc = getCurrentAccount()
@@ -121,6 +124,7 @@ export async function createPermanentMeeting (
     owners: AccountUuid[]
     repeatEvery?: number
     reminderBefore?: number
+    group?: Ref<MeetingGroup>
   }
 ): Promise<Ref<PermanentMeeting>> {
   return await client.createDoc(love.class.PermanentMeeting, core.space.Space, {
@@ -137,6 +141,8 @@ export async function createPermanentMeeting (
     descriptionRef: null,
     repeatEvery: data.repeatEvery,
     reminderBefore: data.reminderBefore,
+    // Only when the dialog was opened from a group header: absent stays absent, not null.
+    ...(data.group !== undefined ? { group: data.group } : {}),
     // A permanent meeting is an always-open room: whoever holds the link may open a session,
     // outside any occurrence. The default `start: 'members'` made a guest wait for a participant
     // to start the meeting, which for this kind of meeting is exactly what the link should avoid.
@@ -241,7 +247,8 @@ export async function createPermanentMeetingWithSchedule (
     members,
     owners: [ctx.me],
     repeatEvery: input.period,
-    reminderBefore: input.reminderBefore
+    reminderBefore: input.reminderBefore,
+    group: input.group
   })
 
   await client.updateMixin(eventIdRef, calendar.class.Event, ctx.space, love.mixin.MeetingEventLink, {

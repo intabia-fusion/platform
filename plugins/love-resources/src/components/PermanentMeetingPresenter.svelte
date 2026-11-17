@@ -16,9 +16,14 @@
   import type { WithLookup } from '@hcengineering/core'
   import love, { type PermanentMeeting } from '@hcengineering/love'
   import { getEmbeddedLabel } from '@hcengineering/platform'
+  import presentation, { copyTextToClipboard } from '@hcengineering/presentation'
   import { Icon, tooltip } from '@hcengineering/ui'
+  import { IconButton } from '@hcengineering/ui/kit'
+  import view from '@hcengineering/view'
   import type { ObjectPresenterType } from '@hcengineering/view'
   import { DocNavLink, ObjectMention } from '@hcengineering/view-resources'
+  import lovePlugin from '../plugin'
+  import { getEventMeetingLink, notifyCopied } from '../utils'
 
   export let value: WithLookup<PermanentMeeting>
   export let inline: boolean = false
@@ -27,24 +32,44 @@
   export let noUnderline: boolean = false
   export let shouldShowAvatar = true
   export let type: ObjectPresenterType = 'link'
+
+  // A link is the only thing a permanent meeting shares: keep it one click away in every row.
+  async function copyLink (): Promise<void> {
+    const link = await getEventMeetingLink(value._id, 'meeting')
+    if (link === '') return
+    await copyTextToClipboard(link)
+    await notifyCopied(lovePlugin.string.LinkCopied)
+  }
 </script>
 
 {#if value}
   {#if inline}
     <ObjectMention object={value} {disabled} />
   {:else if type === 'link'}
-    <DocNavLink object={value} {disabled} {accent} {noUnderline}>
-      <div class="flex-presenter" use:tooltip={{ label: getEmbeddedLabel(value.name) }}>
-        {#if shouldShowAvatar}
-          <div class="icon">
-            <Icon icon={love.icon.MeetingMinutes} size="medium" />
+    <div class="flex-presenter">
+      <DocNavLink object={value} {disabled} {accent} {noUnderline}>
+        <div class="flex-presenter" use:tooltip={{ label: getEmbeddedLabel(value.name) }}>
+          {#if shouldShowAvatar}
+            <div class="icon">
+              <Icon icon={love.icon.MeetingMinutes} size="medium" />
+            </div>
+          {/if}
+          <div class="label nowrap" class:no-underline={noUnderline || disabled} class:fs-bold={accent}>
+            {value.name}
           </div>
-        {/if}
-        <div class="label nowrap" class:no-underline={noUnderline || disabled} class:fs-bold={accent}>
-          {value.name}
         </div>
-      </div>
-    </DocNavLink>
+      </DocNavLink>
+      {#if !disabled}
+        <IconButton
+          icon={view.icon.CopyLink}
+          size="small"
+          kind="ghost"
+          tooltip={{ label: presentation.string.CopyLink }}
+          data-id="permanent-meeting-copy-link"
+          on:click={copyLink}
+        />
+      {/if}
+    </div>
   {:else}
     <span class="flex-presenter" use:tooltip={{ label: getEmbeddedLabel(value.name) }}>
       {#if shouldShowAvatar}

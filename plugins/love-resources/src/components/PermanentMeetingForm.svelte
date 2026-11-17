@@ -23,7 +23,8 @@
   import { getCurrentEmployeeSpace } from '@hcengineering/contact'
   import type { AccountUuid } from '@hcengineering/core'
   import core, { getCurrentAccount } from '@hcengineering/core'
-  import type { PermanentMeeting } from '@hcengineering/love'
+  import type { MeetingGroup, PermanentMeeting } from '@hcengineering/love'
+  import type { Ref } from '@hcengineering/core'
   import { Card, getClient } from '@hcengineering/presentation'
   import presentation from '@hcengineering/presentation'
   import { getCurrentLanguage } from '@hcengineering/theme'
@@ -42,6 +43,9 @@
   } from '../permanentMeetingSchedule'
 
   export let object: PermanentMeeting | undefined = undefined
+
+  // A meeting created from a group header is born in that group; editing never moves it.
+  export let group: Ref<MeetingGroup> | undefined = undefined
 
   const dispatch = createEventDispatcher()
   const client = getClient()
@@ -97,7 +101,8 @@
         members,
         // 0 turns the reminder off, absent falls back to the default, so the value is explicit.
         reminderBefore: Math.max(0, Math.round(reminderMinutes)) * 60 * 1000,
-        guestPassword: password !== '' ? password : undefined
+        guestPassword: password !== '' ? password : undefined,
+        group
       }
       const created = object === undefined ? await createPermanentMeetingWithSchedule(client, input, ctx) : undefined
       if (object !== undefined) {

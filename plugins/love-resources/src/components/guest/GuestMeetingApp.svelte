@@ -49,6 +49,8 @@
   // Route params
   let guestToken: string | undefined = undefined
   let errorMessage: IntlString | null = null
+  // Set only when the link was copied together with its password (`?password=...`).
+  let urlPassword: string | undefined = undefined
 
   export const lk: LKRoom = liveKitClient.liveKitRoom
 
@@ -210,6 +212,8 @@
     }
     const q = loc.query ?? {}
     const shortId = loc.path[1] // /meetings/aB3kR9mXqW2p
+    // A link copied together with its password carries it here; the join popup only prefills it.
+    urlPassword = typeof q.password === 'string' && q.password !== '' ? q.password : undefined
 
     if (q.guestToken != null) {
       guestToken = q.guestToken
@@ -543,6 +547,7 @@
             workspaceId={guestInfo.workspace ?? undefined}
             workspaceName={guestInfo.workspaceUrl ?? undefined}
             passwordRequired={guestInfo.passwordRequired === true}
+            initialPassword={urlPassword}
           />
         </div>
       {/if}

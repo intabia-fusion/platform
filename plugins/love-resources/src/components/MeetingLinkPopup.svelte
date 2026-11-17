@@ -20,6 +20,7 @@
     meetingMasterQuery,
     type MeetingAccess,
     type MeetingEventLink,
+    type MeetingLinkKind,
     type PermanentMeeting
   } from '@hcengineering/love'
   import { Button, DropdownLabelsIntl, EditBox, Label, type DropdownIntlItem } from '@hcengineering/ui'
@@ -70,7 +71,13 @@
   // no "after the series" behaviour to pick, so neither setting is offered on its event card either.
   $: isPermanentSeries = link?.permanentMeeting !== undefined
   $: offersSeriesSettings = !isPermanent && !isPermanentSeries
-  $: pointer = meeting !== undefined ? meeting._id : master?.eventId
+  // A series built by a permanent meeting is not a target of its own: the link, the password and
+  // the revoke all belong to the meeting, otherwise the same meeting answers with two URLs - one
+  // from its own card and one from the series card - and a password set on the series never
+  // reaches the link guests open.
+  $: permanentMeetingId = meeting?._id ?? link?.permanentMeeting
+  $: linkKind = (permanentMeetingId !== undefined ? 'meeting' : 'event') as MeetingLinkKind
+  $: pointer = permanentMeetingId ?? master?.eventId
 
   // Kept only in this popup's memory after a successful save, to power "copy link + password" -
   // the server never returns the plaintext, so a freshly reopened popup has nothing to copy.
@@ -102,15 +109,29 @@
       // `permanentMeeting` read as undefined, which is what showed the series settings on a
       // permanent meeting's card.
       link = await findMeetingLink(client, res)
-      access = link?.meetingAccess ?? defaultMeetingAccess
+      const owned = await permanentMeetingOf(link)
+      access = owned?.meetingAccess ?? link?.meetingAccess ?? defaultMeetingAccess
       passwordSet = access.guestPassword !== undefined
     })
   })
+
+  // The meeting behind a series, when there is one: its policy wins over the series' copy.
+  async function permanentMeetingOf (seriesLink: MeetingEventLink | undefined): Promise<PermanentMeeting | undefined> {
+    const id = seriesLink?.permanentMeeting
+    if (id === undefined) return undefined
+    return await client.findOne(love.class.PermanentMeeting, { _id: id })
+  }
 
   async function save (update: Partial<MeetingAccess>): Promise<void> {
     access = { ...access, ...update }
     if (meeting !== undefined) {
       await client.update(meeting, { meetingAccess: access })
+      return
+    }
+    const owned = await permanentMeetingOf(link)
+    if (owned !== undefined) {
+      // The link resolves to the meeting, so the policy has to live there too.
+      await client.update(owned, { meetingAccess: access })
       return
     }
     if (master === undefined) return
@@ -126,7 +147,7 @@
 
   async function savePassword (): Promise<void> {
     if (pointer === undefined || passwordInput === '') return
-    await loveClient.setGuestPassword(pointer, passwordInput, isPermanent ? 'meeting' : 'event')
+    await loveClient.setGuestPassword(pointer, passwordInput, linkKind)
     plainPassword = passwordInput
     passwordSet = true
     editingPassword = false
@@ -134,7 +155,7 @@
 
   async function removePassword (): Promise<void> {
     if (pointer === undefined) return
-    await loveClient.setGuestPassword(pointer, null, isPermanent ? 'meeting' : 'event')
+    await loveClient.setGuestPassword(pointer, null, linkKind)
     plainPassword = undefined
     passwordSet = false
   }
@@ -142,20 +163,29 @@
   async function copyLink (): Promise<void> {
     if (pointer === undefined) return
     // The promise goes in as is: Safari drops the clipboard write once the user gesture is awaited away.
-    await copyTextToClipboard(getEventMeetingLink(pointer, isPermanent ? 'meeting' : 'event'))
+    await copyTextToClipboard(getEventMeetingLink(pointer, linkKind))
     await notifyCopied(plugin.string.LinkCopied)
   }
 
   async function copyLinkWithPassword (): Promise<void> {
     if (pointer === undefined || plainPassword === undefined) return
-    const link = await getEventMeetingLink(pointer, isPermanent ? 'meeting' : 'event')
-    await copyTextToClipboard(`${link}\n${plainPassword}`)
+    const link = await getEventMeetingLink(pointer, linkKind)
+    if (link === '') return
+    // The password travels as a query parameter: the guest page reads it and fills its own field,
+    // while a bare "link + password" text is not a link at all once pasted into a chat.
+    const url = new URL(link)
+    url.searchParams.set('password', plainPassword)
+    await copyTextToClipboard(url.toString())
     await notifyCopied(plugin.string.LinkCopied)
   }
 
   async function revoke (): Promise<void> {
     if (meeting !== undefined) {
       await revokePermanentMeetingLink(meeting)
+    } else if (permanentMeetingId !== undefined) {
+      // Opened from the series: revoking the series link would leave the meeting's own link alive.
+      const owned = await permanentMeetingOf(link)
+      if (owned !== undefined) await revokePermanentMeetingLink(owned)
     } else if (event !== undefined) {
       await revokeMeetingLink(event)
     }

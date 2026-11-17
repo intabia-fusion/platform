@@ -306,23 +306,18 @@ export async function createMeeting (
       }
     )
 
-    // The link belongs to the series, so it is addressed by the series' eventId, not the event's.
-    const link = await getEventMeetingLink(master.eventId)
-    if (link !== '') {
-      await client.update(master, { location: link })
-    }
-
     // A repeating meeting is also a permanent one: the "Permanent meetings" tab is built from
     // `PermanentMeeting` documents, not from the mixin, so without this row a meeting scheduled in
     // the planner or the calendar existed only as a series and the tab stayed empty. A one-off
     // meeting gets no row - it is a session, not a standing meeting.
+    let permanentMeeting: Ref<PermanentMeeting> | undefined
     if (isPermanent) {
       const me = getCurrentAccount().uuid
       const persons = await client.findAll(contact.class.Person, { _id: { $in: master.participants } })
       const members = persons
         .map((it) => it.personUuid as AccountUuid | undefined)
         .filter((it): it is AccountUuid => it !== undefined)
-      const meeting = await createPermanentMeeting(client, {
+      permanentMeeting = await createPermanentMeeting(client, {
         name: master.title,
         // Defaults, not the room's settings: there is no room to inherit from.
         type: RoomType.Video,
@@ -337,8 +332,19 @@ export async function createMeeting (
         reminderBefore: DEFAULT_MEETING_REMINDER
       })
       await client.updateMixin(master._id, master._class, master.space, love.mixin.MeetingEventLink, {
-        permanentMeeting: meeting
+        permanentMeeting
       })
+    }
+
+    // One meeting, one link: a permanent meeting is addressed by its own id, a plain scheduled
+    // series by its eventId. Asking for the series link of a permanent meeting would mint a second
+    // URL for the same meeting, and a password set through it would never reach the meeting's link.
+    const link =
+      permanentMeeting !== undefined
+        ? await getEventMeetingLink(permanentMeeting, 'meeting')
+        : await getEventMeetingLink(master.eventId)
+    if (link !== '') {
+      await client.update(master, { location: link })
     }
   }
 }

@@ -21,6 +21,7 @@
   import { deviceOptionsStore as deviceInfo, Label } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { onDestroy } from 'svelte'
+  import lovePlugin from '../plugin'
   import { currentFloor, ensureOfficeDetailsLoaded, officeView, rooms } from '../stores'
 
   import Floor from './Floor.svelte'
@@ -61,7 +62,7 @@
   {:else if $officeView === 'floors'}
     <!-- Nothing is picked yet: the floors list is in the navigator, the grid is its detail view. -->
     <div class="flex-col h-full justify-center items-center">
-      <span class="content-color"><Label label={love.string.SelectFloor} /></span>
+      <span class="content-color"><Label label={lovePlugin.string.SelectFloor} /></span>
     </div>
   {:else if $officeView === 'permanent'}
     <!-- Standard view of the class: viewlets, search, filters, view settings, grouped list. -->
@@ -69,9 +70,8 @@
       _class={love.class.PermanentMeeting}
       label={love.string.PermanentMeetings}
       icon={love.icon.Cam}
-      defaultViewletDescriptor={view.viewlet.List}
-      createComponent={love.component.CreatePermanentMeetingPopup}
-      createLabel={love.string.NewMeeting}
+      defaultViewletDescriptor={view.viewlet.Table}
+      createButton={lovePlugin.component.PermanentMeetingsHeaderActions}
     />
   {:else if configure}
     <FloorConfigure

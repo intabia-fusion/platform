@@ -928,33 +928,32 @@ export function createModel (builder: Builder): void {
       attachTo: love.class.PermanentMeeting,
       descriptor: view.viewlet.Table,
       config: [
-        {
-          key: '',
-          presenter: love.component.PermanentMeetingPresenter,
-          label: love.string.PermanentMeeting,
-          displayProps: { key: 'name', fixed: 'left' },
-          sortingKey: 'name'
-        },
+        '',
         {
           key: '',
           presenter: love.component.PermanentMeetingNextPresenter,
           label: love.string.NextOccurrence,
-          displayProps: { key: 'next' }
+          displayProps: { key: 'next', suffix: true }
         },
-        { key: 'members', props: { noJoin: true, kind: 'link', size: 'small' }, displayProps: { key: 'members' } },
+        { key: 'members', props: { noJoin: true } },
         {
           key: '',
           presenter: love.component.PermanentMeetingLastSessionPresenter,
           label: love.string.PastLast,
-          displayProps: { key: 'lastEnd' }
+          displayProps: { key: 'lastEnd', suffix: true }
         }
       ],
-      configOptions: { hiddenKeys: MODEL_HIDDEN_KEYS, sortable: true }
+      configOptions: { hiddenKeys: MODEL_HIDDEN_KEYS, sortable: true },
+      viewOptions: {
+        groupBy: [],
+        orderBy: [['name', SortingOrder.Ascending]],
+        other: []
+      }
     },
     love.viewlet.TablePermanentMeetings
   )
 
-  // Grouped list: categories by `group`, columns switched in the view settings.
+  // Grouped list: the same columns, categories by any standard key picked in the settings.
   builder.createDoc(
     view.class.Viewlet,
     core.space.Model,
@@ -962,34 +961,26 @@ export function createModel (builder: Builder): void {
       attachTo: love.class.PermanentMeeting,
       descriptor: view.viewlet.List,
       viewOptions: {
-        groupBy: ['group', 'createdBy', 'members', 'private'],
-        orderBy: [
-          ['order', SortingOrder.Ascending],
-          ['name', SortingOrder.Ascending]
-        ],
+        // The first key is what the view groups by until the user picks another one.
+        groupBy: ['group', 'members', 'private', 'createdBy'],
+        orderBy: [['name', SortingOrder.Ascending]],
         other: []
       },
       configOptions: { hiddenKeys: MODEL_HIDDEN_KEYS, sortable: true },
       config: [
-        {
-          key: '',
-          presenter: love.component.PermanentMeetingPresenter,
-          label: love.string.PermanentMeeting,
-          displayProps: { key: 'name', fixed: 'left' }
-        },
+        '',
         {
           key: '',
           presenter: love.component.PermanentMeetingNextPresenter,
           label: love.string.NextOccurrence,
-          displayProps: { key: 'next' }
+          displayProps: { key: 'next', suffix: true }
         },
-        { key: '', displayProps: { grow: true } },
-        { key: 'members', props: { noJoin: true, kind: 'link', size: 'small' }, displayProps: { key: 'members', compression: true } },
+        { key: 'members', props: { noJoin: true } },
         {
           key: '',
           presenter: love.component.PermanentMeetingLastSessionPresenter,
           label: love.string.PastLast,
-          displayProps: { key: 'lastEnd' }
+          displayProps: { key: 'lastEnd', suffix: true }
         }
       ]
     },
@@ -1006,7 +997,7 @@ export function createModel (builder: Builder): void {
   })
 
   builder.mixin(love.class.PermanentMeeting, core.class.Class, view.mixin.ClassFilters, {
-    filters: ['group', 'members', 'createdBy', 'createdOn', 'repeatEvery', 'private'],
+    filters: ['members', 'createdBy', 'createdOn', 'repeatEvery', 'private'],
     ignoreKeys: [
       'name',
       'description',

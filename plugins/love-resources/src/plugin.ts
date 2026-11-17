@@ -54,7 +54,8 @@ export default mergeIds(loveId, love, {
     ReminderBeforeEditor: '' as AnyComponent,
     PermanentMeetingNextPresenter: '' as AnyComponent,
     PermanentMeetingLastSessionPresenter: '' as AnyComponent,
-    PermanentMeetingGroupPresenter: '' as AnyComponent
+    PermanentMeetingGroupPresenter: '' as AnyComponent,
+    PermanentMeetingsHeaderActions: '' as AnyComponent
   },
   function: {
     CreateMeeting: '' as Resource<DocCreateFunction>,

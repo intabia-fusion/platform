@@ -68,7 +68,7 @@ export async function persistOrder (
     if (meeting === undefined) continue
     const next = byId.get(id)
     if (meeting.order === order && meeting.group === next?.group) continue
-    await client.diffUpdate(meeting, { order, group: next?.group } as any)
+    await client.diffUpdate(meeting, { order, group: next?.group })
   }
 }
 
@@ -82,7 +82,7 @@ export async function createMeetingGroup (
   const order = groups.reduce((max, it) => Math.max(max, it.order ?? 0), -1) + 1
   const id = await client.createDoc(love.class.MeetingGroup, core.space.Workspace, { name, order })
   for (const [index, meeting] of meetings.entries()) {
-    await client.diffUpdate(meeting, { group: id, order: index } as any)
+    await client.diffUpdate(meeting, { group: id, order: index })
   }
   return id
 }

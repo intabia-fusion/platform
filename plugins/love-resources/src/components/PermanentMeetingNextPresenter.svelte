@@ -41,7 +41,10 @@
     }
   )
 
-  $: start = series[0]?.date
+  $: start = series.reduce<number | undefined>(
+    (acc, it) => (acc === undefined || it.date < acc ? it.date : acc),
+    undefined
+  )
   $: next =
     start === undefined || value.repeatEvery === undefined || value.repeatEvery <= 0
       ? undefined

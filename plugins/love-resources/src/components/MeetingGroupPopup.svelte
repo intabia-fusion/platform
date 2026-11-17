@@ -29,11 +29,21 @@
   const dispatch = createEventDispatcher()
   const client = getClient()
 
+  // Rows the toolbar had checked before the dialog opened.
+  export let preselected: Ref<PermanentMeeting>[] = []
+
   let name = ''
   let meetings: PermanentMeeting[] = []
   let groups = new Map<Ref<MeetingGroup>, string>()
   let selected = new Set<Ref<PermanentMeeting>>()
   let saving = false
+  let preselectedApplied = false
+
+  // Rows arrive asynchronously: the incoming selection is applied once, on the first batch.
+  $: if (!preselectedApplied && meetings.length > 0) {
+    preselectedApplied = true
+    selected = new Set(meetings.filter((it) => preselected.includes(it._id)).map((it) => it._id))
+  }
 
   const query = createQuery()
   $: void query.query(love.class.PermanentMeeting, {}, (res) => {

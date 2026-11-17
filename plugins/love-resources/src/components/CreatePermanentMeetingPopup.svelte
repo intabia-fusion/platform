@@ -12,7 +12,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { PermanentMeeting } from '@hcengineering/love'
+  import type { Ref, Space } from '@hcengineering/core'
+  import type { MeetingGroup, PermanentMeeting } from '@hcengineering/love'
   import { showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import MeetingLinkReadyPopup from './MeetingLinkReadyPopup.svelte'
@@ -23,6 +24,10 @@
   // settings stay one and the same form.
   const dispatch = createEventDispatcher()
 
+  // Created from a group header: the meeting has to land in that group, not in "no group".
+  export let group: Ref<MeetingGroup> | undefined = undefined
+  export let space: Ref<Space> | undefined = undefined
+
   async function created (event: CustomEvent<{ eventId: string, meeting: PermanentMeeting | string }>): Promise<void> {
     const meeting = event.detail.meeting as string
     const link = await getEventMeetingLink(meeting, 'meeting')
@@ -31,4 +36,4 @@
   }
 </script>
 
-<PermanentMeetingForm on:close={() => dispatch('close')} on:created={created} />
+<PermanentMeetingForm {group} on:close={() => dispatch('close')} on:created={created} />
