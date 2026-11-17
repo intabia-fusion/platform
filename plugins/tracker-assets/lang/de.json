@@ -488,9 +488,9 @@
     "BoardVisibilityAllMembers": "Für alle sichtbar",
     "BoardVisibilityOnlyMe": "Nur ich",
     "BoardVisibilityOnlyMeHint": "Persönliches Board, nur für Sie sichtbar",
-    "BoardHideDoneOlder": "Erledigte ausblenden, älter als",
-    "BoardHideDoneOlderHint": "Spalten der Kategorie Erledigt",
-    "BoardHideDoneValue": "2 Wochen",
+    "BoardHideDoneOlder": "Erledigte Aufgaben ausblenden",
+    "BoardHideDoneOlderHint": "Anhand des Abschlussdatums.",
+    "BoardHideDoneValue": "Nach 2 Wochen",
     "BoardCardOrder": "Reihenfolge der Karten",
     "BoardEditorsHint": "Andere können das Board nutzen oder ein eigenes erstellen",
     "WipLimits": "WIP-Limits",
@@ -548,7 +548,18 @@
     "BoardSearch": "Boards suchen",
     "BoardPersonal": "Persönliches Board",
     "WarnOnClosedStatuses": "Vor abgeschlossenen Status ohne Spalte warnen",
-    "WarnOnClosedStatusesHint": "Abgeschlossene und abgebrochene Status in Warnungen zu ausgeblendeten Aufgaben einbeziehen. Standardmäßig deaktiviert."
+    "WarnOnClosedStatusesHint": "Abgeschlossene und abgebrochene Status in Warnungen zu ausgeblendeten Aufgaben einbeziehen. Standardmäßig deaktiviert.",
+    "BoardHideDoneNever": "Nicht ausblenden",
+    "BoardHideDoneWeek": "Nach 1 Woche",
+    "BoardHideDoneMonth": "Nach 1 Monat",
+    "CompletedOn": "Abgeschlossen am",
+    "BoardHideDoneDay": "Nach 1 Tag",
+    "BoardHideDoneThreeDays": "Nach 3 Tagen",
+    "BoardHideDoneQuarter": "Nach 3 Monaten",
+    "BoardHideDoneHalfYear": "Nach 6 Monaten",
+    "BoardHideDoneYear": "Nach 1 Jahr",
+    "BoardHideDoneCustom": "Vor einem Datum…",
+    "BoardHideDoneCustomHint": "Vor dem gewählten Datum abgeschlossene Aufgaben ausblenden. Der gewählte Tag ist nicht eingeschlossen."
   },
   "status": {
     "DuplicateColumnTitle": "Eine Spalte mit diesem Namen existiert bereits"

@@ -13,15 +13,26 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { notEmpty, type Data, type Ref } from '@hcengineering/core'
-  import { getClient, isDisabled, SpacesMultiPopup } from '@hcengineering/presentation'
+  import { DateRangeMode, notEmpty, type Data, type Ref } from '@hcengineering/core'
+  import { getClient, SpacesMultiPopup } from '@hcengineering/presentation'
   import type { Board, Issue, Project } from '@hcengineering/tracker'
   import ui, { Icon, Label, showPopup } from '@hcengineering/ui'
-  import { Button, Dropdown, IconButton, SettingRow, TextArea, TextInput } from '@hcengineering/ui/kit'
+  import {
+    Button,
+    DateLabel,
+    DatePicker,
+    Dropdown,
+    IconButton,
+    SettingRow,
+    TextArea,
+    TextInput,
+    type DatePickerResult
+  } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import { FilterConditions, getKeyLabel } from '@hcengineering/view-resources'
   import task from '@hcengineering/task'
-  import { boardQuery } from '../../../boards'
+  import { onDestroy } from 'svelte'
+  import { BoardQuery } from '../../../boards'
   import tracker from '../../../plugin'
   import ProjectSettingsSection from '../../projects/settings/ProjectSettingsSection.svelte'
 
@@ -30,9 +41,54 @@
   export let onChange: (patch: Partial<Data<Board>>) => Promise<void>
 
   const client = getClient()
-  const boardNext = !isDisabled('tracker-board-next')
-  // Display only until the board gets fields for them
-  const hideDoneItems = [{ id: 'older', label: tracker.string.BoardHideDoneValue }]
+  const hideDoneItems = [
+    { id: 'off', label: tracker.string.BoardHideDoneNever },
+    { id: '1', label: tracker.string.BoardHideDoneDay },
+    { id: '3', label: tracker.string.BoardHideDoneThreeDays },
+    { id: '7', label: tracker.string.BoardHideDoneWeek },
+    { id: '14', label: tracker.string.BoardHideDoneValue },
+    { id: '30', label: tracker.string.BoardHideDoneMonth },
+    { id: '90', label: tracker.string.BoardHideDoneQuarter },
+    { id: '180', label: tracker.string.BoardHideDoneHalfYear },
+    { id: '365', label: tracker.string.BoardHideDoneYear },
+    { id: 'custom', label: tracker.string.BoardHideDoneCustom }
+  ]
+  let hideDoneElement: HTMLButtonElement | undefined
+  let hideDoneSelection = 'off'
+  let datePicker: ReturnType<typeof showPopup> | undefined
+  const periodSelection = (value: Board): string =>
+    value.hideCompletedBefore != null
+      ? 'custom'
+      : String(value.hideCompletedAfterDays === 0 ? 'off' : (value.hideCompletedAfterDays ?? 'off'))
+  $: hideDoneSelection = periodSelection(board)
+  onDestroy(() => {
+    datePicker?.close()
+  })
+
+  function chooseCompletedDate (): void {
+    if (datePicker !== undefined) return
+    datePicker = showPopup(
+      DatePicker,
+      {
+        value: board.hideCompletedBefore,
+        mode: DateRangeMode.DATE,
+        shifts: false,
+        label: tracker.string.BoardHideDoneCustom,
+        detail: tracker.string.BoardHideDoneCustomHint
+      },
+      hideDoneElement ?? 'top',
+      (result: DatePickerResult | null | undefined) => {
+        datePicker = undefined
+        if (result?.value == null) {
+          hideDoneSelection = periodSelection(board)
+          return
+        }
+        const before = new Date(result.value).setHours(0, 0, 0, 0)
+        void onChange({ hideCompletedAfterDays: 0, hideCompletedBefore: before })
+      }
+    )
+  }
+
   // The orders of the kanban view options; the first one is the default of a board
   const cardOrders =
     client
@@ -86,6 +142,12 @@
 
   // How many issues of the board projects the board filter lets through
   let counts: { matched: number, total: number } | undefined
+  const boardQueries = new BoardQuery(client, () => {
+    void count(board)
+  })
+  onDestroy(() => {
+    boardQueries.destroy()
+  })
   let countSeq = 0
   async function count (board: Board): Promise<void> {
     const seq = ++countSeq
@@ -95,9 +157,9 @@
     }
     const [total, matched] = await Promise.all([
       client.findAll<Issue>(tracker.class.Issue, { space: { $in: board.projects } }, { limit: 1, total: true }),
-      boardQuery(client, board, new Set(), () => {
-        void count(board)
-      }).then(async (q) => await client.findAll<Issue>(tracker.class.Issue, q, { limit: 1, total: true }))
+      boardQueries
+        .build(board)
+        .then(async (q) => await client.findAll<Issue>(tracker.class.Issue, q, { limit: 1, total: true }))
     ])
     if (seq === countSeq) counts = { matched: matched.total, total: total.total }
   }
@@ -191,12 +253,42 @@
       </div>
     </div>
 
-    <!-- tracker-board-next: Board has no field for hiding old done issues -->
-    {#if boardNext}
-      <SettingRow kind="column" label={tracker.string.BoardHideDoneOlder} hint={tracker.string.BoardHideDoneOlderHint}>
-        <Dropdown data-id="boardHideDone" kind="secondary" items={hideDoneItems} selected="older" />
-      </SettingRow>
-    {/if}
+    <SettingRow kind="column" label={tracker.string.BoardHideDoneOlder} hint={tracker.string.BoardHideDoneOlderHint}>
+      <div class="completed-period">
+        <Dropdown
+          data-id="boardHideDone"
+          kind="secondary"
+          items={hideDoneItems}
+          bind:element={hideDoneElement}
+          bind:selected={hideDoneSelection}
+          on:selected={(e) => {
+            if (e.detail === 'custom') {
+              chooseCompletedDate()
+              return
+            }
+            const days = e.detail === 'off' ? 0 : Number(e.detail)
+            if (
+              days === 0 ||
+              days === 1 ||
+              days === 3 ||
+              days === 7 ||
+              days === 14 ||
+              days === 30 ||
+              days === 90 ||
+              days === 180 ||
+              days === 365
+            ) {
+              void onChange({ hideCompletedAfterDays: days, hideCompletedBefore: null })
+            }
+          }}
+        />
+        {#if board.hideCompletedBefore != null}
+          <Button data-id="boardHideDoneCustomPeriod" kind="secondary" on:click={chooseCompletedDate}>
+            <DateLabel value={board.hideCompletedBefore} showIcon={false} />
+          </Button>
+        {/if}
+      </div>
+    </SettingRow>
     <SettingRow kind="column" label={tracker.string.BoardCardOrder}>
       <Dropdown
         data-id="boardCardOrder"
@@ -213,6 +305,13 @@
 </ProjectSettingsSection>
 
 <style lang="scss">
+  .completed-period {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
   .rows {
     display: flex;
     flex-direction: column;

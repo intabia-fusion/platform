@@ -34,7 +34,7 @@
   import ui, { eventToHTMLElement, getPlatformColorDef, Icon, Label, showPopup, themeStore } from '@hcengineering/ui'
   import { Button, Dropdown, IconButton, Radio, SettingRow, Toggle } from '@hcengineering/ui/kit'
   import { ColorsPopup, FilterConditions, parseFilters } from '@hcengineering/view-resources'
-  import { boardQuery, ConditionMatches } from '../../../boards'
+  import { BoardQuery, ConditionMatches } from '../../../boards'
   import tracker from '../../../plugin'
   import IssueKanbanCard from '../../issues/IssueKanbanCard.svelte'
   import ProjectSettingsSection from '../../projects/settings/ProjectSettingsSection.svelte'
@@ -202,6 +202,10 @@
   const lookup = { attachedTo: tracker.class.Issue, _id: { subIssues: tracker.class.Issue } } as const
 
   // Live ids of the board issues that fit each condition, as the board itself matches them
+  const boardQueries = new BoardQuery(client, () => {
+    scopeVersion++
+  })
+  let scopeVersion = 0
   let matchesVersion = 0
   const laneMatches = new ConditionMatches(() => {
     matchesVersion++
@@ -210,6 +214,7 @@
     matchesVersion++
   })
   onDestroy(() => {
+    boardQueries.destroy()
     laneMatches.destroy()
     colorMatches.destroy()
   })
@@ -218,14 +223,14 @@
     matches: ConditionMatches,
     rules: Array<{ id: string, condition: string }>
   ): Promise<void> {
-    await matches.sync(client, rules, await boardQuery(client, board, new Set(), () => {}))
+    await matches.sync(client, rules, await boardQueries.build(board))
   }
-  $: if (kind === 'colorRules') {
+  $: if (scopeVersion >= 0 && kind === 'colorRules') {
     void syncMatches(
       colorMatches,
       colorRules.map((r) => ({ id: r.id, condition: r.condition }))
     )
-  } else if (boardNext && kind === 'swimlanes') {
+  } else if (scopeVersion >= 0 && boardNext && kind === 'swimlanes') {
     void syncMatches(
       laneMatches,
       board.swimlanes.slice(0, -1).map((l) => ({ id: l.id, condition: l.condition }))
@@ -255,7 +260,7 @@
     const seq = ++laneSeq
     const first = laneMatches.ids.get(board.swimlanes[0]?.id ?? '')
     const id = first !== undefined ? [...first][0] : undefined
-    const query = id !== undefined ? { _id: id as Ref<Issue> } : await boardQuery(client, board, new Set(), () => {})
+    const query = id !== undefined ? { _id: id as Ref<Issue> } : await boardQueries.build(board)
     const found = await client.findOne(tracker.class.Issue, query, { lookup })
     if (seq === laneSeq) laneSample = found
   }

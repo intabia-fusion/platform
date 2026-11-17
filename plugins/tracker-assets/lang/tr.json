@@ -488,9 +488,9 @@
     "BoardVisibilityAllMembers": "Herkese görünür",
     "BoardVisibilityOnlyMe": "Yalnızca ben",
     "BoardVisibilityOnlyMeHint": "Kişisel pano, yalnızca siz görürsünüz",
-    "BoardHideDoneOlder": "Şundan eski tamamlananları gizle",
-    "BoardHideDoneOlderHint": "Tamamlandı kategorisindeki sütunlar",
-    "BoardHideDoneValue": "2 hafta",
+    "BoardHideDoneOlder": "Tamamlanan görevleri gizle",
+    "BoardHideDoneOlderHint": "Tamamlanma tarihine göre.",
+    "BoardHideDoneValue": "2 hafta sonra",
     "BoardCardOrder": "Kart sırası",
     "BoardEditorsHint": "Diğerleri panoyu kullanabilir veya kendi panolarını oluşturabilir",
     "WipLimits": "WIP limitleri",
@@ -548,7 +548,18 @@
     "BoardSearch": "Pano ara",
     "BoardPersonal": "Kişisel pano",
     "WarnOnClosedStatuses": "Sütunu olmayan kapalı durumlar için uyar",
-    "WarnOnClosedStatusesHint": "Tamamlanan ve iptal edilen durumları gizli görev uyarılarına dahil et. Varsayılan olarak kapalıdır."
+    "WarnOnClosedStatusesHint": "Tamamlanan ve iptal edilen durumları gizli görev uyarılarına dahil et. Varsayılan olarak kapalıdır.",
+    "BoardHideDoneNever": "Gizleme",
+    "BoardHideDoneWeek": "1 hafta sonra",
+    "BoardHideDoneMonth": "1 ay sonra",
+    "CompletedOn": "Tamamlanma tarihi",
+    "BoardHideDoneDay": "1 gün sonra",
+    "BoardHideDoneThreeDays": "3 gün sonra",
+    "BoardHideDoneQuarter": "3 ay sonra",
+    "BoardHideDoneHalfYear": "6 ay sonra",
+    "BoardHideDoneYear": "1 yıl sonra",
+    "BoardHideDoneCustom": "Bir tarihten önce…",
+    "BoardHideDoneCustomHint": "Seçilen tarihten önce tamamlanan görevleri gizle. Seçilen gün dahil değildir."
   },
   "status": {
     "DuplicateColumnTitle": "Bu ada sahip bir sütun zaten var"

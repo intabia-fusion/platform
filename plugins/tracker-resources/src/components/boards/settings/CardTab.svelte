@@ -13,6 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import { onDestroy } from 'svelte'
   import type { Data, WithLookup } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import { getClient, isDisabled } from '@hcengineering/presentation'
@@ -28,7 +29,7 @@
   } from '@hcengineering/tracker'
   import { Label } from '@hcengineering/ui'
   import { Checkbox } from '@hcengineering/ui/kit'
-  import { boardQuery } from '../../../boards'
+  import { BoardQuery } from '../../../boards'
   import tracker from '../../../plugin'
   import IssueKanbanCard from '../../issues/IssueKanbanCard.svelte'
   import ProjectSettingsSection from '../../projects/settings/ProjectSettingsSection.svelte'
@@ -74,9 +75,15 @@
   // A real issue of the board shows what each density keeps
   let sample: WithLookup<Issue> | undefined
   let sampleSeq = 0
+  const boardQueries = new BoardQuery(client, () => {
+    void loadSample(sampleKey)
+  })
+  onDestroy(() => {
+    boardQueries.destroy()
+  })
   async function loadSample (key: string): Promise<void> {
     const seq = ++sampleSeq
-    const query = await boardQuery(client, board, new Set(), () => {})
+    const query = await boardQueries.build(board)
     const issues = await client.findAll(tracker.class.Issue, query, {
       limit: 50,
       lookup: { attachedTo: tracker.class.Issue, _id: { subIssues: tracker.class.Issue } }
@@ -88,7 +95,7 @@
     )
   }
   // Field and density clicks do not change which issues the board takes
-  $: sampleKey = JSON.stringify([board.projects, board.filter])
+  $: sampleKey = JSON.stringify([board.projects, board.filter, board.hideCompletedAfterDays, board.hideCompletedBefore])
   $: void loadSample(sampleKey)
 
   $: shown = (field: CardField): boolean => isCardFieldVisible(board.cardFields, field)

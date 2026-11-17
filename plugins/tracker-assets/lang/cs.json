@@ -488,9 +488,9 @@
     "BoardVisibilityAllMembers": "Vidí všichni",
     "BoardVisibilityOnlyMe": "Jen já",
     "BoardVisibilityOnlyMeHint": "Osobní nástěnka, vidíte ji jen vy",
-    "BoardHideDoneOlder": "Skrýt dokončené starší než",
-    "BoardHideDoneOlderHint": "Sloupce kategorie Hotovo",
-    "BoardHideDoneValue": "2 týdny",
+    "BoardHideDoneOlder": "Skrývat dokončené úkoly",
+    "BoardHideDoneOlderHint": "Podle data dokončení úkolu.",
+    "BoardHideDoneValue": "Po 2 týdnech",
     "BoardCardOrder": "Pořadí karet",
     "BoardEditorsHint": "Ostatní mohou nástěnku používat nebo si vytvořit vlastní",
     "WipLimits": "WIP limity",
@@ -548,7 +548,18 @@
     "BoardSearch": "Hledat nástěnky",
     "BoardPersonal": "Osobní nástěnka",
     "WarnOnClosedStatuses": "Upozorňovat na uzavřené stavy bez sloupce",
-    "WarnOnClosedStatusesHint": "Zahrnout dokončené a zrušené stavy do upozornění na skryté úkoly. Ve výchozím nastavení vypnuto."
+    "WarnOnClosedStatusesHint": "Zahrnout dokončené a zrušené stavy do upozornění na skryté úkoly. Ve výchozím nastavení vypnuto.",
+    "BoardHideDoneNever": "Neskrývat",
+    "BoardHideDoneWeek": "Po 1 týdnu",
+    "BoardHideDoneMonth": "Po 1 měsíci",
+    "CompletedOn": "Datum dokončení",
+    "BoardHideDoneDay": "Po 1 dni",
+    "BoardHideDoneThreeDays": "Po 3 dnech",
+    "BoardHideDoneQuarter": "Po 3 měsících",
+    "BoardHideDoneHalfYear": "Po 6 měsících",
+    "BoardHideDoneYear": "Po 1 roce",
+    "BoardHideDoneCustom": "Před datem…",
+    "BoardHideDoneCustomHint": "Skrýt úkoly dokončené před zvoleným datem. Zvolený den není zahrnut."
   },
   "status": {
     "DuplicateColumnTitle": "Sloupec s tímto názvem již existuje"

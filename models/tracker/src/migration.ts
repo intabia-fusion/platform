@@ -17,6 +17,10 @@
 import activity, { type DocUpdateMessage } from '@hcengineering/activity'
 import core, {
   DOMAIN_MODEL_TX,
+  DOMAIN_TX,
+  SortingOrder,
+  type TxCUD,
+  type TxUpdateDoc,
   DOMAIN_STATUS,
   type Ref,
   type Status,
@@ -420,6 +424,76 @@ export async function migrateChildInfoParentId (client: MigrationClient): Promis
   }
 }
 
+// Restore only dates established by a continuous known status history.
+export async function migrateIssueCompletedOn (client: MigrationClient): Promise<void> {
+  const classes = client.hierarchy.getDescendants(tracker.class.Issue)
+  const statuses = toIdMap(client.model.findAllSync(core.class.Status, {}))
+  const completed = [...statuses.values()].filter((s) => s.category === task.statusCategory.Won).map((s) => s._id)
+  await client.update<Issue>(
+    DOMAIN_TASK,
+    {
+      _class: { $in: classes },
+      status: { $nin: completed },
+      completedOn: { $exists: false }
+    },
+    { completedOn: null }
+  )
+  const issues = await client.find<Issue>(
+    DOMAIN_TASK,
+    {
+      _class: { $in: classes },
+      status: { $in: completed },
+      completedOn: { $exists: false }
+    },
+    { projection: { _id: 1, status: 1 } }
+  )
+  if (issues.length === 0) return
+  const pending = new Map(issues.map((issue) => [issue._id, issue]))
+  const history = new Map<Ref<Issue>, { status: Ref<Status>, completedOn: number | undefined }>()
+  // One pass over the transaction domain; objectId has no index.
+  const iterator = await client.traverse<TxCUD<Issue>>(
+    DOMAIN_TX,
+    {
+      objectClass: { $in: classes },
+      _class: { $in: [core.class.TxCreateDoc, core.class.TxUpdateDoc] }
+    },
+    { sort: { modifiedOn: SortingOrder.Ascending } }
+  )
+  try {
+    while (true) {
+      const txes = await iterator.next(1000)
+      if (txes === null || txes.length === 0) break
+      for (const tx of txes) {
+        if (!pending.has(tx.objectId)) continue
+        const isCreate = tx._class === core.class.TxCreateDoc
+        const status = isCreate
+          ? (tx as TxCreateDoc<Issue>).attributes.status
+          : (tx as TxUpdateDoc<Issue>).operations.status
+        if (status === undefined) continue
+        const previous = history.get(tx.objectId)
+        const category = statuses.get(status)?.category
+        const previousCategory = previous === undefined ? undefined : statuses.get(previous.status)?.category
+        const completedOn =
+          category === task.statusCategory.Won
+            ? isCreate || (previousCategory !== undefined && previousCategory !== task.statusCategory.Won)
+              ? tx.modifiedOn
+              : previous?.completedOn
+            : undefined
+        history.set(tx.objectId, { status, completedOn })
+      }
+    }
+  } finally {
+    await iterator.close()
+  }
+  const updates = issues.flatMap((issue) => {
+    const entry = history.get(issue._id)
+    return entry?.status === issue.status && entry.completedOn !== undefined
+      ? [{ filter: { _id: issue._id, completedOn: { $exists: false } }, update: { completedOn: entry.completedOn } }]
+      : []
+  })
+  for (let i = 0; i < updates.length; i += 500) await client.bulk<Issue>(DOMAIN_TASK, updates.slice(i, i + 500))
+}
+
 export const trackerOperation: MigrateOperation = {
   async preMigrate (client: MigrationClient, logger: ModelLogger, mode): Promise<void> {
     await tryMigrate(mode, client, trackerId, [
@@ -471,6 +545,11 @@ export const trackerOperation: MigrateOperation = {
         func: async (client) => {
           await migrateMixinCustomAttributesPref(client, 'tracker:mixin:IssueTypeData', tracker.class.IssueTaskType)
         }
+      },
+      {
+        state: 'issue-completed-on-v1',
+        mode: 'upgrade',
+        func: migrateIssueCompletedOn
       }
     ])
   },
