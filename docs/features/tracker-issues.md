@@ -128,7 +128,7 @@
 
 #### Формат длительности
 
-`parseDuration`/`formatDuration`/`formatDurationCompact` (алиасы единиц по языку m/h/d/w), `durationFormatHint`; ноль показывается как `0h`.
+`parseDuration`/`formatDuration`/`formatDurationCompact` (алиасы единиц по языку m/h/d/w), `durationFormatHint`; ноль показывается как `0h`. Объединённая колонка времени в списках показывает значения до 4 часов с минутами, большие значения округляет до целых часов и подчёркивает изменённые значения. Всплывающая подсказка сохраняет формат с минутами.
 
 ### Представления списка и канбана
 
@@ -138,7 +138,7 @@
 
 #### Viewlet'ы трекера
 
-`IssueList` (список с priority/identifier/status/kind/title/labels/ Milestone/Component/dueDate/reportedTime/estimation/assignee), `IssueKanban`, `SubIssues`/`ParentIssues`, `MilestoneIssuesList`, `ComponentIssuesList`.
+`IssueList` (список с priority/identifier/status/kind/title/labels/ Milestone/Component/dueDate/estimation/assignee), `IssueKanban`, `SubIssues`/`ParentIssues`, `MilestoneIssuesList`, `ComponentIssuesList`. В `IssueList` и `SubIssues` факт, оценка и прогресс времени показаны одной колонкой. В списках на базе `issueConfig` даты создания и изменения выровнены по центру.
 
 #### Группировка/сортировка
 
@@ -203,7 +203,7 @@
 
 | Фича | ru | en | Статус | Сверено | Расхождение |
 | --- | --- | --- | --- | --- | --- |
-| Дерево подзадач | task-tracking/creating-issues | task-tracking/creating-issues | partial | 0.8.60 | не описано создание подзадачи из уже существующей (действие «Добавить подзадачу»), только указание родителя при создании |
+| Дерево подзадач | task-tracking/creating-issues | task-tracking/creating-issues | stale | 0.8.60 | не описано создание подзадачи из уже существующей; оценка и прогресс времени в списке объединены в одну колонку |
 | Связи между issues | task-tracking/related-issues, people-contacts/connecting-tasks | task-tracking/related-issues, people-contacts/connecting-tasks | ok | 0.8.60 | |
 | AI-ассистент при создании | - | - | plan | - | |
 | Уведомление о создании задачи | - | - | plan | - | |
@@ -214,7 +214,7 @@
 | Разбивка "потрачено/запланировано" | task-tracking/time-reports | - | partial | 0.8.60 | механика splitReportedTime (разбивка часов слота-отчёта) на странице не описана |
 | Диалог отчёта | task-tracking/time-reports, task-tracking/task-management | - | partial | 0.8.60 | не описан выбор сотрудника и быстрые кнопки часов (например «До 8ч») в форме списания |
 | UI оценки | task-tracking/time-reports | - | partial | 0.8.60 | страница описывает только список отчётов (TimeSpendReportList, вид «Отчеты по времени») и только период «Неделя» (без «2 недели»/«Месяц»); EstimationEditor/EstimationPopup/SubIssuesEstimations (оценка в карточке задачи) не описаны |
-| Формат длительности | task-tracking/time-reports | - | partial | 0.8.60 | показан только пример «4ч», без недель/дней/минут и составных значений вида «2ч 30м» |
+| Формат длительности | task-tracking/time-reports | - | stale | 0.8.60 | не описаны составные значения и округление часов в объединённой колонке списка |
 | Навигатор "Мои задачи" / "Все задачи" | task-tracking/issue-collaborators | task-tracking/issue-collaborators | partial | 0.8.60 | описана только вкладка «Отслеживаемые» в «Моих задачах»; остальные вкладки и отдельный раздел «Все задачи» с его вкладками не раскрыты |
 | Viewlet'ы трекера | task-tracking/viewing-issues | task-tracking/viewing-issues | stale | 0.8.60 | канбан теперь работает и по доске (колонки, дорожки, цвета рамки), в описании - обычный канбан; карточка канбана в виде дизайн-кита (атрибуты пилюлями, строка «Оценка» внизу, без счётчика комментариев родителя); описаны только список и канбан, остальные viewlet'ы (подзадачи, этапы, компоненты, отчёты по времени) не упомянуты; в шапке задач проекта вместо подписи «Задачи» - доски, добавленные пользователем на панель, и меню всех досок проекта (добавить/убрать с панели, создать, настройки); доска открывается на месте вида задач проекта, выбор вида в переключателе закрывает её |
 | Индикатор полной загрузки канбана | - | - | plan | - | |

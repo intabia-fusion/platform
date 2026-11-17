@@ -51,6 +51,7 @@
   import { boardContextKey, boardLocation, reportBoardError, shareBoard } from '../../boards'
   import { activeProjects, exportIssuesToCSV } from '../../utils'
   import IssueStatistics from '../milestones/IssueStatistics.svelte'
+  import { normalizeIssueTimeConfig } from './edit/issueTimePreference'
 
   export let space: Ref<Space> | undefined = undefined
   export let query: DocumentQuery<Issue> = {}
@@ -67,6 +68,9 @@
   setContext(boardContextKey, boardStore)
 
   export let viewlet: WithLookup<Viewlet> | undefined = undefined
+  function normalizeConfig (config: Viewlet['config'], source: Viewlet): Viewlet['config'] {
+    return normalizeIssueTimeConfig(config, source)
+  }
   const viewlets: WithLookup<Viewlet>[] | undefined = undefined
   let viewOptions: ViewOptions | undefined
   // A board has no view options button: its header shows the density slider only, the rest is in its settings
@@ -260,7 +264,7 @@
     <!-- Made with the viewlet known: made before, its binding writes its empty viewlet over the one
          a cached viewlet query sets while the header mounts, and the button stays empty -->
     {#if viewlet !== undefined && board === undefined}
-      <ViewletSettingButton bind:viewOptions bind:viewlet />
+      <ViewletSettingButton bind:viewOptions bind:viewlet {normalizeConfig} />
     {/if}
   </svelte:fragment>
 
@@ -354,5 +358,6 @@
     createItemEvent={TrackerEvents.IssuePlusButtonClicked}
     createItemDialogProps={{ shouldSaveDraft: true }}
     {emptyState}
+    {normalizeConfig}
   />
 {/if}

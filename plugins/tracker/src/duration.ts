@@ -144,6 +144,19 @@ export function formatDuration (hours: number, language: string = 'en'): string 
   return visible.map(([value, minutes]) => `${value}${unitLabel(minutes, language)}`).join(' ')
 }
 
+export function formatDurationRoundedHours (hours: number, language: string = 'en'): string {
+  if (!Number.isFinite(hours) || hours < 0) return ''
+  const totalMin = Math.round(hours * MINUTES_IN_HOUR)
+  if (totalMin <= 4 * MINUTES_IN_HOUR) return formatDuration(hours, language)
+  return `${Math.round(totalMin / MINUTES_IN_HOUR)}${unitLabel(MINUTES_IN_HOUR, language)}`
+}
+
+export function isDurationRounded (hours: number): boolean {
+  if (!Number.isFinite(hours) || hours < 0) return false
+  const totalMin = Math.round(hours * MINUTES_IN_HOUR)
+  return totalMin > 4 * MINUTES_IN_HOUR && totalMin % MINUTES_IN_HOUR !== 0
+}
+
 /**
  * The largest unit that fits plus the next one down: `18w 3d 5h 30m` becomes `18w 3d`, `1d 4h 30m`
  * becomes `1d 4h`. Lists have no room for four units, and the tooltip still carries the exact value.

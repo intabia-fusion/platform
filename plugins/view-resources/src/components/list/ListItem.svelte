@@ -73,6 +73,11 @@
   $: columns = model.filter(
     (p) => !p.displayProps?.grow && (groupByKey === undefined || p.displayProps?.excludeByKey !== groupByKey)
   )
+  $: fixedModel = model.filter(
+    (p) =>
+      !(p.displayProps?.optional === true || p.displayProps?.compression === true || p.displayProps?.suffix === true)
+  )
+  $: optionalModel = model.filter((p) => p.displayProps?.optional === true)
   $: gridTemplate = Array.isArray(props.columnWidths)
     ? `1.5rem ${columns.map((_, i) => props.columnWidths[i] ?? 'minmax(8rem, 1fr)').join(' ')}`
     : undefined
@@ -151,7 +156,7 @@
       </div>
     {/each}
   {:else}
-    {#each model.filter((p) => !(p.displayProps?.optional === true || p.displayProps?.compression === true || p.displayProps?.suffix === true)) as attributeModel, i}
+    {#each fixedModel as attributeModel, i}
       {@const displayProps = attributeModel.displayProps}
       {#if !groupByKey || displayProps?.excludeByKey !== groupByKey}
         {#if displayProps?.grow}
@@ -187,7 +192,7 @@
                 />
               {/each}
             </div>
-            {#each model.filter((p) => p.displayProps?.optional === true) as attrModel}
+            {#each optionalModel as attrModel}
               <ListPresenter
                 {docObject}
                 attributeModel={attrModel}
@@ -207,6 +212,10 @@
             value={getObjectValue(attributeModel.key, docObject)}
             onChange={getOnChange(docObject, attributeModel)}
             hideDivider={i === 0}
+            compactDivider={!compactMode &&
+              i > 0 &&
+              fixedModel[i - 1].displayProps?.grow === true &&
+              optionalModel[optionalModel.length - 1]?.props?.showReportedTime === true}
             {compactMode}
           />
         {/if}

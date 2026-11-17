@@ -245,13 +245,13 @@ export function issueConfig (
     {
       key: 'createdOn',
       presenter: view.component.TimestampLabel,
-      displayProps: { key: key + 'created', fixed: 'left', dividerBefore: true },
+      displayProps: { key: key + 'created', fixed: 'center', dividerBefore: true },
       props: { label: tracker.string.CreationDate }
     },
     {
       key: 'modifiedOn',
       presenter: view.component.TimestampLabel,
-      displayProps: { key: key + 'modified', fixed: 'left', dividerBefore: true },
+      displayProps: { key: key + 'modified', fixed: 'center', dividerBefore: true },
       props: { label: tracker.string.ModificationDate }
     },
     {
@@ -261,6 +261,19 @@ export function issueConfig (
       props: { kind: 'list', shouldShowName: false, avatarSize: 'x-small' }
     }
   ]
+}
+
+function combineTimeColumns (config: (BuildModelKey | string)[], subissue = false): (BuildModelKey | string)[] {
+  return config
+    .filter((column) => typeof column === 'string' || column.key !== 'reportedTime')
+    .map((column) =>
+      typeof column !== 'string' && column.presenter === tracker.component.EstimationEditor
+        ? {
+            ...column,
+            props: { ...column.props, showReportedTime: true, ...(subissue ? { widthScope: 'subissue' } : {}) }
+          }
+        : column
+    )
 }
 
 export function defineViewlets (builder: Builder): void {
@@ -356,6 +369,7 @@ export function defineViewlets (builder: Builder): void {
           'component',
           'milestone',
           'estimation',
+          'reportedTime',
           'remainingTime',
           'status',
           'dueDate',
@@ -364,7 +378,7 @@ export function defineViewlets (builder: Builder): void {
           'modifiedBy'
         ]
       },
-      config: issueConfig()
+      config: combineTimeColumns(issueConfig())
     },
     tracker.viewlet.IssueList
   )
@@ -410,12 +424,13 @@ export function defineViewlets (builder: Builder): void {
           'dueDate',
           'milestone',
           'estimation',
+          'reportedTime',
           'remainingTime',
           'createdBy',
           'modifiedBy'
         ]
       },
-      config: issueConfig('sub', true, true)
+      config: combineTimeColumns(issueConfig('sub', true, true), true)
     },
     tracker.viewlet.SubIssues
   )

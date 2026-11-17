@@ -155,12 +155,14 @@ export class IssuesPage extends CommonTrackerPage {
   viewButton = (): Locator => this.page.locator('button[data-id="btn-viewOptions"]')
   orderingButton = (): Locator => this.page.locator('.ordering-primary button')
   modifiedDateMenuItem = (): Locator => this.page.locator('button.menu-item', { hasText: 'Modified date' })
-  estimationContainer = (): Locator => this.page.locator('.estimation-container').first()
   addTimeReportButton = (): Locator => this.page.locator('button:has-text("Add time report")')
   timeReportCreationArea = (): Locator =>
     this.page.locator('[id="tracker\\:string\\:TimeSpendReportAdd"] >> text=Add time report')
 
-  reportedTimeSpan = (): Locator => this.page.locator('.reported-container >> span').first()
+  issueEstimationContainer = (issueName: string): Locator =>
+    this.issuesList()
+      .filter({ has: this.page.locator('a', { hasText: issueName }) })
+      .locator('.estimation-container.combined')
 
   estimationSpan = (): Locator => this.page.locator('.estimation-container >> span').first()
   okButton = (): Locator => this.page.getByRole('button', { name: 'Ok', exact: true })
@@ -186,8 +188,10 @@ export class IssuesPage extends CommonTrackerPage {
     await this.page.keyboard.press('Escape')
   }
 
-  async checkReportedTime (count: number): Promise<void> {
-    await expect(this.reportedTimeSpan()).toContainText(await toTime(count))
+  async checkReportedTime (issueName: string, count: number): Promise<void> {
+    await expect(this.issueEstimationContainer(issueName).locator('.label > .flex-no-shrink').nth(1)).toHaveText(
+      await toTime(count)
+    )
   }
 
   async createAndOpenIssue (name: string, assignee: string, status: string, taskType?: string): Promise<void> {
@@ -348,8 +352,8 @@ export class IssuesPage extends CommonTrackerPage {
     await this.modifiedDateMenuItem().click()
   }
 
-  async clickEstimationContainer (): Promise<void> {
-    await this.estimationContainer().click()
+  async clickEstimationContainer (issueName: string): Promise<void> {
+    await this.issueEstimationContainer(issueName).click()
   }
 
   async waitForEstimation (): Promise<void> {

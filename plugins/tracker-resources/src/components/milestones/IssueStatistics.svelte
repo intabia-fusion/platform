@@ -43,7 +43,11 @@
 {#if docs !== undefined}
   <FixedColumn key="estimation-editor">
     <!-- <Label label={tracker.string.MilestoneDay} value={}/> -->
-    <div class="flex-row-center flex-no-shrink h-6" class:showWarning={totalEstimation > (capacity ?? 0)}>
+    <div
+      class="flex-row-center flex-no-shrink h-6"
+      class:categoryTotal={category !== undefined}
+      class:showWarning={totalEstimation > (capacity ?? 0)}
+    >
       {#if docs.length === itemsProj?.length}
         {#if totalEstimation > 0}
           <EstimationProgressCircle items={[{ value: totalReported, max: totalEstimation }]} />
@@ -65,3 +69,9 @@
     </div>
   </FixedColumn>
 {/if}
+
+<style lang="scss">
+  .categoryTotal {
+    justify-content: flex-end;
+  }
+</style>

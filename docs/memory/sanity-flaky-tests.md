@@ -4,6 +4,8 @@
 
 ## Diagnosing
 
+- CI `43855636060`, `report-time-from-main-view`: все три попытки искали удаленный `.reported-container`; снимки показывали ожидаемое время в объединенной колонке. Проверка привязана к строке задачи и читает факт перед `/`.
+
 - `polls-form.spec.ts`, horizontal drafts: `AppletTile` is 18rem wide. Requiring the whole tile inside the strip gives a false failure when the strip is narrower (Chromium: 288px tile in a 240px strip). After viewport changes, recompute the scroll end on each poll; verify the last tile's right edge is reachable rather than requiring full containment.
 - Workbench renders `.antiPanel-application` for both the apps panel and `#sidebar`; Office has the same `app-love:string:Office` id in both. Scope app navigation to `.antiPanel-application:not(.sidebar-container)` (`tests/sanity/tests/workbench.spec.ts`).
 - `TrackerApi.createIssue` defaults to the same `makeRank(undefined, undefined)` for every issue. The board return-drag test uses shared Second Project; an absolute DOM index also depends on foreign issues and live updates. Its position fixture must filter to its two owned cards and wait for their initial order.
