@@ -23,7 +23,13 @@ await kit.page('Постоянная встреча')
   const content = kit.col('Постоянная встреча', 16, { w: main.width - 32, hs: 'fix' })
   kit.at(main, content, 16, top + 16)
 
-  kit.add(content, kit.text('Без расписания: открывается любым входом, ждать вхождения не нужно', { size: 14, color: T('theme-dark-color') }))
+  kit.add(
+    content,
+    kit.text('Без расписания: открывается любым входом, ждать вхождения не нужно', {
+      size: 14,
+      color: T('theme-dark-color')
+    })
+  )
 
   const linkCol = kit.col('Ссылка', 8, { w: 560, hs: 'fix' })
   kit.add(linkCol, kit.SectionTitle('Ссылка', 'Одна и та же, пока владелец её не отзовёт', 560))
@@ -38,7 +44,14 @@ await kit.page('Постоянная встреча')
   kit.add(content, membersCol)
 
   const sessions = kit.col('Сессии', 8, { w: main.width - 32, hs: 'fix' })
-  kit.add(sessions, kit.SectionTitle('Прошедшие сессии', 'Каждая сессия - отдельный протокол, документы встречи живут выше', main.width - 32))
+  kit.add(
+    sessions,
+    kit.SectionTitle(
+      'Прошедшие сессии',
+      'Каждая сессия - отдельный протокол, документы встречи живут выше',
+      main.width - 32
+    )
+  )
   kit.add(
     sessions,
     kit.Table(

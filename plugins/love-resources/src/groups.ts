@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import type { AttachedDoc, Doc, Ref, TxOperations } from '@hcengineering/core'
+import type { Ref, TxOperations } from '@hcengineering/core'
 import love, { type MeetingGroup, type PermanentMeeting } from '@hcengineering/love'
 import core from '@hcengineering/core'
 
@@ -20,7 +20,7 @@ import core from '@hcengineering/core'
  * Moves an item of `ids` from `from` to `to` and returns the new order. Kept pure and separate from
  * the component: the drag-and-drop code only has to say where, and the test can check the numbers.
  */
-export function moveItem<T>(ids: T[], from: number, to: number): T[] {
+export function moveItem<T> (ids: T[], from: number, to: number): T[] {
   if (from === to || from < 0 || to < 0 || from >= ids.length || to >= ids.length) return ids
   const next = [...ids]
   const [item] = next.splice(from, 1)
@@ -29,12 +29,12 @@ export function moveItem<T>(ids: T[], from: number, to: number): T[] {
 }
 
 /** Assigns `0..n-1` to the given ids - one write per item is what the caller does with it. */
-export function orderOf<T>(ids: T[]): Array<{ id: T, order: number }> {
+export function orderOf<T> (ids: T[]): Array<{ id: T, order: number }> {
   return ids.map((id, index) => ({ id, order: index }))
 }
 
 /** Puts the moved meeting into the target group right before `beforeId` (or at the end). */
-export function mergeMeetingIntoGroup(
+export function mergeMeetingIntoGroup (
   meetings: Array<{ _id: Ref<PermanentMeeting>, group?: Ref<MeetingGroup> }>,
   moved: Ref<PermanentMeeting>,
   targetGroup: Ref<MeetingGroup> | undefined,
@@ -88,11 +88,7 @@ export async function createMeetingGroup (
 }
 
 /** Renames a group in place; an empty name is ignored so a stray Enter cannot blank the header. */
-export async function renameMeetingGroup (
-  client: TxOperations,
-  group: MeetingGroup,
-  name: string
-): Promise<void> {
+export async function renameMeetingGroup (client: TxOperations, group: MeetingGroup, name: string): Promise<void> {
   const trimmed = name.trim()
   if (trimmed === '' || trimmed === group.name) return
   await client.diffUpdate(group, { name: trimmed })

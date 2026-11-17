@@ -155,7 +155,9 @@
       />
       <span class="text-sm content-color"><Label label={love.string.RemindBefore} /></span>
     </div>
-  {/if}  <!-- The answer of the person looking at the card, or the counts of everyone else's: the card is
+  {/if}
+  <!-- The answer of the person looking at the card, or the counts of everyone else's: the card is
        the only place a meeting from the planner is opened, and RSVP used to live in the calendar
        popup only. -->
-  <EventRsvp object={live} /></div>
+  <EventRsvp object={live} />
+</div>

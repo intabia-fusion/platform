@@ -1,9 +1,13 @@
 import aiBot from '@hcengineering/ai-bot'
 import { connectMeeting, disconnectMeeting } from '@hcengineering/ai-bot-resources'
 import { Analytics } from '@hcengineering/analytics'
-import calendar, { AccessLevel, generateEventId, getPrimaryCalendar, type Calendar, type Event, type ReccuringEvent, type Schedule } from '@hcengineering/calendar'
+import calendar, {
+  type Event,
+  type ReccuringEvent,
+  type Schedule
+} from '@hcengineering/calendar'
 import chunter from '@hcengineering/chunter'
-import contact, { getCurrentEmployeeSpace, getName } from '@hcengineering/contact'
+import contact, { getName } from '@hcengineering/contact'
 import workbench from '@hcengineering/workbench'
 import core, {
   type AccountUuid,
@@ -12,7 +16,6 @@ import core, {
   type Data,
   type Doc,
   type DocumentQuery,
-  generateId,
   getCurrentAccount,
   type Ref,
   type RelatedDocument,
@@ -51,7 +54,7 @@ import presentation, {
   getClient,
   type ObjectSearchResult
 } from '@hcengineering/presentation'
-import { closePanel, getCurrentLocation, getUserTimezone, navigate, panelstore, showPopup } from '@hcengineering/ui'
+import { closePanel, getCurrentLocation, navigate, panelstore, showPopup } from '@hcengineering/ui'
 import { getCurrentLanguage } from '@hcengineering/theme'
 import view from '@hcengineering/view'
 import { getObjectLinkFragment } from '@hcengineering/view-resources'
@@ -68,7 +71,7 @@ import {
 } from 'livekit-client'
 import { derived, get, writable } from 'svelte/store'
 
-import { periodRules, ruleToPeriod } from './period'
+import { ruleToPeriod } from './period'
 import { createPermanentMeeting } from './permanentMeetingSchedule'
 import { getPersonByPersonRef } from '@hcengineering/contact-resources'
 import MeetingMinutesSearchItem from './components/MeetingMinutesSearchItem.svelte'

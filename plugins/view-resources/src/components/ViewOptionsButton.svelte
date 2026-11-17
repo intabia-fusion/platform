@@ -105,9 +105,7 @@
         if (result?.key === undefined) return
         if (viewlet) {
           viewOptions =
-            result.key === '__reset'
-              ? (result.value as ViewOptions)
-              : { ...viewOptions, [result.key]: result.value }
+            result.key === '__reset' ? (result.value as ViewOptions) : { ...viewOptions, [result.key]: result.value }
 
           // Clear selection on view settings change.
           focusStore.set({})

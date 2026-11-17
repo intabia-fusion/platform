@@ -24,8 +24,16 @@ const PM_MEMBERS = [
 
 // Строка списка: название, следующее вхождение, копирование гостевой ссылки (только участнику),
 // вход и настройки.
-function pmRow (m, w) {
-  const r = kit.box('Meeting ' + m.name, { w, h: 40, dir: 'row', gap: 8, pad: [0, 12, 0, 12], align: 'center', radius: 6 })
+function pmRow(m, w) {
+  const r = kit.box('Meeting ' + m.name, {
+    w,
+    h: 40,
+    dir: 'row',
+    gap: 8,
+    pad: [0, 12, 0, 12],
+    align: 'center',
+    radius: 6
+  })
   kit.add(r, kit.icon('calendar', T('theme-dark-color'), 16))
   kit.add(r, kit.text(m.name, { size: 14, color: T('theme-caption-color') }))
   kit.add(r, kit.spacer(1, 1))
@@ -37,7 +45,7 @@ function pmRow (m, w) {
 }
 
 // Шапка группы: ручка перетаскивания, название, счётчик, переименование.
-function pmGroupHeader (group, w) {
+function pmGroupHeader(group, w) {
   const h = kit.box('Group ' + group.name, {
     w,
     h: 32,
@@ -57,12 +65,12 @@ function pmGroupHeader (group, w) {
 }
 
 // Место, куда встанет перетаскиваемая строка.
-function pmDropMarker (w) {
+function pmDropMarker(w) {
   return kit.box('Drop marker', { w, h: 2, fill: T('primary-button-default') })
 }
 
 // Поле окна: подпись слева, контрол справа.
-function pmField (w, label, control) {
+function pmField(w, label, control) {
   const r = kit.box('Field ' + label, { w, h: 36, dir: 'row', gap: 12, align: 'center' })
   const l = kit.box('label', { w: 180, h: 20, dir: 'row', align: 'center' })
   kit.add(l, kit.text(label, { size: 13, color: T('theme-dark-color') }))
@@ -71,7 +79,7 @@ function pmField (w, label, control) {
 }
 
 // Окно «Новая встреча» / «Настройки встречи» - одно на создание и на правку (`PermanentMeetingForm`).
-function pmFormModal (title) {
+function pmFormModal(title) {
   const { modal, body } = kit.Modal(title, { w: 620, okLabel: 'Сохранить' })
   kit.add(body, pmField(570, 'Название', kit.EditBox('Планёрка команды', { kind: 'large-style', w: 360 })))
 

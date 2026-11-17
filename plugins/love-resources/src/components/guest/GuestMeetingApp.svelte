@@ -88,7 +88,7 @@
   let rows: number = 0
   const guestRoomPlaceholder: any = undefined
 
-  function updateStyle(count: number, screenSharing: boolean): void {
+  function updateStyle (count: number, screenSharing: boolean): void {
     columns = screenSharing ? 1 : Math.min(Math.ceil(Math.sqrt(count)), 8)
     rows = Math.ceil(count / columns)
     gridStyle = `grid-template-columns: repeat(${columns}, 1fr); aspect-ratio: ${columns * 1280}/${rows * 720};`
@@ -96,7 +96,7 @@
 
   let leaving = false
 
-  async function leaveGuest(): Promise<void> {
+  async function leaveGuest (): Promise<void> {
     // FUSIO-1584: a rage click (or the guest-only timeout racing a manual leave) must run one
     // disconnect, not several.
     if (leaving) return
@@ -111,7 +111,7 @@
   }
 
   // Check if there are any non-guest participants in the room
-  function checkForNonGuestParticipants(): void {
+  function checkForNonGuestParticipants (): void {
     if (!lk || !$lkSessionConnected) return
 
     // Get all remote participants
@@ -164,19 +164,19 @@
     }
   }
 
-  function onParticipantConnected(_participant: RemoteParticipant): void {
+  function onParticipantConnected (_participant: RemoteParticipant): void {
     console.log('[GuestMeetingApp] Participant connected:', _participant.identity)
     // Recheck when someone joins
     checkForNonGuestParticipants()
   }
 
-  function onParticipantDisconnected(_participant: RemoteParticipant): void {
+  function onParticipantDisconnected (_participant: RemoteParticipant): void {
     console.log('[GuestMeetingApp] Participant disconnected:', _participant.identity)
     // Recheck when someone leaves
     checkForNonGuestParticipants()
   }
 
-  function startGuestOnlyCheck(): void {
+  function startGuestOnlyCheck (): void {
     if (guestOnlyCheckInterval !== undefined) return
 
     console.log('[GuestMeetingApp] Starting guest-only check')
@@ -189,7 +189,7 @@
     }, GUEST_ONLY_CHECK_INTERVAL_MS)
   }
 
-  function stopGuestOnlyCheck(): void {
+  function stopGuestOnlyCheck (): void {
     console.log('[GuestMeetingApp] Stopping guest-only check')
     if (guestOnlyCheckInterval !== undefined) {
       clearInterval(guestOnlyCheckInterval)
@@ -206,7 +206,7 @@
   // same refusal, and the answer never changes for as long as this page lives.
   let linkRejected = false
 
-  function handleLocation(loc: Location): void {
+  function handleLocation (loc: Location): void {
     if (loc.path[0] !== 'meetings') {
       return
     }
@@ -240,7 +240,7 @@
     }
   }
 
-  async function resolveShortLink(shortId: string): Promise<string | null> {
+  async function resolveShortLink (shortId: string): Promise<string | null> {
     try {
       const accountEndpoint = getMetadata(login.metadata.AccountsUrl)
       if (accountEndpoint == null || accountEndpoint === '') {
@@ -266,7 +266,7 @@
     }
   }
 
-  async function fetchGuestInfo(): Promise<void> {
+  async function fetchGuestInfo (): Promise<void> {
     if (guestToken == null || linkRejected) return
 
     const token = guestToken
@@ -381,7 +381,7 @@
     }
   })
 
-  function goHome(): void {
+  function goHome (): void {
     // Navigate to root (workbench) - adjust if you prefer a different location
     navigate({ path: [] })
   }
@@ -390,7 +390,7 @@
 
   const handleFullScreen = () => ($isFullScreen = document.fullscreenElement != null)
 
-  function checkFullscreen(): void {
+  function checkFullscreen (): void {
     const needFullScreen = $isFullScreen
     if (document.fullscreenElement && !needFullScreen) {
       document
@@ -415,7 +415,7 @@
     }
   }
 
-  function onFullScreen(): void {
+  function onFullScreen (): void {
     const needFullScreen = !$isFullScreen
     if (!document.fullscreenElement && needFullScreen && roomEl != null) {
       roomEl

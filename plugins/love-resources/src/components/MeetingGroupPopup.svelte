@@ -137,7 +137,7 @@
               }}
             >
               <span class="box">
-                {#if selected.has(meeting._id)}<Icon icon={ui.icon.Check} size={'small'} />{/if}
+                {#if selected.has(meeting._id)}<Icon icon={ui.icon.Check} size="small" />{/if}
               </span>
               <span class="name">
                 {#if meeting.name !== undefined && meeting.name !== ''}

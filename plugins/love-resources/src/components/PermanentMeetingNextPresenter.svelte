@@ -18,7 +18,7 @@
 <script lang="ts">
   import calendar, { type Event } from '@hcengineering/calendar'
   import { DateRangeMode } from '@hcengineering/core'
-  import love, { type MeetingEventLink, type PermanentMeeting } from '@hcengineering/love'
+  import love, { type PermanentMeeting } from '@hcengineering/love'
   import { createQuery } from '@hcengineering/presentation'
   import { formatDateValue } from '@hcengineering/ui/kit'
 

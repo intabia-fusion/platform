@@ -19,7 +19,12 @@ await kit.page('Карточка постоянной встречи')
   const content = kit.col('Встреча', 12, { w: main.width - 32, hs: 'fix' })
   kit.at(main, content, 16, 72)
   kit.add(content, kit.text('Следующее вхождение: 12 ноября, 10:00', { size: 14, color: T('theme-dark-color') }))
-  kit.add(content, kit.Notice('Постоянная встреча открыта всегда: сессия появляется при входе, а не по расписанию', 'info', { w: main.width - 32 }))
+  kit.add(
+    content,
+    kit.Notice('Постоянная встреча открыта всегда: сессия появляется при входе, а не по расписанию', 'info', {
+      w: main.width - 32
+    })
+  )
   kit.add(content, kit.SectionTitle('Участники', 'Владельца и создателя снять нельзя', main.width - 32))
   for (const m of PM_MEMBERS) {
     const r = kit.row('Участник ' + m.name, 8, { w: main.width - 32, h: 32 })

@@ -98,8 +98,7 @@
   // being attended the button leaves it instead of offering to join again - otherwise entering from
   // here left a "Join meeting" button in front of a person who is already inside.
   $: inThisMeeting =
-    $lkSessionConnected &&
-    ($currentMeetingMinutes?.meeting === object._id || $currentMeetingMinutes === undefined)
+    $lkSessionConnected && ($currentMeetingMinutes?.meeting === object._id || $currentMeetingMinutes === undefined)
 
   let leaving = false
   async function handleLeaveRoom (): Promise<void> {

@@ -164,7 +164,11 @@ describe('createPermanentMeetingWithSchedule', () => {
     const setGuestPassword = jest.fn(async () => {})
     const { client } = createFakeClient()
 
-    await createPermanentMeetingWithSchedule(client, input({ guestPassword: 'secret' }), createContext(setGuestPassword))
+    await createPermanentMeetingWithSchedule(
+      client,
+      input({ guestPassword: 'secret' }),
+      createContext(setGuestPassword)
+    )
 
     expect(setGuestPassword).toHaveBeenCalledWith(meetingId, 'secret')
   })
@@ -193,11 +197,7 @@ describe('createPermanentMeetingWithSchedule', () => {
   it('creates no series at all when the meeting is asked to stay out of the calendar', async () => {
     const { client, calls } = createFakeClient()
 
-    const result = await createPermanentMeetingWithSchedule(
-      client,
-      input({ calendar: false }),
-      createContext()
-    )
+    const result = await createPermanentMeetingWithSchedule(client, input({ calendar: false }), createContext())
 
     // Nothing in the calendar: no event, no mixin, no back-reference to hang them on.
     expect(find(calls, 'addCollection')).toHaveLength(0)
@@ -245,7 +245,8 @@ describe('updatePermanentMeetingWithSchedule', () => {
   it('updates the meeting itself and every series pointing at it', async () => {
     const { client, calls } = createFakeClient()
     // The fake `findAll` returns the series the back-reference points at.
-    const meeting = { _id: meetingId, name: 'Old name' } as PermanentMeeting
+    const doc = { _id: meetingId, name: 'Old name' }
+    const meeting = doc as unknown as PermanentMeeting
 
     await updatePermanentMeetingWithSchedule(client, meeting, input({ name: 'New name' }), createContext())
 

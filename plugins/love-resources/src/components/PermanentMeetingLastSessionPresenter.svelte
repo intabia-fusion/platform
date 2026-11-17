@@ -37,4 +37,6 @@
   }, undefined)
 </script>
 
-<span class="text-sm content-dark-color">{lastEnd === undefined ? '' : formatDateValue(lastEnd, DateRangeMode.DATETIME)}</span>
+<span class="text-sm content-dark-color"
+  >{lastEnd === undefined ? '' : formatDateValue(lastEnd, DateRangeMode.DATETIME)}</span
+>

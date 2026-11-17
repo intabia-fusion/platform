@@ -20,7 +20,13 @@ await kit.page('Постоянные встречи и группы')
 
   const content = kit.col('Список', 4, { w: main.width - 32, hs: 'fix' })
   kit.at(main, content, 16, 72)
-  kit.add(content, kit.text('Порядок групп и встреч сохраняется сразу: тянем шапку - меняются группы, строку - встречи', { size: 13, color: T('theme-dark-color') }))
+  kit.add(
+    content,
+    kit.text('Порядок групп и встреч сохраняется сразу: тянем шапку - меняются группы, строку - встречи', {
+      size: 13,
+      color: T('theme-dark-color')
+    })
+  )
 
   const [dev, product] = PM_GROUPS
   kit.add(content, pmGroupHeader(dev, main.width - 32))

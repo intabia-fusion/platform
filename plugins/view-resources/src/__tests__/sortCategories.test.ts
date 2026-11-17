@@ -13,7 +13,14 @@
 // limitations under the License.
 //
 
-import core, { type Class, type Doc, type DocumentQuery, type Ref, type TxOperations, type CategoryType } from '@hcengineering/core'
+import core, {
+  type Class,
+  type Doc,
+  type DocumentQuery,
+  type Ref,
+  type TxOperations,
+  type CategoryType
+} from '@hcengineering/core'
 import { sortNamedCategories } from '../categorySorting'
 import { concatCategories, dedupeCategories } from '../categoryUtils'
 

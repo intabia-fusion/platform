@@ -22,7 +22,7 @@ import type { AggregateValue, CategoryType } from '@hcengineering/core'
 export function categoryKey (category: CategoryType): string {
   if (typeof category === 'object' && category !== null) {
     const name = (category as { name?: unknown }).name
-    return `o:${String(name ?? '')}`
+    return `o:${typeof name === 'string' ? name : ''}`
   }
   return `v:${String(category)}`
 }

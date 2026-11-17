@@ -14,7 +14,14 @@
   import { createEventDispatcher } from 'svelte'
   import view from '../plugin'
   import { buildConfigLookup, canResolveAttribute, getKeyLabel } from '../utils'
-  import { isDropdownType, isSliderType, isToggleType, noCategory, MAX_GROUPING_DEPTH, getDefaults } from '../viewOptions'
+  import {
+    isDropdownType,
+    isSliderType,
+    isToggleType,
+    noCategory,
+    MAX_GROUPING_DEPTH,
+    getDefaults
+  } from '../viewOptions'
   import { SortingOrder } from '@hcengineering/core'
 
   export let viewlet: Viewlet

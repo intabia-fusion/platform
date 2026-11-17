@@ -132,7 +132,13 @@
   <div class="antiGrid">
     <div class="antiGrid-row">
       <div class="antiGrid-row__header"><Label label={love.string.PermanentMeeting} /></div>
-      <EditBox bind:value={name} placeholder={love.string.PermanentMeeting} kind="large-style" autoFocus focusIndex={1} />
+      <EditBox
+        bind:value={name}
+        placeholder={love.string.PermanentMeeting}
+        kind="large-style"
+        autoFocus
+        focusIndex={1}
+      />
     </div>
     <div class="antiGrid-row">
       <div class="antiGrid-row__header"><Label label={love.string.Meetings} /></div>
@@ -158,7 +164,13 @@
     <div class="antiGrid-row">
       <div class="antiGrid-row__header"><Label label={love.string.RemindBeforeMinutes} /></div>
       <div class="flex-row-center gap-2">
-        <NumberInput bind:value={reminderMinutes} minValue={0} maxValue={1440} maxDigitsAfterPoint={0} maxWidth="4rem" />
+        <NumberInput
+          bind:value={reminderMinutes}
+          minValue={0}
+          maxValue={1440}
+          maxDigitsAfterPoint={0}
+          maxWidth="4rem"
+        />
         <span class="text-sm content-color"><Label label={love.string.RemindBefore} /></span>
       </div>
     </div>
@@ -168,7 +180,13 @@
     </div>
     <div class="antiGrid-row">
       <div class="antiGrid-row__header"><Label label={core.string.Members} /></div>
-      <AccountArrayEditor value={members} label={core.string.Members} onChange={membersChanged} kind="regular" size="large" />
+      <AccountArrayEditor
+        value={members}
+        label={core.string.Members}
+        onChange={membersChanged}
+        kind="regular"
+        size="large"
+      />
     </div>
   </div>
 </Card>
