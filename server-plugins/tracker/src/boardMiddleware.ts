@@ -37,7 +37,8 @@ import {
   type PipelineContext,
   type TxMiddlewareResult
 } from '@hcengineering/server-core'
-import tracker, { type Board, canEditBoard, duplicateColumnIds } from '@hcengineering/tracker'
+import tracker, { type Board, type BoardNavigationPreference, canEditBoard, duplicateColumnIds } from '@hcengineering/tracker'
+import { boardBeforeKey, withBoardNavigationLock } from './boardNavigation'
 
 /**
  * Board write rights: only the author or an editor changes a board, only the author removes it.
@@ -64,7 +65,7 @@ export class BoardMiddleware extends BaseMiddleware {
         ids.add((tx as TxCUD<Doc>).objectId)
       }
     }
-    if (ids.size === 0) return await this.processTxes(ctx, txes)
+    if (ids.size === 0) return await this.processNavigationTxes(ctx, txes)
     const previous = [...ids]
       .map((id) => this.pendingBoards.get(id))
       .filter((pending): pending is Promise<void> => pending !== undefined)
@@ -75,13 +76,40 @@ export class BoardMiddleware extends BaseMiddleware {
     for (const id of ids) this.pendingBoards.set(id, pending)
     await Promise.all(previous)
     try {
-      return await this.processTxes(ctx, txes)
+      return await this.processNavigationTxes(ctx, txes)
     } finally {
       release()
       for (const id of ids) {
         if (this.pendingBoards.get(id) === pending) this.pendingBoards.delete(id)
       }
     }
+  }
+
+  private async processNavigationTxes (ctx: MeasureContext<SessionData>, txes: Tx[]): Promise<TxMiddlewareResult> {
+    const ids = [...new Set(txes.filter((tx) =>
+      TxProcessor.isExtendsCUD(tx._class) &&
+      (tx as TxCUD<Doc>).objectClass === tracker.class.BoardNavigationPreference
+    ).map((tx) => (tx as TxCUD<Doc>).objectId))].sort()
+    const run = async (index: number): Promise<TxMiddlewareResult> => {
+      const id = ids[index]
+      if (id !== undefined) {
+        return await withBoardNavigationLock(this.context.workspace.uuid, id, ctx.contextData.contextCache,
+          async () => await run(index + 1))
+      }
+      const filtered: Tx[] = []
+      for (const tx of txes) {
+        if (tx._class === core.class.TxCreateDoc &&
+          (tx as TxCUD<Doc>).objectClass === tracker.class.BoardNavigationPreference) {
+          const [existing] = await this.provideFindAll(this.systemContext(ctx), tracker.class.BoardNavigationPreference,
+            { _id: (tx as TxCUD<BoardNavigationPreference>).objectId })
+          // A first-open snapshot can race with a server assignment. Keep the persisted list.
+          if (existing !== undefined) continue
+        }
+        filtered.push(tx)
+      }
+      return await this.processTxes(ctx, filtered)
+    }
+    return await run(0)
   }
 
   private async processTxes (ctx: MeasureContext<SessionData>, txes: Tx[]): Promise<TxMiddlewareResult> {
@@ -166,6 +194,10 @@ export class BoardMiddleware extends BaseMiddleware {
       : stored !== undefined
         ? stored.get(tx.objectId)
         : (await this.provideFindAll(ctx, tracker.class.Board, { _id: tx.objectId }, { limit: 1 }))[0]
+    // Sync triggers run after persistence; retain the validated preimage for membership changes.
+    if (before !== undefined && tx._class === core.class.TxUpdateDoc) {
+      ctx.contextData.contextCache.set(boardBeforeKey(tx._id), before)
+    }
     // Nothing stored, nothing to protect
     if (before === undefined) return false
 

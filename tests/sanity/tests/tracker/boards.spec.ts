@@ -393,7 +393,7 @@ test.describe('task boards', () => {
     }
   })
 
-  test('a new global board stays in the catalog until explicitly added, and hiding keeps it open', async ({ page }) => {
+  test('a hidden global board stays in the catalog until explicitly added, and hiding keeps it open', async ({ page }) => {
     const boards = new BoardsPage(page)
     await boards.open(boardId)
     await expect
@@ -407,6 +407,11 @@ test.describe('task boards', () => {
     const id = await makeBoard('catalog-only', {
       columns: [{ id: 'queue', title: 'Queue', category: task.statusCategory.ToDo, statuses: [statusId('Todo')] }]
     })
+    const initialNavigation = await client.findOne(tracker.class.BoardNavigationPreference, {
+      attachedTo: 'tracker:boards-navigation'
+    })
+    expect(initialNavigation?.boards).toContain(id)
+    await client.update(initialNavigation as BoardNavigationPreference, { $pull: { boards: id } })
     await boards.catalogButton().click()
     await expect(boards.catalogRow(id)).toBeVisible()
     await expect(boards.navItem(`${titlePrefix}catalog-only`)).toHaveCount(0)
@@ -1014,6 +1019,58 @@ test.describe('task boards', () => {
     await expect
       .poll(async () => (await readBoardById(id))?.cardFields)
       .toEqual(cardFields.filter((f) => !['priority', 'dueDate', 'labels'].includes(f)))
+  })
+
+  test('new membership adds a board live, respects hiding and adds it on reassignment', async ({ browser }) => {
+    const connection = await connectTracker(undefined, PlatformUserSecond)
+    const secondClient = connection.client
+    const token = connection.workspaceToken
+    const account = await createRestClient(token.endpoint, token.workspaceId, token.token).getAccount()
+    using second = await getSecondPage(browser)
+    const boards = new BoardsPage(second.page)
+    const previous = await secondClient.findOne(tracker.class.BoardNavigationPreference, {
+      attachedTo: 'tracker:boards-navigation'
+    })
+    try {
+      const created = await makeBoard('auto-membership-created', { editors: [account.uuid] })
+      await expect.poll(async () => (await secondClient.findOne(tracker.class.BoardNavigationPreference, {
+        attachedTo: 'tracker:boards-navigation'
+      }))?.boards).toContain(created)
+      await second.page.goto(`${PlatformURI}/workbench/sanity-ws/tracker/boards`)
+      await expect(boards.navItem(`${titlePrefix}auto-membership-created`)).toBeVisible()
+      await expect.poll(async () => await secondClient.findOne(tracker.class.BoardNavigationPreference, {
+        attachedTo: 'tracker:boards-navigation'
+      })).toBeDefined()
+      const id = await makeBoard('auto-membership')
+      const title = `${titlePrefix}auto-membership`
+      await expect(boards.catalogRow(id)).toBeVisible()
+      await expect(boards.navItem(title)).toHaveCount(0)
+      const change = async (patch: Partial<Data<Board>>): Promise<void> => {
+        await client.updateDoc(tracker.class.Board, core.space.Workspace, id, patch)
+      }
+      await change({ editors: [account.uuid] })
+      await expect(boards.navItem(title)).toBeVisible()
+      await boards.catalogRow(id).locator('[data-id="boardRemoveFromNavigation"]').click()
+      await expect(boards.navItem(title)).toHaveCount(0)
+      await change({ description: 'Unrelated change', editors: [account.uuid] })
+      await expect(boards.navItem(title)).toHaveCount(0)
+      await second.page.reload()
+      await expect(boards.catalogRow(id)).toBeVisible()
+      await expect(boards.navItem(title)).toHaveCount(0)
+      await change({ editors: [] })
+      await change({ editors: [account.uuid] })
+      await expect(boards.navItem(title)).toBeVisible()
+      await second.page.reload()
+      await expect(boards.navItem(title)).toBeVisible()
+    } finally {
+      const navigation = await secondClient.findOne(tracker.class.BoardNavigationPreference, {
+        attachedTo: 'tracker:boards-navigation'
+      })
+      if (navigation !== undefined) {
+        if (previous === undefined) await secondClient.remove(navigation)
+        else await secondClient.update(navigation, { boards: previous.boards })
+      }
+    }
   })
 
   test('a board of another user leaves the navigator when it becomes personal', async ({ page, browser }) => {

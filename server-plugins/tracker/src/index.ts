@@ -22,6 +22,7 @@ import { NotificationIntlProvider } from '@hcengineering/server-notification'
 import { IconPresenterFn, type StringPresenterFn, type AttributePresenterFn } from '@hcengineering/server-activity'
 
 export { BoardMiddleware } from './boardMiddleware'
+export { boardBeforeKey, withBoardNavigationLock } from './boardNavigation'
 
 /**
  * @public
@@ -44,6 +45,7 @@ export default plugin(serverTrackerId, {
   },
   trigger: {
     OnProjectTypeStatusesChanged: '' as Resource<TriggerFunc>,
+    OnBoardMembers: '' as Resource<TriggerFunc>,
     OnIssueUpdate: '' as Resource<TriggerFunc>,
     OnComponentRemove: '' as Resource<TriggerFunc>,
     OnProjectRemove: '' as Resource<TriggerFunc>
