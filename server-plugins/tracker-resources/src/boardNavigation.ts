@@ -82,10 +82,17 @@ export async function OnBoardMembers (txes: Tx[], control: TriggerControl): Prom
       if (preference === undefined) {
         // Preserve the initial catalogue snapshot used by ensureBoardNavigation on first opening.
         const available = await control.findAll(control.ctx, tracker.class.Board, {})
-        tx = factory.createTxCreateDoc(tracker.class.BoardNavigationPreference, core.space.Workspace, {
-          attachedTo,
-          boards: [...new Set([...available.filter((b) => isBoardAvailable(b, account)).map((b) => b._id), ...boards])]
-        }, id)
+        tx = factory.createTxCreateDoc(
+          tracker.class.BoardNavigationPreference,
+          core.space.Workspace,
+          {
+            attachedTo,
+            boards: [
+              ...new Set([...available.filter((b) => isBoardAvailable(b, account)).map((b) => b._id), ...boards])
+            ]
+          },
+          id
+        )
       } else {
         const missing = [...boards].filter((board) => !preference.boards.includes(board))
         if (missing.length === 0) return

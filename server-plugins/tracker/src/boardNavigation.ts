@@ -33,7 +33,9 @@ export async function withBoardNavigationLock<T> (
   if (contextCache.get(key) === true) return await fn()
   const previous = pending.get(key)
   let release = (): void => {}
-  const current = new Promise<void>((resolve) => { release = resolve })
+  const current = new Promise<void>((resolve) => {
+    release = resolve
+  })
   pending.set(key, current)
   await previous
   contextCache.set(key, true)

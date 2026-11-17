@@ -37,7 +37,12 @@ import {
   type PipelineContext,
   type TxMiddlewareResult
 } from '@hcengineering/server-core'
-import tracker, { type Board, type BoardNavigationPreference, canEditBoard, duplicateColumnIds } from '@hcengineering/tracker'
+import tracker, {
+  type Board,
+  type BoardNavigationPreference,
+  canEditBoard,
+  duplicateColumnIds
+} from '@hcengineering/tracker'
 import { boardBeforeKey, withBoardNavigationLock } from './boardNavigation'
 
 /**
@@ -86,22 +91,38 @@ export class BoardMiddleware extends BaseMiddleware {
   }
 
   private async processNavigationTxes (ctx: MeasureContext<SessionData>, txes: Tx[]): Promise<TxMiddlewareResult> {
-    const ids = [...new Set(txes.filter((tx) =>
-      TxProcessor.isExtendsCUD(tx._class) &&
-      (tx as TxCUD<Doc>).objectClass === tracker.class.BoardNavigationPreference
-    ).map((tx) => (tx as TxCUD<Doc>).objectId))].sort()
+    const ids = [
+      ...new Set(
+        txes
+          .filter(
+            (tx) =>
+              TxProcessor.isExtendsCUD(tx._class) &&
+              (tx as TxCUD<Doc>).objectClass === tracker.class.BoardNavigationPreference
+          )
+          .map((tx) => (tx as TxCUD<Doc>).objectId)
+      )
+    ].sort()
     const run = async (index: number): Promise<TxMiddlewareResult> => {
       const id = ids[index]
       if (id !== undefined) {
-        return await withBoardNavigationLock(this.context.workspace.uuid, id, ctx.contextData.contextCache,
-          async () => await run(index + 1))
+        return await withBoardNavigationLock(
+          this.context.workspace.uuid,
+          id,
+          ctx.contextData.contextCache,
+          async () => await run(index + 1)
+        )
       }
       const filtered: Tx[] = []
       for (const tx of txes) {
-        if (tx._class === core.class.TxCreateDoc &&
-          (tx as TxCUD<Doc>).objectClass === tracker.class.BoardNavigationPreference) {
-          const [existing] = await this.provideFindAll(this.systemContext(ctx), tracker.class.BoardNavigationPreference,
-            { _id: (tx as TxCUD<BoardNavigationPreference>).objectId })
+        if (
+          tx._class === core.class.TxCreateDoc &&
+          (tx as TxCUD<Doc>).objectClass === tracker.class.BoardNavigationPreference
+        ) {
+          const [existing] = await this.provideFindAll(
+            this.systemContext(ctx),
+            tracker.class.BoardNavigationPreference,
+            { _id: (tx as TxCUD<BoardNavigationPreference>).objectId }
+          )
           // A first-open snapshot can race with a server assignment. Keep the persisted list.
           if (existing !== undefined) continue
         }

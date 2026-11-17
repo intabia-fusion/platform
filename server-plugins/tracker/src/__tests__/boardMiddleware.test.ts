@@ -120,7 +120,11 @@ describe('BoardMiddleware', () => {
         return toFindResult(found, found.length)
       }
     }
-    middleware = await BoardMiddleware.create(ctxOf(alice), { hierarchy, workspace: { uuid: 'board-test' } } as any, next as any)
+    middleware = await BoardMiddleware.create(
+      ctxOf(alice),
+      { hierarchy, workspace: { uuid: 'board-test' } } as any,
+      next as any
+    )
   })
 
   const update = (id: string, ops: any): Tx =>
@@ -146,17 +150,25 @@ describe('BoardMiddleware', () => {
   it('keeps the server list when a first-open snapshot was prepared before an assignment', async () => {
     const id = 'tracker:boards-navigation:alice'
     let unlock = (): void => {}
-    const blocked = new Promise<void>((resolve) => { unlock = resolve })
+    const blocked = new Promise<void>((resolve) => {
+      unlock = resolve
+    })
     let entered = (): void => {}
-    const started = new Promise<void>((resolve) => { entered = resolve })
+    const started = new Promise<void>((resolve) => {
+      entered = resolve
+    })
     const server = withBoardNavigationLock('board-test' as any, id, new Map(), async () => {
       entered()
       await blocked
       stored.push({ _id: id, _class: tracker.class.BoardNavigationPreference, boards: ['new-board'] } as any)
     })
     await started
-    const stale = factory.createTxCreateDoc(tracker.class.BoardNavigationPreference, core.space.Workspace,
-      { attachedTo: 'tracker:boards-navigation', boards: [] }, id as any)
+    const stale = factory.createTxCreateDoc(
+      tracker.class.BoardNavigationPreference,
+      core.space.Workspace,
+      { attachedTo: 'tracker:boards-navigation', boards: [] },
+      id as any
+    )
     const client = middleware.tx(ctxOf(alice), [stale])
     unlock()
     await Promise.all([server, client])

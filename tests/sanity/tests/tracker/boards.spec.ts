@@ -393,7 +393,9 @@ test.describe('task boards', () => {
     }
   })
 
-  test('a hidden global board stays in the catalog until explicitly added, and hiding keeps it open', async ({ page }) => {
+  test('a hidden global board stays in the catalog until explicitly added, and hiding keeps it open', async ({
+    page
+  }) => {
     const boards = new BoardsPage(page)
     await boards.open(boardId)
     await expect
@@ -1033,14 +1035,26 @@ test.describe('task boards', () => {
     })
     try {
       const created = await makeBoard('auto-membership-created', { editors: [account.uuid] })
-      await expect.poll(async () => (await secondClient.findOne(tracker.class.BoardNavigationPreference, {
-        attachedTo: 'tracker:boards-navigation'
-      }))?.boards).toContain(created)
+      await expect
+        .poll(
+          async () =>
+            (
+              await secondClient.findOne(tracker.class.BoardNavigationPreference, {
+                attachedTo: 'tracker:boards-navigation'
+              })
+            )?.boards
+        )
+        .toContain(created)
       await second.page.goto(`${PlatformURI}/workbench/sanity-ws/tracker/boards`)
       await expect(boards.navItem(`${titlePrefix}auto-membership-created`)).toBeVisible()
-      await expect.poll(async () => await secondClient.findOne(tracker.class.BoardNavigationPreference, {
-        attachedTo: 'tracker:boards-navigation'
-      })).toBeDefined()
+      await expect
+        .poll(
+          async () =>
+            await secondClient.findOne(tracker.class.BoardNavigationPreference, {
+              attachedTo: 'tracker:boards-navigation'
+            })
+        )
+        .toBeDefined()
       const id = await makeBoard('auto-membership')
       const title = `${titlePrefix}auto-membership`
       await expect(boards.catalogRow(id)).toBeVisible()

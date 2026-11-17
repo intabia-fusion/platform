@@ -15,7 +15,13 @@
 
 import core, {
   type AccountUuid,
-  type PersonId, type Ref, type Tx, TxFactory, TxProcessor, toFindResult, systemAccountUuid
+  type PersonId,
+  type Ref,
+  type Tx,
+  TxFactory,
+  TxProcessor,
+  toFindResult,
+  systemAccountUuid
 } from '@hcengineering/core'
 import type { TriggerControl } from '@hcengineering/server-core'
 import tracker, { type Board, type BoardNavigationPreference } from '@hcengineering/tracker'
@@ -113,7 +119,11 @@ describe('board membership navigation', () => {
 
   it('adds only a newly assigned editor and preserves their existing menu', async () => {
     const { control, preferences } = setup()
-    preferences.set(preferenceId(editor), { _id: preferenceId(editor), boards: ['other'], createdBy: editorSocial } as any)
+    preferences.set(preferenceId(editor), {
+      _id: preferenceId(editor),
+      boards: ['other'],
+      createdBy: editorSocial
+    } as any)
     await OnBoardMembers([update(control, board(), { editors: [editor] })], control)
     expect(preferences.get(preferenceId(editor))?.boards).toEqual(['other', 'board'])
     expect(preferences.has(preferenceId(author))).toBe(false)
@@ -122,15 +132,21 @@ describe('board membership navigation', () => {
   it('does not restore manually hidden boards on unrelated updates or an unchanged editor list', async () => {
     const { control, preferences } = setup()
     const before = board({ editors: [editor] })
-    await OnBoardMembers([update(control, before, { title: 'Renamed' }),
-      update(control, before, { editors: [editor] })], control)
+    await OnBoardMembers(
+      [update(control, before, { title: 'Renamed' }), update(control, before, { editors: [editor] })],
+      control
+    )
     expect(preferences.size).toBe(0)
     expect(control.apply).not.toHaveBeenCalled()
   })
 
   it('keeps the board on removal and restores it on a new assignment without duplicates', async () => {
     const { control, preferences } = setup()
-    preferences.set(preferenceId(editor), { _id: preferenceId(editor), boards: ['board'], createdBy: editorSocial } as any)
+    preferences.set(preferenceId(editor), {
+      _id: preferenceId(editor),
+      boards: ['board'],
+      createdBy: editorSocial
+    } as any)
     await OnBoardMembers([update(control, board({ editors: [editor] }), { editors: [] })], control)
     expect(preferences.get(preferenceId(editor))?.boards).toEqual(['board'])
     const saved = preferences.get(preferenceId(editor))
@@ -152,7 +168,9 @@ describe('board membership navigation', () => {
   it('does not write to another account preference reserved under the recipient id', async () => {
     const { control, preferences } = setup()
     preferences.set(preferenceId(editor), {
-      _id: preferenceId(editor), boards: [], createdBy: authorSocial
+      _id: preferenceId(editor),
+      boards: [],
+      createdBy: authorSocial
     } as any)
     await OnBoardMembers([update(control, board(), { editors: [editor] })], control)
     expect(control.apply).not.toHaveBeenCalled()
@@ -162,9 +180,15 @@ describe('board membership navigation', () => {
 
   it('serializes concurrent assignments of different boards to one offline user', async () => {
     const { control, preferences } = setup()
-    await Promise.all(['one', 'two', 'three', 'four'].map(async (id) =>
-      await OnBoardMembers([create(board({ _id: id as Ref<Board>, editors: [editor] }))],
-        { ...control, contextCache: new Map() })))
+    await Promise.all(
+      ['one', 'two', 'three', 'four'].map(
+        async (id) =>
+          await OnBoardMembers([create(board({ _id: id as Ref<Board>, editors: [editor] }))], {
+            ...control,
+            contextCache: new Map()
+          })
+      )
+    )
     expect(preferences.get(preferenceId(editor))?.boards.sort()).toEqual(['four', 'one', 'three', 'two'])
   })
 
@@ -174,8 +198,9 @@ describe('board membership navigation', () => {
     control.ctx.contextData.broadcast.targets.previous = async (tx) =>
       tx._id === unrelated._id ? { target: [author] } : undefined
     await OnBoardMembers([create(board())], control)
-    const results = await Promise.all(Object.values(control.ctx.contextData.broadcast.targets)
-      .map(async (target) => await target(unrelated)))
+    const results = await Promise.all(
+      Object.values(control.ctx.contextData.broadcast.targets).map(async (target) => await target(unrelated))
+    )
     expect(results.filter(Boolean)).toEqual([{ target: [author] }])
   })
 
