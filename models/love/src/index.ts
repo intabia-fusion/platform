@@ -987,9 +987,11 @@ export function createModel (builder: Builder): void {
     love.viewlet.ListPermanentMeetings
   )
 
-  // Without a presenter the category headers would show a raw id.
+  // A category header and a mention of a group both go through ObjectPresenter. It must not be
+  // `view.component.ObjectPresenter` here: that component resolves the presenter of its own class,
+  // finds itself and renders itself with the same value - an endless recursion that freezes the tab.
   builder.mixin(love.class.MeetingGroup, core.class.Class, view.mixin.ObjectPresenter, {
-    presenter: view.component.ObjectPresenter
+    presenter: love.component.PermanentMeetingGroupPresenter
   })
 
   builder.mixin(love.class.MeetingGroup, core.class.Class, view.mixin.AttributePresenter, {

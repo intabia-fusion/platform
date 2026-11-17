@@ -39,7 +39,9 @@
   const dispatch = createEventDispatcher()
 
   let live: PermanentMeeting = object
-  const query = createQuery(true)
+  // Destroyed with the card: a non-destroying query would keep its subscription (and this component
+  // with it) for the whole session, one pair per opened meeting.
+  const query = createQuery()
 
   $: query.query(object._class, { _id: object._id }, (res) => {
     if (res.length > 0) live = res[0] as PermanentMeeting
@@ -76,7 +78,7 @@
   // A session someone already started is a meeting in progress: a member joins it as a participant
   // instead of opening the room, which would start a session of their own.
   let liveSession: MeetingMinutes | undefined
-  const sessionQuery = createQuery(true)
+  const sessionQuery = createQuery()
 
   $: sessionQuery.query(
     love.class.MeetingMinutes,

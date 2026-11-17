@@ -13,22 +13,32 @@
 // limitations under the License.
 -->
 <!--
-  The `group` column and the category headers of the grouped list: a group is a plain document, so its
-  name is looked up by ref.
+  The `group` column, the category headers of the grouped list and a mention of a group: the same
+  component is both an AttributePresenter (a ref) and an ObjectPresenter (a document).
 -->
 <script lang="ts">
   import type { Ref } from '@hcengineering/core'
   import love, { type MeetingGroup } from '@hcengineering/love'
   import { createQuery } from '@hcengineering/presentation'
 
-  export let value: Ref<MeetingGroup> | undefined = undefined
+  // A ref from the attribute presenter, a document from the object presenter - both end up here.
+  export let value: Ref<MeetingGroup> | MeetingGroup | undefined = undefined
 
   let name: string | undefined = undefined
 
   const query = createQuery()
-  $: void query.query(love.class.MeetingGroup, { _id: value ?? ('#' as Ref<MeetingGroup>) }, (res) => {
-    name = res[0]?.name
-  })
+  $: if (value === undefined) {
+    name = undefined
+    query.unsubscribe()
+  } else if (typeof value === 'object') {
+    // Already a document: no reason to look it up again.
+    name = value.name
+    query.unsubscribe()
+  } else {
+    void query.query(love.class.MeetingGroup, { _id: value }, (res) => {
+      name = res[0]?.name
+    })
+  }
 </script>
 
 {#if name !== undefined}

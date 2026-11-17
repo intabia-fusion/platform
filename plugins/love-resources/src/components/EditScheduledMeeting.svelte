@@ -46,7 +46,7 @@
   // follows the master, so it refreshes when the calendar editor renames or moves the meeting.
   let master: Event = object
   let live: Event = object
-  const query = createQuery(true)
+  const query = createQuery()
 
   async function resolveMaster (): Promise<void> {
     const found = await client.findOne(calendar.class.Event, meetingMasterQuery(object))
@@ -76,7 +76,7 @@
   // A meeting is edited through the window that created it: the calendar editor would ask on save
   // whether the change is the occurrence or the series, and for a meeting that is one document.
   let settings: PermanentMeeting | undefined = undefined
-  const settingsQuery = createQuery(true)
+  const settingsQuery = createQuery()
 
   $: {
     const id = (live as MeetingEventLink).permanentMeeting
