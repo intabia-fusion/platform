@@ -2501,6 +2501,10 @@ export async function getPerson (
   return person
 }
 
+function canLookUpForeignSocialIds (account: AccountUuid, extra: any): boolean {
+  return account === systemAccountUuid || verifyAllowedServices(['workspace', 'tool', 'aibot'], extra, false, account)
+}
+
 export async function findPersonBySocialId (
   ctx: MeasureContext,
   db: AccountDB,
@@ -2514,11 +2518,16 @@ export async function findPersonBySocialId (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
   }
 
-  decodeTokenVerbose(ctx, token)
+  const { account: caller, extra } = decodeTokenVerbose(ctx, token)
 
   const socialIdObj = await db.socialId.findOne({ _id: socialId })
 
   if (socialIdObj == null) {
+    return
+  }
+
+  // A distinct error would still reveal whether the social id exists.
+  if (socialIdObj.personUuid !== caller && !canLookUpForeignSocialIds(caller, extra)) {
     return
   }
 
@@ -2541,7 +2550,7 @@ export async function findSocialIdBySocialKey (
   params: { socialKey: string, requireAccount?: boolean }
 ): Promise<PersonId | undefined> {
   const { socialKey, requireAccount } = params
-  decodeTokenVerbose(ctx, token)
+  const { account: caller, extra } = decodeTokenVerbose(ctx, token)
 
   if (socialKey == null || socialKey === '') {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
@@ -2550,6 +2559,11 @@ export async function findSocialIdBySocialKey (
   const socialIdObj = await db.socialId.findOne({ key: socialKey })
 
   if (socialIdObj == null) {
+    return
+  }
+
+  // A distinct error would still reveal whether the social id exists.
+  if (socialIdObj.personUuid !== caller && !canLookUpForeignSocialIds(caller, extra)) {
     return
   }
 
@@ -3508,10 +3522,17 @@ export async function hasWorkspacePermission (
   }
 ): Promise<boolean> {
   const { accountId, permission } = params
-  const { workspace } = decodeTokenVerbose(ctx, token)
+  const { account, workspace, extra } = decodeTokenVerbose(ctx, token)
 
   if (workspace === null) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.WorkspaceNotFound, { workspaceUuid: workspace }))
+  }
+
+  if (accountId !== account) {
+    const accRole = account === systemAccountUuid ? AccountRole.Owner : await db.getWorkspaceRole(account, workspace)
+    if (!verifyAllowedRole(accRole, AccountRole.Maintainer, extra, false)) {
+      throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+    }
   }
 
   return await db.hasWorkspacePermission(accountId, workspace, permission)

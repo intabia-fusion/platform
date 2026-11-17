@@ -90,6 +90,7 @@ import type {
   PasswordAgingStatus
 } from './types'
 import { getClientTimezone, isNetworkError } from './utils'
+import { RateLimitError, parseRateLimitHeaders } from './rateLimit'
 import type { PasswordPolicy } from './password'
 
 /** @public */
@@ -503,6 +504,12 @@ class AccountClientImpl implements AccountClient {
       method: 'POST',
       body: JSON.stringify(request)
     })
+
+    if (response.status === 429) {
+      // Release the socket even when a proxy returns a non-JSON rejection.
+      void response.body?.cancel().catch(() => {})
+      throw new RateLimitError(parseRateLimitHeaders(response.headers) ?? {})
+    }
 
     const result = await parseRpcResponse(response)
     if (result.error != null) {
