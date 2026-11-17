@@ -23,11 +23,37 @@ import platform, {
   Status,
   type Status as PlatformStatus
 } from '@hcengineering/platform'
-import { PresentationPipelineImpl, type PresentationPipeline } from '../pipeline'
+import { OptimizeQueryMiddleware, PresentationPipelineImpl, type PresentationPipeline } from '../pipeline'
 
 function connectionClosed (): PlatformError {
   return new PlatformError(new Status(Severity.ERROR, platform.status.ConnectionClosed, {}))
 }
+
+it('preserves a singleton undefined in an $in filter', async () => {
+  const findAll = jest.fn().mockResolvedValue([])
+  const middleware = OptimizeQueryMiddleware.create({ findAll } as unknown as Client)
+
+  await middleware.findAll(core.class.Doc, { _id: { $in: [undefined as any] } })
+
+  expect(findAll).toHaveBeenCalledWith(core.class.Doc, { _id: { $in: [undefined] } }, {})
+})
+
+it('short circuits an empty $in filter', async () => {
+  const findAll = jest.fn()
+  const middleware = OptimizeQueryMiddleware.create({ findAll } as unknown as Client)
+
+  await expect(middleware.findAll(core.class.Doc, { _id: { $in: [] } })).resolves.toHaveLength(0)
+  expect(findAll).not.toHaveBeenCalled()
+})
+
+it('optimizes a singleton $in filter', async () => {
+  const findAll = jest.fn().mockResolvedValue([])
+  const middleware = OptimizeQueryMiddleware.create({ findAll } as unknown as Client)
+
+  await middleware.findAll(core.class.Doc, { _id: { $in: ['doc' as any] } })
+
+  expect(findAll).toHaveBeenCalledWith(core.class.Doc, { _id: 'doc' }, {})
+})
 
 describe('PresentationPipelineImpl connection teardown', () => {
   const statuses: PlatformStatus[] = []
