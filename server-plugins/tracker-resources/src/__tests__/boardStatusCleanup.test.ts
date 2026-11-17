@@ -32,6 +32,10 @@ function fixture (extra: object = {}): any {
     filter: condition(['removed']),
     columns: [{ statuses: ['removed'] }],
     quickFilters: [{ id: 'q', condition: condition(['removed', 'kept'], 'not-in') }],
+    swimlanes: [
+      { id: 'lane', condition: condition(['removed', 'kept']) },
+      { id: 'rest', condition: '' }
+    ],
     colorRules: [{ id: 'c', condition: condition(['removed']) }],
     ...extra
   }
@@ -90,6 +94,8 @@ describe('board conditions after project type status removal', () => {
     expect(JSON.parse(update.patch.filter)).toEqual([{ key: { key: 'priority' }, value: [1] }])
     expect(JSON.parse(update.patch.quickFilters[0].condition)[0].value).toEqual(['kept'])
     expect(JSON.parse(update.patch.colorRules[0].condition)).toHaveLength(1)
+    expect(JSON.parse(update.patch.swimlanes[0].condition)[0].value).toEqual(['kept'])
+    expect(update.patch.swimlanes[1]).toEqual({ id: 'rest', condition: '' })
     expect(update.patch).not.toHaveProperty('columns')
     expect(update.space).toBe('private-space')
   })

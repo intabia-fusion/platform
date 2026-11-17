@@ -14,7 +14,7 @@
 //
 
 import type { Ref, Status } from '@hcengineering/core'
-import type { Board, BoardColumn } from '@hcengineering/tracker'
+import type { Board, BoardColumn, Project } from '@hcengineering/tracker'
 import { pruneStatusCondition } from '@hcengineering/tracker'
 export { pruneStatusCondition } from '@hcengineering/tracker'
 
@@ -42,5 +42,60 @@ export function pruneBoardStatusFilters (
       ...rule,
       condition: pruneStatusCondition(rule.condition, allowed, onRemoved)
     }))
+  }
+}
+
+/** Serialize project changes and keep the last selection made while a change is in flight. */
+export function createBoardProjectUpdater (
+  getBoard: () => Board,
+  load: (ids: Array<Ref<Project>>) => Promise<Project[]>,
+  getAllowed: (projects: Project[]) => ReadonlySet<Ref<Status>> | undefined,
+  save: (patch: Partial<Board>, removed: number) => Promise<void>,
+  onBusy: (busy: boolean) => void,
+  isActive: () => boolean = () => true
+): (ids: Array<Ref<Project>>) => Promise<void> {
+  const boardId = getBoard()._id
+  const ownsBoard = (): boolean => isActive() && getBoard()._id === boardId
+  let busy = false
+  let pending: Array<Ref<Project>> | undefined
+  return async (ids) => {
+    if (!ownsBoard()) return
+    pending = [...ids]
+    if (busy) return
+    busy = true
+    onBusy(true)
+    try {
+      while (pending !== undefined) {
+        if (!ownsBoard()) return
+        const ids = pending
+        pending = undefined
+        const current = getBoard().projects
+        if (ids.length === current.length && ids.every((id, index) => id === current[index])) continue
+        let patch: Partial<Board> = { projects: ids }
+        let removed = 0
+        if (getBoard().projects.some((id) => !ids.includes(id))) {
+          const projects = await load(ids)
+          if (!ownsBoard()) return
+          if (pending !== undefined) continue
+          // Missing projects or model data must not erase saved configuration.
+          const allowed = ids.every((id) => projects.some((project) => project._id === id))
+            ? getAllowed(projects)
+            : undefined
+          if (allowed !== undefined) {
+            patch = {
+              ...pruneBoardStatusFilters(getBoard(), allowed, (count) => {
+                removed += count
+              }),
+              ...patch
+            }
+          }
+        }
+        await save(patch, removed)
+      }
+    } finally {
+      pending = undefined
+      busy = false
+      onBusy(false)
+    }
   }
 }

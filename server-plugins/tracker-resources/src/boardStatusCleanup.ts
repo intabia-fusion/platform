@@ -60,6 +60,10 @@ export async function OnProjectTypeStatusesChanged (txes: Tx[], control: Trigger
         ...rule,
         condition: pruneStatusCondition(rule.condition, allowed)
       })),
+      swimlanes: board.swimlanes.map((rule) => ({
+        ...rule,
+        condition: pruneStatusCondition(rule.condition, allowed)
+      })),
       colorRules: board.colorRules.map((rule) => ({
         ...rule,
         condition: pruneStatusCondition(rule.condition, allowed)
@@ -67,6 +71,7 @@ export async function OnProjectTypeStatusesChanged (txes: Tx[], control: Trigger
     }
     if (
       patch.filter !== board.filter ||
+      JSON.stringify(patch.swimlanes) !== JSON.stringify(board.swimlanes) ||
       JSON.stringify(patch.quickFilters) !== JSON.stringify(board.quickFilters) ||
       JSON.stringify(patch.colorRules) !== JSON.stringify(board.colorRules)
     ) {

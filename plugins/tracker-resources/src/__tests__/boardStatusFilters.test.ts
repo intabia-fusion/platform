@@ -14,7 +14,7 @@
 //
 
 import type { Ref, Status } from '@hcengineering/core'
-import { pruneStatusCondition, pruneBoardStatusFilters } from '../boardStatusFilters'
+import { pruneStatusCondition, pruneBoardStatusFilters, createBoardProjectUpdater } from '../boardStatusFilters'
 
 const allowed = new Set(['shared', 'remaining'] as Array<Ref<Status>>)
 const condition = (mode: string, values: string[]): string =>
@@ -75,5 +75,131 @@ describe('project removal status filters', () => {
       expect(JSON.parse(value)[0].value).toEqual(['remaining'])
     }
     expect(JSON.parse(board.filter)[0].value).toContain('removed')
+  })
+})
+
+describe('exclusive board project updates', () => {
+  function fixture (loaded: string[] = ['b', 'c'], complete = true): any {
+    let board: any = {
+      projects: ['a', 'b', 'c'],
+      filter: condition('in', ['removed']),
+      columns: [],
+      quickFilters: [],
+      swimlanes: [],
+      colorRules: []
+    }
+    const save = jest.fn(async (patch) => {
+      board = { ...board, ...patch }
+    })
+    const load = jest.fn(async () => loaded.map((_id) => ({ _id })) as any)
+    const busy = jest.fn()
+    const update = createBoardProjectUpdater(
+      () => board,
+      load,
+      () => (complete ? allowed : undefined),
+      save,
+      busy
+    )
+    return { update, save, load, busy, board: () => board }
+  }
+
+  it.each([false, true])('preserves configuration with incomplete scope (missing model: %s)', async (missingModel) => {
+    const f = fixture(missingModel ? ['b', 'c'] : ['b'], !missingModel)
+    await f.update(['b', 'c'] as any)
+    expect(f.save).toHaveBeenCalledWith({ projects: ['b', 'c'] }, 0)
+    expect(f.board().filter).toBe(condition('in', ['removed']))
+  })
+
+  function defer (): { promise: Promise<void>, resolve: () => void } {
+    let finish!: () => void
+    const promise = new Promise<void>((resolve) => {
+      finish = resolve
+    })
+    return { promise, resolve: finish }
+  }
+
+  it.each([
+    [
+      ['a', 'b', 'c', 'd'],
+      ['a', 'b', 'c', 'd', 'e']
+    ],
+    [
+      ['a', 'b', 'c', 'd'],
+      ['a', 'b', 'c']
+    ],
+    [['c'], ['c']]
+  ])('saves the last selection from an open popup after the current save: %j', async (middle, last) => {
+    const f = fixture()
+    const gate = defer()
+    f.save.mockImplementationOnce(async (patch: any) => {
+      await gate.promise
+      Object.assign(f.board(), patch)
+    })
+    const first = f.update(['a', 'b', 'c', 'x'] as any)
+    await f.update(middle as any)
+    await f.update(last as any)
+    expect(f.save).toHaveBeenCalledTimes(1)
+    gate.resolve()
+    await first
+    expect(f.board().projects).toEqual(last)
+    expect(f.save).toHaveBeenCalledTimes(2)
+    expect(f.busy.mock.calls).toEqual([[true], [false]])
+  })
+
+  it('uses the latest selection when it changes while project data loads', async () => {
+    const f = fixture()
+    const gate = defer()
+    f.load.mockImplementationOnce(async () => {
+      await gate.promise
+      return [{ _id: 'b' }, { _id: 'c' }]
+    })
+    const first = f.update(['b', 'c'] as any)
+    await f.update(['a', 'b', 'c', 'd'] as any)
+    gate.resolve()
+    await first
+    expect(f.save).toHaveBeenCalledTimes(1)
+    expect(f.save).toHaveBeenCalledWith({ projects: ['a', 'b', 'c', 'd'] }, 0)
+    expect(f.board().filter).toBe(condition('in', ['removed']))
+  })
+
+  it('does not save again if the last selection matches the completed save', async () => {
+    const f = fixture()
+    const gate = defer()
+    f.save.mockImplementationOnce(async (patch: any) => {
+      await gate.promise
+      Object.assign(f.board(), patch)
+    })
+    const first = f.update(['a', 'b', 'c', 'd'] as any)
+    await f.update(['a', 'b', 'c', 'd'] as any)
+    gate.resolve()
+    await first
+    expect(f.save).toHaveBeenCalledTimes(1)
+  })
+
+  it('releases the updater on a save error and does not replay an old pending selection on retry', async () => {
+    const f = fixture()
+    const gate = defer()
+    f.save.mockImplementationOnce(async () => {
+      await gate.promise
+      throw new Error('save failed')
+    })
+    const first = f.update(['a', 'b', 'c', 'd'] as any)
+    await f.update(['a', 'b', 'c', 'e'] as any)
+    const failed = expect(first).rejects.toThrow('save failed')
+    gate.resolve()
+    await failed
+    await f.update(['a', 'b', 'c', 'f'] as any)
+    expect(f.board().projects).toEqual(['a', 'b', 'c', 'f'])
+    expect(f.save).toHaveBeenCalledTimes(2)
+    expect(f.busy.mock.calls).toEqual([[true], [false], [true], [false]])
+  })
+
+  it('releases the controls after a failed request and leaves settings untouched', async () => {
+    const f = fixture()
+    f.load.mockRejectedValueOnce(new Error('offline'))
+    await expect(f.update(['b', 'c'] as any)).rejects.toThrow('offline')
+    expect(f.save).not.toHaveBeenCalled()
+    await f.update(['b', 'c'] as any)
+    expect(f.board().projects).toEqual(['b', 'c'])
   })
 })
