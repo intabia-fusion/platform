@@ -18,9 +18,9 @@
 -->
 <script lang="ts">
   import type { Ref, Space } from '@hcengineering/core'
-  import love from '@hcengineering/love'
   import ui, { Button, showPopup } from '@hcengineering/ui'
   import view from '@hcengineering/view'
+  import love from '../plugin'
   import CreatePermanentMeetingPopup from './CreatePermanentMeetingPopup.svelte'
   import MeetingGroupPopup from './MeetingGroupPopup.svelte'
 

@@ -53,11 +53,11 @@
   // The organiser holds the master; everyone else holds their own copy and answers in it.
   $: isOrganiser = object.access === AccessLevel.Owner
   // The organiser is a participant but never answers - counting them leaves one pending forever.
-  // `participants` holds person refs, so the comparison is by id, not by document identity.
-  $: invited = object.participants.filter((it) => it !== me._id).length
+  // `getCurrentEmployee` already answers with the person ref, so it is compared as is.
+  $: invited = object.participants.filter((it) => it !== me).length
   $: pending = rsvpPending(invited, liveSummary)
   // Answering only makes sense for a person the event is actually for.
-  $: isInvited = object.participants.includes(me._id)
+  $: isInvited = object.participants.includes(me)
 
   async function answer (rsvp: RsvpStatus): Promise<void> {
     const previous = current

@@ -30,11 +30,7 @@ export function reorderFloors (floors: Floor[], moved: Ref<Floor>, target: Ref<F
 }
 
 /** Writes `order` for the floors whose position actually changed - one write per moved floor. */
-export async function persistFloorOrder (
-  client: TxOperations,
-  floors: Floor[],
-  ids: Array<Ref<Floor>>
-): Promise<void> {
+export async function persistFloorOrder (client: TxOperations, floors: Floor[], ids: Array<Ref<Floor>>): Promise<void> {
   for (const { id, order } of orderOf(ids)) {
     const floor = floors.find((it) => it._id === id)
     if (floor === undefined || floor.order === order) continue

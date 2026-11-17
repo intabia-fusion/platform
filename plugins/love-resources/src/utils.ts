@@ -1,11 +1,7 @@
 import aiBot from '@hcengineering/ai-bot'
 import { connectMeeting, disconnectMeeting } from '@hcengineering/ai-bot-resources'
 import { Analytics } from '@hcengineering/analytics'
-import calendar, {
-  type Event,
-  type ReccuringEvent,
-  type Schedule
-} from '@hcengineering/calendar'
+import calendar, { type Event, type ReccuringEvent, type Schedule } from '@hcengineering/calendar'
 import chunter from '@hcengineering/chunter'
 import contact, { getName } from '@hcengineering/contact'
 import workbench from '@hcengineering/workbench'

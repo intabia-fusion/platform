@@ -217,8 +217,7 @@ export class CalendarPage extends CommonPage {
   repeatPreview = (): Locator => this.recurrencePopup().locator('div.preview')
 
   // ReccurancePopup.svelte: the interval input of "Every <n> <period>", the first number in the form.
-  private readonly inputRepeatInterval = (): Locator =>
-    this.recurrencePopup().locator('input[type="number"]').first()
+  private readonly inputRepeatInterval = (): Locator => this.recurrencePopup().locator('input[type="number"]').first()
 
   // Opens the repeat popup and sets the interval, leaving the period as it is (Week by default).
   async setRepeatInterval (interval: number): Promise<void> {
@@ -234,7 +233,10 @@ export class CalendarPage extends CommonPage {
   // The overlay covers the whole viewport behind the popup, so a corner click lands on it and
   // nothing else: the same gesture a user makes to dismiss a modal.
   async clickOutsideEventPopup (): Promise<void> {
-    await this.page.locator('div.modal-overlay').last().click({ position: { x: 4, y: 4 } })
+    await this.page
+      .locator('div.modal-overlay')
+      .last()
+      .click({ position: { x: 4, y: 4 } })
   }
 
   // calendar.action.DeleteRecEvent overrides the generic Delete for a ReccuringInstance and opens

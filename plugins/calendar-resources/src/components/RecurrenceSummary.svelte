@@ -70,7 +70,9 @@
       &nbsp;· <Label label={calendar.string.OnThe} /> {rule.bySetPos.join(', ')}
     {/if}
     {#if rule.count !== undefined}
-      &nbsp;· <Label label={calendar.string.After} /> {rule.count} <Label label={calendar.string.Times} params={{ count: rule.count }} />
+      &nbsp;· <Label label={calendar.string.After} />
+      {rule.count}
+      <Label label={calendar.string.Times} params={{ count: rule.count }} />
     {:else if endDate !== undefined}
       &nbsp;· <Label label={calendar.string.OnUntil} /> {endDate}
     {/if}

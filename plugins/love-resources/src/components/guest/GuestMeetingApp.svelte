@@ -334,8 +334,6 @@
     }
   }
 
-  $: void fetchGuestInfo($ticker)
-
   onMount(() => {
     roomEl?.addEventListener('fullscreenchange', handleFullScreen)
 

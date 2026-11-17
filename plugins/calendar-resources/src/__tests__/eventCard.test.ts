@@ -49,10 +49,7 @@ describe('eventCard', () => {
   })
 
   it('finds the mixin by a query when the event came without it', async () => {
-    const client = fakeClient(
-      { [meetingMixin]: meetingEditor, [plainMixin]: calendarEditor },
-      [meetingMixin as string]
-    )
+    const client = fakeClient({ [meetingMixin]: meetingEditor, [plainMixin]: calendarEditor }, [meetingMixin as string])
     const card = await eventCard(client, event(), calendarEditor)
     expect(card?.editor).toBe(meetingEditor)
   })

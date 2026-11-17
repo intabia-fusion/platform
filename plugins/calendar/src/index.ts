@@ -351,7 +351,11 @@ const calendarPlugin = plugin(calendarId, {
     RsvpAccepted: '' as IntlString,
     RsvpDeclined: '' as IntlString,
     RsvpTentative: '' as IntlString,
-    RsvpPending: '' as IntlString
+    RsvpPending: '' as IntlString,
+    // Lead-time units are read by the calendar UI and by the reminder presenter of the meetings UI.
+    DueMinutes: '' as IntlString,
+    DueHours: '' as IntlString,
+    DueDays: '' as IntlString
   },
   handler: {
     DisconnectHandler: '' as Handler,

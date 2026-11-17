@@ -801,10 +801,7 @@ async function queueCallCancels (control: TriggerControl, responses: UserMeeting
  * Ends the live sessions a single edit made unreachable: the query names them exactly - a cancelled
  * occurrence has one, a deleted series has all of them.
  */
-async function finishLiveSessions (
-  control: TriggerControl,
-  query: DocumentQuery<MeetingMinutes>
-): Promise<Tx[]> {
+async function finishLiveSessions (control: TriggerControl, query: DocumentQuery<MeetingMinutes>): Promise<Tx[]> {
   const live = await control.findAll(control.ctx, love.class.MeetingMinutes, {
     ...query,
     status: { $in: LIVE_MEETING_STATUSES }
@@ -1071,9 +1068,9 @@ async function seriesParticipantsTxes (
   const persons: Array<Ref<Person>> =
     members.length === 0
       ? []
-      : (
-          await control.findAll(control.ctx, contact.class.Person, { personUuid: { $in: members } } as any)
-        ).map((it) => it._id)
+      : (await control.findAll(control.ctx, contact.class.Person, { personUuid: { $in: members } } as any)).map(
+          (it) => it._id
+        )
   const res: Tx[] = []
   for (const event of series) {
     const current = (event.participants ?? []) as Array<Ref<Person>>
@@ -1115,9 +1112,7 @@ async function permanentMeetingMembersTxes (
   const current = meeting.members ?? []
   const same = current.length === members.length && members.every((it) => current.includes(it))
   if (same) return []
-  return [
-    control.txFactory.createTxUpdateDoc(love.class.PermanentMeeting, meeting.space, meeting._id, { members })
-  ]
+  return [control.txFactory.createTxUpdateDoc(love.class.PermanentMeeting, meeting.space, meeting._id, { members })]
 }
 
 export async function OnPermanentMeetingUpdate (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
@@ -1175,16 +1170,14 @@ export async function OnPermanentMeetingUpdate (txes: Tx[], control: TriggerCont
     // The creator is the one who can delete the meeting, so losing the creator turns a meeting into
     // something nobody can remove. `createdBy` holds a social id: an old document without it keeps
     // the plain owner rule, which the push-back below already covers.
-    const creator =
-      meeting.createdBy !== undefined ? await getAccountBySocialId(control, meeting.createdBy) : null
+    const creator = meeting.createdBy !== undefined ? await getAccountBySocialId(control, meeting.createdBy) : null
 
     const owners = meeting.owners ?? []
     const missingOwners = touchesOwners ? missingFrom(ops, 'owners', owners) : []
     if (touchesOwners && creator !== null && !owners.includes(creator)) missingOwners.push(creator)
 
     // The creator stays a member even on a document that predates the owner rule.
-    const protectedMembers =
-      creator !== null && !owners.includes(creator) ? [...owners, creator] : owners
+    const protectedMembers = creator !== null && !owners.includes(creator) ? [...owners, creator] : owners
     const missing = touchesMembers ? missingFrom(ops, 'members', protectedMembers) : []
     // The series follows the membership: walking out of the meeting has to take the meeting out of
     // that person's planner, and joining it has to put it there.

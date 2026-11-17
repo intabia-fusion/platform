@@ -13,7 +13,10 @@
 // limitations under the License.
 //
 
+import type { ReccuringInstance } from '@hcengineering/calendar'
 import type { Client, Doc } from '@hcengineering/core'
+import { showPopup } from '@hcengineering/ui'
+import { updateReccuringInstance } from '../utils'
 
 let client: Client
 
@@ -32,17 +35,21 @@ jest.mock('@hcengineering/ui', () => ({
 }))
 
 jest.mock('svelte/store', () => {
-  const writable = (value: unknown) => {
+  const writable = (value: unknown): unknown => {
     let current = value
     const subscribers = new Set<(v: unknown) => void>()
     return {
       set: (v: unknown) => {
         current = v
-        subscribers.forEach((fn) => fn(current))
+        subscribers.forEach((fn): void => {
+          fn(current)
+        })
       },
       update: (fn: (v: unknown) => unknown) => {
         current = fn(current)
-        subscribers.forEach((s) => s(current))
+        subscribers.forEach((s): void => {
+          s(current)
+        })
       },
       subscribe: (fn: (v: unknown) => void) => {
         subscribers.add(fn)
@@ -57,10 +64,6 @@ jest.mock('svelte/store', () => {
 // `utils.ts` also re-exports calendar helpers that pull svelte components; the test only needs the
 // recurring-update path, so the components are stubbed out.
 jest.mock('../components/CalDavAccess.svelte', () => ({}), { virtual: true })
-
-import type { ReccuringInstance } from '@hcengineering/calendar'
-import { showPopup } from '@hcengineering/ui'
-import { updateReccuringInstance } from '../utils'
 
 const showPopupMock = showPopup as unknown as jest.Mock
 

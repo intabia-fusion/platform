@@ -38,10 +38,14 @@
 
 <Card
   label={love.string.LinkReady}
-  okAction={() => dispatch('close')}
+  okAction={() => {
+    dispatch('close')
+  }}
   okLabel={presentation.string.Ok}
   canSave={true}
-  on:close={() => dispatch('close')}
+  on:close={() => {
+    dispatch('close')
+  }}
 >
   <div class="flex-col gap-2 p-4" style="min-width: 32rem">
     <Label label={love.string.CopyMeetingLink} />
@@ -49,11 +53,7 @@
       <div class="flex-grow">
         <EditBox value={link} disabled />
       </div>
-      <Button
-        label={copied ? view.string.Copied : love.string.CopyMeetingLink}
-        kind="primary"
-        on:click={copy}
-      />
+      <Button label={copied ? view.string.Copied : love.string.CopyMeetingLink} kind="primary" on:click={copy} />
     </div>
   </div>
 </Card>

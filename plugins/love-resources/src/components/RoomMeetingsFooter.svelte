@@ -16,13 +16,7 @@
   import type { MeetingMinutes, Room } from '@hcengineering/love'
   import { createQuery } from '@hcengineering/presentation'
   import { Label, Section, Scroller } from '@hcengineering/ui'
-  import {
-    FilterBar,
-    getDefaults,
-    getResultOptions,
-    Table,
-    ViewletsSettingButton
-  } from '@hcengineering/view-resources'
+  import { FilterBar, getDefaults, getResultOptions, Table, ViewletsSettingButton } from '@hcengineering/view-resources'
   import type { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
 
   import love from '../plugin'

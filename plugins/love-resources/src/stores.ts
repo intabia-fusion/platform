@@ -136,10 +136,10 @@ export const officeView = derived(officeSegment, (segment) =>
 export const officeFloors = derived(floors, (floors) =>
   floors
     .filter((it) => !isServiceFloor(it._id))
-    .sort(
-      (a, b) =>
-        (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER) || a.name.localeCompare(b.name)
-    )
+    .sort((a, b) => {
+      const byOrder = (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER)
+      return byOrder !== 0 ? byOrder : a.name.localeCompare(b.name)
+    })
 )
 export const currentFloor = derived(
   [selectedFloor, activeFloor, officeFloors],

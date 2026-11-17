@@ -31,10 +31,14 @@
   type="type-popup"
   width="x-small"
   okLabel={love.string.TakeOverRoom}
-  okAction={() => dispatch('close', true)}
+  okAction={() => {
+    dispatch('close', true)
+  }}
   canSave={true}
   showCancelButton={true}
-  onCancel={() => dispatch('close', false)}
+  onCancel={() => {
+    dispatch('close', false)
+  }}
 >
   <div class="message">
     <Label label={love.string.RoomBusyText} params={{ room: roomName }} />

@@ -15,12 +15,7 @@
 
 import core, { TxOperations } from '@hcengineering/core'
 import love from '@hcengineering/love'
-import {
-  tryUpgrade,
-  type MigrateMode,
-  type MigrateOperation,
-  type MigrationUpgradeClient
-} from '@hcengineering/model'
+import { tryUpgrade, type MigrateMode, type MigrateOperation, type MigrationUpgradeClient } from '@hcengineering/model'
 import serverCore from '@hcengineering/server-core'
 import serverLove, { serverLoveId } from '@hcengineering/server-love'
 

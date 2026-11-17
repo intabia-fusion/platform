@@ -137,6 +137,20 @@
   async function closeMeeting (): Promise<void> {
     await leaveMeeting()
   }
+
+  // A running session is entered by its own document; the click handler closes over the variable,
+  // which loses the `!== undefined` narrowing the template block had. Joining dials the room, so
+  // a second click while it is in flight is dropped instead of opening a second connection.
+  let joining = false
+  async function joinCurrent (): Promise<void> {
+    if (meetingDoc === undefined || joining) return
+    joining = true
+    try {
+      await joinMeeting(meetingDoc)
+    } finally {
+      joining = false
+    }
+  }
 </script>
 
 {#if meeting !== undefined}
@@ -153,7 +167,12 @@
          runs and still offers to pick a room. -->
     <div class="room flex-grow">
       {#if meetingDoc !== undefined}
-        <ObjectPresenter shouldShowAvatar={false} objectId={meetingDoc._id} _class={meetingDoc._class} value={meetingDoc} />
+        <ObjectPresenter
+          shouldShowAvatar={false}
+          objectId={meetingDoc._id}
+          _class={meetingDoc._class}
+          value={meetingDoc}
+        />
       {:else if permanentDoc !== undefined}
         <PermanentMeetingPresenter value={permanentDoc} accent noUnderline />
       {:else if roomDoc !== undefined}
@@ -162,7 +181,12 @@
         {#if readOnly}
           <span class="text-sm content-color"><Label label={love.string.MeetingRunsInServiceRoom} /></span>
         {:else}
-          <RoomSelector value={meeting?.room} on:change={(ev) => void changeRoom(ev.detail)} />
+          <RoomSelector
+            value={meeting?.room}
+            on:change={(ev) => {
+              void changeRoom(ev.detail)
+            }}
+          />
         {/if}
       {/if}
     </div>
@@ -187,7 +211,8 @@
           kind="secondary"
           label={love.string.JoinAsParticipant}
           size="small"
-          on:click={() => void joinMeeting(meetingDoc)}
+          loading={joining}
+          on:click={joinCurrent}
         />
       {/if}
       <!-- Any participant may start a scheduled meeting, not only its owner; a permanent one is

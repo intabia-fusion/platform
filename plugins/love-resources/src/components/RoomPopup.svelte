@@ -48,7 +48,7 @@
   $: isPrivateMeeting = hasParticipants && meeting === undefined
 
   const client = getClient()
-  async function getPerson(info: ParticipantInfo | undefined): Promise<Person | null> {
+  async function getPerson (info: ParticipantInfo | undefined): Promise<Person | null> {
     if (info === undefined) {
       return null
     }
@@ -65,7 +65,7 @@
 
   const dispatch = createEventDispatcher()
 
-  async function connect(): Promise<void> {
+  async function connect (): Promise<void> {
     if ($connectingToMeeting) return
     if (meeting !== undefined) {
       await createMeeting(room, meeting)
@@ -73,7 +73,7 @@
     dispatch('close')
   }
 
-  async function backOrOpen(): Promise<void> {
+  async function backOrOpen (): Promise<void> {
     const meeting = $meetings.find((m) => m._id === meetingId)
     if (meeting !== undefined) {
       const hierarchy = client.getHierarchy()
@@ -94,7 +94,7 @@
     }
   }
 
-  function canGoBack(joined: boolean, location: Location, meetingMinutesId?: Ref<MeetingMinutes>): boolean {
+  function canGoBack (joined: boolean, location: Location, meetingMinutesId?: Ref<MeetingMinutes>): boolean {
     if (!joined) return false
     if (location.path[2] !== loveId) return true
     if (meetingMinutesId === undefined) return false

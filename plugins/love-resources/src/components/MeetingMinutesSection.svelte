@@ -18,13 +18,7 @@
   import type { MeetingMinutes } from '@hcengineering/love'
   import type { IntlString } from '@hcengineering/platform'
   import { Label, Section, Scroller } from '@hcengineering/ui'
-  import {
-    FilterBar,
-    getDefaults,
-    getResultOptions,
-    Table,
-    ViewletsSettingButton
-  } from '@hcengineering/view-resources'
+  import { FilterBar, getDefaults, getResultOptions, Table, ViewletsSettingButton } from '@hcengineering/view-resources'
   import type { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
 
   import love from '../plugin'

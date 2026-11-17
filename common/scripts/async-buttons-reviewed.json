@@ -1015,12 +1015,6 @@
   },
   {
     "file": "plugins/love-resources/src/components/EditMeetingData.svelte",
-    "id": "652ae98b9527",
-    "handler": "on:click={() => void joinMeeting(meetingDoc)}",
-    "reason": "joinMeeting runs inside withConnectingToMeeting (stores.ts), which coalesces overlapping connects, so a second click joins the attempt already in flight instead of opening another session."
-  },
-  {
-    "file": "plugins/love-resources/src/components/EditMeetingData.svelte",
     "id": "18422e2e199d",
     "handler": "on:click={closeMeeting}",
     "reason": "closeMeeting is leaveMeeting, which returns early while lkIsConnecting and sets leavingMeeting before disconnecting, so a repeat click is a no-op."

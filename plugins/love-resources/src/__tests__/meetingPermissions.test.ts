@@ -28,11 +28,7 @@ const creatorViewer: MeetingViewer = { uuid: creatorAccount, primarySocialId: cr
 const memberViewer: MeetingViewer = { uuid: memberAccount, primarySocialId: memberSocial }
 const strangerViewer: MeetingViewer = { uuid: strangerAccount, primarySocialId: 'social:stranger' as PersonId }
 
-function meeting (opts?: {
-  owners?: AccountUuid[]
-  members?: AccountUuid[]
-  createdBy?: PersonId
-}): PermanentMeeting {
+function meeting (opts?: { owners?: AccountUuid[], members?: AccountUuid[], createdBy?: PersonId }): PermanentMeeting {
   return {
     _id: 'permanent:1' as Ref<PermanentMeeting>,
     owners: opts?.owners ?? [creatorAccount],

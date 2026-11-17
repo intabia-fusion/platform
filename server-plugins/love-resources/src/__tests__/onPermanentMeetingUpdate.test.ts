@@ -131,9 +131,7 @@ function createMockControl (
         broadcast: { targets: {} },
         // The trigger resolves `createdBy` (a social id) through this map.
         socialStringsToUsers:
-          creatorAccount !== undefined
-            ? new Map([[creatorSocialId, { accountUuid: creatorAccount }]])
-            : new Map(),
+          creatorAccount !== undefined ? new Map([[creatorSocialId, { accountUuid: creatorAccount }]]) : new Map(),
         account: { uuid: ownerA, socialIds: [] }
       }
     } as unknown as MeasureContext,
@@ -181,9 +179,7 @@ function getPushed (
   objectClass: Ref<Class<Doc>> = love.class.PermanentMeeting
 ): AccountUuid[] | undefined {
   const updates = txes.filter(
-    (tx) =>
-      tx._class === core.class.TxUpdateDoc &&
-      (tx as TxUpdateDoc<PermanentMeeting>).objectClass === objectClass
+    (tx) => tx._class === core.class.TxUpdateDoc && (tx as TxUpdateDoc<PermanentMeeting>).objectClass === objectClass
   ) as Array<TxUpdateDoc<PermanentMeeting>>
   // `$push` is either a bare ref or an `$each` position: this trigger only ever writes the position.
   for (const update of updates) {
@@ -382,7 +378,7 @@ describe('OnPermanentMeetingUpdate', () => {
     it('drops a member who left from the series', async () => {
       const personA = personOf(ownerA, 'person:a')
       const personC = personOf(memberC, 'person:c')
-      const event = { ...series, participants: [personA._id, personC._id] } as Event
+      const event: Event = { ...series, participants: [personA._id, personC._id] }
       const control = createMockControl(createPermanentMeeting(), [], undefined, [event], [personA, personC])
 
       const result = await OnPermanentMeetingUpdate([createUpdateTx({ $pull: { members: memberC } })], control)
@@ -392,7 +388,7 @@ describe('OnPermanentMeetingUpdate', () => {
 
     it('does not touch the series when the membership did not change', async () => {
       const personA = personOf(ownerA, 'person:a')
-      const event = { ...series, participants: [personA._id] } as Event
+      const event: Event = { ...series, participants: [personA._id] }
       const control = createMockControl(createPermanentMeeting(), [], undefined, [event], [personA])
 
       const result = await OnPermanentMeetingUpdate([createUpdateTx({ title: 'Renamed' })], control)

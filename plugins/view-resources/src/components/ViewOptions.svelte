@@ -1,7 +1,7 @@
 <script lang="ts">
   import { getClient } from '@hcengineering/presentation'
-  import type { IntlString, DropdownIntlItem } from '@hcengineering/platform'
-  import ui, { Button, DropdownLabelsIntl, Label, Toggle } from '@hcengineering/ui'
+  import type { IntlString } from '@hcengineering/platform'
+  import ui, { Button, DropdownLabelsIntl, Label, Toggle, type DropdownIntlItem } from '@hcengineering/ui'
   import { Slider } from '@hcengineering/ui/kit'
   import type {
     GroupingKey,

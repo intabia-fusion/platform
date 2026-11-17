@@ -67,12 +67,10 @@ export async function eventCard (
   const editorOf = (mixin: Ref<Class<Doc>>): AnyComponent | undefined =>
     hierarchy.classHierarchyMixin<Doc, ObjectEditor>(mixin, view.mixin.ObjectEditor)?.editor
 
-  const candidates = hierarchy
-    .getAllPossibleMixins(event._class)
-    .filter((mixin) => {
-      const editor = editorOf(mixin)
-      return editor !== undefined && editor !== calendarEditor
-    })
+  const candidates = hierarchy.getAllPossibleMixins(event._class).filter((mixin) => {
+    const editor = editorOf(mixin)
+    return editor !== undefined && editor !== calendarEditor
+  })
   if (candidates.length === 0) return undefined
 
   // An occurrence is a `ReccuringInstance`: the mixin hangs off the master, and the master is the
@@ -85,9 +83,8 @@ export async function eventCard (
   if (owner !== undefined) ownerId = event._id
   if (ownerId === undefined) {
     for (const mixin of candidates) {
-      const found = await client.findOne(mixin as unknown as Ref<Class<Doc>>, {
-        _id: { $in: ids }
-      } as DocumentQuery<Doc>)
+      const query: DocumentQuery<Doc> = { _id: { $in: ids } }
+      const found = await client.findOne(mixin as unknown as Ref<Class<Doc>>, query)
       if (found !== undefined) {
         owner = mixin
         ownerId = found._id
@@ -100,8 +97,7 @@ export async function eventCard (
   if (ownerId === event._id) return { object: event, editor }
 
   // The mixin only knows which document it extends; the document itself is read from the event class.
-  const master = await client.findOne(calendar.class.Event as unknown as Ref<Class<Event>>, {
-    _id: ownerId
-  } as DocumentQuery<Event>)
+  const masterQuery: DocumentQuery<Event> = { _id: ownerId }
+  const master = await client.findOne(calendar.class.Event as unknown as Ref<Class<Event>>, masterQuery)
   return { object: master ?? event, editor }
 }

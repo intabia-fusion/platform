@@ -55,11 +55,7 @@
   // The answer of this person for the event, marked on the tile itself: the calendar is where the
   // question is read, and the answer used to be visible only after opening the event.
   $: rsvpIcon =
-    event.rsvp === 'accepted'
-      ? ui.icon.CheckCircle
-      : event.rsvp === 'declined'
-        ? ui.icon.CrossCircle
-        : ui.icon.Clock
+    event.rsvp === 'accepted' ? ui.icon.CheckCircle : event.rsvp === 'declined' ? ui.icon.CrossCircle : ui.icon.Clock
   $: rsvpLabel =
     event.rsvp === 'accepted'
       ? calendar.string.RsvpAccepted

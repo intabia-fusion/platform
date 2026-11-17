@@ -20,11 +20,12 @@
 -->
 <script lang="ts">
   import type { Ref } from '@hcengineering/core'
-  import love, { type MeetingGroup, type PermanentMeeting } from '@hcengineering/love'
+  import type { MeetingGroup, PermanentMeeting } from '@hcengineering/love'
   import presentation, { createQuery, getClient } from '@hcengineering/presentation'
   import ui, { Icon, Label, Modal, ModernEditbox, Scroller } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import { createMeetingGroup } from '../groups'
+  import love from '../plugin'
 
   const dispatch = createEventDispatcher()
   const client = getClient()

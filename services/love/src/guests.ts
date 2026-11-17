@@ -78,11 +78,7 @@ export class GuestManager {
    * Opens the LiveKit room of a session if nobody has opened it yet. A meeting started by a guest
    * gets the same metadata and agents as one started from the member path (`/roomToken`).
    */
-  private async ensureRoom (
-    workspace: WorkspaceUuid,
-    meetingId: Ref<MeetingMinutes>,
-    roomName: string
-  ): Promise<void> {
+  private async ensureRoom (workspace: WorkspaceUuid, meetingId: Ref<MeetingMinutes>, roomName: string): Promise<void> {
     try {
       const existing = await this.roomClient.listRooms([roomName])
       if (existing !== undefined && existing.length > 0) return

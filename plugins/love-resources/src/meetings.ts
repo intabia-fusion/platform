@@ -291,13 +291,15 @@ export async function confirmRoomAvailable (room: Ref<Room> | undefined, selfEve
   return true
 }
 
-function askTakeOverRoom (roomName: string): Promise<boolean> {
+async function askTakeOverRoom (roomName: string): Promise<boolean> {
   // Loaded on demand: the UI barrel brings styles and components with it, and a module-level import
   // would drag all of that into every consumer of this file, tests included.
-  return new Promise((resolve) => {
+  return await new Promise((resolve) => {
     void Promise.all([import('@hcengineering/ui'), import('./components/TakeOverRoomPopup.svelte')]).then(
       ([{ showPopup }, { default: TakeOverRoomPopup }]) => {
-        showPopup(TakeOverRoomPopup, { roomName }, 'center', (res) => resolve(res === true))
+        showPopup(TakeOverRoomPopup, { roomName }, 'center', (res) => {
+          resolve(res === true)
+        })
       }
     )
   })

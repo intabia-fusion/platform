@@ -1,4 +1,10 @@
-import calendar, { AccessLevel, Event, ReccuringEvent, ReccuringInstance, generateRecurringValues } from '@hcengineering/calendar'
+import calendar, {
+  AccessLevel,
+  Event,
+  ReccuringEvent,
+  ReccuringInstance,
+  generateRecurringValues
+} from '@hcengineering/calendar'
 import { Employee, Person } from '@hcengineering/contact'
 import { Data, DocumentQuery, Timestamp, generateId, Ref, WorkspaceUuid } from '@hcengineering/core'
 

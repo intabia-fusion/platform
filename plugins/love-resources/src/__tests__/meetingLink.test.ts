@@ -42,13 +42,14 @@ function fakeClient (rows: Array<Record<string, unknown>>): Fake {
       queries++
       return rows.find((r) => matches(r, query))
     }
-  } as unknown as Client
-  return {
-    client,
+  }
+  const result = {
+    client: client as unknown as Client,
     get queries () {
       return queries
     }
-  } as Fake
+  }
+  return result as Fake
 }
 
 describe('findMeetingLink', () => {

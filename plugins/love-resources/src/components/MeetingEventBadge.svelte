@@ -26,7 +26,7 @@
   import calendar from '@hcengineering/calendar'
   import type { MeetingEventLink } from '@hcengineering/love'
   import { getClient } from '@hcengineering/presentation'
-  import { Icon, tooltip } from '@hcengineering/ui'
+  import { Icon, tooltip, type IconSize } from '@hcengineering/ui'
   // IconButton is exported by the UI kit only: the barrel in @hcengineering/ui points at a stale path
   // and hands webpack undefined, which fails at render time with "is not a constructor".
   import { IconButton } from '@hcengineering/ui/kit'
@@ -41,7 +41,7 @@
 
   let joining = false
 
-  $: iconSize = narrow || oneRow ? 'x-small' : 'smaller'
+  $: iconSize = (narrow || oneRow ? 'x-small' : 'smaller') as IconSize
   // The calendar's queries hand over bare events, so the link is resolved through the mixin document
   // rather than off the object: reading it off the object alone hid the join button on every tile
   // the calendar drew itself, and showed it only where the view happened to query the mixin.
@@ -79,7 +79,11 @@
 {#if isPermanent || joinable}
   <span class="meeting-badge">
     {#if isPermanent}
-      <span class="permanent-mark" use:tooltip={{ label: love.string.PermanentMeeting }} data-id="event-permanent-meeting">
+      <span
+        class="permanent-mark"
+        use:tooltip={{ label: love.string.PermanentMeeting }}
+        data-id="event-permanent-meeting"
+      >
         <Icon icon={calendar.icon.Repeat} size={iconSize} />
       </span>
     {/if}

@@ -518,17 +518,15 @@ describe('OnEventUpdate', () => {
 
     it('finishes the occurrence session marked cancelled in place', async () => {
       const occurrence = Date.now() + 3600000
+      const event = { ...createEvent(), originalStartTime: occurrence }
       const control = createMockControl(
         buildFindAll({
           meeting: createMeetingDoc({ status: MeetingStatus.Active }),
-          event: { ...createEvent(), originalStartTime: occurrence } as Event
+          event: event as Event
         })
       )
 
-      const result = await OnEventUpdate(
-        [createUpdateTx({ isCancelled: true } as unknown as Partial<Event>)],
-        control
-      )
+      const result = await OnEventUpdate([createUpdateTx({ isCancelled: true } as unknown as Partial<Event>)], control)
 
       const ops = getUpdateOps(result)
       expect(ops).toHaveLength(1)

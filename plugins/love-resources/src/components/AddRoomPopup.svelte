@@ -153,7 +153,9 @@
           label={presentation.string.Create}
           kind="primary"
           loading={creatingRoom}
-          on:click={() => void createRoom('office')}
+          on:click={() => {
+            void createRoom('office')
+          }}
         />
       </div>
     </div>
@@ -164,7 +166,7 @@
           label={item.label}
           kind="ghost"
           size="medium"
-          width={'100%'}
+          width="100%"
           justify="left"
           loading={creatingRoom}
           on:click={() => {
@@ -180,7 +182,7 @@
         label={love.string.Floor}
         kind="ghost"
         size="medium"
-        width={'100%'}
+        width="100%"
         justify="left"
         loading={creatingFloor}
         on:click={createFloor}

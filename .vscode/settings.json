@@ -26,5 +26,5 @@
   },
   "[svelte]": {
     "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-  },
+  }
 }

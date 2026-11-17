@@ -135,7 +135,10 @@ describe('resolveOccurrence with calendar overrides', () => {
       { originalStartTime: start, date: start, isCancelled: true },
       { originalStartTime: start + 2 * day, date: start + 2 * day + 3 * hour }
     ]
-    expect(meetingOccurrences(series(), start, start + 3 * day, overrides)).toEqual([start + day, start + 2 * day + 3 * hour])
+    expect(meetingOccurrences(series(), start, start + 3 * day, overrides)).toEqual([
+      start + day,
+      start + 2 * day + 3 * hour
+    ])
   })
 })
 
