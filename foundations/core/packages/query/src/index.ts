@@ -1537,10 +1537,7 @@ export class LiveQuery implements WithTx, Client {
 
   private async handleDocRemove (q: Query, tx: TxRemoveDoc<Doc>): Promise<void> {
     const h = this.client.getHierarchy()
-    // A query on a mixin lists the documents of whatever base class carries it, while the removal
-    // names only that base class, so the class pair alone never matches: the document proves it
-    // belonged to the results by being in them. Without this a viewlet built on a mixin keeps a
-    // deleted document until the page is reloaded.
+    // A mixin query holds docs of any base class; the removal names only that base class.
     if (
       q._class === tx.objectClass ||
       h.isDerived(q._class, tx.objectClass) ||

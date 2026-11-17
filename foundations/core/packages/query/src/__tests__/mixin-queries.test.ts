@@ -176,9 +176,7 @@ describe('mixin queries', () => {
   })
 
   it('drops a document from a mixin query when the document is removed', async () => {
-    // The removal carries the base class only: a mixin query has nothing to compare it with, so it
-    // must drop whatever it holds with that id. A viewlet attached to a mixin (the calendar on
-    // `MeetingEventLink`) otherwise keeps a deleted document until the page is reloaded.
+    // The removal names the base class only; a mixin query must still drop the doc.
     const { liveQuery, factory } = await getClient()
     const id = await createProject(factory, 'mx-removed')
     await factory.createMixin(id, test.class.TestProject, core.space.Model, test.mixin.TestProjectMixin, {

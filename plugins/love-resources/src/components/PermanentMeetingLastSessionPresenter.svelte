@@ -13,8 +13,7 @@
 // limitations under the License.
 -->
 <!--
-  When the latest session of a permanent meeting ended: the last moment the team actually talked.
-  Sessions are `MeetingMinutes` documents that point back at the meeting.
+  End of the latest session of a permanent meeting.
 -->
 <script lang="ts">
   import { DateRangeMode } from '@hcengineering/core'
@@ -38,6 +37,4 @@
   }, undefined)
 </script>
 
-{#if lastEnd !== undefined}
-  <span class="text-sm content-dark-color">{formatDateValue(lastEnd, DateRangeMode.DATETIME)}</span>
-{/if}
+<span class="text-sm content-dark-color">{lastEnd === undefined ? '' : formatDateValue(lastEnd, DateRangeMode.DATETIME)}</span>

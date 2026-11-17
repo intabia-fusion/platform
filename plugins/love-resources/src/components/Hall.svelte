@@ -64,9 +64,7 @@
       <span class="content-color"><Label label={love.string.SelectFloor} /></span>
     </div>
   {:else if $officeView === 'permanent'}
-    <!-- The same view every other class gets: viewlet selector, search, filters, view settings with
-         the fields, and the grouped list of the `group` attribute. A hand-drawn list sat beside all
-         of that and drifted away from it. -->
+    <!-- Standard view of the class: viewlets, search, filters, view settings, grouped list. -->
     <SpecialView
       _class={love.class.PermanentMeeting}
       label={love.string.PermanentMeetings}

@@ -41,6 +41,7 @@ import PermanentMeetingForm from './components/PermanentMeetingForm.svelte'
 import PermanentMeetingPresenter from './components/PermanentMeetingPresenter.svelte'
 import PermanentMeetingNextPresenter from './components/PermanentMeetingNextPresenter.svelte'
 import PermanentMeetingLastSessionPresenter from './components/PermanentMeetingLastSessionPresenter.svelte'
+import PermanentMeetingGroupPresenter from './components/PermanentMeetingGroupPresenter.svelte'
 import MeetingGroupPopup from './components/MeetingGroupPopup.svelte'
 import EditRoom from './components/EditRoom.svelte'
 import FloorAttributePresenter from './components/FloorAttributePresenter.svelte'
@@ -180,8 +181,7 @@ async function editMeetingSettings (object: Doc): Promise<void> {
 }
 
 /**
- * A view action, so the merge sits in the standard toolbar of the list: the selected meetings come
- * out of the view itself, and the popup lets the user name the group they are merged into.
+ * A view action: the selected meetings come from the view, the popup names the group.
  */
 async function canMergeIntoGroup (docs?: Doc | Doc[]): Promise<boolean> {
   const list = Array.isArray(docs) ? docs : docs === undefined ? [] : [docs]
@@ -250,6 +250,7 @@ export default async (): Promise<Resources> => ({
     PermanentMeetingPresenter,
     PermanentMeetingNextPresenter,
     PermanentMeetingLastSessionPresenter,
+    PermanentMeetingGroupPresenter,
     EditRoom,
     FloorAttributePresenter,
     FloorView,

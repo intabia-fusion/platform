@@ -13,9 +13,7 @@
 // limitations under the License.
 -->
 <!--
-  The column a permanent meeting cannot compute on its own: when it happens next. The schedule lives
-  on the series of the meeting (`MeetingEventLink.permanentMeeting`) and the interval on the meeting
-  itself, so the presenter reads both and formats the result like any other date column.
+  Next occurrence: the schedule lives on the series, the interval on the meeting.
 -->
 <script lang="ts">
   import calendar, { type Event } from '@hcengineering/calendar'
@@ -28,8 +26,7 @@
 
   export let value: PermanentMeeting
 
-  // Occurrences are skipped: a copy of the series carries a copy of the mixin and would answer with
-  // its own date instead of the series' one.
+  // No occurrences: a copy of the series answers with its own date.
   let series: Event[] = []
 
   const query = createQuery()
@@ -49,8 +46,7 @@
     start === undefined || value.repeatEvery === undefined || value.repeatEvery <= 0
       ? undefined
       : nextOccurrence(start, value.repeatEvery, Date.now())
+  $: label = next === undefined ? '' : formatDateValue(next, DateRangeMode.DATETIME)
 </script>
 
-{#if next !== undefined}
-  <span class="text-sm content-dark-color">{formatDateValue(next, DateRangeMode.DATETIME)}</span>
-{/if}
+<span class="text-sm content-dark-color">{label}</span>

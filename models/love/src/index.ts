@@ -907,6 +907,20 @@ export function createModel (builder: Builder): void {
     love.viewlet.CalendarScheduledMeetings
   )
 
+  // Attributes a meetings view never shows as a column.
+  const MODEL_HIDDEN_KEYS = [
+    'description',
+    'descriptionRef',
+    'meetingAccess',
+    'linkId',
+    'linkVersion',
+    'type',
+    'language',
+    'messages',
+    'attachments',
+    'repeatEvery'
+  ]
+
   builder.createDoc(
     view.class.Viewlet,
     core.space.Model,
@@ -933,19 +947,14 @@ export function createModel (builder: Builder): void {
           presenter: love.component.PermanentMeetingLastSessionPresenter,
           label: love.string.PastLast,
           displayProps: { key: 'lastEnd' }
-        },
-        'createdOn',
-        'createdBy',
-        'group',
-        'repeatEvery'
+        }
       ],
-      configOptions: { strict: true, hiddenKeys: ['name', 'description', 'descriptionRef'], sortable: true }
+      configOptions: { hiddenKeys: MODEL_HIDDEN_KEYS, sortable: true }
     },
     love.viewlet.TablePermanentMeetings
   )
 
-  // The grouped list the rest of the app uses for a class with a grouping of its own: categories by
-  // `group`, read-only columns switched in the view settings, the same member stack as the protocols.
+  // Grouped list: categories by `group`, columns switched in the view settings.
   builder.createDoc(
     view.class.Viewlet,
     core.space.Model,
@@ -953,14 +962,14 @@ export function createModel (builder: Builder): void {
       attachTo: love.class.PermanentMeeting,
       descriptor: view.viewlet.List,
       viewOptions: {
-        groupBy: ['group'],
+        groupBy: ['group', 'createdBy', 'members', 'private'],
         orderBy: [
           ['order', SortingOrder.Ascending],
           ['name', SortingOrder.Ascending]
         ],
         other: []
       },
-      configOptions: { strict: true, hiddenKeys: ['name', 'description', 'descriptionRef'], sortable: true },
+      configOptions: { hiddenKeys: MODEL_HIDDEN_KEYS, sortable: true },
       config: [
         {
           key: '',
@@ -981,19 +990,19 @@ export function createModel (builder: Builder): void {
           presenter: love.component.PermanentMeetingLastSessionPresenter,
           label: love.string.PastLast,
           displayProps: { key: 'lastEnd' }
-        },
-        { key: 'createdOn', displayProps: { key: 'createdOn', fixed: 'right', dividerBefore: true } },
-        { key: 'createdBy', displayProps: { key: 'createdBy', fixed: 'right' } },
-        { key: 'group', displayProps: { key: 'group', fixed: 'right' } }
+        }
       ]
     },
     love.viewlet.ListPermanentMeetings
   )
 
-  // A group of meetings is a document of its own: without a presenter the `group` column and the
-  // category headers of the grouped list would show a raw id.
+  // Without a presenter the category headers would show a raw id.
   builder.mixin(love.class.MeetingGroup, core.class.Class, view.mixin.ObjectPresenter, {
     presenter: view.component.ObjectPresenter
+  })
+
+  builder.mixin(love.class.MeetingGroup, core.class.Class, view.mixin.AttributePresenter, {
+    presenter: love.component.PermanentMeetingGroupPresenter
   })
 
   builder.mixin(love.class.PermanentMeeting, core.class.Class, view.mixin.ClassFilters, {
@@ -1012,7 +1021,7 @@ export function createModel (builder: Builder): void {
     ]
   })
 
-  // Merging is a selection action: the standard toolbar of the view offers it for the checked rows.
+  // Selection action: appears in the toolbar of the view for the checked rows.
   builder.createDoc(view.class.Action, core.space.Model, {
     action: love.actionImpl.MergeIntoGroup,
     label: love.string.MergeIntoGroup,

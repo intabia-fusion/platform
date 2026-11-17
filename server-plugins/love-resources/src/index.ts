@@ -1006,9 +1006,7 @@ function removeEventTx (control: TriggerControl, event: Event): Tx {
 }
 
 /**
- * The series of a meeting, looked up from the meeting side. The mixin documents are tried first, as
- * a storage may keep them separate; this one embeds the mixin in the event, so the nested path is
- * what answers.
+ * The series of a meeting. Mixin documents are tried first, the nested path is what this storage answers.
  */
 async function seriesEventsOf (control: TriggerControl, meetingId: Ref<PermanentMeeting>): Promise<Event[]> {
   const links = await control.findAll(
@@ -1060,9 +1058,8 @@ function membersAfter (
 }
 
 /**
- * Who sees a meeting in the calendar is decided by the participants of its series, not by the space.
- * Someone who walked out kept the whole series in their planner, because only the membership moved,
- * and the calendar trigger only prunes copies when the event's participant list changes.
+ * The calendar trigger prunes copies only when the event's participants change, so the series has to
+ * follow the meeting's members itself.
  */
 async function seriesParticipantsTxes (
   control: TriggerControl,

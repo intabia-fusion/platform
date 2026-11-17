@@ -13,12 +13,7 @@
 // limitations under the License.
 -->
 <!--
-  The body of the calendar event form: one checkbox that turns the event into a meeting, and - for a
-  one-off meeting - the room it is held in. Without a room the session runs in the workspace service
-  room, which is what every meeting did before rooms could be picked. A repeating event becomes a
-  permanent meeting when the box is ticked: such a meeting is an entity of its own and owns no office
-  room, so the room picker stays out while a repeat is set. Whether the event is a meeting is still
-  the user's call.
+  Meeting switch of the event form. A repeating event has no office room: the picker stays out.
 -->
 <script lang="ts">
   import type { RecurringRule } from '@hcengineering/calendar'

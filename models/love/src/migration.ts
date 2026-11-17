@@ -62,6 +62,7 @@ import love from './plugin'
 const DOMAIN_ACTIVITY = 'activity' as Domain
 const DOMAIN_ATTACHMENT = 'attachment' as Domain
 const DOMAIN_CONTACT = 'contact' as Domain
+const DOMAIN_PREFERENCE = 'preference' as Domain
 
 // Old MeetingMinutes interface before migration to Space (extends AttachedDoc which extends Doc)
 interface OldMeetingMinutes extends AttachedDoc {
@@ -406,11 +407,19 @@ async function addPermanentMeetingDeleteAction (client: MigrationUpgradeClient):
 }
 
 /**
- * A permanent meeting used to be deleted on its own: its series event stayed in the calendars of
- * everyone who was in it, pointing at a meeting that no longer exists. The server removes the pair
- * together now, this step cleans up what the earlier deletions left behind. Such an event is
- * invisible to a client query - that is what makes it a leftover - so the work is done on the raw
- * event domain, and the copies of the series are found by their shared `eventId`.
+ * Drops saved view preferences of the meetings views: an old preference keeps the columns the model no
+ * longer has. Raw delete: a client query does not find these documents here.
+ */
+async function resetPermanentMeetingsViewPreferences (client: MigrationClient): Promise<void> {
+  await client.deleteMany(DOMAIN_PREFERENCE, {
+    _class: view.class.ViewletPreference,
+    attachedTo: { $in: [love.viewlet.ListPermanentMeetings, love.viewlet.TablePermanentMeetings] }
+  } as any)
+}
+
+/**
+ * Deletes series whose permanent meeting is gone. The leftover is invisible to a client query, so the
+ * event domain is read raw and copies are found by `eventId`.
  */
 async function removeOrphanMeetingSeries (client: MigrationClient): Promise<void> {
   const meetings = new Set<Ref<Space>>(
@@ -816,6 +825,11 @@ export const loveOperation: MigrateOperation = {
         state: 'remove-orphan-meeting-series',
         mode: 'upgrade',
         func: removeOrphanMeetingSeries
+      },
+      {
+        state: 'reset-permanent-meetings-view-preferences',
+        mode: 'upgrade',
+        func: resetPermanentMeetingsViewPreferences
       }
     ])
   },
