@@ -25,10 +25,9 @@
     SelectPopup,
     showPopup,
     themeStore,
-    Toggle,
     tooltip
   } from '@hcengineering/ui'
-  import { IconButton } from '@hcengineering/ui/kit'
+  import { Toggle, IconButton } from '@hcengineering/ui/kit'
   import setting from '@hcengineering/setting'
 
   import task from '../../plugin'
@@ -210,7 +209,9 @@
         </div>
         <div class="toggle-slot">
           <Toggle
-            on={isRootTaskType}
+            size="small"
+            tooltip={{ label: task.string.AllowRootTask }}
+            checked={isRootTaskType}
             disabled={readonly}
             on:change={(evt) => {
               void handleAllowRootChange(evt.detail)

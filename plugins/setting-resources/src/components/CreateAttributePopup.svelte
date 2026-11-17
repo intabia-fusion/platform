@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -19,8 +20,8 @@
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import presentation, { getClient, Card } from '@hcengineering/presentation'
   import type { AnyComponent } from '@hcengineering/ui'
-  import { Component, DropdownLabelsIntl, ModernEditbox, Label, showPopup, Toggle } from '@hcengineering/ui'
-  import { IconButton } from '@hcengineering/ui/kit'
+  import { Component, DropdownLabelsIntl, ModernEditbox, Label, showPopup } from '@hcengineering/ui'
+  import { Toggle, IconButton } from '@hcengineering/ui/kit'
   import viewRes from '@hcengineering/view-resources/src/plugin'
   import type { DropdownIntlItem } from '@hcengineering/ui/src/types'
   import setting from '../plugin'
@@ -173,7 +174,7 @@
       <span class="label">
         <Label label={view.string.AutomationOnly} />
       </span>
-      <Toggle bind:on={readonly} />
+      <Toggle size="small" tooltip={{ label: view.string.AutomationOnly }} bind:checked={readonly} />
     </div>
   </div>
 </Card>

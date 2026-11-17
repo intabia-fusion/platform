@@ -19,8 +19,8 @@
   import type { AccountUuid } from '@hcengineering/core'
   import core, { reduceCalls, type SpaceType, type SpaceTypeDescriptor } from '@hcengineering/core'
   import { createQuery, getClient, MessageBox } from '@hcengineering/presentation'
-  import ui, { Label, ModernEditbox, showPopup, TextArea, Toggle } from '@hcengineering/ui'
-  import { Button, IconButton } from '@hcengineering/ui/kit'
+  import ui, { Label, ModernEditbox, showPopup, TextArea } from '@hcengineering/ui'
+  import { Toggle, Button, IconButton } from '@hcengineering/ui/kit'
   import viewRes from '@hcengineering/view-resources/src/plugin'
   import { deleteObjects } from '@hcengineering/view-resources'
 
@@ -182,7 +182,9 @@
       <div class="flex-row-center flex-gap-2">
         <Label label={core.string.AutoJoin} />
         <Toggle
-          on={type?.autoJoin ?? false}
+          size="small"
+          tooltip={{ label: core.string.AutoJoin }}
+          checked={type?.autoJoin ?? false}
           on:change={(evt) => {
             void attributeUpdated('autoJoin', evt.detail)
           }}

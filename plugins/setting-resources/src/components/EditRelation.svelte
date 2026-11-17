@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,13 +14,14 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import { Toggle } from '@hcengineering/ui/kit'
   import type { Association } from '@hcengineering/core'
   import core from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import presentation, { getClient, MessageBox } from '@hcengineering/presentation'
   import type { DropdownIntlItem } from '@hcengineering/ui'
-  import ui, { Button, EditBox, Label, Modal, showPopup, Toggle } from '@hcengineering/ui'
+  import ui, { Button, EditBox, Label, Modal, showPopup } from '@hcengineering/ui'
   import view from '@hcengineering/view'
 
   import setting from '../plugin'
@@ -118,7 +120,7 @@
       <span class="label">
         <Label label={view.string.AutomationOnly} />
       </span>
-      <Toggle bind:on={automationOnly} />
+      <Toggle size="small" tooltip={{ label: view.string.AutomationOnly }} bind:checked={automationOnly} />
     </div>
   </div>
 </Modal>

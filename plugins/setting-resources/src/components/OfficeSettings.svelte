@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -12,10 +13,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import { Toggle } from '@hcengineering/ui/kit'
   import core from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import setting, { type OfficeSettings } from '@hcengineering/setting'
-  import { Breadcrumb, Header, Label, Scroller, Toggle } from '@hcengineering/ui'
+  import { Breadcrumb, Header, Label, Scroller } from '@hcengineering/ui'
   import settingsRes from '../plugin'
 
   let loading = true
@@ -119,7 +121,9 @@
             <div class="flex-row-center flex-gap-4">
               <Label label={settingsRes.string.DefaultStartWithTranscription} />
               <Toggle
-                on={defaultStartWithTranscription}
+                size="small"
+                tooltip={{ label: settingsRes.string.DefaultStartWithTranscription }}
+                checked={defaultStartWithTranscription}
                 on:change={(e) => {
                   void toggleDefaultTranscription(e)
                 }}
@@ -129,7 +133,9 @@
             <div class="flex-row-center flex-gap-4">
               <Label label={settingsRes.string.DefaultStartWithRecording} />
               <Toggle
-                on={defaultStartWithRecording}
+                size="small"
+                tooltip={{ label: settingsRes.string.DefaultStartWithRecording }}
+                checked={defaultStartWithRecording}
                 on:change={(e) => {
                   void toggleDefaultRecording(e)
                 }}
@@ -139,7 +145,9 @@
             <div class="flex-row-center flex-gap-4">
               <Label label={settingsRes.string.DefaultStartPrivate} />
               <Toggle
-                on={defaultStartPrivate}
+                size="small"
+                tooltip={{ label: settingsRes.string.DefaultStartPrivate }}
+                checked={defaultStartPrivate}
                 on:change={(e) => {
                   void toggleDefaultPrivate(e)
                 }}

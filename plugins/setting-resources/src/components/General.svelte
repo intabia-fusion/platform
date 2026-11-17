@@ -14,6 +14,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import { Toggle } from '@hcengineering/ui/kit'
   import chunter from '@hcengineering/chunter'
   import contact, { AvatarType, ensureEmployeeForPerson } from '@hcengineering/contact'
   import { EditableAvatar, getAccountClient } from '@hcengineering/contact-resources'
@@ -47,8 +48,7 @@
     navigate,
     Scroller,
     showPopup,
-    themeStore,
-    Toggle
+    themeStore
   } from '@hcengineering/ui'
 
   import { requestOperationOtpCode } from '../utils'
@@ -340,9 +340,11 @@
             <div class="flex-row-center flex-gap-4">
               <Label label={settingsRes.string.PasswordAgingRuleDescription} />
               <Toggle
-                on={!!passwordAgingRule}
+                size="small"
+                tooltip={{ label: settingsRes.string.PasswordAgingRuleDescription }}
+                checked={!!passwordAgingRule}
                 on:change={(e) => {
-                  if (e.detail === false) {
+                  if (!e.detail) {
                     void changePasswordAgingRules(undefined)
                   } else {
                     void changePasswordAgingRules(30)
@@ -385,7 +387,9 @@
               <div class="flex-row-center flex-gap-4">
                 <Label label={settingsRes.string.GuestAccessDescription} />
                 <Toggle
-                  on={allowReadOnlyGuests}
+                  size="small"
+                  tooltip={{ label: settingsRes.string.GuestAccessDescription }}
+                  checked={allowReadOnlyGuests}
                   on:change={(e) => {
                     void handleToggleReadonlyAccess(e)
                   }}
@@ -395,8 +399,10 @@
               <div class="flex-row-center flex-gap-4">
                 <Label label={settingsRes.string.GuestSignUpDescription} />
                 <Toggle
+                  size="small"
+                  tooltip={{ label: settingsRes.string.GuestSignUpDescription }}
                   disabled={!allowReadOnlyGuests}
-                  on={allowGuestSignUp}
+                  checked={allowGuestSignUp}
                   on:change={(e) => {
                     void handleToggleGuestSignUp(e)
                   }}
@@ -431,7 +437,9 @@
               <div class="flex-row-center flex-gap-4">
                 <Label label={settingsRes.string.ContentReportsDescription} />
                 <Toggle
-                  on={reportsConfiguration?.enabled === true}
+                  size="small"
+                  tooltip={{ label: settingsRes.string.ContentReportsDescription }}
+                  checked={reportsConfiguration?.enabled === true}
                   on:change={(e) => {
                     void handleToggleReports(e)
                   }}

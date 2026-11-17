@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2026 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,10 +14,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import { Toggle } from '@hcengineering/ui/kit'
   import card from '@hcengineering/card'
   import type { AnyAttribute, Class, Doc, Ref, Role } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { DropdownLabels, Label, Toggle } from '@hcengineering/ui'
+  import { DropdownLabels, Label } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import setting from '../../plugin'
 
@@ -55,10 +57,22 @@
 <span class="label">
   <Label label={setting.string.SpaceMembersOnly} />
 </span>
-<Toggle bind:on={spaceMembersOnly} on:change={changeSpaceMembersOnly} disabled={!editable} />
+<Toggle
+  size="small"
+  tooltip={{ label: setting.string.SpaceMembersOnly }}
+  bind:checked={spaceMembersOnly}
+  on:change={changeSpaceMembersOnly}
+  disabled={!editable}
+/>
 {#if isCard}
   <Label label={setting.string.Role} />
-  <Toggle on={byRole !== undefined} disabled={!editable} on:change={(e) => (byRole = e.detail ? null : undefined)} />
+  <Toggle
+    size="small"
+    tooltip={{ label: setting.string.Role }}
+    checked={byRole !== undefined}
+    disabled={!editable}
+    on:change={(e) => (byRole = e.detail ? null : undefined)}
+  />
   {#if byRole !== undefined}
     <Label label={setting.string.Role} />
     <DropdownLabels

@@ -1,8 +1,9 @@
 <script lang="ts">
+  import { Toggle } from '@hcengineering/ui/kit'
   import type { Ref } from '@hcengineering/core'
-  import core, { getCurrentAccount, groupByArray } from '@hcengineering/core'
+  import core, { generateId, getCurrentAccount, groupByArray } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Breadcrumb, Grid, Header, Label, Scroller, Toggle } from '@hcengineering/ui'
+  import { Breadcrumb, Grid, Header, Label, Scroller } from '@hcengineering/ui'
   import calendar from '../plugin'
   import setting from '@hcengineering/setting'
   import type { Calendar, ExternalCalendar, PrimaryCalendar, Visibility } from '@hcengineering/calendar'
@@ -11,6 +12,7 @@
   import CalendarSelector from './CalendarSelector.svelte'
 
   const client = getClient()
+  const labelId = `calendar-settings-${generateId()}`
 
   const myAcc = getCurrentAccount()
   const socialStrings = myAcc.socialIds
@@ -102,16 +104,18 @@
             <div>
               <Label label={calendar.string.Visibility} />
             </div>
-            <div>
+            <div id={`${labelId}-hidden`}>
               <Label label={calendar.string.Hidden} />
             </div>
             {#each categories as cat}
               {#each cat[1] as _calendar}
-                {#if _calendar._id === myAcc.uuid + '_calendar'}
-                  <Label label={calendar.string.PersonalCalendar} />
-                {:else}
-                  {_calendar.name}
-                {/if}
+                <span id={`${labelId}-${_calendar._id}`}>
+                  {#if _calendar._id === myAcc.uuid + '_calendar'}
+                    <Label label={calendar.string.PersonalCalendar} />
+                  {:else}
+                    {_calendar.name}
+                  {/if}
+                </span>
                 <VisibilityEditor
                   value={_calendar.visibility}
                   kind="inline"
@@ -119,7 +123,10 @@
                   on:change={(res) => changeVisibility(_calendar, res.detail)}
                 />
                 <Toggle
-                  on={_calendar.hidden}
+                  size="small"
+                  tooltip={{ label: calendar.string.Hidden }}
+                  aria-labelledby={`${labelId}-hidden ${labelId}-${_calendar._id}`}
+                  checked={_calendar.hidden}
                   disabled={_calendar._class === calendar.class.Calendar}
                   on:change={(res) => changeHidden(_calendar, res.detail)}
                 />

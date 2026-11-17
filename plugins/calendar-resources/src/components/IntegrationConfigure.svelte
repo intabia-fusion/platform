@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,11 +14,12 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import { Toggle } from '@hcengineering/ui/kit'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import type { Calendar } from '@hcengineering/calendar'
   import { getCurrentAccount } from '@hcengineering/core'
   import presentation, { Card, createQuery, getClient } from '@hcengineering/presentation'
-  import { Grid, Label, Toggle, tooltip } from '@hcengineering/ui'
+  import { Grid, Label, tooltip } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import type { Integration } from '@hcengineering/account-client'
   import calendar from '../plugin'
@@ -69,7 +71,12 @@
       </span>
       {#each calendars as calendar}
         <div use:tooltip={{ label: getEmbeddedLabel(calendar.name) }} class="lines-limit-2">{calendar.name}</div>
-        <Toggle on={!calendar.hidden} on:change={(res) => update(calendar, res.detail)} />
+        <Toggle
+          size="small"
+          tooltip={{ label: getEmbeddedLabel(calendar.name) }}
+          checked={!calendar.hidden}
+          on:change={(res) => update(calendar, res.detail)}
+        />
       {/each}
     </Grid>
   </div>

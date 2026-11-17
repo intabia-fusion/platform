@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,10 +14,11 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import { Toggle } from '@hcengineering/ui/kit'
   import type { TypeNumber as TypeNumberType } from '@hcengineering/core'
   import core from '@hcengineering/core'
   import { TypeNumber } from '@hcengineering/model'
-  import { Label, NumberInput, Toggle } from '@hcengineering/ui'
+  import { Label, NumberInput } from '@hcengineering/ui'
   import { createEventDispatcher, onMount } from 'svelte'
   import setting from '../../plugin'
 
@@ -73,4 +75,10 @@
   on:change={updateType}
 />
 <Label label={setting.string.IntegerOnly} />
-<Toggle on={isInteger} on:change={changeIsInteger} disabled={!editable} />
+<Toggle
+  size="small"
+  tooltip={{ label: setting.string.IntegerOnly }}
+  checked={isInteger}
+  on:change={changeIsInteger}
+  disabled={!editable}
+/>
