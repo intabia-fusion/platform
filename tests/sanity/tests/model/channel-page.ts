@@ -462,6 +462,20 @@ export class ChannelPage extends CommonPage {
     await expect(this.buttonBreadcrumb(channel)).toBeVisible()
   }
 
+  /** An action of the "..." menu of a navigator section, e.g. "Hide all". */
+  async makeActionWithSectionInMenu (sectionId: string, action: string): Promise<void> {
+    await this.openNavigator()
+    const section = this.page.locator(`[data-testid="section-${sectionId}"]`)
+    // The button shows on hover only; a menu closed by a list update is opened again.
+    await retry(async () => {
+      if (await this.popupSpanLabel(action).isVisible()) return
+      await section.locator('.hulyNavGroup-header').hover()
+      await this.page.locator(`[data-testid="action-menu-${sectionId}"]`).click({ timeout: 5000 })
+      await expect(this.popupSpanLabel(action)).toBeVisible({ timeout: 3000 })
+    })
+    await this.selectFromDropdown(this.page, action)
+  }
+
   async makeActionWithChannelInMenu (channelName: string, action: string): Promise<void> {
     await this.openNavigator()
     const item = this.channelContainers().filter({ hasText: channelName })

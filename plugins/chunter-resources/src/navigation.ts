@@ -185,14 +185,21 @@ export async function chunterSpaceLinkFragmentProvider (doc: ChunterSpace): Prom
 
 // The link id of a location goes stale: `<name>-<id>` keeps the old name after a rename, old links
 // carry `<id>|<class>`. Only the doc id it decodes to says which doc is open.
+async function getLocationObjectId (
+  providers: LinkIdProvider[],
+  value: string | undefined
+): Promise<Ref<Doc> | undefined> {
+  const [locId, locClass] = decodeChatURI(value)
+  if (locId === '' || !getClient().getHierarchy().hasClass(locClass)) return undefined
+  return await parseLinkId(providers, locId, locClass)
+}
+
 async function isLocationObject (
   providers: LinkIdProvider[],
   value: string | undefined,
   _id: Ref<Doc>
 ): Promise<boolean> {
-  const [locId, locClass] = decodeChatURI(value)
-  if (locId === '' || !getClient().getHierarchy().hasClass(locClass)) return false
-  return (await parseLinkId(providers, locId, locClass)) === _id
+  return (await getLocationObjectId(providers, value)) === _id
 }
 
 export async function buildThreadLink (
@@ -277,6 +284,10 @@ export async function getMessageLocation (doc: ActivityMessage): Promise<Locatio
 }
 
 export async function resetChunterLocIfEqual (_id: Ref<Doc>): Promise<void> {
+  await resetChunterLocIfAnyOf([_id])
+}
+
+export async function resetChunterLocIfAnyOf (ids: Array<Ref<Doc>>): Promise<void> {
   const loc = getCurrentLocation()
 
   if (loc.path[2] !== chunterId) {
@@ -285,7 +296,8 @@ export async function resetChunterLocIfEqual (_id: Ref<Doc>): Promise<void> {
 
   const client = getClient()
   const providers = client.getModel().findAllSync(view.mixin.LinkIdProvider, {})
-  if (!(await isLocationObject(providers, loc.path[3], _id))) {
+  const opened = await getLocationObjectId(providers, loc.path[3])
+  if (opened == null || !ids.includes(opened)) {
     return
   }
 

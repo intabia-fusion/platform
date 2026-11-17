@@ -24,11 +24,12 @@ import core, {
   type Class,
   type Doc,
   type DocPreview,
+  type DocumentQuery,
   type Space,
   type WithLookup
 } from '@hcengineering/core'
-import notification from '@hcengineering/notification'
-import { readNotifyContext } from '@hcengineering/notification-resources'
+import notification, { type DocNotifyContext } from '@hcengineering/notification'
+import { readNotifyContexts } from '@hcengineering/notification-resources'
 import { getClient } from '@hcengineering/presentation'
 import { type Action, showPopup } from '@hcengineering/ui'
 import view from '@hcengineering/view'
@@ -36,6 +37,7 @@ import { previewMembers } from '@hcengineering/view-resources'
 import { type SpecialNavModel } from '@hcengineering/workbench'
 import activity from '@hcengineering/activity'
 
+import { resetChunterLocIfAnyOf } from '../../navigation'
 import chunter from '../../plugin'
 import { getPinUpdate } from './navigatorRank'
 import { type ChatGroupID, type ChatNavGroupModel, type ChatNavItemModel } from './types'
@@ -224,52 +226,51 @@ function getActivityActions ({ readAll, hideAll }: { readAll?: boolean, hideAll?
 async function hideDocs (id: SectionID): Promise<void> {
   if (id === 'starred') return
   const client = getClient()
-  const chats = await client.findAll(chunter.class.Chat, {
-    attachedToClass: id,
-    account: getCurrentAccount().uuid,
-    hidden: false
-  })
+  const chats = await client.findAll(
+    chunter.class.Chat,
+    {
+      attachedToClass: { $in: client.getHierarchy().getDescendants(id) },
+      account: getCurrentAccount().uuid,
+      hidden: false,
+      pinned: false
+    },
+    { projection: { _id: 1, _class: 1, space: 1, attachedTo: 1, attachedToClass: 1 } }
+  )
+  if (chats.length === 0) return
 
-  try {
-    for (const chat of chats) {
-      await client.updateCollection(chat._class, chat.space, chat._id, chat.attachedTo, chat.attachedToClass, 'chats', {
-        hidden: true
-      })
-    }
-  } catch (e) {
-    console.error(e)
+  const ops = client.apply(undefined, 'hideChats')
+  for (const chat of chats) {
+    await ops.updateCollection(chat._class, chat.space, chat._id, chat.attachedTo, chat.attachedToClass, 'chats', {
+      hidden: true
+    })
   }
+  await ops.commit()
+  await resetChunterLocIfAnyOf(chats.map((it) => it.attachedTo))
 }
 
 async function readDocs (id: SectionID): Promise<void> {
   const client = getClient()
   const me = getCurrentAccount()
-  if (id === 'starred') {
-    const starred = await client.findAll(chunter.class.Chat, { pinned: true })
-    const contexts = await client.findAll(notification.class.DocNotifyContext, {
-      objectId: { $in: starred.map((it) => it.attachedTo) },
-      user: me.uuid
-    })
-    try {
-      for (const context of contexts) {
-        await readNotifyContext(context)
-      }
-    } catch (e) {
-      console.error(e)
-    }
-  } else {
-    const contexts = await client.findAll(notification.class.DocNotifyContext, {
-      objectClass: id,
-      user: me.uuid
-    })
-    try {
-      for (const context of contexts) {
-        await readNotifyContext(context)
-      }
-    } catch (e) {
-      console.error(e)
-    }
-  }
+  const query: DocumentQuery<DocNotifyContext> =
+    id === 'starred'
+      ? { objectId: { $in: await getStarredDocs() } }
+      : { objectClass: { $in: client.getHierarchy().getDescendants(id) } }
+  const own = { ...query, user: me.uuid }
+  const [notified, messages] = await Promise.all([
+    client.findAll(notification.class.DocNotifyContext, { ...own, unreadCount: { $gt: 0 } }),
+    client.findAll(notification.class.DocNotifyContext, { ...own, unreadCount: 0, unreadMessagesCount: { $gt: 0 } })
+  ])
+
+  await readNotifyContexts([...notified, ...messages])
+}
+
+async function getStarredDocs (): Promise<Array<Ref<Doc>>> {
+  const starred = await getClient().findAll(
+    chunter.class.Chat,
+    { pinned: true, account: getCurrentAccount().uuid },
+    { projection: { attachedTo: 1 } }
+  )
+  return starred.map((it) => it.attachedTo)
 }
 
 export function getActivityDocClasses (): Array<Ref<Class<Doc>>> {

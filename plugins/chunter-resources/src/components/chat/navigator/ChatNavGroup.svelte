@@ -347,7 +347,8 @@
           entries: [pushed],
           label: clazz.pluralLabel ?? clazz.label,
           count: 1,
-          actions: getSectionActions(model, pushObject.object._id)
+          // The section's id is a document, not a class
+          actions: []
         })
       }
 
