@@ -5,6 +5,7 @@ await kit.page('Ссылка на встречу')
   const { main, frame } = kit.Workbench('Ссылка на встречу - настройки', 0, 0, {
     tab: 'Календарь',
     tabIcon: 'calendar',
+    app: 'calendar',
     nav: LINK_NAV
   })
 

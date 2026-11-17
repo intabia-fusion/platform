@@ -289,6 +289,19 @@ export interface PermanentMeeting extends Space {
   /** How often the meeting is held, in ms. Set when the meeting is created from the planner. */
   repeatEvery?: number
 
+  /**
+   * Whether the meeting is also a series in the calendar and the planner. Undefined means yes: a
+   * meeting created before the flag existed always had its series.
+   */
+  calendar?: boolean
+  /**
+   * Start of the schedule kept on the meeting itself. A meeting with a series keeps it there; this
+   * copy is what the "next meeting" column reads when the meeting was not put into the calendar.
+   */
+  startDate?: Timestamp
+  /** Time zone of `startDate`, so a meeting without a series still shows its local time. */
+  timeZone?: string
+
   /** shortId of the permanent link. Absent until the link is first issued. */
   linkId?: string
   /** Bumping it revokes the previous link: new payload, new shortId. */

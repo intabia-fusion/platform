@@ -75,9 +75,15 @@ export interface PermanentMeetingInput {
   guestPassword?: string | null
   /** Group the meeting is created in, when the dialog was opened from a group header. */
   group?: Ref<MeetingGroup>
+  /**
+   * Put the meeting into the calendar and the planner as a series. Defaults to true; only the
+   * "new meeting" dialog of the permanent meetings list can pass false.
+   */
+  calendar?: boolean
 }
 
-export async function findPrimaryCalendarId (client: Client): Promise<Ref<Calendar> | undefined> {  const acc = getCurrentAccount()
+export async function findPrimaryCalendarId (client: Client): Promise<Ref<Calendar> | undefined> {
+  const acc = getCurrentAccount()
   const calendars = await client.findAll(calendar.class.Calendar, {
     user: acc.primarySocialId,
     hidden: false,
@@ -125,6 +131,9 @@ export async function createPermanentMeeting (
     repeatEvery?: number
     reminderBefore?: number
     group?: Ref<MeetingGroup>
+    startDate?: number
+    timeZone?: string
+    calendar?: boolean
   }
 ): Promise<Ref<PermanentMeeting>> {
   return await client.createDoc(love.class.PermanentMeeting, core.space.Space, {
@@ -141,6 +150,12 @@ export async function createPermanentMeeting (
     descriptionRef: null,
     repeatEvery: data.repeatEvery,
     reminderBefore: data.reminderBefore,
+    // The schedule kept on the meeting itself: the "next meeting" column falls back to it when
+    // there is no series to ask (a meeting that is only a link).
+    startDate: data.startDate,
+    timeZone: data.timeZone,
+    // Only the explicit "no calendar" is stored: a missing flag means the meeting has its series.
+    ...(data.calendar === false ? { calendar: false } : {}),
     // Only when the dialog was opened from a group header: absent stays absent, not null.
     ...(data.group !== undefined ? { group: data.group } : {}),
     // A permanent meeting is an always-open room: whoever holds the link may open a session,
@@ -165,78 +180,85 @@ export async function createPermanentMeetingWithSchedule (
   const language = ctx.language as RoomLanguage
   const startWithRecording = false
   const startWithTranscription = false
+  // A meeting may exist only as a link and a row in the list: then it gets no series, and nothing
+  // but the meeting itself says when it should be held.
+  const inCalendar = input.calendar !== false
 
   const rules = input.period !== undefined ? periodRules(input.startDate, input.period) : []
   if (rules.length > 0 && input.endDate !== undefined) rules[0] = { ...rules[0], endDate: input.endDate }
 
   const members = input.members.includes(ctx.me) ? input.members : [ctx.me, ...input.members]
-  const participants = await participantsOf(client, members)
-  const eventId = generateEventId()
-  const dueDate = input.startDate + input.duration
+
+  let eventId = ''
   const eventIdRef = generateId<Event>()
+  if (inCalendar) {
+    const participants = await participantsOf(client, members)
+    eventId = generateEventId()
+    const dueDate = input.startDate + input.duration
 
-  const common = {
-    calendar: ctx.calendarId,
-    eventId,
-    date: input.startDate,
-    dueDate,
-    title: input.name,
-    description: '',
-    participants,
-    externalParticipants: [],
-    reminders: [input.reminderBefore],
-    visibility: 'private' as const,
-    blockTime: true,
-    allDay: false,
-    timeZone: ctx.timeZone,
-    access: AccessLevel.Owner,
-    user: ctx.primarySocialId
-  }
-
-  if (rules.length > 0) {
-    await client.addCollection(
-      calendar.class.ReccuringEvent,
-      ctx.space,
-      calendar.ids.NoAttached,
-      calendar.class.Event,
-      'events',
-      {
-        ...common,
-        rules,
-        rdate: [],
-        exdate: [],
-        originalStartTime: input.startDate
-      },
-      eventIdRef as Ref<ReccuringEvent>
-    )
-  } else {
-    await client.addCollection(
-      calendar.class.Event,
-      ctx.space,
-      calendar.ids.NoAttached,
-      calendar.class.Event,
-      'events',
-      common,
-      eventIdRef
-    )
-  }
-
-  await client.createMixin<Event, MeetingEventLink>(
-    eventIdRef,
-    calendar.class.Event,
-    ctx.space,
-    love.mixin.MeetingEventLink,
-    {
-      type,
-      linkVersion: 1,
-      meetingAccess: defaultMeetingAccess,
-      private: false,
-      language,
-      startWithRecording,
-      startWithTranscription,
-      reminderBefore: input.reminderBefore
+    const common = {
+      calendar: ctx.calendarId,
+      eventId,
+      date: input.startDate,
+      dueDate,
+      title: input.name,
+      description: '',
+      participants,
+      externalParticipants: [],
+      reminders: [input.reminderBefore],
+      visibility: 'private' as const,
+      blockTime: true,
+      allDay: false,
+      timeZone: ctx.timeZone,
+      access: AccessLevel.Owner,
+      user: ctx.primarySocialId
     }
-  )
+
+    if (rules.length > 0) {
+      await client.addCollection(
+        calendar.class.ReccuringEvent,
+        ctx.space,
+        calendar.ids.NoAttached,
+        calendar.class.Event,
+        'events',
+        {
+          ...common,
+          rules,
+          rdate: [],
+          exdate: [],
+          originalStartTime: input.startDate
+        },
+        eventIdRef as Ref<ReccuringEvent>
+      )
+    } else {
+      await client.addCollection(
+        calendar.class.Event,
+        ctx.space,
+        calendar.ids.NoAttached,
+        calendar.class.Event,
+        'events',
+        common,
+        eventIdRef
+      )
+    }
+
+    await client.createMixin<Event, MeetingEventLink>(
+      eventIdRef,
+      calendar.class.Event,
+      ctx.space,
+      love.mixin.MeetingEventLink,
+      {
+        type,
+        linkVersion: 1,
+        meetingAccess: defaultMeetingAccess,
+        private: false,
+        language,
+        startWithRecording,
+        startWithTranscription,
+        reminderBefore: input.reminderBefore
+      }
+    )
+  }
 
   const meeting = await createPermanentMeeting(client, {
     name: input.name,
@@ -248,17 +270,23 @@ export async function createPermanentMeetingWithSchedule (
     owners: [ctx.me],
     repeatEvery: input.period,
     reminderBefore: input.reminderBefore,
-    group: input.group
+    group: input.group,
+    startDate: input.startDate,
+    timeZone: ctx.timeZone,
+    calendar: inCalendar
   })
 
-  await client.updateMixin(eventIdRef, calendar.class.Event, ctx.space, love.mixin.MeetingEventLink, {
-    permanentMeeting: meeting
-  })
+  if (inCalendar) {
+    await client.updateMixin(eventIdRef, calendar.class.Event, ctx.space, love.mixin.MeetingEventLink, {
+      permanentMeeting: meeting
+    })
+  }
 
   if (input.guestPassword !== undefined && input.guestPassword !== null) {
     await ctx.setGuestPassword(meeting, input.guestPassword)
   }
 
+  // No series: there is no event to report, only the meeting the dialog opens the link for.
   return { eventId, meeting }
 }
 
@@ -279,7 +307,10 @@ export async function updatePermanentMeetingWithSchedule (
     name: input.name,
     members,
     reminderBefore: input.reminderBefore,
-    repeatEvery: input.period
+    repeatEvery: input.period,
+    // Kept in step with the series: a meeting without one reads its schedule from here.
+    startDate: input.startDate,
+    timeZone: ctx.timeZone
   })
 
   const rules = input.period !== undefined ? periodRules(input.startDate, input.period) : []

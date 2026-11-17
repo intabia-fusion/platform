@@ -19,8 +19,8 @@ import type { AppEntry } from '../types'
 export const railApps: Array<AppEntry & { app?: string }> = [
   { icon: 'kit/Bell', notify: true },
   { icon: 'kit/Bubble', notify: true, app: 'chunter' },
-  { icon: 'kit/Calendar' },
-  { icon: 'kit/Building', divider: true },
+  { icon: 'kit/Calendar', app: 'calendar' },
+  { icon: 'kit/Building', app: 'office', divider: true },
   { icon: 'kit/PanelRight' },
   { icon: 'kit/PersonCircle' },
   { icon: 'kit/PersonSearch' },

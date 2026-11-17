@@ -27,6 +27,8 @@
   // Created from a group header: the meeting has to land in that group, not in "no group".
   export let group: Ref<MeetingGroup> | undefined = undefined
   export let space: Ref<Space> | undefined = undefined
+  // Only the permanent meetings list offers the choice: anywhere else a meeting goes to the calendar.
+  export let allowNoCalendar: boolean = false
 
   async function created (event: CustomEvent<{ eventId: string, meeting: PermanentMeeting | string }>): Promise<void> {
     const meeting = event.detail.meeting as string
@@ -36,4 +38,4 @@
   }
 </script>
 
-<PermanentMeetingForm {group} on:close={() => dispatch('close')} on:created={created} />
+<PermanentMeetingForm {group} {allowNoCalendar} on:close={() => dispatch('close')} on:created={created} />

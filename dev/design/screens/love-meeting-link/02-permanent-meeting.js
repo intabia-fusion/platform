@@ -5,6 +5,7 @@ await kit.page('Постоянная встреча')
   const { main, frame } = kit.Workbench('Постоянная встреча - участники и сессии', 0, 0, {
     tab: 'Встречи',
     tabIcon: 'calendar',
+    app: 'calendar',
     nav: [
       { item: 'Встречи', icon: 'calendar', selected: true },
       { item: 'Постоянные встречи', icon: 'users', selected: true },

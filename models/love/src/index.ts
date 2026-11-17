@@ -406,6 +406,19 @@ export class TPermanentMeeting extends TSpace implements PermanentMeeting {
   @Prop(TypeNumber(), love.string.RepeatEvery, { editor: love.component.RepeatEveryEditor })
   repeatEvery?: number
 
+  // A permanent meeting can exist as a link and a row in the list only: no series, nothing in the
+  // calendar and the planner. Undefined means "in the calendar", so meetings created before the
+  // flag keep their series.
+  calendar?: boolean
+
+  // The schedule kept on the meeting itself. A meeting with a series keeps it on the series; this
+  // copy is what the "next meeting" column reads when there is no series to ask.
+  @Prop(TypeDate(DateRangeMode.DATETIME), love.string.MeetingStart)
+  @ReadOnly()
+  startDate?: Timestamp
+
+  timeZone?: string
+
   @Hidden()
   linkId?: string
 
@@ -532,6 +545,7 @@ export function createModel (builder: Builder): void {
       alias: loveId,
       hidden: false,
       position: 'top',
+      hasNavigator: true,
       component: love.component.Main,
       order: 400
     },

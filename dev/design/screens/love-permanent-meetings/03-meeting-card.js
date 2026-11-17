@@ -5,6 +5,7 @@ await kit.page('Карточка постоянной встречи')
   const { main, frame, panel } = kit.Workbench('Постоянная встреча - карточка', 0, 0, {
     tab: 'Офис',
     tabIcon: 'building',
+    app: 'office',
     nav: PM_NAV,
     panel: { w: 420 }
   })

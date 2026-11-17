@@ -216,6 +216,8 @@
     "WrongPassword": "Wrong password",
     "TooManyAttempts": "Too many attempts. Try again later",
     "RepeatEvery": "Repeat every",
+    "ShowInCalendar": "Calendar display",
+    "ShowInCalendarHint": "Off: shown in the list only",
     "Kind": "Kind",
     "From": "From",
     "To": "To",

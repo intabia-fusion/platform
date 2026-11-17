@@ -216,6 +216,8 @@
     "WrongPassword": "密码错误",
     "TooManyAttempts": "尝试次数过多，请稍后再试",
     "RepeatEvery": "重复间隔",
+    "ShowInCalendar": "在日历中显示",
+    "ShowInCalendarHint": "关闭：仅在列表中显示",
     "Kind": "类型",
     "From": "发件人",
     "To": "收件人",

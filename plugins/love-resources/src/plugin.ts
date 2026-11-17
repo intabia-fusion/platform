@@ -167,6 +167,8 @@ export default mergeIds(loveId, love, {
     PrivateMeetingJoinHeader: '' as IntlString,
     PrivateMeetingJoinText: '' as IntlString,
     RepeatEvery: '' as IntlString,
+    ShowInCalendar: '' as IntlString,
+    ShowInCalendarHint: '' as IntlString,
     RecurringMeeting: '' as IntlString,
     EveryDay: '' as IntlString,
     EveryWeek: '' as IntlString,

@@ -216,6 +216,8 @@
     "WrongPassword": "パスワードが違います",
     "TooManyAttempts": "試行回数が多すぎます。しばらくしてからお試しください",
     "RepeatEvery": "繰り返し間隔",
+    "ShowInCalendar": "カレンダーでの表示",
+    "ShowInCalendarHint": "オフ: リストにのみ表示",
     "Kind": "種類",
     "From": "差出人",
     "To": "宛先",

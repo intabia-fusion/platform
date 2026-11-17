@@ -216,6 +216,8 @@
     "WrongPassword": "Hatalı parola",
     "TooManyAttempts": "Çok fazla deneme. Daha sonra tekrar deneyin",
     "RepeatEvery": "Tekrar aralığı",
+    "ShowInCalendar": "Takvimde görünüm",
+    "ShowInCalendarHint": "Kapalı: yalnızca listede görünür",
     "Kind": "Tür",
     "From": "Kimden",
     "To": "Kime",

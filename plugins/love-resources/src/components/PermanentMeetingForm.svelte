@@ -28,7 +28,7 @@
   import { Card, getClient } from '@hcengineering/presentation'
   import presentation from '@hcengineering/presentation'
   import { getCurrentLanguage } from '@hcengineering/theme'
-  import { EditBox, getUserTimezone, Label, NumberInput } from '@hcengineering/ui'
+  import { EditBox, getUserTimezone, Label, NumberInput, Toggle } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import love from '../plugin'
   import RepeatEveryEditor from './RepeatEveryEditor.svelte'
@@ -43,6 +43,10 @@
   } from '../permanentMeetingSchedule'
 
   export let object: PermanentMeeting | undefined = undefined
+
+  // Offered only where a meeting can be created without a calendar series, and only while creating:
+  // an existing meeting keeps the mode it was created with.
+  export let allowNoCalendar: boolean = false
 
   // A meeting created from a group header is born in that group; editing never moves it.
   export let group: Ref<MeetingGroup> | undefined = undefined
@@ -60,6 +64,7 @@
   let startDate: number = Date.now() + 30 * 60 * 1000
   let dueDate: number = startDate + HOUR
   let period: number | undefined = object?.repeatEvery ?? WEEK
+  let inCalendar: boolean = object?.calendar !== false
   let members: AccountUuid[] = object?.members ?? []
   let reminderMinutes: number = Math.round((object?.reminderBefore ?? 15 * 60 * 1000) / 60000)
   let password: string = ''
@@ -102,6 +107,7 @@
         // 0 turns the reminder off, absent falls back to the default, so the value is explicit.
         reminderBefore: Math.max(0, Math.round(reminderMinutes)) * 60 * 1000,
         guestPassword: password !== '' ? password : undefined,
+        calendar: object === undefined ? inCalendar : object.calendar !== false,
         group
       }
       const created = object === undefined ? await createPermanentMeetingWithSchedule(client, input, ctx) : undefined
@@ -138,6 +144,17 @@
         <RepeatEveryEditor value={period} onChange={changePeriod} />
       </div>
     </div>
+    {#if allowNoCalendar && object === undefined}
+      <div class="antiGrid-row">
+        <div class="antiGrid-row__header"><Label label={love.string.ShowInCalendar} /></div>
+        <div class="flex-row-center gap-2">
+          <Toggle on={inCalendar} on:change={() => (inCalendar = !inCalendar)} />
+          {#if !inCalendar}
+            <span class="text-sm content-color"><Label label={love.string.ShowInCalendarHint} /></span>
+          {/if}
+        </div>
+      </div>
+    {/if}
     <div class="antiGrid-row">
       <div class="antiGrid-row__header"><Label label={love.string.RemindBeforeMinutes} /></div>
       <div class="flex-row-center gap-2">

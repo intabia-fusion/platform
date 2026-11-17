@@ -41,10 +41,12 @@
     }
   )
 
-  $: start = series.reduce<number | undefined>(
-    (acc, it) => (acc === undefined || it.date < acc ? it.date : acc),
-    undefined
-  )
+  // The series answers when there is one; a meeting that exists only as a link keeps its schedule
+  // on the document itself.
+  $: start =
+    series.length > 0
+      ? series.reduce<number | undefined>((acc, it) => (acc === undefined || it.date < acc ? it.date : acc), undefined)
+      : value.startDate
   $: next =
     start === undefined || value.repeatEvery === undefined || value.repeatEvery <= 0
       ? undefined

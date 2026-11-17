@@ -216,6 +216,8 @@
     "WrongPassword": "Mot de passe incorrect",
     "TooManyAttempts": "Trop de tentatives. Réessayez plus tard",
     "RepeatEvery": "Répéter tous les",
+    "ShowInCalendar": "Affichage dans le calendrier",
+    "ShowInCalendarHint": "Désactivé : affiché uniquement dans la liste",
     "Kind": "Type",
     "From": "De",
     "To": "À",

@@ -216,6 +216,8 @@
     "WrongPassword": "Nesprávné heslo",
     "TooManyAttempts": "Příliš mnoho pokusů. Zkuste to později",
     "RepeatEvery": "Opakovat každých",
+    "ShowInCalendar": "Zobrazení v kalendáři",
+    "ShowInCalendarHint": "Vyp.: zobrazení pouze v seznamu",
     "Kind": "Druh",
     "From": "Od",
     "To": "Komu",

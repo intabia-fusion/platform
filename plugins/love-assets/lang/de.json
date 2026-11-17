@@ -216,6 +216,8 @@
     "WrongPassword": "Falsches Passwort",
     "TooManyAttempts": "Zu viele Versuche. Bitte später erneut versuchen",
     "RepeatEvery": "Wiederholen alle",
+    "ShowInCalendar": "Anzeige im Kalender",
+    "ShowInCalendarHint": "Aus: Anzeige nur in der Liste",
     "Kind": "Art",
     "From": "Von",
     "To": "An",

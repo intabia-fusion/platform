@@ -5,6 +5,7 @@ await kit.page('Новая постоянная встреча')
   const { main, frame } = kit.Workbench('Постоянные встречи - создание', 0, 0, {
     tab: 'Офис',
     tabIcon: 'building',
+    app: 'office',
     nav: PM_NAV
   })
 

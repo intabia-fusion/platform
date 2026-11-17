@@ -32,7 +32,8 @@
   }
 
   function createMeeting (): void {
-    showPopup(CreatePermanentMeetingPopup, { space }, 'top')
+    // The only place that may create a meeting without a calendar series.
+    showPopup(CreatePermanentMeetingPopup, { space, allowNoCalendar: true }, 'top')
   }
 </script>
 

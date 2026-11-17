@@ -189,6 +189,40 @@ describe('createPermanentMeetingWithSchedule', () => {
       meetingAccess: expect.objectContaining({ start: 'link' })
     })
   })
+
+  it('creates no series at all when the meeting is asked to stay out of the calendar', async () => {
+    const { client, calls } = createFakeClient()
+
+    const result = await createPermanentMeetingWithSchedule(
+      client,
+      input({ calendar: false }),
+      createContext()
+    )
+
+    // Nothing in the calendar: no event, no mixin, no back-reference to hang them on.
+    expect(find(calls, 'addCollection')).toHaveLength(0)
+    expect(find(calls, 'createMixin')).toHaveLength(0)
+    expect(find(calls, 'updateMixin')).toHaveLength(0)
+    expect(result.eventId).toBe('')
+
+    // The schedule lives on the meeting, and the flag is written explicitly - the column and the
+    // link both read it.
+    const meeting = find(calls, 'createDoc')[0].args[2]
+    expect(meeting.calendar).toBe(false)
+    expect(meeting.startDate).toBe(startDate)
+    expect(meeting.timeZone).toBe('Europe/Moscow')
+    expect(meeting.repeatEvery).toBe(WEEK)
+  })
+
+  it('leaves the calendar flag absent when the meeting goes to the calendar', async () => {
+    const { client, calls } = createFakeClient()
+
+    await createPermanentMeetingWithSchedule(client, input(), createContext())
+
+    // Absent means "in the calendar": documents created before the flag keep their series.
+    expect(find(calls, 'createDoc')[0].args[2].calendar).toBeUndefined()
+    expect(find(calls, 'createDoc')[0].args[2].startDate).toBe(startDate)
+  })
 })
 
 describe('withOwners', () => {
