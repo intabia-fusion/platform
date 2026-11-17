@@ -18,13 +18,16 @@
   import { translate } from '@hcengineering/platform'
   import { getClient, isDisabled } from '@hcengineering/presentation'
   import task from '@hcengineering/task'
+  import { typeStore } from '@hcengineering/task-resources'
+  import { getProjectStatusFilterValues } from '@hcengineering/task-resources/src/statusFilter'
   import {
     duplicateColumnIds,
     nextColumnTitle,
     normalizeColumnTitle,
     statusesWithoutColumn,
     type Board,
-    type BoardColumn
+    type BoardColumn,
+    type Project
   } from '@hcengineering/tracker'
   import ui, { getEventPositionElement, Icon, Label, Menu, Scroller, showPopup } from '@hcengineering/ui'
   import { Button, Callout, IconButton, Toggle } from '@hcengineering/ui/kit'
@@ -42,6 +45,7 @@
   >
   // Statuses of the board projects
   export let statuses: Status[]
+  export let projects: Project[]
   export let onChange: (patch: Partial<Data<Board>>) => Promise<void>
   // For a dialog: no section head, no limits and summaries
   export let compact: boolean = false
@@ -54,6 +58,13 @@
 
   // All statuses, not only the projects' ones: a column may keep a status of a removed project
   $: byId = $statusStore.byId
+  $: typeNames = getProjectStatusFilterValues(
+    projects.flatMap((project) => {
+      const type = $typeStore.get(project.type)
+      return type === undefined ? [] : [type]
+    }),
+    byId
+  ).typeNames
   $: placed = new Set(board.columns.flatMap((c) => c.statuses))
   $: unplaced = statuses.filter((s) => !placed.has(s._id))
   $: open = new Set(statusesWithoutColumn(board.columns, statuses, board.warnOnClosedStatuses).map((s) => s._id))
@@ -323,6 +334,7 @@
           {#each unplaced as status (status._id)}
             <div
               class="status"
+              class:with-type={typeNames.has(status._id)}
               draggable="true"
               role="listitem"
               data-id="boardStatus"
@@ -334,7 +346,12 @@
             >
               <span class="grip"><Icon icon={ui.icon.GripVertical} size="small" /></span>
               <IssueStatusIcon value={status} size="x-small" />
-              <span class="status-name">{status.name}</span>
+              <span class="status-label">
+                <span class="status-name">{status.name}</span>
+                {#if typeNames.has(status._id)}
+                  <span class="status-type" title={typeNames.get(status._id)}>{typeNames.get(status._id)}</span>
+                {/if}
+              </span>
               <span class="count">{counts.get(status._id) ?? ''}</span>
             </div>
           {/each}
@@ -473,6 +490,7 @@
                   {#if status !== undefined}
                     <div
                       class="status"
+                      class:with-type={typeNames.has(status._id)}
                       draggable="true"
                       role="listitem"
                       data-id="boardStatus"
@@ -484,7 +502,12 @@
                     >
                       <span class="grip"><Icon icon={ui.icon.GripVertical} size="small" /></span>
                       <IssueStatusIcon value={status} size="x-small" />
-                      <span class="status-name">{status.name}</span>
+                      <span class="status-label">
+                        <span class="status-name">{status.name}</span>
+                        {#if typeNames.has(status._id)}
+                          <span class="status-type" title={typeNames.get(status._id)}>{typeNames.get(status._id)}</span>
+                        {/if}
+                      </span>
                       <span class="count">{counts.get(id) ?? ''}</span>
                     </div>
                   {/if}
@@ -701,6 +724,24 @@
       width: 0.875rem;
       height: 0.875rem;
     }
+  }
+  .status.with-type {
+    height: auto;
+    min-height: 2.75rem;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+  }
+  .status-label {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .status-type {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: var(--theme-dark-color);
+    font-size: 0.6875rem;
   }
   .status-name {
     overflow: hidden;

@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
+import { OnProjectTypeStatusesChanged } from './boardStatusCleanup'
+
 import core, {
   concatLink,
   Doc,
@@ -552,6 +554,7 @@ export default async () => ({
     TimeSpendReportTitlePresenter: timeSpendReportTitlePresenter
   },
   trigger: {
+    OnProjectTypeStatusesChanged,
     OnIssueUpdate,
     OnComponentRemove,
     OnProjectRemove

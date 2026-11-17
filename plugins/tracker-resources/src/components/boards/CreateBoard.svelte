@@ -43,6 +43,7 @@
   import tracker from '../../plugin'
   import { activeProjects } from '../../utils'
   import ProjectMembersTable from '../projects/settings/ProjectMembersTable.svelte'
+  import { pruneBoardColumns, pruneStatusCondition } from '../../boardStatusFilters'
   import ColumnsTab from './settings/ColumnsTab.svelte'
 
   type Step = 'general' | 'members' | 'columns'
@@ -81,7 +82,7 @@
       e.currentTarget as HTMLElement,
       () => {},
       (result: Array<Ref<Project>> | undefined) => {
-        if (result !== undefined) selected = result
+        if (result !== undefined) setProjects(result)
       }
     )
   }
@@ -94,8 +95,22 @@
     editors = editors.filter((a) => a !== account)
   }
 
+  function setProjects (next: Array<Ref<Project>>): void {
+    if (selected.some((id) => !next.includes(id))) {
+      const allowed = new Set(
+        next.flatMap((id) => {
+          const project = $activeProjects.get(id)
+          return project === undefined ? [] : getStates(project, $typeStore, $statusStore.byId).map((s) => s._id)
+        })
+      )
+      filter = pruneStatusCondition(filter, allowed)
+      columns = pruneBoardColumns(columns, allowed)
+    }
+    selected = next
+  }
+
   function removeProject (id: Ref<Project>): void {
-    selected = selected.filter((p) => p !== id)
+    setProjects(selected.filter((p) => p !== id))
   }
 
   // How many issues of the selected projects the filter lets through
@@ -268,6 +283,7 @@
               <div class="filter">
                 <FilterConditions
                   _class={tracker.class.Issue}
+                  spaces={selected}
                   value={filter}
                   removable
                   addLabel={tracker.string.BoardCondition}
@@ -298,7 +314,7 @@
             />
           </div>
         {:else}
-          <ColumnsTab board={draft} {statuses} onChange={onColumns} compact />
+          <ColumnsTab board={draft} {statuses} projects={shown} onChange={onColumns} compact />
         {/if}
       </div>
     </Scroller>

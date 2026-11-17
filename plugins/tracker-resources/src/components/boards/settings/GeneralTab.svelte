@@ -26,6 +26,7 @@
   import ProjectSettingsSection from '../../projects/settings/ProjectSettingsSection.svelte'
 
   export let board: Board
+  export let updatingProjects = false
   export let projects: Project[]
   export let onChange: (patch: Partial<Data<Board>>) => Promise<void>
 
@@ -146,6 +147,7 @@
               <span class="remove">
                 <IconButton
                   data-id="boardRemoveProject"
+                  disabled={updatingProjects}
                   kind="ghost"
                   size="min"
                   icon={ui.icon.Cross}
@@ -160,6 +162,7 @@
         {/each}
         <Button
           data-id="boardAddProject"
+          disabled={updatingProjects}
           kind="tertiary"
           size="extra-small"
           icon={ui.icon.Plus}
@@ -175,6 +178,7 @@
           <div class="filter">
             <FilterConditions
               _class={tracker.class.Issue}
+              spaces={board.projects}
               value={board.filter}
               removable
               addLabel={tracker.string.BoardCondition}

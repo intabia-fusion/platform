@@ -28,6 +28,8 @@
 
   export let filter: Filter
   export let space: Ref<Space> | undefined
+  // An explicit scope, including an empty one, overrides the global filter selection.
+  export let spaces: Array<Ref<Space>> | undefined = undefined
   export let hideRemove: boolean = false
 
   let currentFilter = filter.nested ? filter.nested : filter
@@ -123,6 +125,7 @@
                   _class: curr.key._class,
                   filter: curr,
                   space,
+                  spaces,
                   onChange
                 },
                 sectionEl ?? target
@@ -183,6 +186,7 @@
               _class: currentFilter.key._class,
               filter: currentFilter,
               space,
+              spaces,
               onChange
             },
             eventToHTMLElement(e)
@@ -192,7 +196,7 @@
         {#if valueComponent}
           <Component
             is={valueComponent}
-            props={{ value: currentFilter.value, onChange, filter: currentFilter, space }}
+            props={{ value: currentFilter.value, onChange, filter: currentFilter, space, spaces }}
           />
         {:else}
           <span>{countLabel}</span>

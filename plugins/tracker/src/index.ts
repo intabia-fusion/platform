@@ -54,6 +54,7 @@ import type { Board, BoardNavigationPreference, BoardPreference } from './boards
 
 export * from './analytics'
 export * from './boards'
+export * from './boardStatusCondition'
 export * from './duration'
 export * from './ops'
 

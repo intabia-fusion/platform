@@ -1,5 +1,6 @@
 {
   "string": {
+    "BoardStatusFiltersCleaned": "Statuswerte entfernter Projekte wurden aus den Filtern entfernt.",
     "PreventDuplicateColumnTitles": "Doppelte Spaltennamen verhindern",
     "PreventDuplicateColumnTitlesHint": "Die Namen aller Spalten dieses Boards vergleichen und dabei Groß- und Kleinschreibung sowie führende und nachfolgende Leerzeichen ignorieren.",
     "DuplicateColumnTitle": "Eine Spalte mit diesem Namen existiert bereits",

@@ -121,7 +121,7 @@
 | AttachedDocPanel.svelte | Панель редактирования AttachedDoc | _id, _class, embedded | view.component.AttachedDocPanel |
 | ParentsNavigator.svelte | Хлебные крошки родителей документа | element, maxWidth | import |
 | UpDownNavigator.svelte | Кнопки перехода к соседнему документу | element | both |
-| SpaceHeader.svelte | Заголовок страницы пространства; слот `afterSearch` - контролы после поиска в строке фильтра | space, _class, viewlet, viewlets, defaultViewletDescriptor | import |
+| SpaceHeader.svelte | Заголовок страницы пространства; слот `afterSearch` - контролы после поиска в строке фильтра; `spaces` задаёт область проектов для фильтров статусов | space, spaces, _class, viewlet, defaultViewletDescriptor | import |
 | DocsNavigator.svelte | Список ссылок на документы | elements, maxWidth | both |
 | ClassAttributeBar.svelte | Панель кастомных атрибутов класса объекта | object, _class, to, ignoreKeys | import |
 | DocAttributeBar.svelte | Панель атрибутов документа по всем миксинам | object, mixins, ignoreKeys | import |
@@ -166,11 +166,11 @@
 
 | Компонент | Purpose | Key props | Доступ |
 |---|---|---|---|
-| filter/FilterBar.svelte | Панель активных фильтров вьюлета | _class, space, query, viewOptions | import |
-| filter/FilterButton.svelte | Кнопка "Filter", открывает FilterTypePopup | _class, space, viewOptions, adaptive | import |
-| filter/FilterTypePopup.svelte | Popup выбора атрибута фильтра; `hiddenKeys` убирает атрибуты верхнего уровня | _class, target, filter, index, hiddenKeys | view.component.FilterTypePopup |
-| filter/FilterConditions.svelte | Условия (JSON `Filter[]`) строкой чипов, с кнопкой добавления (иконка или подпись `addLabel`); крестики - `removable`; `hiddenKeys` не предлагает атрибуты для нового условия (сохранённые показываются); настройки досок | value, _class, space, disabled, removable, addLabel, hiddenKeys | import |
-| filter/FilterSection.svelte | Один активный фильтр в FilterBar | filter, space, hideRemove | internal |
+| filter/FilterBar.svelte | Панель активных фильтров вьюлета; `spaces` задаёт область проектов для фильтров статусов | _class, space, spaces, query, viewOptions | import |
+| filter/FilterButton.svelte | Кнопка "Filter", открывает FilterTypePopup; `spaces` задаёт явную область проектов для фильтра статусов | _class, space, spaces, viewOptions, adaptive | import |
+| filter/FilterTypePopup.svelte | Popup выбора атрибута фильтра; `hiddenKeys` убирает атрибуты верхнего уровня; `spaces` передаёт область проектов в редактор значения | _class, target, filter, hiddenKeys, spaces | view.component.FilterTypePopup |
+| filter/FilterConditions.svelte | Условия (JSON `Filter[]`) строкой чипов, с кнопкой добавления (иконка или подпись `addLabel`); крестики - `removable`; `hiddenKeys` не предлагает атрибуты для нового условия (сохранённые показываются); настройки досок; `spaces` ограничивает статусы типами указанных проектов | value, _class, spaces, removable, hiddenKeys | import |
+| filter/FilterSection.svelte | Один активный фильтр в FilterBar; `spaces` передаёт область проектов в редактор | filter, space, spaces, hideRemove | internal |
 | filter/FilterSave.svelte | Сохранить фильтры как отдельный вид | viewOptions, _class | internal |
 | filter/ModeSelector.svelte | Селектор режима фильтра | filter | internal |
 | filter/ArrayFilter.svelte | Фильтр по значению ArrOf-атрибута | _class, filter, onChange | view.component.ArrayFilter |

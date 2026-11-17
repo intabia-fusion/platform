@@ -1,5 +1,6 @@
 {
   "string": {
+    "BoardStatusFiltersCleaned": "Os estados dos projetos removidos foram retirados dos filtros.",
     "PreventDuplicateColumnTitles": "Impedir nomes de colunas duplicados",
     "PreventDuplicateColumnTitlesHint": "Comparar os nomes de todas as colunas deste quadro, ignorando maiúsculas, minúsculas e espaços no início e no fim.",
     "DuplicateColumnTitle": "Já existe uma coluna com este nome",

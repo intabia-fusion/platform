@@ -26,6 +26,8 @@
 
   export let _class: Ref<Class<Doc>>
   export let space: Ref<Space> | undefined
+  // An explicit scope, including an empty one, overrides the global filter selection.
+  export let spaces: Array<Ref<Space>> | undefined = undefined
   export let target: HTMLElement
   export let filter: Filter | undefined
   export let index: number
@@ -228,6 +230,7 @@
         {
           _class: targetClass,
           space,
+          spaces,
           filter: filter || {
             key: type,
             value: [],
@@ -244,6 +247,7 @@
         {
           _class,
           space,
+          spaces,
           filter: filter || {
             key: type,
             value: [],
@@ -335,6 +339,7 @@
             props={{
               _class,
               space,
+              spaces,
               index,
               target,
               onChange,

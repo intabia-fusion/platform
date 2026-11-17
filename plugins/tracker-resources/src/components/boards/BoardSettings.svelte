@@ -13,14 +13,17 @@
 // limitations under the License.
 -->
 <script lang="ts">
+  import { onDestroy } from 'svelte'
   import contact from '@hcengineering/contact'
   import { getCurrentAccount, type Data, type Ref } from '@hcengineering/core'
-  import { getEmbeddedLabel, type Asset, type IntlString } from '@hcengineering/platform'
+  import { getEmbeddedLabel, translate, type Asset, type IntlString } from '@hcengineering/platform'
   import { createQuery, getClient, isDisabled, MessageBox } from '@hcengineering/presentation'
   import task, { getStates } from '@hcengineering/task'
   import { typeStore } from '@hcengineering/task-resources'
   import type { Board, Project } from '@hcengineering/tracker'
   import ui, {
+    addNotification,
+    themeStore,
     BlankView,
     Header,
     Label,
@@ -31,7 +34,8 @@
   } from '@hcengineering/ui'
   import { Button, Dropdown, IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
-  import { statusStore } from '@hcengineering/view-resources'
+  import { FilterRemovedNotification, statusStore } from '@hcengineering/view-resources'
+  import viewResources from '@hcengineering/view-resources/src/plugin'
   import {
     BoardEditor,
     boardLocation,
@@ -41,6 +45,7 @@
     shareBoard
   } from '../../boards'
   import tracker from '../../plugin'
+  import { createBoardProjectUpdater } from '../../boardStatusFilters'
   import CardTab from './settings/CardTab.svelte'
   import ColumnsTab from './settings/ColumnsTab.svelte'
   import GeneralTab from './settings/GeneralTab.svelte'
@@ -86,8 +91,50 @@
   )
   $: editor.receive(board)
 
+  let active = true
+  onDestroy(() => {
+    active = false
+  })
+  let updatingProjects = false
+  const updateProjects = createBoardProjectUpdater(
+    () => current,
+    async (ids) => await client.findAll<Project>(tracker.class.Project, { _id: { $in: ids } }, { showArchived: true }),
+    (projects) => {
+      if (projects.some((project) => !$typeStore.has(project.type))) return undefined
+      const ids = projects.flatMap((project) =>
+        ($typeStore.get(project.type)?.statuses ?? [])
+          .filter((entry) => entry.taskType !== undefined)
+          .map((entry) => entry._id)
+      )
+      if (ids.some((id) => !$statusStore.byId.has(id))) return undefined
+      return new Set(ids)
+    },
+    savePatch,
+    (busy) => {
+      updatingProjects = busy
+    },
+    () => active
+  )
+
   async function onChange (patch: Partial<Data<Board>>): Promise<void> {
+    try {
+      if (patch.projects !== undefined) await updateProjects(patch.projects)
+      else await savePatch(patch)
+    } catch (err) {
+      reportBoardError(err)
+    }
+  }
+
+  async function savePatch (patch: Partial<Data<Board>>, removed = 0): Promise<void> {
     await editor.edit(patch)
+    if (active && removed > 0) {
+      addNotification(
+        await translate(viewResources.string.FilterUpdated, {}, $themeStore.language),
+        current.title,
+        FilterRemovedNotification,
+        { description: await translate(tracker.string.BoardStatusFiltersCleaned, {}, $themeStore.language) }
+      )
+    }
   }
 
   // Archived projects stay on the board; the store of active projects drops them
@@ -228,11 +275,11 @@
       <div class="hulyComponent-content__column content">
         <Scroller padding="var(--board-settings-padding, 1.5rem 2rem)">
           {#if tab === 'general'}
-            <GeneralTab board={current} {projects} {onChange} />
+            <GeneralTab board={current} {projects} {onChange} {updatingProjects} />
           {:else if tab === 'members'}
             <MembersTab board={current} {onChange} />
           {:else if tab === 'columns'}
-            <ColumnsTab board={current} {statuses} {onChange} />
+            <ColumnsTab board={current} {statuses} {projects} {onChange} />
           {:else if tab === 'card'}
             <CardTab board={current} {onChange} />
           {:else}

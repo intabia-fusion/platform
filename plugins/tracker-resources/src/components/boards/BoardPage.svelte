@@ -73,7 +73,9 @@
     />
   </div>
 {:else if board !== undefined && settingsOpen}
-  <BoardSettings {board} {boards} {canEdit} inNavigation={navigation.has(board._id)} {navigationReady} />
+  {#key board._id}
+    <BoardSettings {board} {boards} {canEdit} inNavigation={navigation.has(board._id)} {navigationReady} />
+  {/key}
 {:else if board !== undefined}
   <BoardView {board} {canEdit} inNavigation={navigation.has(board._id)} {navigationReady} />
 {:else if loaded}

@@ -31,6 +31,7 @@
 
   export let _class: Ref<Class<Doc>> | undefined
   export let space: Ref<Space> | undefined
+  export let spaces: Array<Ref<Space>> | undefined = undefined
   export let query: DocumentQuery<Doc>
   export let viewOptions: ViewOptions | undefined = undefined
   export let hideSaveButtons: boolean = false
@@ -52,6 +53,7 @@
         _class,
         target,
         space,
+        spaces,
         index: $filterStore.map((it) => it.index).reduce((a, b) => Math.max(a, b), 0) + 1,
         onChange
       },
@@ -125,6 +127,7 @@
       {#each $filterStore as filter, i}
         <FilterSection
           {space}
+          {spaces}
           {filter}
           on:change={() => {
             void makeQuery(query, $filterStore)

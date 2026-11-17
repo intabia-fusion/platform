@@ -15,6 +15,7 @@
 
 import { setCurrentAccount, type TxOperations } from '@hcengineering/core'
 import type { Board } from '@hcengineering/tracker'
+import { createBoardProjectUpdater } from '../boardStatusFilters'
 import { BoardEditor, canDeleteBoard, StatusCounts } from '../boards'
 
 jest.mock('@hcengineering/contact', () => ({ getCurrentEmployeeSpace: () => undefined }))
@@ -189,5 +190,118 @@ describe('canDeleteBoard', () => {
   it('lets only the author delete', () => {
     expect(canDeleteBoard(makeBoard({ author: 'anna', editors: ['bob'] }), 'anna' as any)).toBe(true)
     expect(canDeleteBoard(makeBoard({ author: 'anna', editors: ['bob'] }), 'bob' as any)).toBe(false)
+  })
+})
+
+describe('project queue board ownership', () => {
+  it.each(['load', 'save'])('does not write to another board after switching during %s', async (phase) => {
+    const a = makeBoard({
+      _id: 'a',
+      projects: ['p1', 'p2'],
+      filter: '',
+      quickFilters: [],
+      colorRules: [],
+      swimlanes: []
+    })
+    const b = makeBoard({
+      _id: 'b',
+      projects: ['other'],
+      filter: 'untouched',
+      quickFilters: [],
+      colorRules: [],
+      swimlanes: []
+    })
+    let current = a
+    let release!: () => void
+    const gate = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    const writes: string[] = []
+    const client = stub<TxOperations>({
+      update: async (doc: Board) => {
+        writes.push(doc._id)
+        if (phase === 'save') await gate
+      }
+    })
+    const editor = new BoardEditor(
+      a,
+      client,
+      (board) => {
+        current = board
+      },
+      () => {}
+    )
+    const update = createBoardProjectUpdater(
+      () => current,
+      async (ids) => {
+        if (phase === 'load') await gate
+        return ids.map((_id) => ({ _id })) as any
+      },
+      () => new Set(),
+      async (patch) => {
+        await editor.edit(patch)
+      },
+      () => {}
+    )
+    const first = update((phase === 'load' ? ['p1'] : ['p1', 'p2', 'p3']) as any)
+    await update(['p1', 'p2', 'p4'] as any)
+    editor.receive(b)
+    release()
+    await first
+    expect(writes).toEqual(phase === 'load' ? [] : ['a'])
+    expect(editor.board._id).toBe('b')
+    expect(editor.board.projects).toEqual(['other'])
+    expect(editor.board.filter).toBe('untouched')
+  })
+  it.each(['load', 'save'])('cancels queued choices when settings close during %s', async (phase) => {
+    const a = makeBoard({
+      _id: 'a',
+      projects: ['p1', 'p2'],
+      filter: '',
+      quickFilters: [],
+      colorRules: [],
+      swimlanes: []
+    })
+    let current = a
+    let active = true
+    let release!: () => void
+    const gate = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    const writes: string[] = []
+    const client = stub<TxOperations>({
+      update: async (doc: Board) => {
+        writes.push(doc._id)
+        if (phase === 'save') await gate
+      }
+    })
+    const editor = new BoardEditor(
+      a,
+      client,
+      (board) => {
+        current = board
+      },
+      () => {}
+    )
+    const update = createBoardProjectUpdater(
+      () => current,
+      async (ids) => {
+        if (phase === 'load') await gate
+        return ids.map((_id) => ({ _id })) as any
+      },
+      () => new Set(),
+      async (patch) => {
+        await editor.edit(patch)
+      },
+      () => {},
+      () => active
+    )
+    const first = update((phase === 'load' ? ['p1'] : ['p1', 'p2', 'p3']) as any)
+    await update(['p1', 'p2', 'p4'] as any)
+    active = false
+    release()
+    await first
+    await update(['p1', 'p2', 'p5'] as any)
+    expect(writes).toEqual(phase === 'load' ? [] : ['a'])
   })
 })
