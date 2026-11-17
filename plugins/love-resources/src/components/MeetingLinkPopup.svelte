@@ -145,19 +145,35 @@
     editingPassword = true
   }
 
+  // One write at a time: the password and the revoke are server calls, and a second click while the
+  // first one is in flight would send the same request twice.
+  let busy = false
+
   async function savePassword (): Promise<void> {
+    if (busy) return
     if (pointer === undefined || passwordInput === '') return
-    await loveClient.setGuestPassword(pointer, passwordInput, linkKind)
-    plainPassword = passwordInput
-    passwordSet = true
-    editingPassword = false
+    busy = true
+    try {
+      await loveClient.setGuestPassword(pointer, passwordInput, linkKind)
+      plainPassword = passwordInput
+      passwordSet = true
+      editingPassword = false
+    } finally {
+      busy = false
+    }
   }
 
   async function removePassword (): Promise<void> {
+    if (busy) return
     if (pointer === undefined) return
-    await loveClient.setGuestPassword(pointer, null, linkKind)
-    plainPassword = undefined
-    passwordSet = false
+    busy = true
+    try {
+      await loveClient.setGuestPassword(pointer, null, linkKind)
+      plainPassword = undefined
+      passwordSet = false
+    } finally {
+      busy = false
+    }
   }
 
   async function copyLink (): Promise<void> {
@@ -180,14 +196,20 @@
   }
 
   async function revoke (): Promise<void> {
-    if (meeting !== undefined) {
-      await revokePermanentMeetingLink(meeting)
-    } else if (permanentMeetingId !== undefined) {
-      // Opened from the series: revoking the series link would leave the meeting's own link alive.
-      const owned = await permanentMeetingOf(link)
-      if (owned !== undefined) await revokePermanentMeetingLink(owned)
-    } else if (event !== undefined) {
-      await revokeMeetingLink(event)
+    if (busy) return
+    busy = true
+    try {
+      if (meeting !== undefined) {
+        await revokePermanentMeetingLink(meeting)
+      } else if (permanentMeetingId !== undefined) {
+        // Opened from the series: revoking the series link would leave the meeting's own link alive.
+        const owned = await permanentMeetingOf(link)
+        if (owned !== undefined) await revokePermanentMeetingLink(owned)
+      } else if (event !== undefined) {
+        await revokeMeetingLink(event)
+      }
+    } finally {
+      busy = false
     }
     dispatch('close')
   }
@@ -247,13 +269,24 @@
           kind="default"
           autoFocus
         />
-        <Button label={plugin.string.SetPassword} disabled={passwordInput === ''} on:click={savePassword} />
+        <Button
+          label={plugin.string.SetPassword}
+          disabled={passwordInput === '' || busy}
+          loading={busy}
+          on:click={savePassword}
+        />
       </div>
     {:else}
       <div class="flex-row-center flex-gap-2">
         <Button label={plugin.string.SetPassword} on:click={startEditPassword} />
         {#if passwordSet}
-          <Button kind="dangerous" label={plugin.string.RemovePassword} on:click={removePassword} />
+          <Button
+            kind="dangerous"
+            label={plugin.string.RemovePassword}
+            disabled={busy}
+            loading={busy}
+            on:click={removePassword}
+          />
         {/if}
         {#if plainPassword !== undefined}
           <Button label={plugin.string.CopyLinkWithPassword} on:click={copyLinkWithPassword} />
@@ -268,6 +301,8 @@
     kind="dangerous"
     label={plugin.string.RevokeLink}
     showTooltip={{ label: plugin.string.RevokeLinkTooltip }}
+    disabled={busy}
+    loading={busy}
     on:click={revoke}
   />
 </div>
