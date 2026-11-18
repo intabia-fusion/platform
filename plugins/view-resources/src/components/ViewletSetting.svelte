@@ -677,6 +677,9 @@
 
   let saveTimer: ReturnType<typeof setTimeout> | undefined
   let pendingUpdates: Partial<ViewletPreference> | undefined
+  // The view the pending changes belong to: the save is deferred, and `selected` may be another view
+  // by the time it runs.
+  let pendingViewletId: Ref<Viewlet> | undefined
   let saveChain: Promise<void> = Promise.resolve()
 
   onDestroy(() => {
@@ -695,7 +698,8 @@
     if (pendingUpdates !== undefined) {
       const updates = pendingUpdates
       pendingUpdates = undefined
-      const viewletId = selected
+      const viewletId = pendingViewletId ?? selected
+      pendingViewletId = undefined
       const selectedV = selectedViewlet
       const previousSourceConfig =
         preferences.find((p) => p.attachedTo === viewletId)?.config ?? selectedV?.config ?? []
@@ -714,10 +718,17 @@
     }
   }
 
-  function scheduleSave (changes: Partial<ViewletPreference>, delayMs = 150): void {
+  function scheduleSave (
+    changes: Partial<ViewletPreference>,
+    viewletId?: Ref<Viewlet>,
+    delayMs = 150
+  ): void {
     pendingUpdates = {
       ...pendingUpdates,
       ...changes
+    }
+    if (viewletId !== undefined) {
+      pendingViewletId = viewletId
     }
     if (saveTimer !== undefined) {
       clearTimeout(saveTimer)
@@ -731,7 +742,7 @@
   function saveCustomAttributes (viewletId: Ref<Viewlet>, items: CustomAttributeItem[]): void {
     const customAttributes = items.filter((i) => i.enabled).map((i) => i.key)
     lastSavedCustomAttributes = customAttributes
-    scheduleSave({ customAttributes })
+    scheduleSave({ customAttributes }, viewletId)
   }
 
   function extractDescendantAttributes (groups: DescendantAttributeSection[]): DescendantAttribute[] {
@@ -749,7 +760,7 @@
   function saveDescendantAttributes (viewletId: Ref<Viewlet>, descendantAttributes: DescendantAttributeSection[]): void {
     const res = extractDescendantAttributes(descendantAttributes)
     lastSavedDescendantAttributes = res
-    scheduleSave({ descendantAttributes: res })
+    scheduleSave({ descendantAttributes: res }, viewletId)
   }
 
   function save (viewletId: Ref<Viewlet>, items: Array<Config | AttributeConfig>): void {
@@ -767,7 +778,7 @@
       return value
     })
     lastSavedConfig = config
-    scheduleSave({ config })
+    scheduleSave({ config }, viewletId)
   }
 
   function restoreDefault (viewletId: Ref<Viewlet>): void {
@@ -776,6 +787,7 @@
       saveTimer = undefined
     }
     pendingUpdates = undefined
+    pendingViewletId = undefined
     lastSavedConfig = undefined
     lastSavedCustomAttributes = undefined
     lastSavedDescendantAttributes = undefined
@@ -876,7 +888,7 @@
     }
     if (deepEqual(normalized, saved)) return
     lastSavedDescendantAttributes = normalized
-    scheduleSave({ descendantAttributes: normalized })
+    scheduleSave({ descendantAttributes: normalized }, selected)
   }
 
   async function loadConfig (selectedV: Viewlet, pref: ViewletPreference | undefined): Promise<void> {

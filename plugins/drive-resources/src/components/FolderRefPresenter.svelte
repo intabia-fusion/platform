@@ -19,6 +19,7 @@
   import { Label } from '@hcengineering/ui'
   import type { ObjectPresenterType } from '@hcengineering/view'
 
+  import { folderPathRefs } from '../folderPath'
   import drive from '../plugin'
   import FolderPresenter from './FolderPresenter.svelte'
 
@@ -29,7 +30,8 @@
   let found: Folder[] = []
   const query = createQuery()
 
-  $: refs = value === undefined ? [] : Array.isArray(value) ? value : [value]
+  // `path` is stored nearest-parent-first, the breadcrumb has to read root-first
+  $: refs = folderPathRefs(value)
   $: if (refs.length > 0) {
     void query.query(
       drive.class.Folder,
