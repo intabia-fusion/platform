@@ -97,7 +97,7 @@ export async function eventCard (
   if (ownerId === event._id) return { object: event, editor }
 
   // The mixin only knows which document it extends; the document itself is read from the event class.
-  const masterQuery: DocumentQuery<Event> = { _id: ownerId }
+  const masterQuery: DocumentQuery<Event> = { _id: ownerId as unknown as Ref<Event> }
   const master = await client.findOne(calendar.class.Event as unknown as Ref<Class<Event>>, masterQuery)
   return { object: master ?? event, editor }
 }
