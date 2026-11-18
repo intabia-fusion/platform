@@ -2,6 +2,16 @@
 
 Changelog.
 
+## [0.8.74] - 2026-11-18
+
+* 🐛 BUG FIXES: · FUSIO-1829, FUSIO-1830: Hide unpinned chats and clear unread counters across chat sections, including tasks of custom types and muted chats ([#684](https://github.com/hcengineering/platform/issues/684)) · FUSIO-1775: Limit board status filters to the board's project types, label statuses by type when several types are present, and clear obsolete status selections ([#676](https://github.com/hcengineering/platform/issues/676)) · FUSIO-419: Standardize toggle size and alignment across settings ([#683](https://github.com/hcengineering/platform/issues/683))
+
+## [0.8.73] - 2026-11-17
+
+* 🚀 FEATURES: · FUSIO-1824: Combine logged time, estimates, and progress in one column in issue and sub-issue lists ([#678](https://github.com/hcengineering/platform/issues/678)) · FUSIO-1735: Scroll to and focus newly added columns in board creation and settings ([#674](https://github.com/hcengineering/platform/issues/674))
+* 🐛 BUG FIXES: · FUSIO-1760: Preserve the related-issue query constraint when a reference is missing ([#680](https://github.com/hcengineering/platform/issues/680)) · FUSIO-1653: Keep the current view when clicking the active app and provide a dedicated toggle for its menu ([#656](https://github.com/hcengineering/platform/issues/656)) · FUSIO-1746: Mark visible chat messages as read when opening a specific message, even if the window focus state is stale ([#668](https://github.com/hcengineering/platform/issues/668)) · FUSIO-1663: Show a horizontal scrollbar for attachments in the message composer ([#675](https://github.com/hcengineering/platform/issues/675)) · Fix meeting invite timing, meeting state across tabs, AI panel and settings initialization, and label creation without a category ([#654](https://github.com/hcengineering/platform/issues/654))
+* 🧩 OTHER: · Remove legacy design tooling and simplify the Storybook design workflow ([#677](https://github.com/hcengineering/platform/issues/677)) · Update flaky sanity tests ([#654](https://github.com/hcengineering/platform/issues/654)) · Add workspace fixtures for MCP checks ([0c0856367d](https://github.com/intabia-fusion/platform/commit/0c0856367dc364ea1f7f4ef6519c4434d87eea77)) · Set the missing restart policies in development and test Compose configurations ([e17340f875](https://github.com/intabia-fusion/platform/commit/e17340f875879f9e86f12fe7519d421048c0f4d9))
+
 ## [0.8.72] - 2026-11-13
 
 * 🚀 FEATURES: · FUSIO-1733: Add an optional board setting to prevent duplicate column titles, with client and server validation ([#669](https://github.com/hcengineering/platform/issues/669)) · FUSIO-1780: Show workspace limit warnings, include Drive file versions in storage usage, support deleting Drive files from the largest-files list and estimate unused storage in the admin panel ([#672](https://github.com/hcengineering/platform/issues/672))
