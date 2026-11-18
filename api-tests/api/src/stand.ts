@@ -83,10 +83,14 @@ async function startForward (
   targetPort: number
 ): Promise<StandState['forwards'][number] | undefined> {
   if (portOpen(port)) return undefined // someone already forwards this port - leave it alone
-  const proc = spawn('bash', [
-    '-c',
-    `source "${scriptsDir}/lib.sh" && exec kubectl --context "$KUBE_CONTEXT" -n "${ns}" port-forward ${resource} ${port}:${targetPort}`
-  ], { stdio: 'ignore' })
+  const proc = spawn(
+    'bash',
+    [
+      '-c',
+      `source "${scriptsDir}/lib.sh" && exec kubectl --context "$KUBE_CONTEXT" -n "${ns}" port-forward ${resource} ${port}:${targetPort}`
+    ],
+    { stdio: 'ignore' }
+  )
   if (await waitPortOpen(port)) return { proc, port }
   try {
     proc.kill('SIGKILL')
@@ -149,7 +153,9 @@ export async function stopStand (): Promise<void> {
     if (pvc.status === 0) {
       run([join(scriptsDir, 'coverage-collect.sh'), standName, coverageDir])
     } else {
-      console.warn('stand has no stand-coverage PVC (prepared without STAND_COVERAGE=true?) - skipping profile collection')
+      console.warn(
+        'stand has no stand-coverage PVC (prepared without STAND_COVERAGE=true?) - skipping profile collection'
+      )
     }
   }
 

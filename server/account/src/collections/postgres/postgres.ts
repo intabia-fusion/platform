@@ -933,9 +933,11 @@ export class PostgresAccountDB implements AccountDB {
   }
 
   async assignWorkspace (accountUuid: AccountUuid, workspaceUuid: WorkspaceUuid, role: AccountRole): Promise<void> {
+    // A retried insert must not fail with workspace_assignment_pk: the retry can follow a
+    // committed transaction whose response was lost.
     await this.withRetry(
       async (rTx) =>
-        await rTx`INSERT INTO ${this.client(this.getWsMembersTableName())} (workspace_uuid, account_uuid, role) VALUES (${workspaceUuid}, ${accountUuid}, ${role})`
+        await rTx`INSERT INTO ${this.client(this.getWsMembersTableName())} (workspace_uuid, account_uuid, role) VALUES (${workspaceUuid}, ${accountUuid}, ${role}) ON CONFLICT (workspace_uuid, account_uuid) DO UPDATE SET role = EXCLUDED.role`
     )
   }
 
@@ -947,6 +949,7 @@ export class PostgresAccountDB implements AccountDB {
       INSERT INTO ${this.getWsMembersTableName()}
       (account_uuid, workspace_uuid, role)
       VALUES ${placeholders}
+      ON CONFLICT (workspace_uuid, account_uuid) DO UPDATE SET role = EXCLUDED.role
     `
 
     await this.withRetry(async (rTx) => await rTx.unsafe(sql, values))

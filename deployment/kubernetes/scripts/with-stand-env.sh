@@ -92,6 +92,19 @@ pg_accepts_connection() {
 
 cleanup_pids=()
 PF_PID=""
+
+# A port-forward cannot start while the service has no endpoints. base-up waits for the clusters,
+# but the service endpoints appear a moment later - wait here instead of failing the run.
+wait_service_endpoints() {
+  local svc="$1" ips
+  for _ in $(seq 1 120); do
+    ips="$(kc -n "$BASE_NAMESPACE" get endpoints "$svc" -o jsonpath='{.subsets[*].addresses[*].ip}' 2>/dev/null || true)"
+    [ -n "$ips" ] && return 0
+    sleep 0.5
+  done
+  return 1
+}
+
 if [ "${STAND_DB_FORWARD:-1}" != 0 ]; then
   : "${K8S_PG_PORT:=65432}"
   export K8S_PG_PORT
@@ -104,6 +117,7 @@ if [ "${STAND_DB_FORWARD:-1}" != 0 ]; then
     # kubectl itself must be the backgrounded process, not the kc wrapper: the EXIT trap kills
     # $!, and killing a wrapper subshell would leave the forward behind.
     # svc/postgres is the CNPG primary alias: follow failovers instead of pinning postgres-0.
+    wait_service_endpoints postgres || die "no endpoints for $BASE_NAMESPACE/postgres"
     kubectl --context "$KUBE_CONTEXT" -n "$BASE_NAMESPACE" port-forward \
       "svc/postgres" "$K8S_PG_PORT:5432" >/dev/null 2>&1 &
     PF_PID=$!
@@ -158,6 +172,8 @@ if [ "${STAND_KAFKA_FORWARD:-1}" != 0 ]; then
       exec 3>&- 3<&-
       die "port $K8S_KAFKA_PORT is already taken by a non-Kafka process; free the port or set K8S_KAFKA_PORT to another value"
     fi
+    wait_service_endpoints my-cluster-kafka-bootstrap || \
+      die "no endpoints for $BASE_NAMESPACE/my-cluster-kafka-bootstrap"
     kubectl --context "$KUBE_CONTEXT" -n "$BASE_NAMESPACE" port-forward \
       "service/my-cluster-kafka-bootstrap" "$K8S_KAFKA_PORT:9092" >/dev/null 2>&1 &
     KAFKA_PF_PID=$!

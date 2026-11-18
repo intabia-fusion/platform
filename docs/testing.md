@@ -170,7 +170,12 @@ cd sanity
 pnpm run uitest
 ```
 
-The docs stand also provides the MCP experiment baseline in `demo-ws` (`demo1` / `1234`): the `SUP-1`-`SUP-4` issues in "Поддержка клиентов" and "План выпуска" in "База знаний". Before each independent run, recreate the complete stand with `cd tests && ./prepare-pg.sh --docs`; this removes the existing stand volumes and seeds the demo workspace again. Running `generate-demo-data` again on a modified workspace has not been established as a reset.
+The docs/demo stand (`--docs`, workspace `demo-ws`) was part of the compose prepare. The current
+Kubernetes prepare does not seed it: `prepare-pg.sh` accepts only `--reuse`. The compose definition
+still exists in `tests/docker-compose.docs.yaml`, but no script wires it to the Kubernetes stand, so
+`demo-ws` / `demo-ws-en` are not available for screenshots or the MCP baseline until a Kubernetes
+docs stand is added. Running `generate-demo-data` again on a modified workspace has not been
+established as a reset.
 
 `prepare-cockroach.sh` is the CockroachDB variant of the same compose stand. After changing
 application code, rebuild (`pnpm docker:build`) and re-run the prepare script - Playwright tests

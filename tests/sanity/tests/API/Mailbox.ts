@@ -43,10 +43,10 @@ const brokerUrl = new URL(`tcp://${broker}`)
 const loopbackBroker = brokerUrl.hostname === 'localhost' || brokerUrl.hostname === '127.0.0.1'
 const socketFactory = loopbackBroker
   ? ({ onConnect }: ISocketFactoryArgs) => {
-    const socket = new net.Socket()
-    socket.connect({ host: brokerUrl.hostname, port: Number(brokerUrl.port) }, onConnect)
-    return socket
-  }
+      const socket = new net.Socket()
+      socket.connect({ host: brokerUrl.hostname, port: Number(brokerUrl.port) }, onConnect)
+      return socket
+    }
   : undefined
 
 /** Starts reading at the end of the topic, so open it before the action that sends the letter. */

@@ -87,9 +87,10 @@ runs:
             exit 1
           fi
         fi
+      # No LIVEKIT_MODE here: k3d stands use the shared cluster LiveKit; the docker mode needs the
+      # compose redis (:6390) and is only valid for the compose path below.
       env:
         DOCKER_ACCESS_TOKEN: ${{ inputs.docker-access-token }}
-        LIVEKIT_MODE: docker
 
     # ---------------------------------------------------------------- compose stands
     - name: Prepare server (with rate limit retry)
@@ -135,7 +136,12 @@ runs:
       shell: bash
       run: |
         port="${STAND_FRONT_PORT:-8081}"
-        pnpm -w stand:test:front ${{ inputs.stand }} > /tmp/stand-front.log 2>&1 &
+        # qms has its own wrapper: stand:test:front whitelists sanity|ws|api.
+        if [ "${{ inputs.stand }}" = qms ]; then
+          ./qms-tests/stand-front.sh > /tmp/stand-front.log 2>&1 &
+        else
+          pnpm -w stand:test:front "${{ inputs.stand }}" > /tmp/stand-front.log 2>&1 &
+        fi
         echo $! > /tmp/stand-front.pid
         for _ in $(seq 1 60); do
           if curl -fsS "http://localhost:${port}/" >/dev/null 2>&1; then
