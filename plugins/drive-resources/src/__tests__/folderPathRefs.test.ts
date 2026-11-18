@@ -25,11 +25,7 @@ const childFolder = 'folder:child' as Ref<Folder>
 describe('folderPathRefs', () => {
   it('turns the stored nearest-first path into a root-first breadcrumb', () => {
     // A file in A/B stores [B, A]; the breadcrumb has to read A/B
-    expect(folderPathRefs([childFolder, parentFolder, rootFolder])).toEqual([
-      rootFolder,
-      parentFolder,
-      childFolder
-    ])
+    expect(folderPathRefs([childFolder, parentFolder, rootFolder])).toEqual([rootFolder, parentFolder, childFolder])
   })
 
   it('does not mutate the stored path', () => {

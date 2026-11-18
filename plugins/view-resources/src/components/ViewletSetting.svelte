@@ -718,11 +718,7 @@
     }
   }
 
-  function scheduleSave (
-    changes: Partial<ViewletPreference>,
-    viewletId?: Ref<Viewlet>,
-    delayMs = 150
-  ): void {
+  function scheduleSave (changes: Partial<ViewletPreference>, viewletId?: Ref<Viewlet>, delayMs = 150): void {
     pendingUpdates = {
       ...pendingUpdates,
       ...changes
