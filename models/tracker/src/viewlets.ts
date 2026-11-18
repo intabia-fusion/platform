@@ -129,6 +129,7 @@ export function issueConfig (
       key: '',
       label: tracker.string.Priority,
       presenter: tracker.component.PriorityEditor,
+      sortingKey: 'priority',
       props: { type: 'priority', kind: 'list', size: 'small' },
       displayProps: { key: 'priority' }
     },
@@ -225,6 +226,7 @@ export function issueConfig (
       key: '',
       label: tracker.string.DueDate,
       presenter: tracker.component.DueDatePresenter,
+      sortingKey: 'dueDate',
       displayProps: { key: key + 'dueDate', compression: true },
       props: { kind: 'list' }
     },
@@ -239,6 +241,7 @@ export function issueConfig (
       key: '',
       label: tracker.string.Estimation,
       presenter: tracker.component.EstimationEditor,
+      sortingKey: 'estimation',
       props: { kind: 'list', size: 'small' },
       displayProps: { key: key + 'estimation', fixed: 'left', dividerBefore: true, optional: true }
     },
@@ -676,6 +679,7 @@ export function defineViewlets (builder: Builder): void {
         'dueDate',
         'labels',
         'estimation',
+        'remainingTime',
         'attachments',
         'comments'
       ]

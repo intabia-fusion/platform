@@ -252,6 +252,7 @@ export default mergeIds(taskId, task, {
   },
   function: {
     GetAllStates: '' as GetAllValuesFunc,
+    GetAllTaskTypes: '' as GetAllValuesFunc,
     StatusSort: '' as SortFunc
   }
 })

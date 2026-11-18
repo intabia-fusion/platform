@@ -35,11 +35,15 @@ type ValuesSource = 'model' | 'allValues' | undefined
 // values have no presentation order of their own.
 function valuesSource (client: TxOperations, attr: AnyAttribute, attrClass: Ref<Class<Doc>>): ValuesSource {
   if (attr.type._class === core.class.EnumOf) return undefined
+  // A dictionary living in the workspace (a task type, a milestone, a component) has no documents in
+  // the model, so `model` cannot feed the rules. Without its own values the field would fall back to
+  // the raw refs and sort by id, not by name.
+  const hasAllValues = client.getHierarchy().classHierarchyMixin(attrClass, view.mixin.AllValuesFunc) !== undefined
   if (attr.type._class === core.class.RefTo) {
-    return client.getModel().findAllSync(attrClass, {}).length > 0 ? 'model' : undefined
+    if (client.getModel().findAllSync(attrClass, {}).length > 0) return 'model'
+    return hasAllValues ? 'allValues' : undefined
   }
-  if (client.getHierarchy().classHierarchyMixin(attrClass, view.mixin.AllValuesFunc) !== undefined) return 'allValues'
-  return undefined
+  return hasAllValues ? 'allValues' : undefined
 }
 
 async function getValues (

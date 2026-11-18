@@ -54,6 +54,7 @@ export type CardField =
   | 'milestone'
   | 'labels'
   | 'estimation'
+  | 'remainingTime'
   | 'attachments'
   | 'comments'
   | 'parent'
@@ -66,6 +67,7 @@ export const cardFields: readonly CardField[] = [
   'milestone',
   'labels',
   'estimation',
+  'remainingTime',
   'attachments',
   'comments',
   'parent'

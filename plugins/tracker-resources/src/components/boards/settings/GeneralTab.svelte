@@ -207,6 +207,7 @@
         kind="secondary"
         items={cardOrderItems}
         selected={board.orderBy?.[0] ?? cardOrders[0]?.[0]}
+        sortOrder={board.orderBy?.[1] ?? cardOrders[0]?.[1]}
         on:selected={(e) => {
           const order = cardOrders.find(([key]) => key === e.detail)
           if (order !== undefined && order[0] !== board.orderBy?.[0]) void onChange({ orderBy: order })
