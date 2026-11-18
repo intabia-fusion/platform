@@ -13,7 +13,7 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import { getMetadata, type IntlString } from '@hcengineering/platform'
+  import type { IntlString } from '@hcengineering/platform'
   import ui, { type DropdownIntlItem, DropdownLabelsIntl } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
 
@@ -24,7 +24,7 @@
 
   const dispatch = createEventDispatcher()
 
-  // Reuse the platform's configured UI languages + their localized names (ui.string.*).
+  // Response languages are independent of the configured interface languages.
   const allLangs: Array<{ id: string, label: IntlString }> = [
     { id: 'ru', label: ui.string.Russian },
     { id: 'en', label: ui.string.English },
@@ -40,9 +40,6 @@
     { id: 'tr', label: ui.string.Turkish }
   ]
 
-  const enabled = new Set(getMetadata(ui.metadata.Languages) ?? [])
-  $: langs = allLangs.filter((l) => enabled.size === 0 || enabled.has(l.id))
-
   // DropdownLabelsIntl ignores empty-string ids, so the "Auto" option uses a
   // non-empty id and is mapped to/from the persisted empty value at the boundary.
   const AUTO = 'auto'
@@ -51,7 +48,7 @@
   $: selected = value === '' ? AUTO : value
 
   let items: DropdownIntlItem[] = []
-  $: items = [{ id: AUTO, label: aiBot.string.LanguageAuto }, ...langs.map((l) => ({ id: l.id, label: l.label }))]
+  $: items = [{ id: AUTO, label: aiBot.string.LanguageAuto }, ...allLangs.map((l) => ({ id: l.id, label: l.label }))]
 
   function onSelected (id: string | number): void {
     if (disabled) return

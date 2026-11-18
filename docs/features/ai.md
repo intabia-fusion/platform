@@ -78,7 +78,7 @@
 - **Предложение задачи с подзадачами.** Редактируемая карточка, создание только по подтверждению. - `TAITaskProposalMessage`+`TaskProposalPresenter`, тулы `propose_task`/`propose_subtasks`, `utils/tools.ts`.
 - **Экспорт разговора в markdown.** Включая tool-calls. - GET `/conversation/:id/export`, `services/ai-bot/pod-ai-bot/src/server/server.ts`; `fetchConversationExport`, `plugins/ai-bot-resources/src/requests.ts`; `exportConversationMdx`, `exportChat.ts`.
 - **Личная память пользователя.** `personalContext` + предпочитаемый язык, как Preference. - `AIPersonalData`, `resolveMemory`, `services/ai-bot/pod-ai-bot/src/workspace/memory.ts`.
-- **Настройки AI уровня workspace/space.** level/asrLevel/language/sharedPrompt/meetingSummary. - `AISpaceSettings`, `AISpaceSettingsEditor.svelte`/`AISettings.svelte`/`AIPersonalDataSettings.svelte`.
+- **Настройки AI уровня workspace/space.** level/asrLevel/language/sharedPrompt/meetingSummary. `AILanguageSelector.svelte` предлагает полный список языков ответов и «Автоматически», независимо от языков интерфейса (`ui.metadata.Languages`); сохранённый язык, например французский, остаётся видимым и доступным для выбора. - `AISpaceSettings`, `AISpaceSettingsEditor.svelte`/`AISettings.svelte`/`AIPersonalDataSettings.svelte`.
 - **Индикатор "печатает" + отмена запроса.** - `startTyping`/`isRequestCancelled`, `workspace/workspaceClient.ts`.
 - **Приветствие новому активному сотруднику в Direct.** - `pickWelcome`/`loadWelcomeMessages`, `services/ai-bot/pod-ai-bot/src/welcome.ts`; подробности - `../memory/ai_bot_proactive.md`.
 

@@ -135,10 +135,13 @@
 - **Скрытие категорий настроек по `feature`.** `SettingsCategory.feature` + `isDisabled()` в `Settings.svelte`. - `plugins/setting/src/index.ts`.
 - **Переопределение на уровне воркспейса.** Админ может точечно вернуть отключённую глобально фичу конкретному воркспейсу (`disabledFeaturesOverride`), правится в admin-панели (`WorkspaceDetails.svelte`), учитывается в `connect.ts`. - `server/account/src/types.ts`, `plugins/admin-resources/src/components/WorkspaceDetails.svelte`.
 
+- **Язык интерфейса: русский и английский.** Настройки языка (`packages/ui/src/components/internal/SettingsPopup.svelte`) получают общий список `interfaceLanguages` из `packages/theme/src/language.ts` через metadata `Languages`: доступны только русский и английский в вебе и desktop, независимо от branding.languages. `getCurrentLanguage` нормализует сохранённый неподдерживаемый язык в английский при запуске и сохраняет результат в localStorage. Переключение использует существующий `Theme.svelte.setLanguage` и загрузку переводов.
+
 ## Пользовательская документация
 
 | Фича | ru | en | Статус | Сверено | Расхождение |
 | --- | --- | --- | --- | --- | --- |
+| Язык интерфейса: русский и английский | - | - | plan | - | |
 | Виджеты сайдбара (Fixed/Flexible/Configurable) | getting-started/learn-the-basics, communication/sending-messages | getting-started/learn-the-basics, communication/sending-messages | stale | 0.8.60 | явное открытие вкладки показывает сайдбар в полном экране; страница показывает только значки Планировщика/Офиса (Fixed) и закреплённые чаты (Flexible) в правой панели, без названий типов; кнопка добавления виджета (`AddWidgetsPopup`) на проде недостижима (нет ни одного Configurable-виджета), описывать её не нужно |
 | Три состояния вкладки виджета | - | - | plan | - | отложено |
 | Вкладки воркбенча на аккаунт | getting-started/learn-the-basics | getting-started/learn-the-basics | partial | 0.8.60 | закрепление и закрытие вкладок страница не описывает |
@@ -203,6 +206,8 @@
 - `DESKTOP_UPDATES_CHANNEL`/`DESKTOP_UPDATES_CHANNELS` - канал автообновления desktop (дефолт `latest`).
 
 ## Тесты
+
+- Unit: `packages/theme/src/language-storage.test.ts` — публичные `getCurrentLanguage`/`setDefaultLanguage`, миграция сохранённого языка в localStorage и сохранение выбора пользователя.
 
 - Unit: `server/backup/src/__tests__/` (`backup-index-guard`, `backup-lease`, `storage-cleanup`, `stream-errors`); `services/export/pod-export/src/__tests__/` (`workspace-exporter`, `data-mapper`, `attachment-exporter`); `desktop/src/__test__/main/` и `.../ui/` (`updateChannel`, `settings`, `trayUtils`, `config`, ...); `desktop-package/src/__test__/` (`distServer`, `verifyManifests`).
 - api-tests: `api-tests/backup/src/__tests__/` (`backup-incremental`, `backup-retention`, `backup-service`); `api-tests/api/src/__tests__/identity-deletion.test.ts`, `deletion-emails.test.ts`.
