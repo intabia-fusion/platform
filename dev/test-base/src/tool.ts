@@ -55,9 +55,11 @@ let modelVersion: string | undefined
  * @public
  */
 export function getModelVersionString (): string {
-  modelVersion ??= process.env.MODEL_VERSION ?? execFileSync('node', [resolve(repoRoot, 'common/scripts/show_version.js')])
-    .toString()
-    .trim()
+  modelVersion ??=
+    process.env.MODEL_VERSION ??
+    execFileSync('node', [resolve(repoRoot, 'common/scripts/show_version.js')])
+      .toString()
+      .trim()
   return modelVersion
 }
 

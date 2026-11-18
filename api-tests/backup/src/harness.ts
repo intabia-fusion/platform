@@ -75,9 +75,10 @@ const DEFAULTS = {
   ACCOUNT_DB_URL: 'postgresql://postgres:postgres@localhost:5533/api',
   ACCOUNTS_URL: 'https://api.fusion.localhost/_account',
   STORAGE_CONFIG: 'datalake|https://api.fusion.localhost/_datalake',
-  // The chart writes backups into rootBucket=<stand> (platform-secrets backupConfig), so keys must match.
-  BACKUP_STORAGE_CONFIG: 'minio|localhost:9102?accessKey=minioadmin&secretKey=minioadmin&rootBucket=api',
-  BACKUP_BUCKET_NAME: 'api',
+  // The chart writes incremental backups into rootBucket=<stand>-backups
+  // (platform-secrets backupConfig / platform-config backupBucket), so keys must match.
+  BACKUP_STORAGE_CONFIG: 'minio|localhost:9102?accessKey=minioadmin&secretKey=minioadmin&rootBucket=api-backups',
+  BACKUP_BUCKET_NAME: 'api-backups',
   // Test stands run SERVER_SECRET 'secret' (stands/*/values.yaml); the helpers hardcode it.
   SERVER_SECRET: 'secret',
   FRONT_URL: 'https://api.fusion.localhost'

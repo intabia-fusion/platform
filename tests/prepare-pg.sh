@@ -24,16 +24,28 @@ echo $$ > "$LOCK_DIR/pid"
 trap 'rm -rf "$LOCK_DIR"' EXIT
 
 STAND_REUSE=0
+PROFILE_REQUESTED=0
 while [ $# -gt 0 ]; do
     case "$1" in
         --reuse) STAND_REUSE=1; shift ;;
-        *) echo "usage: ./prepare-pg.sh [--reuse]" >&2; exit 1 ;;
+        # Profiling overlays are compose-only; keep the flag so do-test.sh does not die before
+        # preparing, and warn after the stand is up.
+        --profile|--heap) PROFILE_REQUESTED=1; shift ;;
+        --docs|--full|--asr|--asr-local)
+            echo "prepare-pg.sh: $1 is not supported by the Kubernetes prepare (compose-only)" >&2
+            echo "  docs stand: docs/testing.md; profiling: tests/readme.md" >&2
+            exit 1
+            ;;
+        *) echo "usage: ./prepare-pg.sh [--reuse] [--profile]" >&2; exit 1 ;;
     esac
 done
 export STAND_REUSE
 
 # prepare-sanity-k3s.sh exports STAND_HTTPS_PORT for the LiveKit block below.
 source ../deployment/kubernetes/scripts/prepare-sanity-k3s.sh
+
+[ "$PROFILE_REQUESTED" = 1 ] && \
+    warn "profiling is compose-only: the Kubernetes stand runs without profilers"
 
 # The media sanity tests need an mp4 and a docx; generate them with the stand images once the
 # stand is up, so nothing is downloaded and no host ffmpeg or libreoffice is needed.
@@ -101,6 +113,10 @@ LIVEKIT_MODE="${LIVEKIT_MODE:-auto}"
 if [ "$LIVEKIT_MODE" = "auto" ]; then
     if kc -n "$BASE_NAMESPACE" get deployment livekit >/dev/null 2>&1; then
         LIVEKIT_MODE=cluster
+    elif [ "${STAND_RUNTIME:-k3d}" = k3d ]; then
+        # The docker fallback needs the compose redis (:6390), which a k3d stand does not run.
+        echo "ERROR: platform-base has no LiveKit deployment; run pnpm -w stand:base:up" >&2
+        exit 1
     else
         case "$(uname -s)" in
             Linux) LIVEKIT_MODE=docker ;;

@@ -30,11 +30,7 @@ describe('plan-volume', () => {
 
   beforeAll(async () => {
     config = await loadServerConfig(PlatformUrl)
-    owner = await getWorkspaceToken(
-      PlatformUrl,
-      { email: 'user1', password: '1234', workspace: wsName },
-      config
-    )
+    owner = await getWorkspaceToken(PlatformUrl, { email: 'user1', password: '1234', workspace: wsName }, config)
   }, 30000)
 
   async function setStorageLimitGB (storageLimitGB: number): Promise<void> {

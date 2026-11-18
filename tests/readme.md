@@ -100,8 +100,8 @@ Helm поднимает чистый стенд, а `dev/test-base` создаё
 для `prepare-pg.sh` нет - Kubernetes единственный backend. Для
 `STAND_RUNTIME=existing`
 без push Docker не нужен: stand-tool берёт pullable-образ, медиа-фикстуры должны
-уже лежать в `tests/sanity/tests/files`. Опции `--full`, `--docs`,
-`--profile` и `--asr` не поддерживаются. В values sanity
+уже лежать в `tests/sanity/tests/files`. Опции `--full`, `--docs` и `--asr` не
+поддерживаются; `--profile` принимается как no-op (профайлеры остались только в compose). В values sanity
 задан `useOtp: "false"`, как `USE_OTP=false` в compose. Webpack получает config и
 branding самого стенда; его порт можно сменить через `STAND_FRONT_PORT`
 (по умолчанию 8081).

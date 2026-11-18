@@ -47,14 +47,13 @@ if [ "$PREPARE" = true ]; then
     cat <<'EOF'
 
 =====================================================================
- Stand is up with profiling. Run the tests yourself, in this terminal
- (a wrapper would strip playwright's colour and live progress):
+ Stand is up. Profiling is compose-only: no profilers run on the
+ Kubernetes stand, so --collect has nothing to gather. Run the tests:
 
-   cd sanity && pnpm run uitest
+   cd sanity && bash ../../deployment/kubernetes/scripts/with-stand-env.sh sanity \
+     pnpm run uitest:telemetry --workers 5
 
- Then collect and report:
-
-   ./do-test-profile.sh --collect
+ (a wrapper strips playwright's colour and live progress)
 =====================================================================
 EOF
     exit 0
