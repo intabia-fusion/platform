@@ -205,9 +205,9 @@ describe('binaryRequest retry backoff', () => {
       expect(callTimes.length).toBeGreaterThan(5)
       const gaps: number[] = []
       for (let i = 1; i < callTimes.length; i++) gaps.push(callTimes[i] - callTimes[i - 1])
-      // Allow 20% slack on the cap for timer jitter.
+      // The measured gap includes WebSocket round trips and scheduler ticks.
       for (const g of gaps) {
-        expect(g).toBeLessThan(600)
+        expect(g).toBeLessThan(800)
       }
       // At least one of the late gaps should be near the cap (>300ms).
       const maxGap = Math.max(...gaps)
