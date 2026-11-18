@@ -39,6 +39,9 @@ const WIDTH = 320
 // recreating the stand other tests are running against.
 const previewUrl = process.env.PREVIEW_URL ?? `${PlatformURI}/_preview`
 
+// The workspace uuid is a suffix of the cookie name, so only the prefix is fixed.
+const SESSION_COOKIE_PREFIX = 'presentation-metadata-Token'
+
 /** Width from the PNG IHDR chunk - proves a real resized image came back, not an error body. */
 function pngWidth (body: Buffer): number {
   const signature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
@@ -95,9 +98,14 @@ test.describe('Preview service thumbnails in a browser', () => {
 
   test('serves a thumbnail to a request that carries only the cookie', async ({ page, context }) => {
     await page.goto(`${PlatformURI}/workbench/sanity-ws/drive`)
-    await page.waitForFunction(() => document.cookie.includes('presentation-metadata-Token'))
 
-    const cookie = (await context.cookies()).find((it) => it.name === 'presentation-metadata-Token')
+    // The cookie is set for the preview path, invisible to `document.cookie` here: ask the preview url
+    const sessionCookie = async (): Promise<{ name: string, value: string } | undefined> =>
+      (await context.cookies(previewUrl)).find((it) => it.name.startsWith(SESSION_COOKIE_PREFIX))
+
+    await expect.poll(async () => (await sessionCookie()) !== undefined, { timeout: 30000 }).toBe(true)
+
+    const cookie = await sessionCookie()
     expect(cookie, 'the app must write the session token as a cookie').toBeDefined()
     const workspace = workspaceOf(decodeURIComponent(cookie?.value ?? ''))
 

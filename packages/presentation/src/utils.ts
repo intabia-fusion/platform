@@ -80,7 +80,7 @@ import { onDestroy } from 'svelte'
 import { get, writable } from 'svelte/store'
 
 import { type KeyedAttribute } from '.'
-import { presentationCookiePaths } from './cookies'
+import { presentationCookieName, presentationCookiePaths } from './cookies'
 import { OptimizeQueryMiddleware, type PresentationPipeline, PresentationPipelineImpl } from './pipeline'
 import plugin, { type ClientHook } from './plugin'
 
@@ -1138,7 +1138,9 @@ export function isSpaceClass (_class: Ref<Class<Doc>>): boolean {
 }
 
 export function setPresentationCookie (token: string, workspaceUuid: WorkspaceUuid): void {
-  const cookieName = encodeURIComponent(plugin.metadata.Token.replaceAll(':', '-'))
+  const baseName = encodeURIComponent(plugin.metadata.Token.replaceAll(':', '-'))
+  // One cookie per workspace: a second workspace must not overwrite the token of the first one
+  const cookieName = presentationCookieName(baseName, workspaceUuid)
   const cookieValue = encodeURIComponent(token)
 
   const storage = getMetadata(plugin.metadata.FileStorage)
@@ -1152,6 +1154,8 @@ export function setPresentationCookie (token: string, workspaceUuid: WorkspaceUu
 
   const previewUrl = getMetadata(plugin.metadata.PreviewUrl)
   for (const path of presentationCookiePaths(storagePath, previewUrl, window.location.origin)) {
+    // Drop the cookie written before the per-workspace naming: servers read it as a fallback
+    document.cookie = `${baseName}=; path=${path}; max-age=0`
     document.cookie = `${cookieName}=${cookieValue}; path=${path}`
   }
 }

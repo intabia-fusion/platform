@@ -12,7 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { presentationCookiePaths } from '../cookies'
+import { presentationCookieName, presentationCookiePaths } from '../cookies'
+
+describe('presentationCookieName', () => {
+  const base = 'presentation-metadata-Token'
+  const workspaceA = '87a386a9-e662-42fa-8b64-89b1c249999a'
+  const workspaceB = '44f0d558-3261-44bf-936a-114a6a7f31e7'
+
+  // one name for all workspaces is one browser slot: the second one overwrites the first
+  it('keeps one cookie per workspace', () => {
+    expect(presentationCookieName(base, workspaceA)).not.toBe(presentationCookieName(base, workspaceB))
+  })
+
+  it('names the workspace inside the cookie name', () => {
+    expect(presentationCookieName(base, workspaceA)).toBe(`${base}-${workspaceA}`)
+  })
+})
 
 describe('presentationCookiePaths', () => {
   const origin = 'http://localhost:8080'

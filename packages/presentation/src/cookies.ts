@@ -14,10 +14,14 @@
 //
 
 /**
- * The paths the presentation token cookie has to cover: the storage path scripts ask through, and
- * the preview origin a thumbnail is loaded from. A thumbnail is an `<img>`, an `<img>` carries no
- * Authorization header, and a guest of a public link has no account cookie at all - without the
- * preview path every such image would be a 401.
+ * Name of the presentation token cookie of a workspace. The preview host is shared, so a single name
+ * lets a second workspace overwrite the token of the first one; the uuid splits them.
+ */
+export const presentationCookieName = (base: string, workspaceUuid: string): string => `${base}-${workspaceUuid}`
+
+/**
+ * The paths the token cookie has to cover: the storage path and the preview path a thumbnail is
+ * loaded from. An `<img>` carries no Authorization header, so the preview path is the only way in.
  */
 export const presentationCookiePaths = (
   storagePath: string | undefined,

@@ -20,6 +20,7 @@ import { extractToken, extractTokenWithRaw, readToken } from './token'
 const ACCOUNT_A = '59eec4ec-c916-47a2-b19c-1fe156e07c87' as AccountUuid
 const ACCOUNT_B = '0bb2a7b3-1a5a-4a63-9a37-2f5bb75b0a4f' as AccountUuid
 const WORKSPACE = '87a386a9-e662-42fa-8b64-89b1c249999a' as WorkspaceUuid
+const OTHER_WORKSPACE = '44f0d558-3261-44bf-936a-114a6a7f31e7' as WorkspaceUuid
 
 describe('extractTokenWithRaw', () => {
   it('returns the raw string the decoded token came from', () => {
@@ -78,5 +79,29 @@ describe('extractTokenWithRaw', () => {
 
     expect(extracted?.token.extra?.guest).toBe('true')
     expect(extracted?.raw).toBe(raw)
+  })
+
+  // Two public links, two tabs: without the asked workspace the token of the other one answers
+  it('serves the cookie of the requested workspace, not the first one', () => {
+    const first = generateToken(ACCOUNT_A, WORKSPACE, {}, 'secret')
+    const second = generateToken(ACCOUNT_B, OTHER_WORKSPACE, {}, 'secret')
+    const headers = {
+      cookie: `presentation-metadata-Token-${WORKSPACE}=${first}; presentation-metadata-Token-${OTHER_WORKSPACE}=${second}`
+    }
+
+    expect(extractTokenWithRaw(headers, OTHER_WORKSPACE)?.raw).toBe(second)
+    expect(extractTokenWithRaw(headers, OTHER_WORKSPACE)?.token.account).toBe(ACCOUNT_B)
+    expect(extractTokenWithRaw(headers, WORKSPACE)?.raw).toBe(first)
+    // nothing asked: the first cookie with a workspace, as before
+    expect(extractTokenWithRaw(headers)?.raw).toBe(first)
+  })
+
+  it('falls back to a workspace cookie when the asked one is absent', () => {
+    const only = generateToken(ACCOUNT_A, WORKSPACE, {}, 'secret')
+    const headers = { cookie: `presentation-metadata-Token=${only}` }
+
+    // a token of another workspace still beats no token: the middleware refuses it itself
+    expect(extractTokenWithRaw(headers, OTHER_WORKSPACE)?.raw).toBe(only)
+    expect(extractToken(headers, OTHER_WORKSPACE)?.workspace).toBe(WORKSPACE)
   })
 })

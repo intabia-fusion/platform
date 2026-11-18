@@ -55,10 +55,10 @@ export interface ExtractedToken {
 
 /**
  * Extracts and decodes JWT token from Authorization header or cookies, keeping the raw string.
- * Prefers tokens with workspace from cookies, exactly like `extractToken`.
+ * Prefers the cookie naming `workspace`, then any with a workspace, then one without.
  * Returns undefined if token cannot be decoded.
  */
-export function extractTokenWithRaw (headers: IncomingHttpHeaders): ExtractedToken | undefined {
+export function extractTokenWithRaw (headers: IncomingHttpHeaders, workspace?: string): ExtractedToken | undefined {
   // First try Authorization header
   const authToken = extractAuthorizationToken(headers.authorization)
   if (authToken !== null) {
@@ -73,28 +73,33 @@ export function extractTokenWithRaw (headers: IncomingHttpHeaders): ExtractedTok
   // Then try all cookies with 'token' in the name
   const cookieTokens = extractCookieTokens(headers.cookie)
   let validToken: ExtractedToken | undefined
+  let workspaceToken: ExtractedToken | undefined
   for (const raw of cookieTokens) {
     try {
       const decoded = decodeToken(raw)
-      // Prefer token with workspace, return immediately if found
-      if (decoded.workspace !== undefined) {
+      // One cookie per workspace: a token of another one is refused downstream
+      if (workspace !== undefined && decoded.workspace === workspace) {
         return { token: decoded, raw }
       }
-      // Keep first valid token without workspace as fallback
+      // Fallbacks: the first with a workspace, then the first without one
+      if (decoded.workspace !== undefined) {
+        workspaceToken ??= { token: decoded, raw }
+        continue
+      }
       validToken ??= { token: decoded, raw }
     } catch {
       // Continue to next token
     }
   }
 
-  return validToken
+  return workspaceToken ?? validToken
 }
 
 /**
  * Extracts and decodes JWT token from Authorization header or cookies.
- * Prefers tokens with workspace from cookies.
+ * Prefers the cookie naming `workspace` when it is asked for, then any token with a workspace.
  * Returns undefined if token cannot be decoded.
  */
-export function extractToken (headers: IncomingHttpHeaders): Token | undefined {
-  return extractTokenWithRaw(headers)?.token
+export function extractToken (headers: IncomingHttpHeaders, workspace?: string): Token | undefined {
+  return extractTokenWithRaw(headers, workspace)?.token
 }

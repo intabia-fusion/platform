@@ -133,6 +133,19 @@ describe('withAuthorization', () => {
 
     expect(request.tokenRaw).toBe('token-of-a')
   })
+
+  // the url decides which workspace cookie is asked
+  it('asks the token of the workspace in the url', () => {
+    ;(extractTokenWithRaw as jest.Mock).mockReturnValue(undefined)
+    const request = {
+      headers: { cookie: 'presentation-metadata-Token-a=a' },
+      params: { workspace: 'ws-a' }
+    } as unknown as RequestWithAuth
+
+    withAuthorization(request, noResponse, jest.fn())
+
+    expect(extractTokenWithRaw).toHaveBeenCalledWith(request.headers, 'ws-a')
+  })
 })
 
 describe('createWorkspaceAccess', () => {

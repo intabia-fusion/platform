@@ -64,7 +64,8 @@ export const withAuthorization = (req: RequestWithAuth, res: Response, next: Nex
   try {
     // The raw string is kept next to the decoded token: a request carries cookies of several
     // accounts, and asking account with a token picked another way would answer for the wrong one.
-    const extracted = extractTokenWithRaw(req.headers)
+    // One browser holds a token per workspace: ask for the one the url names.
+    const extracted = extractTokenWithRaw(req.headers, req.params?.workspace)
     if (extracted == null) {
       throw new HttpError(401, 'Unauthorized')
     }
