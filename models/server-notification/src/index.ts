@@ -115,6 +115,15 @@ export function createModel (builder: Builder): void {
   })
 
   builder.createDoc(serverCore.class.Trigger, core.space.Model, {
+    trigger: serverNotification.trigger.OnSpaceArchived,
+    txMatch: {
+      _class: core.class.TxUpdateDoc,
+      'operations.archived': { $exists: true }
+    },
+    isAsync: true
+  })
+
+  builder.createDoc(serverCore.class.Trigger, core.space.Model, {
     trigger: serverNotification.trigger.OnDocClassChanged,
     txMatch: {
       _class: core.class.TxUpdateDoc

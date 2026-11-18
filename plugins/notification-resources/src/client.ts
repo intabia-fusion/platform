@@ -140,7 +140,8 @@ export class NotificationClientImpl implements NotificationClient {
       unreadCount: 1,
       unreadMessagesCount: 1,
       notifiedMessagesCount: 1,
-      modifiedOn: 1
+      modifiedOn: 1,
+      objectArchived: 1
     } as const
     this.inboxUnreadQuery.query(
       notification.class.DocNotifyContext,

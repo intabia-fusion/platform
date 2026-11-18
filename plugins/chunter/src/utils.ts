@@ -51,7 +51,8 @@ async function findExistingDirect (
 ): Promise<Ref<DirectMessage> | undefined> {
   if (accounts.size > 2) return undefined
 
-  const existingDms = await client.findAll(chunter.class.DirectMessage, {})
+  // An archived direct is found too: the server refuses a second one with the same members
+  const existingDms = await client.findAll(chunter.class.DirectMessage, {}, { showArchived: true })
 
   let direct: DirectMessage | undefined
 

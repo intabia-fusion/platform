@@ -1167,6 +1167,16 @@ async function hideInactiveChats (client: MigrationClient): Promise<void> {
   }
 }
 
+async function fillObjectArchived (client: MigrationClient): Promise<void> {
+  const spaces = await client.find<Space>(DOMAIN_SPACE, { archived: true }, { projection: { _id: 1 } })
+  for (let i = 0; i < spaces.length; i += 500) {
+    const ids = spaces.slice(i, i + 500).map((it) => it._id)
+    await client.update<DocNotifyContext>(DOMAIN_DOC_NOTIFY, { objectSpace: { $in: ids } }, { objectArchived: true })
+    await client.update<DocNotifyContext>(DOMAIN_DOC_NOTIFY, { objectId: { $in: ids } }, { objectArchived: true })
+  }
+  client.logger.log('contexts of archived spaces', { spaces: spaces.length })
+}
+
 export const notificationOperation: MigrateOperation = {
   async migrate (client: MigrationClient, mode): Promise<void> {
     await tryMigrate(mode, client, notificationId, [
@@ -1474,6 +1484,11 @@ export const notificationOperation: MigrateOperation = {
         state: 'context-preview-snapshots-v1',
         mode: 'upgrade',
         func: fillPreviewSnapshots
+      },
+      {
+        state: 'context-object-archived-v1',
+        mode: 'upgrade',
+        func: fillObjectArchived
       }
     ])
   },

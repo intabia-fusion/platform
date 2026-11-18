@@ -34,7 +34,7 @@ import notification from '@hcengineering/notification'
 import { type TriggerControl } from '@hcengineering/server-core'
 import { isActivityDoc } from '@hcengineering/server-activity'
 
-import { moveContexts, OnSpaceAccessChanged } from './snapshot'
+import { moveContexts, OnSpaceAccessChanged, OnSpaceArchived } from './snapshot'
 import {
   generateAttributeNotificationType,
   getClassNotificationGroup,
@@ -184,6 +184,7 @@ export default async () => ({
     OnDocRemove,
     OnDocSpaceChanged,
     OnSpaceAccessChanged,
+    OnSpaceArchived,
     OnDocClassChanged,
     OnEmployeeDeactivate
   },

@@ -25,7 +25,8 @@ export function defineActions (builder: Builder): void {
     target: core.class.Doc,
     context: {
       mode: ['context', 'browser'],
-      group: 'tools'
+      group: 'tools',
+      order: 10
     }
   })
 

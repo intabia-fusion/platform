@@ -43,6 +43,7 @@ import {
   Model,
   Prop,
   TypeAccountUuid,
+  TypeBoolean,
   TypeDate,
   TypeRef,
   TypeString,
@@ -248,6 +249,9 @@ export class TDocNotifyContext extends TDoc implements DocNotifyContext {
 
   @Prop(TypeRecord(), core.string.Object)
   previewSnapshot?: PreviewSnapshot
+
+  @Prop(TypeBoolean(), core.string.Archived)
+  objectArchived?: boolean
 
   @Prop(TypeRecord(), core.string.Object)
   message?: NotificationMessage

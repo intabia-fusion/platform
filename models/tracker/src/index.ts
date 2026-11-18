@@ -472,6 +472,10 @@ function defineApplication (
 }
 
 export function createModel (builder: Builder): void {
+  builder.mixin(chunter.class.ChunterSpace, core.class.Class, view.mixin.IgnoreActions, {
+    actions: [tracker.action.NewRelatedIssue, tracker.action.EditRelatedTargets]
+  })
+
   builder.createModel(
     TProject,
     TComponent,
