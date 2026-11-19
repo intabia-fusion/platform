@@ -71,6 +71,37 @@ describe('ORDER BY sorting rules', () => {
     )
   })
 
+  // A sort by a field of a joined row keeps the join's own NULL order: a row without the join goes
+  // first ascending and last descending, the way the field sorted before it was read as a number.
+  it.each([
+    [SortingOrder.Ascending, 'ASC', 'NULLS FIRST'],
+    [SortingOrder.Descending, 'DESC', 'NULLS LAST']
+  ])('keeps the null order of a joined jsonb field (%s)', (order, direction, nulls) => {
+    const joins = [
+      {
+        table: 'task',
+        path: 'attachedTo',
+        fromAlias: 'tracker_doc',
+        fromField: 'attachedTo',
+        toAlias: 'task_1',
+        toField: '_id',
+        isReverse: false
+      }
+    ]
+    const sql = adapter.buildOrder(
+      vars([]),
+      'tracker:class:Issue',
+      'tracker_doc',
+      { '$lookup.attachedTo.rate': order },
+      joins as any
+    )
+    expect(sql).toBe(
+      "ORDER BY (CASE WHEN pg_input_is_valid(task_1.\"data\"#>>'{rate}', 'numeric') " +
+        'THEN (task_1."data"#>>\'{rate}\')::numeric END) ' +
+        `${direction} ${nulls}, task_1."data"#>>'{rate}' ${direction} ${nulls}`
+    )
+  })
+
   it('puts a value the rules do not name last in either direction', () => {
     const ascValues: any[] = []
     const asc: string = adapter.buildOrder(

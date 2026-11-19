@@ -237,7 +237,7 @@ export function pickCardOrder (
   fallback: [string, SortingOrder] | undefined = undefined
 ): [string, SortingOrder] {
   const base = current ?? fallback
-  if (base === undefined || base[0] !== picked[0]) return picked
+  if (base?.[0] !== picked[0]) return picked
   return [picked[0], base[1] === SortingOrder.Ascending ? SortingOrder.Descending : SortingOrder.Ascending]
 }
 
