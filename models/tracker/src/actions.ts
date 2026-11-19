@@ -45,6 +45,15 @@ function createGotoSpecialAction (
   })
 }
 
+// One block between joining and leaving: else every general action of a space stands alone
+function defineSpaceMenu (builder: Builder): void {
+  builder.mixin(core.class.Space, core.class.Class, view.mixin.ActionMenu, {
+    layout: {
+      tools: [tracker.action.NewRelatedIssue, view.action.CopyLink]
+    }
+  })
+}
+
 function defineIssueMenu (builder: Builder): void {
   builder.mixin(tracker.class.Issue, core.class.Class, view.mixin.ActionMenu, {
     layout: {
@@ -94,6 +103,7 @@ function defineIssueMenu (builder: Builder): void {
 
 export function createActions (builder: Builder, issuesId: string, componentsId: string, myIssuesId: string): void {
   defineIssueMenu(builder)
+  defineSpaceMenu(builder)
   createGotoSpecialAction(builder, issuesId, 'keyG->keyE', tracker.string.GotoIssues)
   createGotoSpecialAction(builder, issuesId, 'keyG->keyA', tracker.string.GotoActive, { mode: 'active' })
   createGotoSpecialAction(builder, issuesId, 'keyG->keyB', tracker.string.GotoBacklog, { mode: 'backlog' })
@@ -173,7 +183,8 @@ export function createActions (builder: Builder, issuesId: string, componentsId:
       },
       context: {
         mode: ['context', 'browser'],
-        group: 'edit'
+        group: 'remove',
+        order: 20
       },
       analyticsEvent: TrackerEvents.ProjectArchived,
       override: [view.action.Archive, view.action.Delete]
@@ -195,7 +206,8 @@ export function createActions (builder: Builder, issuesId: string, componentsId:
       },
       context: {
         mode: ['context', 'browser'],
-        group: 'edit'
+        group: 'remove',
+        order: 30
       },
       analyticsEvent: TrackerEvents.ProjectDeleted,
       override: [view.action.Archive, view.action.Delete]

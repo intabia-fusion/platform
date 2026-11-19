@@ -236,6 +236,7 @@ export interface DocNotifyContext<T extends Doc = Doc> extends Doc<PersonSpace> 
   // The preview as it was when the user lost access to it: drawn instead of the one no longer readable
   previewSnapshot?: PreviewSnapshot
   message?: NotificationMessage
+  objectArchived?: boolean
 
   lastNotify: Timestamp
   latestNotifications: ContextNotification[] // store n latest notifications to show in inbox
@@ -257,7 +258,14 @@ export type ContextNotification = MessageNotification | ReactionNotification | M
 
 export type UnreadContext = Pick<
   DocNotifyContext,
-  '_id' | 'objectId' | 'objectClass' | 'unreadCount' | 'unreadMessagesCount' | 'notifiedMessagesCount' | 'modifiedOn'
+  | '_id'
+  | 'objectId'
+  | 'objectClass'
+  | 'unreadCount'
+  | 'unreadMessagesCount'
+  | 'notifiedMessagesCount'
+  | 'modifiedOn'
+  | 'objectArchived'
 >
 export type NotificationMessage<T extends ActivityMessage = ActivityMessage> = ActivityMessageLite<T>
 

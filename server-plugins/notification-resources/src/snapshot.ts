@@ -132,6 +132,31 @@ export async function OnSpaceAccessChanged (txes: TxUpdateDoc<Space>[], control:
   return result
 }
 
+// The contexts of an archived space and of what is in it say so: the chat marker goes by the chats in the list
+export async function OnSpaceArchived (txes: TxUpdateDoc<Space>[], control: TriggerControl): Promise<Tx[]> {
+  const projection = { _id: 1, _class: 1, space: 1, objectArchived: 1 } as const
+  const result: Tx[] = []
+  for (const tx of txes) {
+    const archived = tx.operations.archived
+    if (archived == null || !control.hierarchy.isDerived(tx.objectClass, core.class.Space)) continue
+    const _id = tx.objectId
+    const contexts = [
+      ...(await control.findAll(
+        control.ctx,
+        notification.class.DocNotifyContext,
+        { objectSpace: _id },
+        { projection }
+      )),
+      ...(await control.findAll(control.ctx, notification.class.DocNotifyContext, { objectId: _id }, { projection }))
+    ]
+    for (const it of contexts) {
+      if ((it.objectArchived ?? false) === archived) continue
+      result.push(control.txFactory.createTxUpdateDoc(it._class, it.space, it._id, { objectArchived: archived }))
+    }
+  }
+  return result
+}
+
 // The contexts of a document and of the threads in it follow it to the space it is in now
 export async function moveContexts (
   control: TriggerControl,

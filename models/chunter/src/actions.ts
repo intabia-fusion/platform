@@ -238,6 +238,44 @@ function defineChannelActions (builder: Builder): void {
   createAction(
     builder,
     {
+      action: chunter.actionImpl.HideDirect,
+      label: chunter.string.HideFromChatList,
+      icon: view.icon.EyeCrossed,
+      input: 'focus',
+      category: chunter.category.Chunter,
+      target: chunter.class.DirectMessage,
+      visibilityTester: chunter.function.CanHideDirect,
+      context: {
+        mode: ['context', 'browser'],
+        group: 'remove',
+        order: 10
+      }
+    },
+    chunter.action.HideDirect
+  )
+
+  createAction(
+    builder,
+    {
+      action: chunter.actionImpl.ShowDirect,
+      label: chunter.string.ShowInChatList,
+      icon: view.icon.Eye,
+      input: 'focus',
+      category: chunter.category.Chunter,
+      target: chunter.class.DirectMessage,
+      visibilityTester: chunter.function.CanShowDirect,
+      context: {
+        mode: ['context', 'browser'],
+        group: 'remove',
+        order: 10
+      }
+    },
+    chunter.action.ShowDirect
+  )
+
+  createAction(
+    builder,
+    {
       action: chunter.actionImpl.UnarchiveChannel,
       label: chunter.string.UnarchiveChannel,
       icon: view.icon.Archive,
@@ -247,6 +285,8 @@ function defineChannelActions (builder: Builder): void {
       query: {
         archived: true
       },
+      override: [view.action.UnArchive],
+      visibilityTester: view.function.CanArchiveSpace,
       context: {
         mode: 'context',
         group: 'tools'
@@ -271,7 +311,8 @@ function defineChannelActions (builder: Builder): void {
       visibilityTester: view.function.CanArchiveSpace,
       context: {
         mode: 'context',
-        group: 'remove'
+        group: 'remove',
+        order: 20
       }
     },
     chunter.action.ArchiveChannel

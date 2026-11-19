@@ -60,4 +60,33 @@ describe('onDirectCreate', () => {
   it('refuses a second direct with the same two members', async () => {
     await expect(onDirectCreate(systemAccountUuid, [BOT, USER], [{ _id: 'existing' }])).rejects.toThrow()
   })
+
+  it('looks for the existing direct among archived ones too', async () => {
+    const middleware = Object.create(ChunterMiddleware.prototype)
+    let options: { showArchived?: boolean } | undefined
+    middleware.findAll = async (_ctx: unknown, _class: unknown, _query: unknown, opts: typeof options) => {
+      options = opts
+      return []
+    }
+    const ctx = { contextData: { account: { uuid: systemAccountUuid } } }
+    await middleware.onDirectCreate(ctx, { attributes: { members: [BOT, USER] } })
+    expect(options?.showArchived).toBe(true)
+  })
+})
+
+describe('onDirectUpdate', () => {
+  async function onDirectUpdate (operations: Record<string, unknown>): Promise<void> {
+    const middleware = Object.create(ChunterMiddleware.prototype)
+    middleware.findAll = async () => [{ _id: 'direct', type: 'person' }]
+    const ctx = { contextData: { account: { uuid: USER } } }
+    await middleware.onDirectUpdate(ctx, { objectId: 'direct', operations })
+  }
+
+  it('refuses to archive a direct', async () => {
+    await expect(onDirectUpdate({ archived: true })).rejects.toThrow()
+  })
+
+  it('lets an archived direct be restored', async () => {
+    await expect(onDirectUpdate({ archived: false })).resolves.toBeUndefined()
+  })
 })

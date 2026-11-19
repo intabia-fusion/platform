@@ -26,15 +26,19 @@ import core, {
   type FindResult,
   combineAttributes,
   type LowLevelStorage,
-  systemAccountUuid
+  systemAccountUuid,
+  DOMAIN_SPACE,
+  type Space
 } from '@hcengineering/core'
 import chunter, { Chat, type ChatMessage, type ContentReportAction, type DirectMessage } from '@hcengineering/chunter'
 import contact, { PersonSpace } from '@hcengineering/contact'
 import { ForbiddenKind } from '@hcengineering/platform'
 import { createHash } from 'crypto'
+import { LRUCache } from 'lru-cache'
 import notification, { ContextNotification, DocNotifyContext } from '@hcengineering/notification'
 import activity, { ActivityInfoMessage } from '@hcengineering/activity'
 import aiBot from '@hcengineering/ai-bot'
+import attachment from '@hcengineering/attachment'
 import { followsParent, getUpdatedFields } from '@hcengineering/server-activity'
 
 export const DOMAIN_CHUNTER_DOC = 'chunter_doc' as Domain
@@ -43,6 +47,7 @@ type ChatData = Pick<Chat, '_id' | '_class' | 'space' | 'attachedTo' | 'attached
 
 export class ChunterMiddleware extends BaseMiddleware {
   private readonly hiddenChats = new Map<Ref<Doc>, ChatData[]>()
+  private readonly archivedChannels = new LRUCache<Ref<Space>, boolean>({ max: 1000 })
 
   static async create (ctx: MeasureContext, context: PipelineContext, next?: Middleware): Promise<Middleware> {
     return new ChunterMiddleware(context, next)
@@ -55,6 +60,11 @@ export class ChunterMiddleware extends BaseMiddleware {
     for (const _tx of txes) {
       if (!TxProcessor.isExtendsCUD(_tx._class)) continue
       const tx = _tx as TxCUD<Doc>
+      if (tx._class === core.class.TxUpdateDoc && hierarchy.findDomain(tx.objectClass) === DOMAIN_SPACE) {
+        await this.onSpaceUpdate(ctx, tx as TxUpdateDoc<Space>)
+      } else if (tx._class === core.class.TxCreateDoc) {
+        await this.onArchivedChannelPost(ctx, tx)
+      }
       if (
         _tx._class === core.class.TxCreateDoc &&
         hierarchy.isDerived(tx.objectClass, notification.class.DocNotifyContext)
@@ -301,6 +311,53 @@ export class ChunterMiddleware extends BaseMiddleware {
     }
   }
 
+  private isUserTx (ctx: MeasureContext<SessionData>): boolean {
+    return ctx.contextData.isTriggerCtx !== true && ctx.contextData.account.uuid !== systemAccountUuid
+  }
+
+  private async isArchivedChannel (_id: Ref<Space>): Promise<boolean> {
+    const cached = this.archivedChannels.get(_id)
+    if (cached != null) return cached
+
+    const storage = this.context.lowLevelStorage as LowLevelStorage
+    const space = (await storage.rawFindAll<Space>(DOMAIN_SPACE, { _id, archived: true }, { limit: 1 }))[0]
+    const archived = space != null && this.context.hierarchy.isDerived(space._class, chunter.class.Channel)
+    this.archivedChannels.set(_id, archived)
+    return archived
+  }
+
+  // An archived channel takes no new messages and no files
+  private async onArchivedChannelPost (ctx: MeasureContext<SessionData>, tx: TxCUD<Doc>): Promise<void> {
+    const { hierarchy } = this.context
+    const domain = hierarchy.findDomain(tx.objectClass)
+    const posts = [
+      activity.class.ActivityMessage,
+      attachment.class.Attachment,
+      activity.class.AppletInstance,
+      activity.class.Reaction
+    ]
+    if (!this.isUserTx(ctx) || !posts.some((it) => hierarchy.findDomain(it) === domain)) return
+    if (await this.isArchivedChannel(tx.objectSpace)) {
+      this.throwForbidden(ctx, tx, 'An archived channel is read-only')
+    }
+  }
+
+  private async onSpaceUpdate (ctx: MeasureContext<SessionData>, tx: TxUpdateDoc<Space>): Promise<void> {
+    if (!getUpdatedFields(tx.operations).includes('archived')) return
+    // Read again on the next tx
+    this.archivedChannels.delete(tx.objectId)
+    if (!this.isUserTx(ctx)) return
+
+    const storage = this.context.lowLevelStorage as LowLevelStorage
+    const space = (await storage.rawFindAll<Space>(DOMAIN_SPACE, { _id: tx.objectId }, { limit: 1 }))[0]
+    const isChannel = space != null && this.context.hierarchy.isDerived(space._class, chunter.class.Channel)
+    const account = ctx.contextData.account
+    const isOwner = account.role === AccountRole.Owner || (space?.owners ?? []).includes(account.uuid)
+    if (isChannel && !isOwner) {
+      this.throwForbidden(ctx, tx, 'Only an owner archives or restores a channel', ForbiddenKind.SpaceOwnerOnly)
+    }
+  }
+
   private async onDirectCreate (ctx: MeasureContext<SessionData>, tx: TxCreateDoc<DirectMessage>): Promise<void> {
     const account = ctx.contextData.account
 
@@ -318,7 +375,12 @@ export class ChunterMiddleware extends BaseMiddleware {
     if (tx.attributes.members.length <= 2) {
       const referenceId = getMembersHash(tx.attributes.members)
 
-      const direct = await this.findAll(ctx, chunter.class.DirectMessage, { referenceId })
+      const direct = await this.findAll(
+        ctx,
+        chunter.class.DirectMessage,
+        { referenceId },
+        { showArchived: true, limit: 1 }
+      )
       if (direct.length > 0) {
         this.throwForbidden(ctx, tx, 'A direct message with these members already exists')
       }
@@ -332,6 +394,9 @@ export class ChunterMiddleware extends BaseMiddleware {
     }
     if (tx.operations?.$unset?.referenceId != null) {
       this.throwForbidden(ctx, tx, 'Direct message referenceId cannot be changed')
+    }
+    if (tx.operations.archived === true) {
+      this.throwForbidden(ctx, tx, 'Direct message cannot be archived')
     }
     if (tx.operations.private != null) {
       this.throwForbidden(ctx, tx, 'Direct message privacy cannot be changed')

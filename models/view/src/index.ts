@@ -904,7 +904,7 @@ export function createModel (builder: Builder): void {
       },
       target: core.class.Space,
       visibilityTester: view.function.CanArchiveSpace,
-      context: { mode: ['context', 'browser'], group: 'tools' },
+      context: { mode: ['context', 'browser'], group: 'remove', order: 20 },
       override: [view.action.Delete]
     },
     view.action.Archive
@@ -938,7 +938,7 @@ export function createModel (builder: Builder): void {
       input: 'focus',
       target: core.class.Space,
       visibilityTester: view.function.CanJoinSpace,
-      context: { mode: ['context', 'browser'], group: 'tools' }
+      context: { mode: ['context', 'browser'], group: 'edit', order: 10 }
     },
     view.action.Join
   )
@@ -973,7 +973,7 @@ export function createModel (builder: Builder): void {
       input: 'focus',
       target: core.class.Space,
       visibilityTester: view.function.CanLeaveSpace,
-      context: { mode: ['context', 'browser'], group: 'tools' }
+      context: { mode: ['context', 'browser'], group: 'remove', order: 10 }
     },
     view.action.Leave
   )

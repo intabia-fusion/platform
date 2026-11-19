@@ -50,7 +50,7 @@ test.describe('Check direct messages channels', () => {
     await test.step('Close conversation', async () => {
       const directName = `${newUser2.lastName} ${newUser2.firstName}`
       await expect(chunterPage.getChatLocator(directName)).toBeVisible()
-      await channelPage.makeActionWithChannelInMenu(directName, 'Hide from chat list')
+      await channelPage.makeActionWithChannelInMenu(directName, 'Hide from navigator')
       await expect(chunterPage.getChatLocator(directName)).toBeHidden()
     })
 

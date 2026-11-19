@@ -25,7 +25,7 @@ import notification from '@hcengineering/notification'
 import { type TriggerControl } from '@hcengineering/server-core'
 
 import plugin from '../index'
-import { OnSpaceAccessChanged } from '../snapshot'
+import { OnSpaceAccessChanged, OnSpaceArchived } from '../snapshot'
 
 jest.mock('@hcengineering/server-activity', () => ({
   ...jest.requireActual('@hcengineering/server-activity'),
@@ -204,5 +204,46 @@ describe('OnDocSpaceChanged (contexts)', () => {
       ['ctx-thread', ['objectSpace']],
       ['ctx-thread', ['previewSnapshot']]
     ])
+  })
+})
+
+describe('OnSpaceArchived', () => {
+  const contexts = (): Doc[] => [
+    // A document of the space, its own chat, a context of another space
+    context('ctx-doc', 'user-1'),
+    context('ctx-chat', 'user-2', { objectId: 'space-1', objectSpace: 'core:space:Space' }),
+    context('ctx-other', 'user-1', { objectId: 'doc-9', objectSpace: 'space-9' })
+  ]
+
+  it('marks the contexts of the space and of what is in it', async () => {
+    const control = makeControl({ [notification.class.DocNotifyContext]: contexts() })
+    const res = await OnSpaceArchived([membersTx({ archived: true })], control)
+    expect(updates(res)).toEqual([
+      ['ctx-doc', { objectArchived: true }],
+      ['ctx-chat', { objectArchived: true }]
+    ])
+  })
+
+  it('takes the mark off when the space is restored, and writes nothing that is already so', async () => {
+    const [doc, chat, other] = contexts()
+    const control = makeControl({
+      [notification.class.DocNotifyContext]: [{ ...doc, objectArchived: true } as any, chat, other]
+    })
+    const res = await OnSpaceArchived([membersTx({ archived: false })], control)
+    expect(updates(res)).toEqual([['ctx-doc', { objectArchived: false }]])
+  })
+
+  it('ignores updates that do not archive, and documents that are not spaces', async () => {
+    const control = makeControl({ [notification.class.DocNotifyContext]: contexts() })
+    expect(await OnSpaceArchived([membersTx({ name: 'renamed' })], control)).toEqual([])
+    const issueTx = txFactory.createTxUpdateDoc(
+      'class:Issue' as any,
+      'space-1' as any,
+      'doc-1' as any,
+      {
+        archived: true
+      } as any
+    )
+    expect(await OnSpaceArchived([issueTx as any], control)).toEqual([])
   })
 })

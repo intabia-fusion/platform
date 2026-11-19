@@ -27,6 +27,7 @@ import contact from '@hcengineering/contact'
 import { type Builder, Model } from '@hcengineering/model'
 import core, { TDoc } from '@hcengineering/model-core'
 import presentation from '@hcengineering/model-presentation'
+import print from '@hcengineering/model-print'
 import view, { createAttributeApplier } from '@hcengineering/model-view'
 import workbench from '@hcengineering/model-workbench'
 import { WidgetType } from '@hcengineering/workbench'
@@ -281,6 +282,20 @@ export function createModel (builder: Builder): void {
 
   builder.mixin(chunter.class.Channel, core.class.Class, chunter.mixin.ObjectChatPanel, {
     ignoreKeys: ['archived', 'collaborators', 'lastMessage', 'pinned', 'description', 'members', 'owners']
+  })
+
+  builder.mixin(chunter.class.Channel, core.class.Class, view.mixin.IgnoreActions, {
+    actions: [print.action.Print]
+  })
+
+  builder.mixin(chunter.class.DirectMessage, core.class.Class, view.mixin.IgnoreActions, {
+    actions: [
+      view.action.Archive,
+      view.action.Delete,
+      print.action.Print,
+      // The members of a one-to-one direct never change: it is hidden, a group can be left
+      { _class: chunter.class.DirectMessage, action: view.action.Leave, query: { type: 'person' } }
+    ]
   })
 
   builder.mixin(chunter.class.DirectMessage, core.class.Class, chunter.mixin.ObjectChatPanel, {

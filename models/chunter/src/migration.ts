@@ -27,6 +27,8 @@ import core, {
   DOMAIN_MODEL,
   type AccountUuid,
   DOMAIN_COLLABORATOR,
+  DOMAIN_DOC_PREVIEW,
+  type DocPreview,
   type Collaborator,
   type TxUpdateDoc,
   notEmpty
@@ -422,6 +424,33 @@ export async function unhideAutoHiddenDirects (client: MigrationClient): Promise
 
 const BATCH = 500
 
+export async function unarchiveDirects (client: MigrationClient): Promise<void> {
+  const directs = (
+    await client.find<DirectMessage>(
+      DOMAIN_SPACE,
+      { _class: chunter.class.DirectMessage, archived: true },
+      { projection: { _id: 1 } }
+    )
+  ).map((it) => it._id)
+
+  for (let i = 0; i < directs.length; i += BATCH) {
+    const ids = directs.slice(i, i + BATCH)
+    await client.update<Chat>(
+      DOMAIN_CHUNTER_DOC,
+      { _class: chunter.class.Chat, attachedTo: { $in: ids } },
+      { hidden: true }
+    )
+    await client.update<DocPreview>(
+      DOMAIN_DOC_PREVIEW,
+      { objectDomain: DOMAIN_SPACE, objectId: { $in: ids } },
+      { archived: false }
+    )
+
+    await client.update<DirectMessage>(DOMAIN_SPACE, { _id: { $in: ids } }, { archived: false })
+  }
+  client.logger.log('unarchived directs', { count: directs.length })
+}
+
 interface ChatRefs extends Doc {
   attachedTo: Ref<Doc>
   attachedToClass: Ref<Class<Doc>>
@@ -660,6 +689,11 @@ export const chunterOperation: MigrateOperation = {
           await client.reindex(DOMAIN_ATTACHMENT, client.hierarchy.getDescendants(attachment.class.Attachment), true)
           await client.reindex(DOMAIN_ACTIVITY, client.hierarchy.getDescendants(chunter.class.ChatMessage))
         }
+      },
+      {
+        state: 'unarchive-directs-v1',
+        mode: 'upgrade',
+        func: unarchiveDirects
       }
     ])
   },

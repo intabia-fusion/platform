@@ -8415,6 +8415,9 @@ importers:
       '@hcengineering/model-presentation':
         specifier: workspace:^0.7.0
         version: link:../presentation
+      '@hcengineering/model-print':
+        specifier: workspace:^0.7.0
+        version: link:../print
       '@hcengineering/model-view':
         specifier: workspace:^0.7.0
         version: link:../view
@@ -33973,6 +33976,9 @@ importers:
       '@hcengineering/ai-bot':
         specifier: workspace:^0.7.0
         version: link:../../plugins/ai-bot
+      '@hcengineering/attachment':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/attachment
       '@hcengineering/chunter':
         specifier: workspace:^0.7.0
         version: link:../../plugins/chunter
@@ -33997,6 +34003,9 @@ importers:
       '@hcengineering/server-notification':
         specifier: workspace:^0.7.0
         version: link:../notification
+      lru-cache:
+        specifier: 'catalog:'
+        version: 11.2.2
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19

@@ -15,7 +15,8 @@
 //
 
 import { type ActivityMessage } from '@hcengineering/activity'
-import { type Channel, type ChatMessage } from '@hcengineering/chunter'
+import { type Channel, type Chat as ChatState, type ChatMessage, type DirectMessage } from '@hcengineering/chunter'
+import { type Doc, getCurrentAccount } from '@hcengineering/core'
 import { type Resources } from '@hcengineering/platform'
 import { MessageBox, getClient } from '@hcengineering/presentation'
 import { getLocation, navigate, showPopup } from '@hcengineering/ui'
@@ -77,7 +78,8 @@ import {
   locationDataResolver,
   openChannelInSidebar,
   openThreadInSidebar,
-  replyToThread
+  replyToThread,
+  resetChunterLocIfEqual
 } from './navigation'
 import {
   ChannelTitleProvider,
@@ -135,6 +137,45 @@ export async function ArchiveChannel (channel: Channel, evt: any, props?: { afte
       }
     }
   })
+}
+
+async function findOwnChat (direct: Doc): Promise<ChatState | undefined> {
+  return await getClient().findOne(chunter.class.Chat, { attachedTo: direct._id, account: getCurrentAccount().uuid })
+}
+
+async function canHideDirect (doc?: Doc | Doc[]): Promise<boolean> {
+  if (doc == null || Array.isArray(doc)) return false
+  return (await findOwnChat(doc))?.hidden === false
+}
+
+async function canShowDirect (doc?: Doc | Doc[]): Promise<boolean> {
+  if (doc == null || Array.isArray(doc)) return false
+  return (await findOwnChat(doc))?.hidden === true
+}
+
+async function setDirectHidden (direct: DirectMessage, hidden: boolean): Promise<void> {
+  const chat = await findOwnChat(direct)
+  if (chat == null || chat.hidden === hidden) return
+  await getClient().updateCollection(
+    chat._class,
+    chat.space,
+    chat._id,
+    chat.attachedTo,
+    chat.attachedToClass,
+    'chats',
+    {
+      hidden
+    }
+  )
+  if (hidden) await resetChunterLocIfEqual(direct._id)
+}
+
+async function HideDirect (direct: DirectMessage): Promise<void> {
+  await setDirectHidden(direct, true)
+}
+
+async function ShowDirect (direct: DirectMessage): Promise<void> {
+  await setDirectHidden(direct, false)
 }
 
 async function UnarchiveChannel (channel: Channel): Promise<void> {
@@ -223,6 +264,8 @@ export default async (): Promise<Resources> => ({
     DirectLabelProvider,
     ChannelTitleProvider,
     CanDeleteMessage: canDeleteMessage,
+    CanHideDirect: canHideDirect,
+    CanShowDirect: canShowDirect,
     CanCopyMessageLink: canCopyMessageLink,
     CanReportMessage: canReportMessage,
     CanReportPerson: canReportPerson,
@@ -250,7 +293,7 @@ export default async (): Promise<Resources> => ({
       if (unreadCount === 0) return false
 
       const unread = get(NotificationClientImpl.getClient().unreadByDoc).values()
-      return Array.from(unread).some((it) => (it.notifiedMessagesCount ?? 0) > 0)
+      return Array.from(unread).some((it) => (it.notifiedMessagesCount ?? 0) > 0 && it.objectArchived !== true)
     }
   },
   completion: {
@@ -259,6 +302,8 @@ export default async (): Promise<Resources> => ({
   actionImpl: {
     ArchiveChannel,
     UnarchiveChannel,
+    HideDirect,
+    ShowDirect,
     DeleteChatMessage: deleteChatMessage,
     ReplyToThread: replyToThread,
     TranslateMessage: translateMessage,

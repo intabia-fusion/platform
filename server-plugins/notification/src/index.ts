@@ -115,6 +115,7 @@ export default plugin(serverNotificationId, {
     OnDocCreated: '' as Resource<TriggerFunc>,
     OnDocSpaceChanged: '' as Resource<TriggerFunc>,
     OnSpaceAccessChanged: '' as Resource<TriggerFunc>,
+    OnSpaceArchived: '' as Resource<TriggerFunc>,
     OnDocClassChanged: '' as Resource<TriggerFunc>,
     OnEmployeeDeactivate: '' as Resource<TriggerFunc>
   },
