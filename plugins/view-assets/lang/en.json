@@ -123,6 +123,8 @@
     "CopyAll": "Copy All",
     "CopyDocumentMarkdown": "Copy as Markdown",
     "CopyAsMarkdownTable": "Copy as Markdown Table",
+    "MarkdownCopiedToClipboard": "Document copied as Markdown",
+    "MarkdownCopyFailed": "Failed to copy the document as Markdown",
     "TableCopiedToClipboard": "Table copied to clipboard",
     "TableCopyFailed": "Failed to copy table to clipboard",
     "PublicView": "Public",

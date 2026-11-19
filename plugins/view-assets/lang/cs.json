@@ -123,6 +123,8 @@
     "CopyAll": "Kopírovat vše",
     "CopyDocumentMarkdown": "Kopírovat jako Markdown",
     "CopyAsMarkdownTable": "Kopírovat jako Markdown tabulka",
+    "MarkdownCopiedToClipboard": "Dokument zkopírován ve formátu Markdown",
+    "MarkdownCopyFailed": "Dokument se nepodařilo zkopírovat ve formátu Markdown",
     "TableCopiedToClipboard": "Tabulka zkopírována do schránky",
     "TableCopyFailed": "Nepodařilo se zkopírovat tabulku do schránky",
     "PublicView": "Veřejné",

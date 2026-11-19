@@ -119,6 +119,8 @@
     "CopyAll": "Копировать всё",
     "CopyDocumentMarkdown": "Скопировать как Markdown",
     "CopyAsMarkdownTable": "Скопировать как таблицу Markdown",
+    "MarkdownCopiedToClipboard": "Документ скопирован в формате Markdown",
+    "MarkdownCopyFailed": "Не удалось скопировать документ в формате Markdown",
     "TableCopiedToClipboard": "Таблица скопирована в буфер обмена",
     "TableCopyFailed": "Не удалось скопировать таблицу в буфер обмена",
     "PublicView": "Публичный",

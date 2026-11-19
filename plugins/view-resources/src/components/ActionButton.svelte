@@ -59,6 +59,7 @@
     {...$$props}
     icon={action.icon}
     label={action.label}
+    loading={isBeingInvoked}
     disabled={disabled || isBeingInvoked}
     on:click={async (event) => {
       if (action !== null) {

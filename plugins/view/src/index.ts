@@ -262,6 +262,8 @@ const view = plugin(viewId, {
     Join: '' as IntlString,
     Leave: '' as IntlString,
     Copied: '' as IntlString,
+    MarkdownCopiedToClipboard: '' as IntlString,
+    MarkdownCopyFailed: '' as IntlString,
     TableCopiedToClipboard: '' as IntlString,
     TableCopyFailed: '' as IntlString,
     And: '' as IntlString,

@@ -866,18 +866,20 @@ export async function getBlobURL (blob: Blob): Promise<string> {
 /**
  * @public
  */
-export function copyTextToClipboardOldBrowser (text: string): void {
+export function copyTextToClipboardOldBrowser (text: string): boolean {
   const textarea = document.createElement('textarea')
   textarea.value = text
   textarea.classList.add('hulyClipboardArea')
   document.body.appendChild(textarea)
   textarea.select()
   try {
-    document.execCommand('copy')
+    return document.execCommand('copy')
   } catch (err) {
     console.error(err)
+    return false
+  } finally {
+    document.body.removeChild(textarea)
   }
-  document.body.removeChild(textarea)
 }
 
 /**

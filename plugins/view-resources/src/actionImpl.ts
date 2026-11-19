@@ -11,7 +11,7 @@ import core, {
   getCurrentAccount,
   makeDocCollabId
 } from '@hcengineering/core'
-import { type Asset, type IntlString, type Resource, getResource } from '@hcengineering/platform'
+import { type Asset, type IntlString, type Resource, getResource, translate } from '@hcengineering/platform'
 import {
   type ContextStore,
   MessageBox,
@@ -24,21 +24,25 @@ import {
 } from '@hcengineering/presentation'
 import { markupToJSON } from '@hcengineering/text'
 import { markupToMarkdown } from '@hcengineering/text-markdown'
+import { getCurrentLanguage } from '@hcengineering/theme'
 import {
   type AnyComponent,
   type AnySvelteComponent,
   type PopupAlignment,
   type PopupPosAlignment,
+  addNotification,
   closeTooltip,
   isPopupPosAlignment,
   isSafari,
   locationToUrl,
   navigate,
+  NotificationSeverity,
   showPanel,
   showPopup
 } from '@hcengineering/ui'
 import { get } from 'svelte/store'
 import MoveView from './components/Move.svelte'
+import SimpleNotification from './components/SimpleNotification.svelte'
 import view from './plugin'
 import {
   type FocusSelection,
@@ -75,13 +79,16 @@ async function CopyTextToClipboard (
   await copyText(text, 'text/plain')
 }
 
-export async function copyText (text: any, contentType: string = 'text/plain'): Promise<void> {
+/** `false` means the clipboard still holds what it held before - nothing was written. */
+export async function copyText (text: any, contentType: string = 'text/plain'): Promise<boolean> {
+  const pending = text instanceof Promise
   try {
-    // Chromium keeps every ClipboardItem write in a persistent root, which retains the page after reload.
-    // Safari needs it to keep the user gesture across the awaited text.
-    if (typeof ClipboardItem !== 'undefined' && (isSafari() || contentType !== 'text/plain')) {
+    // Chromium keeps every ClipboardItem write in a persistent root, which retains the page after reload,
+    // so a ready string goes through writeText there. Safari needs the item to keep the user gesture
+    // across the awaited text, and so does any pending value.
+    if (typeof ClipboardItem !== 'undefined' && (isSafari() || contentType !== 'text/plain' || pending)) {
       const clipboardData: Record<string, any> = {
-        [contentType]: text instanceof Promise ? text : Promise.resolve(text)
+        [contentType]: pending ? text : Promise.resolve(text)
       }
 
       const clipboardItem = new ClipboardItem(clipboardData)
@@ -89,24 +96,32 @@ export async function copyText (text: any, contentType: string = 'text/plain'): 
     } else {
       // Fallback if ClipboardItem is not available
       if (navigator.clipboard != null && typeof navigator.clipboard.writeText === 'function') {
-        await navigator.clipboard.writeText(text instanceof Promise ? await text : text)
+        await navigator.clipboard.writeText(pending ? await text : text)
       } else {
-        copyTextToClipboardOldBrowser(text instanceof Promise ? await text : text)
+        return copyTextToClipboardOldBrowser(pending ? await text : text)
       }
     }
+    return true
   } catch (error) {
     // Log error and fallback: only copy main content
     console.error('Failed to copy to clipboard, falling back to plain text:', error)
+    let value: string
+    try {
+      value = pending ? await text : text
+    } catch (contentError) {
+      // The text itself never arrived (a network read of the markup): there is nothing to copy.
+      console.error('Failed to build the text to copy:', contentError)
+      return false
+    }
     if (navigator.clipboard != null && typeof navigator.clipboard.writeText === 'function') {
       try {
-        await navigator.clipboard.writeText(text instanceof Promise ? await text : text)
+        await navigator.clipboard.writeText(value)
+        return true
       } catch (fallbackError) {
         console.error('Failed to copy to clipboard with writeText, using old browser fallback:', fallbackError)
-        copyTextToClipboardOldBrowser(text instanceof Promise ? await text : text)
       }
-    } else {
-      copyTextToClipboardOldBrowser(text instanceof Promise ? await text : text)
     }
+    return copyTextToClipboardOldBrowser(value)
   }
 }
 
@@ -653,7 +668,15 @@ async function CopyDocumentMarkdown (
       makeDocCollabId(docs[0], props.contentField),
       (docs[0] as any)[props.contentField] as Ref<Blob>
     ).then((c) => (c !== null ? markupToMarkdown(markupToJSON(c)) : ''))
-    await copyText(content, 'text/plain')
+    const copied = await copyText(content, 'text/plain')
+    const language = getCurrentLanguage()
+    addNotification(
+      await translate(copied ? view.string.Copied : view.string.MarkdownCopyFailed, {}, language),
+      copied ? await translate(view.string.MarkdownCopiedToClipboard, {}, language) : '',
+      SimpleNotification,
+      undefined,
+      copied ? NotificationSeverity.Success : NotificationSeverity.Error
+    )
   }
 }
 
