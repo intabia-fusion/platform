@@ -98,7 +98,7 @@ export async function copyText (text: any, contentType: string = 'text/plain'): 
       if (navigator.clipboard != null && typeof navigator.clipboard.writeText === 'function') {
         await navigator.clipboard.writeText(pending ? await text : text)
       } else {
-        return copyTextToClipboardOldBrowser(pending ? await text : text)
+        copyTextToClipboardOldBrowser(pending ? await text : text); return
       }
     }
     return true
@@ -121,7 +121,7 @@ export async function copyText (text: any, contentType: string = 'text/plain'): 
         console.error('Failed to copy to clipboard with writeText, using old browser fallback:', fallbackError)
       }
     }
-    return copyTextToClipboardOldBrowser(value)
+    copyTextToClipboardOldBrowser(value)
   }
 }
 
