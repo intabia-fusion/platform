@@ -29,6 +29,7 @@ const config: PlaywrightTestConfig = {
             }
           ]
         },
+        ignoreHTTPSErrors: process.env.K8S_STAND === 'qms',
         testIdAttribute: 'data-id',
         permissions: ['clipboard-read', 'clipboard-write'],
         ...devices['Desktop Chrome'],

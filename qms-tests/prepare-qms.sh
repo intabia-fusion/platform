@@ -14,6 +14,7 @@ awk '
   # the tool pod works from /workspace; put the QMS dump next to the other dumps
   /^if \[ "\$STAND_NAME" = sanity \]; then$/ {
     print "if [ \"$STAND_NAME\" = qms ]; then"
+    print "  kc -n \"$STAND_NS\" exec stand-tool -- mkdir -p /workspace/qms-tests"
     print "  kc cp \"$REPO_ROOT/qms-tests/sanity-ws-qms\" \"$STAND_NS/stand-tool:/workspace/qms-tests/sanity-ws-qms\""
     print "fi"
     print ""
@@ -29,6 +30,8 @@ awk '
   }
 ' "$K8S_SCRIPTS/prepare-test-stand.sh" > "$PATCHED"
 
+grep -Fq '  kc -n "$STAND_NS" exec stand-tool -- mkdir -p /workspace/qms-tests' "$PATCHED" || \
+  { echo "prepare-qms.sh: invalid QMS dump directory command" >&2; exit 1; }
 grep -q 'qms-tests/sanity-ws-qms' "$PATCHED" || \
   { echo "prepare-qms.sh: qms dump-copy anchor lost in prepare-test-stand.sh" >&2; exit 1; }
 grep -q 'sanity|ws|api|qms' "$PATCHED" || \

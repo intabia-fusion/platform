@@ -28,6 +28,28 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=lib.sh
 source "$SCRIPT_DIR/lib.sh"
 
+if [ "$STAND" = api ] && [ "${STAND_PREPARE_API:-0}" = 1 ]; then
+  API_STAND_PREPARED=0
+  if [ "${API_STAND:-}" != external ]; then
+    API_NS="$(stand_namespace api)"
+    API_NS_FOUND=""
+    if cluster_exists; then
+      API_NS_FOUND="$(kc get namespace "$API_NS" --ignore-not-found -o name)" || die "cannot inspect api namespace '$API_NS' in context '$KUBE_CONTEXT'"
+    elif [ "$STAND_RUNTIME" = existing ]; then
+      die "cannot reach context '$KUBE_CONTEXT'"
+    fi
+    if [ -n "$API_NS_FOUND" ]; then
+      API_INCOMPLETE="$(kc -n "$API_NS" get configmap api-stand-incomplete --ignore-not-found -o name)" || die "cannot inspect seed state in '$API_NS'"
+      [ -z "$API_INCOMPLETE" ] || die "api namespace '$API_NS' has an incomplete preparation; inspect it before explicitly preparing the stand"
+      kc -n "$API_NS" get deployment account >/dev/null 2>&1 || die "api namespace '$API_NS' has no account deployment; inspect it before explicitly preparing the stand"
+    else
+      STAND_PREPARE_OWNED=1 "$SCRIPT_DIR/prepare-test-stand.sh" api "$STAND_RUNTIME"
+      API_STAND_PREPARED=1
+    fi
+  fi
+  export API_STAND_PREPARED
+fi
+
 STAND_HOST="$(stand_host "$STAND")"
 STAND_DATA="$(stand_data "$STAND")"
 [ -n "$STAND_HOST" ] || die "cannot resolve hostUrl of stand '$STAND' from values"

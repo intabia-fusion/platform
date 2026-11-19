@@ -83,7 +83,7 @@ data:
     "previewConfig" (printf "image|https://%s/_datalake/image/fit=cover,width=:width,height=:height,dpr=:dpr/:workspace/:blobId;video|https://%s/_datalake/meta/:workspace/:blobId" (include "platform.publicHost" .) (include "platform.publicHost" .))
 
   -}}
-{{- $cfg := merge $defaults (default dict .Values.config) -}}
+{{- $cfg := merge (deepCopy (default dict .Values.config)) $defaults -}}
 {{- /* A scaled-to-zero analytics collector has no backend: advertising its URL gives the
        client a 503 per batch (and a console error). An explicit config.collectorUrl wins. */ -}}
 {{- if and (gt (int .Values.services.analytics.replicas) 0) (not (hasKey (default dict .Values.config) "collectorUrl")) -}}

@@ -14,7 +14,8 @@
 //
 
 import type { LoginInfoWithWorkspaces } from '@hcengineering/account-client'
-import core, { WorkspaceEvent, systemAccountUuid, type Account, type WorkspaceIds } from '@hcengineering/core'
+import core, { WorkspaceEvent, systemAccountUuid, type Account, type Tx, type WorkspaceIds } from '@hcengineering/core'
+import platform from '@hcengineering/platform'
 import type { ClientSessionCtx, OneSecondCounters } from '@hcengineering/server-core'
 import type { Token } from '@hcengineering/server-token'
 
@@ -68,6 +69,39 @@ describe('ClientSession.includeSessionContext readOnly', () => {
     expect(readOnlyOf({ readonly: 'true' })).toBe(true)
     expect(readOnlyOf({ readonly: 'false' })).toBe(false)
     expect(readOnlyOf()).toBe(false)
+  })
+})
+
+describe('ClientSession.txRaw read-only', () => {
+  it('rejects read-only transactions and accepts ordinary sessions', async () => {
+    const tx = {} as unknown as Tx
+    const pipelineTx = jest.fn().mockResolvedValue({})
+    const ctx = {
+      ctx: {},
+      pipeline: {
+        context: { modelDb: {} },
+        tx: pipelineTx,
+        handleBroadcast: jest.fn().mockResolvedValue(undefined)
+      },
+      socialStringsToUsers: new Map(),
+      sendResponse: jest.fn()
+    } as unknown as ClientSessionCtx
+    const session = (extra?: Record<string, string>): ClientSession =>
+      new ClientSession(
+        makeToken(extra),
+        {} as unknown as WorkspaceIds,
+        {} as unknown as Account,
+        {} as unknown as LoginInfoWithWorkspaces,
+        false,
+        {} as unknown as OneSecondCounters
+      )
+
+    await expect(session({ readonly: 'true' }).txRaw(ctx, tx)).rejects.toMatchObject({
+      status: { code: platform.status.WorkspaceReadOnly }
+    })
+    expect(pipelineTx).not.toHaveBeenCalled()
+    await session().txRaw(ctx, tx)
+    expect(pipelineTx).toHaveBeenCalledWith(ctx.ctx, [tx])
   })
 })
 
