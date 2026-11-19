@@ -24325,6 +24325,9 @@ importers:
       '@hcengineering/presentation':
         specifier: workspace:^0.7.0
         version: link:../../packages/presentation
+      '@hcengineering/rank':
+        specifier: workspace:^0.7.17
+        version: link:../../foundations/core/packages/rank
       '@hcengineering/setting':
         specifier: workspace:^0.7.0
         version: link:../setting

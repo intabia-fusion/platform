@@ -12,12 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import type { Ref } from '@hcengineering/core'
+import type { Rank, Ref } from '@hcengineering/core'
 import type { MeetingGroup, PermanentMeeting } from '@hcengineering/love'
-import { mergeMeetingIntoGroup, moveItem, orderOf } from '../groups'
+import { mergeMeetingIntoGroup, moveItem } from '../groups'
+import { rankAfterMove } from '../order'
 
 const groupA = 'group:a' as Ref<MeetingGroup>
 const groupB = 'group:b' as Ref<MeetingGroup>
+
+function meeting (id: string, rank?: Rank): PermanentMeeting {
+  return {
+    _id: id as Ref<PermanentMeeting>,
+    _class: 'love:class:PermanentMeeting',
+    space: 'space:1',
+    name: id,
+    rank
+  } as unknown as PermanentMeeting
+}
 
 describe('meeting groups ordering', () => {
   it('moves an item down', () => {
@@ -35,12 +46,17 @@ describe('meeting groups ordering', () => {
     expect(moveItem(ids, -1, 0)).toBe(ids)
   })
 
-  it('numbers the list from zero', () => {
-    expect(orderOf(['x', 'y', 'z'])).toEqual([
-      { id: 'x', order: 0 },
-      { id: 'y', order: 1 },
-      { id: 'z', order: 2 }
-    ])
+  it('ranks a meeting dropped between two others', () => {
+    const meetings = [meeting('x', '0|000001'), meeting('y', '0|000002'), meeting('z', '0|000003')]
+
+    const rank = rankAfterMove(
+      meetings,
+      ['z', 'x', 'y'] as Array<Ref<PermanentMeeting>>,
+      'z' as Ref<PermanentMeeting>
+    ) as Rank
+
+    // One write for the moved meeting: the two that stayed keep 0|000001 and 0|000002.
+    expect(rank < ('0|000001' as Rank)).toBe(true)
   })
 
   it('moves a meeting into another group before the given one', () => {

@@ -14,12 +14,12 @@
 //
 //
 // Ordering of the office floors. The navigator shows the floors in the order the user dragged
-// them into, so the position lives on the document (`Floor.order`) and nothing else.
+// them into, so the position lives on the document (`Floor.rank`) and nothing else.
 //
 
-import type { Ref, TxOperations } from '@hcengineering/core'
+import type { Ref } from '@hcengineering/core'
 import type { Floor } from '@hcengineering/love'
-import { moveItem, orderOf } from './groups'
+import { moveItem } from './groups'
 
 /** New order of floor ids after `moved` is dropped onto `target`; unchanged order if either is unknown. */
 export function reorderFloors (floors: Floor[], moved: Ref<Floor>, target: Ref<Floor>): Array<Ref<Floor>> {
@@ -27,13 +27,4 @@ export function reorderFloors (floors: Floor[], moved: Ref<Floor>, target: Ref<F
   const from = ids.indexOf(moved)
   const to = ids.indexOf(target)
   return from === -1 || to === -1 ? ids : moveItem(ids, from, to)
-}
-
-/** Writes `order` for the floors whose position actually changed - one write per moved floor. */
-export async function persistFloorOrder (client: TxOperations, floors: Floor[], ids: Array<Ref<Floor>>): Promise<void> {
-  for (const { id, order } of orderOf(ids)) {
-    const floor = floors.find((it) => it._id === id)
-    if (floor === undefined || floor.order === order) continue
-    await client.diffUpdate(floor, { order })
-  }
 }

@@ -39,7 +39,8 @@
   import view from '@hcengineering/view'
   import { openDoc } from '@hcengineering/view-resources'
   import plugin from '../plugin'
-  import { persistFloorOrder, reorderFloors } from '../floors'
+  import { reorderFloors } from '../floors'
+  import { persistMovedRank } from '../order'
   import { currentFloor, infos, officeFloors, officeView, rooms, selectedFloor, selectedRoomPlace } from '../stores'
   import { getRoomName, showRoomSettings } from '../utils'
   import AddRoomPopup from './AddRoomPopup.svelte'
@@ -127,7 +128,7 @@
     drag = undefined
     if (moved === undefined || moved === target) return
     const floors = $officeFloors
-    persistFloorOrder(getClient(), floors, reorderFloors(floors, moved, target)).catch((err) => {
+    persistMovedRank(getClient(), floors, reorderFloors(floors, moved, target), moved).catch((err) => {
       console.error('[FloorsNav.drop] Failed to persist the floor order', err)
     })
   }

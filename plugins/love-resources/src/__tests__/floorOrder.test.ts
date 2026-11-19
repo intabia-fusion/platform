@@ -13,16 +13,21 @@
 // limitations under the License.
 //
 
-import type { Ref, TxOperations } from '@hcengineering/core'
+import type { Rank, Ref, TxOperations } from '@hcengineering/core'
 import type { Floor } from '@hcengineering/love'
-import { persistFloorOrder, reorderFloors } from '../floors'
+import { reorderFloors } from '../floors'
+import { persistMovedRank, rankAfterMove } from '../order'
 
 const a = 'floor:a' as Ref<Floor>
 const b = 'floor:b' as Ref<Floor>
 const c = 'floor:c' as Ref<Floor>
 
-function floor (id: Ref<Floor>, order?: number): Floor {
-  return { _id: id, _class: 'love:class:Floor', space: 'space:1', name: String(id), order } as unknown as Floor
+const first = '0|000001' as Rank
+const second = '0|000002' as Rank
+const third = '0|000003' as Rank
+
+function floor (id: Ref<Floor>, rank?: Rank): Floor {
+  return { _id: id, _class: 'love:class:Floor', space: 'space:1', name: String(id), rank } as unknown as Floor
 }
 
 interface Recorded {
@@ -54,24 +59,53 @@ describe('reorderFloors', () => {
   })
 })
 
-describe('persistFloorOrder', () => {
-  it('writes only the floors whose position actually changed', async () => {
-    const { client, calls } = createFakeClient()
-    // The list is already 0,1,2 - nothing to write at all.
-    await persistFloorOrder(client, [floor(a, 0), floor(b, 1), floor(c, 2)], [a, b, c])
-    expect(calls).toHaveLength(0)
+describe('rankAfterMove', () => {
+  it('places the moved row between its new neighbours', () => {
+    const floors = [floor(a, first), floor(b, second), floor(c, third)]
+
+    const rank = rankAfterMove(floors, [a, b, c], b) as Rank
+
+    expect(rank > first && rank < third).toBe(true)
   })
 
-  it('rewrites every moved floor and skips the one that stayed', async () => {
+  it('puts a row dropped first before every other one', () => {
+    const floors = [floor(a, first), floor(b, second), floor(c, third)]
+
+    const rank = rankAfterMove(floors, [b, a, c], b) as Rank
+
+    expect(rank < first).toBe(true)
+  })
+
+  it('puts a row dropped last after every other one', () => {
+    const floors = [floor(a, first), floor(b, second), floor(c, third)]
+
+    const rank = rankAfterMove(floors, [a, c, b], b) as Rank
+
+    expect(rank > third).toBe(true)
+  })
+
+  it('ignores a row the list does not contain', () => {
+    expect(rankAfterMove([floor(a, first)], [a], 'floor:unknown' as Ref<Floor>)).toBeUndefined()
+  })
+})
+
+describe('persistMovedRank', () => {
+  it('writes the moved floor only, its neighbours keep their ranks', async () => {
     const { client, calls } = createFakeClient()
-    const floors = [floor(a, 0), floor(b, 1), floor(c, 2)]
+    const floors = [floor(a, first), floor(b, second), floor(c, third)]
 
-    await persistFloorOrder(client, floors, [c, a, b])
+    await persistMovedRank(client, floors, [c, a, b], c)
 
-    expect(calls.map((it) => [it.args[0]._id, it.args[1].order])).toEqual([
-      [c, 0],
-      [a, 1],
-      [b, 2]
-    ])
+    expect(calls).toHaveLength(1)
+    expect(calls[0].args[0]._id).toBe(c)
+    expect((calls[0].args[1].rank as Rank) < first).toBe(true)
+  })
+
+  it('writes nothing for a floor that is not in the list', async () => {
+    const { client, calls } = createFakeClient()
+
+    await persistMovedRank(client, [floor(a, first)], [a], 'floor:unknown' as Ref<Floor>)
+
+    expect(calls).toHaveLength(0)
   })
 })

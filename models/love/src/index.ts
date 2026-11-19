@@ -20,6 +20,7 @@ import {
   type CollectionSize,
   type Domain,
   type MarkupBlobRef,
+  type Rank,
   type Ref,
   type Timestamp,
   DOMAIN_TRANSIENT,
@@ -72,6 +73,7 @@ import {
   TypeBoolean,
   Hidden,
   TypeNumber,
+  TypeRank,
   ArrOf,
   TypeAccountUuid
 } from '@hcengineering/model'
@@ -155,11 +157,13 @@ export class TOffice extends TRoom implements Office {
 export class TFloor extends TDoc implements Floor {
   name!: string
 
-  // Drag-and-drop in the office navigator rewrites this number; the list sorts by it and nothing
-  // else. Floors created before the list existed carry no value and sort after the ordered ones.
-  @Prop(TypeNumber(), love.string.MeetingOrder)
+  // Drag-and-drop in the office navigator rewrites this LexoRank; the list sorts by it and nothing
+  // else. A rank places a floor between two others without touching them, so a drop writes one
+  // document. Floors created before the list existed carry no rank and sort after the ranked ones.
+  @Prop(TypeRank(), love.string.MeetingOrder)
+  @Hidden()
   @Index(IndexKind.Indexed)
-  order?: number
+  rank?: Rank
 }
 
 @Model(love.class.ParticipantInfo, core.class.Doc, DOMAIN_TRANSIENT)
@@ -435,14 +439,16 @@ export class TPermanentMeeting extends TSpace implements PermanentMeeting {
   @Prop(TypeNumber(), love.string.RemindBefore, { editor: love.component.ReminderBeforeEditor })
   reminderBefore?: number
 
-  // Flat grouping of the permanent meetings list. `order` is authoritative: the list sorts by it
-  // and drag-and-drop rewrites it, so a manual sort never has to fight a computed one.
+  // Flat grouping of the permanent meetings list. `rank` is authoritative inside the group: the
+  // list sorts by it and drag-and-drop rewrites it, so a manual sort never fights a computed one.
   @Index(IndexKind.Indexed)
   @Prop(TypeRef(love.class.MeetingGroup), love.string.MeetingGroup)
   group?: Ref<MeetingGroup>
 
-  @Prop(TypeNumber(), love.string.MeetingOrder)
-  order?: number
+  @Prop(TypeRank(), love.string.MeetingOrder)
+  @Hidden()
+  @Index(IndexKind.Indexed)
+  rank?: Rank
 
   @Prop(PropCollection(chunter.class.ChatMessage), activity.string.Messages)
   messages?: number
@@ -451,17 +457,18 @@ export class TPermanentMeeting extends TSpace implements PermanentMeeting {
   attachments?: number
 }
 
-// A flat group of permanent meetings: a name and an order. Meetings point at it and carry their own
-// `order` inside the group, so drag-and-drop only rewrites numbers.
+// A flat group of permanent meetings: a name and a position. Meetings point at it and carry their
+// own rank inside the group, so drag-and-drop only rewrites a rank string.
 @Model(love.class.MeetingGroup, core.class.Doc, DOMAIN_LOVE)
 @UX(love.string.MeetingGroup, love.icon.MeetingMinutes, undefined, undefined, undefined, undefined, 'name')
 export class TMeetingGroup extends TDoc implements MeetingGroup {
   @Prop(TypeString(), core.string.Name)
   name!: string
 
-  @Prop(TypeNumber(), love.string.MeetingOrder)
+  @Prop(TypeRank(), love.string.MeetingOrder)
+  @Hidden()
   @Index(IndexKind.Indexed)
-  order!: number
+  rank?: Rank
 }
 
 @Mixin(love.mixin.MeetingSchedule, calendar.class.Schedule)

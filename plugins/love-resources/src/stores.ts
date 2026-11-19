@@ -19,6 +19,7 @@ import {
 import { location } from '@hcengineering/ui'
 import { derived, get, writable } from 'svelte/store'
 
+import { compareRanks } from './order'
 import love from './plugin'
 
 // Client-side store to indicate current session is attempting to connect to a meeting
@@ -131,14 +132,14 @@ export const officeView = derived(officeSegment, (segment) =>
   segment === 'meetings' || segment === 'permanent' ? segment : segment === undefined ? 'floors' : 'floor'
 )
 // The service floor only hosts the sessions of scheduled meetings; people never sit on it.
-// Floors are ordered by hand (`order`) in the navigator; a floor created before the list existed
-// carries no value and sorts after the ordered ones, by name.
+// Floors are ordered by hand (`rank`) in the navigator; a floor created before the list existed
+// carries no rank and sorts after the ranked ones, by name.
 export const officeFloors = derived(floors, (floors) =>
   floors
     .filter((it) => !isServiceFloor(it._id))
     .sort((a, b) => {
-      const byOrder = (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER)
-      return byOrder !== 0 ? byOrder : a.name.localeCompare(b.name)
+      const byRank = compareRanks(a.rank, b.rank)
+      return byRank !== 0 ? byRank : a.name.localeCompare(b.name)
     })
 )
 export const currentFloor = derived(

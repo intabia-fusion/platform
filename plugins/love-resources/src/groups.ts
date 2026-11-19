@@ -14,11 +14,12 @@
 //
 import type { Ref, TxOperations } from '@hcengineering/core'
 import love, { type MeetingGroup, type PermanentMeeting } from '@hcengineering/love'
-import core from '@hcengineering/core'
+import { genRanks, makeRank } from '@hcengineering/rank'
+import core, { SortingOrder } from '@hcengineering/core'
 
 /**
  * Moves an item of `ids` from `from` to `to` and returns the new order. Kept pure and separate from
- * the component: the drag-and-drop code only has to say where, and the test can check the numbers.
+ * the component: the drag-and-drop code only has to say where, and the test can check the result.
  */
 export function moveItem<T> (ids: T[], from: number, to: number): T[] {
   if (from === to || from < 0 || to < 0 || from >= ids.length || to >= ids.length) return ids
@@ -26,11 +27,6 @@ export function moveItem<T> (ids: T[], from: number, to: number): T[] {
   const [item] = next.splice(from, 1)
   next.splice(to, 0, item)
   return next
-}
-
-/** Assigns `0..n-1` to the given ids - one write per item is what the caller does with it. */
-export function orderOf<T> (ids: T[]): Array<{ id: T, order: number }> {
-  return ids.map((id, index) => ({ id, order: index }))
 }
 
 /** Puts the moved meeting into the target group right before `beforeId` (or at the end). */
@@ -50,39 +46,21 @@ export function mergeMeetingIntoGroup (
   return next
 }
 
-/** Writes `order` for meetings and groups in one go: the list is ordered by it and nothing else. */
-export async function persistOrder (
-  client: TxOperations,
-  meetings: Array<{ _id: Ref<PermanentMeeting>, group?: Ref<MeetingGroup> }>,
-  groups: Array<Ref<MeetingGroup>>
-): Promise<void> {
-  for (const { id, order } of orderOf(groups)) {
-    const group = await client.findOne(love.class.MeetingGroup, { _id: id })
-    if (group === undefined || group.order === order) continue
-    await client.diffUpdate(group, { order })
-  }
-
-  const byId = new Map(meetings.map((it) => [it._id, it]))
-  for (const { id, order } of orderOf(meetings.map((it) => it._id))) {
-    const meeting = await client.findOne(love.class.PermanentMeeting, { _id: id })
-    if (meeting === undefined) continue
-    const next = byId.get(id)
-    if (meeting.order === order && meeting.group === next?.group) continue
-    await client.diffUpdate(meeting, { order, group: next?.group })
-  }
-}
-
 /** Creates a group and moves the given meetings into it, keeping their relative order. */
 export async function createMeetingGroup (
   client: TxOperations,
   name: string,
   meetings: PermanentMeeting[]
 ): Promise<Ref<MeetingGroup>> {
-  const groups = await client.findAll(love.class.MeetingGroup, {})
-  const order = groups.reduce((max, it) => Math.max(max, it.order ?? 0), -1) + 1
-  const id = await client.createDoc(love.class.MeetingGroup, core.space.Workspace, { name, order })
+  // The new group goes after the last one: one rank for the group, one per moved meeting.
+  const last = await client.findOne(love.class.MeetingGroup, {}, { sort: { rank: SortingOrder.Descending } })
+  const id = await client.createDoc(love.class.MeetingGroup, core.space.Workspace, {
+    name,
+    rank: makeRank(last?.rank, undefined)
+  })
+  const ranks = genRanks(meetings.length)
   for (const [index, meeting] of meetings.entries()) {
-    await client.diffUpdate(meeting, { group: id, order: index })
+    await client.diffUpdate(meeting, { group: id, rank: ranks[index] })
   }
   return id
 }

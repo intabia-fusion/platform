@@ -1,6 +1,16 @@
 import { Event, Schedule } from '@hcengineering/calendar'
 import { Person } from '@hcengineering/contact'
-import { AccountUuid, AttachedDoc, Doc, MarkupBlobRef, Ref, Space, Timestamp, WorkspaceUuid } from '@hcengineering/core'
+import {
+  AccountUuid,
+  AttachedDoc,
+  Doc,
+  MarkupBlobRef,
+  Rank,
+  Ref,
+  Space,
+  Timestamp,
+  WorkspaceUuid
+} from '@hcengineering/core'
 import { Preference } from '@hcengineering/preference'
 
 export enum RoomType {
@@ -14,8 +24,11 @@ export enum RoomType {
 
 export interface Floor extends Doc {
   name: string
-  /** Manual position in the office navigator. Floors without one sort after the ordered ones, by name. */
-  order?: number
+  /**
+   * Manual position in the office navigator, a LexoRank. A drop writes the moved floor only, its
+   * neighbours keep their values. Floors without one sort after the ranked ones, by name.
+   */
+  rank?: Rank
 }
 
 /**
@@ -314,8 +327,8 @@ export interface PermanentMeeting extends Space {
 
   /** Flat group of the meetings list. */
   group?: Ref<MeetingGroup>
-  /** Position inside the group; the list sorts by it and drag-and-drop rewrites it. */
-  order?: number
+  /** Position inside the group: a LexoRank the list sorts by and a drop rewrites. */
+  rank?: Rank
 
   messages?: number
   attachments?: number
@@ -324,12 +337,12 @@ export interface PermanentMeeting extends Space {
 /**
  * @public
  *
- * A flat named group of permanent meetings. Meetings carry their own `order` inside the group,
- * so both the group list and the meeting list are ordered by a number and nothing else.
+ * A flat named group of permanent meetings. Meetings carry their own `rank` inside the group, so
+ * both the group list and the meeting list are ordered by a LexoRank and nothing else.
  */
 export interface MeetingGroup extends Doc {
   name: string
-  order: number
+  rank?: Rank
 }
 
 /**
