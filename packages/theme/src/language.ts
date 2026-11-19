@@ -13,9 +13,21 @@
 // limitations under the License.
 //
 
-/** Available interface languages. */
-export const interfaceLanguages = ['ru', 'en']
+// These locales have entries in the interface language selector and bundled translations.
+const supportedLanguages = ['ru', 'en', 'pt', 'pt-br', 'es', 'zh', 'fr', 'it', 'cs', 'de', 'ja', 'tr']
+let enabledLanguages = ['ru', 'en']
+
+/** Configure the interface languages before initializing the theme. */
+export function configureInterfaceLanguages (languages?: string): string[] {
+  const configured = (languages ?? '')
+    .split(',')
+    .map((language) => language.trim())
+    .filter((language) => supportedLanguages.includes(language))
+  enabledLanguages = configured.length > 0 ? [...new Set(configured)] : ['ru', 'en']
+  return [...enabledLanguages]
+}
 
 export function resolveInterfaceLanguage (language: string): string {
-  return interfaceLanguages.includes(language) ? language : 'en'
+  if (enabledLanguages.includes(language)) return language
+  return enabledLanguages.includes('en') ? 'en' : enabledLanguages[0]
 }

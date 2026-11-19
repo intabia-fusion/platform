@@ -20,7 +20,7 @@ import { Analytics } from '@hcengineering/analytics'
 import '@hcengineering/platform-rig/profiles/ui/svelte'
 import { derived, writable } from 'svelte/store'
 import { ThemeVariant, type ThemeVariantType, AccentColor, type AccentColorType } from './variants'
-export { interfaceLanguages } from './language'
+export { configureInterfaceLanguages } from './language'
 
 export { default as Theme } from './Theme.svelte'
 export { default as InvertedTheme } from './InvertedTheme.svelte'

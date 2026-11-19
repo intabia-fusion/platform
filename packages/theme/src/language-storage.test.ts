@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { getCurrentLanguage, setDefaultLanguage } from './index'
+import { configureInterfaceLanguages, getCurrentLanguage, setDefaultLanguage } from './index'
 
 jest.mock('svelte/store', () => ({ writable: jest.fn(), derived: jest.fn() }))
 jest.mock('./Theme.svelte', () => ({}))
@@ -23,6 +23,7 @@ jest.mock('@hcengineering/analytics', () => ({ Analytics: { setTag: jest.fn() } 
 const originalStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage')
 
 afterAll(() => {
+  configureInterfaceLanguages()
   if (originalStorage !== undefined) {
     Object.defineProperty(globalThis, 'localStorage', originalStorage)
   } else {
@@ -32,6 +33,7 @@ afterAll(() => {
 
 describe('persisted interface language', () => {
   beforeEach(() => {
+    configureInterfaceLanguages('ru,en')
     const values = new Map<string, string>()
     Object.defineProperty(globalThis, 'localStorage', {
       configurable: true,
@@ -58,6 +60,23 @@ describe('persisted interface language', () => {
     setDefaultLanguage('ru')
     expect(localStorage.getItem('lang')).toBe('ru')
     expect(getCurrentLanguage()).toBe('ru')
+  })
+
+  it.each([
+    ['en,ru,fr', 'fr', 'fr'],
+    ['ru', 'fr', 'ru'],
+    ['fr', 'en', 'fr']
+  ])('uses configured languages %s for saved %s', (languages, saved, expected) => {
+    configureInterfaceLanguages(languages)
+    localStorage.setItem('lang', saved)
+    expect(getCurrentLanguage()).toBe(expected)
+    expect(localStorage.getItem('lang')).toBe(expected)
+  })
+
+  it('parses the configured list and ignores unavailable locales', () => {
+    expect(configureInterfaceLanguages(' en, ru,fr,fr,unknown, ')).toEqual(['en', 'ru', 'fr'])
+    expect(configureInterfaceLanguages('unknown')).toEqual(['ru', 'en'])
+    expect(configureInterfaceLanguages()).toEqual(['ru', 'en'])
   })
 
   it('does not overwrite a saved selection with the default', () => {

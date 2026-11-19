@@ -151,7 +151,13 @@ import { concatLink, coreId } from '@hcengineering/core'
 import presentation, { loadServerConfig, createFileStorage, presentationId } from '@hcengineering/presentation'
 
 import { setMetadata } from '@hcengineering/platform'
-import { initThemeStore, interfaceLanguages, setDefaultLanguage, setForceAccent, type AccentColorType } from '@hcengineering/theme'
+import {
+  initThemeStore,
+  configureInterfaceLanguages,
+  setDefaultLanguage,
+  setForceAccent,
+  type AccentColorType
+} from '@hcengineering/theme'
 
 import { configureAnalytics } from './analytics'
 import { Analytics } from '@hcengineering/analytics'
@@ -582,7 +588,7 @@ export async function configurePlatform() {
   setMetadata(support.metadata.PrivacyPolicyLink, myBranding.support?.privacyPolicyLink ?? privacyPolicyLink)
   setMetadata(support.metadata.SupportEmail, config.SUPPORT_EMAIL ?? defaultSupportEmail)
 
-  setMetadata(uiPlugin.metadata.Languages, interfaceLanguages)
+  setMetadata(uiPlugin.metadata.Languages, configureInterfaceLanguages(myBranding.languages))
 
   setMetadata(
     uiPlugin.metadata.Routes,
