@@ -54,7 +54,20 @@ require_tools
 "$SCRIPT_DIR/base-up.sh" "$STAND_RUNTIME"
 
 log "removing the previous $STAND_NAME stand"
-if [ "${STAND_REUSE:-0}" = 1 ] && kc get namespace "$STAND_NS" >/dev/null 2>&1; then
+if [ "$STAND_NAME" = api ]; then
+  guard_down_namespace "$STAND_NAME" "$STAND_NS" 1
+  existing_ns="$(kc get namespace "$STAND_NS" --ignore-not-found -o name)" || die "cannot inspect api namespace '$STAND_NS'"
+  if [ "${STAND_PREPARE_OWNED:-0}" = 1 ]; then
+    kc create namespace "$STAND_NS" || die "cannot claim api namespace '$STAND_NS'"
+  elif [ -n "$existing_ns" ] && [ "${STAND_REUSE:-0}" != 1 ]; then
+    kc -n "$STAND_NS" create configmap api-stand-incomplete --dry-run=client -o yaml | kc apply -f -
+    "$SCRIPT_DIR/test-down.sh" "$STAND_NAME" "$STAND_RUNTIME" --yes
+    kc create namespace "$STAND_NS" || die "cannot reclaim api namespace '$STAND_NS'"
+  elif [ -z "$existing_ns" ]; then
+    kc create namespace "$STAND_NS" || die "cannot claim api namespace '$STAND_NS'"
+  fi
+  kc -n "$STAND_NS" create configmap api-stand-incomplete --dry-run=client -o yaml | kc apply -f -
+elif [ "${STAND_REUSE:-0}" = 1 ] && kc get namespace "$STAND_NS" >/dev/null 2>&1; then
   # STAND_REUSE=1: upgrade in place; the data wipe below requires a pod restart anyway.
   log "keeping namespace $STAND_NS (STAND_REUSE=1): upgrade in place"
 else
@@ -65,41 +78,61 @@ fi
 # message instead of hanging dotest until someone kills it.
 with_deadline() {
   local secs="$1"; shift
-  perl -e 'alarm shift; exec @ARGV' "$secs" "$@" || die "timed out after ${secs}s: $*"
+  local rc=0
+  perl -e '
+    my $seconds = shift;
+    my $pid = fork // die "fork: $!\n";
+    if ($pid == 0) { exec @ARGV or die "exec: $!\n" }
+    $SIG{ALRM} = sub { kill "KILL", $pid; waitpid $pid, 0; exit 124 };
+    alarm $seconds;
+    waitpid $pid, 0;
+    alarm 0;
+    exit(($? & 127) ? 128 + ($? & 127) : $? >> 8);
+  ' "$secs" "$@" || rc=$?
+  [ "$rc" != 124 ] || die "timed out after ${secs}s: $*"
+  [ "$rc" = 0 ] || die "command failed (exit $rc): $*"
 }
 
 log "resetting $STAND_NAME data (databases, buckets, index, Kafka topics)"
 PG_POD="$(postgres_primary_pod)"
 kc -n "$BASE_NAMESPACE" exec "$PG_POD" -- sh -c \
-  "dropdb -U postgres --if-exists --force '$STAND_DATA'; for db in $REGION_DBS; do dropdb -U postgres --if-exists --force \"\$db\"; done"
+  "dropdb -U postgres --if-exists --force '$STAND_DATA' || exit; for db in $REGION_DBS; do dropdb -U postgres --if-exists --force \"\$db\" || exit; done"
 # The silo pod's `local` alias carries no keys; use the platform credentials explicitly,
 # otherwise the wipe is a silent no-op and old blobs pile up across runs.
-S3_AK="$(kc -n "$BASE_NAMESPACE" get secret platform-base -o jsonpath='{.data.S3_ACCESS_KEY}' 2>/dev/null | base64 -d || true)"
-S3_SK="$(kc -n "$BASE_NAMESPACE" get secret platform-base -o jsonpath='{.data.S3_SECRET_KEY}' 2>/dev/null | base64 -d || true)"
-if [ -n "$S3_AK" ] && [ -n "$S3_SK" ]; then
-  kc -n "$BASE_NAMESPACE" exec statefulset/s3 -- sh -c \
-    "mc alias set wipe http://127.0.0.1:9000 '$S3_AK' '$S3_SK' >/dev/null && mc rm -r --force wipe/$STAND_DATA wipe/$STAND_DATA-chunks wipe/$STAND_DATA-backups wipe/$STAND_DATA-love-recordings >/dev/null 2>&1 || true"
-fi
+S3_AK="$(kc -n "$BASE_NAMESPACE" get secret platform-base -o jsonpath='{.data.S3_ACCESS_KEY}' | base64 -d)" || die "S3: cannot read access key"
+S3_SK="$(kc -n "$BASE_NAMESPACE" get secret platform-base -o jsonpath='{.data.S3_SECRET_KEY}' | base64 -d)" || die "S3: cannot read secret key"
+[ -n "$S3_AK" ] && [ -n "$S3_SK" ] || die "S3: platform-base credentials are empty"
+kc -n "$BASE_NAMESPACE" exec -i statefulset/s3 -- sh -s -- "$S3_AK" "$S3_SK" "$STAND_DATA" <<'S3_RESET' || die "S3: data cleanup failed"
+mc alias set wipe http://127.0.0.1:9000 "$1" "$2" >/dev/null || exit
+buckets=$(mc ls wipe) || exit
+for bucket in "$3" "$3-chunks" "$3-backups" "$3-love-recordings"; do
+  for entry in $buckets; do
+    [ "$entry" = "$bucket/" ] || continue
+    mc rm -r --force "wipe/$bucket" || exit
+  done
+done
+S3_RESET
 # Elastic: the stand index plus one index per non-default region (fulltext<region>).
 ELASTIC_INDEXES="$STAND_DATA"
 for region in $REGION_IDS; do
   ELASTIC_INDEXES="$ELASTIC_INDEXES $STAND_DATA-$region"
 done
 for index in $ELASTIC_INDEXES; do
-  kc -n "$BASE_NAMESPACE" exec statefulset/elastic -- \
-    curl -fsS -X DELETE "http://localhost:9200/$index" 2>/dev/null || true
+  status="$(kc -n "$BASE_NAMESPACE" exec statefulset/elastic -- \
+    curl -sS -o /dev/null -w '%{http_code}' -X DELETE "http://localhost:9200/$index")" || die "Elasticsearch: failed to delete $index"
+  [ "$status" = 200 ] || [ "$status" = 404 ] || die "Elasticsearch: delete $index returned HTTP $status"
 done
-with_deadline 300 kc -n "$BASE_NAMESPACE" exec my-cluster-combined-0 -- sh -c \
-  "for topic in \$(bin/kafka-topics.sh --bootstrap-server localhost:9092 --list | grep -- '-$STAND_DATA\$'); do bin/kafka-topics.sh --bootstrap-server localhost:9092 --delete --topic \"\$topic\"; done"
+with_deadline 300 kubectl --context "$KUBE_CONTEXT" -n "$BASE_NAMESPACE" exec my-cluster-combined-0 -- sh -c \
+  "topics=\$(bin/kafka-topics.sh --bootstrap-server localhost:9092 --list) || exit; for topic in \$topics; do case \"\$topic\" in *-$STAND_DATA) bin/kafka-topics.sh --bootstrap-server localhost:9092 --delete --topic \"\$topic\" || exit ;; esac; done"
 
 # Consumers subscribe at pod start and do not all recover when a topic appears later: recreate
 # the core set (partitions as in PlatformQueue.createTopics()) before deploying.
 log "creating $STAND_NAME Kafka topics"
-with_deadline 300 kc -n "$BASE_NAMESPACE" exec my-cluster-combined-0 -- sh -c \
+with_deadline 300 kubectl --context "$KUBE_CONTEXT" -n "$BASE_NAMESPACE" exec my-cluster-combined-0 -- sh -c \
   "for spec in tx:10 online-user-tx:10 fulltext:5 workspace:1 users:1 process:1 ai-queue:10 transcription-queue:10 user-notifications:10 held-notifications:10 notifications:2 love-queue:1 crm:1 billing-usage:1 subscription:1 payment-operation:1; do \
     topic=\${spec%%:*}; partitions=\${spec##*:}; \
     bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --if-not-exists \
-      --topic \"\$topic-$STAND_DATA\" --partitions \"\$partitions\"; \
+      --topic \"\$topic-$STAND_DATA\" --partitions \"\$partitions\" || exit; \
   done"
 
 if [ "${STAND_REUSE:-0}" = 1 ] && kc get namespace "$STAND_NS" >/dev/null 2>&1; then
@@ -218,3 +251,7 @@ kc -n "$STAND_NS" exec stand-tool -- env \
   K8S_TOOL_IN_POD=1 STAND_BACKEND=k3s K8S_STAND="$STAND_NAME" \
   STAND_HTTPS_PORT="$STAND_HTTPS_PORT" MODEL_VERSION="$MODEL_VERSION" \
   node --max-old-space-size=8096 /workspace/dev/test-base/bundle/bundle.js "$STAND_NAME" seed
+
+if [ "$STAND_NAME" = api ]; then
+  kc -n "$STAND_NS" delete configmap api-stand-incomplete
+fi

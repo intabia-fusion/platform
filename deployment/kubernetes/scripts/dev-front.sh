@@ -49,9 +49,9 @@ ensure_base
 HOST="$(stand_host "$STAND")"
 [ -n "$HOST" ] || die "cannot resolve $STAND hostUrl"
 HTTPS_PORT="$(published_https_port)"
-STAND_URL="https://$HOST:$HTTPS_PORT"
 STAND_PUBLIC_HOST="$HOST"
 [ "$HTTPS_PORT" = 443 ] || STAND_PUBLIC_HOST="$HOST:$HTTPS_PORT"
+STAND_URL="https://$STAND_PUBLIC_HOST"
 export STAND_URL STAND_PUBLIC_HOST
 
 CA_PEM="$(mkcert -CAROOT)/rootCA.pem"
@@ -104,7 +104,7 @@ if [ "$MODE" = host ]; then
   cd "$REPO_ROOT/dev/prod"
   export NODE_PATH="$REPO_ROOT/dev/prod/node_modules${NODE_PATH:+:$NODE_PATH}"
   log "starting webpack on http://localhost:$HOST_PORT, proxy target $STAND_URL"
-  exec pnpm run dev-server
+  exec pnpm run dev-server --port "$HOST_PORT"
 fi
 
 # ------------------------------------------------------------ container mode --

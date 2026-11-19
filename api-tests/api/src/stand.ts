@@ -58,7 +58,10 @@ function namespace (): string {
 
 function isUp (): boolean {
   const ns = namespace()
-  const res = spawnSync('bash', ['-c', `source "${scriptsDir}/lib.sh" && kc -n "${ns}" get deployment account`])
+  const res = spawnSync('bash', [
+    '-c',
+    `source "${scriptsDir}/lib.sh" && kc -n "${ns}" get deployment account >/dev/null && marker="$(kc -n "${ns}" get configmap api-stand-incomplete --ignore-not-found -o name)" && test -z "$marker"`
+  ])
   return res.status === 0
 }
 
@@ -103,14 +106,9 @@ export async function startStand (): Promise<void> {
   const mode = process.env.API_STAND
   if (mode === 'external') return
 
-  const up = isUp()
-  if (!(up && mode === 'keep')) {
-    if (!up) {
-      // Full cycle: remove the stand, wipe its data, deploy, seed in-cluster.
-      // STAND_COVERAGE reaches deploy.sh via the environment and enables the coverage PVC.
-      run([join(scriptsDir, 'prepare-test-stand.sh'), standName])
-    }
-    // Already up but not `keep`: reused as is, without re-seeding.
+  const prepared = process.env.API_STAND_PREPARED === '1'
+  if (!prepared && !isUp()) {
+    throw new Error('api stand is unavailable or preparation is incomplete; run the package script')
   }
   // postgres/s3/mailpit live in platform-base, not in the stand namespace.
   const baseNs = shCapture('echo "$BASE_NAMESPACE"')
@@ -120,7 +118,7 @@ export async function startStand (): Promise<void> {
     await startForward(baseNs, 'statefulset/s3', 9102, 9000),
     await startForward(baseNs, 'deployment/mailpit', 8126, 8025)
   ].filter((f): f is StandState['forwards'][number] => f !== undefined)
-  holder.__apiStand = { owned: !up, forwards }
+  holder.__apiStand = { owned: prepared, forwards }
 }
 
 /** @public */

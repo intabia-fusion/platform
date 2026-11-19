@@ -71,6 +71,10 @@ test.describe('Admin impersonation', () => {
       // Every tx from a read-only session is refused by the transactor: the issue must not appear.
       const rejected: NewIssue = { ...newIssue, title: `Must not be created-${wsId}` }
       await issuesPage.createNewIssue(rejected)
+      await page.reload()
+      await trackerNavigationMenuPage.openIssuesForProject('Default')
+      await issuesPage.clickModelSelectorAll()
+      await expect(page.locator('span', { hasText: newIssue.title }).first()).toBeVisible()
       await expect(page.locator('span', { hasText: rejected.title })).toHaveCount(0)
     })
   })

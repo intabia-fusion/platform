@@ -39,6 +39,7 @@ const platformUse: PlaywrightTestConfig['use'] = {
   // Without it, an action inherits the test timeout: clicking a covered element (a panel, a stale
   // overlay) hangs a minute with no useful report. 30s: a button can take twenty under 5 workers.
   actionTimeout: 30000,
+  ignoreHTTPSErrors: process.env.K8S_STAND === 'sanity',
   testIdAttribute: 'data-id',
   permissions: ['clipboard-read', 'clipboard-write', 'microphone', 'camera'],
   launchOptions: {

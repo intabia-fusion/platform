@@ -24,7 +24,7 @@ async function authenticate (page: Page, user: string, password: string): Promis
   const swp = new SelectWorkspacePage(page)
   await swp.selectWorkspace(PlatformWs)
   await page.waitForURL((url) => {
-    return url.pathname.startsWith(`/workbench/${PlatformWs}/`)
+    return url.pathname === `/workbench/${PlatformWs}` || url.pathname.startsWith(`/workbench/${PlatformWs}/`)
   })
 }
 

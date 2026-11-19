@@ -14,13 +14,16 @@ source "$K8S_DIR/cluster/versions.env"
 # defaults so plain `stand:deploy` uses the configured target; explicit env/CLI always wins.
 STAND_CONFIG_DIR="${STAND_CONFIG_DIR:-$K8S_DIR/.stand}"
 STAND_CONFIG_FILE="$STAND_CONFIG_DIR/config"
+_stand_kubeconfig_explicit=0
+if [ -n "${KUBECONFIG+x}" ]; then
+  _stand_kubeconfig_explicit=1
+fi
 if [ -f "$STAND_CONFIG_FILE" ]; then
   _stand_keep=()
   _stand_ns_explicit=0
   for _stand_var in STAND_RUNTIME KUBECONFIG KUBE_CONTEXT STAND_NAMESPACE STAND_PUSH_IMAGES; do
     if [ -n "${!_stand_var+x}" ]; then
       _stand_keep+=("${_stand_var}=${!_stand_var}")
-      [ "$_stand_var" = KUBECONFIG ] && _stand_kubeconfig_explicit=1
       [ "$_stand_var" = STAND_NAMESPACE ] && _stand_ns_explicit=1
     fi
   done
@@ -362,7 +365,11 @@ guard_down_namespace() {
   mapfile -t files < <(stand_values_files "$stand")
   default_ns="$(grep -h '^  namespace:' "${files[@]}" | tail -1 | awk '{print $2}' | tr -d '"')"
   [ -n "$default_ns" ] && [ "$ns" = "$default_ns" ] && return 0
-  warn "STAND_NAMESPACE=$ns overrides the chart default ($default_ns) for stand '$stand'; deleting namespace $ns"
+  if [ "${STAND_NAMESPACE_FROM_CONFIG:-0}" != 1 ]; then
+    warn "explicit STAND_NAMESPACE=$ns overrides chart namespace $default_ns"
+    return 0
+  fi
+  die "refusing to remove stand '$stand' in context '$KUBE_CONTEXT': namespace '$ns' differs from expected '$default_ns'"
 }
 
 # Refuse to install a stand into a namespace it does not own: platform-base is never a stand
