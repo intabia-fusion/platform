@@ -205,7 +205,8 @@ export class FullTextMiddleware extends BaseMiddleware implements Middleware {
       return true
     })
 
-    const fullTextLimit = Math.min(5000, (options?.limit ?? 200) * 100)
+    // A total is asked with limit 1, its window must match the one of the list it counts
+    const fullTextLimit = options?.total === true ? 5000 : Math.min(5000, (options?.limit ?? 200) * 100)
 
     // A re-check by _id must find the doc beyond the first fullTextLimit hits.
     // Long id lists stay unfiltered: Elastic caps the terms of a filter.

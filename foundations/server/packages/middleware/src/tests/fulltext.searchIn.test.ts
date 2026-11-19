@@ -76,7 +76,7 @@ describe('FullTextMiddleware $searchIn', () => {
   let ctx: MeasureContext<SessionData>
   let findAll: jest.Mock
   let mw: FullTextMiddleware
-  let searches: Array<{ classes: Array<Ref<Class<Doc>>>, query: DocumentQuery<Doc> }>
+  let searches: Array<{ classes: Array<Ref<Class<Doc>>>, query: DocumentQuery<Doc>, limit: number }>
   let addExtraFind: jest.Mock
   let found: IndexedDoc[]
   let foundAttached: IndexedDoc[]
@@ -97,8 +97,8 @@ describe('FullTextMiddleware $searchIn', () => {
     mw = new FullTextMiddleware(pipelineContext, next, 'http://fulltext', 'token')
     searches = []
     // Record what goes to the pod
-    jest.spyOn(mw, 'search').mockImplementation(async (ctx, classes, query): Promise<IndexedDoc[]> => {
-      searches.push({ classes: classes as Array<Ref<Class<Doc>>>, query: query as DocumentQuery<Doc> })
+    jest.spyOn(mw, 'search').mockImplementation(async (ctx, classes, query, limit): Promise<IndexedDoc[]> => {
+      searches.push({ classes: classes as Array<Ref<Class<Doc>>>, query: query as DocumentQuery<Doc>, limit })
       return classes.includes(ISSUE) ? found : classes.includes(COMMENT) ? foundAttached : []
     })
     found = [{ id: 'i1', _class: [ISSUE], _score: 1 } as any]
@@ -161,6 +161,14 @@ describe('FullTextMiddleware $searchIn', () => {
     await mw.findAll(ctx, ISSUE, { $search: 'release', _id: { $in: many } }, { limit: 1 })
 
     expect(searches.map((it) => it.query.$filter)).toEqual([undefined, undefined])
+  })
+
+  it('counts a total over the same index window as the list it belongs to', async () => {
+    await mw.findAll(ctx, ISSUE, { $search: 'release' }, { limit: 200 })
+    await mw.findAll(ctx, ISSUE, { $search: 'release' }, { limit: 1, total: true })
+    await mw.findAll(ctx, ISSUE, { $search: 'release' }, { limit: 1 })
+
+    expect(searches.map((it) => it.limit)).toEqual([5000, 5000, 5000, 5000, 100, 100])
   })
 
   it('does not restrict the index without known ids', async () => {
