@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -16,10 +17,9 @@
   import { OK, Severity, Status } from '@hcengineering/platform'
 
   import { getCurrentLocation } from '@hcengineering/ui'
-  import { logIn } from '@hcengineering/workbench'
   import login from '../plugin'
   import type { Field } from '../types'
-  import { goTo, restorePassword } from '../utils'
+  import { doLoginNavigate, restorePassword } from '../utils'
   import Form from './Form.svelte'
   import { getPasswordValidationRules } from '../validations'
 
@@ -52,10 +52,9 @@
 
       status = loginStatus
 
-      if (result != null) {
-        await logIn(result)
-        goTo('selectWorkspace')
-      }
+      await doLoginNavigate(result, (nextStatus) => {
+        status = nextStatus
+      })
     }
   }
 </script>

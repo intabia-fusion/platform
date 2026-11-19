@@ -50,7 +50,7 @@ import { createHash, pbkdf2Sync, randomBytes } from 'crypto'
 import otpGenerator from 'otp-generator'
 
 import { Analytics } from '@hcengineering/analytics'
-import { type PasswordAgingStatus } from '@hcengineering/account-client'
+import { type OnboardingState, type PasswordAgingStatus } from '@hcengineering/account-client'
 import {
   decodeTokenVerbose,
   generateToken,
@@ -1008,7 +1008,8 @@ export async function createAccount (
   confirmed = false,
   automatic = false,
   createdOn = Date.now(),
-  consentAccepted = false
+  consentAccepted = false,
+  onboarding?: OnboardingState
 ): Promise<PersonId> {
   // Create Huly social id and account
   const socialId = await db.socialId.insertOne({
@@ -1020,7 +1021,8 @@ export async function createAccount (
   await db.account.insertOne({
     uuid: personUuid as AccountUuid,
     automatic,
-    ...(consentAccepted ? { consentAcceptedOn: createdOn } : {})
+    ...(consentAccepted ? { consentAcceptedOn: createdOn } : {}),
+    ...(onboarding !== undefined ? { onboarding } : {})
   })
   await db.accountEvent.insertOne({
     accountUuid: personUuid as AccountUuid,
@@ -1854,6 +1856,12 @@ export async function getEmailSocialId (db: AccountDB, email: string): Promise<S
   return await db.socialId.findOne({ type: SocialIdType.EMAIL, value: email })
 }
 
+export async function hasVerifiedEmail (db: AccountDB, personUuid: PersonUuid, email: string): Promise<boolean> {
+  return (
+    (await db.socialId.findOne({ type: SocialIdType.EMAIL, personUuid, value: email, verifiedOn: { $gt: 0 } })) != null
+  )
+}
+
 export function getFrontUrl (branding: Branding | null): string {
   const front = branding?.front ?? getMetadata(accountPlugin.metadata.FrontURL)
 
@@ -2066,7 +2074,8 @@ export async function loginOrSignUpWithProvider (
   last: string,
   socialId: SocialKey,
   signUpDisabled = false,
-  consentAccepted = false
+  consentAccepted = false,
+  invite?: WorkspaceInvite
 ): Promise<LoginInfo | null> {
   try {
     const normalizedEmail = email != null ? cleanEmail(email) : ''
@@ -2083,14 +2092,23 @@ export async function loginOrSignUpWithProvider (
         ? await db.socialId.findOne({ type: SocialIdType.EMAIL, value: normalizedEmail })
         : undefined
     let personUuid = targetSocialId?.personUuid ?? emailSocialId?.personUuid
+    const account = personUuid == null ? null : await db.account.findOne({ uuid: personUuid as AccountUuid })
 
-    if (personUuid == null) {
+    if (account == null) {
       if (signUpDisabled || !consentAccepted) {
         return null
       }
-
-      personUuid = await db.person.insertOne({ firstName: first, lastName: last ?? '' })
+      if (invite?.email != null && invite.email !== '') {
+        const recipient = cleanEmail(invite.email)
+        const matchesProvider =
+          recipient === normalizedEmail && (emailSocialId == null || emailSocialId.personUuid === personUuid)
+        if (!matchesProvider && (personUuid == null || !(await hasVerifiedEmail(db, personUuid, recipient)))) {
+          throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+        }
+      }
     }
+
+    personUuid ??= await db.person.insertOne({ firstName: first ?? '', lastName: last ?? '' })
 
     if (personUuid == null) {
       throw new PlatformError(new Status(Severity.ERROR, platform.status.InternalServerError, {}))
@@ -2102,15 +2120,11 @@ export async function loginOrSignUpWithProvider (
       throw new PlatformError(new Status(Severity.ERROR, platform.status.InternalServerError, {}))
     }
 
-    const account = await db.account.findOne({ uuid: personUuid as AccountUuid })
-
     if (account == null) {
-      if (signUpDisabled || !consentAccepted) {
-        return null
-      }
-
-      await createAccount(db, personUuid, true, false, Date.now(), consentAccepted)
-      await db.person.update({ uuid: personUuid }, { firstName: first, lastName: last })
+      const onboarding: OnboardingState | undefined =
+        invite === undefined ? undefined : { intent: { kind: 'invite', inviteId: invite.id }, stage: 'name' }
+      await createAccount(db, personUuid, true, false, Date.now(), consentAccepted, onboarding)
+      await db.person.update({ uuid: personUuid }, { firstName: first ?? '', lastName: last ?? '' })
     }
 
     // We should check and reset password if there's an account with password but no social ids have been
@@ -2180,7 +2194,7 @@ export async function joinWithProvider (
   socialId: SocialKey,
   signUpDisabled = false,
   consentAccepted = false
-): Promise<WorkspaceLoginInfo | LoginInfo | null> {
+): Promise<((WorkspaceLoginInfo | LoginInfo) & { inviteId?: string }) | null> {
   const normalizedEmail = email != null ? cleanEmail(email) : ''
   const invite = await getWorkspaceInvite(db, inviteId)
   if (invite == null) {
@@ -2203,7 +2217,8 @@ export async function joinWithProvider (
     last,
     socialId,
     signUpDisabled,
-    consentAccepted
+    consentAccepted,
+    invite
   )
 
   if (loginInfo == null) {
@@ -2211,7 +2226,7 @@ export async function joinWithProvider (
   }
 
   if (loginInfo.onboarding != null && loginInfo.onboarding.stage !== 'complete') {
-    return loginInfo
+    return { ...loginInfo, inviteId: invite.id }
   }
 
   return await doJoinByInvite(

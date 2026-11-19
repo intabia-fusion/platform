@@ -56,7 +56,7 @@
 1. Клиент шлёт email+пароль -> `login()` - `server/account/src/operations.ts`.
 2. `verifyPassword()` сверяет scrypt-хеш, при неудаче - `recordFailedLoginAttempt()` (`server/account/src/utils.ts`); после `MAX_FAILED_LOGIN_ATTEMPTS` (default 5) аккаунт блокируется - `isAccountPasswordLocked()` (`utils.ts`).
 3. `ensureNotBlocked()` (`utils.ts`) проверяет `Account.blockedOn` (админ-блокировка) - гейт стоит и здесь, и в `validateOtp`, `loginOrSignUpWithProvider`, `selectWorkspace`.
-4. Генерируется токен - `generateToken()` (`token.ts`), клиент получает `{account, token, name, socialId}`.
+4. Генерируется токен - `generateToken()` (`token.ts`), клиент получает `{account, token, name, socialId}`. У подтверждённого аккаунта ответ также содержит незавершённый `onboarding`. После восстановления пароля пользователь возвращается на сохранённый шаг регистрации.
 
 **2. Вход по коду (OTP) и регистрация без пароля.**
 1. `EmailFirstForm.svelte` запрашивает оба согласия до передачи email в `requestEmailOtp()`. Состояние флажков сохраняется в localStorage браузера; при следующем открытии оба отмеченных согласия отображаются компактно. Состояние кода и ограничений хранится в `email_otp` по нормализованному email без создания пользовательских сущностей.
@@ -67,13 +67,15 @@
 1. `pods/authProviders/src/index.ts` отдаёт список провайдеров на `GET /providers`. Существующие пользователи входят без повторного согласия.
 2. Каждый провайдер регистрирует роуты `/auth/<provider>` и `/auth/<provider>/callback` через `koa-passport` - пример: `pods/authProviders/src/google.ts` (`GoogleStrategy` из `passport-google-oauth20`).
 3. Callback проверяет state сессии и определяет, существует ли аккаунт. Новым пользователям показывает согласие до создания аккаунта. Незавершённая регистрация продолжается на шаге onboarding.
+4. При регистрации по приглашению аккаунт создаётся с каноническим ID приглашения и шагом `name`. Пользователь заполняет недостающие поля имени и подтверждает вступление через `completeOnboardingInvite()`.
 
 **4. Создание воркспейса и вход по инвайту.**
-1. `createWorkspace()` (`operations.ts`) создаёт запись `Workspace`/`WorkspaceStatus` в режиме создания.
+1. `createWorkspace()` (`operations.ts`) создаёт запись `Workspace`/`WorkspaceStatus` в режиме создания. При повторе операции во время регистрации `selectWorkspace()` проверяет текущее членство и возвращает актуальную роль.
 2. Воркер `workspace-service` (`server/workspace-service/src/service.ts`) опрашивает `getPendingWorkspace(region, version, operation)` и выполняет `createWorkspace()`/`upgradeWorkspace()` - `server/workspace-service/src/ws-operations.ts`. Режим `WS_OPERATION` (`create`/`upgrade`/`all`/`all+backup`) задаётся env, читается в `server/workspace-service/src/index.ts`.
    Запросы переиндексации от миграций хранятся в `_migrations` воркспейса (`server/tool/src/reindex.ts`) и уходят в очередь только после `upgrade-done`, когда версия уже повышена (`sendPendingReindex`); так они переживают и падение пода посреди апгрейда.
    Если фуллтекст всё же пропустил переиндексацию из-за несовпадения версии (ручной reindex неактивного воркспейса), он ставит `workspace_status.needs_reindex` через сервисный RPC `setNeedsReindex`; после апгрейда снимает флаг атомарным `takeNeedsReindex` (`serviceOperations.ts`, `postgres.ts`) и запускает полную переиндексацию.
-3. Приглашённый проходит `join()`/`joinByInvite()`/`checkJoin()`/`checkAutoJoin()`/`signUpJoin()` (`operations.ts`).
+3. При включённом OTP страница приглашения предлагает ввод email и ссылку для входа паролем. `checkJoin()` повышает роль по именному приглашению только при наличии подтверждённого email получателя.
+   Операции приглашения - `join()`/`joinByInvite()`/`checkJoin()`/`checkAutoJoin()`/`signUpJoin()` (`operations.ts`).
 4. Если аккаунт создан без инвайта - `sendCrmNotificationIfNotInvited()` (`operations.ts`).
 
 **5. Удаление воркспейса и аккаунта (отложенное, FUSIO-1339).**
@@ -154,7 +156,7 @@
 | Регистрация паролем (deprecated, только dev без mail-сервиса) | - | - | internal | - | |
 | Восстановление и смена пароля | - | - | plan | - | отложено |
 | OAuth Google/GitHub/OpenID Connect | - | - | plan | - | отложено |
-| Инвайты и access-ссылки | getting-started/workspace-setup | getting-started/workspace-setup | stale | 0.8.60 | устарел скрин settings-modules.png; не описаны отправитель письма, регистрация по ссылке, согласия до запроса кода и удаление масок email |
+| Инвайты и access-ссылки | getting-started/workspace-setup | getting-started/workspace-setup | stale | 0.8.60 | устарел скрин settings-modules.png; не описаны отправитель письма, регистрация по ссылке, OAuth, вход паролем при включённом OTP, согласия до запроса кода и удаление масок email |
 | Привязка social identity | people-contacts/managing-account | - | no-en | 0.8.60 | исправлено: текст про удаление аккаунта (отложенное удаление + отмена входом) и про возврат в пространство (по новому приглашению, не только от владельца) |
 | Подписанный JSON-токен без refresh-механики | - | - | internal | - | |
 | LRU-кэш верифицированных токенов | - | - | internal | - | |

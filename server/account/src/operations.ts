@@ -162,6 +162,7 @@ import {
   getWorkspaceRole,
   getWorkspaceRoles,
   getWorkspacesInfoWithStatusByIds,
+  hasVerifiedEmail,
   ensureNotAiBot,
   ensureNotAiBotAccount,
   ensureNotBlocked,
@@ -327,6 +328,7 @@ export async function login (
     await resetLoginOtpMisses(db, existingAccount.uuid)
 
     const isConfirmed = emailSocialId.verifiedOn != null
+    const onboarding = existingAccount.onboarding
 
     const extraToken: Record<string, string> = isAdminEmail(normalizedEmail)
       ? { admin: 'true', authMethod: 'password' }
@@ -340,6 +342,7 @@ export async function login (
       token: isConfirmed ? generateToken(existingAccount.uuid, undefined, extraToken) : undefined,
       name: getPersonName(person),
       socialId: emailSocialId._id,
+      ...(isConfirmed && onboarding != null && onboarding.stage !== 'complete' ? { onboarding } : {}),
       deleteOn: existingAccount.deleteOn
     }
   } catch (err: any) {
@@ -881,6 +884,28 @@ export async function createWorkspace (
 
   ctx.info('Creating workspace record done', { workspaceName, region, account: socialId.personUuid })
 
+  const loginInfo = {
+    account,
+    socialId: socialId._id,
+    name: getPersonName(person),
+    workspace: workspaceUuid,
+    workspaceUrl
+  }
+
+  if (onboarding && newlyCreated === false) {
+    const selected = await selectWorkspace(ctx, db, branding, token, { workspaceUrl, kind: 'external' })
+    if (selected.account !== account) {
+      throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+    }
+    return {
+      ...loginInfo,
+      token: selected.token,
+      endpoint: selected.endpoint,
+      collaboratorEndpoint: selected.collaboratorEndpoint,
+      role: selected.role
+    }
+  }
+
   // Send CRM notification for newly created workspace
   const emailSocialId = await db.socialId.findOne({
     type: SocialIdType.EMAIL,
@@ -893,14 +918,10 @@ export async function createWorkspace (
   }
 
   return {
-    account,
-    socialId: socialId._id,
-    name: getPersonName(person),
+    ...loginInfo,
     token: generateToken(account, workspaceUuid, extra),
     endpoint: getEndpoint(workspaceUuid, actualRegion, EndpointKind.External),
     collaboratorEndpoint: getCollaboratorEndpoint(workspaceUuid, actualRegion, EndpointKind.External),
-    workspace: workspaceUuid,
-    workspaceUrl,
     role: AccountRole.Owner
   }
 }
@@ -1344,17 +1365,11 @@ export async function checkJoin (
     // The shared anonymous account can't join by invite: the visitor has to sign in with an own account
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
-  const emailSocialId = await db.socialId.findOne({
-    type: SocialIdType.EMAIL,
-    personUuid: accountUuid,
-    verifiedOn: { $gt: 0 }
-  })
-  const email = emailSocialId?.value ?? ''
   const workspaceUuid = await checkInvite(ctx, invite)
   const workspace = await getWorkspaceById(db, workspaceUuid)
 
   if (workspace === null) {
-    ctx.error('Workspace not found in checkJoin', { workspaceUuid, email, inviteId })
+    ctx.error('Workspace not found in checkJoin', { workspaceUuid, accountUuid, inviteId })
     throw new PlatformError(new Status(Severity.ERROR, platform.status.WorkspaceNotFound, { workspaceUuid }))
   }
 
@@ -1366,6 +1381,13 @@ export async function checkJoin (
   const wsLoginInfo = await selectWorkspace(ctx, db, branding, token, { workspaceUrl: workspace.url, kind: 'external' })
 
   if (getRolePower(wsLoginInfo.role) < getRolePower(invite.role)) {
+    if (
+      invite.email != null &&
+      invite.email !== '' &&
+      !(await hasVerifiedEmail(db, accountUuid, cleanEmail(invite.email)))
+    ) {
+      throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+    }
     await db.updateWorkspaceRole(accountUuid, workspaceUuid, invite.role)
     await publishMembersChanged(ctx, workspaceUuid)
   }
@@ -2776,6 +2798,7 @@ export async function getWorkspaceMemberDetails (
   if (role == null || getRolePower(role) < getRolePower(AccountRole.Maintainer)) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
+  ensureNotBlocked(await db.account.findOne({ uuid: account }))
   return await db.getWorkspaceMemberDetails(workspace)
 }
 

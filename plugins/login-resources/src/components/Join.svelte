@@ -239,16 +239,14 @@
   }
 
   function goBackToInitial (): void {
-    step = 'initial'
+    step = useOTP ? 'signup' : 'initial'
     status = OK
     loginMethod = LoginMethods.Password
   }
 
   const switchToPasswordAction: BottomAction = {
     i18n: login.string.LoginWithPassword,
-    func: () => {
-      loginMethod = LoginMethods.Password
-    }
+    func: goToLogin
   }
 
   const switchToOtpAction: BottomAction = {
@@ -360,6 +358,7 @@
         intent={{ kind: 'invite', inviteId: location.query?.inviteId ?? '' }}
         onLogin={handleJoinAfterAuth}
       />
+      <div class="text-center"><BottomActionComponent action={switchToPasswordAction} /></div>
     {:else}
       <SignupForm caption={login.string.SignUpAndJoin} onSignUp={handleJoinAfterAuth} />
     {/if}
@@ -384,7 +383,7 @@
         onLogin={handleJoinAfterAuth}
         intent={{ kind: 'invite', inviteId: location.query?.inviteId ?? '' }}
       />
-      <BottomActionComponent action={switchToPasswordAction} />
+      <div class="text-center"><BottomActionComponent action={switchToPasswordAction} /></div>
     {:else}
       <LoginPasswordForm
         caption={login.string.LogInAndJoin}

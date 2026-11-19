@@ -124,7 +124,7 @@ export async function handleProviderAuth (
 ): Promise<string> {
   try {
     measureCtx.info('Provider auth handler', { email, type: providerType })
-    let loginInfo: LoginInfo | null
+    let loginInfo: (LoginInfo & { inviteId?: string }) | null
     const state = safeParseAuthState(rawState)
     const branding = getBranding(brandings, state?.branding)
 
@@ -196,7 +196,7 @@ export async function handleProviderAuth (
         queryObj.autoJoin = state.autoJoin
       }
       if (state.autoJoin === true || (loginInfo.onboarding != null && loginInfo.onboarding.stage !== 'complete')) {
-        queryObj.inviteId = state.inviteId
+        queryObj.inviteId = loginInfo.inviteId ?? state.inviteId
         queryObj.navigateUrl = state.navigateUrl
       }
 

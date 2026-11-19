@@ -265,11 +265,15 @@ describe('provider consent', () => {
   })
 })
 
-it('preserves the invitation when provider authentication returns unfinished onboarding', async () => {
+it.each([
+  { inviteId: undefined, expected: 'invite' },
+  { inviteId: 'canonical', expected: 'canonical' }
+])('redirects provider onboarding to invitation $expected', async ({ inviteId, expected }) => {
   jest.mocked(joinWithProvider).mockResolvedValueOnce({
     account: 'account',
     token: 'token',
-    onboarding: { intent: { kind: 'workspace' }, stage: 'name' }
+    inviteId,
+    onboarding: { intent: inviteId === undefined ? { kind: 'workspace' } : { kind: 'invite', inviteId }, stage: 'name' }
   } as any)
   const ctx: any = { info: jest.fn(), error: jest.fn() }
   const state = encodeURIComponent(JSON.stringify({ inviteId: 'invite', navigateUrl: 'workspace' }))
@@ -289,6 +293,6 @@ it('preserves the invitation when provider authentication returns unfinished onb
   )
   const query = new URLSearchParams(decodeURIComponent(new URL(url).search.slice(1)))
   expect(query.get('token')).toBe('token')
-  expect(query.get('inviteId')).toBe('invite')
+  expect(query.get('inviteId')).toBe(expected)
   expect(query.get('navigateUrl')).toBe('workspace')
 })

@@ -352,8 +352,12 @@ implements DbCollection<T> {
     return (await this.find(query, undefined, 1, client))[0] ?? null
   }
 
+  protected convertForInsert (data: Partial<T>): Record<string, unknown> {
+    return convertKeysToSnakeCase(data)
+  }
+
   async insertOne (data: Partial<T>, client?: SqlClient): Promise<K extends keyof T ? T[K] : undefined> {
-    const snakeData = convertKeysToSnakeCase(data)
+    const snakeData = this.convertForInsert(data)
     const keys: string[] = Object.keys(snakeData)
     const values = Object.values(snakeData) as any
 
@@ -370,7 +374,7 @@ implements DbCollection<T> {
   }
 
   async insertMany (data: Array<Partial<T>>, client?: SqlClient): Promise<K extends keyof T ? Array<T[K]> : undefined> {
-    const snakeData = convertKeysToSnakeCase(data)
+    const snakeData = data.map((row) => this.convertForInsert(row))
     const columns = new Set<string>()
     for (const record of snakeData) {
       Object.keys(record).forEach((k) => columns.add(k))
@@ -528,6 +532,14 @@ export class AccountPostgresDbCollection
     }
 
     return result
+  }
+
+  protected convertForInsert (data: Partial<Account>): Record<string, unknown> {
+    const { onboarding, ...columns } = data
+    const row = super.convertForInsert(columns)
+    // Onboarding transactions read the JSON directly and expect its keys unchanged.
+    if (onboarding !== undefined) row.onboarding = onboarding
+    return row
   }
 
   async insertOne (data: Partial<Account>, client?: SqlClient): Promise<Account['uuid']> {

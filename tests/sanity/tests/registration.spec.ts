@@ -535,6 +535,56 @@ test.describe('registration test', () => {
     await expect(page.getByRole('button', { name: 'Already have an account' })).toHaveCount(0)
   })
 
+  test('an invitation with OTP enabled also accepts a password login', async ({ page, sharedWorkspace }) => {
+    const value = email('invite-password')
+    const password = '1234'
+    const shared = await sharedWorkspace(1)
+    const owner = getAccountClient(LocalUrl, shared.ws.token)
+    const inviteId = await owner.createInvite(60 * 60 * 1000, 1, AccountRole.User)
+    const service = await getServiceAccountClient('tool')
+    const account = await service.signUp(value, password, 'Existing', 'Name')
+
+    await loginPage.enableOtp()
+    await page.goto(`${PlatformURI}/login/join?inviteId=${inviteId}`)
+    await expect(page.getByRole('button', { name: 'Get code', exact: true })).toBeVisible()
+    await expect(loginPage.inputPassword()).toBeHidden()
+    const passwordLink = loginPage.loginWithPassword()
+    await expect(passwordLink).toBeVisible()
+    await passwordLink.click()
+    await expect(page.locator('.invitation-context')).toContainText(shared.data.workspaceName)
+    await expect(page.locator('[data-testid="checkbox-personal-data"]')).toHaveCount(0)
+    await loginPage.inputEmail().fill(value)
+    await loginPage.inputPassword().fill(password)
+    await page.getByRole('button', { name: 'Log In & Join', exact: true }).click()
+    await page.getByRole('button', { name: 'Join workspace', exact: true }).click()
+    await page.waitForURL((url) => url.pathname.startsWith(`/workbench/${shared.ws.workspaceUrl}`))
+    expect(await owner.getWorkspaceMembers()).toContainEqual({ person: account.account, role: AccountRole.User })
+  })
+
+  test('password recovery returns to unfinished registration', async ({ page }) => {
+    const value = email('recovery-onboarding')
+    const consent = { personalData: true, rules: true }
+    await anon.requestEmailOtp(value, { consent })
+    const loginInfo = await anon.confirmEmailOtp(value, await getOtpCode(value), { kind: 'workspace' }, consent)
+
+    await page.route(/\/_account\/?$/, async (route) => {
+      const request = route.request()
+      if (request.method() === 'POST' && request.postDataJSON()?.method === 'restorePassword') {
+        await route.fulfill({ json: { result: loginInfo } })
+      } else {
+        await route.continue()
+      }
+    })
+    await loginPage.enableOtp()
+    await page.goto(`${PlatformURI}/login/recovery?id=recovery-token`)
+    const password = page.locator('input[name="new-password"]')
+    await password.nth(0).fill('New-password1!')
+    await password.nth(1).fill('New-password1!')
+    await page.getByRole('button', { name: 'Recover', exact: true }).click()
+    await expect(page).toHaveURL(/\/login\/onboarding(?:\?|$)/)
+    await expect(page.locator('input[name="workspace"]')).toBeVisible()
+  })
+
   for (const profile of ['new', 'partial', 'complete'] as const) {
     test(`invitation asks only for missing names: ${profile}`, async ({ page, sharedWorkspace }) => {
       const value = email(`invite-${profile}`)

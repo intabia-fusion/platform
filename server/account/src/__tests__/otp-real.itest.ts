@@ -34,9 +34,15 @@ import { type PostgresAccountDB } from '../collections/postgres/postgres'
 import { getMigrations } from '../collections/postgres/migrations'
 import {
   checkAutoJoin,
+  checkJoin,
+  completeOnboardingInvite,
   confirmEmailOtp as confirmEmailOtpImpl,
+  createInvite,
   createWorkspace,
   getLoginInfoByToken,
+  getWorkspaceMemberDetails,
+  getWorkspaceMembers,
+  getWorkspaceSeats,
   login,
   loginByLink,
   loginOtp,
@@ -46,7 +52,7 @@ import {
   validateOtp
 } from '../operations'
 import { accountPlugin } from '../plugin'
-import { type SocialId } from '../types'
+import { SubscriptionStatus, SubscriptionType, type SocialId } from '../types'
 import {
   consumeLoginLink,
   createAccount,
@@ -97,6 +103,7 @@ describe.each(realDbFlavors)('real-otp [$flavor]', ({ flavor, adminUri, dbUri })
   let accountDb: PostgresAccountDB
   let social: SocialId
   let other: SocialId
+  const previousRegionConfig = process.env.REGION_CONFIG_JSON
 
   const insertCode = async (purpose: 'login' | 'operation', code: string, expiresOn?: number): Promise<void> => {
     if (purpose === 'login') {
@@ -153,6 +160,11 @@ describe.each(realDbFlavors)('real-otp [$flavor]', ({ flavor, adminUri, dbUri })
     setMetadata(accountPlugin.metadata.OtpRetryDelaySec, 1)
     setMetadata(accountPlugin.metadata.OtpTimeToLiveSec, 600)
     setMetadata(accountPlugin.metadata.MailQueue, { send: mailSend } as any)
+    const endpoints = [{ external: 'http://localhost', internal: 'http://localhost' }]
+    process.env.REGION_CONFIG_JSON = JSON.stringify({
+      regions: { eu: { transactors: endpoints, collaborators: endpoints } }
+    })
+    resetRegionConfig()
   })
 
   beforeEach(async () => {
@@ -385,29 +397,13 @@ describe.each(realDbFlavors)('real-otp [$flavor]', ({ flavor, adminUri, dbUri })
     const result = await confirmEmailOtp(ctx, accountDb, null, '', { email: address, code })
     ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: result.account, extra: {} })
     expect(result.onboarding).toMatchObject({ stage: 'workspace', intent: { kind: 'workspace' } })
-    const previousRegionConfig = process.env.REGION_CONFIG_JSON
-    process.env.REGION_CONFIG_JSON = JSON.stringify({
-      regions: {
-        eu: {
-          transactors: [{ external: 'http://localhost', internal: 'http://localhost' }],
-          collaborators: [{ external: 'http://localhost', internal: 'http://localhost' }]
-        }
-      }
-    })
-    resetRegionConfig()
-    try {
-      await expect(
-        createWorkspace(ctx, accountDb, null, 'token', {
-          workspaceName: 'A personal space',
-          region: 'eu',
-          onboarding: true
-        })
-      ).resolves.toMatchObject({ account: result.account })
-    } finally {
-      if (previousRegionConfig === undefined) delete process.env.REGION_CONFIG_JSON
-      else process.env.REGION_CONFIG_JSON = previousRegionConfig
-      resetRegionConfig()
-    }
+    await expect(
+      createWorkspace(ctx, accountDb, null, 'token', {
+        workspaceName: 'A personal space',
+        region: 'eu',
+        onboarding: true
+      })
+    ).resolves.toMatchObject({ account: result.account })
     expect(await getLoginInfoByToken(ctx, accountDb, null, 'token')).toMatchObject({
       onboarding: { stage: 'name', workspaceName: 'A personal space', region: 'eu' }
     })
@@ -420,6 +416,104 @@ describe.each(realDbFlavors)('real-otp [$flavor]', ({ flavor, adminUri, dbUri })
     })
     expect(await getLoginInfoByToken(ctx, accountDb, null, 'token')).toMatchObject({
       onboarding: { stage: 'complete', workspaceName: 'A personal space', region: 'eu' }
+    })
+  })
+
+  it.each([AccountRole.User, null])('checks the current role %s on workspace onboarding retry', async (role) => {
+    const address = 'onboarding-retry@example.com'
+    await requestEmailOtp(ctx, accountDb, null, '', { email: address })
+    const code = await accountDb.withEmailOtp(address, async (state) => state.code as string)
+    const { account, token } = await confirmEmailOtp(ctx, accountDb, null, '', { email: address, code })
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account, extra: {} })
+    const params = { workspaceName: 'Onboarding retry', region: 'eu', onboarding: true }
+    const created = await createWorkspace(ctx, accountDb, null, token as string, params)
+    expect(created.role).toBe(AccountRole.Owner)
+    await expect(createWorkspace(ctx, accountDb, null, token as string, params)).resolves.toMatchObject({
+      role: AccountRole.Owner,
+      workspace: created.workspace,
+      workspaceUrl: created.workspaceUrl
+    })
+
+    if (role == null) {
+      await accountDb.unassignWorkspace(account, created.workspace)
+      await expect(createWorkspace(ctx, accountDb, null, token as string, params)).rejects.toMatchObject({
+        status: { code: platform.status.Forbidden }
+      })
+    } else {
+      await accountDb.updateWorkspaceRole(account, created.workspace, role)
+      await expect(createWorkspace(ctx, accountDb, null, token as string, params)).resolves.toMatchObject({
+        role,
+        workspace: created.workspace
+      })
+    }
+  })
+
+  it('requires a verified recipient before checkJoin upgrades a member', async () => {
+    const workspace = await accountDb.createWorkspace(
+      { name: 'Named invite', url: 'named-invite', region: 'eu', allowGuestSignUp: false, allowReadOnlyGuest: false },
+      { isDisabled: false, mode: 'active', versionMajor: 0, versionMinor: 7, versionPatch: 0 }
+    )
+    await accountDb.assignWorkspace(personUuid, workspace, AccountRole.User)
+    await accountDb.socialId.update({ _id: other._id }, { verifiedOn: 0 })
+    const inviteId = await accountDb.invite.insertOne({
+      workspaceUuid: workspace,
+      expiresOn: Date.now() + 60000,
+      email: ` ${otherEmail.toUpperCase()} `,
+      remainingUses: 1,
+      role: AccountRole.Maintainer
+    })
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: personUuid, workspace, extra: {} })
+    await expect(checkJoin(ctx, accountDb, null, 'token', { inviteId })).rejects.toMatchObject({
+      status: { code: platform.status.Forbidden }
+    })
+    await expect(accountDb.getWorkspaceRole(personUuid, workspace)).resolves.toBe(AccountRole.User)
+
+    await accountDb.socialId.update({ _id: other._id }, { verifiedOn: Date.now() })
+    await expect(checkJoin(ctx, accountDb, null, 'token', { inviteId })).resolves.toMatchObject({
+      account: personUuid,
+      workspace,
+      role: AccountRole.Maintainer
+    })
+    await expect(accountDb.getWorkspaceRole(personUuid, workspace)).resolves.toBe(AccountRole.Maintainer)
+  })
+
+  it('rejects a blocked maintainer requesting member details with the same session', async () => {
+    const workspace = await accountDb.createWorkspace(
+      { name: 'Members', url: 'member-details', allowGuestSignUp: false, allowReadOnlyGuest: false },
+      { isDisabled: false, mode: 'active', versionMajor: 0, versionMinor: 7, versionPatch: 0 }
+    )
+    await accountDb.assignWorkspace(personUuid, workspace, AccountRole.Maintainer)
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: personUuid, workspace, extra: {} })
+    const session = 'workspace-token'
+    await expect(getWorkspaceMemberDetails(ctx, accountDb, null, session)).resolves.toMatchObject([
+      { person: personUuid, role: AccountRole.Maintainer, firstName: 'Otp', lastName: 'Real' }
+    ])
+
+    await accountDb.account.update({ uuid: personUuid }, { blockedOn: Date.now() })
+    await expect(getWorkspaceMemberDetails(ctx, accountDb, null, session)).rejects.toMatchObject({
+      status: { code: platform.status.AccountBlocked }
+    })
+  })
+
+  it.each(['login', 'restorePassword'])('returns unfinished onboarding from %s', async (method) => {
+    const address = 'onboarding-password@example.com'
+    await requestEmailOtp(ctx, accountDb, null, '', { email: address })
+    const code = await accountDb.withEmailOtp(address, async (state) => state.code as string)
+    const { account } = await confirmEmailOtp(ctx, accountDb, null, '', { email: address, code })
+    const password = 'New-password1!'
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account, extra: { restoreEmail: address } })
+
+    if (method === 'login') {
+      await setPassword(ctx, accountDb, null, account, password)
+    }
+    const result =
+      method === 'login'
+        ? await login(ctx, accountDb, null, '', { email: address, password })
+        : await restorePassword(ctx, accountDb, null, 'recovery-token', { password })
+    expect(result).toMatchObject({
+      account,
+      token: expect.any(String),
+      onboarding: { intent: { kind: 'workspace' }, stage: 'workspace' }
     })
   })
 
@@ -528,6 +622,108 @@ describe.each(realDbFlavors)('real-otp [$flavor]', ({ flavor, adminUri, dbUri })
     expect(result).toMatchObject({ account: personUuid, onboarding })
     expect((await accountDb.invite.findOne({ id: inviteId }))?.remainingUses).toBe(1)
     expect(await accountDb.getWorkspaceRole(personUuid, workspace)).toBeNull()
+  })
+
+  it('completes a new provider account invitation after the plan fills', async () => {
+    const address = 'provider-invite@example.com'
+    const workspace = await accountDb.createWorkspace(
+      {
+        name: 'Provider invite',
+        url: 'provider-invite',
+        region: 'eu',
+        allowGuestSignUp: false,
+        allowReadOnlyGuest: false
+      },
+      { isDisabled: false, mode: 'active', versionMajor: 0, versionMinor: 7, versionPatch: 0 }
+    )
+    await accountDb.assignWorkspace(personUuid, workspace, AccountRole.Owner)
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: personUuid, workspace, extra: {} })
+    const inviteId = await createInvite(ctx, accountDb, null, 'owner-token', {
+      exp: 60000,
+      email: address,
+      limit: 1,
+      role: AccountRole.User
+    })
+    const legacyInvite = '987654321098765432'
+    await accountDb.invite.update({ id: inviteId }, { migratedFrom: legacyInvite })
+    await accountDb.subscription.insertOne({
+      id: generateUuid(),
+      workspaceUuid: workspace,
+      accountUuid: personUuid,
+      provider: 'manual',
+      providerSubscriptionId: 'provider-invite-plan',
+      type: SubscriptionType.Tier,
+      status: SubscriptionStatus.Active,
+      plan: 'free',
+      limits: { usersLimit: 1, storageLimitGB: 0, trafficLimitGB: 0, meetingMinutesLimit: 0, tokenLimit: 0 }
+    })
+    await expect(getWorkspaceSeats(ctx, accountDb, null, 'owner-token')).resolves.toEqual({
+      available: false,
+      seatsLeft: 0
+    })
+
+    const provider = { type: SocialIdType.GOOGLE, value: 'provider-invite' }
+    await expect(
+      joinWithProvider(ctx, accountDb, null, address, 'First', '', legacyInvite, provider)
+    ).resolves.toBeNull()
+    const result = await joinWithProvider(
+      ctx,
+      accountDb,
+      null,
+      address,
+      'First',
+      '',
+      legacyInvite,
+      provider,
+      false,
+      true
+    )
+    const intent = { kind: 'invite', inviteId }
+    expect(result).toMatchObject({ token: expect.any(String), onboarding: { intent, stage: 'name' } })
+    const account = result?.account as AccountUuid
+    expect(await getWorkspaceMembers(ctx, accountDb, null, 'owner-token')).toEqual([
+      { person: personUuid, role: AccountRole.Owner }
+    ])
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account, extra: {} })
+    const token = result?.token as string
+    await expect(completeOnboardingInvite(ctx, accountDb, null, token, { inviteId })).rejects.toMatchObject({
+      status: { code: platform.status.Forbidden }
+    })
+    await expect(
+      completeOnboardingInvite(ctx, accountDb, null, token, { inviteId, name: { lastName: 'Last' } })
+    ).resolves.toMatchObject({ account, workspace, role: AccountRole.User })
+    await expect(getLoginInfoByToken(ctx, accountDb, null, token)).resolves.toMatchObject({
+      name: 'First Last',
+      onboarding: { intent, stage: 'complete' }
+    })
+    ;(decodeTokenVerbose as jest.Mock).mockReturnValue({ account: personUuid, workspace, extra: {} })
+    expect(await getWorkspaceMembers(ctx, accountDb, null, 'owner-token')).toContainEqual({
+      person: account,
+      role: AccountRole.User,
+      seatOrder: 1
+    })
+  })
+
+  it('refuses new provider onboarding when the email differs from the named invitation', async () => {
+    const address = 'not-the-recipient@example.com'
+    const workspace = await accountDb.createWorkspace(
+      { name: 'Provider recipient', url: 'provider-recipient', allowGuestSignUp: false, allowReadOnlyGuest: false },
+      { isDisabled: false, mode: 'active', versionMajor: 0, versionMinor: 7, versionPatch: 0 }
+    )
+    const inviteId = await accountDb.invite.insertOne({
+      workspaceUuid: workspace,
+      expiresOn: Date.now() + 60000,
+      email,
+      remainingUses: 1,
+      role: AccountRole.User
+    })
+    const provider = { type: SocialIdType.GOOGLE, value: 'provider-wrong-recipient' }
+    await expect(
+      joinWithProvider(ctx, accountDb, null, address, 'First', 'Last', inviteId, provider, false, true)
+    ).rejects.toMatchObject({ status: { code: platform.status.Forbidden } })
+    await expect(
+      loginOrSignUpWithProvider(ctx, accountDb, null, address, 'First', 'Last', provider)
+    ).resolves.toBeNull()
   })
 
   it('does not auto-join an account before its onboarding is complete', async () => {
@@ -726,6 +922,9 @@ describe.each(realDbFlavors)('real-otp [$flavor]', ({ flavor, adminUri, dbUri })
   })
 
   afterAll(async () => {
+    if (previousRegionConfig === undefined) delete process.env.REGION_CONFIG_JSON
+    else process.env.REGION_CONFIG_JSON = previousRegionConfig
+    resetRegionConfig()
     dbClient.close()
     await shutdownPostgres()
   })
