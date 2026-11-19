@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 //
 // Copyright 2026 Intabia Fusion
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -582,13 +583,14 @@ function main() {
 
   emitIndex(cfg, bundle)
   emitPackageJson(cfg, bundle, projects, partial)
+  fs.copyFileSync(path.join(DEV_API_DIR, 'bundle-package-lock.json'), path.join(BUNDLE_DIR, 'package-lock.json'))
   emitTsconfig(cfg, bundle)
   emitShims()
   emitReadme()
 
   console.log(`Bundled ${stats.packages} packages, ${stats.tsFiles} source files`)
   console.log(`Output: ${BUNDLE_DIR}`)
-  console.log(`Next: cd ${path.relative(process.cwd(), BUNDLE_DIR)} && npm install && npx tsc`)
+  console.log(`Next: cd ${path.relative(process.cwd(), BUNDLE_DIR)} && npm ci && npx tsc`)
 }
 
 main()

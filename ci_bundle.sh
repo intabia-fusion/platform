@@ -12,6 +12,6 @@ pnpm bundle
 cd dev/api
 node scripts/build-bundle.js
 cd bundle
-npm install
+npm ci
 npx tsc
 npm pack

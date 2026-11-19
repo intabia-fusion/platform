@@ -10,13 +10,24 @@ card, chat, task, document, rank, tags, client, client-resources).
 cd dev/api
 node scripts/build-bundle.js
 cd bundle
-npm install
+npm ci
 npx tsc
 npm pack
 # => intabia-fusion-api-<version>.tgz
 ```
 
 Configuration: `dev/api/config.yml` (roots, partials, exclude scope).
+
+The bundle uses `dev/api/bundle-package-lock.json` to pin its npm dependencies. After changing
+bundle dependencies, regenerate the bundle and update the lock:
+
+```bash
+cd dev/api
+node scripts/build-bundle.js
+cd bundle
+npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+cp package-lock.json ../bundle-package-lock.json
+``
 
 ## Download from CI
 
