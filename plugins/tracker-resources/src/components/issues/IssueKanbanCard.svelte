@@ -29,7 +29,7 @@
     type Issue,
     type Project
   } from '@hcengineering/tracker'
-  import { Button, Component, Label, PaletteColorIndexes, themeStore } from '@hcengineering/ui'
+  import { Button, Component, Label, PaletteColorIndexes, themeStore, tooltip } from '@hcengineering/ui'
   import type { AttributeModel } from '@hcengineering/view'
   import { ListPresenter, openDoc } from '@hcengineering/view-resources'
   import tracker from '../../plugin'
@@ -43,6 +43,7 @@
   import PriorityEditor from './PriorityEditor.svelte'
   import StatusEditor from './StatusEditor.svelte'
   import EstimationEditor from './timereport/EstimationEditor.svelte'
+  import TimePresenter from './timereport/TimePresenter.svelte'
 
   export let issue: WithLookup<Issue>
   export let density: CardDensity
@@ -217,6 +218,11 @@
       {#if density === 'normal' && shown('estimation') && estimations > 0}
         <div class="card-estimation">
           <EstimationEditor kind="link-bordered" size="small" value={card} />
+        </div>
+      {/if}
+      {#if shown('remainingTime') && card.remainingTime > 0}
+        <div class="card-remaining" data-id="card-remaining-time" use:tooltip={{ label: tracker.string.RemainingTime }}>
+          <TimePresenter value={card.remainingTime} roundedHours />
         </div>
       {/if}
       {#if density === 'detailed' && shown('labels') && preview && (issue.labels ?? 0) === 0}
@@ -451,6 +457,19 @@
       gap: 0.375rem;
       min-width: 0;
 
+      // Remaining time sits with the pills: same height and hairline, read at the same size
+      .card-remaining {
+        display: flex;
+        align-items: center;
+        height: 1.5rem;
+        padding: 0 0.5rem;
+        font-size: 0.75rem;
+        line-height: 1.25;
+        color: var(--theme-dark-color);
+        background-color: var(--theme-popup-color);
+        border: 1px solid var(--theme-button-border);
+        border-radius: 0.75rem;
+      }
       :global(.antiButton),
       :global(.datetime-button),
       :global(.link-container) {

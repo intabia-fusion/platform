@@ -23,6 +23,7 @@
   import { createEventDispatcher } from 'svelte'
   import type { SelectionFocusProvider } from '../../selection'
   import { buildSortRules, hasSortRules } from '../../sortRules'
+  import { noLookupSortOptions } from '../../sortOptions'
   import { buildConfigLookup, isRefAttribute } from '../../utils'
   import { getResultOptions, getResultQuery } from '../../viewOptions'
   import ListCategories from './ListCategories.svelte'
@@ -138,7 +139,7 @@
 
   let categoryQueryOptions: Partial<FindOptions<Doc>>
   $: categoryQueryOptions = {
-    ...noLookupSortingOptions(resultOptions),
+    ...noLookupSortOptions(resultOptions),
     projection: {
       ...resultOptions.projection,
       _id: 1,
@@ -268,11 +269,6 @@
       }
     }
     return newQuery
-  }
-
-  function noLookupSortingOptions (options: FindOptions<Doc>): FindOptions<Doc> {
-    const { lookup, sort, ...resultOptions } = options
-    return resultOptions
   }
 
   const dispatch = createEventDispatcher()

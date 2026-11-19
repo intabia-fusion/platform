@@ -1188,7 +1188,17 @@ abstract class PostgresAdapterBase implements DbAdapter {
             )
           }
         } else {
-          res.push(`${this.getKey(_class, baseDomain, key, joins)} ${val === 1 ? 'ASC' : 'DESC'}${nulls}`)
+          const sqlKey = this.getKey(_class, baseDomain, key, joins)
+          const dir = val === 1 ? 'ASC' : 'DESC'
+          if (sqlKey.includes('->') || sqlKey.includes('#>>')) {
+            // A jsonb value carries no column type: read as text, a number sorts as text and `7` goes after
+            // `16`. The number is ordered as a number, everything else falls to the text key, so a string
+            // field keeps the order it had, and a value the document does not hold goes last either way.
+            res.push(`${numericJsonKey(sqlKey, this.dbFlavor)} ${dir} NULLS LAST`)
+            res.push(`${sqlKey} ${dir} NULLS LAST`)
+          } else {
+            res.push(`${sqlKey} ${dir}${nulls}`)
+          }
         }
       } else {
         const order = this.buildRulesOrder(vars, _class, baseDomain, escape(_key), val, joins)

@@ -15,7 +15,7 @@
 <script lang="ts">
   import { notEmpty, type Data, type Ref } from '@hcengineering/core'
   import { getClient, isDisabled, SpacesMultiPopup } from '@hcengineering/presentation'
-  import type { Board, Issue, Project } from '@hcengineering/tracker'
+  import { pickCardOrder, type Board, type Issue, type Project } from '@hcengineering/tracker'
   import ui, { Icon, Label, showPopup } from '@hcengineering/ui'
   import { Button, Dropdown, IconButton, SettingRow, TextArea, TextInput } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
@@ -210,7 +210,8 @@
         sortOrder={board.orderBy?.[1] ?? cardOrders[0]?.[1]}
         on:selected={(e) => {
           const order = cardOrders.find(([key]) => key === e.detail)
-          if (order !== undefined && order[0] !== board.orderBy?.[0]) void onChange({ orderBy: order })
+          if (order === undefined) return
+          void onChange({ orderBy: pickCardOrder(board.orderBy, order, cardOrders[0]) })
         }}
       />
     </SettingRow>

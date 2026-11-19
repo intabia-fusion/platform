@@ -234,6 +234,8 @@ export function issueConfig (
       key: 'reportedTime',
       label: tracker.string.ReportedTime,
       presenter: tracker.component.ReportedTimeListPresenter,
+      // The header sorts by the stored hours, the same rule the estimation column follows.
+      sortingKey: 'reportedTime',
       props: { kind: 'list', size: 'small' },
       displayProps: { key: key + 'reportedTime', fixed: 'left', optional: true, dividerBefore: true }
     },
