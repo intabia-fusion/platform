@@ -20,6 +20,10 @@ interface PublicLink extends Doc {
   attachedToClass?: Ref<Class<Doc>>
 }
 
+interface PersonWithAvatar extends Doc {
+  avatar?: string
+}
+
 /** Uses the guest client, so revoked links and moved/deleted objects are filtered by the normal pipeline. */
 export async function canReadPublicFile (
   client: Client,
@@ -57,6 +61,10 @@ export async function canReadPublicFile (
       if (attachment !== undefined) return true
     }
   }
+  // Author and assignee are in the guest's person scope. Query through that same client
+  // so an avatar belonging to an unrelated person does not become public.
+  const personClass = 'contact:class:Person' as Ref<Class<PersonWithAvatar>>
+  if (hierarchy.hasClass(personClass) && await client.findOne(personClass, { avatar: file }) !== undefined) return true
   for (const [name, attribute] of hierarchy.getAllAttributes(doc._class)) {
     const value = (doc as unknown as Record<string, unknown>)[name]
     if (typeof value !== 'string') continue

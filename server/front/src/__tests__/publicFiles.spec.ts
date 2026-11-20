@@ -41,6 +41,26 @@ function fixture (): { client: any, findOne: jest.Mock } {
 }
 
 describe('public file scope', () => {
+  it.each([
+    ['assignee avatar', 'assignee-avatar', true],
+    ['author avatar', 'author-avatar', true],
+    ['unrelated person avatar', 'foreign-avatar', false],
+    ['another file of a readable person', 'person-attachment', false]
+  ])('checks guest-readable people for %s', async (_name, file, expected) => {
+    const { client, findOne } = fixture()
+    const findDocument = findOne.getMockImplementation()
+    findOne.mockImplementation(async (clazz, query) => {
+      if (clazz === 'contact:class:Person') {
+        // The guest client filters out people outside this link's scope.
+        return ['assignee-avatar', 'author-avatar'].includes(query.avatar)
+          ? { _id: 'readable-person', avatar: query.avatar }
+          : undefined
+      }
+      return await findDocument?.(clazz, query)
+    })
+    expect(await canReadPublicFile(client, 'link', file as string)).toBe(expected)
+    expect(findOne).toHaveBeenCalledWith('contact:class:Person', expect.objectContaining({ avatar: file }))
+  })
   it('queries each declaring class and file field once, including inherited and distinct fields', async () => {
     const { client, findOne } = fixture()
     const photo = 'attachment:class:Photo'
