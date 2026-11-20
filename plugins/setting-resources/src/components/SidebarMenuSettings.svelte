@@ -4,7 +4,8 @@
   import workbench from '@hcengineering/workbench'
   import { createQuery } from '@hcengineering/presentation'
   import { getMetadata } from '@hcengineering/platform'
-  import { Header, Breadcrumb, Label, Icon, Loading, Toggle, deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
+  import { Header, Breadcrumb, Label, Icon, Loading, deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
+  import { Toggle } from '@hcengineering/ui/kit'
   import setting from '../plugin'
   import {
     getDefaultHiddenApps,
@@ -69,7 +70,9 @@
             </div>
             <Label label={app.label} />
             <Toggle
-              on={!hiddenAppsIds.includes(app._id)}
+              size="small"
+              tooltip={{ label: app.label }}
+              checked={!hiddenAppsIds.includes(app._id)}
               on:change={(e) => {
                 void toggleApp(app, e.detail)
               }}

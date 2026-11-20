@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -18,7 +19,8 @@
   import presentation, { createQuery, getClient } from '@hcengineering/presentation'
   import type { InviteSettings } from '@hcengineering/setting'
   import setting from '@hcengineering/setting'
-  import { Breadcrumb, Button, EditBox, Header, MiniToggle } from '@hcengineering/ui'
+  import { Breadcrumb, Button, EditBox, Header } from '@hcengineering/ui'
+  import { Toggle } from '@hcengineering/ui/kit'
 
   const client = getClient()
   let expTime: number = 48
@@ -74,7 +76,12 @@
       <EditBox label={login.string.LinkValidHours} format="number" bind:value={expTime} />
     </div>
     <div class="mt-2">
-      <MiniToggle bind:on={noLimit} label={login.string.NoLimit} on:change={() => noLimit && (limit = -1)} />
+      <Toggle
+        size="small"
+        bind:checked={noLimit}
+        label={login.string.NoLimit}
+        on:change={() => noLimit && (limit = -1)}
+      />
     </div>
     {#if !noLimit}
       <div class="mt-2">

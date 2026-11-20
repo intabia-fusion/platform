@@ -153,10 +153,10 @@
 | Запрос согласования как первый класс | - | - | off | - | не документируем |
 | Отложенные переходы через TimeMachine | - | - | internal | - | |
 | Права запуска/отмены | - | - | off | - | не документируем |
-| Личные и интеграционные API-ключи | integrations/api-keys | integrations/api-keys | stale | 0.8.60 | en-скрины (huly/webhooks/api-key*.png) показывают ru-интерфейс («Создать личный ключ» и т.п.), нужно переснять на demo-en1 |
+| Личные и интеграционные API-ключи | integrations/api-keys | integrations/api-keys | stale | 0.8.60 | en-скрины (huly/webhooks/api-key*.png) показывают ru-интерфейс («Создать личный ключ» и т.п.), нужно переснять на demo-en1; переключатели настроек приведены к маленькому размеру UI-кита |
 | Входящие вебхуки: вызов операций ключом | integrations/webhooks | integrations/webhooks | stale | 0.8.60 | en-скрины показывают ru-интерфейс, нужно переснять на demo-en1 |
-| Правила разбора чужого формата | integrations/webhooks | integrations/webhooks | stale | 0.8.60 | en-скрины (webhook-rule*.png, «Правила (0)» и т.п.) показывают ru-интерфейс, нужно переснять на demo-en1 |
-| Исходящие вебхуки | integrations/webhooks | integrations/webhooks | stale | 0.8.60 | en-скрины показывают ru-интерфейс, нужно переснять на demo-en1 |
+| Правила разбора чужого формата | integrations/webhooks | integrations/webhooks | stale | 0.8.60 | en-скрины (webhook-rule*.png, «Правила (0)» и т.п.) показывают ru-интерфейс, нужно переснять на demo-en1; переключатели настроек приведены к маленькому размеру UI-кита |
+| Исходящие вебхуки | integrations/webhooks | integrations/webhooks | stale | 0.8.60 | en-скрины показывают ru-интерфейс, нужно переснять на demo-en1; переключатели настроек приведены к маленькому размеру UI-кита |
 | Единый npm-бандл поверх `@hcengineering/*` | - | - | plan | - | |
 | `connect()`/`PlatformClient` | - | - | plan | - | |
 
