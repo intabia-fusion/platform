@@ -14,6 +14,7 @@
   "ANALYTICS_COLLECTOR_URL": "",
   "AI_URL": "/_ai",
   "BRANDING_URL": "/branding.json",
+  "LANGUAGES": "en,ru",
   "VERSION": null,
   "MODEL_VERSION": null,
   "STATS_URL": "/_stats",

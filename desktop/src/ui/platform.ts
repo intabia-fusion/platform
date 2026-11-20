@@ -457,7 +457,7 @@ export async function configurePlatform (onWorkbenchConnect?: () => Promise<void
   setMetadata(support.metadata.PrivacyPolicyLink, myBranding.support?.privacyPolicyLink ?? privacyPolicyLink)
   setMetadata(support.metadata.SupportEmail, config.SUPPORT_EMAIL ?? defaultSupportEmail)
 
-  setMetadata(uiPlugin.metadata.Languages, configureInterfaceLanguages(myBranding.languages))
+  setMetadata(uiPlugin.metadata.Languages, configureInterfaceLanguages(config.LANGUAGES))
 
   setMetadata(
     uiPlugin.metadata.Routes,
