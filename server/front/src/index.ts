@@ -1,6 +1,7 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021, 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -16,7 +17,7 @@
 
 import { Analytics } from '@hcengineering/analytics'
 import { MeasureContext, Blob as PlatformBlob, WorkspaceIds, metricsAggregate } from '@hcengineering/core'
-import platform, { PlatformError } from '@hcengineering/platform'
+import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
 import { TokenError, decodeToken } from '@hcengineering/server-token'
 import { StorageAdapter } from '@hcengineering/storage'
 import bp from 'body-parser'
@@ -28,6 +29,10 @@ import morgan from 'morgan'
 import { join, normalize, resolve } from 'path'
 import { cwd } from 'process'
 import { getClient as getAccountClient } from '@hcengineering/account-client'
+import { createClient } from '@hcengineering/server-client'
+import { canReadPublicFile } from './publicFiles'
+import { PublicFileClients, PublicFileClientsBusy } from './publicFileClients'
+import { pipeline } from 'stream/promises'
 import { staticCacheLimits, staticMemoryCache } from './staticCache'
 import { preConditions } from './utils'
 
@@ -461,6 +466,14 @@ export function start (
   )
 
   const getWorkspaceIds = async (ctx: MeasureContext, token: string, path?: string): Promise<WorkspaceIds | null> => {
+    try {
+      if (decodeToken(token).extra?.guest === 'true') return null
+    } catch (err) {
+      if (err instanceof TokenError) {
+        throw new PlatformError(new Status(Severity.ERROR, platform.status.Unauthorized, {}))
+      }
+      throw err
+    }
     const accountClient = getAccountClient(config.accountsUrlInternal ?? config.accountsUrl, token)
     const workspaceInfo = await accountClient.getWorkspaceInfo()
     const wsIds = {
@@ -580,6 +593,97 @@ export function start (
       { url: req.path, query: req.query }
     )
   }
+
+  const publicFileClients = new PublicFileClients(async (token) => {
+    const payload = decodeToken(token)
+    const account = getAccountClient(config.accountsUrlInternal ?? config.accountsUrl, token)
+    const workspace = await account.getWorkspaceInfo()
+    if (workspace.uuid !== payload.workspace) throw new TokenError('Workspace mismatch')
+    const info = await account.selectWorkspace(workspace.url, 'internal')
+    if (info?.workspace !== payload.workspace) throw new TokenError('Workspace mismatch')
+    return {
+      client: await createClient(info.endpoint, token, undefined, 10000),
+      wsIds: { uuid: info.workspace, dataId: info.workspaceDataId, url: info.workspaceUrl }
+    }
+  })
+
+  // Keep guest file authorization separate from workspace-wide member downloads.
+  const publicFileHandler = async (req: Request, res: Response): Promise<void> => {
+    res.setHeader('Cache-Control', 'no-store')
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      res.status(405).end()
+      return
+    }
+    let connection: Awaited<ReturnType<PublicFileClients['acquire']>> | undefined
+    let discard = false
+    try {
+      const cookie = req.headers.cookie?.split(';').map((it) => it.trim())
+        .find((it) => it.startsWith('presentation-metadata-Token='))?.slice('presentation-metadata-Token='.length)
+      const token = req.headers.authorization?.match(/^Bearer (.+)$/i)?.[1] ??
+        (cookie === undefined ? '' : decodeURIComponent(cookie))
+      const payload = decodeToken(token)
+      if (payload.extra?.guest !== 'true' || typeof payload.extra.linkId !== 'string' ||
+        payload.workspace !== req.params.workspace || payload.extra.linkId !== req.params.linkId || !isBlobName(req.params.file)) {
+        res.status(403).end()
+        return
+      }
+      connection = await publicFileClients.acquire(token)
+      const { client, wsIds } = connection
+      if (!await canReadPublicFile(client, payload.extra.linkId, req.params.file, async (blobId) => {
+        const stat = await config.storageAdapter.stat(ctx, wsIds, blobId)
+        if (stat?.contentType !== 'application/json') return undefined
+        return Buffer.concat(await config.storageAdapter.read(ctx, wsIds, blobId)).toString()
+      })) {
+        res.status(404).end()
+        return
+      }
+      connection.release()
+      connection = undefined
+      const blob = await config.storageAdapter.stat(ctx, wsIds, req.params.file)
+      if (blob === undefined) {
+        res.status(404).end()
+        return
+      }
+      const etag = `"${blob.etag.replace(/^"|"$/g, '')}"`
+      res.setHeader('ETag', etag)
+      res.setHeader('Cache-Control', 'private, no-cache')
+      res.setHeader('Content-Type', blob.contentType)
+      res.setHeader('X-Content-Type-Options', 'nosniff')
+      res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox")
+      res.setHeader('Content-Disposition', ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'application/pdf']
+        .includes(blob.contentType)
+        ? 'inline'
+        : 'attachment')
+      if (typeof req.query.filename === 'string') {
+        const filename = encodeURIComponent(req.query.filename).replace(/['()*]/g,
+          (character) => `%${character.charCodeAt(0).toString(16).toUpperCase()}`)
+        res.setHeader('Content-Disposition', `${String(res.getHeader('Content-Disposition'))}; filename*=UTF-8''${filename}`)
+      }
+      const tags = req.headers['if-none-match']?.split(',').map((it) => it.trim().replace(/^W\//, ''))
+      if (tags?.includes(etag) === true || tags?.includes('*') === true) {
+        res.status(304).end()
+        return
+      }
+      res.setHeader('Content-Length', blob.size)
+      if (req.method === 'HEAD') {
+        res.status(200).end()
+        return
+      }
+      await pipeline(await config.storageAdapter.get(ctx, wsIds, req.params.file), res)
+    } catch (err) {
+      discard = true
+      if (!res.headersSent) {
+        res.setHeader('Cache-Control', 'no-store')
+        res.status(err instanceof TokenError ? 401 : err instanceof PublicFileClientsBusy ? 503 : 500).end()
+      } else res.destroy()
+      if (!(err instanceof TokenError)) ctx.error('public-file failed', { error: err instanceof Error ? err.message : 'unknown' })
+    } finally {
+      connection?.release(discard)
+    }
+  }
+  app.all('/files/public/:workspace/:linkId/:file', (req, res) => {
+    void publicFileHandler(req, res)
+  })
 
   app.get('/files', (req, res) => {
     void filesHandler(req, res)
@@ -737,6 +841,7 @@ export function start (
   server.keepAliveTimeout = KEEP_ALIVE_TIMEOUT * 1000 + 1000
   server.headersTimeout = KEEP_ALIVE_TIMEOUT * 1000 + 2000
   return () => {
+    publicFileClients.close()
     server.close()
   }
 }
