@@ -138,3 +138,17 @@ services:
     replicas: 0
   linkPreview:
     replicas: 0
+  # compose api stand does not run these services and the build job does not build their
+  # images (common/scripts/docker-api.sh), so the stand must not render them at all
+  backupApi:
+    enabled: false
+  notification:
+    enabled: false
+  print:
+    enabled: false
+  love:
+    replicas: 0
+  media:
+    replicas: 0
+  notifications:
+    replicas: 0
