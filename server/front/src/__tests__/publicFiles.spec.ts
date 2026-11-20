@@ -18,7 +18,7 @@ import { canReadPublicFile } from '../publicFiles'
 
 const attachment = 'attachment:class:Attachment'
 const documentClass = 'document:class:Document'
-const blobAttribute = { type: { _class: core.class.TypeBlob } }
+const blobAttribute = { attributeOf: attachment, type: { _class: core.class.TypeBlob } }
 function fixture (): { client: any, findOne: jest.Mock } {
   const findOne = jest.fn(async (clazz, query) => {
     if (clazz === 'guest:class:PublicLink') return { attachedTo: 'doc', attachedToClass: documentClass }
@@ -41,6 +41,31 @@ function fixture (): { client: any, findOne: jest.Mock } {
 }
 
 describe('public file scope', () => {
+  it('queries each declaring class and file field once, including inherited and distinct fields', async () => {
+    const { client, findOne } = fixture()
+    const photo = 'attachment:class:Photo'
+    const version = 'drive:class:FileVersion'
+    client.getHierarchy = () => ({
+      hasClass: () => true,
+      getDescendants: () => [photo, attachment, version],
+      getAncestors: () => [documentClass],
+      getAllAttributes: (clazz: string) => new Map(clazz === photo
+        ? [['file', blobAttribute], ['preview', { ...blobAttribute, attributeOf: photo }]]
+        : clazz === attachment
+          ? [['file', blobAttribute]]
+          : clazz === version ? [['file', { ...blobAttribute, attributeOf: version }]] : [])
+    })
+    const results = await Promise.all(Array.from({ length: 20 }, async (_, i) =>
+      await canReadPublicFile(client, 'link', `embedded-${i}`)))
+    expect(results).toEqual(Array(20).fill(false))
+    const queries = findOne.mock.calls.filter(([clazz]) => [attachment, photo, version].includes(clazz))
+    expect(queries).toHaveLength(60)
+    expect(queries.filter(([clazz]) => clazz === attachment)).toHaveLength(20)
+    expect(queries.filter(([clazz, query]) => clazz === photo && query.preview !== undefined)).toHaveLength(20)
+    expect(queries.filter(([clazz]) => clazz === version)).toHaveLength(20)
+    expect(queries.every(([, query]) => query.attachedTo === 'doc' &&
+      query.attachedToClass.$in.includes(documentClass) === true)).toBe(true)
+  })
   it('allows an attachment of the published object, regardless of file format', async () => {
     const { client } = fixture()
     expect(await canReadPublicFile(client, 'link', 'allowed')).toBe(true)
@@ -48,6 +73,33 @@ describe('public file scope', () => {
   it('refuses a file not attached to the published object', async () => {
     const { client } = fixture()
     expect(await canReadPublicFile(client, 'link', 'foreign')).toBe(false)
+  })
+  it('checks attachments before loading collaborative text, while rechecking access on every request', async () => {
+    const { client, findOne } = fixture()
+    const getAllAttributes = client.getHierarchy().getAllAttributes
+    client.getHierarchy = () => ({
+      hasClass: () => true,
+      getDescendants: () => [attachment],
+      getAncestors: () => [documentClass],
+      getAllAttributes: (clazz: string) => clazz === documentClass
+        ? new Map([['content', { type: { _class: core.class.TypeCollaborativeDoc } }]])
+        : getAllAttributes(clazz)
+    })
+    findOne.mockImplementation(async (clazz, query) => {
+      if (clazz === 'guest:class:PublicLink') return { attachedTo: 'doc', attachedToClass: documentClass }
+      if (clazz === documentClass) return { _id: 'doc', _class: documentClass, content: 'snapshot' }
+      if (clazz === attachment && query.file === 'allowed') return { file: 'allowed' }
+      return undefined
+    })
+    const load = jest.fn(async () => JSON.stringify({ type: 'doc', content: [] }))
+    for (let i = 0; i < 20; i++) {
+      expect(await canReadPublicFile(client, 'link', 'allowed', load)).toBe(true)
+    }
+    expect(load).not.toHaveBeenCalled()
+    expect(findOne.mock.calls.filter(([clazz]) => clazz === 'guest:class:PublicLink')).toHaveLength(20)
+    expect(findOne.mock.calls.filter(([clazz]) => clazz === documentClass)).toHaveLength(20)
+    findOne.mockResolvedValueOnce(undefined)
+    expect(await canReadPublicFile(client, 'link', 'allowed', load)).toBe(false)
   })
   it('refuses a revoked link even when the file still exists', async () => {
     const { client, findOne } = fixture()

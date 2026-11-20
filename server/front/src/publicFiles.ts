@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import core, { type Class, type Client, type Doc, type Ref, type RefTo } from '@hcengineering/core'
+import core, { type AnyAttribute, type Class, type Client, type Doc, type Ref, type RefTo } from '@hcengineering/core'
 
 interface PublicLink extends Doc {
   attachedTo: Ref<Doc>
@@ -33,14 +33,29 @@ export async function canReadPublicFile (
   const doc = await client.findOne(link.attachedToClass, { _id: link.attachedTo })
   if (doc === undefined) return false
 
-  const fileAttributes = (_class: Ref<Class<Doc>>): string[] =>
+  const fileAttributes = (_class: Ref<Class<Doc>>): Array<[string, AnyAttribute]> =>
     Array.from(hierarchy.getAllAttributes(_class))
       .filter(([, attr]) => attr.type._class === core.class.TypeBlob ||
         (attr.type._class === core.class.RefTo && (attr.type as RefTo<Doc>).to === core.class.Blob))
-      .map(([name]) => name)
 
-  for (const name of fileAttributes(doc._class)) {
+  for (const [name] of fileAttributes(doc._class)) {
     if ((doc as unknown as Record<string, unknown>)[name] === file) return true
+  }
+  // The schema identifies file-bearing attached classes; this covers Attachment and FileVersion
+  // without coupling the endpoint to individual product plugins or accepting arbitrary string fields.
+  const checkedFields = new Set<string>()
+  for (const _class of hierarchy.getDescendants(core.class.AttachedDoc)) {
+    for (const [name, attribute] of fileAttributes(_class as Ref<Class<Doc>>)) {
+      const key = JSON.stringify([attribute.attributeOf, name])
+      if (checkedFields.has(key)) continue
+      checkedFields.add(key)
+      const attachment = await client.findOne(attribute.attributeOf as Ref<Class<Doc>>, {
+        attachedTo: doc._id,
+        attachedToClass: { $in: hierarchy.getAncestors(doc._class) },
+        [name]: file
+      } as any)
+      if (attachment !== undefined) return true
+    }
   }
   for (const [name, attribute] of hierarchy.getAllAttributes(doc._class)) {
     const value = (doc as unknown as Record<string, unknown>)[name]
@@ -49,18 +64,6 @@ export async function canReadPublicFile (
     if (attribute.type._class === core.class.TypeMarkup) markup = value
     else if (attribute.type._class === core.class.TypeCollaborativeDoc) markup = await loadMarkup?.(value)
     if (markup !== undefined && markupHasFile(markup, file)) return true
-  }
-  // The schema identifies file-bearing attached classes; this covers Attachment and FileVersion
-  // without coupling the endpoint to individual product plugins or accepting arbitrary string fields.
-  for (const _class of hierarchy.getDescendants(core.class.AttachedDoc)) {
-    for (const name of fileAttributes(_class as Ref<Class<Doc>>)) {
-      const attachment = await client.findOne(_class as Ref<Class<Doc>>, {
-        attachedTo: doc._id,
-        attachedToClass: { $in: hierarchy.getAncestors(doc._class) },
-        [name]: file
-      } as any)
-      if (attachment !== undefined) return true
-    }
   }
   return false
 }
