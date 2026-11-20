@@ -57,13 +57,15 @@
   $: query = { ..._baseQuery }
   $: searchQuery = search === '' ? query : { ...query, $search: `${search}*` }
   $: filterQuery = {}
+  $: membersQuery = _class === chunter.class.DirectMessage ? { members: me.uuid } : {}
   $: resultQuery = isQueryLoaded
     ? {
         ...filterQuery,
         ...searchQuery,
-        ...(_class === chunter.class.DirectMessage ? { members: me.uuid } : {})
+        ...membersQuery
       }
     : undefined
+  $: totalQuery = { ...query, ...membersQuery }
 
   let options = viewlet?.options
   let _options = viewlet?.options ?? {}
@@ -162,7 +164,7 @@
       viewOptions,
       viewOptionsConfig: viewlet.viewOptions?.other,
       query: resultQuery,
-      totalQuery: query,
+      totalQuery,
       ...viewlet.props
     }}
   />
