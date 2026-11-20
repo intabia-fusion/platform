@@ -14,17 +14,20 @@
 //
 
 import { Analytics } from '@hcengineering/analytics'
-import { MeasureMetricsContext } from '@hcengineering/core'
+import { getClient } from '@hcengineering/account-client'
+import { MeasureMetricsContext, type PersonUuid, type WorkspaceUuid } from '@hcengineering/core'
 import { buildStorageFromConfig } from '@hcengineering/server-storage'
+import { generateToken } from '@hcengineering/server-token'
 import { spawn } from 'child_process'
 import { EventEmitter } from 'events'
-import { get as httpGet, type Server } from 'http'
+import { get as httpGet, type IncomingHttpHeaders, type Server } from 'http'
 import { type AddressInfo } from 'net'
 import { Readable } from 'stream'
 
 import { createServer } from '../server'
 
 jest.mock('child_process', () => ({ ...jest.requireActual('child_process'), spawn: jest.fn() }))
+jest.mock('@hcengineering/account-client', () => ({ getClient: jest.fn() }))
 jest.mock('@hcengineering/server-storage', () => ({
   storageConfigFromEnv: jest.fn(() => ({})),
   buildStorageFromConfig: jest.fn()
@@ -39,12 +42,19 @@ jest.mock('../utils/sharp', () => ({
 
 const spawnMock = spawn as unknown as jest.Mock
 
-const WS = '85da8aa0-7334-41bc-b69f-5f05ce88483c'
+const WS = '85da8aa0-7334-41bc-b69f-5f05ce88483c' as WorkspaceUuid
+const OTHER_WS = '87a386a9-e662-42fa-8b64-89b1c249999a' as WorkspaceUuid
+const ACCOUNT = '59eec4ec-c916-47a2-b19c-1fe156e07c87' as PersonUuid
+// signed with the default secret, the one decodeToken falls back to without metadata
+const TOKEN = generateToken(ACCOUNT, WS)
 
 const config = {
   Port: 0,
   Secret: 'secret',
   ServiceID: 'preview',
+  AccountsUrl: 'http://account',
+  AuthAllowCacheMs: 60_000,
+  AuthDenyCacheMs: 1_000,
   Cache: { enabled: false, cachePath: undefined, cacheSize: undefined, gcInterval: undefined },
   MaxBlobSize: 1024 * 1024,
   Video: { concurrency: 2, timeout: 60 * 1000, headTailSize: 5 * 1024 * 1024 },
@@ -53,16 +63,25 @@ const config = {
 }
 
 // http.get sends the path as it is: fetch would resolve "." and ".." before the request
-async function request (server: Server, path: string): Promise<{ status: number, body: string }> {
+async function request (
+  server: Server,
+  path: string,
+  token: string | null = TOKEN,
+  cookie?: string
+): Promise<{ status: number, body: string, headers: IncomingHttpHeaders }> {
   const { port } = server.address() as AddressInfo
+  const headers = {
+    ...(token === null ? {} : { authorization: `Bearer ${token}` }),
+    ...(cookie === undefined ? {} : { cookie })
+  }
   return await new Promise((resolve, reject) => {
-    httpGet({ host: '127.0.0.1', port, path }, (res) => {
+    httpGet({ host: '127.0.0.1', port, path, headers }, (res) => {
       let body = ''
       res.on('data', (chunk) => {
         body += chunk
       })
       res.on('end', () => {
-        resolve({ status: res.statusCode ?? 0, body })
+        resolve({ status: res.statusCode ?? 0, body, headers: res.headers })
       })
     }).on('error', reject)
   })
@@ -79,6 +98,7 @@ describe('preview routes', () => {
     stat.mockImplementation(async () => ({ contentType: 'application/octet-stream', size: 4, etag: 'etag' }))
     get.mockImplementation(async () => Readable.from([Buffer.from('blob')]))
     ;(buildStorageFromConfig as jest.Mock).mockReturnValue({ stat, get, partial: get })
+    ;(getClient as jest.Mock).mockReset()
 
     const created = await createServer(ctx, config)
     close = created.close
@@ -144,6 +164,69 @@ describe('preview routes', () => {
 
     expect(response.status).toBe(200)
     expect(stat).toHaveBeenCalledWith(expect.anything(), { uuid: WS }, '%2e')
+  })
+
+  it('refuses a request without a token', async () => {
+    const metadata = await request(server, `/metadata/${WS}/blob`, null)
+    const image = await request(server, `/image/width=64/${WS}/blob`, null)
+
+    expect(metadata.status).toBe(401)
+    expect(image.status).toBe(401)
+    expect(stat).not.toHaveBeenCalled()
+  })
+
+  it('refuses a token of another workspace', async () => {
+    ;(getClient as jest.Mock).mockReturnValue({
+      getUserWorkspaces: jest.fn(async () => [{ uuid: OTHER_WS }])
+    })
+    const foreign = generateToken(ACCOUNT, OTHER_WS)
+
+    const metadata = await request(server, `/metadata/${WS}/blob`, foreign)
+    const image = await request(server, `/image/width=64/${WS}/blob`, foreign)
+
+    expect(metadata.status).toBe(401)
+    expect(image.status).toBe(401)
+    expect(stat).not.toHaveBeenCalled()
+  })
+
+  it('refuses a guest token of another workspace', async () => {
+    const workspaces = jest.fn()
+    ;(getClient as jest.Mock).mockReturnValue({ getUserWorkspaces: workspaces })
+    const guest = generateToken(ACCOUNT, OTHER_WS, { guest: 'true' })
+
+    const metadata = await request(server, `/metadata/${WS}/blob`, guest)
+
+    expect(metadata.status).toBe(401)
+    expect(workspaces).not.toHaveBeenCalled()
+  })
+
+  // a reader of a public link has a workspace token and nothing else
+  it('serves a guest token of the workspace', async () => {
+    const guest = generateToken(ACCOUNT, WS, { guest: 'true' })
+
+    const metadata = await request(server, `/metadata/${WS}/blob`, guest)
+
+    expect(metadata.status).toBe(200)
+  })
+
+  // a thumbnail is an <img>: it has no header to put the token in, so the token comes as a cookie
+  it('serves a guest token that arrives as a cookie', async () => {
+    stat.mockImplementation(async () => ({ contentType: 'image/png', size: 4, etag: 'etag' }))
+    const guest = generateToken(ACCOUNT, WS, { guest: 'true' })
+
+    const response = await request(server, `/image/width=64/${WS}/blob`, null, `account-metadata-Token=${guest}`)
+
+    expect(response.status).toBe(200)
+    expect(response.body).toBe('thumbnail')
+  })
+
+  // the access check happens before the bytes, so a shared cache must not keep them
+  it('keeps a thumbnail out of a shared cache', async () => {
+    stat.mockImplementation(async () => ({ contentType: 'image/png', size: 4, etag: 'etag' }))
+
+    const response = await request(server, `/image/width=64/${WS}/blob`)
+
+    expect(response.headers['cache-control']).toBe('private, max-age=31536000, immutable')
   })
 
   describe('a blob that ffmpeg fails on', () => {

@@ -40,6 +40,8 @@ const cacheControlNoCache = 'public, no-store, no-cache, must-revalidate, max-ag
 
 const KEEP_ALIVE_TIMEOUT = 5 // seconds
 const KEEP_ALIVE_MAX = 1000
+// Presentation writes the token cookie with the workspace uuid in its name
+const PRESENTATION_COOKIE_PREFIX = 'presentation-metadata-Token'
 const KEEP_ALIVE_HEADERS = {
   Connection: 'keep-alive',
   'Keep-Alive': `timeout=${KEEP_ALIVE_TIMEOUT}, max=${KEEP_ALIVE_MAX}`
@@ -498,11 +500,12 @@ export function start (
 
           const authorization = ((req?.headers?.authorization as string) ?? '').split(' ')
           const authorizationToken = authorization.at(0)?.toLowerCase() === 'bearer' ? authorization.at(1) : undefined
-          const token =
-            cookies.find((it) => it[0] === 'presentation-metadata-Token')?.[1] ??
-            (req.query.token as string | undefined) ??
-            authorizationToken ??
-            ''
+          // The cookie name carries the workspace uuid, which is the second segment of the path
+          const expectedUuid = req.path.split('/')[2] ?? ''
+          const tokenCookie =
+            cookies.find((it) => it[0] === `${PRESENTATION_COOKIE_PREFIX}-${expectedUuid}`) ??
+            cookies.find((it) => it[0].startsWith(PRESENTATION_COOKIE_PREFIX))
+          const token = tokenCookie?.[1] ?? (req.query.token as string | undefined) ?? authorizationToken ?? ''
           const wsIds = await getWorkspaceIds(ctx, token, req.path)
           if (wsIds === null) {
             res.status(403).send()

@@ -41,6 +41,8 @@ import { clearInterval } from 'timers'
 
 const KEEP_ALIVE_TIMEOUT = 5 // seconds
 const KEEP_ALIVE_MAX = 1000
+// Presentation writes the token cookie with the workspace uuid in its name
+const PRESENTATION_COOKIE_PREFIX = 'presentation-metadata-Token'
 
 const cacheControlNoCache = 'public, no-store, no-cache, must-revalidate, max-age=0'
 
@@ -156,7 +158,11 @@ export async function createServer (ctx: MeasureContext, config: Config): Promis
 
     if (token == null) {
       const cookies = (headers.cookie ?? '').split(';').map((it) => it.trim().split('='))
-      token = cookies.find((it) => it[0] === 'presentation-metadata-Token')?.[1]
+      // The cookie name carries the workspace uuid
+      const tokenCookie =
+        cookies.find((it) => it[0] === `${PRESENTATION_COOKIE_PREFIX}-${workspace}`) ??
+        cookies.find((it) => it[0].startsWith(PRESENTATION_COOKIE_PREFIX))
+      token = tokenCookie?.[1]
     }
 
     if (token === undefined || typeof token !== 'string' || token === '') {

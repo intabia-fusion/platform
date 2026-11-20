@@ -85,7 +85,9 @@ export const isServiceToken = (token?: Token): boolean =>
 
 export const withAuthorization = (req: RequestWithAuth, res: Response, next: NextFunction): void => {
   try {
-    const token = extractToken(req.headers)
+    // One token cookie per workspace: the first one may belong to another, and `withWorkspace`
+    // refuses it
+    const token = extractToken(req.headers, req.params?.workspace)
     if (
       token == null ||
       token.extra?.guest === 'true' ||

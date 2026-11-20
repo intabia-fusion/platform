@@ -172,6 +172,25 @@ describe('middleware', () => {
       expect(req.token?.workspace).toBe(workspaceUuid)
       expect(next).toHaveBeenCalled()
     })
+
+    // two tabs, two cookies: the first one may belong to the other workspace
+    it('takes the cookie of the workspace in the url, not the first one', () => {
+      const otherWorkspace = '44f0d558-3261-44bf-936a-114a6a7f31e7' as WorkspaceUuid
+      const otherToken = generateToken(accountUuid, otherWorkspace, {})
+      const workspaceToken = generateToken(accountUuid, workspaceUuid, {})
+
+      req.headers = {
+        cookie: `presentation-metadata-Token-${otherWorkspace}=${otherToken}; presentation-metadata-Token-${workspaceUuid}=${workspaceToken}`
+      }
+      req.params = { workspace: workspaceUuid }
+
+      withAuthorization(req as RequestWithAuth, res as Response, () => {
+        withWorkspace(req as RequestWithAuth, res as Response, next)
+      })
+
+      expect(req.token?.workspace).toBe(workspaceUuid)
+      expect(next).toHaveBeenCalledWith()
+    })
   })
 
   describe('withAuthorization token filter', () => {

@@ -44,16 +44,26 @@ export function readToken (headers: IncomingHttpHeaders): string | undefined {
 }
 
 /**
- * Extracts and decodes JWT token from Authorization header or cookies.
- * Prefers tokens with workspace from cookies.
+ * A decoded token and the string it was decoded from. The two must travel together: the raw is sent
+ * to account, and picking it another way (`readToken` takes the first cookie) can send a token of
+ * one account while the decoded one names another.
+ */
+export interface ExtractedToken {
+  token: Token
+  raw: string
+}
+
+/**
+ * Extracts and decodes JWT token from Authorization header or cookies, keeping the raw string.
+ * Prefers the cookie naming `workspace`, then any with a workspace, then one without.
  * Returns undefined if token cannot be decoded.
  */
-export function extractToken (headers: IncomingHttpHeaders): Token | undefined {
+export function extractTokenWithRaw (headers: IncomingHttpHeaders, workspace?: string): ExtractedToken | undefined {
   // First try Authorization header
   const authToken = extractAuthorizationToken(headers.authorization)
   if (authToken !== null) {
     try {
-      return decodeToken(authToken)
+      return { token: decodeToken(authToken), raw: authToken }
     } catch {
       // Not a valid JWT
       return undefined
@@ -62,20 +72,34 @@ export function extractToken (headers: IncomingHttpHeaders): Token | undefined {
 
   // Then try all cookies with 'token' in the name
   const cookieTokens = extractCookieTokens(headers.cookie)
-  let validToken: Token | undefined
-  for (const tokenStr of cookieTokens) {
+  let validToken: ExtractedToken | undefined
+  let workspaceToken: ExtractedToken | undefined
+  for (const raw of cookieTokens) {
     try {
-      const decoded = decodeToken(tokenStr)
-      // Prefer token with workspace, return immediately if found
-      if (decoded.workspace !== undefined) {
-        return decoded
+      const decoded = decodeToken(raw)
+      // One cookie per workspace: a token of another one is refused downstream
+      if (workspace !== undefined && decoded.workspace === workspace) {
+        return { token: decoded, raw }
       }
-      // Keep first valid token without workspace as fallback
-      validToken ??= decoded
+      // Fallbacks: the first with a workspace, then the first without one
+      if (decoded.workspace !== undefined) {
+        workspaceToken ??= { token: decoded, raw }
+        continue
+      }
+      validToken ??= { token: decoded, raw }
     } catch {
       // Continue to next token
     }
   }
 
-  return validToken
+  return workspaceToken ?? validToken
+}
+
+/**
+ * Extracts and decodes JWT token from Authorization header or cookies.
+ * Prefers the cookie naming `workspace` when it is asked for, then any token with a workspace.
+ * Returns undefined if token cannot be decoded.
+ */
+export function extractToken (headers: IncomingHttpHeaders, workspace?: string): Token | undefined {
+  return extractTokenWithRaw(headers, workspace)?.token
 }
