@@ -2,6 +2,8 @@
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021 Hardcore Engineering Inc.
 //
+// Copyright © 2026 Intabia Fusion.
+//
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
 // obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
@@ -14,6 +16,7 @@
 // limitations under the License.
 //
 
+import { setPublicFileCookie } from './publicFiles'
 import { Analytics } from '@hcengineering/analytics'
 import core, {
   type Account,
@@ -1152,6 +1155,10 @@ export function setPresentationCookie (token: string, workspaceUuid: WorkspaceUu
 
     const normalized = path.startsWith('/') ? path : `/${path}`
     document.cookie = `${cookieName}=${cookieValue}; path=${normalized}`
+    const extra = decodeTokenPayload(token).extra
+    if (extra?.guest === 'true' && typeof extra.linkId === 'string') {
+      setPublicFileCookie(cookieName, cookieValue, workspaceUuid, extra.linkId)
+    }
   }
 }
 

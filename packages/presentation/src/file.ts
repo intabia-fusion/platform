@@ -25,7 +25,9 @@ import {
 import { textContentTypes } from '@hcengineering/view'
 import { v4 as uuid } from 'uuid'
 
+import { publicFilePath } from './publicFiles'
 import plugin from './plugin'
+import { decodeTokenPayload } from './utils'
 import { getFileMetadata, matchContentType } from './filetypes'
 
 export function getCurrentWorkspaceUuid (): WorkspaceUuid {
@@ -66,12 +68,26 @@ export function isTextFile (contentType: string): boolean {
 }
 
 /** @public */
+export function isPublicFileAccess (): boolean {
+  try {
+    return decodeTokenPayload(getToken()).extra?.guest === 'true'
+  } catch {
+    return false
+  }
+}
+
+/** @public */
 export function getFileUrl (file: string, filename?: string): string {
   if (file.includes('://')) {
     return file
   }
 
   const workspace = getCurrentWorkspaceUuid()
+  if (isPublicFileAccess()) {
+    const linkId = decodeTokenPayload(getToken()).extra.linkId
+    return `${publicFilePath(workspace, linkId)}${encodeURIComponent(file)}` +
+      (filename === undefined ? '' : `?filename=${encodeURIComponent(filename)}`)
+  }
 
   const storage = getFileStorage()
   return storage.getFileUrl(workspace, file, filename)

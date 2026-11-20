@@ -218,7 +218,7 @@
 | Роли продукта | - | advanced-settings/roles | off | - | выключено на проде: products |
 | Удаление версии продукта | - | - | off | - | не документируем |
 | Поиск продукта в глобальном поиске | - | - | off | - | не документируем |
-| Печать документа в PDF | knowledge-management/documents | knowledge-management/documents | ok | 0.8.60 | |
+| Печать документа в PDF | knowledge-management/documents | knowledge-management/documents | stale | 0.8.60 | изображения загружаются через проверку файлов публичного объекта |
 | Массовая печать | - | - | off | - | не документируем |
 | Подпись PDF после генерации | - | - | off | - | не документируем |
 | Просмотр DOCX превью через конвертацию в HTML | - | - | off | - | не документируем |

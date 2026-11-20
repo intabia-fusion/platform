@@ -1,9 +1,24 @@
+//
+// Copyright © 2026 Intabia Fusion.
+//
+// Licensed under the Eclipse Public License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License. You may
+// obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
 import type { Blob, Ref } from '@hcengineering/core'
 import { concatLink } from '@hcengineering/core'
 import { getMetadata } from '@hcengineering/platform'
 import { withRetry } from '@hcengineering/retry'
 
-import { getFileUrl, getCurrentWorkspaceUuid, getFileStorage } from './file'
+import { getFileUrl, getCurrentWorkspaceUuid, getFileStorage, isPublicFileAccess } from './file'
 import presentation from './plugin'
 
 const frontImagePreviewUrl = '/files/:workspace?file=:blobId&size=:size'
@@ -49,7 +64,7 @@ export function getSrcSet (_blob: Ref<Blob>, width?: number, height?: number): s
 }
 
 function blobToSrcSet (blob: Ref<Blob>, width: number | undefined, height: number | undefined): string {
-  if (blob.includes('://')) {
+  if (isPublicFileAccess() || blob.includes('://')) {
     return ''
   }
 
