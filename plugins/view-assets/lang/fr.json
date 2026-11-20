@@ -119,6 +119,8 @@
     "CopyAll": "Tout copier",
     "CopyDocumentMarkdown": "Copier en Markdown",
     "CopyAsMarkdownTable": "Copier en tableau Markdown",
+    "MarkdownCopiedToClipboard": "Document copié au format Markdown",
+    "MarkdownCopyFailed": "Impossible de copier le document au format Markdown",
     "TableCopiedToClipboard": "Tableau copié dans le presse-papiers",
     "TableCopyFailed": "Échec de la copie du tableau dans le presse-papiers",
     "PublicView": "Vue publique",

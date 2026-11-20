@@ -110,7 +110,6 @@
     "And": "e",
     "Between": "è tra",
     "ShowColors": "Usa colori",
-
     "Show": "Mostra",
     "FilterArrayAll": "tutti",
     "FilterArrayAny": "qualsiasi",
@@ -120,6 +119,8 @@
     "CopyAll": "Copia tutto",
     "CopyDocumentMarkdown": "Copia come Markdown",
     "CopyAsMarkdownTable": "Copia come tabella Markdown",
+    "MarkdownCopiedToClipboard": "Documento copiato come Markdown",
+    "MarkdownCopyFailed": "Impossibile copiare il documento come Markdown",
     "TableCopiedToClipboard": "Tabella copiata negli appunti",
     "TableCopyFailed": "Impossibile copiare la tabella negli appunti",
     "PublicView": "Vista pubblica",

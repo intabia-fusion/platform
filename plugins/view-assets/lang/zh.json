@@ -41,14 +41,11 @@
     "SelectItemAll": "选择所有项目",
     "SelectItemNone": "取消选择所有项目",
     "NumberItems": "{count, plural, =0 {没有项目} =1 {1 个项目} other {# 个项目}}",
-
     "Assigned": "已分配",
     "Created": "已创建",
     "Subscribed": "已订阅",
-
     "ShowPreview": "显示文档预览",
     "ShowActions": "显示操作弹窗",
-
     "ActionPlaceholder": "搜索或运行命令...",
     "General": "常规",
     "Navigation": "导航",
@@ -85,7 +82,6 @@
     "Grouping": "分组",
     "Ordering": "排序",
     "Manual": "手动",
-
     "FilteredViews": "筛选视图",
     "NewFilteredView": "新筛选视图",
     "FilteredViewName": "筛选视图名称",
@@ -123,10 +119,11 @@
     "CopyAll": "复制全部",
     "CopyDocumentMarkdown": "复制为 Markdown",
     "CopyAsMarkdownTable": "复制为 Markdown 表格",
+    "MarkdownCopiedToClipboard": "文档已复制为 Markdown",
+    "MarkdownCopyFailed": "无法将文档复制为 Markdown",
     "TableCopiedToClipboard": "表格已复制到剪贴板",
     "TableCopyFailed": "复制表格到剪贴板失败",
     "PublicView": "公开视图",
-
     "ChooseIcon": "选择图标",
     "IconColor": "选择图标颜色",
     "IconCategory": "图标",

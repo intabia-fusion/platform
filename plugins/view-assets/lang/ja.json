@@ -119,6 +119,8 @@
     "CopyAll": "すべてコピー",
     "CopyDocumentMarkdown": "Markdownとしてコピー",
     "CopyAsMarkdownTable": "Markdownテーブルとしてコピー",
+    "MarkdownCopiedToClipboard": "ドキュメントをMarkdownとしてコピーしました",
+    "MarkdownCopyFailed": "ドキュメントをMarkdownとしてコピーできませんでした",
     "TableCopiedToClipboard": "テーブルをクリップボードにコピーしました",
     "TableCopyFailed": "テーブルをクリップボードにコピーできませんでした",
     "PublicView": "公開",
