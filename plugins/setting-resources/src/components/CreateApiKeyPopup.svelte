@@ -25,12 +25,11 @@
     NumberInput,
     RadioGroup,
     Spinner,
-    Toggle,
     eventToHTMLElement,
     showPopup,
     type RadioItem
   } from '@hcengineering/ui'
-  import { IconButton } from '@hcengineering/ui/kit'
+  import { IconButton, Toggle } from '@hcengineering/ui/kit'
   import { getCurrentLanguage } from '@hcengineering/theme'
   import { createEventDispatcher } from 'svelte'
 
@@ -279,7 +278,7 @@
           <Label label={settingsRes.string.ApiKeyAllowIncoming} />
           <div class="hint"><Label label={settingsRes.string.ApiKeyAllowIncomingHint} /></div>
         </div>
-        <Toggle bind:on={incoming} />
+        <Toggle size="small" tooltip={{ label: settingsRes.string.ApiKeyAllowIncoming }} bind:checked={incoming} />
       </div>
     </div>
 
