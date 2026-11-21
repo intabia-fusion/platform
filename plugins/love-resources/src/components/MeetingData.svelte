@@ -12,7 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 -->
+<!--
+  Meeting switch of the event form. A repeating event has no office room: the picker stays out.
+-->
 <script lang="ts">
+  import type { RecurringRule } from '@hcengineering/calendar'
   import type { Ref } from '@hcengineering/core'
   import type { Room } from '@hcengineering/love'
   import { Button, CheckBox, Label } from '@hcengineering/ui'
@@ -22,19 +26,37 @@
   import { myOffice, rooms } from '../stores'
 
   export let state: Writable<Record<string, any>>
+  // The repeat rule the calendar form holds. It decides only whether a room can be picked: a series
+  // of meetings lives in the workspace meeting room, so there is nothing to choose there.
+  export let rules: RecurringRule[] = []
 
-  function changeRoom (val: Ref<Room>): void {
-    $state.room = val
-  }
+  let isMeeting = $state.isMeeting === true
+
+  $: selectedRoom = $rooms.find((r) => r._id === $state.room)
+  $: isPrivateRoom = selectedRoom?.startPrivate ?? false
+  $: repeats = rules.length > 0
+  // A permanent meeting is an entity of its own: it lives in the workspace's meeting room and owns no
+  // office room, so a room picked before the repeat was set must not travel with it.
+  $: if (repeats && $state.room !== undefined) $state.room = undefined
 
   function changeIsMeeting (val: boolean): void {
     $state.isMeeting = val
   }
 
-  let isMeeting = false
+  // `withRoom`: a one-off meeting is usually held in a place, so the own office is picked for it.
+  // A repeating one has nowhere to pick from, and defaulting a room there would create the very
+  // setting this form is meant to leave empty.
+  function enableMeeting (withRoom: boolean): void {
+    isMeeting = true
+    changeIsMeeting(true)
+    if (withRoom && $state.room === undefined) {
+      $state.room = $myOffice?._id
+    }
+  }
 
-  $: selectedRoom = $rooms.find((r) => r._id === $state.room)
-  $: isPrivateRoom = selectedRoom?.startPrivate ?? false
+  function changeRoom (val: Ref<Room>): void {
+    $state.room = val
+  }
 </script>
 
 <div class="flex-row-center gap-1-5 mt-1">
@@ -52,15 +74,16 @@
     justify="left"
     flex="1"
     on:click={() => {
-      isMeeting = !isMeeting
-      changeIsMeeting(isMeeting)
-      if (isMeeting && $state.room === undefined) {
-        $state.room = $myOffice?._id
+      if (isMeeting) {
+        isMeeting = false
+        changeIsMeeting(false)
+        return
       }
+      enableMeeting(!repeats)
     }}
   />
 </div>
-{#if isMeeting}
+{#if isMeeting && !repeats}
   <RoomSelector
     value={$state.room}
     on:change={(ev) => {

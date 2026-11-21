@@ -21,14 +21,22 @@
 
   export let events: Event[]
   export let date: Date
-  export let size: 'small' | 'huge' = 'small'
-
   export let today: boolean = false
   export let selected: boolean = false
   export let wrongMonth: boolean = false
+  /** Cell size of the calendar the day sits in: `huge` is the month grid, which lists the events. */
+  export let size: 'huge' | undefined = undefined
 
   const dispatch = createEventDispatcher()
   const eventCount = 3
+
+  // The calendar's own editor - the popup the event has always been edited in. A meeting adds its
+  // block to that editor through `calendar.extensions.EditEventExtensions`, so nothing is branched
+  // here for it. `center` rather than `content`: only then the popup gets the modal overlay, and with
+  // it a click outside the window to dismiss it.
+  function openEvent (event: Event): void {
+    showPopup(calendar.component.EditEvent, { object: event }, 'center')
+  }
 
   $: tip = {
     label: calendar.string.Events,
@@ -67,7 +75,7 @@
           class="overflow-label mt-1 py-1 flex flex-between event cursor-pointer"
           style="background-color: {getPlatformColorForTextDef(e.space, $themeStore.dark).color};"
           on:click|stopPropagation|preventDefault={() => {
-            showPopup(calendar.component.EditEvent, { object: e }, 'content')
+            openEvent(e)
           }}
         >
           {e.title}

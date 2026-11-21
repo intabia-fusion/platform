@@ -16,7 +16,7 @@ import { expect, test, type Page } from '../fixtures'
 import { generateId, getSecondPage, PlatformSetting, PlatformURI, PlatformUserSecond } from '../utils'
 import { CalendarPage } from '../model/calendar-page'
 import { SidebarPage } from '../model/sidebar-page'
-import { deleteEventsByTitle } from '../API/CalendarApi'
+import { deleteEventsByTitle, dropStaleCalendarEvents } from '../API/CalendarApi'
 
 test.use({
   storageState: PlatformSetting
@@ -35,6 +35,12 @@ async function openCalendarWidget (page: Page): Promise<CalendarPage> {
 }
 
 test.describe('Calendar participants isolation', () => {
+  // The widget shows a single day and nothing cleans it up, so a few runs' worth of events
+  // fill every hour and there is no free cell left to click.
+  test.beforeAll(async () => {
+    await dropStaleCalendarEvents(['Not a participant ', 'Shared with participant ', 'Colleague busy '])
+  })
+
   test('Account that is not a participant does not see the event', async ({ page, browser }) => {
     const title = `Not a participant ${generateId()}`
 
@@ -84,12 +90,10 @@ test.describe('Calendar participants isolation', () => {
       })
 
       await test.step('A participant booked at that hour is marked busy', async () => {
-        // Busy mark needs the colleague busy at that exact hour, so book it in their own calendar.
-        // That leaves my grid cell free to click - clicking my own event would open it for editing.
-        const busyTime = await calendarPage2.createEventInWidget(busyTitle, 8)
-
-        await calendarPage.emptyCellAtTime(busyTime).scrollIntoViewIfNeeded()
-        await calendarPage.emptyCellAtTime(busyTime).click()
+        // The mark reflects a clash with the event being created, so the colleague has to be busy
+        // at exactly that hour, and my own grid cell for it has to stay free to click - clicking my
+        // own event would open it for editing instead.
+        await calendarPage.clickFreeCellInBothWidgets(calendarPage2, busyTitle, 8)
         await calendarPage.addEventParticipant(SECOND_USER_LAST_NAME)
         await expect(calendarPage.participantBusyMark(SECOND_USER_LAST_NAME)).toBeVisible({ timeout: 15000 })
         await calendarPage.closeEventPopup()

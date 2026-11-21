@@ -55,6 +55,7 @@
     "EventTitlePlaceholder": "Termintitel",
     "TimeZone": "Zeitzone",
     "Repeat": "Wiederholen",
+    "DoNotRepeat": "Nicht wiederholen",
     "On": "Am",
     "Every": "Jeden",
     "After": "Nach",
@@ -125,6 +126,14 @@
     "SynchronizedCalendars": "Synchronisierte Kalender",
     "Account": "Konto",
     "NoCalendars": "Keine Kalender zur Synchronisation ausgewählt",
-    "PersonalCalendar": "Persönlicher Kalender"
+    "PersonalCalendar": "Persönlicher Kalender",
+    "Going": "Zusagen",
+    "NotGoing": "Absagen",
+    "Maybe": "Vielleicht",
+    "WillYouAttend": "Nehmen Sie teil?",
+    "RsvpAccepted": "zugesagt",
+    "RsvpDeclined": "abgesagt",
+    "RsvpTentative": "unsicher",
+    "RsvpPending": "ohne Antwort"
   }
 }

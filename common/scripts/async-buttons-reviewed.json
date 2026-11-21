@@ -1008,15 +1008,75 @@
     "reason": "Only translate() of the default title is awaited; each click is meant to add one column, the save goes through the board editor queue."
   },
   {
-    "file": "plugins/tracker-resources/src/components/boards/settings/RulesTab.svelte",
-    "id": "20e7b1e36068",
-    "handler": "on:click={add}",
-    "reason": "Only translate() of default titles is awaited; each click is meant to add one rule, the save goes through the board editor queue."
+    "file": "plugins/calendar-resources/src/components/EventRsvp.svelte",
+    "id": "9c5603850e0e",
+    "handler": "on:click={() => {",
+    "reason": "answer(status) writes one rsvp value: clicking the answer already selected sends the same update again, the document ends in the same state."
   },
   {
-    "file": "plugins/tracker-resources/src/components/projects/settings/ArchiveSection.svelte",
-    "id": "8de4e16393dd",
-    "handler": "on:click={async () => {",
-    "reason": "deleteProject reads one issue and opens a confirmation MessageBox; the archive or delete runs in the popup action. Worst case is two stacked confirmations, no mutation."
+    "file": "plugins/love-resources/src/components/EditMeetingData.svelte",
+    "id": "18422e2e199d",
+    "handler": "on:click={closeMeeting}",
+    "reason": "closeMeeting is leaveMeeting, which returns early while lkIsConnecting and sets leavingMeeting before disconnecting, so a repeat click is a no-op."
+  },
+  {
+    "file": "plugins/love-resources/src/components/EditMeetingData.svelte",
+    "id": "5e4ba8e9e016",
+    "handler": "on:click={openMeeting}",
+    "reason": "openMeeting ends in joinMeetingBySession or joinMeeting, both covered by withConnectingToMeeting; the love service also resolves the session for an occurrence itself and answers with the session already created."
+  },
+  {
+    "file": "plugins/love-resources/src/components/EditMeetingScheduleData.svelte",
+    "id": "5e4ba8e9e016",
+    "handler": "on:click={openMeeting}",
+    "reason": "Same openMeeting path as on the meeting card: joining goes through withConnectingToMeeting and the service-side session resolve, so a second click does not start a second session."
+  },
+  {
+    "file": "plugins/love-resources/src/components/EditPermanentMeeting.svelte",
+    "id": "518baa98eee6",
+    "handler": "on:click={joinLive}",
+    "reason": "joinLive only calls joinMeeting(liveSession), guarded by withConnectingToMeeting; a repeated click reuses the connect in flight."
+  },
+  {
+    "file": "plugins/love-resources/src/components/EditPermanentMeeting.svelte",
+    "id": "c9704ea980e9",
+    "handler": "on:click={() => {",
+    "reason": "Joins the permanent meeting by its own id through joinMeetingBySession: the service returns the live session for a meeting that is already open, so the second click lands in the same session."
+  },
+  {
+    "file": "plugins/love-resources/src/components/EditScheduledMeeting.svelte",
+    "id": "dba5dfc4fdf0",
+    "handler": "on:click={leaveOrClose}",
+    "reason": "leaveOrClose ends in leaveMeeting, which guards both the connecting state and a re-entrant leave, so a repeat click does nothing."
+  },
+  {
+    "file": "plugins/love-resources/src/components/EditScheduledMeeting.svelte",
+    "id": "518baa98eee6",
+    "handler": "on:click={joinLive}",
+    "reason": "joinLive only calls joinMeeting(liveSession), guarded by withConnectingToMeeting."
+  },
+  {
+    "file": "plugins/love-resources/src/components/MeetingLinkPopup.svelte",
+    "id": "61a64bd935e7",
+    "handler": "on:click={copyLinkWithPassword}",
+    "reason": "Writes the link to the clipboard and shows a status toast; no server call, and the same text is produced on every click."
+  },
+  {
+    "file": "plugins/love-resources/src/components/MeetingLinkPopup.svelte",
+    "id": "e79a392ab2c9",
+    "handler": "on:click={copyLink}",
+    "reason": "Clipboard write plus a status toast only; repeating it copies the same link again, no mutation."
+  },
+  {
+    "file": "plugins/love-resources/src/components/MeetingLinkReadyPopup.svelte",
+    "id": "aa598be92692",
+    "handler": "on:click={copy}",
+    "reason": "Clipboard write plus a status toast and a local `copied` flag; idempotent, nothing is written to the workspace."
+  },
+  {
+    "file": "plugins/love-resources/src/components/PermanentMeetingPresenter.svelte",
+    "id": "e79a392ab2c9",
+    "handler": "on:click={copyLink}",
+    "reason": "Row action that copies the meeting link to the clipboard and shows a status toast; idempotent."
   }
 ]

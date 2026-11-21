@@ -23,8 +23,8 @@
   import { createEventDispatcher, onMount } from 'svelte'
 
   import love from '../plugin'
-  import { currentMeeting, joinMeeting, leaveMeeting } from '../meetings'
-  import { infos, myConnectingSessionId, rooms, connectingToMeeting } from '../stores'
+  import { joinMeeting, joinMeetingBySession, currentMeeting, leaveMeeting } from '../meetings'
+  import { currentMeetingMinutes, infos, myConnectingSessionId, rooms, connectingToMeeting } from '../stores'
   import { lkIsConnecting, lkSessionConnected } from '../liveKitClient'
   import { getMetadata } from '@hcengineering/platform'
   import { AccountRole, type Ref } from '@hcengineering/core'
@@ -106,6 +106,24 @@
     await joinMeeting(object)
   }
 
+  $: canJoinCurrent =
+    object.status === MeetingStatus.Finished &&
+    currentAccount.role !== AccountRole.Guest &&
+    currentAccount.role !== AccountRole.ReadOnlyGuest &&
+    (object.meeting !== undefined || object.eventId !== undefined)
+
+  let joiningCurrent = false
+  async function joinCurrent (): Promise<void> {
+    if (joiningCurrent) return
+    joiningCurrent = true
+    try {
+      if (object.meeting !== undefined) await joinMeetingBySession(object.meeting, 'meeting')
+      else if (object.eventId !== undefined) await joinMeetingBySession(object.eventId, 'event')
+    } finally {
+      joiningCurrent = false
+    }
+  }
+
   let leavingRoom = false
   async function handleLeaveRoom (): Promise<void> {
     if (leavingRoom) return
@@ -116,8 +134,6 @@
       leavingRoom = false
     }
   }
-
-  $: connectLabel = object.status !== MeetingStatus.Scheduled ? love.string.JoinMeeting : love.string.StartMeeting
 
   function showConnectionButton (
     object: MeetingMinutes,
@@ -140,6 +156,12 @@
 
     return true
   }
+  $: sameMeeting =
+    $currentMeetingMinutes !== undefined &&
+    ($currentMeetingMinutes._id === object._id ||
+      (object.meeting !== undefined && $currentMeetingMinutes.meeting === object.meeting) ||
+      (object.eventId !== undefined && $currentMeetingMinutes.eventId === object.eventId))
+  $: inThisCall = $lkSessionConnected && (sameMeeting || $currentMeetingMinutes === undefined)
 
   function getInfo (mm: Ref<MeetingMinutes>, info: ParticipantInfo[]): ParticipantInfo[] {
     return info.filter((p) => p.meeting === mm)
@@ -179,14 +201,23 @@
           loading={togglingPrivate}
         />
       {/if}
-      {#if showConnectionButton(object, hasPendingJoinInThisSession || $connectingToMeeting, $lkSessionConnected, currentAccount.role)}
+      {#if showConnectionButton(object, hasPendingJoinInThisSession || $connectingToMeeting, $lkSessionConnected, currentAccount.role) && !inThisCall}
         <Button
-          label={connectLabel}
+          label={love.string.JoinMeeting}
           size="large"
           kind="primary"
           on:click={connect}
           loading={hasPendingJoinInThisSession || $connectingToMeeting}
           data-id="meeting-connect"
+        />
+      {:else if canJoinCurrent}
+        <Button
+          label={love.string.JoinMeeting}
+          size="large"
+          kind="primary"
+          on:click={joinCurrent}
+          loading={joiningCurrent}
+          data-id="meeting-connect-current"
         />
       {:else if $lkSessionConnected}
         {#if !$videoVisible}

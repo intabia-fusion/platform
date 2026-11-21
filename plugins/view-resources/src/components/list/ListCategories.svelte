@@ -57,6 +57,7 @@
     provideStatusIconScope
   } from '../../utils'
   import { CategoryQuery, noCategory } from '../../viewOptions'
+  import { dedupeCategories } from '../../categoryUtils'
   import ListCategory from './ListCategory.svelte'
 
   export let docs: Doc[]
@@ -121,7 +122,12 @@
   let categoriesComputed = false
   let isLoadingMoreTop = false
 
-  $: displayedCategories = level === 0 && !showAllCategories ? categories.slice(0, maxInitialCategories) : categories
+  // A grouping can yield the same bucket twice: an empty value from two sources, a category that
+  // arrives both as a raw value and as an aggregate. A keyed list cannot render that - it throws
+  // and takes the whole view with it - so the buckets are deduplicated before they reach it.
+  $: displayedCategories = dedupeCategories(
+    level === 0 && !showAllCategories ? categories.slice(0, maxInitialCategories) : categories
+  )
 
   $: empty = level === 0 && categoriesComputed && categories.length === 0
   $: hasMoreCategories = level === 0 && categories.length > maxInitialCategories

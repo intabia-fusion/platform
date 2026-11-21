@@ -68,20 +68,12 @@ describe('GuestManager.handleGuestJoin', () => {
     manager = new GuestManager(createMockContext(), roomClient as any)
   })
 
-  it('returns 403 when meeting is Scheduled (not started yet)', async () => {
-    wsClient.findMeetingById.mockResolvedValue({ status: MeetingStatus.Scheduled } as unknown as MeetingMinutes)
-    const req = createMockReq({ token: 'guest-token' })
-    const res = createMockRes()
-
-    await manager.handleGuestJoin(req, res)
-
-    expect(res.status).toHaveBeenCalledWith(403)
-    expect(res.send).toHaveBeenCalledWith({ error: 'Meeting has not started yet.' })
-  })
-
   it('returns 403 when meeting is Finished', async () => {
-    wsClient.findMeetingById.mockResolvedValue({ status: MeetingStatus.Finished } as unknown as MeetingMinutes)
-    const req = createMockReq({ token: 'guest-token' })
+    wsClient.findMeetingById.mockResolvedValue({
+      _id: meetingId,
+      status: MeetingStatus.Finished
+    } as unknown as MeetingMinutes)
+    const req = createMockReq({ token: 'guest-token', firstName: 'John', lastName: 'Doe' })
     const res = createMockRes()
 
     await manager.handleGuestJoin(req, res)
@@ -91,9 +83,12 @@ describe('GuestManager.handleGuestJoin', () => {
   })
 
   it('returns 404 when meeting is Active but no LiveKit room exists', async () => {
-    wsClient.findMeetingById.mockResolvedValue({ status: MeetingStatus.Active } as unknown as MeetingMinutes)
+    wsClient.findMeetingById.mockResolvedValue({
+      _id: meetingId,
+      status: MeetingStatus.Active
+    } as unknown as MeetingMinutes)
     roomClient.listRooms.mockResolvedValue([])
-    const req = createMockReq({ token: 'guest-token' })
+    const req = createMockReq({ token: 'guest-token', firstName: 'John', lastName: 'Doe' })
     const res = createMockRes()
 
     await manager.handleGuestJoin(req, res)
@@ -103,7 +98,10 @@ describe('GuestManager.handleGuestJoin', () => {
   })
 
   it('returns 200 with token/roomName/person when Active, room exists and person is created', async () => {
-    wsClient.findMeetingById.mockResolvedValue({ status: MeetingStatus.Active } as unknown as MeetingMinutes)
+    wsClient.findMeetingById.mockResolvedValue({
+      _id: meetingId,
+      status: MeetingStatus.Active
+    } as unknown as MeetingMinutes)
     wsClient.ensurePersonByName.mockResolvedValue(personRef)
     const req = createMockReq({ token: 'guest-token', firstName: 'John', lastName: 'Doe' })
     const res = createMockRes()
@@ -118,7 +116,10 @@ describe('GuestManager.handleGuestJoin', () => {
   })
 
   it('returns 500 when ensurePersonByName fails to produce a person', async () => {
-    wsClient.findMeetingById.mockResolvedValue({ status: MeetingStatus.Active } as unknown as MeetingMinutes)
+    wsClient.findMeetingById.mockResolvedValue({
+      _id: meetingId,
+      status: MeetingStatus.Active
+    } as unknown as MeetingMinutes)
     wsClient.ensurePersonByName.mockResolvedValue(undefined)
     const req = createMockReq({ token: 'guest-token', firstName: 'John', lastName: 'Doe' })
     const res = createMockRes()
@@ -127,6 +128,60 @@ describe('GuestManager.handleGuestJoin', () => {
 
     expect(res.status).toHaveBeenCalledWith(500)
     expect(res.send).toHaveBeenCalledWith({ error: 'Failed to create guest identity' })
+  })
+
+  // A guest is shown to others by this name, and a nameless person would also collapse every
+  // anonymous visitor of a link into one identity.
+  it('refuses a guest without a first and last name', async () => {
+    wsClient.findMeetingById.mockResolvedValue({
+      _id: meetingId,
+      status: MeetingStatus.Active
+    } as unknown as MeetingMinutes)
+    const res = createMockRes()
+
+    await manager.handleGuestJoin(createMockReq({ token: 'guest-token', firstName: '   ', lastName: 'Doe' }), res)
+
+    expect(res.status).toHaveBeenCalledWith(400)
+    expect(res.send).toHaveBeenCalledWith({ error: 'Please enter your first and last name' })
+    expect(wsClient.ensurePersonByName.mock.calls).toHaveLength(0)
+  })
+
+  // Without a client token a fresh Person was created on every join, so the same guest appeared
+  // as several people; the derived one is stable for the link and the name.
+  it('derives the same person token when the client sends none', async () => {
+    wsClient.findMeetingById.mockResolvedValue({
+      _id: meetingId,
+      status: MeetingStatus.Active
+    } as unknown as MeetingMinutes)
+    wsClient.ensurePersonByName.mockResolvedValue(personRef)
+
+    await manager.handleGuestJoin(
+      createMockReq({ token: 'guest-token', firstName: 'John', lastName: 'Doe' }),
+      createMockRes()
+    )
+    await manager.handleGuestJoin(
+      createMockReq({ token: 'guest-token', firstName: 'john', lastName: 'doe' }),
+      createMockRes()
+    )
+
+    const calls = wsClient.ensurePersonByName.mock.calls
+    expect(calls[0][0]).toMatch(/^guest-link:[0-9a-f]{32}$/)
+    expect(calls[1][0]).toBe(calls[0][0])
+  })
+
+  it('uses the person token the client sent', async () => {
+    wsClient.findMeetingById.mockResolvedValue({
+      _id: meetingId,
+      status: MeetingStatus.Active
+    } as unknown as MeetingMinutes)
+    wsClient.ensurePersonByName.mockResolvedValue(personRef)
+
+    await manager.handleGuestJoin(
+      createMockReq({ token: 'guest-token', firstName: 'John', lastName: 'Doe', personToken: 'client-token' }),
+      createMockRes()
+    )
+
+    expect(wsClient.ensurePersonByName.mock.calls[0]).toEqual(['client-token', 'John', 'Doe'])
   })
 })
 
@@ -174,6 +229,33 @@ describe('GuestManager.handleGuestInfo', () => {
     expect(res.status).toHaveBeenCalledWith(200)
     const payload = res.send.mock.calls[0][0]
     expect(payload.roomFound).toBe(false)
+  })
+
+  it('reports "after" for a finished session of a series', async () => {
+    wsClient.findMeetingById.mockResolvedValue({
+      status: MeetingStatus.Finished,
+      name: 'Test'
+    } as unknown as MeetingMinutes)
+    roomClient.listRooms.mockResolvedValue([])
+
+    const res = createMockRes()
+    await manager.handleGuestInfo(createMockReq({ token: 'guest-token' }), res)
+
+    expect(res.send.mock.calls[0][0].mode).toBe('after')
+  })
+
+  it('never reports "after" for a permanent meeting: its session ends, the meeting does not', async () => {
+    wsClient.findMeetingById.mockResolvedValue({
+      status: MeetingStatus.Finished,
+      name: 'Daily standup',
+      meeting: 'permanent-1'
+    } as unknown as MeetingMinutes)
+    roomClient.listRooms.mockResolvedValue([])
+
+    const res = createMockRes()
+    await manager.handleGuestInfo(createMockReq({ token: 'guest-token' }), res)
+
+    expect(res.send.mock.calls[0][0].mode).toBe('before')
   })
 
   it('returns 404 when meeting is missing', async () => {

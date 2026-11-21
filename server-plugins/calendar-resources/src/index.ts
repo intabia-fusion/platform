@@ -15,6 +15,7 @@
 import calendar, {
   AccessLevel,
   busySlotData,
+  collectRsvp,
   Calendar,
   Event,
   getPrimaryCalendar,
@@ -293,12 +294,25 @@ async function removeBusySlot (event: Event, control: TriggerControl): Promise<T
   return res
 }
 
-async function onEventMixin (ctx: TxMixin<Event, Event>, control: TriggerControl): Promise<Tx[]> {
+export async function onEventMixin (ctx: TxMixin<Event, Event>, control: TriggerControl): Promise<Tx[]> {
   const ops = ctx.attributes
   const event = (await control.findAll(control.ctx, calendar.class.Event, { _id: ctx.objectId }, { limit: 1 }))[0]
   void putEventToQueue(control, 'mixin', event, ctx.modifiedBy, ops)
   if (event === undefined) return []
   if (event.access !== 'owner') return []
+  // Only the master carries the identity mixin. An occurrence is a `ReccuringInstance` that keeps
+  // `access: 'owner'` in the calendar of whoever moved it, and a mixin there would give the series a
+  // second identity - the same reason `meetingMasterQuery` excludes the class.
+  if (control.hierarchy.isDerived(event._class, calendar.class.ReccuringInstance)) {
+    // A client that writes the mixin to an occurrence is a bug, not an old document: this is worth
+    // seeing in the log, while the transaction itself is simply not propagated.
+    control.ctx.warn('Meeting identity mixin written to an occurrence, ignored', {
+      eventId: event.eventId,
+      objectId: event._id,
+      modifiedBy: ctx.modifiedBy
+    })
+    return []
+  }
   const events = await control.findAll(control.ctx, calendar.class.Event, { eventId: event.eventId })
   const res: Tx[] = []
   for (const ev of events) {
@@ -316,6 +330,32 @@ async function onEventMixin (ctx: TxMixin<Event, Event>, control: TriggerControl
   return res
 }
 
+// A participant answers in their own copy, which lives in their own space - no client can read
+// every copy, so the tally is kept on the master for the organiser to read.
+async function rsvpSummaryTxes (
+  event: Event,
+  control: TriggerControl,
+  // Copies this call is about to remove are still in the store - name them, or the summary
+  // counts an answer that is gone a moment later.
+  removed = new Set<Ref<Event>>()
+): Promise<Tx[]> {
+  const stored = await control.findAll(control.ctx, calendar.class.Event, { eventId: event.eventId })
+  const master = stored.find((it) => it.access === AccessLevel.Owner)
+  if (master === undefined) return []
+
+  const copies = stored.filter((it) => !removed.has(it._id))
+  const summary = collectRsvp(copies)
+  const current = master.rsvpSummary
+  if (
+    current?.accepted === summary.accepted &&
+    current?.declined === summary.declined &&
+    current?.tentative === summary.tentative
+  ) {
+    return []
+  }
+  return [control.txFactory.createTxUpdateDoc(master._class, master.space, master._id, { rsvpSummary: summary })]
+}
+
 async function onEventUpdate (ctx: TxUpdateDoc<Event>, control: TriggerControl): Promise<Tx[]> {
   const ops = ctx.operations
   const { visibility, user, ...otherOps } = ops
@@ -326,15 +366,24 @@ async function onEventUpdate (ctx: TxUpdateDoc<Event>, control: TriggerControl):
     void sendEventToService(event, 'update', control)
   }
   void putEventToQueue(control, 'update', event, ctx.modifiedBy, ops)
+  if (ops.rsvp !== undefined) {
+    return await rsvpSummaryTxes(event, control)
+  }
   if (event.access !== 'owner') return []
+  // An occurrence edits itself only: propagating its fields to the whole series would overwrite the
+  // master's participants and times with those of one moved occurrence.
+  if (control.hierarchy.isDerived(event._class, calendar.class.ReccuringInstance)) return []
+  const participantsChanged = ops.participants !== undefined
   const events = await control.findAll(control.ctx, calendar.class.Event, { eventId: event.eventId })
   const res: Tx[] = []
   const newParticipants = new Set<Ref<Person>>(event.participants as Ref<Person>[])
+  const removedCopies = new Set<Ref<Event>>()
   const calendars = await control.findAll(control.ctx, calendar.class.Calendar, { hidden: false })
   for (const ev of events) {
     if (ev._id === event._id) continue
     const person = await getEventPerson(ev, calendars, control)
     if (person === undefined || !event.participants.includes(person)) {
+      removedCopies.add(ev._id)
       const innerTx = control.txFactory.createTxRemoveDoc(ev._class, ev.space, ev._id)
       const outerTx = control.txFactory.createTxCollectionCUD(
         ev.attachedToClass,
@@ -360,9 +409,14 @@ async function onEventUpdate (ctx: TxUpdateDoc<Event>, control: TriggerControl):
       }
     }
   }
-  if (newParticipants.size === 0) return res
-  const newPartTxs = await eventForNewParticipants(event, newParticipants, calendars, control)
-  return res.concat(newPartTxs)
+  if (newParticipants.size > 0) {
+    res.push(...(await eventForNewParticipants(event, newParticipants, calendars, control)))
+  }
+  // A participant who left takes their answer with them, or the master counts it forever.
+  if (participantsChanged) {
+    res.push(...(await rsvpSummaryTxes(event, control, removedCopies)))
+  }
+  return res
 }
 
 async function eventForNewParticipants (
@@ -523,7 +577,8 @@ async function onRemoveEvent (ctx: TxRemoveDoc<Event>, control: TriggerControl):
       void sendEventToService(removed, 'delete', control)
     }
     void putEventToQueue(control, 'delete', removed, ctx.modifiedBy)
-    if (removed.access !== 'owner') return []
+    // A participant dropping their own copy takes their answer with it.
+    if (removed.access !== 'owner') return await rsvpSummaryTxes(removed, control, new Set([removed._id]))
     const current = await control.findAll(control.ctx, calendar.class.Event, { eventId: removed.eventId })
     for (const cur of current) {
       res.push(control.txFactory.createTxRemoveDoc(cur._class, cur.space, cur._id))

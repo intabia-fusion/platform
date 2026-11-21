@@ -25,19 +25,25 @@
   import { closePanel, CheckBox } from '@hcengineering/ui'
   import type { RemoteTrack, RemoteTrackPublication } from 'livekit-client'
   import { RoomEvent } from 'livekit-client'
-  import { AuthLikeForm, Label } from '@hcengineering/login-resources'
+  import { AuthLikeForm, Label, StylishEdit } from '@hcengineering/login-resources'
   import { generateId } from '@hcengineering/core'
 
   export let meetingId: string | undefined
   export let guestToken: string | undefined
   export let workspaceId: string | undefined
   export let workspaceName: string | undefined
+  // Set only when /guestInfo answered `passwordRequired: true` - the field stays hidden otherwise.
+  export let passwordRequired: boolean = false
+  // Prefilled when the guest opened a link copied together with its password.
+  export let initialPassword: string | undefined = undefined
 
   const identityKey = 'platform.love_uniq_person_identity'
 
   let firstName: string = ''
   let lastName: string = ''
+  let password: string = initialPassword ?? ''
   let error: string | null = null
+  let errorLabel: IntlString | null = null
   let videoContainer: HTMLDivElement | null = null
 
   // Local media state
@@ -204,7 +210,10 @@
   }
 
   async function join (firstName: string, lastName: string): Promise<void> {
-    if (guestToken == null || meetingId == null) {
+    // The token alone is enough: the love service resolves the link itself. For a link behind a
+    // password `/guestInfo` never reveals a meetingId - nothing about the meeting leaks before the
+    // password is checked - so requiring one here blocked every guest of a protected link.
+    if (guestToken == null) {
       error = 'Missing invite information'
       return
     }
@@ -214,6 +223,7 @@
     }
     if (joining) return
     error = null
+    errorLabel = null
     joining = true
 
     try {
@@ -240,11 +250,20 @@
           token: guestToken,
           firstName,
           lastName,
-          personToken
+          personToken,
+          password: passwordRequired ? password : undefined
         })
       })
 
       if (!resp.ok) {
+        if (resp.status === 401) {
+          errorLabel = love.string.WrongPassword
+          return
+        }
+        if (resp.status === 429) {
+          errorLabel = love.string.TooManyAttempts
+          return
+        }
         const txt = await resp.text().catch(() => '')
         throw new Error(`Join failed: ${resp.status} ${txt}`)
       }
@@ -390,20 +409,29 @@
     }}
     {firstName}
     {lastName}
-    proceedDisabled={!acceptRecording}
+    proceedDisabled={!acceptRecording || (passwordRequired && password === '')}
     proceedButton={love.string.JoinMeeting}
   >
     <svelte:fragment slot="before-form">
       <div class="actions center">
         <div class="form" data-id="guest-join-form" role="dialog" aria-label={love.string.GuestJoin}>
-          {#if error != null || previewError != null}
+          {#if error != null || errorLabel != null || previewError != null}
             <div class="error" data-id="guest-join-error">
-              {#if error != null}
+              {#if errorLabel != null}
+                <Label label={errorLabel} />
+              {:else if error != null}
                 {error}
               {/if}
               {#if previewError}
                 <Label label={previewError} />
               {/if}
+            </div>
+          {/if}
+          {#if passwordRequired}
+            <!-- The login input, not the app one: `EditBox` takes its colors from the app theme, and on
+                 a dark screen its white text sits on the white login panel of the guest page. -->
+            <div class="password-row" data-id="guest-password-row">
+              <StylishEdit password label={love.string.GuestPassword} bind:value={password} />
             </div>
           {/if}
           <div class="preview-area" aria-hidden={startWithVideo ? 'false' : 'true'}>
@@ -589,6 +617,15 @@
   .input-wrapper {
     width: 100%;
     max-width: 520px;
+  }
+
+  .password-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    max-width: 520px;
+    margin-bottom: 8px;
   }
 
   .actions {

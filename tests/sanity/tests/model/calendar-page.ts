@@ -99,30 +99,53 @@ export class CalendarPage extends CommonPage {
 
   // Scanning starts at midnight rather than "now": other specs book the current hour and the
   // ones right after it, so the early morning is nearly always free and the scan ends at once.
+  private async tryClickFreeCellAtTime (time: string): Promise<boolean> {
+    const cell = this.emptyCellAtTime(time)
+    try {
+      await cell.scrollIntoViewIfNeeded({ timeout: 2000 })
+      await cell.click({ timeout: 2000 })
+    } catch (e) {
+      // Only "the cell is covered by an event" is expected here, anything else is a real failure.
+      if (!(e instanceof errors.TimeoutError)) throw e
+      return false
+    }
+    // The click can land on a sliver of a cell that is mostly covered and open nothing, so the
+    // create popup is the only proof the hour was really free.
+    if (
+      await this.createEventPopup()
+        .isVisible({ timeout: 2000 })
+        .catch(() => false)
+    ) {
+      return true
+    }
+    await this.page.keyboard.press('Escape')
+    return false
+  }
+
   async clickFreeCellInWidget (from: number = 0): Promise<string> {
     for (let i = 0; i < 24; i++) {
       const time = this.hourLabel((from + i) % 24)
-      const cell = this.emptyCellAtTime(time)
-      try {
-        await cell.scrollIntoViewIfNeeded({ timeout: 2000 })
-        await cell.click({ timeout: 2000 })
-      } catch (e) {
-        // Only "the cell is covered by an event" is expected here, anything else is a real failure.
-        if (!(e instanceof errors.TimeoutError)) throw e
-        continue
-      }
-      // The click can land on a sliver of a cell that is mostly covered and open nothing, so the
-      // create popup is the only proof the hour was really free.
-      if (
-        await this.createEventPopup()
-          .isVisible({ timeout: 2000 })
-          .catch(() => false)
-      ) {
-        return time
-      }
-      await this.page.keyboard.press('Escape')
+      if (await this.tryClickFreeCellAtTime(time)) return time
     }
     throw new Error('no free hour left in the calendar widget')
+  }
+
+  /**
+   * Books `title` in `other`'s calendar at an hour free in *both* widgets, leaving this widget's
+   * create popup open on it - an hour free only there is covered here, and swallows the click.
+   */
+  async clickFreeCellInBothWidgets (other: CalendarPage, title: string, from: number = 0): Promise<string> {
+    for (let i = 0; i < 24; i++) {
+      const time = this.hourLabel((from + i) % 24)
+      if (!(await this.tryClickFreeCellAtTime(time))) continue
+      await this.closeCreateEventPopup()
+      if (!(await other.tryClickFreeCellAtTime(time))) continue
+      await other.inputEventTitle().fill(title)
+      await other.buttonCreateEventSubmit().click()
+      if (await this.tryClickFreeCellAtTime(time)) return time
+      throw new Error(`hour ${time} was free a moment ago and is taken now`)
+    }
+    throw new Error('no hour free in both calendar widgets')
   }
 
   async createEventInWidget (title: string, from: number = 0): Promise<string> {
@@ -156,6 +179,8 @@ export class CalendarPage extends CommonPage {
 
   async closeEventPopup (): Promise<void> {
     await this.cardCloseButton().click()
+    // The overlay outlives a half-closed popup and swallows every following click.
+    await expect(this.page.locator('div.modal-overlay')).toHaveCount(0)
   }
 
   // EventTimeExtraButton dispatches 'repeat' to open ReccurancePopup.svelte.
@@ -187,6 +212,33 @@ export class CalendarPage extends CommonPage {
     await this.buttonRepeatSave().click()
   }
 
+  // The live preview under the repeat form ("Every 2 Week · Mo"). It is the whole point of the
+  // form: it must follow the inputs, and what it shows is what Save writes.
+  repeatPreview = (): Locator => this.recurrencePopup().locator('div.preview')
+
+  // ReccurancePopup.svelte: the interval input of "Every <n> <period>", the first number in the form.
+  private readonly inputRepeatInterval = (): Locator => this.recurrencePopup().locator('input[type="number"]').first()
+
+  // Opens the repeat popup and sets the interval, leaving the period as it is (Week by default).
+  async setRepeatInterval (interval: number): Promise<void> {
+    await this.buttonRepeat().click()
+    await expect(this.recurrencePopup()).toBeVisible()
+    await this.inputRepeatInterval().fill(`${interval}`)
+    await this.inputRepeatInterval().blur()
+  }
+
+  // The rule the repeat popup saved is what the event popup shows in place of the "Repeat" label.
+  buttonSavedRepeatRule = (): Locator => this.createEventPopup().getByRole('button', { name: /Every\s+\d+\s+Week/ })
+
+  // The overlay covers the whole viewport behind the popup, so a corner click lands on it and
+  // nothing else: the same gesture a user makes to dismiss a modal.
+  async clickOutsideEventPopup (): Promise<void> {
+    await this.page
+      .locator('div.modal-overlay')
+      .last()
+      .click({ position: { x: 4, y: 4 } })
+  }
+
   // calendar.action.DeleteRecEvent overrides the generic Delete for a ReccuringInstance and opens
   // UpdateRecInstancePopup, whose dropdown defaults to "This event" - exactly the override case.
   private readonly recInstancePopup = (): Locator => this.page.locator('div.popup div.msgbox-container')
@@ -201,6 +253,8 @@ export class CalendarPage extends CommonPage {
 
   // The participants dropdown stays open for multi-select and covers the popup, so Escape goes
   // to it first; the create popup itself only closes through its own cross.
+  // Escape closes the popup as well as the cross does: the popup is dismissible again (it used to
+  // refuse to close while the form had anything typed in it).
   async closeCreateEventPopup (): Promise<void> {
     await this.page.keyboard.press('Escape')
     if (await this.createEventPopup().isVisible()) {

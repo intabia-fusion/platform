@@ -1542,7 +1542,13 @@ export class LiveQuery implements WithTx, Client {
 
   private async handleDocRemove (q: Query, tx: TxRemoveDoc<Doc>): Promise<void> {
     const h = this.client.getHierarchy()
-    if (q._class === tx.objectClass || h.isDerived(q._class, tx.objectClass) || h.isDerived(tx.objectClass, q._class)) {
+    // A mixin query holds docs of any base class; the removal names only that base class.
+    if (
+      q._class === tx.objectClass ||
+      h.isDerived(q._class, tx.objectClass) ||
+      h.isDerived(tx.objectClass, q._class) ||
+      h.isMixin(q._class)
+    ) {
       if (q.result instanceof Promise) {
         q.result = await q.result
       }

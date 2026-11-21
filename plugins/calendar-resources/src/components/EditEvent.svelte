@@ -35,6 +35,7 @@
   import { isReadOnly, saveUTC, updateReccuringInstance } from '../utils'
   import CalendarSelector from './CalendarSelector.svelte'
   import EventParticipants from './EventParticipants.svelte'
+  import EventRsvp from './EventRsvp.svelte'
   import ParticipantsBusy from './ParticipantsBusy.svelte'
   import EventReminders from './EventReminders.svelte'
   import EventTimeEditor from './EventTimeEditor.svelte'
@@ -75,8 +76,11 @@
   const dispatch = createEventDispatcher()
   const client = getClient()
 
+  // A modal must be dismissible: clicking the overlay or pressing Esc is how a user leaves a popup.
+  // The previous rule allowed closing only while the title was empty, which for an existing event is
+  // never true, so the popup could not be closed at all.
   export function canClose (): boolean {
-    return title?.trim().length === 0 && participants.length === 0
+    return true
   }
 
   let saving = false
@@ -218,6 +222,7 @@
         {busyPersons}
       />
       <ParticipantsBusy {participants} date={startDate} {dueDate} {ignoreEventId} bind:busyPersons />
+      <EventRsvp {object} indent />
       <ComponentExtensions extension={calendar.extensions.EditEventExtensions} props={{ readOnly, value: object }} />
     </div>
     <div class="block description">
@@ -305,7 +310,7 @@
     .top-icon {
       flex-shrink: 0;
       margin-top: 1.375rem;
-      margin-right: 0.125rem;
+      margin-right: 0.25rem;
 
       &.disabled {
         margin-top: 0.875rem;

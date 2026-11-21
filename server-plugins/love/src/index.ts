@@ -22,6 +22,7 @@ export default plugin(serverLoveId, {
     OnRoomInfo: '' as Resource<TriggerFunc>,
     OnKnock: '' as Resource<TriggerFunc>,
     OnUserMeetingInvite: '' as Resource<TriggerFunc>,
-    OnEventUpdate: '' as Resource<TriggerFunc>
+    OnEventUpdate: '' as Resource<TriggerFunc>,
+    OnPermanentMeetingUpdate: '' as Resource<TriggerFunc>
   }
 })

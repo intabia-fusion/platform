@@ -24280,6 +24280,9 @@ importers:
       '@hcengineering/calendar':
         specifier: workspace:^0.7.0
         version: link:../calendar
+      '@hcengineering/calendar-resources':
+        specifier: workspace:^0.7.0
+        version: link:../calendar-resources
       '@hcengineering/chunter':
         specifier: workspace:^0.7.0
         version: link:../chunter
@@ -24325,6 +24328,9 @@ importers:
       '@hcengineering/presentation':
         specifier: workspace:^0.7.0
         version: link:../../packages/presentation
+      '@hcengineering/rank':
+        specifier: workspace:^0.7.17
+        version: link:../../foundations/core/packages/rank
       '@hcengineering/setting':
         specifier: workspace:^0.7.0
         version: link:../setting
@@ -41995,6 +42001,9 @@ importers:
       '@hcengineering/billing-client':
         specifier: workspace:^0.7.0
         version: link:../../packages/billing-client
+      '@hcengineering/calendar':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/calendar
       '@hcengineering/contact':
         specifier: workspace:^0.7.0
         version: link:../../plugins/contact

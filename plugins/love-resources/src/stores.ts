@@ -1,10 +1,12 @@
 import { aiBotSocialIdentityStore, ensureAiBotIdentityLoaded } from '@hcengineering/ai-bot-resources'
 import { getCurrentEmployee, type Person } from '@hcengineering/contact'
 import { getPersonRefByPersonId, getPersonsByPersonRefs } from '@hcengineering/contact-resources'
-import { type Ref } from '@hcengineering/core'
+import { SortingOrder, type Ref } from '@hcengineering/core'
 import { createQuery, onClient } from '@hcengineering/presentation'
 import {
   isOffice,
+  isServiceFloor,
+  loveId,
   MeetingStatus,
   type PendingRecording,
   type DevicesPreference,
@@ -14,8 +16,10 @@ import {
   type ParticipantInfo,
   type Room
 } from '@hcengineering/love'
+import { location } from '@hcengineering/ui'
 import { derived, get, writable } from 'svelte/store'
 
+import { compareRanks } from './order'
 import love from './plugin'
 
 // Client-side store to indicate current session is attempting to connect to a meeting
@@ -120,6 +124,31 @@ export const activeFloor = derived([rooms, myInfo, myOffice], ([rooms, myInfo, m
   }
   return res ?? love.ids.MainFloor
 })
+// The office navigator keeps its choice in the URL, /love/<segment>: 'meetings', 'permanent' or a floor id.
+// No segment means the office was just opened: the navigator shows the floors, the centre stays empty
+// until a floor is picked - the floor grid is a detail view, not the landing screen.
+export const officeSegment = derived(location, (loc) => (loc.path[2] === loveId ? loc.path[3] : undefined))
+export const officeView = derived(officeSegment, (segment) =>
+  segment === 'meetings' || segment === 'permanent' ? segment : segment === undefined ? 'floors' : 'floor'
+)
+// The service floor only hosts the sessions of scheduled meetings; people never sit on it.
+// Floors are ordered by hand (`rank`) in the navigator; a floor created before the list existed
+// carries no rank and sorts after the ranked ones, by name.
+export const officeFloors = derived(floors, (floors) =>
+  floors
+    .filter((it) => !isServiceFloor(it._id))
+    .sort((a, b) => {
+      const byRank = compareRanks(a.rank, b.rank)
+      return byRank !== 0 ? byRank : a.name.localeCompare(b.name)
+    })
+)
+export const currentFloor = derived(
+  [selectedFloor, activeFloor, officeFloors],
+  ([selected, active, officeFloors]): Ref<Floor> => {
+    const floor = selected ?? active
+    return isServiceFloor(floor) ? (officeFloors[0]?._id ?? love.ids.MainFloor) : floor
+  }
+)
 
 export const myPreferences = writable<DevicesPreference | undefined>()
 export let $myPreferences: DevicesPreference | undefined
@@ -209,10 +238,15 @@ onClient(() => {
 export async function ensureOfficeDetailsLoaded (): Promise<void> {
   officeDetailsLoaded ??= (async () => {
     const floorPromise = new Promise<void>((resolve) =>
-      floorsQuery.query(love.class.Floor, {}, (res) => {
-        floors.set(res)
-        resolve()
-      })
+      floorsQuery.query(
+        love.class.Floor,
+        {},
+        (res) => {
+          floors.set(res)
+          resolve()
+        },
+        { sort: { createdOn: SortingOrder.Ascending } }
+      )
     )
     const preferencePromise = new Promise<void>((resolve) =>
       preferencesQuery.query(love.class.DevicesPreference, {}, (res) => {

@@ -16,10 +16,13 @@
   import type { Contact, Person } from '@hcengineering/contact'
   import type { Ref } from '@hcengineering/core'
   import type { Floor as FloorType, Office, Room } from '@hcengineering/love'
-  import { isOffice } from '@hcengineering/love'
-  import { deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
+  import love, { isOffice } from '@hcengineering/love'
+  import { SpecialView } from '@hcengineering/workbench-resources'
+  import { deviceOptionsStore as deviceInfo, Label } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
   import { onDestroy } from 'svelte'
-  import { activeFloor, ensureOfficeDetailsLoaded, floors, rooms, selectedFloor } from '../stores'
+  import lovePlugin from '../plugin'
+  import { currentFloor, ensureOfficeDetailsLoaded, officeView, rooms } from '../stores'
 
   import Floor from './Floor.svelte'
   import FloorConfigure from './FloorConfigure.svelte'
@@ -30,8 +33,7 @@
     return rooms.filter((p) => p.floor === floor)
   }
 
-  let floor = $selectedFloor ?? ($activeFloor === '' ? $floors[0]?._id : $activeFloor)
-  $: floor = $selectedFloor ?? ($activeFloor === '' ? $floors[0]?._id : $activeFloor)
+  $: floor = $currentFloor
   let configure: boolean = false
   let replacedPanel: HTMLElement
 
@@ -45,7 +47,33 @@
 </script>
 
 <div class="antiPanel-component filledNav" bind:this={replacedPanel}>
-  {#if configure}
+  {#if $officeView === 'meetings'}
+    <!-- A materialised occurrence keeps the mixin the calendar mirrors onto every copy, so without
+         a filter every edited or cancelled occurrence would sit in the list as a second meeting.
+         `recurringEventId` is declared on the occurrence class alone: a series master carries
+         `originalStartTime` too, and filtering by it would hide every series. -->
+    <SpecialView
+      _class={love.mixin.MeetingEventLink}
+      baseQuery={{ recurringEventId: { $exists: false } }}
+      label={love.string.Meetings}
+      icon={love.icon.Cam}
+      hideViewSettings
+    />
+  {:else if $officeView === 'floors'}
+    <!-- Nothing is picked yet: the floors list is in the navigator, the grid is its detail view. -->
+    <div class="flex-col h-full justify-center items-center">
+      <span class="content-color"><Label label={lovePlugin.string.SelectFloor} /></span>
+    </div>
+  {:else if $officeView === 'permanent'}
+    <!-- Standard view of the class: viewlets, search, filters, view settings, grouped list. -->
+    <SpecialView
+      _class={love.class.PermanentMeeting}
+      label={love.string.PermanentMeetings}
+      icon={love.icon.Cam}
+      defaultViewletDescriptor={view.viewlet.Table}
+      createButton={lovePlugin.component.PermanentMeetingsHeaderActions}
+    />
+  {:else if configure}
     <FloorConfigure
       rooms={getRooms($rooms, floor)}
       {floor}

@@ -33,13 +33,21 @@
   const allDayDuration = 24 * 60 * 60 * 1000 - 1
   const dispatch = createEventDispatcher()
 
-  function dateChange () {
+  function dateChange (ev: CustomEvent<number | Date>): void {
+    // DateEditor dispatches `update` with the value it ended up on; the handler ignored it and
+    // recomputed from the stale prop, so the form applied the date only on the next edit.
+    const detail = ev.detail
+    if (typeof detail === 'number') startDate = detail
+    else if (detail instanceof Date) startDate = detail.getTime()
     startDate = allDay ? new Date(startDate).setHours(0, 0, 0, 0) : startDate
     dueDate = startDate + (allDay ? allDayDuration : diff)
     dispatch('change', { startDate, dueDate })
   }
 
-  function dueChange () {
+  function dueChange (ev: CustomEvent<number | Date>): void {
+    const detail = ev.detail
+    if (typeof detail === 'number') dueDate = detail
+    else if (detail instanceof Date) dueDate = detail.getTime()
     const newDiff = dueDate - startDate
     if (newDiff > 0) {
       dueDate = allDay ? new Date(dueDate).setHours(23, 59, 59, 999) : dueDate

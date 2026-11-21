@@ -55,6 +55,7 @@
     "EventTitlePlaceholder": "事件标题",
     "TimeZone": "时区",
     "Repeat": "重复",
+    "DoNotRepeat": "不重复",
     "On": "在",
     "Every": "每",
     "After": "之后",
@@ -125,6 +126,14 @@
     "SynchronizedCalendars": "已同步的日历",
     "Account": "帐户",
     "NoCalendars": "未选择同步日历",
-    "PersonalCalendar": "个人日历"
+    "PersonalCalendar": "个人日历",
+    "Going": "参加",
+    "NotGoing": "不参加",
+    "Maybe": "待定",
+    "WillYouAttend": "您会参加吗？",
+    "RsvpAccepted": "参加",
+    "RsvpDeclined": "不参加",
+    "RsvpTentative": "待定",
+    "RsvpPending": "未回复"
   }
 }

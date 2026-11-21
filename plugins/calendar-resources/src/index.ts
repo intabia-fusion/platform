@@ -34,6 +34,7 @@ import EventElement from './components/EventElement.svelte'
 import CalendarEventPresenter from './components/CalendarEventPresenter.svelte'
 import DayCalendar from './components/DayCalendar.svelte'
 import EventParticipants from './components/EventParticipants.svelte'
+import EventRsvp from './components/EventRsvp.svelte'
 import EventTimeEditor from './components/EventTimeEditor.svelte'
 import EventTimeExtraButton from './components/EventTimeExtraButton.svelte'
 import IntegrationConfigure from './components/IntegrationConfigure.svelte'
@@ -44,6 +45,7 @@ import ConnectApp from './components/ConnectApp.svelte'
 import CalendarWidget from './components/CalendarWidget.svelte'
 import ScheduleNavSection from './components/ScheduleNavSection.svelte'
 import CalendarSettings from './components/CalendarSettings.svelte'
+import RecurrenceSummary from './components/RecurrenceSummary.svelte'
 import IntegrationState from './components/IntegrationState.svelte'
 import calendar from './plugin'
 import contact from '@hcengineering/contact'
@@ -57,12 +59,14 @@ export {
   CalendarView,
   DayCalendar,
   EventParticipants,
+  EventRsvp,
   EventTimeEditor,
   EventTimeExtraButton,
   EventReminders,
   VisibilityEditor,
   CalendarSelector,
   EventPresenter,
+  RecurrenceSummary,
   ScheduleNavSection
 }
 
@@ -77,6 +81,7 @@ export type {
 } from './types'
 
 export * from './utils'
+export { eventCard, registerEventCardResolver, type EventCard, type EventCardResolver } from './eventCard'
 
 async function saveEventReminder (object: Doc): Promise<void> {
   showPopup(SaveEventReminder, { objectId: object._id, objectClass: object._class })

@@ -18,13 +18,7 @@ import { expect, test, type Page } from '@playwright/test'
 import type { AccountUuid, Ref, Space, TxOperations } from '@hcengineering/core'
 import calendar, { AccessLevel, generateEventId, type Event, type Calendar } from '@hcengineering/calendar'
 import contact from '@hcengineering/contact'
-import love, {
-  MeetingStatus,
-  RecordingState,
-  TranscriptionState,
-  type MeetingMinutes,
-  type Room
-} from '@hcengineering/love'
+import love, { RoomType, defaultMeetingAccess, type Room } from '@hcengineering/love'
 import { generateId as generateCoreId } from '@hcengineering/core'
 
 import { connectTracker } from '../API/TrackerApi'
@@ -134,14 +128,13 @@ function countMatchingTx (frames: TxFrame[], objectId: string, opKey: string): n
   return count
 }
 
-// --- EditMeetingData setup: a calendar event linked to a MeetingMinutes via the
-// love.mixin.MeetingEventLink mixin (plugins/love-resources/src/utils.ts `createMeeting`,
-// the real post-create hook for "Schedule Meeting", read as the reference for the doc shapes). ---
+// --- EditMeetingData setup: a calendar event carrying the love.mixin.MeetingEventLink mixin.
+// Since FUSIO-1307 the meeting lives on the master event and the session is created by the love
+// service on the first join, so no `MeetingMinutes` document is written here. ---
 interface ScheduledMeetingSetup {
   client: TxOperations
   eventId: Ref<Event>
   eventTitle: string
-  meetingId: Ref<MeetingMinutes>
   personSpace: Ref<Space>
 }
 
@@ -155,7 +148,7 @@ async function getUserCalendar (client: TxOperations, accountUuid: AccountUuid):
   return any._id
 }
 
-async function createScheduledMeetingEvent (roomName: string, status: MeetingStatus): Promise<ScheduledMeetingSetup> {
+async function createScheduledMeetingEvent (roomName: string): Promise<ScheduledMeetingSetup> {
   const { client, workspaceToken } = await connectTracker(MEETINGS_WS, PlatformUserSecond)
   const accountUuid = workspaceToken.info.account
   const employee = await client.findOne(contact.mixin.Employee, { personUuid: accountUuid })
@@ -198,37 +191,17 @@ async function createScheduledMeetingEvent (roomName: string, status: MeetingSta
     eventId
   )
 
-  const meetingId: Ref<MeetingMinutes> = generateCoreId()
-  await client.createDoc(
-    love.class.MeetingMinutes,
-    meetingId as unknown as Ref<Space>,
-    {
-      name: eventTitle,
-      description: '',
-      private: room.startPrivate ?? false,
-      archived: false,
-      members: [accountUuid],
-      owners: [accountUuid],
-      descriptionRef: null,
-      summary: null,
-      roomId: room._id,
-      status,
-      language: room.language ?? 'en',
-      recordingState: RecordingState.NotStarted,
-      transcriptionState: TranscriptionState.NotStarted,
-      startWithRecording: room.startWithRecording ?? false,
-      startWithTranscription: room.startWithTranscription ?? false,
-      meetingScheduledDate: now
-    },
-    meetingId
-  )
-
   await client.createMixin(eventId, calendar.class.Event, personSpace._id, love.mixin.MeetingEventLink, {
-    room: room._id,
-    meetingId
+    type: RoomType.Video,
+    linkVersion: 1,
+    meetingAccess: defaultMeetingAccess,
+    private: room.startPrivate ?? false,
+    language: room.language ?? 'en',
+    startWithRecording: room.startWithRecording ?? false,
+    startWithTranscription: room.startWithTranscription ?? false
   })
 
-  return { client, eventId, eventTitle, meetingId, personSpace: personSpace._id }
+  return { client, eventId, eventTitle, personSpace: personSpace._id }
 }
 
 async function cleanupScheduledMeetingEvent (setup: ScheduledMeetingSetup): Promise<void> {
@@ -241,11 +214,6 @@ async function cleanupScheduledMeetingEvent (setup: ScheduledMeetingSetup): Prom
       calendar.class.Event,
       'events'
     )
-  } catch {
-    // Best-effort.
-  }
-  try {
-    await setup.client.removeDoc(love.class.MeetingMinutes, setup.meetingId as unknown as Ref<Space>, setup.meetingId)
   } catch {
     // Best-effort.
   }
@@ -599,7 +567,7 @@ export function registerRageClickTests (): void {
 
     test('EditMeetingData "Start Meeting" joins once (rage click)', async ({ browser }) => {
       test.setTimeout(60000)
-      const setup = await createScheduledMeetingEvent('Meeting Room 1', MeetingStatus.Scheduled)
+      const setup = await createScheduledMeetingEvent('Meeting Room 1')
       // A fresh context, not the shared `loveWindow`: that window carries a reconnect-to-meeting
       // anchor (`love.activeMeeting` in sessionStorage) from earlier meeting tests in this file,
       // and `reconnectToCurrentMeeting` (plugins/love-resources/src/meetings.ts) silently navigates
@@ -629,7 +597,7 @@ export function registerRageClickTests (): void {
 
     test('EditMeetingData "End Meeting" ends once (rage click)', async ({ browser }) => {
       test.setTimeout(60000)
-      const setup = await createScheduledMeetingEvent('Meeting Room 2', MeetingStatus.Scheduled)
+      const setup = await createScheduledMeetingEvent('Meeting Room 2')
       const ctx = await browser.newContext({ storageState: '.auth/storageSecond.json' })
       const page = await ctx.newPage()
       const errors = watchErrors(page)
@@ -644,9 +612,11 @@ export function registerRageClickTests (): void {
         await startBtn.click()
         await expect(connectedMarker(page)).toHaveCount(1, { timeout: 30000 })
         // The reconnect marker is written after the final navigation, which can replace the calendar panel.
+        // The session is created by the love service on the first join, so its id is not known here:
+        // what matters is that the client remembered an active meeting at all.
         await expect
           .poll(() => page.evaluate(() => sessionStorage.getItem('love.activeMeeting')), { timeout: 15000 })
-          .toBe(setup.meetingId)
+          .toBeTruthy()
 
         await openCalendarEventPanel(page, setup.eventTitle)
         const endBtn = page.getByRole('button', { name: 'End meeting', exact: true })
@@ -662,36 +632,6 @@ export function registerRageClickTests (): void {
         await ctx.close()
         await cleanupScheduledMeetingEvent(setup)
         await waitForActiveMeetingsToFinish()
-      }
-    })
-
-    test('EditMeetingData reset sends one tx, not three (wire)', async ({ browser }) => {
-      test.setTimeout(60000)
-      // Reset only needs `meetingDoc.status === Finished`; written directly, no LiveKit session
-      // needed (unlike Start/End above) - the same stale-read diffUpdate shape as the privacy
-      // toggle, so "once" is only observable on the wire (see `enableJsonProtocol` above).
-      const setup = await createScheduledMeetingEvent('Meeting Room 1', MeetingStatus.Finished)
-      const ctx = await browser.newContext({ storageState: '.auth/storageSecond.json' })
-      const page = await ctx.newPage()
-      await enableJsonProtocol(page)
-      const tx = trackTxFrames(page)
-
-      try {
-        await openCalendarEventPanel(page, setup.eventTitle)
-        const resetBtn = page.locator('div.flex-col.mt-2').getByRole('button')
-        await expect(resetBtn).toBeVisible({ timeout: 15000 })
-        tx.frames.length = 0
-
-        await rageClick(resetBtn)
-
-        await expect.poll(() => countMatchingTx(tx.frames, setup.meetingId, 'status')).toBeGreaterThanOrEqual(1)
-        await page.waitForTimeout(500)
-        const txCount = countMatchingTx(tx.frames, setup.meetingId, 'status')
-        expect(txCount, `expected exactly one "status" tx, frames: ${JSON.stringify(tx.frames)}`).toBe(1)
-      } finally {
-        await page.close()
-        await ctx.close()
-        await cleanupScheduledMeetingEvent(setup)
       }
     })
   })

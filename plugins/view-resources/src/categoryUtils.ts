@@ -16,6 +16,36 @@
 import type { AggregateValue, CategoryType } from '@hcengineering/core'
 
 /**
+ * Stable render key of a category: an aggregate is identified by its name, a value by itself.
+ * @public
+ */
+export function categoryKey (category: CategoryType): string {
+  if (typeof category === 'object' && category !== null) {
+    const name = (category as { name?: unknown }).name
+    return `o:${typeof name === 'string' ? name : ''}`
+  }
+  return `v:${String(category)}`
+}
+
+/**
+ * Drops repeated buckets. A grouping can produce the same category twice - one empty value from
+ * two sources, or a value that arrives both raw and as an aggregate - and a keyed list rendering
+ * duplicates throws, taking the whole view down.
+ * @public
+ */
+export function dedupeCategories (list: CategoryType[]): CategoryType[] {
+  const seen = new Set<string>()
+  const result: CategoryType[] = []
+  for (const category of list) {
+    const key = categoryKey(category)
+    if (seen.has(key)) continue
+    seen.add(key)
+    result.push(category)
+  }
+  return result
+}
+
+/**
  * Concatenates two category arrays, removing duplicates and preserving empty categories.
  * @public
  */

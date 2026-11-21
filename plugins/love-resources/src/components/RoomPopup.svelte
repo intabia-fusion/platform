@@ -17,7 +17,7 @@
   import { UserInfo, getPersonByPersonRef } from '@hcengineering/contact-resources'
   import type { Class, Doc, Ref } from '@hcengineering/core'
   import type { Location } from '@hcengineering/ui'
-  import ui, { Scroller, location, navigate, panelstore } from '@hcengineering/ui'
+  import ui, { Scroller, getCurrentLocation, location, navigate, panelstore } from '@hcengineering/ui'
   import { Button } from '@hcengineering/ui/kit'
   import type { MeetingMinutes, ParticipantInfo, Room } from '@hcengineering/love'
   import { loveId } from '@hcengineering/love'
@@ -79,9 +79,17 @@
       const hierarchy = client.getHierarchy()
       const panelComponent = hierarchy.classHierarchyMixin(meeting._class as Ref<Class<Doc>>, view.mixin.ObjectPanel)
       const comp = panelComponent?.component ?? view.component.EditDoc
+      const current = getCurrentLocation()
       const loc = await getObjectLinkFragment(hierarchy, meeting, {}, comp)
       loc.path[2] = loveId
-      loc.path.length = 3
+      // Keep the navigator segment: the room popup floats over the office, so the selection the
+      // user made in `path[3]` must survive going back to the meeting document.
+      if (current.path[2] === loveId && current.path[3] !== undefined) {
+        loc.path[3] = current.path[3]
+        loc.path.length = 4
+      } else {
+        loc.path.length = 3
+      }
       navigate(loc)
     }
   }

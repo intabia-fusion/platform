@@ -79,7 +79,8 @@
 
 ### Календарь
 - **Recurrence RFC5545.** `generateRecurringValues` (DAILY/WEEKLY/MONTHLY/YEARLY) + `getAllEvents` собирают базовые/развёрнутые/переопределённые события в окно. - `plugins/calendar/src/utils.ts`.
-- **Удаление вхождения серии.** `calendar.action.DeleteRecEvent`. - `models/calendar/src/index.ts`.
+- **Правка вхождения серии.** `updateReccuringInstance` (`plugins/calendar-resources/src/utils.ts`) применяет изменение сразу к мастеру серии: вопроса «только это событие / все» больше нет, `UpdateRecInstancePopup` на сохранении не показывается, сдвиг дат считается относительно мастера. - `plugins/calendar-resources/src/utils.ts`, `plugins/calendar-resources/src/components/EditEvent.svelte`.
+- **Удаление вхождения серии.** `calendar.action.DeleteRecEvent` (здесь выбор области остался). - `models/calendar/src/index.ts`.
 - **Бронируемое расписание.** `TSchedule` + публичная ссылка `PublicScheduleURL`, `ScheduleEditor.svelte`/ `ScheduleNavSection.svelte`. - `models/calendar/src/index.ts`, `plugins/calendar/src/index.ts`.
 - **Google Calendar.** `calendarIntegrationKind = 'google-calendar'`, `services/calendar/pod-calendar` (`IncomingSyncManager`). - `plugins/calendar/src/index.ts`, `services/calendar/pod-calendar/src/sync.ts`.
 - **CalDAV.** `caldavIntegrationKind = 'caldav'`, `CalDavAccess.svelte` (сервер/аккаунт/пароль). - `plugins/calendar/src/index.ts`, `plugins/calendar-resources/src/components/CalDavAccess.svelte`.
@@ -115,7 +116,7 @@
 | Годовая сетка занятости | - | - | plan | - | |
 | PersonDayWidget | - | - | plan | - | |
 | Демо-данные | - | - | internal | - | |
-| Recurrence RFC5545 | team-resources/create-event | - | partial | 0.8.60 | не раскрыты варианты повторения (DAILY/WEEKLY/MONTHLY/YEARLY), только общая строка «Повтор события» |
+| Recurrence RFC5545 | team-resources/create-event | - | stale | 0.8.60 | не раскрыты варианты повторения (DAILY/WEEKLY/MONTHLY/YEARLY), только общая строка «Повтор события»; правка вхождения теперь молча применяется ко всей серии — шага «только это событие / все события» в документации быть не должно |
 | Удаление вхождения серии | - | - | plan | - | |
 | Бронируемое расписание | - | - | plan | - | |
 | Google Calendar | integrations/google-calendar | integrations/google-calendar | off | - | выключено в продукте |

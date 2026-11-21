@@ -16,12 +16,16 @@
 import activity, { ActivityInfoMessage } from '@hcengineering/activity'
 import { RestClient } from '@hcengineering/api-client'
 import attachment, { Attachment } from '@hcengineering/attachment'
+import calendar, { AccessLevel, type Event, type ReccuringEvent } from '@hcengineering/calendar'
 import contact, { Person } from '@hcengineering/contact'
 import core, {
   Data,
+  SortingOrder,
   MeasureContext,
   Ref,
+  Space,
   TxFactory,
+  TxOperations,
   generateId,
   systemAccountUuid,
   type AccountUuid,
@@ -37,8 +41,19 @@ import core, {
   SocialIdType
 } from '@hcengineering/core'
 import love, {
+  defaultMeetingAccess,
+  LIVE_MEETING_STATUSES,
+  type MeetingAccess,
+  type MeetingEventLink,
+  type MeetingLinkKind,
   MeetingMinutes,
+  type PermanentMeeting,
   MeetingStatus,
+  meetingMasterQuery,
+  occurrencePin,
+  resolveOccurrence,
+  type OccurrenceOverride,
+  SCHEDULED_MEETING_WINDOW_MS,
   Office,
   ParticipantInfo,
   ParticipantMetadata,
@@ -47,15 +62,38 @@ import love, {
   RecordingState,
   RecordingStatus,
   Room,
-  SCHEDULED_MEETING_WINDOW_MS,
   TranscriptionState,
   UserMeetingInvite,
   getFreeRoomPlace
 } from '@hcengineering/love'
 import { Asset, IntlString } from '@hcengineering/platform'
 import { generateToken } from '@hcengineering/server-token'
-import { getClient } from './client'
+import { getClient, getTxOperations } from './client'
 import { RecordingPreset } from './preset'
+
+/** Outcome of resolving a meeting link to a session. */
+export type ResolveSessionResult =
+  | { meeting: MeetingMinutes, created?: boolean }
+  /** No occurrence is open right now; `nextOccurrence` is when one will be, if ever. */
+  | { error: 'no-occurrence', nextOccurrence?: Timestamp }
+  /** The meeting is open but nobody has started it, and this caller may not (create: false).
+   *  `occurrence` is absent for a permanent meeting - it is open at every hour, not at one. */
+  | { error: 'not-started', occurrence?: Timestamp }
+  | { error: 'not-found' }
+  | { error: 'conflict' }
+
+/** A meeting a link may point at: a calendar series, or a permanent meeting with no time. */
+interface MeetingTargetBase {
+  /** What a link carries: the master's `eventId`, or the permanent meeting's `_id`. */
+  pointer: string
+  title: string
+  link?: Pick<MeetingEventLink, 'linkVersion' | 'meetingAccess' | 'linkId'>
+  lastMeetingEnd?: Timestamp
+}
+
+export type MeetingTarget =
+  | (MeetingTargetBase & { kind: 'event', master: Event, nextOccurrence?: Timestamp })
+  | (MeetingTargetBase & { kind: 'meeting', meeting: PermanentMeeting })
 
 // 2x poll interval: don't force-finish meetings younger than this (see checkUnfinishedMeetings)
 export const UNFINISHED_MEETING_GRACE_MS = 60_000
@@ -237,18 +275,12 @@ export class WorkspaceClient {
       return
     }
 
-    // Re-arm to Scheduled instead of terminal Finished, both before the meeting and while it
-    // is still within its window - only past the window is an empty room really the end.
-    const scheduledAt = meeting.meetingScheduledDate
-    const rearm = scheduledAt != null && Date.now() < scheduledAt + SCHEDULED_MEETING_WINDOW_MS
-
+    // Finishing is terminal now: a session covers one gathering, and the next occurrence of the
+    // series opens a new one. Re-arming existed only to keep a Scheduled document reusable.
     const endTs = meetingEnd ?? Date.now()
     // Finished twice - room_finished webhook, then polling seeing the room gone: keep the first end.
-    const upd: DocumentUpdate<MeetingMinutes> = rearm
-      ? { status: MeetingStatus.Scheduled }
-      : meeting.status === MeetingStatus.Finished
-        ? {}
-        : { status: MeetingStatus.Finished, meetingEnd: endTs }
+    const upd: DocumentUpdate<MeetingMinutes> =
+      meeting.status === MeetingStatus.Finished ? {} : { status: MeetingStatus.Finished, meetingEnd: endTs }
     if (meeting.transcriptionState === TranscriptionState.Transcribing) {
       upd.transcriptionState = TranscriptionState.Finished
     }
@@ -257,14 +289,7 @@ export class WorkspaceClient {
     }
     if (Object.keys(upd).length > 0) {
       await this.client.update(meeting, upd)
-      if (rearm) {
-        this.ctx.info('Re-armed scheduled meeting instead of finishing', {
-          meeting: meeting._id,
-          meetingScheduledDate: meeting.meetingScheduledDate
-        })
-      } else {
-        this.ctx.info('Marked meeting as finished', { meeting: meeting._id, meetingEnd: endTs })
-      }
+      this.ctx.info('Marked meeting as finished', { meeting: meeting._id, meetingEnd: endTs })
     }
 
     await this.cleanupParticipantInfosForMeeting(ref)
@@ -636,6 +661,305 @@ export class WorkspaceClient {
       this.ctx.error('[WorkspaceClient.findMeetingById] Failed', { error: err?.message ?? String(err), meetingId })
       return undefined
     }
+  }
+
+  /**
+   * What a link points at, with everything needed to judge it: `afterTtl` counts from
+   * `lastMeetingEnd`, and only once the series has no future occurrence. A permanent meeting
+   * has no series at all, hence the discriminant.
+   */
+  async findMeetingTarget (
+    id: string,
+    kind: MeetingLinkKind = 'event',
+    now: number = Date.now()
+  ): Promise<MeetingTarget | undefined> {
+    if (kind === 'meeting') return await this.permanentMeetingTarget(id as Ref<PermanentMeeting>)
+
+    const event = await this.client.findOne(calendar.class.Event, { eventId: id, access: AccessLevel.Owner })
+    if (event === undefined) return undefined
+    const master = await this.client.findOne(calendar.class.Event, meetingMasterQuery(event))
+    if (master === undefined) return undefined
+
+    // A permanent meeting also has a series, and that event carries no participants: the people
+    // are the meeting's members, and the series points back at the meeting. Resolving through the
+    // back-reference keeps one rule for who may join, whether the caller clicked the calendar card
+    // (an event id) or the meeting list (a meeting id).
+    const permanent = ((master as any)[love.mixin.MeetingEventLink] as MeetingEventLink | undefined)?.permanentMeeting
+    if (permanent !== undefined) {
+      const meeting = await this.permanentMeetingTarget(permanent)
+      if (meeting !== undefined) return meeting
+      // The back-reference names a meeting that is gone: the series is an orphan, not a plain series.
+      // Falling through to the occurrence rules would answer "the meeting is not open" whenever the
+      // slot is not current, which reads as a schedule restriction on a meeting that no longer exists.
+      this.ctx.warn('[findMeetingTarget] Series points at a missing permanent meeting', {
+        eventId: master.eventId,
+        permanentMeeting: permanent
+      })
+      return undefined
+    }
+
+    const { current, next } = resolveOccurrence(master, now, await this.occurrenceOverrides(master, now))
+    return {
+      kind: 'event',
+      master,
+      pointer: master.eventId,
+      title: master.title,
+      link: (master as any)[love.mixin.MeetingEventLink],
+      // An occurrence in progress keeps the link alive just as a future one does.
+      nextOccurrence: current ?? next,
+      lastMeetingEnd: await this.lastSessionEnd({ eventId: master.eventId })
+    }
+  }
+
+  /** The permanent meeting as a target of its own: it is open between occurrences, not by series. */
+  private async permanentMeetingTarget (ref: Ref<PermanentMeeting>): Promise<MeetingTarget | undefined> {
+    const meeting = await this.client.findOne(love.class.PermanentMeeting, { _id: ref })
+    if (meeting === undefined) return undefined
+    return {
+      kind: 'meeting',
+      meeting,
+      pointer: meeting._id,
+      title: meeting.name,
+      link: { linkVersion: meeting.linkVersion, meetingAccess: meeting.meetingAccess, linkId: meeting.linkId },
+      lastMeetingEnd: await this.lastSessionEnd({ meeting: meeting._id })
+    }
+  }
+
+  /** End of the most recent session of a meeting - what `afterTtl` counts from. */
+  private async lastSessionEnd (query: DocumentQuery<MeetingMinutes>): Promise<Timestamp | undefined> {
+    const sessions = await this.client.findAll(love.class.MeetingMinutes, query, {
+      sort: { meetingEnd: SortingOrder.Descending },
+      limit: 1
+    })
+    return sessions[0]?.meetingEnd
+  }
+
+  /** Writes the guest password (or clears it) into the target's MeetingAccess - system account only. */
+  async setGuestPassword (target: MeetingTarget, guestPassword: MeetingAccess['guestPassword']): Promise<void> {
+    const meetingAccess: MeetingAccess = { ...(target.link?.meetingAccess ?? defaultMeetingAccess), guestPassword }
+    if (target.kind === 'meeting') {
+      await this.client.update(target.meeting, { meetingAccess })
+    } else {
+      await this.client.updateMixin(
+        target.master._id,
+        target.master._class,
+        target.master.space,
+        love.mixin.MeetingEventLink,
+        { meetingAccess }
+      )
+    }
+  }
+
+  /**
+   * Remembers the shortId the meeting's link resolves to. The model documents `linkId` as "absent
+   * until the link is first issued", so the issuer fills it in: otherwise the field is a promise
+   * nothing keeps. A revoked link bumps `linkVersion`, and the next issuance stores the new shortId.
+   */
+  async setMeetingLinkId (target: MeetingTarget, linkId: string): Promise<void> {
+    if ((target.link?.linkId ?? '') === linkId) return
+    if (target.kind === 'meeting') {
+      await this.client.update(target.meeting, { linkId })
+    } else {
+      await this.client.updateMixin(
+        target.master._id,
+        target.master._class,
+        target.master.space,
+        love.mixin.MeetingEventLink,
+        { linkId }
+      )
+    }
+  }
+
+  /** Whether this account is invited to the meeting - the check `/meetingLink` gates on. */
+  async isMeetingParticipant (target: MeetingTarget, account: AccountUuid): Promise<boolean> {
+    // A permanent meeting is a Space: membership is already accounts, no Person to resolve.
+    if (target.kind === 'meeting') return target.meeting.members.includes(account)
+    const accounts = await this.accountsOf(target.master.participants as Ref<Person>[])
+    return accounts.includes(account)
+  }
+
+  /**
+   * Cancelled and moved occurrences of a series. Calendar keeps each as a `ReccuringInstance` of the
+   * master in the calendar space of whoever holds it, so reading them needs a system client - which
+   * this service is. Only overrides that can still change an answer about `now` are read: neither an
+   * occurrence well in the past nor an old original start of one matters any more.
+   */
+  private async occurrenceOverrides (master: Event, now: number): Promise<OccurrenceOverride[]> {
+    const from = now - SCHEDULED_MEETING_WINDOW_MS
+    try {
+      // No `$or` here on purpose: the Postgres adapter does not translate it and the query fails
+      // with `operator does not exist: text = text[]`, which used to make every moved occurrence
+      // invisible and every join into one a 403. Occurrences of a single series are few, so the
+      // second half of the condition (a moved occurrence can leave a future original start behind)
+      // is applied in memory.
+      const instances = await this.client.findAll(calendar.class.ReccuringInstance, {
+        recurringEventId: master.eventId as Ref<ReccuringEvent>
+      })
+      return instances
+        .filter((it) => it.date >= from || it.originalStartTime >= from)
+        .map((it) => ({
+          originalStartTime: it.originalStartTime,
+          date: it.date,
+          isCancelled: it.isCancelled
+        }))
+    } catch (err: any) {
+      // Read as the rules say: a series without its exceptions beats a join that fails outright.
+      // Logged as an error: on a healthy workspace this branch is never taken.
+      this.ctx.error('[resolveSession] Failed to read occurrence overrides', {
+        eventId: master.eventId,
+        error: err?.message ?? String(err)
+      })
+      return []
+    }
+  }
+
+  /**
+   * The session to join for this `eventId`, created if the occurrence is open. Single writer:
+   * doing this from the client left a race between the calendar and ad-hoc paths.
+   */
+  async resolveSession (
+    id: string,
+    now: number = Date.now(),
+    // A lobby only asks what is going on; opening a session there would start meetings by
+    // merely looking at the link.
+    create: boolean = true,
+    kind: MeetingLinkKind = 'event'
+  ): Promise<ResolveSessionResult> {
+    const target = await this.findMeetingTarget(id, kind, now)
+    if (target === undefined) return { error: 'not-found' }
+    const query: DocumentQuery<MeetingMinutes> =
+      target.kind === 'meeting' ? { meeting: target.meeting._id } : { eventId: target.master.eventId }
+    const overrides = target.kind === 'event' ? await this.occurrenceOverrides(target.master, now) : []
+
+    // Bounded: each turn either returns or loses the notMatch to another creator, whose session
+    // the next lookup then finds.
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const live = await this.client.findOne(love.class.MeetingMinutes, {
+        ...query,
+        status: { $in: LIVE_MEETING_STATUSES }
+      })
+
+      // A permanent meeting has no occurrence to wait for: it is open whenever someone starts it.
+      let occurrence: Timestamp | undefined
+      let pin: Timestamp | undefined
+      if (target.kind === 'event') {
+        const { current, next } = resolveOccurrence(target.master, now, overrides)
+        if (current === undefined) return { error: 'no-occurrence', nextOccurrence: next }
+        occurrence = current
+        // What a session is pinned to: the moved occurrence keeps its original start.
+        pin = occurrencePin(current, overrides)
+      }
+
+      if (live !== undefined) {
+        // A session of another slot means the meeting was moved (calendar writes the new time to
+        // the master, the link stays the same). It is closed and replaced on the next join, so the
+        // same link opens the new time instead of the room of the old one. A session without a pin
+        // predates the field - it is accepted as is rather than ended on a guess.
+        if (target.kind === 'meeting' || live.occurrence === undefined || live.occurrence === pin) {
+          return { meeting: live }
+        }
+        // Only a caller who is about to join may end it: a lobby merely looking must not.
+        if (!create) return { error: 'not-started', occurrence }
+        this.ctx.info('Meeting moved, replacing the session of the old slot', {
+          meeting: live._id,
+          pointer: target.pointer,
+          previousOccurrence: live.occurrence,
+          occurrence: pin
+        })
+        await this.finishMeeting(live._id, now)
+      }
+
+      if (!create) return { error: 'not-started', occurrence }
+
+      const created = await this.createSession(target, pin)
+      if (created !== undefined) return { meeting: created, created: true }
+    }
+    return { error: 'conflict' }
+  }
+
+  private async createSession (target: MeetingTarget, occurrence?: Timestamp): Promise<MeetingMinutes | undefined> {
+    const master = target.kind === 'event' ? target.master : undefined
+    const parent = target.kind === 'meeting' ? target.meeting : undefined
+    // Mixin data is stored flat under the mixin id, so it is read off the document directly -
+    // there is no Hierarchy on this client to call `as()` with.
+    const link =
+      master !== undefined ? ((master as any)[love.mixin.MeetingEventLink] as MeetingEventLink | undefined) : undefined
+
+    let members: AccountUuid[]
+    let owners: AccountUuid[]
+    if (parent !== undefined) {
+      members = parent.members
+      owners = parent.owners ?? []
+    } else {
+      members = await this.accountsOf((master?.participants ?? []) as Ref<Person>[])
+      const owner = await this.accountOfSocialId(master?.user ?? master?.createdBy ?? master?.modifiedBy)
+      owners = owner !== undefined ? [owner] : []
+    }
+
+    const ops = await this.getTxOps()
+    const apply = ops.apply(`love_session_${target.pointer}`)
+    // Loses to a concurrent creator instead of opening a second session for the same meeting.
+    apply.notMatch(love.class.MeetingMinutes, {
+      ...(parent !== undefined ? { meeting: parent._id } : { eventId: target.pointer }),
+      status: { $in: LIVE_MEETING_STATUSES }
+    })
+
+    const _id = generateId<MeetingMinutes>()
+    await apply.createDoc(
+      love.class.MeetingMinutes,
+      _id as unknown as Ref<Space>,
+      {
+        name: target.title,
+        description: '',
+        private: parent?.private ?? link?.private ?? false,
+        archived: false,
+        members,
+        owners,
+        descriptionRef: null,
+        summary: null,
+        // The room the meeting was scheduled in; a meeting without one runs in the single service
+        // room of the workspace, which is where every meeting used to run.
+        roomId: link?.room ?? love.ids.ScheduledRoom,
+        status: MeetingStatus.Pending,
+        transcriptionState: TranscriptionState.NotStarted,
+        recordingState: RecordingState.NotStarted,
+        language: parent?.language ?? link?.language ?? 'en',
+        startWithRecording: parent?.startWithRecording ?? link?.startWithRecording ?? false,
+        startWithTranscription: parent?.startWithTranscription ?? link?.startWithTranscription ?? false,
+        ...(parent !== undefined ? { meeting: parent._id } : { eventId: target.pointer, occurrence })
+      },
+      _id
+    )
+
+    const { result } = await apply.commit()
+    if (!result) return undefined
+    return await this.client.findOne(love.class.MeetingMinutes, { _id })
+  }
+
+  private txOps?: TxOperations
+
+  // Same REST endpoint as `client`, wrapped so that `apply()`/`notMatch()` are available.
+  private async getTxOps (): Promise<TxOperations> {
+    if (this.txOps === undefined) {
+      const token = generateToken(systemAccountUuid, this.workspace, { service: 'love' })
+      this.txOps = await getTxOperations(token, this.workspace)
+    }
+    return this.txOps
+  }
+
+  /** Members of a session are the people invited to the series. */
+  private async accountsOf (persons: Ref<Person>[]): Promise<AccountUuid[]> {
+    if (persons.length === 0) return []
+    const docs = await this.client.findAll(contact.class.Person, { _id: { $in: persons } })
+    return docs.map((it) => it.personUuid).filter((it): it is AccountUuid => it != null)
+  }
+
+  private async accountOfSocialId (socialId: PersonId | undefined): Promise<AccountUuid | undefined> {
+    if (socialId === undefined) return undefined
+    const identity = await this.client.findOne(contact.class.SocialIdentity, { _id: socialId as any })
+    if (identity === undefined) return undefined
+    const persons = await this.accountsOf([identity.attachedTo])
+    return persons[0]
   }
 
   /**

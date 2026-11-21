@@ -9,10 +9,12 @@ import {
   DevicesPreference,
   Floor,
   MeetingEventLink,
+  MeetingGroup,
   MeetingMinutes,
   MeetingSchedule,
   Office,
   ParticipantInfo,
+  PermanentMeeting,
   PendingRecording,
   Room,
   RoomInfo,
@@ -31,6 +33,8 @@ const love = plugin(loveId, {
     DevicesPreference: '' as Ref<Class<DevicesPreference>>,
     RoomInfo: '' as Ref<Class<RoomInfo>>,
     MeetingMinutes: '' as Ref<Class<MeetingMinutes>>,
+    PermanentMeeting: '' as Ref<Class<PermanentMeeting>>,
+    MeetingGroup: '' as Ref<Class<MeetingGroup>>,
     UserMeetingInvite: '' as Ref<Class<UserMeetingInvite>>
   },
   mixin: {
@@ -81,6 +85,10 @@ const love = plugin(loveId, {
     Reject: '' as IntlString,
     MeetingStart: '' as IntlString,
     MeetingEnd: '' as IntlString,
+    // Shown when a join is refused because the occurrence window is closed (403 from the service).
+    MeetingNotOpenYet: '' as IntlString,
+    MeetingIsOver: '' as IntlString,
+    MeetingNotFound: '' as IntlString,
     Status: '' as IntlString,
     Active: '' as IntlString,
     Finished: '' as IntlString,
@@ -138,11 +146,44 @@ const love = plugin(loveId, {
     GroupByDate: '' as IntlString,
     AllHands: '' as IntlString,
     MeetingRoomNum: '' as IntlString,
-    VoiceRoomNum: '' as IntlString
+    VoiceRoomNum: '' as IntlString,
+    MeetingLinkSettings: '' as IntlString,
+    WhoCanStart: '' as IntlString,
+    StartMembersOnly: '' as IntlString,
+    StartAnyoneWithLink: '' as IntlString,
+    AfterTheSeries: '' as IntlString,
+    PastNone: '' as IntlString,
+    PastLast: '' as IntlString,
+    LinkLifetime: '' as IntlString,
+    RevokeLink: '' as IntlString,
+    RevokeLinkTooltip: '' as IntlString,
+    Day: '' as IntlString,
+    Week: '' as IntlString,
+    Month: '' as IntlString,
+    Forever: '' as IntlString,
+    PermanentMeeting: '' as IntlString,
+    PermanentMeetings: '' as IntlString,
+    Audio: '' as IntlString,
+    NewMeeting: '' as IntlString,
+    Meetings: '' as IntlString,
+    PastSessions: '' as IntlString,
+    GuestPassword: '' as IntlString,
+    PasswordSet: '' as IntlString,
+    PasswordNotSet: '' as IntlString,
+    SetPassword: '' as IntlString,
+    RemovePassword: '' as IntlString,
+    CopyLinkWithPassword: '' as IntlString,
+    EnterPassword: '' as IntlString,
+    WrongPassword: '' as IntlString,
+    TooManyAttempts: '' as IntlString
   },
   ids: {
     MainFloor: '' as Ref<Floor>,
     Reception: '' as Ref<Room>,
+    // One service floor per workspace, holding the single room every scheduled meeting runs in.
+    // Fixed ids instead of a trigger: creation is idempotent by _id, so there is no race to guard.
+    ScheduledFloor: '' as Ref<Floor>,
+    ScheduledRoom: '' as Ref<Room>,
     LoveWidget: '' as Ref<Widget>,
     MeetingWidget: '' as Ref<Widget>,
     LoveNotificationGroup: '' as Ref<NotificationGroup>,
@@ -161,8 +202,10 @@ const love = plugin(loveId, {
     SharingEnabled: '' as Asset,
     SharingDisabled: '' as Asset,
     Open: '' as Asset,
+    Knock: '' as Asset,
     DND: '' as Asset,
     Record: '' as Asset,
+    StopRecord: '' as Asset,
     FullScreen: '' as Asset,
     ExitFullScreen: '' as Asset,
     Invite: '' as Asset,
@@ -197,7 +240,15 @@ const love = plugin(loveId, {
     MeetingMinutesMessagesPresenter: '' as AnyComponent,
     MeetingMinutesTranscriptionPresenter: '' as AnyComponent,
     MeetingAccessAttributeEditor: '' as AnyComponent,
-    MeetingPrivateEditor: '' as AnyComponent
+    EditPermanentMeeting: '' as AnyComponent,
+    PermanentMeetingPresenter: '' as AnyComponent,
+    EditScheduledMeeting: '' as AnyComponent,
+    MeetingSessionsFooter: '' as AnyComponent,
+    MeetingAccessEditor: '' as AnyComponent,
+    CreatePermanentMeetingPopup: '' as AnyComponent,
+    PermanentMeetingForm: '' as AnyComponent,
+    MeetingPrivateEditor: '' as AnyComponent,
+    PermanentMeetingMembersEditor: '' as AnyComponent
   },
   viewlet: {
     TableMeetingMinutes: '' as Ref<Viewlet>,
@@ -212,7 +263,10 @@ const love = plugin(loveId, {
     TableRooms: '' as Ref<Viewlet>,
     TableRoomsDescriptor: '' as Ref<ViewletDescriptor>,
     ListRooms: '' as Ref<Viewlet>,
-    ListRoomsDescriptor: '' as Ref<ViewletDescriptor>
+    ListRoomsDescriptor: '' as Ref<ViewletDescriptor>,
+    CalendarScheduledMeetings: '' as Ref<Viewlet>,
+    TablePermanentMeetings: '' as Ref<Viewlet>,
+    ListPermanentMeetings: '' as Ref<Viewlet>
   }
 })
 

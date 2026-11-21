@@ -21,10 +21,17 @@ import core, {
   type MeasureContext,
   type Ref
 } from '@hcengineering/core'
-import love, { type MeetingMinutes, type ParticipantInfo, type PendingRecording, type Room } from '@hcengineering/love'
+import love, {
+  type MeetingMinutes,
+  type ParticipantInfo,
+  type PendingRecording,
+  type PermanentMeeting,
+  type Room
+} from '@hcengineering/love'
+import calendar, { type Event } from '@hcengineering/calendar'
 import { createMockContext, createMockMeeting, createMockRoom, TEST_IDS } from './test-helpers'
 import { RecordingProcessor } from '../recordings'
-import { WorkspaceClient } from '../workspaceClient'
+import { type MeetingTarget, WorkspaceClient } from '../workspaceClient'
 
 // Fake of the client surface `upsertParticipantFromLiveKit` touches. The occupancy read reflects
 // rows created so far, like a real database - collisions then depend on the code, not the fake.
@@ -82,6 +89,100 @@ describe('WorkspaceClient.upsertParticipantFromLiveKit → new ParticipantInfo s
 
     expect(createDocCalls).toHaveLength(1)
     expect(createDocCalls[0].data.kind).toBe('user')
+  })
+})
+
+// The model documents `linkId` as "absent until the link is first issued" - the issuer fills it in.
+describe('WorkspaceClient.setMeetingLinkId → the shortId is remembered on the meeting', () => {
+  const eventMaster = {
+    _id: 'event-master' as Ref<Event>,
+    _class: calendar.class.Event,
+    space: 'space-1',
+    eventId: 'E1'
+  } as unknown as Event
+
+  function clientFor (): any {
+    return {
+      update: jest.fn(async () => ({})),
+      updateMixin: jest.fn(async () => ({}))
+    }
+  }
+
+  it('writes linkId into the series mixin on the master event', async () => {
+    const client = clientFor()
+    const target = {
+      kind: 'event',
+      master: eventMaster,
+      pointer: 'E1',
+      title: 'Weekly',
+      link: { linkVersion: 1 }
+    } as unknown as MeetingTarget
+
+    await makeWorkspaceClient(createMockContext(), client).setMeetingLinkId(target, 'short-1')
+
+    expect(client.update).not.toHaveBeenCalled()
+    expect(client.updateMixin).toHaveBeenCalledWith(
+      eventMaster._id,
+      eventMaster._class,
+      eventMaster.space,
+      love.mixin.MeetingEventLink,
+      { linkId: 'short-1' }
+    )
+  })
+
+  it('writes linkId into the permanent meeting document', async () => {
+    const client = clientFor()
+    const meeting = { _id: 'permanent-1' } as unknown as PermanentMeeting
+    const target = {
+      kind: 'meeting',
+      meeting,
+      pointer: 'permanent-1',
+      title: 'Daily',
+      link: { linkVersion: 1 }
+    } as unknown as MeetingTarget
+
+    await makeWorkspaceClient(createMockContext(), client).setMeetingLinkId(target, 'short-1')
+
+    expect(client.update).toHaveBeenCalledWith(meeting, { linkId: 'short-1' })
+    expect(client.updateMixin).not.toHaveBeenCalled()
+  })
+
+  it('skips the write when the meeting already remembers this shortId', async () => {
+    const client = clientFor()
+    const target = {
+      kind: 'event',
+      master: eventMaster,
+      pointer: 'E1',
+      title: 'Weekly',
+      link: { linkVersion: 1, linkId: 'short-1' }
+    } as unknown as MeetingTarget
+
+    await makeWorkspaceClient(createMockContext(), client).setMeetingLinkId(target, 'short-1')
+
+    expect(client.update).not.toHaveBeenCalled()
+    expect(client.updateMixin).not.toHaveBeenCalled()
+  })
+
+  it('stores the new shortId after the link was revoked', async () => {
+    const client = clientFor()
+    // Revoking bumps linkVersion, so the next issued shortId differs from the remembered one.
+    const target = {
+      kind: 'event',
+      master: eventMaster,
+      pointer: 'E1',
+      title: 'Weekly',
+      link: { linkVersion: 2, linkId: 'short-1' }
+    } as unknown as MeetingTarget
+
+    await makeWorkspaceClient(createMockContext(), client).setMeetingLinkId(target, 'short-2')
+
+    expect(client.updateMixin).toHaveBeenCalledWith(
+      eventMaster._id,
+      eventMaster._class,
+      eventMaster.space,
+      love.mixin.MeetingEventLink,
+      { linkId: 'short-2' }
+    )
   })
 })
 

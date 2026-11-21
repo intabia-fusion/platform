@@ -55,6 +55,7 @@
     "EventTitlePlaceholder": "Název události",
     "TimeZone": "Časové pásmo",
     "Repeat": "Opakovat",
+    "DoNotRepeat": "Neopakovat",
     "On": "Na",
     "Every": "Každý/každá",
     "After": "Po",
@@ -125,6 +126,14 @@
     "SynchronizedCalendars": "Synchronizované kalendáře",
     "Account": "Účet",
     "NoCalendars": "Kalendáře pro synchronizaci nejsou vybrány",
-    "PersonalCalendar": "Osobní kalendář"
+    "PersonalCalendar": "Osobní kalendář",
+    "Going": "Zúčastním se",
+    "NotGoing": "Nezúčastním se",
+    "Maybe": "Možná",
+    "WillYouAttend": "Zúčastníte se?",
+    "RsvpAccepted": "se zúčastní",
+    "RsvpDeclined": "se nezúčastní",
+    "RsvpTentative": "možná",
+    "RsvpPending": "bez odpovědi"
   }
 }

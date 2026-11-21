@@ -55,6 +55,7 @@
     "EventTitlePlaceholder": "Título do evento",
     "TimeZone": "Fuso horário",
     "Repeat": "Repetir",
+    "DoNotRepeat": "Não repetir",
     "On": "Em",
     "Every": "Todos os",
     "After": "Depois de",
@@ -125,6 +126,14 @@
     "SynchronizedCalendars": "Calendários sincronizados",
     "Account": "Conta",
     "NoCalendars": "Nenhum calendário encontrado",
-    "PersonalCalendar": "Calendário pessoal"
+    "PersonalCalendar": "Calendário pessoal",
+    "Going": "Vou participar",
+    "NotGoing": "Não vou participar",
+    "Maybe": "Talvez",
+    "WillYouAttend": "Vai participar?",
+    "RsvpAccepted": "participarão",
+    "RsvpDeclined": "não participarão",
+    "RsvpTentative": "talvez",
+    "RsvpPending": "sem resposta"
   }
 }

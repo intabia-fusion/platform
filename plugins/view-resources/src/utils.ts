@@ -1077,7 +1077,10 @@ export function groupBy<T extends Doc> (docs: T[], key: string, categories?: Cat
 
     if (categories !== undefined) {
       for (const c of categories) {
-        if (typeof c === 'object') {
+        // Categories are aggregates for a ref attribute and bare values for a primitive one. Any
+        // other shape - a document, a stale category from a previous grouping - must not throw:
+        // one bad entry here takes the whole view down with it.
+        if (typeof c === 'object' && c !== null && Array.isArray(c.values)) {
           const st = c.values.find((it) => it._id === group)
           if (st !== undefined) {
             group = st.name
