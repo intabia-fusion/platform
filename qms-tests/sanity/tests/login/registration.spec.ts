@@ -1,5 +1,13 @@
 import { expect, test } from '@playwright/test'
-import { attachScreenshot, generateId, PlatformURI, randomString } from '../utils'
+import {
+  attachScreenshot,
+  generateId,
+  PlatformURI,
+  PlatformUser,
+  PlatformPassword,
+  PlatformWs,
+  randomString
+} from '../utils'
 import { allure } from 'allure-playwright'
 import { UserSignUp } from '../model/types'
 import { LoginPage } from '../model/login-page'
@@ -53,28 +61,53 @@ test.describe('Registration tests', () => {
     })
   })
 
-  test('TESTS-144. Negative - Duplicate Email', async ({ page }) => {
+  test('TESTS-144. Negative - Duplicate Email', async ({ page, browser }) => {
     await allure.description('Requirement\nThe system should reject the registration with an email that already exists')
     await allure.tms('TESTS-144', 'https://front.hc.engineering/workbench/platform/tracker/TESTS-144')
-    const signUpUserData: UserSignUp = {
-      firstName: randomString(),
-      lastName: randomString(),
-      email: 'user1',
-      password: '1234'
-    }
-
     await test.step('1. Attempt to register a user with an email that already exists', async () => {
-      const loginPage = new LoginPage(page)
-      await loginPage.goto()
-      await loginPage.buttonSignUp.click()
-
-      const signupPage = new SignupPage(page)
-      await signupPage.signupPwd(signUpUserData)
-      await signupPage.buttonSignUp.click()
-
-      await expect(signupPage.textError).toHaveText('Account already exists')
+      const endpoint = `${PlatformURI}/_account/`
+      const login = await page.request.post(endpoint, {
+        data: { method: 'login', params: { email: PlatformUser, password: PlatformPassword } }
+      })
+      const loginInfo = (await login.json()).result
+      const select = await page.request.post(endpoint, {
+        headers: { Authorization: `Bearer ${loginInfo.token}` },
+        data: { method: 'selectWorkspace', params: { workspaceUrl: PlatformWs, kind: 'external' } }
+      })
+      const workspace = (await select.json()).result
+      const invite = await page.request.post(endpoint, {
+        headers: { Authorization: `Bearer ${workspace.token}` },
+        data: { method: 'createInvite', params: { exp: 3600000, limit: 1, role: 'GUEST' } }
+      })
+      const inviteResponse = await invite.json()
+      expect(inviteResponse.error?.code).toBeUndefined()
+      const inviteId = inviteResponse.result
+      expect(inviteId).toBeTruthy()
+      const context = await browser.newContext()
+      try {
+        const signup = await context.newPage()
+        await signup.goto(`${PlatformURI}/login/join?inviteId=${encodeURIComponent(inviteId)}`)
+        await signup.getByRole('button', { name: 'Create new account' }).click()
+        await new SignupPage(signup).signupPwd({
+          firstName: randomString(),
+          lastName: randomString(),
+          email: PlatformUser,
+          password: PlatformPassword
+        })
+        const response = signup.waitForResponse(
+          (response) =>
+            response.request().method() === 'POST' &&
+            response.url().includes('/_account') &&
+            response.request().postDataJSON()?.method === 'signUp'
+        )
+        await signup.getByRole('button', { name: 'Sign Up & Join' }).click()
+        expect((await (await response).json()).error?.code).toBe('platform:status:AccountAlreadyExists')
+        await expect(signup.getByText('Account already exists')).toBeVisible()
+        await attachScreenshot('TESTS-144_duplicate_email.png', signup)
+      } finally {
+        await context.close()
+      }
     })
-    await attachScreenshot('TESTS-144_duplicate_email.png', page)
   })
 
   test('TESTS-396. Correct email and wrong password: I cannot log in ', async ({ page }) => {

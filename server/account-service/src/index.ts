@@ -306,6 +306,9 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
       3 * 60 * 1000
     )
     const sweep = (): void => {
+      void db.cleanExpiredEmailOtp(Date.now()).catch((err) => {
+        measureCtx.error('Expired email OTP cleanup failed', { err })
+      })
       void sweepScheduledDeletions(measureCtx, db, brandings).catch((err) => {
         measureCtx.error('Scheduled deletion sweep failed', { err })
       })
@@ -522,7 +525,12 @@ export function serveAccount (measureCtx: MeasureContext, brandings: BrandingMap
         'X-RateLimit-Remaining': `${rateLimit.remaining}`,
         'X-RateLimit-Reset': `${rateLimit.reset}`
       })
-      ctx.res.end(JSON.stringify({ id: request.id, error: unknownStatus('Rate limit') }))
+      ctx.res.end(
+        JSON.stringify({
+          id: request.id,
+          error: unknownStatus('Rate limit', { retryOn: Date.now() + (rateLimit.retryAfter ?? 1000) })
+        })
+      )
       return
     }
 

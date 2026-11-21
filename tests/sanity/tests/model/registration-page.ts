@@ -54,6 +54,12 @@ export class RegistrationPage extends CommonPage {
     await (await this.page.goto(`${PlatformURI}/login/confirm?id=${id}`))?.finished()
   }
 
+  async acceptRegistrationConsent (): Promise<void> {
+    await this.page.locator('[data-testid="checkbox-personal-data"]').check()
+    await this.page.locator('[data-testid="checkbox-rules"]').check()
+    await this.buttonContinue().click()
+  }
+
   async clickCreateWorkspace (): Promise<void> {
     await this.buttonCreateWorkspace().click()
   }

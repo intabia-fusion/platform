@@ -39,10 +39,10 @@ export class OtpPage extends CommonPage {
 
   async enterCode (code: string): Promise<void> {
     expect(code).toHaveLength(6)
-    // The form submits itself as soon as the last box is filled.
     for (let i = 0; i < 6; i++) {
       await this.codeInput(i + 1).fill(code[i])
     }
+    await this.page.getByRole('button', { name: 'Confirm', exact: true }).click()
   }
 
   async clickChangeEmail (): Promise<void> {

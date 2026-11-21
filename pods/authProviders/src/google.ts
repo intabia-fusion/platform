@@ -4,7 +4,7 @@ import { BrandingMap, concatLink, MeasureContext, getBranding, SocialIdType } fr
 import Router from 'koa-router'
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
 import { Passport } from '.'
-import { encodeState, handleProviderAuth, safeParseAuthState } from './utils'
+import { consumeAuthState, encodeState, handleProviderAuth, providerCookiePath } from './utils'
 
 export function registerGoogle (
   measureCtx: MeasureContext,
@@ -39,7 +39,7 @@ export function registerGoogle (
 
   router.get('/auth/google', async (ctx, next) => {
     measureCtx.info('try auth via', { provider: 'google' })
-    const state = encodeState(ctx, brandings)
+    const state = encodeState(ctx, brandings, 'google', providerCookiePath(accountsUrl))
 
     passport.authenticate('google', { scope: ['profile', 'email'], session: true, state })(ctx, next)
   })
@@ -47,7 +47,7 @@ export function registerGoogle (
   router.get(
     redirectURL,
     async (ctx, next) => {
-      const state = safeParseAuthState(ctx.query?.state)
+      const state = consumeAuthState(ctx, 'google', providerCookiePath(accountsUrl))
       measureCtx.info('Auth state', { state })
       const branding = getBranding(brandings, state?.branding)
       measureCtx.info('With branding', { branding })
@@ -77,7 +77,9 @@ export function registerGoogle (
         first,
         last,
         { type: SocialIdType.GOOGLE, value: email },
-        signUpDisabled
+        signUpDisabled,
+        ctx,
+        providerCookiePath(accountsUrl)
       )
 
       if (redirectUrl !== '') {

@@ -985,6 +985,13 @@ export interface WorkspaceInfoWithStatus extends WorkspaceInfo {
 export interface WorkspaceMemberInfo {
   person: AccountUuid
   role: AccountRole
+  seatOrder?: number
+}
+
+export interface WorkspaceMemberWithDetails extends WorkspaceMemberInfo {
+  firstName?: string
+  lastName?: string
+  email?: string
 }
 
 export enum SocialIdType {

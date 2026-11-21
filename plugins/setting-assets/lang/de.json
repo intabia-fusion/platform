@@ -271,6 +271,8 @@
     "SendCode": "Code senden",
     "SeatLimitReached": "Keine freien Plätze",
     "SeatLimitReachedDescription": "Der Arbeitsbereich hat das Platzlimit des Tarifs erreicht. Geben Sie einen Platz frei oder erweitern Sie den Tarif, um diese Rolle zuzuweisen.",
+    "DocumentGuest": "Dokumentgast",
+    "SystemAdministrator": "Systemadministrator",
     "WebhookAccess": "Ausgehende Webhooks",
     "WebhookIncomingAccess": "Eingehende Webhooks",
     "WebhookIncomingPlaceholderProject": "Wählen Sie oben einen Projektbereich aus, um hier dessen echte Kennung zu verwenden.",

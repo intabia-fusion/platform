@@ -114,7 +114,13 @@ describe('workspace-blobs-deletion', () => {
   }
 
   it('uploads a file into a fresh workspace', async () => {
-    const signedUp = await rpc(config, undefined, 'signUp', { email, password, firstName: 'Blob', lastName: 'Owner' })
+    const signedUp = await rpc(config, undefined, 'signUp', {
+      email,
+      password,
+      firstName: 'Blob',
+      lastName: 'Owner',
+      consent: { personalData: true, rules: true }
+    })
     expect(signedUp.error).toBeUndefined()
     userToken = signedUp.result.token
 

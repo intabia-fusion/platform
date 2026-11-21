@@ -40,6 +40,7 @@ export const pages = [
   'login',
   'signup',
   'createWorkspace',
+  'onboarding',
   'password',
   'recovery',
   'selectWorkspace',
@@ -89,7 +90,6 @@ export default plugin(loginId, {
   string: {
     LogIn: '' as IntlString,
     LinkValidHours: '' as IntlString,
-    EmailMask: '' as IntlString,
     NoLimit: '' as IntlString,
     InviteLimit: '' as IntlString,
     PasswordMinLength: '' as IntlString<{ count: number }>,
@@ -133,13 +133,7 @@ export default plugin(loginId, {
     SendInvite: '' as Resource<(email: string, role: AccountRole) => Promise<void>>,
     ResendInvite: '' as Resource<(email: string, role: AccountRole) => Promise<void>>,
     GetInviteLink: '' as Resource<
-      (
-        expHours: number,
-        mask: string,
-        limit: number | undefined,
-        role: AccountRole,
-        navigateUrl?: string
-      ) => Promise<string>
+      (expHours: number, limit: number | undefined, role: AccountRole, navigateUrl?: string) => Promise<string>
     >,
     LeaveWorkspace: '' as Resource<(account: string, otpCode?: string) => Promise<LoginInfo | null>>,
     ChangePassword: '' as Resource<(oldPassword: string, password: string) => Promise<void>>,

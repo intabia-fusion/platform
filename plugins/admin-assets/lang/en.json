@@ -180,6 +180,7 @@
     "AnyActivity": "Any",
     "Export": "Export",
     "PendingSignups": "Unfinished signups",
+    "IncompleteOnboarding": "Incomplete account setup",
     "SortRegistered": "Registration date",
     "Audit": "Audit",
     "AuditTitle": "Administrator actions",

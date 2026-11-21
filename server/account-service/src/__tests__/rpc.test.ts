@@ -26,7 +26,7 @@ const mockLogin = jest.fn(async () => ({ id: 1, result: 'ok' }))
 jest.mock('@hcengineering/account', () => ({
   ...jest.requireActual('@hcengineering/account'),
   __esModule: true,
-  getAccountDB: jest.fn(async () => [{}, jest.fn()]),
+  getAccountDB: jest.fn(async () => [{ cleanExpiredEmailOtp: jest.fn(async () => {}) }, jest.fn()]),
   getMethods: jest.fn(() => ({ login: mockLogin })),
   initRegionConfig: jest.fn(),
   cleanExpiredOtp: jest.fn(),
@@ -154,6 +154,10 @@ describe('account rpc dispatch', () => {
     expect(served).toBeLessThanOrEqual(300)
     expect(statuses).toContain(429)
     expect(mockLogin).toHaveBeenCalledTimes(served)
+
+    const limited = await call({ id: 351, method: 'login', params: {} })
+    expect(limited.status).toBe(429)
+    expect(limited.body.error.params.retryOn).toBeGreaterThan(Date.now())
 
     const viaArray = await call({ id: 1, method: ['login'], params: {} })
     expect(viaArray.status).toBe(400)

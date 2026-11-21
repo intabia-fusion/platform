@@ -12,7 +12,6 @@
   export let firstName: string | undefined = undefined
   export let lastName: string | undefined = undefined
   export let caption: IntlString | undefined = undefined
-  export let signUpDisabled: boolean = false
   export let proceedDisabled: boolean = true
 
   let status: Status = OK
@@ -48,7 +47,7 @@
 </script>
 
 <slot name="before-form" />
-<Form {caption} {status} {proceedDisabled} {fields} object={formData} {action} ignoreInitialValidation {signUpDisabled}>
+<Form {caption} {status} {proceedDisabled} {fields} object={formData} {action} ignoreInitialValidation>
   <div slot="after-fields" class="form-row" let:submitAttempted>
     <ConsentCheckboxes bind:agreedPersonalData bind:agreedRules highlight={submitAttempted} />
   </div>

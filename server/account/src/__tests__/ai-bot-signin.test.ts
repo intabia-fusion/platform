@@ -37,7 +37,7 @@ import {
   restorePassword,
   signUp,
   signUpJoin,
-  signUpOtp,
+  requestEmailOtp,
   validateOtp
 } from '../operations'
 import { accountPlugin } from '../plugin'
@@ -84,6 +84,16 @@ const db = {
   person: { findOne: jest.fn(), insertOne: jest.fn(), update: jest.fn() },
   socialId: { findOne: jest.fn(), find: jest.fn().mockResolvedValue([]), insertOne: jest.fn(), update: jest.fn() },
   otp: { deleteMany: jest.fn() },
+  resetEmailOtpMisses: jest.fn(),
+  withEmailOtp: async (_email: string, fn: any) =>
+    await fn({
+      code: null,
+      createdOn: 0,
+      expiresOn: 0,
+      attempts: 0,
+      misses: 0,
+      missedOn: 0
+    }),
   mailbox: { findOne: jest.fn(), find: jest.fn(), insertOne: jest.fn() },
   mailboxSecret: { insertOne: jest.fn() },
   shortLink: { deleteMany: jest.fn() },
@@ -115,6 +125,7 @@ describe('ai-bot sign in', () => {
     jest.spyOn(utils, 'verifyPassword').mockReturnValue(true)
     jest.spyOn(utils, 'isOtpValid').mockResolvedValue(true)
     jest.spyOn(utils, 'sendOtp').mockResolvedValue({ sent: true, retryOn: Date.now() + 60000 })
+    jest.spyOn(utils, 'sendOtpEmail').mockResolvedValue()
     jest.spyOn(utils, 'confirmHulyIds').mockResolvedValue()
   })
 
@@ -145,7 +156,7 @@ describe('ai-bot sign in', () => {
         'code request through sign up',
         async () => {
           ;(db.socialId.findOne as jest.Mock).mockResolvedValue(null)
-          await signUpOtp(ctx, db, null, 'token', { email: botEmail, firstName: 'Attacker' })
+          await requestEmailOtp(ctx, db, null, 'token', { email: botEmail })
         }
       ],
       [
@@ -180,7 +191,7 @@ describe('ai-bot sign in', () => {
       await loginOtp(ctx, db, null, 'token', { email: userEmail })
 
       expect(result.token).toBe('new-token')
-      expect(utils.sendOtp).toHaveBeenCalled()
+      expect(utils.sendOtpEmail).toHaveBeenCalled()
     })
   })
 

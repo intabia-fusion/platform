@@ -14,7 +14,13 @@
 // limitations under the License.
 //
 import { Analytics } from '@hcengineering/analytics'
-import { MAX_EMAIL_LENGTH, MAX_PERSON_NAME_LENGTH, type PasswordPolicy } from '@hcengineering/account-client'
+import {
+  MAX_EMAIL_LENGTH,
+  MAX_PERSON_NAME_LENGTH,
+  type OnboardingIntent,
+  type OnboardingState,
+  type PasswordPolicy
+} from '@hcengineering/account-client'
 import {
   type AccountInfo,
   AccountRole,
@@ -37,6 +43,7 @@ import {
   SocialIdType,
   systemAccountUuid,
   type WorkspaceMemberInfo,
+  type WorkspaceMemberWithDetails,
   type WorkspaceUuid
 } from '@hcengineering/core'
 import platform, {
@@ -55,7 +62,7 @@ import {
   type Token
 } from '@hcengineering/server-token'
 
-import { randomUUID } from 'crypto'
+import { randomInt, randomUUID } from 'crypto'
 
 import { isAdminEmail, isBillingAdminEmail } from './admin'
 import { requireAdminOp } from './adminOp'
@@ -85,6 +92,7 @@ import {
 import {
   type Account,
   type AccountDB,
+  type EmailOtpState,
   type AccountMethodHandler,
   type LoginInfo,
   type LoginInfoRequest,
@@ -138,6 +146,10 @@ import {
   getInviteEmail,
   getInviteSender,
   getPersonName,
+  getOtpRetryDelayMs,
+  OTP_MAX_ATTEMPTS,
+  OTP_MISS_DECAY_MS,
+  OTP_MISS_WAIT_MS,
   getRegions,
   getRolePower,
   getWorkspaceByDataId,
@@ -150,6 +162,7 @@ import {
   getWorkspaceRole,
   getWorkspaceRoles,
   getWorkspacesInfoWithStatusByIds,
+  hasVerifiedEmail,
   ensureNotAiBot,
   ensureNotAiBotAccount,
   ensureNotBlocked,
@@ -157,8 +170,6 @@ import {
   isAccountPasswordLocked,
   isAllowReadOnlyGuests,
   isEmail,
-  isOtpValid,
-  normalizePhone,
   normalizeValue,
   publishMembersChanged,
   parseEnvInt,
@@ -171,8 +182,7 @@ import {
   notifyLoginLock,
   consumeLoginLink,
   sendNoAccountEmail,
-  guessNoAccountCode,
-  sendOtp,
+  sendOtpEmail,
   setPassword,
   setTimezone,
   signUpByEmail,
@@ -318,6 +328,7 @@ export async function login (
     await resetLoginOtpMisses(db, existingAccount.uuid)
 
     const isConfirmed = emailSocialId.verifiedOn != null
+    const onboarding = existingAccount.onboarding
 
     const extraToken: Record<string, string> = isAdminEmail(normalizedEmail)
       ? { admin: 'true', authMethod: 'password' }
@@ -331,6 +342,7 @@ export async function login (
       token: isConfirmed ? generateToken(existingAccount.uuid, undefined, extraToken) : undefined,
       name: getPersonName(person),
       socialId: emailSocialId._id,
+      ...(isConfirmed && onboarding != null && onboarding.stage !== 'complete' ? { onboarding } : {}),
       deleteOn: existingAccount.deleteOn
     }
   } catch (err: any) {
@@ -352,30 +364,224 @@ export async function loginOtp (
   token: string,
   params: { email: string }
 ): Promise<OtpInfo> {
-  const { email } = params
+  return await requestEmailOtp(ctx, db, branding, token, params)
+}
 
-  if (email == null || email === '') {
+export async function requestEmailOtp (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: {
+    email: string
+    consent?: { personalData: unknown, rules: unknown }
+  }
+): Promise<OtpInfo> {
+  if (typeof params.email !== 'string' || params.email === '') {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
   }
-
-  // Note: can support OTP based on any other social logins later
-  const normalizedEmail = cleanEmail(email)
-  ensureNotAiBot(normalizedEmail)
-  const emailSocialId = await getEmailSocialId(db, normalizedEmail)
-
-  // The answer must not tell an unknown address from a known one; the owner gets a sign up letter.
-  if (emailSocialId == null) {
-    return await sendNoAccountEmail(ctx, branding, normalizedEmail, 'login')
+  if (params.consent !== undefined && (params.consent?.personalData !== true || params.consent?.rules !== true)) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
   }
+  const email = cleanEmail(params.email)
+  if (!isEmail(email)) throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  checkFieldLength(ctx, 'email', email, MAX_EMAIL_LENGTH)
+  ensureNotAiBot(email)
+  const code = randomInt(0, 1000000).toString().padStart(6, '0')
+  const now = Date.now()
+  const delay = getOtpRetryDelayMs()
+  const ttl = (getMetadata(accountPlugin.metadata.OtpTimeToLiveSec) ?? 60) * 1000
+  const issued = await db.withEmailOtp(email, async (state) => {
+    const lockUntil = state.misses >= OTP_MAX_ATTEMPTS ? state.missedOn + OTP_MISS_WAIT_MS : 0
+    const retryOn = Math.max(lockUntil, state.code !== null && state.expiresOn > now ? state.createdOn + delay : 0)
+    if (retryOn > now) {
+      if (lockUntil > now && (state.code === null || state.expiresOn <= now || state.attempts >= OTP_MAX_ATTEMPTS)) {
+        return { retryOn, locked: true, issued: false }
+      }
+      return { retryOn, locked: false, issued: false }
+    }
+    state.code = code
+    state.createdOn = now
+    state.expiresOn = now + ttl
+    state.attempts = 0
+    return { retryOn: now + delay, locked: false, issued: true }
+  })
+  if (issued.locked) {
+    throw new PlatformError(
+      new Status(Severity.ERROR, platform.status.TooManyOtpAttempts, {
+        retryOn: issued.retryOn,
+        minutes: Math.ceil((issued.retryOn - now) / 60000)
+      })
+    )
+  }
+  if (issued.issued) {
+    try {
+      await sendOtpEmail(ctx, branding, code, email)
+    } catch (err) {
+      await db.withEmailOtp(email, async (state) => {
+        if (state.code === code && state.createdOn === now) {
+          state.code = null
+          state.createdOn = 0
+          state.expiresOn = 0
+        }
+      })
+      throw err
+    }
+  }
+  return { sent: true, retryOn: issued.retryOn }
+}
 
-  return await sendOtp(ctx, db, branding, emailSocialId)
+function checkEmailOtp (state: EmailOtpState, code: string, now: number): boolean {
+  if (state.code === null || state.expiresOn <= now || state.attempts >= OTP_MAX_ATTEMPTS) return false
+  state.attempts++
+  if (state.code === code) return true
+  if (
+    state.missedOn < now - OTP_MISS_DECAY_MS ||
+    (state.misses >= OTP_MAX_ATTEMPTS && state.missedOn < now - OTP_MISS_WAIT_MS)
+  ) {
+    state.misses = 0
+  }
+  state.misses++
+  state.missedOn = now
+  return false
+}
+
+export async function confirmEmailOtp (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: {
+    email: string
+    code: string
+    intent?: OnboardingIntent
+    consent?: { personalData: unknown, rules: unknown }
+  },
+  allowSignUp: boolean = true,
+  markOnboarding: boolean = true
+): Promise<LoginInfo> {
+  if (
+    typeof params.email !== 'string' ||
+    params.email === '' ||
+    typeof params.code !== 'string' ||
+    params.code === ''
+  ) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  }
+  const email = cleanEmail(params.email)
+  checkFieldLength(ctx, 'email', email, MAX_EMAIL_LENGTH)
+  ensureNotAiBot(email)
+  const intent: OnboardingIntent = params.intent ?? { kind: 'workspace' }
+  if (
+    intent.kind !== 'workspace' &&
+    (intent.kind !== 'invite' ||
+      typeof intent.inviteId !== 'string' ||
+      intent.inviteId === '' ||
+      intent.inviteId.length > 512)
+  ) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  }
+  let onboardingIntent = intent
+  let inviteError: Error | undefined
+  if (markOnboarding && params.intent?.kind === 'invite') {
+    try {
+      const invite = await getWorkspaceInvite(db, params.intent.inviteId)
+      if (invite === null) throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+      await checkInvite(ctx, invite)
+      if ((await getWorkspaceById(db, invite.workspaceUuid)) === null) {
+        throw new PlatformError(new Status(Severity.ERROR, platform.status.WorkspaceNotFound, {}))
+      }
+      if (invite.email != null && invite.email !== '' && cleanEmail(invite.email) !== email) {
+        throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+      }
+      onboardingIntent = { kind: 'invite', inviteId: invite.id }
+    } catch (err) {
+      inviteError = err instanceof Error ? err : new Error(String(err))
+    }
+  }
+  const before = await getEmailSocialId(db, email)
+  const now = Date.now()
+  const consentAccepted = params.consent?.personalData === true && params.consent?.rules === true
+  const result = await db.withEmailOtp(email, async (state, resolve) => {
+    if (!checkEmailOtp(state, params.code, now)) return { kind: 'invalid' as const }
+    if (inviteError !== undefined) throw inviteError
+    const onboarding = markOnboarding
+      ? {
+          intent: onboardingIntent,
+          stage: onboardingIntent.kind === 'workspace' ? ('workspace' as const) : ('name' as const)
+        }
+      : undefined
+    const replaceInvite = params.intent?.kind === 'invite'
+    const identity = await resolve(allowSignUp && consentAccepted, onboarding, replaceInvite, consentAccepted)
+    if (identity === null) {
+      if (allowSignUp && !consentAccepted) {
+        state.attempts--
+        return { kind: 'consent' as const }
+      }
+      return { kind: 'invalid' as const }
+    }
+    ensureNotBlocked(identity.account)
+    state.code = null
+    state.misses = 0
+    state.missedOn = 0
+    return { kind: 'success' as const, identity }
+  })
+  if (result.kind === 'consent') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, { consentRequired: true }))
+  }
+  if (result.kind === 'invalid') {
+    if (before !== null) await notifyLoginLock(ctx, db, branding, before)
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.InvalidOtp, {}))
+  }
+  const { identity } = result
+  if (!identity.created) await confirmHulyIds(ctx, db, identity.account.uuid)
+  const login = await finishOtpLogin(db, identity.socialId, email, identity.account)
+  return markOnboarding ? { ...login, created: identity.created } : login
+}
+
+async function verifyEmailOtp (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { email: string, code: string }
+): Promise<LoginInfo> {
+  if (
+    typeof params.email !== 'string' ||
+    params.email === '' ||
+    typeof params.code !== 'string' ||
+    params.code === ''
+  ) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  }
+  const email = cleanEmail(params.email)
+  ensureNotAiBot(email)
+  const { account: accountUuid } = decodeTokenVerbose(ctx, token)
+  const caller = await db.account.findOne({ uuid: accountUuid })
+  if (caller === null) throw new PlatformError(new Status(Severity.ERROR, platform.status.AccountNotFound, {}))
+  ensureNotBlocked(caller)
+  const before = await getEmailSocialId(db, email)
+  const result = await db.withEmailOtp(email, async (state, _resolve, verify) => {
+    if (!checkEmailOtp(state, params.code, Date.now())) return null
+    const identity = await verify(accountUuid)
+    if (identity === null) return null
+    state.code = null
+    state.misses = 0
+    state.missedOn = 0
+    return identity
+  })
+  if (result === null) {
+    if (before !== null) await notifyLoginLock(ctx, db, branding, before)
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.InvalidOtp, {}))
+  }
+  return await finishOtpLogin(db, result.socialId, email, result.account)
 }
 
 /**
  * Given an email, password, first name, and last name, creates a new account, without email confirmation.
  * Allowed only for the system account token or when ALLOW_SKIP_OTP_PASSWORD_SIGNUP is set (dev/test stands).
  *
- * ---------DEPRECATED. Only to be used for dev setups without mail service. Use signUpOtp instead.
+ * ---------DEPRECATED. Only to be used for dev setups without mail service. Use requestEmailOtp instead.
  */
 export async function signUp (
   ctx: MeasureContext,
@@ -387,6 +593,7 @@ export async function signUp (
     password: string
     firstName: string
     lastName?: string
+    consent?: { personalData: unknown, rules: unknown }
   },
   meta?: Meta
 ): Promise<LoginInfo> {
@@ -412,9 +619,23 @@ export async function signUp (
   if (!systemToken) {
     assertPasswordPolicy(password)
     ensureNotAiBot(email)
+    if (params.consent?.personalData !== true || params.consent?.rules !== true) {
+      throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+    }
   }
 
-  const { account, socialId } = await signUpByEmail(ctx, db, branding, email, password, firstName, lastName ?? '')
+  const { account, socialId } = await signUpByEmail(
+    ctx,
+    db,
+    branding,
+    email,
+    password,
+    firstName,
+    lastName ?? '',
+    false,
+    false,
+    !systemToken
+  )
   const person = await db.person.findOne({ uuid: account })
   if (person == null) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.InternalServerError, {}))
@@ -439,62 +660,6 @@ function isSystemToken (token: string | undefined): boolean {
   } catch {
     return false
   }
-}
-
-/**
- * Calling this operation means the user accepted the personal data processing consent and the platform rules.
- * The server does not check or store the consent: the client must collect it before the call.
- */
-export async function signUpOtp (
-  ctx: MeasureContext,
-  db: AccountDB,
-  branding: Branding | null,
-  token: string,
-  params: {
-    email: string
-    firstName: string
-    lastName?: string
-    phone?: string
-  }
-): Promise<OtpInfo> {
-  const { email, firstName, lastName, phone } = params
-
-  if (email == null || firstName == null || email === '' || firstName === '') {
-    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
-  }
-
-  // Note: can support OTP based on any other social logins later
-  const normalizedEmail = cleanEmail(email)
-  checkFieldLength(ctx, 'email', normalizedEmail, MAX_EMAIL_LENGTH)
-  checkFieldLength(ctx, 'firstName', firstName, MAX_PERSON_NAME_LENGTH)
-  checkFieldLength(ctx, 'lastName', lastName ?? '', MAX_PERSON_NAME_LENGTH)
-  ensureNotAiBot(normalizedEmail)
-  const normalizedPhone = phone !== undefined && phone !== '' ? normalizePhone(phone) : ''
-  // A phone is never verified, so claiming exclusive ownership of it would block re-signup forever.
-  const personData = normalizedPhone !== '' ? { phoneHint: normalizedPhone } : {}
-  let emailSocialId = await getEmailSocialId(db, normalizedEmail)
-
-  if (emailSocialId !== null) {
-    const existingAccount = await db.account.findOne({ uuid: emailSocialId.personUuid as AccountUuid })
-
-    // Account exists -> this is a login. Touching the person would let anyone knowing an email
-    // rename its owner through the sign up form.
-    if (existingAccount === null) {
-      await db.person.update({ uuid: emailSocialId.personUuid }, { firstName, lastName: lastName ?? '', ...personData })
-    }
-  } else {
-    // There's no person linked to this email, so we need to create a new one
-    const personUuid: PersonUuid = await db.person.insertOne({
-      firstName,
-      lastName: lastName ?? '',
-      ...personData
-    })
-    const newSocialId = { type: SocialIdType.EMAIL, value: normalizedEmail, personUuid }
-    const emailSocialIdId = await db.socialId.insertOne(newSocialId)
-    emailSocialId = { ...newSocialId, _id: emailSocialIdId, key: buildSocialIdString(newSocialId) }
-  }
-
-  return await sendOtp(ctx, db, branding, emailSocialId)
 }
 
 /**
@@ -543,137 +708,13 @@ export async function validateOtp (
     action?: 'verify'
   }
 ): Promise<LoginInfo> {
-  const { email, code, password, action } = params
+  const { email, code, action } = params
 
-  if (email == null || code == null || email === '' || code === '') {
-    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  if (action !== 'verify') {
+    return await confirmEmailOtp(ctx, db, branding, token, { email, code }, false, false)
   }
 
-  // Note: can support OTP based on any other social logins later
-  const normalizedEmail = cleanEmail(email)
-  try {
-    ensureNotAiBot(normalizedEmail)
-    let emailSocialId = await getEmailSocialId(db, normalizedEmail)
-
-    if (emailSocialId == null) {
-      // Counted like a real miss, so the lock does not tell an unknown address from a known one.
-      guessNoAccountCode(normalizedEmail)
-      throw new PlatformError(new Status(Severity.ERROR, platform.status.InvalidOtp, {}))
-    }
-
-    const isValid = await isOtpValid(db, emailSocialId._id, code, 'login')
-
-    if (!isValid) {
-      await notifyLoginLock(ctx, db, branding, emailSocialId)
-      throw new PlatformError(new Status(Severity.ERROR, platform.status.InvalidOtp, {}))
-    }
-
-    let callerAccountUuid: AccountUuid | null = null
-    let callerAccount: Account | null = null
-
-    if (action === 'verify') {
-      callerAccountUuid = decodeTokenVerbose(ctx, token).account
-      callerAccount = await db.account.findOne({ uuid: callerAccountUuid })
-
-      if (callerAccount == null) {
-        throw new PlatformError(
-          new Status(Severity.ERROR, platform.status.AccountNotFound, { account: callerAccountUuid })
-        )
-      }
-    }
-
-    await db.otp.deleteMany({ socialId: emailSocialId._id, purpose: 'login' })
-
-    const targetAccount = await db.account.findOne({ uuid: emailSocialId.personUuid as AccountUuid })
-    ensureNotBlocked(targetAccount)
-
-    if (action !== 'verify') {
-      // login/sign up
-      if (emailSocialId.verifiedOn == null) {
-        await db.socialId.update({ _id: emailSocialId._id }, { verifiedOn: Date.now() })
-      }
-
-      if (targetAccount == null) {
-        // This is a signup
-        if (password != null) {
-          assertPasswordPolicy(password)
-        }
-        await createAccount(db, emailSocialId.personUuid, true)
-        if (password != null) {
-          await setPassword(ctx, db, branding, emailSocialId.personUuid as AccountUuid, password)
-        }
-
-        ctx.info('OTP signup success', emailSocialId)
-      } else {
-        await confirmHulyIds(ctx, db, targetAccount.uuid)
-
-        ctx.info('OTP login/verification success', emailSocialId)
-      }
-    } else {
-      if (callerAccountUuid == null) {
-        throw new PlatformError(new Status(Severity.ERROR, platform.status.AccountNotFound, {}))
-      }
-
-      if (targetAccount == null) {
-        // Only person exists means there's no verified social id — merge it into the current
-        // account.
-
-        await doMergePersons(db, callerAccountUuid, emailSocialId.personUuid)
-
-        // what happens to local persons referencing this person in various workspaces?
-        // there can be some persons but no Employees because there's no account
-        // we know where the person is migrated to so can update later as needed
-
-        if (emailSocialId.verifiedOn == null) {
-          await db.socialId.update({ _id: emailSocialId._id }, { verifiedOn: Date.now() })
-        } else {
-          // Normally, it should not be the case
-          ctx.warn("Verifying new social id belonging to person w/o account but it's already verified", {
-            emailSocialId,
-            callerAccountUuid
-          })
-          throw new PlatformError(new Status(Severity.ERROR, platform.status.Conflict, {}))
-        }
-      } else {
-        if (callerAccountUuid === targetAccount.uuid) {
-          if (emailSocialId.verifiedOn == null) {
-            await db.socialId.update({ _id: emailSocialId._id }, { verifiedOn: Date.now() })
-          }
-        } else {
-          if (emailSocialId.verifiedOn == null) {
-            // Move the target social id to current account, we can easily do this because it was not verified
-            await db.socialId.update(
-              { _id: emailSocialId._id },
-              { personUuid: callerAccountUuid, verifiedOn: Date.now() }
-            )
-          } else {
-            // Throw for now. Should probably be another workflow to merge accounts.
-            // Alternatively, we can allow the same workflow as with not verfied here just to move
-            // the social id to the current account, but need to add extra checks like there's at least one more
-            // login method for the target account
-            throw new PlatformError(new Status(Severity.ERROR, platform.status.AccountAlreadyExists, {}))
-          }
-        }
-      }
-
-      emailSocialId = await db.socialId.findOne({ _id: emailSocialId._id })
-      if (emailSocialId == null) {
-        throw new PlatformError(new Status(Severity.ERROR, platform.status.InternalServerError, {}))
-      }
-
-      // We've already checked calledAccount is not null previously
-      if ((callerAccount as Account).automatic === true) {
-        // Drop automatic flag since the user added their social id
-        await db.account.update({ uuid: callerAccountUuid }, { automatic: false })
-      }
-    }
-
-    return await finishOtpLogin(db, emailSocialId, normalizedEmail, targetAccount)
-  } catch (err: any) {
-    Analytics.handleError(err)
-    ctx.error(action === 'verify' ? 'OTP verification error' : 'OTP login/sign up error', { email, err })
-    throw err
-  }
+  return await verifyEmailOtp(ctx, db, branding, token, { email, code })
 }
 
 /** The login result after a proven email: a code or a one-time link. */
@@ -702,7 +743,8 @@ async function finishOtpLogin (
     name: getPersonName(person),
     socialId: emailSocialId._id,
     token: generateToken(emailSocialId.personUuid, undefined, extraToken),
-    deleteOn: targetAccount?.deleteOn
+    deleteOn: targetAccount?.deleteOn,
+    onboarding: targetAccount?.onboarding
   }
 }
 
@@ -749,12 +791,17 @@ export async function createWorkspace (
     workspaceName: string
     region?: string
     language?: string
+    onboarding?: boolean
   },
   meta?: Meta
 ): Promise<WorkspaceLoginInfo> {
-  const { workspaceName, region, language } = params
+  const { workspaceName, region, language, onboarding = false } = params
 
-  if (workspaceName == null || workspaceName.length === 0) {
+  if (
+    typeof workspaceName !== 'string' ||
+    workspaceName.length === 0 ||
+    (onboarding && (workspaceName.trim() === '' || typeof region !== 'string'))
+  ) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
   }
 
@@ -795,10 +842,16 @@ export async function createWorkspace (
   const created = own.length - ownStatuses.filter((it) => !holdsWorkspaceSlot(it)).length
 
   if (created >= (accountObj.maxWorkspaces ?? workspaceLimitPerUser)) {
-    ctx.warn('created-by-limit', { person: socialId.key, workspace: workspaceName })
-    throw new PlatformError(
-      new Status(Severity.ERROR, platform.status.WorkspaceLimitReached, { workspace: workspaceName })
-    )
+    const existing =
+      onboarding &&
+      (accountObj.onboarding?.workspace != null ||
+        (await db.account.findOne({ uuid: account }))?.onboarding?.workspace != null)
+    if (!existing) {
+      ctx.warn('created-by-limit', { person: socialId.key, workspace: workspaceName })
+      throw new PlatformError(
+        new Status(Severity.ERROR, platform.status.WorkspaceLimitReached, { workspace: workspaceName })
+      )
+    }
   }
 
   let validLanguage: string | undefined
@@ -808,7 +861,13 @@ export async function createWorkspace (
     ctx.warn('Unsupported language received', { language })
   }
 
-  const { workspaceUuid, workspaceUrl } = await createWorkspaceRecord(
+  const {
+    workspaceUuid,
+    workspaceUrl,
+    region: actualRegion,
+    created: newlyCreated,
+    onboardingCompleted
+  } = await createWorkspaceRecord(
     ctx,
     db,
     branding,
@@ -817,12 +876,35 @@ export async function createWorkspace (
     region,
     'pending-creation',
     undefined,
-    validLanguage
+    validLanguage,
+    onboarding
   )
 
-  await db.assignWorkspace(account, workspaceUuid, AccountRole.Owner)
+  if (!onboarding) await db.assignWorkspace(account, workspaceUuid, AccountRole.Owner)
 
   ctx.info('Creating workspace record done', { workspaceName, region, account: socialId.personUuid })
+
+  const loginInfo = {
+    account,
+    socialId: socialId._id,
+    name: getPersonName(person),
+    workspace: workspaceUuid,
+    workspaceUrl
+  }
+
+  if (onboarding && newlyCreated === false) {
+    const selected = await selectWorkspace(ctx, db, branding, token, { workspaceUrl, kind: 'external' })
+    if (selected.account !== account) {
+      throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+    }
+    return {
+      ...loginInfo,
+      token: selected.token,
+      endpoint: selected.endpoint,
+      collaboratorEndpoint: selected.collaboratorEndpoint,
+      role: selected.role
+    }
+  }
 
   // Send CRM notification for newly created workspace
   const emailSocialId = await db.socialId.findOne({
@@ -831,19 +913,15 @@ export async function createWorkspace (
     verifiedOn: { $gt: 0 }
   })
 
-  if (emailSocialId != null) {
+  if (newlyCreated === true && (!onboarding || onboardingCompleted === true) && emailSocialId != null) {
     await sendCrmNotificationIfNotInvited(ctx, db, emailSocialId.value, socialId.personUuid, meta)
   }
 
   return {
-    account,
-    socialId: socialId._id,
-    name: getPersonName(person),
+    ...loginInfo,
     token: generateToken(account, workspaceUuid, extra),
-    endpoint: getEndpoint(workspaceUuid, region, EndpointKind.External),
-    collaboratorEndpoint: getCollaboratorEndpoint(workspaceUuid, region, EndpointKind.External),
-    workspace: workspaceUuid,
-    workspaceUrl,
+    endpoint: getEndpoint(workspaceUuid, actualRegion, EndpointKind.External),
+    collaboratorEndpoint: getCollaboratorEndpoint(workspaceUuid, actualRegion, EndpointKind.External),
     role: AccountRole.Owner
   }
 }
@@ -855,14 +933,13 @@ export async function createInvite (
   token: string,
   params: {
     exp: number
-    emailMask?: string
     email?: string
     limit: number
     role: AccountRole
     autoJoin?: boolean
   }
 ): Promise<string> {
-  const { exp, emailMask, email, limit, role, autoJoin } = params
+  const { exp, email, limit, role, autoJoin } = params
 
   if (role == null || !assignableRoles.includes(role)) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
@@ -887,16 +964,14 @@ export async function createInvite (
     verifyAllowedServices(['schedule'], extra)
   }
 
-  // No point handing out a link that will be rejected at join time.
   await assertSeatAvailable(ctx, db, workspace.uuid, role)
-
-  ctx.info('Creating invite', { workspace, workspaceName: workspace.name, email, emailMask, limit, autoJoin })
+  ctx.info('Creating invite', { workspace, workspaceName: workspace.name, email, limit, autoJoin })
 
   return await db.invite.insertOne({
     workspaceUuid,
+    inviterUuid: account,
     expiresOn: exp < 0 ? -1 : Date.now() + exp,
     email,
-    emailPattern: emailMask,
     remainingUses: limit,
     role,
     autoJoin
@@ -1194,9 +1269,7 @@ export async function resendInvite (
   const callerRole = await db.getWorkspaceRole(account, workspace.uuid)
   verifyAllowedRole(callerRole, role, extra)
 
-  // Refreshing an existing invite skips createInvite, so the seat cap has to be checked here too.
   await assertSeatAvailable(ctx, db, workspace.uuid, role)
-
   const expHours = 48
   const newExp = Date.now() + expHours * 60 * 60 * 1000
 
@@ -1204,7 +1277,7 @@ export async function resendInvite (
   let inviteId: string
   if (invite != null) {
     inviteId = invite.id
-    await db.invite.update({ id: invite.id }, { expiresOn: newExp, remainingUses: 1, role })
+    await db.invite.update({ id: invite.id }, { expiresOn: newExp, remainingUses: 1, role, inviterUuid: account })
   } else {
     inviteId = await createInvite(ctx, db, branding, token, { exp: newExp, email, limit: 1, role })
   }
@@ -1292,17 +1365,11 @@ export async function checkJoin (
     // The shared anonymous account can't join by invite: the visitor has to sign in with an own account
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
-  const emailSocialId = await db.socialId.findOne({
-    type: SocialIdType.EMAIL,
-    personUuid: accountUuid,
-    verifiedOn: { $gt: 0 }
-  })
-  const email = emailSocialId?.value ?? ''
   const workspaceUuid = await checkInvite(ctx, invite)
   const workspace = await getWorkspaceById(db, workspaceUuid)
 
   if (workspace === null) {
-    ctx.error('Workspace not found in checkJoin', { workspaceUuid, email, inviteId })
+    ctx.error('Workspace not found in checkJoin', { workspaceUuid, accountUuid, inviteId })
     throw new PlatformError(new Status(Severity.ERROR, platform.status.WorkspaceNotFound, { workspaceUuid }))
   }
 
@@ -1314,6 +1381,13 @@ export async function checkJoin (
   const wsLoginInfo = await selectWorkspace(ctx, db, branding, token, { workspaceUrl: workspace.url, kind: 'external' })
 
   if (getRolePower(wsLoginInfo.role) < getRolePower(invite.role)) {
+    if (
+      invite.email != null &&
+      invite.email !== '' &&
+      !(await hasVerifiedEmail(db, accountUuid, cleanEmail(invite.email)))
+    ) {
+      throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+    }
     await db.updateWorkspaceRole(accountUuid, workspaceUuid, invite.role)
     await publishMembersChanged(ctx, workspaceUuid)
   }
@@ -1321,6 +1395,20 @@ export async function checkJoin (
   return {
     ...wsLoginInfo,
     role: invite.role
+  }
+}
+
+function validateInviteName (ctx: MeasureContext, name?: { firstName?: string, lastName?: string }): void {
+  if (name === undefined) return
+  if (name === null || typeof name !== 'object') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  }
+  for (const field of ['firstName', 'lastName'] as const) {
+    const value = name[field]
+    if (value !== undefined && (typeof value !== 'string' || value.trim() === '')) {
+      throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+    }
+    if (value !== undefined) checkFieldLength(ctx, field, value, MAX_PERSON_NAME_LENGTH)
   }
 }
 
@@ -1333,20 +1421,31 @@ export async function joinByInvite (
   db: AccountDB,
   branding: Branding | null,
   token: string,
-  params: { inviteId: string }
+  params: { inviteId: string, name?: { firstName?: string, lastName?: string } }
 ): Promise<WorkspaceLoginInfo> {
-  const { inviteId } = params
+  const { inviteId, name } = params
 
   if (inviteId == null || inviteId === '') {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
   }
 
+  validateInviteName(ctx, name)
+
+  const { account: accountUuid } = decodeTokenVerbose(ctx, token)
+  const account = await db.account.findOne({ uuid: accountUuid })
   const invite = await getWorkspaceInvite(db, inviteId)
+  if (
+    account?.onboarding?.stage === 'complete' &&
+    account.onboarding.intent.kind === 'invite' &&
+    account.onboarding.intent.inviteId === (invite?.id ?? inviteId)
+  ) {
+    return await completeOnboardingInvite(ctx, db, branding, token, { inviteId: account.onboarding.intent.inviteId })
+  }
+
   if (invite == null) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
-  const { account: accountUuid } = decodeTokenVerbose(ctx, token)
   const workspaceUuid = await checkInvite(ctx, invite)
   const workspace = await getWorkspaceById(db, workspaceUuid)
 
@@ -1355,7 +1454,7 @@ export async function joinByInvite (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.WorkspaceNotFound, { workspaceUuid }))
   }
 
-  return await doJoinByInvite(ctx, db, branding, token, accountUuid, workspace, invite)
+  return await doJoinByInvite(ctx, db, branding, token, accountUuid, workspace, invite, name)
 }
 
 /** Free seats left on the workspace plan; `available: true` when the plan is unlimited. */
@@ -1404,12 +1503,15 @@ export async function getInviteInfo (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.WorkspaceNotFound, { workspaceUuid }))
   }
 
-  const seatsLeft = await getSeatsAvailable(db, workspace.uuid)
+  const sender =
+    invite.inviterUuid == null
+      ? undefined
+      : await getInviteSender(db, invite.inviterUuid, null, branding?.lastNameFirst === 'true')
 
   return {
     workspace: workspace.uuid,
     name: workspace.name,
-    seatsAvailable: seatsLeft === undefined || seatsLeft > 0
+    ...(sender !== undefined && sender.name !== sender.email ? { inviterName: sender.name } : {})
   }
 }
 
@@ -1492,13 +1594,20 @@ export async function checkAutoJoin (
         }
       }
 
+      if (targetAccount.onboarding != null && targetAccount.onboarding.stage !== 'complete') {
+        throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+      }
+
       const targetRole = await getWorkspaceRole(db, targetAccount.uuid, workspace.uuid)
 
       if (targetRole == null) {
-        await assertSeatAvailable(ctx, db, workspace.uuid, invite.role)
+        if (invite.role !== AccountRole.Guest) await assertSeatAvailable(ctx, db, workspace.uuid, invite.role)
         await db.assignWorkspace(targetAccount.uuid, workspace.uuid, invite.role)
         await publishMembersChanged(ctx, workspace.uuid)
       } else if (getRolePower(targetRole) < getRolePower(invite.role)) {
+        if ([AccountRole.Guest, AccountRole.DocGuest, AccountRole.ReadOnlyGuest].includes(targetRole)) {
+          await assertSeatAvailable(ctx, db, workspace.uuid, invite.role)
+        }
         await db.updateWorkspaceRole(targetAccount.uuid, workspace.uuid, invite.role)
         await publishMembersChanged(ctx, workspace.uuid)
       }
@@ -1545,6 +1654,7 @@ export async function signUpJoin (
     last?: string
     inviteId: string
     workspaceUrl: string
+    consent?: { personalData: unknown, rules: unknown }
   },
   meta?: Meta
 ): Promise<WorkspaceLoginInfo> {
@@ -1567,6 +1677,9 @@ export async function signUpJoin (
 
   if (!systemToken) {
     assertPasswordPolicy(password)
+    if (params.consent?.personalData !== true || params.consent?.rules !== true) {
+      throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+    }
   }
 
   const workspaceJoinInfo = await getWorkspaceJoinInfo(ctx, db, email, inviteId, workspaceUrl)
@@ -1581,7 +1694,18 @@ export async function signUpJoin (
     inviteId
   })
 
-  const { account } = await signUpByEmail(ctx, db, branding, email, password, first, last ?? '', true)
+  const { account } = await signUpByEmail(
+    ctx,
+    db,
+    branding,
+    email,
+    password,
+    first,
+    last ?? '',
+    true,
+    false,
+    !systemToken
+  )
   void setTimezone(ctx, db, account, null, meta)
 
   return await doJoinByInvite(
@@ -1599,7 +1723,8 @@ export async function confirm (
   ctx: MeasureContext,
   db: AccountDB,
   branding: Branding | null,
-  token: string
+  token: string,
+  params: { consent?: { personalData: unknown, rules: unknown } } = {}
 ): Promise<LoginInfo> {
   const { account, extra } = decodeTokenVerbose(ctx, token)
 
@@ -1609,6 +1734,11 @@ export async function confirm (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
 
+  const accountExists = (await db.account.findOne({ uuid: account })) != null
+  if (!accountExists && (params.consent?.personalData !== true || params.consent?.rules !== true)) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, { consentRequired: true }))
+  }
+
   const socialId = await confirmEmail(ctx, db, account, email)
 
   // Right after confirmEmail: the email is verified now, so the link is dead even if a later step
@@ -1616,8 +1746,8 @@ export async function confirm (
   await db.shortLink.deleteMany({ payload: token })
 
   // The link also completes a sign up whose OTP code was never entered.
-  if ((await db.account.findOne({ uuid: account })) == null) {
-    await createAccount(db, account, true)
+  if (!accountExists) {
+    await createAccount(db, account, true, false, Date.now(), true)
     ctx.info('Account created via activation link', { account, email })
   }
 
@@ -1714,7 +1844,7 @@ export async function requestPasswordReset (
   // Same answer for any address; an unknown one gets a sign up letter instead of the reset link.
   if (emailSocialId == null || account == null) {
     ctx.info('Account not found for password reset', { email, normalizedEmail })
-    await sendNoAccountEmail(ctx, branding, normalizedEmail, 'recovery')
+    await sendNoAccountEmail(ctx, branding, normalizedEmail)
     return
   }
 
@@ -1880,6 +2010,72 @@ export async function leaveWorkspace (
   }
 
   return null
+}
+
+export async function setOnboardingName (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params: { first: string, last: string },
+  meta?: Meta
+): Promise<OnboardingState> {
+  if (
+    typeof params.first !== 'string' ||
+    params.first.trim() === '' ||
+    typeof params.last !== 'string' ||
+    params.last.trim() === ''
+  ) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  }
+  checkFieldLength(ctx, 'firstName', params.first, MAX_PERSON_NAME_LENGTH)
+  checkFieldLength(ctx, 'lastName', params.last, MAX_PERSON_NAME_LENGTH)
+  const { account } = decodeTokenVerbose(ctx, token)
+  const accountData = await db.account.findOne({ uuid: account })
+  if (accountData === null) throw new PlatformError(new Status(Severity.ERROR, platform.status.AccountNotFound, {}))
+  ensureNotBlocked(accountData)
+  const result = await db.setOnboardingName(account, params.first, params.last)
+  if (result === null) throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  if (result.completed) {
+    const email = await db.socialId.findOne({ type: SocialIdType.EMAIL, personUuid: account, verifiedOn: { $gt: 0 } })
+    if (email != null) await sendCrmNotificationIfNotInvited(ctx, db, email.value, account, meta)
+  }
+  return result.onboarding
+}
+
+export async function completeOnboardingInvite (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string,
+  params?: { name?: { firstName?: string, lastName?: string }, inviteId?: string }
+): Promise<WorkspaceLoginInfo> {
+  validateInviteName(ctx, params?.name)
+  if (
+    params?.inviteId !== undefined &&
+    (typeof params.inviteId !== 'string' || params.inviteId === '' || params.inviteId.length > 512)
+  ) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  }
+  const { account, extra } = decodeTokenVerbose(ctx, token)
+  if (extra?.apikey != null || account === readOnlyGuestAccountUuid) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+  const accountData = await db.account.findOne({ uuid: account })
+  if (accountData == null) throw new PlatformError(new Status(Severity.ERROR, platform.status.AccountNotFound, {}))
+  ensureNotBlocked(accountData)
+  const result = await db.completeOnboardingInvite(account, undefined, undefined, params?.name, params?.inviteId)
+  if (result.result === 'expired') throw new PlatformError(new Status(Severity.ERROR, platform.status.ExpiredLink, {}))
+  if (result.result === 'seat-limit') {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.PlanLimitExceeded, {}))
+  }
+  if (result.result !== 'ok' || result.workspace == null) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+  const workspace = await db.workspace.findOne({ uuid: result.workspace })
+  if (workspace == null) throw new PlatformError(new Status(Severity.ERROR, platform.status.WorkspaceNotFound, {}))
+  if (result.changed === true) await publishMembersChanged(ctx, workspace.uuid)
+  return await selectWorkspace(ctx, db, branding, token, { workspaceUrl: workspace.url, kind: 'external' })
 }
 
 export async function changeUsername (
@@ -2231,8 +2427,8 @@ export async function getLoginInfoByToken (
       }
 
       // Create an automatic account and assign it to the grant workspace
-      await signUpByGrant(ctx, db, branding, accountUuid, grant, params)
       await assertSeatAvailable(ctx, db, workspaceUuid, grant.role)
+      await signUpByGrant(ctx, db, branding, accountUuid, grant, params)
       await db.assignWorkspace(accountUuid, workspaceUuid, grant.role)
       await publishMembersChanged(ctx, workspaceUuid)
     } else {
@@ -2248,6 +2444,9 @@ export async function getLoginInfoByToken (
           await db.assignWorkspace(accountUuid, workspaceUuid, grant.role)
           await publishMembersChanged(ctx, workspaceUuid)
         } else if (getRolePower(existingRole) < getRolePower(grant.role)) {
+          if ([AccountRole.Guest, AccountRole.DocGuest, AccountRole.ReadOnlyGuest].includes(existingRole)) {
+            await assertSeatAvailable(ctx, db, workspaceUuid, grant.role)
+          }
           await db.updateWorkspaceRole(accountUuid, workspaceUuid, grant.role)
           await publishMembersChanged(ctx, workspaceUuid)
         }
@@ -2289,13 +2488,15 @@ export async function getLoginInfoByToken (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.InternalServerError, {}))
   }
 
+  const accountData = isDocGuest || isSystem ? null : await getAccount(db, accountUuid)
   const loginInfo = {
     account: accountUuid,
     name: getPersonName(person),
     socialId: socialId?._id,
     token: generateToken(accountUuid, workspaceUuid, extra, undefined, { grant, nbf, exp, sub }),
     // Every sign-in lands on the workspace picker, which is where the deletion notice is shown.
-    deleteOn: isDocGuest || isSystem ? undefined : (await getAccount(db, accountUuid))?.deleteOn
+    deleteOn: accountData?.deleteOn,
+    onboarding: accountData?.onboarding
   }
 
   if (!isSystem) {
@@ -2585,6 +2786,22 @@ export async function getWorkspaceMembers (
   return await getSeatMembers(db, workspace)
 }
 
+export async function getWorkspaceMemberDetails (
+  ctx: MeasureContext,
+  db: AccountDB,
+  branding: Branding | null,
+  token: string
+): Promise<WorkspaceMemberWithDetails[]> {
+  const { account, workspace } = decodeTokenVerbose(ctx, token)
+  if (workspace == null) throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  const role = await db.getWorkspaceRole(account, workspace)
+  if (role == null || getRolePower(role) < getRolePower(AccountRole.Maintainer)) {
+    throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+  }
+  ensureNotBlocked(await db.account.findOne({ uuid: account }))
+  return await db.getWorkspaceMemberDetails(workspace)
+}
+
 export async function getAccountInfo (
   ctx: MeasureContext,
   db: AccountDB,
@@ -2849,7 +3066,7 @@ async function addEmailSocialId (
     targetSocialId = { ...newSocialId, _id, key: buildSocialIdString(newSocialId) }
   }
 
-  return await sendOtp(ctx, db, branding, targetSocialId)
+  return await requestEmailOtp(ctx, db, branding, token, { email: targetSocialId.value })
 }
 
 async function addHulyAssistantSocialId (
@@ -4032,9 +4249,10 @@ export type AccountMethods =
   | AccountServiceMethods
   | 'login'
   | 'loginOtp'
+  | 'requestEmailOtp'
+  | 'confirmEmailOtp'
   | 'loginAsGuest'
   | 'signUp'
-  | 'signUpOtp'
   | 'validateOtp'
   | 'loginByLink'
   | 'createWorkspace'
@@ -4057,6 +4275,8 @@ export type AccountMethods =
   | 'restorePassword'
   | 'leaveWorkspace'
   | 'changeUsername'
+  | 'setOnboardingName'
+  | 'completeOnboardingInvite'
   | 'updateWorkspaceName'
   | 'deleteWorkspace'
   | 'requestOperationOtp'
@@ -4072,6 +4292,7 @@ export type AccountMethods =
   | 'getSocialIds'
   | 'getPerson'
   | 'getWorkspaceMembers'
+  | 'getWorkspaceMemberDetails'
   | 'updateWorkspaceRole'
   | 'isAllowReadOnlyGuests'
   | 'updateAllowReadOnlyGuests'
@@ -4121,9 +4342,12 @@ export function getMethods (hasSignUp: boolean = true): Partial<Record<AccountMe
     /* OPERATIONS */
     login: wrap(login),
     loginOtp: wrap(loginOtp),
+    requestEmailOtp: wrap(requestEmailOtp),
+    confirmEmailOtp: wrap(
+      async (ctx, db, branding, token, params) => await confirmEmailOtp(ctx, db, branding, token, params, hasSignUp)
+    ),
     loginAsGuest: wrap(loginAsGuest),
     ...(hasSignUp ? { signUp: wrap(signUp) } : {}),
-    ...(hasSignUp ? { signUpOtp: wrap(signUpOtp) } : {}),
     validateOtp: wrap(validateOtp),
     loginByLink: wrap(loginByLink),
     createWorkspace: wrap(createWorkspace),
@@ -4146,6 +4370,8 @@ export function getMethods (hasSignUp: boolean = true): Partial<Record<AccountMe
     restorePassword: wrap(restorePassword),
     leaveWorkspace: wrap(leaveWorkspace),
     changeUsername: wrap(changeUsername),
+    setOnboardingName: wrap(setOnboardingName),
+    completeOnboardingInvite: wrap(completeOnboardingInvite),
     updateWorkspaceName: wrap(updateWorkspaceName),
     deleteWorkspace: wrap(deleteWorkspace),
     requestOperationOtp: wrap(requestOperationOtp),
@@ -4199,6 +4425,7 @@ export function getMethods (hasSignUp: boolean = true): Partial<Record<AccountMe
     findPersonBySocialId: wrap(findPersonBySocialId),
     findSocialIdBySocialKey: wrap(findSocialIdBySocialKey),
     getWorkspaceMembers: wrap(getWorkspaceMembers),
+    getWorkspaceMemberDetails: wrap(getWorkspaceMemberDetails),
     getMailboxOptions: wrap(getMailboxOptions),
     getMailboxSecret: wrap(getMailboxSecret),
     getAccountInfo: wrap(getAccountInfo),

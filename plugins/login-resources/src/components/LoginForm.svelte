@@ -1,6 +1,7 @@
 <!--
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021, 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -29,13 +30,14 @@
   } from '../index'
   import LoginPasswordForm from './LoginPasswordForm.svelte'
   import LoginOtpForm from './LoginOtpForm.svelte'
+  import EmailFirstForm from './EmailFirstForm.svelte'
   import BottomActionComponent from './BottomAction.svelte'
   import login from '../plugin'
   import type { LoginInfo } from '@hcengineering/account-client'
 
   export let navigateUrl: string | undefined = undefined
-  export let signUpDisabled = false
   export let useOTP = true
+  export let emailFirst = false
   export let email: string | undefined = undefined
   export let caption: IntlString | undefined = undefined
   export let subtitle: string | undefined = undefined
@@ -44,6 +46,8 @@
   const LOGIN_METHOD_STORAGE_KEY = 'login-method'
 
   let method: LoginMethods = LoginMethods.Password
+  let agreedPersonalData = false
+  let agreedRules = false
 
   // Persist chosen login method to localStorage
   function platformTestingEnabled (): boolean {
@@ -79,6 +83,16 @@
 
   onMount(() => {
     signupStore.setSignUpFlow(false)
+
+    if (!useOTP) {
+      method = LoginMethods.Password
+      return
+    }
+
+    if (emailFirst && useOTP) {
+      method = LoginMethods.Otp
+      return
+    }
 
     // Try to load persisted login method preference from localStorage if not in testing mode
     try {
@@ -151,31 +165,39 @@
 </script>
 
 {#if method === LoginMethods.Otp}
-  <LoginOtpForm
-    {navigateUrl}
-    {signUpDisabled}
-    {email}
-    {caption}
-    {subtitle}
-    {onLogin}
-    {signedInAs}
-    on:change={changeMethod}
-  />
+  {#if emailFirst}
+    <EmailFirstForm {navigateUrl} {onLogin} {signedInAs} />
+  {:else}
+    <LoginOtpForm
+      {navigateUrl}
+      {email}
+      {caption}
+      {subtitle}
+      {onLogin}
+      {signedInAs}
+      bind:agreedPersonalData
+      bind:agreedRules
+      on:change={changeMethod}
+    />
+  {/if}
 {:else}
   <LoginPasswordForm
     {navigateUrl}
-    {signUpDisabled}
     {email}
     {caption}
     {subtitle}
     {onLogin}
     {signedInAs}
+    bind:agreedPersonalData
+    bind:agreedRules
     on:change={changeMethod}
   />
 {/if}
 
 <div class="actions">
-  <BottomActionComponent action={method === LoginMethods.Otp ? loginWithPasswordAction : loginWithCodeAction} />
+  {#if useOTP}
+    <BottomActionComponent action={method === LoginMethods.Otp ? loginWithPasswordAction : loginWithCodeAction} />
+  {/if}
 
   {#if allowReadonlyGuests}
     <div class="login-as-guest">

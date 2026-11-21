@@ -284,6 +284,7 @@ export default mergeIds(adminId, admin, {
     AnyActivity: '' as IntlString,
     Export: '' as IntlString,
     PendingSignups: '' as IntlString,
+    IncompleteOnboarding: '' as IntlString,
     SortRegistered: '' as IntlString,
     Audit: '' as IntlString,
     AuditTitle: '' as IntlString,

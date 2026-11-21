@@ -9,6 +9,7 @@ import { registerToken } from './token'
 import { BrandingMap, MeasureContext } from '@hcengineering/core'
 import { type AccountDB } from '@hcengineering/account'
 import { type ProviderInfo } from '@hcengineering/account-client'
+import { handleProviderAuth, providerCookiePath } from './utils'
 
 export type Passport = typeof passport
 
@@ -62,6 +63,51 @@ export function registerProviders (
   })
 
   registerToken(ctx, passport, router, accountsUrl, db, frontUrl, brandings)
+
+  router.get('/auth/consent', async (request) => {
+    const nonce = request.query.nonce
+    if (typeof nonce !== 'string' || !/^[a-f0-9]{64}$/.test(nonce)) request.throw(403)
+    const path = providerCookiePath(accountsUrl)
+    const cookieName = `oauth-consent-${nonce}`
+    const raw = request.cookies.get(cookieName, { signed: true })
+    let pending
+    try {
+      pending = JSON.parse(Buffer.from(raw ?? '', 'base64url').toString())
+    } catch {
+      request.throw(403)
+    }
+    if (
+      pending == null ||
+      pending.nonce !== nonce ||
+      request.query.agreedPersonalData !== 'true' ||
+      request.query.agreedRules !== 'true' ||
+      typeof pending.createdOn !== 'number' ||
+      pending.createdOn > Date.now() ||
+      Date.now() - pending.createdOn > 10 * 60 * 1000
+    ) {
+      request.throw(403)
+    }
+    request.cookies.set(cookieName, null, { signed: true, httpOnly: true, sameSite: 'lax', path })
+    const redirectUrl = await handleProviderAuth(
+      ctx,
+      await db,
+      brandings,
+      frontUrl,
+      pending.providerType,
+      pending.rawState,
+      {},
+      pending.email,
+      pending.first,
+      pending.last,
+      pending.socialKey,
+      signUpDisabled,
+      undefined,
+      undefined,
+      true
+    )
+    if (redirectUrl === '') request.throw(403)
+    request.redirect(redirectUrl)
+  })
 
   const res: ProviderInfo[] = []
   const providers: AuthProvider[] = [registerGoogle, registerGithub, registerOpenid]

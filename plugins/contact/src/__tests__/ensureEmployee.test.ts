@@ -150,6 +150,22 @@ function createMockClient (scenario: Scenario = {}): {
 }
 
 describe('ensureEmployee retry logic', () => {
+  it('propagates forbidden only when requested', async () => {
+    const { ensureEmployeeForPerson } = await import('../utils')
+    const { default: platform, PlatformError, Severity, Status } = await import('@hcengineering/platform')
+    const account = makeTestAccount()
+    const error = new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+    const client = createMockClient({ personExistsInitially: true })
+    client.tx.mockRejectedValue(error)
+    await expect(
+      ensureEmployeeForPerson(testCtx, account, account, client, account.fullSocialIds, testGlobalPerson)
+    ).resolves.toBe('test-person-id')
+    await expect(
+      ensureEmployeeForPerson(testCtx, account, account, client, account.fullSocialIds, testGlobalPerson, {
+        throwOnForbidden: true
+      })
+    ).rejects.toBe(error)
+  })
   const testCtx = new MeasureMetricsContext('test', {})
 
   beforeEach(() => {

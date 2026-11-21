@@ -50,3 +50,5 @@ export * from './rank'
 export * from './planLimits'
 export * from './planLimitsMiddleware'
 export * from './seatLimits'
+
+export { EnsureEmployeeMiddleware } from './ensureEmployee'

@@ -1,6 +1,7 @@
 /*!
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -30,7 +31,12 @@ export default mergeIds(loginId, login, {
     JoinWorkspaceError: '' as StatusCode
   },
   string: {
+    NoFreeSeats: '' as IntlString,
+    NoFreeSeatsDescription: '' as IntlString,
+    NoFreeSeatsForInvite: '' as IntlString,
     CreateWorkspace: '' as IntlString,
+    OnboardingCreateWorkspace: '' as IntlString,
+    OnboardingWorkspaceName: '' as IntlString,
     HaveWorkspace: '' as IntlString,
     LastName: '' as IntlString,
     FirstName: '' as IntlString,
@@ -38,6 +44,7 @@ export default mergeIds(loginId, login, {
     LoadingAccount: '' as IntlString,
     Join: '' as IntlString,
     Workspace: '' as IntlString,
+    PersonalSpace: '' as IntlString<{ email: string }>,
     SignUp: '' as IntlString,
     SignUpTab: '' as IntlString,
     DoNotHaveAnAccount: '' as IntlString,
@@ -59,12 +66,15 @@ export default mergeIds(loginId, login, {
     ConfirmationSent: '' as IntlString,
     ConfirmationSent2: '' as IntlString,
     ContinueWith: '' as IntlString,
+    SignInVia: '' as IntlString,
     HaventReceivedCode: '' as IntlString,
     ResendCode: '' as IntlString,
+    ResendAvailableIn: '' as IntlString,
     WrongEmail: '' as IntlString,
     ChangeEmail: '' as IntlString,
     SentTo: '' as IntlString,
     EnterCode: '' as IntlString,
+    ConfirmCode: '' as IntlString,
     CanFindCode: '' as IntlString,
     LoginWithCode: '' as IntlString,
     LoginWithPassword: '' as IntlString,
@@ -81,6 +91,11 @@ export default mergeIds(loginId, login, {
     AgreedRules: '' as IntlString,
     SignUpToCreateWorkspace: '' as IntlString,
     WhatIsYourName: '' as IntlString,
+    WorkspacePurposeHint: '' as IntlString,
+    NameVisibilityHint: '' as IntlString,
+    InvitationFrom: '' as IntlString<{ name: string, workspace: string }>,
+    InvitationTo: '' as IntlString<{ workspace: string }>,
+    JoinWorkspaceAction: '' as IntlString,
     AccessExpired: '' as IntlString,
     AccessNotActive: '' as IntlString,
     DesktopApp: '' as IntlString,
@@ -97,10 +112,10 @@ export default mergeIds(loginId, login, {
     AlreadySignedIn: '' as IntlString,
     ExpiredLink: '' as IntlString,
     ExpiredLinkDescription: '' as IntlString,
-    NoFreeSeats: '' as IntlString,
-    NoFreeSeatsDescription: '' as IntlString,
-    NoFreeSeatsForInvite: '' as IntlString,
     Continue: '' as IntlString,
+    StartWithEmail: '' as IntlString,
+    EmailCodeHint: '' as IntlString,
+    GetCode: '' as IntlString,
     CheckingLink: '' as IntlString,
     InvalidLink: '' as IntlString,
     LoginLinkCaption: '' as IntlString,

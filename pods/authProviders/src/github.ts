@@ -4,7 +4,7 @@ import { BrandingMap, concatLink, MeasureContext, getBranding, SocialIdType } fr
 import Router from 'koa-router'
 import { Strategy as GitHubStrategy } from 'passport-github2'
 import { Passport } from '.'
-import { encodeState, handleProviderAuth, safeParseAuthState } from './utils'
+import { consumeAuthState, encodeState, handleProviderAuth, providerCookiePath } from './utils'
 
 export function registerGithub (
   measureCtx: MeasureContext,
@@ -39,7 +39,7 @@ export function registerGithub (
 
   router.get('/auth/github', async (ctx, next) => {
     measureCtx.info('try auth via', { provider: 'github' })
-    const state = encodeState(ctx, brandings)
+    const state = encodeState(ctx, brandings, 'github', providerCookiePath(accountsUrl))
 
     passport.authenticate('github', { scope: ['user:email'], session: true, state })(ctx, next)
   })
@@ -47,7 +47,7 @@ export function registerGithub (
   router.get(
     redirectURL,
     async (ctx, next) => {
-      const state = safeParseAuthState(ctx.query?.state)
+      const state = consumeAuthState(ctx, 'github', providerCookiePath(accountsUrl))
       const branding = getBranding(brandings, state?.branding)
 
       await passport.authenticate('github', {
@@ -74,7 +74,9 @@ export function registerGithub (
         first,
         last,
         { type: SocialIdType.GITHUB, value: ctx.state.user.username },
-        signUpDisabled
+        signUpDisabled,
+        ctx,
+        providerCookiePath(accountsUrl)
       )
 
       if (redirectUrl !== '') {

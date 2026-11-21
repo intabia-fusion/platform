@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the 'License');
 // you may not use this file except in compliance with the License. You may
@@ -17,12 +18,12 @@
   import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
   import { MessageBox, copyTextToClipboard, createQuery } from '@hcengineering/presentation'
   import setting from '@hcengineering/setting'
-  import ui, { Button, EditBox, Grid, Label, Loading, MiniToggle, showPopup, ticker, Icon } from '@hcengineering/ui'
-  import { createEventDispatcher, onMount } from 'svelte'
+  import ui, { Button, EditBox, Grid, Label, Loading, MiniToggle, ticker, Icon, showPopup } from '@hcengineering/ui'
+  import { createEventDispatcher } from 'svelte'
   import platform, { OK, PlatformError, Severity, Status } from '@hcengineering/platform'
 
   import login from '../plugin'
-  import { getAccountClient, getInviteLink } from '../utils'
+  import { getInviteLink } from '../utils'
   import StatusControl from './StatusControl.svelte'
 
   export let role: AccountRole = AccountRole.User
@@ -35,7 +36,6 @@
 
   interface InviteParams {
     expirationTime: number
-    emailMask: string
     limit: number | undefined
   }
 
@@ -43,7 +43,6 @@
     query.query(setting.class.InviteSettings, {}, (set) => {
       if (set !== undefined && set.length > 0) {
         expHours = set[0].expirationTime
-        emailMask = set[0].emailMask
         limit = set[0].limit
       } else {
         expHours = 48
@@ -54,26 +53,29 @@
 
       defaultValues = {
         expirationTime: expHours,
-        emailMask,
         limit
       }
     })
 
   function setToDefault (): void {
     expHours = defaultValues.expirationTime
-    emailMask = defaultValues.emailMask
     limit = defaultValues.limit
   }
 
-  async function getLink (expHours: number, mask: string, limit: number | undefined, role: AccountRole): Promise<void> {
+  async function getLink (expHours: number, limit: number | undefined, role: AccountRole): Promise<void> {
+    if (loading) return
     loading = true
     status = OK
     try {
-      link = await getInviteLink(expHours, mask, limit ?? -1, role)
+      link = await getInviteLink(expHours, limit ?? -1, role)
     } catch (err: any) {
       if (err instanceof PlatformError && err.status.code === platform.status.PlanLimitExceeded) {
-        // The seat count may have been used up between the onMount check and here.
-        showNoFreeSeats()
+        dispatch('close')
+        showPopup(MessageBox, {
+          label: login.string.NoFreeSeats,
+          message: login.string.NoFreeSeatsForInvite,
+          canSubmit: false
+        })
         return
       }
       status =
@@ -102,43 +104,18 @@
   }
 
   let expHours: number = 48
-  let emailMask: string = ''
   let limit: number | undefined = undefined
   let useDefault: boolean | undefined = true
   let noLimit: boolean = false
   const isOwnerOrMaintainer: boolean = hasAccountRole(getCurrentAccount(), AccountRole.Maintainer)
   let defaultValues: InviteParams = {
     expirationTime: 48,
-    emailMask: '',
     limit: undefined
   }
 
   let link: string | undefined
   let loading = false
   let status: Status = OK
-  let seatsChecked = false
-
-  function showNoFreeSeats (): void {
-    dispatch('close')
-    showPopup(MessageBox, {
-      label: login.string.NoFreeSeats,
-      message: login.string.NoFreeSeatsForInvite,
-      canSubmit: false
-    })
-  }
-
-  onMount(async () => {
-    try {
-      if (!(await getAccountClient().getWorkspaceSeats()).available) {
-        showNoFreeSeats()
-        return
-      }
-    } catch (err: any) {
-      // Not fatal: the create call below is still guarded server side.
-      console.error('Failed to check workspace seats', err)
-    }
-    seatsChecked = true
-  })
 </script>
 
 <div class="antiPopup popup" class:secure={isSecureContext}>
@@ -146,7 +123,7 @@
     <Label label={login.string.InviteDescription} />
     <Icon icon={ui.icon.PeopleFill} size="large" />
   </div>
-  {#if isOwnerOrMaintainer && !ignoreSettings && seatsChecked}
+  {#if isOwnerOrMaintainer && !ignoreSettings}
     <Grid column={1} rowGap={1.5}>
       <MiniToggle
         bind:on={useDefault}
@@ -179,7 +156,7 @@
   {#if status !== OK}
     <div class="mt-4 mb-4"><StatusControl {status} overflow /></div>
   {/if}
-  {#if !seatsChecked || loading}
+  {#if loading}
     <div class="mt-4"><Loading shrink /></div>
   {:else if link !== undefined}
     <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -206,7 +183,7 @@
         size="medium"
         kind="primary"
         on:click={() => {
-          void (((limit !== undefined && limit > 0) || noLimit) && getLink(expHours, emailMask, limit, role))
+          void (((limit !== undefined && limit > 0) || noLimit) && getLink(expHours, limit, role))
         }}
       />
     </div>

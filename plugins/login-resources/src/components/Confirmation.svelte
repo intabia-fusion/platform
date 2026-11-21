@@ -27,10 +27,12 @@
 
   export let status: Status<any> = OK
 
-  type Outcome = 'checking' | 'alreadyRegistered' | 'invalidLink' | 'expired' | 'failed'
+  type Outcome = 'checking' | 'consent' | 'alreadyRegistered' | 'invalidLink' | 'expired' | 'failed'
   let outcome: Outcome = 'checking'
+  let agreedPersonalData = false
+  let agreedRules = false
 
-  async function check (): Promise<void> {
+  async function check (consent?: { personalData: boolean, rules: boolean }): Promise<void> {
     const id = getCurrentLocation().query?.id
     if (id == null || id === '') {
       goTo('login')
@@ -54,11 +56,17 @@
       return
     }
 
-    const [loginStatus, result] = await confirm(token)
+    const [loginStatus, result] = await confirm(token, consent)
 
     if (result != null) {
       await logIn(result)
       goTo('registered', true)
+      return
+    }
+
+    if (loginStatus.params?.consentRequired === true) {
+      status = OK
+      outcome = 'consent'
       return
     }
 
@@ -77,6 +85,13 @@
     i18n: login.string.Continue,
     func: async () => {
       goTo((await getAccount(false))?.token != null ? 'selectWorkspace' : 'login')
+    }
+  }
+
+  const consentAction = {
+    i18n: login.string.Continue,
+    func: async () => {
+      await check({ personalData: agreedPersonalData, rules: agreedRules })
     }
   }
 
@@ -99,6 +114,17 @@
       <StatusControl {status} />
     </div>
   </div>
+{:else if outcome === 'consent'}
+  <Form
+    caption={login.string.SignUp}
+    {status}
+    fields={[]}
+    object={{}}
+    action={consentAction}
+    consentRequired
+    bind:agreedPersonalData
+    bind:agreedRules
+  />
 {:else if outcome === 'alreadyRegistered'}
   <Form caption={login.string.AlreadyRegistered} {status} fields={[]} object={{}} action={continueAction} />
 {:else if outcome === 'invalidLink'}

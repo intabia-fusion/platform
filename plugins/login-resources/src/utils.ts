@@ -24,7 +24,8 @@ import type {
   ProviderInfo,
   LoginInfoRequest,
   LoginInfoByToken,
-  LoginInfoRequestData
+  LoginInfoRequestData,
+  OnboardingIntent
 } from '@hcengineering/account-client'
 import { getClient as getAccountClientRaw } from '@hcengineering/account-client'
 import { Analytics } from '@hcengineering/analytics'
@@ -144,10 +145,11 @@ export async function signUp (
   email: string,
   password: string,
   first: string,
-  last: string
+  last: string,
+  consent: { personalData: boolean, rules: boolean }
 ): Promise<[Status, LoginInfo | null]> {
   try {
-    const otpInfo = await getAccountClient(null).signUp(email, password, first, last)
+    const otpInfo = await getAccountClient(null).signUp(email, password, first, last, consent)
 
     Analytics.handleEvent(LoginEvents.SignUpEmail, { email, ok: true })
 
@@ -167,37 +169,11 @@ export async function signUp (
   }
 }
 
-export async function signUpOtp (
-  email: string,
-  first: string,
-  last: string,
-  phone?: string
-): Promise<[Status, OtpInfo | null]> {
-  try {
-    const otpInfo = await getAccountClient(null).signUpOtp(email, first, last, phone)
-
-    Analytics.handleEvent(LoginEvents.SignUpOtp, { email, ok: true })
-
-    return [OK, otpInfo]
-  } catch (err: any) {
-    if (err instanceof PlatformError) {
-      Analytics.handleEvent(LoginEvents.SignUpOtp, { email, ok: false })
-      await handleStatusError('Sign up error', err.status)
-
-      return [err.status, null]
-    } else {
-      Analytics.handleEvent(LoginEvents.SignUpOtp, { email, ok: false })
-      Analytics.handleError(err)
-
-      return [unknownError(err), null]
-    }
-  }
-}
-
 export async function createWorkspace (
   workspaceName: string,
   region?: string,
-  language?: string
+  language?: string,
+  onboarding?: boolean
 ): Promise<[Status, WorkspaceLoginInfo | null]> {
   const token = getMetadata(presentation.metadata.Token)
   if (token == null) {
@@ -210,7 +186,12 @@ export async function createWorkspace (
   }
 
   try {
-    const workspaceLoginInfo = await getAccountClient(token).createWorkspace(workspaceName, region, language)
+    const workspaceLoginInfo = await getAccountClient(token).createWorkspace(
+      workspaceName,
+      region,
+      language,
+      onboarding
+    )
 
     Analytics.handleEvent(LoginEvents.CreateWorkspace, { name: workspaceName, ok: true })
 
@@ -551,13 +532,16 @@ export async function checkJoined (inviteId: string): Promise<WorkspaceLoginInfo
   }
 }
 
-export async function joinByInvite (inviteId: string): Promise<[Status, WorkspaceLoginInfo | undefined]> {
+export async function joinByInvite (
+  inviteId: string,
+  name?: { firstName?: string, lastName?: string }
+): Promise<[Status, WorkspaceLoginInfo | undefined]> {
   const token = getMetadata(presentation.metadata.Token)
 
   if (token == null) return [unknownStatus('Not logged in'), undefined]
 
   try {
-    const workspaceLoginInfo = await getAccountClient(token).joinByInvite(inviteId)
+    const workspaceLoginInfo = await getAccountClient(token).joinByInvite(inviteId, name)
 
     return [OK, workspaceLoginInfo]
   } catch (err: any) {
@@ -607,12 +591,11 @@ export async function getInviteInfo (inviteId: string): Promise<[Status, Workspa
 
 export async function getInviteLink (
   expHours: number,
-  mask: string,
   limit: number | undefined,
   role: AccountRole,
   navigateUrl?: string
 ): Promise<string> {
-  const inviteId = await getInviteLinkId(expHours, mask, limit ?? -1, role)
+  const inviteId = await getInviteLinkId(expHours, limit ?? -1, role)
   const loc = getCurrentLocation()
   loc.path[0] = loginId
   loc.path[1] = 'join'
@@ -634,7 +617,6 @@ export async function getInviteLink (
 
 export async function getInviteLinkId (
   expHours: number,
-  emailMask: string,
   limit: number,
   role: AccountRole = AccountRole.User
 ): Promise<string> {
@@ -650,7 +632,7 @@ export async function getInviteLinkId (
     return ''
   }
 
-  const inviteLink = await getAccountClient(token).createInvite(exp, emailMask, limit, role)
+  const inviteLink = await getAccountClient(token).createInvite(exp, limit, role)
 
   Analytics.handleEvent('Get invite link', { invite_id: inviteLink })
 
@@ -690,10 +672,19 @@ export async function signUpJoin (
   first: string,
   last: string,
   inviteId: string,
-  workspace: string
+  workspace: string,
+  consent: { personalData: boolean, rules: boolean }
 ): Promise<[Status, WorkspaceLoginInfo | null]> {
   try {
-    const workspaceLoginInfo = await getAccountClient().signUpJoin(email, password, first, last, inviteId, workspace)
+    const workspaceLoginInfo = await getAccountClient().signUpJoin(
+      email,
+      password,
+      first,
+      last,
+      inviteId,
+      workspace,
+      consent
+    )
 
     Analytics.handleEvent('Signup Join', { email, ok: true })
 
@@ -806,16 +797,19 @@ export async function resolveConfirmToken (id: string): Promise<string | null> {
   return (await resp.json())?.payload ?? null
 }
 
-export async function confirm (confirmationToken: string): Promise<[Status, LoginInfo | null]> {
+export async function confirm (
+  confirmationToken: string,
+  consent?: { personalData: boolean, rules: boolean }
+): Promise<[Status, LoginInfo | null]> {
   try {
-    const loginInfo = await getAccountClient(confirmationToken).confirm()
+    const loginInfo = await getAccountClient(confirmationToken).confirm(consent)
 
     Analytics.handleEvent('Confirm email')
 
     return [OK, loginInfo]
   } catch (err: any) {
     if (err instanceof PlatformError) {
-      await handleStatusError('Confirm email error', err.status)
+      if (err.status.params?.consentRequired !== true) await handleStatusError('Confirm email error', err.status)
 
       return [err.status, null]
     } else {
@@ -994,28 +988,50 @@ export async function loginOtp (email: string): Promise<[Status, OtpInfo | null]
   }
 }
 
-export async function doValidateOtp (
-  isSignUp: boolean,
+export async function requestEmailOtp (
+  email: string,
+  consent?: { personalData: boolean, rules: boolean }
+): Promise<[Status, OtpInfo | null]> {
+  try {
+    return [OK, await getAccountClient(null).requestEmailOtp(email, { consent })]
+  } catch (err: any) {
+    if (err instanceof PlatformError) return [err.status, null]
+    Analytics.handleError(err)
+    return [unknownError(err), null]
+  }
+}
+
+export async function confirmEmailOtp (
   email: string,
   code: string,
-  password?: string
+  intent?: OnboardingIntent,
+  consent?: { personalData: boolean, rules: boolean }
 ): Promise<[Status, LoginInfo | null]> {
-  const telemetryEvent = isSignUp ? LoginEvents.SignUpOtp : LoginEvents.LoginOtp
   try {
-    const loginInfo = await getAccountClient(null).validateOtp(email, code, password)
+    return [OK, await getAccountClient(null).confirmEmailOtp(email, code, intent, consent)]
+  } catch (err: any) {
+    if (err instanceof PlatformError) return [err.status, null]
+    Analytics.handleError(err)
+    return [unknownError(err), null]
+  }
+}
 
-    Analytics.handleEvent(telemetryEvent, { email, ok: true })
+export async function doValidateOtp (email: string, code: string): Promise<[Status, LoginInfo | null]> {
+  try {
+    const loginInfo = await getAccountClient(null).validateOtp(email, code)
+
+    Analytics.handleEvent(LoginEvents.LoginOtp, { email, ok: true })
 
     return [OK, loginInfo]
   } catch (err: any) {
     if (err instanceof PlatformError) {
-      Analytics.handleEvent(telemetryEvent, { email, ok: false })
+      Analytics.handleEvent(LoginEvents.LoginOtp, { email, ok: false })
       await handleStatusError('Login with otp error', err.status)
 
       return [err.status, null]
     } else {
       console.error('Login with otp error', err)
-      Analytics.handleEvent(telemetryEvent, { email, ok: false })
+      Analytics.handleEvent(LoginEvents.LoginOtp, { email, ok: false })
       Analytics.handleError(err)
       return [unknownError(err), null]
     }
@@ -1049,6 +1065,11 @@ export async function doLoginNavigate (
   if (result != null) {
     if (result.token != null) {
       await logIn(result)
+    }
+
+    if (result.onboarding != null && result.onboarding.stage !== 'complete') {
+      goTo('onboarding')
+      return
     }
 
     if (navigateUrl !== undefined) {

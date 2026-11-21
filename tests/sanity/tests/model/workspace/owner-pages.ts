@@ -26,7 +26,6 @@ export class OwnersPage {
   createdEnum = (name: string): Locator => this.page.getByRole('button', { name: `${name} 1 option` })
   enum = (name: string): Locator => this.page.getByRole('button', { name })
   linkValidFor = (): Locator => this.page.getByRole('spinbutton')
-  emailMask = (): Locator => this.page.getByRole('textbox', { name: 'Type text...' })
   noLimitToggleButton = (): Locator => this.page.locator('label span')
   avatarLarge = (): Locator => this.page.locator('.hulyAvatarSize-medium.ava-image')
 

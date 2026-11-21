@@ -68,19 +68,15 @@ async function expectRefused (what: string, write: Promise<unknown>, kind: Refus
 async function joinAsGuest (owner: WorkspaceLoginInfo): Promise<ChatMember> {
   return await test.step('joinAsGuest', async () => {
     const user = generateUser()
-    const inviteId = await getAccountClient(LocalUrl, owner.token).createInvite(
-      60 * 60 * 1000,
-      '',
-      1,
-      AccountRole.Guest
-    )
+    const inviteId = await getAccountClient(LocalUrl, owner.token).createInvite(60 * 60 * 1000, 1, AccountRole.Guest)
     const joined = await getAccountClient(LocalUrl).signUpJoin(
       user.email,
       user.password,
       user.firstName,
       user.lastName,
       inviteId,
-      owner.workspaceUrl
+      owner.workspaceUrl,
+      { personalData: true, rules: true }
     )
     if (joined.token === undefined) throw new Error('No guest token')
     const client = createRestClient(joined.endpoint, joined.workspace, joined.token)

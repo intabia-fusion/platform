@@ -3,16 +3,18 @@
   import platform, { getMetadata } from '@hcengineering/platform'
   import type { ProviderInfo } from '@hcengineering/account-client'
   import type { AnySvelteComponent } from '@hcengineering/ui'
-  import { Grid, deviceOptionsStore, getCurrentLocation } from '@hcengineering/ui'
+  import { getCurrentLocation } from '@hcengineering/ui'
 
-  import FormButton from './internal/FormButton.svelte'
+  import Label from './internal/Label.svelte'
   import { Analytics } from '@hcengineering/analytics'
   import { onMount } from 'svelte'
   import login from '../plugin'
   import { getProviders } from '../utils'
-  import Github from './providers/Github.svelte'
-  import Google from './providers/Google.svelte'
-  import OpenId from './providers/OpenId.svelte'
+  import Github from './icons/Github.svelte'
+  import Google from './icons/Google.svelte'
+  import OpenId from './icons/OpenId.svelte'
+
+  export let disabled = false
 
   interface Provider {
     name: string
@@ -55,13 +57,6 @@
     }
   })
 
-  function getColumnsCount (providersCount: number): number {
-    if ($deviceOptionsStore.isMobile) {
-      return 1
-    }
-    return providersCount % 2 === 0 ? 2 : 1
-  }
-
   const location = getCurrentLocation()
 
   function getLink (provider: Provider): string {
@@ -94,41 +89,72 @@
   }
 </script>
 
-<div class="container">
-  <Grid column={getColumnsCount(enabledProviders.length)} columnGap={1} rowGap={1} alignItems="center">
+{#if enabledProviders.length > 0}
+  <div class="container">
+    <Label label={login.string.SignInVia} />
     {#each enabledProviders as provider}
       <a
-        class="provider-button"
-        href={getLink(provider)}
-        on:click={() => {
-          handleProviderClick(provider)
+        class="provider-icon"
+        href={disabled ? undefined : getLink(provider)}
+        aria-disabled={disabled}
+        tabindex={disabled ? -1 : undefined}
+        title={provider.displayName ?? provider.name}
+        on:click={(event) => {
+          if (disabled) event.preventDefault()
+          else handleProviderClick(provider)
         }}
       >
-        <FormButton kind="black" shape="round2" size="x-large" width="100%" stopPropagation={false}>
-          <svelte:component this={provider.component} displayName={provider.displayName} labelClass="button-label" />
-        </FormButton>
+        <span aria-hidden="true"><svelte:component this={provider.component} /></span>
+        <Label
+          className="visually-hidden"
+          label={login.string.ContinueWith}
+          params={{ provider: provider.displayName ?? provider.name }}
+        />
       </a>
     {/each}
-  </Grid>
-</div>
+  </div>
+{/if}
 
 <style lang="scss">
   .container {
     padding-top: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
 
-  /* Anchor wrapper for provider buttons — keep full-width and remove link styling */
-  .container a.provider-button {
-    display: block;
+  .provider-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    color: var(--login-content-color, var(--theme-content-color));
     text-decoration: none;
-    width: 100%;
+
+    &:hover,
+    &:focus-visible {
+      background: var(--theme-button-hovered);
+    }
+
+    &[aria-disabled='true'] {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   }
 
-  /* Ensure the inner Button stretches to full width inside the anchor wrapper:
-     support both the global Button (.antiButton) and the local FormButton (.form-button). */
-  .container a.provider-button .antiButton,
-  .container a.provider-button .form-button {
-    width: 100%;
-    display: block;
+  .provider-icon :global(.visually-hidden) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 </style>

@@ -1,5 +1,23 @@
 [
   {
+    "file": "dev/storybook/src/fusio-1620/AuthFlow.svelte",
+    "id": "4e647a3b581b",
+    "handler": "on:click={() => {",
+    "reason": "The handler changes the local step and only awaits a Svelte tick to focus the email field."
+  },
+  {
+    "file": "dev/storybook/src/fusio-1620/ProfileCabinet.svelte",
+    "id": "b03b8525f079",
+    "handler": "on:click={() => copy('link')}",
+    "reason": "The handler copies the same invitation link to the clipboard and updates local status."
+  },
+  {
+    "file": "dev/storybook/src/fusio-1620/ProfileCabinet.svelte",
+    "id": "567fdd480a4c",
+    "handler": "on:click={() => copy('token')}",
+    "reason": "The handler copies the same invitation token to the clipboard and updates local status."
+  },
+  {
     "file": "packages/presentation/src/components/SpaceMultiBoxList.svelte",
     "id": "93f5cc56fd1f",
     "handler": "on:click={addSpace}",
@@ -331,9 +349,9 @@
   },
   {
     "file": "plugins/login-resources/src/components/InviteLink.svelte",
-    "id": "40f074894893",
+    "id": "d3f49cdd5132",
     "handler": "on:click={() => {",
-    "reason": "getLink() sets loading=true synchronously on entry, and the template swaps the button out for a Loading spinner while loading is true, so a second rage click cannot reach the handler again"
+    "reason": "getLink() ignores repeated calls while loading, and the button is replaced by a spinner."
   },
   {
     "file": "plugins/login-resources/src/components/InviteLink.svelte",

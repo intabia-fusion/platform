@@ -36,7 +36,8 @@ export const authLimiter = new SlidingWindowRateLimitter(
 const authMethods = new Set([
   'login',
   'loginOtp',
-  'signUpOtp',
+  'requestEmailOtp',
+  'confirmEmailOtp',
   'validateOtp',
   'loginByLink',
   'join',

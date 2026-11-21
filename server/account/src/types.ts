@@ -22,6 +22,7 @@ import {
   type Timestamp,
   type Version,
   type WorkspaceMemberInfo,
+  type WorkspaceMemberWithDetails,
   type WorkspaceMode,
   type AccountUuid,
   type Person as BasePerson,
@@ -37,7 +38,7 @@ import {
   type IntegrationKind
 } from '@hcengineering/core'
 import type { EndpointInfo } from './utils'
-import { PasswordAgingStatus } from '@hcengineering/account-client'
+import { PasswordAgingStatus, type OnboardingState } from '@hcengineering/account-client'
 
 /* ========= D A T A B A S E  E N T I T I E S ========= */
 export enum Location {
@@ -73,6 +74,8 @@ export interface Account {
   failedLoginAttempts?: number // Number of consecutive failed login attempts
   deleteOn?: Timestamp // Deferred deletion: when the identity gets purged for good
   blockedOn?: Timestamp // Admin block: no login, no workspace access
+  consentAcceptedOn?: Timestamp | null
+  onboarding?: OnboardingState
 }
 
 // TODO: type data with generic type
@@ -178,6 +181,15 @@ export interface OTP {
   attempts: number
 }
 
+export interface EmailOtpState {
+  code: string | null
+  createdOn: number
+  expiresOn: number
+  attempts: number
+  misses: number
+  missedOn: number
+}
+
 /** What issuing a code sees and may do while it holds the lock of the social id. */
 export interface OtpIssue {
   /** The social id as it is under the lock: its counters are current. */
@@ -192,6 +204,7 @@ export interface WorkspaceInvite {
   id: string // bigint should be represented as string as it exceeds JS safe integer limit
   migratedFrom?: string // old invite id to be able to find migrated invites
   workspaceUuid: WorkspaceUuid
+  inviterUuid?: AccountUuid
   expiresOn: Timestamp
   emailPattern?: string
   email?: string
@@ -593,6 +606,26 @@ export type { DBFlavor } from '@hcengineering/postgres'
 
 /* ========= D A T A B A S E  C O L L E C T I O N S ========= */
 export interface AccountDB {
+  setOnboardingName: (
+    account: AccountUuid,
+    first: string,
+    last: string
+  ) => Promise<{ onboarding: OnboardingState, completed: boolean } | null>
+  cleanExpiredEmailOtp: (now: number) => Promise<void>
+  resetEmailOtpMisses: (personUuid: PersonUuid) => Promise<void>
+  withEmailOtp: <T>(
+    email: string,
+    fn: (
+      state: EmailOtpState,
+      resolve: (
+        allowSignUp: boolean,
+        onboarding?: OnboardingState,
+        replaceInvite?: boolean,
+        consentAccepted?: boolean
+      ) => Promise<{ socialId: SocialId, account: Account, created: boolean } | null>,
+      verify: (account: AccountUuid) => Promise<{ socialId: SocialId, account: Account } | null>
+    ) => Promise<T>
+  ) => Promise<T>
   person: DbCollection<Person>
   account: DbCollection<Account>
   socialId: DbCollection<SocialId>
@@ -615,6 +648,18 @@ export interface AccountDB {
 
   init: () => Promise<void>
   createWorkspace: (data: WorkspaceData, status: WorkspaceStatusData) => Promise<WorkspaceUuid>
+  createOnboardingWorkspace: (
+    account: AccountUuid,
+    data: WorkspaceData,
+    status: WorkspaceStatusData
+  ) => Promise<{ workspace: WorkspaceUuid, url: string, region?: string, created: boolean, completed: boolean } | null>
+  completeOnboardingInvite: (
+    account: AccountUuid,
+    inviteId?: string,
+    expectedWorkspace?: WorkspaceUuid,
+    name?: { firstName?: string, lastName?: string },
+    expectedInviteId?: string
+  ) => Promise<{ result: 'ok' | 'forbidden' | 'expired' | 'seat-limit', workspace?: WorkspaceUuid, changed?: boolean }>
   updateAllowReadOnlyGuests: (workspaceId: WorkspaceUuid, readOnlyGuestsAllowed: boolean) => Promise<void>
   updateAllowGuestSignUp: (workspaceId: WorkspaceUuid, guestSignUpAllowed: boolean) => Promise<void>
   updatePasswordAgingRule: (workspaceId: WorkspaceUuid, days: number | null) => Promise<void>
@@ -625,6 +670,7 @@ export interface AccountDB {
   getWorkspaceRole: (accountId: AccountUuid, workspaceId: WorkspaceUuid) => Promise<AccountRole | null>
   getWorkspaceRoles: (accountId: AccountUuid) => Promise<Map<WorkspaceUuid, AccountRole>>
   getWorkspaceMembers: (workspaceId: WorkspaceUuid) => Promise<WorkspaceMemberInfo[]>
+  getWorkspaceMemberDetails: (workspaceId: WorkspaceUuid) => Promise<WorkspaceMemberWithDetails[]>
   getAccountWorkspaces: (accountId: AccountUuid) => Promise<WorkspaceInfoWithStatus[]>
   batchAssignWorkspacePermission: (
     workspaceId: WorkspaceUuid,
@@ -683,15 +729,9 @@ export interface AccountDB {
   // Runs `fn` under the row lock of the social id, so issues of codes for it queue and each sees
   // what the previous wrote. `fn` runs again on a transaction retry: it must only read `issue`.
   withOtpIssue: <T>(socialId: PersonId, purpose: OtpPurpose, fn: (issue: OtpIssue) => Promise<T>) => Promise<T>
-  // Counts a guess on every unexpired code of the social id and purpose, atomically. A wrong
-  // guess at a login code that still takes guesses also counts as a miss (loginOtpMisses).
-  bumpOtpAttempts: (
-    socialId: PersonId,
-    purpose: OtpPurpose,
-    guess: string,
-    maxAttempts: number,
-    miss: { decayMs: number, lockMs: number } // a streak starts over after decayMs or after its lock
-  ) => Promise<OTP[]>
+  // Counts a guess on every unexpired operation code of the social id, atomically. Login
+  // guesses are counted separately against the email, without changing operation codes.
+  bumpOtpAttempts: (socialId: PersonId) => Promise<OTP[]>
   generatePersonUuid: () => Promise<PersonUuid>
   ensurePerson: (
     socialType: SocialIdType,
@@ -787,6 +827,8 @@ export interface LoginInfo {
   name?: string
   socialId?: PersonId
   token?: string
+  onboarding?: OnboardingState
+  created?: boolean
   // Set when the account is scheduled for deletion: the client asks whether to call it off.
   deleteOn?: Timestamp
 }
@@ -859,8 +901,7 @@ export interface WorkspaceInviteInfo {
   workspace: WorkspaceUuid
   email?: string
   name?: string
-  // False when the workspace plan has no free seats: the join page must not offer sign up / sign in.
-  seatsAvailable?: boolean
+  inviterName?: string
 }
 
 export interface MailboxOptions {
@@ -901,6 +942,7 @@ export interface AccountsFilter {
   noWorkspaces?: boolean
   inactiveDays?: number
   pendingOnly?: boolean
+  onboardingOnly?: boolean
   blockedOnly?: boolean
 }
 

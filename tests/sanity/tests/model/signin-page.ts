@@ -44,6 +44,7 @@ export class SignInJoinPage extends CommonPage {
     await this.inputPassword().fill(data.password)
     expect(await this.buttonLogInAndJoin().isEnabled()).toBe(true)
     await this.buttonLogInAndJoin().click()
+    await this.page.getByRole('button', { name: 'Join workspace', exact: true }).click()
     // The click only starts the login: wait for the workbench here, or a caller's first
     // app-button click races the navigation and waits out its own timeout on nothing.
     await expect(this.page).toHaveURL(/workbench/)

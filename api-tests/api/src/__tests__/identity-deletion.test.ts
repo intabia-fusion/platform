@@ -70,7 +70,13 @@ describe('identity-deletion', () => {
   }
 
   it('signs up a user who creates their own workspace', async () => {
-    const signedUp = await rpc(config, undefined, 'signUp', { email, password, firstName: 'Purge', lastName: 'Me' })
+    const signedUp = await rpc(config, undefined, 'signUp', {
+      email,
+      password,
+      firstName: 'Purge',
+      lastName: 'Me',
+      consent: { personalData: true, rules: true }
+    })
     expect(signedUp.error).toBeUndefined()
     userToken = signedUp.result.token
     userAccount = signedUp.result.account
@@ -139,7 +145,13 @@ describe('identity-deletion', () => {
   }, 60000)
 
   it('lets the same person sign up again with the same email', async () => {
-    const again = await rpc(config, undefined, 'signUp', { email, password, firstName: 'Purge', lastName: 'Again' })
+    const again = await rpc(config, undefined, 'signUp', {
+      email,
+      password,
+      firstName: 'Purge',
+      lastName: 'Again',
+      consent: { personalData: true, rules: true }
+    })
     expect(again.error).toBeUndefined()
     expect(again.result.account).not.toEqual(userAccount)
   }, 60000)
@@ -150,7 +162,8 @@ describe('identity-deletion', () => {
       email: ownerEmail,
       password,
       firstName: 'Ws',
-      lastName: 'Owner'
+      lastName: 'Owner',
+      consent: { personalData: true, rules: true }
     })
     expect(signedUp.error).toBeUndefined()
 
@@ -194,7 +207,8 @@ describe('identity-deletion', () => {
       email: selfEmail,
       password,
       firstName: 'Self',
-      lastName: 'Purge'
+      lastName: 'Purge',
+      consent: { personalData: true, rules: true }
     })
     expect(signedUp.error).toBeUndefined()
     const selfToken: string = signedUp.result.token

@@ -39,6 +39,8 @@ import {
   type PlanLimits,
   type TxMiddlewareResult
 } from '@hcengineering/server-core'
+import { ensureEmployeeDomain } from '@hcengineering/contact'
+import { employeeBootstrap, type EmployeeBootstrapContext } from './ensureEmployee'
 import { ForbiddenKind } from '@hcengineering/platform'
 import { LIMITS_PROVIDER_VAR, MEMBERS_VERSION_KEY, PLAN_LIMITS_MAP_KEY, PLAN_LIMITS_VAR } from './planLimits'
 
@@ -85,6 +87,7 @@ export class SeatLimitsMiddleware extends BaseMiddleware implements Middleware {
   private systemAccounts: Set<AccountUuid> | undefined
   /** Last members-version this instance rebuilt against; a bump by the host consumer forces a rebuild. */
   private membersVersion = -1
+  private seatBuild: Promise<void> | undefined
   /** Seats init is lazy: PLAN_LIMITS_VAR is published by PlanLimitsMiddleware, which boots after us. */
   private seatsInited = false
 
@@ -154,38 +157,69 @@ export class SeatLimitsMiddleware extends BaseMiddleware implements Middleware {
    * bump the account service publishes when a key is issued or revoked), never cached beyond it.
    */
   private async resolveIntegrationAccounts (): Promise<Set<AccountUuid>> {
-    this.integrationAccounts = (await this.provider?.getIntegrationAccounts(this.context.workspace.uuid)) ?? new Set()
-    return this.integrationAccounts
+    return (await this.provider?.getIntegrationAccounts(this.context.workspace.uuid)) ?? new Set()
   }
 
   /** Seat-eligible workspace members (uuid), sorted by role priority then uuid for a deterministic set. */
-  private async eligibleMembers (): Promise<AccountUuid[]> {
+  private async eligibleMembers (): Promise<{ eligible: AccountUuid[], integrations: Set<AccountUuid> }> {
     const provider = this.provider
-    if (provider === undefined) return []
+    if (provider === undefined) return { eligible: [], integrations: new Set() }
     const members = await provider.getWorkspaceMembers(this.context.workspace.uuid)
     const systemAccounts = await this.resolveSystemAccounts()
     const integrationAccounts = await this.resolveIntegrationAccounts()
 
     const eligible = members.filter((m) => this.seatEligible(m.person, m.role, systemAccounts, integrationAccounts))
     const roleOf = new Map<AccountUuid, AccountRole>()
-    for (const m of members) roleOf.set(m.person, m.role)
-    return eligible
+    const overflow = new Map<AccountUuid, number>()
+    for (const m of members) {
+      roleOf.set(m.person, m.role)
+      if (m.seatOrder !== undefined) overflow.set(m.person, m.seatOrder)
+    }
+    const sorted = eligible
       .map((m) => m.person)
       .sort((a, b) => {
+        if (overflow.has(a) !== overflow.has(b)) return overflow.has(a) ? 1 : -1
+        if (overflow.has(a) && overflow.has(b)) {
+          const order = (overflow.get(a) as number) - (overflow.get(b) as number)
+          if (order !== 0) return order
+          return a < b ? -1 : a > b ? 1 : 0
+        }
         const pa = rolePriority(roleOf.get(a))
         const pb = rolePriority(roleOf.get(b))
         if (pa !== pb) return pa - pb
         return a < b ? -1 : a > b ? 1 : 0
       })
+    return { eligible: sorted, integrations: integrationAccounts }
   }
 
   /** Fill seatSet with the first usersLimit eligible members (role priority, then uuid). */
   private async buildSeatSet (): Promise<void> {
-    const eligible = await this.eligibleMembers()
-    this.knownMembers.clear()
-    for (const uuid of eligible) this.knownMembers.add(uuid)
-    this.seatSet.clear()
-    for (const uuid of eligible.slice(0, this.usersLimit)) this.seatSet.add(uuid)
+    if (this.seatBuild !== undefined) {
+      await this.seatBuild
+      return
+    }
+    const build = (async () => {
+      const versions = this.context.contextVars[MEMBERS_VERSION_KEY] as Map<WorkspaceUuid, number> | undefined
+      while (true) {
+        const version = versions?.get(this.context.workspace.uuid) ?? 0
+        const { eligible, integrations } = await this.eligibleMembers()
+        if (version !== (versions?.get(this.context.workspace.uuid) ?? 0)) continue
+        this.integrationAccounts = integrations
+        this.knownMembers.clear()
+        for (const uuid of eligible) this.knownMembers.add(uuid)
+        this.seatSet.clear()
+        for (const uuid of eligible.slice(0, this.usersLimit)) this.seatSet.add(uuid)
+        if (this.membersVersion !== version) this.rebuiltFor.clear()
+        this.membersVersion = version
+        return
+      }
+    })()
+    this.seatBuild = build
+    try {
+      await build
+    } finally {
+      if (this.seatBuild === build) this.seatBuild = undefined
+    }
   }
 
   /** A seat is consumed by any member except system/AI/Admin, API-key integrations and guest-role accounts. */
@@ -205,9 +239,7 @@ export class SeatLimitsMiddleware extends BaseMiddleware implements Middleware {
   private async refreshSeatSetIfStale (ctx: MeasureContext): Promise<void> {
     const versions = this.context.contextVars[MEMBERS_VERSION_KEY] as Map<WorkspaceUuid, number> | undefined
     const current = versions?.get(this.context.workspace.uuid) ?? 0
-    if (current === this.membersVersion) return
-    this.membersVersion = current
-    this.rebuiltFor.clear()
+    if (current === this.membersVersion && this.seatBuild === undefined) return
     try {
       await this.buildSeatSet()
     } catch (err: any) {
@@ -248,6 +280,7 @@ export class SeatLimitsMiddleware extends BaseMiddleware implements Middleware {
   }
 
   async tx (ctx: MeasureContext<SessionData>, txes: Tx[]): Promise<TxMiddlewareResult> {
+    if ((ctx as EmployeeBootstrapContext)[employeeBootstrap] === 'tx') return await this.provideTx(ctx, txes)
     if (await this.isSeatless(ctx)) {
       return await this.enforceReadOnly(ctx, txes)
     }
@@ -260,8 +293,25 @@ export class SeatLimitsMiddleware extends BaseMiddleware implements Middleware {
     domain: OperationDomain,
     params: DomainParams
   ): Promise<DomainResult> {
-    if (ctx.contextData !== undefined && (await this.isSeatless(ctx))) {
+    const seatless = ctx.contextData !== undefined && (await this.isSeatless(ctx))
+    if (ctx.contextData !== undefined && seatless) {
       ctx.contextData.seatReadOnly = true
+    }
+    if (domain === ensureEmployeeDomain) {
+      const account = ctx.contextData?.account
+      const eligible =
+        account != null &&
+        seatless &&
+        ctx.contextData.readOnly !== true &&
+        ctx.contextData.apiKey === undefined &&
+        this.knownMembers.has(account.uuid)
+      if (eligible) {
+        return await ctx.with('employee-bootstrap', {}, async (child) => {
+          const scoped = child as EmployeeBootstrapContext
+          scoped[employeeBootstrap] = 'domain'
+          return await this.provideDomainRequest(scoped, domain, params)
+        })
+      }
     }
     return await this.provideDomainRequest(ctx, domain, params)
   }

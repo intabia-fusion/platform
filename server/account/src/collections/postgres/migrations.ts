@@ -123,7 +123,75 @@ export function getMigrations (ns: string, flavor: DBFlavor): [string, string][]
     getV53Migration(ns, flavor),
     getV54Migration(ns, flavor),
     getV55Migration(ns, flavor),
-    getV56Migration(ns)
+    getV56Migration(ns),
+    getV57Migration(ns, flavor),
+    getV59Migration(ns),
+    getV60Migration(ns),
+    getV63Migration(ns, flavor),
+    getV64Migration(ns),
+    getV65Migration(ns, flavor)
+  ]
+}
+
+function getV65Migration (ns: string, flavor: DBFlavor): [string, string] {
+  return [
+    'account_db_v65_member_bootstrap',
+    `ALTER TABLE ${ns}.workspace_members
+      ADD COLUMN IF NOT EXISTS seat_order ${dbTypes[flavor].int4},
+      ADD COLUMN IF NOT EXISTS bootstrap_employee ${dbTypes[flavor].bool} NOT NULL DEFAULT FALSE;`
+  ]
+}
+
+function getV64Migration (ns: string): [string, string] {
+  return ['account_db_v64_invite_creator', `ALTER TABLE ${ns}.invite ADD COLUMN IF NOT EXISTS inviter_uuid UUID;`]
+}
+
+function getV63Migration (ns: string, flavor: DBFlavor): [string, string] {
+  return [
+    'account_db_v63_consent',
+    `ALTER TABLE ${ns}.account ADD COLUMN IF NOT EXISTS consent_accepted_on ${dbTypes[flavor].int8};`
+  ]
+}
+
+function getV60Migration (ns: string): [string, string] {
+  return [
+    'account_db_v60_migrate_login_otp',
+    `WITH ranked AS (
+      SELECT o.social_id, o.code, o.created_on, o.expires_on, o.attempts,
+        ROW_NUMBER() OVER (PARTITION BY o.social_id ORDER BY o.created_on DESC, o.code DESC) AS position
+      FROM ${ns}.otp o
+      WHERE o.purpose = 'login' AND o.expires_on > current_epoch_ms()
+    )
+    INSERT INTO ${ns}.email_otp (email, code, created_on, expires_on, attempts, misses, missed_on)
+    SELECT s.value, r.code, COALESCE(r.created_on, 0), COALESCE(r.expires_on, 0), COALESCE(r.attempts, 0),
+      COALESCE(s.login_otp_misses, 0), COALESCE(s.login_otp_missed_on, 0)
+    FROM ${ns}.social_id s
+    LEFT JOIN ranked r ON r.social_id = s._id AND r.position = 1
+    WHERE s.type = 'email' AND (
+      r.social_id IS NOT NULL OR
+      (s.login_otp_misses > 0 AND s.login_otp_missed_on > current_epoch_ms() - 86400000)
+    )
+    ON CONFLICT (email) DO NOTHING;`
+  ]
+}
+
+function getV59Migration (ns: string): [string, string] {
+  return ['account_db_v59_onboarding', `ALTER TABLE ${ns}.account ADD COLUMN IF NOT EXISTS onboarding JSONB;`]
+}
+
+function getV57Migration (ns: string, flavor: DBFlavor): [string, string] {
+  const types = dbTypes[flavor]
+  return [
+    'account_db_v57_email_otp',
+    `CREATE TABLE IF NOT EXISTS ${ns}.email_otp (
+      email ${types.string} PRIMARY KEY,
+      code ${types.string},
+      created_on ${types.int8} NOT NULL DEFAULT 0,
+      expires_on ${types.int8} NOT NULL DEFAULT 0,
+      attempts ${types.int4} NOT NULL DEFAULT 0,
+      misses ${types.int4} NOT NULL DEFAULT 0,
+      missed_on ${types.int8} NOT NULL DEFAULT 0
+    );`
   ]
 }
 
