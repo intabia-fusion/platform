@@ -1,0 +1,27 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-link-preview
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  stripPrefix:
+    prefixes:
+    - "/_link-preview"
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: link-preview-ingressroute
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  - match: Host(`{{ .Values.global.hostUrl }}`) && PathPrefix(`/_link-preview`)
+    kind: Rule
+    services:
+    - name: link-preview
+      port: 80
+    middlewares:
+    - name: strip-link-preview

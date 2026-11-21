@@ -1,0 +1,55 @@
+# source: kube/analytics/analytics.yml; subs: version, hostUrl, namespace
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics-service
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  replicas: {{ .Values.services.analytics.replicas }}
+  selector:
+    matchLabels:
+      app: analytics-service
+  template:
+    metadata:
+      labels:
+        app: analytics-service
+      annotations:
+        checksum/platform-env: {{ include "platform.envChecksum" . | quote }}
+    spec:
+      {{- include "platform.tolerations" . | nindent 6 }}
+      {{- if .Values.global.tls.caSecretName }}
+      volumes:
+      {{- include "platform.caVolume" $ | nindent 6 }}
+      {{- end }}
+      containers:
+      - name: app
+        image: {{ include "platform.containerImage" (dict "root" . "service" "analytics" "image" "analytics-collector") }}
+        {{- include "platform.resources" (dict "root" . "service" "analytics") | nindent 8 }}
+        ports:
+        - containerPort: 4007
+        imagePullPolicy: {{ $.Values.global.imagePullPolicy | default "Always" }}
+        {{- if .Values.global.tls.caSecretName }}
+        volumeMounts:
+        {{- include "platform.caVolumeMount" $ | nindent 8 }}
+        {{- end }}
+        env:
+        {{- include "platform.extraEnv" (dict "root" $ "service" "analytics") | nindent 8 }}
+        - name: EXTERNAL_REGIONS
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: EXTERNAL_REGIONS
+        - name: SECRET
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: serverSecret
+        - name: PORT
+          value: '4007'
+        - name: STATS_URL
+          value: http://stats-service
+        - name: ACCOUNTS_URL
+          value: http://account
+        - name: SERVICE_ID
+          value: analytics-collector-service
+        {{- include "platform.otelEnv" . | nindent 8 }}

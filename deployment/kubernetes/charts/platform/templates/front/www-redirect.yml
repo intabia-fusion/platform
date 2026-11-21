@@ -1,0 +1,30 @@
+#
+# 301 redirect www.<hostUrl> -> <hostUrl>
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: www-redirect
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  redirectRegex:
+    regex: '^https?://www\.{{ .Values.global.hostUrl | replace "." "\\." }}/(.*)'
+    replacement: 'https://{{ include "platform.publicHost" . }}/${1}'
+    permanent: true
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: www-redirect-ingressroute
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  - match: Host(`www.{{ .Values.global.hostUrl }}`)
+    kind: Rule
+    services:
+    - name: front
+      port: 80
+    middlewares:
+    - name: www-redirect

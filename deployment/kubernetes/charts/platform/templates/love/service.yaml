@@ -1,0 +1,12 @@
+# source: kube/love/service.yaml; subs: version, hostUrl, namespace
+apiVersion: v1
+kind: Service
+metadata:
+  name: love-service
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  selector:
+    app: love-service
+  ports:
+  - port: 80
+    targetPort: 8096

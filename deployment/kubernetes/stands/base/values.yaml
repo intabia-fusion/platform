@@ -1,0 +1,51 @@
+# Local platform-base overlay: sizes that fit a laptop Docker VM; component versions are pinned
+# in the chart values (kept in sync with cluster/versions.env), images come from public registries.
+postgres:
+  storage: 2Gi
+  # Two instances (primary + replica): 128Mi/512Mi each keeps the pair at the memory the old
+  # single instance used at 256Mi/1024Mi.
+  resources:
+    requests: { memory: 128Mi, cpu: 50m }
+    limits: { memory: 512Mi }
+pgbouncer:
+  # Same shape as prod: a 30-connection pool per database in front of a Postgres
+  # with a much larger limit. The pool, not the server, is what bounds load.
+  defaultPoolSize: 30
+kafka:
+  storage: 4Gi
+elastic:
+  heap: 512m
+s3:
+  storage: 5Gi
+mailpit:
+  # https://mailpit.fusion.localhost:8443 - the local Traefik port (stand:base:up
+  # publishes 443 to a free host port; 8443 on this laptop).
+  host: mailpit.fusion.localhost
+livekit:
+  # One server + one egress for every stand; the browser URL is wss://<host>:<stand https port>.
+  # Rooms are separated by the stand's projectKey, love drops events of another one.
+  # k3d only: base-up sets enabled=false for kind/existing, which keep the host livekit-server.
+  enabled: true
+  host: livekit.fusion.localhost
+  # Add a stand here when it gets a love with meetings; a stand not listed sees no webhooks.
+  webhookUrls:
+  - http://love-service.fusion-sanity.svc.cluster.local/webhook
+  - http://love-service.fusion-dev.svc.cluster.local/webhook
+  - http://love-service.fusion-qms.svc.cluster.local/webhook
+  # LiveKit signs webhooks with the webhook key's secret from keys; love verifies with
+  # secrets.loveSecret.webhookApiKey/webhookApiSecret (the same pair on every stand).
+  webhookApiKey: whtestkey
+  # One pair per stand's secrets.loveSecret.apiKey/apiSecret; the key is the map key.
+  keys:
+    testkey: testsecret_for_sanity_tests_min32chars
+    whtestkey: whtestsecret_for_sanity_tests_min32chars
+    dev-love-api-key: dev-love-api-secret-0123456789abcdef
+    qms-testkey: testsecret_for_qms_tests_min32chars
+  egress:
+    apiKey: testkey
+    apiSecret: testsecret_for_sanity_tests_min32chars
+
+metrics:
+  # https://prometheus.fusion.localhost:8443
+  prometheus:
+    host: prometheus.fusion.localhost

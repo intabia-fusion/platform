@@ -1,0 +1,13 @@
+{{- if .Values.services.tbankSubscriptions.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: tbank-subscriptions
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  selector:
+    app: tbank-subscriptions
+  ports:
+  - port: 80
+    targetPort: 4042
+{{- end }}

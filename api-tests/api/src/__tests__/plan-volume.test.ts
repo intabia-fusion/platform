@@ -15,6 +15,7 @@
 
 import { getWorkspaceToken, loadServerConfig, type ServerConfig, type WorkspaceToken } from '@hcengineering/api-client'
 import { adminSessionClient, DEV_OTP } from './admin.fixtures'
+import { PlatformUrl } from '../env'
 
 // Volume (disk) limit e2e: datalake emits storage deltas to billing-usage, pod-billing
 // recomputes used vs subscription.limits.storageLimitGB and publishes LimitsChanged{disk};
@@ -23,17 +24,13 @@ import { adminSessionClient, DEV_OTP } from './admin.fixtures'
 // Workspace api-tests-volume is dedicated: its billing state survives across tests in run.
 describe('plan-volume', () => {
   const wsName = 'api-tests-volume'
-  const datalakeUrl = 'http://localhost:8183/_datalake'
+  const datalakeUrl = `${PlatformUrl}/_datalake`
   let config: ServerConfig
   let owner: WorkspaceToken
 
   beforeAll(async () => {
-    config = await loadServerConfig('http://localhost:8183')
-    owner = await getWorkspaceToken(
-      'http://localhost:8183',
-      { email: 'user1', password: '1234', workspace: wsName },
-      config
-    )
+    config = await loadServerConfig(PlatformUrl)
+    owner = await getWorkspaceToken(PlatformUrl, { email: 'user1', password: '1234', workspace: wsName }, config)
   }, 30000)
 
   async function setStorageLimitGB (storageLimitGB: number): Promise<void> {

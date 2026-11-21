@@ -1,0 +1,117 @@
+{{- /*
+Shared recorder for every local stand. Output goes to the bucket love names in the egress request,
+so the stand's own recordings land in the stand's bucket; the storage block below is a fallback.
+*/}}
+{{- if and .Values.livekit.enabled .Values.livekit.egress.enabled }}
+{{- $egress := .Values.livekit.egress }}
+{{- $redis := include "platformBase.redisHost" . }}
+{{- $wsUrl := printf "ws://livekit-api.%s.svc.cluster.local:%v" .Release.Namespace .Values.livekit.apiPort }}
+{{- $s3Endpoint := include "platformBase.s3Endpoint" . }}
+{{- if and $s3Endpoint (not (contains "://" $s3Endpoint)) }}{{ $s3Endpoint = printf "http://%s" $s3Endpoint }}{{ end }}
+{{- if not .Values.sealedSecrets.enabled }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: livekit-egress-config
+  namespace: '{{ .Release.Namespace }}'
+type: Opaque
+stringData:
+  egress.yaml: |
+    api_key: {{ $egress.apiKey | quote }}
+    api_secret: {{ $egress.apiSecret | quote }}
+    ws_url: {{ $wsUrl | quote }}
+    insecure: true
+    redis:
+      address: {{ printf "%s:6379" $redis | quote }}
+      db: 0
+    logging:
+      json: false
+      level: info
+    # Only the recorder itself is used here; the template page comes from love
+    # (RECORDING_TEMPLATE_URL) and no metrics are scraped on a test stand.
+    template_port: 0
+    prometheus_port: 0
+    health_port: 8080
+    debug_handler_port: 0
+    storage:
+      s3:
+        endpoint: {{ $s3Endpoint | quote }}
+        access_key: {{ include "platformBase.s3AccessKey" . | quote }}
+        secret: {{ include "platformBase.s3SecretKey" . | quote }}
+        bucket: {{ $egress.s3Bucket | quote }}
+        region: {{ $egress.s3Region | quote }}
+        forcePathStyle: true
+        max_retries: 3
+        min_retry_delay: 500ms
+        max_retry_delay: 5s
+    cpu_cost:
+      room_composite_cpu_cost: {{ $egress.cpuCost }}
+      web_cpu_cost: {{ $egress.cpuCost }}
+    session_limits:
+      file_output_max_duration: 1h
+      stream_output_max_duration: 30m
+      segment_output_max_duration: 1h
+{{- end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: livekit-egress
+  namespace: '{{ .Release.Namespace }}'
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: livekit-egress
+  template:
+    metadata:
+      labels:
+        app: livekit-egress
+      annotations:
+        # The config is a Secret mounted as a file: the pod only reloads it on a new template.
+        checksum/livekit-egress-config: {{ printf "%s|%s|%s|%s" $wsUrl $redis $s3Endpoint (.Values.livekit | toYaml) | sha256sum | quote }}
+    spec:
+      tolerations:
+      - key: node.kubernetes.io/unreachable
+        operator: Exists
+        effect: NoExecute
+        tolerationSeconds: 10
+      - key: node.kubernetes.io/not-ready
+        operator: Exists
+        effect: NoExecute
+        tolerationSeconds: 10
+      containers:
+      - name: egress
+        image: {{ $egress.image }}
+        env:
+        - name: EGRESS_CONFIG_FILE
+          value: /etc/egress/egress.yaml
+        volumeMounts:
+        - name: config
+          mountPath: /etc/egress
+        # Chrome crashes on the default 64MB /dev/shm; a room composite is the only user of it.
+        - name: shm
+          mountPath: /dev/shm
+        resources:
+          requests:
+            memory: '{{ $egress.memRequired }}M'
+          limits:
+            memory: '{{ $egress.memLimits }}M'
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+      volumes:
+      - name: config
+        secret:
+          secretName: livekit-egress-config
+      - name: shm
+        emptyDir:
+          medium: Memory
+          sizeLimit: 1Gi
+{{- end }}

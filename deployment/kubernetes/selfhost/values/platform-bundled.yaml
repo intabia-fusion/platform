@@ -1,0 +1,32 @@
+# Platform chart against the bundled base. SMTP is the bundled mailpit; replace smtp* values
+# (in secrets-platform.yaml) with a real relay for production.
+global:
+  namespace: platform
+  baseNamespace: platform-base
+  hostUrl: platform.example.com
+  publicPort: 443
+  stand: platform
+  productName: Intabia Platform
+  defaultLanguage: en
+  imageRegistry: ""
+  imagePullPolicy: Always
+config:
+  REGION: ""
+  EXTERNAL_REGIONS: "--"
+  regions:
+  - id: ""
+    name: Default
+    transactorService: transactor0
+    transactorPath: /_tr0
+    collaboratorService: collaborator0
+    collaboratorPath: /_cl0
+  livekitWs: ""       # empty = from the platform-base contract when livekit.enabled
+  livekitHost: ""
+  livekitProject: transcription-platform
+secrets:
+  platform:
+    # Bundled mailpit; replace with the customer's relay in values/secrets-platform.yaml.
+    smtpMode: queue
+    smtpHost: mailpit.platform-base.svc.cluster.local
+    smtpPort: "1025"
+    smtpFrom: noreply@example.com

@@ -46,6 +46,8 @@ jobs:
           fetch-depth: 0
           filter: tree:0
           submodules: recursive
+      - name: Free space
+        uses: ./.github/actions/free-disk-space
       - uses: pnpm/action-setup@v5
       - uses: actions/setup-node@v6
         with:
@@ -87,8 +89,8 @@ jobs:
           path: dev/api/bundle/intabia-fusion-api-*.tgz
           if-no-files-found: error
 
-      # Server images from the bundles above (no web UI), the ws-tests stand with api-tests and
-      # backup-tests, then unit + integration under istanbul with the stand's V8 coverage folded in.
+      # Server images from the bundles above (no web UI), an api stand on local k3d
+      # (images pushed from this job), then unit + integration with the stand's V8 coverage.
       - name: Testing...
         run: |
           set -o pipefail
@@ -335,6 +337,7 @@ jobs:
           build-package: "@hcengineering/tests-sanity"
           artifact-name-suffix: pg
           enable-profiling: "false"
+          stand: sanity
           docker-access-token: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
   uitest-qms:
@@ -382,7 +385,7 @@ jobs:
         env:
           DOCKER_CLI_HINTS: false
           DOCKER_BUILDKIT: 1
-      # QMS tests (isolated qms-tests project)
+      # QMS tests against the qms Kubernetes stand (same conventions as uitest-pg/ws)
       - name: Run UI tests (QMS)
         uses: ./.github/actions/ui-test
         with:
@@ -390,8 +393,7 @@ jobs:
           prepare-script: ./prepare-qms.sh
           build-package: "@hcengineering/qms-tests-sanity"
           artifact-name-suffix: qms
-          container-prefix: "qms-"
-          enable-profiling: "false"
+          stand: qms
           docker-access-token: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
   uitest-workspaces:
@@ -447,6 +449,7 @@ jobs:
           prepare-script: ./prepare.sh
           build-package: "@hcengineering/tests-ws-sanity"
           artifact-name-suffix: ws
+          stand: ws
           docker-access-token: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
   docker-build:
@@ -787,3 +790,40 @@ jobs:
           DOCKER_BUILDKIT: 1
           BUILD_REV: ${{ needs.dist-build.outputs.rev }}
           RELEASE_TAG: ${{ needs.dist-build.outputs.release_tag }}
+
+  # Публикация Helm-чартов в platform-charts на тег релиза. CHARTS_TOKEN - PAT с правом записи
+  # в intabia-fusion/platform-charts; без него чарты только собираются и прикладываются к релизу.
+  # Пока чарты отлаживаются, публикация ручная (`pnpm -w release:charts`). Job включается
+  # переменной репозитория PUBLISH_CHARTS=true, когда контур будет готов.
+  charts-publish:
+    needs: [docker-build]
+    if: (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/s')) && vars.PUBLISH_CHARTS == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v4.3.2
+      - name: Package charts
+        run: bash deployment/kubernetes/scripts/package-charts.sh "${GITHUB_REF_NAME}" /tmp/charts
+      - name: Publish to platform-charts
+        env:
+          CHARTS_TOKEN: ${{ secrets.CHARTS_TOKEN }}
+        run: |
+          if [ -z "$CHARTS_TOKEN" ]; then
+            echo "CHARTS_TOKEN is not set: charts are packaged but not published"
+            exit 0
+          fi
+          bash deployment/kubernetes/scripts/publish-charts.sh "${GITHUB_REF_NAME}"
+      - name: Attach charts to the GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: /tmp/charts/*.tgz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

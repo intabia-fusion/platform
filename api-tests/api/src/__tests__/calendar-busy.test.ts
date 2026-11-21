@@ -43,8 +43,9 @@ import calendar, {
 } from '@hcengineering/calendar'
 import { generateToken } from '@hcengineering/server-token'
 import { eventually } from './workflow.fixtures'
+import { PlatformUrl } from '../env'
 
-const PLATFORM_URL = process.env.PLATFORM_URL ?? 'http://localhost:8183'
+const PLATFORM_URL = process.env.PLATFORM_URL ?? PlatformUrl
 const WORKSPACE = 'api-tests'
 
 describe('calendar busy slots (api-tests)', () => {

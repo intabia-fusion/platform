@@ -40,6 +40,7 @@ import { type AccountClient, getClient as getAccountClient } from '@hcengineerin
 import chunter from '@hcengineering/chunter'
 import contact, { ensureEmployee, type SocialIdentityRef, type Person } from '@hcengineering/contact'
 import { generateToken } from '@hcengineering/server-token'
+import { PlatformUrl } from '../env'
 
 describe('rest-api-server', () => {
   const testCtx = new MeasureMetricsContext('test', {})
@@ -50,10 +51,10 @@ describe('rest-api-server', () => {
   let adminAccountClient: AccountClient
 
   beforeAll(async () => {
-    const config = await loadServerConfig('http://localhost:8183')
+    const config = await loadServerConfig(PlatformUrl)
 
     apiWorkspace1 = await getWorkspaceToken(
-      'http://localhost:8183',
+      PlatformUrl,
       {
         email: 'user1',
         password: '1234',
@@ -63,7 +64,7 @@ describe('rest-api-server', () => {
     )
 
     apiWorkspace2 = await getWorkspaceToken(
-      'http://localhost:8183',
+      PlatformUrl,
       {
         email: 'user1',
         password: '1234',

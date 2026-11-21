@@ -20,8 +20,9 @@ import { spawn } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 import { Worker } from 'worker_threads'
+import { PlatformUrl } from '../env'
 
-const URL = process.env.BENCH_URL ?? 'http://localhost:8183'
+const URL = process.env.BENCH_URL ?? PlatformUrl
 const WS = process.env.BENCH_WS ?? 'api-tests'
 const SUBS = parseInt(process.env.BENCH_SUBS ?? '20')
 const DOCS = parseInt(process.env.BENCH_DOCS ?? '500')

@@ -72,6 +72,7 @@ export interface StandConfig {
   migrations?: string[]
   accountsUrl: string
   elasticPort?: number
+  elasticHost?: string
   waitPorts?: Array<[string, number]>
   accounts: AccountSpec[]
   workspaces: WorkspaceSpec[]
@@ -118,7 +119,7 @@ async function waitServices (cfg: StandConfig): Promise<void> {
     await waitTcp(host, port)
   })
   if (cfg.elasticPort !== undefined) {
-    waits.push(waitElastic(cfg.elasticPort))
+    waits.push(waitElastic(cfg.elasticPort, cfg.elasticHost))
   }
   await Promise.all(waits)
 }

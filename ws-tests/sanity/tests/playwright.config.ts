@@ -31,6 +31,9 @@ const config: PlaywrightTestConfig = {
         },
         testIdAttribute: 'data-id',
         permissions: ['clipboard-read', 'clipboard-write'],
+        // k8s stands are HTTPS with a mkcert CA: Node gets it via NODE_EXTRA_CA_CERTS
+        // (with-stand-env.sh), the browser only through this flag.
+        ignoreHTTPSErrors: true,
         ...devices['Desktop Chrome'],
         screenshot: 'only-on-failure',
         viewport: {

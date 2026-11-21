@@ -1,0 +1,35 @@
+# Bundled base: Postgres (CNPG), Kafka (Strimzi), S3 (silo), elastic, redis, mailpit and the
+# shared LiveKit run inside the cluster. Sizes below are a starting point for a small production
+# install; raise storage and memory with the customer's data volume.
+postgres:
+  instances: 2
+  storage: 20Gi
+  resources:
+    requests: { memory: 512Mi, cpu: 200m }
+    limits: { memory: 2Gi }
+kafka:
+  storage: 20Gi
+  resources:
+    requests: { memory: 1Gi, cpu: 300m }
+    limits: { memory: 2Gi }
+  jvmXms: 512m
+  jvmXmx: 512m
+s3:
+  storage: 50Gi
+  resources:
+    requests: { memory: 128Mi, cpu: 50m }
+    limits: { memory: 1Gi }
+elastic:
+  heap: 1g
+  storage: 20Gi
+  resources:
+    requests: { memory: 1Gi, cpu: 200m }
+    limits: { memory: 2Gi }
+mailpit:
+  enabled: true    # bundled SMTP catcher; production uses a relay via secrets-platform.yaml
+livekit:
+  enabled: false   # set true to run calls inside this cluster; hostNetwork needs a dedicated node
+metrics:
+  enabled: true
+  prometheus:
+    host: ""       # e.g. prometheus.example.com (needs the platform-base TLSStore below)

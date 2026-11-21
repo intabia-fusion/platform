@@ -26,6 +26,7 @@ import { AccountRole, MeasureMetricsContext, pickPrimarySocialId, type SocialId 
 import { getClient as getAccountClient } from '@hcengineering/account-client'
 import contact, { type Employee, ensureEmployee } from '@hcengineering/contact'
 import { adminSessionClient, DEV_OTP } from './admin.fixtures'
+import { PlatformUrl } from '../env'
 
 // Reproduces SANITY's seat-downgrade-readonly UI check at API level: checkIsLimited reads
 // usageInfo.membersCount, subscription limits, and seat order to explain the missing banner.
@@ -38,7 +39,7 @@ describe('plan-seats-ui', () => {
   let seatless: WorkspaceToken
 
   beforeAll(async () => {
-    config = await loadServerConfig('http://localhost:8183')
+    config = await loadServerConfig(PlatformUrl)
     owner = await login('user1')
     await ensureEmployeeFor(owner)
     seated = await login('user2')
@@ -64,7 +65,7 @@ describe('plan-seats-ui', () => {
   }
 
   async function login (email: string): Promise<WorkspaceToken> {
-    return await getWorkspaceToken('http://localhost:8183', { email, password: '1234', workspace: wsName }, config)
+    return await getWorkspaceToken(PlatformUrl, { email, password: '1234', workspace: wsName }, config)
   }
 
   async function ensureEmployeeFor (ws: WorkspaceToken): Promise<void> {

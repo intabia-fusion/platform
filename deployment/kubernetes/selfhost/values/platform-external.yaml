@@ -1,0 +1,25 @@
+# Platform chart with a customer-managed infrastructure (see base-external.yaml).
+global:
+  namespace: platform
+  baseNamespace: platform-base
+  hostUrl: platform.example.com
+  publicPort: 443
+  stand: platform
+  productName: Intabia Platform
+  defaultLanguage: en
+  imageRegistry: ""
+  imagePullPolicy: Always
+config:
+  REGION: ""
+  EXTERNAL_REGIONS: "--"
+  regions:
+  - id: ""
+    name: Default
+    transactorService: transactor0
+    transactorPath: /_tr0
+    collaboratorService: collaborator0
+    collaboratorPath: /_cl0
+  # External LiveKit (if the customer runs one); otherwise leave empty and disable calls.
+  livekitWs: wss://livekit.example.com
+  livekitHost: http://livekit.example.com
+  livekitProject: transcription-platform

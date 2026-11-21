@@ -1,0 +1,74 @@
+{{- if and .Values.s3.enabled (eq .Values.s3.mode "silo") }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: s3
+  namespace: '{{ .Release.Namespace }}'
+  labels:
+    app: s3
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+spec:
+  type: ClusterIP
+  ports:
+  - name: api
+    port: 9000
+    targetPort: 9000
+  - name: console
+    port: 9001
+    targetPort: 9001
+  selector:
+    app: s3
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: s3
+  namespace: '{{ .Release.Namespace }}'
+  labels:
+    app: s3
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+spec:
+  serviceName: s3
+  replicas: 1
+  selector:
+    matchLabels:
+      app: s3
+  template:
+    metadata:
+      labels:
+        app: s3
+        release: '{{ .Release.Name }}'
+    spec:
+      containers:
+      - name: silo
+        image: '{{ .Values.s3.image }}'
+        imagePullPolicy: IfNotPresent
+        args: ["server", "/data", "--address", ":9000", "--console-address", ":9001"]
+        env:
+        - name: MINIO_ROOT_USER
+          value: '{{ .Values.s3.accessKey }}'
+        - name: MINIO_ROOT_PASSWORD
+          value: '{{ .Values.s3.secretKey }}'
+        ports:
+        - containerPort: 9000
+        - containerPort: 9001
+        resources:
+{{ toYaml .Values.s3.resources | indent 10 }}
+        volumeMounts:
+        - name: data
+          mountPath: /data
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ReadWriteOnce]
+      {{- if .Values.s3.storageClass }}
+      storageClassName: '{{ .Values.s3.storageClass }}'
+      {{- end }}
+      resources:
+        requests:
+          storage: '{{ .Values.s3.storage }}'
+{{- end }}

@@ -1,0 +1,12 @@
+# source: kube/front/service.yaml; subs: version, hostUrl, namespace
+apiVersion: v1
+kind: Service
+metadata:
+  name: front
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  selector:
+    app: front
+  ports:
+  - port: 80
+    targetPort: 8080
