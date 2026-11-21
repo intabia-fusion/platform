@@ -34,7 +34,7 @@
   import { createEventDispatcher, onDestroy } from 'svelte'
 
   import view from '../plugin'
-  import { buildConfigLookup, canResolveAttribute, getKeyLabel } from '../utils'
+  import { buildConfigLookup, canResolveAttribute, getKeyLabel, hasAttributePresenter } from '../utils'
   import ViewletClassSettings from './ViewletClassSettings.svelte'
 
   interface Config {
@@ -574,24 +574,25 @@
       .getDescendants(viewlet.attachTo)
       .filter((it) => !hierarchy.isMixin(it) && it !== selectedViewlet.attachTo)
     const mixins = hierarchy.getDescendants(viewlet.attachTo).filter((it) => hierarchy.isMixin(it))
+    // A column reads a doc field, so an attribute declared on several descendants is offered only once
+    const offeredKeys = new Set<string>()
+    const offeredLabels = new Set<IntlString>()
+    const enabledKeys = new Set((preference?.descendantAttributes ?? []).map((da) => da.key))
 
     return d
       .map((it) => {
         const clazz = hierarchy.getClass(it)
-
-        const enabled = new Set(
-          (preference?.descendantAttributes?.filter((da) => da._class === it) ?? []).map((da) => da.key)
-        )
-        const seen = new Set<string>()
-        const attrs: DescendantAttributeSection['attrs'] = []
+        const candidates: Array<{ key: string, label: IntlString, renderable: boolean }> = []
+        const candidateKeys = new Set<string>()
 
         const addAttr = (attr: AnyAttribute, useMixinProxy: boolean): void => {
           if (attr.hidden === true || attr.label === undefined) return
           if (hierarchy.isDerived(attr.type._class, core.class.Collection)) return
           const key = useMixinProxy ? `${attr.attributeOf}.${attr.name}` : attr.name
-          if (seen.has(key)) return
-          seen.add(key)
-          attrs.push({ key, label: attr.label, enabled: enabled.has(key) })
+          if (candidateKeys.has(key)) return
+          candidateKeys.add(key)
+          const attrClass = useMixinProxy ? attr.attributeOf : it
+          candidates.push({ key, label: attr.label, renderable: hasAttributePresenter(client, attrClass, attr.name) })
         }
 
         for (const [, attr] of hierarchy.getOwnAttributes(it)) {
@@ -603,6 +604,24 @@
           hierarchy.getOwnAttributes(d).forEach((attr) => {
             addAttr(attr, true)
           })
+        }
+
+        // Labels may repeat (`file` and `version` are both «Version»), so keep the one the model can render
+        const preferred = new Map<IntlString, { key: string, label: IntlString, renderable: boolean }>()
+        for (const candidate of candidates) {
+          const previous = preferred.get(candidate.label)
+          if (previous === undefined || (!previous.renderable && candidate.renderable)) {
+            preferred.set(candidate.label, candidate)
+          }
+        }
+
+        const attrs: DescendantAttributeSection['attrs'] = []
+        for (const candidate of candidates) {
+          if (preferred.get(candidate.label) !== candidate) continue
+          if (offeredKeys.has(candidate.key) || offeredLabels.has(candidate.label)) continue
+          offeredKeys.add(candidate.key)
+          offeredLabels.add(candidate.label)
+          attrs.push({ key: candidate.key, label: candidate.label, enabled: enabledKeys.has(candidate.key) })
         }
 
         return {
@@ -666,6 +685,9 @@
 
   let saveTimer: ReturnType<typeof setTimeout> | undefined
   let pendingUpdates: Partial<ViewletPreference> | undefined
+  // The view the pending changes belong to: the save is deferred, and `selected` may be another view
+  // by the time it runs.
+  let pendingViewletId: Ref<Viewlet> | undefined
   let saveChain: Promise<void> = Promise.resolve()
 
   onDestroy(() => {
@@ -684,7 +706,8 @@
     if (pendingUpdates !== undefined) {
       const updates = pendingUpdates
       pendingUpdates = undefined
-      const viewletId = selected
+      const viewletId = pendingViewletId ?? selected
+      pendingViewletId = undefined
       const selectedV = selectedViewlet
       const previousSourceConfig =
         preferences.find((p) => p.attachedTo === viewletId)?.config ?? selectedV?.config ?? []
@@ -703,10 +726,13 @@
     }
   }
 
-  function scheduleSave (changes: Partial<ViewletPreference>, delayMs = 150): void {
+  function scheduleSave (changes: Partial<ViewletPreference>, viewletId?: Ref<Viewlet>, delayMs = 150): void {
     pendingUpdates = {
       ...pendingUpdates,
       ...changes
+    }
+    if (viewletId !== undefined) {
+      pendingViewletId = viewletId
     }
     if (saveTimer !== undefined) {
       clearTimeout(saveTimer)
@@ -720,7 +746,7 @@
   function saveCustomAttributes (viewletId: Ref<Viewlet>, items: CustomAttributeItem[]): void {
     const customAttributes = items.filter((i) => i.enabled).map((i) => i.key)
     lastSavedCustomAttributes = customAttributes
-    scheduleSave({ customAttributes })
+    scheduleSave({ customAttributes }, viewletId)
   }
 
   function extractDescendantAttributes (groups: DescendantAttributeSection[]): DescendantAttribute[] {
@@ -738,7 +764,7 @@
   function saveDescendantAttributes (viewletId: Ref<Viewlet>, descendantAttributes: DescendantAttributeSection[]): void {
     const res = extractDescendantAttributes(descendantAttributes)
     lastSavedDescendantAttributes = res
-    scheduleSave({ descendantAttributes: res })
+    scheduleSave({ descendantAttributes: res }, viewletId)
   }
 
   function save (viewletId: Ref<Viewlet>, items: Array<Config | AttributeConfig>): void {
@@ -756,7 +782,7 @@
       return value
     })
     lastSavedConfig = config
-    scheduleSave({ config })
+    scheduleSave({ config }, viewletId)
   }
 
   function restoreDefault (viewletId: Ref<Viewlet>): void {
@@ -765,6 +791,7 @@
       saveTimer = undefined
     }
     pendingUpdates = undefined
+    pendingViewletId = undefined
     lastSavedConfig = undefined
     lastSavedCustomAttributes = undefined
     lastSavedDescendantAttributes = undefined
@@ -843,7 +870,29 @@
 
     if (isNewViewlet || lastSavedDescendantAttributes === undefined) {
       sections = getDescendantAttributes(selectedV, pref)
+      pruneDescendantAttributes(pref)
     }
+  }
+
+  // Saved descendant attributes are kept only for the sections that still offer them, one per key
+  function pruneDescendantAttributes (pref: ViewletPreference | undefined): void {
+    const saved = pref?.descendantAttributes ?? []
+    if (saved.length === 0) return
+    const offered = new Map<string, Ref<Class<Doc>>>()
+    for (const section of sections) {
+      for (const attr of section.attrs) offered.set(attr.key, section._class)
+    }
+    const normalized: DescendantAttribute[] = []
+    const keys = new Set<string>()
+    for (const it of saved) {
+      const clazz = offered.get(it.key)
+      if (clazz === undefined || keys.has(it.key)) continue
+      keys.add(it.key)
+      normalized.push({ _class: clazz, key: it.key })
+    }
+    if (deepEqual(normalized, saved)) return
+    lastSavedDescendantAttributes = normalized
+    scheduleSave({ descendantAttributes: normalized }, selected)
   }
 
   async function loadConfig (selectedV: Viewlet, pref: ViewletPreference | undefined): Promise<void> {

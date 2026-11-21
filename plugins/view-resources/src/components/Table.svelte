@@ -314,6 +314,8 @@
     if (attr === undefined) return
     if (attribute.collectionAttr) return
     if (attribute.isLookup) return
+    // A descendant attribute belongs to another class, its value cannot be updated from this view
+    if (attribute.displayProps?._class !== undefined) return
     if (attribute.attribute?.readonly === true) return
     const key = attribute.castRequest ? attribute.key.substring(attribute.castRequest.length + 1) : attribute.key
     return (value: any) => {
