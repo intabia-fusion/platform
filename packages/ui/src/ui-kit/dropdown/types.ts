@@ -14,6 +14,7 @@
 //
 
 import type { IntlString } from '@hcengineering/platform'
+import type { SortingOrder } from '@hcengineering/core'
 
 import type { AnySvelteComponent, IconComponent, IconSize, LabelAndProps } from '../../types'
 import type { ButtonAttributes } from '../button/types'
@@ -88,6 +89,11 @@ export interface DropdownProps<Id extends DropdownItemId = DropdownItemId, Selec
   wrap?: boolean
   /** A wider list for long rows: `wide` - 32rem, `x-wide` - 40rem. */
   popupWidth?: 'wide' | 'x-wide'
+  /**
+   * Set when the list picks a sort field: the chosen item shows the direction as an arrow instead of
+   * a check, so the mark is not taken for a submenu.
+   */
+  sortOrder?: SortingOrder
   /** Stretches to the width of the place. */
   fullWidth?: boolean
   justify?: SelectButtonJustify

@@ -484,6 +484,12 @@ export function createModel (builder: Builder): void {
     func: task.function.GetAllStates
   })
 
+  // A task type lives in the workspace, not in the model: without its values a sort by `kind` falls back
+  // to the refs and orders issues by id.
+  builder.mixin(task.class.TaskType, core.class.Class, view.mixin.AllValuesFunc, {
+    func: task.function.GetAllTaskTypes
+  })
+
   builder.mixin(task.mixin.TaskTypeClass, core.class.Class, view.mixin.ObjectPresenter, {
     presenter: task.component.TaskTypeClassPresenter
   })

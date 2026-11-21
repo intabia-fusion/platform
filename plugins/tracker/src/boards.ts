@@ -16,10 +16,10 @@
 import core, {
   AggregateValue,
   AggregateValueData,
+  SortingOrder,
   type AccountUuid,
   type Doc,
   type Ref,
-  type SortingOrder,
   type Status,
   type StatusCategory
 } from '@hcengineering/core'
@@ -54,6 +54,7 @@ export type CardField =
   | 'milestone'
   | 'labels'
   | 'estimation'
+  | 'remainingTime'
   | 'attachments'
   | 'comments'
   | 'parent'
@@ -66,6 +67,7 @@ export const cardFields: readonly CardField[] = [
   'milestone',
   'labels',
   'estimation',
+  'remainingTime',
   'attachments',
   'comments',
   'parent'
@@ -221,6 +223,22 @@ export function isBoardAvailable (board: Pick<Board, 'author' | 'visibility'>, a
 // Pinned boards go first, the rest keep their order.
 export function sortBoards<T extends Pick<Board, '_id'>> (boards: T[], pinned: ReadonlySet<Ref<Board>>): T[] {
   return [...boards.filter((b) => pinned.has(b._id)), ...boards.filter((b) => !pinned.has(b._id))]
+}
+
+/**
+ * The order a "Card order" click asks for. A click on the field that already sorts the board asks for the
+ * other direction, the way the view settings toggle it; a click on another field starts from its own
+ * default direction.
+ * @public
+ */
+export function pickCardOrder (
+  current: [string, SortingOrder] | undefined,
+  picked: [string, SortingOrder],
+  fallback: [string, SortingOrder] | undefined = undefined
+): [string, SortingOrder] {
+  const base = current ?? fallback
+  if (base?.[0] !== picked[0]) return picked
+  return [picked[0], base[1] === SortingOrder.Ascending ? SortingOrder.Descending : SortingOrder.Ascending]
 }
 
 export function pickDefaultBoard<T extends Pick<Board, '_id' | 'author' | 'visibility' | 'projects'>> (

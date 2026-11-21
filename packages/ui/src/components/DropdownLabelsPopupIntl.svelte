@@ -45,8 +45,10 @@
     }
   }
 
+  // A plain list keeps the check; only the list that picks a sort field shows the direction.
   function markIcon (order: SortingOrder | undefined): Asset {
-    return order === SortingOrder.Ascending ? ui.icon.ChevronUpSmall : ui.icon.ChevronDownSmall
+    if (order === undefined) return ui.icon.Check
+    return order === SortingOrder.Ascending ? ui.icon.CaretUpFill : ui.icon.CaretDownFill
   }
   let btns: HTMLButtonElement[] = []
 

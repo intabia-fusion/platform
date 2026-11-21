@@ -165,6 +165,7 @@ export default async (): Promise<Resources> => ({
   },
   function: {
     GetAllStates: getAllStates,
+    GetAllTaskTypes: getAllTaskTypes,
     StatusSort: statusSort
   }
 })
@@ -309,6 +310,32 @@ export async function getProjectType (space: Ref<Space> | undefined): Promise<Re
   const project =
     get(activeProjects).get(projectId) ?? (await getClient().findOne(task.class.Project, { _id: projectId }))
   return project?.type
+}
+
+// Values of the `kind` attribute: the task types of the project in view, so a sort by type reads them by
+// name instead of by the refs the issues carry.
+export async function getAllTaskTypes (
+  query: DocumentQuery<Doc> | undefined,
+  onUpdate: () => void,
+  queryId: Ref<Doc>,
+  attr?: Attribute<TaskType>,
+  space?: Ref<Space>
+): Promise<any[]> {
+  const joinedProjectsTypes = get(typesOfJoinedProjectsStore) ?? []
+  const typeId =
+    get(selectedTypeStore) ??
+    (await getProjectType(space)) ??
+    (joinedProjectsTypes.length === 1 ? joinedProjectsTypes[0] : undefined)
+  const $taskType = get(taskTypeStore)
+  const taskTypes = Array.from($taskType.values()).filter((taskType) =>
+    typeId !== undefined ? taskType.parent === typeId : joinedProjectsTypes.includes(taskType.parent)
+  )
+  watchTaskTypes(
+    queryId,
+    typeId !== undefined ? { parent: typeId } : { parent: { $in: joinedProjectsTypes } },
+    onUpdate
+  )
+  return taskTypes.map((it) => it._id)
 }
 
 async function statusSort (

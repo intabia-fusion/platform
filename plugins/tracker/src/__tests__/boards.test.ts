@@ -1,4 +1,11 @@
-import type { AccountUuid, Doc, Ref, Status, StatusCategory } from '@hcengineering/core'
+import {
+  SortingOrder,
+  type AccountUuid,
+  type Doc,
+  type Ref,
+  type Status,
+  type StatusCategory
+} from '@hcengineering/core'
 import task from '@hcengineering/task'
 import {
   duplicateColumnIds,
@@ -14,6 +21,7 @@ import {
   isCardDensity,
   isCardFieldVisible,
   isOverLimit,
+  pickCardOrder,
   pickDefaultBoard,
   pickRuleSamples,
   pickSwimlane,
@@ -291,5 +299,34 @@ describe('column title uniqueness', () => {
     expect(
       nextColumnTitle([{ title: 'NEW COLUMN' }, { title: ' New column 2 ' }, { title: 'New column 4' }], 'New column')
     ).toBe('New column 3')
+  })
+})
+
+describe('card order of a board', () => {
+  const modified: [string, SortingOrder] = ['modifiedOn', SortingOrder.Descending]
+  const rank: [string, SortingOrder] = ['rank', SortingOrder.Ascending]
+
+  it('takes another field with its own default direction', () => {
+    expect(pickCardOrder(modified, rank)).toEqual(rank)
+    expect(pickCardOrder(undefined, rank)).toEqual(rank)
+  })
+
+  // A second click on the same field was a no-op: the direction could not be changed at all.
+  it('flips the direction when the field already sorts the board', () => {
+    expect(pickCardOrder(modified, ['modifiedOn', SortingOrder.Ascending])).toEqual([
+      'modifiedOn',
+      SortingOrder.Ascending
+    ])
+    expect(pickCardOrder(['modifiedOn', SortingOrder.Ascending], ['modifiedOn', SortingOrder.Ascending])).toEqual([
+      'modifiedOn',
+      SortingOrder.Descending
+    ])
+  })
+
+  it('starts from the viewlet default when the board has no order yet', () => {
+    expect(pickCardOrder(undefined, ['modifiedOn', SortingOrder.Ascending], modified)).toEqual([
+      'modifiedOn',
+      SortingOrder.Ascending
+    ])
   })
 })
