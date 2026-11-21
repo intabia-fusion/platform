@@ -59,6 +59,7 @@ startFront(metricsContext, {
   EXPORT_URL: process.env.EXPORT_URL,
   EXCLUDED_APPLICATIONS_FOR_ANONYMOUS: process.env.EXCLUDED_APPLICATIONS_FOR_ANONYMOUS,
   DISABLED_FEATURES: process.env.DISABLED_FEATURES ?? '',
+  LANGUAGES: process.env.LANGUAGES ?? 'en,ru',
   USE_OTP: process.env.USE_OTP,
   USE_BINARY_PROTOCOL: process.env.USE_BINARY_PROTOCOL,
   SIGNUP_URL: process.env.SIGNUP_URL,

@@ -163,7 +163,13 @@ import sign from '@hcengineering/sign'
 import textEditor, { textEditorId } from '@hcengineering/text-editor'
 import { workflowId } from '@hcengineering/workflow'
 
-import { AccentColorType, initThemeStore, setDefaultLanguage, setForceAccent } from '@hcengineering/theme'
+import {
+  AccentColorType,
+  initThemeStore,
+  configureInterfaceLanguages,
+  setDefaultLanguage,
+  setForceAccent
+} from '@hcengineering/theme'
 import { configureNotifications } from './notifications'
 import { configureAnalyticsProviders } from '@hcengineering/analytics-providers'
 import { Branding, Config } from './types'
@@ -451,12 +457,7 @@ export async function configurePlatform (onWorkbenchConnect?: () => Promise<void
   setMetadata(support.metadata.PrivacyPolicyLink, myBranding.support?.privacyPolicyLink ?? privacyPolicyLink)
   setMetadata(support.metadata.SupportEmail, config.SUPPORT_EMAIL ?? defaultSupportEmail)
 
-  const languages =
-    myBranding.languages !== undefined && myBranding.languages !== ''
-      ? myBranding.languages.split(',').map((l) => l.trim())
-      : ['en', 'ru', 'es', 'pt', 'pt-br', 'zh', 'fr', 'cs', 'it', 'de', 'ja', 'tr']
-
-  setMetadata(uiPlugin.metadata.Languages, languages)
+  setMetadata(uiPlugin.metadata.Languages, configureInterfaceLanguages(config.LANGUAGES))
 
   setMetadata(
     uiPlugin.metadata.Routes,

@@ -1,7 +1,6 @@
 {
   "localhost:8080": {
     "title": "Platform",
-    "languages": "en,ru,pt,es,zh,fr,de,ja",
     "defaultLanguage": "en",
     "defaultApplication": "tracker",
     "defaultSpace": "tracker:project:DefaultProject",
@@ -30,7 +29,6 @@
   },
   "localhost:8087": {
     "title": "Platform",
-    "languages": "en,ru,pt,es,zh,fr,de,ja",
     "defaultLanguage": "en",
     "defaultApplication": "tracker",
     "defaultSpace": "tracker:project:DefaultProject",
@@ -55,7 +53,6 @@
   },
   "localhost:8081": {
     "title": "TraceX",
-    "languages": "en",
     "defaultLanguage": "en",
     "defaultApplication": "documents",
     "defaultSpace": "documents:space:QualityDocuments",
@@ -95,7 +92,6 @@
   },
   "localhost:8088": {
     "title": "TraceX",
-    "languages": "en",
     "defaultLanguage": "en",
     "defaultApplication": "documents",
     "defaultSpace": "documents:space:QualityDocuments",

@@ -1,5 +1,6 @@
 //
 // Copyright © 2020 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,10 +14,13 @@
 // limitations under the License.
 //
 
+import { resolveInterfaceLanguage } from './language'
+
 import { Analytics } from '@hcengineering/analytics'
 import '@hcengineering/platform-rig/profiles/ui/svelte'
 import { derived, writable } from 'svelte/store'
 import { ThemeVariant, type ThemeVariantType, AccentColor, type AccentColorType } from './variants'
+export { configureInterfaceLanguages } from './language'
 
 export { default as Theme } from './Theme.svelte'
 export { default as InvertedTheme } from './InvertedTheme.svelte'
@@ -28,7 +32,7 @@ export { accentColorOptions, type AccentColorOption, getAccentColorName } from '
  */
 export const setDefaultLanguage = (language: string): void => {
   if (localStorage.getItem('lang') === null) {
-    localStorage.setItem('lang', language)
+    localStorage.setItem('lang', resolveInterfaceLanguage(language))
   }
 }
 
@@ -80,7 +84,11 @@ export const getCurrentFontSize = (): string =>
  * @public
  */
 export const getCurrentLanguage = (): string => {
-  const lang = localStorage.getItem('lang') ?? getDefaultProps('lang', 'en')
+  const storedLanguage = localStorage.getItem('lang')
+  const lang = resolveInterfaceLanguage(storedLanguage ?? 'en')
+  if (storedLanguage !== lang) {
+    localStorage.setItem('lang', lang)
+  }
   Analytics.setTag('language', lang)
   return lang
 }

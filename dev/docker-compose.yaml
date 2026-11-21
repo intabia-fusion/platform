@@ -354,6 +354,7 @@ services:
       - DESKTOP_UPDATES_CHANNEL=dev
       - DESKTOP_UPDATES_CHANNELS=dev;tracex:dev-tracex
       - BRANDING_URL=http://localhost:8087/branding.json
+      - LANGUAGES=${LANGUAGES:-en,ru}
       - STREAM_URL=http://localhost:8087/_stream/recording
       - PAYMENT_URL=http://localhost:8087/_payment
       - BILLING_URL=http://localhost:8087/_billing

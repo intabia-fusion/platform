@@ -151,7 +151,13 @@ import { concatLink, coreId } from '@hcengineering/core'
 import presentation, { loadServerConfig, createFileStorage, presentationId } from '@hcengineering/presentation'
 
 import { setMetadata } from '@hcengineering/platform'
-import { initThemeStore, setDefaultLanguage, setForceAccent, type AccentColorType } from '@hcengineering/theme'
+import {
+  initThemeStore,
+  configureInterfaceLanguages,
+  setDefaultLanguage,
+  setForceAccent,
+  type AccentColorType
+} from '@hcengineering/theme'
 
 import { configureAnalytics } from './analytics'
 import { Analytics } from '@hcengineering/analytics'
@@ -180,6 +186,7 @@ export interface Config {
   PRINT_URL?: string
   ANALYTICS_COLLECTOR_URL?: string
   BRANDING_URL?: string
+  LANGUAGES?: string
   TELEGRAM_BOT_URL?: string
   AI_URL?: string
   DISABLE_SIGNUP?: string
@@ -237,7 +244,6 @@ export interface Branding {
     docsLink?: string
     privacyPolicyLink?: string
   }
-  languages?: string
   lastNameFirst?: string
   defaultLanguage?: string
   defaultApplication?: string
@@ -582,11 +588,7 @@ export async function configurePlatform() {
   setMetadata(support.metadata.PrivacyPolicyLink, myBranding.support?.privacyPolicyLink ?? privacyPolicyLink)
   setMetadata(support.metadata.SupportEmail, config.SUPPORT_EMAIL ?? defaultSupportEmail)
 
-  const languages = myBranding.languages
-    ? myBranding.languages.split(',').map((l) => l.trim())
-    : ['en', 'ru', 'es', 'pt', 'pt-br', 'zh', 'fr', 'cs', 'it', 'de', 'ja', 'tr']
-
-  setMetadata(uiPlugin.metadata.Languages, languages)
+  setMetadata(uiPlugin.metadata.Languages, configureInterfaceLanguages(config.LANGUAGES))
 
   setMetadata(
     uiPlugin.metadata.Routes,
