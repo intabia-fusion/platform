@@ -52,6 +52,7 @@ import {
 } from '@hcengineering/server-activity'
 
 import { formatDuration } from '@hcengineering/tracker'
+import { OnBoardMembers } from './boardNavigation'
 
 const timeSpendReportTitlePresenter: StringPresenterFn<TimeSpendReport> = async (
   doc: TimeSpendReport,
@@ -555,6 +556,7 @@ export default async () => ({
   },
   trigger: {
     OnProjectTypeStatusesChanged,
+    OnBoardMembers,
     OnIssueUpdate,
     OnComponentRemove,
     OnProjectRemove

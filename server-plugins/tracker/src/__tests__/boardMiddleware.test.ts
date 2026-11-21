@@ -31,6 +31,7 @@ import contact from '@hcengineering/contact'
 import tracker, { type Board } from '@hcengineering/tracker'
 
 import { BoardMiddleware } from '../boardMiddleware'
+import { boardBeforeKey, withBoardNavigationLock } from '../boardNavigation'
 
 const alice = 'alice' as AccountUuid
 const bob = 'bob' as AccountUuid
@@ -119,7 +120,11 @@ describe('BoardMiddleware', () => {
         return toFindResult(found, found.length)
       }
     }
-    middleware = await BoardMiddleware.create(ctxOf(alice), { hierarchy } as any, next as any)
+    middleware = await BoardMiddleware.create(
+      ctxOf(alice),
+      { hierarchy, workspace: { uuid: 'board-test' } } as any,
+      next as any
+    )
   })
 
   const update = (id: string, ops: any): Tx =>
@@ -131,6 +136,45 @@ describe('BoardMiddleware', () => {
     { id: 'a', title: 'Queue', statuses: [], category: 'category' as any },
     { id: 'b', title: second, statuses: [], category: 'category' as any }
   ]
+
+  it('retains the preimage of each membership update for the post-write trigger', async () => {
+    const ctx = ctxOf(alice)
+    stored[0] = board('own', { editors: [] })
+    const first = update('own', { $push: { editors: bob } })
+    const second = update('own', { editors: [carol] })
+    await middleware.tx(ctx, [first, second])
+    expect(ctx.contextData.contextCache.get(boardBeforeKey(first._id)).editors).toEqual([])
+    expect(ctx.contextData.contextCache.get(boardBeforeKey(second._id)).editors).toEqual([bob])
+  })
+
+  it('keeps the server list when a first-open snapshot was prepared before an assignment', async () => {
+    const id = 'tracker:boards-navigation:alice'
+    let unlock = (): void => {}
+    const blocked = new Promise<void>((resolve) => {
+      unlock = resolve
+    })
+    let entered = (): void => {}
+    const started = new Promise<void>((resolve) => {
+      entered = resolve
+    })
+    const server = withBoardNavigationLock('board-test' as any, id, new Map(), async () => {
+      entered()
+      await blocked
+      stored.push({ _id: id, _class: tracker.class.BoardNavigationPreference, boards: ['new-board'] } as any)
+    })
+    await started
+    const stale = factory.createTxCreateDoc(
+      tracker.class.BoardNavigationPreference,
+      core.space.Workspace,
+      { attachedTo: 'tracker:boards-navigation', boards: [] },
+      id as any
+    )
+    const client = middleware.tx(ctxOf(alice), [stale])
+    unlock()
+    await Promise.all([server, client])
+    expect(passed).not.toContain(stale)
+    expect((stored.find((doc) => doc._id === id) as any).boards).toEqual(['new-board'])
+  })
 
   it('keeps duplicates allowed by default and when the restriction is disabled', async () => {
     await middleware.tx(ctxOf(alice), [update('own', { columns: columns(' queue ') })])

@@ -37169,9 +37169,15 @@ importers:
       '@hcengineering/server-activity':
         specifier: workspace:^0.7.0
         version: link:../activity
+      '@hcengineering/server-contact':
+        specifier: workspace:^0.7.0
+        version: link:../contact
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
+      '@hcengineering/server-tracker':
+        specifier: workspace:^0.7.0
+        version: link:../tracker
       '@hcengineering/task':
         specifier: workspace:^0.7.0
         version: link:../../plugins/task
