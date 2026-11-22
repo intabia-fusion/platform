@@ -267,6 +267,11 @@ export class TMeeting extends TEvent implements MeetingEventLink {
   // master agree on it: the reminder belongs to the meeting, not to one of its occurrences.
   reminderBefore?: number
 
+  // Group of the permanent meeting this event is the series of. Copied from `PermanentMeeting.group`
+  // so the meetings list can group by it: a viewlet groups by an attribute of its own class only.
+  @Prop(TypeRef(love.class.MeetingGroup), love.string.MeetingGroup)
+  group?: Ref<MeetingGroup>
+
   @Index(IndexKind.Indexed)
   permanentMeeting?: Ref<PermanentMeeting>
 }
@@ -926,6 +931,38 @@ export function createModel (builder: Builder): void {
       configOptions: { hiddenKeys: ['title', 'date'] }
     },
     love.viewlet.CalendarScheduledMeetings
+  )
+
+  // The section switches between calendar, list and table through the standard viewlet selector,
+  // so the same records get the views other sections already have.
+  const SCHEDULED_MEETING_CONFIG = ['', 'date', 'participants', 'location']
+
+  builder.createDoc(
+    view.class.Viewlet,
+    core.space.Model,
+    {
+      attachTo: love.mixin.MeetingEventLink,
+      descriptor: view.viewlet.Table,
+      config: SCHEDULED_MEETING_CONFIG,
+      configOptions: { sortable: true },
+      viewOptions: { groupBy: [], orderBy: [['date', SortingOrder.Descending]], other: [] }
+    },
+    love.viewlet.TableScheduledMeetings
+  )
+
+  builder.createDoc(
+    view.class.Viewlet,
+    core.space.Model,
+    {
+      attachTo: love.mixin.MeetingEventLink,
+      descriptor: view.viewlet.List,
+      config: SCHEDULED_MEETING_CONFIG,
+      configOptions: { sortable: true },
+      // Grouped by the meeting group, the same way the groups tab groups its rows: an event carries
+      // the group of its permanent meeting, copied by the server trigger.
+      viewOptions: { groupBy: ['group'], orderBy: [['date', SortingOrder.Descending]], other: [] }
+    },
+    love.viewlet.ListScheduledMeetings
   )
 
   // Attributes a meetings view never shows as a column.

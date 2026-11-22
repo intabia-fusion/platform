@@ -37,5 +37,5 @@
   }
 </script>
 
-<Button icon={view.icon.List} label={love.string.CreateMeetingGroup} kind="secondary" on:click={createGroup} />
+<Button icon={view.icon.List} label={love.string.MergeIntoGroup} kind="secondary" on:click={createGroup} />
 <Button icon={ui.icon.Plus} label={love.string.NewMeeting} kind="primary" on:click={createMeeting} />

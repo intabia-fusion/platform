@@ -130,7 +130,7 @@ RSVP календаря - в [calendar-rsvp.md](calendar-rsvp.md).
 
 `reminderBefore` (мс) - за сколько напоминать о вхождении; `0` - молчать, отсутствие - дефолт 15 минут (§7a.5). Значение дублируется на миксине серии: напоминание читает `MeetingEventLink`.
 
-`group?: Ref<MeetingGroup>` и `order?: number` - положение в списке раздела «Постоянные встречи». `MeetingGroup` (`name`, `order`) - обычный документ `core.class.Doc` в домене `DOMAIN_LOVE`, не `Space`: группа - это порядок строк, а не контейнер прав.
+`group?: Ref<MeetingGroup>` и `order?: number` - положение в списке раздела «Группы». `MeetingGroup` (`name`, `order`) - обычный документ `core.class.Doc` в домене `DOMAIN_LOVE`, не `Space`: группа - это порядок строк, а не контейнер прав.
 
 Серия встречи живёт отдельно и ищется по обратной ссылке `MeetingEventLink.permanentMeeting`; `MeetingSchedule.meetingId` объявлен, но не пишется.
 
@@ -391,15 +391,15 @@ UI: `OutgoingInvitePopup`, `IncomingInvitePopup`, `InviteButton` (лейблы `
 
 Запланированные и постоянные митинги не занимают обычную комнату. Их сессии идут в служебной комнате на служебном этаже с фиксированными id (`love.ids.ScheduledFloor`, `love.ids.ScheduledRoom`, `isServiceFloor` в `plugins/love/src/utils.ts`). Как этаж он в UI не показывается: стор `officeFloors` (`plugins/love-resources/src/stores.ts`) его исключает, а `currentFloor` подменяет его первым офисным этажом.
 
-Навигатор офиса (`OfficeNavigator.svelte` в `Main.svelte`) держит выбор в URL - `/love/<сегмент>`: `meetings`, `permanent` или id этажа (стор `officeSegment`, из него `officeView`; `Hall.svelte` рендерит центр). Переход сбрасывает `fragment`, поэтому открытая по центру панель закрывается. Разделы - штатный `SpecialView`:
+Навигатор офиса (`OfficeNavigator.svelte` в `Main.svelte`) держит выбор в URL - `/love/<сегмент>`: `meetings`, `groups` или id этажа (стор `officeSegment`, из него `officeView`; `Hall.svelte` рендерит центр). Старый сегмент `permanent` ведёт в `groups`, поэтому прежние ссылки и закладки открывают вкладку групп. Переход сбрасывает `fragment`, поэтому открытая по центру панель закрывается. Разделы - штатный `SpecialView`:
 
 - «Этажи» - этаж с людьми, чтобы позвонить; таблица и список этажа - встречи, прошедшие в его комнатах. Кнопка «+» (Maintainer) - `EditFloorPopup.svelte`.
-- «Встречи» - по миксину `love.mixin.MeetingEventLink`, единственный вьюлет - календарь (`love.viewlet.CalendarScheduledMeetings`), он висит на миксине и в приложение календаря не попадает. Панель открывается через `Hierarchy.mixinOrClass`, `ObjectEditor` на миксине даёт шапку `EditScheduledMeeting.svelte` (название, «Редактировать», вход). Список фильтрует `recurringEventId: { $exists: false }` - мастера серий и одиночные события, без копий вхождений.
-- «Постоянные встречи» - свой список `PermanentMeetingsList.svelte` (не `Table`): секции по `MeetingGroup`, встречи без группы - последней секцией, порядок и перетаскивание - §7a.7. Над списком две кнопки: «Новая встреча» (`CreatePermanentMeetingPopup` → `PermanentMeetingForm`) и «Объединить в группу» (`MeetingGroupPopup`). Шапка панели - `EditPermanentMeeting.svelte` (название, галка «Постоянная встреча» → то же окно настроек, вход).
+- «Встречи» - по миксину `love.mixin.MeetingEventLink`, три штатных вьюлета на выбор через переключатель представлений `SpecialView`: календарь (`love.viewlet.CalendarScheduledMeetings`), список (`love.viewlet.ListScheduledMeetings`) и таблица (`love.viewlet.TableScheduledMeetings`). Все три висят на миксине, поэтому в приложение календаря не попадают. Панель открывается через `Hierarchy.mixinOrClass`, `ObjectEditor` на миксине даёт шапку `EditScheduledMeeting.svelte` (название, «Редактировать», вход). Запрос фильтрует `recurringEventId: { $exists: false }` - мастера серий и одиночные события, без копий вхождений.
+- «Группы» (`love.string.MeetingGroups`, сегмент `groups`) - штатные вьюлеты класса `PermanentMeeting`: список `love.viewlet.ListPermanentMeetings` (группировка по `group`, `members`, `private`, `createdBy`) и таблица `love.viewlet.TablePermanentMeetings` (следующее вхождение, участники, последняя сессия), порядок и перетаскивание - §7a.7. Над списком две кнопки: «Новая встреча» (`CreatePermanentMeetingPopup` → `PermanentMeetingForm`) и «Новая группа» (`MeetingGroupPopup`). Шапка панели - `EditPermanentMeeting.svelte` (название, галка «Постоянная встреча» → то же окно настроек, вход).
 
 Настройки встречи - в панели свойств: у миксина `MeetingEventLink` и у `PermanentMeeting` свойства `meetingAccess` (редактор `MeetingAccessEditor.svelte` открывает `MeetingLinkPopup.svelte`: кто начинает, срок жизни, пароль, копирование гостевой ссылки, отзыв), запись, транскрипция; у миксина ещё приватность и язык. Прошедшие сессии - `ObjectEditorFooter` (`MeetingSessionsFooter.svelte` -> `MeetingMinutesSection.svelte`, таблица `TableMeetingMinutesEmbedded`, запрос по `meeting` или `eventId`), ниже описания и вложений.
 
-Постоянный митинг создаётся кнопкой «Новая встреча» в «Постоянных встречах» - одним окном на создание и настройку, §7a.7:
+Постоянный митинг создаётся кнопкой «Новая встреча» во вкладке «Группы» - одним окном на создание и настройку, §7a.7:
 
 ![Создание постоянного митинга](images/love-permanent-create.png)
 
@@ -479,7 +479,7 @@ pbkdf2-sha256, 100 000 итераций, случайная соль на пар
 2. пишет в событие `location` - ссылку на комнату.
 
 Серии и `PermanentMeeting` эта форма больше не создаёт: помимо встречи из планировщика
-есть второе, отдельное окно - «Новая встреча» в разделе «Постоянные встречи» (§7a.7),
+есть второе, отдельное окно - «Новая встреча» в разделе «Группы» (§7a.7),
 которое и создаёт пару «серия + постоянная». Так у каждого пути создания один результат
 и одна точка правки.
 
@@ -524,16 +524,17 @@ pbkdf2-sha256, 100 000 итераций, случайная соль на пар
 (`server-plugins/love-resources`) возвращает его обратно, иначе встречу некому было бы удалить.
 Триггер правит и `owners`, и `members` - первая версия смотрела только на `members`.
 
-Список «Постоянные встречи» (`PermanentMeetingsList.svelte`) держит порядок сам, а не через
-`Table`: секции по группам (`order` группы), внутри - строки по `order` встречи, без группы -
-последней секцией. Перетаскивание - нативный HTML5 drag: шапка группы меняет порядок групп,
-строка - переезжает в другую группу или меняет место внутри; результат сохраняет
-`persistOrder` (`groups.ts`) пакетом `diffUpdate`. Группа создаётся кнопкой «Объединить
-в группу» (`MeetingGroupPopup.svelte`: название + отметки встреч → `createMeetingGroup`),
+Вкладка «Группы» показывает штатный сгруппированный список класса `PermanentMeeting`
+(`love.viewlet.ListPermanentMeetings`) или таблицу (`love.viewlet.TablePermanentMeetings`).
+Порядок строк задаёт `order` встречи, порядок секций - `order` группы; встречи без группы идут
+последней секцией (`MeetingsWithoutGroup`). Перетаскивание - нативный HTML5 drag: шапка группы
+меняет порядок групп, строка - переезжает в другую группу или меняет место внутри; результат
+сохраняет `persistOrder` (`groups.ts`) пакетом `diffUpdate`. Группа создаётся кнопкой «Новая
+группа» (`MeetingGroupPopup.svelte`: название + отметки встреч → `createMeetingGroup`),
 переименовывается прямо в шапке (`renameMeetingGroup`).
 
-В строке: название, следующее вхождение (`nextOccurrence` в `period.ts`: старт мастера +
-период), «Копировать гостевую ссылку» (только участнику) и «Присоединиться».
+В строке таблицы: название, следующее вхождение (`nextOccurrence` в `period.ts`: старт мастера +
+период), участники, последняя сессия.
 
 Правка серии из вкладки «Встречи» - действие `EditMeetingSettings` на миксине: открывает то же
 окно настроек, если у серии есть `permanentMeeting`, и скрыто для обычного события

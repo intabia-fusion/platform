@@ -166,6 +166,7 @@ const love = plugin(loveId, {
     Audio: '' as IntlString,
     NewMeeting: '' as IntlString,
     Meetings: '' as IntlString,
+    MeetingGroups: '' as IntlString,
     PastSessions: '' as IntlString,
     GuestPassword: '' as IntlString,
     PasswordSet: '' as IntlString,
@@ -265,6 +266,8 @@ const love = plugin(loveId, {
     ListRooms: '' as Ref<Viewlet>,
     ListRoomsDescriptor: '' as Ref<ViewletDescriptor>,
     CalendarScheduledMeetings: '' as Ref<Viewlet>,
+    TableScheduledMeetings: '' as Ref<Viewlet>,
+    ListScheduledMeetings: '' as Ref<Viewlet>,
     TablePermanentMeetings: '' as Ref<Viewlet>,
     ListPermanentMeetings: '' as Ref<Viewlet>
   }

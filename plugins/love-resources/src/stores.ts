@@ -20,6 +20,7 @@ import { location } from '@hcengineering/ui'
 import { derived, get, writable } from 'svelte/store'
 
 import { compareRanks } from './order'
+import { officeViewOf } from './officeView'
 import love from './plugin'
 
 // Client-side store to indicate current session is attempting to connect to a meeting
@@ -124,13 +125,11 @@ export const activeFloor = derived([rooms, myInfo, myOffice], ([rooms, myInfo, m
   }
   return res ?? love.ids.MainFloor
 })
-// The office navigator keeps its choice in the URL, /love/<segment>: 'meetings', 'permanent' or a floor id.
+// The office navigator keeps its choice in the URL, /love/<segment>; the rule lives in `officeView.ts`.
 // No segment means the office was just opened: the navigator shows the floors, the centre stays empty
 // until a floor is picked - the floor grid is a detail view, not the landing screen.
 export const officeSegment = derived(location, (loc) => (loc.path[2] === loveId ? loc.path[3] : undefined))
-export const officeView = derived(officeSegment, (segment) =>
-  segment === 'meetings' || segment === 'permanent' ? segment : segment === undefined ? 'floors' : 'floor'
-)
+export const officeView = derived(officeSegment, (segment) => officeViewOf(segment))
 // The service floor only hosts the sessions of scheduled meetings; people never sit on it.
 // Floors are ordered by hand (`rank`) in the navigator; a floor created before the list existed
 // carries no rank and sorts after the ranked ones, by name.

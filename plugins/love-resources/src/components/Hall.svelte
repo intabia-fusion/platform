@@ -19,6 +19,7 @@
   import love, { isOffice } from '@hcengineering/love'
   import { SpecialView } from '@hcengineering/workbench-resources'
   import { deviceOptionsStore as deviceInfo, Label } from '@hcengineering/ui'
+  import ui from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { onDestroy } from 'svelte'
   import lovePlugin from '../plugin'
@@ -52,11 +53,14 @@
          a filter every edited or cancelled occurrence would sit in the list as a second meeting.
          `recurringEventId` is declared on the occurrence class alone: a series master carries
          `originalStartTime` too, and filtering by it would hide every series. -->
+    <!-- Three viewlets hang on the mixin: the calendar, the list and the table. The viewlet selector
+         in the header turns them into the calendar/list/table switch, so a separate control is not needed. -->
     <SpecialView
       _class={love.mixin.MeetingEventLink}
       baseQuery={{ recurringEventId: { $exists: false } }}
       label={love.string.Meetings}
       icon={love.icon.Cam}
+      createButton={lovePlugin.component.PermanentMeetingsHeaderActions}
       hideViewSettings
     />
   {:else if $officeView === 'floors'}
@@ -64,13 +68,13 @@
     <div class="flex-col h-full justify-center items-center">
       <span class="content-color"><Label label={lovePlugin.string.SelectFloor} /></span>
     </div>
-  {:else if $officeView === 'permanent'}
+  {:else if $officeView === 'groups'}
     <!-- Standard view of the class: viewlets, search, filters, view settings, grouped list. -->
     <SpecialView
       _class={love.class.PermanentMeeting}
-      label={love.string.PermanentMeetings}
-      icon={love.icon.Cam}
-      defaultViewletDescriptor={view.viewlet.Table}
+      label={lovePlugin.string.MeetingGroups}
+      icon={ui.icon.People}
+      defaultViewletDescriptor={view.viewlet.List}
       createButton={lovePlugin.component.PermanentMeetingsHeaderActions}
     />
   {:else if configure}

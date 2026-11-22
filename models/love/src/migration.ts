@@ -40,7 +40,9 @@ import {
   type Floor,
   type Room,
   type MeetingEventLink,
+  type MeetingGroup,
   type MeetingMinutes,
+  type PermanentMeeting,
   type RecordingState
 } from '@hcengineering/love'
 import {
@@ -438,6 +440,26 @@ async function removeOrphanMeetingSeries (client: MigrationClient): Promise<void
   }
 }
 
+/**
+ * Copies the group of a permanent meeting onto its series. The meetings list groups events by the
+ * group, and a viewlet can only group by an attribute of its own class, so the event keeps a copy.
+ */
+async function copyMeetingGroupToSeries (client: MigrationClient): Promise<void> {
+  const meetings = await client.find<PermanentMeeting>(DOMAIN_SPACE, { _class: love.class.PermanentMeeting })
+  const groups = new Map<Ref<PermanentMeeting>, Ref<MeetingGroup> | undefined>(
+    meetings.map((it) => [it._id, it.group])
+  )
+  const events = await client.find<Event>(DOMAIN_EVENT, {})
+  for (const event of events) {
+    const link = (event as unknown as Record<string, MeetingEventLink | undefined>)[love.mixin.MeetingEventLink]
+    const meeting = link?.permanentMeeting
+    if (meeting === undefined) continue
+    const group = groups.get(meeting)
+    if (group === undefined || link?.group === group) continue
+    await client.update(DOMAIN_EVENT, { _id: event._id }, { [love.mixin.MeetingEventLink]: { group } } as any)
+  }
+}
+
 export const loveOperation: MigrateOperation = {
   async migrate (client: MigrationClient, mode): Promise<void> {
     await tryMigrate(mode, client, loveId, [
@@ -830,6 +852,11 @@ export const loveOperation: MigrateOperation = {
         state: 'reset-permanent-meetings-view-preferences',
         mode: 'upgrade',
         func: resetPermanentMeetingsViewPreferences
+      },
+      {
+        state: 'copy-meeting-group-to-series',
+        mode: 'upgrade',
+        func: copyMeetingGroupToSeries
       }
     ])
   },

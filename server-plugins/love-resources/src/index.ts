@@ -41,6 +41,7 @@ import love, {
   LIVE_MEETING_STATUSES,
   MeetingStatus,
   type Office,
+  type MeetingGroup,
   type PermanentMeeting,
   ParticipantInfo,
   Room,
@@ -1148,6 +1149,8 @@ export async function OnPermanentMeetingUpdate (txes: Tx[], control: TriggerCont
     const ops = cudTx.operations as {
       members?: AccountUuid[]
       owners?: AccountUuid[]
+      group?: Ref<MeetingGroup> | null
+      $unset?: { group?: number }
       $push?: {
         members?: AccountUuid | AccountUuid[] | { $each: AccountUuid[] }
         owners?: AccountUuid | AccountUuid[] | { $each: AccountUuid[] }
@@ -1157,6 +1160,25 @@ export async function OnPermanentMeetingUpdate (txes: Tx[], control: TriggerCont
         owners?: AccountUuid | AccountUuid[] | { $in: AccountUuid[] }
       }
     }
+
+    // The meetings list groups events by the group of their meeting: the event carries a copy, so it
+    // has to follow every change of the meeting's group.
+    if (ops.group !== undefined || ops.$unset?.group !== undefined) {
+      const meeting = (
+        await control.findAll(control.ctx, love.class.PermanentMeeting, { _id: cudTx.objectId }, { limit: 1 })
+      )[0]
+      if (meeting !== undefined) {
+        const group = ops.$unset?.group !== undefined ? undefined : (ops.group ?? meeting.group)
+        for (const event of await seriesEventsOf(control, cudTx.objectId)) {
+          result.push(
+            control.txFactory.createTxUpdateDoc(calendar.class.Event, event.space, event._id, {
+              group
+            } as any)
+          )
+        }
+      }
+    }
+
     const touchesMembers =
       ops.members !== undefined || ops.$pull?.members !== undefined || ops.$push?.members !== undefined
     const touchesOwners = ops.owners !== undefined || ops.$pull?.owners !== undefined

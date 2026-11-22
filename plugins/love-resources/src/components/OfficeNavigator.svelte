@@ -65,12 +65,12 @@
       }}
     />
     <NavItem
-      _id="permanent"
-      label={plugin.string.PermanentMeetings}
-      icon={plugin.icon.EnterRoom}
-      selected={$officeView === 'permanent'}
+      _id="groups"
+      label={plugin.string.MeetingGroups}
+      icon={ui.icon.People}
+      selected={$officeView === 'groups'}
       on:click={() => {
-        open('permanent')
+        open('groups')
       }}
     />
     <TreeSeparator line />

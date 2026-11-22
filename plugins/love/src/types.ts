@@ -207,6 +207,9 @@ export interface MeetingEventLink extends Event {
   /** Lead time of the meeting reminder in msec; absent or 0 turns the reminder off. */
   reminderBefore?: number
 
+  /** Copy of `PermanentMeeting.group`: a viewlet groups by an attribute of its own class only. */
+  group?: Ref<MeetingGroup>
+
   /** The permanent meeting the series belongs to, so renaming one renames the other. */
   permanentMeeting?: Ref<PermanentMeeting>
 }

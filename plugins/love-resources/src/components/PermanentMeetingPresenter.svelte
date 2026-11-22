@@ -14,9 +14,11 @@
 -->
 <script lang="ts">
   import type { WithLookup } from '@hcengineering/core'
+  import calendar, { type Event } from '@hcengineering/calendar'
   import love, { type PermanentMeeting } from '@hcengineering/love'
   import { getEmbeddedLabel } from '@hcengineering/platform'
-  import presentation, { copyTextToClipboard } from '@hcengineering/presentation'
+  import presentation, { copyTextToClipboard, createQuery } from '@hcengineering/presentation'
+  import ui from '@hcengineering/ui'
   import { Icon, tooltip } from '@hcengineering/ui'
   import { IconButton } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
@@ -32,6 +34,22 @@
   export let noUnderline: boolean = false
   export let shouldShowAvatar = true
   export let type: ObjectPresenterType = 'link'
+
+  // A series says the meeting sits in the calendar; a meeting without one exists only as a link,
+  // so the row shows a crossed-out eye instead of the camera.
+  let series: Event[] = []
+  const query = createQuery()
+  $: void query.query(
+    calendar.class.Event,
+    {
+      [`${love.mixin.MeetingEventLink as string}.permanentMeeting`]: value._id,
+      recurringEventId: { $exists: false }
+    } as any,
+    (res) => {
+      series = res
+    }
+  )
+  $: icon = series.length > 0 ? love.icon.MeetingMinutes : ui.icon.EyeSlash
 
   // A link is the only thing a permanent meeting shares: keep it one click away in every row.
   async function copyLink (): Promise<void> {
@@ -51,7 +69,7 @@
         <div class="flex-presenter" use:tooltip={{ label: getEmbeddedLabel(value.name) }}>
           {#if shouldShowAvatar}
             <div class="icon">
-              <Icon icon={love.icon.MeetingMinutes} size="medium" />
+              <Icon {icon} size="medium" />
             </div>
           {/if}
           <div class="label nowrap" class:no-underline={noUnderline || disabled} class:fs-bold={accent}>
@@ -74,7 +92,7 @@
     <span class="flex-presenter" use:tooltip={{ label: getEmbeddedLabel(value.name) }}>
       {#if shouldShowAvatar}
         <div class="icon">
-          <Icon icon={love.icon.MeetingMinutes} size="medium" />
+          <Icon {icon} size="medium" />
         </div>
       {/if}
       <span class="overflow-label">{value.name}</span>

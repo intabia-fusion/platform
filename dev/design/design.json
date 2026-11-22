@@ -158,6 +158,41 @@
           "screens/love-permanent-meetings/03-meeting-card.js"
         ]
       ]
+    },
+    {
+      "name": "Встречи - единый раздел (FUSIO-1307)",
+      "libraries": [
+        "Intabia UI Kit"
+      ],
+      "storybook": "MeetingsUnified",
+      "canvas": true,
+      "build": [
+        [
+          "screens/love-permanent-meetings/_permanent.js",
+          "screens/love-meetings-unified/_meetings.js",
+          "screens/love-meetings-unified/00-all.js"
+        ],
+        [
+          "screens/love-permanent-meetings/_permanent.js",
+          "screens/love-meetings-unified/_meetings.js",
+          "screens/love-meetings-unified/01-calendar.js"
+        ],
+        [
+          "screens/love-permanent-meetings/_permanent.js",
+          "screens/love-meetings-unified/_meetings.js",
+          "screens/love-meetings-unified/02-list.js"
+        ],
+        [
+          "screens/love-permanent-meetings/_permanent.js",
+          "screens/love-meetings-unified/_meetings.js",
+          "screens/love-meetings-unified/03-table.js"
+        ],
+        [
+          "screens/love-permanent-meetings/_permanent.js",
+          "screens/love-meetings-unified/_meetings.js",
+          "screens/love-meetings-unified/04-groups.js"
+        ]
+      ]
     }
   ]
 }
