@@ -16,6 +16,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
   import { translate, type IntlString } from '@hcengineering/platform'
+  import { SortingOrder } from '@hcengineering/core'
 
   import { deviceOptionsStore, languageStore, resizeObserver } from '..'
   import ui from '../plugin'
@@ -33,6 +34,8 @@
   export let withSearch: boolean = false
   export let searchPlaceholder: IntlString = ui.string.SearchDots
   export let popupClass: string | undefined = undefined
+  // Set when the list picks a sort field: the chosen item shows the direction, not a check
+  export let sortOrder: SortingOrder | undefined = undefined
 
   const dispatch = createEventDispatcher<{
     update: DropdownIntlItem['id'] | Array<DropdownIntlItem['id']>
@@ -220,7 +223,14 @@
         {/if}
         {#if isSelected(selected, item)}
           <div class="hulyPopup-row__icon">
-            <Icon icon={ui.icon.Check} size="small" />
+            <Icon
+              icon={sortOrder === undefined
+                ? ui.icon.Check
+                : sortOrder === SortingOrder.Ascending
+                  ? ui.icon.ChevronUpSmall
+                  : ui.icon.ChevronDownSmall}
+              size="small"
+            />
           </div>
         {/if}
       </button>

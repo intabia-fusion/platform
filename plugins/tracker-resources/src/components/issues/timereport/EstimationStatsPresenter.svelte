@@ -33,6 +33,8 @@
   $: treeResult = reduceChildInfoTree(childInfos, 0, 0)
   $: reported = value.reportedTime + treeResult.totalReportedTime
   $: estimationValue = kind === 'list' ? Math.max(value.estimation, treeResult.totalEstimation) : value.estimation
+  // Both at zero: a pair of zeroes reads as noise, the plain value says the same
+  $: pair = showReportedTime && (reported !== 0 || estimationValue !== 0)
   $: hasProgress =
     reported !== 0 &&
     (_estimation !== 0 || (kind === 'list' && childInfos.length > 0 && treeResult.totalEstimation !== 0))
@@ -40,8 +42,8 @@
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div class="estimation-container" class:combined={showReportedTime} on:click>
-  {#if showReportedTime}
+<div class="estimation-container" class:combined={pair} on:click>
+  {#if pair}
     <span class="overflow-label label flex-row-center flex-nowrap {kind}">
       <FixedColumn key={`${widthScope}-time-icon`}>
         <div class="icon" class:empty={!hasProgress}>

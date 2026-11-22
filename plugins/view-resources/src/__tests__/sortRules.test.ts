@@ -24,13 +24,13 @@ jest.mock('../utils', () => ({}))
 
 const classRef = (id: string): Ref<Class<Doc>> => id as Ref<Class<Doc>>
 
-function makeClient (attr: AnyAttribute, modelDocs: Array<{ _id: string }> = []): TxOperations {
+function makeClient (attr: AnyAttribute, modelDocs: Array<{ _id: string }> = [], allValues = false): TxOperations {
   return {
     getHierarchy: () => ({
       findAttribute: () => attr,
       // A class is derived from itself; a type class is derived from `core.class.Type`.
       isDerived: (from: Ref<Class<Doc>>, of: Ref<Class<Doc>>) => from === of || of === core.class.Type,
-      classHierarchyMixin: () => undefined
+      classHierarchyMixin: () => (allValues ? { func: 'test:function:AllValues' } : undefined)
     }),
     getModel: () => ({
       findAllSync: () => modelDocs
@@ -52,8 +52,15 @@ describe('hasSortRules', () => {
     expect(hasSortRules(makeClient(attr, [{ _id: 'test:doc:a' }]), issue, 'target')).toBe(true)
   })
 
-  it('leaves a reference without model values to the plain sort', () => {
+  it('leaves a reference without model values and without its own values to the plain sort', () => {
     const attr = { type: { _class: core.class.RefTo, to: target } } as unknown as AnyAttribute
     expect(hasSortRules(makeClient(attr), issue, 'target')).toBe(false)
+  })
+
+  // A task type, a milestone or a component lives in the workspace, so the model is empty; without the
+  // workspace values the sort falls back to the refs and orders issues by id instead of by name.
+  it('builds rules for a reference that names its own values', () => {
+    const attr = { type: { _class: core.class.RefTo, to: target } } as unknown as AnyAttribute
+    expect(hasSortRules(makeClient(attr, [], true), issue, 'target')).toBe(true)
   })
 })

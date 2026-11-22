@@ -14,6 +14,7 @@
 -->
 <script lang="ts" generics="Id extends DropdownItemId = DropdownItemId, Selected extends Id | Id[] = Id">
   import type { IntlString } from '@hcengineering/platform'
+  import type { SortingOrder } from '@hcengineering/core'
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher, onDestroy } from 'svelte'
 
@@ -53,6 +54,8 @@
   export let allowDeselect: boolean | undefined = undefined
   export let wrap: boolean = false
   export let popupWidth: 'wide' | 'x-wide' | undefined = undefined
+  // Set when the list picks a sort field: the chosen item shows the direction, not a check
+  export let sortOrder: SortingOrder | undefined = undefined
   export let disabled: boolean = false
   export let element: HTMLButtonElement | undefined = undefined
 
@@ -89,7 +92,8 @@
     multiselect,
     withSearch,
     params: itemParams,
-    popupClass: popupWidth ?? 'fit'
+    popupClass: popupWidth ?? 'fit',
+    sortOrder
   }
   $: syncPopup(popupProps)
 

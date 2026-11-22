@@ -50,6 +50,7 @@
     milestone: tracker.string.Milestone,
     labels: tracker.string.Labels,
     estimation: tracker.string.Estimation,
+    remainingTime: tracker.string.RemainingTime,
     attachments: tracker.string.Attachments,
     comments: tracker.string.Comments,
     parent: tracker.string.Parent
