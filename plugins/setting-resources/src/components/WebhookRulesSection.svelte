@@ -25,12 +25,11 @@
     Label,
     Modal,
     SelectPopup,
-    Toggle,
     eventToHTMLElement,
     showPopup,
     type SelectPopupValueType
   } from '@hcengineering/ui'
-  import { IconButton } from '@hcengineering/ui/kit'
+  import { IconButton, Toggle } from '@hcengineering/ui/kit'
   import view from '@hcengineering/view'
   import { SortableDocList } from '@hcengineering/view-resources'
   import { createEventDispatcher } from 'svelte'
@@ -152,7 +151,9 @@
         {@const rule = toRule(value)}
         <div class="row">
           <Toggle
-            on={rule.enabled}
+            size="small"
+            tooltip={{ label: settingsRes.string.WebhookEnabled }}
+            checked={rule.enabled}
             on:change={() => {
               void toggleEnabled(rule)
             }}

@@ -1,4 +1,5 @@
 <!-- Copyright © 2025 Hardcore Engineering Inc. -->
+<!-- Copyright © 2026 Intabia Fusion. -->
 <!-- -->
 <!-- Licensed under the Eclipse Public License, Version 2.0 (the "License"); -->
 <!-- you may not use this file except in compliance with the License. You may -->
@@ -15,7 +16,8 @@
   import type { Data } from '@hcengineering/core'
   import core from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { Breadcrumb, Header, Label, Toggle } from '@hcengineering/ui'
+  import { Breadcrumb, Header, Label } from '@hcengineering/ui'
+  import { Toggle } from '@hcengineering/ui/kit'
   import { getEmbeddedLabel } from '@hcengineering/platform'
   import view from '@hcengineering/view'
   import type { Translation } from '@hcengineering/contact'
@@ -63,7 +65,12 @@
     <div class="flex-grow flex-col flex-gap-4">
       <div class="flex-row-center flex-gap-4">
         <Label label={getEmbeddedLabel('Enabled')} />
-        <Toggle on={enabled} on:change={changeEnable} />
+        <Toggle
+          size="small"
+          tooltip={{ label: getEmbeddedLabel('Enabled') }}
+          checked={enabled}
+          on:change={changeEnable}
+        />
       </div>
       <div class="flex-row-center flex-gap-4">
         <Label label={contact.string.TranslateTo} />

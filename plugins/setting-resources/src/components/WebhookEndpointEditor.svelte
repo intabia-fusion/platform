@@ -30,11 +30,10 @@
     Label,
     ModernEditbox,
     Scroller,
-    Toggle,
     eventToHTMLElement,
     showPopup
   } from '@hcengineering/ui'
-  import { IconButton } from '@hcengineering/ui/kit'
+  import { IconButton, Toggle } from '@hcengineering/ui/kit'
   import { getCurrentLanguage } from '@hcengineering/theme'
   import { createEventDispatcher } from 'svelte'
   import view from '@hcengineering/view'
@@ -276,7 +275,13 @@
               <!-- Next to the address it belongs to: a switch parked below the form went unnoticed. -->
               <div class="flex-row-center flex-gap-2 flex-no-shrink">
                 <Label label={settingsRes.string.WebhookEnabled} />
-                <Toggle on={endpoint.enabled} disabled={readonly} on:change={toggleEnabled} />
+                <Toggle
+                  size="small"
+                  tooltip={{ label: settingsRes.string.WebhookEnabled }}
+                  checked={endpoint.enabled}
+                  disabled={readonly}
+                  on:change={toggleEnabled}
+                />
               </div>
             </div>
             {#if url.length > 0 && !urlValid}
