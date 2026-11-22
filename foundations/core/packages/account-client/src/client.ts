@@ -29,6 +29,7 @@ import {
   type UsageStatus,
   type WorkspaceInfoWithStatus,
   type WorkspaceMemberInfo,
+  type WorkspaceMemberWithDetails,
   WorkspaceMode,
   type WorkspaceUserOperation,
   type WorkspaceUuid
@@ -58,6 +59,8 @@ import type {
   MailboxOptions,
   MailboxSecret,
   OtpInfo,
+  OnboardingIntent,
+  OnboardingState,
   PersonWithProfile,
   ProviderInfo,
   RegionInfo,
@@ -106,11 +109,23 @@ export interface AccountClient {
   ) => Promise<WorkspaceLoginInfo>
   validateOtp: (email: string, code: string, password?: string, action?: 'verify') => Promise<LoginInfo>
   loginOtp: (email: string) => Promise<OtpInfo>
+  requestEmailOtp: (
+    email: string,
+    details?: {
+      consent?: { personalData: boolean, rules: boolean }
+    }
+  ) => Promise<OtpInfo>
+  confirmEmailOtp: (
+    email: string,
+    code: string,
+    intent?: OnboardingIntent,
+    consent?: { personalData: boolean, rules: boolean }
+  ) => Promise<LoginInfo>
   loginByLink: (token: string) => Promise<LoginInfo>
   getLoginInfoByToken: (data?: LoginInfoRequestData) => Promise<LoginInfoByToken>
   getLoginWithWorkspaceInfo: () => Promise<LoginInfoWithWorkspaces>
   restorePassword: (password: string) => Promise<LoginInfo>
-  confirm: () => Promise<LoginInfo>
+  confirm: (consent?: { personalData: boolean, rules: boolean }) => Promise<LoginInfo>
   requestPasswordReset: (email: string) => Promise<void>
   sendInvite: (email: string, role: AccountRole) => Promise<void>
   resendInvite: (email: string, role: AccountRole) => Promise<void>
@@ -125,6 +140,11 @@ export interface AccountClient {
   ) => Promise<string>
   leaveWorkspace: (account: AccountUuid, otpCode?: string) => Promise<LoginInfo | null>
   changeUsername: (first: string, last: string) => Promise<void>
+  setOnboardingName: (first: string, last: string) => Promise<OnboardingState>
+  completeOnboardingInvite: (
+    name?: { firstName?: string, lastName?: string },
+    inviteId?: string
+  ) => Promise<WorkspaceLoginInfo>
   changePassword: (oldPassword: string, newPassword: string) => Promise<void>
   signUpJoin: (
     email: string,
@@ -132,10 +152,11 @@ export interface AccountClient {
     first: string,
     last: string,
     inviteId: string,
-    workspaceUrl: string
+    workspaceUrl: string,
+    consent?: { personalData: boolean, rules: boolean }
   ) => Promise<WorkspaceLoginInfo>
   join: (email: string, password: string, inviteId: string, workspaceUrl: string) => Promise<WorkspaceLoginInfo>
-  createInvite: (exp: number, emailMask: string, limit: number, role: AccountRole) => Promise<string>
+  createInvite: (exp: number, limit: number, role: AccountRole) => Promise<string>
   /**
    * @param options.personalized
    * If true, will generate a link with a personalized token for one person access
@@ -158,7 +179,7 @@ export interface AccountClient {
     }
   ) => Promise<string>
   checkJoin: (inviteId: string) => Promise<WorkspaceLoginInfo>
-  joinByInvite: (inviteId: string) => Promise<WorkspaceLoginInfo>
+  joinByInvite: (inviteId: string, name?: { firstName?: string, lastName?: string }) => Promise<WorkspaceLoginInfo>
   checkAutoJoin: (inviteId: string, firstName?: string, lastName?: string) => Promise<WorkspaceLoginInfo>
   getInviteInfo: (inviteId: string) => Promise<WorkspaceInviteInfo>
   getWorkspaceSeats: () => Promise<WorkspaceSeatsInfo>
@@ -168,12 +189,22 @@ export interface AccountClient {
   getRegionInfo: () => Promise<RegionInfo[]>
   getLicenseInfo: () => Promise<LicenseInfo>
   getPasswordPolicy: () => Promise<PasswordPolicy>
-  createWorkspace: (name: string, region?: string, language?: string) => Promise<WorkspaceLoginInfo>
-  signUpOtp: (email: string, first: string, last: string, phone?: string) => Promise<OtpInfo>
+  createWorkspace: (
+    name: string,
+    region?: string,
+    language?: string,
+    onboarding?: boolean
+  ) => Promise<WorkspaceLoginInfo>
   /**
    * Deprecated. Only to be used for dev setups without mail service.
    */
-  signUp: (email: string, password: string, first: string, last: string) => Promise<LoginInfo>
+  signUp: (
+    email: string,
+    password: string,
+    first: string,
+    last: string,
+    consent?: { personalData: boolean, rules: boolean }
+  ) => Promise<LoginInfo>
   login: (email: string, password: string) => Promise<LoginInfo>
   loginAsGuest: () => Promise<LoginInfo>
   isReadOnlyGuest: () => Promise<boolean>
@@ -181,6 +212,7 @@ export interface AccountClient {
   getPersonInfo: (account: PersonUuid) => Promise<PersonInfo>
   getSocialIds: (includeDeleted?: boolean) => Promise<SocialId[]>
   getWorkspaceMembers: () => Promise<WorkspaceMemberInfo[]>
+  getWorkspaceMemberDetails: () => Promise<WorkspaceMemberWithDetails[]>
   updateWorkspaceRole: (account: string, role: AccountRole) => Promise<void>
   isAllowReadOnlyGuests: () => Promise<{ allowed: boolean }>
   updateAllowReadOnlyGuests: (
@@ -577,6 +609,24 @@ class AccountClientImpl implements AccountClient {
     return await this.rpc(request)
   }
 
+  async requestEmailOtp (
+    email: string,
+    details?: {
+      consent?: { personalData: boolean, rules: boolean }
+    }
+  ): Promise<OtpInfo> {
+    return await this.rpc({ method: 'requestEmailOtp' as const, params: { email, ...details } })
+  }
+
+  async confirmEmailOtp (
+    email: string,
+    code: string,
+    intent?: OnboardingIntent,
+    consent?: { personalData: boolean, rules: boolean }
+  ): Promise<LoginInfo> {
+    return await this.rpc({ method: 'confirmEmailOtp' as const, params: { email, code, intent, consent } })
+  }
+
   async getLoginInfoByToken (data?: LoginInfoRequestData): Promise<LoginInfoByToken> {
     const request = {
       method: 'getLoginInfoByToken' as const,
@@ -604,10 +654,10 @@ class AccountClientImpl implements AccountClient {
     return await this.rpc(request)
   }
 
-  async confirm (): Promise<LoginInfo> {
+  async confirm (consent?: { personalData: boolean, rules: boolean }): Promise<LoginInfo> {
     const request = {
       method: 'confirm' as const,
-      params: {}
+      params: { consent }
     }
 
     return await this.rpc(request)
@@ -701,6 +751,17 @@ class AccountClientImpl implements AccountClient {
     await this.rpc(request)
   }
 
+  async setOnboardingName (first: string, last: string): Promise<OnboardingState> {
+    return await this.rpc({ method: 'setOnboardingName' as const, params: { first, last } })
+  }
+
+  async completeOnboardingInvite (
+    name?: { firstName?: string, lastName?: string },
+    inviteId?: string
+  ): Promise<WorkspaceLoginInfo> {
+    return await this.rpc({ method: 'completeOnboardingInvite' as const, params: { name, inviteId } })
+  }
+
   async changePassword (oldPassword: string, newPassword: string): Promise<void> {
     const request = {
       method: 'changePassword' as const,
@@ -734,11 +795,12 @@ class AccountClientImpl implements AccountClient {
     first: string,
     last: string,
     inviteId: string,
-    workspaceUrl: string
+    workspaceUrl: string,
+    consent?: { personalData: boolean, rules: boolean }
   ): Promise<WorkspaceLoginInfo> {
     const request = {
       method: 'signUpJoin' as const,
-      params: { email, password, first, last, inviteId, workspaceUrl }
+      params: { email, password, first, last, inviteId, workspaceUrl, consent }
     }
 
     return await this.rpc(request)
@@ -753,10 +815,10 @@ class AccountClientImpl implements AccountClient {
     return await this.rpc(request)
   }
 
-  async createInvite (exp: number, emailMask: string, limit: number, role: AccountRole): Promise<string> {
+  async createInvite (exp: number, limit: number, role: AccountRole): Promise<string> {
     const request = {
       method: 'createInvite' as const,
-      params: { exp, emailMask, limit, role }
+      params: { exp, limit, role }
     }
 
     return await this.rpc(request)
@@ -771,10 +833,10 @@ class AccountClientImpl implements AccountClient {
     return await this.rpc(request)
   }
 
-  async joinByInvite (inviteId: string): Promise<WorkspaceLoginInfo> {
+  async joinByInvite (inviteId: string, name?: { firstName?: string, lastName?: string }): Promise<WorkspaceLoginInfo> {
     const request = {
       method: 'joinByInvite' as const,
-      params: { inviteId }
+      params: { inviteId, name }
     }
 
     return await this.rpc(request)
@@ -860,28 +922,30 @@ class AccountClientImpl implements AccountClient {
     return await this.rpc(request)
   }
 
-  async createWorkspace (workspaceName: string, region?: string, language?: string): Promise<WorkspaceLoginInfo> {
+  async createWorkspace (
+    workspaceName: string,
+    region?: string,
+    language?: string,
+    onboarding?: boolean
+  ): Promise<WorkspaceLoginInfo> {
     const request = {
       method: 'createWorkspace' as const,
-      params: { workspaceName, region, language }
+      params: { workspaceName, region, language, onboarding }
     }
 
     return await this.rpc(request)
   }
 
-  async signUpOtp (email: string, firstName: string, lastName: string, phone?: string): Promise<OtpInfo> {
-    const request = {
-      method: 'signUpOtp' as const,
-      params: { email, firstName, lastName, phone }
-    }
-
-    return await this.rpc(request)
-  }
-
-  async signUp (email: string, password: string, firstName: string, lastName: string): Promise<LoginInfo> {
+  async signUp (
+    email: string,
+    password: string,
+    firstName: string,
+    lastName: string,
+    consent?: { personalData: boolean, rules: boolean }
+  ): Promise<LoginInfo> {
     const request = {
       method: 'signUp' as const,
-      params: { email, password, firstName, lastName }
+      params: { email, password, firstName, lastName, consent }
     }
 
     return await this.rpc(request)
@@ -1019,6 +1083,10 @@ class AccountClientImpl implements AccountClient {
     }
 
     return await this.rpc(request)
+  }
+
+  async getWorkspaceMemberDetails (): Promise<WorkspaceMemberWithDetails[]> {
+    return await this.rpc({ method: 'getWorkspaceMemberDetails' as const, params: {} })
   }
 
   async updateWorkspaceRole (targetAccount: string, targetRole: AccountRole): Promise<void> {

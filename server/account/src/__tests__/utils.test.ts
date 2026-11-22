@@ -1012,17 +1012,17 @@ describe('account utils', () => {
             sent: true,
             retryOn: expect.any(Number)
           })
-          expect(mockDb.otp.deleteMany).toHaveBeenCalledWith({ socialId: mockSocialId._id, purpose: 'login' })
+          expect(mockDb.otp.deleteMany).toHaveBeenCalledWith({ socialId: mockSocialId._id, purpose: 'operation' })
           expect(mockDb.otp.insertOne).toHaveBeenCalledWith({
             socialId: mockSocialId._id,
-            purpose: 'login',
+            purpose: 'operation',
             code: expect.any(String),
             expiresOn: expect.any(Number),
             createdOn: expect.any(Number)
           })
         })
 
-        describe('activation link', () => {
+        describe('operation emails', () => {
           const mailSend = jest.fn()
 
           beforeEach(() => {
@@ -1048,46 +1048,6 @@ describe('account utils', () => {
           function sentHtml (): string {
             return mailSend.mock.calls[0][2][0].data.html
           }
-
-          test('is included while the email is unverified', async () => {
-            await sendOtp(mockCtx, mockDb, mockBranding, mockSocialId)
-
-            expect(sentHtml()).toContain('account:string:SignUpOtpHTML')
-
-            const [row] = (mockDb.shortLink.insertOne as jest.Mock).mock.calls[0]
-            expect(row.payload).toBe(generateToken(mockSocialId.personUuid))
-            // A raw JWT gets mangled by mail clients; the link must carry the short id instead.
-            expect(sentHtml()).toContain(`https://front.test/login/confirm?id=${row.id}`)
-            expect(row.id).toMatch(/^[A-Za-z0-9]{12}$/)
-          })
-
-          test('is omitted once the email is verified', async () => {
-            await sendOtp(mockCtx, mockDb, mockBranding, { ...mockSocialId, verifiedOn: Date.now() })
-
-            // A verified email is a plain login: a week-long bearer link there has no purpose.
-            expect(sentHtml()).toContain('account:string:OtpHTML')
-            expect(sentHtml()).not.toContain('/login/confirm')
-          })
-
-          test('is omitted when the link cannot be stored', async () => {
-            ;(mockDb.shortLink.insertOne as jest.Mock).mockRejectedValueOnce(new Error('duplicate id'))
-
-            await sendOtp(mockCtx, mockDb, mockBranding, mockSocialId)
-
-            // A code-only email still works; failing here would block sign in entirely.
-            expect(sentHtml()).toContain('account:string:OtpHTML')
-          })
-
-          test('is omitted when the front url is not configured', async () => {
-            ;(getMetadata as jest.Mock).mockImplementation((key) =>
-              key === accountPlugin.metadata.MailQueue ? { send: mailSend } : undefined
-            )
-
-            await sendOtp(mockCtx, mockDb, mockBranding, mockSocialId)
-
-            // Degrades to a code-only email instead of breaking sign in entirely.
-            expect(sentHtml()).toContain('account:string:OtpHTML')
-          })
 
           test('a self-service action gets its own letter, not the admin panel one', async () => {
             await sendOtp(mockCtx, mockDb, mockBranding, mockSocialId, 300, 'operation')
@@ -1118,19 +1078,16 @@ describe('account utils', () => {
         test('should return true for the right code', async () => {
           ;(mockDb.bumpOtpAttempts as jest.Mock).mockResolvedValue([{ code: '123456', attempts: 1 }])
 
-          const result = await isOtpValid(mockDb, socialIdId, '123456', 'login')
+          const result = await isOtpValid(mockDb, socialIdId, '123456')
           expect(result).toBe(true)
-          expect(mockDb.bumpOtpAttempts).toHaveBeenCalledWith(socialIdId, 'login', '123456', 5, {
-            decayMs: 24 * 60 * 60 * 1000,
-            lockMs: 60 * 60 * 1000
-          })
+          expect(mockDb.bumpOtpAttempts).toHaveBeenCalledWith(socialIdId)
           expect(mockDb.otp.deleteMany).not.toHaveBeenCalled()
         })
 
         test('should return false for a wrong code', async () => {
           ;(mockDb.bumpOtpAttempts as jest.Mock).mockResolvedValue([{ code: '654321', attempts: 2 }])
 
-          const result = await isOtpValid(mockDb, socialIdId, '123456', 'login')
+          const result = await isOtpValid(mockDb, socialIdId, '123456')
           expect(result).toBe(false)
           expect(mockDb.otp.deleteMany).not.toHaveBeenCalled()
         })
@@ -1138,7 +1095,7 @@ describe('account utils', () => {
         test('should return false when there is no live code', async () => {
           ;(mockDb.bumpOtpAttempts as jest.Mock).mockResolvedValue([])
 
-          const result = await isOtpValid(mockDb, socialIdId, '123456', 'login')
+          const result = await isOtpValid(mockDb, socialIdId, '123456')
           expect(result).toBe(false)
           expect(mockDb.otp.deleteMany).not.toHaveBeenCalled()
         })
@@ -1146,14 +1103,14 @@ describe('account utils', () => {
         test('should accept the right code on the last allowed attempt', async () => {
           ;(mockDb.bumpOtpAttempts as jest.Mock).mockResolvedValue([{ code: '123456', attempts: 5 }])
 
-          expect(await isOtpValid(mockDb, socialIdId, '123456', 'login')).toBe(true)
+          expect(await isOtpValid(mockDb, socialIdId, '123456')).toBe(true)
           expect(mockDb.otp.deleteMany).not.toHaveBeenCalled()
         })
 
         test('should keep the code on the last allowed miss', async () => {
           ;(mockDb.bumpOtpAttempts as jest.Mock).mockResolvedValue([{ code: '654321', attempts: 5 }])
 
-          expect(await isOtpValid(mockDb, socialIdId, '123456', 'login')).toBe(false)
+          expect(await isOtpValid(mockDb, socialIdId, '123456')).toBe(false)
           // The row stays until it expires: sendOtp throttles new codes by its createdOn.
           expect(mockDb.otp.deleteMany).not.toHaveBeenCalled()
         })
@@ -1161,7 +1118,7 @@ describe('account utils', () => {
         test('should refuse the right code once the budget is spent', async () => {
           ;(mockDb.bumpOtpAttempts as jest.Mock).mockResolvedValue([{ code: '123456', attempts: 6 }])
 
-          expect(await isOtpValid(mockDb, socialIdId, '123456', 'login')).toBe(false)
+          expect(await isOtpValid(mockDb, socialIdId, '123456')).toBe(false)
           expect(mockDb.otp.deleteMany).not.toHaveBeenCalled()
         })
       })
@@ -2044,6 +2001,7 @@ describe('account utils', () => {
     } as unknown as MeasureContext
 
     const mockDb = {
+      resetEmailOtpMisses: jest.fn(),
       socialId: {
         find: jest.fn(() => []),
         findOne: jest.fn(),
@@ -2097,7 +2055,9 @@ describe('account utils', () => {
         email,
         firstName,
         lastName,
-        mockSocialId
+        mockSocialId,
+        false,
+        true
       )
 
       expect(result).toEqual({

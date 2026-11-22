@@ -271,6 +271,8 @@
     "SendCode": "コードを送信",
     "SeatLimitReached": "空き席がありません",
     "SeatLimitReachedDescription": "ワークスペースはプランの席数上限に達しています。この役割を割り当てるには、席を空けるかプランをアップグレードしてください。",
+    "DocumentGuest": "ドキュメントゲスト",
+    "SystemAdministrator": "システム管理者",
     "WebhookAccess": "送信Webhook",
     "WebhookIncomingAccess": "受信Webhook",
     "WebhookIncomingPlaceholderProject": "上でプロジェクトのスペースを選択すると、ここに実際の識別子が使われます。",

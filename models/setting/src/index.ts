@@ -133,7 +133,6 @@ export class TClassifierOrder extends TClass implements ClassifierOrder {
 @UX(setting.string.InviteSettings)
 export class TInviteSettings extends TConfiguration implements InviteSettings {
   expirationTime!: number
-  emailMask!: string
   limit!: number
 }
 

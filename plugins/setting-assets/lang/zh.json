@@ -271,6 +271,8 @@
     "SendCode": "发送验证码",
     "SeatLimitReached": "没有空闲席位",
     "SeatLimitReachedDescription": "工作区已达到套餐席位上限。请释放一个席位或升级套餐后再分配此角色。",
+    "DocumentGuest": "文档访客",
+    "SystemAdministrator": "系统管理员",
     "WebhookAccess": "出站 Webhook",
     "WebhookIncomingAccess": "入站 Webhook",
     "WebhookIncomingPlaceholderProject": "在上方选择一个项目空间，即可在此处使用其真实标识符。",

@@ -262,6 +262,8 @@
     "SendCode": "Enviar código",
     "SeatLimitReached": "Sem vagas livres",
     "SeatLimitReachedDescription": "O espaço de trabalho atingiu o limite de vagas do plano. Libere uma vaga ou faça upgrade do plano para atribuir esta função.",
+    "DocumentGuest": "Convidado de documentos",
+    "SystemAdministrator": "Administrador do sistema",
     "WebhookAccess": "Webhooks de saída",
     "WebhookIncomingAccess": "Webhooks de entrada",
     "WebhookIncomingPlaceholderProject": "Escolha um espaço de projeto acima para usar aqui o identificador real dele.",

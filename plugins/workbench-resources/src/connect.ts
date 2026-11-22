@@ -1,19 +1,25 @@
 import { getClient as getAccountClient, type WorkspaceLoginInfo } from '@hcengineering/account-client'
 import { Analytics } from '@hcengineering/analytics'
 import client from '@hcengineering/client'
-import contact, { ensureEmployee, setCurrentEmployee, setCurrentEmployeeSpace } from '@hcengineering/contact'
+import {
+  type Employee,
+  type PersonSpace,
+  ensureEmployeeDomain,
+  setCurrentEmployee,
+  setCurrentEmployeeSpace
+} from '@hcengineering/contact'
 import core, {
   type Account,
   AccountRole,
   type Client,
   ClientConnectEvent,
   concatLink,
-  type Person as GlobalPerson,
   isWorkspaceCreating,
   type MeasureMetricsContext,
   metricsToString,
   platformNow,
   pickPrimarySocialId,
+  type Ref,
   setCurrentAccount,
   type SocialId,
   type Version,
@@ -508,10 +514,11 @@ export async function connect (title: string): Promise<Client | undefined> {
 
   // Ensure employee and social identifiers
   if (workspaceLoginInfo.role !== AccountRole.Admin) {
-    const [employee, spaceByAccount] = await Promise.all([
-      ensureEmployee(ctx, me, newClient, socialIds, getGlobalPerson),
-      newClient.findOne(contact.class.PersonSpace, { members: account }, { projection: { _id: 1, person: 1 } })
-    ])
+    const { value } = await newClient.domainRequest<{ employee: Ref<Employee>, personSpace?: Ref<PersonSpace> } | null>(
+      ensureEmployeeDomain,
+      {}
+    )
+    const employee = value?.employee
 
     if (employee == null) {
       console.log('Failed to ensure employee')
@@ -522,15 +529,9 @@ export async function connect (title: string): Promise<Client | undefined> {
       return
     }
 
-    // A first login creates the employee, and with it the space, only during ensureEmployee.
-    const space =
-      spaceByAccount?.person === employee
-        ? spaceByAccount
-        : await newClient.findOne(contact.class.PersonSpace, { person: employee }, { projection: { _id: 1 } })
-
     setCurrentEmployee(employee)
-    if (space !== undefined) {
-      setCurrentEmployeeSpace(space._id)
+    if (value?.personSpace !== undefined) {
+      setCurrentEmployeeSpace(value.personSpace)
     } else {
       console.error('Failed to find space for employee')
     }
@@ -626,16 +627,4 @@ export async function connect (title: string): Promise<Client | undefined> {
   console.log(metricsToString((ctx as MeasureMetricsContext).metrics, 'connect', 50))
   setIsPasswordAgain(workspaceLoginInfo.passwordAging !== undefined && workspaceLoginInfo.passwordAging !== 'ok')
   return newClient
-}
-
-async function getGlobalPerson (): Promise<GlobalPerson | undefined> {
-  const getPerson = await getResource(login.function.GetPerson)
-  const [status, globalPerson] = await getPerson()
-
-  if (status !== OK) {
-    console.error('Error getting global person')
-    return undefined
-  }
-
-  return globalPerson
 }

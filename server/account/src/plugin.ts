@@ -92,8 +92,6 @@ export const accountPlugin = plugin(accountId, {
     NoAccountText: '' as IntlString,
     NoAccountHTML: '' as IntlString,
     NoAccountSubject: '' as IntlString,
-    SignUpOtpText: '' as IntlString,
-    SignUpOtpHTML: '' as IntlString,
     AdminOtpText: '' as IntlString,
     AdminOtpHTML: '' as IntlString,
     AdminOtpSubject: '' as IntlString,

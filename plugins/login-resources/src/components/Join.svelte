@@ -14,16 +14,16 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import platform, { getMetadata, setMetadata, OK, Severity, Status } from '@hcengineering/platform'
+  import platform, { getMetadata, setMetadata, OK, PlatformError, Severity, Status } from '@hcengineering/platform'
   import { Analytics } from '@hcengineering/analytics'
   import type { LoginInfo, WorkspaceLoginInfo } from '@hcengineering/account-client'
-  import { readOnlyGuestAccountUuid } from '@hcengineering/core'
+  import { readOnlyGuestAccountUuid, type PersonUuid } from '@hcengineering/core'
   import presentation from '@hcengineering/presentation'
   import { type Location, getCurrentLocation, navigate, setMetadataLocalStorage } from '@hcengineering/ui'
   import { logIn, workbenchId } from '@hcengineering/workbench'
   import { onMount } from 'svelte'
 
-  import { getAccount, getInviteInfo, joinByInvite, setLoginInfo } from '../utils'
+  import { getAccount, getAccountClient, getInviteInfo, joinByInvite, setLoginInfo } from '../utils'
   import { LoginMethods } from '../index'
   import type { BottomAction } from '../index'
   import login from '../plugin'
@@ -31,7 +31,9 @@
   import FormButton from './internal/FormButton.svelte'
   import SignupForm from './SignupForm.svelte'
   import LoginPasswordForm from './LoginPasswordForm.svelte'
-  import LoginOtpForm from './LoginOtpForm.svelte'
+  import BottomActionComponent from './BottomAction.svelte'
+  import EmailFirstForm from './EmailFirstForm.svelte'
+  import RegistrationDetails from './RegistrationDetails.svelte'
   import StatusControl from './StatusControl.svelte'
 
   const location = getCurrentLocation()
@@ -39,15 +41,23 @@
   Analytics.handleEvent('invite_link_activated', { invite_id: location.query?.inviteId })
 
   // Step management
-  type JoinStep = 'initial' | 'signup' | 'login'
+  type JoinStep = 'initial' | 'signup' | 'login' | 'name'
   let step: JoinStep = 'initial'
   let hasExistingAccount = false
   let existingAccountEmail = ''
   let existingAccountName = ''
   let workspaceName = ''
+  let inviterName = ''
+  let checkingInvitation = true
+  let checkingAccount = true
+  let invalidInvitation = false
+  let invitationError: Status = OK
   let joiningWithCurrentAccount = false
+  let completingOnboardingInvite = false
   let invitationExpired = false
   let noFreeSeats = false
+  let firstName = ''
+  let lastName = ''
 
   // Login method for existing account
   let loginMethod: LoginMethods = LoginMethods.Password
@@ -86,19 +96,13 @@
       return
     }
 
-    // After successful auth (signup, password login, or OTP), join the workspace
     status = new Status(Severity.INFO, login.status.ConnectingToServer, {})
     setMetadata(presentation.metadata.Token, loginInfo.token)
     setMetadataLocalStorage(login.metadata.LoginAccount, loginInfo.account)
 
     try {
-      const inviteId = location.query?.inviteId ?? ''
-      const [joinStatus, joinResult] = await joinByInvite(inviteId)
-      if (joinResult != null) {
-        await handleLoginSuccess(joinResult)
-      } else {
-        status = toJoinStatus(joinStatus)
-      }
+      await logIn(loginInfo)
+      await showNameStep(loginInfo)
     } catch (err: any) {
       Analytics.handleError(err)
       status = new Status(Severity.ERROR, login.status.JoinWorkspaceError, {})
@@ -112,8 +116,43 @@
     status = new Status(Severity.INFO, login.status.ConnectingToServer, {})
 
     try {
+      const account = await getAccount(false)
+      if (account != null) await showNameStep(account)
+    } catch (err: any) {
+      Analytics.handleError(err)
+      status = new Status(Severity.ERROR, login.status.JoinWorkspaceError, {})
+      joiningWithCurrentAccount = false
+    }
+  }
+
+  async function showNameStep (account: LoginInfo): Promise<void> {
+    const profile = await getAccountClient().getUserProfile(account.account as unknown as PersonUuid)
+    firstName = profile?.firstName ?? ''
+    lastName = profile?.lastName ?? ''
+    completingOnboardingInvite =
+      account.onboarding?.stage !== 'complete' &&
+      account.onboarding?.intent.kind === 'invite' &&
+      account.onboarding.intent.inviteId === location.query?.inviteId
+    status = OK
+    joiningWithCurrentAccount = false
+    step = 'name'
+  }
+
+  async function joinCurrentInvite (event: CustomEvent<{ firstName: string, lastName: string }>): Promise<void> {
+    joiningWithCurrentAccount = true
+    status = new Status(Severity.INFO, login.status.ConnectingToServer, {})
+    try {
       const inviteId = location.query?.inviteId ?? ''
-      const [joinStatus, joinResult] = await joinByInvite(inviteId)
+      const name = {
+        ...(firstName.trim() === '' ? { firstName: event.detail.firstName } : {}),
+        ...(lastName.trim() === '' ? { lastName: event.detail.lastName } : {})
+      }
+      if (completingOnboardingInvite) {
+        const result = await getAccountClient().completeOnboardingInvite(name, inviteId)
+        await handleLoginSuccess(result)
+        return
+      }
+      const [joinStatus, joinResult] = await joinByInvite(inviteId, name)
       if (joinResult != null) {
         await handleLoginSuccess(joinResult)
       } else {
@@ -122,7 +161,13 @@
       }
     } catch (err: any) {
       Analytics.handleError(err)
-      status = new Status(Severity.ERROR, login.status.JoinWorkspaceError, {})
+      if (err instanceof PlatformError && err.status.code === platform.status.PlanLimitExceeded) {
+        noFreeSeats = true
+        joiningWithCurrentAccount = false
+        return
+      }
+      status =
+        err instanceof PlatformError ? err.status : new Status(Severity.ERROR, login.status.JoinWorkspaceError, {})
       joiningWithCurrentAccount = false
     }
   }
@@ -134,20 +179,29 @@
 
   async function loadWorkspaceInfo (): Promise<void> {
     const inviteId = location.query?.inviteId
-    if (inviteId != null) {
-      const [inviteStatus, info] = await getInviteInfo(inviteId)
-      if (inviteStatus.code === platform.status.ExpiredLink) {
-        invitationExpired = true
-        return
-      }
-      if (info?.seatsAvailable === false) {
-        noFreeSeats = true
-        return
-      }
-      if (info?.name != null) {
-        workspaceName = info.name
-      }
+    if (inviteId == null || inviteId === '') {
+      invalidInvitation = true
+      checkingInvitation = false
+      return
     }
+    const [inviteStatus, info] = await getInviteInfo(inviteId)
+    if (inviteStatus.code === platform.status.ExpiredLink) {
+      invitationExpired = true
+    } else if (
+      [platform.status.Forbidden, platform.status.BadRequest, platform.status.WorkspaceNotFound].includes(
+        inviteStatus.code
+      )
+    ) {
+      invalidInvitation = true
+    } else if (inviteStatus !== OK) {
+      invitationError = inviteStatus
+    } else if (info == null) {
+      invalidInvitation = true
+    } else {
+      workspaceName = info.name ?? ''
+      inviterName = info.inviterName ?? ''
+    }
+    checkingInvitation = false
   }
 
   async function checkExistingAccount (): Promise<void> {
@@ -162,10 +216,16 @@
         existingAccountEmail = loginInfo.socialId != null ? loginInfo.socialId.split(':').slice(1).join(':') : ''
         setMetadata(presentation.metadata.Token, loginInfo.token)
         setMetadataLocalStorage(login.metadata.LoginAccount, loginInfo.account)
+        if (useOTP) await showNameStep(loginInfo)
+      } else if (useOTP) {
+        step = 'signup'
       }
     } catch (err: any) {
       // Token expired or invalid, user will need to log in again
       hasExistingAccount = false
+      if (useOTP) step = 'signup'
+    } finally {
+      checkingAccount = false
     }
   }
 
@@ -179,16 +239,14 @@
   }
 
   function goBackToInitial (): void {
-    step = 'initial'
+    step = useOTP ? 'signup' : 'initial'
     status = OK
     loginMethod = LoginMethods.Password
   }
 
   const switchToPasswordAction: BottomAction = {
     i18n: login.string.LoginWithPassword,
-    func: () => {
-      loginMethod = LoginMethods.Password
-    }
+    func: goToLogin
   }
 
   const switchToOtpAction: BottomAction = {
@@ -199,27 +257,35 @@
   }
 </script>
 
+{#if step !== 'name' && !checkingInvitation && !invitationExpired && !invalidInvitation && invitationError === OK && workspaceName !== ''}
+  <div class="invitation-context" data-testid="invitation-context">
+    {#if inviterName !== ''}
+      <Label label={login.string.InvitationFrom} params={{ name: inviterName, workspace: workspaceName }} />
+    {:else}
+      <Label label={login.string.InvitationTo} params={{ workspace: workspaceName }} />
+    {/if}
+  </div>
+{/if}
+
 {#if noFreeSeats}
   <div class="initial-container">
-    <div class="title mb-2">
-      <Label label={login.string.NoFreeSeats} />
-    </div>
+    <div class="title mb-2"><Label label={login.string.NoFreeSeats} /></div>
     <div class="description"><Label label={login.string.NoFreeSeatsDescription} /></div>
   </div>
-{:else if invitationExpired}
+{:else if checkingInvitation || (useOTP && checkingAccount)}
+  <div class="initial-container"><Label label={login.string.CheckingLink} /></div>
+{:else if invitationExpired || invalidInvitation}
   <div class="initial-container">
     <div class="title mb-2">
-      <Label label={login.string.ExpiredLink} />
+      <Label label={invitationExpired ? login.string.ExpiredLink : login.string.InvalidLink} />
     </div>
     <div class="description"><Label label={login.string.ExpiredLinkDescription} /></div>
   </div>
+{:else if invitationError !== OK}
+  <div class="initial-container"><StatusControl status={invitationError} /></div>
 {:else if step === 'initial'}
   <div class="initial-container">
     <div class="title"><Label label={login.string.Join} /></div>
-    {#if workspaceName !== ''}
-      <div class="workspace-name">{workspaceName}</div>
-    {/if}
-
     {#if status !== OK}
       <div class="status mt-4"><StatusControl {status} /></div>
     {/if}
@@ -259,13 +325,26 @@
       />
     </div>
   </div>
+{:else if step === 'name'}
+  <RegistrationDetails
+    invited
+    {status}
+    initialFirstName={firstName}
+    initialLastName={lastName}
+    invitationWorkspace={workspaceName}
+    invitationInviter={inviterName}
+    differentAccount={useOTP ? goToSignup : undefined}
+    on:complete={joinCurrentInvite}
+  />
 {:else if step === 'signup'}
   <div class="form-container">
-    <div class="back-row">
-      <FormButton type="button" kind="ghost" size="small" shape="round" on:click={goBackToInitial}>
-        <Label label={login.string.BackLabel} />
-      </FormButton>
-    </div>
+    {#if !useOTP}
+      <div class="back-row">
+        <FormButton type="button" kind="ghost" size="small" shape="round" on:click={goBackToInitial}>
+          <Label label={login.string.BackLabel} />
+        </FormButton>
+      </div>
+    {/if}
 
     {#if status !== OK}
       <div class="status">
@@ -273,12 +352,16 @@
       </div>
     {/if}
 
-    <SignupForm
-      caption={login.string.SignUpAndJoin}
-      subtitle={workspaceName !== '' ? workspaceName : undefined}
-      onSignUp={handleJoinAfterAuth}
-      {useOTP}
-    />
+    {#if useOTP}
+      <EmailFirstForm
+        caption={login.string.SignUpAndJoin}
+        intent={{ kind: 'invite', inviteId: location.query?.inviteId ?? '' }}
+        onLogin={handleJoinAfterAuth}
+      />
+      <div class="text-center"><BottomActionComponent action={switchToPasswordAction} /></div>
+    {:else}
+      <SignupForm caption={login.string.SignUpAndJoin} onSignUp={handleJoinAfterAuth} />
+    {/if}
   </div>
 {:else if step === 'login'}
   <div class="form-container">
@@ -295,16 +378,15 @@
     {/if}
 
     {#if loginMethod === LoginMethods.Otp}
-      <LoginOtpForm
+      <EmailFirstForm
         caption={login.string.LogInAndJoin}
-        subtitle={workspaceName !== '' ? workspaceName : undefined}
         onLogin={handleJoinAfterAuth}
-        extraBottomActions={[switchToPasswordAction]}
+        intent={{ kind: 'invite', inviteId: location.query?.inviteId ?? '' }}
       />
+      <div class="text-center"><BottomActionComponent action={switchToPasswordAction} /></div>
     {:else}
       <LoginPasswordForm
         caption={login.string.LogInAndJoin}
-        subtitle={workspaceName !== '' ? workspaceName : undefined}
         onLogin={handleJoinAfterAuth}
         extraBottomActions={[switchToOtpAction]}
       />
@@ -313,6 +395,13 @@
 {/if}
 
 <style lang="scss">
+  .invitation-context {
+    padding: 2rem 2rem 0;
+    color: var(--login-label-color, var(--login-content-color, var(--theme-content-color)));
+    font-size: 0.875rem;
+    line-height: 1.3125rem;
+    overflow-wrap: anywhere;
+  }
   .initial-container {
     display: flex;
     flex-direction: column;
@@ -337,14 +426,6 @@
     font-weight: var(--login-title-font-weight, 500);
     font-size: var(--login-title-font-size, 1.25rem);
     color: var(--login-caption-color, var(--theme-caption-color));
-    text-align: center;
-  }
-
-  .workspace-name {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--login-caption-color, var(--theme-caption-color));
-    margin-bottom: 1.5rem;
     text-align: center;
   }
 

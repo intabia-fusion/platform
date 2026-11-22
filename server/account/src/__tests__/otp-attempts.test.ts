@@ -16,10 +16,11 @@
 import { type MeasureContext, type PersonId, type PersonUuid, SocialIdType } from '@hcengineering/core'
 import platform, { getMetadata, PlatformError, Severity, Status } from '@hcengineering/platform'
 import { decodeTokenVerbose, generateToken } from '@hcengineering/server-token'
+import crypto from 'crypto'
 
 import { login, loginByLink, loginOtp, requestPasswordReset, restorePassword, validateOtp } from '../operations'
 import { accountPlugin } from '../plugin'
-import { type AccountDB, type OTP, type OtpIssue, type OtpPurpose, type SocialId } from '../types'
+import { type AccountDB, type EmailOtpState, type OTP, type OtpIssue, type OtpPurpose, type SocialId } from '../types'
 import * as utils from '../utils'
 
 jest.mock('@hcengineering/platform', () => {
@@ -59,6 +60,7 @@ const sidTemplate: SocialId = {
 // UPDATE ... RETURNING in postgres a call is atomic: parallel guesses get distinct counters.
 function createFakeDb (): { db: AccountDB, rows: OTP[], social: SocialId, other: SocialId, account: any } {
   const rows: OTP[] = []
+  const unknownStates = new Map<string, EmailOtpState>()
   const account: any = { uuid: personUuid, failedLoginAttempts: 0 }
   // Issues queue like the row lock of the social id in postgres.
   let issuing: Promise<unknown> = Promise.resolve()
@@ -71,11 +73,58 @@ function createFakeDb (): { db: AccountDB, rows: OTP[], social: SocialId, other:
     key: 'email:other@example.com'
   }
   const matches = (row: any, query: Record<string, any>): boolean =>
-    Object.entries(query).every(([key, value]) =>
-      value !== null && typeof value === 'object' && '$gt' in value ? row[key] > value.$gt : row[key] === value
-    )
+    Object.entries(query).every(([key, value]) => {
+      if (value !== null && typeof value === 'object') {
+        if ('$gt' in value) return row[key] > value.$gt
+        if ('$in' in value) return value.$in.includes(row[key]) === true
+      }
+      return row[key] === value
+    })
 
   const db = {
+    resetEmailOtpMisses: async () => {},
+    withEmailOtp: async (
+      address: string,
+      fn: (state: EmailOtpState, resolve: () => Promise<any>) => Promise<unknown>
+    ) => {
+      const run = issuing.then(async () => {
+        const identity = [social, other].find((item) => item.value === address)
+        const live = rows
+          .filter((row) => row.socialId === identity?._id && row.purpose === 'login')
+          .sort((a, b) => b.createdOn - a.createdOn)[0]
+        const state: EmailOtpState = {
+          code: live?.code ?? null,
+          createdOn: live?.createdOn ?? 0,
+          expiresOn: live?.expiresOn ?? 0,
+          attempts: live?.attempts ?? 0,
+          misses: identity?.loginOtpMisses ?? 0,
+          missedOn: identity?.loginOtpMissedOn ?? 0
+        }
+        if (identity === undefined) Object.assign(state, unknownStates.get(address))
+        const result = await fn(state, async () =>
+          identity === undefined ? null : { socialId: identity, account, created: false }
+        )
+        if (identity !== undefined) {
+          identity.loginOtpMisses = state.misses
+          identity.loginOtpMissedOn = state.missedOn
+          const index = rows.findIndex((row) => row.socialId === identity._id && row.purpose === 'login')
+          if (index >= 0) rows.splice(index, 1)
+          if (state.code !== null) {
+            rows.push({
+              socialId: identity._id,
+              purpose: 'login',
+              code: state.code,
+              createdOn: state.createdOn,
+              expiresOn: state.expiresOn,
+              attempts: state.attempts
+            })
+          }
+        } else unknownStates.set(address, state)
+        return result
+      })
+      issuing = run.catch(() => undefined)
+      return await run
+    },
     otp: {
       find: async (query: Partial<OTP>, _sort?: unknown, limit?: number) =>
         rows
@@ -92,28 +141,11 @@ function createFakeDb (): { db: AccountDB, rows: OTP[], social: SocialId, other:
         }
       }
     },
-    bumpOtpAttempts: async (
-      socialId: PersonId,
-      purpose: OtpPurpose,
-      guess: string,
-      maxAttempts: number,
-      miss: { decayMs: number, lockMs: number }
-    ) => {
-      const live = rows.filter((r) => r.socialId === socialId && r.purpose === purpose && r.expiresOn > Date.now())
+    bumpOtpAttempts: async (socialId: PersonId) => {
+      const live = rows.filter((r) => r.socialId === socialId && r.purpose === 'operation' && r.expiresOn > Date.now())
       live.forEach((r) => {
         r.attempts += 1
       })
-      // Same rule as postgres: a wrong guess at a login code that still takes guesses is a miss, and a
-      // streak whose last miss is older than decayMs, or whose lock is over, starts over.
-      const open = live.filter((r) => r.attempts <= maxAttempts)
-      if (purpose === 'login' && open.length > 0 && open.every((r) => r.code !== guess)) {
-        const misses = social.loginOtpMisses ?? 0
-        const missedOn = social.loginOtpMissedOn ?? 0
-        const streak =
-          missedOn >= Date.now() - miss.decayMs && !(misses >= maxAttempts && missedOn < Date.now() - miss.lockMs)
-        social.loginOtpMisses = streak ? (social.loginOtpMisses ?? 0) + 1 : 1
-        social.loginOtpMissedOn = Date.now()
-      }
       return live.map((r) => ({ ...r }))
     },
     withOtpIssue: async (socialId: PersonId, purpose: OtpPurpose, fn: (issue: OtpIssue) => Promise<unknown>) => {
@@ -189,7 +221,7 @@ describe('otp attempts', () => {
   // Both issue helpers insist the mail went out, so a refused issue fails the test at once.
   const issue = async (): Promise<string> => {
     mailSend.mockClear()
-    await utils.sendOtp(ctx, db, null, sid)
+    await loginOtp(ctx, db, null, 'token', { email })
     expect(mailSend).toHaveBeenCalledTimes(1)
     return newestCode()
   }
@@ -216,9 +248,9 @@ describe('otp attempts', () => {
     await miss(5)
     dropLockLetter()
   }
-  // What sendOtp refuses with while the wrong guesses hold the wait.
+  // What loginOtp refuses with while the wrong guesses hold the wait.
   const refusal = async (): Promise<any> =>
-    await utils.sendOtp(ctx, db, null, sid).then(
+    await loginOtp(ctx, db, null, 'token', { email }).then(
       () => undefined,
       (err) => err
     )
@@ -301,7 +333,7 @@ describe('otp attempts', () => {
   test('operation guesses at another social id are not counted against the code', async () => {
     const code = await issueOperation()
     for (let i = 0; i < 6; i++) {
-      await utils.isOtpValid(db, 'stranger-social-id' as PersonId, wrongCode(), 'operation')
+      await utils.isOtpValid(db, 'stranger-social-id' as PersonId, wrongCode())
     }
 
     await expect(verify(code)).resolves.toBeUndefined()
@@ -310,7 +342,7 @@ describe('otp attempts', () => {
   describe('several live codes (parallel sendOtp calls)', () => {
     const row = (code: string, createdOn: number): OTP => ({
       socialId: sid._id,
-      purpose: 'login',
+      purpose: 'operation',
       code,
       createdOn,
       expiresOn: now + 600 * 1000,
@@ -320,8 +352,8 @@ describe('otp attempts', () => {
     test('the right code of an older row is refused, the newest row works', async () => {
       rows.push(row('111111', now - 1000), row('222222', now))
 
-      await expect(validate('111111')).rejects.toThrow(invalidOtp)
-      await expect(validate('222222')).resolves.toMatchObject({ account: personUuid })
+      expect(await utils.isOtpValid(db, sid._id, '111111')).toBe(false)
+      expect(await utils.isOtpValid(db, sid._id, '222222')).toBe(true)
     })
 
     test.each([
@@ -330,13 +362,17 @@ describe('otp attempts', () => {
     ])('rows from the same millisecond: the greater code wins, whatever the order (%s)', async (_name, codes) => {
       rows.push(...codes.map((code) => row(code, now)))
 
-      expect(await utils.isOtpValid(db, sid._id, '333333', 'login')).toBe(false)
-      expect(await utils.isOtpValid(db, sid._id, '444444', 'login')).toBe(true)
+      expect(await utils.isOtpValid(db, sid._id, '333333')).toBe(false)
+      expect(await utils.isOtpValid(db, sid._id, '444444')).toBe(true)
     })
   })
 
-  describe('sendOtp', () => {
+  describe('loginOtp', () => {
     test('a new code replaces the old one', async () => {
+      jest
+        .spyOn(crypto, 'randomInt')
+        .mockImplementationOnce(() => 111111)
+        .mockImplementationOnce(() => 222222)
       const first = await issue()
       now += 61 * 1000
 
@@ -344,14 +380,8 @@ describe('otp attempts', () => {
 
       expect(second).not.toBe(first)
       expect(rows).toHaveLength(1)
-      expect(await utils.isOtpValid(db, sid._id, first, 'login')).toBe(false)
-      expect(await utils.isOtpValid(db, sid._id, second, 'login')).toBe(true)
-    })
-
-    // A request inside the wait pays neither for the scan of the otp table by code nor for the lock of the social id.
-    const spyOnIssue = (): { findOne: jest.SpyInstance, lock: jest.SpyInstance } => ({
-      findOne: jest.spyOn(db.otp, 'findOne'),
-      lock: jest.spyOn(db, 'withOtpIssue')
+      await expect(validate(first)).rejects.toThrow(invalidOtp)
+      await expect(validate(second)).resolves.toMatchObject({ account: personUuid })
     })
 
     describe('a request inside the wait', () => {
@@ -359,24 +389,17 @@ describe('otp attempts', () => {
         const first = await issue()
         const retryOn = now + 60 * 1000
         now += 10 * 1000
-        const spies = spyOnIssue()
+        await expect(loginOtp(ctx, db, null, 'token', { email })).resolves.toEqual({ sent: true, retryOn })
 
-        await expect(utils.sendOtp(ctx, db, null, sid)).resolves.toEqual({ sent: true, retryOn })
-
-        expect(spies.findOne).not.toHaveBeenCalled()
-        expect(spies.lock).not.toHaveBeenCalled()
         expect(rows.map((r) => r.code)).toEqual([first])
       })
 
       test('after the wait a code is generated and issued under the lock', async () => {
         await issue()
         now += 61 * 1000
-        const spies = spyOnIssue()
+        const next = await issue()
 
-        await issue()
-
-        expect(spies.findOne).toHaveBeenCalledWith({ code: expect.any(String) })
-        expect(spies.lock).toHaveBeenCalledTimes(1)
+        expect(rows.map((row) => row.code)).toEqual([next])
       })
     })
 
@@ -384,6 +407,10 @@ describe('otp attempts', () => {
       let dead: string
 
       beforeEach(async () => {
+        jest
+          .spyOn(crypto, 'randomInt')
+          .mockImplementationOnce(() => 111111)
+          .mockImplementation(() => 222222)
         dead = await issue()
         await exhaust()
         mailSend.mockClear()
@@ -391,17 +418,13 @@ describe('otp attempts', () => {
 
       test('a request inside the wait sends no mail, generates no code and revives nothing', async () => {
         now += 10 * 1000
-        const spies = spyOnIssue()
-
         const refused = await refusal()
 
         expect(refused).toBeInstanceOf(PlatformError)
         expect(refused.status.code).toBe(platform.status.TooManyOtpAttempts)
         expect(mailSend).not.toHaveBeenCalled()
-        expect(spies.findOne).not.toHaveBeenCalled()
-        expect(spies.lock).not.toHaveBeenCalled()
         expect(rows.map((r) => r.code)).toEqual([dead])
-        expect(await utils.isOtpValid(db, sid._id, dead, 'login')).toBe(false)
+        await expect(validate(dead)).rejects.toThrow(invalidOtp)
       })
 
       test('a request after the wait replaces the dead code with a fresh one', async () => {
@@ -411,8 +434,8 @@ describe('otp attempts', () => {
 
         expect(rows).toHaveLength(1)
         expect(rows[0].attempts).toBe(0)
-        expect(await utils.isOtpValid(db, sid._id, dead, 'login')).toBe(false)
-        expect(await utils.isOtpValid(db, sid._id, fresh, 'login')).toBe(true)
+        await expect(validate(dead)).rejects.toThrow(invalidOtp)
+        await expect(validate(fresh)).resolves.toMatchObject({ account: personUuid })
       })
     })
   })
@@ -520,7 +543,10 @@ describe('otp attempts', () => {
       mailSend.mockClear()
 
       // The second code can still be typed, so the answer stays sent, but no new code goes out.
-      await expect(utils.sendOtp(ctx, db, null, sid)).resolves.toEqual({ sent: true, retryOn: missedAt + wait })
+      await expect(loginOtp(ctx, db, null, 'token', { email })).resolves.toEqual({
+        sent: true,
+        retryOn: missedAt + wait
+      })
       expect(mailSend).not.toHaveBeenCalled()
     })
 
@@ -628,12 +654,15 @@ describe('otp attempts', () => {
         const missedAt = now
         now += 10 * 1000
 
-        await expect(utils.sendOtp(ctx, db, null, sid)).resolves.toEqual({ sent: true, retryOn: missedAt + wait })
+        await expect(loginOtp(ctx, db, null, 'token', { email })).resolves.toEqual({
+          sent: true,
+          retryOn: missedAt + wait
+        })
 
         expect(rows.map((r) => r.code)).toEqual([live])
       })
 
-      test('signUpOtp and loginOtp pass it on', async () => {
+      test('loginOtp passes it on', async () => {
         await issue()
         await exhaust()
         now += 10 * 1000
@@ -654,7 +683,7 @@ describe('otp attempts', () => {
       jest.spyOn(utils, 'getEmailSocialId').mockResolvedValue(null)
     })
 
-    test('loginOtp answers sent and mails the sign up link once per delay', async () => {
+    test('loginOtp answers sent and mails a code once per delay', async () => {
       const to = unknown()
 
       const first = await loginOtp(ctx, db, null, 'token', { email: to })
@@ -662,7 +691,7 @@ describe('otp attempts', () => {
 
       expect(first).toEqual({ sent: true, retryOn: now + 60 * 1000 })
       expect(lettersTo(to)).toHaveLength(1)
-      expect(lettersTo(to)[0][2][0].data.text).toContain('https://front.example.com/login/signup')
+      expect(lettersTo(to)[0][2][0].data.text).toContain('account:string:OtpText')
 
       now += 61 * 1000
       await loginOtp(ctx, db, null, 'token', { email: to })
@@ -904,7 +933,7 @@ describe('otp attempts', () => {
       now += 60 * 60 * 1000
       mailSend.mockClear()
 
-      await Promise.all(Array.from({ length: 6 }, async () => await utils.sendOtp(ctx, db, null, sid)))
+      await Promise.all(Array.from({ length: 6 }, async () => await loginOtp(ctx, db, null, 'token', { email })))
       await exhaust()
       mailSend.mockClear()
 
@@ -917,10 +946,10 @@ describe('otp attempts', () => {
     test('a code that could not be mailed is taken back, so the user can ask again at once', async () => {
       mailSend.mockRejectedValueOnce(new Error('mail queue is down'))
 
-      await expect(utils.sendOtp(ctx, db, null, sid)).rejects.toThrow('mail queue is down')
+      await expect(loginOtp(ctx, db, null, 'token', { email })).rejects.toThrow('mail queue is down')
       expect(rows).toHaveLength(0)
 
-      await expect(utils.sendOtp(ctx, db, null, sid)).resolves.toMatchObject({ sent: true })
+      await expect(loginOtp(ctx, db, null, 'token', { email })).resolves.toMatchObject({ sent: true })
       expect(rows).toHaveLength(1)
     })
   })

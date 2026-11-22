@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering, Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -15,6 +16,7 @@
 import { AccountDB, joinWithProvider, LoginInfo, loginOrSignUpWithProvider } from '@hcengineering/account'
 import { BrandingMap, concatLink, getBranding, MeasureContext, SocialKey } from '@hcengineering/core'
 import { IncomingHttpHeaders } from 'http'
+import { randomBytes } from 'crypto'
 import qs from 'querystringify'
 
 export function getHost (headers: IncomingHttpHeaders): string | undefined {
@@ -32,6 +34,7 @@ export interface AuthState {
   branding?: string
   autoJoin?: boolean
   navigateUrl?: string
+  consentState?: string
 }
 
 export function safeParseAuthState (rawState: string | undefined): AuthState {
@@ -46,17 +49,60 @@ export function safeParseAuthState (rawState: string | undefined): AuthState {
   }
 }
 
-export function encodeState (ctx: any, brandings: BrandingMap): string {
+const providerCookieTtl = 10 * 60 * 1000
+
+export function providerCookiePath (accountsUrl: string): string {
+  return `${new URL(accountsUrl).pathname.replace(/\/$/, '')}/auth`
+}
+
+export function encodeState (ctx: any, brandings: BrandingMap, provider: string, path: string): string {
+  const consentState = randomBytes(32).toString('hex')
+  ctx.cookies.set(
+    `oauth-state-${consentState}`,
+    Buffer.from(JSON.stringify({ provider, createdOn: Date.now() })).toString('base64url'),
+    {
+      signed: true,
+      httpOnly: true,
+      sameSite: 'lax',
+      path,
+      maxAge: providerCookieTtl
+    }
+  )
   const host = getHost(ctx.request.headers)
   const branding = host !== undefined ? (brandings[host]?.key ?? undefined) : undefined
   const state: AuthState = {
     inviteId: ctx.query?.inviteId,
     branding,
     autoJoin: ctx.query?.autoJoin !== undefined,
-    navigateUrl: ctx.query?.navigateUrl
+    navigateUrl: ctx.query?.navigateUrl,
+    consentState
   }
 
   return encodeURIComponent(JSON.stringify(state))
+}
+
+export function consumeAuthState (ctx: any, provider: string, path: string): AuthState {
+  const state = safeParseAuthState(ctx.query?.state)
+  const nonce = state?.consentState
+  if (typeof nonce !== 'string' || !/^[a-f0-9]{64}$/.test(nonce)) ctx.throw(403)
+  const name = `oauth-state-${nonce}`
+  const raw = ctx.cookies.get(name, { signed: true })
+  let pending
+  try {
+    pending = JSON.parse(Buffer.from(raw ?? '', 'base64url').toString())
+  } catch {
+    ctx.throw(403)
+  }
+  if (
+    pending?.provider !== provider ||
+    typeof pending.createdOn !== 'number' ||
+    pending.createdOn > Date.now() ||
+    Date.now() - pending.createdOn > providerCookieTtl
+  ) {
+    ctx.throw(403)
+  }
+  ctx.cookies.set(name, null, { signed: true, httpOnly: true, sameSite: 'lax', path })
+  return state
 }
 
 export async function handleProviderAuth (
@@ -71,11 +117,14 @@ export async function handleProviderAuth (
   first: string,
   last: string,
   socialKey: SocialKey,
-  signUpDisabled: boolean | undefined
+  signUpDisabled: boolean | undefined,
+  request?: any,
+  cookiePath?: string,
+  consentAccepted = false
 ): Promise<string> {
   try {
     measureCtx.info('Provider auth handler', { email, type: providerType })
-    let loginInfo: LoginInfo | null
+    let loginInfo: (LoginInfo & { inviteId?: string }) | null
     const state = safeParseAuthState(rawState)
     const branding = getBranding(brandings, state?.branding)
 
@@ -89,7 +138,8 @@ export async function handleProviderAuth (
         last,
         state.inviteId,
         socialKey,
-        signUpDisabled
+        signUpDisabled === true || !consentAccepted,
+        consentAccepted
       )
     } else {
       loginInfo = await loginOrSignUpWithProvider(
@@ -100,11 +150,39 @@ export async function handleProviderAuth (
         first,
         last,
         socialKey,
-        signUpDisabled === true || state.autoJoin === true
+        signUpDisabled === true || state.autoJoin === true || !consentAccepted,
+        consentAccepted
       )
     }
 
     if (loginInfo === null) {
+      if (
+        !consentAccepted &&
+        signUpDisabled !== true &&
+        state.autoJoin !== true &&
+        request != null &&
+        cookiePath != null
+      ) {
+        const nonce = randomBytes(32).toString('hex')
+        const pending = {
+          nonce,
+          createdOn: Date.now(),
+          providerType,
+          rawState,
+          email,
+          first,
+          last,
+          socialKey
+        }
+        request.cookies.set(`oauth-consent-${nonce}`, Buffer.from(JSON.stringify(pending)).toString('base64url'), {
+          signed: true,
+          httpOnly: true,
+          sameSite: 'lax',
+          path: cookiePath,
+          maxAge: providerCookieTtl
+        })
+        return concatLink(branding?.front ?? frontUrl, `/login/auth?providerConsent=${nonce}`)
+      }
       measureCtx.info('Failed to auth: no associated account found', {
         email,
         type: providerType,
@@ -116,7 +194,9 @@ export async function handleProviderAuth (
       const queryObj: any = { token: loginInfo.token }
       if (state.autoJoin === true) {
         queryObj.autoJoin = state.autoJoin
-        queryObj.inviteId = state.inviteId
+      }
+      if (state.autoJoin === true || (loginInfo.onboarding != null && loginInfo.onboarding.stage !== 'complete')) {
+        queryObj.inviteId = loginInfo.inviteId ?? state.inviteId
         queryObj.navigateUrl = state.navigateUrl
       }
 

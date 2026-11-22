@@ -47,7 +47,13 @@ describe('api-key-emails', () => {
 
   beforeAll(async () => {
     config = await loadServerConfig(STAND_URL)
-    const signedUp = await rpc(config, undefined, 'signUp', { email, password, firstName: 'Key', lastName: 'Owner' })
+    const signedUp = await rpc(config, undefined, 'signUp', {
+      email,
+      password,
+      firstName: 'Key',
+      lastName: 'Owner',
+      consent: { personalData: true, rules: true }
+    })
     expect(signedUp.error).toBeUndefined()
 
     const created = await rpc(config, signedUp.result.token, 'createWorkspace', { workspaceName: `apikey-${stamp}` })

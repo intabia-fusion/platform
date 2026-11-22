@@ -451,12 +451,15 @@ export async function joinWorkspace (owner: WorkspaceLoginInfo, user: SignUpData
 async function joinWorkspaceRest (owner: WorkspaceLoginInfo, user: SignUpData): Promise<ChatMember> {
   // `exp` is how long the invite lives, not when it ends.
   const inviteId = await test.step('ChatApi.createInvite', async () =>
-    await getAccountClient(LocalUrl, owner.token).createInvite(60 * 60 * 1000, '', 1, AccountRole.User))
+    await getAccountClient(LocalUrl, owner.token).createInvite(60 * 60 * 1000, 1, AccountRole.User))
   const accounts = getAccountClient(LocalUrl)
   // Some specs create the account up front, for the join page to log in with.
   const joined = await test.step('ChatApi.signUpJoin', async () =>
     await accounts
-      .signUpJoin(user.email, user.password, user.firstName, user.lastName, inviteId, owner.workspaceUrl)
+      .signUpJoin(user.email, user.password, user.firstName, user.lastName, inviteId, owner.workspaceUrl, {
+        personalData: true,
+        rules: true
+      })
       .catch(async () => await accounts.join(user.email, user.password, inviteId, owner.workspaceUrl)))
   const member = await connect(joined, `${user.lastName} ${user.firstName}`, user)
   await test.step('ChatApi.createEmployee', async () => {

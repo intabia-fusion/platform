@@ -16,7 +16,7 @@
 /**
  * Longest first or last name the account service stores. Shares the email limit so every sign up
  * field has one: the form stops typing and pasting at it and reports a longer value instead of
- * cutting it; `signUp`/`signUpOtp` reject it.
+ * cutting it; `signUp`/`requestEmailOtp` reject it.
  * @public
  */
 export const MAX_PERSON_NAME_LENGTH = 254
@@ -24,7 +24,7 @@ export const MAX_PERSON_NAME_LENGTH = 254
 /**
  * Longest email the account service accepts: the address limit of RFC 5321 4.5.3.1.3. The sign up
  * and login forms stop typing and pasting at it and report a longer value instead of cutting it;
- * `signUp`/`signUpOtp` reject it.
+ * `signUp`/`requestEmailOtp` reject it.
  * @public
  */
 export const MAX_EMAIL_LENGTH = 254

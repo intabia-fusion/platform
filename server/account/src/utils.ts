@@ -50,7 +50,7 @@ import { createHash, pbkdf2Sync, randomBytes } from 'crypto'
 import otpGenerator from 'otp-generator'
 
 import { Analytics } from '@hcengineering/analytics'
-import { type PasswordAgingStatus } from '@hcengineering/account-client'
+import { type OnboardingState, type PasswordAgingStatus } from '@hcengineering/account-client'
 import {
   decodeTokenVerbose,
   generateToken,
@@ -458,12 +458,12 @@ export async function resetFailedLoginAttempts (db: AccountDB, accountUuid: Acco
 
 /** A confirmed sign in ends the streak of wrong code guesses on every email of the account. */
 export async function resetLoginOtpMisses (db: AccountDB, personUuid: PersonUuid): Promise<void> {
-  const missed = await db.socialId.find({ personUuid, loginOtpMisses: { $gt: 0 } })
-  if (missed.length === 0) return
+  await db.resetEmailOtpMisses(personUuid)
+  const emails = await db.socialId.find({ personUuid, type: SocialIdType.EMAIL })
   await db.socialId.update({ personUuid, loginOtpMisses: { $gt: 0 } }, { loginOtpMisses: 0, loginOtpMissedOn: 0 })
   // Any sign in ends the lock: the link mailed about it must not outlive it.
-  for (const { _id } of missed) {
-    await db.otp.deleteMany({ socialId: _id, purpose: 'login-link' })
+  if (emails.length > 0) {
+    await db.otp.deleteMany({ socialId: { $in: emails.map((email) => email._id) }, purpose: 'login-link' })
   }
 }
 
@@ -498,6 +498,14 @@ export function isEmail (email: string): boolean {
   const EMAIL_REGEX =
     /^[a-zA-Z0-9](?:[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-](?:\.?[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-])*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?|\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-zA-Z0-9-]*[a-zA-Z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])$/ // eslint-disable-line no-control-regex
   return EMAIL_REGEX.test(email)
+}
+
+export function checkEmailFormat (email: string): void {
+  if (!isEmail(email)) {
+    throw new PlatformError(
+      new Status(Severity.ERROR, platform.status.BadRequest, { field: 'email', reason: 'format' })
+    )
+  }
 }
 
 export function isShallowEqual (obj1: Record<string, any>, obj2: Record<string, any>): boolean {
@@ -589,9 +597,9 @@ export function getSignUpLinkTtlMs (): number {
 export type OtpKind = 'login' | 'admin' | 'operation'
 
 // Once a streak of wrong guesses at login codes reaches the cap, no new code is issued for this long.
-const OTP_MISS_WAIT_MS = 60 * 60 * 1000
+export const OTP_MISS_WAIT_MS = 60 * 60 * 1000
 // A streak of wrong guesses at login codes starts over once the last of them is this old.
-const OTP_MISS_DECAY_MS = 24 * 60 * 60 * 1000
+export const OTP_MISS_DECAY_MS = 24 * 60 * 60 * 1000
 
 type Issued = { info: OtpInfo } | { ts: number }
 
@@ -623,12 +631,10 @@ function getOtpWait (
   return { sent: true, retryOn }
 }
 
-// Letters and misses of an address without an account: its waits and lock match a real one.
+// Rate-limit recovery letters for an address without an account.
 // Kept in this pod only: a restart, another replica or eviction forgets them.
 interface NoAccountState {
   otp?: Pick<OTP, 'createdOn' | 'expiresOn' | 'attempts'>
-  loginOtpMisses?: number
-  loginOtpMissedOn?: number
 }
 const NO_ACCOUNT_MAX_ENTRIES = 10000
 const noAccounts = new Map<string, NoAccountState>()
@@ -645,24 +651,20 @@ function touchNoAccount (key: string): NoAccountState {
 }
 
 /**
- * Answers for an address without an account as sendOtp does for a real one, waits and lock
- * included, and mails the owner how to sign up.
+ * Answers for an address without an account with a rate-limited sign-up email.
  */
 export async function sendNoAccountEmail (
   ctx: MeasureContext,
   branding: Branding | null,
-  email: string,
-  kind: 'login' | 'recovery'
+  email: string
 ): Promise<OtpInfo> {
   // The address goes to the mail "to": a list of addresses would mail every one of them.
-  if (!isEmail(email)) {
-    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
-  }
+  checkEmailFormat(email)
 
   const ts = Date.now()
   const retryDelayMs = getOtpRetryDelayMs()
-  const state = touchNoAccount(`${kind}:${email}`)
-  const waiting = getOtpWait('login', state, state.otp, ts, retryDelayMs)
+  const state = touchNoAccount(email)
+  const waiting = getOtpWait('login', {}, state.otp, ts, retryDelayMs)
   if (waiting !== undefined) {
     return waiting
   }
@@ -691,22 +693,6 @@ export async function sendNoAccountEmail (
     throw err
   }
   return { sent: true, retryOn: ts + retryDelayMs }
-}
-
-/** Counts a guess at the code "sent" to an address without an account, as bumpOtpAttempts does. */
-export function guessNoAccountCode (email: string): void {
-  const state = noAccounts.get(`login:${email}`)
-  const ts = Date.now()
-  if (state?.otp === undefined || state.otp.expiresOn <= ts) return
-  state.otp.attempts += 1
-  // Past its cap a code refuses a guess unchecked: that is no probing, so it is not counted.
-  if (state.otp.attempts > OTP_MAX_ATTEMPTS) return
-  const misses = state.loginOtpMisses ?? 0
-  const missedOn = state.loginOtpMissedOn ?? 0
-  const startsOver =
-    missedOn < ts - OTP_MISS_DECAY_MS || (misses >= OTP_MAX_ATTEMPTS && missedOn < ts - OTP_MISS_WAIT_MS)
-  state.loginOtpMisses = startsOver ? 1 : misses + 1
-  state.loginOtpMissedOn = ts
 }
 
 const hashLinkToken = (token: string): string => createHash('sha256').update(token).digest('hex')
@@ -788,9 +774,9 @@ export async function sendOtp (
   branding: Branding | null,
   socialId: SocialId,
   ttlSec?: number,
-  kind: OtpKind = 'login'
+  kind: Exclude<OtpKind, 'login'> = 'operation'
 ): Promise<OtpInfo> {
-  const purpose: OtpPurpose = kind === 'login' ? 'login' : 'operation'
+  const purpose = 'operation'
   const retryDelayMs = getOtpRetryDelayMs()
   const ttlMs = (ttlSec ?? getMetadata(accountPlugin.metadata.OtpTimeToLiveSec) ?? 60) * 1000
 
@@ -827,12 +813,7 @@ export async function sendOtp (
   }
 
   try {
-    // The code dies in a minute and a delayed email arrives too late; the link outlives it by a week.
-    // Only while unverified - on a plain login it would be a pointless long-lived bearer credential.
-    const link =
-      kind === 'login' && socialId.verifiedOn == null ? await buildConfirmLink(ctx, db, branding, socialId) : undefined
-
-    await sendOtpEmail(ctx, branding, code, socialId.value, kind, link)
+    await sendOtpEmail(ctx, branding, code, socialId.value, kind)
   } catch (err) {
     // Nothing was mailed: take the code back so that the user can ask again now, not after the delay.
     await db.otp.deleteMany({ socialId: socialId._id, purpose, code })
@@ -847,8 +828,7 @@ export async function sendOtpEmail (
   branding: Branding | null,
   otp: string,
   email: string,
-  kind: OtpKind = 'login',
-  link?: string
+  kind: OtpKind = 'login'
 ): Promise<void> {
   const notificationProducer = getMetadata(accountPlugin.metadata.MailQueue)
 
@@ -857,9 +837,8 @@ export async function sendOtpEmail (
   const app = branding?.title ?? getMetadata(accountPlugin.metadata.ProductName)
 
   // Admin and self-service codes name what is being confirmed; the admin one points at the admin panel.
-  // The sign up variant carries an activation link; a template cannot include one conditionally.
-  let textKey = link !== undefined ? accountPlugin.string.SignUpOtpText : accountPlugin.string.OtpText
-  let htmlKey = link !== undefined ? accountPlugin.string.SignUpOtpHTML : accountPlugin.string.OtpHTML
+  let textKey = accountPlugin.string.OtpText
+  let htmlKey = accountPlugin.string.OtpHTML
   let subjectKey = accountPlugin.string.OtpSubject
   if (kind === 'admin') {
     textKey = accountPlugin.string.AdminOtpText
@@ -871,7 +850,7 @@ export async function sendOtpEmail (
     subjectKey = accountPlugin.string.OperationOtpSubject
   }
 
-  const params = { code: otp, app, link }
+  const params = { code: otp, app }
   const text = await translate(textKey, params, lang)
   const html = await translate(htmlKey, params, lang)
   const subject = await translate(subjectKey, params, lang)
@@ -906,16 +885,8 @@ export const OTP_MAX_ATTEMPTS = 5
  * refuses everything but stays until it expires, so the retry delay of sendOtp keeps
  * applying. A match is not consumed here: the caller deletes it.
  */
-export async function isOtpValid (
-  db: AccountDB,
-  socialId: PersonId,
-  code: string,
-  purpose: OtpPurpose
-): Promise<boolean> {
-  const live = await db.bumpOtpAttempts(socialId, purpose, code, OTP_MAX_ATTEMPTS, {
-    decayMs: OTP_MISS_DECAY_MS,
-    lockMs: OTP_MISS_WAIT_MS
-  })
+export async function isOtpValid (db: AccountDB, socialId: PersonId, code: string): Promise<boolean> {
+  const live = await db.bumpOtpAttempts(socialId)
   const newest: OTP | undefined = live.sort((a, b) =>
     a.createdOn !== b.createdOn ? b.createdOn - a.createdOn : a.code < b.code ? 1 : -1
   )[0]
@@ -987,7 +958,7 @@ export async function sendOperationOtp (
   db: AccountDB,
   branding: Branding | null,
   token: string,
-  kind: OtpKind = 'operation'
+  kind: Exclude<OtpKind, 'login'> = 'operation'
 ): Promise<OtpInfo> {
   const audit = isHumanAdmin(decodeTokenVerbose(ctx, token))
   if (getAdminOtpDevCode() !== undefined) {
@@ -1027,8 +998,7 @@ export async function verifyOperationOtp (
   const sid = await getCallerEmailSocialId(ctx, db, token)
   // Atomic consume: only the caller that deletes the row succeeds. Prevents one code
   // confirming two concurrent ops. Wrong guesses are counted and capped by isOtpValid.
-  const ok =
-    (await isOtpValid(db, sid._id, otpCode, 'operation')) && (await db.consumeOtp(sid._id, 'operation', otpCode))
+  const ok = (await isOtpValid(db, sid._id, otpCode)) && (await db.consumeOtp(sid._id, 'operation', otpCode))
   if (!ok) {
     throw new PlatformError(new Status(Severity.ERROR, platform.status.InvalidOtp, {}))
   }
@@ -1043,7 +1013,9 @@ export async function createAccount (
   personUuid: PersonUuid,
   confirmed = false,
   automatic = false,
-  createdOn = Date.now()
+  createdOn = Date.now(),
+  consentAccepted = false,
+  onboarding?: OnboardingState
 ): Promise<PersonId> {
   // Create Huly social id and account
   const socialId = await db.socialId.insertOne({
@@ -1052,7 +1024,12 @@ export async function createAccount (
     personUuid,
     ...(confirmed ? { verifiedOn: Date.now() } : {})
   })
-  await db.account.insertOne({ uuid: personUuid as AccountUuid, automatic })
+  await db.account.insertOne({
+    uuid: personUuid as AccountUuid,
+    automatic,
+    ...(consentAccepted ? { consentAcceptedOn: createdOn } : {}),
+    ...(onboarding !== undefined ? { onboarding } : {})
+  })
   await db.accountEvent.insertOne({
     accountUuid: personUuid as AccountUuid,
     eventType: AccountEventType.ACCOUNT_CREATED,
@@ -1077,7 +1054,8 @@ export async function signUpByEmail (
   firstName: string,
   lastName: string,
   confirmed = false,
-  automatic = false
+  automatic = false,
+  consentAccepted = false
 ): Promise<{ account: AccountUuid, socialId: PersonId }> {
   const normalizedEmail = cleanEmail(email)
 
@@ -1108,7 +1086,7 @@ export async function signUpByEmail (
     })
   }
 
-  await createAccount(db, account, confirmed, automatic)
+  await createAccount(db, account, confirmed, automatic, Date.now(), consentAccepted)
   if (password != null) {
     await setPassword(ctx, db, branding, account, password)
   }
@@ -1591,6 +1569,9 @@ const DB_ERROR_CODES = {
 interface CreateWorkspaceRecordResult {
   workspaceUuid: WorkspaceUuid
   workspaceUrl: string
+  region?: string
+  created?: boolean
+  onboardingCompleted?: boolean
 }
 
 export async function createWorkspaceRecord (
@@ -1602,7 +1583,8 @@ export async function createWorkspaceRecord (
   region: string = '',
   initMode: WorkspaceMode = 'pending-creation',
   dataId?: WorkspaceDataId,
-  language?: string
+  language?: string,
+  onboarding = false
 ): Promise<CreateWorkspaceRecordResult> {
   const brandingKey = branding?.key ?? 'huly'
   const regionInfo = getRegions().find((it) => it.region === region)
@@ -1630,31 +1612,43 @@ export async function createWorkspaceRecord (
 
   while (true) {
     try {
-      const workspaceUuid = await db.createWorkspace(
-        {
-          name: workspaceName,
-          url: workspaceUrl,
-          dataId,
-          branding: brandingKey,
-          createdBy: account,
-          billingAccount: account,
-          allowReadOnlyGuest: false,
-          allowGuestSignUp: false,
-          region,
-          language
-        },
-        {
-          mode: initMode,
-          versionMajor: 0,
-          versionMinor: 0,
-          versionPatch: 0,
-          isDisabled: true
-        }
-      )
-
+      const data = {
+        name: workspaceName,
+        url: workspaceUrl,
+        dataId,
+        branding: brandingKey,
+        createdBy: account,
+        billingAccount: account,
+        allowReadOnlyGuest: false,
+        allowGuestSignUp: false,
+        region,
+        language
+      }
+      const status = {
+        mode: initMode,
+        versionMajor: 0,
+        versionMinor: 0,
+        versionPatch: 0,
+        isDisabled: true
+      }
+      const result = onboarding
+        ? await db.createOnboardingWorkspace(account as AccountUuid, data, status)
+        : {
+            workspace: await db.createWorkspace(data, status),
+            url: workspaceUrl,
+            region,
+            created: true,
+            completed: false
+          }
+      if (result === null) {
+        throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+      }
       return {
-        workspaceUuid,
-        workspaceUrl
+        workspaceUuid: result.workspace,
+        workspaceUrl: result.url,
+        region: result.region,
+        created: result.created,
+        onboardingCompleted: result.completed
       }
     } catch (err: any) {
       if (!DB_ERROR_CODES.UNIQUE_VIOLATION.includes(err.code)) {
@@ -1698,41 +1692,6 @@ export function generateShortId (length = 12): string {
     result += chars[bytes[i] % chars.length]
   }
   return result
-}
-
-/**
- * Builds an activation link for an unverified email social id.
- * Single use comes for free: `confirmEmail` refuses an already verified social id.
- */
-export async function buildConfirmLink (
-  ctx: MeasureContext,
-  db: AccountDB,
-  branding: Branding | null,
-  socialId: SocialId
-): Promise<string | undefined> {
-  const front = branding?.front ?? getMetadata(accountPlugin.metadata.FrontURL)
-  if (front === undefined || front === '') {
-    // Degrade to a code-only email rather than break sign in entirely.
-    ctx.error('Please provide front url via branding configuration or FRONT_URL variable')
-    return undefined
-  }
-
-  // generateToken without an explicit exp mints a token that never expires.
-  const token = generateToken(socialId.personUuid, undefined, { confirmEmail: socialId.value }, undefined, {
-    exp: Math.floor((Date.now() + getSignUpLinkTtlMs()) / 1000)
-  })
-
-  // A raw JWT in a mail body gets wrapped by clients and is unreadable; short id keeps it clickable.
-  const shortId = generateShortId()
-  try {
-    await db.shortLink.insertOne({ id: shortId, payload: token, workspaceId: '' })
-  } catch (err: any) {
-    // A code-only email still works; failing here would block sign in entirely.
-    ctx.error('Failed to store the activation link', { err })
-    return undefined
-  }
-
-  return concatLink(front, `/login/confirm?id=${shortId}`)
 }
 
 export async function sendEmailConfirmation (
@@ -1827,10 +1786,6 @@ export async function confirmHulyIds (ctx: MeasureContext, db: AccountDB, accoun
   }
 }
 
-export async function useInvite (db: AccountDB, inviteId: string): Promise<void> {
-  await db.invite.update({ id: inviteId }, { $inc: { remainingUses: -1 } })
-}
-
 export async function getAccount (db: AccountDB, uuid: AccountUuid): Promise<Account | null> {
   return await db.account.findOne({ uuid })
 }
@@ -1905,6 +1860,12 @@ export async function getSocialIdByKey (db: AccountDB, socialKey: string): Promi
 
 export async function getEmailSocialId (db: AccountDB, email: string): Promise<SocialId | null> {
   return await db.socialId.findOne({ type: SocialIdType.EMAIL, value: email })
+}
+
+export async function hasVerifiedEmail (db: AccountDB, personUuid: PersonUuid, email: string): Promise<boolean> {
+  return (
+    (await db.socialId.findOne({ type: SocialIdType.EMAIL, personUuid, value: email, verifiedOn: { $gt: 0 } })) != null
+  )
 }
 
 export function getFrontUrl (branding: Branding | null): string {
@@ -2070,28 +2031,27 @@ export async function doJoinByInvite (
   token: string,
   account: AccountUuid,
   workspace: Workspace,
-  invite: WorkspaceInvite | null | undefined
+  invite: WorkspaceInvite | null | undefined,
+  name?: { firstName?: string, lastName?: string }
 ): Promise<WorkspaceLoginInfo> {
   if (account === readOnlyGuestAccountUuid) {
     // The shared anonymous account is used by every anonymous visitor: its role must stay ReadOnlyGuest
     ctx.warn('Join by invite with the anonymous account is not allowed', { workspace: workspace.uuid })
     throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
   }
-  const role = await db.getWorkspaceRole(account, workspace.uuid)
-
   if (invite !== undefined && invite != null) {
     // TODO: should we re-join kicked users? How are they marked as inactive?
-    if (role == null) {
-      // Join-time seat cap: reject before assign so an over-limit member never enters ws_members.
-      await assertSeatAvailable(ctx, db, workspace.uuid, invite.role)
-      await db.assignWorkspace(account, workspace.uuid, invite.role)
-      await publishMembersChanged(ctx, workspace.uuid)
-    } else if (getRolePower(role) < getRolePower(invite.role)) {
-      await db.updateWorkspaceRole(account, workspace.uuid, invite.role)
-      await publishMembersChanged(ctx, workspace.uuid)
+    const result = await db.completeOnboardingInvite(account, invite.id, workspace.uuid, name)
+    if (result.result === 'expired') {
+      throw new PlatformError(new Status(Severity.ERROR, platform.status.ExpiredLink, {}))
     }
-    await useInvite(db, invite.id)
+    if (result.result === 'seat-limit') {
+      throw new PlatformError(new Status(Severity.ERROR, platform.status.PlanLimitExceeded, {}))
+    }
+    if (result.result !== 'ok') throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+    if (result.changed === true) await publishMembersChanged(ctx, workspace.uuid)
   } else if (workspace.allowReadOnlyGuest && workspace.allowGuestSignUp) {
+    const role = await db.getWorkspaceRole(account, workspace.uuid)
     if (role == null) {
       await db.assignWorkspace(account, workspace.uuid, AccountRole.Guest)
     }
@@ -2119,7 +2079,9 @@ export async function loginOrSignUpWithProvider (
   first: string,
   last: string,
   socialId: SocialKey,
-  signUpDisabled = false
+  signUpDisabled = false,
+  consentAccepted = false,
+  invite?: WorkspaceInvite
 ): Promise<LoginInfo | null> {
   try {
     const normalizedEmail = email != null ? cleanEmail(email) : ''
@@ -2136,14 +2098,23 @@ export async function loginOrSignUpWithProvider (
         ? await db.socialId.findOne({ type: SocialIdType.EMAIL, value: normalizedEmail })
         : undefined
     let personUuid = targetSocialId?.personUuid ?? emailSocialId?.personUuid
+    const account = personUuid == null ? null : await db.account.findOne({ uuid: personUuid as AccountUuid })
 
-    if (personUuid == null) {
-      if (signUpDisabled) {
+    if (account == null) {
+      if (signUpDisabled || !consentAccepted) {
         return null
       }
-
-      personUuid = await db.person.insertOne({ firstName: first, lastName: last ?? '' })
+      if (invite?.email != null && invite.email !== '') {
+        const recipient = cleanEmail(invite.email)
+        const matchesProvider =
+          recipient === normalizedEmail && (emailSocialId == null || emailSocialId.personUuid === personUuid)
+        if (!matchesProvider && (personUuid == null || !(await hasVerifiedEmail(db, personUuid, recipient)))) {
+          throw new PlatformError(new Status(Severity.ERROR, platform.status.Forbidden, {}))
+        }
+      }
     }
+
+    personUuid ??= await db.person.insertOne({ firstName: first ?? '', lastName: last ?? '' })
 
     if (personUuid == null) {
       throw new PlatformError(new Status(Severity.ERROR, platform.status.InternalServerError, {}))
@@ -2155,15 +2126,11 @@ export async function loginOrSignUpWithProvider (
       throw new PlatformError(new Status(Severity.ERROR, platform.status.InternalServerError, {}))
     }
 
-    const account = await db.account.findOne({ uuid: personUuid as AccountUuid })
-
     if (account == null) {
-      if (signUpDisabled) {
-        return null
-      }
-
-      await createAccount(db, personUuid, true)
-      await db.person.update({ uuid: personUuid }, { firstName: first, lastName: last })
+      const onboarding: OnboardingState | undefined =
+        invite === undefined ? undefined : { intent: { kind: 'invite', inviteId: invite.id }, stage: 'name' }
+      await createAccount(db, personUuid, true, false, Date.now(), consentAccepted, onboarding)
+      await db.person.update({ uuid: personUuid }, { firstName: first ?? '', lastName: last ?? '' })
     }
 
     // We should check and reset password if there's an account with password but no social ids have been
@@ -2196,7 +2163,8 @@ export async function loginOrSignUpWithProvider (
       await db.socialId.update({ key: emailSocialId.key }, { verifiedOn: Date.now() })
     }
 
-    ensureNotBlocked(await db.account.findOne({ uuid: personUuid as AccountUuid }))
+    const loginAccount = await db.account.findOne({ uuid: personUuid as AccountUuid })
+    ensureNotBlocked(loginAccount)
 
     await confirmHulyIds(ctx, db, personUuid as AccountUuid)
     await resetLoginOtpMisses(db, personUuid)
@@ -2211,6 +2179,7 @@ export async function loginOrSignUpWithProvider (
       account: personUuid as AccountUuid,
       socialId: socialIdId,
       name: getPersonName(person),
+      onboarding: loginAccount?.onboarding,
       token: generateToken(personUuid, undefined, extraToken)
     }
   } catch (err: any) {
@@ -2229,8 +2198,9 @@ export async function joinWithProvider (
   last: string,
   inviteId: string,
   socialId: SocialKey,
-  signUpDisabled = false
-): Promise<WorkspaceLoginInfo | LoginInfo | null> {
+  signUpDisabled = false,
+  consentAccepted = false
+): Promise<((WorkspaceLoginInfo | LoginInfo) & { inviteId?: string }) | null> {
   const normalizedEmail = email != null ? cleanEmail(email) : ''
   const invite = await getWorkspaceInvite(db, inviteId)
   if (invite == null) {
@@ -2252,11 +2222,17 @@ export async function joinWithProvider (
     first,
     last,
     socialId,
-    signUpDisabled
+    signUpDisabled,
+    consentAccepted,
+    invite
   )
 
   if (loginInfo == null) {
     return null
+  }
+
+  if (loginInfo.onboarding != null && loginInfo.onboarding.stage !== 'complete') {
+    return { ...loginInfo, inviteId: invite.id }
   }
 
   return await doJoinByInvite(

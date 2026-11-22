@@ -66,6 +66,7 @@
 
   let noWorkspaces = false
   let pendingOnly = false
+  let onboardingOnly = false
   let blockedOnly = false
   let inactiveDays: number | undefined
   const inactiveItems = [
@@ -76,6 +77,7 @@
   $: filter = {
     noWorkspaces: noWorkspaces ? true : undefined,
     pendingOnly: pendingOnly ? true : undefined,
+    onboardingOnly: onboardingOnly ? true : undefined,
     blockedOnly: blockedOnly ? true : undefined,
     inactiveDays
   }
@@ -87,7 +89,16 @@
   })
 
   let prevKey = ''
-  $: key = [refreshTick, sortKey, sortAsc, noWorkspaces, pendingOnly, blockedOnly, inactiveDays ?? ''].join(':')
+  $: key = [
+    refreshTick,
+    sortKey,
+    sortAsc,
+    noWorkspaces,
+    pendingOnly,
+    onboardingOnly,
+    blockedOnly,
+    inactiveDays ?? ''
+  ].join(':')
   $: if (key !== prevKey) {
     if (prevKey !== '') accountSkip = 0
     prevKey = key
@@ -254,8 +265,13 @@
   </div>
 
   <div class="flex-row-center mr-4">
-    <CheckBox bind:checked={pendingOnly} />
+    <CheckBox bind:checked={pendingOnly} disabled={onboardingOnly} />
     <span class="ml-1"><Label label={adminRes.string.PendingSignups} /></span>
+  </div>
+
+  <div class="flex-row-center mr-4">
+    <CheckBox id="incomplete-onboarding" bind:checked={onboardingOnly} disabled={pendingOnly} />
+    <label for="incomplete-onboarding" class="ml-1"><Label label={adminRes.string.IncompleteOnboarding} /></label>
   </div>
 
   <div class="flex-row-center mr-4">

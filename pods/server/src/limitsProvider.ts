@@ -25,6 +25,7 @@ import core, {
   buildSocialIdString,
   type Class,
   type Doc,
+  type Person,
   type Ref,
   SocialIdType,
   systemAccountUuid,
@@ -61,6 +62,11 @@ export class AccountLimitsProvider implements LimitsProvider {
   private accountClient (workspace?: WorkspaceUuid): AccountClient {
     const token = generateToken(systemAccountUuid, workspace, { service: 'transactor' })
     return getAccountClient(this.accountsUrl, token)
+  }
+
+  async getPerson (account: AccountUuid, workspace: WorkspaceUuid): Promise<Person> {
+    const token = generateToken(account, workspace)
+    return await getAccountClient(this.accountsUrl, token).getPerson()
   }
 
   private toPlanLimits (l: {

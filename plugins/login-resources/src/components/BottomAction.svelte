@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -22,15 +23,17 @@
   import { goTo } from '../index'
 
   export let action: BottomAction
+  export let disabled = false
 </script>
 
-<div>
+<div class="bottom-action">
   {#if action.caption}
     <span><Label label={action.caption} /></span>
   {/if}
   {#if action.page}
     <NavLink
       href={getHref(action.page)}
+      noOverflow
       onClick={() => {
         if (action.func !== undefined) {
           action.func()
@@ -40,11 +43,22 @@
       }}><Label label={action.i18n} /></NavLink
     >
   {:else}
-    <a href="." on:click|preventDefault={action.func}><Label label={action.i18n} className="login-label-link" /></a>
+    <a
+      href={disabled ? undefined : '.'}
+      aria-disabled={disabled}
+      tabindex={disabled ? -1 : undefined}
+      on:click|preventDefault={() => {
+        if (!disabled) action.func()
+      }}><Label label={action.i18n} className="login-label-link" /></a
+    >
   {/if}
 </div>
 
 <style lang="scss">
+  .bottom-action {
+    line-height: 1.5;
+  }
+
   span {
     color: var(--login-darker-color, var(--theme-darker-color));
   }

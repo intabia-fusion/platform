@@ -40,7 +40,7 @@ export async function closeAccountDb (): Promise<void> {
 }
 
 /**
- * Latest live OTP code for an email. Retries: the code row is written after mail is queued, so
+ * Latest live OTP code for an email. Retries: the code row is written during the request, so
  * a fast test can look before it lands.
  */
 export async function getOtpCode (email: string, timeoutMs = 10000): Promise<string> {
@@ -49,13 +49,8 @@ export async function getOtpCode (email: string, timeoutMs = 10000): Promise<str
   const deadline = Date.now() + timeoutMs
 
   while (true) {
-    const socialId = await db.socialId.findOne({ type: SocialIdType.EMAIL, value: normalized })
-    if (socialId != null) {
-      const otp = (await db.otp.find({ socialId: socialId._id }, { createdOn: 'descending' }, 1))[0]
-      if (otp != null && otp.expiresOn > Date.now()) {
-        return otp.code
-      }
-    }
+    const otp = await db.withEmailOtp(normalized, async (state) => ({ code: state.code, expiresOn: state.expiresOn }))
+    if (otp.code != null && otp.expiresOn > Date.now()) return otp.code
 
     if (Date.now() > deadline) {
       throw new Error(`No live OTP code for ${email}`)

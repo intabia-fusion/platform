@@ -147,7 +147,6 @@ export interface AttributeUsageProvider extends Doc {
  */
 export interface InviteSettings extends Configuration {
   expirationTime: number
-  emailMask: string
   limit: number
 }
 
@@ -543,6 +542,8 @@ export default plugin(settingId, {
     MailboxLimitReached: '' as IntlString,
     SeatLimitReached: '' as IntlString,
     SeatLimitReachedDescription: '' as IntlString,
+    DocumentGuest: '' as IntlString,
+    SystemAdministrator: '' as IntlString,
     OfficeSettings: '' as IntlString,
     SidebarMenuSettings: '' as IntlString,
     OfficeDefaultSettings: '' as IntlString,

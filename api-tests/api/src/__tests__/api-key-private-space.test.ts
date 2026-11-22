@@ -63,7 +63,13 @@ describe('api-key-private-space', () => {
 
   beforeAll(async () => {
     config = await loadServerConfig(STAND_URL)
-    const signedUp = await rpc(config, undefined, 'signUp', { email, password, firstName: 'Key', lastName: 'Space' })
+    const signedUp = await rpc(config, undefined, 'signUp', {
+      email,
+      password,
+      firstName: 'Key',
+      lastName: 'Space',
+      consent: { personalData: true, rules: true }
+    })
     expect(signedUp.error).toBeUndefined()
 
     const created = await rpc(config, signedUp.result.token, 'createWorkspace', { workspaceName: `apikey-sp-${stamp}` })

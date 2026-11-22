@@ -1,3 +1,5 @@
+// Copyright © 2026 Intabia Fusion.
+
 import { expect, type Locator, type Page } from '@playwright/test'
 import { PlatformURI } from '../utils'
 import { retryIntervals } from '../retry'
@@ -37,6 +39,13 @@ export class LoginPage {
     await (await this.page.goto(`${PlatformURI}/login/login`))?.finished()
   }
 
+  async enableOtp (): Promise<void> {
+    await this.page.route('**/config{,-test}.json', async (route) => {
+      const response = await route.fetch()
+      await route.fulfill({ response, json: { ...(await response.json()), USE_OTP: 'true' } })
+    })
+  }
+
   // ACTIONS
   async gotoAdmin (): Promise<void> {
     await (await this.page.goto(`${PlatformURI}/admin`))?.finished()
@@ -67,6 +76,14 @@ export class LoginPage {
     await this.inputPassword().waitFor({ state: 'visible' })
   }
 
+  async acceptEmailConsent (): Promise<void> {
+    const personal = this.page.locator('[data-testid="checkbox-personal-data"]')
+    if (await personal.isVisible()) {
+      await personal.check()
+      await this.page.locator('[data-testid="checkbox-rules"]').check()
+    }
+  }
+
   // Requests a code and lands on the six-box screen, see OtpPage.
   async loginWithCode (email: string): Promise<void> {
     await this.inputEmail().waitFor({ state: 'visible' })
@@ -75,7 +92,8 @@ export class LoginPage {
       await expect(this.inputPassword()).toBeHidden()
     }
     await this.inputEmail().fill(email)
-    await this.buttonLogin().click()
+    await this.acceptEmailConsent()
+    await this.page.getByRole('button', { name: 'Get code', exact: true }).click()
   }
 
   async login (email: string, password: string): Promise<void> {

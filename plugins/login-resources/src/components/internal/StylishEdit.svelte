@@ -28,7 +28,7 @@
   export let maxLength: number | undefined = undefined
 </script>
 
-<div class="editbox{error ? ' error' : ''}" style={width ? 'width: ' + width : ''}>
+<label class="editbox{error ? ' error' : ''}" style={width ? 'width: ' + width : ''}>
   {#if password}
     <input
       type="password"
@@ -105,9 +105,9 @@
     />
   {/if}
   {#if label}
-    <div class="label"><Label {label} /></div>
+    <span class="label"><Label {label} /></span>
   {/if}
-</div>
+</label>
 
 <style lang="scss">
   /* Localized input control for login pages.

@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -24,7 +25,7 @@
   import { themeStore } from '@hcengineering/theme'
   import presentation from '@hcengineering/presentation'
 
-  import { checkAutoJoin, isWorkspaceLoginInfo, navigateToWorkspace } from '../utils'
+  import { checkAutoJoin, getAccount, isWorkspaceLoginInfo, navigateToWorkspace } from '../utils'
   import login from '../plugin'
   import LoginForm from './LoginForm.svelte'
 
@@ -59,6 +60,14 @@
     }
 
     try {
+      const account = await getAccount(false)
+      if (account?.onboarding != null && account.onboarding.stage !== 'complete') {
+        delete location.query.autoJoin
+        location.path[1] = 'join'
+        navigate(location, true)
+        return
+      }
+
       const [, result] = await checkAutoJoin(
         location.query.inviteId,
         location.query.firstName ?? '',
@@ -112,7 +121,7 @@
     <Loading />
   </div>
 {:else}
-  <LoginForm signUpDisabled {email} caption={login.string.SignToProceed} {subtitle} {onLogin} />
+  <LoginForm {email} caption={login.string.SignToProceed} {subtitle} {onLogin} />
 {/if}
 
 <style lang="scss">

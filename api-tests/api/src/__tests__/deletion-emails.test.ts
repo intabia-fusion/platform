@@ -61,7 +61,13 @@ describe('deletion-emails', () => {
   }
 
   it('signs up an owner with a workspace', async () => {
-    const signedUp = await rpc(config, undefined, 'signUp', { email, password, firstName: 'Mail', lastName: 'Owner' })
+    const signedUp = await rpc(config, undefined, 'signUp', {
+      email,
+      password,
+      firstName: 'Mail',
+      lastName: 'Owner',
+      consent: { personalData: true, rules: true }
+    })
     expect(signedUp.error).toBeUndefined()
     userToken = signedUp.result.token
     userAccount = signedUp.result.account

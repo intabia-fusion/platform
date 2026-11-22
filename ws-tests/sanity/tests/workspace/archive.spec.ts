@@ -6,6 +6,7 @@ import {
   IssuesPage,
   LoginPage,
   NewIssue,
+  PlatformURI,
   SelectWorkspacePage,
   TrackerNavigationMenuPage
 } from '@hcengineering/tests-sanity'
@@ -100,7 +101,7 @@ test.describe('Workspace Archive tests', () => {
       await adminPage.waitWorkspaceMode(workspaceInfo.workspace, 'active')
     })
     await test.step('Check workspace is active again', async () => {
-      await page.reload()
+      await page.goto(`${PlatformURI}/login/selectWorkspace`)
 
       await selectWorkspacePage.selectWorkspace(wsId)
 

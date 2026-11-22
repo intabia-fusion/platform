@@ -353,6 +353,8 @@ describe('AccountPostgresDbCollection', () => {
         a.failed_login_attempts,
         a.delete_on,
         a.blocked_on,
+        a.consent_accepted_on,
+        a.onboarding,
         p.hash,
         p.salt
       FROM global_account.account as a
@@ -361,7 +363,9 @@ describe('AccountPostgresDbCollection', () => {
         ['acc1']
       )
       // Every timestamp column is normalised, so an absent delete_on comes back as null.
-      expect(result).toEqual(mockResult.map((r) => ({ ...r, deleteOn: null, blockedOn: null })))
+      expect(result).toEqual(
+        mockResult.map((r) => ({ ...r, deleteOn: null, blockedOn: null, consentAcceptedOn: null }))
+      )
     })
 
     it('selects every column it promises to convert', async () => {
@@ -527,104 +531,36 @@ describe('PostgresAccountDB', () => {
   })
 
   describe('bumpOtpAttempts', () => {
-    const cap = 5
-    const day = 24 * 60 * 60 * 1000
-    const hour = 60 * 60 * 1000
     const otpRow = (attempts: number, code = '123456'): any => ({
       social_id: '42',
-      purpose: 'login',
+      purpose: 'operation',
       code,
       expires_on: '1786004113426',
       created_on: '1786004053426',
       attempts
     })
     const sqlOf = (call: number): string => mockClient.unsafe.mock.calls[call][0].replace(/\s+/g, ' ')
-    // The statements of a login bump: the lock of the social id, the codes, and then the miss.
-    const lock = 0
-    const codes = 1
-    const miss = 2
-    // Answers the lock of a login bump with nothing and the codes with `rows`.
-    const bump = async (purpose: 'login' | 'operation', guess: string, rows: any[]): Promise<any> => {
-      if (purpose === 'login') mockClient.unsafe.mockResolvedValueOnce([])
-      mockClient.unsafe.mockResolvedValueOnce(rows)
-      return await accountDb.bumpOtpAttempts('42' as PersonId, purpose, guess, cap, { decayMs: day, lockMs: hour })
-    }
+    it('counts guesses on unexpired operation codes and maps the rows', async () => {
+      mockClient.unsafe.mockResolvedValueOnce([otpRow(3)])
+      const res = await accountDb.bumpOtpAttempts('42' as PersonId)
 
-    it('locks the social id, then counts the guess on unexpired codes of the social id and purpose, and maps the rows', async () => {
-      const res = await bump('login', '123456', [otpRow(3)])
-
-      expect(mockClient.unsafe).toHaveBeenCalledTimes(2)
-      expect(sqlOf(lock)).toBe('SELECT 1 FROM global_account.social_id WHERE _id = $1 FOR UPDATE')
-      expect(mockClient.unsafe.mock.calls[lock][1]).toEqual(['42'])
-      const [, values] = mockClient.unsafe.mock.calls[codes]
-      expect(sqlOf(codes)).toBe(
+      expect(mockClient.unsafe).toHaveBeenCalledTimes(1)
+      const [, values] = mockClient.unsafe.mock.calls[0]
+      expect(sqlOf(0)).toBe(
         'UPDATE global_account.otp SET attempts = attempts + 1 WHERE social_id = $1 AND purpose = $2 AND expires_on > $3 RETURNING *'
       )
-      expect(values.slice(0, 2)).toEqual(['42', 'login'])
+      expect(values.slice(0, 2)).toEqual(['42', 'operation'])
       expect(values[2]).toBeGreaterThan(0)
       expect(res).toEqual([
         {
           socialId: '42',
-          purpose: 'login',
+          purpose: 'operation',
           code: '123456',
           expiresOn: 1786004113426,
           createdOn: 1786004053426,
           attempts: 3
         }
       ])
-    })
-
-    it('does not lock the social id for an operation code, which never updates it', async () => {
-      await bump('operation', '123456', [otpRow(3)])
-
-      expect(mockClient.unsafe).toHaveBeenCalledTimes(1)
-      expect(sqlOf(0)).toContain('UPDATE global_account.otp')
-    })
-
-    describe('wrong guesses at login codes', () => {
-      // The row comes back with the attempts after this guess: 5 is the last one the code takes.
-      it.each([1, 4, 5])(
-        'counts a wrong guess that is attempt %s of the code, in the same transaction',
-        async (attempts) => {
-          await bump('login', '999999', [otpRow(attempts)])
-
-          expect(mockClient.begin).toHaveBeenCalledTimes(1)
-          expect(mockClient.unsafe).toHaveBeenCalledTimes(3)
-        }
-      )
-
-      // Past its cap a code refuses the guess unchecked: no probing, so no reason to stretch the wait.
-      it.each([6, 30])('does not count a wrong guess that is attempt %s of the code', async (attempts) => {
-        await bump('login', '999999', [otpRow(attempts)])
-
-        expect(mockClient.unsafe).toHaveBeenCalledTimes(2)
-      })
-
-      it('adds one to the streak, or starts it over when the last miss is older than the decay window', async () => {
-        await bump('login', '999999', [otpRow(2)])
-
-        expect(sqlOf(miss)).toBe(
-          'UPDATE global_account.social_id SET login_otp_misses = CASE WHEN login_otp_missed_on < $3 OR (login_otp_misses >= $4 AND login_otp_missed_on < $5) THEN 1 ELSE login_otp_misses + 1 END, login_otp_missed_on = $2 WHERE _id = $1'
-        )
-        const [, [socialId, missedOn, cutoff, maxAttempts, lockCutoff]] = mockClient.unsafe.mock.calls[miss]
-        expect(socialId).toBe('42')
-        expect(missedOn).toBe(mockClient.unsafe.mock.calls[codes][1][2])
-        expect(cutoff).toBe(missedOn - day)
-        expect(maxAttempts).toBe(cap)
-        expect(lockCutoff).toBe(missedOn - hour)
-      })
-
-      // Only the codes that still take the guess decide; the single-code cases are in otp-real.itest.ts.
-      it.each([
-        ['wrong at two live codes', '999999', [otpRow(2, '123456'), otpRow(2, '654321')], 3],
-        ['right at one of two live codes', '654321', [otpRow(2, '123456'), otpRow(2, '654321')], 2],
-        ['wrong while an older code is spent', '999999', [otpRow(7, '111111'), otpRow(2, '222222')], 3],
-        ['right at the code that still takes it', '222222', [otpRow(7, '111111'), otpRow(2, '222222')], 2]
-      ])('guess %s runs %i statements', async (_name, guess, rows, statements) => {
-        await bump('login', guess, rows)
-
-        expect(mockClient.unsafe).toHaveBeenCalledTimes(statements)
-      })
     })
   })
 
@@ -841,15 +777,11 @@ describe('PostgresAccountDB', () => {
           { account_uuid: 'acc1', role: AccountRole.Owner },
           { account_uuid: 'acc2', role: AccountRole.Maintainer }
         ]
+        mockClient.unsafe.mockResolvedValue(spyValue)
 
         const result = await accountDb.getWorkspaceMembers(workspaceId)
 
-        expect(mockClient).toHaveBeenCalledWith('global_account.workspace_members')
-        expect(mockClient).toHaveBeenCalledWith(
-          ['SELECT account_uuid, role FROM ', ' WHERE workspace_uuid = ', ''],
-          expect.anything(),
-          workspaceId
-        )
+        expect(mockClient.unsafe).toHaveBeenCalledWith(expect.stringContaining('seat_order'), [workspaceId])
 
         expect(result).toEqual([
           { person: 'acc1', role: AccountRole.Owner },

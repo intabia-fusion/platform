@@ -1,6 +1,7 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2023 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -30,6 +31,7 @@ import {
   type Blob,
   type MarkupBlobRef,
   type Data,
+  type OperationDomain,
   type WithLookup,
   AccountUuid,
   type SocialIdType
@@ -209,6 +211,7 @@ export interface ContactsTab extends Doc {
  * @public
  */
 export const contactId = 'contact' as Plugin
+export const ensureEmployeeDomain = `${contactId}:operation:ensureEmployee` as OperationDomain
 
 export interface PersonSpace extends Space {
   account: AccountUuid

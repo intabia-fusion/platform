@@ -11,8 +11,8 @@ import { retryIntervals } from './retry'
 import { NewIssue } from './model/tracker/types'
 import { SignUpData } from './model/common-types'
 import { LoginPage } from './model/login-page'
-import { SignUpPage } from './model/signup-page'
 import { SelectWorkspacePage } from './model/select-workspace-page'
+import { getServiceAccountClient } from './API/AccountClient'
 
 const retryOptions = { intervals: retryIntervals, timeout: 60000 }
 test.use({
@@ -332,7 +332,6 @@ test.describe('Fulltext index', () => {
       }
 
       const loginPage = new LoginPage(page)
-      const signUpPage = new SignUpPage(page)
       const selectWorkspacePage = new SelectWorkspacePage(page)
       const issuesPage = new IssuesPage(page)
       const spotlight = new SpotlightPopup(page)
@@ -357,9 +356,11 @@ test.describe('Fulltext index', () => {
         }
         const newWorkspaceName = `New Workspace Name - ${generateId(2)}`
 
+        const service = await getServiceAccountClient('tool')
+        await service.signUp(newUser.email, newUser.password, newUser.firstName, newUser.lastName)
         await loginPage.goto()
-        await loginPage.clickSignUp()
-        await signUpPage.signUp(newUser)
+        await loginPage.login(newUser.email, newUser.password)
+        await page.waitForURL((url) => url.pathname.startsWith('/login/selectWorkspace'))
 
         await selectWorkspacePage.createWorkspace(newWorkspaceName)
       })

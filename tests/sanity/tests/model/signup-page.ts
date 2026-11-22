@@ -1,5 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test'
-import { SignUpData, SignUpOtpData } from './common-types'
+import { SignUpData } from './common-types'
 import { CommonPage } from './common-page'
 import { getOtpCode } from '../API/AccountDb'
 import { retryIntervals } from '../retry'
@@ -21,7 +21,6 @@ export class SignUpPage extends CommonPage {
   inputFirstName = (): Locator => this.page.locator('input[name="given-name"]')
   inputLastName = (): Locator => this.page.locator('input[name="family-name"]')
   inputEmail = (): Locator => this.page.locator('input[name="email"]')
-  inputPhone = (): Locator => this.page.locator('input[name="phone-number"]')
   inputNewPassword = (): Locator => this.page.locator('input[name="password"]')
   inputRepeatPassword = (): Locator => this.page.locator('input[name="password2"]')
   checkboxPersonalData = (): Locator => this.page.locator('[data-testid="checkbox-personal-data"]')
@@ -90,6 +89,11 @@ export class SignUpPage extends CommonPage {
   }
 
   async confirmOtpIfNeeded (email: string): Promise<void> {
+    if (new URL(this.page.url()).pathname.startsWith('/login/join')) {
+      await this.page.getByRole('button', { name: 'Join workspace', exact: true }).click()
+      await this.page.waitForURL((url) => url.pathname.startsWith('/workbench/'))
+      return
+    }
     // A stand without OTP never shows the code screen. Polling both outcomes leaves as soon as one
     // of them holds; racing two waitFors instead left the loser burning its whole timeout.
     await expect
@@ -103,6 +107,7 @@ export class SignUpPage extends CommonPage {
     for (let i = 0; i < 6; i++) {
       await this.page.locator(`input[name="otp${i + 1}"]`).fill(code[i])
     }
+    await this.page.getByRole('button', { name: 'Confirm', exact: true }).click()
 
     // Password sign up ends on the create form, OTP on select workspace, join-link sign up lands in
     // the workspace. Callers expect the create form - take the extra click here, not in every spec.
@@ -111,19 +116,6 @@ export class SignUpPage extends CommonPage {
       await this.page.locator('button > span', { hasText: 'Create workspace' }).click()
       await this.page.waitForURL((url) => url.pathname.startsWith('/login/createWorkspace'))
     }
-  }
-
-  // With USE_OTP the form has no password fields and submitting leads to the code screen.
-  async signUpOtp (data: SignUpOtpData): Promise<void> {
-    await this.enterFirstName(data.firstName)
-    await this.enterLastName(data.lastName)
-    await this.enterEmail(data.email)
-    if (data.phone !== undefined) {
-      await this.inputPhone().fill(data.phone)
-    }
-    await this.acceptConsents()
-    expect(await this.buttonSignUp().isEnabled()).toBe(true)
-    await this.buttonSignUp().click()
   }
 
   async checkIfSignUpButtonIsDisabled (): Promise<void> {

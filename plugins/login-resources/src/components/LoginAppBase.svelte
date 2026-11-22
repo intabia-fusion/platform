@@ -1,7 +1,7 @@
 <!--
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021, 2022 Hardcore Engineering Inc.
-// Copyright © 2026 Intabia Fusion
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -30,6 +30,9 @@
   import loginBack2xAvif from '../../img/login_back_2x.avif'
   import loginBackWebp from '../../img/login_back.webp'
   import loginBack2xWebp from '../../img/login_back_2x.webp'
+  import intabiaMark from '../../img/intabia-mark.png'
+  import intabiaWordmark from '../../img/intabia-wordmark.png'
+  import intabiaPlatformWordmark from '../../img/intabia-platform-wordmark.png'
 
   export let wide: boolean = false
 
@@ -90,18 +93,20 @@
     {/if}
 
     <div class="content-block">
-      <div
-        style:position={isNarrow && !wide ? 'static' : 'fixed'}
-        style:left={isNarrow && !wide ? undefined : '1.75rem'}
-        style:top={isNarrow && !wide ? undefined : '3rem'}
-        style:z-index={1001}
-        class="px-4 logo"
-      >
-        <svelte:component this={activeTheme.logoComponent} />
-        {#if activeTheme.showTitle}
-          <span class="fs-title ml-2">{getMetadata(workbench.metadata.PlatformTitle)}</span>
-        {/if}
-      </div>
+      {#if activeTheme.name !== 'intabia' || wide}
+        <div
+          style:position={isNarrow && !wide ? 'static' : 'fixed'}
+          style:left={isNarrow && !wide ? undefined : '1.75rem'}
+          style:top={isNarrow && !wide ? undefined : '3rem'}
+          style:z-index={1001}
+          class="px-4 logo"
+        >
+          <svelte:component this={activeTheme.logoComponent} />
+          {#if activeTheme.showTitle}
+            <span class="fs-title ml-2">{getMetadata(workbench.metadata.PlatformTitle)}</span>
+          {/if}
+        </div>
+      {/if}
 
       {#if getMetadata(platform.metadata.DevModel)}
         <div style:position="fixed" style:left="0px" style:top="0px" style:z-index={1001} class="flex-row-center">
@@ -114,10 +119,18 @@
 
       <div class:panel-base={!wide} class="panel" class:wide>
         <Scroller padding="1rem 0" noStretch={!wide}>
-          <div class="form-content">
+          <div class="form-content" class:with-brand={activeTheme.name === 'intabia' && !wide}>
+            {#if activeTheme.name === 'intabia' && !wide}
+              <div class="card-brand" role="img" aria-label="Intabia Platform">
+                <img src={intabiaMark} alt="" width="44" height="44" />
+                <div class="card-wordmark" aria-hidden="true">
+                  <span class="card-wordmark-intabia" style:mask-image="url({intabiaWordmark})" />
+                  <span class="card-wordmark-platform" style:mask-image="url({intabiaPlatformWordmark})" />
+                </div>
+              </div>
+            {/if}
             <slot name="form-content" />
           </div>
-          <slot name="extra-form-content" />
         </Scroller>
       </div>
     </div>
@@ -128,8 +141,9 @@
       {#if getMetadata(login.metadata.UsageUrl)}
         <NavLink href={getMetadata(login.metadata.UsageUrl)}><Label label={login.string.UsageConditions} /></NavLink>
       {/if}
-      {#if getMetadata(login.metadata.SupportUrl)}
-        <span class="support">
+      <div class="footer-actions">
+        <slot name="footer-action" />
+        {#if getMetadata(login.metadata.SupportUrl)}
           <Button
             kind="regular"
             borderStyle="none"
@@ -139,8 +153,8 @@
               window.open(getMetadata(login.metadata.SupportUrl), '_blank')
             }}
           />
-        </span>
-      {/if}
+        {/if}
+      </div>
     </div>
   </div>
 </div>
@@ -280,6 +294,46 @@
     height: 100%;
   }
 
+  .card-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 1rem 2rem 0;
+    color: #000061;
+  }
+
+  .card-brand img {
+    flex: none;
+  }
+
+  .card-wordmark {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .card-wordmark span {
+    display: block;
+    background: currentColor;
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: left center;
+  }
+
+  .card-wordmark-intabia {
+    width: 85px;
+    height: 11px;
+  }
+
+  .card-wordmark-platform {
+    width: 120px;
+    height: 14px;
+  }
+
+  .with-brand > :global(form.container) {
+    padding-top: 1.25rem !important;
+  }
+
   /* Let the content define its own height so the page can grow around it. */
   @media (max-height: 760px), (max-width: 768px) {
     .panel:not(.wide) .form-content {
@@ -306,8 +360,11 @@
     align-items: center;
   }
 
-  .support {
+  .footer-actions {
     margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
   }
 
   /* Intabia-scoped primary button visuals */
@@ -384,6 +441,9 @@
   /* Mobile fallbacks: make panel full-width and ensure panel-base padding/background
      so the login container looks correct on smaller screens and is controlled centrally. */
   @media (max-width: 768px) {
+    .card-brand {
+      margin: 0.5rem 1.5rem 0;
+    }
     /* Full width minus margins; `wide` keeps its own fullscreen layout. */
     .panel:not(.wide),
     .panel-base {
@@ -471,9 +531,11 @@
       flex-shrink: 0;
     }
 
-    .backd:not(.wide-layout) .support {
+    .backd:not(.wide-layout) .footer-actions {
       margin-left: 0;
       order: -1;
+      flex-direction: column;
+      gap: 0.5rem;
     }
   }
 </style>

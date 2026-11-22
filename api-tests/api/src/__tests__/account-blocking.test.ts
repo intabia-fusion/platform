@@ -76,7 +76,13 @@ describe('account-blocking', () => {
   }
 
   it('signs up a person with a workspace of their own', async () => {
-    const signedUp = await rpc(config, undefined, 'signUp', { email, password, firstName: 'Block', lastName: 'Me' })
+    const signedUp = await rpc(config, undefined, 'signUp', {
+      email,
+      password,
+      firstName: 'Block',
+      lastName: 'Me',
+      consent: { personalData: true, rules: true }
+    })
     expect(signedUp.error).toBeUndefined()
     userToken = signedUp.result.token
     userAccount = signedUp.result.account

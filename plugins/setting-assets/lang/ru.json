@@ -271,6 +271,8 @@
     "SendCode": "Отправить код",
     "SeatLimitReached": "Нет свободных мест",
     "SeatLimitReachedDescription": "В рабочем пространстве достигнут лимит мест по тарифу. Освободите место или повысьте тариф, чтобы назначить эту роль.",
+    "DocumentGuest": "Гость документов",
+    "SystemAdministrator": "Системный администратор",
     "WebhookAccess": "Исходящие вебхуки",
     "WebhookIncomingAccess": "Входящие вебхуки",
     "WebhookIncomingPlaceholderProject": "Выберите проект выше, чтобы использовать здесь его настоящий идентификатор.",

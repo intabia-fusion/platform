@@ -14,27 +14,32 @@
 */
 
 import {
+  connect as connectWs,
   createRestClient,
   createRestTxOperations,
   getWorkspaceToken,
   loadServerConfig,
+  NodeWebSocketFactory,
   type RestClient,
   type ServerConfig,
   type WorkspaceToken
 } from '@hcengineering/api-client'
 import core, {
-  type AccountUuid,
+  AccountRole,
   generateUuid,
   MeasureMetricsContext,
   pickPrimarySocialId,
   type Ref,
   type SocialId,
-  type TxOperations
+  systemAccountUuid,
+  type TxOperations,
+  TxFactory
 } from '@hcengineering/core'
 import { getClient as getAccountClient } from '@hcengineering/account-client'
-import { ensureEmployee } from '@hcengineering/contact'
+import contact, { ensureEmployee, ensureEmployeeDomain, type Employee, type Person } from '@hcengineering/contact'
+import { generateToken } from '@hcengineering/server-token'
 import drivePlugin, { type Drive } from '@hcengineering/drive'
-import { adminSessionClient, DEV_OTP } from './admin.fixtures'
+import { adminSessionClient, DEV_OTP, waitForMail } from './admin.fixtures'
 
 // Workspace boots business (10 seats), 3 users onboard. usersLimit=2 seats by role priority then
 // uuid; one user goes read-only, asserting ws_members-sourced enforcement on a plan change.
@@ -135,6 +140,41 @@ describe('plan-seats', () => {
     return false
   }
 
+  it('synchronizes an existing seated employee and identity through the socket', async () => {
+    const client = connect(owner)
+    const person = (await client.findAll(contact.class.Person, { personUuid: owner.info.account }))[0]
+    const space = (await client.findAll(contact.class.PersonSpace, { person: person._id }))[0]
+    const identities = await client.findAll(contact.class.SocialIdentity, { attachedTo: person._id })
+    const identity = identities[0]
+    const system = createRestClient(
+      owner.endpoint,
+      owner.workspaceId,
+      generateToken(systemAccountUuid, owner.workspaceId, undefined, 'secret')
+    )
+    await system.tx(
+      new TxFactory(core.account.System).createTxUpdateDoc(
+        contact.class.SocialIdentity,
+        contact.space.Contacts,
+        identity._id,
+        { verifiedOn: null as any }
+      )
+    )
+    const socket = await connectWs('http://localhost:8183', {
+      token: owner.token,
+      workspace: wsName,
+      socketFactory: NodeWebSocketFactory
+    })
+    try {
+      const result = await (socket as any).connection.domainRequest(ensureEmployeeDomain, {})
+      expect(result.value).toEqual({ employee: person._id, personSpace: space._id })
+      expect((await client.findAll(contact.class.SocialIdentity, { _id: identity._id }))[0].verifiedOn).toBeGreaterThan(
+        0
+      )
+    } finally {
+      await socket.close()
+    }
+  }, 30000)
+
   it('usersLimit=2 seats the owner plus one user, the other user is read-only', async () => {
     // Seats go by role priority then account-uuid (createdOn no longer decides), so which of the two
     // plain users loses the seat depends on uuid order — assert "owner + exactly one user" instead.
@@ -202,71 +242,138 @@ describe('plan-seats', () => {
     }
   }, 60000)
 
-  // Join-time hard cap now lives in account service, not the old Employee-mixin block (removed
-  // in the seat-source-of-truth refactor); ws_members holds one seat per member.
-  const joinerAccountUuid = async (): Promise<AccountUuid> => {
-    const cli = getAccountClient(config.ACCOUNTS_URL)
-    const info = await cli.login('user4', '1234')
-    if (info == null) throw new Error('user4 login failed')
-    return info.account
-  }
-
-  // Owner creates an invite; the joiner (an account token, not yet a member) redeems it.
-  async function inviteAndJoin (): Promise<void> {
-    const ownerAccount = getAccountClient(config.ACCOUNTS_URL, owner.token)
-    const inviteId = await ownerAccount.createInvite(24 * 3600 * 1000, '*', 1, 'USER' as any)
-    const cli = getAccountClient(config.ACCOUNTS_URL)
-    const info = await cli.login('user4', '1234')
-    if (info?.token == null) throw new Error('user4 login failed')
-    await getAccountClient(config.ACCOUNTS_URL, info.token).joinByInvite(inviteId)
-  }
-
-  async function removeJoiner (): Promise<void> {
-    const account = await joinerAccountUuid()
-    // Removing someone else needs at least Maintainer in the workspace; the owner token qualifies.
-    // A service/system token is NOT a workspace member, so leaveWorkspace rejects it with 403.
+  it('bootstraps a newly invited account without displacing existing seats', async () => {
     const ownerClient = getAccountClient(config.ACCOUNTS_URL, owner.token)
+    const invite = await ownerClient.createInvite(24 * 3600 * 1000, 1, AccountRole.User)
+    const email = `seats-onboarding-${generateUuid()}@test.local`
+    const anon = getAccountClient(config.ACCOUNTS_URL)
+    let account: string | undefined
     try {
-      await ownerClient.leaveWorkspace(account)
-    } catch {
-      /* not a member — nothing to remove */
-    }
-  }
-
-  it('joining past usersLimit is rejected by the account seat cap', async () => {
-    // usersLimit=3 fills all seats with user1/2/3; user4 (not a member) must be rejected on join.
-    try {
-      await setUsersLimit(3)
-      const blocked = await pollRejected(inviteAndJoin)
-      expect(blocked).toBe(true)
+      await setUsersLimit(2)
+      let existing: TxOperations | undefined
+      const deadline = Date.now() + 20000
+      while (Date.now() < deadline && existing === undefined) {
+        for (const [candidate, other] of [
+          [seatedOps, seatlessOps],
+          [seatlessOps, seatedOps]
+        ]) {
+          if (await pollRejected(async () => await createDrive(candidate, `existing-seat-${generateUuid()}`), 1500)) {
+            existing = other
+            break
+          }
+        }
+        if (existing === undefined) await new Promise((resolve) => setTimeout(resolve, 500))
+      }
+      expect(existing).toBeDefined()
+      await anon.requestEmailOtp(email)
+      const mail = await waitForMail(email)
+      const code = mail?.Subject.match(/\b\d{6}\b/)?.[0]
+      expect(code).toBeDefined()
+      const login = await anon.confirmEmailOtp(
+        email,
+        code as string,
+        { kind: 'invite', inviteId: invite },
+        {
+          personalData: true,
+          rules: true
+        }
+      )
+      account = login.account
+      const member = getAccountClient(config.ACCOUNTS_URL, login.token)
+      const joined = await member.completeOnboardingInvite({ firstName: 'New', lastName: 'Member' }, invite)
+      const socket = await connectWs('http://localhost:8183', {
+        token: login.token as string,
+        workspace: joined.workspaceUrl,
+        socketFactory: NodeWebSocketFactory
+      })
+      let employee: Ref<Employee>
+      try {
+        expect((await socket.getAccount()).uuid).toBe(login.account)
+        await socket.findAll(core.class.Space, {})
+        const bootstrap = await (socket as any).connection.domainRequest(ensureEmployeeDomain, {})
+        employee = bootstrap.value.employee
+        expect(employee).toBeDefined()
+      } finally {
+        await socket.close()
+      }
+      const client = createRestClient(joined.endpoint, joined.workspace, joined.token)
+      const person = (await client.findAll(contact.class.Person, { personUuid: login.account }))[0] as Person
+      expect(person._id).toBe(employee)
+      expect((person as any)[contact.mixin.Employee]).toMatchObject({ active: true })
+      const identities = await client.findAll(contact.class.SocialIdentity, { attachedTo: person._id })
+      expect(identities.length).toBeGreaterThan(0)
+      let personSpace = await client.findAll(contact.class.PersonSpace, { person: person._id })
+      const spaceDeadline = Date.now() + 10000
+      while (personSpace.length === 0 && Date.now() < spaceDeadline) {
+        await new Promise((resolve) => setTimeout(resolve, 200))
+        personSpace = await client.findAll(contact.class.PersonSpace, { person: person._id })
+      }
+      expect(personSpace).toHaveLength(1)
+      const system = createRestClient(
+        joined.endpoint,
+        joined.workspace,
+        generateToken(systemAccountUuid, joined.workspace, undefined, 'secret')
+      )
+      await system.removeDoc(contact.class.PersonSpace, core.space.Space, personSpace[0]._id)
+      expect(await client.findAll(contact.class.PersonSpace, { person: person._id })).toHaveLength(0)
+      const restored = await client.domainRequest<{ employee: Ref<Employee>, personSpace: string }>(
+        ensureEmployeeDomain,
+        {}
+      )
+      expect(restored.value.employee).toBe(employee)
+      expect(await client.findAll(contact.class.PersonSpace, { person: person._id })).toHaveLength(1)
+      const ops = await createRestTxOperations(joined.endpoint, joined.workspace, joined.token)
+      await expect(createDrive(ops, `overflow-${generateUuid()}`)).rejects.toThrow()
+      await expect(createDrive(existing as TxOperations, `existing-after-${generateUuid()}`)).resolves.toBeDefined()
     } finally {
       await setUsersLimit(0)
-      await removeJoiner()
+      if (account !== undefined) await ownerClient.leaveWorkspace(account as any)
     }
   }, 60000)
 
-  it('after lifting the limit the new member can join again', async () => {
-    // Once usersLimit is raised past the member count the join-time cap no longer rejects.
+  it('bootstraps an invited account when the plan shrinks before its first connection', async () => {
+    const ownerClient = getAccountClient(config.ACCOUNTS_URL, owner.token)
+    const invite = await ownerClient.createInvite(24 * 3600 * 1000, 1, AccountRole.User)
+    const email = `seats-downgrade-${generateUuid()}@test.local`
+    const anon = getAccountClient(config.ACCOUNTS_URL)
+    let account: string | undefined
     try {
-      await setUsersLimit(3)
-      const blocked = await pollRejected(inviteAndJoin)
-      expect(blocked).toBe(true)
-
-      await setUsersLimit(10)
-      const deadline = Date.now() + 20000
-      let ok = false
-      while (Date.now() < deadline && !ok) {
-        try {
-          await inviteAndJoin()
-          ok = true
-        } catch {
-          await new Promise((resolve) => setTimeout(resolve, 1000))
+      await anon.requestEmailOtp(email)
+      const mail = await waitForMail(email)
+      const code = mail?.Subject.match(/\b\d{6}\b/)?.[0]
+      expect(code).toBeDefined()
+      const login = await anon.confirmEmailOtp(
+        email,
+        code as string,
+        { kind: 'invite', inviteId: invite },
+        {
+          personalData: true,
+          rules: true
         }
-      }
-      expect(ok).toBe(true)
+      )
+      account = login.account
+      const joined = await getAccountClient(config.ACCOUNTS_URL, login.token).completeOnboardingInvite(
+        { firstName: 'New', lastName: 'Member' },
+        invite
+      )
+      await setUsersLimit(1)
+      expect(await pollRejected(async () => await createDrive(seatedOps, `downgrade-${generateUuid()}`))).toBe(true)
+      const client = createRestClient(joined.endpoint, joined.workspace, joined.token)
+      const bootstrap = await client.domainRequest<{ employee: Ref<Employee>, personSpace: string }>(
+        ensureEmployeeDomain,
+        {}
+      )
+      expect(bootstrap.value).toBeDefined()
+      const repeated = await client.domainRequest<{ employee: Ref<Employee>, personSpace: string }>(
+        ensureEmployeeDomain,
+        {}
+      )
+      expect(repeated.value).toEqual(bootstrap.value)
+      const ops = await createRestTxOperations(joined.endpoint, joined.workspace, joined.token)
+      await expect(createDrive(ops, `downgrade-new-${generateUuid()}`)).rejects.toThrow()
     } finally {
       await setUsersLimit(0)
-      await removeJoiner()
+      if (account !== undefined) await ownerClient.leaveWorkspace(account as any)
     }
   }, 60000)
 })

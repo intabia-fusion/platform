@@ -1,12 +1,13 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { getCurrentLocation, Loading, TimeLeft } from '@hcengineering/ui'
+  import { getCurrentLocation, Loading, navigate, TimeLeft } from '@hcengineering/ui'
   import Label from './internal/Label.svelte'
   import { logIn } from '@hcengineering/workbench'
   import { trackOAuthCompletion } from '@hcengineering/analytics-providers'
   import type { LoginInfoRequest, LoginInfoByToken } from '@hcengineering/account-client'
   import type { Status } from '@hcengineering/platform'
-  import platform, { OK, PlatformError, unknownError } from '@hcengineering/platform'
+  import platform, { getMetadata, OK, PlatformError, unknownError } from '@hcengineering/platform'
+  import { concatLink } from '@hcengineering/core'
 
   import type { Field } from '../types'
   import {
@@ -22,6 +23,7 @@
   import login from '../plugin'
 
   let request: LoginInfoRequest | undefined
+  let providerConsent: string | undefined
   let fields: Field[]
   let status: Status = OK
   $: fields =
@@ -37,12 +39,15 @@
   }
 
   onMount(async () => {
-    const autoJoinInfo = getAutoJoinInfo()
-    if (autoJoinInfo != null) {
-      goTo('autoJoin')
+    const location = getCurrentLocation()
+    const consent = location.query?.providerConsent
+    if (typeof consent === 'string' && consent !== '') {
+      providerConsent = consent
+      delete location.query?.providerConsent
+      navigate(location, true)
       return
     }
-
+    const autoJoinInfo = getAutoJoinInfo()
     let result: LoginInfoByToken | null = null
 
     try {
@@ -57,6 +62,17 @@
       }
     }
 
+    if (
+      autoJoinInfo != null &&
+      (result == null ||
+        isLoginInfoRequest(result) ||
+        result.onboarding == null ||
+        result.onboarding.stage === 'complete')
+    ) {
+      goTo('autoJoin')
+      return
+    }
+
     trackOAuthCompletion(result)
     await handleLoginInfo(result)
   })
@@ -68,6 +84,20 @@
       request = result
     } else {
       await logIn(result)
+
+      if (result.onboarding != null && result.onboarding.stage !== 'complete') {
+        const location = getCurrentLocation()
+        if (location.query?.inviteId != null) {
+          delete location.query.token
+          delete location.query.autoJoin
+          location.path[1] = 'join'
+          location.path.length = 2
+          navigate(location, true)
+        } else {
+          goTo('onboarding', true)
+        }
+        return
+      }
 
       if (isWorkspaceLoginInfo(result)) {
         navigateToWorkspace(result.workspaceUrl, result, getCurrentLocation().query?.navigateUrl, true)
@@ -94,10 +124,25 @@
     }
   }
 
+  const providerConsentAction = {
+    i18n: login.string.Proceed,
+    func: async () => {
+      const accountsUrl = getMetadata(login.metadata.AccountsUrl) ?? ''
+      window.location.assign(
+        concatLink(
+          accountsUrl,
+          `/auth/consent?nonce=${encodeURIComponent(providerConsent ?? '')}&agreedPersonalData=true&agreedRules=true`
+        )
+      )
+    }
+  }
+
   let timer: TimeLeft | undefined
 </script>
 
-{#if status?.code === platform.status.TokenExpired}
+{#if providerConsent !== undefined}
+  <Form caption={login.string.SignUp} {status} fields={[]} object={{}} action={providerConsentAction} consentRequired />
+{:else if status?.code === platform.status.TokenExpired}
   <span class="text ml-8">
     <Label label={login.string.AccessExpired} />
   </span>
