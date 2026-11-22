@@ -1,5 +1,6 @@
 {
   "status": {
+    "InvalidEmailFormat": "Неверный формат email",
     "FieldTooLong": "Поле {field} не должно быть длиннее {count} символов",
     "RequiredField": "Требуется заполнить {field}",
     "FieldsDoNotMatch": "{field} не совпадает {field2}",

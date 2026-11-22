@@ -1,3 +1,5 @@
+// Copyright © 2026 Intabia Fusion.
+
 import { expect, type Locator, type Page } from '@playwright/test'
 import { PlatformURI } from '../utils'
 import { retryIntervals } from '../retry'
@@ -38,7 +40,7 @@ export class LoginPage {
   }
 
   async enableOtp (): Promise<void> {
-    await this.page.route('**/config.json', async (route) => {
+    await this.page.route('**/config{,-test}.json', async (route) => {
       const response = await route.fetch()
       await route.fulfill({ response, json: { ...(await response.json()), USE_OTP: 'true' } })
     })

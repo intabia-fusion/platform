@@ -76,3 +76,14 @@ export function mapPasswordPolicyStatus (status: Status<any>): Status<any> {
 
   return new Status(Severity.INFO, ruleDescr, { count: status.params?.count })
 }
+
+export function mapEmailFormatStatus (status: Status): Status {
+  if (
+    status.code === platform.status.BadRequest &&
+    status.params?.field === 'email' &&
+    status.params?.reason === 'format'
+  ) {
+    return new Status(Severity.ERROR, login.status.InvalidEmailFormat, {})
+  }
+  return status
+}

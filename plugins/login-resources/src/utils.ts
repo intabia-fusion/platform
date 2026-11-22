@@ -65,7 +65,7 @@ import { logIn, workbenchId } from '@hcengineering/workbench'
 import { LoginEvents } from './analytics'
 import { type Pages } from './index'
 import login from './plugin'
-import { mapPasswordPolicyStatus } from './validations'
+import { mapEmailFormatStatus, mapPasswordPolicyStatus } from './validations'
 
 export function readAuthEmail (): string {
   return localStorage.getItem(login.metadata.AuthEmail) ?? ''
@@ -762,7 +762,7 @@ export async function requestPassword (email: string): Promise<Status> {
     if (err instanceof PlatformError) {
       await handleStatusError('Request password error', err.status)
 
-      return err.status
+      return mapEmailFormatStatus(err.status)
     } else {
       Analytics.handleError(err)
 
@@ -977,7 +977,7 @@ export async function loginOtp (email: string): Promise<[Status, OtpInfo | null]
       Analytics.handleEvent('sendOtp', { email, ok: false })
       await handleStatusError('Send otp error', err.status)
 
-      return [err.status, null]
+      return [mapEmailFormatStatus(err.status), null]
     } else {
       console.error('Send otp error', err)
       Analytics.handleEvent('sendOtp', { email, ok: false })
@@ -995,7 +995,7 @@ export async function requestEmailOtp (
   try {
     return [OK, await getAccountClient(null).requestEmailOtp(email, { consent })]
   } catch (err: any) {
-    if (err instanceof PlatformError) return [err.status, null]
+    if (err instanceof PlatformError) return [mapEmailFormatStatus(err.status), null]
     Analytics.handleError(err)
     return [unknownError(err), null]
   }

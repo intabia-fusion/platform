@@ -44,7 +44,7 @@
   import RegistrationOnboarding from './RegistrationOnboarding.svelte'
   import SelectDownloads from './SelectDownloads.svelte'
   import type { Pages } from '..'
-  import { pages } from '..'
+  import { LoginMethods, pages } from '..'
   import { goTo, restoreSession } from '../utils'
   import login from '../plugin'
   import LoginAppBase from './LoginAppBase.svelte'
@@ -81,6 +81,7 @@
 
     const allowedUnauthPages: Pages[] = [
       'login',
+      'login-password',
       'signup',
       'password',
       'recovery',
@@ -137,14 +138,32 @@
 
 <LoginAppBase>
   <svelte:fragment slot="form-content">
-    {#if page === 'login'}
+    {#if page === 'login' || page === 'login-password'}
       {#if localLoginHidden}
         <ProvidersOnlyForm />
       {:else}
-        <LoginForm {navigateUrl} {useOTP} emailFirst />
+        {#key page}
+          <LoginForm
+            {navigateUrl}
+            {useOTP}
+            emailFirst
+            initialMethod={page === 'login-password' ? LoginMethods.Password : undefined}
+          />
+        {/key}
       {/if}
     {:else if page === 'signup'}
       <EmailFirstForm {navigateUrl} />
+      <div class="text-center">
+        <BottomAction
+          action={{
+            i18n: login.string.LoginWithPassword,
+            page: 'login-password',
+            func: () => {
+              goTo('login-password')
+            }
+          }}
+        />
+      </div>
     {:else if page === 'onboarding'}
       <RegistrationOnboarding />
     {:else if page === 'createWorkspace'}

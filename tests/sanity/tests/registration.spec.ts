@@ -46,10 +46,13 @@ test.describe('registration test', () => {
 
   const anon = getAccountClient(LocalUrl)
 
-  test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem('lang', 'en')
-    })
+  test.beforeEach(async ({ page }, testInfo) => {
+    await page.addInitScript(
+      (lang) => {
+        localStorage.setItem('lang', lang)
+      },
+      testInfo.tags.includes('@ru') ? 'ru' : 'en'
+    )
     loginPage = new LoginPage(page)
     registrationPage = new RegistrationPage(page)
     selectWorkspacePage = new SelectWorkspacePage(page)
@@ -75,7 +78,7 @@ test.describe('registration test', () => {
     await page.addInitScript(() => {
       localStorage.setItem('login-method', 'otp')
     })
-    await page.route('**/config.json', async (route) => {
+    await page.route('**/config{,-test}.json', async (route) => {
       const response = await route.fetch()
       const config = await response.json()
       await route.fulfill({ response, json: { ...config, USE_OTP: 'false' } })
@@ -86,6 +89,100 @@ test.describe('registration test', () => {
     await expect(page.getByRole('link', { name: 'Login with code' })).toHaveCount(0)
     await expect(page.locator('input[name="first-name"]')).toHaveCount(0)
     await expect(page.getByRole('link', { name: 'Sign up', exact: true })).toHaveCount(0)
+  })
+
+  test.describe('registration and recovery controls', () => {
+    test.beforeEach(async ({ page }) => {
+      await loginPage.enableOtp()
+      await page.route('**/_account/providers', async (route) => {
+        await route.fulfill({ json: [] })
+      })
+      await page.route(/\/_account\/?$/, async (route) => {
+        const method = route.request().postDataJSON()?.method
+        switch (method) {
+          case 'getPasswordPolicy':
+            await route.fulfill({ json: { result: { strictness: 'none', validations: {} } } })
+            break
+          case 'getLoginInfoByToken':
+            await route.fulfill({ json: { result: null } })
+            break
+          case 'isAllowReadOnlyGuests':
+            await route.fulfill({ json: { result: { allowed: false } } })
+            break
+          default:
+            await route.continue()
+        }
+      })
+    })
+
+    for (const [path, requestMethod] of [
+      ['signup', 'requestEmailOtp'],
+      ['password', 'requestPasswordReset']
+    ] as const) {
+      test(`shows the format error for a doubled email on ${path}`, { tag: '@ru' }, async ({ page }) => {
+        await page.route(/\/_account\/?$/, async (route) => {
+          if (route.request().postDataJSON()?.method !== requestMethod) {
+            await route.fallback()
+            return
+          }
+          await route.fulfill({
+            json: {
+              error: {
+                code: 'platform:status:BadRequest',
+                severity: 'ERROR',
+                params: { field: 'email', reason: 'format' }
+              }
+            }
+          })
+        })
+        await page.goto(`${PlatformURI}/login/${path}`)
+        await loginPage.inputEmail().fill('ada@example.comada@example.com')
+        if (path === 'signup') await loginPage.acceptEmailConsent()
+        await loginPage.inputEmail().press('Enter')
+        await expect(page.getByText('Неверный формат email', { exact: true })).toBeVisible()
+      })
+    }
+
+    test('the Russian recovery login link can wrap without clipping', { tag: '@ru' }, async ({ page }) => {
+      await page.setViewportSize({ width: 320, height: 720 })
+      await page.goto(`${PlatformURI}/login/password`)
+      const link = page.getByRole('link', { name: 'Вход', exact: true })
+      await link.hover()
+      const spaceBelowText = await link.evaluate((anchor) => {
+        const text = new Range()
+        text.selectNodeContents(anchor)
+        const line = anchor.parentElement?.getBoundingClientRect()
+        return (line?.bottom ?? 0) - text.getBoundingClientRect().bottom
+      })
+      expect(spaceBelowText).toBeGreaterThanOrEqual(1)
+      await expect(link).toHaveCSS('text-decoration-line', 'underline')
+      await link.click()
+      await expect(page).toHaveURL(/\/login\/login$/)
+    })
+
+    test('offers direct password login after going from recovery to signup', async ({ page }) => {
+      await loginPage.goto()
+      await loginPage.switchToPasswordIfNeeded()
+      await loginPage.clickOnRecover()
+      await expect(page).toHaveURL(/\/login\/password$/)
+      await loginPage.clickOnRecoverySignUp()
+      await expect(page).toHaveURL(/\/login\/signup$/)
+      await expect(page.getByRole('button', { name: 'Get code', exact: true })).toBeVisible()
+      await expect(loginPage.loginWithPassword()).toBeVisible()
+      await loginPage.loginWithPassword().click()
+      await expect(loginPage.inputPassword()).toBeVisible()
+      await expect(page.locator('[data-testid="checkbox-personal-data"]')).toHaveCount(0)
+    })
+
+    test('the direct password route respects hidden local login', async ({ page }) => {
+      await page.route('**/config{,-test}.json', async (route) => {
+        const response = await route.fetch()
+        await route.fulfill({ response, json: { ...(await response.json()), HIDE_LOCAL_LOGIN: 'true' } })
+      })
+      await page.goto(`${PlatformURI}/login/login-password`)
+      await expect(page.getByText('Log In', { exact: true })).toBeVisible()
+      await expect(loginPage.inputPassword()).toHaveCount(0)
+    })
   })
 
   async function startSignUp (value: string): Promise<PersonUuid> {

@@ -121,6 +121,7 @@ import {
 import {
   addSocialIdBase,
   assignableRoles,
+  checkEmailFormat,
   checkInvite,
   checkFieldLength,
   checkPasswordAging,
@@ -384,7 +385,7 @@ export async function requestEmailOtp (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
   }
   const email = cleanEmail(params.email)
-  if (!isEmail(email)) throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
+  checkEmailFormat(email)
   checkFieldLength(ctx, 'email', email, MAX_EMAIL_LENGTH)
   ensureNotAiBot(email)
   const code = randomInt(0, 1000000).toString().padStart(6, '0')

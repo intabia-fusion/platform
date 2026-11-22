@@ -38,6 +38,7 @@
   export let navigateUrl: string | undefined = undefined
   export let useOTP = true
   export let emailFirst = false
+  export let initialMethod: LoginMethods | undefined = undefined
   export let email: string | undefined = undefined
   export let caption: IntlString | undefined = undefined
   export let subtitle: string | undefined = undefined
@@ -89,8 +90,8 @@
       return
     }
 
-    if (emailFirst && useOTP) {
-      method = LoginMethods.Otp
+    if (initialMethod !== undefined || emailFirst) {
+      method = initialMethod ?? LoginMethods.Otp
       return
     }
 

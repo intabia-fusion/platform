@@ -165,6 +165,18 @@ describe('account operations', () => {
     })
   })
 
+  test.each([
+    ['requestEmailOtp', requestEmailOtp],
+    ['requestPasswordReset', requestPasswordReset]
+  ] as const)('%s identifies a doubled email as an address format error', async (_name, request) => {
+    ;(mockDb.socialId.findOne as jest.Mock).mockResolvedValue(null)
+    await expect(
+      request(mockCtx, mockDb, mockBranding, mockToken, { email: 'ada@example.comada@example.com' })
+    ).rejects.toMatchObject({
+      status: { code: platform.status.BadRequest, params: { field: 'email', reason: 'format' } }
+    })
+  })
+
   describe('getWorkspaceMemberDetails', () => {
     test('limits personal details to workspace maintainers and owners', async () => {
       ;(mockDb.getWorkspaceRole as jest.Mock).mockResolvedValue(AccountRole.User)
@@ -2961,13 +2973,13 @@ describe('account operations', () => {
         })
       })
 
-      test('should send reset password email', async () => {
+      test.each([mockEmail, 'legacy-user'])('should send reset password email for %s', async (value) => {
         const mockSocialId = {
           _id: 'social-id' as PersonId,
           personUuid: mockAccountId,
           type: SocialIdType.EMAIL,
-          value: mockEmail,
-          key: `email:${mockEmail}`
+          value,
+          key: `email:${value}`
         }
 
         const mockAccount = {
@@ -2978,7 +2990,7 @@ describe('account operations', () => {
         ;(mockDb.account.findOne as jest.Mock).mockResolvedValue(mockAccount)
 
         await requestPasswordReset(mockCtx, mockDb, mockBranding, mockToken, {
-          email: mockEmail
+          email: value
         })
       })
 

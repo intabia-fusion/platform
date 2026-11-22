@@ -28,6 +28,7 @@ export default mergeIds(loginId, login, {
     FieldsDoNotMatch: '' as StatusCode<{ field: string, field2: string }>,
     ConnectingToServer: '' as StatusCode,
     IncorrectValue: '' as StatusCode<{ field: string }>,
+    InvalidEmailFormat: '' as StatusCode,
     JoinWorkspaceError: '' as StatusCode
   },
   string: {

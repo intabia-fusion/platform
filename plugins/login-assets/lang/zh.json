@@ -1,5 +1,6 @@
 {
   "status": {
+    "InvalidEmailFormat": "电子邮件地址格式无效",
     "FieldTooLong": "{field}不能超过{count}个字符",
     "RequiredField": "必填字段 {field}",
     "FieldsDoNotMatch": "{field} 与 {field2} 不匹配",

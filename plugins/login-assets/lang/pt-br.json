@@ -1,5 +1,6 @@
 {
   "status": {
+    "InvalidEmailFormat": "Formato de e-mail inválido",
     "FieldTooLong": "O campo {field} não pode ter mais de {count} caracteres",
     "RequiredField": "Campo obrigatório {field}",
     "FieldsDoNotMatch": "{field} não coincide com {field2}",

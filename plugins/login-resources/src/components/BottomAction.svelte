@@ -26,13 +26,14 @@
   export let disabled = false
 </script>
 
-<div>
+<div class="bottom-action">
   {#if action.caption}
     <span><Label label={action.caption} /></span>
   {/if}
   {#if action.page}
     <NavLink
       href={getHref(action.page)}
+      noOverflow
       onClick={() => {
         if (action.func !== undefined) {
           action.func()
@@ -54,6 +55,10 @@
 </div>
 
 <style lang="scss">
+  .bottom-action {
+    line-height: 1.5;
+  }
+
   span {
     color: var(--login-darker-color, var(--theme-darker-color));
   }

@@ -500,6 +500,14 @@ export function isEmail (email: string): boolean {
   return EMAIL_REGEX.test(email)
 }
 
+export function checkEmailFormat (email: string): void {
+  if (!isEmail(email)) {
+    throw new PlatformError(
+      new Status(Severity.ERROR, platform.status.BadRequest, { field: 'email', reason: 'format' })
+    )
+  }
+}
+
 export function isShallowEqual (obj1: Record<string, any>, obj2: Record<string, any>): boolean {
   const keys1 = Object.keys(obj1)
   const keys2 = Object.keys(obj2)
@@ -651,9 +659,7 @@ export async function sendNoAccountEmail (
   email: string
 ): Promise<OtpInfo> {
   // The address goes to the mail "to": a list of addresses would mail every one of them.
-  if (!isEmail(email)) {
-    throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
-  }
+  checkEmailFormat(email)
 
   const ts = Date.now()
   const retryDelayMs = getOtpRetryDelayMs()
