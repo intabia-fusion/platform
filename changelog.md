@@ -2,6 +2,16 @@
 
 Changelog.
 
+## [0.8.76] - 2026-11-22
+
+* 🚀 FEATURES: · FUSIO-1823: Streamline email sign-in and registration, save onboarding progress, and show workspace and inviter details when accepting an invitation ([#679](https://github.com/hcengineering/platform/issues/679))
+* 🐛 BUG FIXES: · FUSIO-1832: Count only direct messages the current user belongs to in chat search totals ([#693](https://github.com/hcengineering/platform/issues/693)) · FUSIO-419: Standardize the remaining toggles for translation, API keys, invitations, the sidebar and webhooks ([#691](https://github.com/hcengineering/platform/issues/691))
+
+## [0.8.75] - 2026-11-20
+
+* 🐛 BUG FIXES: · FUSIO-1832: Use the same full-text search window for chat results and their total count ([#688](https://github.com/hcengineering/platform/issues/688)) · FUSIO-1833, FUSIO-1828, FUSIO-1834: Replace direct message archiving with per-user hiding, prevent duplicate chat creation, remove broken PDF print actions and block new activity in archived channels ([#687](https://github.com/hcengineering/platform/issues/687))
+* 🧩 OTHER: · Reduce timing sensitivity in the WebSocket retry-backoff test ([a03e7f5124](https://github.com/intabia-fusion/platform/commit/a03e7f51244a0538715ce700b6ceeaaad8dfeabb)) · Pin API bundle dependencies for reproducible CI installs ([2ec52b7cc1](https://github.com/intabia-fusion/platform/commit/2ec52b7cc128362119a102a01687eeba1a864eb3))
+
 ## [0.8.74] - 2026-11-18
 
 * 🐛 BUG FIXES: · FUSIO-1829, FUSIO-1830: Hide unpinned chats and clear unread counters across chat sections, including tasks of custom types and muted chats ([#684](https://github.com/hcengineering/platform/issues/684)) · FUSIO-1775: Limit board status filters to the board's project types, label statuses by type when several types are present, and clear obsolete status selections ([#676](https://github.com/hcengineering/platform/issues/676)) · FUSIO-419: Standardize toggle size and alignment across settings ([#683](https://github.com/hcengineering/platform/issues/683))
