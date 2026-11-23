@@ -617,23 +617,34 @@ export function start (
     let connection: Awaited<ReturnType<PublicFileClients['acquire']>> | undefined
     let discard = false
     try {
-      const cookie = req.headers.cookie?.split(';').map((it) => it.trim())
-        .find((it) => it.startsWith('presentation-metadata-Token='))?.slice('presentation-metadata-Token='.length)
-      const token = req.headers.authorization?.match(/^Bearer (.+)$/i)?.[1] ??
+      const cookie = req.headers.cookie
+        ?.split(';')
+        .map((it) => it.trim())
+        .find((it) => it.startsWith('presentation-metadata-Token='))
+        ?.slice('presentation-metadata-Token='.length)
+      const token =
+        req.headers.authorization?.match(/^Bearer (.+)$/i)?.[1] ??
         (cookie === undefined ? '' : decodeURIComponent(cookie))
       const payload = decodeToken(token)
-      if (payload.extra?.guest !== 'true' || typeof payload.extra.linkId !== 'string' ||
-        payload.workspace !== req.params.workspace || payload.extra.linkId !== req.params.linkId || !isBlobName(req.params.file)) {
+      if (
+        payload.extra?.guest !== 'true' ||
+        typeof payload.extra.linkId !== 'string' ||
+        payload.workspace !== req.params.workspace ||
+        payload.extra.linkId !== req.params.linkId ||
+        !isBlobName(req.params.file)
+      ) {
         res.status(403).end()
         return
       }
       connection = await publicFileClients.acquire(token)
       const { client, wsIds } = connection
-      if (!await canReadPublicFile(client, payload.extra.linkId, req.params.file, async (blobId) => {
-        const stat = await config.storageAdapter.stat(ctx, wsIds, blobId)
-        if (stat?.contentType !== 'application/json') return undefined
-        return Buffer.concat(await config.storageAdapter.read(ctx, wsIds, blobId)).toString()
-      })) {
+      if (
+        !(await canReadPublicFile(client, payload.extra.linkId, req.params.file, async (blobId) => {
+          const stat = await config.storageAdapter.stat(ctx, wsIds, blobId)
+          if (stat?.contentType !== 'application/json') return undefined
+          return Buffer.concat(await config.storageAdapter.read(ctx, wsIds, blobId)).toString()
+        }))
+      ) {
         res.status(404).end()
         return
       }
@@ -650,14 +661,21 @@ export function start (
       res.setHeader('Content-Type', blob.contentType)
       res.setHeader('X-Content-Type-Options', 'nosniff')
       res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox")
-      res.setHeader('Content-Disposition', ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'application/pdf']
-        .includes(blob.contentType)
-        ? 'inline'
-        : 'attachment')
+      res.setHeader(
+        'Content-Disposition',
+        ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'application/pdf'].includes(blob.contentType)
+          ? 'inline'
+          : 'attachment'
+      )
       if (typeof req.query.filename === 'string') {
-        const filename = encodeURIComponent(req.query.filename).replace(/['()*]/g,
-          (character) => `%${character.charCodeAt(0).toString(16).toUpperCase()}`)
-        res.setHeader('Content-Disposition', `${String(res.getHeader('Content-Disposition'))}; filename*=UTF-8''${filename}`)
+        const filename = encodeURIComponent(req.query.filename).replace(
+          /['()*]/g,
+          (character) => `%${character.charCodeAt(0).toString(16).toUpperCase()}`
+        )
+        res.setHeader(
+          'Content-Disposition',
+          `${String(res.getHeader('Content-Disposition'))}; filename*=UTF-8''${filename}`
+        )
       }
       const tags = req.headers['if-none-match']?.split(',').map((it) => it.trim().replace(/^W\//, ''))
       if (tags?.includes(etag) === true || tags?.includes('*') === true) {
@@ -676,7 +694,9 @@ export function start (
         res.setHeader('Cache-Control', 'no-store')
         res.status(err instanceof TokenError ? 401 : err instanceof PublicFileClientsBusy ? 503 : 500).end()
       } else res.destroy()
-      if (!(err instanceof TokenError)) ctx.error('public-file failed', { error: err instanceof Error ? err.message : 'unknown' })
+      if (!(err instanceof TokenError)) {
+        ctx.error('public-file failed', { error: err instanceof Error ? err.message : 'unknown' })
+      }
     } finally {
       connection?.release(discard)
     }

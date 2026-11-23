@@ -85,8 +85,10 @@ export function getFileUrl (file: string, filename?: string): string {
   const workspace = getCurrentWorkspaceUuid()
   if (isPublicFileAccess()) {
     const linkId = decodeTokenPayload(getToken()).extra.linkId
-    return `${publicFilePath(workspace, linkId)}${encodeURIComponent(file)}` +
+    return (
+      `${publicFilePath(workspace, linkId)}${encodeURIComponent(file)}` +
       (filename === undefined ? '' : `?filename=${encodeURIComponent(filename)}`)
+    )
   }
 
   const storage = getFileStorage()

@@ -31,16 +31,20 @@ export async function canReadPublicFile (
   file: string,
   loadMarkup?: (blob: string) => Promise<string | undefined>
 ): Promise<boolean> {
-  const link = await client.findOne('guest:class:PublicLink' as Ref<Class<PublicLink>>, { _id: linkId as Ref<PublicLink> })
+  const link = await client.findOne('guest:class:PublicLink' as Ref<Class<PublicLink>>, {
+    _id: linkId as Ref<PublicLink>
+  })
   const hierarchy = client.getHierarchy()
   if (link?.attachedToClass === undefined || !hierarchy.hasClass(link.attachedToClass)) return false
   const doc = await client.findOne(link.attachedToClass, { _id: link.attachedTo })
   if (doc === undefined) return false
 
   const fileAttributes = (_class: Ref<Class<Doc>>): Array<[string, AnyAttribute]> =>
-    Array.from(hierarchy.getAllAttributes(_class))
-      .filter(([, attr]) => attr.type._class === core.class.TypeBlob ||
-        (attr.type._class === core.class.RefTo && (attr.type as RefTo<Doc>).to === core.class.Blob))
+    Array.from(hierarchy.getAllAttributes(_class)).filter(
+      ([, attr]) =>
+        attr.type._class === core.class.TypeBlob ||
+        (attr.type._class === core.class.RefTo && (attr.type as RefTo<Doc>).to === core.class.Blob)
+    )
 
   for (const [name] of fileAttributes(doc._class)) {
     if ((doc as unknown as Record<string, unknown>)[name] === file) return true
@@ -53,18 +57,23 @@ export async function canReadPublicFile (
       const key = JSON.stringify([attribute.attributeOf, name])
       if (checkedFields.has(key)) continue
       checkedFields.add(key)
-      const attachment = await client.findOne(attribute.attributeOf as Ref<Class<Doc>>, {
-        attachedTo: doc._id,
-        attachedToClass: { $in: hierarchy.getAncestors(doc._class) },
-        [name]: file
-      } as any)
+      const attachment = await client.findOne(
+        attribute.attributeOf as Ref<Class<Doc>>,
+        {
+          attachedTo: doc._id,
+          attachedToClass: { $in: hierarchy.getAncestors(doc._class) },
+          [name]: file
+        } as any
+      )
       if (attachment !== undefined) return true
     }
   }
   // Author and assignee are in the guest's person scope. Query through that same client
   // so an avatar belonging to an unrelated person does not become public.
   const personClass = 'contact:class:Person' as Ref<Class<PersonWithAvatar>>
-  if (hierarchy.hasClass(personClass) && await client.findOne(personClass, { avatar: file }) !== undefined) return true
+  if (hierarchy.hasClass(personClass) && (await client.findOne(personClass, { avatar: file })) !== undefined) {
+    return true
+  }
   for (const [name, attribute] of hierarchy.getAllAttributes(doc._class)) {
     const value = (doc as unknown as Record<string, unknown>)[name]
     if (typeof value !== 'string') continue
@@ -78,7 +87,11 @@ export async function canReadPublicFile (
 
 function markupHasFile (markup: string, file: string): boolean {
   let root: unknown
-  try { root = JSON.parse(markup) } catch { return false }
+  try {
+    root = JSON.parse(markup)
+  } catch {
+    return false
+  }
   const nodes: unknown[] = [root]
   while (nodes.length > 0) {
     const value = nodes.pop()

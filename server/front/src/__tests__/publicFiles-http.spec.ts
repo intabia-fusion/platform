@@ -26,7 +26,11 @@ import { canReadPublicFile } from '../publicFiles'
 jest.mock('../publicFiles', () => ({ canReadPublicFile: jest.fn() }))
 const mockCreateClient = jest.fn(async () => ({ close: async () => {} }))
 const mockWorkspaceInfo = jest.fn(async () => ({ uuid: '11111111-1111-4111-8111-111111111111', url: 'test' }))
-const mockSelectWorkspace = jest.fn(async () => ({ workspace: '11111111-1111-4111-8111-111111111111', workspaceUrl: 'test', endpoint: 'ws://test' }))
+const mockSelectWorkspace = jest.fn(async () => ({
+  workspace: '11111111-1111-4111-8111-111111111111',
+  workspaceUrl: 'test',
+  endpoint: 'ws://test'
+}))
 jest.mock('@hcengineering/server-client', () => ({ createClient: () => mockCreateClient() }))
 jest.mock('@hcengineering/account-client', () => ({
   getClient: () => ({
@@ -107,7 +111,11 @@ const ws = '11111111-1111-4111-8111-111111111111'
 const token = generateToken('b6996120-416f-49cd-841e-e4a5d2e49c9b' as any, ws as any, { guest: 'true', linkId: 'link' })
 const headers = { authorization: `Bearer ${token}` }
 const allowed = canReadPublicFile as jest.Mock
-beforeEach(() => { allowed.mockReset(); allowed.mockResolvedValue(true); get.mockClear() })
+beforeEach(() => {
+  allowed.mockReset()
+  allowed.mockResolvedValue(true)
+  get.mockClear()
+})
 
 it('serves a permitted file with private revalidation headers', async () => {
   const res = await fetch(`${base}/files/public/${ws}/link/file`, { headers })
@@ -145,7 +153,13 @@ it('rejects missing or invalid tokens', async () => {
 })
 
 it('serves a non-image attachment without changing its bytes', async () => {
-  stat.mockResolvedValueOnce({ _id: 'file', size: 4, contentType: 'application/zip', etag: 'zip-version', modifiedOn: 1 })
+  stat.mockResolvedValueOnce({
+    _id: 'file',
+    size: 4,
+    contentType: 'application/zip',
+    etag: 'zip-version',
+    modifiedOn: 1
+  })
   const res = await fetch(`${base}/files/public/${ws}/link/file?filename=archive.zip`, { headers })
   expect(res.status).toBe(200)
   expect(res.headers.get('content-type')).toBe('application/zip')
@@ -161,13 +175,19 @@ it('does not accept a member token as a public-link token', async () => {
 })
 
 it('isolates two public links in the same workspace and checks linkId against the token', async () => {
-  const tokenB = generateToken('b6996120-416f-49cd-841e-e4a5d2e49c9b' as any, ws as any, { guest: 'true', linkId: 'link-b' })
+  const tokenB = generateToken('b6996120-416f-49cd-841e-e4a5d2e49c9b' as any, ws as any, {
+    guest: 'true',
+    linkId: 'link-b'
+  })
   const cookieA = { cookie: `presentation-metadata-Token=${encodeURIComponent(token)}` }
   const cookieB = { cookie: `presentation-metadata-Token=${encodeURIComponent(tokenB)}` }
-  allowed.mockImplementation(async (_client, link, file) =>
-    (link === 'link' && file === 'file-a') || (link === 'link-b' && file === 'file-b'))
+  allowed.mockImplementation(
+    async (_client, link, file) => (link === 'link' && file === 'file-a') || (link === 'link-b' && file === 'file-b')
+  )
   for (const [link, file, cookie] of [
-    ['link', 'file-a', cookieA], ['link-b', 'file-b', cookieB], ['link', 'file-a', cookieA]
+    ['link', 'file-a', cookieA],
+    ['link-b', 'file-b', cookieB],
+    ['link', 'file-a', cookieA]
   ] as const) {
     const res = await fetch(`${base}/files/public/${ws}/${link}/${file}`, { headers: cookie })
     expect(res.status).toBe(200)
@@ -183,13 +203,18 @@ it('reuses one account lookup and client for 20 files and rechecks access on a c
   mockCreateClient.mockClear()
   mockWorkspaceInfo.mockClear()
   mockSelectWorkspace.mockClear()
-  const bulk = generateToken('b6996120-416f-49cd-841e-e4a5d2e49c9b' as any, ws as any, { guest: 'true', linkId: 'bulk' })
+  const bulk = generateToken('b6996120-416f-49cd-841e-e4a5d2e49c9b' as any, ws as any, {
+    guest: 'true',
+    linkId: 'bulk'
+  })
   const bulkHeaders = { authorization: `Bearer ${bulk}` }
-  await Promise.all(Array.from({ length: 20 }, async () => {
-    const res = await fetch(`${base}/files/public/${ws}/bulk/file`, { headers: bulkHeaders })
-    expect(res.status).toBe(200)
-    await res.arrayBuffer()
-  }))
+  await Promise.all(
+    Array.from({ length: 20 }, async () => {
+      const res = await fetch(`${base}/files/public/${ws}/bulk/file`, { headers: bulkHeaders })
+      expect(res.status).toBe(200)
+      await res.arrayBuffer()
+    })
+  )
   const res = await fetch(`${base}/files/public/${ws}/bulk/file`, {
     headers: { ...bulkHeaders, 'if-none-match': '"version"' }
   })

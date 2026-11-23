@@ -18,11 +18,6 @@ export function publicFilePath (workspace: string, linkId: string): string {
   return `/files/public/${encodeURIComponent(workspace)}/${encodeURIComponent(linkId)}/`
 }
 
-export function setPublicFileCookie (
-  cookieName: string,
-  cookieValue: string,
-  workspace: string,
-  linkId: string
-): void {
+export function setPublicFileCookie (cookieName: string, cookieValue: string, workspace: string, linkId: string): void {
   document.cookie = `${cookieName}=${cookieValue}; path=${publicFilePath(workspace, linkId)}; SameSite=Lax`
 }

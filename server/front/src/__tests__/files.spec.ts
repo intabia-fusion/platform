@@ -148,7 +148,10 @@ describe('/files with a name the storage refuses', () => {
 })
 
 it('does not let a public-link token bypass scope through the ordinary file endpoint', async () => {
-  const token = generateToken('b6996120-416f-49cd-841e-e4a5d2e49c9b' as any, undefined, { guest: 'true', linkId: 'link' })
+  const token = generateToken('b6996120-416f-49cd-841e-e4a5d2e49c9b' as any, undefined, {
+    guest: 'true',
+    linkId: 'link'
+  })
   const res = await fetch(`${base}/files?file=private-file`, { headers: { authorization: `Bearer ${token}` } })
   expect(res.status).toBe(403)
   expect(stat).not.toHaveBeenCalled()
@@ -173,7 +176,9 @@ describe('/files authentication failures', () => {
       const body = method === 'POST' ? new FormData() : undefined
       body?.append('file', new Blob(['data'], { type: 'image/png' }), 'image.png')
       const res = await fetch(`${base}/files?file=file`, {
-        method, headers: { authorization: `Bearer ${token}` }, body
+        method,
+        headers: { authorization: `Bearer ${token}` },
+        body
       })
       expect(res.status).toBe(401)
       expect(errors).toEqual([])

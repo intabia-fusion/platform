@@ -69,22 +69,34 @@ describe('public file scope', () => {
       hasClass: () => true,
       getDescendants: () => [photo, attachment, version],
       getAncestors: () => [documentClass],
-      getAllAttributes: (clazz: string) => new Map(clazz === photo
-        ? [['file', blobAttribute], ['preview', { ...blobAttribute, attributeOf: photo }]]
-        : clazz === attachment
-          ? [['file', blobAttribute]]
-          : clazz === version ? [['file', { ...blobAttribute, attributeOf: version }]] : [])
+      getAllAttributes: (clazz: string) =>
+        new Map(
+          clazz === photo
+            ? [
+                ['file', blobAttribute],
+                ['preview', { ...blobAttribute, attributeOf: photo }]
+              ]
+            : clazz === attachment
+              ? [['file', blobAttribute]]
+              : clazz === version
+                ? [['file', { ...blobAttribute, attributeOf: version }]]
+                : []
+        )
     })
-    const results = await Promise.all(Array.from({ length: 20 }, async (_, i) =>
-      await canReadPublicFile(client, 'link', `embedded-${i}`)))
+    const results = await Promise.all(
+      Array.from({ length: 20 }, async (_, i) => await canReadPublicFile(client, 'link', `embedded-${i}`))
+    )
     expect(results).toEqual(Array(20).fill(false))
     const queries = findOne.mock.calls.filter(([clazz]) => [attachment, photo, version].includes(clazz))
     expect(queries).toHaveLength(60)
     expect(queries.filter(([clazz]) => clazz === attachment)).toHaveLength(20)
     expect(queries.filter(([clazz, query]) => clazz === photo && query.preview !== undefined)).toHaveLength(20)
     expect(queries.filter(([clazz]) => clazz === version)).toHaveLength(20)
-    expect(queries.every(([, query]) => query.attachedTo === 'doc' &&
-      query.attachedToClass.$in.includes(documentClass) === true)).toBe(true)
+    expect(
+      queries.every(
+        ([, query]) => query.attachedTo === 'doc' && query.attachedToClass.$in.includes(documentClass) === true
+      )
+    ).toBe(true)
   })
   it('allows an attachment of the published object, regardless of file format', async () => {
     const { client } = fixture()
@@ -101,9 +113,10 @@ describe('public file scope', () => {
       hasClass: () => true,
       getDescendants: () => [attachment],
       getAncestors: () => [documentClass],
-      getAllAttributes: (clazz: string) => clazz === documentClass
-        ? new Map([['content', { type: { _class: core.class.TypeCollaborativeDoc } }]])
-        : getAllAttributes(clazz)
+      getAllAttributes: (clazz: string) =>
+        clazz === documentClass
+          ? new Map([['content', { type: { _class: core.class.TypeCollaborativeDoc } }]])
+          : getAllAttributes(clazz)
     })
     findOne.mockImplementation(async (clazz, query) => {
       if (clazz === 'guest:class:PublicLink') return { attachedTo: 'doc', attachedToClass: documentClass }
@@ -129,7 +142,9 @@ describe('public file scope', () => {
   })
   it('refuses a deleted or moved document', async () => {
     const { client, findOne } = fixture()
-    findOne.mockResolvedValueOnce({ attachedTo: 'doc', attachedToClass: documentClass }).mockResolvedValueOnce(undefined)
+    findOne
+      .mockResolvedValueOnce({ attachedTo: 'doc', attachedToClass: documentClass })
+      .mockResolvedValueOnce(undefined)
     expect(await canReadPublicFile(client, 'link', 'allowed')).toBe(false)
   })
   it('allows a typed blob field on the published object', async () => {
@@ -139,7 +154,9 @@ describe('public file scope', () => {
       getDescendants: () => [],
       getAllAttributes: () => new Map([['cover', blobAttribute]])
     })
-    client.findOne = jest.fn().mockResolvedValueOnce({ attachedTo: 'doc', attachedToClass: documentClass })
+    client.findOne = jest
+      .fn()
+      .mockResolvedValueOnce({ attachedTo: 'doc', attachedToClass: documentClass })
       .mockResolvedValueOnce({ _id: 'doc', _class: documentClass, cover: 'cover-file' })
     expect(await canReadPublicFile(client, 'link', 'cover-file')).toBe(true)
   })
@@ -152,15 +169,21 @@ it('reads embedded image references only from a typed collaborative field', asyn
     getDescendants: () => [],
     getAllAttributes: () => new Map([['content', { type: { _class: core.class.TypeCollaborativeDoc } }]])
   })
-  client.findOne = jest.fn().mockResolvedValueOnce({ attachedTo: 'doc', attachedToClass: documentClass })
+  client.findOne = jest
+    .fn()
+    .mockResolvedValueOnce({ attachedTo: 'doc', attachedToClass: documentClass })
     .mockResolvedValueOnce({ _id: 'doc', _class: documentClass, content: 'snapshot' })
-  const load = jest.fn(async () => JSON.stringify({ type: 'doc', content: [{ type: 'image', attrs: { 'file-id': 'embedded' } }] }))
+  const load = jest.fn(async () =>
+    JSON.stringify({ type: 'doc', content: [{ type: 'image', attrs: { 'file-id': 'embedded' } }] })
+  )
   expect(await canReadPublicFile(client, 'link', 'embedded', load)).toBe(true)
   expect(load).toHaveBeenCalledWith('snapshot')
 })
 it('does not authorize a file just because its id is in an arbitrary string field', async () => {
   const { client } = fixture()
-  client.findOne = jest.fn().mockResolvedValueOnce({ attachedTo: 'doc', attachedToClass: documentClass })
+  client.findOne = jest
+    .fn()
+    .mockResolvedValueOnce({ attachedTo: 'doc', attachedToClass: documentClass })
     .mockResolvedValueOnce({ _id: 'doc', _class: documentClass, title: 'foreign' })
   expect(await canReadPublicFile(client, 'link', 'foreign')).toBe(false)
 })
@@ -177,13 +200,18 @@ describe.each([
     ['emoji without image kind', 'emoji', undefined, 'emoji-file', 'emoji-file', false]
   ])('%s', async (_name, type, kind, image, requested, expected) => {
     const { client } = fixture()
-    const markup = JSON.stringify({ type: 'doc', content: [{ type: 'paragraph', content: [{ type, attrs: { kind, image } }] }] })
+    const markup = JSON.stringify({
+      type: 'doc',
+      content: [{ type: 'paragraph', content: [{ type, attrs: { kind, image } }] }]
+    })
     client.getHierarchy = () => ({
       hasClass: () => true,
       getDescendants: () => [],
       getAllAttributes: () => new Map([['content', { type: { _class: fieldType } }]])
     })
-    client.findOne = jest.fn().mockResolvedValueOnce({ attachedTo: 'doc', attachedToClass: documentClass })
+    client.findOne = jest
+      .fn()
+      .mockResolvedValueOnce({ attachedTo: 'doc', attachedToClass: documentClass })
       .mockResolvedValueOnce({
         _id: 'doc',
         _class: documentClass,

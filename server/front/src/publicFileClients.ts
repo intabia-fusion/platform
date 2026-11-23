@@ -40,7 +40,12 @@ export class PublicFileClients {
     private readonly open: (token: string) => Promise<PublicFileClient>,
     private readonly limits = { maxClients: 32, idleMs: 60000, maxAgeMs: 300000 }
   ) {
-    this.timer = setInterval(() => { this.sweep() }, Math.min(limits.idleMs, limits.maxAgeMs))
+    this.timer = setInterval(
+      () => {
+        this.sweep()
+      },
+      Math.min(limits.idleMs, limits.maxAgeMs)
+    )
     this.timer.unref?.()
   }
 
@@ -54,7 +59,8 @@ export class PublicFileClients {
       entry = undefined
     }
     while (entry === undefined && this.entries.size >= this.limits.maxClients) {
-      const idle = Array.from(this.entries).filter(([, it]) => it.users === 0)
+      const idle = Array.from(this.entries)
+        .filter(([, it]) => it.users === 0)
         .sort((a, b) => a[1].lastUsed - b[1].lastUsed)[0]
       if (idle === undefined) throw new PublicFileClientsBusy('Client pool is busy')
       await this.remove(...idle)
@@ -107,8 +113,11 @@ export class PublicFileClients {
   }
 
   private expired (entry: Entry): boolean {
-    return entry.retired || Date.now() - entry.created >= this.limits.maxAgeMs ||
+    return (
+      entry.retired ||
+      Date.now() - entry.created >= this.limits.maxAgeMs ||
       (entry.users === 0 && Date.now() - entry.lastUsed >= this.limits.idleMs)
+    )
   }
 
   private sweep (): void {
@@ -120,6 +129,10 @@ export class PublicFileClients {
   private async remove (token: string, entry: Entry): Promise<void> {
     if (this.entries.get(token) !== entry) return
     this.entries.delete(token)
-    await entry.value.then(async ({ client }) => { await client.close() }).catch(() => {})
+    await entry.value
+      .then(async ({ client }) => {
+        await client.close()
+      })
+      .catch(() => {})
   }
 }

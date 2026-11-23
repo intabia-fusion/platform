@@ -17,14 +17,20 @@ import { PublicFileClients, PublicFileClientsBusy } from '../publicFileClients'
 
 const wsIds = { uuid: 'workspace' as any, url: 'test' }
 let pools: PublicFileClients[] = []
-function fixture (limits = { maxClients: 2, idleMs: 1000, maxAgeMs: 5000 }): { pool: PublicFileClients, open: jest.Mock, close: jest.Mock } {
+function fixture (limits = { maxClients: 2, idleMs: 1000, maxAgeMs: 5000 }): {
+  pool: PublicFileClients
+  open: jest.Mock
+  close: jest.Mock
+} {
   const close = jest.fn(async () => {})
   const open = jest.fn(async () => ({ client: { close } as any, wsIds }))
   const pool = new PublicFileClients(open, limits)
   pools.push(pool)
   return { pool, open, close }
 }
-beforeEach(() => { jest.useFakeTimers() })
+beforeEach(() => {
+  jest.useFakeTimers()
+})
 afterEach(async () => {
   for (const pool of pools) pool.close()
   pools = []
@@ -46,7 +52,8 @@ it('does not share clients across tokens', async () => {
   const a = await pool.acquire('a')
   const b = await pool.acquire('b')
   expect(open.mock.calls).toEqual([['a'], ['b']])
-  a.release(); b.release()
+  a.release()
+  b.release()
 })
 it('bounds active and pending clients instead of opening extra connections', async () => {
   const { pool, open } = fixture()
@@ -54,11 +61,13 @@ it('bounds active and pending clients instead of opening extra connections', asy
   const b = await pool.acquire('b')
   await expect(pool.acquire('c')).rejects.toBeInstanceOf(PublicFileClientsBusy)
   expect(open).toHaveBeenCalledTimes(2)
-  a.release(); b.release()
+  a.release()
+  b.release()
 })
 it('evicts an idle client when the pool is full', async () => {
   const { pool, open, close } = fixture({ maxClients: 1, idleMs: 1000, maxAgeMs: 5000 })
-  const a = await pool.acquire('a'); a.release()
+  const a = await pool.acquire('a')
+  a.release()
   const b = await pool.acquire('b')
   expect(close).toHaveBeenCalledTimes(1)
   expect(open).toHaveBeenCalledTimes(2)
@@ -66,7 +75,8 @@ it('evicts an idle client when the pool is full', async () => {
 })
 it('closes idle clients after the timeout', async () => {
   const { pool, close } = fixture()
-  const request = await pool.acquire('a'); request.release()
+  const request = await pool.acquire('a')
+  request.release()
   await jest.advanceTimersByTimeAsync(1000)
   expect(close).toHaveBeenCalledTimes(1)
 })
@@ -87,7 +97,8 @@ it('retries failed opens and discards broken clients', async () => {
   const { pool, open, close } = fixture()
   open.mockRejectedValueOnce(new Error('connect failed'))
   await expect(pool.acquire('a')).rejects.toThrow('connect failed')
-  const request = await pool.acquire('a'); request.release(true)
+  const request = await pool.acquire('a')
+  request.release(true)
   await Promise.resolve()
   const next = await pool.acquire('a')
   expect(open).toHaveBeenCalledTimes(3)
@@ -100,7 +111,8 @@ it('closes the pool without interrupting an active authorization check', async (
   pool.close()
   expect(close).not.toHaveBeenCalled()
   await expect(pool.acquire('b')).rejects.toBeInstanceOf(PublicFileClientsBusy)
-  request.release(); request.release()
+  request.release()
+  request.release()
   await Promise.resolve()
   expect(close).toHaveBeenCalledTimes(1)
 })
