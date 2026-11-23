@@ -41,14 +41,11 @@
     "SelectItemAll": "Vybrat všechny položky",
     "SelectItemNone": "Zrušit výběr všech položek",
     "NumberItems": "{count, plural, =0 {žádné položky} =1 {1 položka} other {# položek}}",
-
     "Assigned": "Přiřazeno",
     "Created": "Vytvořeno",
     "Subscribed": "Odebíráno",
-
     "ShowPreview": "Zobrazit náhled dokumentu",
     "ShowActions": "Zobrazit akce",
-
     "ActionPlaceholder": "Hledat nebo spustit příkaz...",
     "General": "Obecné",
     "Navigation": "Navigace",
@@ -85,7 +82,6 @@
     "Grouping": "Seskupení",
     "Ordering": "Řazení",
     "Manual": "Manuální",
-
     "FilteredViews": "Filtrovaná zobrazení",
     "NewFilteredView": "Nové filtrované zobrazení",
     "FilteredViewName": "Název filtrovaného zobrazení",
@@ -123,10 +119,11 @@
     "CopyAll": "Kopírovat vše",
     "CopyDocumentMarkdown": "Kopírovat jako Markdown",
     "CopyAsMarkdownTable": "Kopírovat jako Markdown tabulka",
+    "MarkdownCopiedToClipboard": "Dokument zkopírován ve formátu Markdown",
+    "MarkdownCopyFailed": "Dokument se nepodařilo zkopírovat ve formátu Markdown",
     "TableCopiedToClipboard": "Tabulka zkopírována do schránky",
     "TableCopyFailed": "Nepodařilo se zkopírovat tabulku do schránky",
     "PublicView": "Veřejné",
-
     "ChooseIcon": "Vybrat ikonu",
     "IconColor": "Vybrat barvu ikony",
     "IconCategory": "Ikona",

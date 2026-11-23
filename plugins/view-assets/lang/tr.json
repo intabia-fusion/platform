@@ -119,6 +119,8 @@
     "CopyAll": "Tümünü kopyala",
     "CopyDocumentMarkdown": "Markdown olarak kopyala",
     "CopyAsMarkdownTable": "Markdown tablosu olarak kopyala",
+    "MarkdownCopiedToClipboard": "Belge Markdown olarak kopyalandı",
+    "MarkdownCopyFailed": "Belge Markdown olarak kopyalanamadı",
     "TableCopiedToClipboard": "Tablo panoya kopyalandı",
     "TableCopyFailed": "Tablo panoya kopyalanamadı",
     "PublicView": "Genel",
