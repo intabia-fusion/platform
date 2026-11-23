@@ -23,4 +23,12 @@
   export let onChange: (e: Filter) => void
 </script>
 
-<ObjectFilter {filter} {space} {onChange} popupClass="max-width-50" itemPresenter={TaskTypeFilterItem} />
+<ObjectFilter {filter} {space} {onChange} popupClass="task-type-filter" itemPresenter={TaskTypeFilterItem} />
+
+<style lang="scss">
+  :global(.selectPopup.task-type-filter) {
+    width: max-content;
+    min-width: min(17rem, calc(100vw - 2rem));
+    max-width: min(40rem, calc(100vw - 2rem));
+  }
+</style>

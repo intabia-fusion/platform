@@ -242,7 +242,7 @@
               }}
             >
               <div class="flex-between w-full">
-                <div class="flex-row-center">
+                <div class="filter-value flex-row-center">
                   {#if value}
                     {#key value._id}
                       {#if itemPresenter !== undefined}
@@ -269,3 +269,11 @@
   </div>
   <div class="menu-space" />
 </div>
+
+<style lang="scss">
+  .filter-value {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+  }
+</style>
