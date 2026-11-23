@@ -122,6 +122,7 @@
     "InvitationTo": "Pozvánka do prostoru {workspace}",
     "JoinWorkspaceAction": "Připojit se k prostoru",
     "OnboardingCreateWorkspace": "Vytvořte prostor",
+    "OnboardingResumeWorkspace": "Pokračujte ve vytváření pracovního prostoru",
     "OnboardingWorkspaceName": "Název prostoru",
     "EmailCodeHint": "Na váš e-mail pošleme jednorázový kód.",
     "GetCode": "Získat kód",

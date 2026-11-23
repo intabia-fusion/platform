@@ -123,6 +123,7 @@
     "InvitationTo": "Invitation to the workspace {workspace}",
     "JoinWorkspaceAction": "Join workspace",
     "OnboardingCreateWorkspace": "Create a workspace",
+    "OnboardingResumeWorkspace": "Continue creating your workspace",
     "OnboardingWorkspaceName": "Workspace name",
     "EmailCodeHint": "We'll send a one-time code to your email.",
     "GetCode": "Get code",

@@ -41,6 +41,8 @@
   import RegistrationDetails from './RegistrationDetails.svelte'
   import StatusControl from './StatusControl.svelte'
 
+  export let resumed = false
+
   let account: LoginInfo | undefined
   let firstName = ''
   let lastName = ''
@@ -170,6 +172,7 @@
 
 {#if ready && account?.onboarding != null}
   <RegistrationDetails
+    {resumed}
     invited={account.onboarding.intent.kind === 'invite'}
     initialStep={account.onboarding.intent.kind === 'invite' || account.onboarding.workspaceName != null
       ? 'name'
