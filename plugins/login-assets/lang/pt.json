@@ -123,6 +123,7 @@
     "InvitationTo": "Convite para o espaço {workspace}",
     "JoinWorkspaceAction": "Entrar no espaço",
     "OnboardingCreateWorkspace": "Crie um espaço",
+    "OnboardingResumeWorkspace": "Continue a criar o seu espaço de trabalho",
     "OnboardingWorkspaceName": "Nome do espaço",
     "EmailCodeHint": "Enviaremos um código de uso único para o seu e-mail.",
     "GetCode": "Obter código",

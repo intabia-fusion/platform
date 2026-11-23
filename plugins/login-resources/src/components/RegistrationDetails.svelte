@@ -21,6 +21,7 @@
   import Label from './internal/Label.svelte'
 
   export let invited = false
+  export let resumed = false
   export let status: Status = OK
   export let initialStep: 'name' | 'workspace' = invited ? 'name' : 'workspace'
   export let initialFirstName = ''
@@ -92,7 +93,7 @@
   </Form>
 {:else}
   <Form
-    caption={login.string.OnboardingCreateWorkspace}
+    caption={resumed ? login.string.OnboardingResumeWorkspace : login.string.OnboardingCreateWorkspace}
     hint={login.string.WorkspacePurposeHint}
     {status}
     fields={workspaceFields}

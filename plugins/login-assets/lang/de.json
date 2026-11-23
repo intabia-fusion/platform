@@ -122,6 +122,7 @@
     "InvitationTo": "Einladung zum Bereich {workspace}",
     "JoinWorkspaceAction": "Dem Arbeitsbereich beitreten",
     "OnboardingCreateWorkspace": "Erstellen Sie einen Bereich",
+    "OnboardingResumeWorkspace": "Erstellen Sie Ihren Arbeitsbereich weiter",
     "OnboardingWorkspaceName": "Name des Bereichs",
     "EmailCodeHint": "Wir senden Ihnen einen einmaligen Code per E-Mail.",
     "GetCode": "Code erhalten",

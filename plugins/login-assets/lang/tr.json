@@ -123,6 +123,7 @@
     "InvitationTo": "{workspace} çalışma alanına davet",
     "JoinWorkspaceAction": "Çalışma alanına katıl",
     "OnboardingCreateWorkspace": "Bir çalışma alanı oluşturun",
+    "OnboardingResumeWorkspace": "Çalışma alanınızı oluşturmaya devam edin",
     "OnboardingWorkspaceName": "Çalışma alanı adı",
     "EmailCodeHint": "E-posta adresinize tek kullanımlık bir kod göndereceğiz.",
     "GetCode": "Kodu al",

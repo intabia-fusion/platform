@@ -64,6 +64,7 @@
   const localLoginHidden = getMetadata(login.metadata.HideLocalLogin) ?? false
   const useOTP = getMetadata(presentation.metadata.UseOTP) === true
   let navigateUrl: string | undefined
+  let resumedOnboarding = false
 
   onDestroy(location.subscribe(updatePageLoc))
 
@@ -115,18 +116,22 @@
       // there's a separate workflow for auto join
       return
     }
-
-    if (getMetadata(presentation.metadata.Token) == null) {
-      try {
-        // Was gated on LastAccount, so a cookie-only session left `selectWorkspace`
-        // unroutable while the form already showed "Signed in as".
-        await restoreSession()
-        if (getMetadata(presentation.metadata.Token) != null) {
-          updatePageLoc(getCurrentLocation())
-        }
-      } catch (err: any) {
-        // do nothing
+    const entryPage = page === 'login' || page === 'login-password' || page === 'signup' || page === 'selectWorkspace'
+    if (!entryPage && getMetadata(presentation.metadata.Token) != null) return
+    const initialPage = page
+    try {
+      // Was gated on LastAccount, so a cookie-only session left `selectWorkspace`
+      // unroutable while the form already showed "Signed in as".
+      const account = await restoreSession()
+      if (page !== initialPage) return
+      if (entryPage && account?.onboarding != null && account.onboarding.stage !== 'complete') {
+        resumedOnboarding = true
+        goTo('onboarding')
+      } else if (getMetadata(presentation.metadata.Token) != null) {
+        updatePageLoc(getCurrentLocation())
       }
+    } catch (err: any) {
+      // do nothing
     }
   }
 
@@ -165,7 +170,7 @@
         />
       </div>
     {:else if page === 'onboarding'}
-      <RegistrationOnboarding />
+      <RegistrationOnboarding resumed={resumedOnboarding} />
     {:else if page === 'createWorkspace'}
       <CreateWorkspaceForm />
     {:else if page === 'password'}

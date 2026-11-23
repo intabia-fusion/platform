@@ -37,6 +37,7 @@ export default mergeIds(loginId, login, {
     NoFreeSeatsForInvite: '' as IntlString,
     CreateWorkspace: '' as IntlString,
     OnboardingCreateWorkspace: '' as IntlString,
+    OnboardingResumeWorkspace: '' as IntlString,
     OnboardingWorkspaceName: '' as IntlString,
     HaveWorkspace: '' as IntlString,
     LastName: '' as IntlString,

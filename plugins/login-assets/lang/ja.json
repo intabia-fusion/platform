@@ -123,6 +123,7 @@
     "InvitationTo": "ワークスペース「{workspace}」への招待",
     "JoinWorkspaceAction": "ワークスペースに参加",
     "OnboardingCreateWorkspace": "ワークスペースを作成",
+    "OnboardingResumeWorkspace": "ワークスペースの作成を続ける",
     "OnboardingWorkspaceName": "ワークスペース名",
     "EmailCodeHint": "ワンタイムコードをメールでお送りします。",
     "GetCode": "コードを取得",

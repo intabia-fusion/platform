@@ -123,6 +123,7 @@
     "InvitationTo": "Приглашение в пространство {workspace}",
     "JoinWorkspaceAction": "Подключиться к пространству",
     "OnboardingCreateWorkspace": "Создайте пространство",
+    "OnboardingResumeWorkspace": "Продолжите создание рабочего пространства",
     "OnboardingWorkspaceName": "Название пространства",
     "EmailCodeHint": "Пришлем одноразовый код на вашу почту.",
     "GetCode": "Получить код",
