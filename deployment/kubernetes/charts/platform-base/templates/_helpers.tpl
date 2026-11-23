@@ -1,4 +1,50 @@
 {{- /*
+Placement for a component: its nodeSelector, then its global.nodePools entry (pool),
+then global.nodeSelector. Call with (dict "root" . "component" "postgres").
+*/ -}}
+{{- define "platformBase.podSelector" -}}
+{{- $root := .root -}}
+{{- $cfg := index $root.Values .component | default dict -}}
+{{- $sel := $cfg.nodeSelector | default dict -}}
+{{- if not $sel -}}
+{{- $pool := $cfg.pool | default "" -}}
+{{- if $pool -}}
+{{- $poolSel := index ($root.Values.global.nodePools | default dict) $pool | default dict -}}
+{{- if not $poolSel }}{{ fail (printf "%s.pool: global.nodePools.%s is not defined" .component $pool) }}{{ end -}}
+{{- $sel = $poolSel -}}
+{{- end -}}
+{{- end -}}
+{{- if not $sel }}{{ $sel = $root.Values.global.nodeSelector | default dict }}{{ end -}}
+{{- toYaml $sel -}}
+{{- end -}}
+
+{{- /*
+Pod placement: per-component nodeSelector, then component pool, then global.nodeSelector.
+*/ -}}
+{{- define "platformBase.nodeSelector" -}}
+{{- with .sel }}
+nodeSelector:
+{{ toYaml . | indent 2 }}
+{{- end }}
+{{- end -}}
+
+{{- /* same selector as nodeAffinity, for CRs whose pod template has no nodeSelector field (Strimzi). */ -}}
+{{- define "platformBase.nodeAffinity" -}}
+{{- with .sel }}
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+      - matchExpressions:
+        {{- range $k, $v := . }}
+        - key: {{ $k }}
+          operator: In
+          values: [{{ $v | quote }}]
+        {{- end }}
+{{- end }}
+{{- end -}}
+
+{{- /*
 Component address helpers: resolve the effective host/port/etc per mode and fail
 loudly when an external mode is missing its values.
 */ -}}

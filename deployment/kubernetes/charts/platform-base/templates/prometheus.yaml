@@ -40,6 +40,7 @@ spec:
       annotations:
         checksum/prometheus-config: {{ include "platformBase.prometheusConfig" . | sha256sum | quote }}
     spec:
+      {{- include "platformBase.nodeSelector" (dict "sel" (include "platformBase.podSelector" (dict "root" . "component" "metrics") | fromYaml)) | nindent 6 }}
       containers:
       - name: prometheus
         image: '{{ $p.image }}'

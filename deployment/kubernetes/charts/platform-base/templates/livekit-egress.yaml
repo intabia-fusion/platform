@@ -74,6 +74,7 @@ spec:
         # The config is a Secret mounted as a file: the pod only reloads it on a new template.
         checksum/livekit-egress-config: {{ printf "%s|%s|%s|%s" $wsUrl $redis $s3Endpoint (.Values.livekit | toYaml) | sha256sum | quote }}
     spec:
+      {{- include "platformBase.nodeSelector" (dict "sel" (include "platformBase.podSelector" (dict "root" . "component" "livekit") | fromYaml)) | nindent 6 }}
       tolerations:
       - key: node.kubernetes.io/unreachable
         operator: Exists

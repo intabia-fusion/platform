@@ -69,6 +69,11 @@ metadata:
     chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
     release: '{{ .Release.Name }}'
 spec:
+  {{- with (include "platformBase.podSelector" (dict "root" . "component" "postgres") | fromYaml) }}
+  affinity:
+    nodeSelector:
+{{ toYaml . | indent 6 }}
+  {{- end }}
   instances: {{ .Values.postgres.instances }}
   imageName: '{{ .Values.postgres.image }}'
   # The platform connects as the superuser with a fixed password: keep the DSN unchanged.

@@ -193,6 +193,38 @@ from the uptraceDsn secret. Include right after the container `env:` list starts
       key: uptraceDsn
 {{- end -}}
 
+{{- /*
+Placement: services.<svc>.nodeSelector, then its global.nodePools entry (pool), then
+global.nodeSelector; aibot passes "mode" for services.aibot.pools.<mode>. Empty -> nothing.
+*/ -}}
+{{- define "platform.nodeSelector" -}}
+{{- $root := .root -}}
+{{- $cfg := index ($root.Values.services | default dict) .service | default dict -}}
+{{- $sel := $cfg.nodeSelector | default dict -}}
+{{- $pools := $root.Values.global.nodePools | default dict -}}
+{{- if and (not $sel) .mode -}}
+{{- $pool := index ($cfg.pools | default dict) .mode | default "" -}}
+{{- if $pool -}}
+{{- $poolSel := index $pools $pool | default dict -}}
+{{- if not $poolSel }}{{ fail (printf "services.%s.pools.%s: global.nodePools.%s is not defined" .service .mode $pool) }}{{ end -}}
+{{- $sel = $poolSel -}}
+{{- end -}}
+{{- end -}}
+{{- if not $sel -}}
+{{- $pool := $cfg.pool | default "" -}}
+{{- if $pool -}}
+{{- $poolSel := index $pools $pool | default dict -}}
+{{- if not $poolSel }}{{ fail (printf "services.%s.pool: global.nodePools.%s is not defined" .service $pool) }}{{ end -}}
+{{- $sel = $poolSel -}}
+{{- end -}}
+{{- end -}}
+{{- if not $sel }}{{ $sel = $root.Values.global.nodeSelector | default dict }}{{ end -}}
+{{- with $sel }}
+nodeSelector:
+{{ toYaml . | indent 2 }}
+{{- end }}
+{{- end -}}
+
 {{/*
 Tolerations every platform pod carries: die with the node instead of rescheduling it.
 Include at pod spec level with nindent 6.

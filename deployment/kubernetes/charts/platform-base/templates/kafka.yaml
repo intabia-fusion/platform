@@ -10,6 +10,11 @@ metadata:
   labels:
     strimzi.io/cluster: my-cluster
 spec:
+  {{- with (include "platformBase.podSelector" (dict "root" . "component" "kafka") | fromYaml) }}
+  template:
+    pod:
+      {{- include "platformBase.nodeAffinity" (dict "sel" .) | nindent 6 }}
+  {{- end }}
   replicas: 1
   roles:
   - controller

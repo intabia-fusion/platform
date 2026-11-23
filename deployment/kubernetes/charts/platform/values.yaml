@@ -15,6 +15,12 @@ global:
   imageNamespace: ""
   # Default for all pods; prod uses Always, local stands push mutable latest tags.
   imagePullPolicy: Always
+  # Node placement for every pod, by node labels, e.g. {kubernetes.io/role: worker}.
+  # A service may override it with services.<name>.nodeSelector.
+  nodeSelector: {}
+  # Named selector sets for node classes, e.g. {cpu: {intabia.io/pool: cpu}}.
+  # A service picks one with services.<name>.pool; nodeSelector wins over the pool.
+  nodePools: {}
   # Stand name: database, S3 bucket, kafka topic postfix, fulltext index.
   # Empty = release name. Set per stand, e.g. "dev" / "sanity".
   stand: ""
@@ -216,7 +222,8 @@ secrets:
 
 services:
   # Per-service deployment settings: replicas/count, memory, enabled switches.
-  # Consumed by templates/<service>/; memory in Mi, image defaults to intabiafusion/<service>.
+  # Consumed by templates/<service>/; memory in Mi, image defaults to intabiafusion/<service>;
+  # placement: services.<name>.nodeSelector, then .pool, then global.nodeSelector.
   account:
     passwords: normal
     replicas: 1
@@ -261,6 +268,8 @@ services:
     # Providers the llm-router consumes (LLM_PROVIDER_IDS). Empty = secrets.platform.llmProvider;
     # a mock stand (stands/sanity: mock) needs it or llm-mock-* has no consumer.
     llmProviderIds: ""
+    # Placement: pools.<event-router|llm-router|stt-worker> picks global.nodePools, e.g.
+    # {llm-router: gpu}; then pool, then global.nodeSelector. nodeSelector wins over both.
     # event-router: Kafka ai-queue (10 партиций) делится, но каждый под подключается ко ВСЕМ
     # воркспейсам - реплики дублируют соединения. Держим 1, см. foundation-tasks/aibot-router-replicas.md
     router:

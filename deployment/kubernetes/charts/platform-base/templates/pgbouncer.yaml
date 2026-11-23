@@ -82,6 +82,7 @@ spec:
       annotations:
         checksum/pgbouncer-config: {{ .Values.pgbouncer | toYaml | sha256sum }}
     spec:
+      {{- include "platformBase.nodeSelector" (dict "sel" (include "platformBase.podSelector" (dict "root" . "component" "pgbouncer") | fromYaml)) | nindent 6 }}
       containers:
       - name: pgbouncer
         image: '{{ .Values.pgbouncer.image }}'

@@ -55,6 +55,7 @@ spec:
       labels:
         app: db-init
     spec:
+      {{- include "platform.nodeSelector" (dict "root" . "service" "db-init") | nindent 6 }}
       restartPolicy: Never
       containers:
       - name: db-init

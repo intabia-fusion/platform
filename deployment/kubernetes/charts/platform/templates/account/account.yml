@@ -18,6 +18,7 @@ spec:
         checksum/region-config: {{ include (print $.Template.BasePath "/region-config.yaml") . | sha256sum }}
     spec:
       {{- include "platform.tolerations" . | nindent 6 }}
+      {{- include "platform.nodeSelector" (dict "root" . "service" "account") | nindent 6 }}
       containers:
       - name: app
         image: {{ include "platform.containerImage" (dict "root" . "service" "account") }}

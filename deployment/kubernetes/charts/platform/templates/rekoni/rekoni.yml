@@ -17,6 +17,7 @@ spec:
         checksum/platform-env: {{ include "platform.envChecksum" . | quote }}
     spec:
       {{- include "platform.tolerations" . | nindent 6 }}
+      {{- include "platform.nodeSelector" (dict "root" . "service" "rekoni") | nindent 6 }}
       {{- if .Values.global.tls.caSecretName }}
       volumes:
       {{- include "platform.caVolume" $ | nindent 6 }}

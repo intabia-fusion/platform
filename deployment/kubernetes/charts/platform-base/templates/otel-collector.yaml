@@ -41,6 +41,7 @@ spec:
       annotations:
         checksum/otel-config: {{ include "platformBase.otelCollectorConfig" . | sha256sum | quote }}
     spec:
+      {{- include "platformBase.nodeSelector" (dict "sel" (include "platformBase.podSelector" (dict "root" . "component" "metrics") | fromYaml)) | nindent 6 }}
       containers:
       - name: otel-collector
         image: '{{ $m.image }}'

@@ -103,7 +103,8 @@
 {{- end }}
 
 {{- define "platform.aibot.pod" -}}
-{{- $root := .root -}}
+{{- $root := .root }}
+{{- include "platform.nodeSelector" (dict "root" $root "service" "aibot" "mode" .mode) | nindent 0 }}
 tolerations:
 - key: node.kubernetes.io/unreachable
   operator: Exists

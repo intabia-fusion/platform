@@ -37,6 +37,7 @@ spec:
         app: redis
         release: '{{ .Release.Name }}'
     spec:
+      {{- include "platformBase.nodeSelector" (dict "sel" (include "platformBase.podSelector" (dict "root" . "component" "redis") | fromYaml)) | nindent 6 }}
       containers:
       - name: redis
         image: '{{ .Values.redis.image }}'

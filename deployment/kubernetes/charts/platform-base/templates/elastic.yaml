@@ -38,6 +38,7 @@ spec:
         app: elastic
         release: '{{ .Release.Name }}'
     spec:
+      {{- include "platformBase.nodeSelector" (dict "sel" (include "platformBase.podSelector" (dict "root" . "component" "elastic") | fromYaml)) | nindent 6 }}
       initContainers:
       # Copy the analysis plugins from the elastic-plugins image, same pairing as
       # compose (dev/docker-compose.yaml elastic-plugins + elastic).

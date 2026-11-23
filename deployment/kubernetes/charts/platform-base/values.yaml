@@ -1,6 +1,14 @@
 # Per-component modes: postgres/kafka/s3/elastic internal|external, redis internal|external|disabled,
 # mailpit on/off, tls TLSStore. Local stands keep the defaults; prod overlays use managed services.
 
+global:
+  # Node placement for every pod, by node labels, e.g. {kubernetes.io/role: worker}.
+  # A component may override it with <component>.nodeSelector.
+  nodeSelector: {}
+  # Named selector sets for node classes, e.g. {memory: {intabia.io/pool: memory}}.
+  # A component picks one with <component>.pool; nodeSelector wins over the pool.
+  nodePools: {}
+
 postgres:
   enabled: true
   # internal: CloudNativePG Cluster (primary + one streaming replica) in this namespace.
@@ -151,6 +159,9 @@ livekit:
   advertiseAddress: ""
   loopbackCandidate: true
   apiPort: 7880
+  # LiveKit uses hostNetwork and RTC ports: pin it to one node by a dedicated label,
+  # e.g. {intabia.io/livekit: "true"}. Empty = livekit.pool, then global.nodeSelector.
+  nodeSelector: {}
   tcpHostPort: 7881
   udpHostPort: 7882
   memRequired: 128

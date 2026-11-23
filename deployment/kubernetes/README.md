@@ -594,6 +594,29 @@ deployment/kubernetes/
 - Стенд может добавить или переопределить переменные через `services.<key>.extraEnv`.
 - Правка проверяется рендером: `helm template fusion-sanity charts/platform -f stands/sanity/values.yaml -f stands/ci/render-check.yaml` — данные манифестов не должны меняться.
 
+### Пулы нод (nodeSelector)
+
+`global.nodeSelector` задаёт размещение всех подов, `global.nodePools` - именованные
+наборы для классов нод. Сервис выбирает пул через `services.<name>.pool`:
+
+```yaml
+global:
+  nodePools:
+    cpu: {intabia.io/pool: cpu}
+    memory: {intabia.io/pool: memory}
+    gpu: {intabia.io/pool: gpu}
+services:
+  transactor: {pool: memory}
+  stream: {pool: cpu}
+  aibot: {pools: {llm-router: gpu}}
+```
+
+Порядок: `nodeSelector` сервиса, затем его `pool`, затем `global.nodeSelector`;
+если пусто везде, `nodeSelector` не рендерится. В platform-base то же для postgres,
+kafka, s3, elastic, redis, mailpit, pgbouncer, metrics и livekit (`<component>.pool`);
+у aibot `pools.<mode>` перекрывает `services.aibot.pool`. Неизвестное имя пула -
+ошибка рендера.
+
 ## Troubleshooting
 
 Ручные команды ниже - для случаев, когда обёртки недостаточны. Везде

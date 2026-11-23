@@ -42,6 +42,7 @@ spec:
         app: s3
         release: '{{ .Release.Name }}'
     spec:
+      {{- include "platformBase.nodeSelector" (dict "sel" (include "platformBase.podSelector" (dict "root" . "component" "s3") | fromYaml)) | nindent 6 }}
       containers:
       - name: silo
         image: '{{ .Values.s3.image }}'

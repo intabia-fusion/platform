@@ -41,6 +41,7 @@ spec:
         app: mailpit
         release: '{{ .Release.Name }}'
     spec:
+      {{- include "platformBase.nodeSelector" (dict "sel" (include "platformBase.podSelector" (dict "root" . "component" "mailpit") | fromYaml)) | nindent 6 }}
       containers:
       - name: mailpit
         image: '{{ .Values.mailpit.image }}'

@@ -21,6 +21,7 @@ spec:
       labels:
         app: tbank-subscriptions
     spec:
+      {{- include "platform.nodeSelector" (dict "root" . "service" "tbankSubscriptions") | nindent 6 }}
       containers:
       - name: tbank-subscriptions
         image: {{ include "platform.containerImage" (dict "root" . "service" "tbankSubscriptions" "image" "tbank-subscriptions") }}

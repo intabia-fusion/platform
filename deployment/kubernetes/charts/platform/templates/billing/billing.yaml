@@ -18,6 +18,7 @@ spec:
       annotations:
         checksum/platform-env: {{ include "platform.envChecksum" . | quote }}
     spec:
+      {{- include "platform.nodeSelector" (dict "root" . "service" "billing") | nindent 6 }}
       {{- if or .Values.global.tls.caSecretName .Values.global.coverage.enabled }}
       volumes:
       {{- include "platform.caVolume" $ | nindent 6 }}

@@ -20,6 +20,7 @@ spec:
       labels:
         app: payment
     spec:
+      {{- include "platform.nodeSelector" (dict "root" . "service" "payment") | nindent 6 }}
       containers:
       - name: payment
         image: {{ include "platform.containerImage" (dict "root" . "service" "payment") }}
