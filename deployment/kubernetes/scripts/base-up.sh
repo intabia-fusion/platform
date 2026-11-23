@@ -136,6 +136,20 @@ fi
 log "ensuring TLS material (mkcert wildcard)"
 "$K8S_DIR/certs/gen.sh" "$STAND_RUNTIME" || die "TLS setup failed (mkcert installed? network for LE staging not required)"
 
+# ------------------------------------------------------------- crd readiness ----
+# `kubectl wait --for=condition=Established` aborts on a CRD whose .status.conditions is not
+# written yet (accessor error, not a wait); poll the condition instead.
+wait_crd_established() {
+  local crd="$1" timeout="${2:-120}"
+  local deadline=$((SECONDS + timeout)) status
+  while :; do
+    status="$(kc get crd "$crd" -o jsonpath='{.status.conditions[?(@.type=="Established")].status}' 2>/dev/null || true)"
+    [ "$status" = True ] && return 0
+    [ $SECONDS -lt $deadline ] || return 1
+    sleep 2
+  done
+}
+
 # -------------------------------------------------------- strimzi operator ----
 # kubectl apply of the pinned release manifest is idempotent: first run installs CRDs + operator,
 # later runs keep the operator on the pinned version.
@@ -166,7 +180,8 @@ if [ -s "$STRIMZI_CACHE" ]; then
     log "installing Strimzi operator $STRIMZI_VERSION"
     kc apply -n "$BASE_NAMESPACE" -f "$STRIMZI_CACHE"
     log "waiting for strimzi CRDs"
-    kc wait --for=condition=Established crd kafkas.kafka.strimzi.io --timeout=120s
+    wait_crd_established kafkas.kafka.strimzi.io || \
+      die "Strimzi CRD kafkas.kafka.strimzi.io is not established"
   else
     log "Strimzi already installed - re-applying pinned $STRIMZI_VERSION manifest"
     kc apply -n "$BASE_NAMESPACE" -f "$STRIMZI_CACHE"
@@ -202,7 +217,9 @@ fi
 if [ -s "$CNPG_CACHE" ]; then
   log "installing/updating CloudNativePG operator $CLOUDNATIVE_PG_VERSION"
   kc apply --server-side --force-conflicts -f "$CNPG_CACHE" >/dev/null
-  kc wait --for=condition=Established crd clusters.postgresql.cnpg.io --timeout=120s
+  log "waiting for the CloudNativePG CRD"
+  wait_crd_established clusters.postgresql.cnpg.io || \
+    die "CloudNativePG CRD clusters.postgresql.cnpg.io is not established"
   kc -n cnpg-system rollout status deployment/cnpg-controller-manager --timeout=180s >/dev/null || \
     die "CloudNativePG operator did not become ready"
 fi
