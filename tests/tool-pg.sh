@@ -18,7 +18,7 @@ tool_backend() {
     if ( set +eu
          # shellcheck source=../deployment/kubernetes/scripts/lib.sh
          source "$lib" >/dev/null 2>&1
-         ns="$(stand_namespace sanity)" || exit 1
+         ns="$(stand_namespace sanity 2>/dev/null)" || exit 1
          [ -n "$ns" ] || exit 1
          phase="$(kubectl --context "$KUBE_CONTEXT" -n "$ns" --request-timeout=5s \
              get pod stand-tool -o jsonpath='{.status.phase}' 2>/dev/null)" || exit 1
