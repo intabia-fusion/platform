@@ -437,7 +437,10 @@ function emitPackageJson(cfg, bundle, projects, partial) {
     publishConfig: {
       access: 'public'
     },
-    dependencies: collectExternalDeps(bundle, projects, partial, cfg.depsMerge, cfg.sourceScopes),
+    dependencies: {
+      ...collectExternalDeps(bundle, projects, partial, cfg.depsMerge, cfg.sourceScopes),
+      '@types/markdown-it': '^14.2.0'
+    },
     devDependencies: {
       typescript: '~5.9.3',
       '@types/node': '^24.13.3',
