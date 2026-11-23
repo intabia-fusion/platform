@@ -67,21 +67,19 @@ export async function shutdown (): Promise<void> {
 }
 
 /**
- * Host-side defaults for the api stand: postgres 5533 and the S3 bucket 9102 are
- * port-forwarded by api-tests/api/src/stand.ts; DB names mirror the chart.
+ * Host-side defaults for ws-tests: regions/services share one postgres, each its own database
+ * (ws-tests/postgres-init) - workspace data in region_main, account in postgres.
  */
 const DEFAULTS = {
-  DB_URL: 'postgresql://postgres:postgres@localhost:5533/api',
-  ACCOUNT_DB_URL: 'postgresql://postgres:postgres@localhost:5533/api',
-  ACCOUNTS_URL: 'https://api.fusion.localhost/_account',
-  STORAGE_CONFIG: 'datalake|https://api.fusion.localhost/_datalake',
-  // The chart writes incremental backups into rootBucket=<stand>-backups
-  // (platform-secrets backupConfig / platform-config backupBucket), so keys must match.
-  BACKUP_STORAGE_CONFIG: 'minio|localhost:9102?accessKey=minioadmin&secretKey=minioadmin&rootBucket=api-backups',
-  BACKUP_BUCKET_NAME: 'api-backups',
-  // Test stands run SERVER_SECRET 'secret' (stands/*/values.yaml); the helpers hardcode it.
+  DB_URL: 'postgresql://postgres:postgres@localhost:5533/region_main',
+  ACCOUNT_DB_URL: 'postgresql://postgres:postgres@localhost:5533/postgres',
+  ACCOUNTS_URL: 'http://localhost:8183/_account',
+  STORAGE_CONFIG: 'datalake|http://localhost:8183/_datalake',
+  // The archive bucket, reached straight from the host (compose publishes minio on 9102).
+  BACKUP_STORAGE_CONFIG: 'minio|localhost:9102?accessKey=minioadmin&secretKey=minioadmin',
+  BACKUP_BUCKET_NAME: 'ws-dev-backups',
   SERVER_SECRET: 'secret',
-  FRONT_URL: 'https://api.fusion.localhost'
+  FRONT_URL: 'http://localhost:8183'
 }
 
 export function env (name: keyof typeof DEFAULTS | string, def?: string): string {

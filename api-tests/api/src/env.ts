@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-// Default is the k8s `api` stand; with-stand-env.sh exports PLATFORM_URL for other runtimes.
+// Compose api stand is the default; a k8s stand exports PLATFORM_URL (with-stand-env.sh).
 
 export const PlatformUrl: string =
-  process.env.PLATFORM_URL ?? process.env.API_TESTS_URL ?? process.env.PLATFORM_URI ?? 'https://api.fusion.localhost'
+  process.env.PLATFORM_URL ?? process.env.API_TESTS_URL ?? process.env.PLATFORM_URI ?? 'http://localhost:8183'

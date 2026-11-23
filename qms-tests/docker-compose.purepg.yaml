@@ -1,0 +1,59 @@
+services:
+  account:
+    environment:
+      - DB_URL=${DB_PURE_PG_URL}
+      - STORAGE_CONFIG=${DATALAKE_STORAGE_CONFIG}
+      - PROCEED_V7_MONGO=false
+  transactor0:
+    environment:
+      - DB_URL=${DB_PURE_PG_URL}
+      - STORAGE_CONFIG=${DATALAKE_STORAGE_CONFIG}
+      - POSTGRES_OPTIONS={"connection":{"application_name":"transactor0"},"max":100}
+  workspace:
+    environment:
+      - DB_URL=${DB_PURE_PG_URL}
+      - STORAGE_CONFIG=${DATALAKE_STORAGE_CONFIG}
+      - ACCOUNTS_DB_URL=${DB_PURE_PG_URL}
+      - POSTGRES_OPTIONS={"connection":{"application_name":"transactor0"},"max":30}
+  fulltext:
+    environment:
+      - DB_URL=${DB_PURE_PG_URL}
+      - STORAGE_CONFIG=${DATALAKE_STORAGE_CONFIG}
+      - POSTGRES_OPTIONS={"connection":{"application_name":"fulltext"},"max":30}
+  front0:
+    environment:
+      - STORAGE_CONFIG=${DATALAKE_STORAGE_CONFIG}
+      - FILES_URL=http://localhost:4031/blob/:workspace/:blobId/:filename
+      - UPLOAD_URL=http://localhost:4031/upload/form-data/:workspace
+      - DATALAKE_URL=http://localhost:4031
+      - PREVIEW_URL=http://localhost:4031
+  collaborator0:
+    environment:
+      - STORAGE_CONFIG=${DATALAKE_STORAGE_CONFIG}
+  datalake:
+    image: "${DOCKER_REGISTRY:+${DOCKER_REGISTRY}/}${DOCKER_NAMESPACE:-intabiafusion}/datalake:${DOCKER_TAG:-latest}"
+    pull_policy: ${DOCKER_PULL_POLICY:-never}
+    extra_hosts:
+      - "localhost:host-gateway"
+    depends_on:
+      minio:
+        condition: service_healthy
+      cockroach:
+        condition: service_started
+      stats:
+        condition: service_started
+      account:
+        condition: service_started
+    ports:
+      - 4031:4031
+    environment:
+      - DB_URL=${DB_PURE_PG_URL}
+  notifications:
+    environment:
+      - DB_URL=${DB_PURE_PG_URL}
+  activity:
+    environment:
+      - DB_URL=${DB_PURE_PG_URL}
+  db-migrator:
+    environment:
+      - DB_URL=${DB_PURE_PG_URL}

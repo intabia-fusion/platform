@@ -1,11 +1,12 @@
-# Test-only pgbouncer override, orphaned when the qms compose stand was removed (qms runs
-# on k8s now): kept as a reference for the pgbouncer config in ./pgbouncer/.
+# Test-only pgbouncer override.
+# Usage (from tests folder):
+#   docker compose -f ../dev/docker-compose.yaml -f docker-compose.purepg.yaml -f docker-compose.pgbouncer.yaml up -d
 services:
   pgbouncer:
     image: edoburu/pgbouncer:latest
     depends_on:
       - postgres
-    # Local test config, see ./pgbouncer/
+    # Mount local test pgbouncer config (kept under tests/pgbouncer/)
     volumes:
       - ./pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
       - ./pgbouncer/userlist.txt:/etc/pgbouncer/userlist.txt:ro

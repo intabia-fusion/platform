@@ -54,7 +54,8 @@ if [ "$PREPARE" = true ]; then
     echo
     echo "====================================================================="
     if [ "$PROFILE" = true ]; then
-        echo " READY. Stand is up (no profilers: profiling is compose-only on the Kubernetes stand)."
+        PROFILED=$(grep -cE '^  [a-z0-9_-]+:$' docker-compose.profile.yaml || echo 0)
+        echo " READY. Stand is up, ${PROFILED} pods are being profiled."
     else
         echo " READY. Stand is up."
     fi
@@ -62,11 +63,10 @@ if [ "$PREPARE" = true ]; then
 
  1) Run the tests here, in this terminal:
 
-      cd sanity && bash ../../deployment/kubernetes/scripts/with-stand-env.sh sanity \
-        pnpm run uitest:telemetry --workers 5
+      cd sanity && pnpm run uitest
 
     (run them yourself - a pipe or subshell strips playwright's
-     colour and live progress; the stand's own front is used, no dev proxy)
+     colour and live progress)
 
  2) After a red run, to see what actually broke:
 

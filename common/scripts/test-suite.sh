@@ -2,8 +2,8 @@
 # Builds the workspace, then runs every test group except the Playwright suites:
 #
 #   pnpm integration [jest args]   *.itest.ts - each suite starts its own containers
-#   pnpm api-test [jest args]      images, then api-tests and backup-tests on their k8s
-#                                  stand; jest args narrow the api-tests and skip the backup-tests
+#   pnpm api-test [jest args]      images, then api-tests and backup-tests on their stand;
+#                                  jest args narrow the api-tests and skip the backup-tests
 #   pnpm fulltest                  unit, integration, api-tests and backup-tests
 #
 # A failing group does not stop the next one. The run ends with a summary per group and the failed
