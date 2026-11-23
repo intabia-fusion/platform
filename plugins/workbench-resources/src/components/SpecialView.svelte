@@ -68,6 +68,10 @@
   export let defaultViewletDescriptor: Ref<ViewletDescriptor> | undefined = undefined
   export let defaultViewOptions: ViewOptions | undefined = undefined
   export let defaultConfig: (BuildModelKey | string)[] | undefined = undefined
+  // A switch of the section's own, drawn where the viewlet icons would be: the section then renders
+  // its views itself, so it needs no viewlet selector of ours.
+  export let beforeTitle: AnyComponent | undefined = undefined
+  export let beforeTitleProps: Record<string, any> = {}
   /** A view that is not the user's to arrange hides the gear: the settings it opens mean nothing there. */
   export let hideViewSettings: boolean = false
 
@@ -157,7 +161,13 @@
   freezeBefore
 >
   <svelte:fragment slot="beforeTitle">
+    {#if beforeTitle !== undefined}
+      <Component is={beforeTitle} props={beforeTitleProps} />
+    {/if}
+    <!-- The selector owns the choice of the viewlet and the preference, so it keeps running with a
+         switch of our own standing beside it: hidden only means it draws no icons. -->
     <ViewletSelector
+      hidden={beforeTitle !== undefined}
       bind:viewlet
       bind:preference
       bind:viewlets

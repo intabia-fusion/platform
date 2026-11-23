@@ -206,6 +206,7 @@
     "NewMeeting": "Neues Meeting",
     "Meetings": "Besprechungen",
     "MeetingGroups": "Gruppen",
+    "CalendarMeetingView": "Kalender",
     "PastSessions": "Frühere Meetings",
     "GuestPassword": "Gastpasswort",
     "PasswordSet": "Gesetzt",
@@ -246,6 +247,16 @@
     "LinkCopied": "Link kopiert",
     "RoomBusy": "Raum ist besetzt",
     "RoomBusyText": "Im Raum „{room}“ läuft bereits ein Meeting.",
-    "TakeOverRoom": "Raum übernehmen"
+    "TakeOverRoom": "Raum übernehmen",
+    "OneOffMeeting": "Einmaliges Meeting",
+    "MeetingName": "Name",
+    "AllDay": "Ganztägig",
+    "Notify": "Benachrichtigen",
+    "TimeZone": "Zeitzone",
+    "MeetingDescription": "Beschreibung",
+    "MeetingHintPermanent": "Wiederholt sich nach Zeitplan; die Serie erscheint im Kalender, wenn die Anzeige an ist",
+    "MeetingHintOneOff": "Findet einmal zur gewählten Zeit statt; ein Gastlink wird erstellt",
+    "EachPeriod": "alle",
+    "ShowInCalendarOn": "Das Meeting erscheint im Kalender"
   }
 }

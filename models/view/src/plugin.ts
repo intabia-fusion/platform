@@ -101,7 +101,6 @@ export default mergeIds(viewId, view, {
     AddRelationPopup: '' as AnyComponent
   },
   string: {
-    Table: '' as IntlString,
     RelationshipTable: '' as IntlString,
     Role: '' as IntlString,
     // Keybaord actions

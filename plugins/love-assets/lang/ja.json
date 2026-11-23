@@ -206,6 +206,7 @@
     "NewMeeting": "新しいミーティング",
     "Meetings": "会議",
     "MeetingGroups": "グループ",
+    "CalendarMeetingView": "カレンダー",
     "PastSessions": "過去のミーティング",
     "GuestPassword": "ゲスト用パスワード",
     "PasswordSet": "設定済み",
@@ -246,6 +247,16 @@
     "LinkCopied": "リンクをコピーしました",
     "RoomBusy": "会議室は使用中です",
     "RoomBusyText": "「{room}」ではすでに会議が行われています。",
-    "TakeOverRoom": "会議室を引き継ぐ"
+    "TakeOverRoom": "会議室を引き継ぐ",
+    "OneOffMeeting": "単発の会議",
+    "MeetingName": "名前",
+    "AllDay": "終日",
+    "Notify": "通知する",
+    "TimeZone": "タイムゾーン",
+    "MeetingDescription": "説明",
+    "MeetingHintPermanent": "スケジュールに従って繰り返されます。カレンダー表示がオンの場合、シリーズがカレンダーに表示されます",
+    "MeetingHintOneOff": "指定した時刻に一度だけ開催されます。ゲストリンクが作成されます",
+    "EachPeriod": "毎",
+    "ShowInCalendarOn": "会議はカレンダーに表示されます"
   }
 }

@@ -206,6 +206,7 @@
     "NewMeeting": "Yeni toplantı",
     "Meetings": "Toplantılar",
     "MeetingGroups": "Gruplar",
+    "CalendarMeetingView": "Takvim",
     "PastSessions": "Geçmiş toplantılar",
     "GuestPassword": "Misafir parolası",
     "PasswordSet": "Ayarlandı",
@@ -246,6 +247,16 @@
     "LinkCopied": "Bağlantı kopyalandı",
     "RoomBusy": "Oda dolu",
     "RoomBusyText": "“{room}” odasında zaten bir toplantı sürüyor.",
-    "TakeOverRoom": "Odayı devral"
+    "TakeOverRoom": "Odayı devral",
+    "OneOffMeeting": "Tek seferlik toplantı",
+    "MeetingName": "Ad",
+    "AllDay": "Tüm gün",
+    "Notify": "Bildir",
+    "TimeZone": "Saat dilimi",
+    "MeetingDescription": "Açıklama",
+    "MeetingHintPermanent": "Programa göre yinelenir; takvim görünümü açıksa seri takvimde görünür",
+    "MeetingHintOneOff": "Seçilen saatte bir kez yapılır; misafir bağlantısı oluşturulur",
+    "EachPeriod": "her",
+    "ShowInCalendarOn": "Toplantı takvimde görünecek"
   }
 }

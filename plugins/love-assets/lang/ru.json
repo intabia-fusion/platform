@@ -206,6 +206,7 @@
     "NewMeeting": "Новая встреча",
     "Meetings": "Встречи",
     "MeetingGroups": "Группы",
+    "CalendarMeetingView": "Календарь",
     "PastSessions": "Прошлые встречи",
     "GuestPassword": "Пароль для гостей",
     "PasswordSet": "Задан",
@@ -246,6 +247,16 @@
     "LinkCopied": "Ссылка скопирована",
     "RoomBusy": "Комната занята",
     "RoomBusyText": "В комнате «{room}» уже идёт встреча.",
-    "TakeOverRoom": "Перехватить"
+    "TakeOverRoom": "Перехватить",
+    "OneOffMeeting": "Разовая встреча",
+    "MeetingName": "Название",
+    "AllDay": "Весь день",
+    "Notify": "Уведомить",
+    "TimeZone": "Часовой пояс",
+    "MeetingDescription": "Описание",
+    "MeetingHintPermanent": "Повторяется по расписанию; серия появляется в календаре, если показ включён",
+    "MeetingHintOneOff": "Проводится один раз в выбранное время; для неё создаётся гостевая ссылка",
+    "EachPeriod": "каждые",
+    "ShowInCalendarOn": "Встреча появится в календаре"
   }
 }

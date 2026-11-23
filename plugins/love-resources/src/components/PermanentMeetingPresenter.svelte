@@ -75,6 +75,13 @@
           <div class="label nowrap" class:no-underline={noUnderline || disabled} class:fs-bold={accent}>
             {value.name}
           </div>
+          <span
+            class="icon permanent-mark"
+            use:tooltip={{ label: love.string.PermanentMeeting }}
+            data-id="permanent-meeting-mark"
+          >
+            <Icon icon={calendar.icon.Repeat} size="smaller" />
+          </span>
         </div>
       </DocNavLink>
       {#if !disabled}
@@ -96,6 +103,24 @@
         </div>
       {/if}
       <span class="overflow-label">{value.name}</span>
+      <span
+        class="icon permanent-mark"
+        use:tooltip={{ label: love.string.PermanentMeeting }}
+        data-id="permanent-meeting-mark"
+      >
+        <Icon icon={calendar.icon.Repeat} size="smaller" />
+      </span>
     </span>
   {/if}
 {/if}
+
+<style lang="scss">
+  // Sits in the row like the kind icon beside it: same muted colour, same hover, no accent of its
+  // own - it only says "this one repeats".
+  .permanent-mark {
+    display: flex;
+    align-items: center;
+    padding: 0 0.125rem;
+    flex-shrink: 0;
+  }
+</style>

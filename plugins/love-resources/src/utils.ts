@@ -11,6 +11,7 @@ import core, {
   concatLink,
   type Data,
   type Doc,
+  type DocData,
   type DocumentQuery,
   getCurrentAccount,
   type Ref,
@@ -20,18 +21,15 @@ import core, {
   type WithLookup
 } from '@hcengineering/core'
 import {
-  defaultMeetingAccess,
   isOffice,
   LoveEvents,
   loveId,
   meetingMasterQuery,
-  type MeetingEventLink,
   type MeetingLinkKind,
   type MeetingMinutes,
   type MeetingSchedule,
   type PermanentMeeting,
   type Room,
-  type RoomLanguage,
   RoomType,
   type UserMeetingInvite
 } from '@hcengineering/love'
@@ -68,7 +66,7 @@ import {
 import { derived, get, writable } from 'svelte/store'
 
 import { ruleToPeriod } from './period'
-import { createPermanentMeeting } from './permanentMeetingSchedule'
+import { attachMeetingLink, createPermanentMeeting } from './permanentMeetingSchedule'
 import { getPersonByPersonRef } from '@hcengineering/contact-resources'
 import MeetingMinutesSearchItem from './components/MeetingMinutesSearchItem.svelte'
 import RoomSettingsPopup from './components/RoomSettingsPopup.svelte'
@@ -257,8 +255,8 @@ export const DEFAULT_MEETING_REMINDER = 15 * 60 * 1000
 export async function createMeeting (
   client: TxOperations,
   _id: Ref<Event>,
-  _space: Space,
-  _data: Data<Event>,
+  _space: Space | Ref<Space>,
+  _data: DocData<Doc>,
   store: Record<string, any>,
   phase: DocCreatePhase
 ): Promise<void> {
@@ -277,33 +275,15 @@ export async function createMeeting (
     const rules = (master as ReccuringEvent).rules ?? []
     const isPermanent = rules.length > 0
 
-    // The room is picked in the form; it decides where the session runs and inherits the media
-    // settings of that room, the way a meeting held in a room always has. No room picked - the
-    // session goes to the workspace service room.
-    const room =
-      !isPermanent && store.room !== undefined
-        ? await client.findOne(love.class.Room, { _id: store.room as Ref<Room> })
-        : undefined
-
     // A meeting is its own entity: scheduling only records what the meeting is, the session is
     // opened by the love service when an occurrence comes (the only writer allowed to, F1 §5).
-    await client.createMixin<Event, MeetingEventLink>(
-      master._id,
-      master._class,
-      master.space,
-      love.mixin.MeetingEventLink,
-      {
-        type: room?.type === RoomType.Audio ? RoomType.Audio : RoomType.Video,
-        room: room?._id,
-        linkVersion: 1,
-        meetingAccess: defaultMeetingAccess,
-        private: room?.startPrivate ?? false,
-        language: (room?.language ?? getCurrentLanguage()) as RoomLanguage,
-        startWithRecording: room?.startWithRecording ?? false,
-        startWithTranscription: room?.startWithTranscription ?? false,
-        reminderBefore: DEFAULT_MEETING_REMINDER
-      }
-    )
+    await attachMeetingLink(client, master, {
+      room: isPermanent ? undefined : (store.room as Ref<Room> | undefined),
+      language: getCurrentLanguage(),
+      // The meeting form may carry its own lead time; the calendar checkbox does not, and keeps the
+      // default quarter of an hour.
+      reminderBefore: typeof store.reminderBefore === 'number' ? store.reminderBefore : DEFAULT_MEETING_REMINDER
+    })
 
     // A repeating meeting is also a permanent one: the "Permanent meetings" tab is built from
     // `PermanentMeeting` documents, not from the mixin, so without this row a meeting scheduled in

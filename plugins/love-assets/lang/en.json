@@ -206,6 +206,7 @@
     "NewMeeting": "New meeting",
     "Meetings": "Meetings",
     "MeetingGroups": "Groups",
+    "CalendarMeetingView": "Calendar",
     "PastSessions": "Past meetings",
     "GuestPassword": "Guest password",
     "PasswordSet": "Set",
@@ -246,6 +247,16 @@
     "LinkCopied": "Link copied",
     "RoomBusy": "Room is busy",
     "RoomBusyText": "A meeting is already running in “{room}”.",
-    "TakeOverRoom": "Take over"
+    "TakeOverRoom": "Take over",
+    "OneOffMeeting": "One-off meeting",
+    "MeetingName": "Name",
+    "AllDay": "All day",
+    "Notify": "Notify",
+    "TimeZone": "Time zone",
+    "MeetingDescription": "Description",
+    "MeetingHintPermanent": "Repeats on a schedule; the series appears in the calendar when the calendar display is on",
+    "MeetingHintOneOff": "Held once at the chosen time; a guest link is created for it",
+    "EachPeriod": "every",
+    "ShowInCalendarOn": "The meeting appears in the calendar"
   }
 }

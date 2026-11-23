@@ -206,6 +206,7 @@
     "NewMeeting": "Nuova riunione",
     "Meetings": "Riunioni",
     "MeetingGroups": "Gruppi",
+    "CalendarMeetingView": "Calendario",
     "PastSessions": "Riunioni passate",
     "GuestPassword": "Password per gli ospiti",
     "PasswordSet": "Impostata",
@@ -246,6 +247,16 @@
     "LinkCopied": "Link copiato",
     "RoomBusy": "Sala occupata",
     "RoomBusyText": "Una riunione è già in corso in «{room}».",
-    "TakeOverRoom": "Occupare la sala"
+    "TakeOverRoom": "Occupare la sala",
+    "OneOffMeeting": "Riunione una tantum",
+    "MeetingName": "Nome",
+    "AllDay": "Tutto il giorno",
+    "Notify": "Notifica",
+    "TimeZone": "Fuso orario",
+    "MeetingDescription": "Descrizione",
+    "MeetingHintPermanent": "Si ripete secondo una pianificazione; la serie compare nel calendario se la visualizzazione è attiva",
+    "MeetingHintOneOff": "Si tiene una volta all’orario scelto; viene creato un link ospite",
+    "EachPeriod": "ogni",
+    "ShowInCalendarOn": "La riunione comparirà nel calendario"
   }
 }

@@ -206,6 +206,7 @@
     "NewMeeting": "Nová schůzka",
     "Meetings": "Schůzky",
     "MeetingGroups": "Skupiny",
+    "CalendarMeetingView": "Kalendář",
     "PastSessions": "Minulé schůzky",
     "GuestPassword": "Heslo pro hosty",
     "PasswordSet": "Nastaveno",
@@ -246,6 +247,16 @@
     "LinkCopied": "Odkaz zkopírován",
     "RoomBusy": "Místnost je obsazená",
     "RoomBusyText": "V místnosti „{room}“ již probíhá schůzka.",
-    "TakeOverRoom": "Převzít místnost"
+    "TakeOverRoom": "Převzít místnost",
+    "OneOffMeeting": "Jednorázová schůzka",
+    "MeetingName": "Název",
+    "AllDay": "Celý den",
+    "Notify": "Upozornit",
+    "TimeZone": "Časové pásmo",
+    "MeetingDescription": "Popis",
+    "MeetingHintPermanent": "Opakuje se podle rozvrhu; série se zobrazí v kalendáři, pokud je zobrazení zapnuté",
+    "MeetingHintOneOff": "Koná se jednou ve zvolený čas; vytvoří se odkaz pro hosty",
+    "EachPeriod": "každých",
+    "ShowInCalendarOn": "Schůzka se zobrazí v kalendáři"
   }
 }

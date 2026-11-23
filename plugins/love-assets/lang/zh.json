@@ -206,6 +206,7 @@
     "NewMeeting": "新建会议",
     "Meetings": "会议",
     "MeetingGroups": "分组",
+    "CalendarMeetingView": "日历",
     "PastSessions": "往期会议",
     "GuestPassword": "访客密码",
     "PasswordSet": "已设置",
@@ -246,6 +247,16 @@
     "LinkCopied": "链接已复制",
     "RoomBusy": "房间已被占用",
     "RoomBusyText": "“{room}”中已有会议正在进行。",
-    "TakeOverRoom": "接管"
+    "TakeOverRoom": "接管",
+    "OneOffMeeting": "单次会议",
+    "MeetingName": "名称",
+    "AllDay": "全天",
+    "Notify": "提醒",
+    "TimeZone": "时区",
+    "MeetingDescription": "描述",
+    "MeetingHintPermanent": "按计划重复；若开启日历显示，系列会出现在日历中",
+    "MeetingHintOneOff": "在所选时间举行一次，并创建访客链接",
+    "EachPeriod": "每",
+    "ShowInCalendarOn": "会议将出现在日历中"
   }
 }

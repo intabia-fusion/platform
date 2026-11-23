@@ -27,6 +27,8 @@
 
   import Floor from './Floor.svelte'
   import FloorConfigure from './FloorConfigure.svelte'
+  import MeetingGroupsView from './MeetingGroupsView.svelte'
+  import MeetingsView from './MeetingsView.svelte'
 
   void ensureOfficeDetailsLoaded()
 
@@ -49,34 +51,18 @@
 
 <div class="antiPanel-component filledNav" bind:this={replacedPanel}>
   {#if $officeView === 'meetings'}
-    <!-- A materialised occurrence keeps the mixin the calendar mirrors onto every copy, so without
-         a filter every edited or cancelled occurrence would sit in the list as a second meeting.
-         `recurringEventId` is declared on the occurrence class alone: a series master carries
-         `originalStartTime` too, and filtering by it would hide every series. -->
-    <!-- Three viewlets hang on the mixin: the calendar, the list and the table. The viewlet selector
-         in the header turns them into the calendar/list/table switch, so a separate control is not needed. -->
-    <SpecialView
-      _class={love.mixin.MeetingEventLink}
-      baseQuery={{ recurringEventId: { $exists: false } }}
-      label={love.string.Meetings}
-      icon={love.icon.Cam}
-      createButton={lovePlugin.component.PermanentMeetingsHeaderActions}
-      hideViewSettings
-    />
+    <!-- Calendar and table; the list of meetings is the groups tab. -->
+    <MeetingsView />
   {:else if $officeView === 'floors'}
     <!-- Nothing is picked yet: the floors list is in the navigator, the grid is its detail view. -->
     <div class="flex-col h-full justify-center items-center">
       <span class="content-color"><Label label={lovePlugin.string.SelectFloor} /></span>
     </div>
   {:else if $officeView === 'groups'}
-    <!-- Standard view of the class: viewlets, search, filters, view settings, grouped list. -->
-    <SpecialView
-      _class={love.class.PermanentMeeting}
-      label={lovePlugin.string.MeetingGroups}
-      icon={ui.icon.People}
-      defaultViewletDescriptor={view.viewlet.List}
-      createButton={lovePlugin.component.PermanentMeetingsHeaderActions}
-    />
+    <!-- Three sets of rows: calendar meetings, permanent meetings with a series, and the meetings
+         that exist only as a link. The sets share the viewlets of the class, so each keeps grouping
+         and sorting. -->
+    <MeetingGroupsView />
   {:else if configure}
     <FloorConfigure
       rooms={getRooms($rooms, floor)}

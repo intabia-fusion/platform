@@ -26,6 +26,13 @@
 
   // Sent by the view header; the form resolves its own space, so it only has to be accepted.
   export let space: Ref<Space> | undefined = undefined
+  // The calendar tab creates a one-off meeting, the planner a standing one.
+  export let initialKind: 'permanent' | 'one-off' | undefined = undefined
+  // The groups tab only groups what is there: no meeting is created from it.
+  export let groupOnly: boolean = false
+  // `Component` (ui) hands every child these two; declaring them keeps the console free of warnings.
+  export let inline: boolean | undefined = undefined
+  export let disabled: boolean | undefined = undefined
 
   function createGroup (): void {
     showPopup(MeetingGroupPopup, {}, 'center')
@@ -33,9 +40,11 @@
 
   function createMeeting (): void {
     // The only place that may create a meeting without a calendar series.
-    showPopup(CreatePermanentMeetingPopup, { space, allowNoCalendar: true }, 'top')
+    showPopup(CreatePermanentMeetingPopup, { space, allowNoCalendar: true, initialKind }, 'top')
   }
 </script>
 
 <Button icon={view.icon.List} label={love.string.MergeIntoGroup} kind="secondary" on:click={createGroup} />
-<Button icon={ui.icon.Plus} label={love.string.NewMeeting} kind="primary" on:click={createMeeting} />
+{#if !groupOnly}
+  <Button icon={ui.icon.Plus} label={love.string.NewMeeting} kind="primary" on:click={createMeeting} />
+{/if}

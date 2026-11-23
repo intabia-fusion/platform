@@ -82,7 +82,7 @@ import core, { TAttachedDoc, TDoc, TSpace } from '@hcengineering/model-core'
 import preference, { TPreference } from '@hcengineering/model-preference'
 import presentation from '@hcengineering/model-presentation'
 import view, { createAction, createAttributePresenter, showColorsViewOption } from '@hcengineering/model-view'
-import { type ViewOptionModel } from '@hcengineering/view'
+import { type OrderOption, type ViewOptionModel } from '@hcengineering/view'
 import media from '@hcengineering/media'
 import notification, { type MessageNotificationType, type TxNotificationType } from '@hcengineering/notification'
 import { getEmbeddedLabel } from '@hcengineering/platform'
@@ -933,22 +933,8 @@ export function createModel (builder: Builder): void {
     love.viewlet.CalendarScheduledMeetings
   )
 
-  // The section switches between calendar, list and table through the standard viewlet selector,
-  // so the same records get the views other sections already have.
+  // The list of meetings lives in the groups tab: this is what the section keeps on its own.
   const SCHEDULED_MEETING_CONFIG = ['', 'date', 'participants', 'location']
-
-  builder.createDoc(
-    view.class.Viewlet,
-    core.space.Model,
-    {
-      attachTo: love.mixin.MeetingEventLink,
-      descriptor: view.viewlet.Table,
-      config: SCHEDULED_MEETING_CONFIG,
-      configOptions: { sortable: true },
-      viewOptions: { groupBy: [], orderBy: [['date', SortingOrder.Descending]], other: [] }
-    },
-    love.viewlet.TableScheduledMeetings
-  )
 
   builder.createDoc(
     view.class.Viewlet,
@@ -979,6 +965,14 @@ export function createModel (builder: Builder): void {
     'repeatEvery'
   ]
 
+  // A sort key is offered only when the viewlet names it: one entry left the sorting dropdown with a
+  // single choice, so the list could not be ordered by creation or change date at all.
+  const PERMANENT_MEETING_ORDER: OrderOption[] = [
+    ['name', SortingOrder.Ascending],
+    ['createdOn', SortingOrder.Descending],
+    ['modifiedOn', SortingOrder.Descending]
+  ]
+
   builder.createDoc(
     view.class.Viewlet,
     core.space.Model,
@@ -1003,8 +997,10 @@ export function createModel (builder: Builder): void {
       ],
       configOptions: { hiddenKeys: MODEL_HIDDEN_KEYS, sortable: true },
       viewOptions: {
-        groupBy: [],
-        orderBy: [['name', SortingOrder.Ascending]],
+        // Every key offered in the view settings comes from this list: an empty one left the grouping
+        // dropdown with nothing to pick.
+        groupBy: ['group', 'members', 'private'],
+        orderBy: PERMANENT_MEETING_ORDER,
         other: []
       }
     },
@@ -1021,7 +1017,7 @@ export function createModel (builder: Builder): void {
       viewOptions: {
         // The first key is what the view groups by until the user picks another one.
         groupBy: ['group', 'members', 'private', 'createdBy'],
-        orderBy: [['name', SortingOrder.Ascending]],
+        orderBy: PERMANENT_MEETING_ORDER,
         other: []
       },
       configOptions: { hiddenKeys: MODEL_HIDDEN_KEYS, sortable: true },

@@ -42,6 +42,7 @@ import {
   type MeetingEventLink,
   type MeetingGroup,
   type PermanentMeeting,
+  type Room,
   type RoomLanguage,
   RoomType
 } from '@hcengineering/love'
@@ -66,11 +67,22 @@ export interface PermanentMeetingInput {
   name: string
   startDate: number
   duration: number
+  /** Free text of the event; a permanent meeting keeps the rich description on its own document. */
+  description?: string
+  /** The fields pick whole days: the series covers the day, and the time of the fields is ignored. */
+  allDay?: boolean
+  /** Zone the user picked; absent falls back to the caller's own. */
+  timeZone?: string
+  /** Office room the session runs in. Only a one-off meeting has one. */
+  room?: Ref<Room>
   /** Repeat period in msec; absent creates a one-off meeting. */
   period?: number
   endDate?: number
   members: AccountUuid[]
+  /** Lead time of the single reminder; the smallest of `reminders` when the list is set. */
   reminderBefore: number
+  /** Every lead time the user asked for. The calendar keeps a list, the meeting one value. */
+  reminders?: number[]
   /** Plain-text guest password to set, '' to leave it as is, null to remove. */
   guestPassword?: string | null
   /** Group the meeting is created in, when the dialog was opened from a group header. */
@@ -180,6 +192,10 @@ export async function createPermanentMeetingWithSchedule (
   const language = ctx.language as RoomLanguage
   const startWithRecording = false
   const startWithTranscription = false
+  // The zone belongs to the meeting, not to the person creating it: a series made for a colleague in
+  // another city keeps the zone the dialog showed.
+  const timeZone = input.timeZone ?? ctx.timeZone
+  const allDay = input.allDay === true
   // A meeting may exist only as a link and a row in the list: then it gets no series, and nothing
   // but the meeting itself says when it should be held.
   const inCalendar = input.calendar !== false
@@ -194,7 +210,7 @@ export async function createPermanentMeetingWithSchedule (
   if (inCalendar) {
     const participants = await participantsOf(client, members)
     eventId = generateEventId()
-    const dueDate = input.startDate + input.duration
+    const dueDate = allDay ? new Date(input.startDate).setHours(23, 59, 59, 999) : input.startDate + input.duration
 
     const common = {
       calendar: ctx.calendarId,
@@ -202,14 +218,14 @@ export async function createPermanentMeetingWithSchedule (
       date: input.startDate,
       dueDate,
       title: input.name,
-      description: '',
+      description: input.description ?? '',
       participants,
       externalParticipants: [],
-      reminders: [input.reminderBefore],
+      reminders: input.reminders ?? [input.reminderBefore],
       visibility: 'private' as const,
       blockTime: true,
-      allDay: false,
-      timeZone: ctx.timeZone,
+      allDay,
+      timeZone,
       access: AccessLevel.Owner,
       user: ctx.primarySocialId
     }
@@ -272,7 +288,7 @@ export async function createPermanentMeetingWithSchedule (
     reminderBefore: input.reminderBefore,
     group: input.group,
     startDate: input.startDate,
-    timeZone: ctx.timeZone,
+    timeZone,
     calendar: inCalendar
   })
 
@@ -291,6 +307,95 @@ export async function createPermanentMeetingWithSchedule (
 }
 
 /**
+ * The meeting mixin on the master event: where the session runs, who may start it and how the media
+ * starts. Shared by the calendar form (through `createMeeting`) and the one-off writer below, so a
+ * meeting made here and one made from the calendar differ in nothing but the fields the form offers.
+ */
+export async function attachMeetingLink (
+  client: TxOperations,
+  master: Event,
+  options: { room?: Ref<Room>, language: string, reminderBefore: number }
+): Promise<void> {
+  // The room, when picked, decides the type, the language and the media the session starts with, the
+  // way a meeting held in a room always has. No room means the workspace service room.
+  const room = options.room !== undefined ? await client.findOne(love.class.Room, { _id: options.room }) : undefined
+  await client.createMixin<Event, MeetingEventLink>(
+    master._id,
+    master._class,
+    master.space,
+    love.mixin.MeetingEventLink,
+    {
+      type: room?.type === RoomType.Audio ? RoomType.Audio : RoomType.Video,
+      room: room?._id,
+      linkVersion: 1,
+      meetingAccess: defaultMeetingAccess,
+      private: room?.startPrivate ?? false,
+      language: (room?.language ?? options.language) as RoomLanguage,
+      startWithRecording: room?.startWithRecording ?? false,
+      startWithTranscription: room?.startWithTranscription ?? false,
+      reminderBefore: options.reminderBefore
+    }
+  )
+}
+
+/**
+ * A one-off meeting is a calendar event with the meeting mixin and nothing else: no `PermanentMeeting`
+ * document, so it never shows up in the permanent meetings list. The room picked in the form decides
+ * where the session runs and which media settings it starts with, exactly as a calendar meeting does.
+ */
+export async function createOneOffMeeting (
+  client: TxOperations,
+  input: PermanentMeetingInput,
+  ctx: ScheduleContext
+): Promise<{ eventId: string }> {
+  const members = input.members.includes(ctx.me) ? input.members : [ctx.me, ...input.members]
+  const participants = await participantsOf(client, members)
+  const timeZone = input.timeZone ?? ctx.timeZone
+  const allDay = input.allDay === true
+  const eventId = generateEventId()
+  const eventRef = generateId<Event>()
+
+  await client.addCollection(
+    calendar.class.Event,
+    ctx.space,
+    calendar.ids.NoAttached,
+    calendar.class.Event,
+    'events',
+    {
+      calendar: ctx.calendarId,
+      eventId,
+      date: input.startDate,
+      dueDate: allDay ? new Date(input.startDate).setHours(23, 59, 59, 999) : input.startDate + input.duration,
+      title: input.name,
+      description: input.description ?? '',
+      participants,
+      externalParticipants: [],
+      reminders: input.reminders ?? [input.reminderBefore],
+      visibility: 'private' as const,
+      blockTime: true,
+      allDay,
+      timeZone,
+      access: AccessLevel.Owner,
+      user: ctx.primarySocialId
+    },
+    eventRef
+  )
+
+  // The mixin is written by the same function the calendar form uses, so a meeting made here and one
+  // made from the calendar differ in nothing but the fields this dialog offers.
+  const master = await client.findOne(calendar.class.Event, { _id: eventRef })
+  if (master !== undefined) {
+    await attachMeetingLink(client, master, {
+      room: input.room,
+      language: ctx.language,
+      reminderBefore: input.reminderBefore
+    })
+  }
+
+  return { eventId }
+}
+
+/**
  * Saving the settings window of an existing meeting: the meeting itself, its series and the guest
  * password. The series is found by the back-reference on the mixin, so a meeting created before the
  * link existed simply updates without one.
@@ -302,6 +407,8 @@ export async function updatePermanentMeetingWithSchedule (
   ctx: ScheduleContext
 ): Promise<void> {
   const members = input.members.includes(ctx.me) ? input.members : [ctx.me, ...input.members]
+  const timeZone = input.timeZone ?? ctx.timeZone
+  const allDay = input.allDay === true
 
   await client.update(object, {
     name: input.name,
@@ -310,7 +417,7 @@ export async function updatePermanentMeetingWithSchedule (
     repeatEvery: input.period,
     // Kept in step with the series: a meeting without one reads its schedule from here.
     startDate: input.startDate,
-    timeZone: ctx.timeZone
+    timeZone
   })
 
   const rules = input.period !== undefined ? periodRules(input.startDate, input.period) : []
@@ -324,7 +431,9 @@ export async function updatePermanentMeetingWithSchedule (
     const update: Record<string, any> = {
       title: input.name,
       date: input.startDate,
-      dueDate: input.startDate + input.duration,
+      dueDate: allDay ? new Date(input.startDate).setHours(23, 59, 59, 999) : input.startDate + input.duration,
+      allDay,
+      timeZone,
       participants
     }
     if (rules.length > 0) update.rules = rules
