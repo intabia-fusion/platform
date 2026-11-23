@@ -1,0 +1,90 @@
+{{- /*
+STT worker (MODE=client): recognises audio for aibot-clisr over /_aibot. The real engine is an
+OpenAI-compatible endpoint reachable from the cluster; the stand keeps the single clisr receiver.
+*/}}
+{{- if and .Values.services.aibot.enabled .Values.services.aibotClient.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aibot-client-config
+  namespace: '{{ .Values.global.namespace }}'
+data:
+  config.yaml: |
+    asr:
+      defaultLevel: default
+      models:
+        default:
+          order: 0
+          label: Базовый
+          description: Распознавание на воркере
+          tokenMultiplier: 1
+          displayMultiplier: 1
+      providers:
+        - id: local-stt
+          provider: {{ .Values.services.aibotClient.sttProvider | quote }}
+          serves:
+            default:
+              # Empty model = whatever the recognition server serves by default.
+              model: {{ .Values.services.aibotClient.sttModel | quote }}
+              url: {{ .Values.services.aibotClient.sttUrl | quote }}
+              apiKey: {{ .Values.services.aibotClient.sttApiKey | quote }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aibot-client
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: aibot-client
+  template:
+    metadata:
+      labels:
+        app: aibot-client
+      annotations:
+        checksum/platform-env: {{ include "platform.envChecksum" . | quote }}
+        checksum/aibot-client-config: {{ .Values.services.aibotClient | toYaml | sha256sum | quote }}
+    spec:
+      {{- include "platform.nodeSelector" (dict "root" . "service" "aibot") | nindent 6 }}
+      {{- include "platform.tolerations" . | nindent 6 }}
+      containers:
+      - name: app
+        image: {{ include "platform.containerImage" (dict "root" . "service" "aibot" "image" "ai-bot") }}
+        env:
+        - name: MODE
+          value: client
+        # STT only: no LLM provider registered by this worker.
+        - name: LLM_PROVIDER
+          value: none
+        - name: SERVER_URL
+          value: ws://aibot-clisr
+        - name: API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: aibotApiToken
+        - name: SERVER_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: serverSecret
+        - name: CONFIG_PATH
+          value: /var/cfg/config.yaml
+        volumeMounts:
+        - name: config
+          mountPath: /var/cfg
+          readOnly: true
+        resources:
+          requests:
+            memory: '{{ .Values.services.aibotClient.memRequired }}M'
+          limits:
+            memory: '{{ .Values.services.aibotClient.memLimits }}M'
+      volumes:
+      - name: config
+        configMap:
+          name: aibot-client-config
+{{- end }}

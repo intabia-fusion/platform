@@ -106,7 +106,7 @@ pause не трогает контейнер webpack dev-front (`fusion-dev-fron
 | redis 8.0.2 | `internal` Deployment | `external`/`disabled` |
 | otel-collector + Prometheus | enabled, общие на все стенды | OTLP :4318 -> `otel-collector:8889` -> Prometheus; UI `https://prometheus.fusion.localhost:<https-порт>`; ручной runbook: [docs/observability.md](docs/observability.md) |
 | sealed-secrets | только non-k3d или `SEALED_SECRETS=1` | контроллер для запечатанных секретов; локально секреты plain, см. [docs/sealed-secrets.md](docs/sealed-secrets.md) |
-| mailpit | enabled | SMTP стендов: `mailpit.platform-base.svc.cluster.local:1025`; UI через Traefik: `https://mailpit.fusion.localhost:<https-порт>` (`stands/base/values.yaml` -> `mailpit.host`, пусто = не публиковать) |
+| mailpit | enabled | SMTP стендов: `mailpit.platform-base.svc.cluster.local:1025`; UI через Traefik: `https://mailpit.fusion.localhost:<https-порт>` (`stands/base/values.yaml` -> `mailpit.host`, пусто = не публиковать). Второй способ - под путём самого стенда: `mailpit.path: /_mailpit` в чарте платформы плюс `mailpit.webroot: /_mailpit` в базе |
 
 Режимы `external` для postgres/s3/elastic/redis/kafka реализованы: чарт
 публикует внешние адреса в контракт вместо своих. Проверены рендером

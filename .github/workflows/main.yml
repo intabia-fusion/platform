@@ -259,7 +259,7 @@ jobs:
           if pnpm docker 2>&1 | tee /tmp/docker-build.log; then
             echo "Docker build succeeded"
           else
-            if grep -qi "rate limit\|too many requests\|toomanyrequests\|429" /tmp/docker-build.log; then
+            if grep -qi "rate limit\|too many requests\|toomanyrequests" /tmp/docker-build.log; then
               echo "Rate limit hit, logging in to Docker Hub and retrying..."
               echo "${{ secrets.DOCKER_ACCESS_TOKEN }}" | docker login -u intabiafusion --password-stdin
               pnpm docker
@@ -315,7 +315,7 @@ jobs:
           if pnpm docker 2>&1 | tee /tmp/docker-build.log; then
             echo "Docker build succeeded"
           else
-            if grep -qi "rate limit\|too many requests\|toomanyrequests\|429" /tmp/docker-build.log; then
+            if grep -qi "rate limit\|too many requests\|toomanyrequests" /tmp/docker-build.log; then
               echo "Rate limit hit, logging in to Docker Hub and retrying..."
               echo "${{ secrets.DOCKER_ACCESS_TOKEN }}" | docker login -u intabiafusion --password-stdin
               pnpm docker
@@ -371,7 +371,7 @@ jobs:
           if pnpm docker 2>&1 | tee /tmp/docker-build.log; then
             echo "Docker build succeeded"
           else
-            if grep -qi "rate limit\|too many requests\|toomanyrequests\|429" /tmp/docker-build.log; then
+            if grep -qi "rate limit\|too many requests\|toomanyrequests" /tmp/docker-build.log; then
               echo "Rate limit hit, logging in to Docker Hub and retrying..."
               echo "${{ secrets.DOCKER_ACCESS_TOKEN }}" | docker login -u intabiafusion --password-stdin
               pnpm docker
@@ -426,7 +426,7 @@ jobs:
           if pnpm docker 2>&1 | tee /tmp/docker-build.log; then
             echo "Docker build succeeded"
           else
-            if grep -qi "rate limit\|too many requests\|toomanyrequests\|429" /tmp/docker-build.log; then
+            if grep -qi "rate limit\|too many requests\|toomanyrequests" /tmp/docker-build.log; then
               echo "Rate limit hit, logging in to Docker Hub and retrying..."
               echo "${{ secrets.DOCKER_ACCESS_TOKEN }}" | docker login -u intabiafusion --password-stdin
               pnpm docker
@@ -491,7 +491,7 @@ jobs:
           if pnpm docker:build -v --esbuild-emit 2>&1 | tee /tmp/docker-build.log; then
             echo "Docker build succeeded"
           else
-            if grep -qi "rate limit\|too many requests\|toomanyrequests\|429" /tmp/docker-build.log; then
+            if grep -qi "rate limit\|too many requests\|toomanyrequests" /tmp/docker-build.log; then
               echo "Rate limit hit, logging in to Docker Hub and retrying..."
               echo "${{ secrets.DOCKER_ACCESS_TOKEN }}" | docker login -u intabiafusion --password-stdin
               pnpm docker:build -v --esbuild-emit

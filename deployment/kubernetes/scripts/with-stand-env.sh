@@ -88,6 +88,9 @@ export PLATFORM_URL
 export API_TESTS_URL
 : "${ACCOUNTS_URL:=$STAND_URL/_account}"
 export ACCOUNTS_URL
+# The api stand mounts the transactor at transactorPath (_tr0), not the compose stand's /_tr.
+: "${TRANSACTOR_URL:=$STAND_URL/_tr0}"
+export TRANSACTOR_URL
 : "${BILLING_URL:=${FRONT_ORIGIN:+$FRONT_ORIGIN/_billing}}"
 : "${BILLING_URL:=$STAND_URL/_billing}"
 export BILLING_URL

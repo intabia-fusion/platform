@@ -46,6 +46,11 @@ spec:
       - name: mailpit
         image: '{{ .Values.mailpit.image }}'
         imagePullPolicy: IfNotPresent
+        {{- with .Values.mailpit.webroot }}
+        env:
+        - name: MP_WEBROOT
+          value: {{ . | quote }}
+        {{- end }}
         # SMTP :1025 and UI :8025 are the mailpit defaults
         ports:
         - containerPort: 1025

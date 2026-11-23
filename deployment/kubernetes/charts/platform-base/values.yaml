@@ -134,6 +134,9 @@ mailpit:
   # Web UI behind Traefik (IngressRoute, websecure). Empty = no route; SMTP stays
   # cluster-internal either way. Local stands set it in stands/base/values.yaml.
   host: ""
+  # Webroot for the UI and API when a stand publishes them under a path (/smtp style):
+  # must match mailpit.path of the platform chart. Empty = root.
+  webroot: ""
   resources:
     requests: { memory: 32Mi, cpu: 20m }
     limits: { memory: 128Mi }

@@ -77,7 +77,7 @@ runs:
         if ${{ inputs.prepare-script }} 2>&1 | tee /tmp/prepare-server.log; then
           echo "Prepare succeeded"
         else
-          if grep -qi "rate limit\|too many requests\|toomanyrequests\|429" /tmp/prepare-server.log; then
+          if grep -qi "rate limit\|too many requests\|toomanyrequests" /tmp/prepare-server.log; then
             echo "Rate limit hit, logging in to Docker Hub and retrying..."
             echo "$DOCKER_ACCESS_TOKEN" | docker login -u intabiafusion --password-stdin
             ${{ inputs.prepare-script }}
@@ -99,12 +99,12 @@ runs:
       run: |
         set -o pipefail
         cd ./${{ inputs.test-folder }}
-        export DO_CLEAN=true
+        export DO_CLEAN=false
         # DO_CLEAN=false: docker system prune -a between test runs deletes locally built images needed by subsequent tests
         if ${{ inputs.prepare-script }} 2>&1 | tee /tmp/prepare-server.log; then
           echo "Prepare succeeded"
         else
-          if grep -qi "rate limit\|too many requests\|toomanyrequests\|429" /tmp/prepare-server.log; then
+          if grep -qi "rate limit\|too many requests\|toomanyrequests" /tmp/prepare-server.log; then
             echo "Rate limit hit, logging in to Docker Hub and retrying..."
             echo "$DOCKER_ACCESS_TOKEN" | docker login -u intabiafusion --password-stdin
             ${{ inputs.prepare-script }}

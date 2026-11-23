@@ -280,6 +280,17 @@ services:
       replicas: 1
     # stt-worker = clisr-приёмник. Реплика ровно одна (жёстко в шаблоне): внешние воркеры
     # держат WebSocket к конкретному поду.
+  # STT-воркер (MODE=client) к aibot-clisr: распознаёт аудио на OpenAI-совместимом сервере,
+  # доступном из кластера. enabled=false - воркер не ставится, работает только приёмник.
+  aibotClient:
+    enabled: false
+    sttProvider: openai
+    sttUrl: ""
+    sttApiKey: "key"
+    # Пусто - модель по умолчанию самого сервера распознавания.
+    sttModel: ""
+    memRequired: 256
+    memLimits: 512
   backup:
     enabled: true
     replicas: 1
@@ -534,3 +545,9 @@ services:
     replicas: 1
     memRequired: 256
     memLimits: 512
+
+mailpit:
+  # publish the stand's mailpit UI on the stand host under this path, e.g. /_mailpit;
+  # must match mailpit.webroot in the base chart. empty = not published (subdomain route is
+  # mailpit.host in platform-base).
+  path: ""

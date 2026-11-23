@@ -1,0 +1,21 @@
+{{- /*
+Mailbox UI of the stand under its own host: /_mailpit -> mailpit in platform-base. The base
+sets MP_WEBROOT to the same path, so URLs and assets stay under the prefix without stripping.
+*/}}
+{{- if .Values.mailpit.path }}
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: mailpit-stand
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  - match: Host(`{{ .Values.global.hostUrl }}`) && PathPrefix(`{{ .Values.mailpit.path }}`)
+    kind: Rule
+    services:
+    - name: mailpit
+      namespace: '{{ .Values.global.baseNamespace | default .Release.Namespace }}'
+      port: 8025
+{{- end }}
