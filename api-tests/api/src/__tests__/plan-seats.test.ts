@@ -160,7 +160,7 @@ describe('plan-seats', () => {
         { verifiedOn: null as any }
       )
     )
-    const socket = await connectWs('http://localhost:8183', {
+    const socket = await connectWs(PlatformUrl, {
       token: owner.token,
       workspace: wsName,
       socketFactory: NodeWebSocketFactory
@@ -282,7 +282,7 @@ describe('plan-seats', () => {
       account = login.account
       const member = getAccountClient(config.ACCOUNTS_URL, login.token)
       const joined = await member.completeOnboardingInvite({ firstName: 'New', lastName: 'Member' }, invite)
-      const socket = await connectWs('http://localhost:8183', {
+      const socket = await connectWs(PlatformUrl, {
         token: login.token as string,
         workspace: joined.workspaceUrl,
         socketFactory: NodeWebSocketFactory
