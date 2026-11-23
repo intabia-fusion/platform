@@ -267,7 +267,7 @@ runs:
         name: profiling-${{ inputs.artifact-name-suffix }}
         path: ./${{ inputs.test-folder }}/profiles
 
-    # Pod logs/events from the stand namespace; compose mode stores host container logs below.
+    # Stand pods/logs/events, shared platform-base namespace and cluster node state; compose stores host container logs below.
     - name: Store Kubernetes logs
       if: ${{ always() && inputs.stand != '' }}
       shell: bash
