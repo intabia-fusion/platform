@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2026 Intabia Fusion
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -104,7 +105,7 @@
     try {
       if (hasBody && proposedNode !== undefined) {
         if (editor === undefined) return
-        editor.commands.setContent(proposedNode)
+        editor.commands.setContent(proposedNode, { emitUpdate: false })
       }
       if (value.proposedTitle !== undefined && value.proposedTitle !== '') {
         await applyTitle(value.proposedTitle)

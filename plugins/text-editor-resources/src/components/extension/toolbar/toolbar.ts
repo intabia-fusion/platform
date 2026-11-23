@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -736,12 +737,19 @@ function minmax (value = 0, min = 0, max = 0): number {
   return Math.min(Math.max(value, min), max)
 }
 
-export function setLoadingState (view: EditorView, pos: number, loading: boolean): void {
-  const meta: LoadingStateTxMeta = {
-    setLoading: { pos, loading }
-  }
-
-  view.dispatch(view.state.tr.setMeta(loadingStatePluginKey, meta).setMeta('loadingState', loading))
+export function setLoadingState (
+  view: EditorView,
+  getPos: () => number | undefined,
+  element: HTMLElement,
+  loading: boolean
+): void {
+  queueMicrotask(() => {
+    if (view.isDestroyed) return
+    const pos = getPos()
+    if (pos === undefined || view.nodeDOM(pos) !== element) return
+    const meta: LoadingStateTxMeta = { setLoading: { pos, loading } }
+    view.dispatch(view.state.tr.setMeta(loadingStatePluginKey, meta).setMeta('loadingState', loading))
+  })
 }
 
 export const GeneralToolbarProvider: ToolbarProvider<any> = {

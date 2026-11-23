@@ -1,6 +1,7 @@
 <!--
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -22,7 +23,7 @@
   import type { Editor } from '@tiptap/core'
   import { onMount } from 'svelte'
   import { createRelativePositionFromJSON } from 'yjs'
-  import { relativePositionToAbsolutePosition, ySyncPluginKey } from 'y-prosemirror'
+  import { relativePositionToAbsolutePosition, ySyncPluginKey } from '@tiptap/y-tiptap'
   import type { Provider } from '../provider/types'
 
   export let provider: Provider
@@ -47,6 +48,7 @@
     if (cursor?.head != null) {
       try {
         const ystate = ySyncPluginKey.getState(editor.state)
+        if (ystate === undefined) return
         const abs = relativePositionToAbsolutePosition(
           ystate.doc,
           ystate.type,

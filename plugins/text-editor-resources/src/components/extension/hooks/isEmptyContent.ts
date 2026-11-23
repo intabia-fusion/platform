@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -31,14 +32,14 @@ export const IsEmptyContentExtension: Extension<IsEmptyContentOptions, IsEmptyCo
         isEmpty: true
       }
     },
-    onCreate () {
-      this.parent?.()
+    onCreate (props) {
+      this.parent?.(props)
 
       this.storage.isEmpty = this.editor.isEmpty
       this.options.onChange(this.storage.isEmpty)
     },
-    onUpdate () {
-      this.parent?.()
+    onUpdate (props) {
+      this.parent?.(props)
 
       if (this.storage.isEmpty !== this.editor.isEmpty) {
         this.storage.isEmpty = this.editor.isEmpty

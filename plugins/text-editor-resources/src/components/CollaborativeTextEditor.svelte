@@ -1,6 +1,7 @@
 <!--
 //
 // Copyright © 2022, 2023, 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -67,7 +68,9 @@
   import { noSelectionRender, renderCursor } from './editor/collaboration'
   import { defaultEditorAttributes } from './editor/editorProps'
   import type { SavedBoard } from './extension/drawingBoard'
+  import { insertEditableBlock, saveInsertionSelection } from './extension/insertion-selection'
   import type { FileAttachFunction } from './extension/types'
+  import type { Command } from '@tiptap/core'
   import { inlineCommandsConfig } from './extensions'
 
   export let object: Doc
@@ -283,56 +286,80 @@
   }
 
   let inputImage: HTMLInputElement
+  let imageInsertionSelection: Command | undefined
 
-  export function handleAttachImage (): void {
+  function selectImage (restoreSelection: Command): void {
+    imageInsertionSelection = restoreSelection
     inputImage.click()
   }
 
-  async function createInlineImage (file: File): Promise<void> {
+  export function handleAttachImage (): void {
+    const tiptap = editor
+    if (tiptap === undefined || tiptap.isDestroyed || !tiptap.isEditable) return
+    selectImage(saveInsertionSelection(tiptap))
+  }
+
+  async function createInlineImage (file: File, restoreSelection: Command): Promise<Command> {
     if (!file.type.startsWith('image/') || attachFile === undefined) {
-      return
+      return restoreSelection
     }
 
+    const tiptap = editor
+    if (tiptap === undefined || tiptap.isDestroyed || !tiptap.isEditable) return restoreSelection
     const attached = await attachFile(file)
     if (attached === undefined) {
-      return
+      return restoreSelection
     }
 
     const size = await getImageSize(file)
+    if (tiptap.isDestroyed || !tiptap.isEditable) return restoreSelection
 
-    editor.commands.insertContent(
-      {
-        type: 'image',
-        attrs: {
-          'file-id': attached.file,
-          width: imageSizeToRatio(size.width, size.pixelRatio)
-        }
-      },
-      {
-        updateSelection: false
-      }
-    )
+    const inserted = tiptap
+      .chain()
+      .focus()
+      .command(restoreSelection)
+      .command(({ tr, chain }) => {
+        return chain()
+          .insertContent({
+            type: 'image',
+            attrs: {
+              'file-id': attached.file,
+              width: imageSizeToRatio(size.width, size.pixelRatio)
+            }
+          })
+          .run()
+      })
+      .run()
+    return inserted ? saveInsertionSelection(tiptap) : restoreSelection
   }
 
   async function fileSelected (): Promise<void> {
-    if (readonly) return
-    const list = inputImage.files
-    if (list === null || list.length === 0) return
-    for (let index = 0; index < list.length; index++) {
-      const file = list.item(index)
-      if (file !== null) {
-        await createInlineImage(file)
-      }
-    }
+    const tiptap = editor
+    const restoreSelection = imageInsertionSelection
+    imageInsertionSelection = undefined
+    const files = Array.from(inputImage.files ?? [])
     inputImage.value = ''
+    if (readonly || tiptap === undefined || tiptap.isDestroyed || !tiptap.isEditable) return
+
+    try {
+      let nextSelection = restoreSelection ?? saveInsertionSelection(tiptap)
+      for (const file of files) {
+        nextSelection = await createInlineImage(file, nextSelection)
+      }
+    } catch (error) {
+      console.error('Failed to insert image:', error)
+    }
   }
 
   async function handleLeftMenuClick (id: string, pos: number, targetItem?: MouseEvent | HTMLElement): Promise<void> {
-    editor.commands.focus(pos, { scrollIntoView: false })
+    const tiptap = editor
+    if (tiptap === undefined || tiptap.isDestroyed || !tiptap.isEditable) return
+    const restoreSelection = saveInsertionSelection(tiptap, pos)
+    const insertion = (): ReturnType<typeof tiptap.chain> => tiptap.chain().focus().command(restoreSelection)
 
     switch (id) {
       case 'image':
-        handleAttachImage()
+        selectImage(restoreSelection)
         break
       case 'table': {
         let position: PopupAlignment | undefined = undefined
@@ -345,26 +372,39 @@
         // Otherwise, it hoggs the focus from the popup and keyboard navigation doesn't work
         setTimeout(() => {
           // addTableHandler opens popup so the editor loses focus so in the callback we need to refocus again
-          void addTableHandler((options: { rows?: number, cols?: number, withHeaderRow?: boolean }) => {
-            editor.chain().focus(pos).insertTable(options).run()
+          void addTableHandler((options) => {
+            if (!tiptap.isDestroyed && tiptap.isEditable) insertion().insertTable(options).run()
           }, position)
         }, 0)
         break
       }
       case 'code-block':
-        editor.commands.insertContentAt(pos, { type: 'codeBlock' })
+        insertion()
+          .command(insertEditableBlock({ type: 'codeBlock' }))
+          .run()
         break
       case 'todo-list':
-        editor.chain().insertContentAt(pos, { type: 'paragraph' }).toggleTaskList().run()
+        insertion()
+          .command(
+            insertEditableBlock({
+              type: 'todoList',
+              content: [{ type: 'todoItem', content: [{ type: 'paragraph' }] }]
+            })
+          )
+          .run()
         break
       case 'separator-line':
-        editor.commands.setHorizontalRule()
+        insertion().setHorizontalRule().run()
         break
       case 'drawing-board':
-        editor.commands.insertContentAt(pos, { type: 'drawingBoard', attrs: { id: generateId() } })
+        insertion()
+          .insertContent({ type: 'drawingBoard', attrs: { id: generateId() } })
+          .run()
         break
       case 'mermaid':
-        editor.commands.insertContentAt(pos, { type: 'mermaid' })
+        insertion()
+          .command(insertEditableBlock({ type: 'mermaid' }))
+          .run()
         break
     }
   }
@@ -637,12 +677,6 @@
       }
     }
   }
-  .collaborationUsers-container {
-    position: sticky;
-    top: 0;
-    min-width: 1.5rem;
-  }
-
   .hidden {
     display: none;
   }

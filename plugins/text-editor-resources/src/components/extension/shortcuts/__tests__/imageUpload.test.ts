@@ -18,7 +18,7 @@ import { EditorState } from '@tiptap/pm/state'
 import type { EditorView } from '@tiptap/pm/view'
 
 import { setPlatformStatus } from '@hcengineering/platform'
-import { rejectDataImages, replaceDataImages } from '../imageUpload'
+import { ImageUploadExtension, rejectDataImages, replaceDataImages } from '../imageUpload'
 
 jest.mock('@hcengineering/platform', () => ({
   ...jest.requireActual('@hcengineering/platform'),
@@ -38,6 +38,26 @@ const schema = new Schema({
 })
 
 describe('replaceDataImages', () => {
+  beforeEach(() => jest.mocked(setPlatformStatus).mockClear())
+
+  it('rejects a dropped slice containing both a stored image and data image without an uploader', () => {
+    const slice = new Slice(
+      Fragment.from(
+        schema.nodes.paragraph.create(null, [
+          schema.nodes.image.create({ 'file-id': 'stored' }),
+          schema.nodes.image.create({ src: 'data:image/png;base64,iVBORw0KGgo=' })
+        ])
+      ),
+      0,
+      0
+    )
+    const plugins = ImageUploadExtension.config.addProseMirrorPlugins?.call({
+      options: { getFileUrl: () => '' }
+    } as any)
+    const event = { dataTransfer: { getData: () => '', files: [] } } as unknown as DragEvent
+    const view: any = {}
+    expect(plugins?.[0].props.handleDrop?.call(plugins[0], view, event, slice, false)).toBe(true)
+  })
   it('keeps base64 out of the pasted slice and swaps the placeholder for the uploaded file', async () => {
     const dataUrl = 'data:image/png;base64,iVBORw0KGgo='
     const pasted = new Slice(

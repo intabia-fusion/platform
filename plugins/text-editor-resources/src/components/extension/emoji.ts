@@ -49,7 +49,7 @@ function handleEmoji (
   if (emojiString === undefined) return
   const emoji = getEmojiFunction(emojiString)
   if (emoji === undefined) return
-  if (match.length > 0) range.from = range.to - emojiString.length + 1
+  if (match.length > 0) range.from = range.to - emojiString.length
 
   if (typeof emoji === 'string' || !isCustomEmoji(emoji)) {
     commands.insertContentAt(range, [

@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2024-2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -57,8 +58,11 @@
   function resizeFinish (): void {
     if (resizedHeight !== undefined) {
       if (typeof getPos === 'function') {
-        const tr = editor.state.tr.setNodeMarkup(getPos(), undefined, { ...node.attrs, height: resizedHeight })
-        editor.view.dispatch(tr)
+        const pos = getPos()
+        if (pos !== undefined) {
+          const tr = editor.state.tr.setNodeMarkup(pos, undefined, { ...node.attrs, height: resizedHeight })
+          editor.view.dispatch(tr)
+        }
       }
       resizedHeight = undefined
     }

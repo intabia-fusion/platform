@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -21,7 +22,7 @@ export { Dropcursor, type DropcursorOptions } from '@tiptap/extension-dropcursor
 export { Gapcursor } from '@tiptap/extension-gapcursor'
 export { HardBreak, type HardBreakOptions } from '@tiptap/extension-hard-break'
 export { Heading, type HeadingOptions } from '@tiptap/extension-heading'
-export { History, type HistoryOptions } from '@tiptap/extension-history'
+export { UndoRedo as History, type UndoRedoOptions as HistoryOptions } from '@tiptap/extensions'
 export { HorizontalRule, type HorizontalRuleOptions } from '@tiptap/extension-horizontal-rule'
 export { Italic, type ItalicOptions } from '@tiptap/extension-italic'
 export { Paragraph, type ParagraphOptions } from '@tiptap/extension-paragraph'

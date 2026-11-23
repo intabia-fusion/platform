@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -560,6 +561,41 @@ describe('markupToHtml', () => {
 })
 
 describe('htmlToMarkup', () => {
+  it('preserves unknown tags and text after them', () => {
+    expect(htmlToMarkup('<p>before <custom>inside <b>nested</b></custom> after</p>')).toEqual({
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          attrs: { textAlign: null },
+          content: [
+            { type: 'text', text: 'before ' },
+            { type: 'text', text: '<custom>inside <b>nested</b></custom>' },
+            { type: 'text', text: ' after' }
+          ]
+        }
+      ]
+    })
+  })
+
+  it('continues parsing after an unknown self-closing tag', () => {
+    expect(htmlToMarkup('<p>before <custom/> after <strong>bold</strong></p>')).toEqual({
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          attrs: { textAlign: null },
+          content: [
+            { type: 'text', text: 'before ' },
+            { type: 'text', text: '<custom/>' },
+            { type: 'text', text: ' after ' },
+            { type: 'text', text: 'bold', marks: [{ type: 'bold' }] }
+          ]
+        }
+      ]
+    })
+  })
+
   describe('convert to markup', () => {
     tests.forEach(({ name, markup, html }) => {
       it(name, () => {

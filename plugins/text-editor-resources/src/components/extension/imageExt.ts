@@ -22,6 +22,7 @@ import { getEventPositionElement, SelectPopup, showPopup } from '@hcengineering/
 import { type Editor, mergeAttributes, nodeInputRule } from '@tiptap/core'
 import { type Node, type ResolvedPos } from '@tiptap/pm/model'
 import { type EditorState, Plugin, PluginKey } from '@tiptap/pm/state'
+import { unwrapImageOnlySlice } from './imageDisplay'
 import {
   CursorSource,
   getToolbarCursor,
@@ -116,6 +117,7 @@ export const ImageExtension = ImageNode.extend<ImageOptions>({
 
   addProseMirrorPlugins () {
     return [
+      new Plugin({ props: { transformPasted: (slice) => unwrapImageOnlySlice(slice) } }),
       new Plugin({
         key: new PluginKey('handle-image-open'),
         props: {
@@ -151,14 +153,12 @@ export const ImageExtension = ImageNode.extend<ImageOptions>({
         'data-align': node.attrs.align
       }
 
-      const pos = typeof getPos === 'function' ? getPos() : 0
-      setLoadingState(view, pos, true)
+      setLoadingState(view, getPos, container, true)
       const setImageProps = (src: string | null, srcset: string | null): void => {
         if (src != null) imgElement.src = src
         if (srcset != null) imgElement.srcset = srcset
         void imgElement.decode().finally(() => {
-          const pos = typeof getPos === 'function' ? getPos() : 0
-          setLoadingState(view, pos, false)
+          setLoadingState(view, getPos, container, false)
         })
       }
 
