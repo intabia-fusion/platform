@@ -145,6 +145,8 @@ describe('account utils', () => {
   describe('isEmail', () => {
     test.each([
       ['test@example.com', true, 'basic valid email'],
+      ['a@example.com', true, 'single character local part'],
+      ['a.b@example.com', true, 'dot after one character'],
       ['user.name@domain.com', true, 'email with dot in local part'],
       ['user+tag@domain.co.uk', true, 'email with plus and subdomain'],
       ['small@domain.museum', true, 'email with long TLD'],
@@ -152,6 +154,23 @@ describe('account utils', () => {
       ['user-name@domain.com', true, 'email with hyphen in local part'],
       ['user123@domain.com', true, 'email with numbers'],
       ['user.name+tag@domain.com', true, 'email with dot and plus'],
+      [`${'a'.repeat(64)}@example.com`, true, '64-byte local part'],
+      [`${'a'.repeat(65)}@example.com`, false, 'local part exceeds 64 bytes'],
+      [`${'é'.repeat(33)}@example.com`, false, 'local part exceeds 64 UTF-8 bytes'],
+      ['é@example.com', false, 'UTF-8 local part'],
+      ['a@[127.0.0.1]', true, 'IPv4 domain literal'],
+      ['a@127.0.0.1', false, 'IP domain without brackets'],
+      [`a@${'a'.repeat(63)}.${'b'.repeat(63)}.${'c'.repeat(63)}.${'d'.repeat(60)}`, true, '254 character address'],
+      [
+        `a@${'a'.repeat(63)}.${'b'.repeat(63)}.${'c'.repeat(63)}.${'d'.repeat(61)}`,
+        false,
+        'address exceeds 254 characters'
+      ],
+      ['Name <a@example.com>', false, 'display name'],
+      ['a@example.com,b@example.com', false, 'address list'],
+      ['"a,b"@example.com', false, 'quoted local part with comma'],
+      ['"a\u0001b"@example.com', false, 'quoted local part with control character'],
+      ['a\nb@example.com', false, 'control character'],
       ['not-an-email', false, 'string without @ symbol'],
       ['@missing-user.com', false, 'missing local part'],
       ['missing-domain@', false, 'missing domain part'],

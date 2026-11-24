@@ -48,6 +48,7 @@ import {
 import { getDBClient, getDBFlavor, setDBExtraOptions } from '@hcengineering/postgres'
 import { createHash, pbkdf2Sync, randomBytes } from 'crypto'
 import otpGenerator from 'otp-generator'
+import validateEmail from 'validator/lib/isEmail'
 
 import { Analytics } from '@hcengineering/analytics'
 import { type OnboardingState, type PasswordAgingStatus } from '@hcengineering/account-client'
@@ -494,10 +495,10 @@ export function checkFieldLength (ctx: MeasureContext, field: string, value: str
 }
 
 export function isEmail (email: string): boolean {
-  // RFC 5322 compliant email regex
-  const EMAIL_REGEX =
-    /^[a-zA-Z0-9](?:[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-](?:\.?[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-])*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?|\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-zA-Z0-9-]*[a-zA-Z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])$/ // eslint-disable-line no-control-regex
-  return EMAIL_REGEX.test(email)
+  return (
+    !email.startsWith('"') &&
+    validateEmail(email, { allow_utf8_local_part: false, allow_ip_domain: email.endsWith(']') })
+  )
 }
 
 export function checkEmailFormat (email: string): void {

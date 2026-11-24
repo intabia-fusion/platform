@@ -385,8 +385,8 @@ export async function requestEmailOtp (
     throw new PlatformError(new Status(Severity.ERROR, platform.status.BadRequest, {}))
   }
   const email = cleanEmail(params.email)
-  checkEmailFormat(email)
   checkFieldLength(ctx, 'email', email, MAX_EMAIL_LENGTH)
+  checkEmailFormat(email)
   ensureNotAiBot(email)
   const code = randomInt(0, 1000000).toString().padStart(6, '0')
   const now = Date.now()
