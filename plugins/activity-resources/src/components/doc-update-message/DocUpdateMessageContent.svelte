@@ -74,7 +74,7 @@
         <Label label={activity.string.New} />
       {/if}
       <span class="lower">
-        {#if collectionName && (message.history?.length || !isOwn)}
+        {#if collectionName && !isOwn}
           <Label label={collectionName} />:
         {:else if objectName}
           <Label label={objectName} />:
@@ -110,7 +110,7 @@
       <Label label={activity.string.Removed} />
     {/if}
     <span class="lower">
-      {#if collectionName && (message.history?.length || !isOwn)}
+      {#if collectionName && !isOwn}
         <Label label={collectionName} />:
       {:else if objectName}
         <Label label={objectName} />:
