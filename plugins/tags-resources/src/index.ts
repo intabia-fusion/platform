@@ -20,6 +20,7 @@ import CategoryPresenter from './components/CategoryPresenter.svelte'
 import EditTagElement from './components/EditTagElement.svelte'
 import TagElementPresenter from './components/TagElementPresenter.svelte'
 import TagReferencePresenter from './components/TagReferencePresenter.svelte'
+import TagReferenceActivityPresenter from './components/TagReferenceActivityPresenter.svelte'
 import Tags from './components/Tags.svelte'
 import TagsDropdownEditor from './components/TagsDropdownEditor.svelte'
 import TagsEditor from './components/TagsEditor.svelte'
@@ -62,6 +63,7 @@ export default async (): Promise<Resources> => ({
   component: {
     Tags,
     TagReferencePresenter,
+    TagReferenceActivityPresenter,
     TagElementPresenter,
     TagsPresenter,
     TagsView,

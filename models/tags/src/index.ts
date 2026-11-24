@@ -1,5 +1,6 @@
 //
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -108,6 +109,9 @@ export function createModel (builder: Builder): void {
 
   builder.mixin(tags.class.TagReference, core.class.Class, view.mixin.ObjectPresenter, {
     presenter: tags.component.TagReferencePresenter
+  })
+  builder.mixin(tags.class.TagReference, core.class.Class, view.mixin.ActivityAttributePresenter, {
+    presenter: tags.component.TagReferenceActivityPresenter
   })
   builder.mixin(tags.class.TagElement, core.class.Class, view.mixin.ObjectPresenter, {
     presenter: tags.component.TagElementPresenter

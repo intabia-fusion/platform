@@ -44,6 +44,9 @@
   $: objectPresenter = hierarchy.hasClass(message.objectClass)
     ? hierarchy.classHierarchyMixin(message.objectClass, view.mixin.ObjectPresenter)
     : undefined
+  $: activityPresenter = hierarchy.hasClass(message.objectClass)
+    ? hierarchy.classHierarchyMixin(message.objectClass, view.mixin.ActivityAttributePresenter)
+    : undefined
   $: clazz = hierarchy.findClass(message.objectClass)
 
   async function getValue (object: Doc, clazz?: Class<Doc>): Promise<string | undefined> {
@@ -98,7 +101,9 @@
   }
 </script>
 
-{#if isRemoved && message.objectTitle}
+{#if activityPresenter && object}
+  <Component is={activityPresenter.presenter} props={{ value: object }} />
+{:else if isRemoved && message.objectTitle}
   <span class="valueLink">
     <DocNavLink
       object={undefined}
