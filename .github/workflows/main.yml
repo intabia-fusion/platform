@@ -57,7 +57,14 @@ jobs:
       - name: Checking for mis-matching dependencies...
         run: |
           node common/scripts/check-versions.js
-          node common/scripts/check-catalog.js
+          if [ -n "$BASE_SHA" ]; then
+            node common/scripts/check-catalog.js --base "$BASE_SHA"
+          else
+            node common/scripts/check-catalog.js
+          fi
+          node --test common/scripts/check-catalog.test.js
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
 
       - name: Checking layer boundaries...
         run: node common/scripts/check-layers.js
