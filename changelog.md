@@ -2,6 +2,10 @@
 
 Changelog.
 
+## [0.8.77] - 2026-11-24
+
+* 🐛 BUG FIXES: · FUSIO-1902: Resume unfinished registration at the workspace or name step when a signed-in user reopens the sign-in or registration page ([#696](https://github.com/hcengineering/platform/issues/696)) · FUSIO-1906: Accept email addresses with a single letter before the @ sign or the first dot, such as a@example.com and a.b@example.com ([#697](https://github.com/hcengineering/platform/issues/697))
+
 ## [0.8.76] - 2026-11-22
 
 * 🚀 FEATURES: · FUSIO-1823: Streamline email sign-in and registration, save onboarding progress, and show workspace and inviter details when accepting an invitation ([#679](https://github.com/hcengineering/platform/issues/679))
