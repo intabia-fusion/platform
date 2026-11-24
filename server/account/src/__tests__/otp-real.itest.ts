@@ -289,7 +289,7 @@ describe.each(realDbFlavors)('real-otp [$flavor]', ({ flavor, adminUri, dbUri })
   })
 
   it('records consent only after verifying a new email', async () => {
-    const address = 'registration-consent@example.com'
+    const address = 'a.b+registration-consent@example.com'
     const consent = { personalData: true, rules: true }
     await requestEmailOtp(ctx, accountDb, null, '', { email: address, consent })
     expect(await accountDb.socialId.findOne({ type: SocialIdType.EMAIL, value: address })).toBeNull()

@@ -398,6 +398,9 @@ catalogs:
     '@types/uuid':
       specifier: ^11.0.0
       version: 11.0.0
+    '@types/validator':
+      specifier: ^13.15.10
+      version: 13.15.10
     '@types/ws':
       specifier: ^8.5.12
       version: 8.18.1
@@ -767,6 +770,9 @@ catalogs:
     uuid:
       specifier: ^11.1.1
       version: 11.1.1
+    validator:
+      specifier: 13.15.22
+      version: 13.15.22
     vite:
       specifier: ^5.4.21
       version: 5.4.21
@@ -37686,6 +37692,9 @@ importers:
       postgres:
         specifier: 'catalog:'
         version: 3.4.9
+      validator:
+        specifier: 'catalog:'
+        version: 13.15.22
     devDependencies:
       '@hcengineering/platform-rig':
         specifier: workspace:^0.7.19
@@ -37711,6 +37720,9 @@ importers:
       '@types/pg':
         specifier: ^8.23.1
         version: 8.23.1
+      '@types/validator':
+        specifier: 'catalog:'
+        version: 13.15.10
       '@typescript-eslint/eslint-plugin':
         specifier: 'catalog:'
         version: 8.70.0(@typescript-eslint/parser@8.70.0(eslint@8.57.1(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3))(eslint@8.57.1(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3)
@@ -49152,6 +49164,9 @@ packages:
 
   '@types/uuid@9.0.8':
     resolution: {integrity: sha512-jg+97EGIcY9AGHJJRaaPVgetKDsrTgbRjQ5Msgjh/DQKEFl0DtyRr/VCOyD1T2R1MNeWPK/u7JoGhlDZnKBAfA==}
+
+  '@types/validator@13.15.10':
+    resolution: {integrity: sha512-T8L6i7wCuyoK8A/ZeLYt1+q0ty3Zb9+qbSSvrIVitzT3YjZqkTZ40IbRsPanlB4h1QB3JVL1SYCdR6ngtFYcuA==}
 
   '@types/web-push@3.6.4':
     resolution: {integrity: sha512-GnJmSr40H3RAnj0s34FNTcJi1hmWFV5KXugE0mYWnYhgTAHLJ/dJKAwDmvPJYMke0RplY2XE9LnM4hqSqKIjhQ==}
@@ -62416,6 +62431,8 @@ snapshots:
       uuid: 11.1.1
 
   '@types/uuid@9.0.8': {}
+
+  '@types/validator@13.15.10': {}
 
   '@types/web-push@3.6.4':
     dependencies:
