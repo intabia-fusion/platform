@@ -13,16 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Single-stand lock (STAND_MODE=single in deployment/kubernetes/.env): one stand holds the VM at a
-# time. dual leaves the lock alone - sanity and dev are sized to run together.
-# Sourced by lib.sh; callers are deploy.sh (acquire) and down.sh (release).
+# Stand locks. The host-wide lock (common/scripts/stand-lock.sh) keeps one stand per host across
+# backends: a compose stand and a k3d cluster cannot run together. STAND_MODE=single adds the
+# k8s-only rule on top - one stand namespace at a time. Sourced by lib.sh; callers are deploy.sh
+# (acquire) and down.sh (release).
 
-STAND_LOCK_FILE="$K8S_DIR/.stand/active"
+STAND_LOCK_SCRIPT="$K8S_DIR/../../common/scripts/stand-lock.sh"
 STAND_LOCK_STANDS="sanity dev ws api qms"
 
 stand_mode() { printf '%s' "${STAND_MODE:-dual}"; }
-
-stand_lock_owner() { cat "$STAND_LOCK_FILE" 2>/dev/null || true; }
 
 stand_lock_down_command() {
   case "$1" in
@@ -33,34 +32,23 @@ stand_lock_down_command() {
 
 stand_lock_acquire() {
   local stand="$1"
+  "$STAND_LOCK_SCRIPT" acquire k3s "$stand"
   [ "$(stand_mode)" = single ] || return 0
-  local owner
-  owner="$(stand_lock_owner)"
-  if [ -n "$owner" ] && [ "$owner" != "$stand" ]; then
-    die "STAND_MODE=single: '$owner' holds the stand lock. Stop it first: $(stand_lock_down_command "$owner"), or set STAND_MODE=dual in deployment/kubernetes/.env"
-  fi
-  if [ -z "$owner" ]; then
-    local other ns
-    for other in $STAND_LOCK_STANDS; do
-      [ "$other" = "$stand" ] && continue
-      ns="$(stand_namespace "$other" 2>/dev/null || true)"
-      [ -n "$ns" ] || continue
-      if kc get namespace "$ns" >/dev/null 2>&1 && \
-         [ -n "$(kc -n "$ns" get pods --field-selector=status.phase=Running -o name 2>/dev/null)" ]; then
-        die "STAND_MODE=single: '$other' is still running in $ns. Stop it first: $(stand_lock_down_command "$other")"
-      fi
-    done
-  fi
-  mkdir -p "$(dirname "$STAND_LOCK_FILE")"
-  printf '%s\n' "$stand" > "$STAND_LOCK_FILE"
+  local other ns
+  for other in $STAND_LOCK_STANDS; do
+    [ "$other" = "$stand" ] && continue
+    ns="$(stand_namespace "$other" 2>/dev/null || true)"
+    [ -n "$ns" ] || continue
+    if kc get namespace "$ns" >/dev/null 2>&1 && \
+       [ -n "$(kc -n "$ns" get pods --field-selector=status.phase=Running -o name 2>/dev/null)" ]; then
+      "$STAND_LOCK_SCRIPT" release k3s "$stand" || true
+      die "STAND_MODE=single: '$other' is still running in $ns. Stop it first: $(stand_lock_down_command "$other")"
+    fi
+  done
   log "stand lock: $stand (STAND_MODE=single)"
 }
 
 stand_lock_release() {
-  local stand="$1"
-  if [ "$(stand_lock_owner)" = "$stand" ]; then
-    rm -f "$STAND_LOCK_FILE"
-    log "stand lock released: $stand"
-  fi
+  "$STAND_LOCK_SCRIPT" release k3s "$1" || true
   return 0
 }

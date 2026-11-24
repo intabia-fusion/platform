@@ -30,6 +30,9 @@ command -v helm >/dev/null 2>&1 || { echo "helm is required" >&2; exit 2; }
 mkdir -p "$OUT"
 
 echo ">> packaging charts $CHART_VERSION into $OUT"
+# The chart ships the hand-tuned indexes as files/indexes.yaml; copy them from the repository so a
+# release never carries indexes older than this commit.
+cp "$REPO_ROOT/tests/indexes.yaml" "$K8S_DIR/charts/platform/files/indexes.yaml"
 helm lint "$K8S_DIR/charts/platform-base" >/dev/null
 # The platform chart resolves the base contract with lookup; offline lint needs the fake one.
 helm lint "$K8S_DIR/charts/platform" -f "$K8S_DIR/stands/ci/render-check.yaml" >/dev/null

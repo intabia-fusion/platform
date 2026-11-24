@@ -176,6 +176,17 @@ ensure_traefik_https_port() {
   [ "$port" = 443 ] && return 0
   case "$STAND_RUNTIME" in k3d|kind) ;; *) return 0 ;; esac
   current="$(kc -n "$TRAEFIK_NS" get service traefik -o jsonpath="{.spec.ports[?(@.port==$port)].port}" 2>/dev/null || true)"
+  if [ -z "$current" ] && ! kc -n "$TRAEFIK_NS" get service traefik >/dev/null 2>&1; then
+    # k3d installs its traefik chart right after the cluster is created, asynchronously: patch
+    # only once the Service exists, otherwise a cold start dies with "services traefik not found".
+    local i
+    for i in $(seq 1 60); do
+      kc -n "$TRAEFIK_NS" get service traefik >/dev/null 2>&1 && break
+      sleep 2
+    done
+    kc -n "$TRAEFIK_NS" get service traefik >/dev/null 2>&1 || die "traefik service did not appear in namespace $TRAEFIK_NS"
+    current="$(kc -n "$TRAEFIK_NS" get service traefik -o jsonpath="{.spec.ports[?(@.port==$port)].port}" 2>/dev/null || true)"
+  fi
   [ "$current" = "$port" ] && return 0
   log "exposing internal traefik port $port for public stand URLs"
   kc -n "$TRAEFIK_NS" patch service traefik --type=json \

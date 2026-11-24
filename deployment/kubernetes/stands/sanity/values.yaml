@@ -61,6 +61,9 @@ secrets:
     smtpFrom: noreply@sanity.fusion.localhost
 
 services:
+  # prepare-pg.sh applies tests/indexes.yaml through the stand-tool pod on this stand already.
+  index-sync:
+    enabled: false
   payment:
     # Композный tests/plan-config.yaml: без него maxSeats 500 вместо ожидаемых тестами 10000.
     planConfigFile: files/plan-config.test.yaml

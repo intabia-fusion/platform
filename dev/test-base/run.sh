@@ -8,6 +8,10 @@ set -e
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BUNDLE="$DIR/bundle/bundle.js"
 
+# One stand per host: compose and k3d stands share the Docker VM and the test ports.
+STAND_BACKEND="${STAND_BACKEND:-compose}"
+"$DIR/../../common/scripts/stand-lock.sh" acquire "$([ "$STAND_BACKEND" = k3s ] && echo k3s || echo compose)" "$1"
+
 # Always rebuilt (~1s): the bundle inlines other packages, so checking only src/ for staleness would
 # silently run the stand on old code.
 (cd "$DIR" && node ../../common/scripts/esbuild.js --entry=src/main.ts --keep-names=true --external=snappy --sourcemap=external >/dev/null)

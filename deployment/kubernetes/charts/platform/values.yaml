@@ -329,6 +329,17 @@ services:
     memLimits: 256
     backoffLimit: 5
     ttlSecondsAfterFinished: 3600
+  # Applies tests/indexes.yaml after every install/upgrade. Test stands turn it off: their
+  # prepare-pg.sh already applies the same file through the stand-tool pod.
+  index-sync:
+    enabled: true
+    memRequired: 128
+    memLimits: 512
+    backoffLimit: 3
+    # A big table can keep one CREATE INDEX busy; the deadline keeps a broken run from hanging
+    # the release, the upgrade window should leave room for it.
+    activeDeadlineSeconds: 1800
+    ttlSecondsAfterFinished: 3600
   collaborator:
     enabled: true
     count: 1

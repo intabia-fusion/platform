@@ -100,6 +100,9 @@ secrets:
     smtpFrom: noreply@qms.fusion.localhost
 
 services:
+  # prepare-qms.sh applies tests/indexes.yaml through the stand-tool pod on this stand already.
+  index-sync:
+    enabled: false
   # compose parity (qms-tests/docker-compose.yaml): billing ran without the
   # payment provider and tbank; keep both off
   billing:

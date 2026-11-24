@@ -15,10 +15,18 @@ fi
 pnpm install --frozen-lockfile
 pnpm -w build
 
-# Push after `pnpm -w docker`: it rewrites the images the stand will run.
+# One stand per host: the compose stand and a k3d cluster share the Docker VM. The lock also
+# checks that the VM has the memory/disk the backend needs.
+STAND_BACKEND="${STAND_BACKEND:-compose}"
+../common/scripts/stand-lock.sh acquire "$([ "$STAND_BACKEND" = k3s ] && echo k3s || echo compose)" dotest
+
+# Push after `pnpm -w docker`: it rewrites the images the stand will run. Only a k3d stand pulls
+# them from the registry; a compose stand runs the local images as built.
 build_images() {
     pnpm -w docker
-    bash ../deployment/kubernetes/scripts/push-images.sh sanity
+    if [ "$STAND_BACKEND" = k3s ]; then
+        bash ../deployment/kubernetes/scripts/push-images.sh sanity
+    fi
 }
 
 FAILED=0
@@ -40,9 +48,14 @@ run_suite() {
             ./restore-pg.sh
         fi
         echo "=== run $i/$ITERATIONS ($label)"
-        # A red run is data, not a reason to stop: collect several in a row. with-stand-env.sh
-        # resolves the stand env (PLATFORM_URI/LOCAL_URL, BILLING_URL, MAILBOX_KAFKA_BROKER).
-        (cd sanity && bash ../../deployment/kubernetes/scripts/with-stand-env.sh sanity pnpm run uitest:telemetry --workers 5) || failed=$((failed + 1))
+        # A red run is data, not a reason to stop: collect several in a row. A k3d stand needs
+        # with-stand-env.sh for PLATFORM_URI/BILLING_URL and the Kafka forward; a compose stand
+        # already listens on :8083 and telemetry/run.sh defaults to it.
+        if [ "$STAND_BACKEND" = k3s ]; then
+            (cd sanity && bash ../../deployment/kubernetes/scripts/with-stand-env.sh sanity pnpm run uitest:telemetry --workers 5) || failed=$((failed + 1))
+        else
+            (cd sanity && pnpm run uitest:telemetry --workers 5) || failed=$((failed + 1))
+        fi
         stamps+=("$(ls -1t sanity/runs | head -1)")
     done
     if [ "$ITERATIONS" -gt 1 ]; then

@@ -61,6 +61,9 @@ secrets:
     smtpFrom: noreply@api.fusion.localhost
 
 services:
+  # prepare-pg.sh applies tests/indexes.yaml through the stand-tool pod on this stand already.
+  index-sync:
+    enabled: false
   # compose ws/api stands do not run the payment provider at all (plan tests drive
   # plans through billing test endpoints); keep it off, as in compose
   billing:
