@@ -271,6 +271,12 @@
 </div>
 
 <style lang="scss">
+  .selectPopup {
+    width: var(--object-filter-width, fit-content);
+    min-width: var(--object-filter-min-width, 12.5rem);
+    max-width: var(--object-filter-max-width, 17rem);
+  }
+
   .filter-value {
     flex: 1;
     min-width: 0;
