@@ -26,6 +26,7 @@ async function authenticate (page: Page, user: string, password: string): Promis
   await page.waitForURL((url) => {
     return url.pathname === `/workbench/${PlatformWs}` || url.pathname.startsWith(`/workbench/${PlatformWs}/`)
   })
+  await page.locator('div.antiPanel-navigator').waitFor({ state: 'visible' })
 }
 
 if (!existsSync(authFile)) {

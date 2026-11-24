@@ -65,7 +65,7 @@ config:
   githubAppName: ""
   githubClientId: ""
   queueConfig: "" # empty = platform-base contract (KAFKA_BOOTSTRAP + ;-<stand>)
-  REGION: "tst"
+  REGION: "pg" # single region for now; must match services.account.regionInfo and every worker
   EXTERNAL_REGIONS: "--"
   temporalUrl: "testing-temporal-frontend.temporal:7233"
   polarSucscriptionPlans: ""
@@ -229,6 +229,7 @@ services:
     replicas: 1
     memRequired: 100
     memLimits: 128
+    # Region id|display name. One region only for now (multi-region is future work).
     regionInfo: pg|PostgreSQL
     adminEmails: ""
     billingEmails: ""
