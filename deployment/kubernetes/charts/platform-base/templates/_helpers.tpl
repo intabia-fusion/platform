@@ -94,6 +94,8 @@ loudly when an external mode is missing its values.
 {{- if eq .Values.kafka.mode "external" -}}
   {{- if not .Values.kafka.external.bootstrap }}{{ fail "kafka.mode=external: set kafka.external.bootstrap" }}{{ end -}}
   {{- .Values.kafka.external.bootstrap -}}
+{{- else if eq .Values.kafka.mode "redpanda" -}}
+  {{- printf "redpanda.%s.svc.cluster.local:9092" .Release.Namespace -}}
 {{- else -}}
   {{- printf "my-cluster-kafka-bootstrap.%s.svc.cluster.local:9092" .Release.Namespace -}}
 {{- end -}}

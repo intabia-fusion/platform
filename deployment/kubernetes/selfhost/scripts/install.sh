@@ -17,6 +17,9 @@
 #   PROFILE=bundled PLATFORM_VERSION=v0.8.37 ./scripts/install.sh
 #   PROFILE=external PLATFORM_VERSION=v0.8.37 ./scripts/install.sh
 # Both helm releases are idempotent: the same command upgrades an existing installation.
+#
+# DIFF=1 renders the same two releases as a helm diff instead of applying them (needs the
+# helm-diff plugin); scripts/diff.sh is a wrapper for it.
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$HERE"
@@ -45,6 +48,18 @@ run() {
 }
 
 command -v helm >/dev/null 2>&1 || { echo "helm is required" >&2; exit 2; }
+
+# DIFF=1: same releases through helm-diff, nothing is applied and --wait makes no sense.
+HELM_UPGRADE=(helm upgrade --install)
+WAIT_ARGS=(--wait)
+if [ "${DIFF:-0}" = 1 ]; then
+  helm plugin list 2>/dev/null | awk '{print $1}' | grep -qx diff || {
+    echo "helm-diff is required for DIFF=1: helm plugin install https://github.com/databus23/helm-diff" >&2
+    exit 2
+  }
+  HELM_UPGRADE=(helm diff upgrade --install)
+  WAIT_ARGS=()
+fi
 
 BASE_ARGS=()
 PLATFORM_ARGS=()
@@ -84,24 +99,28 @@ if [ -z "${CHARTS_DIR:-}" ]; then
 fi
 
 echo ">> platform-base $CHART_VERSION ($PROFILE) in $NS_BASE"
-run helm upgrade --install platform-base "$(chart_ref platform-base)" \
+run "${HELM_UPGRADE[@]}" platform-base "$(chart_ref platform-base)" \
   "${VERSION_ARGS[@]}" \
   -n "$NS_BASE" --create-namespace \
   "${BASE_FILES[@]}" "${BASE_ARGS[@]}" \
-  --timeout "$TIMEOUT" --wait
+  --timeout "$TIMEOUT" "${WAIT_ARGS[@]}"
 
 echo ">> platform $CHART_VERSION ($PROFILE) in $NS"
-run helm upgrade --install platform "$(chart_ref platform)" \
+run "${HELM_UPGRADE[@]}" platform "$(chart_ref platform)" \
   "${VERSION_ARGS[@]}" \
   -n "$NS" --create-namespace \
   -f "values/platform-$PROFILE.yaml" "${PLATFORM_ARGS[@]}" \
   --set "global.namespace=$NS" \
   --set "global.baseNamespace=$NS_BASE" \
   --set "global.version=$VERSION" \
-  --timeout "$TIMEOUT" --wait
+  --timeout "$TIMEOUT" "${WAIT_ARGS[@]}"
 
 if [ "${DRY_RUN:-0}" = 1 ]; then
   echo ">> dry run: see the commands above"
+  exit 0
+fi
+if [ "${DIFF:-0}" = 1 ]; then
+  echo ">> diff done, nothing applied"
   exit 0
 fi
 HOST="$(helm -n "$NS" get values platform -o json | python3 -c 'import json,sys; print(json.load(sys.stdin)["global"]["hostUrl"])')"

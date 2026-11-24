@@ -52,6 +52,9 @@ run_suite() {
         # with-stand-env.sh for PLATFORM_URI/BILLING_URL and the Kafka forward; a compose stand
         # already listens on :8083 and telemetry/run.sh defaults to it.
         if [ "$STAND_BACKEND" = k3s ]; then
+            # The .auth files hold cookies for one origin: a state saved against the compose stand
+            # silently logs the browser out on the stand's own HTTPS host.
+            rm -rf sanity/.auth
             (cd sanity && bash ../../deployment/kubernetes/scripts/with-stand-env.sh sanity pnpm run uitest:telemetry --workers 5) || failed=$((failed + 1))
         else
             (cd sanity && pnpm run uitest:telemetry --workers 5) || failed=$((failed + 1))

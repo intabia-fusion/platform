@@ -17,6 +17,14 @@ source "$SCRIPT_DIR/lib.sh"
 
 require_tools
 
+# Queue implementation for the base: strimzi (Kafka through the operator, production parity) or
+# redpanda (one container, starts in seconds - handy to compare a run against Kafka).
+KAFKA_MODE="${KAFKA_MODE:-strimzi}"
+case "$KAFKA_MODE" in
+  strimzi|redpanda|external) ;;
+  *) die "KAFKA_MODE must be strimzi, redpanda or external (got '$KAFKA_MODE')" ;;
+esac
+
 log "base-up: runtime=$STAND_RUNTIME context=$KUBE_CONTEXT"
 
 # ---------------------------------------------------------------- cluster ----
@@ -155,6 +163,7 @@ wait_crd_established() {
 # later runs keep the operator on the pinned version.
 # Cached in TMPDIR: a stalled GitHub download used to hang base-up (and dotest) for hours, and a
 # truncated manifest reached kubectl as a YAML parse error. The cache is validated before use.
+if [ "$KAFKA_MODE" = strimzi ]; then
 STRIMZI_CACHE="${TMPDIR:-/tmp}/fusion-strimzi-$STRIMZI_VERSION.yaml"
 strimzi_manifest_ok() { kc apply --dry-run=client -f "$1" >/dev/null 2>&1; }
 if [ ! -s "$STRIMZI_CACHE" ] || ! strimzi_manifest_ok "$STRIMZI_CACHE"; then
@@ -222,6 +231,8 @@ if [ -s "$CNPG_CACHE" ]; then
     die "CloudNativePG CRD clusters.postgresql.cnpg.io is not established"
   kc -n cnpg-system rollout status deployment/cnpg-controller-manager --timeout=180s >/dev/null || \
     die "CloudNativePG operator did not become ready"
+fi
+
 fi
 
 # ------------------------------------------------- sealed secrets controller ----
@@ -302,33 +313,67 @@ log "installing/upgrading platform-base in namespace $BASE_NAMESPACE"
 helmc upgrade --install platform-base "$K8S_DIR/charts/platform-base" \
   -n "$BASE_NAMESPACE" \
   --set tls.traefikNamespace="$TRAEFIK_NS" \
+  --set "kafka.mode=$KAFKA_MODE" \
   "${BASE_VALUES[@]}" "${LIVEKIT_ARGS[@]}" "${PG_IMAGE_ARGS[@]}" \
   --timeout 600s
 
 log "waiting for platform-base components"
+# All components start together, so wait for them together: a sequential chain adds the last
+# component's readiness to every earlier one and hides which wait is the slow one.
+wait_component() {
+  local name="$1"
+  shift
+  "$@" >/dev/null || {
+    printf 'ERROR: %s did not become ready\n' "$name" >&2
+    exit 1
+  }
+}
+
+PIDS=()
+NAMES=()
+components() {
+  local name="$1"
+  shift
+  wait_component "$name" "$@" &
+  PIDS+=($!)
+  NAMES+=("$name")
+}
+
 if [ "$(base_postgres_mode)" != external ]; then
-  # Cluster Ready means the primary accepts writes; wait for the streaming replica too.
-  kc -n "$BASE_NAMESPACE" wait cluster/postgres --for=condition=Ready --timeout=600s >/dev/null || \
-    die "the postgres cluster did not become ready"
-  PG_DEADLINE=$((SECONDS + 600))
-  while :; do
-    PG_READY="$(kc -n "$BASE_NAMESPACE" get cluster postgres -o jsonpath='{.status.readyInstances}' 2>/dev/null || true)"
-    PG_WANT="$(kc -n "$BASE_NAMESPACE" get cluster postgres -o jsonpath='{.spec.instances}' 2>/dev/null || true)"
-    [ -n "$PG_READY" ] && [ "$PG_READY" = "$PG_WANT" ] && break
-    [ $SECONDS -lt $PG_DEADLINE ] || die "postgres instances are $PG_READY/$PG_WANT, expected all ready"
-    sleep 3
-  done
+  postgres_wait() {
+    kc -n "$BASE_NAMESPACE" wait cluster/postgres --for=condition=Ready --timeout=600s >/dev/null || return 1
+    local pg_deadline=$((SECONDS + 600)) pg_ready pg_want
+    while :; do
+      pg_ready="$(kc -n "$BASE_NAMESPACE" get cluster postgres -o jsonpath='{.status.readyInstances}' 2>/dev/null || true)"
+      pg_want="$(kc -n "$BASE_NAMESPACE" get cluster postgres -o jsonpath='{.spec.instances}' 2>/dev/null || true)"
+      [ -n "$pg_ready" ] && [ "$pg_ready" = "$pg_want" ] && return 0
+      [ $SECONDS -lt $pg_deadline ] || { echo "postgres instances are $pg_ready/$pg_want, expected all ready" >&2; return 1; }
+      sleep 3
+    done
+  }
+  components postgres postgres_wait
 fi
-wait_statefulset "$BASE_NAMESPACE" s3 300 || die "silo did not become ready"
-wait_statefulset "$BASE_NAMESPACE" elastic 600 || die "elastic did not become ready"
-kc -n "$BASE_NAMESPACE" rollout status deployment/redis --timeout=120s >/dev/null || die "redis did not become ready"
-kc -n "$BASE_NAMESPACE" rollout status deployment/mailpit --timeout=120s >/dev/null || die "mailpit did not become ready"
+components s3 wait_statefulset "$BASE_NAMESPACE" s3 300
+components elastic wait_statefulset "$BASE_NAMESPACE" elastic 600
+components redis kc -n "$BASE_NAMESPACE" rollout status deployment/redis --timeout=120s
+components mailpit kc -n "$BASE_NAMESPACE" rollout status deployment/mailpit --timeout=120s
 if [ "$STAND_RUNTIME" = k3d ]; then
-  kc -n "$BASE_NAMESPACE" rollout status deployment/livekit --timeout=300s >/dev/null || die "livekit did not become ready"
-  kc -n "$BASE_NAMESPACE" rollout status deployment/livekit-egress --timeout=300s >/dev/null || die "livekit-egress did not become ready"
+  components livekit kc -n "$BASE_NAMESPACE" rollout status deployment/livekit --timeout=300s
+  components livekit-egress kc -n "$BASE_NAMESPACE" rollout status deployment/livekit-egress --timeout=300s
 fi
-# Kafka: the my-cluster resource reports readiness via the Ready condition
-kc -n "$BASE_NAMESPACE" wait kafka my-cluster --for=condition=Ready --timeout=600s || die "Kafka did not become ready"
+# Kafka: the my-cluster resource reports readiness via the Ready condition; redpanda is a plain
+# deployment on the same kafka:9092 contract.
+if [ "$KAFKA_MODE" = redpanda ]; then
+  components kafka kc -n "$BASE_NAMESPACE" rollout status deployment/redpanda --timeout=300s
+elif [ "$KAFKA_MODE" != external ]; then
+  components kafka kc -n "$BASE_NAMESPACE" wait kafka my-cluster --for=condition=Ready --timeout=600s
+fi
+
+FAILED=0
+for i in "${!PIDS[@]}"; do
+  wait "${PIDS[$i]}" || FAILED=1
+done
+[ "$FAILED" = 0 ] || die "platform-base did not become ready"
 
 echo
 log "base is up:"

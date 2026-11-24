@@ -88,6 +88,10 @@ export PLATFORM_URL
 export API_TESTS_URL
 : "${ACCOUNTS_URL:=$STAND_URL/_account}"
 export ACCOUNTS_URL
+# The suites use LOCAL_URL as the account endpoint; the stand's own front serves it at /_account.
+# A caller that wants the webpack proxy sets LOCAL_URL before this script and keeps it.
+: "${LOCAL_URL:=$ACCOUNTS_URL/}"
+export LOCAL_URL
 # The api stand mounts the transactor at transactorPath (_tr0), not the compose stand's /_tr.
 : "${TRANSACTOR_URL:=$STAND_URL/_tr0}"
 export TRANSACTOR_URL

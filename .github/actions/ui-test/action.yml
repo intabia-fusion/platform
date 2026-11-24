@@ -124,37 +124,9 @@ runs:
       run: |
         pnpm build --to ${{ inputs.build-package }}
 
-    # uitest:k8s goes through the webpack dev-server on :8081, so build the whole client graph first.
-    - name: Build front dev-server
-      if: ${{ inputs.stand != '' }}
-      shell: bash
-      run: |
-        pnpm build --to @hcengineering/prod --esbuild-emit
-
-    - name: Start stand front proxy
-      if: ${{ inputs.stand != '' }}
-      shell: bash
-      run: |
-        port="${STAND_FRONT_PORT:-8081}"
-        # qms has its own wrapper: stand:test:front whitelists sanity|ws|api.
-        if [ "${{ inputs.stand }}" = qms ]; then
-          ./qms-tests/stand-front.sh > /tmp/stand-front.log 2>&1 &
-        else
-          pnpm -w stand:test:front "${{ inputs.stand }}" > /tmp/stand-front.log 2>&1 &
-        fi
-        echo $! > /tmp/stand-front.pid
-        # Cold start builds the fusion-dev-front image and the webpack bundle: 300s is not enough
-        # on a loaded runner, 15 minutes covers the observed 6-8 minutes with headroom.
-        for _ in $(seq 1 180); do
-          if curl -fsS --max-time 5 "http://localhost:${port}/" >/dev/null 2>&1; then
-            echo "stand front proxy is up on :${port}"
-            exit 0
-          fi
-          sleep 5
-        done
-        echo "stand front proxy did not come up on :${port}; log follows" >&2
-        cat /tmp/stand-front.log >&2 || true
-        exit 1
+    # The stand serves its own front image (the chart deploys it), so the suites talk to the
+    # stand URL: no webpack dev-server and no full client build here. Developers who want HMR
+    # against a stand run stand:test:front and the uitest:k8s:dev script themselves.
 
     - name: Install Playwright
       shell: bash
@@ -314,5 +286,4 @@ runs:
       if: ${{ always() && inputs.stand != '' }}
       shell: bash
       run: |
-        if [ -f /tmp/stand-front.pid ]; then kill "$(cat /tmp/stand-front.pid)" 2>/dev/null || true; fi
         STAND_CLEANUP=${{ inputs.k8s-cleanup }} ./common/scripts/ci-k8s-cleanup.sh ${{ inputs.stand }}

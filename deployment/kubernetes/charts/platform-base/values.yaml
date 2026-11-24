@@ -70,6 +70,9 @@ pgbouncer:
 
 kafka:
   enabled: true
+  # strimzi   - Strimzi operator + a single-node KRaft Kafka (production parity, slow first start)
+  # redpanda  - single Redpanda container on the same kafka:9092 contract (starts in seconds)
+  # external  - managed broker, fill kafka.external.bootstrap
   mode: strimzi
   # keep in sync with KAFKA_VERSION in cluster/versions.env (supported by pinned Strimzi)
   version: "4.2.2"
@@ -83,6 +86,13 @@ kafka:
   jvmXmx: 320m
   external:
     bootstrap: ""
+  # mode redpanda: dev-container keeps the data in memory, like the compose stand.
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.3.6
+    memory: 1G
+    resources:
+      requests: { memory: 512Mi, cpu: 100m }
+      limits: { memory: 1400Mi }
 
 s3:
   enabled: true
