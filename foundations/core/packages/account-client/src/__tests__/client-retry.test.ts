@@ -92,3 +92,39 @@ describe('AccountClient getProviders retries', () => {
     expect(fetchMock).toHaveBeenCalledTimes(5)
   })
 })
+
+describe('AccountClient rpc attempt timeout', () => {
+  const realFetch = globalThis.fetch
+
+  beforeEach(() => {
+    jest.useFakeTimers()
+  })
+
+  afterEach(() => {
+    jest.useRealTimers()
+    globalThis.fetch = realFetch
+  })
+
+  // A hanging connection never rejects on its own: without a per-attempt timeout the call (and
+  // everything collapsed into it) waits for a reply that is never coming.
+  it('fails the call when account does not answer, instead of waiting forever', async () => {
+    const fetchMock = jest.fn(async (_url: string, init?: RequestInit) => {
+      return await new Promise<Response>((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => {
+          reject(new Error('aborted'))
+        })
+      })
+    })
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    const client = getClient('http://accounts.test', undefined, 60, undefined, 50)
+    const assertion = client.getRegionInfo().catch((err) => err)
+    await jest.advanceTimersByTimeAsync(100)
+
+    const err = await assertion
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(err).toBeInstanceOf(PlatformError)
+    expect(err.status.code).toBe(platform.status.ServiceUnavailable)
+  })
+})
