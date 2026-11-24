@@ -96,6 +96,8 @@ function input (opts?: Partial<PermanentMeetingInput>): PermanentMeetingInput {
     period: WEEK,
     members: [other],
     reminderBefore: 15 * 60 * 1000,
+    // The planner grid is the only caller that asks for a series; the section leaves it out.
+    series: true,
     ...opts
   }
 }
@@ -197,7 +199,11 @@ describe('createPermanentMeetingWithSchedule', () => {
   it('creates no series at all when the meeting is asked to stay out of the calendar', async () => {
     const { client, calls } = createFakeClient()
 
-    const result = await createPermanentMeetingWithSchedule(client, input({ calendar: false }), createContext())
+    const result = await createPermanentMeetingWithSchedule(
+      client,
+      input({ series: false, calendar: false }),
+      createContext()
+    )
 
     // Nothing in the calendar: no event, no mixin, no back-reference to hang them on.
     expect(find(calls, 'addCollection')).toHaveLength(0)

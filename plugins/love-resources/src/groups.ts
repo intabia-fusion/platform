@@ -71,3 +71,15 @@ export async function renameMeetingGroup (client: TxOperations, group: MeetingGr
   if (trimmed === '' || trimmed === group.name) return
   await client.diffUpdate(group, { name: trimmed })
 }
+
+/**
+ * Removes a group. Its meetings stay and become ungrouped: a group is a way to sort meetings, not
+ * something that owns them. The copy of the group on the series is cleared by the server trigger.
+ */
+export async function deleteMeetingGroup (client: TxOperations, group: MeetingGroup): Promise<void> {
+  const meetings = await client.findAll(love.class.PermanentMeeting, { group: group._id })
+  for (const meeting of meetings) {
+    await client.update(meeting, { $unset: { group: 1 } })
+  }
+  await client.remove(group)
+}

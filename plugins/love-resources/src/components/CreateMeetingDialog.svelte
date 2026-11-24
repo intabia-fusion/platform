@@ -74,7 +74,9 @@
   const dispatch = createEventDispatcher()
   const client = getClient()
 
-  let kind: Kind = initialKind ?? (date !== undefined ? 'one-off' : 'permanent')
+  // A meeting is a one-off unless the user says it repeats: a standing meeting is the deliberate
+  // choice, so the tab starts on the plain meeting and the period fields stay out of the way.
+  let kind: Kind = initialKind ?? 'one-off'
   let name = ''
   let description = ''
   let allDay: boolean = withTime === false
@@ -86,6 +88,9 @@
   // calendar form. A permanent one owns no office room at all.
   let room: Ref<Room> | undefined = $myOffice?._id
   let period: number = WEEK
+  // The flag the toggle sets: whether the meeting is meant to be shown in the calendar. It is not what
+  // creates the series - only the planner grid does that, so a meeting from the section never reaches
+  // the Planner, with the toggle on or off.
   let inCalendar = true
   let remind = true
   // The calendar keeps every lead time, the meeting itself only the earliest one.
@@ -195,7 +200,9 @@
         reminderBefore: remind ? Math.min(...reminders, Number.MAX_SAFE_INTEGER) : 0,
         reminders: remind ? [...reminders].sort((a, b) => a - b) : [0],
         guestPassword: password !== '' ? password : undefined,
-        calendar: allowNoCalendar ? inCalendar : true,
+        calendar: inCalendar,
+        // A series belongs to the planner grid: the dialog opened there is the only one that asks for it.
+        series: date !== undefined,
         group
       }
       if (permanent) {
@@ -241,7 +248,7 @@
         focusIndex={1}
       />
 
-      <span class="create-meeting__label"><Label label={love.string.Meetings} /></span>
+      <span class="create-meeting__label"><Label label={love.string.Time} /></span>
       <div class="create-meeting__stack">
         <Checkbox
           label={love.string.AllDay}
@@ -323,7 +330,10 @@
         </div>
       {/if}
 
-      {#if allowNoCalendar}
+      <!-- From the calendar grid the series is what the click creates, so there is nothing to choose.
+           From the meetings section the toggle only marks the intent to show the meeting in a
+           calendar: the section itself creates no event, so nothing lands in the Planner. -->
+      {#if date === undefined}
         <span class="create-meeting__label"><Label label={love.string.CalendarMeetingView} /></span>
         <div class="create-meeting__inline">
           <Toggle

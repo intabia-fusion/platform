@@ -75,13 +75,17 @@
           <div class="label nowrap" class:no-underline={noUnderline || disabled} class:fs-bold={accent}>
             {value.name}
           </div>
-          <span
-            class="icon permanent-mark"
-            use:tooltip={{ label: love.string.PermanentMeeting }}
-            data-id="permanent-meeting-mark"
-          >
-            <Icon icon={calendar.icon.Repeat} size="smaller" />
-          </span>
+          <!-- Only a meeting that repeats is a standing one: a one-off lives in the same class now, and
+               the mark would call it permanent. -->
+          {#if value.repeatEvery !== undefined}
+            <span
+              class="icon permanent-mark"
+              use:tooltip={{ label: love.string.PermanentMeeting }}
+              data-id="permanent-meeting-mark"
+            >
+              <Icon icon={calendar.icon.Repeat} size="smaller" />
+            </span>
+          {/if}
         </div>
       </DocNavLink>
       {#if !disabled}
@@ -103,13 +107,15 @@
         </div>
       {/if}
       <span class="overflow-label">{value.name}</span>
-      <span
-        class="icon permanent-mark"
-        use:tooltip={{ label: love.string.PermanentMeeting }}
-        data-id="permanent-meeting-mark"
-      >
-        <Icon icon={calendar.icon.Repeat} size="smaller" />
-      </span>
+      {#if value.repeatEvery !== undefined}
+        <span
+          class="icon permanent-mark"
+          use:tooltip={{ label: love.string.PermanentMeeting }}
+          data-id="permanent-meeting-mark"
+        >
+          <Icon icon={calendar.icon.Repeat} size="smaller" />
+        </span>
+      {/if}
     </span>
   {/if}
 {/if}

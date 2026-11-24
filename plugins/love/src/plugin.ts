@@ -85,6 +85,11 @@ const love = plugin(loveId, {
     Reject: '' as IntlString,
     MeetingStart: '' as IntlString,
     MeetingEnd: '' as IntlString,
+    Duration: '' as IntlString,
+    Time: '' as IntlString,
+    RenameGroup: '' as IntlString,
+    DeleteGroup: '' as IntlString,
+    DeleteGroupMessage: '' as IntlString,
     // Shown when a join is refused because the occurrence window is closed (403 from the service).
     MeetingNotOpenYet: '' as IntlString,
     MeetingIsOver: '' as IntlString,

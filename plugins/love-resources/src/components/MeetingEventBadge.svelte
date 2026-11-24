@@ -24,7 +24,7 @@
 <script lang="ts">
   import type { Event, ReccuringInstance } from '@hcengineering/calendar'
   import calendar from '@hcengineering/calendar'
-  import type { MeetingEventLink } from '@hcengineering/love'
+  import loveCore, { type MeetingEventLink } from '@hcengineering/love'
   import { getClient } from '@hcengineering/presentation'
   import { Icon, tooltip, type IconSize } from '@hcengineering/ui'
   // IconButton is exported by the UI kit only: the barrel in @hcengineering/ui points at a stale path
@@ -52,12 +52,21 @@
     const found = await findMeetingLink(getClient(), ev)
     if (found === undefined) {
       link = undefined
+      repeats = false
       return
     }
     link = found
+    // A one-off meeting is the same document as a standing one now, so the link alone says nothing:
+    // the mark belongs to the meeting that repeats, that is the one with a period.
+    const meeting =
+      found.permanentMeeting !== undefined
+        ? await getClient().findOne(loveCore.class.PermanentMeeting, { _id: found.permanentMeeting })
+        : undefined
+    repeats = meeting?.repeatEvery !== undefined
   }
 
-  $: isPermanent = link?.permanentMeeting !== undefined
+  let repeats = false
+  $: isPermanent = repeats
   // A busy overlay of a colleague carries no mixin, and a cancelled occurrence is not joinable.
   $: joinable = link !== undefined && !hideDetails && (event as ReccuringInstance).isCancelled !== true
 

@@ -66,7 +66,9 @@
   let todayDate = new Date()
 
   $: calendarsQ.query(calendar.class.Calendar, { createdBy: { $in: socialStrings }, hidden: false }, (res) => {
-    calendars = res
+    // The meetings section keeps the events of its meetings in its own calendar: they are the
+    // section's business and stay out of the Planner.
+    calendars = res.filter((p) => !(p._id as string).endsWith('_meetings_calendar'))
   })
 
   $: from = getFrom(currentDate)

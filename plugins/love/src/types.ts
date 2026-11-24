@@ -315,6 +315,10 @@ export interface PermanentMeeting extends Space {
    * copy is what the "next meeting" column reads when the meeting was not put into the calendar.
    */
   startDate?: Timestamp
+  /** Length of a one-off meeting in ms: with no series nothing else says when it ends. */
+  duration?: number
+  /** Room the session of a one-off meeting runs in; a permanent meeting owns no room. */
+  room?: Ref<Room>
   /** Time zone of `startDate`, so a meeting without a series still shows its local time. */
   timeZone?: string
 

@@ -156,5 +156,9 @@
     }
   )
 
-  $: calendarIds = $visibleCalendarStore.map((p) => p._id)
+  $: calendarIds = $visibleCalendarStore
+    // The meetings section keeps its events in its own calendar: those meetings belong to the section
+    // and stay out of the Planner, while events created in the Planner itself stay.
+    .filter((p) => !(p._id as string).endsWith('_meetings_calendar'))
+    .map((p) => p._id)
 </script>

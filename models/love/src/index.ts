@@ -426,6 +426,15 @@ export class TPermanentMeeting extends TSpace implements PermanentMeeting {
   @ReadOnly()
   startDate?: Timestamp
 
+  // A one-off meeting has no series, so the document itself says when it ends.
+  @Prop(TypeNumber(), love.string.Duration)
+  duration?: number
+
+  // The room a one-off meeting runs in. A permanent meeting owns no room: its sessions use the
+  // workspace service room, so the field stays empty there.
+  @Prop(TypeRef(love.class.Room), love.string.Room)
+  room?: Ref<Room>
+
   timeZone?: string
 
   @Hidden()

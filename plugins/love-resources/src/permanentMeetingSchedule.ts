@@ -92,6 +92,46 @@ export interface PermanentMeetingInput {
    * "new meeting" dialog of the permanent meetings list can pass false.
    */
   calendar?: boolean
+  /**
+   * Create the calendar series for the meeting. Only the planner grid passes true: a meeting made in
+   * the meetings section stays out of the planner, whatever the calendar flag says.
+   */
+  series?: boolean
+}
+
+/**
+ * The calendar that keeps the events of meetings made in the meetings section. It is the user's own
+ * calendar, so the section's calendar view shows the meetings, but the Planner leaves it out: the
+ * Planner shows only the events created in the Planner itself.
+ */
+export function meetingsCalendarId (me: AccountUuid): Ref<Calendar> {
+  return `${me}_meetings_calendar` as Ref<Calendar>
+}
+
+/** Suffix of the meetings calendar id: the Planner recognises it without asking love. */
+export const MEETINGS_CALENDAR_SUFFIX = '_meetings_calendar'
+
+async function findOrCreateMeetingsCalendar (
+  client: TxOperations,
+  ctx: ScheduleContext
+): Promise<Ref<Calendar>> {
+  const id = meetingsCalendarId(ctx.me)
+  const existing = await client.findOne(calendar.class.Calendar, { _id: id })
+  if (existing !== undefined) return id
+  await client.createDoc(
+    calendar.class.Calendar,
+    core.space.Space,
+    {
+      name: 'Meetings',
+      hidden: false,
+      // The Planner filters this calendar out by id, visibility plays no part in it.
+      visibility: 'private',
+      user: ctx.primarySocialId,
+      access: AccessLevel.Owner
+    },
+    id
+  )
+  return id
 }
 
 export async function findPrimaryCalendarId (client: Client): Promise<Ref<Calendar> | undefined> {
@@ -144,6 +184,10 @@ export async function createPermanentMeeting (
     reminderBefore?: number
     group?: Ref<MeetingGroup>
     startDate?: number
+    /** Length of a one-off meeting in ms: the series is what says it for a recurring one. */
+    duration?: number
+    /** Room of a one-off meeting: the session runs there, a permanent meeting owns no room. */
+    room?: Ref<Room>
     timeZone?: string
     calendar?: boolean
   }
@@ -165,6 +209,8 @@ export async function createPermanentMeeting (
     // The schedule kept on the meeting itself: the "next meeting" column falls back to it when
     // there is no series to ask (a meeting that is only a link).
     startDate: data.startDate,
+    duration: data.duration,
+    ...(data.room !== undefined ? { room: data.room } : {}),
     timeZone: data.timeZone,
     // Only the explicit "no calendar" is stored: a missing flag means the meeting has its series.
     ...(data.calendar === false ? { calendar: false } : {}),
@@ -196,9 +242,18 @@ export async function createPermanentMeetingWithSchedule (
   // another city keeps the zone the dialog showed.
   const timeZone = input.timeZone ?? ctx.timeZone
   const allDay = input.allDay === true
-  // A meeting may exist only as a link and a row in the list: then it gets no series, and nothing
-  // but the meeting itself says when it should be held.
+  // The series is the planner's business: only its grid asks for one. A meeting from the section still
+  // gets an event, but in the meetings calendar, so it shows in the section and stays out of the Planner.
+  const series = input.series === true
   const inCalendar = input.calendar !== false
+  const withEvent = series || inCalendar
+  // The planner writes to the user's own calendar, the section to the meetings one. The meetings
+  // calendar is created only when the event is actually made.
+  const eventCalendar = withEvent
+    ? series
+      ? ctx.calendarId
+      : await findOrCreateMeetingsCalendar(client, ctx)
+    : ctx.calendarId
 
   const rules = input.period !== undefined ? periodRules(input.startDate, input.period) : []
   if (rules.length > 0 && input.endDate !== undefined) rules[0] = { ...rules[0], endDate: input.endDate }
@@ -207,13 +262,13 @@ export async function createPermanentMeetingWithSchedule (
 
   let eventId = ''
   const eventIdRef = generateId<Event>()
-  if (inCalendar) {
+  if (withEvent) {
     const participants = await participantsOf(client, members)
     eventId = generateEventId()
     const dueDate = allDay ? new Date(input.startDate).setHours(23, 59, 59, 999) : input.startDate + input.duration
 
     const common = {
-      calendar: ctx.calendarId,
+      calendar: eventCalendar,
       eventId,
       date: input.startDate,
       dueDate,
@@ -288,16 +343,21 @@ export async function createPermanentMeetingWithSchedule (
     reminderBefore: input.reminderBefore,
     group: input.group,
     startDate: input.startDate,
+    duration: input.duration,
+    // The room matters for a one-off meeting: its session runs there. A permanent meeting owns no
+    // room, so the field stays empty and the session uses the workspace service room.
+    room: input.room,
     timeZone,
-    calendar: inCalendar
+    calendar: input.calendar
   })
 
-  if (inCalendar) {
+  // The event and the meeting point at each other: the planner grid and the meetings calendar both
+  // reach the meeting through this link.
+  if (withEvent) {
     await client.updateMixin(eventIdRef, calendar.class.Event, ctx.space, love.mixin.MeetingEventLink, {
       permanentMeeting: meeting
     })
   }
-
   if (input.guestPassword !== undefined && input.guestPassword !== null) {
     await ctx.setGuestPassword(meeting, input.guestPassword)
   }
@@ -339,60 +399,19 @@ export async function attachMeetingLink (
 }
 
 /**
- * A one-off meeting is a calendar event with the meeting mixin and nothing else: no `PermanentMeeting`
- * document, so it never shows up in the permanent meetings list. The room picked in the form decides
- * where the session runs and which media settings it starts with, exactly as a calendar meeting does.
+ * A one-off meeting is a meeting document like any other: the lists of the section read
+ * `PermanentMeeting`, so a meeting that existed only as a calendar event was invisible there. It gets
+ * no `repeatEvery`, and its series - and therefore the planner - appears only when the dialog was
+ * opened from the planner itself.
  */
 export async function createOneOffMeeting (
   client: TxOperations,
   input: PermanentMeetingInput,
   ctx: ScheduleContext
-): Promise<{ eventId: string }> {
-  const members = input.members.includes(ctx.me) ? input.members : [ctx.me, ...input.members]
-  const participants = await participantsOf(client, members)
-  const timeZone = input.timeZone ?? ctx.timeZone
-  const allDay = input.allDay === true
-  const eventId = generateEventId()
-  const eventRef = generateId<Event>()
-
-  await client.addCollection(
-    calendar.class.Event,
-    ctx.space,
-    calendar.ids.NoAttached,
-    calendar.class.Event,
-    'events',
-    {
-      calendar: ctx.calendarId,
-      eventId,
-      date: input.startDate,
-      dueDate: allDay ? new Date(input.startDate).setHours(23, 59, 59, 999) : input.startDate + input.duration,
-      title: input.name,
-      description: input.description ?? '',
-      participants,
-      externalParticipants: [],
-      reminders: input.reminders ?? [input.reminderBefore],
-      visibility: 'private' as const,
-      blockTime: true,
-      allDay,
-      timeZone,
-      access: AccessLevel.Owner,
-      user: ctx.primarySocialId
-    },
-    eventRef
-  )
-
-  // The mixin is written by the same function the calendar form uses, so a meeting made here and one
-  // made from the calendar differ in nothing but the fields this dialog offers.
-  const master = await client.findOne(calendar.class.Event, { _id: eventRef })
-  if (master !== undefined) {
-    await attachMeetingLink(client, master, {
-      room: input.room,
-      language: ctx.language,
-      reminderBefore: input.reminderBefore
-    })
-  }
-
-  return { eventId }
+): Promise<{ eventId: string, meeting: Ref<PermanentMeeting> }> {
+  // No period is what makes the meeting a one-off: the shared writer creates the series only when
+  // the input says so, and writes the room and the length of the meeting onto the document.
+  return await createPermanentMeetingWithSchedule(client, input, ctx)
 }
 
 /**

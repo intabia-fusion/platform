@@ -23,8 +23,9 @@
   import type { MeetingGroup, PermanentMeeting } from '@hcengineering/love'
   import presentation, { createQuery, getClient } from '@hcengineering/presentation'
   import ui, { Icon, Label, Modal, ModernEditbox, Scroller } from '@hcengineering/ui'
+  import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
-  import { createMeetingGroup } from '../groups'
+  import { createMeetingGroup, renameMeetingGroup } from '../groups'
   import love from '../plugin'
 
   const dispatch = createEventDispatcher()
@@ -32,8 +33,10 @@
 
   // Rows the toolbar had checked before the dialog opened.
   export let preselected: Ref<PermanentMeeting>[] = []
+  // Set when an existing group is being renamed: the name is the only field then.
+  export let group: MeetingGroup | undefined = undefined
 
-  let name = ''
+  let name = group?.name ?? ''
   let meetings: PermanentMeeting[] = []
   let groups = new Map<Ref<MeetingGroup>, string>()
   let selected = new Set<Ref<PermanentMeeting>>()
@@ -67,7 +70,9 @@
     selected = selected
   }
 
-  $: canSave = !saving && name.trim() !== '' && selected.size > 0
+  $: renaming = group !== undefined
+  $: canSave =
+    !saving && name.trim() !== '' && (renaming ? name.trim() !== group?.name : selected.size > 0)
 
   function close (): void {
     dispatch('close')
@@ -77,8 +82,12 @@
     if (!canSave) return
     saving = true
     try {
-      const chosen = meetings.filter((it) => selected.has(it._id))
-      await createMeetingGroup(client, name.trim(), chosen)
+      if (group !== undefined) {
+        await renameMeetingGroup(client, group, name)
+      } else {
+        const chosen = meetings.filter((it) => selected.has(it._id))
+        await createMeetingGroup(client, name.trim(), chosen)
+      }
       dispatch('close')
     } finally {
       saving = false
@@ -87,11 +96,11 @@
 </script>
 
 <Modal
-  label={love.string.CreateMeetingGroup}
+  label={renaming ? love.string.RenameGroup : love.string.CreateMeetingGroup}
   type="type-popup"
   width="small"
   padding="0"
-  okLabel={presentation.string.Create}
+  okLabel={renaming ? view.string.Rename : presentation.string.Create}
   okAction={save}
   okLoading={saving}
   scrollableContent={false}
@@ -110,10 +119,14 @@
         if (ev.key === 'Enter') void save()
       }}
     />
-    <span class="hint"><Label label={love.string.MeetingGroupHint} /></span>
+    {#if !renaming}
+      <span class="hint"><Label label={love.string.MeetingGroupHint} /></span>
+    {/if}
   </div>
 
-  {#if meetings.length === 0}
+  {#if renaming}
+    <!-- The name is the only field: which meetings belong to the group is not edited here. -->
+  {:else if meetings.length === 0}
     <div class="empty"><Label label={love.string.MeetingGroupNoMeetings} /></div>
   {:else}
     <div class="head">

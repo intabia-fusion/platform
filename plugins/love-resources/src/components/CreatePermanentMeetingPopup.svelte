@@ -12,10 +12,8 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import calendar from '@hcengineering/calendar'
   import type { Ref, Space } from '@hcengineering/core'
   import type { MeetingGroup, PermanentMeeting } from '@hcengineering/love'
-  import { getClient } from '@hcengineering/presentation'
   import { showPopup } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import CreateMeetingDialog from './CreateMeetingDialog.svelte'
@@ -37,20 +35,10 @@
   // The calendar tab creates a one-off meeting, the planner a standing one; the tabs still switch.
   export let initialKind: 'permanent' | 'one-off' | undefined = undefined
 
-  async function created (event: CustomEvent<{ eventId: string, meeting?: PermanentMeeting | string }>): Promise<void> {
-    const { eventId, meeting } = event.detail
-    // A permanent meeting is addressed by its own id, a one-off by the id of its event: the two are
-    // resolved by different kinds of link.
-    const link =
-      meeting !== undefined
-        ? await getEventMeetingLink(meeting as string, 'meeting')
-        : await getEventMeetingLink(eventId)
+  async function created (event: CustomEvent<{ meeting: PermanentMeeting | string }>): Promise<void> {
+    // Both kinds of meeting are addressed by their own id: the link is issued for the meeting.
+    const link = await getEventMeetingLink(event.detail.meeting as string, 'meeting')
     if (link !== '') {
-      if (meeting === undefined) {
-        // The card carries the link, the same way a meeting made from the calendar form does.
-        const master = await getClient().findOne(calendar.class.Event, { eventId })
-        if (master !== undefined) await getClient().update(master, { location: link })
-      }
       showPopup(MeetingLinkReadyPopup, { link }, 'content')
     }
     dispatch('close')

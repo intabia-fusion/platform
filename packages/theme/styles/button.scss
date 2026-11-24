@@ -508,7 +508,9 @@
     }
     &:not(.no-focus):focus { box-shadow: none; }
   }
-  &.primary, &.secondary, &.positive, &.negative {
+  // Filled kinds keep their own label colour on hover. A secondary button has no fill of its own: it
+  // used to take the primary label colour, which is white in both themes and vanished on the light one.
+  &.primary, &.positive, &.negative {
     &:hover, &:active, &:focus {
       color: var(--primary-button-color);
 

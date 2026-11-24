@@ -124,7 +124,11 @@ RSVP календаря - в [calendar-rsvp.md](calendar-rsvp.md).
 
 ### 2.6 PermanentMeeting
 
-`PermanentMeeting extends Space` (`plugins/love/src/types.ts`) - митинг без серии и без расписания: `type`, `language`, `startWithRecording`, `startWithTranscription`, `linkId`, `linkVersion`, `meetingAccess`, `repeatEvery`, `reminderBefore`, `group`, `order`. Открыт всегда, ждать вхождения не нужно. Сессии (`MeetingMinutes`) ссылаются на него через `meeting`, как на серию через `eventId`.
+`PermanentMeeting extends Space` (`plugins/love/src/types.ts`) - **единственный документ любой встречи**, постоянной и разовой: `type`, `language`, `startWithRecording`, `startWithTranscription`, `linkId`, `linkVersion`, `meetingAccess`, `repeatEvery`, `reminderBefore`, `group`, `order`, `startDate`, `duration`, `room`. Открыт всегда, ждать вхождения не нужно. Сессии (`MeetingMinutes`) ссылаются на него через `meeting`, как на серию через `eventId`.
+
+Списки раздела «Встречи» и вкладки «Группы» читают только этот класс, поэтому любая встреча обязана быть документом: разовая встреча больше не создаётся как голое событие календаря (`createOneOffMeeting` пишет `PermanentMeeting` с `calendar: false`, `startDate`, `duration` и `room`). `Event` создаётся только тогда, когда встреча заводится из планировщика: тогда документ получает серию, а миксин - обратную ссылку `permanentMeeting`. Миграция `event-meeting-to-permanent` (`models/love/src/migration.ts`) заводит документы для старых событий-встреч.
+
+`startDate` / `duration` (мс) - начало и длина встречи без серии: у разовой встречи больше нет события, из которого читалось бы время, а `startDate` постоянной без серии читает колонка «Следующая встреча». `room` - комната, в которой идёт разовая встреча (у постоянной пусто: её сессии идут в служебной комнате workspace).
 
 `repeatEvery` (мс) - как часто команда собирается собираться; задаётся в окне создания/настроек (§7a.7) и больше нигде. Сессии по нему **не открываются**: вход в комнату - единственный источник сессии.
 
@@ -506,6 +510,7 @@ pbkdf2-sha256, 100 000 итераций, случайная соль на пар
 | Функция | Что пишет |
 |---|---|
 | `createPermanentMeetingWithSchedule` | серию (`ReccuringEvent` с правилом из `periodRules`, или `Event` без периода), миксин на мастер, `PermanentMeeting`, обратную ссылку `permanentMeeting`, пароль гостей |
+| `createOneOffMeeting` | только `PermanentMeeting` (`calendar: false`, `startDate`, `duration`, `room`): серия не создаётся, встреча остаётся в списках раздела; серия появляется лишь если окно открыто из планировщика (`input.calendar`) |
 | `updatePermanentMeetingWithSchedule` | саму встречу (название, участники, `reminderBefore`, `repeatEvery`), мастер серии (название, дата, `rules`) и миксин, пароль гостей |
 
 Серия ищется по миксину: `{ '<mixin>.permanentMeeting': <id встречи> }`. Обратной связи

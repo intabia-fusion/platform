@@ -17,6 +17,7 @@ import contact, { type SocialIdentity, type Employee } from '@hcengineering/cont
 import {
   type AttachedDoc,
   type DocumentQuery,
+  generateId,
   type MarkupBlobRef,
   TxOperations,
   type Ref,
@@ -441,6 +442,71 @@ async function removeOrphanMeetingSeries (client: MigrationClient): Promise<void
 }
 
 /**
+ * A meeting used to be two documents or none: a permanent meeting was a `PermanentMeeting`, while a
+ * one-off meeting was a bare calendar event with the meeting mixin. The meetings lists read
+ * `PermanentMeeting` only, so such an event was invisible there. This gives every meeting-event its
+ * own meeting document and links the two: the event keeps running the calendar and the planner.
+ */
+async function eventMeetingsToPermanent (client: MigrationClient): Promise<void> {
+  const events = await client.find<Event>(DOMAIN_EVENT, {})
+  for (const event of events) {
+    // An occurrence is a copy the calendar mirrors onto the master; only the master is a meeting.
+    const occurrence = (event as unknown as { recurringEventId?: Ref<Event> }).recurringEventId
+    if (occurrence !== undefined) continue
+    const link = (event as unknown as Record<string, MeetingEventLink | undefined>)[love.mixin.MeetingEventLink]
+    if (link === undefined || link.permanentMeeting !== undefined) continue
+
+    const persons =
+      (event.participants?.length ?? 0) > 0
+        ? await client.find<Employee>(DOMAIN_CONTACT, {
+          _class: contact.mixin.Employee,
+          _id: { $in: event.participants as unknown as Array<Ref<Employee>> }
+        })
+        : []
+    const members = [event.createdBy, ...persons.map((it) => it.personUuid)].filter(
+      (it, idx, all) => all.indexOf(it) === idx
+    )
+    const meetingId: Ref<PermanentMeeting> = generateId()
+
+    await client.create<PermanentMeeting>(DOMAIN_SPACE, {
+      _id: meetingId,
+      _class: love.class.PermanentMeeting,
+      space: core.space.Space,
+      name: event.title,
+      description: '',
+      descriptionRef: null,
+      private: true,
+      archived: false,
+      members,
+      owners: [event.createdBy],
+      type: RoomType.Video,
+      language: (link.language ?? 'en') as RoomLanguage,
+      startWithRecording: link.startWithRecording ?? false,
+      startWithTranscription: link.startWithTranscription ?? false,
+      // The event is in the calendar by definition: it is the calendar that holds it.
+      calendar: true,
+      startDate: event.date,
+      duration: event.dueDate !== undefined ? Math.max(0, event.dueDate - event.date) : undefined,
+      timeZone: event.timeZone,
+      reminderBefore: link.reminderBefore,
+      meetingAccess: { ...defaultMeetingAccess, start: 'link' },
+      createdOn: event.createdOn,
+      createdBy: event.createdBy,
+      modifiedOn: event.modifiedOn,
+      modifiedBy: event.modifiedBy,
+      ...(link.group !== undefined ? { group: link.group } : {})
+    } as unknown as PermanentMeeting)
+
+    // The mixin is replaced as a whole: a partial update would drop the fields it already carries.
+    await client.update(
+      DOMAIN_EVENT,
+      { _id: event._id },
+      { [love.mixin.MeetingEventLink]: { ...link, permanentMeeting: meetingId } } as any
+    )
+  }
+}
+
+/**
  * Copies the group of a permanent meeting onto its series. The meetings list groups events by the
  * group, and a viewlet can only group by an attribute of its own class, so the event keeps a copy.
  */
@@ -857,6 +923,13 @@ export const loveOperation: MigrateOperation = {
         state: 'copy-meeting-group-to-series',
         mode: 'upgrade',
         func: copyMeetingGroupToSeries
+      },
+      {
+        // Before this, a one-off meeting existed only as a calendar event and was invisible in the
+        // meetings lists: every meeting-event gets its own meeting document here.
+        state: 'event-meeting-to-permanent',
+        mode: 'upgrade',
+        func: eventMeetingsToPermanent
       }
     ])
   },
