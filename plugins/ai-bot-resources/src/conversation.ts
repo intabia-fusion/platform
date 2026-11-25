@@ -80,19 +80,15 @@ export async function startIssueDraftConversation (
   const direct = await createAndGetDirect(client, [me, botAccount])
   if (direct === undefined) return undefined
 
-  // Draft roots nobody wrote into yet: one is reused, the rest are leftovers of earlier dialogs.
-  // Whatever this pass misses goes on the next one.
+  // Leftovers of earlier dialogs go: a reused root would date the new discussion by the old one.
   const roots = await client.findAll(aiBot.class.AIContextMessage, {
     space: direct._id,
     purpose: 'issue-draft',
     archived: { $ne: true },
     resultId: { $exists: false }
   })
-  const [reuse, ...stale] = roots.filter((r) => (r.replies ?? 0) === 0)
-  for (const r of stale) await client.remove(r)
-  if (reuse !== undefined) {
-    await client.diffUpdate(reuse, { message, objectId: origin.objectId, objectClass: origin.objectClass })
-    return { direct, messageId: reuse._id }
+  for (const r of roots) {
+    if ((r.replies ?? 0) === 0) await client.remove(r)
   }
 
   const messageId = await client.addCollection<DirectMessage, AIContextMessage>(
@@ -163,6 +159,16 @@ export async function linkConversationResult (
       $unset: { purpose: 1, workingContext: 1 }
     }
   )
+}
+
+/** Removes a draft conversation nobody wrote into; false when it has messages and must be kept. */
+export async function discardEmptyConversation (root: StartedConversation): Promise<boolean> {
+  const client = getClient()
+  const doc = await client.findOne(aiBot.class.AIContextMessage, { _id: root.messageId as Ref<AIContextMessage> })
+  if (doc == null) return true
+  if ((doc.replies ?? 0) > 0) return false
+  await client.remove(doc)
+  return true
 }
 
 /** Reopen a conversation by its root message; undefined when it is gone or was archived. */

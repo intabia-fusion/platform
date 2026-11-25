@@ -30,6 +30,7 @@
   import { issueAssistFits, issueAssistOpened, issueDraftApplier } from '../stores'
   import {
     archiveConversation,
+    discardEmptyConversation,
     linkConversationResult,
     resumeConversation,
     startIssueDraftConversation,
@@ -205,7 +206,10 @@
     const root = conversation ?? (await resumeConversation(conversationId as Ref<ChatMessage>))
     if (root === undefined) return
     try {
-      await linkConversationResult(root, { id: result.id, class: resultClass, label: result.identifier })
+      // An untouched thread would only leave a stray mention in the issue activity.
+      if (!(await discardEmptyConversation(root))) {
+        await linkConversationResult(root, { id: result.id, class: resultClass, label: result.identifier })
+      }
       // The thread belongs to the issue now, not to this dialog.
       conversation = undefined
       proposal = undefined

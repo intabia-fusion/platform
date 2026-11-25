@@ -55,7 +55,8 @@
 
 ## Корни контекстов issue-draft (FUSIO-1271)
 
-- `startIssueDraftConversation` (`plugins/ai-bot-resources/src/conversation.ts`) переиспользует пустой корень (`replies===0`, без `resultId`, не archived) и удаляет остальные пустые - панель заводится при открытии, а не на первое сообщение.
+- `startIssueDraftConversation` (`plugins/ai-bot-resources/src/conversation.ts`) удаляет все пустые корни (`replies===0`, без `resultId`, не archived) и создаёт новый - панель заводит корень при открытии, а не на первое сообщение. Переиспользование через `diffUpdate` сохраняло `createdOn` старого корня: тред задачи датировался днём, когда панель открыли впервые.
+- `stampResult` (`IssueAssistPanel.svelte`) передаёт задаче только беседу с сообщениями; пустую удаляет `discardEmptyConversation`. Иначе `linkConversationResult` пишет в корень упоминание задачи и в её активности появляется запись об упоминании в треде, хотя с ассистентом не говорили. Срабатывает и без открытия панели: id корня лежит в черновике (`assistConversation`).
 - `resetObjectConversation` (`conversation.ts`) архивирует и сразу создаёт новый контекст напрямую (`createObjectContext`), не через `findObjectConversation`: LiveQuery-кэш клиента может вернуть только что заархивированный корень раньше, чем `archived: true` дойдёт broadcast'ом.
 
 ## Mock-провайдер через clisr
