@@ -25,6 +25,7 @@ export interface Config {
   AI_URL?: string
   ANALYTICS_COLLECTOR_URL?: string
   BRANDING_URL?: string
+  LANGUAGES?: string
   CALENDAR_URL: string
   COLLABORATOR?: string
   CONFIG_URL: string
@@ -95,7 +96,6 @@ export interface Branding {
     docsLink?: string
     privacyPolicyLink?: string
   }
-  languages?: string
   lastNameFirst?: string
   defaultLanguage?: string
   defaultApplication?: string

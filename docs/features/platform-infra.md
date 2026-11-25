@@ -135,10 +135,13 @@
 - **Скрытие категорий настроек по `feature`.** `SettingsCategory.feature` + `isDisabled()` в `Settings.svelte`. - `plugins/setting/src/index.ts`.
 - **Переопределение на уровне воркспейса.** Админ может точечно вернуть отключённую глобально фичу конкретному воркспейсу (`disabledFeaturesOverride`), правится в admin-панели (`WorkspaceDetails.svelte`), учитывается в `connect.ts`. - `server/account/src/types.ts`, `plugins/admin-resources/src/components/WorkspaceDetails.svelte`.
 
+- **Язык интерфейса: русский и английский.** Список в `SettingsPopup.svelte` задаётся полем `LANGUAGES` в `/config.json` (статический пример — `dev/prod/public/config.json`; desktop получает конфиг с фронта). Формат — коды через запятую, например `"en,ru"`. При деплое задаётся переменная окружения `LANGUAGES=en,ru` у front: `pods/front/src/__start.ts` передаёт её в JSON через `extraConfig` сервера; без переменной используется `en,ru`. В `dev/docker-compose.yaml` она передаётся из окружения хоста. Веб и desktop передают её через `configureInterfaceLanguages` (`packages/theme/src/language.ts`) в metadata `Languages` до инициализации темы. Для включения другой существующей локали достаточно добавить её код в конфиг: файлы переводов сохранены. Пустой список или список без известных локалей использует `ru,en`. `getCurrentLanguage` сохраняет разрешённый выбор; недоступный заменяет на английский, а если английский выключен — на первый язык из конфига, с записью результата в localStorage. `defaultLanguage` задаёт язык для пустого хранилища. Языки ответов ИИ не ограничены этим списком.
+
 ## Пользовательская документация
 
 | Фича | ru | en | Статус | Сверено | Расхождение |
 | --- | --- | --- | --- | --- | --- |
+| Язык интерфейса: русский и английский | - | - | plan | - | |
 | Виджеты сайдбара (Fixed/Flexible/Configurable) | getting-started/learn-the-basics, communication/sending-messages | getting-started/learn-the-basics, communication/sending-messages | stale | 0.8.60 | явное открытие вкладки показывает сайдбар в полном экране; страница показывает только значки Планировщика/Офиса (Fixed) и закреплённые чаты (Flexible) в правой панели, без названий типов; кнопка добавления виджета (`AddWidgetsPopup`) на проде недостижима (нет ни одного Configurable-виджета), описывать её не нужно |
 | Три состояния вкладки виджета | - | - | plan | - | отложено |
 | Вкладки воркбенча на аккаунт | getting-started/learn-the-basics | getting-started/learn-the-basics | partial | 0.8.60 | закрепление и закрытие вкладок страница не описывает |
@@ -203,6 +206,8 @@
 - `DESKTOP_UPDATES_CHANNEL`/`DESKTOP_UPDATES_CHANNELS` - канал автообновления desktop (дефолт `latest`).
 
 ## Тесты
+
+- Unit: `packages/theme/src/language-storage.test.ts` — публичные `getCurrentLanguage`/`setDefaultLanguage`, миграция сохранённого языка в localStorage и сохранение выбора пользователя.
 
 - Unit: `server/backup/src/__tests__/` (`backup-index-guard`, `backup-lease`, `storage-cleanup`, `stream-errors`); `services/export/pod-export/src/__tests__/` (`workspace-exporter`, `data-mapper`, `attachment-exporter`); `desktop/src/__test__/main/` и `.../ui/` (`updateChannel`, `settings`, `trayUtils`, `config`, ...); `desktop-package/src/__test__/` (`distServer`, `verifyManifests`).
 - api-tests: `api-tests/backup/src/__tests__/` (`backup-incremental`, `backup-retention`, `backup-service`); `api-tests/api/src/__tests__/identity-deletion.test.ts`, `deletion-emails.test.ts`.
