@@ -25,7 +25,7 @@ const otherWs = '22222222-2222-4222-8222-222222222222'
 let sql: Sql
 let access: PublicFileAccess
 beforeAll(async () => {
-  sql = postgres(await postgresUrl(), { max: 4, onnotice: () => {} })
+  sql = postgres(await postgresUrl(), { fetch_types: false, max: 4, onnotice: () => {} })
   await sql`CREATE SCHEMA IF NOT EXISTS global_account`
   await sql`CREATE TABLE IF NOT EXISTS global_account.workspace (uuid uuid, data_id text)`
   access = (await PostgresDB.create(new MeasureMetricsContext('test', {}), sql)).publicFileAccess

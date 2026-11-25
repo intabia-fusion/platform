@@ -324,7 +324,7 @@ export async function getServerPipeline (
     usePassedCtx: true,
     disableTriggers: opt?.disableTriggers ?? false,
     queue: opt?.queue,
-    publicFileAccessUrl: opt?.publicFileAccessUrl
+    publicFileAccessUrl: opt?.publicFileAccessUrl ?? process.env.PUBLIC_FILE_ACCESS_URL
   })
 
   return await pipelineFactory(ctx, wsUrl, createEmptyBroadcastOps(), null)

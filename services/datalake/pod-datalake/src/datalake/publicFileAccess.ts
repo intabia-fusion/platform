@@ -78,7 +78,7 @@ export class PublicFileAccess {
 
   async state (workspace: string, linkId: string): Promise<{ revision: number, revoked: boolean, blobs: string[] }> {
     const [row] = await this.sql`SELECT l.revision, l.revoked,
-      COALESCE(array_agg(f.blob_id ORDER BY f.blob_id) FILTER (WHERE f.blob_id IS NOT NULL), ARRAY[]::varchar[]) AS blobs
+      COALESCE(jsonb_agg(f.blob_id ORDER BY f.blob_id) FILTER (WHERE f.blob_id IS NOT NULL), '[]'::jsonb) AS blobs
       FROM blob.public_link l LEFT JOIN blob.public_link_file f
       ON l.workspace = f.workspace AND l.link_id = f.link_id
       WHERE l.workspace = ${workspace} AND l.link_id = ${linkId}

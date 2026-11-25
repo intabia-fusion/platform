@@ -1,4 +1,5 @@
-import {
+import core, {
+  TxOperations,
   DOMAIN_BLOB,
   DOMAIN_MODEL,
   DOMAIN_TRANSIENT,
@@ -81,5 +82,31 @@ export const guestOperation: MigrateOperation = {
       }
     ])
   },
-  async upgrade (state: Map<string, Set<string>>, client: () => Promise<MigrationUpgradeClient>): Promise<void> {}
+  async upgrade (state: Map<string, Set<string>>, client: () => Promise<MigrationUpgradeClient>): Promise<void> {
+    const migration = 'public-file-access-v1'
+    // Do not mark this migration complete while registry synchronization is disabled.
+    if (process.env.PUBLIC_FILE_ACCESS_URL === undefined || process.env.PUBLIC_FILE_ACCESS_URL === '') return
+    if (state.get(guestId)?.has(migration) === true) return
+    const source = await client()
+    const tx = new TxOperations(source, core.account.System)
+    let after = ''
+    while (true) {
+      const links = await source.findAll(
+        guest.class.PublicLink,
+        { _id: { $gt: after } as any },
+        {
+          limit: 10,
+          sort: { _id: 1 }
+        }
+      )
+      for (const link of links) {
+        // Explicit PublicLink writes synchronously register its current files in the guarded pipeline.
+        // A failed request propagates: no completion marker is written; repeating the migration is safe.
+        await tx.updateDoc(link._class, link.space, link._id, { revokable: link.revokable })
+      }
+      if (links.length < 10) break
+      after = links[links.length - 1]._id
+    }
+    await tx.createDoc(core.class.MigrationState, core.space.Configuration, { plugin: guestId, state: migration })
+  }
 }
