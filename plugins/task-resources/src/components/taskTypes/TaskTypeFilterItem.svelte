@@ -30,16 +30,22 @@
     <span class="flex-no-shrink">{_value.name}</span>
     {#if _parent?.name !== undefined}
       <span class="project flex-no-shrink">·</span>
-      <span class="project overflow-label">{_parent.name}</span>
+      <span class="project project-name overflow-label" title={_parent.name}>{_parent.name}</span>
     {/if}
   </span>
 {/if}
 
 <style lang="scss">
   .item {
+    width: 100%;
     min-width: 0;
     overflow: hidden;
     white-space: nowrap;
+  }
+
+  .project-name {
+    flex: 0 1 auto;
+    pointer-events: auto;
   }
 
   // Project type is a secondary detail, the type name comes first and stays visible

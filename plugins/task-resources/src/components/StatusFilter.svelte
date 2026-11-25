@@ -265,19 +265,23 @@
               }}
             >
               <div class="flex-between w-full">
-                <div class="flex-row-center">
+                <div class="status-value flex-row-center">
                   {#if value}
                     {#key value._id}
-                      <svelte:component
-                        this={attribute.presenter}
-                        {value}
-                        {...attribute.props}
-                        {space}
-                        disabled
-                        oneLine
-                      />
+                      <div class="status-name">
+                        <svelte:component
+                          this={attribute.presenter}
+                          {value}
+                          {...attribute.props}
+                          {space}
+                          disabled
+                          oneLine
+                        />
+                      </div>
                       {#if typeNames.has(value._id)}
-                        <span class="status-project-type">{typeNames.get(value._id)}</span>
+                        <span class="status-project-type" title={typeNames.get(value._id)}
+                          >{typeNames.get(value._id)}</span
+                        >
                       {/if}
                     {/key}
                   {:else}
@@ -300,11 +304,31 @@
 </div>
 
 <style lang="scss">
+  .selectPopup {
+    width: max-content;
+    min-width: min(17rem, calc(100vw - 2rem));
+    max-width: min(40rem, calc(100vw - 2rem));
+  }
+  .status-value {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .status-name {
+    flex: 0 0 auto;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+  }
   .status-project-type {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: auto;
     margin-left: 0.5rem;
     color: var(--theme-dark-color);
     font-size: 0.75rem;
-    white-space: normal;
-    overflow-wrap: anywhere;
+    white-space: nowrap;
   }
 </style>

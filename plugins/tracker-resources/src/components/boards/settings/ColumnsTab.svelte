@@ -732,6 +732,7 @@
     padding-bottom: 0.25rem;
   }
   .status-label {
+    flex: 1;
     display: flex;
     flex-direction: column;
     min-width: 0;
@@ -749,6 +750,7 @@
     text-overflow: ellipsis;
   }
   .count {
+    flex-shrink: 0;
     margin-left: 0.25rem;
     color: var(--theme-darker-color);
   }

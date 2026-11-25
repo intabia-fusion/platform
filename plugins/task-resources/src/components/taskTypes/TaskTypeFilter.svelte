@@ -23,4 +23,12 @@
   export let onChange: (e: Filter) => void
 </script>
 
-<ObjectFilter {filter} {space} {onChange} popupClass="max-width-50" itemPresenter={TaskTypeFilterItem} />
+<ObjectFilter
+  {filter}
+  {space}
+  {onChange}
+  itemPresenter={TaskTypeFilterItem}
+  --object-filter-width="max-content"
+  --object-filter-min-width="min(17rem, calc(100vw - 2rem))"
+  --object-filter-max-width="min(40rem, calc(100vw - 2rem))"
+/>
