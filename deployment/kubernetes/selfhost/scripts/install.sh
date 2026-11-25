@@ -52,13 +52,18 @@ command -v helm >/dev/null 2>&1 || { echo "helm is required" >&2; exit 2; }
 # DIFF=1: same releases through helm-diff, nothing is applied and --wait makes no sense.
 HELM_UPGRADE=(helm upgrade --install)
 WAIT_ARGS=(--wait)
+CREATE_ARGS=(--create-namespace)
+TIMEOUT_ARGS=(--timeout "$TIMEOUT")
 if [ "${DIFF:-0}" = 1 ]; then
   helm plugin list 2>/dev/null | awk '{print $1}' | grep -qx diff || {
     echo "helm-diff is required for DIFF=1: helm plugin install https://github.com/databus23/helm-diff" >&2
     exit 2
   }
   HELM_UPGRADE=(helm diff upgrade --install)
+  # helm diff renders a chart: create-namespace, --wait and --timeout are upgrade-only flags.
   WAIT_ARGS=()
+  CREATE_ARGS=()
+  TIMEOUT_ARGS=()
 fi
 
 BASE_ARGS=()
@@ -101,19 +106,19 @@ fi
 echo ">> platform-base $CHART_VERSION ($PROFILE) in $NS_BASE"
 run "${HELM_UPGRADE[@]}" platform-base "$(chart_ref platform-base)" \
   "${VERSION_ARGS[@]}" \
-  -n "$NS_BASE" --create-namespace \
+  -n "$NS_BASE" "${CREATE_ARGS[@]}" \
   "${BASE_FILES[@]}" "${BASE_ARGS[@]}" \
-  --timeout "$TIMEOUT" "${WAIT_ARGS[@]}"
+  "${TIMEOUT_ARGS[@]}" "${WAIT_ARGS[@]}"
 
 echo ">> platform $CHART_VERSION ($PROFILE) in $NS"
 run "${HELM_UPGRADE[@]}" platform "$(chart_ref platform)" \
   "${VERSION_ARGS[@]}" \
-  -n "$NS" --create-namespace \
+  -n "$NS" "${CREATE_ARGS[@]}" \
   -f "values/platform-$PROFILE.yaml" "${PLATFORM_ARGS[@]}" \
   --set "global.namespace=$NS" \
   --set "global.baseNamespace=$NS_BASE" \
   --set "global.version=$VERSION" \
-  --timeout "$TIMEOUT" "${WAIT_ARGS[@]}"
+  "${TIMEOUT_ARGS[@]}" "${WAIT_ARGS[@]}"
 
 if [ "${DRY_RUN:-0}" = 1 ]; then
   echo ">> dry run: see the commands above"
