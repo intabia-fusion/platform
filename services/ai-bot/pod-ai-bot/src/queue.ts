@@ -342,7 +342,7 @@ async function startEventRouter (boot: Boot): Promise<void> {
 }
 
 /** llm-router role: batch consumer per provider topic `llm-<id>`, serving config.LLMProviderIds (empty = all). */
-function startLlmRouter (boot: Boot): void {
+async function startLlmRouter (boot: Boot): Promise<void> {
   const { ctx, queue, aiControl } = boot
 
   const served = aiControl.getProviderIds()
@@ -356,6 +356,9 @@ function startLlmRouter (boot: Boot): void {
   for (const cfg of config.AIProviders) {
     if (!served.includes(cfg.id) || !wanted.includes(cfg.id)) continue
     const topic = providerTopic(cfg.id)
+    // Its own topic, not the event-router's: a consumer that subscribes before the topic exists
+    // dies for good (kafkajs run() rejects), and the llm-router may start first on a fresh stand.
+    await queue.createTopic(topic, 1)
     const limiter = new RateLimiter(Math.max(1, cfg.concurrency))
     // Per message: one failing request must not take the rest of the batch down with it, and it
     // must not vanish either — it goes to the dead letter topic.
@@ -645,7 +648,7 @@ export const startQueue = async (): Promise<void> => {
   startWorkspaceConsumer(boot)
   await startSttIngest(boot)
   await startEventRouter(boot)
-  startLlmRouter(boot)
+  await startLlmRouter(boot)
   startSummary(boot)
   await startSttWorker(boot)
   await finalize(boot)
@@ -669,7 +672,7 @@ export const startLlmRouterMode = async (): Promise<void> => {
   boot.aiControl.initLLM(hasClisr ? boot.clisrServer : undefined)
   startWorkspaceConsumer(boot)
   await startSttIngest(boot)
-  startLlmRouter(boot)
+  await startLlmRouter(boot)
   startSummary(boot)
   await finalize(boot)
 }
