@@ -26,6 +26,7 @@ import { type Server } from 'http'
 import morgan from 'morgan'
 import onHeaders from 'on-headers'
 
+import { publicFileAccessRouter } from './handlers/publicFileAccess'
 import { cacheControl } from './const'
 import { createDb } from './datalake/db'
 import { ApiError } from './error'
@@ -166,6 +167,8 @@ export async function createServer (
   if (config.Readonly) {
     app.use(withReadonly)
   }
+
+  app.use('/internal/public-links', publicFileAccessRouter(db.publicFileAccess))
 
   app.post('/admin/storage/cleanup', withSystemAuthorization, (_req, res, next) => {
     void cleanupDatalake(ctx, db, buckets)

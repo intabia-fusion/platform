@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -14,6 +15,7 @@
 //
 
 import { MeasureContext } from '@hcengineering/core'
+import { PublicFileAccess } from './publicFileAccess'
 import postgres, { Sql, type Row } from 'postgres'
 import { type Location, type UUID } from './types'
 import { type RetryOptions, retry } from './retry'
@@ -93,7 +95,10 @@ export interface WorkspaceStatsByTypeResult {
   derivedSize: number
 }
 
-export async function createDb (ctx: MeasureContext, connectionString: string): Promise<BlobDB> {
+export async function createDb (
+  ctx: MeasureContext,
+  connectionString: string
+): Promise<BlobDB & { publicFileAccess: PublicFileAccess }> {
   const sql = postgres(connectionString, {
     max: 5,
     connection: {
@@ -116,7 +121,7 @@ export async function createDb (ctx: MeasureContext, connectionString: string): 
   })
 
   const db = await PostgresDB.create(ctx, sql)
-  return new LoggedDB(ctx, new RetryDB(db, { retries: 5 }))
+  return Object.assign(new LoggedDB(ctx, new RetryDB(db, { retries: 5 })), { publicFileAccess: db.publicFileAccess })
 }
 
 export interface BlobDB {
@@ -140,7 +145,11 @@ export interface BlobDB {
 }
 
 export class PostgresDB implements BlobDB {
-  private constructor (private readonly sql: Sql) {}
+  readonly publicFileAccess: PublicFileAccess
+
+  private constructor (private readonly sql: Sql) {
+    this.publicFileAccess = new PublicFileAccess(sql)
+  }
 
   static async create (ctx: MeasureContext, sql: Sql): Promise<PostgresDB> {
     const db = new PostgresDB(sql)
@@ -741,7 +750,7 @@ export function escape (value: any): string {
 }
 
 function getMigrations (): [string, string][] {
-  return [migrationV1(), migrationV2()]
+  return [migrationV1(), migrationV2(), migrationV3()]
 }
 
 function migrationV1 (): [string, string] {
@@ -808,4 +817,26 @@ function migrationV2 (): [string, string] {
     ALTER TABLE blob.meta ADD CONSTRAINT fk_blob_meta FOREIGN KEY (workspace, name) REFERENCES blob.blob (workspace, name);
   `
   return ['migrate_workspaces_02', sql]
+}
+
+function migrationV3 (): [string, string] {
+  return [
+    'public_link_access_03',
+    `
+    CREATE TABLE IF NOT EXISTS blob.public_link (
+      workspace UUID NOT NULL,
+      link_id VARCHAR(255) NOT NULL,
+      revision BIGINT NOT NULL CHECK (revision >= 0),
+      revoked BOOLEAN NOT NULL,
+      PRIMARY KEY (workspace, link_id)
+    );
+    CREATE TABLE IF NOT EXISTS blob.public_link_file (
+      workspace UUID NOT NULL,
+      link_id VARCHAR(255) NOT NULL,
+      blob_id VARCHAR(255) NOT NULL,
+      PRIMARY KEY (workspace, link_id, blob_id),
+      FOREIGN KEY (workspace, link_id) REFERENCES blob.public_link(workspace, link_id) ON DELETE CASCADE
+    );
+  `
+  ]
 }
