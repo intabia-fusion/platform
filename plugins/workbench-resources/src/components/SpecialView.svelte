@@ -74,6 +74,10 @@
   export let beforeTitleProps: Record<string, any> = {}
   /** A view that is not the user's to arrange hides the gear: the settings it opens mean nothing there. */
   export let hideViewSettings: boolean = false
+  /** Content the viewlet draws above its rows, such as a caption row of the list. */
+  export let contentHeader: AnyComponent | undefined = undefined
+  /** Props of the viewlet of this view, for a section that sets them rather than the model. */
+  export let viewletProps: Record<string, any> | undefined = undefined
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
@@ -256,9 +260,11 @@
         viewOptionsConfig: viewlet.viewOptions?.other,
         createItemDialog: createComponent,
         createItemLabel: createLabel,
+        contentHeader,
         query: resultQuery,
         totalQuery: query,
-        ...viewlet.props
+        ...viewlet.props,
+        ...viewletProps
       }}
     />
   {:else}
@@ -276,9 +282,11 @@
         viewOptionsConfig: viewlet.viewOptions?.other,
         createItemDialog: createComponent,
         createItemLabel: createLabel,
+        contentHeader,
         query: resultQuery,
         totalQuery: query,
-        ...viewlet.props
+        ...viewlet.props,
+        ...viewletProps
       }}
       {...navigationModel}
     />

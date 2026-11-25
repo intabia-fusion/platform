@@ -207,11 +207,12 @@
       }
       if (permanent) {
         const created = await createPermanentMeetingWithSchedule(client, input, ctx)
-        dispatch('created', created)
+        // The plaintext password is known only here: the ready popup offers a link with it inside.
+        dispatch('created', { ...created, password: input.guestPassword })
       } else {
         // A one-off is a calendar meeting: no standing meeting document is created for it.
         const created = await createOneOffMeeting(client, input, ctx)
-        dispatch('created', created)
+        dispatch('created', { ...created, password: input.guestPassword })
       }
       dispatch('close')
     } finally {

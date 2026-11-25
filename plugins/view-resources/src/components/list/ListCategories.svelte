@@ -79,6 +79,8 @@
   export let flatHeaders = false
   export let disableHeader = false
   export let props: Record<string, any> = {}
+  // A list with fixed columns lays its rows out by their content and rolls them sideways.
+  export let wideRows: boolean = false
   export let level: number
   export let initIndex = 0
   export let newObjectProps: (doc: Doc | undefined) => Record<string, any> | undefined
@@ -538,6 +540,7 @@
     {flatHeaders}
     {disableHeader}
     {props}
+    {wideRows}
     {listDiv}
     bind:dragItem
   >
@@ -577,6 +580,7 @@
         {newObjectProps}
         {flatHeaders}
         {props}
+        {wideRows}
         {level}
         docKeys={categoryDocKeys}
         groupPersistKey={`${groupPersistKey}_${level}_${typeof category === 'object' ? category.name : category}`}

@@ -20,6 +20,7 @@
   import { ComponentExtensions } from '@hcengineering/presentation'
   import ui, { Component, Icon, MILLISECONDS_IN_MINUTE, showPopup, tooltip } from '@hcengineering/ui'
   import { showMenu } from '@hcengineering/view-resources'
+  import { openEventCard } from '../eventCard'
   import { calendarByIdStore, isVisible } from '../utils'
   import EventPresenter from './EventPresenter.svelte'
 
@@ -30,15 +31,12 @@
   $: narrow = event.dueDate - event.date < MILLISECONDS_IN_MINUTE * 25
   $: empty = size.width < 44
 
-  // The calendar's own editor, which is the popup the event has always been edited in. A meeting is
-  // not a special case here: its block (room, link, "Start meeting") is added to that very editor by
-  // the love plugin through `calendar.extensions.EditEventExtensions`.
-  // `center` and not `content`: only a position that shows the modal overlay gives the window a click
-  // outside it - `content` docks the popup to the content panel with no overlay, so only the close
-  // button and Esc can dismiss it.
+  // The card of the event is resolved first: a meeting is a document of its own and opens in the
+  // meeting's window, while a plain event keeps the calendar's quick-edit popup. `center` and not
+  // `content`: only a position that shows the modal overlay gives the window a click outside it.
   function click (): void {
     if (!visible) return
-    showPopup(calendar.component.EditEvent, { object: event }, 'center')
+    void openEventCard(client, event, calendar.component.EditEvent)
   }
 
   const client = getClient()

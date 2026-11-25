@@ -15,8 +15,9 @@
 
 import calendar, { type Event, type ReccuringInstance } from '@hcengineering/calendar'
 import { type Class, type Client, type Doc, type DocumentQuery, type Ref } from '@hcengineering/core'
-import type { AnyComponent } from '@hcengineering/ui'
+import { showPopup, type AnyComponent } from '@hcengineering/ui'
 import view, { type ObjectEditor } from '@hcengineering/view'
+import { openDoc } from '@hcengineering/view-resources'
 
 /** The card an event is opened with: the document to open, and the editor the mixin contributed. */
 export interface EventCard {
@@ -26,16 +27,43 @@ export interface EventCard {
 }
 
 /**
+ * A plugin's answer with a window of its own: a meeting card is the meeting's window, not the panel
+ * of a document, so the plugin names both the event it describes and the component that draws it.
+ */
+export interface EventCardWithEditor {
+  object: Doc
+  editor: AnyComponent
+}
+
+/**
  * A plugin's answer to "which document should this event open as".
  *
  * Some events are only a projection of a document that lives elsewhere - a meeting series, for one,
  * belongs to a meeting that is a document of its own. The calendar cannot know that mapping, so a
- * plugin that defines such a document registers it here. Resolvers run before the mixin lookup and
- * the first answer wins; `undefined` leaves the event to the calendar.
+ * plugin that defines such a document registers it here. Resolvers run before the mixin lookup
+ * and the first answer wins; `undefined` leaves the event to the calendar.
  */
-export type EventCardResolver = (client: Client, event: Doc) => Promise<Doc | undefined>
+export type EventCardResolver = (client: Client, event: Doc) => Promise<Doc | EventCardWithEditor | undefined>
 
 const resolvers: EventCardResolver[] = []
+
+/**
+ * Opens the card of an event, the way every place of the calendar does it: the window a plugin
+ * names for the event, the panel of the document a plugin maps it to, or the calendar's own
+ * quick-edit popup when nothing else claims it.
+ */
+export async function openEventCard (client: Client, event: Doc, calendarEditor: AnyComponent): Promise<void> {
+  const card = await eventCard(client, event, calendarEditor)
+  if (card === undefined) {
+    showPopup(calendarEditor, { object: event }, 'center')
+    return
+  }
+  if (card.editor !== undefined) {
+    showPopup(card.editor, { object: card.object }, 'center')
+    return
+  }
+  await openDoc(client.getHierarchy(), card.object)
+}
 
 export function registerEventCardResolver (resolver: EventCardResolver): void {
   resolvers.push(resolver)
@@ -60,8 +88,12 @@ export async function eventCard (
   calendarEditor: AnyComponent
 ): Promise<EventCard | undefined> {
   for (const resolve of resolvers) {
-    const object = await resolve(client, event)
-    if (object !== undefined) return { object }
+    const answer = await resolve(client, event)
+    if (answer === undefined) continue
+    // A window of the plugin's own: it knows the event and the component that edits it.
+    const editor = (answer as EventCardWithEditor).editor
+    if (editor !== undefined) return { object: (answer as EventCardWithEditor).object, editor }
+    return { object: answer as Doc }
   }
   const hierarchy = client.getHierarchy()
   const editorOf = (mixin: Ref<Class<Doc>>): AnyComponent | undefined =>

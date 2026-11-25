@@ -20,14 +20,20 @@
 -->
 <script lang="ts">
   import love from '@hcengineering/love'
-  import ui from '@hcengineering/ui'
+  import ui, { type AnyComponent } from '@hcengineering/ui'
   import view from '@hcengineering/view'
   import { SpecialView } from '@hcengineering/workbench-resources'
 
   import lovePlugin from '../plugin'
+  import MeetingListCaption from './MeetingListCaption.svelte'
+  import { MEETING_LIST_COLUMNS, MEETING_LIST_MIN_ROW_WIDTH } from '../meetingListColumns'
 
   // One list only: the table of the same rows is the meetings tab, so the list is not a choice here.
   const descriptors = [view.viewlet.List]
+  // The list itself has no caption row: the view draws it above the categories. Fixed columns make a
+  // row a grid, so every cell sits under its own caption.
+  const caption = MeetingListCaption as unknown as AnyComponent
+  const viewletProps = { props: { columnWidths: MEETING_LIST_COLUMNS, minRowWidth: MEETING_LIST_MIN_ROW_WIDTH } }
 </script>
 
 <SpecialView
@@ -38,4 +44,6 @@
   defaultViewletDescriptor={view.viewlet.List}
   createButton={lovePlugin.component.PermanentMeetingsHeaderActions}
   createComponentProps={{ groupOnly: true }}
+  contentHeader={caption}
+  {viewletProps}
 />

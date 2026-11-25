@@ -63,6 +63,9 @@
   export let flatHeaders = false
   export let disableHeader = false
   export let props: Record<string, any> = {}
+  // A list with fixed columns is as wide as its columns: the rows are laid out by their content and the
+  // section rolls them sideways, together with the caption row above it.
+  export let wideRows: boolean = false
   export let level: number
   export let lookup: Lookup<Doc>
   export let _class: Ref<Class<Doc>>
@@ -440,6 +443,7 @@
   in:fade|local={{ duration: 50 }}
   bind:this={div}
   class="category-container"
+  class:list-wide={wideRows}
   class:listGrid-container={level === 0}
   class:collapsed
   class:category-one={oneCat}
@@ -596,3 +600,12 @@
     </ExpandCollapse>
   </Scroller>
 </div>
+
+<style lang="scss">
+  // A list with fixed columns is as wide as its columns: laying a row out by its content makes the
+  // section roll the rows sideways instead of squeezing every column into the panel.
+  .category-container.list-wide :global(.expandcollapse-content) {
+    width: max-content;
+    min-width: 100%;
+  }
+</style>

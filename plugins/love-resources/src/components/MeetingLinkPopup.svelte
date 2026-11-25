@@ -26,7 +26,13 @@
   import { Button, DropdownLabelsIntl, EditBox, Label, type DropdownIntlItem } from '@hcengineering/ui'
   import { createEventDispatcher, onMount } from 'svelte'
   import plugin from '../plugin'
-  import { getEventMeetingLink, notifyCopied, revokeMeetingLink, revokePermanentMeetingLink } from '../utils'
+  import {
+    getEventMeetingLink,
+    notifyCopied,
+    revokeMeetingLink,
+    revokePermanentMeetingLink,
+    withPassword
+  } from '../utils'
   import { getLoveClient } from '../loveClient'
   import { findMeetingLink } from '../meetingLink'
 
@@ -82,6 +88,10 @@
   // Kept only in this popup's memory after a successful save, to power "copy link + password" -
   // the server never returns the plaintext, so a freshly reopened popup has nothing to copy.
   let plainPassword: string | undefined
+  // A password saved in an earlier session is a hash on the server: the popup has no plaintext to put
+  // into the link, so the copy asks for it once instead of hiding the action entirely.
+  let askingPasswordToCopy = false
+  let copyPassword = ''
   // The hash is write-only: the server stores it and never sends it back, so "is there a password"
   // is kept as a flag instead of a fake hash in `access`.
   let passwordSet = false
@@ -158,6 +168,7 @@
       plainPassword = passwordInput
       passwordSet = true
       editingPassword = false
+      askingPasswordToCopy = false
     } finally {
       busy = false
     }
@@ -171,6 +182,7 @@
       await loveClient.setGuestPassword(pointer, null, linkKind)
       plainPassword = undefined
       passwordSet = false
+      askingPasswordToCopy = false
     } finally {
       busy = false
     }
@@ -183,15 +195,19 @@
     await notifyCopied(plugin.string.LinkCopied)
   }
 
-  async function copyLinkWithPassword (): Promise<void> {
-    if (pointer === undefined || plainPassword === undefined) return
+  async function copyLinkWithPassword (password?: string): Promise<void> {
+    if (pointer === undefined) return
+    const plain = password ?? plainPassword
+    if (plain === undefined || plain === '') {
+      // Nothing to put into the link yet: ask for the password with the same field the form uses.
+      askingPasswordToCopy = true
+      copyPassword = ''
+      return
+    }
     const link = await getEventMeetingLink(pointer, linkKind)
     if (link === '') return
-    // The password travels as a query parameter: the guest page reads it and fills its own field,
-    // while a bare "link + password" text is not a link at all once pasted into a chat.
-    const url = new URL(link)
-    url.searchParams.set('password', plainPassword)
-    await copyTextToClipboard(url.toString())
+    await copyTextToClipboard(withPassword(link, plain))
+    askingPasswordToCopy = false
     await notifyCopied(plugin.string.LinkCopied)
   }
 
@@ -277,7 +293,7 @@
         />
       </div>
     {:else}
-      <div class="flex-row-center flex-gap-2">
+      <div class="flex-row-center flex-wrap flex-gap-2">
         <Button label={plugin.string.SetPassword} on:click={startEditPassword} />
         {#if passwordSet}
           <Button
@@ -288,9 +304,34 @@
             on:click={removePassword}
           />
         {/if}
-        {#if plainPassword !== undefined}
-          <Button label={plugin.string.CopyLinkWithPassword} on:click={copyLinkWithPassword} />
+        <!-- A password is copied in either form: with the password inside the link and the bare link. -->
+        {#if passwordSet}
+          <Button
+            label={plugin.string.CopyLinkWithPassword}
+            on:click={() => {
+              void copyLinkWithPassword()
+            }}
+          />
         {/if}
+      </div>
+    {/if}
+
+    {#if askingPasswordToCopy}
+      <div class="flex-row-center flex-wrap flex-gap-2">
+        <EditBox
+          bind:value={copyPassword}
+          format="password"
+          placeholder={plugin.string.EnterPassword}
+          kind="default"
+          autoFocus
+        />
+        <Button
+          label={plugin.string.CopyLinkWithPassword}
+          disabled={copyPassword === ''}
+          on:click={() => {
+            void copyLinkWithPassword(copyPassword)
+          }}
+        />
       </div>
     {/if}
   </div>

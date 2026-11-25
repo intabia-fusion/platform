@@ -14,9 +14,11 @@
 -->
 <script lang="ts">
   import type { Event } from '@hcengineering/calendar'
+  import { getClient } from '@hcengineering/presentation'
   import { Label, addZero, getPlatformColorForTextDef, showPopup, themeStore, tooltip } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import calendar from '../plugin'
+  import { openEventCard } from '../eventCard'
   import EventsPopup from './EventsPopup.svelte'
 
   export let events: Event[]
@@ -30,12 +32,12 @@
   const dispatch = createEventDispatcher()
   const eventCount = 3
 
-  // The calendar's own editor - the popup the event has always been edited in. A meeting adds its
-  // block to that editor through `calendar.extensions.EditEventExtensions`, so nothing is branched
-  // here for it. `center` rather than `content`: only then the popup gets the modal overlay, and with
-  // it a click outside the window to dismiss it.
+  // The card is resolved first: a meeting opens in the meeting's own window, a plain event in the
+  // calendar's quick-edit popup.
+  const client = getClient()
+
   function openEvent (event: Event): void {
-    showPopup(calendar.component.EditEvent, { object: event }, 'center')
+    void openEventCard(client, event, calendar.component.EditEvent)
   }
 
   $: tip = {

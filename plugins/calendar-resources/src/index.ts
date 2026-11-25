@@ -81,7 +81,14 @@ export type {
 } from './types'
 
 export * from './utils'
-export { eventCard, registerEventCardResolver, type EventCard, type EventCardResolver } from './eventCard'
+export {
+  eventCard,
+  openEventCard,
+  registerEventCardResolver,
+  type EventCard,
+  type EventCardResolver,
+  type EventCardWithEditor
+} from './eventCard'
 
 async function saveEventReminder (object: Doc): Promise<void> {
   showPopup(SaveEventReminder, { objectId: object._id, objectClass: object._class })

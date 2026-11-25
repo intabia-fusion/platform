@@ -43,6 +43,8 @@
   export let viewOptionsConfig: ViewOptionModel[] | undefined = undefined
   export let props: Record<string, any> = {}
   export let baseMenuClass: Ref<Class<Doc>> | undefined = undefined
+  // A caption block of the view's own, above the rows of the list.
+  export let contentHeader: AnyComponent | undefined = undefined
   export let emptyState: BlankViewProps | undefined = undefined
 
   let empty = false
@@ -86,7 +88,7 @@
     bind:divScroll
     fade={{ multipler: { top: 2.75 * viewOptions.groupBy.length, bottom: 0 } }}
     padding="0 1rem"
-    horizontal={viewlet.props?.columnWidths !== undefined}
+    horizontal={viewlet.props?.columnWidths !== undefined || props.columnWidths !== undefined}
     noFade
     checkForHeaders
   >
@@ -106,9 +108,14 @@
       {createItemLabel}
       {createItemEvent}
       {viewOptions}
-      props={{ ...props, columnWidths: viewlet.props?.columnWidths, minRowWidth: viewlet.props?.minRowWidth }}
+      {contentHeader}
+      props={{
+        ...props,
+        columnWidths: viewlet.props?.columnWidths ?? props.columnWidths,
+        minRowWidth: viewlet.props?.minRowWidth ?? props.minRowWidth
+      }}
       {listProvider}
-      compactMode={viewlet.props?.columnWidths === undefined && listWidth <= 800}
+      compactMode={(viewlet.props?.columnWidths ?? props.columnWidths) === undefined && listWidth <= 800}
       viewOptionsConfig={viewOptionsConfig ?? viewlet.viewOptions?.other}
       selectedObjectIds={$selection ?? []}
       selection={listProvider.current($focusStore)}

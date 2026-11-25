@@ -1,5 +1,6 @@
 import { getMetadata, type Resources } from '@hcengineering/platform'
 import aiBot from '@hcengineering/ai-bot'
+import calendar, { type Event } from '@hcengineering/calendar'
 import {
   AccountRole,
   SortingOrder,
@@ -10,11 +11,11 @@ import {
   type Doc,
   type Ref
 } from '@hcengineering/core'
-import { registerEventCardResolver } from '@hcengineering/calendar-resources'
+import { registerEventCardResolver, type EventCardWithEditor } from '@hcengineering/calendar-resources'
 import { type MeetingEventLink, type MeetingMinutes, type PermanentMeeting } from '@hcengineering/love'
 import love from '@hcengineering/love'
 import { getClient } from '@hcengineering/presentation'
-import { showPopup } from '@hcengineering/ui'
+import { showPopup, type AnyComponent } from '@hcengineering/ui'
 import { getCurrentEmployee } from '@hcengineering/contact'
 import { getPersonByPersonRef } from '@hcengineering/contact-resources'
 import { findMeetingLink, seriesKeyOf } from './meetingLink'
@@ -35,6 +36,7 @@ import MeetingMinutesSection from './components/MeetingMinutesSection.svelte'
 import EditMeetingMinutes from './components/EditMeetingMinutes.svelte'
 import EditPermanentMeeting from './components/EditPermanentMeeting.svelte'
 import EditScheduledMeeting from './components/EditScheduledMeeting.svelte'
+import EditMeeting from './components/EditMeeting.svelte'
 import MeetingSessionsFooter from './components/MeetingSessionsFooter.svelte'
 import MeetingAccessEditor from './components/MeetingAccessEditor.svelte'
 import CreatePermanentMeetingPopup from './components/CreatePermanentMeetingPopup.svelte'
@@ -199,27 +201,26 @@ async function mergeIntoGroup (docs: Doc | Doc[] | undefined): Promise<void> {
 }
 
 /**
- * A meeting series is only a projection: the meeting itself is a document of its own, and its card
- * is what the calendar has to open. The link is read off the event when the view queried the mixin,
- * and by the series otherwise - an occurrence carries no mixin at all, only its master does. A series
- * created before the meeting document existed has no meeting to point at, so the latest session of
- * that series is opened instead: it is still a meeting page, not the event settings.
+ * A meeting series is only a projection: the meeting itself is a document of its own, and its
+ * window - not the calendar editor - is what a click on the event opens. The calendar asks here
+ * first, so the answer names both the series to edit and the window that draws it; a plain event
+ * says nothing and keeps the calendar's quick-edit popup.
  */
-async function resolveMeetingCard (client: Client, event: Doc): Promise<Doc | undefined> {
+async function resolveMeetingCard (client: Client, event: Doc): Promise<Doc | EventCardWithEditor | undefined> {
   const link = await findMeetingLink(client, event)
   if (link === undefined) return undefined
 
-  if (link.permanentMeeting !== undefined) {
-    const meeting = await client.findOne(love.class.PermanentMeeting, { _id: link.permanentMeeting })
-    if (meeting !== undefined) return meeting
-  }
-
-  const sessions = await client.findAll(
-    love.class.MeetingMinutes,
-    { eventId: seriesKeyOf(event) },
-    { sort: { meetingStart: SortingOrder.Descending }, limit: 1 }
-  )
-  return sessions[0]
+  // An occurrence is a projection of the series: the series is the identity of the meeting, and
+  // only the series carries the fields the window edits. `recurringEventId` names it on an
+  // expanded occurrence, `eventId` on a stored instance - both are read, the id itself is the last
+  // resort.
+  const instance = event as { recurringEventId?: Ref<Doc>, eventId?: string }
+  const seriesId = instance.recurringEventId ?? (instance.eventId as unknown as Ref<Doc> | undefined) ?? event._id
+  const series =
+    seriesId === event._id
+      ? event
+      : ((await client.findOne(calendar.class.Event, { _id: seriesId as Ref<Event> })) ?? event)
+  return { object: series as Doc, editor: EditMeeting as unknown as AnyComponent }
 }
 
 // The calendar asks before it opens an event: a meeting series answers with the meeting itself.
@@ -246,6 +247,7 @@ export default async (): Promise<Resources> => ({
     EditMeetingMinutes,
     EditPermanentMeeting,
     EditScheduledMeeting,
+    EditMeeting,
     MeetingSessionsFooter,
     MeetingAccessEditor,
     CreatePermanentMeetingPopup,

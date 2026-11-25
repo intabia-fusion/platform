@@ -35,11 +35,13 @@
   // The calendar tab creates a one-off meeting, the planner a standing one; the tabs still switch.
   export let initialKind: 'permanent' | 'one-off' | undefined = undefined
 
-  async function created (event: CustomEvent<{ meeting: PermanentMeeting | string }>): Promise<void> {
+  async function created (event: CustomEvent<{ meeting: PermanentMeeting | string, password?: string }>): Promise<void> {
     // Both kinds of meeting are addressed by their own id: the link is issued for the meeting.
     const link = await getEventMeetingLink(event.detail.meeting as string, 'meeting')
     if (link !== '') {
-      showPopup(MeetingLinkReadyPopup, { link }, 'content')
+      // The password the meeting was just created with travels along, so the screen can offer the link
+      // with it inside: the server keeps a hash and never gives the plaintext back.
+      showPopup(MeetingLinkReadyPopup, { link, password: event.detail.password }, 'content')
     }
     dispatch('close')
   }

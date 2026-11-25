@@ -22,15 +22,19 @@
   import view from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import love from '../plugin'
-  import { notifyCopied } from '../utils'
+  import { notifyCopied, withPassword } from '../utils'
 
   export let link: string
+  // The password the meeting was just created with: the server stores a hash and never returns the
+  // plaintext, so this screen is the one place that can offer both forms of the link.
+  export let password: string | undefined = undefined
 
   const dispatch = createEventDispatcher()
   let copied = false
 
-  async function copy (): Promise<void> {
-    await copyTextToClipboard(link)
+  async function copy (withPasswordInLink: boolean = false): Promise<void> {
+    const text = withPasswordInLink && password !== undefined ? withPassword(link, password) : link
+    await copyTextToClipboard(text)
     copied = true
     await notifyCopied(love.string.LinkCopied)
   }
@@ -49,11 +53,17 @@
 >
   <div class="flex-col gap-2 p-4" style="min-width: 32rem">
     <Label label={love.string.CopyMeetingLink} />
-    <div class="flex-row-center gap-2">
-      <div class="flex-grow">
-        <EditBox value={link} disabled />
-      </div>
+    <EditBox value={link} disabled />
+    <div class="flex-row-center flex-wrap flex-gap-2">
       <Button label={copied ? view.string.Copied : love.string.CopyMeetingLink} kind="primary" on:click={copy} />
+      {#if password !== undefined}
+        <Button
+          label={love.string.CopyLinkWithPassword}
+          on:click={() => {
+            void copy(true)
+          }}
+        />
+      {/if}
     </div>
   </div>
 </Card>

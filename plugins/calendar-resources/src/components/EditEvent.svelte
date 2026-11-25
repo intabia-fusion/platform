@@ -16,18 +16,32 @@
   import type { Event, ReccuringEvent, ReccuringInstance, RecurringRule } from '@hcengineering/calendar'
   import type { Person } from '@hcengineering/contact'
   import type { DocumentUpdate, Ref } from '@hcengineering/core'
+  import { DateRangeMode } from '@hcengineering/core'
   import presentation, { ComponentExtensions, getClient } from '@hcengineering/presentation'
   import { StyledTextBox } from '@hcengineering/text-editor-resources'
   import ui, {
-    Button,
-    EditBox,
-    FocusHandler,
-    Icon,
-    createFocusManager,
+    Label,
+    convertTimeZone,
+    eventToHTMLElement,
+    getTimeZoneName,
     getUserTimezone,
     showPopup,
-    Scroller
+    TimeZonesPopup
   } from '@hcengineering/ui'
+  import {
+    Button as KitButton,
+    Chip,
+    DateLabel,
+    DateSelect,
+    Dialog,
+    Dropdown,
+    MenuButton,
+    Section,
+    SettingRow,
+    TextInput,
+    Toggle,
+    type DropdownItem
+  } from '@hcengineering/ui/kit'
   import { deepEqual } from 'fast-equals'
   import { createEventDispatcher } from 'svelte'
 
@@ -37,12 +51,8 @@
   import EventParticipants from './EventParticipants.svelte'
   import EventRsvp from './EventRsvp.svelte'
   import ParticipantsBusy from './ParticipantsBusy.svelte'
-  import EventReminders from './EventReminders.svelte'
-  import EventTimeEditor from './EventTimeEditor.svelte'
-  import EventTimeExtraButton from './EventTimeExtraButton.svelte'
-  import LocationEditor from './LocationEditor.svelte'
   import ReccurancePopup from './ReccurancePopup.svelte'
-  import VisibilityEditor from './VisibilityEditor.svelte'
+  import RRulePresenter from './RRulePresenter.svelte'
 
   export let object: Event
   $: readOnly = isReadOnly(object)
@@ -62,6 +72,28 @@
   let allDay = object.allDay
   let visibility = object.visibility ?? 'public'
   let reminders = [...(object.reminders ?? [])]
+
+  const MINUTE = 60 * 1000
+  const HOUR = 60 * MINUTE
+  // The lead times offered by the picker: the same five the meeting window offers.
+  const reminderItems: Array<DropdownItem<number>> = [
+    { id: 5 * MINUTE, label: calendar.string.DueMinutes, labelParams: { minutes: 5 } },
+    { id: 15 * MINUTE, label: calendar.string.DueMinutes, labelParams: { minutes: 15 } },
+    { id: 30 * MINUTE, label: calendar.string.DueMinutes, labelParams: { minutes: 30 } },
+    { id: HOUR, label: calendar.string.DueHours, labelParams: { hours: 1 } },
+    { id: 24 * HOUR, label: calendar.string.DueDays, labelParams: { days: 1 } }
+  ]
+  const visibilityItems: Array<DropdownItem<string>> = [
+    { id: 'public', label: calendar.string.Public },
+    { id: 'private', label: calendar.string.Private }
+  ]
+  // A reminder is either on with the leads picked, or off with none: the switch is the whole state.
+  function toggleReminders (on: boolean): void {
+    if (readOnly) return
+    reminders = on ? (reminders.length > 0 ? reminders : [15 * MINUTE]) : []
+  }
+
+  $: pickedReminders = reminderItems.filter((item) => reminders.includes(item.id))
   let _calendar = object.calendar
   let timeZone: string = object.timeZone ?? getUserTimezone()
 
@@ -158,6 +190,50 @@
     }
   }
 
+  // One switch drives both the flag and the dates behind it, the way the old pair of handlers did.
+  function changeAllDay (value: boolean): void {
+    allDay = value
+    void allDayChangeHandler()
+  }
+
+  // Moving the start carries the length of the event with it; pulling the end before the start
+  // keeps the event at its default hour instead of turning it inside out.
+  function changeStart (event: CustomEvent<number | null>): void {
+    const value = event.detail
+    if (value == null) return
+    const length = dueDate - startDate
+    startDate = value
+    dueDate = startDate + (allDay ? allDayDuration : length)
+  }
+
+  function changeDue (event: CustomEvent<number | null>): void {
+    const value = event.detail
+    if (value == null) return
+    dueDate = value > startDate ? value : startDate + defaultDuration
+    if (allDay) dueDate = new Date(dueDate).setHours(23, 59, 59, 999)
+  }
+
+  function pickTimeZone (event: MouseEvent): void {
+    const zones = Intl.supportedValuesOf?.('timeZone') ?? []
+    showPopup(
+      TimeZonesPopup,
+      { timeZones: zones.map(convertTimeZone), withAdd: false, selected: timeZone, count: 1, reset: null },
+      eventToHTMLElement(event),
+      (result) => {
+        if (result !== undefined) timeZone = result
+      }
+    )
+  }
+
+  function changeLocation (value: string): void {
+    location = value.trim() === '' ? undefined : value
+  }
+
+  $: timeMode = allDay ? DateRangeMode.DATE : DateRangeMode.DATETIME
+  // `getTimeZoneName` cuts the continent off; `Etc/GMT` has none, so the id itself is shown instead.
+  $: zoneName = getTimeZoneName(timeZone) === '' ? timeZone : getTimeZoneName(timeZone)
+  $: noRepeat = object._class !== calendar.class.ReccuringInstance
+
   function setRecurrance () {
     if (readOnly) {
       return
@@ -168,52 +244,160 @@
       }
     })
   }
-
-  const manager = createFocusManager()
 </script>
 
-<FocusHandler {manager} />
+<!-- The card is the kit dialog, the way the meeting window is built: the screen behind it is dimmed
+     by the popup host, the card is the only thing on top of it. -->
+<Dialog
+  label={calendar.string.Event}
+  width="large"
+  submitLabel={presentation.string.Save}
+  cancelLabel={ui.string.Cancel}
+  submitKind="brand"
+  canSubmit={!readOnly}
+  loading={saving}
+  on:submit={saveEvent}
+  on:cancel={() => dispatch('close')}
+  on:close={() => dispatch('close')}
+>
+  <div class="eventPopup-body">
+    <!-- What the event is, in one sentence, before the first field. -->
+    <p class="eventPopup-summary">
+      <DateLabel value={startDate} mode={timeMode} showIcon={false} />
+      <span class="eventPopup-sep">—</span>
+      <DateLabel value={dueDate} mode={timeMode} showIcon={false} />
+      <span class="eventPopup-sep">·</span>
+      <span>{zoneName}</span>
+    </p>
 
-<div class="eventPopup-container">
-  <div class="header flex-between">
-    <EditBox
-      bind:value={title}
-      placeholder={calendar.string.EventTitlePlaceholder}
-      disabled={readOnly}
-      kind="ghost-large"
-      fullSize
-      focusable
-      autoFocus
-      focusIndex={10001}
-    />
-    <div class="flex-row-center gap-1 flex-no-shrink ml-3">
-      <Button
-        id="card-close"
-        focusIndex={10003}
-        icon={ui.icon.Cross}
-        kind="ghost"
-        size="small"
-        on:click={() => {
-          dispatch('close')
-        }}
-      />
-    </div>
-  </div>
-  <Scroller thinScrollBars>
-    <div class="block first">
-      <EventTimeEditor {allDay} bind:startDate {timeZone} bind:dueDate disabled={readOnly} focusIndex={10004} />
-      <EventTimeExtraButton
-        bind:allDay
-        bind:timeZone
-        bind:rules
-        on:repeat={setRecurrance}
-        {readOnly}
-        on:allday={allDayChangeHandler}
-        noRepeat={object._class !== calendar.class.ReccuringInstance}
-      />
-    </div>
-    <div class="block rightCropPadding">
-      <LocationEditor bind:value={location} focusIndex={10005} {readOnly} />
+    <Section label={calendar.string.About} icon={ui.icon.Calendar} level={3}>
+      <SettingRow label={calendar.string.Title}>
+        <div class="eventPopup-field eventPopup-field--wide">
+          <TextInput
+            bind:value={title}
+            placeholder={calendar.string.EventTitlePlaceholder}
+            size="medium"
+            fullWidth
+            disabled={readOnly}
+            autofocus
+            focusIndex={10001}
+          />
+        </div>
+      </SettingRow>
+
+      <SettingRow label={calendar.string.Description} stacked>
+        <div class="eventPopup-description" class:eventPopup-description--readonly={readOnly}>
+          <StyledTextBox
+            alwaysEdit={true}
+            isScrollable={false}
+            focusIndex={10007}
+            showButtons={false}
+            readonly={readOnly}
+            placeholder={calendar.string.Description}
+            bind:content={description}
+          />
+        </div>
+      </SettingRow>
+    </Section>
+
+    <Section label={calendar.string.When} icon={ui.icon.Clock} level={3}>
+      <SettingRow label={calendar.string.AllDay} let:labelId>
+        <Toggle
+          aria-labelledby={labelId}
+          checked={allDay}
+          disabled={readOnly}
+          on:change={(event) => changeAllDay(event.detail)}
+        />
+      </SettingRow>
+      <SettingRow label={calendar.string.Date} stacked>
+        <div class="eventPopup-range">
+          <DateSelect
+            value={startDate}
+            mode={timeMode}
+            size="medium"
+            fullWidth
+            disabled={readOnly}
+            focusIndex={10004}
+            on:change={changeStart}
+          />
+          <span class="eventPopup-dash">—</span>
+          <DateSelect
+            value={dueDate}
+            mode={timeMode}
+            size="medium"
+            fullWidth
+            disabled={readOnly}
+            on:change={changeDue}
+          />
+        </div>
+      </SettingRow>
+      <SettingRow label={calendar.string.TimeZone}>
+        <div class="eventPopup-field">
+          <KitButton
+            kind="secondary"
+            size="medium"
+            hasMenu
+            iconRight={ui.icon.ChevronDown}
+            disabled={readOnly}
+            on:click={pickTimeZone}
+          >
+            {zoneName}
+          </KitButton>
+        </div>
+      </SettingRow>
+      {#if !noRepeat}
+        <SettingRow label={calendar.string.Repeat}>
+          <div class="eventPopup-field">
+            <KitButton kind="secondary" size="medium" hasMenu disabled={readOnly} on:click={setRecurrance}>
+              {#if rules.length > 0}
+                <RRulePresenter {rules} />
+              {:else}
+                <Label label={calendar.string.Repeat} />
+              {/if}
+            </KitButton>
+          </div>
+        </SettingRow>
+      {/if}
+    </Section>
+
+    <Section label={calendar.string.Where} icon={ui.icon.DoorOpen} level={3}>
+      <SettingRow label={calendar.string.Location}>
+        <div class="eventPopup-field">
+          <TextInput
+            value={location ?? ''}
+            placeholder={calendar.string.Location}
+            size="medium"
+            fullWidth
+            disabled={readOnly}
+            focusIndex={10005}
+            on:input={(event) => changeLocation(event.detail)}
+          />
+        </div>
+      </SettingRow>
+      <SettingRow label={calendar.string.Calendar}>
+        <div class="eventPopup-field">
+          <CalendarSelector bind:value={_calendar} focusIndex={10008} appearance="secondary" />
+        </div>
+      </SettingRow>
+      <SettingRow label={calendar.string.Visibility}>
+        <div class="eventPopup-field">
+          <Dropdown
+            items={visibilityItems}
+            selected={visibility}
+            size="medium"
+            kind="secondary"
+            fullWidth
+            disabled={readOnly}
+            focusIndex={10009}
+            on:selected={(event) => (visibility = event.detail)}
+          />
+        </div>
+      </SettingRow>
+    </Section>
+
+    <ComponentExtensions extension={calendar.extensions.EditEventExtensions} props={{ readOnly, value: object }} />
+
+    <Section label={calendar.string.Participants} icon={ui.icon.People} level={3}>
       <EventParticipants
         bind:participants
         bind:externalParticipants
@@ -223,98 +407,122 @@
       />
       <ParticipantsBusy {participants} date={startDate} {dueDate} {ignoreEventId} bind:busyPersons />
       <EventRsvp {object} indent />
-      <ComponentExtensions extension={calendar.extensions.EditEventExtensions} props={{ readOnly, value: object }} />
-    </div>
-    <div class="block description">
-      <div class="top-icon" class:disabled={readOnly}>
-        <Icon icon={calendar.icon.Description} size="small" />
-      </div>
-      <StyledTextBox
-        alwaysEdit={true}
-        isScrollable={false}
-        focusIndex={10007}
-        kind="indented"
-        showButtons={false}
-        readonly={readOnly}
-        placeholder={calendar.string.Description}
-        bind:content={description}
-      />
-    </div>
-    <div class="divider" />
-    <div class="block rightCropPadding">
-      <CalendarSelector bind:value={_calendar} focusIndex={10008} />
-      <div class="flex-row-center flex-gap-1">
-        <Icon icon={calendar.icon.Hidden} size="small" />
-        <VisibilityEditor bind:value={visibility} kind="inline" disabled={readOnly} withoutIcon focusIndex={10009} />
-      </div>
-      <EventReminders bind:reminders focusIndex={10010} disabled={readOnly} />
-    </div>
-  </Scroller>
-  <div class="antiDivider noMargin" />
-  <div class="flex-between p-5 flex-no-shrink">
-    <div />
-    <Button
-      kind="primary"
-      label={presentation.string.Save}
-      focusIndex={10011}
-      disabled={readOnly}
-      loading={saving}
-      on:click={saveEvent}
-    />
+    </Section>
+
+    <Section label={calendar.string.Reminders} icon={ui.icon.Bell} level={3}>
+      <SettingRow label={calendar.string.Remember} let:labelId>
+        <Toggle
+          aria-labelledby={labelId}
+          checked={reminders.length > 0}
+          disabled={readOnly}
+          on:change={(event) => toggleReminders(event.detail)}
+        />
+      </SettingRow>
+      <SettingRow label={calendar.string.ReminderTime}>
+        <div class="eventPopup-field">
+          <MenuButton
+            kind="secondary"
+            size="medium"
+            icon={ui.icon.Plus}
+            label={calendar.string.AddReminder}
+            items={reminderItems}
+            selected={reminders}
+            multiselect
+            disabled={readOnly || reminders.length === 0}
+            on:selected={(event) => (reminders = [...event.detail].sort((a, b) => a - b))}
+          />
+        </div>
+        <svelte:fragment slot="details">
+          {#each pickedReminders as item (item.id)}
+            <Chip
+              label={item.label}
+              labelParams={item.labelParams}
+              kind="neutral"
+              size="small"
+              removable={!readOnly}
+              on:remove={() => (reminders = reminders.filter((id) => id !== item.id))}
+            />
+          {/each}
+          {#if reminders.length === 0}
+            <span class="eventPopup-note"><Label label={calendar.string.NoReminders} /></span>
+          {/if}
+        </svelte:fragment>
+      </SettingRow>
+    </Section>
   </div>
-</div>
+</Dialog>
 
 <style lang="scss">
-  .eventPopup-container {
+  // The card itself is the kit dialog; these are the blocks inside its body.
+  .eventPopup-body {
     display: flex;
     flex-direction: column;
-    max-width: 40rem;
-    min-width: 25rem;
+    gap: var(--spacing-2);
+    min-width: 0;
     min-height: 0;
-    background: var(--theme-popup-color);
-    border-radius: 1rem;
-    box-shadow: var(--theme-popup-shadow);
+  }
 
-    .header {
-      flex-shrink: 0;
-      padding: 0.75rem 0.75rem 0.5rem;
-    }
+  // The sentence about when the event happens, above the fields that set it.
+  .eventPopup-summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacing-1);
+    margin: 0;
+    font-size: 0.8125rem;
+    line-height: 1.125rem;
+    color: var(--global-secondary-TextColor);
+  }
 
-    .block {
-      display: flex;
-      flex-shrink: 0;
-      padding: 0.75rem 1.25rem;
+  .eventPopup-sep {
+    color: var(--global-secondary-TextColor);
+  }
+
+  // The two ends of the event share the row of the date field.
+  .eventPopup-range {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-1_5);
+    width: 100%;
+    min-width: 0;
+
+    :global(.date-select) {
+      flex: 1 1 0;
       min-width: 0;
+    }
+  }
+
+  .eventPopup-dash {
+    flex-shrink: 0;
+    color: var(--global-secondary-TextColor);
+  }
+
+  // A control of a row: it keeps the right edge of the row.
+  .eventPopup-field {
+    display: flex;
+    justify-content: flex-end;
+    width: 12rem;
+    min-width: 0;
+
+    &--wide {
+      width: 100%;
+    }
+  }
+
+  .eventPopup-description {
+    min-width: 0;
+    padding-top: var(--spacing-0_5);
+
+    // A read-only description is a text, not a field: it loses the editor's empty box.
+    &--readonly {
       min-height: 0;
-
-      &:not(:last-child) {
-        border-bottom: 1px solid var(--theme-divider-color);
-      }
-      &:not(.description) {
-        flex-direction: column;
-      }
-      &.first {
-        padding-top: 0;
-      }
-      &:not(.rightCropPadding) {
-        padding: 0.75rem 1.25rem;
-      }
-      &.rightCropPadding {
-        padding: 0.75rem 1rem 0.75rem 1.25rem;
-      }
-      &.description {
-        padding: 0 1.25rem;
-        min-height: 2.625rem;
-      }
     }
-    .top-icon {
-      flex-shrink: 0;
-      margin-top: 1.375rem;
-      margin-right: 0.25rem;
+  }
 
-      &.disabled {
-        margin-top: 0.875rem;
-      }
-    }
+  // A muted line where the row has nothing to show.
+  .eventPopup-note {
+    font-size: 0.75rem;
+    line-height: 1rem;
+    color: var(--global-secondary-TextColor);
   }
 </style>

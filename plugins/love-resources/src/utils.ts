@@ -464,6 +464,17 @@ export async function getEventMeetingLink (eventId: string, kind: MeetingLinkKin
   }
 }
 
+/**
+ * The guest link with the password in it. The password travels as a query parameter: the guest page
+ * reads it and fills its own field, while a bare "link + password" text is not a link at all once
+ * pasted into a chat.
+ */
+export function withPassword (link: string, password: string): string {
+  const url = new URL(link)
+  url.searchParams.set('password', password)
+  return url.toString()
+}
+
 async function getMeetingGuestLink (mm: MeetingMinutes): Promise<string> {
   try {
     const shortIdOrToken = await getLoveClient().getGuestToken(mm)

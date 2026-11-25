@@ -22,10 +22,10 @@
   import { LIVE_MEETING_STATUSES, meetingMasterQuery } from '@hcengineering/love'
   // Icons come off the default export: `@hcengineering/ui` exports no `Icon<Name>` components, so a
   // named import is `undefined` and the button renders empty.
-  import ui, { Icon, Label, eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  import ui, { Label, eventToHTMLElement, showPopup } from '@hcengineering/ui'
   // The kit, not the legacy barrel: `x-small` is not a kit size, and mixing the two buttons in one row
   // left the primary action a different height from the icon button next to it.
-  import { Button, IconButton } from '@hcengineering/ui/kit'
+  import { Button, Section, SettingRow } from '@hcengineering/ui/kit'
   import MeetingMinutesStatusPresenter from './MeetingMinutesStatusPresenter.svelte'
   import PermanentMeetingPresenter from './PermanentMeetingPresenter.svelte'
   import RoomPresenter from './RoomPresenter.svelte'
@@ -154,91 +154,124 @@
 </script>
 
 {#if meeting !== undefined}
-  <!-- One row with a single gap, no per-child margins: the label, the room and the actions keep the
-       same 8px rhythm at any width, and the actions never squeeze the primary button into its label. -->
-  <div class="meeting-row flex-row-center mt-2">
-    <div class="flex-row-center gap-2 shrink-0">
-      <Icon icon={love.icon.MeetingMinutes} size="small" />
-      <Label label={love.string.Meeting} />
-    </div>
+  <!-- A section of the event card, not a lone row: the card groups its rows, and the meeting is
+       one of its subjects rather than a field of the event. -->
+  <Section label={love.string.Meeting} icon={love.icon.MeetingMinutes} level={3}>
     <!-- The room the meeting takes place in. A live session is shown as the session card, a room as
          a link into the room card - the same drill-down the session row has. A permanent meeting has
          no room at all: its own card is shown instead, and a roomless one-off event says where it
          runs and still offers to pick a room. -->
-    <div class="room flex-grow">
-      {#if meetingDoc !== undefined}
-        <ObjectPresenter
-          shouldShowAvatar={false}
-          objectId={meetingDoc._id}
-          _class={meetingDoc._class}
-          value={meetingDoc}
-        />
-      {:else if permanentDoc !== undefined}
-        <PermanentMeetingPresenter value={permanentDoc} accent noUnderline />
-      {:else if roomDoc !== undefined}
-        <RoomPresenter value={roomDoc} accent />
-      {:else if !isPermanent}
-        {#if readOnly}
-          <span class="text-sm content-color"><Label label={love.string.MeetingRunsInServiceRoom} /></span>
-        {:else}
-          <RoomSelector
-            value={meeting?.room}
-            on:change={(ev) => {
-              void changeRoom(ev.detail)
-            }}
+    <SettingRow label={love.string.MeetingRoom}>
+      <div class="meeting-value">
+        {#if meetingDoc !== undefined}
+          <ObjectPresenter
+            shouldShowAvatar={false}
+            objectId={meetingDoc._id}
+            _class={meetingDoc._class}
+            value={meetingDoc}
           />
+        {:else if permanentDoc !== undefined}
+          <PermanentMeetingPresenter value={permanentDoc} accent noUnderline />
+        {:else if roomDoc !== undefined}
+          <RoomPresenter value={roomDoc} accent />
+        {:else if !isPermanent}
+          {#if readOnly}
+            <span class="meeting-note"><Label label={love.string.MeetingRunsInServiceRoom} /></span>
+          {:else}
+            <div class="meeting-field">
+              <RoomSelector
+                value={meeting?.room}
+                on:change={(ev) => {
+                  void changeRoom(ev.detail)
+                }}
+              />
+            </div>
+          {/if}
         {/if}
-      {/if}
-    </div>
-    <div class="actions flex-row-center gap-2 shrink-0">
-      {#if meetingDoc !== undefined}
-        <MeetingMinutesStatusPresenter object={meetingDoc} value={meetingDoc.status} attributeKey="status" />
-      {/if}
-      {#if !readOnly}
-        <IconButton
-          icon={ui.icon.Gear}
-          size="small"
-          kind="tertiary"
-          tooltip={{ label: love.string.MeetingLinkSettings }}
-          on:click={(e) => {
-            showPopup(MeetingLinkPopup, { event: _value }, eventToHTMLElement(e))
-          }}
-        />
-      {/if}
-      <!-- A running session is entered directly: the room is already open, there is nothing to start. -->
-      {#if meetingDoc !== undefined && isPermanent}
-        <Button
-          kind="secondary"
-          label={love.string.JoinAsParticipant}
-          size="small"
-          loading={joining}
-          on:click={joinCurrent}
-        />
-      {/if}
-      <!-- Any participant may start a scheduled meeting, not only its owner; a permanent one is
-           always open, so its action is joining it rather than starting it. -->
-      {#if meetingDoc !== undefined}
-        <Button kind="negative" label={love.string.EndMeeting} size="small" on:click={closeMeeting} />
-      {:else if isPermanent}
-        <Button kind="primary" label={love.string.JoinMeeting} size="small" on:click={openMeeting} />
-      {:else}
-        <Button kind="primary" label={love.string.StartMeeting} size="small" on:click={openMeeting} />
-      {/if}
-    </div>
-  </div>
+      </div>
+      <!-- The actions sit on a line of their own under the field, as the card's other rows do:
+           inline with the value they squeezed the primary button into its label. -->
+      <svelte:fragment slot="details">
+        <div class="meeting-actions">
+          {#if meetingDoc !== undefined}
+            <MeetingMinutesStatusPresenter object={meetingDoc} value={meetingDoc.status} attributeKey="status" />
+          {/if}
+          {#if !readOnly}
+            <Button
+              kind="secondary"
+              size="small"
+              icon={ui.icon.Gear}
+              label={love.string.MeetingLinkSettings}
+              on:click={(e) => {
+                showPopup(MeetingLinkPopup, { event: _value }, eventToHTMLElement(e))
+              }}
+            />
+          {/if}
+          <!-- A running session is entered directly: the room is already open, there is nothing to start. -->
+          {#if meetingDoc !== undefined && isPermanent}
+            <Button
+              kind="secondary"
+              label={love.string.JoinAsParticipant}
+              size="small"
+              icon={ui.icon.Play}
+              loading={joining}
+              on:click={joinCurrent}
+            />
+          {/if}
+          <!-- Any participant may start a scheduled meeting, not only its owner; a permanent one is
+               always open, so its action is joining it rather than starting it. The row spends one
+               emphasis level only: the filled button of the card is its own submit. -->
+          {#if meetingDoc !== undefined}
+            <Button kind="negative-ghost" label={love.string.EndMeeting} size="small" on:click={closeMeeting} />
+          {:else if isPermanent}
+            <Button
+              kind="secondary"
+              label={love.string.JoinMeeting}
+              size="small"
+              icon={ui.icon.Play}
+              on:click={openMeeting}
+            />
+          {:else}
+            <Button
+              kind="secondary"
+              label={love.string.StartMeeting}
+              size="small"
+              icon={ui.icon.Play}
+              on:click={openMeeting}
+            />
+          {/if}
+        </div>
+      </svelte:fragment>
+    </SettingRow>
+  </Section>
 {/if}
 
 <style lang="scss">
-  .meeting-row {
-    gap: 0.5rem;
+  .meeting-value {
+    display: flex;
+    justify-content: flex-end;
     min-width: 0;
   }
 
-  .room {
+  // The control keeps the right edge of the row, as the other fields of the card do.
+  .meeting-field {
+    display: flex;
+    justify-content: flex-end;
+    width: 12rem;
     min-width: 0;
   }
 
-  .actions {
-    margin-left: auto;
+  .meeting-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacing-1);
+    padding-top: var(--spacing-1);
+  }
+
+  .meeting-note {
+    font-size: 0.75rem;
+    line-height: 1rem;
+    color: var(--global-secondary-TextColor);
   }
 </style>
