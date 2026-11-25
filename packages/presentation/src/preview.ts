@@ -105,6 +105,7 @@ function blobToSrcSet (blob: Ref<Blob>, width: number | undefined, height: numbe
 }
 
 export function getPreviewThumbnail (file: string, width: number, height: number, dpr?: number): string {
+  if (isPublicFileAccess()) return getFileUrl(file)
   return getImagePreviewUrl(
     encodeURIComponent(getCurrentWorkspaceUuid()),
     encodeURIComponent(file),

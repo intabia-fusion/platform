@@ -86,8 +86,8 @@ export function getFileUrl (file: string, filename?: string): string {
   if (isPublicFileAccess()) {
     const linkId = decodeTokenPayload(getToken()).extra.linkId
     return (
-      `${publicFilePath(workspace, linkId)}${encodeURIComponent(file)}` +
-      (filename === undefined ? '' : `?filename=${encodeURIComponent(filename)}`)
+      `${publicFilePath(workspace, linkId, getMetadata(plugin.metadata.DatalakeUrl) ?? '/_datalake')}${encodeURIComponent(file)}` +
+      (filename === undefined || filename === '' ? '' : `/${encodeURIComponent(filename)}`)
     )
   }
 

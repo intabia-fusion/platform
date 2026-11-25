@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -27,6 +28,7 @@ import morgan from 'morgan'
 import onHeaders from 'on-headers'
 
 import { publicFileAccessRouter } from './handlers/publicFileAccess'
+import { publicBlobRouter } from './handlers/publicBlob'
 import { cacheControl } from './const'
 import { createDb } from './datalake/db'
 import { ApiError } from './error'
@@ -169,6 +171,7 @@ export async function createServer (
   }
 
   app.use('/internal/public-links', publicFileAccessRouter(db.publicFileAccess))
+  app.use('/blob/public', publicBlobRouter(ctx, datalake, db.publicFileAccess))
 
   app.post('/admin/storage/cleanup', withSystemAuthorization, (_req, res, next) => {
     void cleanupDatalake(ctx, db, buckets)

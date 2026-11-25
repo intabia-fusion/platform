@@ -1146,6 +1146,17 @@ export function setPresentationCookie (token: string, workspaceUuid: WorkspaceUu
   const cookieName = encodeURIComponent(plugin.metadata.Token.replaceAll(':', '-'))
   const cookieValue = encodeURIComponent(token)
 
+  const extra = token === '' ? undefined : decodeTokenPayload(token).extra
+  if (extra?.guest === 'true' && typeof extra.linkId === 'string') {
+    setPublicFileCookie(
+      cookieValue,
+      workspaceUuid,
+      extra.linkId,
+      getMetadata(plugin.metadata.DatalakeUrl) ?? '/_datalake'
+    )
+    return
+  }
+
   const storage = getMetadata(plugin.metadata.FileStorage)
   if (storage !== undefined) {
     let path = `/files/${workspaceUuid}`
@@ -1155,10 +1166,6 @@ export function setPresentationCookie (token: string, workspaceUuid: WorkspaceUu
 
     const normalized = path.startsWith('/') ? path : `/${path}`
     document.cookie = `${cookieName}=${cookieValue}; path=${normalized}`
-    const extra = decodeTokenPayload(token).extra
-    if (extra?.guest === 'true' && typeof extra.linkId === 'string') {
-      setPublicFileCookie(cookieName, cookieValue, workspaceUuid, extra.linkId)
-    }
   }
 }
 

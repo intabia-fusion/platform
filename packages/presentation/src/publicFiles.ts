@@ -14,10 +14,21 @@
 //
 
 /** The trailing slash keeps link paths disjoint even when one id is a prefix of another. */
-export function publicFilePath (workspace: string, linkId: string): string {
-  return `/files/public/${encodeURIComponent(workspace)}/${encodeURIComponent(linkId)}/`
+export function publicFilePath (workspace: string, linkId: string, datalakeUrl = '/_datalake'): string {
+  const base = datalakeUrl === '' ? '/_datalake' : datalakeUrl
+  return `${base.replace(/\/+$/, '')}/blob/public/${encodeURIComponent(workspace)}/${encodeURIComponent(linkId)}/`
 }
 
-export function setPublicFileCookie (cookieName: string, cookieValue: string, workspace: string, linkId: string): void {
-  document.cookie = `${cookieName}=${cookieValue}; path=${publicFilePath(workspace, linkId)}; SameSite=Lax`
+export function setPublicFileCookie (
+  cookieValue: string,
+  workspace: string,
+  linkId: string,
+  datalakeUrl = '/_datalake'
+): void {
+  const url = new URL(publicFilePath(workspace, linkId, datalakeUrl), window.location.href)
+  if (url.hostname !== window.location.hostname || url.protocol !== window.location.protocol) {
+    throw new Error('Public files require a Datalake URL on the frontend hostname and protocol')
+  }
+  const secure = url.protocol === 'https:' ? '; Secure' : ''
+  document.cookie = `public-file-token=${cookieValue}; path=${url.pathname}; SameSite=Lax${secure}`
 }
