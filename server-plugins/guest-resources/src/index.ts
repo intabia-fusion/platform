@@ -124,3 +124,5 @@ export default async () => ({
     OnPublicLinkCreate
   }
 })
+
+export { collectPublicFiles } from './publicFiles'
