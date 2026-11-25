@@ -189,6 +189,27 @@ test.describe('ai-bot scenarios', () => {
     await expect(issuesPage.inputPopupCreateNewIssueTitle()).toHaveValue(drafted, { timeout: 30000 })
   })
 
+  test('assistant panel left untouched leaves no thread mention on the created issue', async ({ page }) => {
+    const issuesPage = new IssuesPage(page)
+    const issueTitle = `Issue without assist ${generateId()}`
+
+    await openDefaultProject(page)
+    await issuesPage.clickButtonCreateNewIssue()
+
+    await page.locator('[data-id="btnIssueAssist"]').click()
+    const panel = page.locator('.assist')
+    // The input shows up once the draft thread exists - the state the issue must not inherit.
+    await expect(panel.locator('div.text-editor-view')).toBeVisible({ timeout: BOT_REPLY_TIMEOUT })
+
+    await issuesPage.fillNewIssueForm({ title: issueTitle, description: 'no assistant used' })
+    await issuesPage.clickButtonCreateIssue()
+
+    await issuesPage.searchIssueByName(issueTitle)
+    await issuesPage.openIssueByName(issueTitle)
+    await expect(page.locator('.activityMessage').first()).toBeVisible({ timeout: 30000 })
+    await expect(page.locator('.activityMessage', { hasText: /mentioned/i })).toHaveCount(0)
+  })
+
   test('project picked on the proposal card survives a reload', async ({ page }) => {
     const projectId = generateProjectId()
     const target: NewProject = { title: `AiTarget-${projectId}`, identifier: projectId }
