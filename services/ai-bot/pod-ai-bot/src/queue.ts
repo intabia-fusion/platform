@@ -657,6 +657,10 @@ export const startQueue = async (): Promise<void> => {
 /** event-router role: routes ai-queue -> llm-<id> (+ stt ingest). */
 export const startEventRouterMode = async (): Promise<void> => {
   const boot = await bootstrap('event-router')
+  // The REST API lives on this pod (ingress /_ai), and /events and /translate need a provider.
+  // Without it a split deployment answers 500 "LLM provider not configured" while the all-in-one
+  // role works. No ClisrServer here: a clisr provider is skipped, as on an llm-router without one.
+  boot.aiControl.initLLM()
   startWorkspaceConsumer(boot)
   await startSttIngest(boot)
   await startEventRouter(boot)
