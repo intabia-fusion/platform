@@ -156,3 +156,23 @@ it('recomputes after additions and removals without changing the supplied docume
   expect(files).not.toContain('inline-image')
   expect(files).not.toContain('emoji')
 })
+
+it('drops an unreferenced image embedding but retains an embedded PDF attachment', async () => {
+  const { client, doc, load, findAll } = fixture()
+  const original = findAll.getMockImplementation()
+  findAll.mockImplementation(async (clazz: string, query: any) => {
+    const found = await original(clazz, query)
+    return clazz !== attachment
+      ? found
+      : [
+          ...found,
+          { _class: 'attachment:class:Embedding', type: 'image/png', file: 'inline-image' },
+          { _class: 'attachment:class:Embedding', type: 'application/pdf', file: 'embedded-pdf' }
+        ]
+  })
+  expect(await collectPublicFiles(client, doc, load)).toContain('inline-image')
+  doc.text = JSON.stringify({ type: 'doc', content: [] })
+  const files = await collectPublicFiles(client, doc, load)
+  expect(files).not.toContain('inline-image')
+  expect(files).toContain('embedded-pdf')
+})

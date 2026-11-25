@@ -76,6 +76,24 @@ export class PublicFileAccess {
     })
   }
 
+  async state (workspace: string, linkId: string): Promise<{ revision: number, revoked: boolean, blobs: string[] }> {
+    const [row] = await this.sql`SELECT l.revision, l.revoked,
+      COALESCE(array_agg(f.blob_id ORDER BY f.blob_id) FILTER (WHERE f.blob_id IS NOT NULL), ARRAY[]::varchar[]) AS blobs
+      FROM blob.public_link l LEFT JOIN blob.public_link_file f
+      ON l.workspace = f.workspace AND l.link_id = f.link_id
+      WHERE l.workspace = ${workspace} AND l.link_id = ${linkId}
+      GROUP BY l.revision, l.revoked`
+    return row === undefined
+      ? { revision: 0, revoked: false, blobs: [] }
+      : { revision: Number(row.revision), revoked: row.revoked, blobs: row.blobs }
+  }
+
+  async activeLinks (workspace: string, after: string): Promise<string[]> {
+    const rows = await this.sql`SELECT link_id FROM blob.public_link
+      WHERE workspace = ${workspace} AND NOT revoked AND link_id > ${after} ORDER BY link_id LIMIT 10`
+    return rows.map((row) => row.link_id as string)
+  }
+
   async canRead (workspace: string, linkId: string, blobId: string): Promise<boolean> {
     const rows = await this.sql`SELECT 1 FROM blob.public_link_file f JOIN blob.public_link l
       ON l.workspace = f.workspace AND l.link_id = f.link_id

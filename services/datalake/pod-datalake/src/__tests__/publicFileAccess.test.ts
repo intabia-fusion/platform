@@ -21,6 +21,8 @@ import { publicFileAccessRouter } from '../handlers/publicFileAccess'
 import { type PublicFileAccess } from '../datalake/publicFileAccess'
 
 const registry = {
+  state: jest.fn(async () => ({ revision: 1, revoked: false, blobs: ['file'] })),
+  activeLinks: jest.fn(async () => ['link']),
   replace: jest.fn(async () => {}),
   revoke: jest.fn(async () => {}),
   canRead: jest.fn(async () => true)
@@ -78,4 +80,11 @@ it('accepts only validated publisher requests', async () => {
   expect((await fetch(base + path, { method: 'DELETE', headers, body: JSON.stringify({ revision: 2 }) })).status).toBe(
     204
   )
+})
+
+it('exposes state and bounded active-link pages to the publisher only', async () => {
+  const headers = { authorization: `Bearer ${service}` }
+  expect(await (await fetch(base + path, { headers })).json()).toEqual({ revision: 1, revoked: false, blobs: ['file'] })
+  expect(await (await fetch(base + path.split('/link')[0], { headers })).json()).toEqual(['link'])
+  expect((await fetch(base + '/not-a-workspace/link', { headers })).status).toBe(400)
 })

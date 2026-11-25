@@ -79,6 +79,10 @@ export async function getPublicLink (
   const space = getPublicLinkSpace(client.getHierarchy(), doc)
   const current = await client.findOne(guest.class.PublicLink, { attachedTo: doc._id, space })
   if (current !== undefined) {
+    if ((current as PublicLink & { publicFileSyncPending?: boolean }).publicFileSyncPending === true) {
+      // Retry an interrupted publication through the same guarded pipeline before returning its URL.
+      await client.update(current, { revokable: current.revokable })
+    }
     if (!revokable && current.revokable) {
       await client.update(current, { revokable: false })
     }
@@ -126,3 +130,5 @@ export default async () => ({
 })
 
 export { collectPublicFiles } from './publicFiles'
+
+export { PublicFileMiddleware } from './publicFileMiddleware'

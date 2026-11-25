@@ -79,6 +79,18 @@ export async function collectPublicFiles (
       attachedToClass: { $in: h.getAncestors(doc._class) }
     } as any)
     for (const child of attached) {
+      const embedding = 'attachment:class:Embedding' as Ref<Class<Doc>>
+      const contentType = valueOf(child, 'type')
+      if (
+        typeof contentType === 'string' &&
+        contentType.startsWith('image/') &&
+        h.hasClass(embedding) &&
+        h.isDerived(child._class, embedding)
+      ) {
+        continue
+      }
+      // Image embeddings are allowed only while referenced in the text. Non-image
+      // embeddings remain direct files (e.g. an uploaded PDF block).
       for (const name of names) add(valueOf(child, name))
     }
   }

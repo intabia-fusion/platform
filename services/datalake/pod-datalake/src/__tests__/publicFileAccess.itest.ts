@@ -87,3 +87,15 @@ it('revokes permanently even when a newer publication arrives before the revoke'
   await expect(access.replace(ws, 'a', 6, ['file'])).rejects.toThrow()
   await access.revoke(ws, 'a', 1)
 })
+
+it('reads a consistent state and pages active links without revoked rows', async () => {
+  expect(await access.state(ws, 'missing')).toEqual({ revision: 0, revoked: false, blobs: [] })
+  for (let i = 0; i < 12; i++) await access.replace(ws, `link-${String(i).padStart(2, '0')}`, 1, ['file'])
+  await access.revoke(ws, 'link-01', 2)
+  const first = await access.activeLinks(ws, '')
+  expect(first).toHaveLength(10)
+  expect(first).not.toContain('link-01')
+  expect(await access.activeLinks(ws, first[first.length - 1])).toEqual(['link-11'])
+  expect(await access.state(ws, 'link-00')).toEqual({ revision: 1, revoked: false, blobs: ['file'] })
+  expect(await access.state(ws, 'link-01')).toEqual({ revision: 2, revoked: true, blobs: [] })
+})

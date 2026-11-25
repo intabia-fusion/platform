@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/unbound-method */
+import { PublicFileMiddleware } from '@hcengineering/server-guest-resources'
 import card from '@hcengineering/card'
 import {
   DOMAIN_BENCHMARK,
@@ -146,6 +147,7 @@ export function createServerPipeline (
     fulltextUrl?: string
     disableTriggers?: boolean
     usePassedCtx?: boolean
+    publicFileAccessUrl?: string
     externalStorage: StorageAdapter
 
     queue?: PlatformQueue
@@ -200,6 +202,9 @@ export function createServerPipeline (
       ChunterMiddleware.create,
       NotificationMiddleware.create,
       ActivityMiddleware.create,
+      ...(opt.publicFileAccessUrl === undefined || opt.publicFileAccessUrl === ''
+        ? []
+        : [PublicFileMiddleware.create(opt.publicFileAccessUrl)]),
       TxMiddleware.create, // Store tx into transaction domain
       ...(opt.disableTriggers === true ? [] : [TriggersMiddleware.create]),
       ...(opt.fulltextUrl !== undefined
@@ -309,6 +314,7 @@ export async function getServerPipeline (
   wsUrl: WorkspaceIds,
   storageAdapter: StorageAdapter,
   opt?: {
+    publicFileAccessUrl?: string
     queue?: PlatformQueue
     disableTriggers?: boolean
   }
@@ -317,7 +323,8 @@ export async function getServerPipeline (
     externalStorage: storageAdapter,
     usePassedCtx: true,
     disableTriggers: opt?.disableTriggers ?? false,
-    queue: opt?.queue
+    queue: opt?.queue,
+    publicFileAccessUrl: opt?.publicFileAccessUrl
   })
 
   return await pipelineFactory(ctx, wsUrl, createEmptyBroadcastOps(), null)

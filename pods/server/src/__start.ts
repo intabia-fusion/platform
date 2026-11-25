@@ -1,5 +1,6 @@
 //
 // Copyright © 2023 Hardcore Engineering Inc
+// Copyright © 2026 Intabia Fusion.
 //
 
 // Add this to the VERY top of the first file loaded in your app
@@ -89,6 +90,7 @@ console.log(`Started with branding: ${JSON.stringify(brandingMap, null, 2)}`)
 const { shutdown, sessionManager } = start(metricsContext, config.dbUrl, {
   fulltextUrl: config.fulltextUrl,
   storageConfig,
+  publicFileAccessUrl: process.env.PUBLIC_FILE_ACCESS_URL,
   port: config.serverPort,
   brandingMap,
   accountsUrl: config.accountsUrl,

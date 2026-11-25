@@ -44,6 +44,23 @@ export function publicFileAccessRouter (registry: PublicFileAccess): Router {
     }
     next()
   })
+  router.get('/:workspace', (req, res, next) => {
+    const after = req.query.after ?? ''
+    if (!validate(req.params.workspace) || typeof after !== 'string' || after.length > 255) {
+      next(new ApiError(400, 'Invalid cursor or workspace'))
+      return
+    }
+    void registry
+      .activeLinks(req.params.workspace, after)
+      .then((links) => res.json(links))
+      .catch(next)
+  })
+  router.get('/:workspace/:linkId', (req, res, next) => {
+    void registry
+      .state(req.params.workspace, req.params.linkId)
+      .then((state) => res.json(state))
+      .catch(next)
+  })
   router.put('/:workspace/:linkId', (req, res, next) => {
     const { revision, blobs } = req.body ?? {}
     if (!Array.isArray(blobs) || blobs.length > 10000 || !blobs.every(validName)) {

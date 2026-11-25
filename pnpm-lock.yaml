@@ -35041,6 +35041,9 @@ importers:
       '@hcengineering/core':
         specifier: workspace:^0.7.24
         version: link:../../foundations/core/packages/core
+      '@hcengineering/datalake':
+        specifier: workspace:^0.7.17
+        version: link:../../foundations/server/packages/datalake
       '@hcengineering/guest':
         specifier: workspace:^0.7.0
         version: link:../../plugins/guest
@@ -35066,6 +35069,9 @@ importers:
       '@types/jest':
         specifier: 'catalog:'
         version: 29.5.14
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.13.3
       '@typescript-eslint/eslint-plugin':
         specifier: 'catalog:'
         version: 8.70.0(@typescript-eslint/parser@8.70.0(eslint@8.57.1(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3))(eslint@8.57.1(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3)
@@ -38864,6 +38870,9 @@ importers:
         specifier: workspace:^0.7.0
         version: link:../../plugins/workflow-assets
     devDependencies:
+      '@hcengineering/datalake':
+        specifier: workspace:^0.7.17
+        version: link:../../foundations/server/packages/datalake
       '@hcengineering/model-all':
         specifier: workspace:^0.7.0
         version: link:../../models/all
