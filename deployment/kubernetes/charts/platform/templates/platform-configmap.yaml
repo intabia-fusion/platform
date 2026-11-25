@@ -35,6 +35,9 @@ data:
 {{- $kafkaBootstrap := .Values.config.kafkaBootstrapServers | default (get $base "KAFKA_BOOTSTRAP") | default (first (splitList ";" $queueConfig)) }}
 {{- $livekitWs := .Values.config.livekitWs }}
 {{- $livekitHost := .Values.config.livekitHost }}
+{{- if and (not $livekitWs) .Values.config.livekitPath }}
+  {{- $livekitWs = printf "wss://%s%s" (include "platform.publicHost" .) .Values.config.livekitPath }}
+{{- end }}
 {{- if not $livekitWs }}
   {{- $lkHost := get $base "LIVEKIT_PUBLIC_HOST" }}
   {{- if $lkHost }}

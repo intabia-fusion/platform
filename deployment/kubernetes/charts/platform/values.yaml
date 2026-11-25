@@ -72,6 +72,10 @@ config:
   livekitWs: "wss://lkiturl"
   livekitHost: "" # internal LiveKit URL for love/agents; empty = livekitWs
   livekitProject: "prj"
+  # Path on the stand host that proxies LiveKit signaling to livekit-api (Traefik stripPrefix).
+  # Empty = no route; livekitWs then points at the dedicated LiveKit host. Set it when that host
+  # has no certificate the browser trusts: the stand host is already open in the tab.
+  livekitPath: ""
   sttProvider: "openai"
   sttModel: "whisper-v3-large"
   yandexMetricaId: null
