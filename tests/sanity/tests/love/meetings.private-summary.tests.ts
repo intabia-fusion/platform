@@ -40,7 +40,7 @@ async function getThirdUserToken (): Promise<string> {
 }
 
 async function summarize (token: string, meetingId: Ref<MeetingMinutes>): Promise<number> {
-  const res = await fetch(`${baseUrl()}/_aibot/summarize`, {
+  const res = await fetch(`${baseUrl()}/_ai/summarize`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ target: meetingId, targetClass: love.class.MeetingMinutes, lang: 'en' })
