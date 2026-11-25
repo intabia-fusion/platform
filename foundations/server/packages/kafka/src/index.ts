@@ -58,20 +58,20 @@ function firstFetchDone (cc: Consumer): Promise<void> {
 const CRASH_RESTART_DELAY = 5000
 const MAX_CRASH_RESTART_DELAY = 60000
 
+/** Schedules a restart of a consumer that stopped; returns a trigger for a failed initial start. */
 export function installCrashRestart (
   ctx: MeasureContext,
   cc: Consumer,
   restart: () => Promise<void>,
   isClosed: () => boolean,
   delayMs: number = CRASH_RESTART_DELAY
-): void {
+): () => void {
   // A caller-supplied 0/NaN would turn the loop into a tight spin
   const baseDelay = Number.isFinite(delayMs) && delayMs > 0 ? delayMs : CRASH_RESTART_DELAY
   let restarting = false
-  cc.on(cc.events.CRASH, (event: any) => {
-    if (event?.payload?.restart === true || restarting || isClosed()) return
+  const trigger = (): void => {
+    if (restarting || isClosed()) return
     restarting = true
-    ctx.warn('consumer crashed unrecoverably, restarting', { err: event?.payload?.error })
     void (async () => {
       let delay = baseDelay
       while (!isClosed()) {
@@ -92,7 +92,13 @@ export function installCrashRestart (
       }
       restarting = false
     })()
+  }
+  cc.on(cc.events.CRASH, (event: any) => {
+    if (event?.payload?.restart === true) return
+    ctx.warn('consumer crashed unrecoverably, restarting', { err: event?.payload?.error })
+    trigger()
   })
+  return trigger
 }
 
 // Kafka unreachable for this long (including the very first connect) means the pod is useless:
@@ -469,10 +475,17 @@ class PlatformQueueConsumerImpl implements ConsumerHandle {
       allowAutoTopicCreation: true
     })
     this.ready = firstFetchDone(this.cc)
-    this.installListeners(this.options?.crashRestartDelay, this.options?.deadTimeout, this.options?.onDead)
+    const restart = this.installListeners(
+      this.options?.crashRestartDelay,
+      this.options?.deadTimeout,
+      this.options?.onDead
+    )
 
     void this.start().catch((err) => {
-      ctx.error('failed to consume', { err })
+      // run() rejects as a whole when the group cannot be joined, e.g. the topic is not created
+      // yet on a fresh broker. Without a restart the pod stays up with a consumer that never reads.
+      ctx.error('failed to consume, restarting', { err })
+      restart()
     })
   }
 
@@ -532,7 +545,7 @@ class PlatformQueueConsumerImpl implements ConsumerHandle {
     })
   }
 
-  private installListeners (delayMs?: number, deadTimeout?: number, onDead?: () => void): void {
+  private installListeners (delayMs?: number, deadTimeout?: number, onDead?: () => void): () => void {
     this.cc.on(this.cc.events.CONNECT, () => {
       this.connected = true
       this.ctx.info('consumer connected to queue')
@@ -541,7 +554,7 @@ class PlatformQueueConsumerImpl implements ConsumerHandle {
       this.connected = false
       this.ctx.warn('consumer disconnected from queue')
     })
-    installCrashRestart(
+    const restart = installCrashRestart(
       this.ctx,
       this.cc,
       () => this.start(),
@@ -549,6 +562,7 @@ class PlatformQueueConsumerImpl implements ConsumerHandle {
       delayMs
     )
     installDeadWatchdog(this.ctx, this.cc, () => this.closed, deadTimeout, onDead)
+    return restart
   }
 
   async doConnect (): Promise<void> {
@@ -624,10 +638,17 @@ class PlatformQueueBatchConsumerImpl implements ConsumerHandle {
       allowAutoTopicCreation: true
     })
     this.ready = firstFetchDone(this.cc)
-    this.installListeners(this.options?.crashRestartDelay, this.options?.deadTimeout, this.options?.onDead)
+    const restart = this.installListeners(
+      this.options?.crashRestartDelay,
+      this.options?.deadTimeout,
+      this.options?.onDead
+    )
 
     void this.start().catch((err) => {
-      ctx.error('failed to consume', { err })
+      // run() rejects as a whole when the group cannot be joined, e.g. the topic is not created
+      // yet on a fresh broker. Without a restart the pod stays up with a consumer that never reads.
+      ctx.error('failed to consume, restarting', { err })
+      restart()
     })
   }
 
@@ -728,7 +749,7 @@ class PlatformQueueBatchConsumerImpl implements ConsumerHandle {
     })
   }
 
-  private installListeners (delayMs?: number, deadTimeout?: number, onDead?: () => void): void {
+  private installListeners (delayMs?: number, deadTimeout?: number, onDead?: () => void): () => void {
     this.cc.on(this.cc.events.CONNECT, () => {
       this.connected = true
       this.ctx.info('consumer connected to queue')
@@ -737,7 +758,7 @@ class PlatformQueueBatchConsumerImpl implements ConsumerHandle {
       this.connected = false
       this.ctx.warn('consumer disconnected from queue')
     })
-    installCrashRestart(
+    const restart = installCrashRestart(
       this.ctx,
       this.cc,
       () => this.start(),
@@ -745,6 +766,7 @@ class PlatformQueueBatchConsumerImpl implements ConsumerHandle {
       delayMs
     )
     installDeadWatchdog(this.ctx, this.cc, () => this.closed, deadTimeout, onDead)
+    return restart
   }
 
   async doConnect (): Promise<void> {
