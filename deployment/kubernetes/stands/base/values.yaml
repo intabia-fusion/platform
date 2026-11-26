@@ -2,11 +2,13 @@
 # in the chart values (kept in sync with cluster/versions.env), images come from public registries.
 postgres:
   storage: 2Gi
-  # Two instances (primary + replica): 128Mi/512Mi each keeps the pair at the memory the old
-  # single instance used at 256Mi/1024Mi.
+  # The primary takes every write and the replica mostly replays WAL, so splitting the old
+  # single-instance memory in half OOMKilled the primary 14 minutes into a 5-worker sanity run
+  # (liveness timeouts, failover, pgbouncer CONNECTION_CLOSED, billing 500s). Each pod keeps a
+  # full 1Gi.
   resources:
-    requests: { memory: 128Mi, cpu: 50m }
-    limits: { memory: 512Mi }
+    requests: { memory: 256Mi, cpu: 100m }
+    limits: { memory: 1Gi }
 pgbouncer:
   # Same shape as prod: a 30-connection pool per database in front of a Postgres
   # with a much larger limit. The pool, not the server, is what bounds load.
