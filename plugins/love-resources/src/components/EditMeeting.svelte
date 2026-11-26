@@ -853,8 +853,8 @@
                   focusable
                   fullSize
                   autoFocus
-                  on:ref={(event) => addParticipant(event.detail)}
-                  on:enter={(event) => addGuestEmail(event.detail)}
+                  on:ref={(event) => { addParticipant(event.detail) }}
+                  on:enter={(event) => { addGuestEmail(event.detail) }}
                 />
               </div>
             </div>
@@ -882,7 +882,7 @@
                 icon={mark?.icon}
                 size="small"
                 removable={canEdit}
-                on:remove={() => removeParticipant(item.id)}
+                on:remove={() => { removeParticipant(item.id) }}
               />
             </button>
           {/each}
@@ -893,7 +893,7 @@
               kind="outline"
               size="small"
               removable={canEdit}
-              on:remove={() => removeGuest(guest)}
+              on:remove={() => { removeGuest(guest) }}
             />
           {/each}
           {#if guestOpen}
