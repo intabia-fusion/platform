@@ -163,6 +163,9 @@ kubectl -n monitoring port-forward svc/monitoring-app 3000:3000
 # http://localhost:3000
 ```
 
+При первом входе создай аккаунт: до регистрации HyperDX не отдаёт коллектору
+OTLP-приёмник (team создаётся только на регистрации), и телеметрия не пишется.
+
 Сервисы стенда шлют телеметрию в этот коллектор через values чарта `platform`:
 
 ```yaml
@@ -171,7 +174,13 @@ otel:
   OTEL_EXPORTER_OTLP_COMPRESSION: gzip
 ```
 
+После регистрации коллектор по умолчанию требует bearer-токен команды. Для внутреннего
+кластера проверку выключают в team
+(`collectorAuthenticationEnforced: false`); если она нужна, сервисы получают
+`authorization=Bearer <team api key>` через `secrets.platform.uptraceDsn`.
+
 `platform-otel-config` с явным `otel.*` перекрывает endpoint из контракта
 `platform-base`; тогда Prometheus локального base перестаёт получать метрики
-стенда, а все три сигнала идут в ClickStack. Ключ `clickstack.hyperdx.apiKey`
-обязан быть уникальным для стенда - его используют и UI, и коллектор.
+стенда, а все три сигнала идут в ClickStack. `clickstack.hyperdx.apiKey` задаёт
+`HYPERDX_API_KEY` приложения и коллектора, а ключ team создаётся при регистрации;
+если включаешь bearer-проверку, держи оба ключа одинаковыми.

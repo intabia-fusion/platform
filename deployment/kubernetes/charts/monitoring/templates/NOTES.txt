@@ -10,7 +10,9 @@ HyperDX UI (not published outside the cluster yet):
   kubectl -n {{ .Release.Namespace }} port-forward svc/{{ .Values.clickstack.fullnameOverride | default "monitoring" }}-app 3000:3000
   open http://localhost:3000
 
-The first visit asks to create an account; it stays inside this cluster.
+The first visit asks to create an account; it stays inside this cluster. OTLP ingestion starts
+only after that first registration: HyperDX enables the collector's OTLP receiver once a team
+exists. For the same reason a fresh install shows no data until the account is created.
 
 Platform services send OTLP to:
 

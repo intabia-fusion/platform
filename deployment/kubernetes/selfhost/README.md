@@ -101,14 +101,21 @@ helm upgrade --install monitoring intabia-fusion/monitoring -n monitoring --crea
 kubectl -n monitoring port-forward svc/monitoring-app 3000:3000
 ```
 
-UI открывается на `http://localhost:3000`; наружу чарт пока не публикуется. Сервисы стенда
-шлют OTLP в `http://monitoring-otel-collector.monitoring.svc.cluster.local:4318` — задай это
-в values чарта `platform`:
+UI открывается на `http://localhost:3000`; наружу чарт пока не публикуется. При первом входе
+создай аккаунт: до регистрации HyperDX не включает OTLP-приёмник коллектора и данные не идут.
+Сервисы стенда шлют OTLP в `http://monitoring-otel-collector.monitoring.svc.cluster.local:4318` —
+задай это в values чарта `platform`:
 
 ```yaml
 otel:
   OTEL_EXPORTER_OTLP_ENDPOINT: http://monitoring-otel-collector.monitoring.svc.cluster.local:4318
 ```
+
+После регистрации коллектор по умолчанию требует bearer-токен команды. Пока мониторинг
+внутри кластера, проще выключить проверку:
+`mongosh hyperdx --eval 'db.teams.updateMany({}, {$set:{collectorAuthenticationEnforced:false}})'`.
+Если проверка нужна, передай заголовок сервисам через `secrets.platform.uptraceDsn`:
+`authorization=Bearer <team api key>`.
 
 ## Частичный external
 

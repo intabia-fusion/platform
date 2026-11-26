@@ -55,8 +55,8 @@ clickstack:
         memory: 2Gi
 
   hyperdx:
-    # Shared by the app and the collector. Every stand overrides it: a fixed default would make
-    # two stands report into the same HyperDX team if they ever share a ClickHouse.
+    # HYPERDX_API_KEY for the app and the collector. Override it per stand: the team's key is
+    # created at registration and both must match when collector authentication is enforced.
     apiKey: "00000000-0000-0000-0000-000000000000"
     frontendUrl: "http://localhost:3000"
     resources:
