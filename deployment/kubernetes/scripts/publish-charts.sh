@@ -107,7 +107,7 @@ def key(version):
 charts = {}
 for path in docs.glob('*.tgz'):
     name = path.name[: -len('.tgz')]
-    for chart in ('platform-base', 'platform'):
+    for chart in ('platform-base', 'platform', 'monitoring'):
         if name.startswith(chart + '-'):
             charts.setdefault(chart, []).append((name[len(chart) + 1:], path))
             break
