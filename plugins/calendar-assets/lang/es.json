@@ -138,6 +138,10 @@
     "RsvpAccepted": "asistirán",
     "RsvpDeclined": "no asistirán",
     "RsvpTentative": "quizás",
-    "RsvpPending": "sin respuesta"
+    "RsvpPending": "sin respuesta",
+    "RsvpAcceptedCount": "{count, plural, one {# going} other {# going}}",
+    "RsvpTentativeCount": "{count, plural, one {# maybe} other {# maybe}}",
+    "RsvpDeclinedCount": "{count, plural, one {# not going} other {# not going}}",
+    "RsvpPendingCount": "{count, plural, one {# no answer} other {# no answer}}"
   }
 }

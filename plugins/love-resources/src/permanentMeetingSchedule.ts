@@ -247,8 +247,9 @@ export async function createPermanentMeetingWithSchedule (
   const series = input.series === true
   const inCalendar = input.calendar !== false
   const withEvent = series || inCalendar
-  // The planner writes to the user's own calendar, the section to the meetings one. The meetings
-  // calendar is created only when the event is actually made.
+  // A meeting made in the Planner goes to the personal calendar, so it stays on the Planner grid;
+  // a meeting made in the meetings section goes to the meetings calendar, which the Planner does
+  // not read. The meeting mixin carries `planner` for the same distinction.
   const eventCalendar = withEvent
     ? series
       ? ctx.calendarId
@@ -326,7 +327,8 @@ export async function createPermanentMeetingWithSchedule (
         language,
         startWithRecording,
         startWithTranscription,
-        reminderBefore: input.reminderBefore
+        reminderBefore: input.reminderBefore,
+        ...(series ? { planner: true } : {})
       }
     )
   }

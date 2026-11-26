@@ -31,18 +31,21 @@ export function seriesKeyOf (event: Event | Doc): string {
 }
 
 /**
- * The mixin data of a document, whichever shape the client handed over: a document fetched by a mixin
- * class carries it nested under the mixin id, while `hierarchy.as` on an event whose data is already
- * there gives the mixin fields directly. Reading `permanentMeeting` off the nested document is what
- * used to make a meeting look like a bare series.
+ * The mixin nested inside a document. Storage keeps a mixin on the row of the document it extends,
+ * so a document fetched by the event class carries it under the mixin id - and a plain event carries
+ * nothing, which is how a document tells whether it is a meeting at all.
  */
-function asLink (doc: Doc | undefined): MeetingEventLink | undefined {
+function nestedMixin (doc: Doc | undefined): MeetingEventLink | undefined {
   if (doc === undefined) return undefined
   const nested = (doc as unknown as Record<string, unknown>)[love.mixin.MeetingEventLink as unknown as string]
-  if (nested !== undefined && typeof nested === 'object') {
-    return { ...(nested as unknown as Record<string, unknown>), _id: doc._id } as unknown as MeetingEventLink
-  }
-  return doc as unknown as MeetingEventLink
+  if (nested === undefined || typeof nested !== 'object') return undefined
+  return { ...(nested as unknown as Record<string, unknown>), _id: doc._id } as unknown as MeetingEventLink
+}
+
+/** A document fetched by the mixin class: either the mixin itself, or the event that carries it. */
+function asMixin (doc: Doc | undefined): MeetingEventLink | undefined {
+  if (doc === undefined) return undefined
+  return nestedMixin(doc) ?? (doc as unknown as MeetingEventLink)
 }
 
 /**
@@ -64,11 +67,13 @@ export async function findMeetingLink (client: Client, event: Event | Doc): Prom
   if (cached?.link !== undefined) return cached.link
   if (cached !== undefined && Date.now() - cached.at < MISS_TTL_MS) return undefined
 
-  const link =
-    asLink(await client.findOne(love.mixin.MeetingEventLink, { _id: key as any })) ??
-    asLink(await client.findOne(love.mixin.MeetingEventLink, { eventId: key as any })) ??
-    // Last resort: the mixin lives on the event row itself, so its own document always answers.
-    asLink(await client.findOne(calendar.class.Event as any, { eventId: key }))
+  // The first two ask the mixin class, so their answer is the mixin; the last one asks the event and
+  // only a mixin nested inside it counts - the event itself is not a meeting.
+  const byId = asMixin(await client.findOne(love.mixin.MeetingEventLink, { _id: key as any }))
+  const byEventId =
+    byId ?? asMixin(await client.findOne(love.mixin.MeetingEventLink, { eventId: key as any }))
+  // Last resort: the mixin lives on the event row itself, so its own document answers.
+  const link = byEventId ?? nestedMixin(await client.findOne(calendar.class.Event as any, { eventId: key }))
   known.set(key, { link, at: Date.now() })
   return link
 }

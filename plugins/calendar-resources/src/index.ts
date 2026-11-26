@@ -34,6 +34,7 @@ import EventElement from './components/EventElement.svelte'
 import CalendarEventPresenter from './components/CalendarEventPresenter.svelte'
 import DayCalendar from './components/DayCalendar.svelte'
 import EventParticipants from './components/EventParticipants.svelte'
+import AddParticipant from './components/AddParticipant.svelte'
 import EventRsvp from './components/EventRsvp.svelte'
 import EventTimeEditor from './components/EventTimeEditor.svelte'
 import EventTimeExtraButton from './components/EventTimeExtraButton.svelte'
@@ -59,6 +60,7 @@ export {
   CalendarView,
   DayCalendar,
   EventParticipants,
+  AddParticipant,
   EventRsvp,
   EventTimeEditor,
   EventTimeExtraButton,

@@ -1,7 +1,7 @@
 import { type PersonId, type Ref } from '@hcengineering/core'
 import { type Contact } from '@hcengineering/contact'
 import { AccessLevel } from '..'
-import { collectRsvp, rsvpPending } from '../utils'
+import { collectRsvp, collectRsvpAnswers, rsvpPending } from '../utils'
 
 const alice = 'alice' as PersonId
 const bob = 'bob' as PersonId
@@ -40,6 +40,37 @@ describe('collectRsvp', () => {
       accepted: 1,
       declined: 0
     })
+  })
+})
+
+describe('collectRsvpAnswers', () => {
+  it('names the answer behind every count', () => {
+    const copies = [copy(carol, 'tentative'), copy(alice, 'accepted'), copy(bob, 'declined')]
+    expect(collectRsvpAnswers(copies)).toEqual([
+      // Sorted by social id, so two passes over the same answers compare equal.
+      { user: alice, status: 'accepted' },
+      { user: bob, status: 'declined' },
+      { user: carol, status: 'tentative' }
+    ])
+  })
+
+  it('agrees with the counts of the same copies', () => {
+    const copies = [copy(alice, 'accepted'), copy(bob), copy(carol, 'accepted')]
+    const answers = collectRsvpAnswers(copies)
+    const summary = collectRsvp(copies)
+    expect(answers).toHaveLength(summary.accepted + summary.declined + summary.tentative)
+    expect(answers.filter((it) => it.status === 'accepted')).toHaveLength(summary.accepted)
+  })
+
+  it('ignores the master row and copies without an answer', () => {
+    const master = { access: AccessLevel.Owner, participants, user: alice, rsvp: 'accepted' } as any
+    expect(collectRsvpAnswers([master, copy(bob)])).toEqual([])
+  })
+
+  it('keeps the last answer of one person', () => {
+    expect(collectRsvpAnswers([copy(alice, 'declined'), copy(alice, 'accepted')])).toEqual([
+      { user: alice, status: 'accepted' }
+    ])
   })
 })
 

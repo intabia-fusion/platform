@@ -138,6 +138,10 @@
     "RsvpAccepted": "придут",
     "RsvpDeclined": "не придут",
     "RsvpTentative": "возможно",
-    "RsvpPending": "без ответа"
+    "RsvpPending": "без ответа",
+    "RsvpAcceptedCount": "{count, plural, one {# придёт} few {# придут} many {# придут} other {# придут}}",
+    "RsvpTentativeCount": "{count, plural, one {# возможно} few {# возможно} many {# возможно} other {# возможно}}",
+    "RsvpDeclinedCount": "{count, plural, one {# не придёт} few {# не придут} many {# не придут} other {# не придут}}",
+    "RsvpPendingCount": "{count, plural, one {# без ответа} few {# без ответа} many {# без ответа} other {# без ответа}}"
   }
 }

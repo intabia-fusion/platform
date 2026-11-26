@@ -212,6 +212,12 @@ export interface MeetingEventLink extends Event {
 
   /** The permanent meeting the series belongs to, so renaming one renames the other. */
   permanentMeeting?: Ref<PermanentMeeting>
+
+  /**
+   * Made in the Planner: such a series lives in the personal calendar, so the Planner reads it.
+   * A meeting made in the meetings section has no flag and is kept out of the Planner.
+   */
+  planner?: boolean
 }
 
 export interface MeetingSchedule extends Schedule {

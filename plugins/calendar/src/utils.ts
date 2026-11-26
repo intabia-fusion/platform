@@ -584,3 +584,25 @@ export function rsvpPending (participants: number, summary: RsvpSummary | undefi
   if (summary === undefined) return participants
   return Math.max(0, participants - summary.accepted - summary.declined - summary.tentative)
 }
+
+/**
+ * @public
+ *
+ * The same pass as `collectRsvp`, keeping the answers instead of counting them. A social id and not
+ * a person ref: that is what a copy carries in `user`, and only the server can resolve it further.
+ * Sorted, so two passes over the same answers compare equal and nothing is rewritten needlessly.
+ */
+export function collectRsvpAnswers (
+  copies: Array<Pick<Event, 'access' | 'rsvp' | 'user'>>
+): Array<{ user: PersonId, status: RsvpStatus }> {
+  const answers = new Map<PersonId, RsvpStatus>()
+  for (const copy of copies) {
+    // The master carries no answer of its own; counting it would invent one.
+    if (copy.access === AccessLevel.Owner) continue
+    if (copy.user === undefined || copy.rsvp === undefined) continue
+    answers.set(copy.user, copy.rsvp)
+  }
+  return [...answers.entries()]
+    .map(([user, status]) => ({ user, status }))
+    .sort((left, right) => (left.user < right.user ? -1 : left.user > right.user ? 1 : 0))
+}

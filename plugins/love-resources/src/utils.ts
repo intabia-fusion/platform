@@ -285,35 +285,37 @@ export async function createMeeting (
       reminderBefore: typeof store.reminderBefore === 'number' ? store.reminderBefore : DEFAULT_MEETING_REMINDER
     })
 
-    // A repeating meeting is also a permanent one: the "Permanent meetings" tab is built from
-    // `PermanentMeeting` documents, not from the mixin, so without this row a meeting scheduled in
-    // the planner or the calendar existed only as a series and the tab stayed empty. A one-off
-    // meeting gets no row - it is a session, not a standing meeting.
-    let permanentMeeting: Ref<PermanentMeeting> | undefined
-    if (isPermanent) {
-      const me = getCurrentAccount().uuid
-      const persons = await client.findAll(contact.class.Person, { _id: { $in: master.participants } })
-      const members = persons
-        .map((it) => it.personUuid as AccountUuid | undefined)
-        .filter((it): it is AccountUuid => it !== undefined)
-      permanentMeeting = await createPermanentMeeting(client, {
-        name: master.title,
-        // Defaults, not the room's settings: there is no room to inherit from.
-        type: RoomType.Video,
-        language: getCurrentLanguage(),
-        startWithRecording: false,
-        startWithTranscription: false,
-        // The organiser is always a member: the list is filtered by membership, and a meeting the
-        // creator cannot see in their own tab would look like the same bug again.
-        members: members.includes(me) ? members : [me, ...members],
-        owners: [me],
-        repeatEvery: ruleToPeriod(rules[0]),
-        reminderBefore: DEFAULT_MEETING_REMINDER
-      })
-      await client.updateMixin(master._id, master._class, master.space, love.mixin.MeetingEventLink, {
-        permanentMeeting
-      })
-    }
+    // A meeting is a document of the sections, not only a series: the meetings list, the groups and
+    // the table are built from `PermanentMeeting`, so a meeting scheduled from the planner used to
+    // show in the calendar alone. Both kinds get their row now: a repeating one carries the period,
+    // a one-off keeps the room and the length the event form picked.
+    const me = getCurrentAccount().uuid
+    const persons = await client.findAll(contact.class.Person, { _id: { $in: master.participants } })
+    const members = persons
+      .map((it) => it.personUuid as AccountUuid | undefined)
+      .filter((it): it is AccountUuid => it !== undefined)
+    const permanentMeeting = await createPermanentMeeting(client, {
+      name: master.title,
+      // Defaults, not the room's settings: there is no room to inherit from.
+      type: RoomType.Video,
+      language: getCurrentLanguage(),
+      startWithRecording: false,
+      startWithTranscription: false,
+      // The organiser is always a member: the list is filtered by membership, and a meeting the
+      // creator cannot see in their own tab would look like the same bug again.
+      members: members.includes(me) ? members : [me, ...members],
+      owners: [me],
+      repeatEvery: isPermanent ? ruleToPeriod(rules[0]) : undefined,
+      reminderBefore: DEFAULT_MEETING_REMINDER,
+      startDate: master.date,
+      timeZone: master.timeZone,
+      ...(isPermanent ? {} : { room: store.room as Ref<Room> | undefined, duration: master.dueDate - master.date })
+    })
+    // `planner`: the meeting was scheduled from the planner grid, which keeps it on that grid.
+    await client.updateMixin(master._id, master._class, master.space, love.mixin.MeetingEventLink, {
+      permanentMeeting,
+      planner: true
+    })
 
     // One meeting, one link: a permanent meeting is addressed by its own id, a plain scheduled
     // series by its eventId. Asking for the series link of a permanent meeting would mint a second

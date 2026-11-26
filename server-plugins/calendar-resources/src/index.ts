@@ -16,9 +16,12 @@ import calendar, {
   AccessLevel,
   busySlotData,
   collectRsvp,
+  collectRsvpAnswers,
   Calendar,
   Event,
   getPrimaryCalendar,
+  type RsvpMembers,
+  type RsvpSummary,
   ReccuringEvent,
   ReccuringInstance
 } from '@hcengineering/calendar'
@@ -345,15 +348,69 @@ async function rsvpSummaryTxes (
 
   const copies = stored.filter((it) => !removed.has(it._id))
   const summary = collectRsvp(copies)
-  const current = master.rsvpSummary
-  if (
-    current?.accepted === summary.accepted &&
-    current?.declined === summary.declined &&
-    current?.tentative === summary.tentative
-  ) {
-    return []
+  const members = await rsvpMembersOf(copies, control)
+  // The tally goes to every copy, not only to the master: an invitee opens their own copy, which
+  // cannot see the others, and "who is coming" has to be readable there as well.
+  const res: Tx[] = []
+  for (const target of stored) {
+    if (removed.has(target._id)) continue
+    if (sameAnswers(target, summary, members)) continue
+    res.push(
+      control.txFactory.createTxUpdateDoc(target._class, target.space, target._id, {
+        rsvpSummary: summary,
+        rsvpMembers: members
+      })
+    )
   }
-  return [control.txFactory.createTxUpdateDoc(master._class, master.space, master._id, { rsvpSummary: summary })]
+  return res
+}
+
+/**
+ * The answers resolved to people. A copy stores the social id of its owner in `user`, which is not
+ * something a card can show or compare with the participants of the event.
+ */
+async function rsvpMembersOf (
+  copies: Event[],
+  control: TriggerControl
+): Promise<RsvpMembers> {
+  const answers = collectRsvpAnswers(copies)
+  const members: RsvpMembers = { accepted: [], tentative: [], declined: [] }
+  if (answers.length === 0) return members
+
+  const identities = await control.findAll(control.ctx, contactPlugin.class.SocialIdentity, {
+    _id: { $in: answers.map((it) => it.user) } as any
+  })
+  const personOf = new Map<PersonId, Ref<Person>>(
+    identities.map((it) => [it._id as unknown as PersonId, it.attachedTo])
+  )
+  for (const answer of answers) {
+    const person = personOf.get(answer.user)
+    if (person === undefined) continue
+    members[answer.status].push(person)
+  }
+  for (const list of [members.accepted, members.tentative, members.declined]) {
+    list.sort()
+  }
+  return members
+}
+
+/** Whether a document already carries these answers, so the trigger writes nothing. */
+function sameAnswers (event: Event, summary: RsvpSummary, members: RsvpMembers): boolean {
+  const current = event.rsvpSummary
+  const currentMembers = event.rsvpMembers
+  if (current === undefined || currentMembers === undefined) return false
+  return (
+    current.accepted === summary.accepted &&
+    current.declined === summary.declined &&
+    current.tentative === summary.tentative &&
+    sameList(currentMembers.accepted, members.accepted) &&
+    sameList(currentMembers.tentative, members.tentative) &&
+    sameList(currentMembers.declined, members.declined)
+  )
+}
+
+function sameList (left: string[], right: string[]): boolean {
+  return left.length === right.length && left.every((it, index) => it === right[index])
 }
 
 async function onEventUpdate (ctx: TxUpdateDoc<Event>, control: TriggerControl): Promise<Tx[]> {

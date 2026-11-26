@@ -101,6 +101,31 @@ describe('findMeetingLink', () => {
     expect(await findMeetingLink(fake.client, event())).toBeUndefined()
   })
 
+  it('does not mistake the event itself for a link when the last lookup returns a plain event', async () => {
+    // The last resort asks the event class, because the mixin is stored on the event row: an event
+    // without the mixin comes back as itself, and answering with it made every event a meeting -
+    // the calendar opened the meeting window on it, and minting the guest link stamped the mixin on
+    // so the event turned up in the meetings section.
+    const plainEvent = event()
+    const client = {
+      getHierarchy: () => ({
+        hasMixin: () => false,
+        as: (doc: Doc) => doc
+      }),
+      findOne: async (cls: string) => (cls === 'calendar:class:Event' ? plainEvent : undefined)
+    } as unknown as Client
+
+    expect(await findMeetingLink(client, event())).toBeUndefined()
+  })
+
+  it('still reads the mixin stored on the event row itself', async () => {
+    // The same lookup, with the mixin nested under its id: a real meeting's series is an event row.
+    const fake = fakeClient([
+      { _id: 'ev-1', eventId: 'E1', [meetingMixin as string]: { permanentMeeting: 'pm-1' } }
+    ])
+    expect((await findMeetingLink(fake.client, event()))?.permanentMeeting).toBe('pm-1')
+  })
+
   it('asks once per series, and again only after the negative answer expires', async () => {
     const fake = fakeClient([{ _id: 'ev-1', eventId: 'E1', permanentMeeting: 'pm-1' }])
 

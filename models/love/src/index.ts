@@ -274,6 +274,11 @@ export class TMeeting extends TEvent implements MeetingEventLink {
 
   @Index(IndexKind.Indexed)
   permanentMeeting?: Ref<PermanentMeeting>
+
+  // Made in the Planner: such a series lives in the personal calendar, so the Planner reads it.
+  // A meeting made in the meetings section has no flag and is kept out of the Planner.
+  @Prop(TypeBoolean(), love.string.Meeting)
+  planner?: boolean
 }
 
 @Model(love.class.MeetingMinutes, core.class.Space, DOMAIN_SPACE)
@@ -604,6 +609,8 @@ export function createModel (builder: Builder): void {
     component: love.component.WorkbenchExtension
   })
 
+  // A meeting can be started from a calendar event, and the Planner is where such an event is
+  // created: the switch in the event form turns the event into a meeting of the sections.
   builder.createDoc(presentation.class.DocCreateExtension, core.space.Model, {
     ofClass: calendar.class.Event,
     apply: love.function.CreateMeeting,

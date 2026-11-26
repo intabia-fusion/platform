@@ -52,18 +52,9 @@ export default mergeIds(calendarId, calendar, {
     DeleteRecEvent: '' as ViewAction
   },
   string: {
+    // Only the ids the calendar UI does not own: `mergeIds` overwrites what the base plugin
+    // already has, and a repeated key throws at load, taking the whole model bundle with it.
     ApplicationLabelCalendar: '' as IntlString,
-    Event: '' as IntlString,
-    Reminder: '' as IntlString,
-    ReminderTime: '' as IntlString,
-    AddReminder: '' as IntlString,
-    NoReminders: '' as IntlString,
-    About: '' as IntlString,
-    When: '' as IntlString,
-    Where: '' as IntlString,
-    Remember: '' as IntlString,
-    AllDay: '' as IntlString,
-    TimeZone: '' as IntlString,
     Shift: '' as IntlString,
     State: '' as IntlString,
     CreatedReminder: '' as IntlString,

@@ -37,6 +37,7 @@ import EditMeetingMinutes from './components/EditMeetingMinutes.svelte'
 import EditPermanentMeeting from './components/EditPermanentMeeting.svelte'
 import EditScheduledMeeting from './components/EditScheduledMeeting.svelte'
 import EditMeeting from './components/EditMeeting.svelte'
+import MeetingMemberWindow from './components/MeetingMemberWindow.svelte'
 import MeetingSessionsFooter from './components/MeetingSessionsFooter.svelte'
 import MeetingAccessEditor from './components/MeetingAccessEditor.svelte'
 import CreatePermanentMeetingPopup from './components/CreatePermanentMeetingPopup.svelte'
@@ -220,7 +221,29 @@ async function resolveMeetingCard (client: Client, event: Doc): Promise<Doc | Ev
     seriesId === event._id
       ? event
       : ((await client.findOne(calendar.class.Event, { _id: seriesId as Ref<Event> })) ?? event)
-  return { object: series as Doc, editor: EditMeeting as unknown as AnyComponent }
+  // The mixin is read on the series: an occurrence opened from the calendar may arrive without it,
+  // and a missing back-reference would send an invitee into the organiser's window.
+  const seriesLink = series === event ? link : ((await findMeetingLink(client, series)) ?? link)
+  return {
+    object: series as Doc,
+    editor: ((await mayConfigureMeeting(client, seriesLink)) ? EditMeeting : MeetingMemberWindow) as unknown as AnyComponent
+  }
+}
+
+/**
+ * A meeting is configured by its organiser: the owners of the meeting, the same rule the members
+ * editor uses. Everyone else opens the member window, which carries only their own answer. A
+ * workspace-owner role is not an organiser of someone else's meeting, so it grants nothing here.
+ */
+async function mayConfigureMeeting (client: Client, link: MeetingEventLink): Promise<boolean> {
+  const permanentId = link.permanentMeeting
+  // A series without a meeting document has no owners to read: the calendar rights decide.
+  if (permanentId === undefined) return true
+  const meeting = await client.findOne(love.class.PermanentMeeting, { _id: permanentId })
+  if (meeting === undefined) return true
+  // `createdBy` is a PersonId: the creator check has to compare it with `primarySocialId`.
+  const account = getCurrentAccount()
+  return isPermanentMeetingCreator(meeting, { uuid: account.uuid, primarySocialId: account.primarySocialId })
 }
 
 // The calendar asks before it opens an event: a meeting series answers with the meeting itself.

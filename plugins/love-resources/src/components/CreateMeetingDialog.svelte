@@ -201,8 +201,10 @@
         reminders: remind ? [...reminders].sort((a, b) => a - b) : [0],
         guestPassword: password !== '' ? password : undefined,
         calendar: inCalendar,
-        // A series belongs to the planner grid: the dialog opened there is the only one that asks for it.
-        series: date !== undefined,
+        // A series belongs to the planner grid: only a dialog opened from the Planner creates one.
+        // A date in the props only prefills the time - the calendar of the meetings section passes
+        // it too, and a meeting made there must not land in the personal calendar of the Planner.
+        series: false,
         group
       }
       if (permanent) {

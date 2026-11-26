@@ -138,6 +138,10 @@
     "RsvpAccepted": "参加",
     "RsvpDeclined": "不参加",
     "RsvpTentative": "未定",
-    "RsvpPending": "未回答"
+    "RsvpPending": "未回答",
+    "RsvpAcceptedCount": "{count, plural, one {# going} other {# going}}",
+    "RsvpTentativeCount": "{count, plural, one {# maybe} other {# maybe}}",
+    "RsvpDeclinedCount": "{count, plural, one {# not going} other {# not going}}",
+    "RsvpPendingCount": "{count, plural, one {# no answer} other {# no answer}}"
   }
 }

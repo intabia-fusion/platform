@@ -135,6 +135,10 @@ export interface Event extends AttachedDoc {
    *  can see them all - the organiser reads this, never the copies themselves. */
   rsvpSummary?: RsvpSummary
 
+  /** Who answered what, mirrored into every copy by the server: a participant cannot read the other
+   *  copies, so the breakdown travels with their own one along with the tally above. */
+  rsvpMembers?: RsvpMembers
+
   timeZone?: string
 
   user: PersonId
@@ -154,6 +158,18 @@ export interface RsvpSummary {
   accepted: number
   declined: number
   tentative: number
+}
+
+/**
+ * @public
+ *
+ * The answers themselves, as the people who gave them: `RsvpSummary` counts, this names. Kept on
+ * the master and mirrored into every copy, because a copy cannot see its siblings.
+ */
+export interface RsvpMembers {
+  accepted: Ref<Person>[]
+  tentative: Ref<Person>[]
+  declined: Ref<Person>[]
 }
 
 export enum AccessLevel {
@@ -352,6 +368,11 @@ const calendarPlugin = plugin(calendarId, {
     RsvpDeclined: '' as IntlString,
     RsvpTentative: '' as IntlString,
     RsvpPending: '' as IntlString,
+    // The same states with a count in them, for the line of answers on a card.
+    RsvpAcceptedCount: '' as IntlString,
+    RsvpTentativeCount: '' as IntlString,
+    RsvpDeclinedCount: '' as IntlString,
+    RsvpPendingCount: '' as IntlString,
     // Lead-time units are read by the calendar UI and by the reminder presenter of the meetings UI.
     DueMinutes: '' as IntlString,
     DueHours: '' as IntlString,
