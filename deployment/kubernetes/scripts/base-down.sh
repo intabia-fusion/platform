@@ -47,4 +47,9 @@ case "$STAND_RUNTIME" in
     ;;
 esac
 
-rm -f "$K8S_DIR/.stand/active"
+# Claims live in the user cache (common/scripts/stand-lock.sh). Removing the cluster drops every
+# k8s claim, including the legacy single-owner file; a compose stand keeps its own claim. The
+# existing runtime without --delete-data leaves the base and its stands alone, so their claims stay.
+if [ "$STAND_RUNTIME" != existing ] || [ "$DELETE_DATA" = 1 ]; then
+  "$REPO_ROOT/common/scripts/stand-lock.sh" clear k3s
+fi

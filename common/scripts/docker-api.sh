@@ -1,6 +1,6 @@
 #!/bin/bash
 # Images for the api-tests/backup-tests stand: the services of stands/api, nothing else.
-# No web UI (empty dist/ - the tests need only /config.json); also tagged `front` for the chart.
+# No web UI (empty dist/ - the tests need only /config.json): tagged `front-api`, never `front`.
 set -eo pipefail
 
 ./common/scripts/node_modules/.bin/compile-all . --parallel 4 --docker-build --esbuild-emit \
@@ -33,5 +33,4 @@ cp pods/front/Dockerfile "$ctx/"
 cp pods/front/bundle/bundle.js pods/front/bundle/bundle.js.map "$ctx/bundle/"
 docker build ${DOCKER_EXTRA} \
   -t "${DOCKER_NAMESPACE:-intabiafusion}/front-api" \
-  -t "${DOCKER_NAMESPACE:-intabiafusion}/front" \
   "$ctx"

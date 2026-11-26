@@ -14,8 +14,9 @@
 # limitations under the License.
 #
 # Publish packaged charts into the platform-charts repository (GitHub Pages serves docs/).
-#   publish-charts.sh vX.Y.Z [--init] [--no-push]
-# --init seeds values/scripts/README into an empty repository.
+#   publish-charts.sh [vX.Y.Z] [--init] [--no-push]
+# Version defaults to the latest v* release tag. Staging tags s* are rejected: only v*
+# releases are published. --init seeds values/scripts/README into an empty repository.
 # CI passes CHARTS_TOKEN; a developer can rely on their git credentials.
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -38,8 +39,23 @@ while [ $# -gt 0 ]; do
   esac
   shift
 done
-VERSION="${VERSION:-$(git -C "$REPO_ROOT" describe --tags --abbrev=0)}"
-[ -n "$VERSION" ] || { echo "usage: $0 [vX.Y.Z] [--init] [--no-push] [--prune [--keep N]]" >&2; exit 2; }
+VERSION="${VERSION:-}"
+if [ -z "$VERSION" ]; then
+  VERSION="$(git -C "$REPO_ROOT" describe --tags --match 'v*' --abbrev=0 2>/dev/null)" || {
+    echo "no v* release tag found: pass the version explicitly" >&2
+    exit 2
+  }
+fi
+case "$VERSION" in
+  s*)
+    echo "$VERSION is a staging tag: charts are published for v* release tags only" >&2
+    exit 2
+    ;;
+esac
+if [[ ! "$VERSION" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
+  echo "invalid version '$VERSION': expected vX.Y.Z or X.Y.Z" >&2
+  exit 2
+fi
 
 CHARTS_DIR="${CHARTS_DIR:-$REPO_ROOT/../platform-charts}"
 CHARTS_URL="${CHARTS_URL:-https://intabia-fusion.github.io/platform-charts}"

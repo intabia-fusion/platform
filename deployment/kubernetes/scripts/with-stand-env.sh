@@ -16,14 +16,14 @@
 # Run <cmd> with the host env of a test stand: HTTPS STAND_URL + mkcert CA. With LOCAL_URL (front
 # proxy) set, PLATFORM_URI/BILLING_URL go there: the Playwright `request` fixture cannot use the CA.
 set -euo pipefail
-STAND="${1:?usage: with-stand-env.sh <sanity|ws|api> [runtime] <cmd...>}"
+STAND="${1:?usage: with-stand-env.sh <sanity|ws|qms|api> [runtime] <cmd...>}"
 case "$STAND" in
-  sanity|ws|api) ;;
-  *) echo "usage: with-stand-env.sh <sanity|ws|api> [k3d|kind|existing] <cmd...>" >&2; exit 2 ;;
+  sanity|ws|qms|api) ;;
+  *) echo "usage: with-stand-env.sh <sanity|ws|qms|api> [k3d|kind|existing] <cmd...>" >&2; exit 2 ;;
 esac
 [ $# -ge 2 ] && case "$2" in k3d|kind|existing) STAND_RUNTIME="$2"; shift ;; esac
 shift
-[ $# -ge 1 ] || { echo "usage: with-stand-env.sh <sanity|ws|api> [runtime] <cmd...>" >&2; exit 2; }
+[ $# -ge 1 ] || { echo "usage: with-stand-env.sh <sanity|ws|qms|api> [runtime] <cmd...>" >&2; exit 2; }
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=lib.sh
 source "$SCRIPT_DIR/lib.sh"
@@ -188,34 +188,41 @@ kafka_accepts_connection() {
   ' "$1" 2>/dev/null
 }
 
-# Kafka has no public listener: Strimzi advertises in-cluster pod DNS the host cannot resolve, so
-# forward the bootstrap service to K8S_KAFKA_PORT and pin MAILBOX_KAFKA_BROKER to it.
+# Kafka has no public listener: Strimzi and Redpanda advertise in-cluster pod DNS the host cannot
+# resolve, so forward the base's bootstrap Service to K8S_KAFKA_PORT and pin MAILBOX_KAFKA_BROKER
+# to it. An external broker is reachable from the host as is - nothing to forward.
 KAFKA_PF_PID=""
 if [ "${STAND_KAFKA_FORWARD:-1}" != 0 ]; then
-  : "${K8S_KAFKA_PORT:=19093}"
-  export K8S_KAFKA_PORT
-  if kafka_accepts_connection "$K8S_KAFKA_PORT"; then
-    warn "K8S_KAFKA_PORT $K8S_KAFKA_PORT is already serving Kafka; reusing it (set K8S_KAFKA_PORT to use a different port)"
-  else
-    if (exec 3<>"/dev/tcp/127.0.0.1/$K8S_KAFKA_PORT") 2>/dev/null; then
-      exec 3>&- 3<&-
-      die "port $K8S_KAFKA_PORT is already taken by a non-Kafka process; free the port or set K8S_KAFKA_PORT to another value"
+  # The base's mode comes from `helm get values`: read it only when the forward is wanted, so a
+  # caller that disables the forward needs neither a base release nor helm.
+  KAFKA_BASE_MODE="$(base_kafka_mode)"
+  if [ "$KAFKA_BASE_MODE" != external ]; then
+    KAFKA_SVC="$(base_kafka_service)"
+    : "${K8S_KAFKA_PORT:=19093}"
+    export K8S_KAFKA_PORT
+    if kafka_accepts_connection "$K8S_KAFKA_PORT"; then
+      warn "K8S_KAFKA_PORT $K8S_KAFKA_PORT is already serving Kafka; reusing it (set K8S_KAFKA_PORT to use a different port)"
+    else
+      if (exec 3<>"/dev/tcp/127.0.0.1/$K8S_KAFKA_PORT") 2>/dev/null; then
+        exec 3>&- 3<&-
+        die "port $K8S_KAFKA_PORT is already taken by a non-Kafka process; free the port or set K8S_KAFKA_PORT to another value"
+      fi
+      wait_service_endpoints "$KAFKA_SVC" || \
+        die "no endpoints for $BASE_NAMESPACE/$KAFKA_SVC"
+      kubectl --context "$KUBE_CONTEXT" -n "$BASE_NAMESPACE" port-forward \
+        "service/$KAFKA_SVC" "$K8S_KAFKA_PORT:9092" >/dev/null 2>&1 &
+      KAFKA_PF_PID=$!
+      up=0
+      for _ in $(seq 1 50); do
+        if kafka_accepts_connection "$K8S_KAFKA_PORT"; then up=1; break; fi
+        sleep 0.2
+      done
+      [ "$up" = 1 ] || die "kafka port-forward to $BASE_NAMESPACE/$KAFKA_SVC:$K8S_KAFKA_PORT did not start"
     fi
-    wait_service_endpoints my-cluster-kafka-bootstrap || \
-      die "no endpoints for $BASE_NAMESPACE/my-cluster-kafka-bootstrap"
-    kubectl --context "$KUBE_CONTEXT" -n "$BASE_NAMESPACE" port-forward \
-      "service/my-cluster-kafka-bootstrap" "$K8S_KAFKA_PORT:9092" >/dev/null 2>&1 &
-    KAFKA_PF_PID=$!
-    up=0
-    for _ in $(seq 1 50); do
-      if kafka_accepts_connection "$K8S_KAFKA_PORT"; then up=1; break; fi
-      sleep 0.2
-    done
-    [ "$up" = 1 ] || die "kafka port-forward to $BASE_NAMESPACE/my-cluster-kafka-bootstrap:$K8S_KAFKA_PORT did not start"
+    : "${MAILBOX_KAFKA_BROKER:=localhost:$K8S_KAFKA_PORT}"
+    export MAILBOX_KAFKA_BROKER
+    cleanup_pids+=("$KAFKA_PF_PID")
   fi
-  : "${MAILBOX_KAFKA_BROKER:=localhost:$K8S_KAFKA_PORT}"
-  export MAILBOX_KAFKA_BROKER
-  cleanup_pids+=("$KAFKA_PF_PID")
 fi
 
 cleanup() {

@@ -677,6 +677,28 @@ describe.each(realDbFlavors)('real-account [$flavor]', ({ flavor, adminUri, dbUr
     })
   })
 
+  it('keeps the assigned role when a membership is added again', async () => {
+    const workspace = await accountDb.createWorkspace(
+      {
+        name: 'Reassign',
+        url: 'reassign-role',
+        createdBy: users[0].uuid,
+        allowGuestSignUp: false,
+        allowReadOnlyGuest: false
+      },
+      { isDisabled: false, mode: 'active', versionMajor: 0, versionMinor: 7, versionPatch: 0 }
+    )
+    await accountDb.assignWorkspace(users[0].uuid, workspace, AccountRole.Owner)
+    await accountDb.assignWorkspace(users[0].uuid, workspace, AccountRole.User)
+    expect(await accountDb.getWorkspaceRole(users[0].uuid, workspace)).toBe(AccountRole.Owner)
+
+    await accountDb.batchAssignWorkspace([[users[0].uuid, workspace, AccountRole.Guest]])
+    expect(await accountDb.getWorkspaceRole(users[0].uuid, workspace)).toBe(AccountRole.Owner)
+
+    await accountDb.updateWorkspaceRole(users[0].uuid, workspace, AccountRole.Maintainer)
+    expect(await accountDb.getWorkspaceRole(users[0].uuid, workspace)).toBe(AccountRole.Maintainer)
+  })
+
   it('lists all members and only their verified email addresses', async () => {
     const workspace = await accountDb.createWorkspace(
       { name: 'List', url: 'seat-list', createdBy: users[0].uuid, allowGuestSignUp: false, allowReadOnlyGuest: false },

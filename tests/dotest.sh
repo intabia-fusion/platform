@@ -18,34 +18,66 @@ pnpm -w build
 # One stand per host: the compose stand and a k3d cluster share the Docker VM. The lock also
 # checks that the VM has the memory/disk the backend needs.
 STAND_BACKEND="${STAND_BACKEND:-compose}"
-../common/scripts/stand-lock.sh acquire "$([ "$STAND_BACKEND" = k3s ] && echo k3s || echo compose)" dotest
+LOCK_BACKEND="$([ "$STAND_BACKEND" = k3s ] && echo k3s || echo compose)"
 
-# Push after `pnpm -w docker`: it rewrites the images the stand will run. Only a k3d stand pulls
-# them from the registry; a compose stand runs the local images as built.
+# Children pick the stand by these: dev/test-base/run.sh chooses compose unless STAND_BACKEND says
+# k3s (the host restore is Compose only), and with-stand-env.sh forwards to the runtime it is given.
+export STAND_BACKEND
+[ -z "${STAND_RUNTIME:-}" ] || export STAND_RUNTIME
+
+# The claim covers the whole run and is dropped on any exit, so a failed build or suite does not
+# leave the host claimed. Only this script's own record goes; nested claims from
+# dev/test-base/run.sh are separate records.
+release_lock() {
+    local rc=$?
+    ../common/scripts/stand-lock.sh release "$LOCK_BACKEND" dotest || true
+    exit "$rc"
+}
+../common/scripts/stand-lock.sh acquire "$LOCK_BACKEND" dotest
+trap release_lock EXIT
+
+# `pnpm -w docker` rewrites the images the stand will run. A k3d stand pulls them from the
+# registry, but the push belongs to the prepare: deploy.sh pushes after base-up has created the
+# registry, so at build time a cold host has nowhere to push yet. A compose stand runs the local
+# images as built.
 build_images() {
     pnpm -w docker
-    if [ "$STAND_BACKEND" = k3s ]; then
-        bash ../deployment/kubernetes/scripts/push-images.sh sanity
-    fi
 }
 
 FAILED=0
 SUMMARY=()
-# Reuse by default: in-place upgrade + pod restart beats a full namespace round-trip.
-# CLEAN=1 forces uninstall, deploy, seed.
+# k3s reuses by default: in-place upgrade + pod restart beats a full namespace round-trip;
+# CLEAN=1 forces uninstall, deploy, seed. Compose always does a full prepare: the images are
+# rebuilt right before the runs, and a restore on the running stand would keep the previous
+# build's containers, so the suite would test stale code.
 CLEAN="${CLEAN:-0}"
+prepare_stand() {
+    if [ "$STAND_BACKEND" != k3s ]; then
+        ./prepare-pg.sh
+        return
+    fi
+    if [ "$CLEAN" = 1 ]; then
+        bash ../deployment/kubernetes/scripts/prepare-test-stand.sh sanity ${STAND_RUNTIME:+"$STAND_RUNTIME"}
+    else
+        STAND_REUSE=1 bash ../deployment/kubernetes/scripts/prepare-test-stand.sh sanity ${STAND_RUNTIME:+"$STAND_RUNTIME"}
+    fi
+}
 run_suite() {
     local label="$1" failed=0
     local stamps=()
-    if [ "$CLEAN" = 1 ]; then
-        ./prepare-pg.sh
-    else
-        ./prepare-pg.sh --reuse
-    fi
+    prepare_stand
     for ((i = 1; i <= ITERATIONS; i++)); do
         if [ "$i" -gt 1 ]; then
-            echo "=== restore before run $i/$ITERATIONS ($label)"
-            ./restore-pg.sh
+            if [ "$STAND_BACKEND" = k3s ]; then
+                # A k3s stand cannot be restored from the host: Strimzi and Redpanda advertise
+                # in-cluster DNS, so KafkaJS connects to an address the host cannot resolve.
+                # Reseed in-cluster through the prepare instead.
+                echo "=== reseed before run $i/$ITERATIONS ($label)"
+                prepare_stand
+            else
+                echo "=== restore before run $i/$ITERATIONS ($label)"
+                ./restore-pg.sh
+            fi
         fi
         echo "=== run $i/$ITERATIONS ($label)"
         # A red run is data, not a reason to stop: collect several in a row. A k3d stand needs

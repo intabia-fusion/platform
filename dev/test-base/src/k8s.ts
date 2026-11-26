@@ -70,8 +70,15 @@ export function k8sStand (cfg: StandConfig): StandConfig {
   const host = `${def.host}:${httpsPort}`
   const pgHost = inPod ? 'postgres.platform-base.svc.cluster.local' : 'localhost'
   const pgPort = inPod ? 5432 : Number(process.env.K8S_PG_PORT ?? '65432')
-  const kafkaHost = inPod ? 'my-cluster-kafka-bootstrap.platform-base.svc.cluster.local' : 'localhost'
-  const kafkaPort = inPod ? 9092 : Number(process.env.K8S_KAFKA_PORT ?? '19092')
+  // In the pod the base's Kafka mode decides the broker Service; prepare-test-stand.sh passes the
+  // resolved bootstrap. On the host with-stand-env.sh forwards the same Service to K8S_KAFKA_PORT.
+  const kafkaBootstrap = process.env.K8S_KAFKA_BOOTSTRAP ?? ''
+  if (inPod && kafkaBootstrap === '') {
+    throw new Error('K8S_KAFKA_BOOTSTRAP is not set: seed through prepare-test-stand.sh')
+  }
+  const [kafkaBootstrapHost = 'localhost', kafkaBootstrapPort = '19092'] = kafkaBootstrap.split(':')
+  const kafkaHost = inPod ? kafkaBootstrapHost : 'localhost'
+  const kafkaPort = inPod ? Number(kafkaBootstrapPort) : Number(process.env.K8S_KAFKA_PORT ?? '19092')
   const elasticHost = inPod ? 'elastic.platform-base.svc.cluster.local' : 'localhost'
   const elasticPort = inPod ? 9200 : Number(process.env.K8S_ELASTIC_PORT ?? '19200')
   const platformUrl = `https://${host}`

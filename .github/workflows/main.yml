@@ -788,13 +788,14 @@ jobs:
           BUILD_REV: ${{ needs.dist-build.outputs.rev }}
           RELEASE_TAG: ${{ needs.dist-build.outputs.release_tag }}
 
-  # Публикация Helm-чартов в platform-charts на тег релиза. CHARTS_TOKEN - PAT с правом записи
-  # в intabia-fusion/platform-charts; без него чарты только собираются и прикладываются к релизу.
+  # Публикация Helm-чартов в platform-charts на тег релиза v*. Staging-теги s* чарты не публикуют.
+  # CHARTS_TOKEN - PAT с правом записи в intabia-fusion/platform-charts; без него чарты только
+  # собираются и прикладываются к релизу.
   # Пока чарты отлаживаются, публикация ручная (`pnpm -w release:charts`). Job включается
   # переменной репозитория PUBLISH_CHARTS=true, когда контур будет готов.
   charts-publish:
     needs: [docker-build]
-    if: (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/s')) && vars.PUBLISH_CHARTS == 'true'
+    if: startsWith(github.ref, 'refs/tags/v') && vars.PUBLISH_CHARTS == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:

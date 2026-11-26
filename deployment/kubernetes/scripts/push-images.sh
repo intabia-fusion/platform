@@ -81,7 +81,8 @@ if [ ${#to_push[@]} -gt 0 ]; then
   push_one() {
     local img="$1"
     local repo="${img%%:*}" tag="${img#*:}"
-    local target="$REGISTRY_PUSH/$repo"
+    # The chart pulls <registry>/<imageNamespace>/<svc>; the local build stays intabiafusion/<svc>.
+    local target="$REGISTRY_PUSH/$STAND_IMAGE_NAMESPACE/${repo#intabiafusion/}"
     docker tag "$repo:$tag" "$target:$tag" >/dev/null || return 1
     if [ "$PODMAN" = 1 ]; then
       podman push --tls-verify=false "$target:$tag" >/dev/null 2>&1 || { echo "!! push failed: $target:$tag" >&2; return 1; }
@@ -90,10 +91,11 @@ if [ ${#to_push[@]} -gt 0 ]; then
     fi
   }
   export -f push_one
-  export REGISTRY_PUSH PODMAN
+  export REGISTRY_PUSH PODMAN STAND_IMAGE_NAMESPACE
 
   for img in "${to_push[@]}"; do
-    echo ">> push $REGISTRY_PUSH/${img%%:*}:${img#*:}"
+    repo="${img%%:*}"
+    echo ">> push $REGISTRY_PUSH/$STAND_IMAGE_NAMESPACE/${repo#intabiafusion/}:${img#*:}"
   done
   printf '%s\n' "${to_push[@]}" | xargs -P "$PUSH_JOBS" -n1 bash -c 'push_one "$0"'
 fi

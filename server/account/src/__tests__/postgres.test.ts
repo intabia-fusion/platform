@@ -730,7 +730,7 @@ describe('PostgresAccountDB', () => {
             ' (workspace_uuid, account_uuid, role) VALUES (',
             ', ',
             ', ',
-            ') ON CONFLICT (workspace_uuid, account_uuid) DO UPDATE SET role = EXCLUDED.role'
+            ') ON CONFLICT (workspace_uuid, account_uuid) DO NOTHING'
           ],
           expect.anything(),
           workspaceId,

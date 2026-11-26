@@ -256,6 +256,50 @@ base_postgres_mode() {
     awk '/^postgres:/{p=1;next} p&&/^[a-z]/{p=0} p&&$1=="mode:"{print $2;exit}'
 }
 
+# Effective kafka.mode of the installed base (strimzi|redpanda|external), read the same way:
+# tooling must target the broker this base actually runs.
+base_kafka_mode() {
+  helmc -n "$BASE_NAMESPACE" get values platform-base -a -o yaml 2>/dev/null | \
+    awk '/^kafka:/{p=1;next} p&&/^[a-z]/{p=0} p&&$1=="mode:"{print $2;exit}'
+}
+
+# mode a component declares in the stand values overlay base-up renders; empty when the overlay
+# leaves it to the chart default.
+base_values_mode() {
+  local key="$1"
+  [ -f "$K8S_DIR/stands/base/values.yaml" ] || return 0
+  awk -v key="$key:" '$0==key{p=1;next} p&&/^[a-z]/{p=0} p&&$1=="mode:"{print $2;exit}' \
+    "$K8S_DIR/stands/base/values.yaml"
+}
+
+# Kafka Service of the installed base behind the kafka:9092 contract. Empty for external: the
+# broker lives outside the cluster and there is nothing to forward.
+base_kafka_service() {
+  case "$(base_kafka_mode)" in
+    redpanda) printf 'redpanda\n' ;;
+    external) ;;
+    *) printf 'my-cluster-kafka-bootstrap\n' ;;
+  esac
+}
+
+# In-cluster bootstrap host:port of the installed base; for external it comes from
+# kafka.external.bootstrap in the release values.
+base_kafka_bootstrap() {
+  local mode external
+  mode="$(base_kafka_mode)"
+  case "$mode" in
+    external)
+      external="$(helmc -n "$BASE_NAMESPACE" get values platform-base -a -o yaml 2>/dev/null | \
+        awk '/^kafka:/{p=1;next} p&&/^[a-z]/{p=0} p&&$1=="bootstrap:"{print $2;exit}')"
+      [ -n "$external" ] || \
+        die "kafka.mode=external without kafka.external.bootstrap in $BASE_NAMESPACE/platform-base"
+      printf '%s\n' "$external"
+      ;;
+    redpanda) printf 'redpanda.%s.svc.cluster.local:9092\n' "$BASE_NAMESPACE" ;;
+    *) printf 'my-cluster-kafka-bootstrap.%s.svc.cluster.local:9092\n' "$BASE_NAMESPACE" ;;
+  esac
+}
+
 # Pod name of the CNPG primary: writes and database resets go here, never to a replica.
 postgres_primary_pod() {
   local pod

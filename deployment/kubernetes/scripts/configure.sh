@@ -13,18 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Configure where the stand scripts deploy: a local k3d cluster or a remote
-# Kubernetes. The choice is saved to deployment/kubernetes/.stand/config
+# Configure where the stand scripts deploy: a local k3d or kind cluster, or a
+# remote Kubernetes. The choice is saved to deployment/kubernetes/.stand/config
 # (mode 600, gitignored) and picked up by deploy/down/base scripts on every
 # run; explicit env/CLI values always override the saved file.
 #
-#   configure.sh [--runtime k3d|existing] [--kubeconfig <path|https-url>]
+#   configure.sh [--runtime k3d|kind|existing] [--kubeconfig <path|https-url>]
 #                [--context <name>] [--namespace <ns>]
 #                [--push-images|--no-push-images]
 #                [--yes] [--skip-connectivity] [--config-dir <dir>]
 #
 # Remote kubeconfig: a local path is used as-is; an https URL is downloaded
 # into <config-dir>/kubeconfig (mode 600). http URLs are not accepted.
+# kind is local: no kubeconfig is asked for or saved, the scripts use the
+# local kind cluster the same way they use the local k3d one.
 # Without a TTY (or with --yes) nothing is asked - missing inputs are an error,
 # so CI can drive it with flags/env:
 #   STAND_RUNTIME, STAND_KUBECONFIG, KUBE_CONTEXT, STAND_NAMESPACE,
@@ -40,7 +42,7 @@ warn() { printf '\033[33m!! %s\033[0m\n' "$*" >&2; }
 die()  { printf '\033[31mERROR: %s\033[0m\n' "$*" >&2; exit 1; }
 
 usage() {
-  sed -n '16,31p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '16,33p' "$0" | sed 's/^# \{0,1\}//'
 }
 
 RUNTIME=""
@@ -98,14 +100,16 @@ if [ -z "$RUNTIME" ]; then
   echo "Where should stands deploy?"
   echo "  1) local k3d cluster (bootstrap via pnpm -w stand:base:up)"
   echo "  2) remote Kubernetes (existing kubeconfig/context)"
-  case "$(prompt "choose 1/2" 1)" in
+  echo "  3) local kind cluster (bootstrap via pnpm -w stand:base:up)"
+  case "$(prompt "choose 1/2/3" 1)" in
     2|remote|existing) RUNTIME=existing ;;
+    3|kind) RUNTIME=kind ;;
     *) RUNTIME=k3d ;;
   esac
 fi
 case "$RUNTIME" in
-  k3d|existing) ;;
-  *) die "unknown --runtime '$RUNTIME' (expected k3d|existing); kind stays env/CLI-only" ;;
+  k3d|kind|existing) ;;
+  *) die "unknown --runtime '$RUNTIME' (expected k3d|kind|existing)" ;;
 esac
 
 # ------------------------------------------------------------- namespace -----

@@ -1,6 +1,7 @@
 {{- define "platform.containerImage" -}}
   {{- $svcImage := (index .root.Values.services .service "image") | default "" -}}
-  {{- $image := .image | default .service -}}
+  {{- $svcImageName := (index .root.Values.services .service "imageName") | default "" -}}
+  {{- $image := $svcImageName | default (.image | default .service) -}}
   {{- if ne $svcImage "" }}{{ $svcImage }}{{- else }}{{- with .root.Values.global.imageRegistry }}{{ . }}/{{ end }}{{ .root.Values.global.imageNamespace | default "intabiafusion" }}/{{ $image }}:{{ .root.Values.global.version }}{{- end }}
 {{- end -}}
 

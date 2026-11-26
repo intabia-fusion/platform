@@ -19,6 +19,7 @@ tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 mkdir -p "$tmp/repo/deployment/kubernetes/scripts" "$tmp/repo/deployment/kubernetes/cluster" "$tmp/repo/dev/test-base" "$tmp/repo/dev/tool" "$tmp/repo/common/scripts" "$tmp/repo/tests/sanity" "$tmp/bin" "$tmp/state"
 cp "$root"/deployment/kubernetes/scripts/*.sh "$tmp/repo/deployment/kubernetes/scripts/"
+cp "$root"/common/scripts/stand-lock.sh "$tmp/repo/common/scripts/"
 cp "$root/deployment/kubernetes/cluster/versions.env" "$tmp/repo/deployment/kubernetes/cluster/"
 cp -R "$root/deployment/kubernetes/stands" "$tmp/repo/deployment/kubernetes/"
 cat > "$tmp/repo/deployment/kubernetes/scripts/base-up.sh" <<'MOCK'
@@ -31,6 +32,7 @@ exit 0
 MOCK
 cat > "$tmp/repo/deployment/kubernetes/scripts/test-down.sh" <<'MOCK'
 #!/bin/sh
+[ "${STAND_LOCK_KEEP:-0}" = 1 ] && touch "$STATE/keep"
 rm -rf "$STATE/ns" "$STATE/marker"
 MOCK
 cat > "$tmp/bin/kubectl" <<'MOCK'
@@ -71,6 +73,8 @@ done
 chmod +x "$tmp/bin/"* "$tmp/repo/deployment/kubernetes/scripts/"*.sh
 export STATE="$tmp/state" PATH="$tmp/bin:$PATH" STAND_RUNTIME=existing KUBE_CONTEXT=isolated
 export STAND_CONFIG_DIR="$tmp/config" STAND_HTTPS_PORT=443 NODE_EXTRA_CA_CERTS=/dev/null STAND_PUSH_IMAGES=0
+export STAND_LOCK_DIR="$tmp/lock"
+mkdir -p "$STAND_LOCK_DIR"
 prepare="$tmp/repo/deployment/kubernetes/scripts/prepare-test-stand.sh"
 TEST_RUN=first TEST_RACE=1 STAND_PREPARE_OWNED=1 bash "$prepare" api > "$tmp/first.log" 2>&1 &
 first=$!
@@ -104,6 +108,7 @@ fi
 [ -d "$STATE/marker" ]
 TEST_RUN=earlyretry STAND_REUSE=1 bash "$prepare" api > "$tmp/earlyretry.log" 2>&1 || { cat "$tmp/earlyretry.log"; exit 1; }
 [ ! -d "$STATE/marker" ]
+rm -f "$STATE/keep"
 for reuse in 0 1; do
   rm -rf "$STATE/reset."* "$STATE/marker"
   mkdir -p "$STATE/ns"
@@ -114,6 +119,8 @@ for reuse in 0 1; do
   TEST_RUN="retry$reuse" STAND_REUSE="$reuse" bash "$prepare" api > "$tmp/retry$reuse.log" 2>&1 || { cat "$tmp/retry$reuse.log"; exit 1; }
   [ ! -d "$STATE/marker" ]
 done
+[ -f "$STATE/keep" ] || { echo 'prepare did not pass STAND_LOCK_KEEP=1 to test-down.sh' >&2; exit 1; }
+[ -f "$STAND_LOCK_DIR/k3s--api.lock" ] || { echo 'prepare lost the stand claim after a nested down' >&2; exit 1; }
 : > "$STATE/calls"
 if TEST_RUN=guard STAND_NAMESPACE=platform-base STAND_REUSE=1 bash "$prepare" api > "$tmp/guard.log" 2>&1; then
   echo "platform-base namespace was accepted" >&2; exit 1

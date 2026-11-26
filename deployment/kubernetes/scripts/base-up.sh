@@ -2,7 +2,8 @@
 # Idempotent bring-up of the shared base for local stands:
 #   1. cluster (k3d/kind) with local registry and 80/443 on the load balancer
 #   2. CoreDNS rewrite *.fusion.localhost -> traefik, TLS (mkcert + TLSStore default)
-#   3. Strimzi + CloudNativePG operators (pinned) and the platform-base chart: postgres
+#   3. the operators the selected modes need (Strimzi for Kafka, CloudNativePG for Postgres,
+#      both pinned) and the platform-base chart: postgres
 #      (CNPG, primary + replica), Kafka, silo S3, elastic, redis, mailpit, the shared
 #      LiveKit + egress and the platform-base contract
 #      (LiveKit and the k3d RTC port maps are k3d-only; kind/existing keep the host server)
@@ -23,6 +24,24 @@ KAFKA_MODE="${KAFKA_MODE:-strimzi}"
 case "$KAFKA_MODE" in
   strimzi|redpanda|external) ;;
   *) die "KAFKA_MODE must be strimzi, redpanda or external (got '$KAFKA_MODE')" ;;
+esac
+
+# PostgreSQL: internal runs the CloudNativePG operator and Cluster here; external points the base
+# contract at an existing server. An explicit POSTGRES_MODE overrides the stand values; with
+# neither set the chart default (internal) applies, and the operator is installed only when a
+# Cluster is rendered.
+POSTGRES_MODE="${POSTGRES_MODE:-}"
+case "$POSTGRES_MODE" in
+  ''|internal|external) ;;
+  *) die "POSTGRES_MODE must be internal or external (got '$POSTGRES_MODE')" ;;
+esac
+POSTGRES_MODE_ARGS=()
+[ -z "$POSTGRES_MODE" ] || POSTGRES_MODE_ARGS=(--set "postgres.mode=$POSTGRES_MODE")
+PG_MODE="${POSTGRES_MODE:-$(base_values_mode postgres)}"
+PG_MODE="${PG_MODE:-internal}"
+case "$PG_MODE" in
+  internal|external) ;;
+  *) die "postgres.mode in $K8S_DIR/stands/base/values.yaml must be internal or external (got '$PG_MODE')" ;;
 esac
 
 log "base-up: runtime=$STAND_RUNTIME context=$KUBE_CONTEXT"
@@ -196,42 +215,45 @@ if [ -s "$STRIMZI_CACHE" ]; then
     kc apply -n "$BASE_NAMESPACE" -f "$STRIMZI_CACHE"
   fi
 fi
+fi
 
 # ------------------------------------------------------ cloudnativepg operator ----
-# Same shape as Strimzi: pinned release manifest, cached in TMPDIR, applied on every run.
-# Server-side apply is required: the CRD manifests exceed the 256KB limit of the
-# last-applied-configuration annotation that client-side apply writes.
-CNPG_VER="${CLOUDNATIVE_PG_VERSION#v}"
-CNPG_CACHE="${TMPDIR:-/tmp}/fusion-cnpg-$CNPG_VER.yaml"
-cnpg_manifest_ok() {
-  kc create --dry-run=client -f "$1" >/dev/null 2>&1 && grep -q 'clusters.postgresql.cnpg.io' "$1"
-}
-if [ ! -s "$CNPG_CACHE" ] || ! cnpg_manifest_ok "$CNPG_CACHE"; then
-  log "downloading CloudNativePG operator $CLOUDNATIVE_PG_VERSION manifest"
-  TMP="$CNPG_CACHE.tmp.$$"
-  if curl -fsSL --connect-timeout 10 --max-time 180 \
-      --retry 3 --retry-delay 2 --retry-all-errors \
-      "https://github.com/cloudnative-pg/cloudnative-pg/releases/download/$CLOUDNATIVE_PG_VERSION/cnpg-$CNPG_VER.yaml" \
-      > "$TMP" && cnpg_manifest_ok "$TMP"; then
-    mv "$TMP" "$CNPG_CACHE"
-  else
-    rm -f "$TMP"
-    if kc get deployment cnpg-controller-manager -n cnpg-system >/dev/null 2>&1; then
-      log "CloudNativePG download failed; the installed operator is kept as is"
+# Only when the base renders a Cluster: an external PostgreSQL has no operator here.
+if [ "$PG_MODE" != external ]; then
+  # Same shape as Strimzi: pinned release manifest, cached in TMPDIR, applied on every run.
+  # Server-side apply is required: the CRD manifests exceed the 256KB limit of the
+  # last-applied-configuration annotation that client-side apply writes.
+  CNPG_VER="${CLOUDNATIVE_PG_VERSION#v}"
+  CNPG_CACHE="${TMPDIR:-/tmp}/fusion-cnpg-$CNPG_VER.yaml"
+  cnpg_manifest_ok() {
+    kc create --dry-run=client -f "$1" >/dev/null 2>&1 && grep -q 'clusters.postgresql.cnpg.io' "$1"
+  }
+  if [ ! -s "$CNPG_CACHE" ] || ! cnpg_manifest_ok "$CNPG_CACHE"; then
+    log "downloading CloudNativePG operator $CLOUDNATIVE_PG_VERSION manifest"
+    TMP="$CNPG_CACHE.tmp.$$"
+    if curl -fsSL --connect-timeout 10 --max-time 180 \
+        --retry 3 --retry-delay 2 --retry-all-errors \
+        "https://github.com/cloudnative-pg/cloudnative-pg/releases/download/$CLOUDNATIVE_PG_VERSION/cnpg-$CNPG_VER.yaml" \
+        > "$TMP" && cnpg_manifest_ok "$TMP"; then
+      mv "$TMP" "$CNPG_CACHE"
     else
-      die "cannot download the CloudNativePG operator manifest and none is installed"
+      rm -f "$TMP"
+      if kc get deployment cnpg-controller-manager -n cnpg-system >/dev/null 2>&1; then
+        log "CloudNativePG download failed; the installed operator is kept as is"
+      else
+        die "cannot download the CloudNativePG operator manifest and none is installed"
+      fi
     fi
   fi
-fi
-if [ -s "$CNPG_CACHE" ]; then
-  log "installing/updating CloudNativePG operator $CLOUDNATIVE_PG_VERSION"
-  kc apply --server-side --force-conflicts -f "$CNPG_CACHE" >/dev/null
-  log "waiting for the CloudNativePG CRD"
-  wait_crd_established clusters.postgresql.cnpg.io || \
-    die "CloudNativePG CRD clusters.postgresql.cnpg.io is not established"
-  kc -n cnpg-system rollout status deployment/cnpg-controller-manager --timeout=180s >/dev/null || \
-    die "CloudNativePG operator did not become ready"
-fi
+  if [ -s "$CNPG_CACHE" ]; then
+    log "installing/updating CloudNativePG operator $CLOUDNATIVE_PG_VERSION"
+    kc apply --server-side --force-conflicts -f "$CNPG_CACHE" >/dev/null
+    log "waiting for the CloudNativePG CRD"
+    wait_crd_established clusters.postgresql.cnpg.io || \
+      die "CloudNativePG CRD clusters.postgresql.cnpg.io is not established"
+    kc -n cnpg-system rollout status deployment/cnpg-controller-manager --timeout=180s >/dev/null || \
+      die "CloudNativePG operator did not become ready"
+  fi
 
 fi
 
@@ -314,6 +336,7 @@ helmc upgrade --install platform-base "$K8S_DIR/charts/platform-base" \
   -n "$BASE_NAMESPACE" \
   --set tls.traefikNamespace="$TRAEFIK_NS" \
   --set "kafka.mode=$KAFKA_MODE" \
+  "${POSTGRES_MODE_ARGS[@]}" \
   "${BASE_VALUES[@]}" "${LIVEKIT_ARGS[@]}" "${PG_IMAGE_ARGS[@]}" \
   --timeout 600s
 
@@ -339,7 +362,7 @@ components() {
   NAMES+=("$name")
 }
 
-if [ "$(base_postgres_mode)" != external ]; then
+if [ "$PG_MODE" != external ]; then
   postgres_wait() {
     kc -n "$BASE_NAMESPACE" wait cluster/postgres --for=condition=Ready --timeout=600s >/dev/null || return 1
     local pg_deadline=$((SECONDS + 600)) pg_ready pg_want

@@ -15,14 +15,30 @@
 #
 # Package the platform charts with the release version, ready for a Helm repo.
 #   package-charts.sh [vX.Y.Z] [outdir]
-# Version defaults to the latest git tag; the chart version drops the leading v.
+# Version defaults to the latest v* release tag; the chart version drops the leading v.
+# Staging tags s* are rejected: charts are published for v* releases only.
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 K8S_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 REPO_ROOT="$(cd "$K8S_DIR/../.." && pwd)"
 
-VERSION="${1:-$(git -C "$REPO_ROOT" describe --tags --abbrev=0)}"
-[ -n "$VERSION" ] || { echo "usage: $0 [vX.Y.Z] [outdir]" >&2; exit 2; }
+VERSION="${1:-}"
+if [ -z "$VERSION" ]; then
+  VERSION="$(git -C "$REPO_ROOT" describe --tags --match 'v*' --abbrev=0 2>/dev/null)" || {
+    echo "no v* release tag found: pass the version explicitly" >&2
+    exit 2
+  }
+fi
+case "$VERSION" in
+  s*)
+    echo "$VERSION is a staging tag: charts are packaged for v* release tags only" >&2
+    exit 2
+    ;;
+esac
+if [[ ! "$VERSION" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
+  echo "invalid version '$VERSION': expected vX.Y.Z or X.Y.Z" >&2
+  exit 2
+fi
 CHART_VERSION="${VERSION#v}"
 OUT="${2:-$REPO_ROOT/dist/charts}"
 

@@ -58,12 +58,22 @@ cat > "$tmp/bin/jest" <<'MOCK'
 printf 'jest:%s:%s:%s\n' "${API_STAND:-unset}" "${API_STAND_PREPARED:-unset}" "$*" >> "$TEST_CALLS"
 MOCK
 chmod +x "$tmp/bin/"* "$tmp/repo/deployment/kubernetes/scripts/prepare-test-stand.sh"
+
+# The `node` stub exits 1, so package.json is parsed as JSON, not by running it through node.
+package_script() {
+  python3 - "$1" "$2" <<'PY'
+import json, sys
+with open(sys.argv[1], encoding='utf-8') as f:
+    print(json.load(f)['scripts'][sys.argv[2]])
+PY
+}
+
 export PATH="$tmp/bin:$PATH" TEST_CALLS="$tmp/calls" STAND_HTTPS_PORT=443 STAND_RUNTIME=k3d
 export STAND_CONFIG_DIR="$tmp/config" K8S_KAFKA_PORT=19876
 for package in api backup; do
   cd "$tmp/repo/api-tests/$package"
-  case "$package" in api) script=api-test ;; backup) script=backup-test ;; esac
-  command="$(sed -n "s/.*\"$script\": \"\(.*\)\",/\1/p" package.json)"
+  case "$package" in api) script=api-test:k8s ;; backup) script=backup-test:k8s ;; esac
+  command="$(package_script package.json "$script")"
   [ -n "$command" ]
   for mode in unset keep stop external; do
     for up in 0 1; do
@@ -85,9 +95,25 @@ for package in api backup; do
     done
   done
 done
+
+# Compose wrappers run Jest directly: no stand preparation, the arguments reach Jest unchanged.
+for package in api backup; do
+  cd "$tmp/repo/api-tests/$package"
+  case "$package" in api) script=api-test ;; backup) script=backup-test ;; esac
+  command="$(package_script package.json "$script")"
+  [ -n "$command" ]
+  : > "$TEST_CALLS"
+  env -u API_STAND_PREPARED API_STAND=keep bash -c "$command --json --outputFile=report.json"
+  grep -q '^jest:keep:unset:.*--json --outputFile=report.json' "$TEST_CALLS"
+  if grep -q '^prepare:' "$TEST_CALLS"; then
+    echo "$package compose wrapper prepared the stand" >&2
+    exit 1
+  fi
+done
+
 cd "$tmp/repo/api-tests/api"
-script=api-test
-  command="$(sed -n "s/.*\"$script\": \"\(.*\)\",/\1/p" package.json)"
+script=api-test:k8s
+command="$(package_script package.json "$script")"
 : > "$TEST_CALLS"
 export TEST_UP=1 TEST_INCOMPLETE=1
 if API_STAND=keep bash -c "$command" >/dev/null 2>&1; then
@@ -98,4 +124,4 @@ if grep -qE '^(prepare|jest):' "$TEST_CALLS"; then
   echo "incomplete stand was modified or passed to Jest" >&2
   exit 1
 fi
-echo "API and backup wrappers prepare before Jest only when needed"
+echo "API and backup k8s wrappers prepare before Jest only when needed; compose wrappers pass arguments"

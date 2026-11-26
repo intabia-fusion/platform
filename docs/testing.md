@@ -161,7 +161,7 @@ Flags (`-g "<title>"`, `--workers=1` for love/meetings), tracing, flake diagnosi
 
 All server-side checks run in one job, `ci_test.sh`, right after `pnpm bundle`:
 
-1. `common/scripts/docker-api.sh` builds the images of the services in `api-tests/docker-compose.yaml` from the bundles on disk. No web UI: `front` is built with an empty `dist/`, since the api-tests only need its `/config.json`, and the webpack bundle is most of a full image build.
+1. `common/scripts/docker-api.sh` builds the images of the services in `api-tests/docker-compose.yaml` from the bundles on disk. No web UI: `front-api` is built with an empty `dist/`, since the api-tests only need its `/config.json`, and the webpack bundle is most of a full image build. The separate tag keeps the full-UI `front` (Compose sanity, Playwright stands) intact; the Kubernetes API stand names it with `services.front.imageName`.
 2. `api-tests/api` runs with `API_STAND=keep` and brings the stand up with the coverage overlay, `api-tests/backup` reuses it with `API_STAND=stop` and takes it down (logs go to `api-tests/logs/`), then `pnpm coverage:stand` turns the pods' V8 profiles into `coverage-stand.json`.
 3. `pnpm coverage --integration --stand` runs the unit and integration groups under istanbul, folds the stand run in and is the gate for both jest groups. The integration group and the vitest run go side by side, and packages with `testIsolated` run alongside the shared jest - each jest process starts its own containers - unless `QUEUE_CONFIG` points at a shared stand.
 

@@ -18,7 +18,7 @@
 
 | Команда | Что делает |
 |---|---|
-| `pnpm -w stand:configure [флаги]` | Интерактивно спрашивает, куда деплоить: локальный k3d или удалённый Kubernetes (kubeconfig/context/namespace), и сохраняет выбор в `deployment/kubernetes/.stand/config` (mode 600, gitignored) |
+| `pnpm -w stand:configure [флаги]` | Интерактивно спрашивает, куда деплоить: локальный k3d, локальный kind или удалённый Kubernetes (kubeconfig/context/namespace), и сохраняет выбор в `deployment/kubernetes/.stand/config` (mode 600, gitignored) |
 | `pnpm -w stand:base:up [k3d\|kind\|existing]` | Идемпотентно поднимает base: кластер (если его нет), registry, CoreDNS-rewrite `*.fusion.localhost`, TLS (mkcert), Strimzi и чарт `platform-base` |
 | `pnpm -w stand:base:down [k3d\|kind\|existing] [--delete-data]` | Убирает только то, что создал base-up. `existing` без флага кластер не трогает |
 | `pnpm -w stand:dev:up [runtime] [--no-push]` | Поднимает dev-стенд (`dev.fusion.localhost`), base проверяет, при необходимости сам пушит образы |
@@ -184,7 +184,7 @@ allocatable 11.6 GiB.
 | `STAND_MODE` | Поведение |
 | --- | --- |
 | `dual` (default) | sanity и dev могут работать вместе (12 GB VM) |
-| `single` | один стенд на VM: `deploy.sh` берёт lock `deployment/kubernetes/.stand/active`, второй стенд не поднимется, пока первый не остановлен (`stand:test:down`/`stand:dev:down`) |
+| `single` | один стенд на VM: `deploy.sh` берёт запись в `${XDG_CACHE_HOME:-$HOME/.cache}/fusion-stand` и проверяет namespace соседних стендов; второй стенд не поднимется, пока первый не остановлен (`stand:test:down`/`stand:dev:down`) |
 
 `stand:budget` и `stand:seal` — те же переменные окружения; явный env всегда перекрывает
 `.env`.
@@ -444,7 +444,7 @@ elastic (стенда и каждого региона) и Kafka-топики, �
 
 - Playwright (sanity/ws/qms): `pnpm -w stand:test:front <stand>` (webpack на :8081) →
   `pnpm run uitest:k8s` в `<testdir>/sanity`. ws/qms-скрипты `uitest:k8s` идут через
-  `scripts/with-stand-env.sh <stand>` (для qms - runtime-копия `qms-tests/with-stand-env.sh`,
+  `scripts/with-stand-env.sh <stand>` (для qms - обёртка `qms-tests/with-stand-env.sh`,
   front-proxy - `qms-tests/stand-front.sh`): резолвит HTTPS-адрес стенда по конфигурации, ставит
   `NODE_EXTRA_CA_CERTS` (mkcert CA) и поднимает port-forward postgres для чтения OTP-кодов
   из account_db.
@@ -499,9 +499,9 @@ pnpm -w release:charts v0.8.37 --no-push     # локальная проверк
   Чистка опциональна: `pnpm -w release:charts vX.Y.Z --prune --keep N` оставляет N последних
   версий на чарт (rc сортируется раньше GA, поэтому после релиза обычно уходит первым).
 - Пока чарты отлаживаются, публикация **только вручную** (`pnpm -w release:charts`).
-  CI-job `charts-publish` (теги `v*`/`s*`) выключен и включается переменной репозитория
-  `PUBLISH_CHARTS=true`; тогда же нужен секрет `CHARTS_TOKEN` (PAT с правом записи в
-  platform-charts), а чарты дополнительно прикладываются к GitHub Release.
+  CI-job `charts-publish` (теги `v*`; staging `s*` чарты не публикует) выключен и включается
+  переменной репозитория `PUBLISH_CHARTS=true`; тогда же нужен секрет `CHARTS_TOKEN` (PAT с
+  правом записи в platform-charts), а чарты дополнительно прикладываются к GitHub Release.
 - В platform-charts: `docs/` — Helm-репозиторий (Pages), `values/` — профили `bundled` и
   `external`, `scripts/install.sh` — установка/апгрейд:
   ```bash
@@ -517,6 +517,8 @@ pnpm -w release:charts v0.8.37 --no-push     # локальная проверк
 `deployment/kubernetes/.stand/config` (shell-sourceable, mode 600, gitignored):
 
 - локальный k3d (default) - кластер `fusion`, который поднимает `stand:base:up`;
+- локальный kind - кластер `fusion-kind`, который поднимает `stand:base:up`;
+  kubeconfig не спрашивается и не сохраняется, скрипты берут контекст `kind-fusion-kind`;
 - удалённый Kubernetes - kubeconfig (локальный путь или https-ссылка; http не
   принимается), context и namespace для следующего deploy. kubeconfig из URL
   скачивается curl-ом в `.stand/kubeconfig` (mode 600), локальный путь

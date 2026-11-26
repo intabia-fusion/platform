@@ -13,13 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Reset and seed a test stand (sanity|ws|api) against the lib.sh config: remove, wipe data
+# Reset and seed a test stand (sanity|ws|qms|api) against the lib.sh config: remove, wipe data
 # (db, region dbs, buckets, index, topics), deploy, seed via stand-tool. SOURCEd or executed.
 set -euo pipefail
-STAND_NAME="${1:?usage: prepare-test-stand.sh <sanity|ws|api> [k3d|kind|existing]}"
+STAND_NAME="${1:?usage: prepare-test-stand.sh <sanity|ws|qms|api> [k3d|kind|existing]}"
 case "$STAND_NAME" in
-  sanity|ws|api) ;;
-  *) echo "usage: prepare-test-stand.sh <sanity|ws|api> [k3d|kind|existing]" >&2; exit 2 ;;
+  sanity|ws|qms|api) ;;
+  *) echo "usage: prepare-test-stand.sh <sanity|ws|qms|api> [k3d|kind|existing]" >&2; exit 2 ;;
 esac
 [ $# -ge 2 ] && case "$2" in k3d|kind|existing) STAND_RUNTIME="$2"; shift ;; esac
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -51,7 +51,39 @@ REGION_DBS="$(grep -h -E '^    db:' "${VALUES_FILES[@]}" | awk '{print $2}' | so
 REGION_IDS="$(grep -h -E '^  - id:' "${VALUES_FILES[@]}" | awk '{print $3}' | sed 's/^"//; s/"$//' | grep -v '^$' || true)"
 
 require_tools
+
+# The data reset below runs inside the in-cluster components: the CNPG primary,
+# statefulset/s3, statefulset/elastic and the broker pod (Strimzi or Redpanda). External
+# components live outside the cluster, so refuse before base-up touches the stand. The modes
+# are resolved the same way base-up renders them: explicit env, then stands/base/values.yaml,
+# then the chart defaults.
+PG_MODE="${POSTGRES_MODE:-$(base_values_mode postgres)}"
+PG_MODE="${PG_MODE:-internal}"
+S3_MODE="$(base_values_mode s3)"
+S3_MODE="${S3_MODE:-silo}"
+ELASTIC_MODE="$(base_values_mode elastic)"
+ELASTIC_MODE="${ELASTIC_MODE:-internal}"
+KAFKA_MODE="${KAFKA_MODE:-strimzi}"
+export KAFKA_MODE
+EXTERNAL_COMPONENTS=()
+[ "$PG_MODE" != external ] || EXTERNAL_COMPONENTS+=("postgres.mode=external")
+[ "$KAFKA_MODE" != external ] || EXTERNAL_COMPONENTS+=("kafka.mode=external")
+[ "$S3_MODE" != external ] || EXTERNAL_COMPONENTS+=("s3.mode=external")
+[ "$ELASTIC_MODE" != external ] || EXTERNAL_COMPONENTS+=("elastic.mode=external")
+if [ ${#EXTERNAL_COMPONENTS[@]} -ne 0 ]; then
+  die "prepare-test-stand.sh cannot prepare a stand with ${EXTERNAL_COMPONENTS[*]}: the data wipe and seed run inside the CNPG primary, statefulset/s3, statefulset/elastic and the broker pod. Only internal PostgreSQL, S3, Elasticsearch and strimzi|redpanda Kafka are supported; switch stands/base/values.yaml back to the internal components or prepare this stand by hand."
+fi
+
 "$SCRIPT_DIR/base-up.sh" "$STAND_RUNTIME"
+
+# Claim the stand before the destructive steps below. deploy.sh acquires again once the stand is
+# ready; the claim stays with the live stand and is released by down.sh, not here. The downs below
+# run with STAND_LOCK_KEEP=1 so the nested down does not drop this claim mid-prepare.
+stand_lock_acquire "$STAND_NAME"
+
+# In-cluster broker address for the tool pod (dev/test-base/src/k8s.ts reads it): the base's
+# Kafka mode picks the Strimzi or Redpanda Service; external was refused above.
+KAFKA_BOOTSTRAP="$(base_kafka_bootstrap)"
 
 log "removing the previous $STAND_NAME stand"
 if [ "$STAND_NAME" = api ]; then
@@ -61,7 +93,7 @@ if [ "$STAND_NAME" = api ]; then
     kc create namespace "$STAND_NS" || die "cannot claim api namespace '$STAND_NS'"
   elif [ -n "$existing_ns" ] && [ "${STAND_REUSE:-0}" != 1 ]; then
     kc -n "$STAND_NS" create configmap api-stand-incomplete --dry-run=client -o yaml | kc apply -f -
-    "$SCRIPT_DIR/test-down.sh" "$STAND_NAME" "$STAND_RUNTIME" --yes
+    STAND_LOCK_KEEP=1 "$SCRIPT_DIR/test-down.sh" "$STAND_NAME" "$STAND_RUNTIME" --yes
     kc create namespace "$STAND_NS" || die "cannot reclaim api namespace '$STAND_NS'"
   elif [ -z "$existing_ns" ]; then
     kc create namespace "$STAND_NS" || die "cannot claim api namespace '$STAND_NS'"
@@ -71,7 +103,7 @@ elif [ "${STAND_REUSE:-0}" = 1 ] && kc get namespace "$STAND_NS" >/dev/null 2>&1
   # STAND_REUSE=1: upgrade in place; the data wipe below requires a pod restart anyway.
   log "keeping namespace $STAND_NS (STAND_REUSE=1): upgrade in place"
 else
-  "$SCRIPT_DIR/test-down.sh" "$STAND_NAME" "$STAND_RUNTIME" --yes
+  STAND_LOCK_KEEP=1 "$SCRIPT_DIR/test-down.sh" "$STAND_NAME" "$STAND_RUNTIME" --yes
 fi
 
 # Kafka admin calls can wedge while the broker recovers; a bounded run fails the prepare with a
@@ -122,18 +154,46 @@ for index in $ELASTIC_INDEXES; do
     curl -sS -o /dev/null -w '%{http_code}' -X DELETE "http://localhost:9200/$index")" || die "Elasticsearch: failed to delete $index"
   [ "$status" = 200 ] || [ "$status" = 404 ] || die "Elasticsearch: delete $index returned HTTP $status"
 done
-with_deadline 300 kubectl --context "$KUBE_CONTEXT" -n "$BASE_NAMESPACE" exec my-cluster-combined-0 -- sh -c \
-  "topics=\$(bin/kafka-topics.sh --bootstrap-server localhost:9092 --list) || exit; for topic in \$topics; do case \"\$topic\" in *-$STAND_DATA) bin/kafka-topics.sh --bootstrap-server localhost:9092 --delete --topic \"\$topic\" || exit ;; esac; done"
+if [ "$KAFKA_MODE" = redpanda ]; then
+  # Redpanda has no Kafka distribution: rpk is its admin tool. `rpk topic list` is a text table,
+  # so the names are matched token by token against the stand suffix.
+  with_deadline 300 kubectl --context "$KUBE_CONTEXT" -n "$BASE_NAMESPACE" exec -i deployment/redpanda -- sh -s -- "$STAND_DATA" <<'RPK_RESET'
+topics=$(rpk topic list --brokers localhost:9092) || exit
+for name in $topics; do
+  case "$name" in *-"$1") rpk topic delete --brokers localhost:9092 "$name" || exit ;; esac
+done
+RPK_RESET
+else
+  with_deadline 300 kubectl --context "$KUBE_CONTEXT" -n "$BASE_NAMESPACE" exec my-cluster-combined-0 -- sh -c \
+    "topics=\$(bin/kafka-topics.sh --bootstrap-server localhost:9092 --list) || exit; for topic in \$topics; do case \"\$topic\" in *-$STAND_DATA) bin/kafka-topics.sh --bootstrap-server localhost:9092 --delete --topic \"\$topic\" || exit ;; esac; done"
+fi
 
 # Consumers subscribe at pod start and do not all recover when a topic appears later: recreate
 # the core set (partitions as in PlatformQueue.createTopics()) before deploying.
 log "creating $STAND_NAME Kafka topics"
-with_deadline 300 kubectl --context "$KUBE_CONTEXT" -n "$BASE_NAMESPACE" exec my-cluster-combined-0 -- sh -c \
-  "for spec in tx:10 online-user-tx:10 fulltext:5 workspace:1 users:1 process:1 ai-queue:10 transcription-queue:10 user-notifications:10 held-notifications:10 notifications:2 love-queue:1 crm:1 billing-usage:1 subscription:1 payment-operation:1; do \
-    topic=\${spec%%:*}; partitions=\${spec##*:}; \
-    bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --if-not-exists \
-      --topic \"\$topic-$STAND_DATA\" --partitions \"\$partitions\" || exit; \
-  done"
+if [ "$KAFKA_MODE" = redpanda ]; then
+  # rpk exits non-zero when the topic is still there; the delete above is asynchronous, so an
+  # existing topic is the expected result of a retry, same as --if-not-exists below.
+  with_deadline 300 kubectl --context "$KUBE_CONTEXT" -n "$BASE_NAMESPACE" exec -i deployment/redpanda -- sh -s -- "$STAND_DATA" <<'RPK_TOPICS'
+# Keep the topic/partition list in sync with the Strimzi branch below.
+for spec in tx:10 online-user-tx:10 fulltext:5 workspace:1 users:1 process:1 ai-queue:10 transcription-queue:10 user-notifications:10 held-notifications:10 notifications:2 love-queue:1 crm:1 billing-usage:1 subscription:1 payment-operation:1; do
+  topic=${spec%%:*}
+  partitions=${spec##*:}
+  # rpk prints a per-topic failure as a table row on stdout (create.go uses out.NewTable/os.Stdout)
+  # and request-level failures on stderr; capture both so the retry check sees either.
+  out=$(rpk topic create --brokers localhost:9092 -r 1 -p "$partitions" "$topic-$1" 2>&1) || {
+    case "$out" in *TOPIC_ALREADY_EXISTS*) ;; *) echo "$out" >&2; exit 1 ;; esac
+  }
+done
+RPK_TOPICS
+else
+  with_deadline 300 kubectl --context "$KUBE_CONTEXT" -n "$BASE_NAMESPACE" exec my-cluster-combined-0 -- sh -c \
+    "for spec in tx:10 online-user-tx:10 fulltext:5 workspace:1 users:1 process:1 ai-queue:10 transcription-queue:10 user-notifications:10 held-notifications:10 notifications:2 love-queue:1 crm:1 billing-usage:1 subscription:1 payment-operation:1; do \
+      topic=\${spec%%:*}; partitions=\${spec##*:}; \
+      bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --if-not-exists \
+        --topic \"\$topic-$STAND_DATA\" --partitions \"\$partitions\" || exit; \
+    done"
+fi
 
 if [ "${STAND_REUSE:-0}" = 1 ] && kc get namespace "$STAND_NS" >/dev/null 2>&1; then
   # The stand database is gone: a running transactor/workspace would keep stale pools and
@@ -148,6 +208,7 @@ fi
 # login screen; the fresh stand re-authenticates in the setup project.
 rm -rf "$REPO_ROOT/tests/sanity/.auth"
 [ "$STAND_NAME" = ws ] && rm -rf "$REPO_ROOT/ws-tests/sanity/.auth"
+[ "$STAND_NAME" = qms ] && rm -rf "$REPO_ROOT/qms-tests/sanity/.auth"
 
 # The tool pod dies with the calling shell (the trap below runs in whoever sourced this file),
 # so tests/tool-pg.sh still has it for sync-indexes at the end of a tests/prepare-pg.sh run.
@@ -233,7 +294,7 @@ EOF
 kc -n "$STAND_NS" wait --for=condition=Ready pod/stand-tool --timeout=180s
 
 kc -n "$STAND_NS" exec stand-tool -- mkdir -p \
-  /workspace/dev/test-base/bundle /workspace/dev/tool/bundle /workspace/common/scripts /workspace/tests
+  /workspace/dev/test-base/bundle /workspace/dev/tool/bundle /workspace/common/scripts /workspace/tests /workspace/qms-tests
 kc cp "$REPO_ROOT/dev/test-base/bundle/bundle.js" "$STAND_NS/stand-tool:/workspace/dev/test-base/bundle/bundle.js"
 kc cp "$REPO_ROOT/dev/tool/bundle/bundle.js" "$STAND_NS/stand-tool:/workspace/dev/tool/bundle/bundle.js"
 kc cp "$REPO_ROOT/common/scripts/show_version.js" "$STAND_NS/stand-tool:/workspace/common/scripts/show_version.js"
@@ -242,6 +303,9 @@ if [ "$STAND_NAME" = sanity ]; then
   kc cp "$REPO_ROOT/tests/sanity-ws" "$STAND_NS/stand-tool:/workspace/tests/sanity-ws"
   kc cp "$REPO_ROOT/tests/meetings-ws" "$STAND_NS/stand-tool:/workspace/tests/meetings-ws"
   kc cp "$REPO_ROOT/tests/indexes.yaml" "$STAND_NS/stand-tool:/workspace/tests/indexes.yaml"
+elif [ "$STAND_NAME" = qms ]; then
+  # dev/test-base/src/stands.ts restores it from the qms stand dir (qms-tests/).
+  kc cp "$REPO_ROOT/qms-tests/sanity-ws-qms" "$STAND_NS/stand-tool:/workspace/qms-tests/sanity-ws-qms"
 fi
 
 MODEL_VERSION="$(node "$REPO_ROOT/common/scripts/show_version.js")"
@@ -249,6 +313,7 @@ export MODEL_VERSION
 log "seeding $STAND_NAME inside $STAND_NS/stand-tool"
 kc -n "$STAND_NS" exec stand-tool -- env \
   K8S_TOOL_IN_POD=1 STAND_BACKEND=k3s K8S_STAND="$STAND_NAME" \
+  K8S_KAFKA_BOOTSTRAP="$KAFKA_BOOTSTRAP" \
   STAND_HTTPS_PORT="$STAND_HTTPS_PORT" MODEL_VERSION="$MODEL_VERSION" \
   node --max-old-space-size=8096 /workspace/dev/test-base/bundle/bundle.js "$STAND_NAME" seed
 

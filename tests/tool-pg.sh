@@ -65,7 +65,7 @@ if [ "$(tool_backend)" = k8s ]; then
         ACCOUNT_DB_URL="$DB_URL" \
         SERVER_SECRET=secret \
         DB_URL="$DB_URL" \
-        QUEUE_CONFIG="my-cluster-kafka-bootstrap.${BASE_NAMESPACE}.svc.cluster.local:9092;-${SANITY_DATA}" \
+        QUEUE_CONFIG="$(base_kafka_bootstrap);-${SANITY_DATA}" \
         ELASTIC_URL="http://elastic.${BASE_NAMESPACE}.svc.cluster.local:9200" \
         node ${TOOL_OPTIONS:-} /workspace/dev/tool/bundle/bundle.js "${ARGS[@]}"
     exit 0

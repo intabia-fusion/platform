@@ -27,7 +27,7 @@ inputs:
     required: false
     default: 'sanity-'
   stand:
-    description: 'Kubernetes stand name (sanity|ws|api); empty runs the compose stand instead'
+    description: 'Kubernetes stand name (sanity|ws|qms|api); empty runs the compose stand instead'
     required: false
     default: ''
   k8s-runtime:
@@ -67,30 +67,63 @@ runs:
         [ "${{ inputs.k8s-runtime }}" = existing ] && push_flag=--no-push-images
         # Explicit flags/env win over any saved config; prepare brings the base up itself.
         pnpm -w stand:configure --runtime "${{ inputs.k8s-runtime }}" --namespace "$ns" "$push_flag" --yes
+        # The saved config namespace targets the dev stand and test stands ignore it by design;
+        # publish the resolved one so prepare, deploy, with-stand-env and the cleanup all use it.
+        if [ -n "$ns" ]; then
+          echo "STAND_NAMESPACE=$ns" >> "$GITHUB_ENV"
+        fi
 
-    - name: Prepare Kubernetes stand (with rate limit retry)
+    - name: Prepare Kubernetes stand
       if: ${{ inputs.stand != '' }}
       shell: bash
       run: |
         set -o pipefail
-        cd ./${{ inputs.test-folder }}
-        if ${{ inputs.prepare-script }} 2>&1 | tee /tmp/prepare-server.log; then
+        # No Docker Hub retry: the stand pulls images inside the cluster, so a host login
+        # would not change the outcome. Keep the full log and fail.
+        if deployment/kubernetes/scripts/prepare-test-stand.sh "${{ inputs.stand }}" "${{ inputs.k8s-runtime }}" 2>&1 | tee /tmp/prepare-server.log; then
           echo "Prepare succeeded"
         else
-          if grep -qi "rate limit\|too many requests\|toomanyrequests" /tmp/prepare-server.log; then
-            echo "Rate limit hit, logging in to Docker Hub and retrying..."
-            echo "$DOCKER_ACCESS_TOKEN" | docker login -u intabiafusion --password-stdin
-            ${{ inputs.prepare-script }}
-          else
-            echo "Prepare failed (not a rate limit issue)"
-            cat /tmp/prepare-server.log
-            exit 1
-          fi
+          echo "Prepare failed"
+          cat /tmp/prepare-server.log
+          exit 1
         fi
       # No LIVEKIT_MODE here: k3d stands use the shared cluster LiveKit; the docker mode needs the
       # compose redis (:6390) and is only valid for the compose path below.
-      env:
-        DOCKER_ACCESS_TOKEN: ${{ inputs.docker-access-token }}
+
+    # make-media-fixtures.sh is called by the compose prepare only; a fresh checkout has neither
+    # fixture. It generates them with the locally built stream and preview images and only warns
+    # when Docker is missing, so check the result instead of trusting its exit code.
+    - name: Generate sanity media fixtures
+      if: ${{ inputs.stand == 'sanity' }}
+      shell: bash
+      run: |
+        cd ./${{ inputs.test-folder }}
+        ./make-media-fixtures.sh
+        missing=()
+        for f in sanity/tests/files/fake-video.mp4 sanity/tests/files/fake-doc.docx; do
+          [ -f "$f" ] || missing+=("$f")
+        done
+        if [ ${#missing[@]} -ne 0 ]; then
+          echo "ERROR: missing media fixtures: ${missing[*]}" >&2
+          echo "make-media-fixtures.sh generates them from the local intabiafusion/stream and intabiafusion/preview images (pnpm docker:build); without those images the media and docx preview tests cannot run." >&2
+          exit 1
+        fi
+        ls -l sanity/tests/files/fake-video.mp4 sanity/tests/files/fake-doc.docx
+
+    # The ws suite drives the UI from a localhost:8081 dev-server; the chart serves only the stand's
+    # own front. Host mode: a fresh runner has no dev-front image and building one costs a full
+    # docker build per job. Webpack runs from dev/prod against the lib/ output `pnpm docker`
+    # already emits for the stand images, so no extra compile step is needed.
+    - name: Start test frontend
+      if: ${{ inputs.stand == 'ws' }}
+      shell: bash
+      run: |
+        set -m
+        pnpm -w stand:test:front ws --host > /tmp/stand-front.log 2>&1 < /dev/null &
+        echo "$!" > /tmp/stand-front.pid
+        disown 2>/dev/null || true
+        set +m
+        echo "test frontend started (pid $(cat /tmp/stand-front.pid)), log: /tmp/stand-front.log"
 
     # ---------------------------------------------------------------- compose stands
     - name: Prepare server (with rate limit retry)
@@ -157,6 +190,26 @@ runs:
         fi
         node $T/stats.js sample --out runs/ci/stats.ndjson --interval 1000 &
         echo $! > /tmp/telemetry-stats.pid
+
+    - name: Wait for test frontend
+      if: ${{ inputs.stand == 'ws' }}
+      shell: bash
+      run: |
+        for _ in $(seq 1 450); do
+          if curl -sf -o /dev/null http://localhost:8081/config.json; then
+            echo "test frontend is serving on :8081"
+            exit 0
+          fi
+          if ! kill -0 "$(cat /tmp/stand-front.pid)" 2>/dev/null; then
+            echo "test frontend exited before it served :8081:" >&2
+            tail -100 /tmp/stand-front.log >&2 || true
+            exit 1
+          fi
+          sleep 2
+        done
+        echo "test frontend did not answer on :8081 within 15 min:" >&2
+        tail -100 /tmp/stand-front.log >&2 || true
+        exit 1
 
     - name: Run UI tests
       shell: bash
@@ -281,6 +334,17 @@ runs:
       with:
         name: ${{ inputs.stand != '' && 'k8s' || 'docker' }}-logs-${{ inputs.artifact-name-suffix }}
         path: ./${{ inputs.test-folder }}/sanity/logs
+
+    - name: Stop test frontend
+      if: ${{ always() && inputs.stand == 'ws' }}
+      shell: bash
+      run: |
+        if [ -f /tmp/stand-front.pid ]; then
+          pid="$(cat /tmp/stand-front.pid)"
+          kill -TERM -- "-$pid" 2>/dev/null || true
+          rm -f /tmp/stand-front.pid
+          echo "stopped test frontend (process group $pid)"
+        fi
 
     - name: Cleanup Kubernetes stand
       if: ${{ always() && inputs.stand != '' }}

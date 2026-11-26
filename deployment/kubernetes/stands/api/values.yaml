@@ -104,6 +104,9 @@ services:
     - name: DELETED_RETENTION_DAYS
       value: "7"
   front:
+    # The API build (common/scripts/docker-api.sh) has no web UI: front-api keeps the full
+    # front image (Playwright stands, compose sanity) untouched.
+    imageName: front-api
     replicas: 1
     # compose parity: the ws/api UI suites expect the full navigator, nothing hidden
     disabledFeatures: []
