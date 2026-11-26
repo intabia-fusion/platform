@@ -1,0 +1,57 @@
+#
+# Copyright © 2026 Intabia Fusion.
+#
+# Licensed under the Eclipse Public License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License. You may
+# obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+{{- if .Values.resourceMetrics.enabled }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "monitoring.clickstackName" . }}-metrics
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: monitoring-metrics
+    app.kubernetes.io/instance: {{ .Release.Name }}
+---
+# kubeletstats reads the kubelet's /stats/summary through the node API; the node name comes from
+# the downward API, and the collector authenticates with this service account.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "monitoring.clickstackName" . }}-metrics
+  labels:
+    app.kubernetes.io/name: monitoring-metrics
+    app.kubernetes.io/instance: {{ .Release.Name }}
+rules:
+  - apiGroups: [""]
+    resources: ["nodes", "nodes/stats", "nodes/metrics", "nodes/log", "nodes/spec", "nodes/proxy"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods", "namespaces"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "monitoring.clickstackName" . }}-metrics
+  labels:
+    app.kubernetes.io/name: monitoring-metrics
+    app.kubernetes.io/instance: {{ .Release.Name }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "monitoring.clickstackName" . }}-metrics
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "monitoring.clickstackName" . }}-metrics
+    namespace: {{ .Release.Namespace }}
+{{- end }}

@@ -73,3 +73,32 @@ clickstack:
 
   tasks:
     enabled: false
+
+# ClickStack does not collect node/pod resources or database metrics by itself. These two
+# collectors feed the resource dashboards: the node DaemonSet reads the kubelet and host
+# counters, the database Deployment scrapes the CloudNativePG instance-manager endpoint.
+resourceMetrics:
+  enabled: true
+  collector:
+    image: otel/opentelemetry-collector-contrib:0.160.0
+  node:
+    enabled: true
+    collectionInterval: 30s
+    resources:
+      requests:
+        memory: 64Mi
+        cpu: 50m
+      limits:
+        memory: 256Mi
+  database:
+    enabled: true
+    # Empty discovers CloudNativePG pods in every namespace; the Prometheus receiver keeps pods
+    # carrying the cnpg.io/cluster label and scrapes their instance-manager port 9187.
+    namespaces: []
+    collectionInterval: 30s
+    resources:
+      requests:
+        memory: 64Mi
+        cpu: 50m
+      limits:
+        memory: 256Mi
