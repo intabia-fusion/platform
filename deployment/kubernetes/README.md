@@ -410,11 +410,12 @@ pnpm -w stand:test:front  # HTTP UI на :8081
 # В другом терминале: cd tests/sanity && pnpm run uitest:k8s
 ```
 
-Все четыре тестовых стенда (sanity/ws/api/qms) готовятся одним сценарием,
+Все четыре тестовых стенда (sanity/ws/api/qms) может готовить
 `deployment/kubernetes/scripts/prepare-test-stand.sh` (обёртки: `tests/prepare-pg.sh`
-для sanity, `ws-tests/prepare.sh` для ws, `qms-tests/prepare-qms.sh` для qms - runtime-копия
-сценария, т.к. whitelist общего скрипта ещё sanity|ws|api; api-стенд готовит сам jest-прогон через
-`api-tests/api/src/stand.ts`). По умолчанию prepare поднимает стенд в Kubernetes,
+для sanity, `ws-tests/prepare.sh` для ws; qms - тем же скриптом, whitelist
+sanity|ws|qms|api; api-стенд готовит сам jest-прогон через `api-tests/api/src/stand.ts`).
+`qms-tests/prepare-qms.sh` остаётся Compose-входом (`dev/test-base/run.sh qms`), а
+`qms-tests/with-stand-env.sh` - тонкая обёртка над общим `with-stand-env.sh`. По умолчанию prepare поднимает стенд в Kubernetes,
 настроенном через `pnpm -w stand:configure` (kubeconfig/context/namespace, runtime
 k3d/kind/existing); compose-сценария нет.
 

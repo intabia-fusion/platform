@@ -68,16 +68,10 @@ run_suite() {
     prepare_stand
     for ((i = 1; i <= ITERATIONS; i++)); do
         if [ "$i" -gt 1 ]; then
-            if [ "$STAND_BACKEND" = k3s ]; then
-                # A k3s stand cannot be restored from the host: Strimzi and Redpanda advertise
-                # in-cluster DNS, so KafkaJS connects to an address the host cannot resolve.
-                # Reseed in-cluster through the prepare instead.
-                echo "=== reseed before run $i/$ITERATIONS ($label)"
-                prepare_stand
-            else
-                echo "=== restore before run $i/$ITERATIONS ($label)"
-                ./restore-pg.sh
-            fi
+            # The k3s restore runs under with-stand-env with the queue disabled: the broker's
+            # in-cluster DNS is unreachable from the host, but Postgres and the HTTP API are not.
+            echo "=== restore before run $i/$ITERATIONS ($label)"
+            ./restore-pg.sh
         fi
         echo "=== run $i/$ITERATIONS ($label)"
         # A red run is data, not a reason to stop: collect several in a row. A k3d stand needs

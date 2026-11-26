@@ -338,8 +338,9 @@ cmd_status() {
         "$REC_BACKEND" "$REC_STAND" "$REC_PID" "$state" "$REC_RUNTIME" "${REC_NAMESPACE:--}"
     done
   fi
-  [ "$found" = 1 ] || echo "lock: free"
   if parse_legacy; then
+    # A legacy file is a claim too: never report the host free while one exists, even unreadable.
+    found=1
     if [ -z "$LEGACY_BACKEND" ]; then
       printf 'lock: legacy file %s is empty or unreadable\n' "$LEGACY_LOCK_FILE"
     else
@@ -349,6 +350,7 @@ cmd_status() {
         "$LEGACY_BACKEND" "${LEGACY_STAND:--}" "${LEGACY_PID:--}" "$state"
     fi
   fi
+  [ "$found" = 1 ] || echo "lock: free"
   compose_running && echo "compose: running (project $COMPOSE_PROJECT)" || echo "compose: stopped"
   k3d_running && echo "k3d: cluster running" || echo "k3d: cluster stopped"
   kind_running && echo "kind: cluster running" || echo "kind: cluster stopped"

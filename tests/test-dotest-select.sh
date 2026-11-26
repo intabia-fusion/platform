@@ -136,33 +136,31 @@ has "prepare-test-stand sanity k3d reuse=0"
 nomatch '^test-base '
 has "lock release k3s dotest"
 
-# k3s, second iteration: the host restore cannot reach the cluster's Kafka (the broker advertises
-# in-cluster DNS), so every run after the first reseeds in-cluster through the prepare. The host
-# restore is never called, and the reseed sits between the two runs.
+# k3s, second iteration: the restore runs under with-stand-env with the queue disabled, because
+# the broker advertises in-cluster DNS. prepare runs once; the restore sits between the runs.
 run_dotest k3s-iterations 2 STAND_BACKEND=k3s STAND_RUNTIME=k3d
 [ "$LAST_RC" = 0 ] || fail "exit $LAST_RC"
-[ "$(count "prepare-test-stand sanity k3d reuse=1")" = 2 ] || fail "prepare-test-stand count: $(count "prepare-test-stand sanity k3d reuse=1")"
+[ "$(count "prepare-test-stand sanity k3d reuse=1")" = 1 ] || fail "prepare-test-stand count: $(count "prepare-test-stand sanity k3d reuse=1")"
 [ "$(count "pnpm run uitest:telemetry --workers 5")" = 2 ] || fail "runs: $(count "pnpm run uitest:telemetry --workers 5")"
-nomatch '^test-base '
-hasnt "push-images sanity"
-prepare_first="$(pos "prepare-test-stand sanity k3d reuse=1")"
-prepare_last="$(lastpos "prepare-test-stand sanity k3d reuse=1")"
+[ "$(count "test-base sanity restore backend=k3s runtime=k3d wrapped=1")" = 1 ] || fail "restore count"
+prepare="$(pos "prepare-test-stand sanity k3d reuse=1")"
+restore="$(pos "test-base sanity restore backend=k3s runtime=k3d wrapped=1")"
 run_first="$(pos "with-stand-env sanity pnpm run uitest:telemetry --workers 5")"
 run_last="$(lastpos "with-stand-env sanity pnpm run uitest:telemetry --workers 5")"
-[ "$prepare_first" -lt "$run_first" ] || fail "first prepare after the first run"
-[ "$run_first" -lt "$prepare_last" ] || fail "second prepare before the first run"
-[ "$prepare_last" -lt "$run_last" ] || fail "second prepare after the second run"
+[ "$prepare" -lt "$run_first" ] || fail "prepare after the first run"
+[ "$run_first" -lt "$restore" ] || fail "restore before the first run"
+[ "$restore" -lt "$run_last" ] || fail "restore after the second run"
+hasnt "push-images sanity"
 has "lock release k3s dotest"
 
-# A k3s restore from the host is refused outright: nothing reaches dev/test-base/run.sh.
-state="$tmp/k3s-restore-refused"
+# A direct k3s restore goes through with-stand-env and reaches the tool with backend=k3s.
+state="$tmp/k3s-restore"
 calls="$state/calls"
 mkdir -p "$state"
-: > "$state/out"
-if (cd "$tmp/tests" && STAND_BACKEND=k3s CALLS="$calls" bash ./restore-pg.sh sanity) >"$state/out" 2>&1; then
-    CASE=k3s-restore-refused fail "restore-pg.sh accepted a k3s stand"
-fi
-[ ! -s "$calls" ] || fail "restore-pg.sh ran a k3s restore"
+(cd "$tmp/tests" && STAND_BACKEND=k3s CALLS="$calls" bash ./restore-pg.sh sanity) >"$state/out" 2>&1 || \
+    fail "restore-pg.sh rejected a k3s stand"
+grep -qxF 'test-base sanity restore backend=k3s runtime=unset wrapped=1' "$calls" || \
+    fail "restore-pg.sh did not run the k3s restore"
 
 # A failed prepare still releases the claim and keeps the failure exit code.
 run_dotest compose-fail 1 STUB_PREPARE_RC=1

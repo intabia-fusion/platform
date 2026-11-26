@@ -194,8 +194,11 @@ kafka_accepts_connection() {
 KAFKA_PF_PID=""
 if [ "${STAND_KAFKA_FORWARD:-1}" != 0 ]; then
   # The base's mode comes from `helm get values`: read it only when the forward is wanted, so a
-  # caller that disables the forward needs neither a base release nor helm.
-  KAFKA_BASE_MODE="$(base_kafka_mode)"
+  # caller that disables the forward needs neither a base release nor helm. A failed helm call
+  # must not leave an empty mode and a silent exit: say why the forward cannot start.
+  KAFKA_BASE_MODE="$(base_kafka_mode || true)"
+  [ -n "$KAFKA_BASE_MODE" ] || \
+    die "cannot read kafka.mode from $BASE_NAMESPACE/platform-base; is the base up? (helm get values)"
   if [ "$KAFKA_BASE_MODE" != external ]; then
     KAFKA_SVC="$(base_kafka_service)"
     : "${K8S_KAFKA_PORT:=19093}"

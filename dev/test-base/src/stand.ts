@@ -161,8 +161,14 @@ async function seedWorkspaces (cfg: StandConfig, concurrency: number): Promise<v
     for (const ws of workspaces) {
       if (ws.restore !== undefined) {
         // Backups live next to the stand that defined the workspace, which is not the cwd once
-        // stands are merged.
-        await runTool(['backup-restore', resolve(standDir(cfg), ws.restore), ws.name, '--upgrade'])
+        // stands are merged. A host-side k3s restore cannot use the queue: the broker advertises
+        // in-cluster DNS, so skip the restoring event and the KafkaJS client there. The in-pod
+        // seed reaches Kafka and keeps the event.
+        const args = ['backup-restore', resolve(standDir(cfg), ws.restore), ws.name, '--upgrade']
+        if (process.env.STAND_BACKEND === 'k3s' && process.env.K8S_TOOL_IN_POD !== '1') {
+          args.push('--noqueue')
+        }
+        await runTool(args)
       }
     }
 
