@@ -140,7 +140,7 @@ export async function createServer (
   const datalake = new DatalakeImpl(db, buckets, producer, { cacheControl, cache: config.Cache })
   const tempDir = new TemporaryDir(ctx, 'datalake-', config.CleanupInterval)
   const limitsState = new LimitsState(ctx, queue)
-  const workspaceCleaner = createWorkspaceCleaner(ctx, queue, datalake)
+  const workspaceCleaner = createWorkspaceCleaner(ctx, queue, datalake, db.publicFileAccess)
 
   const app = express()
   app.disable('x-powered-by')

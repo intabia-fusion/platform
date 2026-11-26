@@ -24,6 +24,7 @@ import { handleWorkspaceMessage } from '../workspace'
 
 const ctx = { info: jest.fn(), warn: jest.fn(), error: jest.fn() } as unknown as MeasureContext
 const workspace = 'ws-1' as WorkspaceUuid
+const access = { setWorkspaceAvailable: jest.fn() }
 
 function message (type: QueueWorkspaceEvent): ConsumerMessage<QueueWorkspaceMessage> {
   const value: QueueWorkspaceMessage = { type } as any
@@ -32,10 +33,23 @@ function message (type: QueueWorkspaceEvent): ConsumerMessage<QueueWorkspaceMess
 }
 
 describe('workspace deletion marks the blobs', () => {
+  it('blocks archive and restore-in-progress without deleting files, then enables restored workspaces', async () => {
+    const datalake = { deleteWorkspace: jest.fn() } as unknown as Datalake
+    const access = { setWorkspaceAvailable: jest.fn() }
+    for (const type of [QueueWorkspaceEvent.Archived, QueueWorkspaceEvent.Restoring, QueueWorkspaceEvent.Restored]) {
+      await handleWorkspaceMessage(ctx, datalake, message(type), access)
+    }
+    expect(access.setWorkspaceAvailable.mock.calls).toEqual([
+      [workspace, false],
+      [workspace, false],
+      [workspace, true]
+    ])
+    expect(datalake.deleteWorkspace).not.toHaveBeenCalled()
+  })
   it('a Deleted event marks every blob of that workspace', async () => {
     const datalake = { deleteWorkspace: jest.fn() } as unknown as Datalake
 
-    await handleWorkspaceMessage(ctx, datalake, message(QueueWorkspaceEvent.Deleted))
+    await handleWorkspaceMessage(ctx, datalake, message(QueueWorkspaceEvent.Deleted), access)
 
     expect(datalake.deleteWorkspace).toHaveBeenCalledWith(ctx, workspace)
   })
@@ -49,7 +63,7 @@ describe('workspace deletion marks the blobs', () => {
       QueueWorkspaceEvent.Restored,
       QueueWorkspaceEvent.ClearIndex
     ]) {
-      await handleWorkspaceMessage(ctx, datalake, message(type))
+      await handleWorkspaceMessage(ctx, datalake, message(type), access)
     }
 
     expect(datalake.deleteWorkspace).not.toHaveBeenCalled()

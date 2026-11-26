@@ -25,6 +25,7 @@ import {
 } from '@hcengineering/server-core'
 
 import { type Datalake } from './datalake/types'
+import { type PublicFileAccess } from './datalake/publicFileAccess'
 
 /** Shared group: one replica applies the change, the rest skip the message. */
 const GROUP_ID = 'datalake-workspace'
@@ -32,23 +33,40 @@ const GROUP_ID = 'datalake-workspace'
 export async function handleWorkspaceMessage (
   ctx: MeasureContext,
   datalake: Datalake,
-  msg: ConsumerMessage<QueueWorkspaceMessage>
+  msg: ConsumerMessage<QueueWorkspaceMessage>,
+  access: Pick<PublicFileAccess, 'setWorkspaceAvailable'>
 ): Promise<void> {
-  if (msg.value.type !== QueueWorkspaceEvent.Deleted) return
-  await datalake.deleteWorkspace(ctx, msg.workspace)
+  switch (msg.value.type) {
+    case QueueWorkspaceEvent.Archived:
+    case QueueWorkspaceEvent.Restoring:
+      await access.setWorkspaceAvailable(msg.workspace, false)
+      break
+    case QueueWorkspaceEvent.Restored:
+      await access.setWorkspaceAvailable(msg.workspace, true)
+      break
+    case QueueWorkspaceEvent.Deleted:
+      await access.setWorkspaceAvailable(msg.workspace, false)
+      await datalake.deleteWorkspace(ctx, msg.workspace)
+      break
+  }
 }
 
 /**
  * Deleting a workspace drops its database, never its blobs - marking them keeps the files for a
- * later sweep. Archiving needs nothing here: its tokens are read-only, which every write refuses.
+ * later sweep. Archive/restore events change guest availability without changing blobs or link permissions.
  */
-export function createWorkspaceCleaner (ctx: MeasureContext, queue: PlatformQueue, datalake: Datalake): ConsumerHandle {
+export function createWorkspaceCleaner (
+  ctx: MeasureContext,
+  queue: PlatformQueue,
+  datalake: Datalake,
+  access: Pick<PublicFileAccess, 'setWorkspaceAvailable'>
+): ConsumerHandle {
   return queue.createConsumer<QueueWorkspaceMessage>(
     ctx,
     QueueTopic.Workspace,
     GROUP_ID,
     async (ctx: MeasureContext, msg: ConsumerMessage<QueueWorkspaceMessage>, _control: ConsumerControl) => {
-      await handleWorkspaceMessage(ctx, datalake, msg)
+      await handleWorkspaceMessage(ctx, datalake, msg, access)
     }
   )
 }

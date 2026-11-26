@@ -97,7 +97,13 @@ export class PublicFileAccess {
   async canRead (workspace: string, linkId: string, blobId: string): Promise<boolean> {
     const rows = await this.sql`SELECT 1 FROM blob.public_link_file f JOIN blob.public_link l
       ON l.workspace = f.workspace AND l.link_id = f.link_id
-      WHERE f.workspace = ${workspace} AND f.link_id = ${linkId} AND f.blob_id = ${blobId} AND NOT l.revoked`
+      WHERE f.workspace = ${workspace} AND f.link_id = ${linkId} AND f.blob_id = ${blobId} AND NOT l.revoked
+      AND NOT EXISTS (SELECT 1 FROM blob.public_workspace_access w WHERE w.workspace = f.workspace AND NOT w.available)`
     return rows.length > 0
+  }
+
+  async setWorkspaceAvailable (workspace: string, available: boolean): Promise<void> {
+    await this.sql`INSERT INTO blob.public_workspace_access (workspace, available) VALUES (${workspace}, ${available})
+      ON CONFLICT (workspace) DO UPDATE SET available = EXCLUDED.available`
   }
 }

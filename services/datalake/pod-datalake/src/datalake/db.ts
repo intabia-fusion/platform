@@ -750,7 +750,7 @@ export function escape (value: any): string {
 }
 
 function getMigrations (): [string, string][] {
-  return [migrationV1(), migrationV2(), migrationV3()]
+  return [migrationV1(), migrationV2(), migrationV3(), migrationV4()]
 }
 
 function migrationV1 (): [string, string] {
@@ -837,6 +837,27 @@ function migrationV3 (): [string, string] {
       PRIMARY KEY (workspace, link_id, blob_id),
       FOREIGN KEY (workspace, link_id) REFERENCES blob.public_link(workspace, link_id) ON DELETE CASCADE
     );
+  `
+  ]
+}
+
+function migrationV4 (): [string, string] {
+  return [
+    'public_workspace_access_04',
+    `
+    CREATE TABLE IF NOT EXISTS blob.public_workspace_access (
+      workspace UUID PRIMARY KEY,
+      available BOOLEAN NOT NULL
+    );
+    DO $$ BEGIN
+      IF to_regclass('global_account.workspace_status') IS NOT NULL THEN
+        INSERT INTO blob.public_workspace_access (workspace, available)
+        SELECT workspace_uuid, false FROM global_account.workspace_status
+        WHERE mode IN ('archiving-pending-backup', 'archiving-backup', 'archiving-pending-clean',
+          'archiving-clean', 'archived', 'pending-restore', 'restoring', 'pending-deletion', 'deleting')
+        ON CONFLICT (workspace) DO NOTHING;
+      END IF;
+    END $$;
   `
   ]
 }
