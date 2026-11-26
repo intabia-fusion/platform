@@ -74,6 +74,7 @@ spec:
               key: serverSecret
         - name: CONFIG_PATH
           value: /var/cfg/config.yaml
+        {{- include "platform.otelEnv" . | nindent 8 }}
         volumeMounts:
         - name: config
           mountPath: /var/cfg

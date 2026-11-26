@@ -43,3 +43,4 @@ spec:
             secretKeyRef:
               name: platform-secret
               key: serverSecret
+        {{- include "platform.otelEnv" . | nindent 8 }}
