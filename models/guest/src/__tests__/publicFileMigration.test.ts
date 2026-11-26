@@ -60,7 +60,7 @@ it('does not mark disabled synchronization complete or repeat a completed migrat
   process.env.STORAGE_CONFIG = 'minio|minio:9000?accessKey=minio&secretKey=minio'
   await guestOperation.upgrade(new Map(), client, 'upgrade')
   process.env.STORAGE_CONFIG = 'datalake|http://datalake:4030'
-  await guestOperation.upgrade(new Map([[guestId, new Set(['public-file-access-v1'])]]), client, 'upgrade')
+  await guestOperation.upgrade(new Map([[guestId, new Set(['public-file-access-v2'])]]), client, 'upgrade')
   expect(client).not.toHaveBeenCalled()
   expect(create).not.toHaveBeenCalled()
 })

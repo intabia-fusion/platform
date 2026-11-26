@@ -84,7 +84,7 @@ export const guestOperation: MigrateOperation = {
     ])
   },
   async upgrade (state: Map<string, Set<string>>, client: () => Promise<MigrationUpgradeClient>): Promise<void> {
-    const migration = 'public-file-access-v1'
+    const migration = 'public-file-access-v2'
     // Do not mark this migration complete while registry synchronization is disabled.
     if (getDatalakeEndpoint() === undefined) return
     if (state.get(guestId)?.has(migration) === true) return

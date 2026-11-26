@@ -25,7 +25,7 @@ export interface PublicFileSource {
 
 /** Source records and registry rows are the durable work list; no in-memory event is required for recovery. */
 export class PublicFileSync {
-  private readonly locks = new Map<string, Promise<void>>()
+  private readonly locks = new Map<string, Promise<boolean>>()
   private readonly hints = new Map<string, number>()
   private closed = false
   private timer?: ReturnType<typeof setTimeout>
@@ -47,8 +47,9 @@ export class PublicFileSync {
     return await this.source.files(linkId)
   }
 
-  async sync (linkId: string, restrictOnly = false): Promise<void> {
-    const previous = this.locks.get(linkId) ?? Promise.resolve()
+  /** Returns true when this link id is permanently revoked. */
+  async sync (linkId: string, restrictOnly = false): Promise<boolean> {
+    const previous = this.locks.get(linkId) ?? Promise.resolve(false)
     const work = previous
       .catch(() => {})
       .then(async () => {
@@ -56,29 +57,31 @@ export class PublicFileSync {
           // Read the revision BEFORE the source, so a concurrent publisher cannot overwrite
           // a completed reduction with an older snapshot and a higher revision.
           const state = await this.client.state(this.workspace, linkId)
-          if (state.revoked) return
+          if (state.revoked) return true
           const files = await this.source.files(linkId)
           try {
             if (files === undefined) {
               await this.client.revoke(this.workspace, linkId, state.revision + 1)
+              return true
             } else {
               const allowed = new Set(files)
               const next = restrictOnly ? state.blobs.filter((file) => allowed.has(file)) : files
               const sorted = [...new Set(next)].sort()
               // A restriction must fence publishers that collected an older source snapshot,
               // including files which have not reached the registry yet.
-              if (!restrictOnly && JSON.stringify([...state.blobs].sort()) === JSON.stringify(sorted)) return
+              if (!restrictOnly && JSON.stringify([...state.blobs].sort()) === JSON.stringify(sorted)) return false
               await this.client.replace(this.workspace, linkId, state.revision + 1, sorted)
             }
-            return
+            return false
           } catch (err) {
             if (!(err instanceof PublicFileAccessError) || err.status !== 409 || attempt === 2) throw err
           }
         }
+        return false
       })
     this.locks.set(linkId, work)
     try {
-      await work
+      return await work
     } finally {
       if (this.locks.get(linkId) === work) this.locks.delete(linkId)
     }

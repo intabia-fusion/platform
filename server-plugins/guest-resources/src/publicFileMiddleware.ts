@@ -16,6 +16,7 @@
 import { Buffer } from 'buffer'
 import core, {
   TxProcessor,
+  TxFactory,
   toFindResult,
   type Class,
   type Client,
@@ -243,6 +244,7 @@ export class PublicFileMiddleware extends BaseMiddleware {
     // early; pending markers and the durable scan repair interrupted requests after restart.
     for (const id of await this.affected(txes)) links.add(id)
     for (const id of links) {
+      let revoked = false
       if (
         txes.some(
           (tx) =>
@@ -252,18 +254,28 @@ export class PublicFileMiddleware extends BaseMiddleware {
         )
       ) {
         await this.markPending(id, true)
-        await this.syncer.sync(id)
+        revoked = await this.syncer.sync(id)
       } else if (hasRemoval || dirty.has(id)) {
-        await this.syncer.sync(id, true)
+        revoked = await this.syncer.sync(id, true)
       } else {
         const previous = before.get(id)
         if (previous !== undefined) {
           const current = await this.syncer.sourceFiles(id)
           const allowed = new Set(current)
-          if (current === undefined || previous.some((file) => !allowed.has(file))) await this.syncer.sync(id, true)
+          if (current === undefined || previous.some((file) => !allowed.has(file))) {
+            revoked = await this.syncer.sync(id, true)
+          }
         }
       }
-      await this.markPending(id, false)
+      if (revoked) {
+        const [link] = await this.find(guest.class.PublicLink, { _id: id as Ref<PublicLink> })
+        if (link !== undefined) {
+          const derived = this.context.derived ?? this.nextTx
+          if (derived === undefined) throw new Error('Missing pipeline for retiring public link')
+          const remove = new TxFactory(core.account.System, true).createTxRemoveDoc(link._class, link.space, link._id)
+          await derived.tx(ctx, [remove])
+        }
+      } else await this.markPending(id, false)
     }
     this.syncer.enqueue(links)
     return result

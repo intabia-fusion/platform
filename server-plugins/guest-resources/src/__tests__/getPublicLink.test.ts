@@ -57,4 +57,17 @@ describe('getPublicLink', () => {
     expect(url).toBe('https://current')
     expect(client.createDoc).not.toHaveBeenCalled()
   })
+
+  it('creates a fresh URL if repairing an interrupted operation retires the old record', async () => {
+    const links = [
+      { space: 'spaceB' as Ref<Space>, url: 'https://retired', publicFileSyncPending: true, revokable: true }
+    ]
+    const client = clientWith(links)
+    client.update.mockImplementation(async () => {
+      links.splice(0)
+    })
+    const url = await getPublicLink(doc, client, workspace, true, null)
+    expect(url).not.toBe('https://retired')
+    expect(client.createDoc).toHaveBeenCalledTimes(1)
+  })
 })

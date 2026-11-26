@@ -15,6 +15,7 @@
 
 import core, {
   ClassifierKind,
+  AccountRole,
   MeasureMetricsContext,
   TxFactory,
   TxOperations,
@@ -25,7 +26,7 @@ import core, {
   type WorkspaceIds,
   type WorkspaceUuid
 } from '@hcengineering/core'
-import buildModel from '@hcengineering/model-all'
+import buildModel, { migrateOperations } from '@hcengineering/model-all'
 import { addLocation, type IntlString } from '@hcengineering/platform'
 import {
   createPostgresAdapter,
@@ -35,10 +36,16 @@ import {
   shutdownPostgres,
   setDBExtraOptions
 } from '@hcengineering/postgres'
-import serverCore, { createDummyStorageAdapter, wrapPipeline, type Pipeline } from '@hcengineering/server-core'
+import serverCore, {
+  SessionDataImpl,
+  createDummyStorageAdapter,
+  wrapPipeline,
+  type Pipeline
+} from '@hcengineering/server-core'
 import serverGuest, { serverGuestId } from '@hcengineering/server-guest'
 import { postgresUrl, stopContainers } from '@hcengineering/test-containers'
 import { PublicFileAccessClient, PublicFileAccessError } from '@hcengineering/datalake'
+import { getPublicLink } from '@hcengineering/server-guest-resources'
 import { execFile } from 'child_process'
 import { randomUUID } from 'crypto'
 import { promisify } from 'util'
@@ -230,4 +237,75 @@ it('revokes deletion of the published object', async () => {
   const { doc, link } = await publish()
   await client().removeDoc(root, space, doc)
   expect(mockStates.get(link)?.revoked).toBe(true)
+})
+
+it('never revives a retired URL after A to B to A and publishes a new working link', async () => {
+  const { doc, link } = await publish()
+  const otherSpace = randomUUID() as any
+  await client().createDoc(
+    core.class.Space,
+    core.space.Space,
+    {
+      name: 'other space',
+      description: '',
+      private: false,
+      archived: false,
+      members: []
+    },
+    otherSpace
+  )
+  await client().updateDoc(root, space, doc, { space: otherSpace } as any)
+  expect(await client().findOne(publicLink, { _id: link })).toBeUndefined()
+  expect(mockStates.get(link)?.revoked).toBe(true)
+  await client().updateDoc(root, otherSpace, doc, { space } as any)
+  const data = new SessionDataImpl(
+    {
+      uuid: 'b6996120-416f-49cd-841e-e4a5d2e49c9b',
+      role: AccountRole.DocGuest,
+      primarySocialId: '',
+      socialIds: [],
+      fullSocialIds: []
+    } as any,
+    'guest',
+    false,
+    undefined,
+    ws,
+    false,
+    undefined,
+    undefined,
+    pipeline.context.modelDb,
+    new Map(),
+    'transactor'
+  )
+  data.guestLink = { _id: link }
+  const guestContext = new MeasureMetricsContext('retired-guest', {}) as any
+  guestContext.contextData = data
+  expect(await pipeline.findAll(guestContext, root, { _id: doc })).toHaveLength(0)
+  const restored = await client().findOne(root, { _id: doc })
+  if (restored === undefined) throw new Error('Moved document missing')
+  const url = await getPublicLink(restored, client(), ws, true, null)
+  const fresh = await client().findOne(publicLink, { attachedTo: doc, space } as any)
+  expect(fresh?._id).not.toBe(link)
+  expect((fresh as any)?.url).toBe(url)
+  expect(mockStates.get(fresh?._id ?? '')?.blobs).toEqual(['old'])
+  expect(mockStates.get(link)?.revoked).toBe(true)
+  if (fresh === undefined) throw new Error('New public link missing')
+  data.guestLink = { _id: fresh._id }
+  expect(await pipeline.findAll(guestContext, root, { _id: doc })).toHaveLength(1)
+})
+
+it('upgrades the v1 migration and retires a legacy source link whose id is revoked', async () => {
+  const { link } = await publish()
+  mockStates.set(link, { revision: 2, revoked: true, blobs: [] })
+  const operation = migrateOperations.find(([name]) => name === 'guest')?.[1]
+  if (operation === undefined) throw new Error('Guest migration missing')
+  await operation.upgrade(
+    new Map([['guest', new Set(['public-file-access-v1'])]]),
+    async () => client() as any,
+    'upgrade'
+  )
+  expect(await client().findOne(publicLink, { _id: link })).toBeUndefined()
+  expect(
+    await client().findOne(core.class.MigrationState, { plugin: 'guest', state: 'public-file-access-v2' })
+  ).toBeDefined()
 })

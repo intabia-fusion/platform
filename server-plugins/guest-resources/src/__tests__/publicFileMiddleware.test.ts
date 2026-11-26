@@ -182,6 +182,23 @@ it('registers initial publication even when the URL is already filled', async ()
 it('revokes deletion and invalidating moves', async () => {
   await middleware.tx(ctx, [{ ...update(), operations: { space: 'another-space' } }])
   expect(state.revoked).toBe(true)
+  expect(records.some((record) => record._id === 'link')).toBe(false)
+  await middleware.tx(ctx, [{ ...update(), operations: { space } }])
+  expect(records.some((record) => record._id === 'link')).toBe(false)
+})
+it('retires legacy source links whose id is already revoked in Datalake', async () => {
+  state.revoked = true
+  await middleware.tx(ctx, [
+    { ...update(), objectClass: guest.class.PublicLink, objectId: 'link', operations: { revokable: true } }
+  ])
+  expect(records.some((record) => record._id === 'link')).toBe(false)
+})
+it('keeps the source record when Datalake has not confirmed the revoke', async () => {
+  mockClient.revoke.mockRejectedValue(new Error('registry unavailable'))
+  await expect(middleware.tx(ctx, [{ ...update(), operations: { space: 'another-space' } }])).rejects.toThrow(
+    'registry unavailable'
+  )
+  expect(records.some((record) => record._id === 'link')).toBe(true)
 })
 it('rejects attempts by a client to clear the server-owned marker', async () => {
   await expect(
