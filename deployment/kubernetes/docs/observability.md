@@ -138,3 +138,40 @@ otel:
 5. Deployment `prometheus` с `--config.file`, `--storage.tsdb.path`, `--storage.tsdb.retention.time`.
 6. Service и IngressRoute (или обычный Ingress) на 9090.
 7. Раздай сервисам `OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector.<ns>.svc.cluster.local:4318`.
+
+## Полный стек: ClickStack (ClickHouse + HyperDX + OTel collector)
+
+`platform-base` держит только метрики для Prometheus. Для трейсов, логов и UI
+есть отдельный чарт `charts/monitoring` - обёртка над upstream-чартом ClickStack:
+ClickHouse (хранение), HyperDX (UI и API), OpenTelemetry collector (приём OTLP)
+и MongoDB (метаданные HyperDX). Чарт ставится в собственный namespace, не в
+namespace стенда, и может быть один на кластер.
+
+```bash
+helm dependency build deployment/kubernetes/charts/monitoring
+helm upgrade --install monitoring deployment/kubernetes/charts/monitoring \
+  -n monitoring --create-namespace -f <stand>/values-monitoring.yaml
+```
+
+Объекты получают стабильные имена независимо от релиза: `monitoring-clickhouse`,
+`monitoring-mongodb`, `monitoring-otel-collector`, `monitoring-app`.
+
+UI пока не публикуется наружу:
+
+```bash
+kubectl -n monitoring port-forward svc/monitoring-app 3000:3000
+# http://localhost:3000
+```
+
+Сервисы стенда шлют телеметрию в этот коллектор через values чарта `platform`:
+
+```yaml
+otel:
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://monitoring-otel-collector.monitoring.svc.cluster.local:4318
+  OTEL_EXPORTER_OTLP_COMPRESSION: gzip
+```
+
+`platform-otel-config` с явным `otel.*` перекрывает endpoint из контракта
+`platform-base`; тогда Prometheus локального base перестаёт получать метрики
+стенда, а все три сигнала идут в ClickStack. Ключ `clickstack.hyperdx.apiKey`
+обязан быть уникальным для стенда - его используют и UI, и коллектор.

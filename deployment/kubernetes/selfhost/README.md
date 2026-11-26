@@ -1,14 +1,16 @@
 # Intabia Platform charts
 
-Helm-чарты платформы, публикуемые по релизам: `platform` (сервисы) и `platform-base`
-(Postgres/Kafka/S3/elastic/redis/mailpit + контракт для `platform`). Docker-версия живёт в
+Helm-чарты платформы, публикуемые по релизам: `platform` (сервисы), `platform-base`
+(Postgres/Kafka/S3/elastic/redis/mailpit + контракт для `platform`) и отдельный `monitoring`
+(ClickStack: ClickHouse + HyperDX + OpenTelemetry collector). Docker-версия живёт в
 [platform-selfhost](https://github.com/intabia-fusion/platform-selfhost); этот репозиторий — для
 Kubernetes.
 
 ## Что внутри
 
 ```
-docs/                     Helm-репозиторий: index.yaml + platform-<version>.tgz, platform-base-<version>.tgz
+docs/                     Helm-репозиторий: index.yaml + platform-<version>.tgz, platform-base-<version>.tgz,
+                          monitoring-<version>.tgz
 values/
   base-bundled.yaml       всё stateful внутри кластера
   base-external.yaml      managed Postgres/Kafka/S3/elastic/redis, base только публикует контракт
@@ -87,6 +89,26 @@ SINGLE_NAMESPACE=1 NS=acme PROFILE=bundled PLATFORM_VERSION=v0.8.73 ./scripts/in
 `global.namespace` в чарте `platform` — это namespace, в который пишутся ресурсы (не только
 релиз Helm), поэтому он должен совпадать с `-n`. `install.sh` подставляет его сам; при ручном
 `helm upgrade` задавай `--set global.namespace=<ns> --set global.baseNamespace=<base-ns>`.
+
+## Мониторинг (опционально)
+
+`monitoring` ставится отдельно от стенда, один релиз на кластер:
+
+```bash
+helm repo add intabia-fusion https://intabia-fusion.github.io/platform-charts
+helm repo update
+helm upgrade --install monitoring intabia-fusion/monitoring -n monitoring --create-namespace
+kubectl -n monitoring port-forward svc/monitoring-app 3000:3000
+```
+
+UI открывается на `http://localhost:3000`; наружу чарт пока не публикуется. Сервисы стенда
+шлют OTLP в `http://monitoring-otel-collector.monitoring.svc.cluster.local:4318` — задай это
+в values чарта `platform`:
+
+```yaml
+otel:
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://monitoring-otel-collector.monitoring.svc.cluster.local:4318
+```
 
 ## Частичный external
 

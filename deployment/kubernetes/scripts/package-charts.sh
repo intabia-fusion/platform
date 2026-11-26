@@ -36,9 +36,15 @@ cp "$REPO_ROOT/tests/indexes.yaml" "$K8S_DIR/charts/platform/files/indexes.yaml"
 helm lint "$K8S_DIR/charts/platform-base" >/dev/null
 # The platform chart resolves the base contract with lookup; offline lint needs the fake one.
 helm lint "$K8S_DIR/charts/platform" -f "$K8S_DIR/stands/ci/render-check.yaml" >/dev/null
+# Monitoring wraps the upstream ClickStack chart; the dependency must be vendored into the
+# package. appVersion stays the ClickStack version, only the chart version follows the release.
+helm dependency build "$K8S_DIR/charts/monitoring" >/dev/null
+helm lint "$K8S_DIR/charts/monitoring" >/dev/null
 helm package --version "$CHART_VERSION" --app-version "$CHART_VERSION" \
   --destination "$OUT" "$K8S_DIR/charts/platform-base" >/dev/null
 helm package --version "$CHART_VERSION" --app-version "$CHART_VERSION" \
   --destination "$OUT" "$K8S_DIR/charts/platform" >/dev/null
+helm package --version "$CHART_VERSION" \
+  --destination "$OUT" "$K8S_DIR/charts/monitoring" >/dev/null
 
 ls -1 "$OUT"/*-"$CHART_VERSION".tgz

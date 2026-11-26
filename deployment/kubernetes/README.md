@@ -1,6 +1,6 @@
 # Kubernetes-стенды платформы
 
-Два чарта и один набор команд из корня репозитория:
+Два чарта платформы, отдельный чарт мониторинга и один набор команд из корня репозитория:
 
 - `charts/platform` - сама платформа (Deployment/Service/IngressRoute сервисов,
   ConfigMap/Secret из values, Job `db-init`, `global.imageRegistry`,
@@ -9,6 +9,10 @@
 - `charts/platform-base` - окружение под платформу: postgres (CloudNativePG), Kafka (Strimzi),
   S3 (pgsty/silo), elastic с плагинами, redis, mailpit, общий LiveKit с egress,
   TLSStore default и контракт `platform-base` (адреса и учётки окружения).
+- `charts/monitoring` - отдельный от стенда стек наблюдаемости: ClickStack
+  (ClickHouse + HyperDX + OpenTelemetry collector) и MongoDB для метаданных HyperDX.
+  Сервисы шлют OTLP в `monitoring-otel-collector`, UI открывается port-forward'ом;
+  наружу чарт пока не публикуется.
 
 Команды (pnpm из корня репозитория):
 

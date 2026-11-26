@@ -1,0 +1,75 @@
+# One monitoring stack per cluster: ClickHouse stores the telemetry, HyperDX is the UI and API,
+# the OpenTelemetry collector is the OTLP entry point. Platform services point at
+#   http://monitoring-otel-collector.<namespace>.svc.cluster.local:4318
+# through the platform chart's otel.OTEL_EXPORTER_OTLP_ENDPOINT.
+#
+# The UI is not published: port-forward monitoring-app (see NOTES after install).
+
+clickstack:
+  enabled: true
+  # Stable object names regardless of the release name: monitoring-clickhouse,
+  # monitoring-mongodb, monitoring-otel-collector, monitoring-app.
+  fullnameOverride: monitoring
+
+  global:
+    # Empty uses the cluster default StorageClass (local-path on k3s/k3d, standard on kind).
+    storageClassName: ""
+    keepPVC: false
+
+  clickhouse:
+    # The repository path must carry the `clickhouse/` prefix: the chart's own default
+    # (docker.clickhouse.com/clickstack-otel-collector) is denied for anonymous pulls.
+    image: clickhouse/clickhouse-server:25.7-alpine
+    persistence:
+      enabled: true
+      dataSize: 10Gi
+      logSize: 2Gi
+    resources:
+      requests:
+        memory: 512Mi
+        cpu: 250m
+      limits:
+        memory: 2Gi
+
+  mongodb:
+    persistence:
+      enabled: true
+      dataSize: 5Gi
+    resources:
+      requests:
+        memory: 128Mi
+        cpu: 100m
+      limits:
+        memory: 512Mi
+
+  otel:
+    # The collector's own memory_limiter is set to 1500 MiB, so a smaller limit would let the
+    # limiter allow more than the container can use.
+    image:
+      repository: docker.clickhouse.com/clickhouse/clickstack-otel-collector
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 100m
+      limits:
+        memory: 2Gi
+
+  hyperdx:
+    # Shared by the app and the collector. Every stand overrides it: a fixed default would make
+    # two stands report into the same HyperDX team if they ever share a ClickHouse.
+    apiKey: "00000000-0000-0000-0000-000000000000"
+    frontendUrl: "http://localhost:3000"
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 100m
+      limits:
+        memory: 1Gi
+    # Exposed later through Traefik; until then the UI is reached with kubectl port-forward.
+    ingress:
+      enabled: false
+      ingressClassName: traefik
+      host: monitoring.fusion.localhost
+
+  tasks:
+    enabled: false

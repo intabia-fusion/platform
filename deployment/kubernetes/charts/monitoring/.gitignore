@@ -1,0 +1,2 @@
+# Downloaded by `helm dependency build`; the packaged chart embeds it.
+charts/*.tgz

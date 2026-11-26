@@ -1,0 +1,26 @@
+Monitoring is installed in namespace {{ .Release.Namespace }}.
+{{- if eq .Values.clickstack.hyperdx.apiKey "00000000-0000-0000-0000-000000000000" }}
+
+WARNING: clickstack.hyperdx.apiKey is the chart default. Set a unique key per stand before
+the UI is shared between stands.
+{{- end }}
+
+HyperDX UI (not published outside the cluster yet):
+
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ .Values.clickstack.fullnameOverride | default "monitoring" }}-app 3000:3000
+  open http://localhost:3000
+
+The first visit asks to create an account; it stays inside this cluster.
+
+Platform services send OTLP to:
+
+  http://{{ .Values.clickstack.fullnameOverride | default "monitoring" }}-otel-collector.{{ .Release.Namespace }}.svc.cluster.local:4318
+
+Set it in the stand's values as:
+
+  otel:
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://{{ .Values.clickstack.fullnameOverride | default "monitoring" }}-otel-collector.{{ .Release.Namespace }}.svc.cluster.local:4318
+
+Ingestion check:
+
+  kubectl -n {{ .Release.Namespace }} logs deploy/{{ .Values.clickstack.fullnameOverride | default "monitoring" }}-otel-collector --tail=50
