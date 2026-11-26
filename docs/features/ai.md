@@ -72,7 +72,7 @@
 ### AI-ассистент (диалог, встраивание в объекты)
 - **"Обсудить с ассистентом" в шапке объекта.** Открывает привязанную к объекту ветку диалога. Для узкой панели то же есть действием в режиме `header` (`aiBot.action.DiscussWithAI`). - `DiscussWithAI`, `plugins/ai-bot-resources/src/components/DiscussWithAI.svelte`, `plugins/ai-bot-resources/src/discuss.ts`; точка расширения и действие `models/ai-bot/src/index.ts`.
 - **Ассистент в диалоге создания задачи.** Тумблер в шапке + панель рядом с формой issue. - `IssueAssistToggle`/`IssueAssistPanel`, `models/ai-bot/src/index.ts`.
-- **Issue-draft разговор.** Переиспользует незаполненные черновики. - `startIssueDraftConversation`, `plugins/ai-bot-resources/src/conversation.ts`.
+- **Issue-draft разговор.** Каждый раз новый корень, пустые прежние удаляются; созданной задаче передаётся только беседа с сообщениями. - `startIssueDraftConversation`, `discardEmptyConversation`, `linkConversationResult`, `plugins/ai-bot-resources/src/conversation.ts`.
 - **"Новый контекст".** Архивация текущего диалога и старт нового. - `ThreadContextActions`, `archiveConversation`/`resetObjectConversation`, `conversation.ts`.
 - **Предложение правки как diff.** Бот не пишет объект сам, только предлагает. - `TAIEditProposalMessage`+`EditProposalPresenter`, `models/ai-bot/src/index.ts`.
 - **Предложение задачи с подзадачами.** Редактируемая карточка, создание только по подтверждению. - `TAITaskProposalMessage`+`TaskProposalPresenter`, тулы `propose_task`/`propose_subtasks`, `utils/tools.ts`.
