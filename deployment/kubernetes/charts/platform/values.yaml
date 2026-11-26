@@ -514,6 +514,67 @@ services:
       - tracker.issueImport
       - contact:ids:OrganizationNotificationGroup
       - setting:ids:SettingNotificationGroup
+  landing:
+    # Static marketing site at the root of the stand host; the platform front stays the
+    # catch-all, the landing owns the exact paths and prefixes below.
+    enabled: false
+    # Full image ref: the landing releases on its own tag, not the platform version.
+    image: intabiafusion/platform-landing:v0.75.0
+    replicas: 1
+    memRequired: 64
+    memLimits: 128
+    hideLikes: false
+    hideViews: false
+    isProduction: false
+    # Exact paths only: /platform is exact because front serves /platform/favicon.svg.
+    exactPaths:
+      - /
+      - /index.html
+      - /platform
+      - /platform/
+      - /tracker
+      - /tracker/
+      - /conferences
+      - /conferences/
+      - /favicon.ico
+      - /favicon.svg
+      - /scroll-animations.css
+      - /chat
+      - /chat/
+      - /documents
+      - /documents/
+      - /julia-ai
+      - /julia-ai/
+      - /calendar
+      - /calendar/
+      - /disk
+      - /disk/
+      - /mobile
+      - /mobile/
+      - /ai-agents
+      - /ai-agents/
+      - /download
+      - /download/
+    pathPrefixes:
+      - /_astro
+      - /assets
+      - /videos
+      - /blog
+      - /go-zen
+      - /landing
+      - /yandex_
+  documentation:
+    enabled: false
+    image: intabiafusion/platform-docs:0.17.0
+    replicas: 1
+    memRequired: 64
+    memLimits: 128
+  legal:
+    enabled: false
+    image: intabiafusion/platform-legal:0.0.11
+    replicas: 1
+    memRequired: 64
+    memLimits: 64
   love:
     replicas: 1
     memRequired: 128

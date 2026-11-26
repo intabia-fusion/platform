@@ -27,6 +27,8 @@ receivers:
       cpu: {}
       memory: {}
       load: {}
+      disk: {}
+      filesystem: {}
       network: {}
   # Per-pod and per-container CPU/memory, and node-level stats from the kubelet summary.
   kubeletstats:
@@ -43,6 +45,11 @@ processors:
     attributes:
       - key: service.name
         value: node-metrics
+        action: upsert
+      # hostmetrics has no node identity of its own; the downward API supplies it so disk,
+      # filesystem and network series can be grouped by node.
+      - key: k8s.node.name
+        value: ${env:K8S_NODE_NAME}
         action: upsert
   batch: {}
 exporters:
@@ -86,6 +93,12 @@ receivers:
               replacement: $1:9187
             - source_labels: [__meta_kubernetes_pod_name]
               target_label: instance
+        - job_name: kube-state-metrics
+          scrape_interval: {{ $m.database.collectionInterval }}
+          honor_labels: true
+          static_configs:
+            - targets:
+                - {{ include "monitoring.clickstackName" . }}-kube-state-metrics.{{ .Release.Namespace }}.svc.cluster.local:8080
 processors:
   memory_limiter:
     check_interval: 1s

@@ -26,10 +26,12 @@ clickstack:
       logSize: 2Gi
     resources:
       requests:
-        memory: 512Mi
+        memory: 1Gi
         cpu: 250m
       limits:
-        memory: 2Gi
+        # The rate views run window functions over the metric tables; 4Gi hit the cgroup
+        # limit on a 1h dashboard query (ClickHouse RSS 3.6Gi). The nodes have 64Gi.
+        memory: 8Gi
 
   mongodb:
     persistence:
@@ -90,6 +92,16 @@ resourceMetrics:
         cpu: 50m
       limits:
         memory: 256Mi
+  kubeStateMetrics:
+    # Exposes pod/node requests and limits; the database collector scrapes it.
+    enabled: true
+    image: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.15.0
+    resources:
+      requests:
+        memory: 32Mi
+        cpu: 20m
+      limits:
+        memory: 128Mi
   database:
     enabled: true
     # Empty discovers CloudNativePG pods in every namespace; the Prometheus receiver keeps pods

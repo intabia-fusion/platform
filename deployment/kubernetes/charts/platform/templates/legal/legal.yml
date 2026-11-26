@@ -1,0 +1,72 @@
+#
+# Copyright © 2026 Intabia Fusion.
+#
+# Licensed under the Eclipse Public License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License. You may
+# obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+{{- if .Values.services.legal.enabled }}
+{{- $legal := .Values.services.legal }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: legal
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  replicas: {{ $legal.replicas }}
+  selector:
+    matchLabels:
+      app: legal
+  template:
+    metadata:
+      labels:
+        app: legal
+    spec:
+      {{- include "platform.tolerations" . | nindent 6 }}
+      {{- include "platform.nodeSelector" (dict "root" . "service" "legal") | nindent 6 }}
+      containers:
+      - name: app
+        image: {{ include "platform.containerImage" (dict "root" . "service" "legal" "image" "platform-legal") }}
+        imagePullPolicy: {{ .Values.global.imagePullPolicy | default "Always" }}
+        ports:
+        - containerPort: 80
+        {{- include "platform.resources" (dict "root" . "service" "legal") | nindent 8 }}
+        env:
+        - name: PORT
+          value: '80'
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: legal
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  selector:
+    app: legal
+  ports:
+  - port: 80
+    targetPort: 80
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: legal-ingressroute
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  - match: Host(`{{ .Values.global.hostUrl }}`) && PathPrefix(`/legal`)
+    kind: Rule
+    priority: 1000
+    services:
+    - name: legal
+      port: 80
+{{- end }}
