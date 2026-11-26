@@ -13,12 +13,14 @@
 // limitations under the License.
 //
 
+import { AsyncLocalStorage } from 'node:async_hooks'
 import core, {
   clone,
   type Doc,
   type MeasureContext,
   type Ref,
   type SessionData,
+  type Status as CoreStatus,
   type Tx,
   type TxCreateDoc,
   type TxCUD,
@@ -37,7 +39,13 @@ import {
   type PipelineContext,
   type TxMiddlewareResult
 } from '@hcengineering/server-core'
-import tracker, { type Board, canEditBoard, duplicateColumnIds } from '@hcengineering/tracker'
+import tracker, {
+  type Board,
+  type Project,
+  canEditBoard,
+  duplicateColumnIds,
+  pruneStatusCondition
+} from '@hcengineering/tracker'
 
 /**
  * Board write rights: only the author or an editor changes a board, only the author removes it.
@@ -49,48 +57,173 @@ export class BoardMiddleware extends BaseMiddleware {
     return new BoardMiddleware(context, next)
   }
 
-  private readonly pendingBoards = new Map<Ref<Doc>, Promise<void>>()
+  private pendingBoard: Promise<void> | undefined
+  private readonly boardScope = new AsyncLocalStorage<{ active: boolean }>()
 
   async tx (ctx: MeasureContext<SessionData>, txes: Tx[]): Promise<TxMiddlewareResult> {
-    // Derived writes can re-enter this middleware while the parent request holds its queue entry.
-    if (ctx.contextData.isTriggerCtx === true) return await this.processTxes(ctx, txes)
-    // Validation must read the state left by earlier requests, including a concurrent policy switch.
-    const ids = new Set<Ref<Doc>>()
-    for (const tx of txes) {
-      if (
+    const hasBoard = txes.some(
+      (tx) =>
         TxProcessor.isExtendsCUD(tx._class) &&
         this.context.hierarchy.isDerived((tx as TxCUD<Doc>).objectClass, tracker.class.Board)
-      ) {
-        ids.add((tx as TxCUD<Doc>).objectId)
-      }
-    }
-    if (ids.size === 0) return await this.processTxes(ctx, txes)
-    const previous = [...ids]
-      .map((id) => this.pendingBoards.get(id))
-      .filter((pending): pending is Promise<void> => pending !== undefined)
+    )
+    // Derived writes can re-enter this middleware while the parent request holds its queue entry.
+    if (!hasBoard || this.boardScope.getStore()?.active === true) return await this.processTxes(ctx, txes)
+    // Validation must read the state left by earlier requests, including a concurrent policy switch.
+    const previous = this.pendingBoard
     let release: () => void = () => {}
     const pending = new Promise<void>((resolve) => {
       release = resolve
     })
-    for (const id of ids) this.pendingBoards.set(id, pending)
-    await Promise.all(previous)
+    this.pendingBoard = pending
+    await previous
+    const scope = { active: true }
     try {
-      return await this.processTxes(ctx, txes)
+      return await this.boardScope.run(scope, async () => await this.processTxes(ctx, txes))
     } finally {
+      scope.active = false
       release()
-      for (const id of ids) {
-        if (this.pendingBoards.get(id) === pending) this.pendingBoards.delete(id)
-      }
+      if (this.pendingBoard === pending) this.pendingBoard = undefined
     }
   }
 
   private async processTxes (ctx: MeasureContext<SessionData>, txes: Tx[]): Promise<TxMiddlewareResult> {
     const trusted = ctx.contextData.account.uuid === systemAccountUuid || ctx.contextData.isTriggerCtx === true
+    let batchBoards: Map<Ref<Board>, Board> | undefined
+    let batchProjects: Map<Ref<Project>, Project> | undefined
+    const markers = txes.filter(
+      (tx): tx is TxUpdateDoc<Board> =>
+        tx._class === core.class.TxUpdateDoc &&
+        tx.meta?.boardStatusCleanup !== undefined &&
+        this.context.hierarchy.isDerived((tx as TxCUD<Doc>).objectClass, tracker.class.Board)
+    )
+    if (markers.length > 0 && markers.length === txes.length && ctx.contextData.isTriggerCtx === true) {
+      const systemCtx = this.systemContext(ctx)
+      const ids = [...new Set(markers.map((tx) => tx.objectId))]
+      const boards = await this.provideFindAll(systemCtx, tracker.class.Board, { _id: { $in: ids } })
+      batchBoards = new Map(boards.map((board) => [board._id, board]))
+      const projectIds = [...new Set(boards.flatMap((board) => board.projects))]
+      const projects =
+        projectIds.length === 0
+          ? []
+          : await this.provideFindAll(
+            systemCtx,
+            tracker.class.Project,
+            { _id: { $in: projectIds } },
+            { showArchived: true }
+          )
+      batchProjects = new Map(projects.map((project) => [project._id, project]))
+    }
+    const staged = new Map<Ref<Board>, Board | null>()
+    const refreshed: Tx[] = []
+    for (const tx of txes) {
+      if (tx._class !== core.class.TxUpdateDoc || tx.meta?.boardStatusCleanup === undefined) {
+        refreshed.push(tx)
+        if (markers.length === 0 || !TxProcessor.isExtendsCUD(tx._class)) continue
+        const cud = tx as TxCUD<Board>
+        if (!this.context.hierarchy.isDerived(cud.objectClass, tracker.class.Board)) continue
+        if (tx._class === core.class.TxCreateDoc) {
+          staged.set(cud.objectId, TxProcessor.createDoc2Doc(tx as TxCreateDoc<Board>))
+        } else if (tx._class === core.class.TxRemoveDoc) {
+          staged.set(cud.objectId, null)
+        } else if (tx._class === core.class.TxUpdateDoc) {
+          const previous = staged.has(cud.objectId)
+            ? staged.get(cud.objectId)
+            : (
+                await this.provideFindAll(
+                  this.systemContext(ctx),
+                  tracker.class.Board,
+                  { _id: cud.objectId },
+                  { limit: 1 }
+                )
+              )[0]
+          if (previous != null) {
+            staged.set(cud.objectId, TxProcessor.updateDoc2Doc(clone(previous), tx as TxUpdateDoc<Board>))
+          }
+        }
+        continue
+      }
+      const update = tx as TxUpdateDoc<Board>
+      if (
+        ctx.contextData.isTriggerCtx !== true ||
+        !this.context.hierarchy.isDerived(update.objectClass, tracker.class.Board)
+      ) {
+        throw this.forbiddenTx(ctx, ForbiddenKind.AuthorOnly, 'Board status cleanup is managed by the system', update)
+      }
+      const systemCtx = this.systemContext(ctx)
+      const board = staged.has(update.objectId)
+        ? staged.get(update.objectId)
+        : batchBoards === undefined
+          ? (await this.provideFindAll(systemCtx, tracker.class.Board, { _id: update.objectId }, { limit: 1 }))[0]
+          : batchBoards.get(update.objectId)
+      if (board == null) continue
+      const projects =
+        batchProjects === undefined
+          ? await this.provideFindAll(
+            systemCtx,
+            tracker.class.Project,
+            { _id: { $in: board.projects } },
+            { showArchived: true }
+          )
+          : []
+      const byId = batchProjects ?? new Map(projects.map((project: Project) => [project._id, project]))
+      const types = board.projects.map((id) => {
+        const project = byId.get(id)
+        return project === undefined ? undefined : this.context.modelDb.findObject(project.type)
+      })
+      // Incomplete scope must never erase another project's settings.
+      if (types.some((type) => type === undefined)) continue
+      const allowed = new Set<Ref<CoreStatus>>(
+        types.flatMap((type) =>
+          (type?.statuses ?? []).filter((entry) => entry.taskType !== undefined).map((entry) => entry._id)
+        )
+      )
+      const patch = {
+        filter: pruneStatusCondition(board.filter, allowed),
+        quickFilters: board.quickFilters.map((rule) => ({
+          ...rule,
+          condition: pruneStatusCondition(rule.condition, allowed)
+        })),
+        swimlanes: board.swimlanes.map((rule) => ({
+          ...rule,
+          condition: pruneStatusCondition(rule.condition, allowed)
+        })),
+        colorRules: board.colorRules.map((rule) => ({
+          ...rule,
+          condition: pruneStatusCondition(rule.condition, allowed)
+        }))
+      }
+      const operations: Partial<Board> = {}
+      if (patch.filter !== board.filter) operations.filter = patch.filter
+      if (JSON.stringify(patch.quickFilters) !== JSON.stringify(board.quickFilters)) {
+        operations.quickFilters = patch.quickFilters
+      }
+      if (JSON.stringify(patch.swimlanes) !== JSON.stringify(board.swimlanes)) operations.swimlanes = patch.swimlanes
+      if (JSON.stringify(patch.colorRules) !== JSON.stringify(board.colorRules)) {
+        operations.colorRules = patch.colorRules
+      }
+      if (Object.keys(operations).length === 0) {
+        staged.set(update.objectId, board)
+        continue
+      }
+      const meta = { ...update.meta }
+      delete meta.boardStatusCleanup
+      const refreshedUpdate: TxUpdateDoc<Board> = {
+        ...update,
+        objectClass: board._class,
+        objectSpace: board.space,
+        operations,
+        meta
+      }
+      refreshed.push(refreshedUpdate)
+      staged.set(update.objectId, TxProcessor.updateDoc2Doc(clone(board), refreshedUpdate))
+    }
+    txes = refreshed
+    if (txes.length === 0) return {}
     // Boards of this batch as the batch leaves them: a later tx checks against the earlier ones.
     const batch = new Map<Ref<Board>, Board | null>()
     // Read past the caller's rights: a board hidden from the caller, or one named by another class of
     // its domain, would otherwise pass as "nothing stored"
-    const stored = trusted ? undefined : await this.storedBoards(ctx, txes)
+    const stored = trusted ? batchBoards : await this.storedBoards(ctx, txes)
     let moved = false
     for (const tx of txes) {
       if (!TxProcessor.isExtendsCUD(tx._class)) continue

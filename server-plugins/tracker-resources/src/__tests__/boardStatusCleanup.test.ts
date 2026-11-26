@@ -52,7 +52,18 @@ function fixture (extra: object = {}): any {
     modelDb: { findAllSync: () => types },
     findAll: jest.fn(async (_ctx: unknown, cls: string) => (cls === tracker.class.Project ? projects : [board])),
     txFactory: {
-      createTxUpdateDoc: jest.fn((cls: string, space: string, id: string, patch: object) => ({ cls, space, id, patch }))
+      createTxUpdateDoc: jest.fn(
+        (
+          cls: string,
+          space: string,
+          id: string,
+          patch: object,
+          _retrieve: unknown,
+          _on: unknown,
+          _by: unknown,
+          meta: object
+        ) => ({ cls, space, id, patch, meta })
+      )
     }
   }
   const tx = {
@@ -88,37 +99,31 @@ describe('board conditions after project type status removal', () => {
     expect(await OnProjectTypeStatusesChanged([tx] as any, control as any)).toHaveLength(1)
   })
 
-  it('cleans saved conditions on a closed personal board without changing columns', async () => {
+  it('queues a personal board without copying its conditions into the marker', async () => {
     const { control, tx } = fixture()
     const [update] = (await OnProjectTypeStatusesChanged([tx] as any, control as any)) as any
-    expect(JSON.parse(update.patch.filter)).toEqual([{ key: { key: 'priority' }, value: [1] }])
-    expect(JSON.parse(update.patch.quickFilters[0].condition)[0].value).toEqual(['kept'])
-    expect(JSON.parse(update.patch.colorRules[0].condition)).toHaveLength(1)
-    expect(JSON.parse(update.patch.swimlanes[0].condition)[0].value).toEqual(['kept'])
-    expect(update.patch.swimlanes[1]).toEqual({ id: 'rest', condition: '' })
-    expect(update.patch).not.toHaveProperty('columns')
+    expect(update.patch).toEqual({})
+    expect(update.meta).toEqual({ boardStatusCleanup: true })
     expect(update.space).toBe('private-space')
   })
-  it('removes the whole condition when its last status disappeared, including an already empty condition', async () => {
-    for (const ids of [['removed'], []]) {
-      const { control, tx } = fixture({ filter: JSON.stringify([{ key: { key: 'status' }, value: ids }]) })
-      const [update] = (await OnProjectTypeStatusesChanged([tx] as any, control as any)) as any
-      expect(update.patch.filter).toBe('')
+
+  it('queues boards even when another project keeps the status or project data is incomplete', async () => {
+    for (const projects of [
+      ['project', 'other-project'],
+      ['project', 'unavailable']
+    ]) {
+      const { control, tx } = fixture({ projects })
+      expect(await OnProjectTypeStatusesChanged([tx] as any, control as any)).toHaveLength(1)
     }
-  })
-  it('keeps a status still used by another type of a board project', async () => {
-    const { control, tx } = fixture({ projects: ['project', 'other-project'] })
-    expect(await OnProjectTypeStatusesChanged([tx] as any, control as any)).toEqual([])
-  })
-  it('does nothing on unrelated transactions or boards with incomplete project data', async () => {
-    const { control, tx } = fixture({ projects: ['project', 'unavailable'] })
-    expect(await OnProjectTypeStatusesChanged([tx] as any, control as any)).toEqual([])
+    const { control } = fixture()
     expect(await OnProjectTypeStatusesChanged([] as any, control as any)).toEqual([])
   })
-  it('is idempotent after cleaning both delete and merge updates', async () => {
-    const { board, control, tx } = fixture()
-    const [update] = (await OnProjectTypeStatusesChanged([tx] as any, control as any)) as any
-    Object.assign(board, update.patch)
-    expect(await OnProjectTypeStatusesChanged([tx] as any, control as any)).toEqual([])
+
+  it('queues a clean snapshot for rechecking after pending board writes', async () => {
+    const { control, tx } = fixture({ filter: '', quickFilters: [], swimlanes: [], colorRules: [] })
+    const updates = await OnProjectTypeStatusesChanged([tx] as any, control as any)
+    expect(updates).toHaveLength(1)
+    expect((updates[0] as any).patch).toEqual({})
+    expect((updates[0] as any).meta).toEqual({ boardStatusCleanup: true })
   })
 })

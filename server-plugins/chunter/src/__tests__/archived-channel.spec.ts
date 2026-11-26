@@ -47,6 +47,8 @@ function makeMiddleware (): any {
   const middleware = Object.create(ChunterMiddleware.prototype)
   middleware.hiddenChats = new Map()
   middleware.archivedChannels = new LRUCache({ max: 10 })
+  middleware.archivedUpdates = new Map()
+  middleware.archivedVersion = 0
   // What the storage holds: a test archives a channel by adding it here
   middleware.stored = new Set([ARCHIVED])
   middleware.context = {
@@ -103,6 +105,89 @@ describe('archived channel', () => {
     const tx = create(chunter.class.ChatMessage, ARCHIVED)
     await expect(send(makeMiddleware(), tx, { trigger: true })).resolves.toBeUndefined()
     await expect(send(makeMiddleware(), tx, { account: systemAccountUuid })).resolves.toBeUndefined()
+  })
+
+  it.each([true, false])('does not cache a pre-commit read while archived becomes %s', async (archived) => {
+    const middleware = makeMiddleware()
+    if (!archived) middleware.stored.add(OPEN)
+    const archive = {
+      _class: core.class.TxUpdateDoc,
+      objectClass: chunter.class.Channel,
+      objectId: OPEN,
+      operations: { archived }
+    }
+    const message = create(chunter.class.ChatMessage, OPEN)
+    let release: () => void = () => {}
+    let entered: () => void = () => {}
+    const started = new Promise<void>((resolve) => {
+      entered = resolve
+    })
+    const blocked = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    middleware.provideTx = async (_ctx: any, txes: any[]) => {
+      if (txes[0]._class === core.class.TxUpdateDoc) {
+        entered()
+        await blocked
+        if (archived) middleware.stored.add(OPEN)
+        else middleware.stored.delete(OPEN)
+      }
+      return {}
+    }
+    const update = send(middleware, archive, { account: CHANNEL_OWNER })
+    await started
+    if (archived) await send(middleware, message)
+    else await expect(send(middleware, message)).rejects.toThrow()
+    release()
+    await update
+    if (archived) await expect(send(middleware, message)).rejects.toThrow()
+    else await expect(send(middleware, message)).resolves.toBeUndefined()
+  })
+
+  it.each([true, false])('does not cache a read started before archived becomes %s', async (archived) => {
+    const middleware = makeMiddleware()
+    if (!archived) middleware.stored.add(OPEN)
+    const rawFindAll = middleware.context.lowLevelStorage.rawFindAll
+    let release: () => void = () => {}
+    let entered: () => void = () => {}
+    const started = new Promise<void>((resolve) => {
+      entered = resolve
+    })
+    const blocked = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    let first = true
+    middleware.context.lowLevelStorage.rawFindAll = async (domain: string, query: any) => {
+      const snapshot = await rawFindAll(domain, query)
+      if (query.archived === true && first) {
+        first = false
+        entered()
+        await blocked
+      }
+      return snapshot
+    }
+    const message = create(chunter.class.ChatMessage, OPEN)
+    const pending = send(middleware, message).catch(() => {})
+    await started
+    middleware.provideTx = async () => {
+      if (archived) middleware.stored.add(OPEN)
+      else middleware.stored.delete(OPEN)
+      return {}
+    }
+    await send(
+      middleware,
+      {
+        _class: core.class.TxUpdateDoc,
+        objectClass: chunter.class.Channel,
+        objectId: OPEN,
+        operations: { archived }
+      },
+      { account: CHANNEL_OWNER }
+    )
+    release()
+    await pending
+    if (archived) await expect(send(middleware, message)).rejects.toThrow()
+    else await expect(send(middleware, message)).resolves.toBeUndefined()
   })
 
   it('follows the channel being archived and restored', async () => {
