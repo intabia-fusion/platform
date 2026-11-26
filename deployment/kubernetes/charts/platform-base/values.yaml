@@ -147,6 +147,11 @@ mailpit:
   # Webroot for the UI and API when a stand publishes them under a path (/smtp style):
   # must match mailpit.path of the platform chart. Empty = root.
   webroot: ""
+  auth:
+    # Traefik basic auth for the subdomain route. users is an htpasswd line
+    # (bcrypt/apr1); enabling the auth with an empty users fails the render.
+    enabled: false
+    users: ""
   resources:
     requests: { memory: 32Mi, cpu: 20m }
     limits: { memory: 128Mi }

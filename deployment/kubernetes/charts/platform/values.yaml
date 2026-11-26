@@ -567,3 +567,8 @@ mailpit:
   # must match mailpit.webroot in the base chart. empty = not published (subdomain route is
   # mailpit.host in platform-base).
   path: ""
+  auth:
+    # Traefik basic auth for the published mailbox. users is an htpasswd line (bcrypt/apr1);
+    # enabling the auth with an empty users fails the render.
+    enabled: false
+    users: ""
