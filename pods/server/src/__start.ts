@@ -20,7 +20,7 @@ import serverCore, {
   type WorkspaceStatistics
 } from '@hcengineering/server-core'
 import serverNotification from '@hcengineering/server-notification'
-import { storageConfigFromEnv } from '@hcengineering/server-storage'
+import { getDatalakeEndpoint, storageConfigFromEnv } from '@hcengineering/server-storage'
 import serverToken from '@hcengineering/server-token'
 import serverClient from '@hcengineering/server-client'
 import { join } from 'path'
@@ -90,7 +90,7 @@ console.log(`Started with branding: ${JSON.stringify(brandingMap, null, 2)}`)
 const { shutdown, sessionManager } = start(metricsContext, config.dbUrl, {
   fulltextUrl: config.fulltextUrl,
   storageConfig,
-  publicFileAccessUrl: process.env.PUBLIC_FILE_ACCESS_URL,
+  publicFileAccessUrl: getDatalakeEndpoint(storageConfig),
   port: config.serverPort,
   brandingMap,
   accountsUrl: config.accountsUrl,

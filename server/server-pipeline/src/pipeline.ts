@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { PublicFileMiddleware } from '@hcengineering/server-guest-resources'
+import { getDatalakeEndpoint } from '@hcengineering/server-storage'
 import card from '@hcengineering/card'
 import {
   DOMAIN_BENCHMARK,
@@ -324,7 +325,7 @@ export async function getServerPipeline (
     usePassedCtx: true,
     disableTriggers: opt?.disableTriggers ?? false,
     queue: opt?.queue,
-    publicFileAccessUrl: opt?.publicFileAccessUrl ?? process.env.PUBLIC_FILE_ACCESS_URL
+    publicFileAccessUrl: opt?.publicFileAccessUrl ?? getDatalakeEndpoint()
   })
 
   return await pipelineFactory(ctx, wsUrl, createEmptyBroadcastOps(), null)

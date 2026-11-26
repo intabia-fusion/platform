@@ -38,7 +38,7 @@ import {
 import serverCore, { createDummyStorageAdapter, wrapPipeline, type Pipeline } from '@hcengineering/server-core'
 import serverGuest, { serverGuestId } from '@hcengineering/server-guest'
 import { postgresUrl, stopContainers } from '@hcengineering/test-containers'
-import { PublicFileAccessError } from '@hcengineering/datalake'
+import { PublicFileAccessClient, PublicFileAccessError } from '@hcengineering/datalake'
 import { execFile } from 'child_process'
 import { randomUUID } from 'crypto'
 import { promisify } from 'util'
@@ -51,6 +51,7 @@ import {
 } from '../index'
 
 const mockStates = new Map<string, { revision: number, revoked: boolean, blobs: string[] }>()
+const previousStorage = process.env.STORAGE_CONFIG
 let mockFail = false
 jest.mock('@hcengineering/datalake', () => ({
   ...jest.requireActual('@hcengineering/datalake'),
@@ -120,11 +121,11 @@ function client (): TxOperations {
 }
 async function reopen (): Promise<void> {
   pipeline = await getServerPipeline(ctx, model(), dbUrl, ws, createDummyStorageAdapter(), {
-    disableTriggers: false,
-    publicFileAccessUrl: 'http://datalake'
+    disableTriggers: false
   })
 }
 beforeAll(async () => {
+  process.env.STORAGE_CONFIG = 'datalake|http://datalake:4030'
   const serverUrl = await postgresUrl()
   const dbName = `public_files_${randomUUID().replace(/-/g, '')}`
   const admin = getDBClient(serverUrl)
@@ -165,6 +166,8 @@ afterAll(async () => {
     await pipeline?.close()
     await shutdownPostgres()
   } finally {
+    if (previousStorage === undefined) delete process.env.STORAGE_CONFIG
+    else process.env.STORAGE_CONFIG = previousStorage
     await stopContainers()
   }
 })
@@ -190,6 +193,7 @@ async function publish (url = 'already-filled'): Promise<{ doc: any, link: any }
   return { doc, link }
 }
 it('registers an already-filled public link through the real pipeline', async () => {
+  expect(PublicFileAccessClient).toHaveBeenCalledWith('http://datalake:4030', expect.any(String))
   const { link } = await publish()
   expect(mockStates.get(link)?.blobs).toEqual(['old'])
 })

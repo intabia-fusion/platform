@@ -17,18 +17,18 @@ import { TxOperations } from '@hcengineering/core'
 import { guestId } from '@hcengineering/guest'
 import { guestOperation } from '../migration'
 
-const endpoint = process.env.PUBLIC_FILE_ACCESS_URL
+const endpoint = process.env.STORAGE_CONFIG
 let update: jest.SpyInstance
 let create: jest.SpyInstance
 beforeEach(() => {
-  process.env.PUBLIC_FILE_ACCESS_URL = 'http://datalake'
+  process.env.STORAGE_CONFIG = 'datalake|http://datalake:4030'
   update = jest.spyOn(TxOperations.prototype, 'updateDoc').mockResolvedValue({} as any)
   create = jest.spyOn(TxOperations.prototype, 'createDoc').mockResolvedValue('marker' as any)
 })
 afterEach(() => {
   jest.restoreAllMocks()
-  if (endpoint === undefined) delete process.env.PUBLIC_FILE_ACCESS_URL
-  else process.env.PUBLIC_FILE_ACCESS_URL = endpoint
+  if (endpoint === undefined) delete process.env.STORAGE_CONFIG
+  else process.env.STORAGE_CONFIG = endpoint
 })
 const source = (findAll: jest.Mock): any => ({ findAll })
 it('registers existing links in bounded pages before recording completion', async () => {
@@ -57,9 +57,9 @@ it('does not record completion after failure and retries all links safely', asyn
 })
 it('does not mark disabled synchronization complete or repeat a completed migration', async () => {
   const client = jest.fn()
-  delete process.env.PUBLIC_FILE_ACCESS_URL
+  process.env.STORAGE_CONFIG = 'minio|minio:9000?accessKey=minio&secretKey=minio'
   await guestOperation.upgrade(new Map(), client, 'upgrade')
-  process.env.PUBLIC_FILE_ACCESS_URL = 'http://datalake'
+  process.env.STORAGE_CONFIG = 'datalake|http://datalake:4030'
   await guestOperation.upgrade(new Map([[guestId, new Set(['public-file-access-v1'])]]), client, 'upgrade')
   expect(client).not.toHaveBeenCalled()
   expect(create).not.toHaveBeenCalled()

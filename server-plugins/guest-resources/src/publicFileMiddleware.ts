@@ -43,7 +43,7 @@ import { systemAccountUuid } from '@hcengineering/core'
 import { collectPublicFiles } from './publicFiles'
 import { PublicFileSync } from './publicFileSync'
 
-/** Optional until rollout: PUBLIC_FILE_ACCESS_URL enables synchronization, not guest downloads. */
+/** Enabled by the pipeline when the primary STORAGE_CONFIG backend is Datalake. */
 export class PublicFileMiddleware extends BaseMiddleware {
   private readonly syncer: PublicFileSync
   private tail: Promise<void> = Promise.resolve()

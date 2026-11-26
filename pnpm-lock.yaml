@@ -9573,6 +9573,9 @@ importers:
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
+      '@hcengineering/server-storage':
+        specifier: workspace:^0.7.17
+        version: link:../../foundations/server/packages/server-storage
       '@hcengineering/ui':
         specifier: workspace:^0.7.0
         version: link:../../packages/ui
@@ -38737,6 +38740,9 @@ importers:
       '@hcengineering/server-setting-resources':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/setting-resources
+      '@hcengineering/server-storage':
+        specifier: workspace:^0.7.17
+        version: link:../../foundations/server/packages/server-storage
       '@hcengineering/server-tags':
         specifier: workspace:^0.7.0
         version: link:../../server-plugins/tags
