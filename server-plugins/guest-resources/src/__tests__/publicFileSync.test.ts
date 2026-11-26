@@ -45,12 +45,65 @@ it('closes removed files synchronously and publishes additions on a later full r
   expect(state.blobs).toEqual(['kept', 'new'])
   await sync.close()
 })
-it('does not write a registry for an unchanged set or an addition-only restriction', async () => {
+it('does not write a registry for an unchanged full reconciliation', async () => {
+  const { source, client, sync } = fixture()
+  source.files.mockResolvedValue(['old', 'kept'])
+  await sync.sync('link')
+  expect(client.replace).not.toHaveBeenCalled()
+  await sync.close()
+})
+it('advances the revision for a restriction even when its file set is unchanged', async () => {
   const { source, client, sync } = fixture()
   source.files.mockResolvedValue(['old', 'kept', 'new'])
   await sync.sync('link', true)
-  expect(client.replace).not.toHaveBeenCalled()
+  expect(client.replace).toHaveBeenCalledWith(workspace, 'link', 2, ['kept', 'old'])
   await sync.close()
+})
+
+it('fences a delayed publisher from another instance after an acknowledged unchanged restriction', async () => {
+  const { source, client, state, sync: publisher } = fixture()
+  state.blobs = ['kept']
+  source.files.mockResolvedValue(['kept', 'new'])
+  let pause: () => void = () => {}
+  let release: () => void = () => {}
+  const paused = new Promise<void>((resolve) => {
+    pause = resolve
+  })
+  const gate = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  let delayed = true
+  client.replace.mockImplementation(async (_ws: string, _id: string, revision: number, blobs: string[]) => {
+    if (delayed && blobs.includes('new')) {
+      delayed = false
+      pause()
+      await gate
+    }
+    if (
+      state.revision > revision ||
+      (state.revision === revision && JSON.stringify(state.blobs) !== JSON.stringify(blobs))
+    ) {
+      throw new PublicFileAccessError(409)
+    }
+    Object.assign(state, { revision, blobs: [...blobs] })
+  })
+  const remover = new PublicFileSync(workspace, client, source, () => {})
+  const pending = publisher.sync('link')
+  try {
+    await paused
+    source.files.mockResolvedValue(['kept'])
+    await remover.sync('link', true)
+    expect(state).toEqual({ revision: 2, revoked: false, blobs: ['kept'] })
+    release()
+    await pending
+    expect(state).toEqual({ revision: 2, revoked: false, blobs: ['kept'] })
+    expect(source.files).toHaveBeenCalledTimes(3)
+  } finally {
+    release()
+    await Promise.allSettled([pending])
+    await publisher.close()
+    await remover.close()
+  }
 })
 it('propagates a failed reduction and does not report success', async () => {
   const { client, sync } = fixture()

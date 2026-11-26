@@ -65,7 +65,9 @@ export class PublicFileSync {
               const allowed = new Set(files)
               const next = restrictOnly ? state.blobs.filter((file) => allowed.has(file)) : files
               const sorted = [...new Set(next)].sort()
-              if (JSON.stringify([...state.blobs].sort()) === JSON.stringify(sorted)) return
+              // A restriction must fence publishers that collected an older source snapshot,
+              // including files which have not reached the registry yet.
+              if (!restrictOnly && JSON.stringify([...state.blobs].sort()) === JSON.stringify(sorted)) return
               await this.client.replace(this.workspace, linkId, state.revision + 1, sorted)
             }
             return
