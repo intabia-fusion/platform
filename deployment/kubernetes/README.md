@@ -504,9 +504,9 @@ pnpm -w release:charts v0.8.37 --no-push     # локальная проверк
   переменной репозитория `PUBLISH_CHARTS=true`; тогда же нужен секрет `CHARTS_TOKEN` (PAT с
   правом записи в platform-charts), а чарты дополнительно прикладываются к GitHub Release.
 - В platform-charts: `docs/` — Helm-репозиторий (Pages), `values/` — профили `bundled` и
-  `external`, `scripts/install.sh` — установка/апгрейд:
+  `external`, `node scripts/platform.mjs install` — установка/апгрейд:
   ```bash
-  PROFILE=bundled PLATFORM_VERSION=v0.8.37 ./scripts/install.sh
+  PROFILE=bundled PLATFORM_VERSION=v0.8.37 node ./scripts/platform.mjs install
   ```
 - Профиль `external`: у `platform-base` каждый компонент `enabled: false` + `mode: external`;
   чарт не поднимает stateful-поды, а только публикует контракт с адресами. `enabled: false` без

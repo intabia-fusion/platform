@@ -3,7 +3,7 @@ Applies the hand-tuned Postgres indexes (tests/indexes.yaml) to the stand databa
 `tool sync-indexes` creates only the indexes that are missing, so a re-run on every upgrade is
 cheap and safe; the model's own indexes come from db-migrator, this file carries the rest.
 
-The chart ships a copy of tests/indexes.yaml (files/indexes.yaml); package-charts.sh refreshes it
+The chart ships a copy of tests/indexes.yaml (files/indexes.yaml); package-charts.mjs refreshes it
 from the repository before packaging, so the released chart cannot drift.
 
 Test stands keep the hook off: prepare-pg.sh applies the same file through the stand-tool pod.

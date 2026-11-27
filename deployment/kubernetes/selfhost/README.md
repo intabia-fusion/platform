@@ -17,18 +17,18 @@ values/
   platform-bundled.yaml   platform против bundled base
   platform-external.yaml  platform против внешней инфраструктуры
   secrets-*.example.yaml  шаблоны credentials (копируются в secrets-*.yaml, gitignored)
-scripts/install.sh        установка и апгрейд (идемпотентно)
-scripts/apply.sh          то же под именем apply: diff -> apply -> rollback
-scripts/upgrade.sh        то же, отдельная точка входа для runbook'ов
-scripts/diff.sh           что изменит apply, без изменений (нужен helm-diff)
-scripts/rollback.sh       откат обоих релизов на ревизию назад или на заданную
+scripts/platform.mjs install    установка и апгрейд (идемпотентно)
+scripts/platform.mjs apply      то же под именем apply: diff -> apply -> rollback
+scripts/platform.mjs upgrade    то же, отдельная точка входа для runbook'ов
+scripts/platform.mjs diff       что изменит apply, без изменений (нужен helm-diff)
+scripts/platform.mjs rollback   откат обоих релизов на ревизию назад или на заданную
 ```
 
 Charts repo: `https://intabia-fusion.github.io/platform-charts` (GitHub Pages из `docs/`).
 
 ## Требования
 
-- Kubernetes 1.32+ (CNPG/Strimzi CRD), Helm 4, `kubectl`.
+- Node.js 24, Kubernetes 1.32+ (CNPG/Strimzi CRD), Helm 4, `kubectl`.
 - **Traefik** как ingress: чарты создают `IngressRoute`/`Middleware`/`TLSStore` (traefik.io/v1alpha1).
   Для nginx-ingress нужен отдельный values-слой, его здесь нет.
 - StorageClass для PVC (bundled) или внешние сервисы.
@@ -65,10 +65,10 @@ cp values/secrets-platform.example.yaml values/secrets-platform.yaml
 # заполнить serverSecret и SMTP; для bundled S3/Postgres креды можно оставить дефолтными
 
 # hostUrl в values/platform-bundled.yaml -> ваш домен
-PROFILE=bundled PLATFORM_VERSION=v0.8.37 ./scripts/install.sh
+PROFILE=bundled PLATFORM_VERSION=v0.8.37 node ./scripts/platform.mjs install
 ```
 
-`install.sh` ставит `platform-base` в `platform-base`, затем `platform` в `platform`
+Команда `platform.mjs install` ставит `platform-base` в `platform-base`, затем `platform` в `platform`
 (`global.namespace`, `global.baseNamespace`, `global.version` подставляются из окружения).
 
 ## Namespace
@@ -77,17 +77,17 @@ PROFILE=bundled PLATFORM_VERSION=v0.8.37 ./scripts/install.sh
 Можно любые имена:
 
 ```bash
-NS=acme-app NS_BASE=acme-base PROFILE=bundled PLATFORM_VERSION=v0.8.73 ./scripts/install.sh
+NS=acme-app NS_BASE=acme-base PROFILE=bundled PLATFORM_VERSION=v0.8.73 node ./scripts/platform.mjs install
 ```
 
 Оба чарта можно поставить в **один** namespace (например, отдельный namespace заказчика):
 
 ```bash
-SINGLE_NAMESPACE=1 NS=acme PROFILE=bundled PLATFORM_VERSION=v0.8.73 ./scripts/install.sh
+SINGLE_NAMESPACE=1 NS=acme PROFILE=bundled PLATFORM_VERSION=v0.8.73 node ./scripts/platform.mjs install
 ```
 
 `global.namespace` в чарте `platform` — это namespace, в который пишутся ресурсы (не только
-релиз Helm), поэтому он должен совпадать с `-n`. `install.sh` подставляет его сам; при ручном
+релиз Helm), поэтому он должен совпадать с `-n`. команда `install` подставляет его автоматически; при ручном
 `helm upgrade` задавай `--set global.namespace=<ns> --set global.baseNamespace=<base-ns>`.
 
 ## Мониторинг (опционально)
@@ -123,7 +123,7 @@ otel:
 оставь `PROFILE=bundled` и перечисли компоненты в `EXTERNAL`:
 
 ```bash
-EXTERNAL=postgres,s3 PROFILE=bundled PLATFORM_VERSION=v0.8.73 ./scripts/install.sh
+EXTERNAL=postgres,s3 PROFILE=bundled PLATFORM_VERSION=v0.8.73 node ./scripts/platform.mjs install
 ```
 
 Оверлеи лежат в `values/external/` (`postgres`, `kafka`, `s3`, `elastic`, `redis`, `mailpit`,
@@ -131,20 +131,20 @@ EXTERNAL=postgres,s3 PROFILE=bundled PLATFORM_VERSION=v0.8.73 ./scripts/install.
 `enabled: false` + `mode: external` — при `enabled: false` без `mode: external` рендер падает
 с ошибкой (защита от «выключил и забыл»).
 
-Проверить команды без установки: `DRY_RUN=1 ... ./scripts/install.sh`.
+Проверить команды без установки: `DRY_RUN=1 ... node ./scripts/platform.mjs install`.
 
 Рабочий цикл обновления - три скрипта с одинаковыми переменными (`PROFILE`,
 `PLATFORM_VERSION`, `NS`, `CHARTS_DIR`):
 
 ```bash
-PROFILE=bundled PLATFORM_VERSION=v0.8.76 ./scripts/diff.sh    # что изменится (helm-diff)
-PROFILE=bundled PLATFORM_VERSION=v0.8.76 ./scripts/apply.sh   # platform-base, затем platform
-./scripts/rollback.sh --list                                  # история обоих релизов
-./scripts/rollback.sh                                         # на ревизию назад
+PROFILE=bundled PLATFORM_VERSION=v0.8.76 node ./scripts/platform.mjs diff    # что изменится (helm-diff)
+PROFILE=bundled PLATFORM_VERSION=v0.8.76 node ./scripts/platform.mjs apply   # platform-base, затем platform
+node ./scripts/platform.mjs rollback --list                                  # история обоих релизов
+node ./scripts/platform.mjs rollback                                         # на ревизию назад
 ```
 
-`diff.sh` и `apply.sh` - те же `install.sh` (`DIFF=1` и без него), поэтому флаги и порядок
-релизов совпадают. `rollback.sh` откатывает в обратном порядке: сначала `platform`, потом
+Команды `diff` и `apply` используют те же values и порядок релизов, что и `install`.
+Команда `rollback` сначала откатывает `platform`, затем
 `platform-base`, чтобы инфраструктура не оказалась новее приложения.
 
 ## Внешняя инфраструктура (prod)
@@ -155,7 +155,7 @@ PROFILE=bundled PLATFORM_VERSION=v0.8.76 ./scripts/apply.sh   # platform-base, �
 3. Установить:
 
 ```bash
-PROFILE=external PLATFORM_VERSION=v0.8.37 ./scripts/install.sh
+PROFILE=external PLATFORM_VERSION=v0.8.37 node ./scripts/platform.mjs install
 ```
 
 В external-профиле `platform-base` не поднимает stateful-сервисы: он только публикует
@@ -171,9 +171,9 @@ ConfigMap/Secret `platform-base` с адресами, которые читае�
 - Старые версии чартов остаются в репозитории: они нужны для `--version` и отката. Опциональная
   чистка у мейнтейнера: `release:charts <version> --prune --keep N`.
 - `helm search repo platform-charts --versions` покажет доступные версии; ставить конкретную:
-  `PLATFORM_VERSION=v0.8.37 ./scripts/install.sh`.
+  `PLATFORM_VERSION=v0.8.37 node ./scripts/platform.mjs install`.
 - Pre-release чарт (например `0.8.73-rc2`) можно поставить с релизными образами:
-  `PLATFORM_VERSION=v0.8.73 CHART_VERSION=0.8.73-rc2 ./scripts/install.sh`.
+  `PLATFORM_VERSION=v0.8.73 CHART_VERSION=0.8.73-rc2 node ./scripts/platform.mjs install`.
 
 ## Секреты
 
@@ -212,7 +212,7 @@ Docker-версией; для Kubernetes используйте account endpoint
 ## Апгрейд
 
 ```bash
-PLATFORM_VERSION=v0.8.40 ./scripts/upgrade.sh
+PLATFORM_VERSION=v0.8.40 node ./scripts/platform.mjs upgrade
 ```
 
 Порядок: `platform-base` обновляется первым (операторы/CRD), затем `platform`. Оба релиза
@@ -236,7 +236,7 @@ Bundled на небольшой прод: ~6-8 GiB RAM, 4 vCPU, 100+ GiB дис�
 ## Публикация (для мейнтейнеров)
 
 CI основного репозитория на тег `v*`/`s*` пакетирует чарты и пушит их в этот репозиторий
-(`deployment/kubernetes/scripts/publish-charts.sh`, секрет `CHARTS_TOKEN`). Вручную:
+(`deployment/kubernetes/scripts/publish-charts.mjs`, секрет `CHARTS_TOKEN`). Вручную:
 
 ```bash
 pnpm -w release:charts v0.8.37

@@ -77,8 +77,8 @@
     "doupdate": "pnpm install --frozen-lockfile",
     "stand:budget": "bash ./deployment/kubernetes/scripts/stand-budget.sh",
     "stand:seal": "bash ./deployment/kubernetes/scripts/seal-secrets.sh",
-    "package:charts": "bash ./deployment/kubernetes/scripts/package-charts.sh",
-    "release:charts": "bash ./deployment/kubernetes/scripts/publish-charts.sh"
+    "package:charts": "node ./deployment/kubernetes/scripts/package-charts.mjs",
+    "release:charts": "node ./deployment/kubernetes/scripts/publish-charts.mjs"
   },
   "dependencies": {
     "pnpm": "12.14.0"
