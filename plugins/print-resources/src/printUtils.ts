@@ -1,4 +1,5 @@
 // Copyright © 2026 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -11,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Class, Client, Doc, Ref } from '@hcengineering/core'
+import type { Class, Client, Doc, Ref, TxOperations } from '@hcengineering/core'
 import type { Location } from '@hcengineering/ui'
 import { Analytics } from '@hcengineering/analytics'
 import guest, { type PublicLink, createPublicLink, getPublicLinkSpace } from '@hcengineering/guest'
@@ -75,6 +76,19 @@ export async function ensurePublicLink (client: Client, doc: Doc): Promise<Publi
   return undefined
 }
 
+/** A PublicLink write is acknowledged only after its current files are registered in Datalake. */
+export async function preparePublicLinkForPrint (
+  client: Client & Pick<TxOperations, 'updateDoc'>,
+  doc: Doc
+): Promise<PublicLink | undefined> {
+  const link = await ensurePublicLink(client, doc)
+  if (link === undefined) return undefined
+  await client.updateDoc(guest.class.PublicLink, link.space, link._id, { revokable: link.revokable })
+  // Synchronization can retire a permanently revoked link. Creating its replacement also
+  // waits for registration; never send the retired URL to Chromium.
+  return await ensurePublicLink(client, doc)
+}
+
 async function getObjectLocation (client: Client, obj: Doc): Promise<Location> {
   const hierarchy = client.getHierarchy()
   const panelComponent = hierarchy.classHierarchyMixin(obj._class, view.mixin.ObjectPanel)
@@ -99,7 +113,7 @@ export async function getDocTitleForPdf (
  * Print multiple documents to PDF (one per document). Calls onProgress and getCancelled for progress and cancellation.
  */
 export async function printAll (
-  client: Client,
+  client: Client & Pick<TxOperations, 'updateDoc'>,
   docs: Doc[],
   signed: boolean,
   options: PrintAllOptions
@@ -111,7 +125,7 @@ export async function printAll (
     options.onProgress(i + 1, docs.length)
     const doc = docs[i]
     try {
-      const link = await ensurePublicLink(client, doc)
+      const link = await preparePublicLinkForPrint(client, doc)
       if (link?.url === undefined || link.url === '') {
         const title = await getDocTitleForPdf(client, doc._id, doc._class, doc).catch(() => 'document.pdf')
         results.push({

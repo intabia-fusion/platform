@@ -1,111 +1,38 @@
 <!--
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 -->
 
 <script lang="ts">
-  import { Analytics } from '@hcengineering/analytics'
-  import type { Doc } from '@hcengineering/core'
-  import type { Blob, Ref } from '@hcengineering/core'
-  import presentation, { PDFViewer, createQuery, getClient } from '@hcengineering/presentation'
-  import type { PublicLink } from '@hcengineering/guest'
-  import guest, { createPublicLink, getPublicLinkSpace } from '@hcengineering/guest'
-  import view from '@hcengineering/view'
-  import type { Location } from '@hcengineering/ui'
-  import { getDocTitle, getObjectLinkFragment } from '@hcengineering/view-resources'
-  import { printToPDF } from '@hcengineering/print'
-  import { signPDF } from '@hcengineering/sign'
-  import { getMetadata } from '@hcengineering/platform'
+  import type { Blob, Doc, Ref } from '@hcengineering/core'
+  import { PDFViewer, getClient } from '@hcengineering/presentation'
+  import { printAll } from '../printUtils'
 
   export let object: Doc
   export let signed: boolean = false
 
   const client = getClient()
-
   let isLoading = true
-  let isLinkLoading = true
-  let link: PublicLink | undefined = undefined
-  let file: Ref<Blob> | undefined = undefined
+  let file: Ref<Blob> | undefined
   let title = ''
+  let request = 0
 
-  $: objId = object?._id
-  // A link left in the previous space of a moved document is revoked: do not print it.
-  $: objSpace = object !== undefined ? getPublicLinkSpace(client.getHierarchy(), object) : undefined
-
-  const linkQuery = createQuery()
-  $: {
-    link = undefined
+  async function load (doc: Doc, sign: boolean): Promise<void> {
+    const current = ++request
     file = undefined
     isLoading = true
-    isLinkLoading = true
-    linkQuery.query(
-      guest.class.PublicLink,
-      { attachedTo: objId, space: objSpace },
-      (res) => {
-        link = res[0]
-        isLinkLoading = false
-      },
-      { limit: 1 }
-    )
+    const [result] = await printAll(client, [doc], sign, {
+      onProgress: () => {},
+      getCancelled: () => current !== request
+    })
+    if (current !== request) return
+    title = result?.title ?? ''
+    file = result?.error === undefined && result?.blobId ? result.blobId as Ref<Blob> : undefined
+    isLoading = false
   }
 
-  $: if (link?.url !== undefined && link.url !== '' && file === undefined) {
-    const token = getMetadata(presentation.metadata.Token) ?? ''
-
-    printToPDF(link.url, token).then(
-      (res) => {
-        if (signed) {
-          signPDF(res, token).then(
-            (signedRes) => {
-              file = signedRes as Ref<Blob>
-              isLoading = false
-            },
-            (err) => {
-              Analytics.handleError(err)
-              isLoading = false
-            }
-          )
-        } else {
-          file = res as Ref<Blob>
-          isLoading = false
-        }
-      },
-      (err) => {
-        Analytics.handleError(err)
-        isLoading = false
-      }
-    )
-  }
-
-  $: if (object !== undefined && !isLinkLoading) {
-    void createLinkIfMissing(object)
-  }
-
-  async function getObjectLocation (obj: Doc): Promise<Location> {
-    const panelComponent = client.getHierarchy().classHierarchyMixin(obj._class, view.mixin.ObjectPanel)
-    const comp = panelComponent?.component ?? view.component.EditDoc
-
-    return await getObjectLinkFragment(client.getHierarchy(), obj, {}, comp)
-  }
-
-  async function createLinkIfMissing (obj: Doc): Promise<void> {
-    if (link?.attachedTo === obj._id) {
-      return
-    }
-
-    if (link === undefined) {
-      const location = await getObjectLocation(obj)
-
-      await createPublicLink(client, obj, location)
-    }
-  }
-
-  async function updateDocTitle (obj: Doc): Promise<void> {
-    const value = (await getDocTitle(client, obj._id, obj._class, obj)) ?? ''
-    title = value !== '' ? value + '.pdf' : ''
-  }
-
-  $: void updateDocTitle(object)
+  $: void load(object, signed)
 </script>
 
 <PDFViewer {file} name={title} contentType="application/pdf" showIcon={false} {isLoading} on:close on:fullsize />
