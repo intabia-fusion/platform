@@ -83,6 +83,7 @@ const guestRoles = new Set<AccountRole>([AccountRole.Guest, AccountRole.DocGuest
 
 // guest.class.PublicLink: the guest plugin is not a dependency of this package.
 const publicLinkClass = 'guest:class:PublicLink' as Ref<Class<Doc>>
+const publicFileSyncJobClass = 'guest:class:PublicFileSyncJob' as Ref<Class<Doc>>
 
 interface PublicLinkDoc extends Doc {
   attachedTo?: Ref<Doc>
@@ -683,6 +684,9 @@ export class SpaceSecurityMiddleware extends BaseMiddleware implements Middlewar
   // After that only the server may re-point or move the link.
   private async checkPublicLinkTx (ctx: MeasureContext<SessionData>, tx: TxCUD<Doc>, derived: boolean): Promise<void> {
     const h = this.context.hierarchy
+    if (tx.objectClass === publicFileSyncJobClass) {
+      throw this.forbiddenTx(ctx, ForbiddenKind.SystemOnly, 'Public file synchronization jobs are server-owned', tx)
+    }
     if (!h.isDerived(tx.objectClass, publicLinkClass) || derived || ctx.contextData.isTriggerCtx === true) return
     if (isSystem(ctx.contextData.account, ctx)) return
     const forbidden = (message: string): PlatformError => this.forbiddenTx(ctx, ForbiddenKind.SystemOnly, message, tx)

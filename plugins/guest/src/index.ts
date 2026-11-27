@@ -15,6 +15,11 @@ export interface PublicLink extends Doc {
   revokable: boolean
 }
 
+export interface PublicFileSyncJob extends Doc {
+  generation: string
+  readyAt: number
+}
+
 export interface Restrictions {
   readonly: boolean
   disableComments: boolean
@@ -27,7 +32,8 @@ export const guestAccount = 'b6996120-416f-49cd-841e-e4a5d2e49c9b' as PersonUuid
 export const guestId = 'guest' as Plugin
 export default plugin(guestId, {
   class: {
-    PublicLink: '' as Ref<Class<PublicLink>>
+    PublicLink: '' as Ref<Class<PublicLink>>,
+    PublicFileSyncJob: '' as Ref<Class<PublicFileSyncJob>>
   },
   icon: {
     Link: '' as Asset

@@ -1,6 +1,7 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -998,17 +999,27 @@ export function doTrimHash (s: string | undefined): string | undefined {
   return s
 }
 
+export function hasIncompleteDigest (domain: DomainData | undefined): boolean {
+  if (domain === undefined) return false
+  const hasChanges = domain.added > 0 || domain.updated > 0 || domain.removed > 0
+  return (
+    domain.incomplete === true || (hasChanges && domain.snapshot === undefined && (domain.snapshots?.length ?? 0) === 0)
+  )
+}
+
 export async function loadDigest (
   ctx: MeasureContext,
   storage: BackupStorage,
   snapshots: BackupSnapshot[],
   domain: Domain,
   date?: number,
-  msg?: Record<string, any>
+  msg?: Record<string, any>,
+  strict: boolean = false
 ): Promise<Map<BackupDocId, string>> {
   const result = new Map<BackupDocId, string>()
   for (const s of snapshots) {
     const d = s.domains[domain]
+    if (strict && hasIncompleteDigest(d)) throw new Error(`Incomplete digest for ${domain} at snapshot ${s.date}`)
 
     // Load old JSON snapshot
     if (d?.snapshot !== undefined) {
@@ -1016,6 +1027,22 @@ export async function loadDigest (
         const dChanges: SnapshotV6 = JSON.parse(
           gunzipSync(new Uint8Array(await storage.loadFile(d.snapshot))).toString()
         )
+        if (strict) {
+          const validEntries = [dChanges.added, dChanges.updated].every(
+            (entries) =>
+              entries !== null &&
+              typeof entries === 'object' &&
+              !Array.isArray(entries) &&
+              Object.entries(entries).every(([id, hash]) => id !== '' && typeof hash === 'string')
+          )
+          if (
+            !validEntries ||
+            !Array.isArray(dChanges.removed) ||
+            dChanges.removed.some((id) => typeof id !== 'string' || id === '')
+          ) {
+            throw new Error('Invalid JSON digest')
+          }
+        }
         for (const [k, v] of Object.entries(dChanges.added)) {
           result.set(k, v)
         }
@@ -1027,6 +1054,7 @@ export async function loadDigest (
         }
       } catch (err: any) {
         ctx.warn('failed to load digest', { snapshot: d.snapshot, ...(msg ?? {}) })
+        if (strict) throw err
       }
     }
     for (const snapshot of d?.snapshots ?? []) {
@@ -1034,27 +1062,30 @@ export async function loadDigest (
         const dataBlob = gunzipSync(new Uint8Array(await storage.loadFile(snapshot)))
           .toString()
           .split('\n')
-        const addedCount = parseInt(dataBlob.shift() ?? '0')
-        const added = dataBlob.splice(0, addedCount)
-        for (const it of added) {
-          const [k, v] = it.split(';')
-          result.set(k, v)
+        const readLines = (): string[] => {
+          const header = dataBlob.shift() ?? ''
+          const count = parseInt(header)
+          if (strict && (!/^\d+$/.test(header) || count > dataBlob.length)) {
+            throw new Error('Invalid digest section size')
+          }
+          return dataBlob.splice(0, count)
         }
 
-        const updatedCount = parseInt(dataBlob.shift() ?? '0')
-        const updated = dataBlob.splice(0, updatedCount)
-        for (const it of updated) {
-          const [k, v] = it.split(';')
-          result.set(k, v)
+        for (let section = 0; section < 2; section++) {
+          for (const line of readLines()) {
+            const [id, hash] = line.split(';')
+            if (strict && (id === '' || hash === undefined)) throw new Error('Invalid digest document entry')
+            result.set(id, hash)
+          }
         }
-
-        const removedCount = parseInt(dataBlob.shift() ?? '0')
-        const removed = dataBlob.splice(0, removedCount)
-        for (const k of removed) {
-          result.delete(k)
+        for (const id of readLines()) {
+          if (strict && id === '') throw new Error('Invalid digest removal entry')
+          result.delete(id)
         }
+        if (strict && dataBlob.some((line) => line !== '')) throw new Error('Unexpected digest entries')
       } catch (err: any) {
         ctx.warn('digest is broken', { domain, err: err.message, snapshot, ...(msg ?? {}) })
+        if (strict) throw err
       }
     }
     // Stop if stop date is matched and provided
@@ -1217,6 +1248,7 @@ export async function updateDigest (
           if (validDocs.has(k as any)) {
             changes.added.set(k, v)
           } else {
+            d.incomplete = true
             lmodified = true
           }
         }
@@ -1228,6 +1260,7 @@ export async function updateDigest (
           if (validDocs.has(k as any)) {
             changes.updated.set(k, v)
           } else {
+            d.incomplete = true
             lmodified = true
           }
         }
@@ -1243,6 +1276,7 @@ export async function updateDigest (
       } catch (err: any) {
         ctx.warn('failed during processing of snapshot file, it will be skipped', { snapshot })
         digestToRemove.add(snapshot)
+        d.incomplete = true
         modified = true
       }
 
@@ -1257,6 +1291,7 @@ export async function updateDigest (
       }
     } catch (err: any) {
       digestToRemove.add(snapshot)
+      d.incomplete = true
       modifiedFiles.push(snapshot)
       ctx.warn('digest is broken', { domain, err: err.message, snapshot })
       modified = true

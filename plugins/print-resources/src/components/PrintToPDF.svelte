@@ -28,7 +28,7 @@
     })
     if (current !== request) return
     title = result?.title ?? ''
-    file = result?.error === undefined && result?.blobId ? result.blobId as Ref<Blob> : undefined
+    file = result?.error === undefined && result?.blobId ? (result.blobId as Ref<Blob>) : undefined
     isLoading = false
   }
 

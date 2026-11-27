@@ -31,7 +31,12 @@ export function storageConfigFromEnv (configEnv?: string): StorageConfiguration 
 }
 
 /** Use the primary file store, so permissions and blob reads cannot target different backends. */
-export function getDatalakeEndpoint (config: StorageConfiguration = storageConfigFromEnv()): string | undefined {
+export function getDatalakeEndpoint (config?: StorageConfiguration): string | undefined {
+  if (config === undefined) {
+    const storageEnv = process.env.STORAGE_CONFIG
+    if (storageEnv === undefined) return undefined
+    config = storageConfigFrom(storageEnv)
+  }
   const storage = config.storages.find((it) => it.name === config.default)
   if (storage?.kind !== DATALAKE_CONFIG_KIND) return undefined
   const url = new URL(storage.endpoint)

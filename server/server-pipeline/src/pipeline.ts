@@ -269,7 +269,7 @@ export function createBackupPipeline (
   // Backup walks workspace by workspace - the system model is built once for all of them.
   const shared = buildSharedModel(metrics, systemTx)
 
-  return (ctx, workspace, broadcast, branding) => {
+  const open: PipelineFactory = (ctx, workspace, broadcast, branding) => {
     const metricsCtx = opt.usePassedCtx === true ? ctx : metrics
     const wsMetrics = metricsCtx.newChild('🧲 backup', {}, { span: false })
     const conf = getConfig(metrics, dbUrl, wsMetrics, {
@@ -289,6 +289,7 @@ export function createBackupPipeline (
 
     const hierarchy = new Hierarchy(shared.hierarchy)
     const modelDb = new ModelDb(hierarchy, shared.model)
+    const endpoint = getDatalakeEndpoint()
     const context: PipelineContext = {
       workspace,
       branding,
@@ -297,8 +298,20 @@ export function createBackupPipeline (
       storageAdapter: opt.externalStorage,
       contextVars: {}
     }
+    if (endpoint !== undefined) {
+      context.afterRestore = async (ctx) => {
+        // The restore can write model transactions directly, so its original hierarchy is stale.
+        const restored = await open(ctx, workspace, broadcast, branding)
+        try {
+          await PublicFileMiddleware.reconcileAfterRestore(ctx, restored.context, endpoint)
+        } finally {
+          await restored.close()
+        }
+      }
+    }
     return createPipeline(ctx, middlewares, context)
   }
+  return open
 }
 
 export function createEmptyBroadcastOps (): BroadcastOps {

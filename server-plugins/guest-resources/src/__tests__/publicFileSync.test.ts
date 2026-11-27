@@ -15,12 +15,17 @@
 
 import { PublicFileSync } from '../publicFileSync'
 import { PublicFileAccessError } from '@hcengineering/datalake'
-import { type WorkspaceUuid } from '@hcengineering/core'
+import { type Ref, type WorkspaceUuid } from '@hcengineering/core'
+import { type PublicFileSyncJob } from '@hcengineering/guest'
 
 const workspace = '11111111-1111-4111-8111-111111111111' as WorkspaceUuid
 function fixture (): any {
   const state = { revision: 1, revoked: false, blobs: ['old', 'kept'] }
-  const source = { links: jest.fn(async () => ['link']), files: jest.fn(async () => ['kept', 'new']) }
+  const source = {
+    pending: jest.fn(async () => [{ _id: 'link' as Ref<PublicFileSyncJob>, generation: 'current' }]),
+    files: jest.fn(async () => ['kept', 'new']),
+    finish: jest.fn()
+  }
   const client = {
     state: jest.fn(async () => ({ ...state, blobs: [...state.blobs] })),
     replace: jest.fn(async (_ws, _id, revision, blobs) => {
@@ -29,14 +34,13 @@ function fixture (): any {
     revoke: jest.fn(async () => {
       state.revoked = true
       state.blobs = []
-    }),
-    activeLinks: jest.fn(async () => ['link'])
+    })
   }
   const report = jest.fn()
   const sync = new PublicFileSync(workspace, client, source, report)
   return { state, source, client, report, sync }
 }
-it('closes removed files synchronously and publishes additions on a later full reconciliation', async () => {
+it('closes removed files synchronously and publishes additions on a later reconciliation', async () => {
   const { state, client, sync } = fixture()
   await sync.sync('link', true)
   expect(state.blobs).toEqual(['kept'])
@@ -146,7 +150,7 @@ it('limits revision conflicts to three requests', async () => {
   expect(client.replace).toHaveBeenCalledTimes(3)
   await sync.close()
 })
-it('recovers a missed addition from persisted source links after restart', async () => {
+it('recovers a missed addition from a persisted job after restart', async () => {
   const { client, source, state, sync } = fixture()
   await sync.close()
   const restarted = new PublicFileSync(workspace, client, source, () => {})
@@ -154,9 +158,8 @@ it('recovers a missed addition from persisted source links after restart', async
   expect(state.blobs).toEqual(['kept', 'new'])
   await restarted.close()
 })
-it('recovers a missed deletion from registered links when the source record is gone', async () => {
+it('recovers a missed deletion from a persisted job when the source record is gone', async () => {
   const { source, state, sync } = fixture()
-  source.links.mockResolvedValue([])
   source.files.mockResolvedValue(undefined)
   await sync.tick()
   expect(state.revoked).toBe(true)
@@ -165,8 +168,8 @@ it('recovers a missed deletion from registered links when the source record is g
 it('backs off failures and stops its timer on close', async () => {
   jest.useFakeTimers()
   jest.spyOn(Math, 'random').mockReturnValue(0.5)
-  const { client, report, sync } = fixture()
-  client.activeLinks.mockRejectedValue(new PublicFileAccessError(503))
+  const { source, report, sync } = fixture()
+  source.pending.mockRejectedValue(new PublicFileAccessError(503))
   sync.start()
   await jest.advanceTimersByTimeAsync(1000)
   expect(report).toHaveBeenCalledTimes(1)
@@ -181,13 +184,12 @@ it('backs off failures and stops its timer on close', async () => {
   jest.restoreAllMocks()
 })
 
-it('wakes the worker for a new addition without waiting for a complete scan', async () => {
+it('wakes the worker for a newly queued addition before the next poll', async () => {
   jest.useFakeTimers()
   jest.spyOn(Math, 'random').mockReturnValue(0.5)
-  const { source, sync, state } = fixture()
-  source.links.mockResolvedValue([])
+  const { sync, state } = fixture()
   sync.start()
-  sync.enqueue(['link'])
+  sync.wake()
   await jest.advanceTimersByTimeAsync(1)
   expect(state.blobs).toEqual(['kept', 'new'])
   await sync.close()

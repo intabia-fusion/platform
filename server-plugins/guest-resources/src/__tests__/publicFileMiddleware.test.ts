@@ -14,7 +14,7 @@
 //
 
 import core, { MeasureMetricsContext } from '@hcengineering/core'
-import guest from '@hcengineering/guest'
+import guest, { type PublicFileSyncJob } from '@hcengineering/guest'
 import { PublicFileMiddleware } from '../publicFileMiddleware'
 import { PublicFileAccessError } from '@hcengineering/datalake'
 
@@ -22,7 +22,7 @@ const mockClient = {
   state: jest.fn(),
   replace: jest.fn(),
   revoke: jest.fn(),
-  activeLinks: jest.fn(async () => [])
+  activeLinks: jest.fn(async (): Promise<string[]> => [])
 }
 jest.mock('@hcengineering/datalake', () => ({
   ...jest.requireActual('@hcengineering/datalake'),
@@ -32,6 +32,7 @@ const root = 'document:class:Document'
 const space = 'space'
 let middleware: PublicFileMiddleware
 let records: any[]
+let jobs: any[]
 let state: any
 let next: any
 let ctx: any
@@ -42,10 +43,12 @@ function match (record: any, query: any): boolean {
     if (value !== null && typeof value === 'object') {
       if (value.$in !== undefined) return value.$in.includes(record[key]) === true
       if (value.$gt !== undefined) return record[key] > value.$gt
+      if (value.$lte !== undefined) return record[key] <= value.$lte
     }
     return record[key] === value
   })
 }
+const remove = (id: string): any => ({ _class: core.class.TxRemoveDoc, objectClass: root, objectId: id })
 const update = (): any => ({
   _class: core.class.TxUpdateDoc,
   objectClass: root,
@@ -56,10 +59,12 @@ beforeEach(() => {
   jest.useFakeTimers()
   jest.clearAllMocks()
   state = { revision: 1, revoked: false, blobs: ['old'] }
+  jobs = []
   records = [
     { _id: 'link', _class: guest.class.PublicLink, attachedTo: 'doc', attachedToClass: root, space },
     { _id: 'doc', _class: root, space, content: 'old' }
   ]
+  mockClient.activeLinks.mockResolvedValue([])
   mockClient.state.mockImplementation(async () => ({ ...state, blobs: [...state.blobs] }))
   mockClient.replace.mockImplementation(async (_ws, _id, revision, blobs) => {
     Object.assign(state, { revision, blobs })
@@ -70,7 +75,7 @@ beforeEach(() => {
   })
   const hierarchy = {
     hasClass: (clazz: string) => [root, guest.class.PublicLink, core.class.Space].includes(clazz as any),
-    getDomain: () => 'data',
+    getDomain: (clazz: string) => (clazz === guest.class.PublicFileSyncJob ? 'jobs' : 'data'),
     isMixin: () => false,
     isDerived: (clazz: string, base: string) => clazz === base,
     getDescendants: (clazz: string) => (clazz === core.class.AttachedDoc ? [] : [clazz]),
@@ -81,14 +86,22 @@ beforeEach(() => {
     workspace: { uuid: '11111111-1111-4111-8111-111111111111' },
     hierarchy,
     lowLevelStorage: {
-      rawFindAll: jest.fn(async (_domain, query, options) =>
-        records
+      rawFindAll: jest.fn(async (domain, query, options) =>
+        (domain === 'jobs' ? jobs : records)
           .filter((record) => match(record, query))
           .sort((a, b) => a._id.localeCompare(b._id))
           .slice(0, options?.limit)
       ),
-      rawUpdate: jest.fn(async (_domain, query, fields) => {
-        for (const record of records.filter((record) => match(record, query))) Object.assign(record, fields)
+      upload: jest.fn(async (_ctx, _domain, queue: PublicFileSyncJob[]) => {
+        jobs = [...jobs.filter((job) => !queue.some((item) => item._id === job._id)), ...queue]
+      }),
+      rawDeleteMany: jest.fn(async (_domain, query) => {
+        if (_domain === 'jobs') jobs = jobs.filter((job) => !match(job, query))
+        else records = records.filter((record) => !match(record, query))
+      }),
+      rawUpdate: jest.fn(async (domain, query, fields) => {
+        const rows = domain === 'jobs' ? jobs : records
+        for (const record of rows.filter((record) => match(record, query))) Object.assign(record, fields)
       })
     },
     storageAdapter: {
@@ -166,6 +179,163 @@ it('does not wait for the registry when only a new file is added', async () => {
   expect(mockClient.state).not.toHaveBeenCalled()
   expect(records[0].publicFileSyncPending).toBe(false)
 })
+it('processes another workspace queue while two workspace writes are still open', async () => {
+  let release: () => void = () => {}
+  const gate = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  next.tx.mockImplementation(async () => {
+    await gate
+    return {}
+  })
+  jest.spyOn(Math, 'random').mockReturnValue(0.5)
+  await middleware.close()
+  middleware = new PublicFileMiddleware(ctx, context, next, 'http://datalake')
+  const second = new PublicFileMiddleware(
+    ctx,
+    { ...context, workspace: { uuid: '22222222-2222-4222-8222-222222222222' } },
+    next,
+    'http://datalake'
+  )
+  const third = new PublicFileMiddleware(
+    ctx,
+    { ...context, workspace: { uuid: '33333333-3333-4333-8333-333333333333' } },
+    next,
+    'http://datalake'
+  )
+  const secondCtx = new MeasureMetricsContext('second', {}) as any
+  secondCtx.contextData = { contextCache: new Map() }
+  const writing = [middleware.tx(ctx, []), second.tx(secondCtx, [])]
+  jobs = [{ _id: 'link', _class: guest.class.PublicFileSyncJob, generation: 'queued', readyAt: Date.now() }]
+  try {
+    await jest.advanceTimersByTimeAsync(1200)
+    expect(jobs).toHaveLength(0)
+  } finally {
+    release()
+    await Promise.all(writing)
+    await Promise.all([second.close(), third.close()])
+    jest.restoreAllMocks()
+  }
+})
+
+it('reads ready jobs between saves even when another save is already queued', async () => {
+  jest.spyOn(Math, 'random').mockReturnValue(0.5)
+  await middleware.close()
+  middleware = new PublicFileMiddleware(ctx, context, next, 'http://datalake')
+  let releaseFirst: () => void = () => {}
+  let releaseSecond: () => void = () => {}
+  const first = new Promise<void>((resolve) => {
+    releaseFirst = resolve
+  })
+  const second = new Promise<void>((resolve) => {
+    releaseSecond = resolve
+  })
+  next.tx
+    .mockImplementationOnce(async () => {
+      await first
+      return {}
+    })
+    .mockImplementationOnce(async () => {
+      await second
+      return {}
+    })
+  jobs = [{ _id: 'link', _class: guest.class.PublicFileSyncJob, generation: 'queued', readyAt: Date.now() }]
+  const secondCtx = new MeasureMetricsContext('second save', {}) as any
+  secondCtx.contextData = { contextCache: new Map() }
+  const firstWrite = middleware.tx(ctx, [])
+  await jest.advanceTimersByTimeAsync(1000)
+  const secondWrite = middleware.tx(secondCtx, [])
+  try {
+    expect(jobs).toHaveLength(1)
+    releaseFirst()
+    await jest.advanceTimersByTimeAsync(1200)
+    expect(jobs).toHaveLength(0)
+  } finally {
+    releaseFirst()
+    releaseSecond()
+    await Promise.all([firstWrite, secondWrite])
+    jest.restoreAllMocks()
+  }
+})
+
+it('recovers a queued addition after restarting without scanning other links', async () => {
+  records.push({ ...records[0], _id: 'unrelated', attachedTo: 'unrelated-doc' })
+  context.storageAdapter.read.mockImplementation(async (_ctx: any, _ws: any, snapshot: string) => [
+    Buffer.from(
+      JSON.stringify({
+        type: 'doc',
+        content: (snapshot === 'old' ? ['old'] : ['old', 'new']).map((id) => ({
+          type: 'image',
+          attrs: { 'file-id': id }
+        }))
+      })
+    )
+  ])
+  await middleware.tx(ctx, [update()])
+  expect(mockClient.state).not.toHaveBeenCalled()
+  await middleware.close()
+  middleware = new PublicFileMiddleware(ctx, context, next, 'http://datalake')
+  await jest.advanceTimersByTimeAsync(1500)
+  expect(state.blobs).toEqual(['new', 'old'])
+  expect(mockClient.state.mock.calls.map(([, id]) => id)).toEqual(['link'])
+  expect(mockClient.activeLinks).not.toHaveBeenCalled()
+})
+
+it('keeps a newer generation when the worker finishes an older one', async () => {
+  const deleteJob = context.lowLevelStorage.rawDeleteMany.getMockImplementation()
+  let firstGeneration: string | undefined
+  context.lowLevelStorage.rawDeleteMany.mockImplementationOnce(async (domain: string, query: PublicFileSyncJob) => {
+    firstGeneration = query.generation
+    await middleware.tx(ctx, [update()])
+    await deleteJob(domain, query)
+  })
+  await middleware.tx(ctx, [update()])
+  await jest.advanceTimersByTimeAsync(1)
+  expect(firstGeneration).toBeDefined()
+  expect(jobs).toHaveLength(1)
+  expect(jobs[0].generation).not.toBe(firstGeneration)
+  await jest.advanceTimersByTimeAsync(100)
+  expect(jobs).toHaveLength(0)
+})
+
+it('keeps the revoke job after a link has been deleted and Datalake fails', async () => {
+  mockClient.revoke.mockRejectedValueOnce(new PublicFileAccessError(503))
+  await expect(
+    middleware.tx(ctx, [
+      { ...update(), _class: core.class.TxRemoveDoc, objectClass: guest.class.PublicLink, objectId: 'link' }
+    ])
+  ).rejects.toMatchObject({ status: 503 })
+  expect(records.some((record) => record._id === 'link')).toBe(false)
+  await middleware.close()
+  middleware = new PublicFileMiddleware(ctx, context, next, 'http://datalake')
+  await jest.advanceTimersByTimeAsync(1500)
+  expect(state.revoked).toBe(true)
+  expect(jobs).toEqual([])
+})
+
+it('reconciles registered links missing from a restored workspace without a periodic scan', async () => {
+  records = records.filter((record) => record._id !== 'link')
+  mockClient.activeLinks.mockResolvedValueOnce(['link'])
+  await PublicFileMiddleware.reconcileAfterRestore(ctx, context, 'http://datalake')
+  expect(state.revoked).toBe(true)
+  expect(jobs).toEqual([])
+})
+
+it('removes a restored PublicLink whose id was permanently revoked after the backup', async () => {
+  state.revoked = true
+  await PublicFileMiddleware.reconcileAfterRestore(ctx, context, 'http://datalake')
+  expect(records.map((record) => record._id)).toEqual(['doc'])
+})
+
+it('withdraws files from restored links without a target class while preserving the link for migration', async () => {
+  delete records[0].attachedToClass
+  mockClient.activeLinks.mockResolvedValueOnce(['link'])
+  await PublicFileMiddleware.reconcileAfterRestore(ctx, context, 'http://datalake')
+  expect(state.blobs).toEqual([])
+  expect(state.revoked).toBe(false)
+  expect(records[0]._id).toBe('link')
+})
+
 it('registers initial publication even when the URL is already filled', async () => {
   records = records.filter((record) => record._id !== 'link')
   state = { revision: 0, revoked: false, blobs: [] }
@@ -186,6 +356,18 @@ it('revokes deletion and invalidating moves', async () => {
   await middleware.tx(ctx, [{ ...update(), operations: { space } }])
   expect(records.some((record) => record._id === 'link')).toBe(false)
 })
+it('fences a failed move before the document can return to its previous space', async () => {
+  mockClient.revoke.mockRejectedValueOnce(new PublicFileAccessError(503))
+  await expect(middleware.tx(ctx, [{ ...update(), operations: { space: 'another-space' } }])).rejects.toMatchObject({
+    status: 503
+  })
+  records.push({ _id: 'unrelated', _class: root, space })
+  await middleware.tx(ctx, [{ ...update(), operations: { space } }, remove('unrelated')])
+  expect(records.some((record) => record._id === 'unrelated')).toBe(false)
+  expect(state.revoked).toBe(true)
+  expect(records.some((record) => record._id === 'link')).toBe(false)
+})
+
 it('retires legacy source links whose id is already revoked in Datalake', async () => {
   state.revoked = true
   await middleware.tx(ctx, [

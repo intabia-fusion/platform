@@ -13,6 +13,24 @@ it.each([
   expect(getDatalakeEndpoint(storageConfigFrom(config as string))).toBe(expected)
 })
 
+it('does not initialize the MinIO fallback when optional Datalake configuration is missing', () => {
+  const env = jest.replaceProperty(process, 'env', {
+    ...process.env,
+    STORAGE_CONFIG: undefined,
+    MINIO_ENDPOINT: undefined
+  })
+  const exit = jest.spyOn(process, 'exit').mockImplementation(() => {
+    throw new Error('unexpected fallback initialization')
+  })
+  try {
+    expect(getDatalakeEndpoint()).toBeUndefined()
+    expect(exit).not.toHaveBeenCalled()
+  } finally {
+    exit.mockRestore()
+    env.restore()
+  }
+})
+
 describe('config-parse', () => {
   it('single-minio', async () => {
     const cfg: StorageConfiguration = { default: '', storages: [] }

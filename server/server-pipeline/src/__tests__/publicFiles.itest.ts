@@ -15,6 +15,7 @@
 
 import core, {
   ClassifierKind,
+  DOMAIN_MODEL_TX,
   AccountRole,
   MeasureMetricsContext,
   TxFactory,
@@ -50,6 +51,8 @@ import { execFile } from 'child_process'
 import { randomUUID } from 'crypto'
 import { promisify } from 'util'
 import {
+  createBackupPipeline,
+  createEmptyBroadcastOps,
   getServerPipeline,
   registerTxAdapterFactory,
   registerAdapterFactory,
@@ -228,6 +231,32 @@ it('persists failed reductions and repairs them after a pipeline restart', async
   const [repaired] = await reopenedStorage.rawFindAll<Doc>('guest' as Domain, { _id: link })
   expect((repaired as any).publicFileSyncPending).toBe(false)
 })
+it('restores a persisted revoke job after restarting the real PostgreSQL pipeline', async () => {
+  const { link } = await publish()
+  mockFail = true
+  await expect(client().removeDoc(publicLink, space, link)).rejects.toThrow()
+  expect(await client().findOne(publicLink, { _id: link })).toBeUndefined()
+  const domain = 'public_file_sync' as Domain
+  expect(await pipeline.context.lowLevelStorage?.rawFindAll(domain, { _id: link })).toHaveLength(1)
+
+  // A worker may already have retried while the API was down. Make that
+  // persisted retry due without waiting a minute in the integration suite.
+  await pipeline.close()
+  mockFail = false
+  await reopen()
+  await pipeline.context.lowLevelStorage?.rawUpdate<Doc & { readyAt: number }>(
+    domain,
+    { _id: link },
+    { readyAt: Date.now() }
+  )
+  for (let attempt = 0; attempt < 30; attempt++) {
+    if ((await pipeline.context.lowLevelStorage?.rawFindAll(domain, { _id: link }))?.length === 0) break
+    await new Promise((resolve) => setTimeout(resolve, 100))
+  }
+  expect(await pipeline.context.lowLevelStorage?.rawFindAll(domain, { _id: link })).toHaveLength(0)
+  expect(mockStates.get(link)?.revoked).toBe(true)
+})
+
 it('revokes deletion of the public link', async () => {
   const { link } = await publish()
   await client().removeDoc(publicLink, space, link)
@@ -308,4 +337,42 @@ it('upgrades the v1 migration and retires a legacy source link whose id is revok
   expect(
     await client().findOne(core.class.MigrationState, { plugin: 'guest', state: 'public-file-access-v2' })
   ).toBeDefined()
+})
+
+it('reconciles a public file whose custom class was written by the restore', async () => {
+  const backup = await createBackupPipeline(ctx, dbUrl, model(), {
+    externalStorage: createDummyStorageAdapter()
+  })(ctx, ws, createEmptyBroadcastOps(), null)
+  try {
+    const storage = backup.context.lowLevelStorage
+    if (storage === undefined) throw new Error('Missing storage')
+    const customClass = 'publicFileTest:class:RestoredDocument' as Ref<Class<Doc>>
+    expect(backup.context.hierarchy.hasClass(customClass)).toBe(false)
+    const f = new TxFactory(core.account.System)
+    const dataDomain = 'public-file-test' as Domain
+    await storage.upload(ctx, DOMAIN_MODEL_TX, [
+      f.createTxCreateDoc(
+        core.class.Class,
+        core.space.Model,
+        {
+          kind: ClassifierKind.CLASS,
+          extends: root,
+          domain: dataDomain,
+          label: 'restored' as IntlString
+        },
+        customClass
+      )
+    ])
+    const doc = randomUUID() as Ref<Doc>
+    const link = randomUUID() as Ref<Doc>
+    const metadata = { space, modifiedBy: core.account.System, modifiedOn: Date.now() }
+    const restored = { ...metadata, _id: doc, _class: customClass, file: 'restored-file' }
+    const restoredLink = { ...metadata, _id: link, _class: publicLink, attachedTo: doc, attachedToClass: customClass }
+    await storage.upload(ctx, dataDomain, [restored])
+    await storage.upload(ctx, 'guest' as Domain, [restoredLink])
+    await backup.context.afterRestore?.(ctx)
+    expect(mockStates.get(link)?.blobs).toEqual(['restored-file'])
+  } finally {
+    await backup.close()
+  }
 })

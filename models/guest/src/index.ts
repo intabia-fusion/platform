@@ -1,5 +1,5 @@
 import { type Class, type IndexingConfiguration, type Doc, type Domain, type Ref } from '@hcengineering/core'
-import { type PublicLink, type Restrictions } from '@hcengineering/guest'
+import { type PublicFileSyncJob, type PublicLink, type Restrictions } from '@hcengineering/guest'
 import { type Builder, Model } from '@hcengineering/model'
 import core, { TDoc } from '@hcengineering/model-core'
 import { type Location } from '@hcengineering/ui/src/types'
@@ -17,8 +17,14 @@ export class TPublicLink extends TDoc implements PublicLink {
   attachedToClass?: Ref<Class<Doc>>
 }
 
+@Model(guest.class.PublicFileSyncJob, core.class.Doc, 'public_file_sync' as Domain)
+class TPublicFileSyncJob extends TDoc implements PublicFileSyncJob {
+  generation!: string
+  readyAt!: number
+}
+
 export function createModel (builder: Builder): void {
-  builder.createModel(TPublicLink)
+  builder.createModel(TPublicLink, TPublicFileSyncJob)
 
   builder.createDoc(core.class.DomainIndexConfiguration, core.space.Model, {
     domain: GUEST_DOMAIN,

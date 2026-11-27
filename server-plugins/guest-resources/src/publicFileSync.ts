@@ -13,32 +13,31 @@
 // limitations under the License.
 //
 
-import { type WorkspaceUuid } from '@hcengineering/core'
+import { type Ref, type WorkspaceUuid } from '@hcengineering/core'
 import { PublicFileAccessError, type PublicFileAccessClient } from '@hcengineering/datalake'
+import { type PublicFileSyncJob } from '@hcengineering/guest'
 
 let backgroundWorkers = 0
 
+type PendingJob = Pick<PublicFileSyncJob, '_id' | 'generation'>
+
 export interface PublicFileSource {
-  links: (after: string) => Promise<string[]>
+  pending: () => Promise<PendingJob[]>
+  finish: (id: Ref<PublicFileSyncJob>, generation: string, retryAt?: number) => Promise<void>
   files: (linkId: string) => Promise<string[] | undefined>
 }
 
-/** Source records and registry rows are the durable work list; no in-memory event is required for recovery. */
 export class PublicFileSync {
   private readonly locks = new Map<string, Promise<boolean>>()
-  private readonly hints = new Map<string, number>()
   private closed = false
   private timer?: ReturnType<typeof setTimeout>
   private running?: Promise<void>
-  private sourceCursor = ''
-  private registryCursor = ''
-  private sourceDone = false
-  private registryDone = false
+  private wakeRequested = false
   private backoff = 1000
 
   constructor (
     private readonly workspace: WorkspaceUuid,
-    private readonly client: Pick<PublicFileAccessClient, 'state' | 'replace' | 'revoke' | 'activeLinks'>,
+    private readonly client: Pick<PublicFileAccessClient, 'state' | 'replace' | 'revoke'>,
     private readonly source: PublicFileSource,
     private readonly report: (error: unknown) => void
   ) {}
@@ -87,11 +86,10 @@ export class PublicFileSync {
     }
   }
 
-  enqueue (ids: Iterable<string>): void {
-    for (const id of ids) {
-      if (this.hints.size < 1000 || this.hints.has(id)) this.hints.set(id, (this.hints.get(id) ?? 0) + 1)
-    }
-    if (this.running === undefined && this.backoff === 1000) {
+  wake (): void {
+    if (this.running !== undefined) {
+      this.wakeRequested = true
+    } else if (this.backoff === 1000) {
       clearTimeout(this.timer)
       this.timer = undefined
       this.schedule(1)
@@ -122,41 +120,39 @@ export class PublicFileSync {
       this.schedule(1000)
       return
     }
-    backgroundWorkers++
+    let acquired = false
     try {
-      const source = this.sourceDone ? [] : await this.source.links(this.sourceCursor)
-      const registry = this.registryDone ? [] : await this.client.activeLinks(this.workspace, this.registryCursor)
-      const hints = new Map([...this.hints].slice(0, 10))
-      for (const id of new Set([...hints.keys(), ...source, ...registry])) {
-        if (this.closed) return
-        try {
-          await this.sync(id)
-        } catch (err) {
-          if (!(err instanceof PublicFileAccessError) || ![400, 409].includes(err.status)) throw err
-          this.report(new Error(`Public file synchronization rejected for link ${id}: HTTP ${err.status}`))
-        }
-        if (hints.has(id) && this.hints.get(id) === hints.get(id)) this.hints.delete(id)
+      this.wakeRequested = false
+      const jobs = await this.source.pending()
+      if (this.closed) return
+      if (backgroundWorkers >= 2) {
+        this.schedule(1000)
+        return
       }
-      this.sourceCursor = source.at(-1) ?? this.sourceCursor
-      this.registryCursor = registry.at(-1) ?? this.registryCursor
-      this.sourceDone ||= source.length < 10
-      this.registryDone ||= registry.length < 10
-      const complete = this.sourceDone && this.registryDone
-      if (complete) {
-        this.sourceCursor = ''
-        this.registryCursor = ''
-        this.sourceDone = false
-        this.registryDone = false
+      backgroundWorkers++
+      acquired = true
+      for (const job of jobs) {
+        if (this.closed) return
+        let retryAt: number | undefined
+        try {
+          await this.sync(job._id)
+        } catch (err) {
+          // Keep failures in the queue without keeping later jobs behind them.
+          this.report(err)
+          const retryAfter = err instanceof PublicFileAccessError ? (err.retryAfterMs ?? 0) : 0
+          retryAt = Date.now() + Math.min(Math.max(60000, retryAfter), 1800000)
+        }
+        await this.source.finish(job._id, job.generation, retryAt)
       }
       this.backoff = 1000
-      this.schedule(complete && this.hints.size === 0 ? 60000 : 1000)
+      this.schedule(this.wakeRequested ? 1 : jobs.length === 10 ? 1000 : 60000)
     } catch (err) {
       this.report(err)
       this.backoff = Math.min(this.backoff * 2, 300000)
       const retryAfter = err instanceof PublicFileAccessError ? (err.retryAfterMs ?? 0) : 0
       this.schedule(Math.min(Math.max(this.backoff, retryAfter), 1800000))
     } finally {
-      backgroundWorkers--
+      if (acquired) backgroundWorkers--
     }
   }
 
