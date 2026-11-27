@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-{{- if and .Values.resourceMetrics.enabled .Values.resourceMetrics.node.enabled }}
+{{- if and .Values.resourceMetrics.enabled .Values.resourceMetrics.node.enabled (include "monitoring.resourceExportersEnabled" .) }}
 {{- $m := .Values.resourceMetrics }}
 ---
 apiVersion: v1
@@ -48,7 +48,7 @@ spec:
       annotations:
         checksum/config: {{ include "monitoring.metricsNodeConfig" . | sha256sum | quote }}
     spec:
-      serviceAccountName: {{ include "monitoring.clickstackName" . }}-metrics
+      serviceAccountName: {{ include "monitoring.clickstackName" . }}-metrics-node
       # Control-plane nodes carry this taint; their CPU and memory are part of the cluster view.
       tolerations:
         - key: node-role.kubernetes.io/control-plane
@@ -63,6 +63,13 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
+{{- with $m.clickstack.apiKeySecret }}
+            - name: CLICKSTACK_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ . }}
+                  key: {{ $m.clickstack.apiKeySecretKey | default "api-key" }}
+{{- end }}
           resources:
 {{ toYaml $m.node.resources | indent 12 }}
           volumeMounts:

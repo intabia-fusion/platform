@@ -16,7 +16,9 @@
 # Package the platform charts with the release version, ready for a Helm repo.
 #   package-charts.sh [vX.Y.Z] [outdir]
 # Version defaults to the latest v* release tag; the chart version drops the leading v.
-# Staging tags s* are rejected: charts are published for v* releases only.
+# Staging tags s* are rejected: charts are published for v* releases only. Build metadata
+# (+build.1) is rejected too: every chart name, the prune and the repo index compare plain
+# X.Y.Z[-pre], so a +build chart sorts below its own release and gets pruned as old.
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 K8S_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -34,9 +36,13 @@ case "$VERSION" in
     echo "$VERSION is a staging tag: charts are packaged for v* release tags only" >&2
     exit 2
     ;;
+  *+*)
+    echo "$VERSION carries build metadata (+...): chart versions are plain X.Y.Z[-pre], so a +build chart would sort below its release and be pruned as old. Tag the release without +build" >&2
+    exit 2
+    ;;
 esac
-if [[ ! "$VERSION" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
-  echo "invalid version '$VERSION': expected vX.Y.Z or X.Y.Z" >&2
+if [[ ! "$VERSION" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+  echo "invalid version '$VERSION': expected vX.Y.Z or X.Y.Z, with an optional -prerelease" >&2
   exit 2
 fi
 CHART_VERSION="${VERSION#v}"

@@ -73,6 +73,14 @@ run_base_up() { # <case> [VAR=value...]
   }
 }
 
+run_base_up_fail() { # <case> [VAR=value...]
+  local name="$1"; shift
+  : > "$STATE/calls"; : > "$STATE/helm"
+  if env "$@" bash "$base_up" existing > "$tmp/$name.log" 2>&1; then
+    echo "FAIL: $name: base-up accepted an unsupported mode" >&2; tail -20 "$tmp/$name.log" >&2; exit 1
+  fi
+}
+
 expect_log() { grep -q "$2" "$tmp/$1.log" || { echo "FAIL: $1: log lacks '$2'" >&2; exit 1; }; }
 expect_no_log() { ! grep -q "$2" "$tmp/$1.log" || { echo "FAIL: $1: log has '$2'" >&2; exit 1; }; }
 expect_helm() { grep -q -- "$2" "$STATE/helm" || { echo "FAIL: $1: helm lacks '$2'" >&2; exit 1; }; }
@@ -117,6 +125,24 @@ printf 'postgres:\n  mode: external\n' > "$repo/stands/base/values.yaml"
 run_base_up values-external-pg KAFKA_MODE=redpanda
 expect_no_cnpg values-external-pg
 expect_no_helm values-external-pg 'postgres.mode'
+
+# s3.mode and elastic.mode external: the chart renders no statefulset/s3 or statefulset/elastic,
+# so base-up's wait could only time out. It must refuse before touching the cluster.
+printf 's3:\n  mode: external\n' > "$repo/stands/base/values.yaml"
+run_base_up_fail external-s3 KAFKA_MODE=redpanda
+grep -q 'does not support s3.mode=external' "$tmp/external-s3.log" || {
+  echo "FAIL: external-s3: missing refusal message" >&2; tail -20 "$tmp/external-s3.log" >&2; exit 1
+}
+test ! -s "$STATE/calls" || { echo 'FAIL: external-s3: kubectl touched the cluster' >&2; exit 1; }
+! grep -q 'upgrade --install platform-base' "$STATE/helm" || { echo 'FAIL: external-s3: helm installed the base' >&2; exit 1; }
+
+printf 'elastic:\n  mode: external\n' > "$repo/stands/base/values.yaml"
+run_base_up_fail external-elastic KAFKA_MODE=redpanda
+grep -q 'does not support elastic.mode=external' "$tmp/external-elastic.log" || {
+  echo "FAIL: external-elastic: missing refusal message" >&2; tail -20 "$tmp/external-elastic.log" >&2; exit 1
+}
+test ! -s "$STATE/calls" || { echo 'FAIL: external-elastic: kubectl touched the cluster' >&2; exit 1; }
+! grep -q 'upgrade --install platform-base' "$STATE/helm" || { echo 'FAIL: external-elastic: helm installed the base' >&2; exit 1; }
 
 : > "$STATE/calls"
 if POSTGRES_MODE=sidecar bash "$base_up" existing > "$tmp/bad-mode.log" 2>&1; then

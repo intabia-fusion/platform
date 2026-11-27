@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-{{- if and .Values.resourceMetrics.enabled .Values.resourceMetrics.kubeStateMetrics.enabled }}
+{{- if and .Values.resourceMetrics.enabled .Values.resourceMetrics.kubeStateMetrics.enabled (include "monitoring.resourceExportersEnabled" .) }}
 {{- $m := .Values.resourceMetrics }}
 {{- $name := printf "%s-kube-state-metrics" (include "monitoring.clickstackName" .) }}
 apiVersion: v1

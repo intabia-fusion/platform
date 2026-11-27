@@ -45,6 +45,9 @@ clickstack:
         memory: 512Mi
 
   otel:
+    # Upstream flag for the collector Deployment and Service. When false, the resource
+    # collectors are not rendered either: they have nowhere to export.
+    enabled: true
     # The collector's own memory_limiter is set to 1500 MiB, so a smaller limit would let the
     # limiter allow more than the container can use.
     image:
@@ -83,6 +86,14 @@ resourceMetrics:
   enabled: true
   collector:
     image: otel/opentelemetry-collector-contrib:0.160.0
+  clickstack:
+    # Optional bearer token for the ClickStack OTLP receiver. Empty keeps the exporters
+    # unauthenticated (the collector accepts ingestion until authentication is enforced).
+    # The upstream chart already creates <fullname>-app-secrets with key api-key from
+    # clickstack.hyperdx.apiKey: point at that Secret instead of copying the key. With the
+    # default fullnameOverride that is monitoring-app-secrets/api-key.
+    apiKeySecret: ""
+    apiKeySecretKey: api-key
   node:
     enabled: true
     collectionInterval: 30s

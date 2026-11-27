@@ -1,17 +1,41 @@
 {{- /*
-Stable OTLP endpoint of the ClickStack collector. The upstream chart names its objects from
-fullnameOverride (monitoring by default); without it Helm would prepend the release name.
+Name of the ClickStack objects. Mirrors the upstream clickstack.fullname helper: fullnameOverride
+wins; otherwise the release name is used when it already contains the chart name, and
+<release>-clickstack otherwise. Keeping the same rule keeps the endpoint on the real Service.
 */ -}}
 {{- define "monitoring.clickstackName" -}}
 {{- if .Values.clickstack.fullnameOverride -}}
-{{- .Values.clickstack.fullnameOverride -}}
+{{- .Values.clickstack.fullnameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
-{{- printf "%s-clickstack" .Release.Name -}}
+{{- $name := default "clickstack" .Values.clickstack.nameOverride -}}
+{{- if contains $name .Release.Name -}}
+{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
 {{- end -}}
 {{- end -}}
 
+{{- /* OTLP/HTTP port of the upstream collector Service (clickstack.otel.httpPort). */ -}}
+{{- define "monitoring.clickstackOtelPort" -}}
+{{- .Values.clickstack.otel.httpPort | default 4318 -}}
+{{- end -}}
+
 {{- define "monitoring.otlpEndpoint" -}}
-{{- printf "http://%s-otel-collector.%s.svc.cluster.local:4318" (include "monitoring.clickstackName" .) .Release.Namespace -}}
+{{- printf "http://%s-otel-collector.%s.svc.cluster.local:%v" (include "monitoring.clickstackName" .) .Release.Namespace (include "monitoring.clickstackOtelPort" .) -}}
+{{- end -}}
+
+{{- /*
+Resource collectors export to the ClickStack collector, so they are rendered only when that
+collector exists: the subchart is enabled and its otel component is not switched off.
+*/ -}}
+{{- define "monitoring.resourceExportersEnabled" -}}
+{{- $otel := .Values.clickstack.otel | default dict -}}
+{{- $otelEnabled := true -}}
+{{- if hasKey $otel "enabled" -}}{{- $otelEnabled = $otel.enabled -}}{{- end -}}
+{{- if and .Values.resourceMetrics.enabled .Values.clickstack.enabled $otelEnabled -}}
+true
+{{- end -}}
 {{- end -}}
 
 {{- /* Node collector config. Kept in a helper so the DaemonSet checksum hashes the same text. */ -}}
@@ -56,6 +80,10 @@ exporters:
   otlp_http:
     endpoint: {{ include "monitoring.otlpEndpoint" . }}
     compression: gzip
+{{- with $m.clickstack.apiKeySecret }}
+    headers:
+      Authorization: "Bearer ${env:CLICKSTACK_API_KEY}"
+{{- end }}
 service:
   telemetry:
     logs:
@@ -93,12 +121,16 @@ receivers:
               replacement: $1:9187
             - source_labels: [__meta_kubernetes_pod_name]
               target_label: instance
+{{- if $m.kubeStateMetrics.enabled }}
+        # Only when its workload and Service are rendered; the target would be a dead DNS name
+        # otherwise.
         - job_name: kube-state-metrics
           scrape_interval: {{ $m.database.collectionInterval }}
           honor_labels: true
           static_configs:
             - targets:
                 - {{ include "monitoring.clickstackName" . }}-kube-state-metrics.{{ .Release.Namespace }}.svc.cluster.local:8080
+{{- end }}
 processors:
   memory_limiter:
     check_interval: 1s
@@ -113,6 +145,10 @@ exporters:
   otlp_http:
     endpoint: {{ include "monitoring.otlpEndpoint" . }}
     compression: gzip
+{{- with $m.clickstack.apiKeySecret }}
+    headers:
+      Authorization: "Bearer ${env:CLICKSTACK_API_KEY}"
+{{- end }}
 service:
   telemetry:
     logs:

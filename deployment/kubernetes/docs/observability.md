@@ -174,13 +174,99 @@ otel:
   OTEL_EXPORTER_OTLP_COMPRESSION: gzip
 ```
 
+### Контракт endpoint
+
+Адрес собирается из фактических объектов upstream-чарта, а не из литерала:
+
+- Service: `<fullname>-otel-collector`, где `<fullname>` - upstream-helper
+  `clickstack.fullname`. При заданном `clickstack.fullnameOverride` это его значение;
+  без него Helm берёт имя релиза, если оно содержит `clickstack`, иначе
+  `<release>-clickstack`. Например, релиз `monitoring` без override даёт
+  `monitoring-clickstack-otel-collector`.
+- Порт OTLP/HTTP: `clickstack.otel.httpPort` (по умолчанию 4318). Смена порта
+  перестраивает Service upstream-чарта и оба exporter'а чарта `monitoring`
+  одновременно.
+- Адрес для сервисов стенда по-прежнему задаётся в values чарта `platform`
+  (`otel.OTEL_EXPORTER_OTLP_ENDPOINT`). Чарт `platform` не вычисляет его из
+  `monitoring`: при смене порта или `fullnameOverride` обнови значение и там.
+
+Node DaemonSet, database Deployment и kube-state-metrics рендерятся только когда
+получатель существует: `clickstack.enabled=true` (условие подключения upstream-чарта)
+и `clickstack.otel.enabled=true` (флаг его collector'а, по умолчанию включён).
+При выключенном получателе workload'ы не создаются и на отсутствующий Service никто
+не ссылается. Scrape job
+`kube-state-metrics` попадает в конфиг database-коллектора только при
+`resourceMetrics.kubeStateMetrics.enabled=true`, то есть когда его Service есть.
+
+### Ключ ingestion
+
+По умолчанию exporter'ы идут без заголовка `Authorization`: коллектор принимает
+метрики, пока в HyperDX не включена проверка. Для включённой проверки укажи
+существующий Secret с ключом команды:
+
+```yaml
+resourceMetrics:
+  clickstack:
+    apiKeySecret: monitoring-app-secrets   # Secret, созданный upstream-чартом
+    apiKeySecretKey: api-key               # ключ в этом Secret
+```
+
+Upstream-чарт уже создаёт `<fullname>-app-secrets` с ключом `api-key` из
+`clickstack.hyperdx.apiKey`; при штатном `fullnameOverride` это
+`monitoring-app-secrets`. Ссылайся на него, а не создавай второй Secret с тем же
+значением. Значение в `hyperdx.apiKey` должно совпадать с ключом команды, если
+проверка включена.
+
+При заданном Secret оба коллектора получают `CLICKSTACK_API_KEY` через
+`secretKeyRef`, а exporter'ы добавляют `Authorization: Bearer ${env:CLICKSTACK_API_KEY}`.
+В ConfigMap попадает только имя переменной, не ключ. Пустой `apiKeySecret`
+оставляет прежнее поведение без авторизации.
+
 После регистрации коллектор по умолчанию требует bearer-токен команды. Для внутреннего
 кластера проверку выключают в team
-(`collectorAuthenticationEnforced: false`); если она нужна, сервисы получают
-`authorization=Bearer <team api key>` через `secrets.platform.uptraceDsn`.
+(`collectorAuthenticationEnforced: false`). Если она нужна, сервисы стенда получают
+заголовок через `OTEL_EXPORTER_OTLP_HEADERS` вида
+`authorization=Bearer <team api key>`; существующий Secret `platform-secret` отдаёт
+эту строку из ключа `uptraceDsn` (имя историческое, содержимое - произвольные
+OTLP-заголовки).
+
+### Права коллекторов
+
+У каждого workload свой ServiceAccount и ClusterRole:
+
+- node (`monitoring-metrics-node`): `nodes` get/list/watch и `nodes/stats` get.
+  kubeletstats обращается к kubelet напрямую, API server авторизует запрос через
+  SubjectAccessReview для `nodes/stats`.
+- database (`monitoring-metrics-database`): `pods`, `namespaces` get/list/watch для
+  Prometheus pod discovery. `namespaces` - cluster-scoped ресурс, поэтому роль
+  кластерная.
+- kube-state-metrics использует собственный ServiceAccount `monitoring-kube-state-metrics`.
+
+Общий ServiceAccount и права `nodes/proxy`, `nodes/log`, `nodes/metrics`, `nodes/spec`
+удалены: ни один receiver их не использует. Проверка на стенде:
+
+```bash
+kubectl auth can-i get nodes/stats --as=system:serviceaccount:monitoring:monitoring-metrics-node   # yes
+kubectl auth can-i get nodes/proxy --as=system:serviceaccount:monitoring:monitoring-metrics-node   # no
+kubectl auth can-i list pods --all-namespaces --as=system:serviceaccount:monitoring:monitoring-metrics-database  # yes
+kubectl auth can-i get nodes/proxy --as=system:serviceaccount:monitoring:monitoring-metrics-database  # no
+```
+
+### Проверка без кластера
+
+Офлайн-тест рендерит чарт и сверяет endpoint с Service upstream-чарта, раздельные
+права и проводку ключа:
+
+```bash
+bash deployment/kubernetes/charts/monitoring/tests/test-monitoring-render.sh
+```
+
+Он покрывает: значения по умолчанию, `clickstack.otel.httpPort=4320`, пустой
+`fullnameOverride`, `resourceMetrics.kubeStateMetrics.enabled=false`,
+`clickstack.enabled=false`, `clickstack.otel.enabled=false`, Secret с ключом и без.
+Доставка метрик в живой ClickStack с включённой проверкой этим тестом не
+проверяется.
 
 `platform-otel-config` с явным `otel.*` перекрывает endpoint из контракта
 `platform-base`; тогда Prometheus локального base перестаёт получать метрики
-стенда, а все три сигнала идут в ClickStack. `clickstack.hyperdx.apiKey` задаёт
-`HYPERDX_API_KEY` приложения и коллектора, а ключ team создаётся при регистрации;
-если включаешь bearer-проверку, держи оба ключа одинаковыми.
+стенда, а все три сигнала идут в ClickStack.

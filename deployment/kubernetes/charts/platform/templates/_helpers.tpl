@@ -21,6 +21,19 @@ Defaults to the release name.
 {{- end -}}
 
 {{/*
+One container env entry: value, or valueFrom when the values entry sets it.
+*/}}
+{{- define "platform.envEntry" -}}
+- name: {{ .name }}
+{{- if hasKey . "valueFrom" }}
+  valueFrom:
+{{ .valueFrom | toYaml | indent 4 }}
+{{- else }}
+  value: {{ .value | default "" | quote }}
+{{- end }}
+{{- end -}}
+
+{{/*
 Extra env for a service container:
 - NODE_EXTRA_CA_CERTS when global.tls.caSecretName is set (mkcert CA for stand TLS)
 - services.<svc>.extraEnv entries from values
@@ -38,8 +51,7 @@ Inject right after the container `env:` line with the matching indentation.
   value: /coverage/{{ $svc }}
 {{- end }}
 {{- range $e := (index $root.Values.services $svc "extraEnv") | default list }}
-- name: {{ $e.name }}
-  value: {{ $e.value | quote }}
+{{ include "platform.envEntry" $e }}
 {{- end }}
 {{- end -}}
 
@@ -173,25 +185,46 @@ database, the stand dbUrl otherwise.
 {{/*
 OTEL exporter env: endpoint and compression from platform-otel-config (optional), headers
 from the uptraceDsn secret. Include right after the container `env:` list starts, with nindent 8.
+
+Call with the chart root (all services), or with (dict "root" . "service" "<svc>") to merge
+by name with services.<svc>.extraEnv: a name set there (value or valueFrom) wins and its
+OTEL default is not emitted, so the container gets exactly one entry per name.
 */ -}}
 {{- define "platform.otelEnv" -}}
-- name: OTEL_EXPORTER_OTLP_ENDPOINT
+{{- $root := . -}}
+{{- $svc := "" -}}
+{{- if and (kindIs "map" .) (hasKey . "root") -}}
+{{- $root = .root -}}
+{{- $svc = .service | default "" -}}
+{{- end -}}
+{{- $overridden := dict -}}
+{{- if $svc -}}
+{{- range $e := (index $root.Values.services $svc "extraEnv") | default list -}}
+{{- $_ := set $overridden $e.name true -}}
+{{- end -}}
+{{- end -}}
+{{- $endpoint := `- name: OTEL_EXPORTER_OTLP_ENDPOINT
   valueFrom:
     configMapKeyRef:
       name: platform-otel-config
       key: OTEL_EXPORTER_OTLP_ENDPOINT
-      optional: true
-- name: OTEL_EXPORTER_OTLP_COMPRESSION
+      optional: true` -}}
+{{- $compression := `- name: OTEL_EXPORTER_OTLP_COMPRESSION
   valueFrom:
     configMapKeyRef:
       name: platform-otel-config
       key: OTEL_EXPORTER_OTLP_COMPRESSION
-      optional: true
-- name: OTEL_EXPORTER_OTLP_HEADERS
+      optional: true` -}}
+{{- $headers := `- name: OTEL_EXPORTER_OTLP_HEADERS
   valueFrom:
     secretKeyRef:
       name: platform-secret
-      key: uptraceDsn
+      key: uptraceDsn` -}}
+{{- $entries := list -}}
+{{- if not (hasKey $overridden "OTEL_EXPORTER_OTLP_ENDPOINT") -}}{{- $entries = append $entries $endpoint -}}{{- end -}}
+{{- if not (hasKey $overridden "OTEL_EXPORTER_OTLP_COMPRESSION") -}}{{- $entries = append $entries $compression -}}{{- end -}}
+{{- if not (hasKey $overridden "OTEL_EXPORTER_OTLP_HEADERS") -}}{{- $entries = append $entries $headers -}}{{- end -}}
+{{- join "\n" $entries -}}
 {{- end -}}
 
 {{- /*

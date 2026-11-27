@@ -26,12 +26,16 @@
 #
 # A claim records the runtime and namespace, so liveness is checked against the actual stand and
 # not against Docker alone: a k3d/kind cluster is local, an existing cluster lives behind kubectl.
+# The recorded pid counts too while it is alive: a stand claimed before a long build has no
+# container yet. The check-and-create of acquire runs under $LOCK_DIR/.guard, so two acquires
+# cannot both win.
 # STAND_SKIP_LOCK=1 skips the lock, STAND_SKIP_RESOURCE_CHECK=1 skips the resource check.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 LOCK_DIR="${STAND_LOCK_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/fusion-stand}"
 LEGACY_LOCK_FILE="$LOCK_DIR/active"
+GUARD_DIR="$LOCK_DIR/.guard"
 COMPOSE_PROJECT="${STAND_COMPOSE_PROJECT:-sanity}"
 K3D_SERVER_CONTAINER="${STAND_K3D_SERVER_CONTAINER:-k3d-fusion-server-0}"
 KIND_CONTROL_CONTAINER="${STAND_KIND_CONTROL_CONTAINER:-fusion-kind-control-plane}"
@@ -122,6 +126,15 @@ parse_record() {
   IFS='|' read -r REC_BACKEND REC_STAND REC_RUNTIME REC_NAMESPACE REC_CONTEXT REC_PID _ < "$1" || true
 }
 
+# A record's pid proves a claim only while the process is alive: tests/dotest.sh claims the host
+# before a multi-hour build, when no container exists yet, so reality alone would call it stale.
+# A dead pid proves nothing - the stand outlives the command that started it, and pids get reused -
+# so a dead pid never makes a claim stale, it only stops proving it live.
+pid_alive() {
+  case "$1" in ''|*[!0-9]*) return 1 ;; esac
+  kill -0 "$1" 2>/dev/null
+}
+
 # exists | absent | unknown. A failed kubectl call is unknown, never absent: an unreachable
 # cluster must not make another stand's claim look stale.
 namespace_state() {
@@ -136,9 +149,11 @@ namespace_state() {
 }
 
 owner_gone() {
-  # The prepare/deploy command exits once the stand is up, so the pid says nothing about the
-  # stand. Reality does; when reality cannot be checked, the claim is kept (not stale).
-  local backend="$1" runtime="$2" ns="$3" ctx="$4"
+  # The prepare/deploy command exits once the stand is up, so a dead pid says nothing about the
+  # stand; a live one says everything. Otherwise reality does; when reality cannot be checked, the
+  # claim is kept (not stale).
+  local backend="$1" runtime="$2" ns="$3" ctx="$4" pid="$5"
+  pid_alive "$pid" && return 1
   case "$backend" in
     compose)
       docker_available || return 1
@@ -166,11 +181,13 @@ owner_gone() {
 }
 
 # A claim from the single-owner layout: "backend stand pid started", with no runtime, namespace or
-# context, so only a positive signal proves it live. Docker unavailable, or k3s with the existing
-# runtime (a record cannot name the namespace to ask kubectl about), leaves it unproven and live.
+# context, so only a positive signal proves it live: a live pid, or a running stand. Docker
+# unavailable, or k3s with the existing runtime (a record cannot name the namespace to ask kubectl
+# about), leaves it unproven and live.
 legacy_claim_gone() {
+  pid_alive "$2" && return 1
   case "$1" in
-    compose) owner_gone compose "" "" "" ;;
+    compose) owner_gone compose "" "" "" "$2" ;;
     k3s)
       docker_available || return 1
       local_cluster_running && return 1
@@ -221,6 +238,43 @@ valid_stand() {
   esac
 }
 
+# Serialises the check-and-create of acquire: mkdir is atomic, so one caller owns the guard and the
+# rest wait. Without it two acquires both see a free host and both write a claim. A guard whose
+# owner is gone (the process was killed mid-acquire) is removed; a guard with a live owner blocks
+# for STAND_GUARD_WAIT seconds, then fails loudly - it may be about to create the claim this call
+# must not duplicate.
+GUARD_HELD=0
+acquire_guard() {
+  local gpid="" deadline=$((SECONDS + ${STAND_GUARD_WAIT:-15}))
+  while :; do
+    if mkdir "$GUARD_DIR" 2>/dev/null; then
+      printf '%s\n' "$$" > "$GUARD_DIR/pid"
+      GUARD_HELD=1
+      return 0
+    fi
+    gpid="$(cat "$GUARD_DIR/pid" 2>/dev/null || true)"
+    if [ -z "$gpid" ]; then
+      # The owner writes its pid right after mkdir; give it a moment before judging the guard.
+      sleep 0.1
+      gpid="$(cat "$GUARD_DIR/pid" 2>/dev/null || true)"
+    fi
+    if [ -n "$gpid" ] && ! pid_alive "$gpid"; then
+      # Remove only the dead guard that was inspected: another waiter may already own a new one.
+      [ "$(cat "$GUARD_DIR/pid" 2>/dev/null || true)" = "$gpid" ] && rm -rf "$GUARD_DIR"
+      continue
+    fi
+    [ $SECONDS -lt $deadline ] || \
+      die "another stand-lock call (pid ${gpid:-unknown}) has held $GUARD_DIR for over ${STAND_GUARD_WAIT:-15}s. Wait for it, or remove the directory if that process is gone"
+    sleep 0.2
+  done
+}
+
+release_guard() {
+  [ "$GUARD_HELD" = 1 ] && rm -rf "$GUARD_DIR"
+  GUARD_HELD=0
+}
+trap release_guard EXIT
+
 cmd_acquire() {
   local backend="$1" stand="$2" own file owner_backend owner_stand runtime ns ctx tmp
   [ "${STAND_SKIP_LOCK:-0}" = 1 ] && return 0
@@ -231,6 +285,7 @@ cmd_acquire() {
   runtime="$(runtime_of "$backend")"
 
   mkdir -p "$LOCK_DIR"
+  acquire_guard
 
   own="$(record_path "$backend" "$stand")"
   if [ -f "$own" ]; then
@@ -244,7 +299,7 @@ cmd_acquire() {
     [ -e "$file" ] || continue
     parse_record "$file"
     [ "$REC_BACKEND" = "$backend" ] && continue
-    if owner_gone "$REC_BACKEND" "$REC_RUNTIME" "$REC_NAMESPACE" "$REC_CONTEXT"; then
+    if owner_gone "$REC_BACKEND" "$REC_RUNTIME" "$REC_NAMESPACE" "$REC_CONTEXT" "$REC_PID"; then
       printf 'lock: ignoring stale claim %s/%s\n' "$REC_BACKEND" "$REC_STAND"
       continue
     fi
@@ -259,7 +314,7 @@ cmd_acquire() {
     [ -n "$LEGACY_BACKEND" ] || \
       die "legacy claim file $LEGACY_LOCK_FILE is empty or unreadable; inspect it and remove it by hand"
     if [ "$LEGACY_BACKEND" != "$backend" ]; then
-      if legacy_claim_gone "$LEGACY_BACKEND"; then
+      if legacy_claim_gone "$LEGACY_BACKEND" "$LEGACY_PID"; then
         printf 'lock: ignoring stale legacy claim %s/%s\n' "$LEGACY_BACKEND" "${LEGACY_STAND:--}"
       else
         die "legacy $LEGACY_BACKEND claim '${LEGACY_STAND:--}' is still live ($LEGACY_LOCK_FILE). Stop it: $(stop_hint "$LEGACY_BACKEND" "$LEGACY_STAND"), or drop the record: $0 clear $LEGACY_BACKEND"
@@ -279,6 +334,7 @@ cmd_acquire() {
   tmp="$own.tmp.$$"
   printf '%s|%s|%s|%s|%s|%s|%s\n' "$backend" "$stand" "$runtime" "$ns" "$ctx" "$$" "$(date +%s)" > "$tmp"
   mv -f "$tmp" "$own"
+  release_guard
   printf 'lock: %s/%s acquired\n' "$backend" "$stand"
 }
 
@@ -302,7 +358,7 @@ cmd_held() {
   own="$(record_path "$backend" "$stand")"
   [ -f "$own" ] || return 1
   parse_record "$own"
-  ! owner_gone "$REC_BACKEND" "$REC_RUNTIME" "$REC_NAMESPACE" "$REC_CONTEXT"
+  ! owner_gone "$REC_BACKEND" "$REC_RUNTIME" "$REC_NAMESPACE" "$REC_CONTEXT" "$REC_PID"
 }
 
 cmd_clear() {
@@ -333,7 +389,7 @@ cmd_status() {
       found=1
       parse_record "$file"
       state=held
-      owner_gone "$REC_BACKEND" "$REC_RUNTIME" "$REC_NAMESPACE" "$REC_CONTEXT" && state=stale
+      owner_gone "$REC_BACKEND" "$REC_RUNTIME" "$REC_NAMESPACE" "$REC_CONTEXT" "$REC_PID" && state=stale
       printf 'lock: %s/%s pid %s state %s runtime %s ns %s\n' \
         "$REC_BACKEND" "$REC_STAND" "$REC_PID" "$state" "$REC_RUNTIME" "${REC_NAMESPACE:--}"
     done
@@ -345,7 +401,7 @@ cmd_status() {
       printf 'lock: legacy file %s is empty or unreadable\n' "$LEGACY_LOCK_FILE"
     else
       state=held
-      legacy_claim_gone "$LEGACY_BACKEND" && state=stale
+      legacy_claim_gone "$LEGACY_BACKEND" "$LEGACY_PID" && state=stale
       printf 'lock: legacy %s/%s pid %s state %s\n' \
         "$LEGACY_BACKEND" "${LEGACY_STAND:--}" "${LEGACY_PID:--}" "$state"
     fi

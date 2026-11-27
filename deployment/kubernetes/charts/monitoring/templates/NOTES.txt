@@ -4,25 +4,40 @@ Monitoring is installed in namespace {{ .Release.Namespace }}.
 WARNING: clickstack.hyperdx.apiKey is the chart default. Set a unique key per stand before
 the UI is shared between stands.
 {{- end }}
+{{- if .Values.clickstack.enabled }}
 
 HyperDX UI (not published outside the cluster yet):
 
-  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ .Values.clickstack.fullnameOverride | default "monitoring" }}-app 3000:3000
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "monitoring.clickstackName" . }}-app 3000:3000
   open http://localhost:3000
 
 The first visit asks to create an account; it stays inside this cluster. OTLP ingestion starts
 only after that first registration: HyperDX enables the collector's OTLP receiver once a team
 exists. For the same reason a fresh install shows no data until the account is created.
+{{- if .Values.clickstack.otel.enabled }}
+{{- $endpoint := include "monitoring.otlpEndpoint" . }}
 
 Platform services send OTLP to:
 
-  http://{{ .Values.clickstack.fullnameOverride | default "monitoring" }}-otel-collector.{{ .Release.Namespace }}.svc.cluster.local:4318
+  {{ $endpoint }}
 
 Set it in the stand's values as:
 
   otel:
-    OTEL_EXPORTER_OTLP_ENDPOINT: http://{{ .Values.clickstack.fullnameOverride | default "monitoring" }}-otel-collector.{{ .Release.Namespace }}.svc.cluster.local:4318
+    OTEL_EXPORTER_OTLP_ENDPOINT: {{ $endpoint }}
+{{- if .Values.resourceMetrics.clickstack.apiKeySecret }}
+
+Resource collectors authenticate with the key from Secret
+{{ .Values.resourceMetrics.clickstack.apiKeySecret }} (key {{ .Values.resourceMetrics.clickstack.apiKeySecretKey }}).
+Platform services need the same key in OTEL_EXPORTER_OTLP_HEADERS once HyperDX enforces it.
+{{- end }}
 
 Ingestion check:
 
-  kubectl -n {{ .Release.Namespace }} logs deploy/{{ .Values.clickstack.fullnameOverride | default "monitoring" }}-otel-collector --tail=50
+  kubectl -n {{ .Release.Namespace }} logs deploy/{{ include "monitoring.clickstackName" . }}-otel-collector --tail=50
+{{- end }}
+{{- else }}
+
+clickstack.enabled is false: the upstream stack is not installed and the resource collectors
+are not rendered.
+{{- end }}

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-{{- if and .Values.resourceMetrics.enabled .Values.resourceMetrics.database.enabled }}
+{{- if and .Values.resourceMetrics.enabled .Values.resourceMetrics.database.enabled (include "monitoring.resourceExportersEnabled" .) }}
 {{- $m := .Values.resourceMetrics }}
 ---
 apiVersion: v1
@@ -49,11 +49,19 @@ spec:
       annotations:
         checksum/config: {{ include "monitoring.metricsDatabaseConfig" . | sha256sum | quote }}
     spec:
-      serviceAccountName: {{ include "monitoring.clickstackName" . }}-metrics
+      serviceAccountName: {{ include "monitoring.clickstackName" . }}-metrics-database
       containers:
         - name: collector
           image: {{ $m.collector.image }}
           args: ["--config=/etc/otel/config.yaml"]
+{{- with $m.clickstack.apiKeySecret }}
+          env:
+            - name: CLICKSTACK_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ . }}
+                  key: {{ $m.clickstack.apiKeySecretKey | default "api-key" }}
+{{- end }}
           resources:
 {{ toYaml $m.database.resources | indent 12 }}
           volumeMounts:

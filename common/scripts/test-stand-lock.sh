@@ -90,9 +90,17 @@ fresh() {
   rm -rf "$tmp/lock"
   mkdir -p "$tmp/lock"
   export STAND_LOCK_DIR="$tmp/lock"
-  unset STAND_RUNTIME STAND_PUSH_IMAGES STAND_NAMESPACE STAND_LOCK_NAMESPACE STAND_MODE KUBE_CONTEXT
+  unset STAND_RUNTIME STAND_PUSH_IMAGES STAND_NAMESPACE STAND_LOCK_NAMESPACE STAND_MODE KUBE_CONTEXT STAND_GUARD_WAIT
   export STUB_DOCKER_BROKEN=0 STUB_COMPOSE=0 STUB_K3D=0 STUB_KIND=0 STUB_KUBECTL_FAIL=0
   export STUB_NAMESPACES="" STUB_RUNNING_NS=""
+}
+
+# A pid that was alive and is gone: a child that has already been reaped.
+dead_pid() {
+  local p
+  ( exit 0 ) & p=$!
+  wait "$p" 2>/dev/null || true
+  printf '%s' "$p"
 }
 
 record_count() { find "$STAND_LOCK_DIR" -name '*.lock' | wc -l | tr -d ' '; }
@@ -205,6 +213,85 @@ expect_ok acquire k3s dotest
 expect_ok acquire k3s sanity
 expect_ok release k3s sanity
 has_record k3s dotest || fail 'nested k3s: release removed the dotest claim'
+
+# A live recorded pid keeps a claim live with nothing running: dotest claims the host before the
+# multi-hour build, when no container exists yet. A dead pid proves nothing, so it never makes a
+# claim stale on its own - the same record falls through to the container check and goes stale.
+fresh
+export STUB_K3D=0 STUB_COMPOSE=0
+printf 'k3s|sanity|k3d|fusion-sanity|ctx|%s|1\n' "$$" > "$STAND_LOCK_DIR/k3s--sanity.lock"
+expect_ok held k3s sanity
+"$lock_script" status >"$tmp/out" 2>&1
+grep -q 'k3s/sanity.*state held' "$tmp/out" || fail 'live pid: status reported stale'
+expect_fail acquire compose dotest
+grep -q "k3s stand 'sanity' is claimed" "$tmp/out" || fail 'live pid: claim not enforced'
+has_record compose dotest && fail 'live pid: blocked acquire left a claim'
+
+fresh
+export STUB_K3D=0 STUB_COMPOSE=0
+printf 'k3s|sanity|k3d|fusion-sanity|ctx|%s|1\n' "$(dead_pid)" > "$STAND_LOCK_DIR/k3s--sanity.lock"
+expect_fail held k3s sanity
+"$lock_script" status >"$tmp/out" 2>&1
+grep -q 'k3s/sanity.*state stale' "$tmp/out" || fail 'dead pid: status reported held'
+expect_ok acquire compose dotest
+has_record compose dotest || fail 'dead pid: stale claim blocked acquire'
+grep -q 'ignoring stale claim k3s/sanity' "$tmp/out" || fail 'dead pid: stale claim not reported'
+
+# The legacy record carries the same pid signal.
+fresh
+export STUB_K3D=0
+printf 'k3s sanity %s 1\n' "$$" > "$STAND_LOCK_DIR/active"
+expect_fail acquire compose dotest
+grep -q 'legacy k3s claim' "$tmp/out" || fail 'legacy live pid: claim not enforced'
+
+fresh
+export STUB_K3D=0
+printf 'k3s sanity %s 1\n' "$(dead_pid)" > "$STAND_LOCK_DIR/active"
+expect_ok acquire compose dotest
+grep -q 'ignoring stale legacy claim k3s/sanity' "$tmp/out" || fail 'legacy dead pid: stale claim not reported'
+
+# Atomicity: the guard serialises check-and-create, so two parallel acquires of one stand both
+# succeed (the second is idempotent) and leave one claim; the guard is gone afterwards.
+fresh
+export STUB_K3D=1
+"$lock_script" acquire k3s sanity >"$tmp/par1" 2>&1 &
+p1=$!
+"$lock_script" acquire k3s sanity >"$tmp/par2" 2>&1 &
+p2=$!
+rc1=0; wait "$p1" || rc1=$?
+rc2=0; wait "$p2" || rc2=$?
+[ "$rc1" = 0 ] || { cat "$tmp/par1" >&2; fail "parallel acquire exited $rc1"; }
+[ "$rc2" = 0 ] || { cat "$tmp/par2" >&2; fail "parallel acquire exited $rc2"; }
+[ "$(record_count)" = 1 ] || fail 'parallel acquire wrote more than one claim'
+[ ! -d "$STAND_LOCK_DIR/.guard" ] || fail 'parallel acquire left the guard behind'
+
+# The guard of a killed acquire does not block; the guard of a live call is waited for and then
+# reported, and the blocked acquire leaves no claim and no guard of its own.
+fresh
+export STUB_K3D=1
+mkdir -p "$STAND_LOCK_DIR/.guard"
+printf '%s\n' "$(dead_pid)" > "$STAND_LOCK_DIR/.guard/pid"
+expect_ok acquire k3s sanity
+has_record k3s sanity || fail 'dead guard: acquire blocked'
+[ ! -d "$STAND_LOCK_DIR/.guard" ] || fail 'dead guard left behind'
+
+fresh
+export STUB_K3D=1
+mkdir -p "$STAND_LOCK_DIR/.guard"
+printf '%s\n' "$$" > "$STAND_LOCK_DIR/.guard/pid"
+export STAND_GUARD_WAIT=1
+expect_fail acquire k3s sanity
+grep -q 'has held' "$tmp/out" || fail 'live guard: missing block message'
+unset STAND_GUARD_WAIT
+has_record k3s sanity && fail 'live guard: blocked acquire left a claim'
+[ -f "$STAND_LOCK_DIR/.guard/pid" ] || fail 'live guard: removed a guard it does not own'
+
+# A failed acquire (a live neighbor claim) drops the guard it took.
+fresh
+export STUB_COMPOSE=1
+expect_ok acquire compose sanity
+expect_fail acquire k3s dev
+[ ! -d "$STAND_LOCK_DIR/.guard" ] || fail 'conflict: acquire left the guard behind'
 
 # existing runtime without push: no Docker required, and a live claim is not stale.
 fresh

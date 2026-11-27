@@ -142,7 +142,8 @@ mailpit:
   enabled: true
   image: axllent/mailpit:v1.33.0
   # Web UI behind Traefik (IngressRoute, websecure). Empty = no route; SMTP stays
-  # cluster-internal either way. Local stands set it in stands/base/values.yaml.
+  # cluster-internal either way. A published UI must carry auth.enabled below:
+  # stands/base/values.yaml shows the local switch.
   host: ""
   # Webroot for the UI and API when a stand publishes them under a path (/smtp style):
   # must match mailpit.path of the platform chart. Empty = root.

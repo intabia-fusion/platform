@@ -43,4 +43,4 @@ spec:
             secretKeyRef:
               name: platform-secret
               key: serverSecret
-        {{- include "platform.otelEnv" . | nindent 8 }}
+        {{- include "platform.otelEnv" (dict "root" $ "service" "linkPreview") | nindent 8 }}

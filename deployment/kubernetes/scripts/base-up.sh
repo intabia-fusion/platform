@@ -44,6 +44,20 @@ case "$PG_MODE" in
   *) die "postgres.mode in $K8S_DIR/stands/base/values.yaml must be internal or external (got '$PG_MODE')" ;;
 esac
 
+# S3 and Elasticsearch: base-up installs the chart and then waits for statefulset/s3 and
+# statefulset/elastic, and the chart renders neither with an external component, so the wait could
+# only time out. Refuse before the install instead of failing an hour later.
+S3_MODE="$(base_values_mode s3)"
+S3_MODE="${S3_MODE:-silo}"
+ELASTIC_MODE="$(base_values_mode elastic)"
+ELASTIC_MODE="${ELASTIC_MODE:-internal}"
+EXTERNAL_MODES=()
+[ "$S3_MODE" != external ] || EXTERNAL_MODES+=("s3.mode=external")
+[ "$ELASTIC_MODE" != external ] || EXTERNAL_MODES+=("elastic.mode=external")
+if [ ${#EXTERNAL_MODES[@]} -ne 0 ]; then
+  die "base-up does not support ${EXTERNAL_MODES[*]} ($K8S_DIR/stands/base/values.yaml): it waits for statefulset/s3 and statefulset/elastic after the install, and an external S3 or Elasticsearch renders neither. Keep s3 and elastic internal, or bring this base up by hand."
+fi
+
 log "base-up: runtime=$STAND_RUNTIME context=$KUBE_CONTEXT"
 
 # ---------------------------------------------------------------- cluster ----

@@ -16,8 +16,10 @@
 # Publish packaged charts into the platform-charts repository (GitHub Pages serves docs/).
 #   publish-charts.sh [vX.Y.Z] [--init] [--no-push]
 # Version defaults to the latest v* release tag. Staging tags s* are rejected: only v*
-# releases are published. --init seeds values/scripts/README into an empty repository.
-# CI passes CHARTS_TOKEN; a developer can rely on their git credentials.
+# releases are published. Build metadata (+build.1) is rejected for the same reason as the
+# prune: it compares plain X.Y.Z[-pre] and would drop the fresh chart. --init seeds
+# values/scripts/README into an empty repository. CI passes CHARTS_TOKEN; a developer can rely
+# on their git credentials.
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 K8S_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -51,9 +53,13 @@ case "$VERSION" in
     echo "$VERSION is a staging tag: charts are published for v* release tags only" >&2
     exit 2
     ;;
+  *+*)
+    echo "$VERSION carries build metadata (+...): chart versions are plain X.Y.Z[-pre], so a +build chart would sort below its release and --prune would drop it as old. Tag the release without +build" >&2
+    exit 2
+    ;;
 esac
-if [[ ! "$VERSION" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
-  echo "invalid version '$VERSION': expected vX.Y.Z or X.Y.Z" >&2
+if [[ ! "$VERSION" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+  echo "invalid version '$VERSION': expected vX.Y.Z or X.Y.Z, with an optional -prerelease" >&2
   exit 2
 fi
 

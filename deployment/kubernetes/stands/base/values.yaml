@@ -19,10 +19,15 @@ elastic:
   heap: 512m
 s3:
   storage: 5Gi
-mailpit:
-  # https://mailpit.fusion.localhost:8443 - the local Traefik port (stand:base:up
-  # publishes 443 to a free host port; 8443 on this laptop).
-  host: mailpit.fusion.localhost
+# The base mailbox UI is not published: https://mailpit.fusion.localhost:<https-port> stays
+# closed, and a stand publishes the box under its own host with platform's mailpit.path plus
+# mailpit.webroot here. A published base entry must carry basic auth, so to open it set both:
+# mailpit:
+#   host: mailpit.fusion.localhost
+#   auth:
+#     enabled: true
+#     users: "<login>:<htpasswd hash>"   # bcrypt/apr1, e.g. htpasswd -nbB admin secret
+# mailpit.host without mailpit.auth fails the render.
 livekit:
   # One server + one egress for every stand; the browser URL is wss://<host>:<stand https port>.
   # Rooms are separated by the stand's projectKey, love drops events of another one.

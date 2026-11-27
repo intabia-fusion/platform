@@ -71,18 +71,23 @@ spec:
   routes:
   # The front remains the catch-all on /. Everything the landing serves at the root is
   # listed explicitly: /platform must stay exact, front serves /platform/favicon.svg.
-  - match: Host(`{{ .Values.global.hostUrl }}`) && ({{ range $i, $p := $landing.exactPaths }}{{ if $i }} || {{ end }}Path(`{{ $p }}`){{ end }})
+  # An empty list emits no route: Traefik rejects an empty `Host(...) && ()`.
+{{- with $landing.exactPaths }}
+  - match: Host(`{{ $.Values.global.hostUrl }}`) && ({{ range $i, $p := . }}{{ if $i }} || {{ end }}Path(`{{ $p }}`){{ end }})
     kind: Rule
     priority: 1000
     services:
     - name: landing
       port: 80
-  - match: Host(`{{ .Values.global.hostUrl }}`) && ({{ range $i, $p := $landing.pathPrefixes }}{{ if $i }} || {{ end }}PathPrefix(`{{ $p }}`){{ end }})
+{{- end }}
+{{- with $landing.pathPrefixes }}
+  - match: Host(`{{ $.Values.global.hostUrl }}`) && ({{ range $i, $p := . }}{{ if $i }} || {{ end }}PathPrefix(`{{ $p }}`){{ end }})
     kind: Rule
     priority: 1000
     services:
     - name: landing
       port: 80
+{{- end }}
   # robots.txt and sitemap must not fall through to the front SPA, which answers every
   # path with index.html.
   - match: Host(`{{ .Values.global.hostUrl }}`) && (Path(`/robots.txt`) || PathPrefix(`/sitemap`))

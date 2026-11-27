@@ -96,4 +96,4 @@ spec:
               key: serverSecret
         - name: APP_NAME
           value: '{{ .Values.global.productName }}'
-        {{- include "platform.otelEnv" . | nindent 8 }}
+        {{- include "platform.otelEnv" (dict "root" $ "service" "mail") | nindent 8 }}

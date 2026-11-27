@@ -6,11 +6,12 @@ tls section: traefik serves the wildcard certificate from the default TLSStore
 Empty mailpit.host renders nothing - SMTP stays reachable in-cluster at
 mailpit.platform-base.svc.cluster.local:1025, and no mailbox is published.
 
-mailpit.auth restricts the published mailbox with Traefik basic auth. users is an htpasswd
+A published mailbox always carries Traefik basic auth: mailpit.host without
+mailpit.auth.enabled fails the render instead of exposing the box. users is an htpasswd
 line stored in the stand values, not in the chart defaults.
 */}}
 {{- if and .Values.mailpit.enabled .Values.mailpit.host }}
-{{- if .Values.mailpit.auth.enabled }}
+{{- if not .Values.mailpit.auth.enabled }}{{ fail "mailpit.host is set: enable mailpit.auth or clear the host (SMTP stays cluster-internal)" }}{{ end }}
 {{- if not .Values.mailpit.auth.users }}{{ fail "mailpit.auth.users is empty: set an htpasswd line or disable mailpit.auth" }}{{ end }}
 ---
 apiVersion: v1
@@ -31,7 +32,6 @@ metadata:
 spec:
   basicAuth:
     secret: mailpit-auth
-{{- end }}
 ---
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
@@ -51,8 +51,6 @@ spec:
     services:
     - name: mailpit
       port: 8025
-{{- if .Values.mailpit.auth.enabled }}
     middlewares:
     - name: mailpit-auth
-{{- end }}
 {{- end }}
