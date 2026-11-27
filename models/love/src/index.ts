@@ -15,6 +15,7 @@
 //
 
 import contact, { type Employee, type Person } from '@hcengineering/contact'
+import { type Event as CalendarEvent } from '@hcengineering/calendar'
 import {
   AccountRole,
   type CollectionSize,
@@ -441,6 +442,13 @@ export class TPermanentMeeting extends TSpace implements PermanentMeeting {
   room?: Ref<Room>
 
   timeZone?: string
+
+  // The calendar event of the meeting. Kept on the meeting itself: a query by the link mixin's nested
+  // field found nothing on some adapters, so the writer could neither update nor remove the series,
+  // and the row had no way to tell whether the meeting is in the calendar.
+  @Hidden()
+  @Index(IndexKind.Indexed)
+  event?: Ref<CalendarEvent>
 
   @Hidden()
   linkId?: string

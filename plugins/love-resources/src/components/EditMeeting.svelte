@@ -75,6 +75,7 @@
     type PermanentMeetingInput,
     type ScheduleContext
   } from '../permanentMeetingSchedule'
+  import { descriptionMarkup, descriptionText } from '../description'
   import { getEventMeetingLink, notifyCopied, withPassword } from '../utils'
   import { isPermanentMeetingCreator } from '../permissions'
   import MeetingRsvpSummary from './MeetingRsvpSummary.svelte'
@@ -148,7 +149,7 @@
 
   function applyEvent (event: Event): void {
     title = event.title
-    description = event.description ?? ''
+    description = descriptionText(event.description)
     startDate = event.date
     dueDate = event.dueDate
     allDay = event.allDay
@@ -160,7 +161,7 @@
 
   // A series in the calendar names its fields `title`/`description`, a permanent meeting `name`.
   let title: string = object.title
-  let description: string = object.description ?? ''
+  let description: string = descriptionText(object.description)
   let startDate: number = object.date
   let dueDate: number = object.dueDate
   let allDay: boolean = object.allDay
@@ -556,7 +557,7 @@
       name: title.trim(),
       startDate,
       duration: Math.max(15 * MINUTE, dueDate - startDate),
-      description: description.trim(),
+      description: descriptionMarkup(description),
       allDay,
       timeZone,
       // A recurring meeting keeps its period on the meeting and its rule in the series; a one-off
@@ -600,7 +601,9 @@
 
       const update: DocumentUpdate<Event> = {}
       if (live.title !== title.trim()) update.title = title.trim()
-      if ((live.description ?? '') !== description.trim()) update.description = description.trim()
+      if (descriptionText(live.description) !== description.trim()) {
+        update.description = descriptionMarkup(description)
+      }
       if (live.date !== startDate) update.date = startDate
       if (live.dueDate !== dueDate) update.dueDate = dueDate
       if (live.allDay !== allDay) update.allDay = allDay

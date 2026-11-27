@@ -267,6 +267,7 @@
     "GroupName": "Group name",
     "MeetingsWithoutGroup": "Without group",
     "CopyMeetingLink": "Copy guest link",
+    "MeetingCreateFailed": "The meeting was not created: the service is unavailable. Try again.",
     "MeetingSettings": "Meeting settings",
     "NextOccurrence": "Next occurrence",
     "RemindBeforeMinutes": "Remind before (minutes)",

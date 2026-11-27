@@ -343,6 +343,19 @@ async function openPermanentMeetingsOnLink (client: MigrationUpgradeClient): Pro
 
 // The delete action of a permanent meeting is a model document too: a workspace created before it
 // existed never receives it, and the tab's selection toolbar stays without a delete entry.
+async function backfillMeetingEvent (client: MigrationUpgradeClient): Promise<void> {
+  const tx = new TxOperations(client, core.account.System)
+  const meetings = await client.findAll(love.class.PermanentMeeting, {})
+  for (const meeting of meetings) {
+    if (meeting.event !== undefined) continue
+    const events = await client.findAll(calendar.class.Event, {
+      [`${love.mixin.MeetingEventLink as string}.permanentMeeting`]: meeting._id
+    } as any)
+    if (events.length === 0) continue
+    await tx.update(meeting, { event: events[0]._id })
+  }
+}
+
 async function addPermanentMeetingDeleteAction (client: MigrationUpgradeClient): Promise<void> {
   const tx = new TxOperations(client, core.account.System)
   const existing = await client.findAll(view.class.Action, {
@@ -998,6 +1011,12 @@ export const loveOperation: MigrateOperation = {
         // Existing meetings keep the policy they were created with - the default `members`.
         state: 'permanent-meeting-link-open',
         func: openPermanentMeetingsOnLink
+      },
+      {
+        // The event reference moved from the link mixin onto the meeting itself: the settings window
+        // finds the series by it, and the row reads it to mark the meeting as scheduled.
+        state: 'backfill-meeting-event',
+        func: backfillMeetingEvent
       }
     ])
   }

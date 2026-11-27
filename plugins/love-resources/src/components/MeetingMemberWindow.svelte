@@ -30,6 +30,7 @@
   import { createEventDispatcher } from 'svelte'
   import { getCurrentLanguage } from '@hcengineering/theme'
   import love from '../plugin'
+  import { descriptionText } from '../description'
   import { findMeetingLink } from '../meetingLink'
   import MeetingRsvpSummary from './MeetingRsvpSummary.svelte'
   import { openDoc } from '@hcengineering/view-resources'
@@ -67,7 +68,7 @@
     const series = await resolveSeries(event)
     liveEvent = series
     title = series.title
-    description = series.description ?? ''
+    description = descriptionText(series.description)
     startDate = series.date
     dueDate = series.dueDate
     allDay = series.allDay

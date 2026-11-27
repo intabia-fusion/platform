@@ -24,6 +24,7 @@
   import type { AccountUuid, Ref, Space } from '@hcengineering/core'
   import core, { DateRangeMode, getCurrentAccount } from '@hcengineering/core'
   import type { MeetingGroup, Room } from '@hcengineering/love'
+  import { setPlatformStatus, Severity, Status } from '@hcengineering/platform'
   import { getClient } from '@hcengineering/presentation'
   import { getCurrentLanguage } from '@hcengineering/theme'
   import {
@@ -217,6 +218,11 @@
         dispatch('created', { ...created, password: input.guestPassword })
       }
       dispatch('close')
+    } catch (err: any) {
+      // A failure leaves the dialog open with everything typed in it: an uncaught rejection here
+      // would only paint the dev overlay and say nothing to the person.
+      console.error('Failed to create the meeting', { error: err?.message ?? err })
+      await setPlatformStatus(new Status(Severity.ERROR, love.string.MeetingCreateFailed, {}, undefined, { timeout: 4000 }))
     } finally {
       saving = false
     }
@@ -244,7 +250,7 @@
       <span class="create-meeting__label"><Label label={love.string.MeetingName} /></span>
       <TextInput
         bind:value={name}
-        placeholder={love.string.PermanentMeeting}
+        placeholder={love.string.MeetingName}
         size="medium"
         fullWidth
         autofocus

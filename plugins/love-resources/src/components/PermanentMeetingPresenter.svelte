@@ -35,21 +35,10 @@
   export let shouldShowAvatar = true
   export let type: ObjectPresenterType = 'link'
 
-  // A series says the meeting sits in the calendar; a meeting without one exists only as a link,
-  // so the row shows a crossed-out eye instead of the camera.
-  let series: Event[] = []
-  const query = createQuery()
-  $: void query.query(
-    calendar.class.Event,
-    {
-      [`${love.mixin.MeetingEventLink as string}.permanentMeeting`]: value._id,
-      recurringEventId: { $exists: false }
-    } as any,
-    (res) => {
-      series = res
-    }
-  )
-  $: icon = series.length > 0 ? love.icon.MeetingMinutes : ui.icon.EyeSlash
+  // The meeting keeps the reference to its event, so the row knows whether it has anything in the
+  // calendar. A live query over the event's link mixin did not refresh the icon; the meeting document
+  // is a plain live query, and the writer updates it when the series appears or goes away.
+  $: icon = value.event !== undefined ? love.icon.MeetingMinutes : ui.icon.EyeSlash
 
   // A link is the only thing a permanent meeting shares: keep it one click away in every row.
   async function copyLink (): Promise<void> {

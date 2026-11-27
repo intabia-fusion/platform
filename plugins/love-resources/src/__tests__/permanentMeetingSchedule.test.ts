@@ -15,7 +15,7 @@
 
 import calendar, { type Calendar, type ReccuringEvent } from '@hcengineering/calendar'
 import type { AccountUuid, PersonId, Ref, Space, TxOperations } from '@hcengineering/core'
-import love, { type PermanentMeeting } from '@hcengineering/love'
+import love, { type PermanentMeeting, type Room } from '@hcengineering/love'
 import {
   createPermanentMeetingWithSchedule,
   updatePermanentMeetingWithSchedule,
@@ -66,6 +66,12 @@ function createFakeClient (): { client: TxOperations, calls: Recorded[] } {
     },
     update: async (...args: any[]) => {
       calls.push({ method: 'update', args })
+      return undefined
+    },
+    // The meeting keeps the reference to its event, and the writer sets it through `updateDoc`: the
+    // fake has to answer it, or every create path throws on a method the test client lacks.
+    updateDoc: async (...args: any[]) => {
+      calls.push({ method: 'updateDoc', args })
       return undefined
     }
   } as unknown as TxOperations
@@ -261,5 +267,41 @@ describe('updatePermanentMeetingWithSchedule', () => {
     expect(updates[0].args[1]).toMatchObject({ name: 'New name', repeatEvery: WEEK })
     // Nothing else to update: the fake client answers `findAll` with an empty list.
     expect(updates).toHaveLength(1)
+  })
+
+  it('clears the room of a repeating meeting: it holds no room of its own', async () => {
+    const { client, calls } = createFakeClient()
+    const doc = { _id: meetingId, name: 'Daily standup' }
+    const meeting = doc as unknown as PermanentMeeting
+
+    await updatePermanentMeetingWithSchedule(
+      client,
+      meeting,
+      input({ period: WEEK, room: 'room:1' as Ref<Room> }),
+      createContext()
+    )
+
+    const update = find(calls, 'update')[0]
+    expect(update.args[1].$unset).toEqual({ room: 1 })
+    expect(update.args[1].room).toBeUndefined()
+    expect(update.args[1].repeatEvery).toBe(WEEK)
+  })
+
+  it('writes the room of a one-off meeting and clears the old period', async () => {
+    const { client, calls } = createFakeClient()
+    const doc = { _id: meetingId, name: 'Daily standup' }
+    const meeting = doc as unknown as PermanentMeeting
+
+    await updatePermanentMeetingWithSchedule(
+      client,
+      meeting,
+      input({ period: undefined, room: 'room:1' as Ref<Room> }),
+      createContext()
+    )
+
+    const update = find(calls, 'update')[0]
+    expect(update.args[1].$unset).toEqual({ repeatEvery: 1 })
+    expect(update.args[1].room).toBe('room:1')
+    expect(update.args[1].repeatEvery).toBeUndefined()
   })
 })

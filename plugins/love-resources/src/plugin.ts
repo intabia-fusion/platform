@@ -201,6 +201,7 @@ export default mergeIds(loveId, love, {
     GroupName: '' as IntlString,
     MeetingsWithoutGroup: '' as IntlString,
     CopyMeetingLink: '' as IntlString,
+    MeetingCreateFailed: '' as IntlString,
     MeetingSettings: '' as IntlString,
     NextOccurrence: '' as IntlString,
     RemindBeforeMinutes: '' as IntlString,

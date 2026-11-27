@@ -267,6 +267,7 @@
     "GroupName": "Название группы",
     "MeetingsWithoutGroup": "Без группы",
     "CopyMeetingLink": "Копировать гостевую ссылку",
+    "MeetingCreateFailed": "Встреча не создана: сервис недоступен. Попробуйте ещё раз.",
     "MeetingSettings": "Настройки встречи",
     "NextOccurrence": "Следующая встреча",
     "RemindBeforeMinutes": "Напомнить за (минут)",

@@ -328,6 +328,12 @@ export interface PermanentMeeting extends Space {
   /** Time zone of `startDate`, so a meeting without a series still shows its local time. */
   timeZone?: string
 
+  /**
+   * The calendar event of the meeting, kept on the meeting itself. Absent means the meeting lives
+   * in the list only: nothing to show in the calendar and nothing for the row to mark as scheduled.
+   */
+  event?: Ref<Event>
+
   /** shortId of the permanent link. Absent until the link is first issued. */
   linkId?: string
   /** Bumping it revokes the previous link: new payload, new shortId. */

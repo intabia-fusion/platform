@@ -47,6 +47,7 @@ import {
   RoomType
 } from '@hcengineering/love'
 import contact, { type Person } from '@hcengineering/contact'
+import { descriptionMarkup } from './description'
 import { periodRules } from './period'
 import love from './plugin'
 
@@ -229,6 +230,107 @@ export async function createPermanentMeeting (
  * entity: it belongs to no office room, so the session of such a meeting runs in the service room
  * and the media settings below are defaults rather than something inherited from a room.
  */
+/**
+ * The calendar side of a meeting: the series in the meetings calendar (the caller's own calendar when
+ * the Planner asked for it) and the mixin that links it back to the meeting. Shared by the create and
+ * the update paths, so turning "show in calendar" on later builds exactly the same event.
+ */
+async function createMeetingEvent (
+  client: TxOperations,
+  meeting: Ref<PermanentMeeting> | undefined,
+  input: PermanentMeetingInput,
+  ctx: ScheduleContext,
+  planner: boolean
+): Promise<{ eventId: string, eventRef: Ref<Event> }> {
+  const type = RoomType.Video
+  const language = ctx.language as RoomLanguage
+  const timeZone = input.timeZone ?? ctx.timeZone
+  const allDay = input.allDay === true
+  const eventCalendar = planner ? ctx.calendarId : await findOrCreateMeetingsCalendar(client, ctx)
+
+  const rules = input.period !== undefined ? periodRules(input.startDate, input.period) : []
+  if (rules.length > 0 && input.endDate !== undefined) rules[0] = { ...rules[0], endDate: input.endDate }
+
+  const members = input.members.includes(ctx.me) ? input.members : [ctx.me, ...input.members]
+  const participants = await participantsOf(client, members)
+  const eventId = generateEventId()
+  const dueDate = allDay ? new Date(input.startDate).setHours(23, 59, 59, 999) : input.startDate + input.duration
+  const eventIdRef = generateId<Event>()
+
+  const common = {
+    calendar: eventCalendar,
+    eventId,
+    date: input.startDate,
+    dueDate,
+    title: input.name,
+    description: descriptionMarkup(input.description ?? ''),
+    participants,
+    externalParticipants: [],
+    reminders: input.reminders ?? [input.reminderBefore],
+    visibility: 'private' as const,
+    blockTime: true,
+    allDay,
+    timeZone,
+    access: AccessLevel.Owner,
+    user: ctx.primarySocialId
+  }
+
+  if (rules.length > 0) {
+    await client.addCollection(
+      calendar.class.ReccuringEvent,
+      ctx.space,
+      calendar.ids.NoAttached,
+      calendar.class.Event,
+      'events',
+      {
+        ...common,
+        rules,
+        rdate: [],
+        exdate: [],
+        originalStartTime: input.startDate
+      },
+      eventIdRef as Ref<ReccuringEvent>
+    )
+  } else {
+    await client.addCollection(
+      calendar.class.Event,
+      ctx.space,
+      calendar.ids.NoAttached,
+      calendar.class.Event,
+      'events',
+      common,
+      eventIdRef
+    )
+  }
+
+  await client.createMixin<Event, MeetingEventLink>(
+    eventIdRef,
+    calendar.class.Event,
+    ctx.space,
+    love.mixin.MeetingEventLink,
+    {
+      type,
+      linkVersion: 1,
+      meetingAccess: defaultMeetingAccess,
+      private: false,
+      language,
+      startWithRecording: false,
+      startWithTranscription: false,
+      reminderBefore: input.reminderBefore,
+      // The room is part of the meeting, not of the document only: the love service starts the
+      // session in the room of this link, and the event card reads the room from it. A link without
+      // a room made a meeting booked into a room run in the shared service room instead.
+      ...(input.room !== undefined ? { room: input.room } : {}),
+      // The meeting is known when the event is built for an existing meeting; on create the link is
+      // written right after the document appears, as it always was.
+      ...(meeting !== undefined ? { permanentMeeting: meeting } : {}),
+      ...(planner ? { planner: true } : {})
+    }
+  )
+
+  return { eventId, eventRef: eventIdRef }
+}
+
 export async function createPermanentMeetingWithSchedule (
   client: TxOperations,
   input: PermanentMeetingInput,
@@ -241,96 +343,19 @@ export async function createPermanentMeetingWithSchedule (
   // The zone belongs to the meeting, not to the person creating it: a series made for a colleague in
   // another city keeps the zone the dialog showed.
   const timeZone = input.timeZone ?? ctx.timeZone
-  const allDay = input.allDay === true
   // The series is the planner's business: only its grid asks for one. A meeting from the section still
   // gets an event, but in the meetings calendar, so it shows in the section and stays out of the Planner.
   const series = input.series === true
   const inCalendar = input.calendar !== false
   const withEvent = series || inCalendar
-  // A meeting made in the Planner goes to the personal calendar, so it stays on the Planner grid;
-  // a meeting made in the meetings section goes to the meetings calendar, which the Planner does
-  // not read. The meeting mixin carries `planner` for the same distinction.
-  const eventCalendar = withEvent
-    ? series
-      ? ctx.calendarId
-      : await findOrCreateMeetingsCalendar(client, ctx)
-    : ctx.calendarId
-
-  const rules = input.period !== undefined ? periodRules(input.startDate, input.period) : []
-  if (rules.length > 0 && input.endDate !== undefined) rules[0] = { ...rules[0], endDate: input.endDate }
-
   const members = input.members.includes(ctx.me) ? input.members : [ctx.me, ...input.members]
 
   let eventId = ''
-  const eventIdRef = generateId<Event>()
+  let eventRef: Ref<Event> | undefined
   if (withEvent) {
-    const participants = await participantsOf(client, members)
-    eventId = generateEventId()
-    const dueDate = allDay ? new Date(input.startDate).setHours(23, 59, 59, 999) : input.startDate + input.duration
-
-    const common = {
-      calendar: eventCalendar,
-      eventId,
-      date: input.startDate,
-      dueDate,
-      title: input.name,
-      description: input.description ?? '',
-      participants,
-      externalParticipants: [],
-      reminders: input.reminders ?? [input.reminderBefore],
-      visibility: 'private' as const,
-      blockTime: true,
-      allDay,
-      timeZone,
-      access: AccessLevel.Owner,
-      user: ctx.primarySocialId
-    }
-
-    if (rules.length > 0) {
-      await client.addCollection(
-        calendar.class.ReccuringEvent,
-        ctx.space,
-        calendar.ids.NoAttached,
-        calendar.class.Event,
-        'events',
-        {
-          ...common,
-          rules,
-          rdate: [],
-          exdate: [],
-          originalStartTime: input.startDate
-        },
-        eventIdRef as Ref<ReccuringEvent>
-      )
-    } else {
-      await client.addCollection(
-        calendar.class.Event,
-        ctx.space,
-        calendar.ids.NoAttached,
-        calendar.class.Event,
-        'events',
-        common,
-        eventIdRef
-      )
-    }
-
-    await client.createMixin<Event, MeetingEventLink>(
-      eventIdRef,
-      calendar.class.Event,
-      ctx.space,
-      love.mixin.MeetingEventLink,
-      {
-        type,
-        linkVersion: 1,
-        meetingAccess: defaultMeetingAccess,
-        private: false,
-        language,
-        startWithRecording,
-        startWithTranscription,
-        reminderBefore: input.reminderBefore,
-        ...(series ? { planner: true } : {})
-      }
-    )
+    const created = await createMeetingEvent(client, undefined, { ...input, members }, ctx, series)
+    eventId = created.eventId
+    eventRef = created.eventRef
   }
 
   const meeting = await createPermanentMeeting(client, {
@@ -355,13 +380,25 @@ export async function createPermanentMeetingWithSchedule (
 
   // The event and the meeting point at each other: the planner grid and the meetings calendar both
   // reach the meeting through this link.
-  if (withEvent) {
-    await client.updateMixin(eventIdRef, calendar.class.Event, ctx.space, love.mixin.MeetingEventLink, {
+  if (withEvent && eventRef !== undefined) {
+    await client.updateMixin(eventRef, calendar.class.Event, ctx.space, love.mixin.MeetingEventLink, {
       permanentMeeting: meeting
     })
+    // The meeting remembers its own event: the row reads it to tell whether the meeting is in the
+    // calendar, and the writer finds it without a query by the link mixin's nested field.
+    await client.updateDoc(love.class.PermanentMeeting, core.space.Space, meeting, { event: eventRef })
   }
   if (input.guestPassword !== undefined && input.guestPassword !== null) {
-    await ctx.setGuestPassword(meeting, input.guestPassword)
+    // The password lives in the love service, not in the document: a service that is down must not
+    // undo a meeting that is already written, and must not leave the dialog half done either.
+    try {
+      await ctx.setGuestPassword(meeting, input.guestPassword)
+    } catch (err: any) {
+      console.error('Failed to set the guest password of the new meeting', {
+        meeting,
+        error: err?.message ?? err
+      })
+    }
   }
 
   // No series: there is no event to report, only the meeting the dialog opens the link for.
@@ -435,33 +472,94 @@ export async function updatePermanentMeetingWithSchedule (
     name: input.name,
     members,
     reminderBefore: input.reminderBefore,
-    repeatEvery: input.period,
+    // A one-off has no period, and a repeating meeting holds no room: the two fields are exclusive,
+    // so one of them is cleared by the same write that sets the other.
+    $unset: {
+      ...(input.period === undefined ? { repeatEvery: 1 } : { room: 1 })
+    },
+    ...(input.period !== undefined ? { repeatEvery: input.period } : {}),
     // Kept in step with the series: a meeting without one reads its schedule from here.
     startDate: input.startDate,
+    ...(input.duration !== undefined ? { duration: input.duration } : {}),
+    // The document keeps the text: `description` is a plain string attribute of a space, and the panel
+    // shows it as it is. The markup goes to the event, which is the only place that renders it.
+    ...(input.description !== undefined ? { description: input.description } : {}),
+    ...(input.room !== undefined && input.period === undefined ? { room: input.room } : {}),
+    ...(input.group !== undefined ? { group: input.group } : {}),
     timeZone
   })
+  // The flag is stored only when the meeting is hidden: a missing field means "shown", so turning
+  // the switch back on has to remove it rather than write `true`.
+  if (input.calendar === false) {
+    await client.update(object, { calendar: false })
+  } else if (input.calendar === true && object.calendar === false) {
+    await client.update(object, { $unset: { calendar: 1 } })
+  }
 
   const rules = input.period !== undefined ? periodRules(input.startDate, input.period) : []
   if (rules.length > 0 && input.endDate !== undefined) rules[0] = { ...rules[0], endDate: input.endDate }
 
   const participants = await participantsOf(client, members)
-  const series = await client.findAll(calendar.class.Event, {
-    [`${love.mixin.MeetingEventLink as string}.permanentMeeting`]: object._id
-  } as any)
-  for (const event of series) {
-    const update: Record<string, any> = {
-      title: input.name,
-      date: input.startDate,
-      dueDate: allDay ? new Date(input.startDate).setHours(23, 59, 59, 999) : input.startDate + input.duration,
-      allDay,
-      timeZone,
-      participants
+  // The reference on the meeting comes first: a query by the link mixin's nested field found nothing
+  // on some adapters, and every save then built another event beside the ones it could not see.
+  const known =
+    object.event !== undefined ? await client.findOne(calendar.class.Event, { _id: object.event }) : undefined
+  const series =
+    known !== undefined
+      ? [known]
+      : await client.findAll(calendar.class.Event, {
+          [`${love.mixin.MeetingEventLink as string}.permanentMeeting`]: object._id
+        } as any)
+  // Older meetings only had the link on the event: remember it on the meeting, so the row shows the
+  // calendar icon right away and the next save finds the series without asking the mixin.
+  if (object.event === undefined && series.length > 0) {
+    await client.update(object, { event: series[0]._id })
+  }
+
+  if (input.calendar === false) {
+    // "Not in the calendar" has to mean it: a switch that says hidden while the event stays is a lie,
+    // and the calendar would keep showing the meeting.
+    for (const event of series) {
+      await client.removeDoc(event._class, event.space, event._id)
     }
-    if (rules.length > 0) update.rules = rules
-    await client.update(event, update as any)
-    await client.updateMixin(event._id, event._class, event.space, love.mixin.MeetingEventLink, {
-      reminderBefore: input.reminderBefore
-    })
+    if (series.length > 0) await client.update(object, { $unset: { event: 1 } })
+  } else {
+    // The switch was off and is now on: the meeting gets the event it never had, built the same way
+    // creating it would have built one.
+    if (series.length === 0 && input.calendar === true) {
+      const created = await createMeetingEvent(client, object._id, { ...input, members }, ctx, false)
+      await client.update(object, { event: created.eventRef })
+    }
+    if (series.length > 0 && (object.repeatEvery !== undefined) !== (input.period !== undefined)) {
+      // The meeting changed its kind (one-off ↔ repeating): the old rule and the new period would
+      // disagree, so the calendar side is rebuilt from scratch.
+      for (const event of series) {
+        await client.removeDoc(event._class, event.space, event._id)
+      }
+      const created = await createMeetingEvent(client, object._id, { ...input, members }, ctx, false)
+      await client.update(object, { event: created.eventRef })
+      return
+    }
+    for (const event of series) {
+      const update: Record<string, any> = {
+        title: input.name,
+        date: input.startDate,
+        dueDate: allDay ? new Date(input.startDate).setHours(23, 59, 59, 999) : input.startDate + input.duration,
+        allDay,
+        timeZone,
+        participants
+      }
+      if (rules.length > 0) update.rules = rules
+      if (input.description !== undefined) update.description = descriptionMarkup(input.description)
+      if (input.reminders !== undefined) update.reminders = input.reminders
+      await client.update(event, update as any)
+      await client.updateMixin(event._id, event._class, event.space, love.mixin.MeetingEventLink, {
+        reminderBefore: input.reminderBefore,
+        // The room follows the meeting: the series is what the love service and the event card read,
+        // so changing the room in the settings window has to reach the link as well as the document.
+        ...(input.room !== undefined ? { room: input.room } : {})
+      })
+    }
   }
 
   if (input.guestPassword !== undefined) {

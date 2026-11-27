@@ -21,16 +21,20 @@
 <script lang="ts">
   import calendar, { type Event } from '@hcengineering/calendar'
   import { LIVE_MEETING_STATUSES, type MeetingMinutes, type PermanentMeeting } from '@hcengineering/love'
+  import { getCurrentAccount } from '@hcengineering/core'
   import { createQuery, getClient } from '@hcengineering/presentation'
-  import { EditBox } from '@hcengineering/ui'
+  import ui, { EditBox, Label, showPopup } from '@hcengineering/ui'
   import { Button } from '@hcengineering/ui/kit'
   import { createEventDispatcher, onMount } from 'svelte'
   import love from '../plugin'
+  import { canEditMeeting } from '../permissions'
   import { joinMeeting, joinMeetingBySession, leaveMeeting } from '../meetings'
+  import PermanentMeetingForm from './PermanentMeetingForm.svelte'
   import { currentMeetingMinutes } from '../stores'
   import { lkSessionConnected } from '../liveKitClient'
   import { videoVisible } from '../utils'
   import { openWidgetTab } from '@hcengineering/workbench-resources'
+  import { ObjectPresenter } from '@hcengineering/view-resources'
 
   export let object: PermanentMeeting
   export let readonly: boolean = false
@@ -70,9 +74,10 @@
   }
 
   // Both read in the header, and the attributes panel below would repeat them: the period has its own
-  // editor in the settings window, the name is edited here.
+  // editor in the settings window, the name is edited here. The link policy moved into the settings
+  // window as a section of its own, so its popup button is gone from the panel: one place per setting.
   onMount(() => {
-    dispatch('open', { ignoreKeys: ['name', 'repeatEvery'] })
+    dispatch('open', { ignoreKeys: ['name', 'repeatEvery', 'meetingAccess'] })
   })
 
   // A session someone already started is a meeting in progress: a member joins it as a participant
@@ -110,10 +115,18 @@
       leaving = false
     }
   }
+
+  // A meeting without a calendar series has no event to open: its window lives here, otherwise the
+  // only way into the settings would be the calendar, where such a meeting never appears.
+  $: canEdit = canEditMeeting(live, getCurrentAccount())
+
+  function openSettings (): void {
+    showPopup(PermanentMeetingForm, { object: live }, 'content')
+  }
 </script>
 
 <div class="flex-row-center flex-between flex-gap-2 mb-4">
-  <div class="title flex-grow">
+  <div class="title flex-grow flex-col gap-1">
     <EditBox
       disabled={readonly}
       placeholder={love.string.PermanentMeeting}
@@ -121,6 +134,14 @@
       on:change={changeName}
       focusIndex={1}
     />
+    <!-- The room is part of the meeting and a user looks for it here, next to the name: the crumbs of
+         the panel show the navigation path, not the links of the document. -->
+    {#if live.room !== undefined}
+      <div class="flex-row-center gap-1 room" data-id="permanent-meeting-room">
+        <span class="text-sm content-color"><Label label={love.string.MeetingRoom} /></span>
+        <ObjectPresenter objectId={live.room} _class={love.class.Room} shouldShowAvatar={false} />
+      </div>
+    {/if}
   </div>
   {#if inThisMeeting}
     {#if !$videoVisible}
@@ -145,6 +166,16 @@
     {#if liveSession !== undefined}
       <Button label={love.string.JoinAsParticipant} size="large" kind="secondary" on:click={joinLive} />
     {/if}
+    {#if canEdit}
+      <Button
+        icon={ui.icon.Gear}
+        size="large"
+        kind="secondary"
+        tooltip={{ label: ui.string.Settings }}
+        on:click={openSettings}
+        data-id="permanent-meeting-settings"
+      />
+    {/if}
     <Button
       label={love.string.JoinMeeting}
       size="large"
@@ -162,5 +193,11 @@
     font-weight: 500;
     font-size: 1.25rem;
     color: var(--theme-caption-color);
+  }
+
+  // The room is a note beside the name, not a second title.
+  .room {
+    font-weight: 400;
+    font-size: 0.875rem;
   }
 </style>
