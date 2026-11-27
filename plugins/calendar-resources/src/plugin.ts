@@ -18,7 +18,9 @@ import { type IntlString, mergeIds } from '@hcengineering/platform'
 
 export default mergeIds(calendarId, calendar, {
   string: {
+    Event: '' as IntlString,
     Events: '' as IntlString,
+    Reminder: '' as IntlString,
     RemindMeAt: '' as IntlString,
     CreateReminder: '' as IntlString,
     ReminderTime: '' as IntlString,
@@ -27,11 +29,12 @@ export default mergeIds(calendarId, calendar, {
     ModeMonth: '' as IntlString,
     ModeYear: '' as IntlString,
     TableView: '' as IntlString,
-    DueMinutes: '' as IntlString,
-    DueHours: '' as IntlString,
-    DueDays: '' as IntlString,
     NoReminders: '' as IntlString,
     AllDay: '' as IntlString,
+    When: '' as IntlString,
+    Where: '' as IntlString,
+    About: '' as IntlString,
+    Remember: '' as IntlString,
     AndMore: '' as IntlString,
     CreateEvent: '' as IntlString,
     EventFor: '' as IntlString,
@@ -49,6 +52,7 @@ export default mergeIds(calendarId, calendar, {
     EventTitlePlaceholder: '' as IntlString,
     TimeZone: '' as IntlString,
     Repeat: '' as IntlString,
+    DoNotRepeat: '' as IntlString,
     Every: '' as IntlString,
     On: '' as IntlString,
     OnUntil: '' as IntlString,

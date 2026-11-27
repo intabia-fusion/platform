@@ -16,13 +16,19 @@
   import type { Contact, Person } from '@hcengineering/contact'
   import type { Ref } from '@hcengineering/core'
   import type { Floor as FloorType, Office, Room } from '@hcengineering/love'
-  import { isOffice } from '@hcengineering/love'
-  import { deviceOptionsStore as deviceInfo } from '@hcengineering/ui'
+  import love, { isOffice } from '@hcengineering/love'
+  import { SpecialView } from '@hcengineering/workbench-resources'
+  import { deviceOptionsStore as deviceInfo, Label } from '@hcengineering/ui'
+  import ui from '@hcengineering/ui'
+  import view from '@hcengineering/view'
   import { onDestroy } from 'svelte'
-  import { activeFloor, ensureOfficeDetailsLoaded, floors, rooms, selectedFloor } from '../stores'
+  import lovePlugin from '../plugin'
+  import { currentFloor, ensureOfficeDetailsLoaded, officeView, rooms } from '../stores'
 
   import Floor from './Floor.svelte'
   import FloorConfigure from './FloorConfigure.svelte'
+  import MeetingGroupsView from './MeetingGroupsView.svelte'
+  import MeetingsView from './MeetingsView.svelte'
 
   void ensureOfficeDetailsLoaded()
 
@@ -30,8 +36,7 @@
     return rooms.filter((p) => p.floor === floor)
   }
 
-  let floor = $selectedFloor ?? ($activeFloor === '' ? $floors[0]?._id : $activeFloor)
-  $: floor = $selectedFloor ?? ($activeFloor === '' ? $floors[0]?._id : $activeFloor)
+  $: floor = $currentFloor
   let configure: boolean = false
   let replacedPanel: HTMLElement
 
@@ -45,7 +50,20 @@
 </script>
 
 <div class="antiPanel-component filledNav" bind:this={replacedPanel}>
-  {#if configure}
+  {#if $officeView === 'meetings'}
+    <!-- Calendar and table; the list of meetings is the groups tab. -->
+    <MeetingsView />
+  {:else if $officeView === 'floors'}
+    <!-- Nothing is picked yet: the floors list is in the navigator, the grid is its detail view. -->
+    <div class="flex-col h-full justify-center items-center">
+      <span class="content-color"><Label label={lovePlugin.string.SelectFloor} /></span>
+    </div>
+  {:else if $officeView === 'groups'}
+    <!-- Three sets of rows: calendar meetings, permanent meetings with a series, and the meetings
+         that exist only as a link. The sets share the viewlets of the class, so each keeps grouping
+         and sorting. -->
+    <MeetingGroupsView />
+  {:else if configure}
     <FloorConfigure
       rooms={getRooms($rooms, floor)}
       {floor}

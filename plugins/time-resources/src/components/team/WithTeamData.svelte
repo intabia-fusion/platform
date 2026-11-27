@@ -128,7 +128,13 @@
     rawProjectSlots = []
   }
 
-  $: raw = rawEvent.concat(rawReq).filter((it, idx, arr) => arr.findIndex((e) => e.eventId === it.eventId) === idx)
+  $: raw = rawEvent
+    .concat(rawReq)
+    .filter((it, idx, arr) => arr.findIndex((e) => e.eventId === it.eventId) === idx)
+    // A meeting of the meetings section keeps its master in its own calendar, but the calendar gives
+    // every participant a copy and the series an occurrence - both carry the master's eventId and
+    // land in a personal calendar, which this query does read. The Planner shows none of them.
+    .filter((it) => !meetingEventIds.includes(it.eventId))
 
   // Every event and WorkSlot has a paired BusySlot per participant. Whenever the detailed
   // document is already on hand - a project slot, or an event I take part in, which carries
@@ -156,5 +162,27 @@
     }
   )
 
-  $: calendarIds = $visibleCalendarStore.map((p) => p._id)
+  $: calendarIds = $visibleCalendarStore
+    // The meetings section keeps its events in its own calendar: those meetings belong to the section
+    // and stay out of the Planner, while events created in the Planner itself stay.
+    .filter((p) => !(p._id as string).endsWith('_meetings_calendar'))
+    .map((p) => p._id)
+
+  $: meetingsCalendarIds = $visibleCalendarStore
+    .filter((p) => (p._id as string).endsWith('_meetings_calendar'))
+    .map((p) => p._id)
+
+  // The eventIds of the meetings section, read from its calendar. Collected for the whole calendar
+  // rather than the visible window: an occurrence inside the window has a master outside it.
+  const meetingsQuery = createQuery()
+  let meetingEventIds: string[] = []
+
+  $: if (meetingsCalendarIds.length > 0) {
+    meetingsQuery.query(calendar.class.Event, { calendar: { $in: meetingsCalendarIds } }, (res) => {
+      meetingEventIds = res.map((it) => it.eventId)
+    })
+  } else {
+    meetingsQuery.unsubscribe()
+    meetingEventIds = []
+  }
 </script>

@@ -508,7 +508,9 @@
     }
     &:not(.no-focus):focus { box-shadow: none; }
   }
-  &.primary, &.secondary, &.positive, &.negative {
+  // Filled kinds keep their own label colour on hover. A secondary button has no fill of its own: it
+  // used to take the primary label colour, which is white in both themes and vanished on the light one.
+  &.primary, &.positive, &.negative {
     &:hover, &:active, &:focus {
       color: var(--primary-button-color);
 
@@ -550,6 +552,12 @@
   &.secondary {
     color: var(--secondary-button-color);
     background-color: var(--secondary-button-default);
+    // The shared block above paints the icon with the primary label colour, which is white in both
+    // themes. An accent that leaves the secondary tokens unset gives the button no fill of its own,
+    // so on the light theme that white icon sat on a light background and disappeared. A secondary
+    // icon follows its label, the same way the label colour already follows the button.
+    .btn-icon,
+    .btn-right-icon { color: inherit; }
     &:hover { background-color: var(--secondary-button-hovered); }
     &:active,
     &.pressed,

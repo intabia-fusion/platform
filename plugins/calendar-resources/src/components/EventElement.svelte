@@ -17,10 +17,10 @@
   import calendar from '@hcengineering/calendar'
   import type { Doc } from '@hcengineering/core'
   import { getClient } from '@hcengineering/presentation'
-  import { Component, MILLISECONDS_IN_MINUTE, showPopup, tooltip } from '@hcengineering/ui'
-  import type { ObjectEditor } from '@hcengineering/view'
-  import view from '@hcengineering/view'
+  import { ComponentExtensions } from '@hcengineering/presentation'
+  import ui, { Component, Icon, MILLISECONDS_IN_MINUTE, showPopup, tooltip } from '@hcengineering/ui'
   import { showMenu } from '@hcengineering/view-resources'
+  import { openEventCard } from '../eventCard'
   import { calendarByIdStore, isVisible } from '../utils'
   import EventPresenter from './EventPresenter.svelte'
 
@@ -31,13 +31,12 @@
   $: narrow = event.dueDate - event.date < MILLISECONDS_IN_MINUTE * 25
   $: empty = size.width < 44
 
-  function click () {
-    if (visible) {
-      const editor = hierarchy.classHierarchyMixin<Doc, ObjectEditor>(event._class, view.mixin.ObjectEditor)
-      if (editor?.editor !== undefined) {
-        showPopup(editor.editor, { object: event })
-      }
-    }
+  // The card of the event is resolved first: a meeting is a document of its own and opens in the
+  // meeting's window, while a plain event keeps the calendar's quick-edit popup. `center` and not
+  // `content`: only a position that shows the modal overlay gives the window a click outside it.
+  function click (): void {
+    if (!visible) return
+    void openEventCard(client, event, calendar.component.EditEvent)
   }
 
   const client = getClient()
@@ -50,6 +49,17 @@
   let div: HTMLDivElement
 
   $: visible = isVisible(event, $calendarByIdStore)
+
+  // The answer of this person for the event, marked on the tile itself: the calendar is where the
+  // question is read, and the answer used to be visible only after opening the event.
+  $: rsvpIcon =
+    event.rsvp === 'accepted' ? ui.icon.CheckCircle : event.rsvp === 'declined' ? ui.icon.CrossCircle : ui.icon.Clock
+  $: rsvpLabel =
+    event.rsvp === 'accepted'
+      ? calendar.string.RsvpAccepted
+      : event.rsvp === 'declined'
+        ? calendar.string.RsvpDeclined
+        : calendar.string.RsvpTentative
 
   function contextMenu (e: MouseEvent): void {
     showMenu(e, { object: event })
@@ -71,12 +81,28 @@
     {#if !empty && presenter?.presenter}
       <Component is={presenter.presenter} props={{ event, narrow, oneRow, hideDetails: !visible }} />
     {/if}
+    <!-- Another plugin may mark the card (a meeting, for one). Rendered as an overlay so it does
+         not take a row from the presenter, which fills the whole card. -->
+    {#if !empty}
+      <div class="event-card-extensions">
+        <ComponentExtensions
+          extension={calendar.extensions.EventCardExtensions}
+          props={{ event, narrow, oneRow, hideDetails: !visible }}
+        />
+      </div>
+    {/if}
+    {#if !empty && event.rsvp !== undefined}
+      <div class="event-rsvp" use:tooltip={{ label: rsvpLabel }}>
+        <Icon icon={rsvpIcon} size="x-small" />
+      </div>
+    {/if}
   </div>
 {/if}
 
 <style lang="scss">
   .event-container {
     pointer-events: auto;
+    position: relative;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -92,5 +118,22 @@
     border-radius: 0.25rem;
     cursor: pointer;
     padding: 0.25rem 0.5rem 0.25rem 1rem;
+  }
+
+  .event-card-extensions {
+    position: absolute;
+    top: 0.125rem;
+    right: 0.25rem;
+    display: flex;
+    align-items: center;
+  }
+
+  // Bottom corner: the top one carries the plugin marks (a meeting has three of them).
+  .event-rsvp {
+    position: absolute;
+    bottom: 0.125rem;
+    right: 0.25rem;
+    display: flex;
+    color: var(--theme-content-color);
   }
 </style>

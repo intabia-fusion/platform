@@ -34,9 +34,12 @@
   import {
     FilterBar,
     FilterButton,
+    getDefaults,
     getResultOptions,
     getResultQuery,
     getViewletSpecialActions,
+    getViewOptions,
+    viewOptionStore,
     ViewletSelector,
     ViewletSettingButton
   } from '@hcengineering/view-resources'
@@ -65,6 +68,16 @@
   export let defaultViewletDescriptor: Ref<ViewletDescriptor> | undefined = undefined
   export let defaultViewOptions: ViewOptions | undefined = undefined
   export let defaultConfig: (BuildModelKey | string)[] | undefined = undefined
+  // A switch of the section's own, drawn where the viewlet icons would be: the section then renders
+  // its views itself, so it needs no viewlet selector of ours.
+  export let beforeTitle: AnyComponent | undefined = undefined
+  export let beforeTitleProps: Record<string, any> = {}
+  /** A view that is not the user's to arrange hides the gear: the settings it opens mean nothing there. */
+  export let hideViewSettings: boolean = false
+  /** Content the viewlet draws above its rows, such as a caption row of the list. */
+  export let contentHeader: AnyComponent | undefined = undefined
+  /** Props of the viewlet of this view, for a section that sets them rather than the model. */
+  export let viewletProps: Record<string, any> | undefined = undefined
 
   const client = getClient()
   const hierarchy = client.getHierarchy()
@@ -87,6 +100,13 @@
 
   let options = viewlet?.options
   let _options = viewlet?.options ?? {}
+
+  // `viewOptions` used to be computed by the settings button alone, so a view that hides the gear
+  // (`hideViewSettings`) rendered nothing at all: its content waits for these options. The value is
+  // the same one the button would have produced.
+  $: if (hideViewSettings) {
+    viewOptions = getViewOptions(viewlet, $viewOptionStore, getDefaults(viewlet?.viewOptions))
+  }
 
   $: if (!deepEqual(viewlet?.options ?? {}, _options)) {
     _options = viewlet?.options ?? {}
@@ -145,7 +165,13 @@
   freezeBefore
 >
   <svelte:fragment slot="beforeTitle">
+    {#if beforeTitle !== undefined}
+      <Component is={beforeTitle} props={beforeTitleProps} />
+    {/if}
+    <!-- The selector owns the choice of the viewlet and the preference, so it keeps running with a
+         switch of our own standing beside it: hidden only means it draws no icons. -->
     <ViewletSelector
+      hidden={beforeTitle !== undefined}
       bind:viewlet
       bind:preference
       bind:viewlets
@@ -157,7 +183,9 @@
         ...(descriptors !== undefined ? { descriptor: { $in: descriptors } } : {})
       }}
     />
-    <ViewletSettingButton bind:viewOptions bind:viewlet {defaultViewOptions} {defaultConfig} />
+    {#if !hideViewSettings}
+      <ViewletSettingButton bind:viewOptions bind:viewlet {defaultViewOptions} {defaultConfig} />
+    {/if}
   </svelte:fragment>
 
   <Breadcrumb {icon} {iconProps} {label} size="large" isCurrent />
@@ -232,9 +260,11 @@
         viewOptionsConfig: viewlet.viewOptions?.other,
         createItemDialog: createComponent,
         createItemLabel: createLabel,
+        contentHeader,
         query: resultQuery,
         totalQuery: query,
-        ...viewlet.props
+        ...viewlet.props,
+        ...viewletProps
       }}
     />
   {:else}
@@ -252,9 +282,11 @@
         viewOptionsConfig: viewlet.viewOptions?.other,
         createItemDialog: createComponent,
         createItemLabel: createLabel,
+        contentHeader,
         query: resultQuery,
         totalQuery: query,
-        ...viewlet.props
+        ...viewlet.props,
+        ...viewletProps
       }}
       {...navigationModel}
     />

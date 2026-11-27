@@ -1,8 +1,25 @@
+import calendar, {
+  AccessLevel,
+  Event,
+  ReccuringEvent,
+  ReccuringInstance,
+  generateRecurringValues
+} from '@hcengineering/calendar'
 import { Employee, Person } from '@hcengineering/contact'
-import { Data, generateId, Ref, WorkspaceUuid } from '@hcengineering/core'
+import { Data, DocumentQuery, Timestamp, generateId, Ref, WorkspaceUuid } from '@hcengineering/core'
 
 import love from './plugin'
-import { MeetingMinutes, MeetingStatus, Office, ParticipantInfo, Room, RoomType } from './types'
+import {
+  Floor,
+  MeetingEventLink,
+  MeetingMinutes,
+  MeetingStatus,
+  Office,
+  ParticipantInfo,
+  Room,
+  RoomType,
+  defaultMeetingAccess
+} from './types'
 import { translate } from '@hcengineering/platform'
 
 /**
@@ -24,6 +41,34 @@ export function parseRoomName (roomName: string): ParsedRoomName | undefined {
   return {
     workspace: roomName.slice(0, sepIdx) as WorkspaceUuid,
     meetingId: roomName.slice(sepIdx + 1) as Ref<MeetingMinutes>
+  }
+}
+
+/**
+ * The service floor and its single room are created by fixed id and belong to the workspace,
+ * not to a user: they cannot be renamed, deleted, or given another room.
+ */
+export function isServiceFloor (floor: Ref<Floor> | undefined): boolean {
+  return floor === love.ids.ScheduledFloor
+}
+
+export function isServiceRoom (room: Pick<Room, '_id'> | undefined): boolean {
+  return room?._id === love.ids.ScheduledRoom
+}
+
+/**
+ * Query resolving the master event a meeting's identity lives on. An override of one occurrence
+ * owns a different `eventId`, and resolving by it would give that occurrence its own link.
+ */
+export function meetingMasterQuery (event: Pick<Event, 'eventId'>): DocumentQuery<Event> {
+  const recurringEventId = (event as ReccuringInstance).recurringEventId
+  return {
+    eventId: recurringEventId ?? event.eventId,
+    access: AccessLevel.Owner,
+    // An occurrence is a `ReccuringInstance` with `access: 'owner'` in the calendar of whoever moved
+    // it, so the class has to be excluded explicitly: resolving through an occurrence would make
+    // that one occurrence the identity of the whole series.
+    _class: { $ne: calendar.class.ReccuringInstance }
   }
 }
 
@@ -256,22 +301,14 @@ export interface ScreenSource {
   appIconURL: string
 }
 
-// A scheduled meeting keeps its identity for a plausible session length: an empty room in the
-// middle of it is a dropout, not the end. Joining opens 15 minutes before the start.
+// A session that is either running or waiting for its first participant. At most one of these
+// may exist per meeting at a time - both the client and the love service rely on that.
+export const LIVE_MEETING_STATUSES = [MeetingStatus.Active, MeetingStatus.Pending]
+
+// An occurrence may be joined from 15 minutes before its start until 4 hours after it: an empty
+// room in the middle of a meeting is a dropout, not the end.
 export const SCHEDULED_MEETING_WINDOW_MS = 4 * 60 * 60 * 1000
 export const SCHEDULED_JOIN_LEAD_MS = 15 * 60 * 1000
-
-// A Scheduled meeting owns its room only inside that window; next week's one must not swallow
-// an ad-hoc Connect. Without a date there is no window, so it owns nothing.
-export function isScheduledJoinable (
-  mm: Pick<MeetingMinutes, 'status' | 'meetingScheduledDate'>,
-  now: number = Date.now()
-): boolean {
-  if (mm.status !== MeetingStatus.Scheduled) return false
-  const date = mm.meetingScheduledDate
-  if (date == null) return false
-  return now >= date - SCHEDULED_JOIN_LEAD_MS && now < date + SCHEDULED_MEETING_WINDOW_MS
-}
 
 export function getFreeRoomPlace (
   room: Room,
@@ -307,5 +344,192 @@ export function getFreeRoomPlace (
   // Room full: overflow along x - RoomPreview adds extra columns, never rows.
   for (let x = room.width; ; x++) {
     if (!taken(x, 0)) return { x, y: 0 }
+  }
+}
+
+/**
+ * One occurrence that differs from what the rules say: it moved, or it was cancelled. Calendar keeps
+ * both as a `ReccuringInstance` of the master - `originalStartTime` names the occurrence, `date` is
+ * where it moved to (the original time for a cancelled one), `isCancelled` marks a cancellation.
+ */
+export interface OccurrenceOverride {
+  originalStartTime: Timestamp
+  date: Timestamp
+  isCancelled?: boolean
+}
+
+/**
+ * Occurrence starts of a meeting inside `[from, to)`, sorted. `overrides` are the calendar's own
+ * exceptions to the series: a cancelled occurrence disappears, a moved one leaves its old place
+ * and appears at the new time.
+ */
+export function meetingOccurrences (
+  master: Event,
+  from: Timestamp,
+  to: Timestamp,
+  overrides: OccurrenceOverride[] = []
+): Timestamp[] {
+  const rec = master as ReccuringEvent
+  // Empty on purpose, not only absent: the calendar stores `rules: []` on a plain event, and
+  // treating that as a series leaves it with no occurrences at all - the meeting never opens.
+  if ((rec.rules?.length ?? 0) === 0 && (rec.rdate?.length ?? 0) === 0) {
+    return master.date >= from && master.date < to ? [master.date] : []
+  }
+
+  const values = new Set<Timestamp>()
+  for (const rule of rec.rules ?? []) {
+    // generateRecurringValues treats `to` as inclusive; the half-open range keeps `resolveOccurrence`
+    // from reporting an occurrence that starts exactly at the far edge of the lookahead.
+    for (const value of generateRecurringValues(rule, master.date, from, to)) {
+      if (value < to) values.add(value)
+    }
+  }
+  for (const date of rec.rdate ?? []) {
+    if (date >= from && date < to) values.add(date)
+  }
+  for (const date of rec.exdate ?? []) {
+    values.delete(date)
+  }
+
+  // An override replaces the occurrence it names. A moved one can land inside this window while its
+  // original start sits outside it, so the new time is added from the override itself.
+  for (const it of overrides) {
+    values.delete(it.originalStartTime)
+  }
+  for (const it of overrides) {
+    if (it.isCancelled !== true && it.date >= from && it.date < to) values.add(it.date)
+  }
+  return Array.from(values).sort((a, b) => a - b)
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000
+const FREQ_MS: Record<string, number> = {
+  SECONDLY: 1000,
+  MINUTELY: 60 * 1000,
+  HOURLY: 60 * 60 * 1000,
+  DAILY: DAY_MS,
+  WEEKLY: 7 * DAY_MS,
+  MONTHLY: 31 * DAY_MS,
+  YEARLY: 366 * DAY_MS
+}
+
+/**
+ * How far ahead the next occurrence can be. A flat window would report a yearly series as over for
+ * most of the year, and `checkMeetingLink` would then start expiring a link that is still live -
+ * so the window follows the rule's own period, with room for a skipped occurrence.
+ */
+function lookaheadFor (master: Event): number {
+  let horizon = 90 * DAY_MS
+  for (const rule of (master as ReccuringEvent).rules ?? []) {
+    const period = (FREQ_MS[rule.freq] ?? DAY_MS) * (rule.interval ?? 1)
+    if (period * 2 > horizon) horizon = period * 2
+  }
+  return horizon
+}
+
+/**
+ * Which occurrence a session may be opened for right now: `current` is the one whose join window
+ * is open, `next` is what a caller outside the window is told to wait for. `overrides` are the
+ * calendar's cancelled and moved occurrences - a meeting cancelled in the calendar is not open.
+ */
+export function resolveOccurrence (
+  master: Event,
+  now: number = Date.now(),
+  overrides: OccurrenceOverride[] = []
+): { current?: Timestamp, next?: Timestamp } {
+  const starts = meetingOccurrences(master, now - SCHEDULED_MEETING_WINDOW_MS, now + lookaheadFor(master), overrides)
+  const current = starts.find((it) => now >= it - SCHEDULED_JOIN_LEAD_MS && now < it + SCHEDULED_MEETING_WINDOW_MS)
+  const next = starts.find((it) => it - SCHEDULED_JOIN_LEAD_MS > now)
+  return { current, next }
+}
+
+/**
+ * The point in the series a session of the `current` occurrence is pinned to, or `undefined` when
+ * there is no open occurrence to pin to.
+ *
+ * A moved occurrence is pinned to its **original** start, not to the time it moved to: that is what
+ * `MeetingMinutes.occurrence` means, and it keeps a session of the series stitched to its own slot
+ * when the calendar moves the slot around. Everything that has to compare a session with "the
+ * occurrence that is open right now" goes through this function, so the comparison cannot drift
+ * from `meetingOccurrences`.
+ */
+export function occurrencePin (
+  current: Timestamp | undefined,
+  overrides: OccurrenceOverride[] = []
+): Timestamp | undefined {
+  if (current === undefined) return undefined
+  const moved = overrides.find((it) => it.isCancelled !== true && it.date === current)
+  return moved?.originalStartTime ?? current
+}
+
+/** Why a meeting link no longer works, or `undefined` when it still does. */
+export type LinkRejection = 'revoked' | 'expired'
+
+/**
+ * Whether a link still opens its meeting. Revoking bumps `linkVersion`, so the old short id keeps
+ * resolving but carries a stale version; `afterTtl` counts only once the series has no future
+ * occurrence - otherwise a weekly meeting's link would die every week.
+ */
+export function checkMeetingLink (
+  link: Pick<MeetingEventLink, 'linkVersion' | 'meetingAccess'>,
+  claimed: { linkVersion?: number },
+  series: { nextOccurrence?: Timestamp, lastMeetingEnd?: Timestamp, permanent?: boolean },
+  now: number = Date.now()
+): LinkRejection | undefined {
+  if ((claimed.linkVersion ?? 1) !== (link.linkVersion ?? 1)) return 'revoked'
+  // A permanent meeting has no series to outlive: nothing but a revoke ends its link.
+  if (series.permanent === true) return undefined
+  if (series.nextOccurrence !== undefined) return undefined
+
+  const afterTtl = (link.meetingAccess ?? defaultMeetingAccess).afterTtl
+  // Nothing has run and nothing is coming - the link had a series once, and it is over.
+  const since = series.lastMeetingEnd
+  if (since === undefined || afterTtl === null) return undefined
+  return now < since + afterTtl ? undefined : 'expired'
+}
+
+/**
+ * What a meeting link points at - a pointer, not a credential: nothing changeable is baked in,
+ * and permissions are issued by the love service against the policy as it stands then.
+ */
+export interface MeetingLinkPayload {
+  /** Master event's `eventId`, or the `_id` of a PermanentMeeting when `kind` is `meeting`. */
+  eventId: string
+  workspace: string
+  linkVersion: number
+  /** Absent in links minted before F4; those all point at events. */
+  kind?: MeetingLinkKind
+}
+
+export type MeetingLinkKind = 'event' | 'meeting'
+
+export function buildMeetingLinkPayload (payload: MeetingLinkPayload): string {
+  // Key order is fixed: the account service deduplicates short links by the exact payload string,
+  // and a reordered object would mint a second id for the same meeting. `kind` goes last and is
+  // omitted for events, so every link issued before F4 keeps its short id.
+  return JSON.stringify({
+    eventId: payload.eventId,
+    workspace: payload.workspace,
+    linkVersion: payload.linkVersion,
+    ...(payload.kind === 'meeting' && { kind: payload.kind })
+  })
+}
+
+/** Reads a link payload, or `undefined` for the old JWT form (F1 §11). */
+export function parseMeetingLinkPayload (raw: string): MeetingLinkPayload | undefined {
+  if (!raw.startsWith('{')) return undefined
+  try {
+    const parsed = JSON.parse(raw)
+    const { eventId, workspace, linkVersion, kind } = parsed ?? {}
+    if (typeof eventId !== 'string' || eventId === '') return undefined
+    if (typeof workspace !== 'string' || workspace === '') return undefined
+    return {
+      eventId,
+      workspace,
+      linkVersion: typeof linkVersion === 'number' ? linkVersion : 1,
+      kind: kind === 'meeting' ? 'meeting' : 'event'
+    }
+  } catch {
+    return undefined
   }
 }

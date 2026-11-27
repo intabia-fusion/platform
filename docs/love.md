@@ -6,6 +6,8 @@
 
 Карта фич -> файл (что появилось после этого документа: телеметрия звонков, надёжность записи/очереди, lazy-load офисных данных) - [office-meetings.md](features/office-meetings.md).
 
+RSVP календаря - в [calendar-rsvp.md](calendar-rsvp.md).
+
 ## Содержание
 
 1. [Карта кода](#1-карта-кода)
@@ -15,6 +17,7 @@
 5. [Подключение](#5-подключение)
 6. [Присутствие в комнатах](#6-присутствие-в-комнатах)
 7. [Invite / Knock](#7-invite--knock)
+7a. [Запланированные и постоянные митинги](#7a-запланированные-и-постоянные-митинги)
 8. [Гости](#8-гости)
 9. [Запись и транскрипция](#9-запись-и-транскрипция)
 10. [Исправленные дефекты](#10-исправленные-дефекты)
@@ -25,7 +28,7 @@
 
 ## 1. Карта кода
 
-Полная и актуальная таблица пакетов (включая то, что добавилось позже: `plugins/love-assets`, `packages/audio-dsp`, `services/ai-bot/pod-ai-bot`, `models/recorder`, `models/media`) - [office-meetings.md](features/office-meetings.md). Для навигации по разделам ниже нужны только: `plugins/love` (типы, `getFreeRoomPlace`, `parseRoomName`, дефолтные комнаты), `plugins/love-resources` (клиент: сторы, `meetings.ts`, `invites.ts`, `liveKitClient.ts`, `loveClient.ts`, Svelte-компоненты), `models/love` (модель классов, миграции), `server-plugins/love-resources` (триггеры `OnUserMeetingInvite`, `OnEventUpdate`), `services/love` (HTTP-сервис: `/getToken`, `/webhook`, гости, записи, polling, биллинг), `services/ai-bot/love-agent` (транскрипция).
+Полная и актуальная таблица пакетов (включая то, что добавилось позже: `plugins/love-assets`, `packages/audio-dsp`, `services/ai-bot/pod-ai-bot`, `models/recorder`, `models/media`) - [office-meetings.md](features/office-meetings.md). Для навигации по разделам ниже нужны только: `plugins/love` (типы, `getFreeRoomPlace`, `parseRoomName`, дефолтные комнаты), `plugins/love-resources` (клиент: сторы, `meetings.ts`, `invites.ts`, `liveKitClient.ts`, `loveClient.ts`, Svelte-компоненты), `models/love` (модель классов, миграции), `server-plugins/love-resources` (триггеры `OnUserMeetingInvite`, `OnEventUpdate`, `RoomInfo`), `services/love` (HTTP-сервис: `/getToken`, `/webhook`, ссылки и пароли митингов, гости, записи, polling, биллинг), `services/ai-bot/love-agent` (транскрипция).
 
 ---
 
@@ -42,7 +45,15 @@
 
 ### 2.2 MeetingMinutes
 
-`MeetingMinutes extends Space`, домен `DOMAIN_SPACE`. От `Space`: `name`, `description`, `private`, `archived`, `members`, `owners`. Своё: `status`, `roomId`, `descriptionRef`, `summary`, `meetingScheduledDate`, `meetingEnd`, `transcriptionState`, `recordingState`, `language`, `startWithRecording`, `startWithTranscription`, счётчики `transcription`/`messages`/`attachments`/`recordings`.
+`MeetingMinutes extends Space`, домен `DOMAIN_SPACE`. От `Space`: `name`, `description`, `private`, `archived`, `members`, `owners`. Своё: `status`, `roomId`, `descriptionRef`, `summary`, `meetingEnd`, `transcriptionState`, `recordingState`, `language`, `startWithRecording`, `startWithTranscription`, счётчики `transcription`/`messages`/`attachments`/`recordings`.
+
+Привязка сессии к источнику (`plugins/love/src/types.ts:246`):
+
+| Поле | Смысл |
+|---|---|
+| `eventId` | мастер-событие серии; `undefined` у ad-hoc митинга |
+| `meeting` | `Ref<PermanentMeeting>` - аналог `eventId` для постоянных митингов |
+| `occurrence` | `originalStartTime` вхождения, к которому пришпилена сессия, а не фактический старт: перенесённое вхождение остаётся сшитым с историей серии |
 
 `MeetingStatus`:
 
@@ -51,7 +62,9 @@
 | 0 | `Active` | LiveKit-комната существует, идёт митинг |
 | 1 | `Finished` | Терминальное. Фильтруется из клиентского стора `meetings` |
 | 2 | `Pending` | Документ создан клиентом, LiveKit-комната ещё не стартовала |
-| 7 | `Scheduled` | Создан из календарного Event, ждёт начала |
+
+Статуса `Scheduled` больше нет: сессия запланированного митинга не существует,
+пока не открылось окно вхождения - её создаёт `resolveSession` (§7a).
 
 До миграции `meeting-minutes-to-space` жил в `DOMAIN_MEETING_MINUTES` как `AttachedDoc` c `title`/`attachedTo`. Миграция переносит в `DOMAIN_SPACE` (`title -> name`, `attachedTo -> roomId`) и чинит `space` у `PendingRecording`, `ActivityMessage`, `Attachment`. Класс `LegacyMeetingMinutes` оставлен как якорь домена.
 
@@ -85,17 +98,67 @@
 
 ### 2.5 Связь с календарём
 
-- `MeetingEventLink extends Event` (миксин на `calendar.class.Event`): `room`, `meetingId`.
+- `MeetingEventLink extends Event` - миксин на `calendar.class.Event`
+  (`plugins/love/src/types.ts:171`). Настройки митинга живут **на мастер-событии
+  серии**, а не на сессии:
+
+  | Поле | Смысл |
+  |---|---|
+  | `type` | `Video`/`Audio`; раньше бралось из `Room.type` |
+  | `linkId` | shortId постоянной ссылки; отсутствует, пока ссылку не выдали |
+  | `linkVersion` | бамп отзывает предыдущую ссылку: новый payload - новый shortId |
+  | `meetingAccess` | политика доступа, см. §7a |
+  | `private`, `language`, `startWithRecording`, `startWithTranscription` | параметры будущих сессий |
+  | `reminderBefore` | за сколько до вхождения напоминать (мс); `0` выключает, отсутствие - 15 минут по умолчанию |
+  | `permanentMeeting` | ссылка на `PermanentMeeting`, созданную вместе с серией: переименование одной переименовывает другую |
+
 - `MeetingSchedule extends Schedule` (миксин): `room`. **`calendar.class.Schedule`
-  - это booking-page** (`availability`, `meetingDuration`, `meetingInterval`), а не рекуррентность. Рекуррентность живёт в `ReccuringEvent { rules, exdate, rdate }` + `ReccuringInstance { recurringEventId, originalStartTime, virtual }`; инстансы разворачиваются на клиенте через `getAllEvents` и не персистятся.
-- Создание: `createMeeting` в `plugins/love-resources/src/utils.ts` (`DocCreateFunction`, фаза `post`) - один `MeetingMinutes` со `status: Scheduled` и `meetingScheduledDate: event.date`, миксин вешается на **все** события серии, гостевая ссылка пишется в `event.location`.
-- Триггер `OnEventUpdate` (`server-plugins/love-resources/src/index.ts`) синхронизирует `meetingScheduledDate` и участников при сдвиге Event, **только пока митинг в статусе `Scheduled`**.
+  - это booking-page** (`availability`, `meetingDuration`, `meetingInterval`), а не рекуррентность. Рекуррентность живёт в `ReccuringEvent { rules, exdate, rdate }` + `ReccuringInstance { recurringEventId, originalStartTime, virtual }`; инстансы разворачиваются на клиенте через `getAllEvents` и не персистятся. Поле `meetingId`, объявленное в модели (`models/love/src/index.ts:418`), пока не пишется никем - это место под встречу, созданную из booking-расписания (бэклог).
+- Создание: `createMeeting` в `plugins/love-resources/src/utils.ts` (`DocCreateFunction`, фаза `post`) вешает миксин на мастер-событие. Сессия **не создаётся заранее** - её открывает `resolveSession`, когда наступает вхождение (§7a).
+- Триггер `OnEventUpdate` (`server-plugins/love-resources/src/index.ts`) при сдвиге Event досыпает участников в живые сессии серии. Переопределение одного вхождения (`ReccuringInstance`) правит только свою сессию - она найдена по `occurrence === originalStartTime`; мастер правит все живые сессии сразу, их может быть две, когда затянувшийся митинг заходит на старт следующего.
+- Отмена и удаление (там же, `finishLiveSessions`):
+  - удаление мастера серии завершает все её живые сессии, удаление копии участником - ничего (мастер отличён по `access === 'owner'`);
+  - отмена **одного вхождения** календарь делает не через `exdate`, а заменой вхождения копией с `isCancelled: true` (`deleteRecHandler`, `plugins/calendar-resources/src/index.ts:87`) - это приходит как `TxCreateDoc`, а не как правка серии; сессия этого вхождения (найдена по `eventId` + `occurrence`) завершается, остальные вхождения работают;
+  - удаление `PermanentMeeting` завершает живые сессии по ссылке `meeting`, иначе комната остаётся занятой митингом, которого больше нет.
+- Триггер - это модельный документ: функция в серверном плагине без `serverCore.class.Trigger` не вызывается вообще, а воркспейс не получает новые модельные документы сам. Поэтому у каждой новой триггер-функции должна быть регистрация (`models/server-love/src/index.ts`) и шаг миграции (`models/server-love/src/migration.ts`, операция `serverLoveOperation`).
+
+### 2.6 PermanentMeeting
+
+`PermanentMeeting extends Space` (`plugins/love/src/types.ts`) - **единственный документ любой встречи**, постоянной и разовой: `type`, `language`, `startWithRecording`, `startWithTranscription`, `linkId`, `linkVersion`, `meetingAccess`, `repeatEvery`, `reminderBefore`, `group`, `order`, `startDate`, `duration`, `room`. Открыт всегда, ждать вхождения не нужно. Сессии (`MeetingMinutes`) ссылаются на него через `meeting`, как на серию через `eventId`.
+
+Списки раздела «Встречи» и вкладки «Группы» читают только этот класс, поэтому любая встреча обязана быть документом: разовая встреча больше не создаётся как голое событие календаря (`createOneOffMeeting` пишет `PermanentMeeting` с `calendar: false`, `startDate`, `duration` и `room`). `Event` создаётся только тогда, когда встреча заводится из планировщика: тогда документ получает серию, а миксин - обратную ссылку `permanentMeeting`. Миграция `event-meeting-to-permanent` (`models/love/src/migration.ts`) заводит документы для старых событий-встреч.
+
+`startDate` / `duration` (мс) - начало и длина встречи без серии: у разовой встречи больше нет события, из которого читалось бы время, а `startDate` постоянной без серии читает колонка «Следующая встреча». `room` - комната, в которой идёт разовая встреча (у постоянной пусто: её сессии идут в служебной комнате workspace).
+
+`repeatEvery` (мс) - как часто команда собирается собираться; задаётся в окне создания/настроек (§7a.7) и больше нигде. Сессии по нему **не открываются**: вход в комнату - единственный источник сессии.
+
+`reminderBefore` (мс) - за сколько напоминать о вхождении; `0` - молчать, отсутствие - дефолт 15 минут (§7a.5). Значение дублируется на миксине серии: напоминание читает `MeetingEventLink`.
+
+`group?: Ref<MeetingGroup>` и `order?: number` - положение в списке раздела «Группы». `MeetingGroup` (`name`, `order`) - обычный документ `core.class.Doc` в домене `DOMAIN_LOVE`, не `Space`: группа - это порядок строк, а не контейнер прав.
+
+Серия встречи живёт отдельно и ищется по обратной ссылке `MeetingEventLink.permanentMeeting`; `MeetingSchedule.meetingId` объявлен, но не пишется.
 
 ---
 
 ## 3. Безопасность
 
-`MeetingMinutes` - это `Space`, поэтому работает общий `spaceSecurity.ts`. Кто может закрыть встречу, менять организаторов и участников, и что видит владелец воркспейса без членства - [access_model.md](access_model.md), разделы 2-3. Фильтрация `findAll` выполняется в PostgreSQL-адаптере по аккаунту сессии; `searchFulltext` получает явный список разрешённых space.
+`MeetingMinutes` - это `Space`, поэтому работает общий `spaceSecurity.ts`.
+
+| Действие | Условие | Результат |
+|---|---|---|
+| Создать приватный space с `owners: [я]` | - | OK |
+| Создать приватный space с `owners: [другой]` | - | `Only owners can create private spaces` |
+| Создать приватный space с `owners: []` | - | отказ |
+| Создать публичный space | - | OK (намеренно) |
+| Сменить `private` | я не в `owners` | `Only owners can change space privacy` |
+| Сменить `owners` (set/$push/$pull) | я не в `owners` | `Only owners can change space owners` |
+| Сменить `members` приватного space | я не в `owners` | `Only owners can change members of private spaces` |
+| `$pull: { members: я }` (self-leave) | я в `members`, не owner | OK |
+| `$pull: { members: { $in: [я, X] } }` | я не в `owners` | `Only owners can change members of private spaces` |
+| `$push: { members: я }` в `autoJoin` space | я не в `owners` | OK |
+| Любые изменения space с `owners.size === 0` | - | OK (legacy) |
+
+Системный аккаунт и `AccountRole.Owner` обходят проверки. Фильтрация `findAll` выполняется в PostgreSQL-адаптере по аккаунту сессии; `searchFulltext` получает явный список разрешённых space.
 
 `ensurePerson` атомарен (`ON CONFLICT DO NOTHING` + откат orphan-person); Mongo как backend AccountDB не поддерживается. `OnEmployeeCreate` сериализует создание `PersonSpace` через `control.withScope`, поэтому дублей при параллельной регистрации нет.
 
@@ -108,21 +171,18 @@
 ```
         client createMeetingDocument            LiveKit room_started
   (нет) --------------------------> Pending -----------------------> Active
-                                       |                               |
-   calendar createMeeting              |                               | room_finished
-  (нет) ----------------------> Scheduled --(тот же путь)--> Active ---+---> Finished
                                                                        |
-                       meetingScheduledDate + SCHEDULED_MEETING_WINDOW_MS ещё не прошло |
-                                                                       +---> Scheduled (re-arm)
+   resolveSession в окне вхождения                                     | room_finished
+  (нет) --------------------------> Pending --(тот же путь)--> Active -+---> Finished
 ```
 
 - `activateMeeting` (`services/love/src/workspaceClient.ts`) отказывается поднимать `Finished` обратно.
-- `finishMeeting` переводит в `Scheduled` вместо `Finished`, если `Date.now() < meetingScheduledDate + SCHEDULED_MEETING_WINDOW_MS` (4 часа, `plugins/love/src/utils.ts`) - re-arm срабатывает и для митинга, который уже идёт в своём окне, не только для будущего; иначе `Finished` + `meetingEnd`. Затем чистит все `ParticipantInfo` митинга и pending-инвайты.
+- `finishMeeting` - терминальный переход: `Finished` + `meetingEnd`; повторный finish (webhook `room_finished`, затем polling) сохраняет первый `meetingEnd`. Re-arm убран вместе со статусом `Scheduled`: сессия покрывает одну встречу, следующее вхождение серии открывает новую. Затем чистит все `ParticipantInfo` митинга и pending-инвайты.
 - `checkUnfinishedMeetings` завершает `Active`/`Pending` митинги без LiveKit-комнаты старше `UNFINISHED_MEETING_GRACE_MS = 60s`.
 
 ### 4.1 Создание документа
 
-`createMeetingDocument` в `plugins/love-resources/src/meetings.ts` - сперва проверяет `findJoinableScheduled` (переиспользовать joinable `Scheduled`-митинг вместо создания нового), иначе `client.apply()` c `notMatch(MeetingMinutes, { roomId, status: { $in: LIVE_MEETING_STATUSES } })`, затем `createDoc` со `status: Pending`. При провале `notMatch` или исключении - переиспользует найденный митинг. Ретрай через 250 мс.
+`createMeetingDocument` в `plugins/love-resources/src/meetings.ts` - `client.apply()` c `notMatch(MeetingMinutes, { roomId, status: { $in: LIVE_MEETING_STATUSES } })`, затем `createDoc` со `status: Pending`. При провале `notMatch` или исключении - переиспользует найденный митинг. Ретрай через 250 мс.
 
 ---
 
@@ -289,6 +349,205 @@ UI: `OutgoingInvitePopup`, `IncomingInvitePopup`, `InviteButton` (лейблы `
 
 ---
 
+## 7a. Запланированные и постоянные митинги
+
+### 7a.1 Сессии нет, пока не наступило вхождение
+
+Запланированный митинг - это мастер-событие календаря с миксином
+`MeetingEventLink`. `MeetingMinutes` для него **не создаётся заранее**: сессию
+открывает `WorkspaceClient.resolveSession`
+(`services/love/src/workspaceClient.ts:724`) в момент, когда кто-то приходит по
+ссылке или жмёт Join.
+
+Окно вхождения (`plugins/love/src/utils.ts:287`):
+
+| Константа | Значение | Смысл |
+|---|---|---|
+| `SCHEDULED_JOIN_LEAD_MS` | 15 мин | насколько раньше старта можно войти |
+| `SCHEDULED_MEETING_WINDOW_MS` | 4 ч | насколько долго вхождение считается идущим |
+
+`resolveOccurrence` возвращает `current` (окно открыто) и `next` (когда
+вернуться). Горизонт поиска `next` считается от периода правила, а не фиксирован:
+у годовой серии следующее вхождение дальше любого фиксированного окна, и плоские
+90 дней хоронили живую ссылку.
+
+Третьим аргументом `resolveOccurrence(master, now, overrides)` принимает исключения календаря
+(`OccurrenceOverride`): отменённое вхождение - `ReccuringInstance` с `isCancelled: true` и `date` =
+исходному времени - из набора убирается, перенесённое (`date` = новое время, `originalStartTime` =
+старое) убирается из старого места и появляется в новом. Иначе ссылка открывала отменённую встречу
+и перенесённую - по старому времени. Читает их `WorkspaceClient.occurrenceOverrides` системным клиентом
+(они лежат в `PersonSpace` участников), выборка
+`$or: [{ date: { $gte } }, { originalStartTime: { $gte } }]`.
+
+Результаты `resolveSession` (`workspaceClient.ts:68`):
+
+| Результат | Что значит |
+|---|---|
+| `{ meeting }` | сессия есть или только что открыта |
+| `no-occurrence` + `nextOccurrence` | сейчас не время; когда вернуться |
+| `not-started` + `occurrence` | окно открыто, но никто не начал, и этот вызывающий не вправе |
+| `not-found` / `conflict` | нет такой встречи / сессию открывает кто-то другой прямо сейчас |
+
+Постоянный митинг (`PermanentMeeting`, §2.6) вхождения не имеет: он открыт
+всегда, `occurrence` у его сессий отсутствует.
+
+### 7a.2 Служебный этаж
+
+Запланированные и постоянные митинги не занимают обычную комнату. Их сессии идут в служебной комнате на служебном этаже с фиксированными id (`love.ids.ScheduledFloor`, `love.ids.ScheduledRoom`, `isServiceFloor` в `plugins/love/src/utils.ts`). Как этаж он в UI не показывается: стор `officeFloors` (`plugins/love-resources/src/stores.ts`) его исключает, а `currentFloor` подменяет его первым офисным этажом.
+
+Навигатор офиса (`OfficeNavigator.svelte` в `Main.svelte`) держит выбор в URL - `/love/<сегмент>`: `meetings`, `groups` или id этажа (стор `officeSegment`, из него `officeView`; `Hall.svelte` рендерит центр). Старый сегмент `permanent` ведёт в `groups`, поэтому прежние ссылки и закладки открывают вкладку групп. Переход сбрасывает `fragment`, поэтому открытая по центру панель закрывается. Разделы - штатный `SpecialView`:
+
+- «Этажи» - этаж с людьми, чтобы позвонить; таблица и список этажа - встречи, прошедшие в его комнатах. Кнопка «+» (Maintainer) - `EditFloorPopup.svelte`.
+- «Встречи» - по миксину `love.mixin.MeetingEventLink`, три штатных вьюлета на выбор через переключатель представлений `SpecialView`: календарь (`love.viewlet.CalendarScheduledMeetings`), список (`love.viewlet.ListScheduledMeetings`) и таблица (`love.viewlet.TableScheduledMeetings`). Все три висят на миксине, поэтому в приложение календаря не попадают. Панель открывается через `Hierarchy.mixinOrClass`, `ObjectEditor` на миксине даёт шапку `EditScheduledMeeting.svelte` (название, «Редактировать», вход). Запрос фильтрует `recurringEventId: { $exists: false }` - мастера серий и одиночные события, без копий вхождений.
+- «Группы» (`love.string.MeetingGroups`, сегмент `groups`) - штатные вьюлеты класса `PermanentMeeting`: список `love.viewlet.ListPermanentMeetings` (группировка по `group`, `members`, `private`, `createdBy`) и таблица `love.viewlet.TablePermanentMeetings` (следующее вхождение, участники, последняя сессия), порядок и перетаскивание - §7a.7. Над списком две кнопки: «Новая встреча» (`CreatePermanentMeetingPopup` → `PermanentMeetingForm`) и «Новая группа» (`MeetingGroupPopup`). Шапка панели - `EditPermanentMeeting.svelte` (название, галка «Постоянная встреча» → то же окно настроек, вход).
+
+Настройки встречи - в панели свойств: у миксина `MeetingEventLink` и у `PermanentMeeting` свойства `meetingAccess` (редактор `MeetingAccessEditor.svelte` открывает `MeetingLinkPopup.svelte`: кто начинает, срок жизни, пароль, копирование гостевой ссылки, отзыв), запись, транскрипция; у миксина ещё приватность и язык. Прошедшие сессии - `ObjectEditorFooter` (`MeetingSessionsFooter.svelte` -> `MeetingMinutesSection.svelte`, таблица `TableMeetingMinutesEmbedded`, запрос по `meeting` или `eventId`), ниже описания и вложений.
+
+Постоянный митинг создаётся кнопкой «Новая встреча» во вкладке «Группы» - одним окном на создание и настройку, §7a.7:
+
+![Создание постоянного митинга](images/love-permanent-create.png)
+
+### 7a.3 Ссылка на митинг
+
+Ссылка - это **указатель, а не пропуск**: в неё ничего изменяемого не зашито,
+права выдаёт сервис love по политике на момент входа.
+
+- `buildMeetingLinkPayload` / `parseMeetingLinkPayload`
+  (`plugins/love/src/utils.ts:455`) кладут в payload `eventId` (или `_id`
+  постоянного митинга), workspace, `linkVersion` и `kind`.
+- `GET /meetingLink` (`services/love/src/main.ts:404`) выдаёт shortId. Ссылку
+  получает только участник: раздать её - это пригласить.
+- Отзыв - бамп `linkVersion` на миксине: старый shortId продолжает
+  резолвиться, но несёт устаревшую версию, и `checkMeetingLink` отдаёт `revoked`.
+
+Политика и пароль правятся в `MeetingLinkPopup` - с карточки постоянного митинга
+или из панели события (`EditMeetingData.svelte:106`):
+
+![Настройки ссылки митинга](images/love-meeting-link.png)
+
+Политика `MeetingAccess` (`plugins/love/src/types.ts:149`):
+
+| Поле | Значения | Смысл |
+|---|---|---|
+| `start` | `members` \| `link` | кто вправе открыть сессию вне вхождения; `link` делает митинг постоянной комнатой |
+| `afterTtl` | ms или `null` (бессрочно), по умолчанию 7 дней | сколько ссылка живёт после конца серии - отсчёт идёт **только** когда будущих вхождений не осталось |
+| `past` | `none` \| `last` | что ссылка показывает, когда серия закончилась; `none` не отдаёт даже названия |
+| `guestPassword` | hash+salt | пароль для гостей, пишет только сервис love |
+
+### 7a.4 Пароль гостя
+
+`POST /meetingPassword` (`main.ts:446`) ставит и снимает пароль; открытый текст
+в документ не попадает, хеш наружу не отдаётся.
+`hashGuestPassword`/`verifyGuestPassword` (`services/love/src/passwords.ts`) -
+pbkdf2-sha256, 100 000 итераций, случайная соль на пароль, сравнение через
+`timingSafeEqual`. Итераций на два порядка больше, чем у пароля аккаунта:
+тот защищён блокировкой после 5 неудач, а этот хеш виден каждому участнику
+пространства, и офлайновый перебор по нему дёшев.
+
+Пустая строка паролем не считается (иначе войти можно было бы, прислав `''`),
+снятие - явный `null`.
+
+### 7a.5 Напоминания о вхождениях
+
+Напоминание - клиентское: серверного планировщика для событий календаря нет, поэтому его
+доставляет тот клиент, который открыт (`plugins/love-resources/src/meetingReminders.ts`).
+
+| Что | Значение |
+|---|---|
+| Тик | 30 с |
+| Окно развёртывания вхождений | 1 ч вперёд |
+| Задержка по умолчанию | 15 мин (`DEFAULT_MEETING_REMINDER`) |
+| Где хранится задержка | `MeetingEventLink.reminderBefore`, мс; `0` - молчать |
+| Защита от повторов | `localStorage['love-meeting-reminders']`, ключ `eventId:date`, хранится 200 последних |
+
+Требует разрешения браузерных `Notification` - оно спрашивается один раз при первом запуске
+клиента. Таймер один на вкладку: после повторного входа в том же окне второй интервал
+не создаётся, иначе напоминания приходили бы дважды. Запрос - один, по наличию миксина и
+`date <= now + 1ч`; лишние события (старые серии и события вне окна) отсеивает `getAllEvents`
+и проверка `dueAt`. `$or` в запросе не используется: адаптер БД воркспейса его не переводит
+и падает с `operator does not exist: text = text[]`.
+
+Включить/выключить напоминание можно в шапке встречи (`EditScheduledMeeting.svelte`,
+чекбокс `love.string.RemindBefore`).
+
+### 7a.6 Встреча из планировщика
+
+Планировщик (`plugins/time-resources`, «Планировщик»/«Планировщик команды») открывает
+тот же попап, что и календарь: `PlanningCalendar.svelte:312` → `calendar.component.CreateEvent`.
+Любовское тело `MeetingData.svelte` (`DocCreateExtension` на `calendar.class.Event`)
+добавляет в него «Создать встречу» и выбор комнаты, участники - штатные `EventParticipants` календаря.
+
+`createMeeting` (`plugins/love-resources/src/utils.ts`, фаза `post`) делает две вещи:
+
+1. вешает миксин `MeetingEventLink` на созданное событие/мастер;
+2. пишет в событие `location` - ссылку на комнату.
+
+Серии и `PermanentMeeting` эта форма больше не создаёт: помимо встречи из планировщика
+есть второе, отдельное окно - «Новая встреча» в разделе «Группы» (§7a.7),
+которое и создаёт пару «серия + постоянная». Так у каждого пути создания один результат
+и одна точка правки.
+
+Карточки в планировщике рисует `DayCalendar.svelte` → `EventElement.svelte`, а он рендерит
+`EventCardExtensions` → `MeetingEventBadge.svelte` (кнопка входа прямо с карточки). Поэтому
+встреча из планировщика видна и в календаре, и во вкладке «Встречи».
+
+Во вкладке «Встречи» вхождения отсечены фильтром `recurringEventId: { $exists: false }`:
+календарь зеркалит миксин на все копии с тем же `eventId`, и без фильтра каждое перенесённое
+или отменённое вхождение висело бы в списке отдельной встречей. Фильтровать по
+`originalStartTime` нельзя: его несёт и мастер серии (`makeRecurring`), и тогда из списка
+исчезают все серии.
+
+### 7a.7 Окно постоянной встречи, группы и права
+
+Одно окно на создание и настройку - `PermanentMeetingForm.svelte` (id
+`love.component.PermanentMeetingForm`): название, дата/время (`EventTimeEditor`), период
+повторения (`RepeatEveryEditor`), участники (`AccountArrayEditor`), «напомнить за N минут»,
+пароль для гостей, комната. Открывается тремя путями: кнопкой «Новая встреча» (новая встреча),
+действием «Настройки» в строке списка и галкой «Постоянная встреча» в шапке карточки.
+
+Сохранение идёт через `plugins/love-resources/src/permanentMeetingSchedule.ts`:
+
+| Функция | Что пишет |
+|---|---|
+| `createPermanentMeetingWithSchedule` | серию (`ReccuringEvent` с правилом из `periodRules`, или `Event` без периода), миксин на мастер, `PermanentMeeting`, обратную ссылку `permanentMeeting`, пароль гостей |
+| `createOneOffMeeting` | только `PermanentMeeting` (`calendar: false`, `startDate`, `duration`, `room`): серия не создаётся, встреча остаётся в списках раздела; серия появляется лишь если окно открыто из планировщика (`input.calendar`) |
+| `updatePermanentMeetingWithSchedule` | саму встречу (название, участники, `reminderBefore`, `repeatEvery`), мастер серии (название, дата, `rules`) и миксин, пароль гостей |
+
+Серия ищется по миксину: `{ '<mixin>.permanentMeeting': <id встречи> }`. Обратной связи
+«встреча → серия» в документе нет намеренно: серий может быть больше одной (старые данные),
+и поиск по ссылке находит все.
+
+Права (`plugins/love-resources/src/permissions.ts`, чистые функции + серверный триггер):
+
+| Кто | Видит «Настройки» | «Покинуть» | «Удалить» |
+|---|---|---|---|
+| Создатель (`createdBy`, иначе `owners[0]`) | да | нет | да |
+| Участник | да | да | нет |
+| Посторонний | нет | нет | нет |
+
+Создателя нельзя убрать ни из `owners`, ни из `members`: `OnPermanentMeetingUpdate`
+(`server-plugins/love-resources`) возвращает его обратно, иначе встречу некому было бы удалить.
+Триггер правит и `owners`, и `members` - первая версия смотрела только на `members`.
+
+Вкладка «Группы» показывает штатный сгруппированный список класса `PermanentMeeting`
+(`love.viewlet.ListPermanentMeetings`) или таблицу (`love.viewlet.TablePermanentMeetings`).
+Порядок строк задаёт `order` встречи, порядок секций - `order` группы; встречи без группы идут
+последней секцией (`MeetingsWithoutGroup`). Перетаскивание - нативный HTML5 drag: шапка группы
+меняет порядок групп, строка - переезжает в другую группу или меняет место внутри; результат
+сохраняет `persistOrder` (`groups.ts`) пакетом `diffUpdate`. Группа создаётся кнопкой «Новая
+группа» (`MeetingGroupPopup.svelte`: название + отметки встреч → `createMeetingGroup`),
+переименовывается прямо в шапке (`renameMeetingGroup`).
+
+В строке таблицы: название, следующее вхождение (`nextOccurrence` в `period.ts`: старт мастера +
+период), участники, последняя сессия.
+
+Правка серии из вкладки «Встречи» - действие `EditMeetingSettings` на миксине: открывает то же
+окно настроек, если у серии есть `permanentMeeting`, и скрыто для обычного события
+(`CanEditMeetingSettings`). Диалог выбора области правки (`UpdateRecInstancePopup`) для встреч
+показывает только «Текущая» и «Все (будущие)»: проп `modes`, у события остаются все три варианта.
+
+---
+
 ## 8. Гости
 
 ### 8.1 Приложение
@@ -297,14 +556,36 @@ UI: `OutgoingInvitePopup`, `IncomingInvitePopup`, `InviteButton` (лейблы `
 - `GuestJoinPopup.svelte` - запрос имени, если не удалось подключиться автоматически.
 - `GuestControlBar`, `GuestParticipantView`, `GuestParticipantsListView` - упрощённый UI.
 
-### 8.2 Ссылки
+### 8.2 Ссылки: два формата
 
-При создании Event с комнатой генерируется гостевая ссылка через `login.function.GetInviteLink` и пишется в `event.location`; содержит `inviteId` + `navigateUrl` с `meetId`.
+| Формат | Кто выдаёт | Что несёт |
+|---|---|---|
+| **Указатель** (текущий) | `GET /meetingLink` (§7a.3) | `eventId`/`_id` митинга, workspace, `linkVersion`, `kind` |
+| **JWT** (старый) | `POST /guestToken` (`services/love/src/main.ts`) | подписанный токен с `meetingId`, время жизни не ограничено |
+
+JWT-путь убрать нельзя: выданные ссылки живут неограниченно. Поэтому он проходит **те же** проверки, что и указатель - `checkMeetingLink` и пароль (`guests.ts`). Токен не несёт `linkVersion`, так что отзыв (бамп версии) отвергает его как устаревший. Выдача JWT-ссылки, как и указателя, доступна только участнику: раздать ссылку - это пригласить.
+
+Резолв токена уводит гостя на **серию**, а не на одно вхождение, которое он называет (`resolveGuestSession` в `guests.ts`), - иначе ссылка умирала бы после первой встречи.
 
 ### 8.3 Эндпоинты (`services/love/src/guests.ts`)
 
-- `/guestInfo` -> `{meetingId, workspace, workspaceUrl, now, meetingScheduledDate, meetingEnd, title, meetingStatus, roomFound}`.
-- `/guestJoin`: `Scheduled` -> 403 "Meeting has not started yet"; `Finished` -> 403 "Meeting has already finished"; нет LiveKit-комнаты -> 404; иначе `ensurePersonByName` (`addGuestEmployee: true`) и выдача токена.
+`POST /guestInfo` - лобби, сессию не открывает:
+
+| Ответ | Когда |
+|---|---|
+| `{passwordRequired: true, workspace, workspaceUrl, now}` | у ссылки есть пароль, и он ещё не проверен - о самой встрече не сообщается ничего |
+| `{mode: 'before'\|'after', nextOccurrence, title, roomFound: false}` | сессии нет: либо встреча впереди, либо серия кончилась. При `past: 'none'` название не отдаётся |
+| `{meetingId, meetingStatus, roomFound, …}` | сессия живая |
+| 404 | такой встречи нет |
+
+`POST /guestJoin` - вход. Тело: `{token, firstName, lastName, personToken?}`.
+
+1. Ключ rate-limit - ссылка + IP; 10 промахов пароля закрывают её на 15 мин.
+2. `resolveGuestLink`: `checkMeetingLink` (отзыв/истечение), затем пароль. Неверный пароль - 401, о встрече ничего не сообщается.
+3. Открывать сессию вправе только `start: 'link'`; при `members` гость ждёт, пока митинг начнёт участник.
+4. `firstName`/`lastName` обязательны: без них `400 { error: 'Please enter your first and last name' }`, персона не создаётся.
+5. `personToken` необязателен. Если клиент его не прислал, сервер выводит `guest-link:<sha256(meetingId : имя)>` - повторный вход с тем же именем по той же ссылке даёт ту же персону. Разные люди с одинаковым именем на одной встрече при этом сливаются, а один гость в разных встречах получает разные персоны; штатный клиент всегда шлёт свой `personToken` из `localStorage` и на этот путь не попадает.
+6. `ensurePersonByName` (`addGuestEmployee: true`) и выдача токена: ответ `{token, roomName, person}`.
 
 ---
 
@@ -368,6 +649,10 @@ Egress ждёт сигнал `START_RECORDING` от страницы шабло�
 
 Найдены и закрыты 2026-08-28 (FUSIO-1242). D4-D10 - нумерация из `love-meetings-rework.md` (там же карточки с разбором), D25 - находка этого же прогона.
 
+**D4, D5, D10 описывают механику статуса `Scheduled`, которого больше нет**
+(§2.2): запланированная сессия теперь не существует до вхождения, поэтому
+«оживить» её Connect'ом нечем. Строки оставлены как история.
+
 | # | Проблема | Правка |
 |---|---|---|
 | D4 | `EditRoom.connect` брал любой митинг комнаты из неупорядоченного стора, включая `Scheduled` на следующую неделю. Нажавший Connect попадал в чужой запланированный митинг, `room_started` переводил его в `Active`, и к назначенному времени митинг уже "прошёл" | `pickRoomMeeting`: `Active` -> `Pending` -> `Scheduled` только внутри окна запуска (`isScheduledJoinable`) |
@@ -380,7 +665,7 @@ Egress ждёт сигнал `START_RECORDING` от страницы шабло�
 
 Коллизии координат теперь ещё и закрепляются: `RoomPreview` у создателя митинга пишет разведённые места обратно через `apply()` + `notMatch` (§6.3), поэтому раскладка сходится к одной у всех клиентов. Сама первая аллокация в `upsertParticipantFromLiveKit` по-прежнему неатомарна (read-then-create).
 
-Проверка: `plugins/love/src/__tests__/getFreeRoomPlace.test.ts` (6 тестов), `services/love` 138 тестов, `server-plugins/love-resources` 21 тест.
+Проверка: `plugins/love` 44 теста, `services/love` 214, `server-plugins/love-resources` 28, `plugins/love-resources` 27, `plugins/calendar` 32, `models/love` 9.
 
 ## 11. Тесты
 
@@ -398,7 +683,14 @@ Egress ждёт сигнал `START_RECORDING` от страницы шабло�
 
 ### 11.2 Unit: `plugins/love/src/__tests__/`
 
-`getFreeRoomPlace.test.ts` - границы `pref`, резерв `(0,0)` офиса, overflow по `x`.
+| Файл | Что проверяет |
+|---|---|
+| `getFreeRoomPlace.test.ts` | Границы `pref`, резерв `(0,0)` офиса, overflow по `x` |
+| `resolveOccurrence.test.ts` | Окно вхождения, exdate/rdate, горизонт поиска `next` для годовой и полугодовой серии, отмена и перенос вхождения (`OccurrenceOverride`) |
+| `checkMeetingLink.test.ts` | Отзыв по `linkVersion`, `afterTtl` только при отсутствии будущих вхождений, постоянный митинг не истекает |
+| `meetingLinkPayload.test.ts` | Round-trip payload, в том числе `kind: 'meeting'` |
+| `meetingMasterQuery.test.ts` | Резолв мастера серии против переопределения вхождения |
+| `serviceFloor.test.ts` | Распознавание фиксированных id служебного этажа и комнаты |
 
 Запуск: `cd plugins/love && npx jest`.
 
@@ -410,9 +702,16 @@ Egress ждёт сигнал `START_RECORDING` от страницы шабло�
 | `utils.test.ts` | `parseRoomName`, `getRoomName`, токены |
 | `edge-cases.test.ts` | Митинг без `roomId`, быстрые join/leave, AI-участники без `sessionId` |
 | `finishMeeting.test.ts` | Re-arm scheduled vs терминальный Finished |
-| `checkUnfinishedMeetings.test.ts` | Не трогать `Scheduled`, grace-окно |
-| `guests.test.ts` | 403 на `Scheduled`/`Finished` |
+| `checkUnfinishedMeetings.test.ts` | Grace-окно перед автозавершением |
+| `guests.test.ts` | Отказы гостевого входа |
 | `polling.test.ts` | Reconcile, outage-drain |
+| `resolveSession.test.ts` | `WorkspaceClient.resolveSession`: окно, гонка создателей, `conflict` |
+| `meetingLink.test.ts` | Выдача и резолв указателя, участие вызывающего |
+| `guestPassword.test.ts` | Гейт пароля в лобби и на входе, rate-limit |
+| `passwords.test.ts` | `hashGuestPassword`/`verifyGuestPassword` |
+| `sessions.test.ts` | `claimSession`, `liveSessionsOf` |
+| `workspaceClient.test.ts` | `upsertParticipantFromLiveKit`, гонка на размещении |
+| `recordings.test.ts` | `startRecording`/`startAudioRecording`, резервация до egress |
 
 Хелперы `test-helpers.ts`: `TEST_IDS`, `TEST_TIMESTAMPS`, `createMockContext()`, `createMockMeeting()`, `createMockParticipant()`, `createMockRoom()`, `TEST_SCENARIOS`. Моки: `RestClient`, `WorkspaceClient.create()`, `@hcengineering/server-token` - база и LiveKit не нужны.
 
@@ -462,10 +761,8 @@ BENCH_INVITE_FLOW=1 BENCH_INVITE_ITERATIONS=200 BENCH_INVITE_PARALLEL=20 \
 | `meetings.devices.tests.ts` | Выбор микрофона: muted join, пропавшее устройство |
 | `meetings.network.tests.ts` | Деградация линка до LiveKit: задержка, обрыв, полный offline |
 | `meetings.presence.tests.ts` | Размещение на сетке этажа, разрешение коллизий координат |
-| `meetings.scheduled-links.tests.ts` | Гостевая ссылка, ранний старт, poll-цикл |
 | `meetings.refresh-reconnect.tests.ts` | Reconnect после refresh, explicit leave |
 | `meetings.host-refresh.tests.ts` | F5 владельца офиса не выкидывает остальных (D7) |
-| `meetings.scheduled-connect.tests.ts` | Connect не "оживляет" будущий `Scheduled` (D4) |
 | `meetings.finished-token.tests.ts` | `/getToken` отвергает `Finished` (D10), без браузера |
 | `meetings.multitab.tests.ts` | Второй таб того же person эвиктит первый и закрывает его комнату (`/claimSession`) |
 | `meetings.transactor-restart.tests.ts` | Присутствие переживает force-close воркспейс-сессии. **Только вручную**: `LOVE_MANUAL_TESTS=true` |
@@ -518,7 +815,7 @@ LOVE_MANUAL_TESTS=true pnpm run uitest tests/love/meetings.all.spec.ts -g "works
 |---|---|---|---|
 | §2 Модель, парсинг room name | `utils.test.ts`, `edge-cases.test.ts` | - | Достаточно |
 | §3 Безопасность private-митинга | `guests.test.ts` (403/404) | `privacy`, `scenarios`, `workspace-owner` | Достаточно |
-| §4 Жизненный цикл, автозавершение | `checkUnfinishedMeetings`, `finishMeeting` | `start`, `session`, `scheduled-links` | Достаточно |
+| §4 Жизненный цикл, автозавершение | `checkUnfinishedMeetings`, `finishMeeting` | `start`, `session`, `recurring` | Достаточно |
 | §5 Подключение, reconnect | `webhook.test.ts`, `polling.test.ts` | `connect`, `refresh-reconnect`, `network` | Достаточно |
 | §5.4 Деградация сети до LiveKit | - | `network` (задержка, обрыв, offline) | Базово |
 | §6 Присутствие и сетка | `getFreeRoomPlace.test.ts` | `presence` | Базово |
@@ -534,7 +831,7 @@ LOVE_MANUAL_TESTS=true pnpm run uitest tests/love/meetings.all.spec.ts -g "works
 3. **Медиа-канал** - тесты `network` бьют только по сигнальному WebSocket. Потеря пакетов и деградация RTC-портов (7891/7892) не моделируются.
 4. **CRUD этажей и комнат** - создание, удаление, переименование, смена `RoomType`, запрет удаления этажа с комнатами.
 5. **Screen sharing** - не покрыт ни на одном уровне.
-6. **Гости**: не покрыты private-митинг, отзыв ссылки, `Scheduled` до старта (есть только unit на 403), поведение гостя при обрыве связи.
+6. **Гости**: не покрыты private-митинг и отзыв ссылки через UI (есть только unit на 403), поведение гостя при обрыве связи.
 
 ---
 

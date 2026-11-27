@@ -7,6 +7,10 @@
     "PersonsLabel": "{name}",
     "AddDescription": "説明を追加",
     "Date": "日付",
+    "When": "日時",
+    "About": "概要",
+    "Where": "場所",
+    "Remember": "通知",
     "DueTo": "期限",
     "Description": "説明",
     "Title": "タイトル",
@@ -55,6 +59,7 @@
     "EventTitlePlaceholder": "イベントタイトル",
     "TimeZone": "タイムゾーン",
     "Repeat": "繰り返し",
+    "DoNotRepeat": "繰り返さない",
     "On": "開始日",
     "Every": "毎",
     "After": "後",
@@ -125,6 +130,18 @@
     "SynchronizedCalendars": "同期されたカレンダー",
     "Account": "アカウント",
     "NoCalendars": "同期するカレンダーが選択されていません",
-    "PersonalCalendar": "個人カレンダー"
+    "PersonalCalendar": "個人カレンダー",
+    "Going": "参加する",
+    "NotGoing": "参加しない",
+    "Maybe": "未定",
+    "WillYouAttend": "参加しますか？",
+    "RsvpAccepted": "参加",
+    "RsvpDeclined": "不参加",
+    "RsvpTentative": "未定",
+    "RsvpPending": "未回答",
+    "RsvpAcceptedCount": "{count, plural, one {# going} other {# going}}",
+    "RsvpTentativeCount": "{count, plural, one {# maybe} other {# maybe}}",
+    "RsvpDeclinedCount": "{count, plural, one {# not going} other {# not going}}",
+    "RsvpPendingCount": "{count, plural, one {# no answer} other {# no answer}}"
   }
 }

@@ -1,16 +1,34 @@
 import { Event, Schedule } from '@hcengineering/calendar'
 import { Person } from '@hcengineering/contact'
-import { AccountUuid, AttachedDoc, Doc, MarkupBlobRef, Ref, Space, Timestamp, WorkspaceUuid } from '@hcengineering/core'
+import {
+  AccountUuid,
+  AttachedDoc,
+  Doc,
+  MarkupBlobRef,
+  Rank,
+  Ref,
+  Space,
+  Timestamp,
+  WorkspaceUuid
+} from '@hcengineering/core'
 import { Preference } from '@hcengineering/preference'
 
 export enum RoomType {
   Video,
   Audio,
-  Reception
+  Reception,
+  // The one service room every scheduled meeting runs in - it holds no place on a floor grid,
+  // sessions are told apart by MeetingMinutes, not by the room.
+  Scheduled
 }
 
 export interface Floor extends Doc {
   name: string
+  /**
+   * Manual position in the office navigator, a LexoRank. A drop writes the moved floor only, its
+   * neighbours keep their values. Floors without one sort after the ranked ones, by name.
+   */
+  rank?: Rank
 }
 
 /**
@@ -143,13 +161,70 @@ export interface RoomInfo extends Doc {
   isOffice: boolean
 }
 
+export interface MeetingAccess {
+  /** Who may open a new session outside an occurrence window. */
+  start: 'members' | 'link'
+  /** How long the link outlives the series, ms; `null` - forever. Counted from the last session's end,
+   *  and only while the series has no future occurrence - otherwise a weekly meeting would die weekly. */
+  afterTtl: number | null
+  /** What the link gives access to once the series is over. */
+  past: 'none' | 'last'
+  /** pbkdf2-sha256 hash+salt, base64. Absent - no password. Written only by the love service. */
+  guestPassword?: { hash: string, salt: string }
+}
+
+export const defaultMeetingAccess: MeetingAccess = {
+  start: 'members',
+  afterTtl: 7 * 24 * 60 * 60 * 1000,
+  past: 'last'
+}
+
+/**
+ * Meeting identity, mixed into calendar.class.Event. Lives on the series master only: a persisted
+ * ReccuringInstance would carry its own `linkId`. Time and participants stay on the Event.
+ */
 export interface MeetingEventLink extends Event {
-  room: Ref<Room>
-  meetingId: Ref<MeetingMinutes> // A reference to scheduled meeting minutes
+  /** Media mode of the session. Used to be taken from Room.type. */
+  type?: RoomType.Video | RoomType.Audio
+
+  /** The room the meeting takes place in. Absent: the session runs in the workspace service room. */
+  room?: Ref<Room>
+
+  /** shortId of the permanent link. Absent until the link is first issued. */
+  linkId?: string
+  /** Bumping it revokes the previous link: new payload, new shortId. */
+  linkVersion?: number
+
+  /** Named `meetingAccess`, not `access`: `Event.access` is already the calendar's AccessLevel. */
+  meetingAccess?: MeetingAccess
+
+  /** Privacy of future sessions. Drives the Busy badge on the service floor. */
+  private?: boolean
+  language?: RoomLanguage
+  startWithRecording?: boolean
+  startWithTranscription?: boolean
+
+  /** Lead time of the meeting reminder in msec; absent or 0 turns the reminder off. */
+  reminderBefore?: number
+
+  /** Copy of `PermanentMeeting.group`: a viewlet groups by an attribute of its own class only. */
+  group?: Ref<MeetingGroup>
+
+  /** The permanent meeting the series belongs to, so renaming one renames the other. */
+  permanentMeeting?: Ref<PermanentMeeting>
+
+  /**
+   * Made in the Planner: such a series lives in the personal calendar, so the Planner reads it.
+   * A meeting made in the meetings section has no flag and is kept out of the Planner.
+   */
+  planner?: boolean
 }
 
 export interface MeetingSchedule extends Schedule {
   room: Ref<Room>
+  /** Set when the recording of a public schedule is also a permanent meeting: a schedule carries no
+   *  `eventId`, so it points at the meeting itself instead of a series. */
+  meetingId?: Ref<PermanentMeeting>
 }
 
 export interface DevicesPreference extends Preference {
@@ -164,8 +239,7 @@ export interface DevicesPreference extends Preference {
 export enum MeetingStatus {
   Active = 0,
   Finished = 1,
-  Pending = 2,
-  Scheduled = 7 // In case meeting is scheduled, it could be started by any ws participant, only once at -15mins - due interval
+  Pending = 2
 }
 
 export const transcriptionStateLabel = {
@@ -192,8 +266,6 @@ export interface MeetingMinutes extends Space {
   recordingState: RecordingState
   meetingEnd?: Timestamp
 
-  meetingScheduledDate?: Timestamp
-
   transcription?: number
   messages?: number
   attachments?: number
@@ -203,6 +275,14 @@ export interface MeetingMinutes extends Space {
   /** Reference to the room where meeting takes place (optional, for navigation) */
   roomId?: Ref<Room>
 
+  /** eventId of the master event this session belongs to. Undefined for an ad-hoc meeting. */
+  eventId?: string
+  /** The permanent meeting this session belongs to - the counterpart of `eventId` for F4. */
+  meeting?: Ref<PermanentMeeting>
+  /** Start of the occurrence the session is pinned to - `originalStartTime`, not the actual
+   *  start: a moved occurrence keeps the series history stitched to its original point. */
+  occurrence?: Timestamp
+
   language: RoomLanguage
 
   // If defined, should start with recording
@@ -211,6 +291,77 @@ export interface MeetingMinutes extends Space {
   startWithTranscription?: boolean
 
   traceId?: string
+}
+
+/**
+ * A meeting with a name and no time: it is started whenever someone needs it, and every start
+ * opens its own `MeetingMinutes` session. Documents and chat live here, on the parent, so they
+ * outlive the sessions - a session is terminal, this is not (F4).
+ */
+export interface PermanentMeeting extends Space {
+  /** The meeting's own document. Sessions keep their own minutes. */
+  descriptionRef: MarkupBlobRef | null
+
+  /** Media mode of every session opened from here. */
+  type: RoomType.Video | RoomType.Audio
+  language: RoomLanguage
+  startWithRecording?: boolean
+  startWithTranscription?: boolean
+
+  /** How often the meeting is held, in ms. Set when the meeting is created from the planner. */
+  repeatEvery?: number
+
+  /**
+   * Whether the meeting is also a series in the calendar and the planner. Undefined means yes: a
+   * meeting created before the flag existed always had its series.
+   */
+  calendar?: boolean
+  /**
+   * Start of the schedule kept on the meeting itself. A meeting with a series keeps it there; this
+   * copy is what the "next meeting" column reads when the meeting was not put into the calendar.
+   */
+  startDate?: Timestamp
+  /** Length of a one-off meeting in ms: with no series nothing else says when it ends. */
+  duration?: number
+  /** Room the session of a one-off meeting runs in; a permanent meeting owns no room. */
+  room?: Ref<Room>
+  /** Time zone of `startDate`, so a meeting without a series still shows its local time. */
+  timeZone?: string
+
+  /**
+   * The calendar event of the meeting, kept on the meeting itself. Absent means the meeting lives
+   * in the list only: nothing to show in the calendar and nothing for the row to mark as scheduled.
+   */
+  event?: Ref<Event>
+
+  /** shortId of the permanent link. Absent until the link is first issued. */
+  linkId?: string
+  /** Bumping it revokes the previous link: new payload, new shortId. */
+  linkVersion?: number
+  /** Only `start` applies here: with no series there is nothing for `afterTtl`/`past` to follow. */
+  meetingAccess?: MeetingAccess
+
+  /** Lead time of the reminder in ms for a meeting with no series; absent or 0 turns it off. */
+  reminderBefore?: number
+
+  /** Flat group of the meetings list. */
+  group?: Ref<MeetingGroup>
+  /** Position inside the group: a LexoRank the list sorts by and a drop rewrites. */
+  rank?: Rank
+
+  messages?: number
+  attachments?: number
+}
+
+/**
+ * @public
+ *
+ * A flat named group of permanent meetings. Meetings carry their own `rank` inside the group, so
+ * both the group list and the meeting list are ordered by a LexoRank and nothing else.
+ */
+export interface MeetingGroup extends Doc {
+  name: string
+  rank?: Rank
 }
 
 /**

@@ -1,6 +1,7 @@
-import { AccountUuid, Data, Ref, Timestamp, generateId } from '@hcengineering/core'
+import { AccountUuid, Data, type PersonId, Ref, Timestamp, generateId } from '@hcengineering/core'
 import { Person } from '@hcengineering/contact'
 import calendar, {
+  AccessLevel,
   BusySlot,
   Calendar,
   PrimaryCalendar,
@@ -8,7 +9,9 @@ import calendar, {
   ExternalCalendar,
   ReccuringEvent,
   ReccuringInstance,
-  RecurringRule
+  RecurringRule,
+  RsvpStatus,
+  RsvpSummary
 } from '.'
 
 function getInstance (event: ReccuringEvent, date: Timestamp): ReccuringInstance {
@@ -547,4 +550,59 @@ function mergeIntervals (
     }
   }
   return res
+}
+
+/**
+ * @public
+ *
+ * Tallies answers from every copy of an event. Only the server sees them all: a copy lives in its
+ * owner's space, so one answer per participant is what the master gets told about.
+ */
+export function collectRsvp (copies: Array<Pick<Event, 'access' | 'rsvp' | 'user'>>): RsvpSummary {
+  // Keyed by `user`, the one field a copy owns - `participants` is the master's list, the same
+  // in every copy, so keying on it collapsed all the answers into one.
+  const answers = new Map<PersonId, RsvpStatus>()
+  for (const copy of copies) {
+    // The master carries no answer of its own; counting it would invent one.
+    if (copy.access === AccessLevel.Owner) continue
+    const who = copy.user
+    if (who === undefined || copy.rsvp === undefined) continue
+    answers.set(who, copy.rsvp)
+  }
+
+  const summary: RsvpSummary = { accepted: 0, declined: 0, tentative: 0 }
+  for (const status of answers.values()) {
+    if (status === 'accepted') summary.accepted++
+    else if (status === 'declined') summary.declined++
+    else summary.tentative++
+  }
+  return summary
+}
+
+/** How many of the invited have not answered yet - silence is not a refusal. */
+export function rsvpPending (participants: number, summary: RsvpSummary | undefined): number {
+  if (summary === undefined) return participants
+  return Math.max(0, participants - summary.accepted - summary.declined - summary.tentative)
+}
+
+/**
+ * @public
+ *
+ * The same pass as `collectRsvp`, keeping the answers instead of counting them. A social id and not
+ * a person ref: that is what a copy carries in `user`, and only the server can resolve it further.
+ * Sorted, so two passes over the same answers compare equal and nothing is rewritten needlessly.
+ */
+export function collectRsvpAnswers (
+  copies: Array<Pick<Event, 'access' | 'rsvp' | 'user'>>
+): Array<{ user: PersonId, status: RsvpStatus }> {
+  const answers = new Map<PersonId, RsvpStatus>()
+  for (const copy of copies) {
+    // The master carries no answer of its own; counting it would invent one.
+    if (copy.access === AccessLevel.Owner) continue
+    if (copy.user === undefined || copy.rsvp === undefined) continue
+    answers.set(copy.user, copy.rsvp)
+  }
+  return [...answers.entries()]
+    .map(([user, status]) => ({ user, status }))
+    .sort((left, right) => (left.user < right.user ? -1 : left.user > right.user ? 1 : 0))
 }

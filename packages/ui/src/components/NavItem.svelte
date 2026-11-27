@@ -208,7 +208,7 @@
       }
     }
     .hulyNavItem-icon {
-      margin-right: var(--spacing-1);
+      margin-right: var(--spacing-1_5);
       width: var(--global-min-Size);
       height: var(--global-min-Size);
       min-width: var(--global-min-Size);

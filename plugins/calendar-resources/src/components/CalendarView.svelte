@@ -39,6 +39,9 @@
   export let query: DocumentQuery<Event> | undefined = undefined
   export let options: FindOptions<Event> | undefined = undefined
   export let createComponent: AnyComponent | undefined = calendar.component.CreateEvent
+  // A host view may bring the dialog its class creates with: the calendar of the meetings section
+  // opens the meeting form there instead of the plain event one.
+  export let createItemDialog: AnyComponent | undefined = undefined
   export let dragItem: Doc | undefined = undefined
   export let dragEventClass: Ref<Class<Event>> = calendar.class.Event
   export let allowedModes: CalendarMode[] = [
@@ -201,10 +204,11 @@
   }
 
   function showCreateDialog (date: Date, withTime: boolean) {
-    if (createComponent === undefined) {
+    const dialog = createItemDialog ?? createComponent
+    if (dialog === undefined) {
       return
     }
-    showPopup(createComponent, { date, withTime }, 'top')
+    showPopup(dialog, { date, withTime }, 'top')
   }
 
   function getDdItem (mode: CalendarMode) {

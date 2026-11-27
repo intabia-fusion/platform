@@ -57,6 +57,7 @@
     provideStatusIconScope
   } from '../../utils'
   import { CategoryQuery, noCategory } from '../../viewOptions'
+  import { dedupeCategories } from '../../categoryUtils'
   import ListCategory from './ListCategory.svelte'
 
   export let docs: Doc[]
@@ -78,6 +79,8 @@
   export let flatHeaders = false
   export let disableHeader = false
   export let props: Record<string, any> = {}
+  // A list with fixed columns lays its rows out by their content and rolls them sideways.
+  export let wideRows: boolean = false
   export let level: number
   export let initIndex = 0
   export let newObjectProps: (doc: Doc | undefined) => Record<string, any> | undefined
@@ -121,7 +124,12 @@
   let categoriesComputed = false
   let isLoadingMoreTop = false
 
-  $: displayedCategories = level === 0 && !showAllCategories ? categories.slice(0, maxInitialCategories) : categories
+  // A grouping can yield the same bucket twice: an empty value from two sources, a category that
+  // arrives both as a raw value and as an aggregate. A keyed list cannot render that - it throws
+  // and takes the whole view with it - so the buckets are deduplicated before they reach it.
+  $: displayedCategories = dedupeCategories(
+    level === 0 && !showAllCategories ? categories.slice(0, maxInitialCategories) : categories
+  )
 
   $: empty = level === 0 && categoriesComputed && categories.length === 0
   $: hasMoreCategories = level === 0 && categories.length > maxInitialCategories
@@ -532,6 +540,7 @@
     {flatHeaders}
     {disableHeader}
     {props}
+    {wideRows}
     {listDiv}
     bind:dragItem
   >
@@ -571,6 +580,7 @@
         {newObjectProps}
         {flatHeaders}
         {props}
+        {wideRows}
         {level}
         docKeys={categoryDocKeys}
         groupPersistKey={`${groupPersistKey}_${level}_${typeof category === 'object' ? category.name : category}`}

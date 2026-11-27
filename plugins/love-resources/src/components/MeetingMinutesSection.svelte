@@ -16,15 +16,9 @@
   import type { Class, Doc, DocumentQuery, FindOptions, Ref, Space } from '@hcengineering/core'
   import { AccountRole, getCurrentAccount, hasAccountRole } from '@hcengineering/core'
   import type { MeetingMinutes } from '@hcengineering/love'
+  import type { IntlString } from '@hcengineering/platform'
   import { Label, Section, Scroller } from '@hcengineering/ui'
-  import {
-    FilterBar,
-    getDefaults,
-    getResultOptions,
-    Table,
-    ViewletSettingButton,
-    ViewletsSettingButton
-  } from '@hcengineering/view-resources'
+  import { FilterBar, getDefaults, getResultOptions, Table, ViewletsSettingButton } from '@hcengineering/view-resources'
   import type { Viewlet, ViewletPreference, ViewOptions } from '@hcengineering/view'
 
   import love from '../plugin'
@@ -34,6 +28,9 @@
   export let _class: Ref<Class<Doc>>
   export let readonly: boolean = false
   export let meetings: number
+  // Sessions of a permanent meeting or a series are found by their own link, not by attachedTo.
+  export let query: DocumentQuery<MeetingMinutes> | undefined = undefined
+  export let label: IntlString = love.string.MeetingMinutes
 
   const me = getCurrentAccount()
 
@@ -52,7 +49,7 @@
   })
 
   let baseQuery: DocumentQuery<MeetingMinutes>
-  $: baseQuery = { attachedTo: objectId }
+  $: baseQuery = query ?? { attachedTo: objectId }
   let resultQuery: DocumentQuery<MeetingMinutes>
   $: resultQuery = { ...baseQuery }
 
@@ -60,17 +57,18 @@
 </script>
 
 {#if canViewMinutes}
-  <Section label={love.string.MeetingMinutes} icon={love.icon.Cam}>
+  <Section {label} icon={love.icon.Cam}>
     <svelte:fragment slot="header">
-      {#if viewlet}
-        <ViewletSettingButton kind="tertiary" {viewlet} bind:viewOptions />
-      {/if}
+      <!-- One settings entry: `ViewletsSettingButton` already renders both the grouping selector and
+           the "customize view" button, so a second `ViewletSettingButton` next to it drew the same
+           pair twice. `viewOptions` is read back from it for the filter bar and the table. -->
       <ViewletsSettingButton
         viewletQuery={{ _id: love.viewlet.TableMeetingMinutesEmbedded }}
         kind="tertiary"
         bind:viewlet
         bind:loading
         bind:preference
+        bind:viewOptions
       />
     </svelte:fragment>
 

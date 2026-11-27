@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import calendar, { Event } from '@hcengineering/calendar'
+import calendar, { AccessLevel, Event, type ReccuringInstance } from '@hcengineering/calendar'
 import contact, { Employee, formatName, Person, PersonSpace } from '@hcengineering/contact'
 import core, {
   AccountUuid,
@@ -21,6 +21,7 @@ import core, {
   combineAttributes,
   concatLink,
   Doc,
+  DocumentQuery,
   DocumentUpdate,
   generateId,
   Ref,
@@ -30,14 +31,18 @@ import core, {
   TxCUD,
   TxMixin,
   TxProcessor,
+  TxRemoveDoc,
   TxUpdateDoc
 } from '@hcengineering/core'
 import love, {
   isOffice,
   loveId,
   MeetingMinutes,
+  LIVE_MEETING_STATUSES,
   MeetingStatus,
   type Office,
+  type MeetingGroup,
+  type PermanentMeeting,
   ParticipantInfo,
   Room,
   RoomInfo,
@@ -794,74 +799,434 @@ async function queueCallCancels (control: TriggerControl, responses: UserMeeting
 }
 
 /**
+ * Ends the live sessions a single edit made unreachable: the query names them exactly - a cancelled
+ * occurrence has one, a deleted series has all of them.
+ */
+async function finishLiveSessions (control: TriggerControl, query: DocumentQuery<MeetingMinutes>): Promise<Tx[]> {
+  const live = await control.findAll(control.ctx, love.class.MeetingMinutes, {
+    ...query,
+    status: { $in: LIVE_MEETING_STATUSES }
+  })
+  const endTs = Date.now()
+  return live.map((meetingDoc) =>
+    control.txFactory.createTxUpdateDoc(love.class.MeetingMinutes, meetingDoc.space, meetingDoc._id, {
+      status: MeetingStatus.Finished,
+      meetingEnd: endTs
+    })
+  )
+}
+
+/**
  * Trigger to update MeetingMinutes when Event is updated
- * - Updates meetingScheduledDate when Event date changes
+ * - Ends the sessions of a deleted series and of a cancelled occurrence
  * - Updates members when Event participants change
  */
 export async function OnEventUpdate (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
   const result: Tx[] = []
 
   for (const tx of txes) {
+    // Deleting the series must not leave a live session behind: the panel is gone with the event,
+    // so nobody could end it, and the room would stay occupied by a meeting that no longer exists.
+    // Only the owner's copy is the master - a participant deleting their copy ends nothing.
+    if (tx._class === core.class.TxRemoveDoc) {
+      const removeTx = tx as TxRemoveDoc<Event>
+      if (!control.hierarchy.isDerived(removeTx.objectClass, calendar.class.Event)) continue
+      const removed = (
+        await control.findAll(control.ctx, calendar.class.Event, { _id: removeTx.objectId }, { limit: 1 })
+      )[0]
+      // Some pipelines hand the trigger an already removed document: the series cannot be resolved.
+      if (removed?.access !== AccessLevel.Owner) continue
+      if (!control.hierarchy.hasMixin(removed, love.mixin.MeetingEventLink)) continue
+
+      // A removed occurrence is one occurrence, even when the calendar truncates a series by removing
+      // its materialised occurrences: only the master takes the whole series down with it.
+      const removedOccurrence = control.hierarchy.isDerived(removed._class, calendar.class.ReccuringInstance)
+        ? (removed as ReccuringInstance).originalStartTime
+        : undefined
+      result.push(
+        ...(await finishLiveSessions(control, {
+          eventId: removed.eventId,
+          ...(removedOccurrence !== undefined ? { occurrence: removedOccurrence } : {})
+        }))
+      )
+      continue
+    }
+
+    // A single occurrence is cancelled by replacing it with a copy marked `isCancelled`
+    // (`deleteRecHandler` in calendar-resources), so the cancellation arrives as a creation and not
+    // as an edit of the series. The session of that occurrence is already under way and its card is
+    // gone from the calendar - nobody could end it any more.
+    if (tx._class === core.class.TxCreateDoc) {
+      const createTx = tx as TxCreateDoc<Event>
+      if (!control.hierarchy.isDerived(createTx.objectClass, calendar.class.Event)) continue
+      const created = createTx.attributes as Partial<ReccuringInstance> | undefined
+      if (created?.isCancelled !== true || created.eventId === undefined) continue
+      const occurrence = created.originalStartTime ?? created.date
+      result.push(
+        ...(await finishLiveSessions(control, {
+          eventId: created.eventId,
+          ...(occurrence !== undefined ? { occurrence } : {})
+        }))
+      )
+      continue
+    }
+
     if (tx._class !== core.class.TxUpdateDoc) continue
 
     const cudTx = tx as TxCUD<Event>
-    if (cudTx.objectClass !== calendar.class.Event) continue
+    // A series is a ReccuringEvent, so the whole Event hierarchy has to pass - an exact class
+    // check silently skipped every recurring meeting.
+    if (!control.hierarchy.isDerived(cudTx.objectClass, calendar.class.Event)) continue
 
     // Get the event
     const event = (await control.findAll(control.ctx, calendar.class.Event, { _id: cudTx.objectId }, { limit: 1 }))[0]
     if (event === undefined) continue
+    if (event.access !== AccessLevel.Owner) continue
 
     // Check if event has MeetingEventLink mixin
     const hasMeetingMixin = control.hierarchy.hasMixin(event, love.mixin.MeetingEventLink)
     if (!hasMeetingMixin) continue
 
-    const meetingLink = control.hierarchy.as(event, love.mixin.MeetingEventLink)
-    if (meetingLink.meetingId === undefined) continue
+    // The people of a permanent meeting are the participants of its series: adding someone to the
+    // event has to make them a member of the meeting, or the meeting never appears for them - the
+    // list is a space, and only members see it.
+    const participantsOps = (tx as TxUpdateDoc<Event>).operations.participants
+    if (participantsOps !== undefined) {
+      result.push(...(await permanentMeetingMembersTxes(control, event, participantsOps)))
+    }
 
-    // Get the meeting
-    const meeting = await control.findAll(
-      control.ctx,
-      love.class.MeetingMinutes,
-      { _id: meetingLink.meetingId },
-      { limit: 1 }
-    )
-    if (meeting.length === 0) continue
-    const meetingDoc = meeting[0]
-
-    // Only update if meeting is in Scheduled status
-    if (meetingDoc.status !== MeetingStatus.Scheduled) continue
+    // The session is found by the series, not by a reference on the event: the mixin no longer
+    // holds one, and a series has a different session per occurrence. An override edits its own
+    // (pinned by `originalStartTime`); a master edits every live session, and two can overlap.
+    const query: DocumentQuery<MeetingMinutes> = {
+      eventId: event.eventId,
+      status: { $in: LIVE_MEETING_STATUSES }
+    }
+    if (control.hierarchy.isDerived(event._class, calendar.class.ReccuringInstance)) {
+      query.occurrence = (event as ReccuringInstance).originalStartTime
+    }
+    const meetings = await control.findAll(control.ctx, love.class.MeetingMinutes, query)
+    if (meetings.length === 0) continue
 
     const updateTx = tx as TxUpdateDoc<Event>
     const ops = updateTx.operations
-    const meetingUpdate: DocumentUpdate<MeetingMinutes> = {}
 
-    // Update meetingScheduledDate if Event date changed
-    if (ops.date !== undefined) {
-      meetingUpdate.meetingScheduledDate = ops.date
+    // The same cancellation, but written in place: an occurrence copy that already exists gets
+    // `isCancelled` set, and its session has to end the same way.
+    const instance = event as ReccuringInstance
+    if ((ops as Partial<ReccuringInstance>).isCancelled === true && instance.originalStartTime !== undefined) {
+      if (event.eventId !== undefined) {
+        result.push(
+          ...(await finishLiveSessions(control, {
+            eventId: event.eventId,
+            occurrence: instance.originalStartTime
+          }))
+        )
+      }
+      continue
     }
 
-    // Update members if Event participants changed
-    if (ops.participants !== undefined) {
-      const newMembers: AccountUuid[] = []
+    if (ops.participants === undefined) continue
 
-      for (const participantRef of ops.participants) {
-        const person = (
-          await control.findAll(control.ctx, contact.class.Person, { _id: participantRef }, { limit: 1 })
-        )[0]
-        if (person?.personUuid !== undefined && !meetingDoc.members.includes(person.personUuid as AccountUuid)) {
-          newMembers.push(person.personUuid as AccountUuid)
+    // Resolved once, not per session: the participants of the event are the same for all of them.
+    const added: AccountUuid[] = []
+    for (const participantRef of ops.participants) {
+      const person = (
+        await control.findAll(control.ctx, contact.class.Person, { _id: participantRef }, { limit: 1 })
+      )[0]
+      if (person?.personUuid !== undefined) added.push(person.personUuid as AccountUuid)
+    }
+
+    for (const meetingDoc of meetings) {
+      const newMembers = added.filter((it) => !meetingDoc.members.includes(it))
+      if (newMembers.length === 0) continue
+      result.push(
+        control.txFactory.createTxUpdateDoc(love.class.MeetingMinutes, meetingDoc.space, meetingDoc._id, {
+          $push: { members: { $each: newMembers, $position: 0 } }
+        })
+      )
+    }
+  }
+
+  return result
+}
+
+/**
+ * A permanent meeting has no other way to be managed: an owner outside `members` cannot open its
+ * session (`/getToken` answers 403 for a private space), so removing the last owner from the member
+ * list leaves the meeting unreachable. A trigger cannot veto a transaction, so the missing owners
+ * are pushed back: the invariant holds for every client, not only for the panel that edits members.
+ * The member list is rewritten either as a whole (`members`) or by `SpaceMembers`, which pulls one
+ * account at a time (`$pull`), so both shapes are checked. The corrective transaction carries
+ * `$push`, which this trigger does not act on, so it cannot loop.
+ */
+/** Accounts from `accounts` that the update drops: an explicit list replaces them, a `$pull` removes them. */
+function missingFrom (
+  ops: {
+    members?: AccountUuid[]
+    owners?: AccountUuid[]
+    $pull?: {
+      members?: AccountUuid | AccountUuid[] | { $in: AccountUuid[] }
+      owners?: AccountUuid | AccountUuid[] | { $in: AccountUuid[] }
+    }
+  },
+  field: 'members' | 'owners',
+  accounts: AccountUuid[]
+): AccountUuid[] {
+  const next = ops[field]
+  const missing = next !== undefined ? accounts.filter((it) => !next.includes(it)) : []
+  const pulled = ops.$pull?.[field]
+  if (pulled !== undefined) {
+    const pulledAccounts = Array.isArray(pulled) ? pulled : typeof pulled === 'object' ? pulled.$in : [pulled]
+    for (const account of accounts) {
+      if (pulledAccounts.includes(account) && !missing.includes(account)) missing.push(account)
+    }
+  }
+  return missing
+}
+
+/**
+ * A removal the collection it lives in knows about. A calendar event is stored inside its calendar
+ * (`attachedTo`/`collection`), and a bare `TxRemoveDoc` for such a document is not applied - which is
+ * why a deleted meeting kept sitting in the planner.
+ */
+function removeEventTx (control: TriggerControl, event: Event): Tx {
+  const inner = control.txFactory.createTxRemoveDoc(event._class, event.space, event._id)
+  const collection = (event as unknown as { collection?: string }).collection
+  if (collection === undefined || event.attachedTo === undefined) return inner
+  return control.txFactory.createTxCollectionCUD(
+    event.attachedToClass,
+    event.attachedTo,
+    event.space,
+    collection,
+    inner
+  )
+}
+
+/**
+ * The series of a meeting. Mixin documents are tried first, the nested path is what this storage answers.
+ */
+async function seriesEventsOf (control: TriggerControl, meetingId: Ref<PermanentMeeting>): Promise<Event[]> {
+  const links = await control.findAll(
+    control.ctx,
+    love.mixin.MeetingEventLink,
+    { permanentMeeting: meetingId } as any,
+    { limit: 50 }
+  )
+  if (links.length > 0) {
+    const events = await control.findAll(control.ctx, calendar.class.Event, { _id: { $in: links.map((it) => it._id) } })
+    if (events.length > 0) {
+      return events
+    }
+  }
+  return await control.findAll(
+    control.ctx,
+    calendar.class.Event,
+    { [`${love.mixin.MeetingEventLink as string}.permanentMeeting`]: meetingId } as any,
+    { limit: 50 }
+  )
+}
+
+/** The member list a transaction leaves behind: the new array, or the current one with its patch. */
+function membersAfter (
+  members: AccountUuid[],
+  ops: {
+    members?: AccountUuid[]
+    $push?: { members?: AccountUuid | AccountUuid[] | { $each: AccountUuid[] } }
+    $pull?: { members?: AccountUuid | AccountUuid[] | { $in: AccountUuid[] } }
+  },
+  keep: AccountUuid[]
+): AccountUuid[] {
+  let next = ops.members !== undefined ? [...ops.members] : [...members]
+  const pushed = ops.$push?.members
+  const pushedAccounts = pushed === undefined ? [] : Array.isArray(pushed) ? pushed : [pushed]
+  const pushedList = pushedAccounts.flatMap((it) => ('$each' in it ? it.$each : [it as AccountUuid]))
+  for (const account of pushedList) {
+    if (!next.includes(account)) next.push(account)
+  }
+  const pulled = ops.$pull?.members
+  const pulledAccounts = pulled === undefined ? [] : Array.isArray(pulled) ? pulled : [pulled]
+  const pulledList = pulledAccounts.flatMap((it) => (typeof it === 'object' ? it.$in : [it]))
+  if (pulledList.length > 0) next = next.filter((it) => !pulledList.includes(it))
+  // Owners are put back by the rules above, so they stay participants of the series as well.
+  for (const account of keep) {
+    if (!next.includes(account)) next.push(account)
+  }
+  return next
+}
+
+/**
+ * The calendar trigger prunes copies only when the event's participants change, so the series has to
+ * follow the meeting's members itself.
+ */
+async function seriesParticipantsTxes (
+  control: TriggerControl,
+  meeting: PermanentMeeting,
+  members: AccountUuid[]
+): Promise<Tx[]> {
+  const series = await seriesEventsOf(control, meeting._id)
+  if (series.length === 0) return []
+  const persons: Array<Ref<Person>> =
+    members.length === 0
+      ? []
+      : (await control.findAll(control.ctx, contact.class.Person, { personUuid: { $in: members } } as any)).map(
+          (it) => it._id
+        )
+  const res: Tx[] = []
+  for (const event of series) {
+    const current = (event.participants ?? []) as Array<Ref<Person>>
+    const same = current.length === persons.length && persons.every((person) => current.includes(person))
+    if (same) continue
+    res.push(control.txFactory.createTxUpdateDoc(event._class, event.space, event._id, { participants: persons }))
+  }
+  return res
+}
+
+/**
+ * The other half of the same invariant: a person added to the series becomes a member of the meeting,
+ * which is what makes the meeting visible to them at all - the list is a space, and a space is seen
+ * by its members. Owners stay in the list, the same way the meeting trigger keeps them there.
+ */
+async function permanentMeetingMembersTxes (
+  control: TriggerControl,
+  event: Event,
+  participants: Array<Ref<Person>>
+): Promise<Tx[]> {
+  const link = (event as unknown as Record<string, { permanentMeeting?: Ref<PermanentMeeting> } | undefined>)[
+    love.mixin.MeetingEventLink as unknown as string
+  ]
+  const meetingRef = link?.permanentMeeting
+  if (meetingRef === undefined) return []
+  const meeting = (
+    await control.findAll(control.ctx, love.class.PermanentMeeting, { _id: meetingRef }, { limit: 1 })
+  )[0]
+  if (meeting === undefined) return []
+
+  const persons =
+    participants.length === 0
+      ? []
+      : await control.findAll(control.ctx, contact.class.Person, { _id: { $in: participants } } as any)
+  const accounts = persons
+    .map((it) => it.personUuid as AccountUuid | undefined)
+    .filter((it): it is AccountUuid => it !== undefined)
+  const members = [...new Set([...(meeting.owners ?? []), ...accounts])]
+  const current = meeting.members ?? []
+  const same = current.length === members.length && members.every((it) => current.includes(it))
+  if (same) return []
+  return [control.txFactory.createTxUpdateDoc(love.class.PermanentMeeting, meeting.space, meeting._id, { members })]
+}
+
+export async function OnPermanentMeetingUpdate (txes: Tx[], control: TriggerControl): Promise<Tx[]> {
+  const result: Tx[] = []
+
+  for (const tx of txes) {
+    // Deleting a permanent meeting leaves its running session behind the same way a deleted series
+    // does: the panel is the only place that could end it, and it goes away with the meeting.
+    if (tx._class === core.class.TxRemoveDoc) {
+      const removeTx = tx as TxRemoveDoc<PermanentMeeting>
+      if (removeTx.objectClass !== love.class.PermanentMeeting) continue
+      result.push(...(await finishLiveSessions(control, { meeting: removeTx.objectId })))
+      // The series is part of the meeting, not a booking of its own: leaving it behind keeps an event
+      // in the planners that still looks like a meeting, points at a document that no longer exists
+      // and refuses to open with "the meeting is not open".
+      const series = await seriesEventsOf(control, removeTx.objectId)
+      for (const event of series) {
+        // Every copy of the series goes with it: the calendar's own cascade reads the removed document
+        // from the trigger map, and a removal this trigger generates is not in it yet.
+        const copies = await control.findAll(control.ctx, calendar.class.Event, { eventId: event.eventId })
+        for (const copy of copies.length > 0 ? copies : [event]) {
+          result.push(removeEventTx(control, copy))
         }
       }
+      continue
+    }
 
-      if (newMembers.length > 0) {
-        meetingUpdate.$push = { members: { $each: newMembers, $position: 0 } }
+    if (tx._class !== core.class.TxUpdateDoc) continue
+
+    const cudTx = tx as TxUpdateDoc<PermanentMeeting>
+    if (cudTx.objectClass !== love.class.PermanentMeeting) continue
+
+    const ops = cudTx.operations as {
+      members?: AccountUuid[]
+      owners?: AccountUuid[]
+      group?: Ref<MeetingGroup> | null
+      $unset?: { group?: number }
+      $push?: {
+        members?: AccountUuid | AccountUuid[] | { $each: AccountUuid[] }
+        owners?: AccountUuid | AccountUuid[] | { $each: AccountUuid[] }
+      }
+      $pull?: {
+        members?: AccountUuid | AccountUuid[] | { $in: AccountUuid[] }
+        owners?: AccountUuid | AccountUuid[] | { $in: AccountUuid[] }
       }
     }
 
-    // Apply update if there are changes
-    if (Object.keys(meetingUpdate).length > 0) {
+    // The meetings list groups events by the group of their meeting: the event carries a copy, so it
+    // has to follow every change of the meeting's group.
+    if (ops.group !== undefined || ops.$unset?.group !== undefined) {
+      const meeting = (
+        await control.findAll(control.ctx, love.class.PermanentMeeting, { _id: cudTx.objectId }, { limit: 1 })
+      )[0]
+      if (meeting !== undefined) {
+        const group = ops.$unset?.group !== undefined ? undefined : (ops.group ?? meeting.group)
+        for (const event of await seriesEventsOf(control, cudTx.objectId)) {
+          result.push(
+            control.txFactory.createTxUpdateDoc(calendar.class.Event, event.space, event._id, {
+              group
+            } as any)
+          )
+        }
+      }
+    }
+
+    const touchesMembers =
+      ops.members !== undefined || ops.$pull?.members !== undefined || ops.$push?.members !== undefined
+    const touchesOwners = ops.owners !== undefined || ops.$pull?.owners !== undefined
+    if (!touchesMembers && !touchesOwners) continue
+
+    const meeting = (
+      await control.findAll(control.ctx, love.class.PermanentMeeting, { _id: cudTx.objectId }, { limit: 1 })
+    )[0]
+    if (meeting === undefined) continue
+
+    // The creator is the one who can delete the meeting, so losing the creator turns a meeting into
+    // something nobody can remove. `createdBy` holds a social id: an old document without it keeps
+    // the plain owner rule, which the push-back below already covers.
+    const creator = meeting.createdBy !== undefined ? await getAccountBySocialId(control, meeting.createdBy) : null
+
+    const owners = meeting.owners ?? []
+    const missingOwners = touchesOwners ? missingFrom(ops, 'owners', owners) : []
+    if (touchesOwners && creator !== null && !owners.includes(creator)) missingOwners.push(creator)
+
+    // The creator stays a member even on a document that predates the owner rule.
+    const protectedMembers = creator !== null && !owners.includes(creator) ? [...owners, creator] : owners
+    const missing = touchesMembers ? missingFrom(ops, 'members', protectedMembers) : []
+    // The series follows the membership: walking out of the meeting has to take the meeting out of
+    // that person's planner, and joining it has to put it there.
+    if (touchesMembers) {
       result.push(
-        control.txFactory.createTxUpdateDoc(love.class.MeetingMinutes, meetingDoc.space, meetingDoc._id, meetingUpdate)
+        ...(await seriesParticipantsTxes(control, meeting, membersAfter(meeting.members ?? [], ops, protectedMembers)))
+      )
+    }
+    if (missing.length === 0 && missingOwners.length === 0) continue
+
+    control.ctx.warn('[OnPermanentMeetingUpdate] Owner is not in the members, pushed back', {
+      meeting: cudTx.objectId,
+      missing,
+      missingOwners
+    })
+    if (missingOwners.length > 0) {
+      result.push(
+        control.txFactory.createTxUpdateDoc(love.class.PermanentMeeting, meeting.space, meeting._id, {
+          $push: { owners: { $each: missingOwners, $position: 0 } }
+        })
+      )
+    }
+    if (missing.length > 0) {
+      result.push(
+        control.txFactory.createTxUpdateDoc(love.class.PermanentMeeting, meeting.space, meeting._id, {
+          $push: { members: { $each: missing, $position: 0 } }
+        })
       )
     }
   }
@@ -880,6 +1245,7 @@ export default async () => ({
     OnParticipantInfo,
     OnRoomInfo,
     OnUserMeetingInvite,
-    OnEventUpdate
+    OnEventUpdate,
+    OnPermanentMeetingUpdate
   }
 })

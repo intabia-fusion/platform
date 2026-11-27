@@ -19,6 +19,8 @@
   import { getClient } from '@hcengineering/presentation'
   import type { Ref } from '@hcengineering/core'
   import type { Room } from '@hcengineering/love'
+  import { Button } from '@hcengineering/ui'
+  import { openDoc } from '@hcengineering/view-resources'
 
   export let value: Schedule
 
@@ -33,8 +35,28 @@
       await client.updateMixin(schedule._id, schedule._class, schedule.space, love.mixin.MeetingSchedule, { room: val })
     }
   }
+
+  // The schedule owns the meeting it created; the row is the way to its settings and sessions.
+  async function openMeeting (): Promise<void> {
+    const id = meetingSchedule?.meetingId
+    if (id === undefined) return
+    const meeting = await client.findOne(love.class.PermanentMeeting, { _id: id })
+    if (meeting === undefined) return
+    await openDoc(client.getHierarchy(), meeting)
+  }
 </script>
 
 {#if isMeetingSchedule && meetingSchedule}
-  <RoomSelector value={meetingSchedule?.room} on:change={(ev) => changeRoom(ev.detail)} />
+  <div class="flex-col gap-2">
+    <RoomSelector value={meetingSchedule?.room} on:change={(ev) => changeRoom(ev.detail)} />
+    {#if meetingSchedule.meetingId !== undefined}
+      <Button
+        label={love.string.PermanentMeeting}
+        kind="ghost"
+        justify="left"
+        icon={love.icon.MeetingMinutes}
+        on:click={openMeeting}
+      />
+    {/if}
+  </div>
 {/if}

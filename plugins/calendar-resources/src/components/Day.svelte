@@ -14,21 +14,31 @@
 -->
 <script lang="ts">
   import type { Event } from '@hcengineering/calendar'
+  import { getClient } from '@hcengineering/presentation'
   import { Label, addZero, getPlatformColorForTextDef, showPopup, themeStore, tooltip } from '@hcengineering/ui'
   import { createEventDispatcher } from 'svelte'
   import calendar from '../plugin'
+  import { openEventCard } from '../eventCard'
   import EventsPopup from './EventsPopup.svelte'
 
   export let events: Event[]
   export let date: Date
-  export let size: 'small' | 'huge' = 'small'
-
   export let today: boolean = false
   export let selected: boolean = false
   export let wrongMonth: boolean = false
+  /** Cell size of the calendar the day sits in: `huge` is the month grid, which lists the events. */
+  export let size: 'huge' | undefined = undefined
 
   const dispatch = createEventDispatcher()
   const eventCount = 3
+
+  // The card is resolved first: a meeting opens in the meeting's own window, a plain event in the
+  // calendar's quick-edit popup.
+  const client = getClient()
+
+  function openEvent (event: Event): void {
+    void openEventCard(client, event, calendar.component.EditEvent)
+  }
 
   $: tip = {
     label: calendar.string.Events,
@@ -67,7 +77,7 @@
           class="overflow-label mt-1 py-1 flex flex-between event cursor-pointer"
           style="background-color: {getPlatformColorForTextDef(e.space, $themeStore.dark).color};"
           on:click|stopPropagation|preventDefault={() => {
-            showPopup(calendar.component.EditEvent, { object: e }, 'content')
+            openEvent(e)
           }}
         >
           {e.title}

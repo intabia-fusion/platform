@@ -33,7 +33,6 @@
 
   import love from '../../plugin'
   import type { MeetingMinutes } from '@hcengineering/love'
-  import { MeetingStatus } from '@hcengineering/love'
   import { workbenchId } from '@hcengineering/workbench'
   import GuestControlBar from './GuestControlBar.svelte'
   import type { Ref, Timestamp, WorkspaceUuid } from '@hcengineering/core'
@@ -50,20 +49,25 @@
   // Route params
   let guestToken: string | undefined = undefined
   let errorMessage: IntlString | null = null
+  // Set only when the link was copied together with its password (`?password=...`).
+  let urlPassword: string | undefined = undefined
 
   export const lk: LKRoom = liveKitClient.liveKitRoom
 
   // Guest info / resolution state
   let guestInfo: {
-    meetingId: Ref<MeetingMinutes>
+    meetingId?: Ref<MeetingMinutes>
     workspace: WorkspaceUuid
     workspaceUrl: string
     now: Timestamp
-    meetingStatus: MeetingStatus
-    meetingScheduledDate?: Timestamp
+    // What the link opens onto right now: waiting for the meeting, joining it, or looking back.
+    mode?: 'before' | 'live' | 'after'
+    nextOccurrence?: Timestamp
     meetingEnd?: Timestamp
-    roomFound: boolean
-    title: string
+    roomFound?: boolean
+    title?: string
+    // The link carries a guest password - nothing else in this object is populated until it checks out.
+    passwordRequired?: boolean
   } | null = null
   let resolving = false
   let resolveError: string | null = null
@@ -93,6 +97,8 @@
   let leaving = false
 
   async function leaveGuest (): Promise<void> {
+    // FUSIO-1584: a rage click (or the guest-only timeout racing a manual leave) must run one
+    // disconnect, not several.
     if (leaving) return
     leaving = true
     try {
@@ -196,6 +202,9 @@
   }
 
   let resolvingShortLink = false
+  // The link itself was refused (revoked, expired, unknown). Polling it again would only repeat the
+  // same refusal, and the answer never changes for as long as this page lives.
+  let linkRejected = false
 
   function handleLocation (loc: Location): void {
     if (loc.path[0] !== 'meetings') {
@@ -203,13 +212,17 @@
     }
     const q = loc.query ?? {}
     const shortId = loc.path[1] // /meetings/aB3kR9mXqW2p
+    // A link copied together with its password carries it here; the join popup only prefills it.
+    urlPassword = typeof q.password === 'string' && q.password !== '' ? q.password : undefined
 
     if (q.guestToken != null) {
       guestToken = q.guestToken
       errorMessage = null
-      void fetchGuestInfo(0)
+      linkRejected = false
+      void fetchGuestInfo()
     } else if (shortId != null && shortId !== '') {
       errorMessage = null
+      linkRejected = false
       resolvingShortLink = true
       void resolveShortLink(shortId).then((resolved) => {
         resolvingShortLink = false
@@ -218,7 +231,7 @@
           guestInfo = null
         } else {
           guestToken = resolved
-          void fetchGuestInfo(0)
+          void fetchGuestInfo()
         }
       })
     } else {
@@ -253,10 +266,11 @@
     }
   }
 
-  async function fetchGuestInfo (_time: number): Promise<void> {
-    if (guestToken == null) return
+  async function fetchGuestInfo (): Promise<void> {
+    if (guestToken == null || linkRejected) return
 
-    if (guestToken === null) {
+    const token = guestToken
+    if (guestInfo == null) {
       resolving = true
     }
     resolveError = null
@@ -270,11 +284,19 @@
       const resp = await fetch(`${endpoint}/guestInfo`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: guestToken })
+        body: JSON.stringify({ token })
       })
 
       if (!resp.ok) {
         const txt = await resp.text().catch(() => '')
+        // 401/403/404 are the link's own verdicts: unknown, expired, or revoked. They are final, so the
+        // lobby says the link is dead instead of polling a refusal forever behind a blank form.
+        if (resp.status === 401 || resp.status === 403 || resp.status === 404) {
+          linkRejected = true
+          guestInfo = null
+          errorMessage = love.string.InvalidOrExpiredLink
+          return
+        }
         throw new Error(`Failed to fetch guest info: ${resp.status} ${txt}`)
       }
 
@@ -285,9 +307,11 @@
         return
       }
 
-      // Attempt automatic workspace resolve/select if URL is present
+      // Attempt automatic workspace resolve/select if URL is present. Skipped while a password is
+      // pending - there is no meetingId to deep-link into yet, and a member goes through the
+      // password field like everyone else, or opens the workspace directly on their own.
       const wsUrl = guestInfo?.workspaceUrl ?? guestInfo?.workspace ?? null
-      if (wsUrl != null) {
+      if (wsUrl != null && guestInfo?.passwordRequired !== true) {
         try {
           const selectFn = await getResource(login.function.SelectWorkspace)
           const selectResult = await selectFn?.(wsUrl, null, false)
@@ -309,8 +333,6 @@
       resolving = false
     }
   }
-
-  $: void fetchGuestInfo($ticker)
 
   onMount(() => {
     roomEl?.addEventListener('fullscreenchange', handleFullScreen)
@@ -420,7 +442,7 @@
   $: now = $ticker
 
   let duration: string
-  $: durValue = (guestInfo?.meetingScheduledDate ?? 0) - now
+  $: durValue = (guestInfo?.nextOccurrence ?? 0) - now
   $: void formatDuration(durValue, $themeStore.language).then((res) => {
     duration = res
   })
@@ -437,7 +459,7 @@
         />
       </div>
     {/if}
-    {#if guestInfo?.meetingStatus === MeetingStatus.Finished}
+    {#if guestInfo?.mode === 'after'}
       <div class="center">
         <div class="message flex flex-col justify-center">
           <div class="flex flex-row-center justify-center fs-title mb-2">
@@ -447,7 +469,7 @@
           </div>
         </div>
       </div>
-    {:else if guestInfo?.meetingStatus === MeetingStatus.Scheduled}
+    {:else if guestInfo?.mode === 'before'}
       <div class="center">
         <div class="message flex flex-col items-center">
           <div class="flex flex-col flex-row-center">
@@ -477,7 +499,7 @@
     {:else if guestToken}
       {#if resolving}
         <div class="center">
-          <div class="message flex justify-center">{love.string.CheckingLink}</div>
+          <div class="message flex justify-center"><Label label={love.string.CheckingLink} /></div>
         </div>
       {:else if $lkSessionConnected}
         <div bind:this={roomEl} data-id="guest-connected" class="flex-col-center w-full h-full">
@@ -499,7 +521,7 @@
       {:else if guestInfo != null}
         <div>
           <div class="flex flex-col justify-center fs-title mb-2">
-            {#if guestInfo.workspaceUrl !== ''}
+            {#if guestInfo.workspaceUrl != null && guestInfo.workspaceUrl !== '' && guestInfo.passwordRequired !== true}
               <div class="message flex flex-row-center justify-center">
                 <Label label={love.string.Meeting} />
                 <div class="p-1">
@@ -510,7 +532,7 @@
               </div>
             {/if}
             {#if resolveError}
-              <div class="message" role="alert">{love.string.Error}: {resolveError}</div>
+              <div class="message" role="alert"><Label label={love.string.Error} />: {resolveError}</div>
             {/if}
           </div>
 
@@ -522,17 +544,19 @@
             {guestToken}
             workspaceId={guestInfo.workspace ?? undefined}
             workspaceName={guestInfo.workspaceUrl ?? undefined}
+            passwordRequired={guestInfo.passwordRequired === true}
+            initialPassword={urlPassword}
           />
         </div>
       {/if}
     {:else if resolvingShortLink}
       <div class="center">
-        <div class="message">{love.string.ResolvingLink}</div>
+        <div class="message"><Label label={love.string.ResolvingLink} /></div>
       </div>
     {:else}
       <!-- In case location hasn't been populated yet we show a small loader/placeholder -->
       <div class="center">
-        <div class="message">{love.string.PreparingGuestConnection}</div>
+        <div class="message"><Label label={love.string.PreparingGuestConnection} /></div>
       </div>
     {/if}
   </svelte:fragment>

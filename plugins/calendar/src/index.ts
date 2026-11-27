@@ -128,11 +128,48 @@ export interface Event extends AttachedDoc {
 
   access: AccessLevel
 
+  /** Participant's own answer, written only into their copy of the event (F1 §8). */
+  rsvp?: RsvpStatus
+
+  /** Answers gathered on the master. Copies live in their owners' spaces, so only the server
+   *  can see them all - the organiser reads this, never the copies themselves. */
+  rsvpSummary?: RsvpSummary
+
+  /** Who answered what, mirrored into every copy by the server: a participant cannot read the other
+   *  copies, so the breakdown travels with their own one along with the tally above. */
+  rsvpMembers?: RsvpMembers
+
   timeZone?: string
 
   user: PersonId
 
   blockTime: boolean
+}
+
+/**
+ * @public
+ */
+export type RsvpStatus = 'accepted' | 'declined' | 'tentative'
+
+/**
+ * @public
+ */
+export interface RsvpSummary {
+  accepted: number
+  declined: number
+  tentative: number
+}
+
+/**
+ * @public
+ *
+ * The answers themselves, as the people who gave them: `RsvpSummary` counts, this names. Kept on
+ * the master and mirrored into every copy, because a copy cannot see its siblings.
+ */
+export interface RsvpMembers {
+  accepted: Ref<Person>[]
+  tentative: Ref<Person>[]
+  declined: Ref<Person>[]
 }
 
 export enum AccessLevel {
@@ -322,7 +359,24 @@ const calendarPlugin = plugin(calendarId, {
     SynchronizedCalendars: '' as IntlString,
     Account: '' as IntlString,
     NoCalendars: '' as IntlString,
-    PersonalCalendar: '' as IntlString
+    PersonalCalendar: '' as IntlString,
+    Going: '' as IntlString,
+    NotGoing: '' as IntlString,
+    Maybe: '' as IntlString,
+    WillYouAttend: '' as IntlString,
+    RsvpAccepted: '' as IntlString,
+    RsvpDeclined: '' as IntlString,
+    RsvpTentative: '' as IntlString,
+    RsvpPending: '' as IntlString,
+    // The same states with a count in them, for the line of answers on a card.
+    RsvpAcceptedCount: '' as IntlString,
+    RsvpTentativeCount: '' as IntlString,
+    RsvpDeclinedCount: '' as IntlString,
+    RsvpPendingCount: '' as IntlString,
+    // Lead-time units are read by the calendar UI and by the reminder presenter of the meetings UI.
+    DueMinutes: '' as IntlString,
+    DueHours: '' as IntlString,
+    DueDays: '' as IntlString
   },
   handler: {
     DisconnectHandler: '' as Handler,
@@ -338,7 +392,10 @@ const calendarPlugin = plugin(calendarId, {
   },
   extensions: {
     EditEventExtensions: '' as ComponentExtensionId,
-    EditScheduleExtensions: '' as ComponentExtensionId
+    EditScheduleExtensions: '' as ComponentExtensionId,
+    // Rendered inside the event card of every calendar view (day, month, planner), so another
+    // plugin can mark an event without calendar knowing about it.
+    EventCardExtensions: '' as ComponentExtensionId
   },
   ids: {
     ReminderNotification: '' as Ref<NotificationType>,

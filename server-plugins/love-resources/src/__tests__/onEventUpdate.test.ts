@@ -26,11 +26,12 @@ import core, {
   toFindResult,
   type Tx,
   TxFactory,
+  type TxRemoveDoc,
   type TxUpdateDoc
 } from '@hcengineering/core'
 import type { TriggerControl } from '@hcengineering/server-core'
 import contact, { type Person } from '@hcengineering/contact'
-import calendar, { type Event } from '@hcengineering/calendar'
+import calendar, { AccessLevel, type Event } from '@hcengineering/calendar'
 import love, { MeetingStatus, type MeetingMinutes, type MeetingEventLink, type Room } from '@hcengineering/love'
 import { OnEventUpdate } from '../index'
 
@@ -55,18 +56,26 @@ function createMeetingDoc (opts?: { status?: MeetingStatus, members?: AccountUui
     archived: false,
     members: opts?.members ?? [accountA],
     owners: [accountA],
-    status: opts?.status ?? MeetingStatus.Scheduled,
+    status: opts?.status ?? MeetingStatus.Pending,
     roomId: roomRef,
     modifiedOn: Date.now(),
     modifiedBy: core.account.System
   } as unknown as MeetingMinutes
 }
 
-function createEvent (opts?: { participants?: Array<Ref<Person>>, date?: number }): Event {
+function createEvent (opts?: {
+  participants?: Array<Ref<Person>>
+  date?: number
+  eventId?: string
+  access?: AccessLevel
+}): Event {
   const ev = {
     _id: eventRef,
     _class: calendar.class.Event,
-    space: core.space.Workspace,
+    space: core.space.Workspace as unknown as Ref<Space>,
+    eventId: opts?.eventId ?? 'E1',
+    // The trigger only follows the master; participant copies mirror it and must not fan back.
+    access: opts?.access ?? AccessLevel.Owner,
     title: 'Test Event',
     description: '',
     date: opts?.date ?? Date.now(),
@@ -93,14 +102,14 @@ function createPersonDoc (id: Ref<Person>, uuid?: PersonUuid): Person {
   } as unknown as Person
 }
 
-function createUpdateTx (ops: Partial<Event>): TxUpdateDoc<Event> {
+function createUpdateTx (ops: Partial<Event>, objectClass: Ref<Class<Doc>> = calendar.class.Event): TxUpdateDoc<Event> {
   return {
     _id: generateId(),
     _class: core.class.TxUpdateDoc,
     space: core.space.DerivedTx,
     objectId: eventRef,
-    objectClass: calendar.class.Event,
-    objectSpace: core.space.Workspace,
+    objectClass: objectClass as Ref<Class<Event>>,
+    objectSpace: core.space.Workspace as unknown as Ref<Space>,
     modifiedOn: Date.now(),
     modifiedBy: 'creator' as PersonId,
     operations: ops
@@ -108,6 +117,36 @@ function createUpdateTx (ops: Partial<Event>): TxUpdateDoc<Event> {
 }
 
 type FindAllFn = (_class: Ref<Class<Doc>>, query: any) => Doc[]
+
+function createRemoveTx (objectClass: Ref<Class<Doc>> = calendar.class.Event): TxRemoveDoc<Event> {
+  return {
+    _id: generateId(),
+    _class: core.class.TxRemoveDoc,
+    space: core.space.DerivedTx,
+    objectId: eventRef,
+    objectClass: objectClass as Ref<Class<Event>>,
+    objectSpace: core.space.Workspace as unknown as Ref<Space>,
+    modifiedOn: Date.now(),
+    modifiedBy: 'creator' as PersonId
+  } satisfies TxRemoveDoc<Event>
+}
+
+function createCreateTx (
+  attributes: Record<string, any>,
+  objectClass: Ref<Class<Doc>> = calendar.class.ReccuringInstance
+): Tx {
+  return {
+    _id: generateId(),
+    _class: core.class.TxCreateDoc,
+    space: core.space.DerivedTx,
+    objectId: generateId(),
+    objectClass: objectClass as Ref<Class<Doc>>,
+    objectSpace: core.space.Workspace as unknown as Ref<Space>,
+    modifiedOn: Date.now(),
+    modifiedBy: 'creator' as PersonId,
+    attributes
+  } as unknown as Tx
+}
 
 function createMockControl (findAllImpl: FindAllFn): TriggerControl {
   return {
@@ -125,9 +164,15 @@ function createMockControl (findAllImpl: FindAllFn): TriggerControl {
     }),
     txFactory: new TxFactory(core.account.System, true),
     hierarchy: {
-      isDerived: (_class: Ref<Class<Doc>>, base: Ref<Class<Doc>>) => _class === base,
+      // Only ReccuringEvent/Instance derive from Event here - enough to tell a series apart.
+      isDerived: (_class: Ref<Class<Doc>>, base: Ref<Class<Doc>>) =>
+        _class === base ||
+        (base === calendar.class.Event &&
+          (_class === calendar.class.ReccuringEvent || _class === calendar.class.ReccuringInstance)),
       hasMixin: (_doc: Doc, _mixin: Ref<Class<Doc>>) => true,
-      as: (doc: Doc) => ({ ...doc, meetingId: meetingRef, room: roomRef }) as unknown as MeetingEventLink
+      // The mixin carries no session reference any more; fabricating one hid the fact that the
+      // trigger could never find a meeting.
+      as: (doc: Doc) => ({ ...doc }) as unknown as MeetingEventLink
     } as any,
     modelDb: {} as any,
     removedMap: new Map(),
@@ -171,7 +216,8 @@ function getUpdateOps (txes: Tx[]): any[] {
 
 describe('OnEventUpdate', () => {
   describe('date update', () => {
-    it('should update meetingScheduledDate when Event date changes', async () => {
+    it('leaves a running session alone when the event is moved', async () => {
+      // Timing lives on the event now; a session that is already under way keeps its own start.
       const newDate = Date.now() + 86400000
       const control = createMockControl(
         buildFindAll({
@@ -181,10 +227,8 @@ describe('OnEventUpdate', () => {
       )
 
       const result = await OnEventUpdate([createUpdateTx({ date: newDate })], control)
-      const ops = getUpdateOps(result)
 
-      expect(ops).toHaveLength(1)
-      expect(ops[0].meetingScheduledDate).toBe(newDate)
+      expect(getUpdateOps(result)).toHaveLength(0)
     })
   })
 
@@ -275,6 +319,100 @@ describe('OnEventUpdate', () => {
     })
   })
 
+  describe('finding the session', () => {
+    it('finds the session of the series, not a reference on the event', async () => {
+      // The mixin holds no session id any more - looking one up there found nothing at all.
+      const control = createMockControl((_class, query) => {
+        if (_class === love.class.MeetingMinutes) {
+          return query.eventId === 'E1' ? [createMeetingDoc()] : []
+        }
+        if (_class === calendar.class.Event) return [createEvent({ eventId: 'E1' })]
+        if (_class === contact.class.Person) return [createPersonDoc(personB, accountB as unknown as PersonUuid)]
+        return []
+      })
+
+      const result = await OnEventUpdate([createUpdateTx({ participants: [personA, personB] })], control)
+
+      expect(getUpdateOps(result)).toHaveLength(1)
+    })
+
+    it('follows a recurring series, not only a plain event', async () => {
+      const control = createMockControl(
+        buildFindAll({
+          meeting: createMeetingDoc(),
+          event: createEvent(),
+          persons: [createPersonDoc(personB, accountB as unknown as PersonUuid)]
+        })
+      )
+
+      const tx = createUpdateTx({ participants: [personA, personB] }, calendar.class.ReccuringEvent)
+      const result = await OnEventUpdate([tx], control)
+
+      expect(getUpdateOps(result)).toHaveLength(1)
+    })
+
+    it('ignores a participant copy of the event', async () => {
+      // Copies mirror the master; reacting to them would fan the same edit out repeatedly.
+      const control = createMockControl(
+        buildFindAll({
+          meeting: createMeetingDoc(),
+          event: createEvent({ access: AccessLevel.Reader }),
+          persons: [createPersonDoc(personB, accountB as unknown as PersonUuid)]
+        })
+      )
+
+      const result = await OnEventUpdate([createUpdateTx({ participants: [personA, personB] })], control)
+
+      expect(getUpdateOps(result)).toHaveLength(0)
+    })
+  })
+
+  describe('series removal', () => {
+    it('finishes the live session when the series is deleted', async () => {
+      // The meeting panel lives on the event, so a deleted event would strand a running session.
+      const control = createMockControl(
+        buildFindAll({
+          meeting: createMeetingDoc({ status: MeetingStatus.Active }),
+          event: createEvent()
+        })
+      )
+
+      const result = await OnEventUpdate([createRemoveTx()], control)
+      const ops = getUpdateOps(result)
+
+      expect(ops).toHaveLength(1)
+      expect(ops[0].status).toBe(MeetingStatus.Finished)
+      expect(typeof ops[0].meetingEnd).toBe('number')
+    })
+
+    it('ignores removal of a participant copy', async () => {
+      // Only the master carries the series; a participant dropping their copy ends nothing.
+      const control = createMockControl(
+        buildFindAll({
+          meeting: createMeetingDoc({ status: MeetingStatus.Active }),
+          event: createEvent({ access: AccessLevel.Reader })
+        })
+      )
+
+      const result = await OnEventUpdate([createRemoveTx()], control)
+
+      expect(result).toHaveLength(0)
+    })
+
+    it('ignores removal of a document that is not an event', async () => {
+      const control = createMockControl(
+        buildFindAll({
+          meeting: createMeetingDoc({ status: MeetingStatus.Active }),
+          event: createEvent()
+        })
+      )
+
+      const result = await OnEventUpdate([createRemoveTx(love.class.MeetingMinutes)], control)
+
+      expect(result).toHaveLength(0)
+    })
+  })
+
   describe('tx filtering', () => {
     it('should ignore TxMixin transactions', async () => {
       const tx = createUpdateTx({ date: Date.now() + 86400000 })
@@ -324,8 +462,89 @@ describe('OnEventUpdate', () => {
       const ops = getUpdateOps(result)
 
       expect(ops).toHaveLength(1)
-      expect(ops[0].meetingScheduledDate).toBe(newDate)
+      expect(ops[0].meetingScheduledDate).toBeUndefined()
       expect(ops[0].$push.members.$each).toEqual([accountB])
+    })
+  })
+
+  describe('cancelled occurrence', () => {
+    it('ends the session of the cancelled occurrence', async () => {
+      // Deleting one occurrence replaces it with a copy marked `isCancelled`; its session is already
+      // running and its card is gone from the calendar, so nobody could end it any more.
+      const occurrence = Date.now() + 3600000
+      const control = createMockControl(
+        buildFindAll({ meeting: createMeetingDoc({ status: MeetingStatus.Active }), event: createEvent() })
+      )
+
+      const result = await OnEventUpdate(
+        [
+          createCreateTx({
+            eventId: 'E1',
+            originalStartTime: occurrence,
+            date: occurrence,
+            isCancelled: true
+          })
+        ],
+        control
+      )
+
+      const ops = getUpdateOps(result)
+      expect(ops).toHaveLength(1)
+      expect(ops[0].status).toBe(MeetingStatus.Finished)
+      expect(ops[0].meetingEnd).toBeDefined()
+    })
+
+    it('asks the query for that very occurrence, not for the whole series', async () => {
+      const occurrence = Date.now() + 3600000
+      const queries: any[] = []
+      const control = createMockControl((_class, query) => {
+        if (_class === love.class.MeetingMinutes) {
+          queries.push(query)
+          return [createMeetingDoc({ status: MeetingStatus.Active })]
+        }
+        if (_class === calendar.class.Event) return [createEvent()]
+        return []
+      })
+
+      await OnEventUpdate(
+        [createCreateTx({ eventId: 'E1', originalStartTime: occurrence, date: occurrence, isCancelled: true })],
+        control
+      )
+
+      expect(queries).toHaveLength(1)
+      expect(queries[0].eventId).toBe('E1')
+      expect(queries[0].occurrence).toBe(occurrence)
+    })
+
+    it('finishes the occurrence session marked cancelled in place', async () => {
+      const occurrence = Date.now() + 3600000
+      const event = { ...createEvent(), originalStartTime: occurrence }
+      const control = createMockControl(
+        buildFindAll({
+          meeting: createMeetingDoc({ status: MeetingStatus.Active }),
+          event: event as Event
+        })
+      )
+
+      const result = await OnEventUpdate([createUpdateTx({ isCancelled: true } as unknown as Partial<Event>)], control)
+
+      const ops = getUpdateOps(result)
+      expect(ops).toHaveLength(1)
+      expect(ops[0].status).toBe(MeetingStatus.Finished)
+    })
+
+    it('ignores a copy that is created without the cancellation mark', async () => {
+      // Moving one occurrence also replaces it with a copy: that copy is not a cancellation.
+      const control = createMockControl(
+        buildFindAll({ meeting: createMeetingDoc({ status: MeetingStatus.Active }), event: createEvent() })
+      )
+
+      const result = await OnEventUpdate(
+        [createCreateTx({ eventId: 'E1', originalStartTime: Date.now(), date: Date.now() })],
+        control
+      )
+
+      expect(getUpdateOps(result)).toHaveLength(0)
     })
   })
 })

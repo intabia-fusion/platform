@@ -101,8 +101,10 @@
   // saveEvent bails out silently, so the button must not be clickable yet.
   $: canSave = title !== '' && _calendar !== undefined
 
+  // A modal must be dismissible: swallowing the overlay click reads as a broken popup. The draft is
+  // lost on dismissal, and that is the expected cost of clicking outside.
   export function canClose (): boolean {
-    return title?.trim().length === 0 && participants.length === 0
+    return true
   }
 
   let saving = false
@@ -197,10 +199,11 @@
   }
 
   function setRecurrance () {
-    showPopup(ReccurancePopup, { rules, startDate }, undefined, (res) => {
-      if (res) {
-        rules = res
-      }
+    showPopup(ReccurancePopup, { rules, startDate, removable: true }, undefined, (res) => {
+      // Only a rule list is an answer. Cancel reports `null` (a Svelte event without a payload has
+      // `detail: null`), and an empty array means "no repeat" - so neither truthiness nor a
+      // comparison with `undefined` is enough here.
+      if (Array.isArray(res)) rules = res
     })
   }
 
@@ -250,7 +253,9 @@
       <ParticipantsBusy {participants} date={startDate} {dueDate} bind:busyPersons />
     </div>
     <div class="block">
-      <DocCreateExtComponent manager={docCreateManager} kind="body" />
+      <!-- The repeat rule goes to the extensions: a repeating event is a series of meetings, and the
+           meeting block turns itself on from it. -->
+      <DocCreateExtComponent manager={docCreateManager} kind="body" props={{ rules }} />
     </div>
     <div class="block description">
       <div class="top-icon">

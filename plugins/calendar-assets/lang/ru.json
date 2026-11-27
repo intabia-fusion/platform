@@ -7,6 +7,10 @@
     "PersonsLabel": "{name}",
     "AddDescription": "Добавить описание",
     "Date": "Дата",
+    "When": "Когда",
+    "About": "О встрече",
+    "Where": "Где",
+    "Remember": "Напоминать",
     "DueTo": "Дата конца",
     "Description": "Описание",
     "Title": "Название",
@@ -55,6 +59,7 @@
     "EventTitlePlaceholder": "Название события",
     "TimeZone": "Часовой пояс",
     "Repeat": "Повтор",
+    "DoNotRepeat": "Не повторять",
     "On": "В",
     "Every": "Кажд.",
     "After": "После",
@@ -125,6 +130,18 @@
     "SynchronizedCalendars": "Синхронизированные календари",
     "Account": "Аккаунт",
     "NoCalendars": "Календари для синхронизации не выбраны",
-    "PersonalCalendar": "Личный календарь"
+    "PersonalCalendar": "Личный календарь",
+    "Going": "Приду",
+    "NotGoing": "Не приду",
+    "Maybe": "Возможно",
+    "WillYouAttend": "Придёте?",
+    "RsvpAccepted": "придут",
+    "RsvpDeclined": "не придут",
+    "RsvpTentative": "возможно",
+    "RsvpPending": "без ответа",
+    "RsvpAcceptedCount": "{count, plural, one {# придёт} few {# придут} many {# придут} other {# придут}}",
+    "RsvpTentativeCount": "{count, plural, one {# возможно} few {# возможно} many {# возможно} other {# возможно}}",
+    "RsvpDeclinedCount": "{count, plural, one {# не придёт} few {# не придут} many {# не придут} other {# не придут}}",
+    "RsvpPendingCount": "{count, plural, one {# без ответа} few {# без ответа} many {# без ответа} other {# без ответа}}"
   }
 }

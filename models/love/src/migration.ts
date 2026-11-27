@@ -16,6 +16,8 @@
 import contact, { type SocialIdentity, type Employee } from '@hcengineering/contact'
 import {
   type AttachedDoc,
+  type DocumentQuery,
+  generateId,
   type MarkupBlobRef,
   TxOperations,
   type Ref,
@@ -33,11 +35,15 @@ import {
   RoomType,
   type TranscriptionState,
   createDefaultRooms,
+  defaultMeetingAccess,
   isOffice,
   loveId,
   type Floor,
   type Room,
+  type MeetingEventLink,
+  type MeetingGroup,
   type MeetingMinutes,
+  type PermanentMeeting,
   type RecordingState
 } from '@hcengineering/love'
 import {
@@ -49,13 +55,17 @@ import {
   type MigrationClient,
   type MigrationUpgradeClient
 } from '@hcengineering/model'
+import calendar, { AccessLevel, DOMAIN_EVENT, type Event } from '@hcengineering/model-calendar'
 import core, { DOMAIN_SPACE } from '@hcengineering/model-core'
+import presentation from '@hcengineering/model-presentation'
+import view from '@hcengineering/model-view'
 import { DOMAIN_LOVE, DOMAIN_LOVE_PENDING, DOMAIN_MEETING_MINUTES } from '.'
 import love from './plugin'
 
 const DOMAIN_ACTIVITY = 'activity' as Domain
 const DOMAIN_ATTACHMENT = 'attachment' as Domain
 const DOMAIN_CONTACT = 'contact' as Domain
+const DOMAIN_PREFERENCE = 'preference' as Domain
 
 // Old MeetingMinutes interface before migration to Space (extends AttachedDoc which extends Doc)
 interface OldMeetingMinutes extends AttachedDoc {
@@ -146,6 +156,387 @@ async function createReception (client: MigrationUpgradeClient): Promise<void> {
     },
     love.ids.Reception
   )
+}
+
+// One service floor and one room per workspace, idempotent by fixed _id like MainFloor.
+// The room is needed even though the floor renders as a calendar: a session without `roomId`
+// never gets a ParticipantInfo.
+async function createScheduledFloor (client: MigrationUpgradeClient): Promise<void> {
+  const tx = new TxOperations(client, core.account.System)
+
+  const floor = await tx.findOne(love.class.Floor, { _id: love.ids.ScheduledFloor })
+  if (floor === undefined) {
+    await tx.createDoc(love.class.Floor, core.space.Workspace, { name: 'Scheduled' }, love.ids.ScheduledFloor)
+  }
+
+  const room = await tx.findOne(love.class.Room, { _id: love.ids.ScheduledRoom })
+  if (room !== undefined) return
+  await tx.createDoc(
+    love.class.Room,
+    core.space.Workspace,
+    {
+      name: 'Scheduled',
+      type: RoomType.Scheduled,
+      floor: love.ids.ScheduledFloor,
+      width: 100,
+      height: 0,
+      x: 0,
+      y: 0,
+      // Media settings of a scheduled meeting come from its own mixin, not from this room.
+      language: 'en',
+      startWithTranscription: false,
+      startWithRecording: false,
+      startPrivate: false,
+      description: null
+    },
+    love.ids.ScheduledRoom
+  )
+}
+
+// `MeetingStatus.Scheduled` is gone from the enum, but old documents still carry its value.
+// A migration describes data as it was, so the literal stays.
+const OLD_STATUS_SCHEDULED = 7 as MeetingStatus
+
+// The mixin is stored flat under its own id, so a whole-object write is the only way to touch
+// several of its fields at once.
+const MEETING_MIXIN = love.mixin.MeetingEventLink as unknown as string
+
+interface OldMeetingLink {
+  room?: Ref<Room>
+  meetingId?: Ref<MeetingMinutes>
+}
+
+// Master events carry the mixin, participant copies only mirror it - and both share `eventId`,
+// so the master is the one to write to.
+async function masterEventsByMeeting (client: MigrationClient): Promise<Map<Ref<MeetingMinutes>, Event>> {
+  const res = new Map<Ref<MeetingMinutes>, Event>()
+  const iterator = await client.traverse<Event>(DOMAIN_EVENT, {
+    [MEETING_MIXIN]: { $exists: true },
+    access: AccessLevel.Owner,
+    // A materialized override carries `access: Owner` and the series' `eventId`, so it answers
+    // this query too - and `stripMixinFromNonMasters` then wipes what was written to it.
+    _class: { $ne: calendar.class.ReccuringInstance }
+  })
+  try {
+    while (true) {
+      const docs = await iterator.next(500)
+      if (docs === null || docs.length === 0) break
+      for (const doc of docs) {
+        const link = (doc as any)[MEETING_MIXIN] as OldMeetingLink | undefined
+        if (link?.meetingId === undefined) continue
+        res.set(link.meetingId, doc)
+      }
+    }
+  } finally {
+    await iterator.close()
+  }
+  return res
+}
+
+// F1 §12.1-3: the meeting's identity moves from the session document onto the event mixin.
+// A `Scheduled` session never took place - its settings are the series defaults and it goes away;
+// a live one only learns which series it belongs to. `Finished` sessions stay as they are: the
+// history from before the migration is not stitched to a series, a deliberate loss.
+export async function meetingSettingsToMixin (client: MigrationClient): Promise<void> {
+  const byMeeting = await masterEventsByMeeting(client)
+  if (byMeeting.size === 0) return
+
+  const rooms = await client.find<Room>(DOMAIN_LOVE, { _class: { $in: [love.class.Room, love.class.Office] } })
+  const roomType = new Map(rooms.map((it) => [it._id, it.type]))
+
+  const sessions = await client.find<MeetingMinutes>(DOMAIN_SPACE, {
+    _class: love.class.MeetingMinutes,
+    status: { $in: [OLD_STATUS_SCHEDULED, MeetingStatus.Active, MeetingStatus.Pending] }
+  })
+
+  const dropped: Array<Ref<MeetingMinutes>> = []
+  for (const session of sessions) {
+    const event = byMeeting.get(session._id)
+    if (event === undefined) continue
+
+    if (session.status === OLD_STATUS_SCHEDULED) {
+      const type = session.roomId !== undefined ? roomType.get(session.roomId) : undefined
+      const link = (event as any)[MEETING_MIXIN] as OldMeetingLink
+      const mixin: Partial<MeetingEventLink> & OldMeetingLink = {
+        ...link,
+        // Reception is not a media mode; anything but Audio behaves as Video.
+        type: type === RoomType.Audio ? RoomType.Audio : RoomType.Video,
+        linkVersion: 1,
+        meetingAccess: defaultMeetingAccess,
+        private: session.private,
+        language: session.language,
+        startWithRecording: session.startWithRecording ?? false,
+        startWithTranscription: session.startWithTranscription ?? false
+      }
+      // Master only - copies keep the stale mixin until it is stripped below, and the calendar
+      // trigger re-mirrors the new one from the master afterwards.
+      await client.update(DOMAIN_EVENT, { _id: event._id }, { [MEETING_MIXIN]: mixin })
+      dropped.push(session._id)
+    } else {
+      await client.update(
+        DOMAIN_SPACE,
+        { _id: session._id },
+        // Set by meeting-minutes-to-space-v2; a session without one belongs to the series start.
+        { eventId: event.eventId, occurrence: session.occurrence ?? event.date }
+      )
+    }
+  }
+
+  if (dropped.length > 0) {
+    // No session ever ran, so nothing hangs off these spaces worth keeping.
+    await client.deleteMany(DOMAIN_SPACE, { _id: { $in: dropped } })
+  }
+
+  client.logger.log('meeting settings moved onto the event mixin', {
+    events: byMeeting.size,
+    sessions: sessions.length,
+    dropped: dropped.length
+  })
+}
+
+// F1 §12.4: the mixin belongs to the master alone. On a copy the calendar trigger re-mirrors it;
+// on a persisted ReccuringInstance it would be a permanent link owned by one occurrence.
+export async function stripMixinFromNonMasters (client: MigrationClient): Promise<void> {
+  await client.update(
+    DOMAIN_EVENT,
+    { [MEETING_MIXIN]: { $exists: true }, access: { $ne: AccessLevel.Owner } },
+    { $unset: { [MEETING_MIXIN]: true } }
+  )
+  await client.update(
+    DOMAIN_EVENT,
+    { [MEETING_MIXIN]: { $exists: true }, _class: calendar.class.ReccuringInstance },
+    { $unset: { [MEETING_MIXIN]: true } }
+  )
+}
+
+// The event card badge is a model document, and a workspace never picks new model documents up on
+// its own - the model it was created with is the model it keeps. Without this step the card stays
+// unmarked on every workspace created before the badge existed.
+async function addMeetingEventCardBadge (client: MigrationUpgradeClient): Promise<void> {
+  const existing = await client.findAll(presentation.class.ComponentPointExtension, {
+    extension: calendar.extensions.EventCardExtensions
+  })
+  // A fresh workspace already has it from the model, and the step runs once per workspace anyway.
+  if (existing.length > 0) return
+
+  const tx = new TxOperations(client, core.account.System)
+  await tx.createDoc(presentation.class.ComponentPointExtension, core.space.Model, {
+    extension: calendar.extensions.EventCardExtensions,
+    component: love.component.MeetingEventBadge
+  })
+}
+
+/**
+ * A permanent meeting is an always-open room, but its link was left at the default `start: 'members'`:
+ * a guest could join only after a participant had already started the session. New meetings are
+ * created with `start: 'link'`; this step gives the existing ones the same policy.
+ */
+async function openPermanentMeetingsOnLink (client: MigrationUpgradeClient): Promise<void> {
+  const tx = new TxOperations(client, core.account.System)
+  const meetings = await client.findAll(love.class.PermanentMeeting, {})
+  for (const meeting of meetings) {
+    const access = meeting.meetingAccess
+    if (access?.start === 'link') continue
+    await tx.update(meeting, { meetingAccess: { ...defaultMeetingAccess, ...access, start: 'link' } })
+  }
+}
+
+// The delete action of a permanent meeting is a model document too: a workspace created before it
+// existed never receives it, and the tab's selection toolbar stays without a delete entry.
+async function backfillMeetingEvent (client: MigrationUpgradeClient): Promise<void> {
+  const tx = new TxOperations(client, core.account.System)
+  const meetings = await client.findAll(love.class.PermanentMeeting, {})
+  for (const meeting of meetings) {
+    if (meeting.event !== undefined) continue
+    const events = await client.findAll(calendar.class.Event, {
+      [`${love.mixin.MeetingEventLink as string}.permanentMeeting`]: meeting._id
+    } as any)
+    if (events.length === 0) continue
+    await tx.update(meeting, { event: events[0]._id })
+  }
+}
+
+async function addPermanentMeetingDeleteAction (client: MigrationUpgradeClient): Promise<void> {
+  const tx = new TxOperations(client, core.account.System)
+  const existing = await client.findAll(view.class.Action, {
+    target: love.class.PermanentMeeting,
+    action: view.actionImpl.Delete
+  })
+  if (existing.length === 0) {
+    await tx.createDoc(view.class.Action, core.space.Model, {
+      action: view.actionImpl.Delete,
+      label: view.string.Delete,
+      icon: view.icon.Delete,
+      category: love.category.Office,
+      override: [view.action.Delete],
+      input: 'any',
+      target: love.class.PermanentMeeting,
+      context: { mode: ['context', 'browser'], group: 'remove' },
+      visibilityTester: love.function.CanDeletePermanentMeeting
+    })
+  } else {
+    // A workspace that got the action before the creator check existed still carries CanDeleteSpace,
+    // and the delete entry would stay visible to everyone.
+    for (const action of existing) {
+      if (action.visibilityTester !== love.function.CanDeletePermanentMeeting) {
+        await tx.update(action, { visibilityTester: love.function.CanDeletePermanentMeeting })
+      }
+    }
+  }
+
+  // The settings action is new: same reason, a workspace never picks a model document up on its own.
+  const settings = await client.findAll(view.class.Action, {
+    target: love.class.PermanentMeeting,
+    action: love.actionImpl.EditPermanentMeetingSettings
+  })
+  if (settings.length === 0) {
+    await tx.createDoc(view.class.Action, core.space.Model, {
+      action: love.actionImpl.EditPermanentMeetingSettings,
+      label: love.string.MeetingSettings,
+      icon: view.icon.Edit,
+      category: love.category.Office,
+      target: love.class.PermanentMeeting,
+      input: 'focus',
+      visibilityTester: love.function.CanEditPermanentMeeting,
+      context: { mode: ['context', 'browser'] }
+    })
+  }
+
+  // The series of a meeting is edited through the same window, so the list of meetings needs its
+  // own entry: the calendar's `Edit` opens a recurrence scope dialog a meeting has no answer for.
+  const seriesSettings = await client.findAll(view.class.Action, {
+    target: love.mixin.MeetingEventLink,
+    action: love.actionImpl.EditMeetingSettings
+  })
+  if (seriesSettings.length === 0) {
+    await tx.createDoc(view.class.Action, core.space.Model, {
+      action: love.actionImpl.EditMeetingSettings,
+      label: love.string.MeetingSettings,
+      icon: view.icon.Edit,
+      category: love.category.Office,
+      target: love.mixin.MeetingEventLink,
+      input: 'focus',
+      visibilityTester: love.function.CanEditMeetingSettings,
+      context: { mode: ['context', 'browser'] }
+    })
+  }
+}
+
+/**
+ * Drops saved view preferences of the meetings views: an old preference keeps the columns the model no
+ * longer has. Raw delete: a client query does not find these documents here.
+ */
+async function resetPermanentMeetingsViewPreferences (client: MigrationClient): Promise<void> {
+  await client.deleteMany(DOMAIN_PREFERENCE, {
+    _class: view.class.ViewletPreference,
+    attachedTo: { $in: [love.viewlet.ListPermanentMeetings, love.viewlet.TablePermanentMeetings] }
+  } as any)
+}
+
+/**
+ * Deletes series whose permanent meeting is gone. The leftover is invisible to a client query, so the
+ * event domain is read raw and copies are found by `eventId`.
+ */
+async function removeOrphanMeetingSeries (client: MigrationClient): Promise<void> {
+  const meetings = new Set<Ref<Space>>(
+    (await client.find<Space>(DOMAIN_SPACE, { _class: love.class.PermanentMeeting })).map((it) => it._id)
+  )
+  const events = await client.find<Event>(DOMAIN_EVENT, {})
+  for (const event of events) {
+    const link = (event as unknown as Record<string, MeetingEventLink | undefined>)[love.mixin.MeetingEventLink]
+    const meeting = link?.permanentMeeting
+    if (meeting === undefined || meetings.has(meeting as unknown as Ref<Space>)) continue
+    if (event.eventId === undefined) {
+      await client.delete(DOMAIN_EVENT, event._id)
+    } else {
+      await client.deleteMany(DOMAIN_EVENT, { eventId: event.eventId } as unknown as DocumentQuery<Event>)
+    }
+  }
+}
+
+/**
+ * A meeting used to be two documents or none: a permanent meeting was a `PermanentMeeting`, while a
+ * one-off meeting was a bare calendar event with the meeting mixin. The meetings lists read
+ * `PermanentMeeting` only, so such an event was invisible there. This gives every meeting-event its
+ * own meeting document and links the two: the event keeps running the calendar and the planner.
+ */
+async function eventMeetingsToPermanent (client: MigrationClient): Promise<void> {
+  const events = await client.find<Event>(DOMAIN_EVENT, {})
+  for (const event of events) {
+    // An occurrence is a copy the calendar mirrors onto the master; only the master is a meeting.
+    const occurrence = (event as unknown as { recurringEventId?: Ref<Event> }).recurringEventId
+    if (occurrence !== undefined) continue
+    const link = (event as unknown as Record<string, MeetingEventLink | undefined>)[love.mixin.MeetingEventLink]
+    if (link === undefined || link.permanentMeeting !== undefined) continue
+
+    const persons =
+      (event.participants?.length ?? 0) > 0
+        ? await client.find<Employee>(DOMAIN_CONTACT, {
+          _class: contact.mixin.Employee,
+          _id: { $in: event.participants as unknown as Array<Ref<Employee>> }
+        })
+        : []
+    const members = [event.createdBy, ...persons.map((it) => it.personUuid)].filter(
+      (it, idx, all) => all.indexOf(it) === idx
+    )
+    const meetingId: Ref<PermanentMeeting> = generateId()
+
+    await client.create<PermanentMeeting>(DOMAIN_SPACE, {
+      _id: meetingId,
+      _class: love.class.PermanentMeeting,
+      space: core.space.Space,
+      name: event.title,
+      description: '',
+      descriptionRef: null,
+      private: true,
+      archived: false,
+      members,
+      owners: [event.createdBy],
+      type: RoomType.Video,
+      language: (link.language ?? 'en') as RoomLanguage,
+      startWithRecording: link.startWithRecording ?? false,
+      startWithTranscription: link.startWithTranscription ?? false,
+      // The event is in the calendar by definition: it is the calendar that holds it.
+      calendar: true,
+      startDate: event.date,
+      duration: event.dueDate !== undefined ? Math.max(0, event.dueDate - event.date) : undefined,
+      timeZone: event.timeZone,
+      reminderBefore: link.reminderBefore,
+      meetingAccess: { ...defaultMeetingAccess, start: 'link' },
+      createdOn: event.createdOn,
+      createdBy: event.createdBy,
+      modifiedOn: event.modifiedOn,
+      modifiedBy: event.modifiedBy,
+      ...(link.group !== undefined ? { group: link.group } : {})
+    } as unknown as PermanentMeeting)
+
+    // The mixin is replaced as a whole: a partial update would drop the fields it already carries.
+    await client.update(
+      DOMAIN_EVENT,
+      { _id: event._id },
+      { [love.mixin.MeetingEventLink]: { ...link, permanentMeeting: meetingId } } as any
+    )
+  }
+}
+
+/**
+ * Copies the group of a permanent meeting onto its series. The meetings list groups events by the
+ * group, and a viewlet can only group by an attribute of its own class, so the event keeps a copy.
+ */
+async function copyMeetingGroupToSeries (client: MigrationClient): Promise<void> {
+  const meetings = await client.find<PermanentMeeting>(DOMAIN_SPACE, { _class: love.class.PermanentMeeting })
+  const groups = new Map<Ref<PermanentMeeting>, Ref<MeetingGroup> | undefined>(
+    meetings.map((it) => [it._id, it.group])
+  )
+  const events = await client.find<Event>(DOMAIN_EVENT, {})
+  for (const event of events) {
+    const link = (event as unknown as Record<string, MeetingEventLink | undefined>)[love.mixin.MeetingEventLink]
+    const meeting = link?.permanentMeeting
+    if (meeting === undefined) continue
+    const group = groups.get(meeting)
+    if (group === undefined || link?.group === group) continue
+    await client.update(DOMAIN_EVENT, { _id: event._id }, { [love.mixin.MeetingEventLink]: { group } } as any)
+  }
 }
 
 export const loveOperation: MigrateOperation = {
@@ -363,7 +754,8 @@ export const loveOperation: MigrateOperation = {
                   transcriptionState: m.transcriptionState,
                   recordingState: m.recordingState,
                   meetingEnd: m.meetingEnd,
-                  meetingScheduledDate: m.meetingScheduledDate,
+                  // Old meetingScheduledDate; meeting-settings-to-mixin reads it after this state.
+                  occurrence: m.meetingScheduledDate,
                   transcription: m.transcription,
                   messages: m.messages,
                   attachments: m.attachments,
@@ -518,6 +910,39 @@ export const loveOperation: MigrateOperation = {
             }
           }
         }
+      },
+      {
+        state: 'meeting-settings-to-mixin',
+        mode: 'upgrade',
+        func: meetingSettingsToMixin
+      },
+      {
+        state: 'strip-meeting-mixin-from-non-masters',
+        mode: 'upgrade',
+        func: stripMixinFromNonMasters
+      },
+      {
+        // Raw-domain cleanup: the leftover events are not reachable through a client query.
+        state: 'remove-orphan-meeting-series',
+        mode: 'upgrade',
+        func: removeOrphanMeetingSeries
+      },
+      {
+        state: 'reset-permanent-meetings-view-preferences',
+        mode: 'upgrade',
+        func: resetPermanentMeetingsViewPreferences
+      },
+      {
+        state: 'copy-meeting-group-to-series',
+        mode: 'upgrade',
+        func: copyMeetingGroupToSeries
+      },
+      {
+        // Before this, a one-off meeting existed only as a calendar event and was invisible in the
+        // meetings lists: every meeting-event gets its own meeting document here.
+        state: 'event-meeting-to-permanent',
+        mode: 'upgrade',
+        func: eventMeetingsToPermanent
       }
     ])
   },
@@ -551,6 +976,12 @@ export const loveOperation: MigrateOperation = {
         }
       },
       {
+        state: 'create-scheduled-floor',
+        func: async (client) => {
+          await createScheduledFloor(client)
+        }
+      },
+      {
         state: 'create-drive',
         func: async (client) => {
           await createDefaultSpace(
@@ -565,6 +996,27 @@ export const loveOperation: MigrateOperation = {
             drive.class.Drive
           )
         }
+      },
+      {
+        state: 'meeting-event-card-badge',
+        func: addMeetingEventCardBadge
+      },
+      {
+        // Renamed from 'permanent-meeting-delete-action': the step now also rewrites the delete
+        // visibility to the creator check, and a state that already ran would be skipped.
+        state: 'permanent-meeting-actions-v3',
+        func: addPermanentMeetingDeleteAction
+      },
+      {
+        // Existing meetings keep the policy they were created with - the default `members`.
+        state: 'permanent-meeting-link-open',
+        func: openPermanentMeetingsOnLink
+      },
+      {
+        // The event reference moved from the link mixin onto the meeting itself: the settings window
+        // finds the series by it, and the row reads it to mark the meeting as scheduled.
+        state: 'backfill-meeting-event',
+        func: backfillMeetingEvent
       }
     ])
   }

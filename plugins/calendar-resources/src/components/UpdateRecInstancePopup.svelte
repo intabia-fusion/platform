@@ -21,36 +21,23 @@
 
   export let label: IntlString = calendar.string.EditRecEvent
   export let currentAvailable: boolean = true
+  // Which scopes the caller can honour. Editing a meeting is editing one thing, so its save never
+  // offers to split the series - only the occurrence or everything from now on.
+  export let modes: string[] = ['current', 'next', 'all']
 
   const dispatch = createEventDispatcher()
 
   const manager = createFocusManager()
 
-  const items = currentAvailable
-    ? [
-        {
-          id: 'current',
-          label: calendar.string.ThisEvent
-        },
-        {
-          id: 'next',
-          label: calendar.string.ThisAndNext
-        },
-        {
-          id: 'all',
-          label: calendar.string.AllEvents
-        }
-      ]
-    : [
-        {
-          id: 'next',
-          label: calendar.string.ThisAndNext
-        },
-        {
-          id: 'all',
-          label: calendar.string.AllEvents
-        }
-      ]
+  const labels: Record<string, IntlString> = {
+    current: calendar.string.ThisEvent,
+    next: calendar.string.ThisAndNext,
+    all: calendar.string.AllEvents
+  }
+
+  const items = modes
+    .filter((it) => labels[it] !== undefined && (it !== 'current' || currentAvailable))
+    .map((id) => ({ id, label: labels[id] }))
 
   let selected = items[0].id
 </script>

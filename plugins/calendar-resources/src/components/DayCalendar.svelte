@@ -1306,9 +1306,11 @@
       background-color: var(--accent-color-base, var(--highlight-red));
     }
     .now-line {
+      // Stretched by `left`/`right` alone: a `width: 100%` here measures from the grid's left edge,
+      // not from `left`, so the line ran 3rem past the last column and gave the grid a horizontal
+      // scrollbar to hide that overflow with.
       left: 3rem;
       right: 0;
-      width: 100%;
       height: 1px;
       min-height: 1px;
       max-height: 1px;

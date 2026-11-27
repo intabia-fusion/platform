@@ -18,7 +18,7 @@
   import core, { getObjectValue, RateLimiter, mergeQueries, type SortingOrder } from '@hcengineering/core'
   import type { IntlString } from '@hcengineering/platform'
   import { createQuery, getClient, reduceCalls } from '@hcengineering/presentation'
-  import type { AnyComponent, AnySvelteComponent } from '@hcengineering/ui'
+  import { Component, type AnyComponent, type AnySvelteComponent } from '@hcengineering/ui'
   import type { BuildModelKey, ViewOptionModel, ViewOptions, Viewlet } from '@hcengineering/view'
   import { createEventDispatcher } from 'svelte'
   import type { SelectionFocusProvider } from '../../selection'
@@ -51,6 +51,9 @@
   export let singleCategoryLimit: number | undefined = undefined
   export let readonly: boolean = false
   export let empty: boolean = false
+  // A block of the view's own above the categories: a caption row of the list, for a view that shows
+  // the names of its columns the way a table does.
+  export let contentHeader: AnyComponent | undefined = undefined
 
   const limiter = new RateLimiter(10)
 
@@ -305,7 +308,12 @@
 </script>
 
 <div class="list-container" bind:this={listDiv} style:min-width={props.minRowWidth}>
+  <!-- A caption block of the list's own, above everything the categories scroll. -->
+  {#if contentHeader !== undefined}
+    <Component is={contentHeader} props={{ _class, docs, config, viewOptions }} />
+  {/if}
   <ListCategories
+    wideRows={props.columnWidths !== undefined}
     bind:this={listCategories}
     bind:empty={noCategories}
     newObjectProps={() => (space != null ? { space } : {})}

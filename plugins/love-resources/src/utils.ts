@@ -1,9 +1,9 @@
 import aiBot from '@hcengineering/ai-bot'
 import { connectMeeting, disconnectMeeting } from '@hcengineering/ai-bot-resources'
 import { Analytics } from '@hcengineering/analytics'
-import calendar, { type Event, type Schedule } from '@hcengineering/calendar'
+import calendar, { type Event, type ReccuringEvent, type Schedule } from '@hcengineering/calendar'
 import chunter from '@hcengineering/chunter'
-import contact, { getName, getPersonsByPersonIds, getPersonsByPersonRefs, type Person } from '@hcengineering/contact'
+import contact, { getName } from '@hcengineering/contact'
 import workbench from '@hcengineering/workbench'
 import core, {
   type AccountUuid,
@@ -11,29 +11,37 @@ import core, {
   concatLink,
   type Data,
   type Doc,
+  type DocData,
   type DocumentQuery,
   getCurrentAccount,
   type Ref,
   type RelatedDocument,
   type Space,
   type TxOperations,
-  type WithLookup,
-  generateId
+  type WithLookup
 } from '@hcengineering/core'
 import {
   isOffice,
   LoveEvents,
   loveId,
-  MeetingStatus,
-  RecordingState,
-  TranscriptionState,
-  type MeetingEventLink,
+  meetingMasterQuery,
+  type MeetingLinkKind,
   type MeetingMinutes,
   type MeetingSchedule,
+  type PermanentMeeting,
   type Room,
+  RoomType,
   type UserMeetingInvite
 } from '@hcengineering/love'
-import { getEmbeddedLabel, getMetadata, translate, type IntlString } from '@hcengineering/platform'
+import {
+  getEmbeddedLabel,
+  getMetadata,
+  setPlatformStatus,
+  Severity,
+  Status,
+  translate,
+  type IntlString
+} from '@hcengineering/platform'
 import presentation, {
   copyTextToClipboard,
   type DocCreatePhase,
@@ -57,6 +65,8 @@ import {
 } from 'livekit-client'
 import { derived, get, writable } from 'svelte/store'
 
+import { ruleToPeriod } from './period'
+import { attachMeetingLink, createPermanentMeeting } from './permanentMeetingSchedule'
 import { getPersonByPersonRef } from '@hcengineering/contact-resources'
 import MeetingMinutesSearchItem from './components/MeetingMinutesSearchItem.svelte'
 import RoomSettingsPopup from './components/RoomSettingsPopup.svelte'
@@ -191,9 +201,17 @@ export async function navigateToOfficeDoc (object: Doc): Promise<void> {
   const hierarchy = getClient().getHierarchy()
   const panelComponent = hierarchy.classHierarchyMixin(object._class, view.mixin.ObjectPanel)
   const comp = panelComponent?.component ?? view.component.EditDoc
+  const current = getCurrentLocation()
   const loc = await getObjectLinkFragment(hierarchy, object, {}, comp)
   loc.path[2] = loveId
-  loc.path.length = 3
+  // The navigator keeps its selection in `path[3]`: cutting the path to three segments dropped the
+  // user back to the default section as soon as a document opened from a call (FUSIO-1307 follow-up).
+  if (current.path[2] === loveId && current.path[3] !== undefined) {
+    loc.path[3] = current.path[3]
+    loc.path.length = 4
+  } else {
+    loc.path.length = 3
+  }
   loc.query = undefined
   navigate(loc)
 }
@@ -231,104 +249,84 @@ async function checkRecordAvailable (): Promise<void> {
 
 void checkRecordAvailable()
 
+/** Lead time of the meeting reminder unless the meeting says otherwise: a quarter of an hour. */
+export const DEFAULT_MEETING_REMINDER = 15 * 60 * 1000
+
 export async function createMeeting (
   client: TxOperations,
   _id: Ref<Event>,
-  space: Space,
-  _data: Data<Event>,
+  _space: Space | Ref<Space>,
+  _data: DocData<Doc>,
   store: Record<string, any>,
   phase: DocCreatePhase
 ): Promise<void> {
-  if (phase === 'post' && store.room != null && store.isMeeting === true) {
+  if (phase === 'post' && store.isMeeting === true) {
     const event = await client.findOne(calendar.class.Event, { _id })
     if (event === undefined) return
-    const events = await client.findAll(calendar.class.Event, { eventId: event.eventId })
+    // The mixin goes on the series master alone: onEventMixin mirrors it onto every copy sharing
+    // the eventId, and a copy cannot fan changes back (it returns early on access !== 'owner').
+    // The recurrence rule itself lives on the event: the calendar editor turns it into a series
+    // (`rules`) before this post hook runs, so no conversion happens here.
+    const master = await client.findOne(calendar.class.Event, meetingMasterQuery(event))
+    if (master === undefined) return
 
-    const room = await client.findOne(love.class.Room, { _id: store.room as Ref<Room> })
-    const isPrivate = room?.startPrivate ?? false
-    const roomLanguage = room?.language ?? 'en'
-    const roomStartWithRecording = room?.startWithRecording ?? false
-    const roomStartWithTranscription = room?.startWithTranscription ?? false
+    // A repeating meeting is a permanent one, and a permanent meeting owns no office room: it lives in
+    // the workspace meeting room. Whatever room the form still holds is ignored for it.
+    const rules = (master as ReccuringEvent).rules ?? []
+    const isPermanent = rules.length > 0
 
-    // Collect members from event creator and participants
-    const members = new Set<AccountUuid>()
+    // A meeting is its own entity: scheduling only records what the meeting is, the session is
+    // opened by the love service when an occurrence comes (the only writer allowed to, F1 §5).
+    await attachMeetingLink(client, master, {
+      room: isPermanent ? undefined : (store.room as Ref<Room> | undefined),
+      language: getCurrentLanguage(),
+      // The meeting form may carry its own lead time; the calendar checkbox does not, and keeps the
+      // default quarter of an hour.
+      reminderBefore: typeof store.reminderBefore === 'number' ? store.reminderBefore : DEFAULT_MEETING_REMINDER
+    })
 
-    // Add event creator (modifiedBy is PersonId/SocialId)
-    const creatorPersonIds = [event.modifiedBy]
-    if (event.createdBy !== undefined && event.createdBy !== event.modifiedBy) {
-      creatorPersonIds.push(event.createdBy)
+    // A meeting is a document of the sections, not only a series: the meetings list, the groups and
+    // the table are built from `PermanentMeeting`, so a meeting scheduled from the planner used to
+    // show in the calendar alone. Both kinds get their row now: a repeating one carries the period,
+    // a one-off keeps the room and the length the event form picked.
+    const me = getCurrentAccount().uuid
+    const persons = await client.findAll(contact.class.Person, { _id: { $in: master.participants } })
+    const members = persons
+      .map((it) => it.personUuid as AccountUuid | undefined)
+      .filter((it): it is AccountUuid => it !== undefined)
+    const permanentMeeting = await createPermanentMeeting(client, {
+      name: master.title,
+      // Defaults, not the room's settings: there is no room to inherit from.
+      type: RoomType.Video,
+      language: getCurrentLanguage(),
+      startWithRecording: false,
+      startWithTranscription: false,
+      // The organiser is always a member: the list is filtered by membership, and a meeting the
+      // creator cannot see in their own tab would look like the same bug again.
+      members: members.includes(me) ? members : [me, ...members],
+      owners: [me],
+      repeatEvery: isPermanent ? ruleToPeriod(rules[0]) : undefined,
+      reminderBefore: DEFAULT_MEETING_REMINDER,
+      startDate: master.date,
+      timeZone: master.timeZone,
+      ...(isPermanent ? {} : { room: store.room as Ref<Room> | undefined, duration: master.dueDate - master.date })
+    })
+    // `planner`: the meeting was scheduled from the planner grid, which keeps it on that grid.
+    await client.updateMixin(master._id, master._class, master.space, love.mixin.MeetingEventLink, {
+      permanentMeeting,
+      planner: true
+    })
+
+    // One meeting, one link: a permanent meeting is addressed by its own id, a plain scheduled
+    // series by its eventId. Asking for the series link of a permanent meeting would mint a second
+    // URL for the same meeting, and a password set through it would never reach the meeting's link.
+    const link =
+      permanentMeeting !== undefined
+        ? await getEventMeetingLink(permanentMeeting, 'meeting')
+        : await getEventMeetingLink(master.eventId)
+    if (link !== '') {
+      await client.update(master, { location: link })
     }
-    const creatorPersons = await getPersonsByPersonIds(client, creatorPersonIds)
-    let creatorAccountUuid: AccountUuid | undefined
-    for (const person of creatorPersons.values()) {
-      if (person?.personUuid !== undefined) {
-        members.add(person.personUuid as unknown as AccountUuid)
-        creatorAccountUuid = person.personUuid as unknown as AccountUuid
-      }
-    }
-
-    // Add participants
-    if (event.participants !== undefined && event.participants.length > 0) {
-      const participantPersons = await getPersonsByPersonRefs(client, event.participants as Array<Ref<Person>>)
-      for (const person of participantPersons.values()) {
-        if (person?.personUuid !== undefined) {
-          members.add(person.personUuid as unknown as AccountUuid)
-        }
-      }
-    }
-
-    const membersArray = Array.from(members)
-
-    // Create MeetingMinutes as a Space - it must use its own _id as space
-    const meetingId = generateId<MeetingMinutes>()
-    await client.createDoc(
-      love.class.MeetingMinutes,
-      meetingId as unknown as Ref<Space>,
-      {
-        name: event.title,
-        description: '',
-        private: isPrivate,
-        archived: false,
-        members: membersArray,
-        owners: creatorAccountUuid !== undefined ? [creatorAccountUuid] : [],
-        descriptionRef: null,
-        summary: null,
-        roomId: store.room as Ref<Room>,
-        status: MeetingStatus.Scheduled,
-        language: roomLanguage,
-        recordingState: RecordingState.NotStarted,
-        transcriptionState: TranscriptionState.NotStarted,
-        startWithRecording: roomStartWithRecording,
-        startWithTranscription: roomStartWithTranscription,
-        meetingScheduledDate: event.date
-      },
-      meetingId
-    )
-
-    const meetingDoc = await client.findOne(love.class.MeetingMinutes, { _id: meetingId })
-    if (meetingDoc === undefined) {
-      throw new Error('Failed to create meeting minutes')
-    }
-
-    for (const event of events) {
-      await client.createMixin<Event, MeetingEventLink>(
-        event._id,
-        calendar.class.Event,
-        space._id,
-        love.mixin.MeetingEventLink,
-        {
-          room: store.room as Ref<Room>,
-          meetingId
-        }
-      )
-    }
-    const navigateUrl = getCurrentLocation()
-    navigateUrl.path[2] = loveId
-    navigateUrl.query = {
-      meetId: _id
-    }
-    const link = await getMeetingGuestLink(meetingDoc)
-    await client.update(event, { location: link })
   }
 }
 
@@ -343,13 +341,27 @@ export async function createMeetingSchedule (
   if (phase === 'post') {
     const schedule = await client.findOne(calendar.class.Schedule, { _id })
     if (schedule === undefined) return
+    // A public schedule has no `eventId`, so there is no series to hang the meeting on: the booking
+    // path creates the meeting itself and the mixin remembers it, which is what the panel shows.
+    const acc = getCurrentAccount()
+    const meeting = await createPermanentMeeting(client, {
+      name: schedule.title,
+      type: RoomType.Video,
+      language: getCurrentLanguage(),
+      startWithRecording: false,
+      startWithTranscription: false,
+      members: [acc.uuid],
+      owners: [acc.uuid],
+      reminderBefore: DEFAULT_MEETING_REMINDER
+    })
     await client.createMixin<Schedule, MeetingSchedule>(
       schedule._id,
       calendar.class.Schedule,
       space._id,
       love.mixin.MeetingSchedule,
       {
-        room: store.room as Ref<Room>
+        room: store.room as Ref<Room>,
+        meetingId: meeting
       }
     )
   }
@@ -399,11 +411,70 @@ export async function copyGuestLink (mm: MeetingMinutes): Promise<void> {
 
   // Pass a Promise so ClipboardItem is created synchronously within the user gesture (Safari)
   await copyTextToClipboard(getMeetingGuestLink(mm))
+  await notifyCopied(love.string.LinkCopied)
+}
+
+/**
+ * Confirms a copy to the user. A clipboard write that says nothing looks like a dead button, and a
+ * link is exactly what people paste without checking, so the text is the only proof it worked.
+ * Plain status on purpose: a status with `display: Notification` is swallowed by the notification
+ * store, which nothing renders, and never reaches the status bar.
+ */
+export async function notifyCopied (text: IntlString): Promise<void> {
+  await setPlatformStatus(new Status(Severity.INFO, text, {}, undefined, { timeout: 2500 }))
 }
 
 export async function toggleRoomPrivacy (mm: MeetingMinutes): Promise<void> {
   if (mm === undefined) return
   await setMeetingPrivate(mm, !mm.private)
+}
+
+/** Revoking a permanent meeting's link: same bump, but its policy lives on the doc, not a mixin. */
+export async function revokePermanentMeetingLink (meeting: PermanentMeeting): Promise<void> {
+  await getClient().update(meeting, { linkVersion: (meeting.linkVersion ?? 1) + 1 })
+}
+
+/**
+ * Revokes the current link of a meeting: the next request mints a different short id, and the
+ * previous one stops being accepted even though it still resolves.
+ */
+export async function revokeMeetingLink (event: Event): Promise<void> {
+  const client = getClient()
+  const master = await client.findOne(calendar.class.Event, meetingMasterQuery(event))
+  if (master === undefined) return
+  const link = client.getHierarchy().as(master, love.mixin.MeetingEventLink)
+  await client.updateMixin(master._id, master._class, master.space, love.mixin.MeetingEventLink, {
+    linkVersion: (link.linkVersion ?? 1) + 1
+  })
+}
+
+/**
+ * Shareable link of a scheduled meeting, addressed by its calendar event.
+ *
+ * Unlike the session-scoped guest link, this one survives every occurrence of the series - it
+ * points at the meeting, not at one of its sessions.
+ */
+export async function getEventMeetingLink (eventId: string, kind: MeetingLinkKind = 'event'): Promise<string> {
+  try {
+    const shortId = await getLoveClient().getMeetingLink(eventId, kind)
+    if (shortId === '') return ''
+    const front = getMetadata(presentation.metadata.FrontUrl) ?? window.location.origin
+    return concatLink(front, `/meetings/${shortId}`)
+  } catch (err: any) {
+    console.error('Failed to generate meeting link', err)
+    return ''
+  }
+}
+
+/**
+ * The guest link with the password in it. The password travels as a query parameter: the guest page
+ * reads it and fills its own field, while a bare "link + password" text is not a link at all once
+ * pasted into a chat.
+ */
+export function withPassword (link: string, password: string): string {
+  const url = new URL(link)
+  url.searchParams.set('password', password)
+  return url.toString()
 }
 
 async function getMeetingGuestLink (mm: MeetingMinutes): Promise<string> {

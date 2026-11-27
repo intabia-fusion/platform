@@ -5,15 +5,20 @@
   import { getCurrentAccount } from '@hcengineering/core'
   import { createQuery } from '@hcengineering/presentation'
   import { Dropdown, Icon } from '@hcengineering/ui'
+  // The card of an event draws its fields with the kit, so the picker of a calendar follows it:
+  // the legacy dropdown is a ghost text button, the kit one is the bordered control of a row.
+  import { Dropdown as KitDropdown } from '@hcengineering/ui/kit'
   import { createEventDispatcher } from 'svelte'
   import calendar from '../plugin'
-  import { translateCB } from '@hcengineering/platform'
+  import { getEmbeddedLabel, translateCB } from '@hcengineering/platform'
   import { themeStore } from '@hcengineering/theme'
 
   export let value: Ref<Calendar> | undefined
   export let disabled: boolean = false
   export let focusIndex = -1
   export let withIcon: boolean = true
+  /** `ghost` - the standalone picker; `secondary` - a row control of the dialog card. */
+  export let appearance: 'ghost' | 'secondary' = 'ghost'
 
   const dispatch = createEventDispatcher()
 
@@ -70,25 +75,43 @@
       value = id
     }
   }
+
+  // The kit dropdown takes an IntlString per item; the names here are already read from the model.
+  $: kitItems = items.map((it) => ({ id: it._id, label: getEmbeddedLabel(it.label) }))
 </script>
 
 {#if calendars.length > 0}
-  <div class="flex-row-center flex-gap-1">
-    {#if withIcon}
-      <Icon icon={calendar.icon.Calendar} size="small" />
-    {/if}
-    <Dropdown
-      kind="ghost"
+  {#if appearance === 'secondary'}
+    <KitDropdown
+      items={kitItems}
+      selected={value}
+      kind="secondary"
       size="medium"
-      placeholder={calendar.string.Calendar}
-      {items}
+      fullWidth
       withSearch={false}
-      {selected}
+      placeholder={calendar.string.Calendar}
       {disabled}
       {focusIndex}
-      on:selected={(e) => {
-        change(e.detail._id)
-      }}
+      on:selected={(e) => change(e.detail)}
     />
-  </div>
+  {:else}
+    <div class="flex-row-center flex-gap-1">
+      {#if withIcon}
+        <Icon icon={calendar.icon.Calendar} size="small" />
+      {/if}
+      <Dropdown
+        kind="ghost"
+        size="medium"
+        placeholder={calendar.string.Calendar}
+        {items}
+        withSearch={false}
+        {selected}
+        {disabled}
+        {focusIndex}
+        on:selected={(e) => {
+          change(e.detail._id)
+        }}
+      />
+    </div>
+  {/if}
 {/if}

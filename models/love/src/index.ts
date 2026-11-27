@@ -15,11 +15,13 @@
 //
 
 import contact, { type Employee, type Person } from '@hcengineering/contact'
+import { type Event as CalendarEvent } from '@hcengineering/calendar'
 import {
   AccountRole,
   type CollectionSize,
   type Domain,
   type MarkupBlobRef,
+  type Rank,
   type Ref,
   type Timestamp,
   DOMAIN_TRANSIENT,
@@ -35,15 +37,18 @@ import {
   type Floor,
   loveId,
   type MeetingEventLink,
+  type MeetingGroup,
   type MeetingMinutes,
   type MeetingStatus,
   type MeetingSchedule,
   type Office,
   type ParticipantInfo,
   type PendingRecording,
+  type PermanentMeeting,
   type RecordingFormat,
   type Room,
   type RoomInfo,
+  type MeetingAccess,
   type RoomLanguage,
   type RoomType,
   type TranscriptionState,
@@ -69,6 +74,7 @@ import {
   TypeBoolean,
   Hidden,
   TypeNumber,
+  TypeRank,
   ArrOf,
   TypeAccountUuid
 } from '@hcengineering/model'
@@ -77,7 +83,7 @@ import core, { TAttachedDoc, TDoc, TSpace } from '@hcengineering/model-core'
 import preference, { TPreference } from '@hcengineering/model-preference'
 import presentation from '@hcengineering/model-presentation'
 import view, { createAction, createAttributePresenter, showColorsViewOption } from '@hcengineering/model-view'
-import { type ViewOptionModel } from '@hcengineering/view'
+import { type OrderOption, type ViewOptionModel } from '@hcengineering/view'
 import media from '@hcengineering/media'
 import notification, { type MessageNotificationType, type TxNotificationType } from '@hcengineering/notification'
 import { getEmbeddedLabel } from '@hcengineering/platform'
@@ -151,6 +157,14 @@ export class TOffice extends TRoom implements Office {
 @Model(love.class.Floor, core.class.Doc, DOMAIN_LOVE)
 export class TFloor extends TDoc implements Floor {
   name!: string
+
+  // Drag-and-drop in the office navigator rewrites this LexoRank; the list sorts by it and nothing
+  // else. A rank places a floor between two others without touching them, so a drop writes one
+  // document. Floors created before the list existed carry no rank and sort after the ranked ones.
+  @Prop(TypeRank(), love.string.MeetingOrder)
+  @Hidden()
+  @Index(IndexKind.Indexed)
+  rank?: Rank
 }
 
 @Model(love.class.ParticipantInfo, core.class.Doc, DOMAIN_TRANSIENT)
@@ -220,8 +234,52 @@ export class TRoomInfo extends TDoc implements RoomInfo {
 
 @Mixin(love.mixin.MeetingEventLink, calendar.class.Event)
 export class TMeeting extends TEvent implements MeetingEventLink {
-  room!: Ref<Room>
-  meetingId!: Ref<MeetingMinutes>
+  type?: RoomType.Video | RoomType.Audio
+
+  // The room the meeting takes place in. Absent means the session runs in the workspace service
+  // room, which is where every meeting used to run before the room could be picked.
+  @Prop(TypeRef(love.class.Room), love.string.Room)
+  room?: Ref<Room>
+
+  // Looked up by the link resolver on every guest join.
+  @Index(IndexKind.Indexed)
+  linkId?: string
+
+  linkVersion?: number
+
+  @Prop(TypeAny(love.component.MeetingAccessEditor, love.string.MeetingLinkSettings), love.string.MeetingLinkSettings, {
+    editor: love.component.MeetingAccessEditor
+  })
+  meetingAccess?: MeetingAccess
+
+  @Prop(TypeBoolean(), love.string.Private)
+  private?: boolean
+
+  @Prop(TypeString(), love.string.Language, { editor: love.component.RoomLanguageEditor })
+  language?: RoomLanguage
+
+  @Prop(TypeBoolean(), love.string.StartWithRecording)
+  startWithRecording?: boolean
+
+  @Prop(TypeBoolean(), love.string.StartWithTranscription)
+  startWithTranscription?: boolean
+
+  // Lead time of the meeting reminder in msec. Stored on the mixin, so a copy of the series and the
+  // master agree on it: the reminder belongs to the meeting, not to one of its occurrences.
+  reminderBefore?: number
+
+  // Group of the permanent meeting this event is the series of. Copied from `PermanentMeeting.group`
+  // so the meetings list can group by it: a viewlet groups by an attribute of its own class only.
+  @Prop(TypeRef(love.class.MeetingGroup), love.string.MeetingGroup)
+  group?: Ref<MeetingGroup>
+
+  @Index(IndexKind.Indexed)
+  permanentMeeting?: Ref<PermanentMeeting>
+
+  // Made in the Planner: such a series lives in the personal calendar, so the Planner reads it.
+  // A meeting made in the meetings section has no flag and is kept out of the Planner.
+  @Prop(TypeBoolean(), love.string.Meeting)
+  planner?: boolean
 }
 
 @Model(love.class.MeetingMinutes, core.class.Space, DOMAIN_SPACE)
@@ -306,6 +364,16 @@ export class TMeetingMinutes extends TSpace implements MeetingMinutes, Todoable 
 
   language!: RoomLanguage
 
+  // The whole history of one series is fetched by eventId.
+  @Index(IndexKind.Indexed)
+  eventId?: string
+
+  occurrence?: Timestamp
+
+  // The whole history of one permanent meeting is fetched by this ref.
+  @Index(IndexKind.Indexed)
+  meeting?: Ref<PermanentMeeting>
+
   @Prop(ArrOf(TypeAccountUuid()), love.string.Organizators, { editor: love.component.MeetingAccessAttributeEditor })
   declare owners: AccountUuid[]
 
@@ -316,10 +384,128 @@ export class TMeetingMinutes extends TSpace implements MeetingMinutes, Todoable 
   declare private: boolean
 }
 
+/**
+ * A named meeting with no time. Sessions are opened per start and stay terminal; the document,
+ * chat and files live here so they survive them (F4).
+ */
+@Model(love.class.PermanentMeeting, core.class.Space, DOMAIN_SPACE)
+@UX(
+  love.string.PermanentMeeting,
+  love.icon.MeetingMinutes,
+  undefined,
+  'name',
+  undefined,
+  love.string.PermanentMeetings,
+  'name'
+)
+export class TPermanentMeeting extends TSpace implements PermanentMeeting {
+  // From TSpace: name, description, private, archived, members, owners.
+
+  @Prop(TypeCollaborativeDoc(), core.string.Description)
+  @Index(IndexKind.FullText)
+  descriptionRef!: MarkupBlobRef | null
+
+  // Numeric enum, like Room.type: no @Prop, nothing in the UI enumerates it.
+  type!: RoomType.Video | RoomType.Audio
+
+  language!: RoomLanguage
+
+  @Prop(TypeBoolean(), love.string.StartWithRecording)
+  startWithRecording?: boolean
+
+  @Prop(TypeBoolean(), love.string.StartWithTranscription)
+  startWithTranscription?: boolean
+
+  // How often the meeting is held, for a permanent meeting created from the planner: the interval
+  // the planner already knows (`Schedule.meetingInterval`) is copied here, so the meeting keeps it.
+  @Prop(TypeNumber(), love.string.RepeatEvery, { editor: love.component.RepeatEveryEditor })
+  repeatEvery?: number
+
+  // A permanent meeting can exist as a link and a row in the list only: no series, nothing in the
+  // calendar and the planner. Undefined means "in the calendar", so meetings created before the
+  // flag keep their series.
+  calendar?: boolean
+
+  // The schedule kept on the meeting itself. A meeting with a series keeps it on the series; this
+  // copy is what the "next meeting" column reads when there is no series to ask.
+  @Prop(TypeDate(DateRangeMode.DATETIME), love.string.MeetingStart)
+  @ReadOnly()
+  startDate?: Timestamp
+
+  // A one-off meeting has no series, so the document itself says when it ends.
+  @Prop(TypeNumber(), love.string.Duration)
+  duration?: number
+
+  // The room a one-off meeting runs in. A permanent meeting owns no room: its sessions use the
+  // workspace service room, so the field stays empty there.
+  @Prop(TypeRef(love.class.Room), love.string.Room)
+  room?: Ref<Room>
+
+  timeZone?: string
+
+  // The calendar event of the meeting. Kept on the meeting itself: a query by the link mixin's nested
+  // field found nothing on some adapters, so the writer could neither update nor remove the series,
+  // and the row had no way to tell whether the meeting is in the calendar.
+  @Hidden()
+  @Index(IndexKind.Indexed)
+  event?: Ref<CalendarEvent>
+
+  @Hidden()
+  linkId?: string
+
+  @Hidden()
+  linkVersion?: number
+
+  @Prop(TypeAny(love.component.MeetingAccessEditor, love.string.MeetingLinkSettings), love.string.MeetingLinkSettings, {
+    editor: love.component.MeetingAccessEditor
+  })
+  meetingAccess?: MeetingAccess
+
+  // Lead time of the reminder for a meeting with no series. A scheduled meeting keeps it on the
+  // series mixin, so both places exist: this one is for the always-open room.
+  @Prop(TypeNumber(), love.string.RemindBefore, { editor: love.component.ReminderBeforeEditor })
+  reminderBefore?: number
+
+  // Flat grouping of the permanent meetings list. `rank` is authoritative inside the group: the
+  // list sorts by it and drag-and-drop rewrites it, so a manual sort never fights a computed one.
+  @Index(IndexKind.Indexed)
+  @Prop(TypeRef(love.class.MeetingGroup), love.string.MeetingGroup)
+  group?: Ref<MeetingGroup>
+
+  @Prop(TypeRank(), love.string.MeetingOrder)
+  @Hidden()
+  @Index(IndexKind.Indexed)
+  rank?: Rank
+
+  @Prop(PropCollection(chunter.class.ChatMessage), activity.string.Messages)
+  messages?: number
+
+  @Prop(Collection(attachment.class.Attachment), attachment.string.Attachments, { shortLabel: attachment.string.Files })
+  attachments?: number
+}
+
+// A flat group of permanent meetings: a name and a position. Meetings point at it and carry their
+// own rank inside the group, so drag-and-drop only rewrites a rank string.
+@Model(love.class.MeetingGroup, core.class.Doc, DOMAIN_LOVE)
+@UX(love.string.MeetingGroup, love.icon.MeetingMinutes, undefined, undefined, undefined, undefined, 'name')
+export class TMeetingGroup extends TDoc implements MeetingGroup {
+  @Prop(TypeString(), core.string.Name)
+  name!: string
+
+  @Prop(TypeRank(), love.string.MeetingOrder)
+  @Hidden()
+  @Index(IndexKind.Indexed)
+  rank?: Rank
+}
+
 @Mixin(love.mixin.MeetingSchedule, calendar.class.Schedule)
 export class TMeetingSchedule extends TSchedule implements MeetingSchedule {
   room!: Ref<Room>
-  meetingId!: Ref<MeetingMinutes>
+
+  // Written when the schedule is saved: the booking path creates the meeting itself, because a
+  // schedule has no `eventId` to hang a series on. Optional - schedules created earlier carry none.
+  @Prop(TypeRef(love.class.PermanentMeeting), love.string.PermanentMeeting)
+  meetingId?: Ref<PermanentMeeting>
 }
 
 // Placeholder class so that the legacy `meeting-minutes` table is created/kept
@@ -374,6 +560,11 @@ export function createModel (builder: Builder): void {
     TRoomInfo,
     TMeeting,
     TMeetingMinutes,
+    TPermanentMeeting,
+    // Without this entry the class doc is never created: the `group` attribute of a permanent
+    // meeting still points at `love:class:MeetingGroup`, and the workspace fails with
+    // `ancestors not found: love:class:MeetingGroup` on the first view that resolves ancestors.
+    TMeetingGroup,
     TMeetingSchedule,
     TUserMeetingInvite,
     TLegacyMeetingMinutes
@@ -388,6 +579,7 @@ export function createModel (builder: Builder): void {
       alias: loveId,
       hidden: false,
       position: 'top',
+      hasNavigator: true,
       component: love.component.Main,
       order: 400
     },
@@ -425,6 +617,8 @@ export function createModel (builder: Builder): void {
     component: love.component.WorkbenchExtension
   })
 
+  // A meeting can be started from a calendar event, and the Planner is where such an event is
+  // created: the switch in the event form turns the event into a meeting of the sections.
   builder.createDoc(presentation.class.DocCreateExtension, core.space.Model, {
     ofClass: calendar.class.Event,
     apply: love.function.CreateMeeting,
@@ -436,6 +630,13 @@ export function createModel (builder: Builder): void {
   builder.createDoc(presentation.class.ComponentPointExtension, core.space.Model, {
     extension: calendar.extensions.EditEventExtensions,
     component: love.component.EditMeetingData
+  })
+
+  // Every calendar card of a meeting gets a join badge: the mixin is mirrored onto participant
+  // copies, so the marker is visible to everyone in the series, not only to its owner.
+  builder.createDoc(presentation.class.ComponentPointExtension, core.space.Model, {
+    extension: calendar.extensions.EventCardExtensions,
+    component: love.component.MeetingEventBadge
   })
 
   builder.createDoc(presentation.class.DocCreateExtension, core.space.Model, {
@@ -607,7 +808,15 @@ export function createModel (builder: Builder): void {
     components: { input: { component: chunter.component.ChatMessageInput, props: { collection: 'messages' } } }
   })
 
+  // Without it the activity feed has no composer, and the chat of a permanent meeting lives there.
+  builder.createDoc(activity.class.ActivityExtension, core.space.Model, {
+    ofClass: love.class.PermanentMeeting,
+    components: { input: { component: chunter.component.ChatMessageInput, props: { collection: 'messages' } } }
+  })
+
   builder.mixin(love.class.MeetingMinutes, core.class.Class, activity.mixin.ActivityDoc, {})
+
+  builder.mixin(love.class.PermanentMeeting, core.class.Class, activity.mixin.ActivityDoc, {})
 
   builder.mixin(love.class.Room, core.class.Class, activity.mixin.ActivityDoc, {})
 
@@ -652,6 +861,247 @@ export function createModel (builder: Builder): void {
 
   builder.mixin(love.class.MeetingMinutes, core.class.Class, view.mixin.ObjectEditor, {
     editor: love.component.EditMeetingMinutes
+  })
+
+  // The panel renders the document, attachments and chat of a permanent meeting off the same
+  // generic machinery a session gets; this only supplies the header.
+  builder.mixin(love.class.PermanentMeeting, core.class.Class, view.mixin.ObjectEditor, {
+    editor: love.component.EditPermanentMeeting
+  })
+
+  builder.mixin(love.class.PermanentMeeting, core.class.Class, view.mixin.ObjectPresenter, {
+    presenter: love.component.PermanentMeetingPresenter
+  })
+
+  // Walking out is a membership edit, not a deletion: the meeting outlives whoever leaves it, and
+  // the server puts the owner back if the owner is the one leaving.
+  createAction(builder, {
+    action: love.actionImpl.LeavePermanentMeeting,
+    label: view.string.Leave,
+    icon: view.icon.Leave,
+    category: love.category.Office,
+    target: love.class.PermanentMeeting,
+    input: 'focus',
+    visibilityTester: love.function.CanLeavePermanentMeeting,
+    context: {
+      mode: 'context'
+    }
+  })
+
+  // A permanent meeting is deleted like any space. The generic `Delete` is gated by object
+  // permissions a space does not pass, so the tab's selection toolbar needs its own action; the
+  // server trigger ends the live sessions of the removed meeting.
+  createAction(builder, {
+    action: view.actionImpl.Delete,
+    label: view.string.Delete,
+    icon: view.icon.Delete,
+    category: love.category.Office,
+    override: [view.action.Delete],
+    input: 'any',
+    target: love.class.PermanentMeeting,
+    context: { mode: ['context', 'browser'], group: 'remove' },
+    visibilityTester: love.function.CanDeletePermanentMeeting
+  })
+
+  // Settings of the meeting open the same window that created it, so the list does not need to be
+  // navigated into for a rename or a new period.
+  createAction(builder, {
+    action: love.actionImpl.EditPermanentMeetingSettings,
+    label: love.string.MeetingSettings,
+    icon: view.icon.Edit,
+    category: love.category.Office,
+    target: love.class.PermanentMeeting,
+    input: 'focus',
+    visibilityTester: love.function.CanEditPermanentMeeting,
+    context: { mode: ['context', 'browser'] }
+  })
+
+  // Opened through the mixin (links and lists use Hierarchy.mixinOrClass), so a scheduled meeting
+  // gets its own header while a plain calendar event keeps the calendar editor.
+  builder.mixin(love.mixin.MeetingEventLink, core.class.Class, view.mixin.ObjectEditor, {
+    editor: love.component.EditScheduledMeeting
+  })
+
+  // A series is edited through the window that created it: the calendar editor of a recurring event
+  // asks on every save whether the scope is the occurrence or the series, and a meeting has only one
+  // honest scope - the meeting itself. The action hides on a plain event (`CanEditMeetingSettings`).
+  createAction(builder, {
+    action: love.actionImpl.EditMeetingSettings,
+    label: love.string.MeetingSettings,
+    icon: view.icon.Edit,
+    category: love.category.Office,
+    target: love.mixin.MeetingEventLink,
+    input: 'focus',
+    visibilityTester: love.function.CanEditMeetingSettings,
+    context: { mode: ['context', 'browser'] }
+  })
+
+  // Past sessions go below the description and attachments, where a panel lists related documents.
+  builder.mixin(love.class.PermanentMeeting, core.class.Class, view.mixin.ObjectEditorFooter, {
+    editor: love.component.MeetingSessionsFooter
+  })
+  builder.mixin(love.mixin.MeetingEventLink, core.class.Class, view.mixin.ObjectEditorFooter, {
+    editor: love.component.MeetingSessionsFooter
+  })
+
+  // Attached to the mixin rather than to Event, so it stays out of the calendar app.
+  builder.createDoc(
+    view.class.Viewlet,
+    core.space.Model,
+    {
+      attachTo: love.mixin.MeetingEventLink,
+      descriptor: calendar.viewlet.Calendar,
+      config: [''],
+      configOptions: { hiddenKeys: ['title', 'date'] }
+    },
+    love.viewlet.CalendarScheduledMeetings
+  )
+
+  // The list of meetings lives in the groups tab: this is what the section keeps on its own.
+  const SCHEDULED_MEETING_CONFIG = ['', 'date', 'participants', 'location']
+
+  builder.createDoc(
+    view.class.Viewlet,
+    core.space.Model,
+    {
+      attachTo: love.mixin.MeetingEventLink,
+      descriptor: view.viewlet.List,
+      config: SCHEDULED_MEETING_CONFIG,
+      configOptions: { sortable: true },
+      // Grouped by the meeting group, the same way the groups tab groups its rows: an event carries
+      // the group of its permanent meeting, copied by the server trigger.
+      viewOptions: { groupBy: ['group'], orderBy: [['date', SortingOrder.Descending]], other: [] }
+    },
+    love.viewlet.ListScheduledMeetings
+  )
+
+  // Attributes a meetings view never shows as a column.
+  const MODEL_HIDDEN_KEYS = [
+    'description',
+    'descriptionRef',
+    'meetingAccess',
+    'linkId',
+    'linkVersion',
+    'type',
+    'language',
+    'messages',
+    'attachments',
+    'repeatEvery'
+  ]
+
+  // A sort key is offered only when the viewlet names it: one entry left the sorting dropdown with a
+  // single choice, so the list could not be ordered by creation or change date at all.
+  const PERMANENT_MEETING_ORDER: OrderOption[] = [
+    ['name', SortingOrder.Ascending],
+    ['createdOn', SortingOrder.Descending],
+    ['modifiedOn', SortingOrder.Descending]
+  ]
+
+  builder.createDoc(
+    view.class.Viewlet,
+    core.space.Model,
+    {
+      attachTo: love.class.PermanentMeeting,
+      descriptor: view.viewlet.Table,
+      config: [
+        '',
+        {
+          key: '',
+          presenter: love.component.PermanentMeetingNextPresenter,
+          label: love.string.NextOccurrence,
+          displayProps: { key: 'next', suffix: true }
+        },
+        { key: 'members', props: { noJoin: true } },
+        {
+          key: '',
+          presenter: love.component.PermanentMeetingLastSessionPresenter,
+          label: love.string.PastLast,
+          displayProps: { key: 'lastEnd', suffix: true }
+        }
+      ],
+      configOptions: { hiddenKeys: MODEL_HIDDEN_KEYS, sortable: true },
+      viewOptions: {
+        // Every key offered in the view settings comes from this list: an empty one left the grouping
+        // dropdown with nothing to pick.
+        groupBy: ['group', 'members', 'private'],
+        orderBy: PERMANENT_MEETING_ORDER,
+        other: []
+      }
+    },
+    love.viewlet.TablePermanentMeetings
+  )
+
+  // Grouped list: the same columns, categories by any standard key picked in the settings.
+  builder.createDoc(
+    view.class.Viewlet,
+    core.space.Model,
+    {
+      attachTo: love.class.PermanentMeeting,
+      descriptor: view.viewlet.List,
+      viewOptions: {
+        // The first key is what the view groups by until the user picks another one.
+        groupBy: ['group', 'members', 'private', 'createdBy'],
+        orderBy: PERMANENT_MEETING_ORDER,
+        other: []
+      },
+      configOptions: { hiddenKeys: MODEL_HIDDEN_KEYS, sortable: true },
+      config: [
+        '',
+        {
+          key: '',
+          presenter: love.component.PermanentMeetingNextPresenter,
+          label: love.string.NextOccurrence,
+          displayProps: { key: 'next', suffix: true }
+        },
+        { key: 'members', props: { noJoin: true } },
+        {
+          key: '',
+          presenter: love.component.PermanentMeetingLastSessionPresenter,
+          label: love.string.PastLast,
+          displayProps: { key: 'lastEnd', suffix: true }
+        }
+      ]
+    },
+    love.viewlet.ListPermanentMeetings
+  )
+
+  // A category header and a mention of a group both go through ObjectPresenter. It must not be
+  // `view.component.ObjectPresenter` here: that component resolves the presenter of its own class,
+  // finds itself and renders itself with the same value - an endless recursion that freezes the tab.
+  builder.mixin(love.class.MeetingGroup, core.class.Class, view.mixin.ObjectPresenter, {
+    presenter: love.component.PermanentMeetingGroupPresenter
+  })
+
+  builder.mixin(love.class.MeetingGroup, core.class.Class, view.mixin.AttributePresenter, {
+    presenter: love.component.PermanentMeetingGroupPresenter
+  })
+
+  builder.mixin(love.class.PermanentMeeting, core.class.Class, view.mixin.ClassFilters, {
+    filters: ['members', 'createdBy', 'createdOn', 'repeatEvery', 'private'],
+    ignoreKeys: [
+      'name',
+      'description',
+      'descriptionRef',
+      'meetingAccess',
+      'linkId',
+      'linkVersion',
+      'type',
+      'language',
+      'messages',
+      'attachments'
+    ]
+  })
+
+  // Selection action: appears in the toolbar of the view for the checked rows.
+  builder.createDoc(view.class.Action, core.space.Model, {
+    action: love.actionImpl.MergeIntoGroup,
+    label: love.string.MergeIntoGroup,
+    icon: view.icon.List,
+    category: love.category.Office,
+    target: love.class.PermanentMeeting,
+    input: 'any',
+    context: { mode: ['browser', 'panel'] },
+    visibilityTester: love.function.CanMergeIntoGroup
   })
 
   builder.mixin(love.class.Floor, core.class.Class, view.mixin.AttributeEditor, {
@@ -1043,6 +1493,12 @@ export function createModel (builder: Builder): void {
     forceIndex: true
   })
 
+  builder.createDoc(core.class.FullTextSearchContext, core.space.Model, {
+    toClass: love.class.PermanentMeeting,
+    fullTextSummary: true,
+    forceIndex: true
+  })
+
   builder.createDoc(
     presentation.class.ObjectSearchCategory,
     core.space.Model,
@@ -1086,6 +1542,26 @@ export function createModel (builder: Builder): void {
     view.component.DateTimePresenter,
     love.class.MeetingMinutes,
     'meetingEnd',
+    'attribute'
+  )
+
+  // A permanent meeting's members are edited through its own editor: the shared one knows nothing
+  // about `owners`, and removing an owner there would leave the meeting without a manager.
+  createAttributePresenter(
+    builder,
+    love.component.PermanentMeetingMembersEditor,
+    love.class.PermanentMeeting,
+    'members',
+    'array'
+  )
+
+  // The reminder lead time is stored in milliseconds, which is unreadable in the attribute panel:
+  // the presenter reads it as "15 minutes", "2 hours" or "1 day".
+  createAttributePresenter(
+    builder,
+    love.component.ReminderBeforePresenter,
+    love.class.PermanentMeeting,
+    'reminderBefore',
     'attribute'
   )
 

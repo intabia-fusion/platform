@@ -13,24 +13,34 @@
 // limitations under the License.
 -->
 <script lang="ts">
-  import type { Event } from '@hcengineering/calendar'
-  import { getCurrentAccount } from '@hcengineering/core'
+  import calendar, { type Event, type ReccuringInstance } from '@hcengineering/calendar'
+  import type { Ref } from '@hcengineering/core'
+  import love from '../plugin'
   import { createQuery, getClient } from '@hcengineering/presentation'
   import { ObjectPresenter } from '@hcengineering/view-resources'
-  import type { MeetingMinutes } from '@hcengineering/love'
-  import { MeetingStatus } from '@hcengineering/love'
-  import ui, { Button, Icon, Label } from '@hcengineering/ui'
-
-  import love from '../plugin'
+  import type { MeetingEventLink, MeetingMinutes, PermanentMeeting, Room } from '@hcengineering/love'
+  import { LIVE_MEETING_STATUSES, meetingMasterQuery } from '@hcengineering/love'
+  // Icons come off the default export: `@hcengineering/ui` exports no `Icon<Name>` components, so a
+  // named import is `undefined` and the button renders empty.
+  import ui, { Label, eventToHTMLElement, showPopup } from '@hcengineering/ui'
+  // The kit, not the legacy barrel: `x-small` is not a kit size, and mixing the two buttons in one row
+  // left the primary action a different height from the icon button next to it.
+  import { Button, Section, SettingRow } from '@hcengineering/ui/kit'
   import MeetingMinutesStatusPresenter from './MeetingMinutesStatusPresenter.svelte'
-  import { joinMeeting, leaveMeeting } from '../meetings'
+  import PermanentMeetingPresenter from './PermanentMeetingPresenter.svelte'
+  import RoomPresenter from './RoomPresenter.svelte'
+  import RoomSelector from './RoomSelector.svelte'
+  import { confirmRoomAvailable, joinMeeting, joinMeetingBySession, leaveMeeting } from '../meetings'
+  import { findMeetingLink } from '../meetingLink'
+  import MeetingLinkPopup from './MeetingLinkPopup.svelte'
 
   export let value: Event
   export let readOnly: boolean = false
 
   const valueQuery = createQuery()
   const meetingQuery = createQuery()
-  const currentAccount = getCurrentAccount()
+  const roomQuery = createQuery()
+  const permanentQuery = createQuery()
 
   let _value: Event = value
 
@@ -39,105 +49,229 @@
   })
   const client = getClient()
 
-  $: isMeeting = client.getHierarchy().hasMixin(_value, love.mixin.MeetingEventLink)
-  $: meeting = isMeeting ? client.getHierarchy().as(_value, love.mixin.MeetingEventLink) : null
+  // The mixin is resolved through its document, not read off the event: the calendar hands over bare
+  // events, and an expanded occurrence carries no mixin at all - only its master does. Reading it off
+  // the object hid the whole meeting row for every occurrence of a series, which for a permanent
+  // meeting also meant no way to open its card or join it.
+  let meeting: MeetingEventLink | undefined
+  $: void resolveMeeting(_value)
+
+  async function resolveMeeting (event: Event): Promise<void> {
+    meeting = await findMeetingLink(client, event)
+  }
+
+  // A permanent meeting is an entity of its own: it runs in the workspace meeting room and owns no
+  // office room, so there is no room to pick here and no room to take over.
+  $: isPermanent = meeting?.permanentMeeting !== undefined
 
   let meetingDoc: MeetingMinutes | undefined
+  // The room the meeting happens in, as a document: the row shows it as a link into the room card,
+  // the way the session row links into the session card.
+  let roomDoc: Room | undefined
+  // A permanent meeting is a document of its own, and its card is where the meeting is managed -
+  // showing it as a link keeps the drill-down the room link has.
+  let permanentDoc: PermanentMeeting | undefined
+  $: permanentRef = meeting?.permanentMeeting
 
-  $: meetingQuery.query(love.class.MeetingMinutes, { _id: meeting?.meetingId }, (r) => {
-    meetingDoc = r.shift()
-  })
+  // An expanded occurrence is virtual: `getInstance` gives it a brand new eventId that exists in
+  // no database. Everything about the meeting hangs off the series, so resolve that instead.
+  $: seriesEventId = (_value as ReccuringInstance).recurringEventId ?? _value.eventId
 
-  // Check if current user is owner of the meeting
-  $: isOwner = meetingDoc?.owners?.includes(currentAccount.uuid) ?? false
+  $: if (permanentRef !== undefined) {
+    permanentQuery.query(love.class.PermanentMeeting, { _id: permanentRef }, (r) => {
+      permanentDoc = r.shift()
+    })
+  } else {
+    permanentDoc = undefined
+  }
 
-  let resetting = false
-  async function resetMeeting (meetingDoc: MeetingMinutes): Promise<void> {
-    if (meetingDoc.status === MeetingStatus.Active || meetingDoc.status === MeetingStatus.Pending) {
-      // Disallow change for active meeting
+  $: if (meeting?.room !== undefined) {
+    roomQuery.query(love.class.Room, { _id: meeting.room }, (r) => {
+      roomDoc = r.shift()
+    })
+  } else {
+    roomDoc = undefined
+  }
+
+  // A session exists only while the meeting is running - it is looked up by the series, not by a
+  // reference on the event, which no longer holds one.
+  $: meetingQuery.query(
+    love.class.MeetingMinutes,
+    { eventId: seriesEventId, status: { $in: LIVE_MEETING_STATUSES } },
+    (r) => {
+      meetingDoc = r.shift()
+    }
+  )
+
+  async function openMeeting (): Promise<void> {
+    // A permanent meeting is an entity of its own: it is joined by its own id, and it is open at any
+    // time - there is no occurrence to wait for and no room to take over.
+    if (permanentRef !== undefined) {
+      await joinMeetingBySession(permanentRef, 'meeting')
       return
     }
-    if (resetting) return
-    resetting = true
-    try {
-      await client.diffUpdate(meetingDoc, { status: MeetingStatus.Scheduled })
-    } finally {
-      resetting = false
+    // The room hosts one meeting at a time: a newcomer may evict the one already running there, but
+    // only by saying so.
+    if (!(await confirmRoomAvailable(meeting?.room, seriesEventId))) return
+    // Sessions of a series are opened by the love service, addressed by the event. The old path
+    // stays for meetings whose mixin still points at a session created by the client (F1 §7).
+    if (seriesEventId !== undefined && meeting?.linkVersion !== undefined) {
+      await joinMeetingBySession(seriesEventId, 'event')
+      return
     }
+    if (meetingDoc === undefined) return
+    await joinMeeting(meetingDoc)
   }
 
-  let opening = false
-  async function openMeeting (): Promise<void> {
-    if (opening) return
-    opening = true
+  /**
+   * The room is part of the meeting, not of one occurrence, so it is written on the series master.
+   * A live session already holds a room and cannot be moved out of it.
+   */
+  async function changeRoom (room: Ref<Room>): Promise<void> {
+    if (meetingDoc !== undefined || isPermanent) return
+    const master = await client.findOne(calendar.class.Event, meetingMasterQuery(_value))
+    if (master === undefined) return
+    await client.updateMixin(master._id, master._class, master.space, love.mixin.MeetingEventLink, { room })
+  }
+
+  async function closeMeeting (): Promise<void> {
+    await leaveMeeting()
+  }
+
+  // A running session is entered by its own document; the click handler closes over the variable,
+  // which loses the `!== undefined` narrowing the template block had. Joining dials the room, so
+  // a second click while it is in flight is dropped instead of opening a second connection.
+  let joining = false
+  async function joinCurrent (): Promise<void> {
+    if (meetingDoc === undefined || joining) return
+    joining = true
     try {
-      if (meetingDoc === undefined) return
       await joinMeeting(meetingDoc)
     } finally {
-      opening = false
-    }
-  }
-
-  let closing = false
-  async function closeMeeting (): Promise<void> {
-    if (closing) return
-    closing = true
-    try {
-      await leaveMeeting()
-    } finally {
-      closing = false
+      joining = false
     }
   }
 </script>
 
-{#if isMeeting && meetingDoc !== undefined}
-  {@const doc = meetingDoc}
-  <div class="flex-col mt-2">
-    <div class="flex-row-center">
-      <div class="mr-2">
-        <Icon icon={love.icon.MeetingMinutes} size="small" />
-      </div>
-      <div class="mr-2">
-        <Label label={love.string.Meeting} />
-      </div>
-      <div class="flex-grow">
-        <ObjectPresenter
-          shouldShowAvatar={false}
-          objectId={meetingDoc._id}
-          _class={meetingDoc._class}
-          value={meetingDoc}
-        />
-      </div>
-      <div class="ml-3 flex flex-row-center flex-gap-2">
-        <MeetingMinutesStatusPresenter object={meetingDoc} value={meetingDoc.status} attributeKey="status" />
-        {#if isOwner}
-          {#if meetingDoc.status === MeetingStatus.Scheduled}
-            <Button
-              kind="primary"
-              label={love.string.StartMeeting}
-              size="x-small"
-              loading={opening}
-              on:click={openMeeting}
-            />
-          {:else if meetingDoc.status === MeetingStatus.Active || meetingDoc.status === MeetingStatus.Pending}
-            <Button
-              kind="negative"
-              label={love.string.EndMeeting}
-              size="x-small"
-              loading={closing}
-              on:click={closeMeeting}
-            />
-          {:else if meetingDoc.status === MeetingStatus.Finished}
-            <Button
-              kind="ghost"
-              icon={ui.icon.ArrowUturnRight}
-              size="x-small"
-              loading={resetting}
-              on:click={() => resetMeeting(doc)}
-            />
+{#if meeting !== undefined}
+  <!-- A section of the event card, not a lone row: the card groups its rows, and the meeting is
+       one of its subjects rather than a field of the event. -->
+  <Section label={love.string.Meeting} icon={love.icon.MeetingMinutes} level={3}>
+    <!-- The room the meeting takes place in. A live session is shown as the session card, a room as
+         a link into the room card - the same drill-down the session row has. A permanent meeting has
+         no room at all: its own card is shown instead, and a roomless one-off event says where it
+         runs and still offers to pick a room. -->
+    <SettingRow label={love.string.MeetingRoom}>
+      <div class="meeting-value">
+        {#if meetingDoc !== undefined}
+          <ObjectPresenter
+            shouldShowAvatar={false}
+            objectId={meetingDoc._id}
+            _class={meetingDoc._class}
+            value={meetingDoc}
+          />
+        {:else if permanentDoc !== undefined}
+          <PermanentMeetingPresenter value={permanentDoc} accent noUnderline />
+        {:else if roomDoc !== undefined}
+          <RoomPresenter value={roomDoc} accent />
+        {:else if !isPermanent}
+          {#if readOnly}
+            <span class="meeting-note"><Label label={love.string.MeetingRunsInServiceRoom} /></span>
+          {:else}
+            <div class="meeting-field">
+              <RoomSelector
+                value={meeting?.room}
+                on:change={(ev) => {
+                  void changeRoom(ev.detail)
+                }}
+              />
+            </div>
           {/if}
         {/if}
       </div>
-    </div>
-  </div>
+      <!-- The actions sit on a line of their own under the field, as the card's other rows do:
+           inline with the value they squeezed the primary button into its label. -->
+      <svelte:fragment slot="details">
+        <div class="meeting-actions">
+          {#if meetingDoc !== undefined}
+            <MeetingMinutesStatusPresenter object={meetingDoc} value={meetingDoc.status} attributeKey="status" />
+          {/if}
+          {#if !readOnly}
+            <Button
+              kind="secondary"
+              size="small"
+              icon={ui.icon.Gear}
+              label={love.string.MeetingLinkSettings}
+              on:click={(e) => {
+                showPopup(MeetingLinkPopup, { event: _value }, eventToHTMLElement(e))
+              }}
+            />
+          {/if}
+          <!-- A running session is entered directly: the room is already open, there is nothing to start. -->
+          {#if meetingDoc !== undefined && isPermanent}
+            <Button
+              kind="secondary"
+              label={love.string.JoinAsParticipant}
+              size="small"
+              icon={ui.icon.Play}
+              loading={joining}
+              on:click={joinCurrent}
+            />
+          {/if}
+          <!-- Any participant may start a scheduled meeting, not only its owner; a permanent one is
+               always open, so its action is joining it rather than starting it. The row spends one
+               emphasis level only: the filled button of the card is its own submit. -->
+          {#if meetingDoc !== undefined}
+            <Button kind="negative-ghost" label={love.string.EndMeeting} size="small" on:click={closeMeeting} />
+          {:else if isPermanent}
+            <Button
+              kind="secondary"
+              label={love.string.JoinMeeting}
+              size="small"
+              icon={ui.icon.Play}
+              on:click={openMeeting}
+            />
+          {:else}
+            <Button
+              kind="secondary"
+              label={love.string.StartMeeting}
+              size="small"
+              icon={ui.icon.Play}
+              on:click={openMeeting}
+            />
+          {/if}
+        </div>
+      </svelte:fragment>
+    </SettingRow>
+  </Section>
 {/if}
+
+<style lang="scss">
+  .meeting-value {
+    display: flex;
+    justify-content: flex-end;
+    min-width: 0;
+  }
+
+  // The control keeps the right edge of the row, as the other fields of the card do.
+  .meeting-field {
+    display: flex;
+    justify-content: flex-end;
+    width: 12rem;
+    min-width: 0;
+  }
+
+  .meeting-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacing-1);
+    padding-top: var(--spacing-1);
+  }
+
+  .meeting-note {
+    font-size: 0.75rem;
+    line-height: 1rem;
+    color: var(--global-secondary-TextColor);
+  }
+</style>

@@ -7,6 +7,10 @@
     "PersonsLabel": "{name}",
     "AddDescription": "Adicionar descrição",
     "Date": "Data",
+    "When": "Quando",
+    "About": "Sobre",
+    "Where": "Onde",
+    "Remember": "Lembrar",
     "DueTo": "Data de vencimento",
     "Description": "Descrição",
     "Title": "Título",
@@ -55,6 +59,7 @@
     "EventTitlePlaceholder": "Título do evento",
     "TimeZone": "Fuso horário",
     "Repeat": "Repetir",
+    "DoNotRepeat": "Não repetir",
     "On": "Em",
     "Every": "Todos os",
     "After": "Depois de",
@@ -125,6 +130,18 @@
     "SynchronizedCalendars": "Calendários sincronizados",
     "Account": "Conta",
     "NoCalendars": "Nenhum calendário encontrado",
-    "PersonalCalendar": "Calendário pessoal"
+    "PersonalCalendar": "Calendário pessoal",
+    "Going": "Vou participar",
+    "NotGoing": "Não vou participar",
+    "Maybe": "Talvez",
+    "WillYouAttend": "Vai participar?",
+    "RsvpAccepted": "participarão",
+    "RsvpDeclined": "não participarão",
+    "RsvpTentative": "talvez",
+    "RsvpPending": "sem resposta",
+    "RsvpAcceptedCount": "{count, plural, one {# going} other {# going}}",
+    "RsvpTentativeCount": "{count, plural, one {# maybe} other {# maybe}}",
+    "RsvpDeclinedCount": "{count, plural, one {# not going} other {# not going}}",
+    "RsvpPendingCount": "{count, plural, one {# no answer} other {# no answer}}"
   }
 }
