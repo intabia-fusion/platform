@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -59,10 +60,9 @@ export const DriveEmbedProvider: EmbedNodeProviderConstructor<DriveEmbedOptions>
 
     if (previewType === undefined) return
 
-    return (editor: Editor, root: HTMLDivElement, getPos: () => number) => {
+    return (editor: Editor, root: HTMLDivElement, getPos: () => number | undefined) => {
       const setLoading = (loading: boolean): void => {
-        const pos = typeof getPos === 'function' ? getPos() : 0
-        setLoadingState(editor.view, pos, loading)
+        setLoadingState(editor.view, getPos, root, loading)
       }
       const renderer = new SvelteRenderer(FilePreview, {
         element: root,

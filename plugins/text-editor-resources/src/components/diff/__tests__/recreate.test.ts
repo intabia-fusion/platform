@@ -16,8 +16,11 @@
 import { type MarkupNode, MarkupMarkType, MarkupNodeType, jsonToPmNode } from '@hcengineering/text'
 import { ChangeSet } from '@tiptap/pm/changeset'
 import { type Node as ProseMirrorNode } from '@tiptap/pm/model'
+import { DOMSerializer } from '@tiptap/pm/model'
+import { type Editor } from '@tiptap/core'
 
 import { recreateTransform } from '../recreate'
+import { calculateDecorations } from '../decorations'
 
 /** what the diff viewer ends up highlighting */
 interface Changes {
@@ -73,6 +76,45 @@ function list (...items: string[]): MarkupNode {
 }
 
 describe('recreateTransform', () => {
+  it.each([
+    [['first', 'second'], ['first']],
+    [['first'], ['first', 'second']]
+  ])('keeps column change widgets outside table structure', (oldCells, newCells) => {
+    const table = (cells: string[]): MarkupNode => ({
+      type: MarkupNodeType.table,
+      content: [
+        {
+          type: MarkupNodeType.table_row,
+          content: cells.map((text) => ({ type: MarkupNodeType.table_cell, content: [para(text)] }))
+        }
+      ]
+    })
+    const before = jsonToPmNode(doc(table(oldCells)))
+    const after = jsonToPmNode(doc(table(newCells)))
+    const editor: Editor = Object.create(null)
+    Object.assign(editor, { schema: after.type.schema, state: { doc: after }, getJSON: () => after.toJSON() })
+    const originalDocument = global.document
+    global.document = {
+      createElement: () => ({ className: '', appendChild: () => {} })
+    } as unknown as Document
+    const serializer = jest.spyOn(DOMSerializer, 'fromSchema').mockReturnValue({
+      serializeFragment: () => ({})
+    } as unknown as DOMSerializer)
+
+    try {
+      const result = calculateDecorations(editor, undefined, before)
+      expect(result).toBeDefined()
+      const widgets = result?.decorations.find().filter((decoration) => decoration.from === decoration.to) ?? []
+      expect(widgets.length).toBeGreaterThan(0)
+      for (const widget of widgets) {
+        expect(['table', 'tableRow']).not.toContain(after.resolve(widget.from).parent.type.name)
+      }
+    } finally {
+      serializer.mockRestore()
+      global.document = originalDocument
+    }
+  })
+
   it('reports no changes for identical documents', () => {
     const a = doc(para('one'), para('two'))
     expect(changesBetween(a, a)).toEqual({ inserted: [], deleted: [] })

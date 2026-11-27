@@ -7,7 +7,6 @@ const NAME = 'node-uuid'
  */
 export const QMSInlineCommentMark = Mark.create({
   name: NAME,
-  inline: true,
 
   parseHTML () {
     return [

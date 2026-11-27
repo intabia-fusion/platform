@@ -1,6 +1,7 @@
 <!--
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -114,21 +115,6 @@
 {/if}
 
 <style lang="scss">
-  .link {
-    padding: 0 0.5rem;
-    padding-right: 0;
-    max-width: 20rem;
-    font-weight: 400;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    color: var(--theme-link-color);
-
-    &:hover {
-      color: var(--theme-link-color);
-    }
-  }
-
   .toolbar {
     position: relative;
     padding: 0.25rem;

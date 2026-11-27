@@ -1,5 +1,7 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
+// Copyright © 2026 TraceX SAS.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -39,7 +41,7 @@ function nodeDOMAtCoords (coords: { x: number, y: number }): Element | undefined
     .find((elem: Element) => elem.parentElement?.matches?.('.ProseMirror') === true)
 }
 
-function posAtLeftMenuElement (view: EditorView, leftMenuElement: HTMLElement, offsetX: number): number {
+function posAtLeftMenuElement (view: EditorView, leftMenuElement: HTMLElement, offsetX: number): number | null {
   const rect = leftMenuElement.getBoundingClientRect()
 
   const position = view.posAtCoords({
@@ -48,7 +50,7 @@ function posAtLeftMenuElement (view: EditorView, leftMenuElement: HTMLElement, o
   })
 
   if (position === null) {
-    return 0
+    return null
   }
 
   const pos = position.inside >= 0 ? position.inside : position.pos
@@ -119,16 +121,19 @@ function LeftMenu (options: LeftMenuOptions): Plugin {
         // Prevent default in order for the popup to take focus for keyboard events
         e.preventDefault()
         e.stopPropagation()
+        if (leftMenuElement === null) return
+        const pos = posAtLeftMenuElement(view, leftMenuElement, offsetX)
+        if (pos === null) return
+
         showPopup(
           SelectPopup,
           {
             value: options.items
           },
           getEventPositionElement(e),
-          (val) => {
-            if (leftMenuElement === null) return
-            const pos = posAtLeftMenuElement(view, leftMenuElement, offsetX)
-            void options.handleSelect(val, pos, e)
+          async (val) => {
+            if (leftMenuElement === null || val === undefined) return
+            await options.handleSelect(val, pos, e)
           }
         )
       })

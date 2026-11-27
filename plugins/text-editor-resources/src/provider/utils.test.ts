@@ -92,6 +92,16 @@ describe('createRemoteProvider reconnect grace behavior', () => {
     jest.useRealTimers()
   })
 
+  it.each([null, ''])('omits an absent content reference (%s)', (content) => {
+    createRemoteProvider({} as any, 'doc-1' as any, content as any)
+    expect(new URL(lastConfig.url).searchParams.has('content')).toBe(false)
+  })
+
+  it('includes the initial content reference in the connection URL', () => {
+    createRemoteProvider({} as any, 'doc-1' as any, 'snapshot-1' as any)
+    expect(new URL(lastConfig.url).searchParams.get('content')).toBe('snapshot-1')
+  })
+
   it('does not report error before grace timeout', () => {
     const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
     createRemoteProvider({} as any, 'doc-1' as any, null)

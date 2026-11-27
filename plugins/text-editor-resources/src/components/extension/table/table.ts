@@ -1,5 +1,6 @@
 //
 // Copyright © 2023, 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -16,7 +17,7 @@
 import textEditor, { type ActionContext } from '@hcengineering/text-editor'
 import { getEventPositionElement, SelectPopup, showPopup } from '@hcengineering/ui'
 import { type Editor } from '@tiptap/core'
-import TiptapTable from '@tiptap/extension-table'
+import { Table as TiptapTable } from '@tiptap/extension-table'
 import { CellSelection, TableMap } from '@tiptap/pm/tables'
 
 import { type EditorState, Plugin, TextSelection, type Transaction } from '@tiptap/pm/state'

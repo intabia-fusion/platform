@@ -1,6 +1,7 @@
 <!--
 //
 // Copyright © 2023, 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 // Copyright © 2026 TraceX SAS.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
@@ -42,6 +43,7 @@
   let focused = false
   function handleSelectionUpdate (): void {
     const from = getPos()
+    if (from === undefined) return
     const to = from + node.nodeSize
 
     focused = editor.state.selection.from <= to && editor.state.selection.to >= from && editor.isActive('table')

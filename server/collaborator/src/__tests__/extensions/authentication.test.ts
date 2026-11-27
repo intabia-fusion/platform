@@ -92,7 +92,7 @@ describe('AuthenticationExtension', () => {
         documentName: 'workspace-uuid:doc-id:class:Doc:attr',
         requestParameters: new Map(),
         context: {},
-        connection: mockConnection
+        connectionConfig: mockConnection
       }
 
       const result = await extension.onAuthenticate(mockPayload as any)
@@ -136,7 +136,7 @@ describe('AuthenticationExtension', () => {
         documentName: 'workspace-uuid:doc-id:class:Doc:attr',
         requestParameters: new Map(),
         context: {},
-        connection: mockConnection
+        connectionConfig: mockConnection
       }
 
       await extension.onAuthenticate(mockPayload as any)
@@ -172,7 +172,7 @@ describe('AuthenticationExtension', () => {
         documentName: 'different-workspace-uuid:doc-id:class:Doc:attr',
         requestParameters: new Map(),
         context: {},
-        connection: { readOnly: false }
+        connectionConfig: { readOnly: false }
       }
 
       await expect(extension.onAuthenticate(mockPayload as any)).rejects.toThrow(
@@ -198,7 +198,7 @@ describe('AuthenticationExtension', () => {
         documentName: 'workspace-uuid:doc-id:class:Doc:attr',
         requestParameters: new Map(),
         context: {},
-        connection: { readOnly: false }
+        connectionConfig: { readOnly: false }
       }
 
       await expect(extension.onAuthenticate(mockPayload as any)).rejects.toThrow('Account service unavailable')
@@ -234,7 +234,7 @@ describe('AuthenticationExtension', () => {
         documentName: 'workspace-uuid:doc-id:class:Doc:attr',
         requestParameters: new Map(),
         context: {},
-        connection: { readOnly: false }
+        connectionConfig: { readOnly: false }
       }
 
       await extension.onAuthenticate(mockPayload as any)

@@ -1,6 +1,7 @@
 <!--
 //
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -104,7 +105,7 @@
           // a read-only diff must never scroll the page to its selection
           handleScrollToSelection: () => true
         },
-        element,
+        element: null,
         content,
         editable: false,
         autofocus: false,
@@ -121,6 +122,7 @@
           editor = editor
         }
       })
+      editor.mount(element)
     } catch (err: unknown) {
       editorMountFailed = true
       console.error(`MarkupDiffViewer mount failed: ${err instanceof Error ? err.message : String(err)}`)

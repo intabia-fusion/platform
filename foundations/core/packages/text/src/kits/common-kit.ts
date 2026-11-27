@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -67,10 +68,19 @@ export const CommonKitFactory = (e: ExtensionFactory) =>
     heading: e(Heading),
     underline: e(Underline),
     blockquote: e(Blockquote, { HTMLAttributes: { class: 'proseBlockQuote' } }),
-    link: e(Link.extend({ inclusive: false }), {
-      openOnClick: false,
-      HTMLAttributes: { class: 'cursor-pointer', rel: 'noopener noreferrer', target: '_blank' }
-    }),
+    link: e(
+      Link.extend({
+        inclusive: false,
+        addAttributes () {
+          const attributes: Record<string, any> = this.parent?.() ?? {}
+          return { href: attributes?.href, target: attributes?.target, rel: attributes?.rel, class: attributes?.class }
+        }
+      }),
+      {
+        openOnClick: false,
+        HTMLAttributes: { class: 'cursor-pointer', rel: 'noopener noreferrer', target: '_blank' }
+      }
+    ),
     textAlign: e(TextAlign, {
       types: ['heading', 'paragraph'],
       alignments: ['left', 'center', 'right'],

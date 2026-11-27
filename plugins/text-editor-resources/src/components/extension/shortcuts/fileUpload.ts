@@ -1,5 +1,6 @@
 //
 // Copyright © 2023, 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -91,7 +92,8 @@ export const FileUploadExtension = Extension.create<FileUploadExtensionOptions>(
               return res
             }
           },
-          handleDrop (view, event) {
+          handleDrop (view, event, _slice, moved) {
+            if (moved) return false
             const dataTransfer = event.dataTransfer
             if (dataTransfer !== null) {
               const res = handleDrop(view, view.posAtCoords({ left: event.x, top: event.y }), dataTransfer)

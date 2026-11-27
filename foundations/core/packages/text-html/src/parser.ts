@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -536,7 +537,7 @@ export class HtmlParser {
             handler.handleOpenTag(state, tag, attributes)
           } else {
             rawPos = parser.startIndex
-            rawDepth = 0
+            rawDepth = 1
           }
         },
 
@@ -568,7 +569,7 @@ export class HtmlParser {
 
             if (rawDepth === 0) {
               const start = rawPos ?? 0
-              const end = parser.endIndex
+              const end = parser.endIndex + 1
               const text = html.substring(start, end)
               state.addText(text)
               rawPos = undefined

@@ -1,5 +1,6 @@
 //
 // Copyright © 2022 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -95,14 +96,24 @@ export function calculateDecorations (
       return node
     }
     changes.forEach((change) => {
+      const position = docNew.resolve(change.fromB)
+      let widgetPosition = change.fromB
+      if (position.parent.type.name === 'table' || position.parent.type.name === 'tableRow') {
+        for (let depth = position.depth; depth > 0; depth--) {
+          if (position.node(depth).type.name === 'table') {
+            widgetPosition = position.before(depth)
+            break
+          }
+        }
+      }
       if (change.inserted.length > 0) {
         decorations.push(Decoration.inline(change.fromB, change.toB, { class: 'text-editor-highlighted-node-add' }, {}))
-        decorations.push(Decoration.widget(change.fromB, lintIcon('add')))
+        decorations.push(Decoration.widget(widgetPosition, lintIcon('add')))
       }
 
       if (change.deleted.length > 0) {
-        decorations.push(Decoration.widget(change.fromB, deleted(change.fromA, change.toA)))
-        decorations.push(Decoration.widget(change.fromB, lintIcon('delete')))
+        decorations.push(Decoration.widget(widgetPosition, deleted(change.fromA, change.toA)))
+        decorations.push(Decoration.widget(widgetPosition, lintIcon('delete')))
       }
     })
     if (decorations.length > 0) {

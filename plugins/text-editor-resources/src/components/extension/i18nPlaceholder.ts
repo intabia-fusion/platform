@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -34,7 +35,16 @@ export const I18nPlaceholderExtension = Placeholder.extend<I18nPlaceholderOption
 
   addOptions () {
     return {
+      emptyEditorClass: 'is-editor-empty',
+      emptyNodeClass: 'is-empty',
+      dataAttribute: 'placeholder',
+      showOnlyWhenEditable: true,
+      showOnlyCurrent: true,
+      includeChildren: false,
       ...this.parent?.(),
+      placeholder: ({ editor }) =>
+        (editor.storage as unknown as Record<string, I18nPlaceholderStorage | undefined>)['i18n-placeholder']
+          ?.placeholder ?? '',
       placeholderIntl: '' as IntlString,
       placeholderIntlParams: {},
       themeStore: undefined as any
@@ -54,9 +64,6 @@ export const I18nPlaceholderExtension = Placeholder.extend<I18nPlaceholderOption
 
     const placeholderIntl = options.placeholderIntl
     const placeholderIntlParams = options.placeholderIntlParams
-
-    // Set the placeholder function before any rendering happens
-    this.options.placeholder = (): string => storage.placeholder
 
     // Get initial translation
     const theme = get(options.themeStore)

@@ -1,5 +1,6 @@
 //
 // Copyright © 2023, 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -20,6 +21,7 @@ import { Fragment, type Node, Slice } from '@tiptap/pm/model'
 import { Plugin, PluginKey } from '@tiptap/pm/state'
 import { dropPoint } from '@tiptap/pm/transform'
 import { type EditorView } from '@tiptap/pm/view'
+import { hasStoredImage } from '../imageDisplay'
 
 import { type FileAttachFunction } from '../types'
 import { loadingImageSrc } from '../imageExt'
@@ -116,8 +118,9 @@ export const ImageUploadExtension = Extension.create<ImageUploadExtensionOptions
             return true
           },
           handleDrop (view, event, slice, moved) {
+            if (moved) return false
             const dataTransfer = event.dataTransfer
-            if (dataTransfer !== null) {
+            if (dataTransfer !== null && !hasStoredImage(slice)) {
               const res = handleDrop(view, view.posAtCoords({ left: event.x, top: event.y }), dataTransfer)
               if (res === true) {
                 event.preventDefault()
@@ -125,7 +128,6 @@ export const ImageUploadExtension = Extension.create<ImageUploadExtensionOptions
                 return res
               }
             }
-            if (moved) return false
             if (attachFile === undefined) return rejectDataImages(slice)
             const mouse = view.posAtCoords({ left: event.clientX, top: event.clientY })
             if (mouse === null) return false

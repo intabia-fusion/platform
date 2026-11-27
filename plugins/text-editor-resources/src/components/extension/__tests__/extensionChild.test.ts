@@ -1,3 +1,5 @@
+/** @jest-environment jsdom */
+
 //
 // Copyright © 2026 Intabia Fusion.
 //
@@ -15,7 +17,7 @@
 
 import { Editor, Extension, Mark, Node } from '@tiptap/core'
 
-// Guards common/pnpm-patches/@tiptap__core@2.27.1.patch: a module-level extension must not keep
+// A module-level extension must not keep
 // the copy configured for an editor, or the destroyed editor stays reachable through its options.
 describe('tiptap extension child links', () => {
   it('configure() does not leave the configured copy in child', () => {
@@ -37,13 +39,16 @@ describe('tiptap extension child links', () => {
     const grandchild = child.extend({})
     expect(root.child).toBe(child)
 
-    // The real Editor needs a DOM; destroy() only touches these fields.
-    const editor = {
-      emit: jest.fn(),
-      removeAllListeners: jest.fn(),
-      extensionManager: { extensions: [grandchild] }
-    }
-    Editor.prototype.destroy.call(editor)
+    const editor = new Editor({
+      element: null,
+      extensions: [
+        Node.create({ name: 'doc', topNode: true, content: 'paragraph+' }),
+        Node.create({ name: 'paragraph', group: 'block', content: 'text*' }),
+        Node.create({ name: 'text', group: 'inline' }),
+        grandchild
+      ]
+    })
+    editor.destroy()
 
     expect(root.child).toBeNull()
     expect(child.child).toBeNull()

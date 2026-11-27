@@ -4,6 +4,7 @@
 
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -34,15 +35,6 @@ import {
 import { Editor, getSchema } from '@tiptap/core'
 import { ServerKit } from '../../kits/server-kit'
 import { getMarkup, htmlToJSON, htmlToMarkup, jsonToHTML, jsonToPmNode, jsonToText, pmNodeToJSON } from '../utils'
-
-// mock tiptap functions
-jest.mock('@tiptap/html', () => ({
-  generateHTML: jest.fn(() => '<p>hello</p>'),
-  generateJSON: jest.fn(() => ({
-    type: 'doc',
-    content: [{ type: 'paragraph', content: [{ type: 'text', text: 'hello' }] }]
-  }))
-}))
 
 const extensions = [ServerKit]
 
@@ -332,7 +324,8 @@ describe('jsonToPmNode', () => {
 describe('htmlToMarkup', () => {
   it('converts HTML to Markup', () => {
     const html = '<p>hello</p>'
-    const expectedMarkup = '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"hello"}]}]}'
+    const expectedMarkup =
+      '{"type":"doc","content":[{"type":"paragraph","attrs":{"textAlign":null},"content":[{"type":"text","text":"hello"}]}]}'
     expect(htmlToMarkup(html)).toEqual(expectedMarkup)
   })
 })
@@ -340,7 +333,7 @@ describe('htmlToMarkup', () => {
 describe('htmlToJSON', () => {
   it('converts HTML to JSON', () => {
     const html = '<p>hello</p>'
-    const json = nodeDoc(nodeParagraph(nodeText('hello')))
+    const json = nodeDoc({ ...nodeParagraph(nodeText('hello')), attrs: { textAlign: null } })
     expect(htmlToJSON(html)).toEqual(json)
   })
 })

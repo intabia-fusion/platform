@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 // Copyright © 2026 TraceX SAS.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
@@ -173,6 +174,7 @@ export const MermaidExtension = CodeBlockLowlight.extend<MermaidOptions>({
         if (typeof getPos !== 'function') return
 
         const pos = getPos()
+        if (pos === undefined) return
         const node = editor.view.state.doc.nodeAt(pos)
 
         if (node?.type.name !== MermaidExtension.name) return
@@ -207,6 +209,7 @@ export const MermaidExtension = CodeBlockLowlight.extend<MermaidOptions>({
         e.stopPropagation()
 
         const pos = getPos()
+        if (pos === undefined) return
 
         const { selection } = editor.view.state
         const mermaid = editor.view.state.doc.nodeAt(pos)
@@ -331,6 +334,7 @@ export const MermaidExtension = CodeBlockLowlight.extend<MermaidOptions>({
         if (nodeState.selected === newState) return
         if (typeof getPos !== 'function') return
         const pos = getPos()
+        if (pos === undefined) return
         const tr = setTxMeta(editor.view.state.tr, {
           nodePatch: {
             pos,

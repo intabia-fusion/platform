@@ -1,5 +1,6 @@
 //
 // Copyright © 2023, 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -12,45 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { type Blob, type Ref } from '@hcengineering/core'
 import { HocuspocusProvider, type HocuspocusProviderConfiguration } from '@hocuspocus/provider'
 import { type Provider } from './types'
-
-export type HocuspocusCollabProviderConfiguration = HocuspocusProviderConfiguration &
-  Required<Pick<HocuspocusProviderConfiguration, 'token'>> &
-  Omit<HocuspocusProviderConfiguration, 'parameters'> & {
-    parameters: HocuspocusCollabProviderURLParameters
-  }
-
-export interface HocuspocusCollabProviderURLParameters {
-  content: Ref<Blob> | null
-}
 
 export class HocuspocusCollabProvider extends HocuspocusProvider implements Provider {
   readonly loaded: Promise<void>
 
-  constructor (configuration: HocuspocusCollabProviderConfiguration) {
-    const parameters: Record<string, any> = {}
-
-    const content = configuration.parameters?.content
-    if (content !== null && content !== undefined && content !== '') {
-      parameters.content = content
-    }
-
-    const hocuspocusConfig: HocuspocusProviderConfiguration = {
-      ...configuration,
-      parameters
-    }
-    super(hocuspocusConfig)
+  constructor (configuration: HocuspocusProviderConfiguration) {
+    super(configuration)
 
     this.loaded = new Promise((resolve) => {
       this.on('synced', resolve)
     })
-  }
-
-  destroy (): void {
-    super.destroy()
-    // disconnect() keeps the connectionChecker interval, which retains the socket and its providers
-    this.configuration.websocketProvider.destroy()
   }
 }

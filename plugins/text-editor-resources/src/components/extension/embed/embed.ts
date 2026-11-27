@@ -1,5 +1,6 @@
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -51,7 +52,7 @@ export interface EmbedNodeProvider {
 export type EmbedNodeView = (
   editor: Editor,
   root: HTMLDivElement,
-  getPos: () => number
+  getPos: () => number | undefined
 ) => EmbedNodeViewHandle | undefined
 export type EmbedNodeProviderConstructor<T> = (options: T) => EmbedNodeProvider
 
@@ -113,8 +114,7 @@ export const EmbedNode = BaseEmbedNode.extend<EmbedNodeOptions>({
       root.setAttribute('data-embed-src', node.attrs.src)
       root.classList.add('embed-node')
 
-      const pos = typeof getPos === 'function' ? getPos() : 0
-      setLoadingState(editor.view, pos, true)
+      setLoadingState(editor.view, getPos, root, true)
       root.setAttribute('block-editor-blur', 'true')
 
       let handle: EmbedNodeViewHandle | undefined
@@ -128,8 +128,7 @@ export const EmbedNode = BaseEmbedNode.extend<EmbedNodeOptions>({
           }
         })
         .finally(() => {
-          const pos = typeof getPos === 'function' ? getPos() : 0
-          setLoadingState(editor.view, pos, false)
+          setLoadingState(editor.view, getPos, root, false)
         })
 
       return {
@@ -506,7 +505,7 @@ export function replacePreviewContent (
   return tr
 }
 
-const StubEmbedNodeView: EmbedNodeView = (editor: Editor, root: HTMLDivElement, getPos: () => number) => {
+const StubEmbedNodeView: EmbedNodeView = (editor: Editor, root: HTMLDivElement, getPos: () => number | undefined) => {
   const hint = document.createElement('p')
   const hintIcon = hint.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'svg'))
   const hintSpan = hint.appendChild(document.createElement('span'))

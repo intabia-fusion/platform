@@ -60,9 +60,6 @@ export async function start (ctx: MeasureContext, config: Config, storageAdapter
   const transformer = new MarkupTransformer()
 
   const hocuspocus = new Hocuspocus({
-    address: '0.0.0.0',
-    port,
-
     /**
      * Defines in which interval the server sends a ping, and closes the connection when no pong is sent back.
      */

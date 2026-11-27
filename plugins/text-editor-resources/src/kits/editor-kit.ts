@@ -1,5 +1,6 @@
 //
 // Copyright © 2023, 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -27,11 +28,11 @@ import {
 } from '@hcengineering/text'
 import textEditor, { type ActionContext, type ExtensionCreator, type TextEditorMode } from '@hcengineering/text-editor'
 import { type AnyExtension, Extension } from '@tiptap/core'
-import TableHeader from '@tiptap/extension-table-header'
+import { TableHeader } from '@tiptap/extension-table'
 import 'prosemirror-codemark/dist/codemark.css'
 
 import Collaboration from '@tiptap/extension-collaboration'
-import CollaborationCursor from '@tiptap/extension-collaboration-cursor'
+import CollaborationCursor from '@tiptap/extension-collaboration-caret'
 import { CodeBlockHighlighExtension, codeBlockHighlightOptions } from '../components/extension/codeSnippets/codeblock'
 import { MermaidExtension, mermaidOptions } from '../components/extension/codeSnippets/mermaid'
 import { DrawingBoardExtension } from '../components/extension/drawingBoard'

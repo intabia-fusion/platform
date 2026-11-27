@@ -1,5 +1,6 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -15,8 +16,8 @@
 
 import { Markup } from '@hcengineering/core'
 import { Editor, Extensions, getSchema } from '@tiptap/core'
-import { generateHTML, generateJSON } from '@tiptap/html'
-import { Node as ProseMirrorNode, Schema } from '@tiptap/pm/model'
+import { DOMParser, DOMSerializer, Node as ProseMirrorNode, Schema } from '@tiptap/pm/model'
+import { createHTMLDocument, parseHTML, VHTMLDocument } from 'zeed-dom'
 
 import { MarkupNode, jsonToMarkup } from '@hcengineering/text-core'
 import { defaultExtensions } from '../extensions'
@@ -78,11 +79,18 @@ export function htmlToMarkup (html: string, extensions?: Extensions): Markup {
 /** @public */
 export function htmlToJSON (html: string, extensions?: Extensions): MarkupNode {
   extensions = extensions ?? defaultExtensions
-  return generateJSON(html, extensions, { preserveWhitespace: 'full' }) as MarkupNode
+  const schema = getSchema(extensions)
+  const dom = parseHTML(html) as unknown as Node
+  return DOMParser.fromSchema(schema).parse(dom, { preserveWhitespace: 'full' }).toJSON() as MarkupNode
 }
 
 /** @public */
 export function jsonToHTML (json: MarkupNode, extensions?: Extensions): string {
   extensions = extensions ?? defaultExtensions
-  return generateHTML(json, extensions)
+  const schema = getSchema(extensions)
+  const doc = ProseMirrorNode.fromJSON(schema, json)
+  const result = DOMSerializer.fromSchema(schema).serializeFragment(doc.content, {
+    document: createHTMLDocument() as unknown as Document
+  }) as unknown as VHTMLDocument
+  return result.render()
 }

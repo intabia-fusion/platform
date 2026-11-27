@@ -1,5 +1,6 @@
 <!--
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
+// Copyright © 2026 Intabia Fusion.
 // Copyright © 2021, 2023, 2024 Hardcore Engineering Inc.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
@@ -67,7 +68,7 @@
   export function setContent (newContent: Markup): void {
     if (editor !== undefined && content !== newContent) {
       content = newContent
-      editor.commands.setContent(markupToJSON(content))
+      editor.commands.setContent(markupToJSON(content), { emitUpdate: false })
     }
   }
   export function clear (): void {
