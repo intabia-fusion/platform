@@ -1,0 +1,74 @@
+#
+# Copyright © 2026 Intabia Fusion.
+#
+# Licensed under the Eclipse Public License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License. You may
+# obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+{{- if and .Values.resourceMetrics.enabled .Values.resourceMetrics.database.enabled (include "monitoring.resourceExportersEnabled" .) }}
+{{- $m := .Values.resourceMetrics }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "monitoring.clickstackName" . }}-metrics-database
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: monitoring-metrics-database
+    app.kubernetes.io/instance: {{ .Release.Name }}
+data:
+  config.yaml: |
+{{ include "monitoring.metricsDatabaseConfig" . | indent 4 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "monitoring.clickstackName" . }}-metrics-database
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: monitoring-metrics-database
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: monitoring-metrics-database
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: monitoring-metrics-database
+        app.kubernetes.io/instance: {{ .Release.Name }}
+      annotations:
+        checksum/config: {{ include "monitoring.metricsDatabaseConfig" . | sha256sum | quote }}
+    spec:
+      serviceAccountName: {{ include "monitoring.clickstackName" . }}-metrics-database
+      containers:
+        - name: collector
+          image: {{ $m.collector.image }}
+          args: ["--config=/etc/otel/config.yaml"]
+{{- with $m.clickstack.apiKeySecret }}
+          env:
+            - name: CLICKSTACK_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ . }}
+                  key: {{ $m.clickstack.apiKeySecretKey | default "api-key" }}
+{{- end }}
+          resources:
+{{ toYaml $m.database.resources | indent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/otel
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "monitoring.clickstackName" . }}-metrics-database
+{{- end }}

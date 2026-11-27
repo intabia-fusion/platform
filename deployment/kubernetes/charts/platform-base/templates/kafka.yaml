@@ -1,0 +1,59 @@
+{{- if and .Values.kafka.enabled (eq .Values.kafka.mode "strimzi") }}
+# Single-node KRaft cluster like fusion-deployment/pre_deployment/kafka/kafka-persistent.yaml; Strimzi
+# 1.x keeps replicas/resources/jvmOptions on the KafkaNodePool. Operator: scripts/base-up.sh.
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaNodePool
+metadata:
+  name: combined
+  namespace: '{{ .Release.Namespace }}'
+  labels:
+    strimzi.io/cluster: my-cluster
+spec:
+  {{- with (include "platformBase.podSelector" (dict "root" . "component" "kafka") | fromYaml) }}
+  template:
+    pod:
+      {{- include "platformBase.nodeAffinity" (dict "sel" .) | nindent 6 }}
+  {{- end }}
+  replicas: 1
+  roles:
+  - controller
+  - broker
+  storage:
+    type: persistent-claim
+    size: '{{ .Values.kafka.storage }}'
+    {{- if .Values.kafka.storageClass }}
+    class: '{{ .Values.kafka.storageClass }}'
+    {{- end }}
+    deleteClaim: false
+  resources:
+{{ toYaml .Values.kafka.resources | indent 4 }}
+  jvmOptions:
+    "-Xms": {{ .Values.kafka.jvmXms | quote }}
+    "-Xmx": {{ .Values.kafka.jvmXmx | quote }}
+---
+apiVersion: kafka.strimzi.io/v1
+kind: Kafka
+metadata:
+  name: my-cluster
+  namespace: '{{ .Release.Namespace }}'
+  labels:
+    app: kafka
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+spec:
+  kafka:
+    version: '{{ .Values.kafka.version }}'
+    listeners:
+    - name: plain
+      port: 9092
+      type: internal
+      tls: false
+    config:
+      auto.create.topics.enable: 'true'
+      default.replication.factor: 1
+      min.insync.replicas: 1
+      offsets.topic.replication.factor: 1
+      transaction.state.log.replication.factor: 1
+      transaction.state.log.min.isr: 1
+{{- end }}

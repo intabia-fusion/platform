@@ -1,0 +1,94 @@
+{{- /*
+Applies the hand-tuned Postgres indexes (tests/indexes.yaml) to the stand database.
+`tool sync-indexes` creates only the indexes that are missing, so a re-run on every upgrade is
+cheap and safe; the model's own indexes come from db-migrator, this file carries the rest.
+
+The chart ships a copy of tests/indexes.yaml (files/indexes.yaml); package-charts.mjs refreshes it
+from the repository before packaging, so the released chart cannot drift.
+
+Test stands keep the hook off: prepare-pg.sh applies the same file through the stand-tool pod.
+*/ -}}
+{{- $sync := index .Values.services "index-sync" }}
+{{- if $sync.enabled }}
+{{- $root := . }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: platform-index-sync
+  namespace: '{{ .Values.global.namespace }}'
+  labels:
+    app: index-sync
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "8"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+data:
+  indexes.yaml: |
+{{ .Files.Get "files/indexes.yaml" | indent 4 }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: 'index-sync-{{ .Values.global.version | replace "." "-" | replace ":" "-" }}'
+  namespace: '{{ .Values.global.namespace }}'
+  labels:
+    app: index-sync
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+  annotations:
+    # Job pod templates are immutable, so the hook is recreated on every upgrade.
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "10"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ $sync.backoffLimit }}
+  activeDeadlineSeconds: {{ $sync.activeDeadlineSeconds }}
+  ttlSecondsAfterFinished: {{ $sync.ttlSecondsAfterFinished }}
+  template:
+    metadata:
+      labels:
+        app: index-sync
+      annotations:
+        checksum/platform-env: {{ include "platform.envChecksum" $root | quote }}
+    spec:
+      restartPolicy: Never
+      {{- include "platform.nodeSelector" (dict "root" $root "service" "index-sync") | nindent 6 }}
+      containers:
+      - name: index-sync
+        image: {{ include "platform.containerImage" (dict "root" $root "service" "index-sync" "image" "tool") }}
+        imagePullPolicy: {{ $root.Values.global.imagePullPolicy | default "Always" }}
+        {{- include "platform.resources" (dict "root" $root "service" "index-sync") | nindent 8 }}
+        command:
+        - node
+        - bundle.js
+        - sync-indexes
+        - /cfg/indexes.yaml
+        - --apply
+        env:
+        - name: DB_URL
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: dbUrl
+        - name: SERVER_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: serverSecret
+        # The tool refuses to start without an accounts endpoint and a transactor; sync-indexes
+        # itself only touches the database.
+        - name: ACCOUNTS_URL
+          value: http://account
+        - name: TRANSACTOR_URL
+          value: http://transactor0
+        volumeMounts:
+        - mountPath: /cfg
+          name: indexes
+      volumes:
+      - name: indexes
+        configMap:
+          name: platform-index-sync
+{{- end }}

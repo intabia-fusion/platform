@@ -1,0 +1,15 @@
+# source: kube/kvs/service.yaml; subs: version, hostUrl, namespace
+{{- if .Values.services.kvs.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: kvs
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  selector:
+    app: kvs
+  ports:
+  - port: 80
+    targetPort: 8094
+
+{{- end }}

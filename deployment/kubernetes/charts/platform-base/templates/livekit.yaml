@@ -1,0 +1,142 @@
+{{- /*
+Shared LiveKit for the local stands: one server, one redis, one egress. Rooms of different
+stands are told apart by the room `projectKey` (love drops foreign events) - see docs/love.md.
+*/}}
+{{- if .Values.livekit.enabled }}
+{{- if not .Values.livekit.keys }}{{ fail "livekit: set livekit.keys" }}{{ end }}
+{{- if and .Values.livekit.webhookUrls (not .Values.livekit.webhookApiKey) }}{{ fail "livekit: set livekit.webhookApiKey" }}{{ end }}
+{{- $redis := include "platformBase.redisHost" . }}
+{{- if not .Values.sealedSecrets.enabled }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: livekit-config
+  namespace: '{{ .Release.Namespace }}'
+type: Opaque
+stringData:
+  livekit.yaml: |
+    port: {{ .Values.livekit.apiPort }}
+    rtc:
+      udp_port: {{ .Values.livekit.udpHostPort }}
+      tcp_port: {{ .Values.livekit.tcpHostPort }}
+      use_external_ip: false
+      enable_loopback_candidate: {{ .Values.livekit.loopbackCandidate }}
+    turn:
+      enabled: false
+    redis:
+      address: {{ printf "%s:6379" $redis | quote }}
+    webhook:
+      urls:
+      {{- range .Values.livekit.webhookUrls }}
+      - {{ . | quote }}
+      {{- end }}
+      api_key: {{ .Values.livekit.webhookApiKey | quote }}
+    keys:
+      {{- range $key, $secret := .Values.livekit.keys }}
+      {{ $key | quote }}: {{ $secret | quote }}
+      {{- end }}
+    logging:
+      json: false
+      level: info
+{{- end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: livekit
+  namespace: '{{ .Release.Namespace }}'
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: livekit
+  template:
+    metadata:
+      labels:
+        app: livekit
+      annotations:
+        checksum/livekit-config: {{ printf "%s|%s|%s" (toYaml .Values.livekit.webhookUrls) $redis (.Values.livekit | toYaml) | sha256sum | quote }}
+    spec:
+      {{- include "platformBase.nodeSelector" (dict "sel" (include "platformBase.podSelector" (dict "root" . "component" "livekit") | fromYaml)) | nindent 6 }}
+      tolerations:
+      - key: node.kubernetes.io/unreachable
+        operator: Exists
+        effect: NoExecute
+        tolerationSeconds: 10
+      - key: node.kubernetes.io/not-ready
+        operator: Exists
+        effect: NoExecute
+        tolerationSeconds: 10
+      {{- if .Values.livekit.hostNetwork }}
+      # RTC binds the node network so the published host ports reach it without a second NAT.
+      # ClusterFirstWithHostNet keeps ClusterIP names (redis, love, s3) resolvable.
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      {{- end }}
+      containers:
+      - name: livekit
+        image: {{ .Values.livekit.image }}
+        args:
+        - --config
+        - /etc/livekit/livekit.yaml
+        {{- with .Values.livekit.advertiseAddress }}
+        - --node-ip
+        - {{ . | quote }}
+        {{- end }}
+        volumeMounts:
+        - name: config
+          mountPath: /etc/livekit
+        ports:
+        - containerPort: {{ .Values.livekit.apiPort }}
+          protocol: TCP
+        - containerPort: {{ .Values.livekit.tcpHostPort }}
+          protocol: TCP
+        - containerPort: {{ .Values.livekit.udpHostPort }}
+          protocol: UDP
+        resources:
+          requests:
+            memory: '{{ .Values.livekit.memRequired }}M'
+          limits:
+            memory: '{{ .Values.livekit.memLimits }}M'
+        readinessProbe:
+          httpGet:
+            path: /
+            port: {{ .Values.livekit.apiPort }}
+          initialDelaySeconds: 3
+          periodSeconds: 5
+      volumes:
+      - name: config
+        secret:
+          secretName: livekit-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: livekit-api
+  namespace: '{{ .Release.Namespace }}'
+spec:
+  selector:
+    app: livekit
+  ports:
+  - name: api
+    port: {{ .Values.livekit.apiPort }}
+    targetPort: {{ .Values.livekit.apiPort }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: livekit-ingress
+  namespace: '{{ .Release.Namespace }}'
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  - match: Host(`{{ .Values.livekit.host }}`)
+    kind: Rule
+    services:
+    - name: livekit-api
+      port: {{ .Values.livekit.apiPort }}
+{{- end }}

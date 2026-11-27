@@ -18,6 +18,7 @@ import { type PersonUuid, systemAccountUuid } from '@hcengineering/core'
 import { type AccountClient, getClient as getAccountClient } from '@hcengineering/account-client'
 import { generateToken } from '@hcengineering/server-token'
 import { waitForMail } from './admin.fixtures'
+import { PlatformUrl } from '../env'
 
 // Email-first registration creates the person and account only after OTP confirmation.
 describe('signup-otp', () => {
@@ -29,7 +30,7 @@ describe('signup-otp', () => {
   let runId: string
 
   beforeAll(async () => {
-    config = await loadServerConfig('http://localhost:8183')
+    config = await loadServerConfig(PlatformUrl)
     anon = getAccountClient(config.ACCOUNTS_URL)
     // findPersonBySocialKey needs a service token; getPersonInfo takes admin or service - one
     // token covers both.

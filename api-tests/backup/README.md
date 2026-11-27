@@ -5,22 +5,29 @@ backup pipeline (same path `pods/backup` uses), not through a client API.
 
 ## Run
 
-Bring the stand up first:
-
-```
-cd ws-tests
-./prepare.sh
-```
-
-Then, from this directory:
+The api-tests compose stand is the default: `api-tests/api` brings it up and
+leaves it for this package, which takes it down. Run both after
+`common/scripts/docker-api.sh`:
 
 ```
 pnpm run backup-test
 ```
 
-Defaults target the local stand, so no exports are needed. Note the stand keeps
-workspace data and the account DB on different servers: `DB_URL` points at
-cockroach (26258), `ACCOUNT_DB_URL` at pure postgres (5533).
+To run against a stand you prepared yourself instead, take the lifecycle out of
+the run:
+
+```
+cd api-tests/backup
+API_STAND=external pnpm run backup-test
+```
+
+Defaults target that stand: `http://localhost:8183` for the platform URLs and
+`localhost:5533` / `localhost:9102` for postgres / minio.
+
+A local k3d/k3s stand is the other variant: `pnpm run backup-test:k8s` sets its
+own defaults (`https://api.fusion.localhost`, `api` databases, `api-backups`
+bucket) and drives the stand through `with-stand-env.sh` - see
+[`deployment/kubernetes/README.md`](../../deployment/kubernetes/README.md).
 
 Overridable: `DB_URL`, `ACCOUNT_DB_URL`, `ACCOUNTS_URL`, `STORAGE_CONFIG`,
 `SERVER_SECRET`, `FRONT_URL`, `BACKUP_TEST_WS` (default `api-tests`),

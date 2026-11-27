@@ -448,8 +448,10 @@ const api: StandConfig = {
 }
 
 /**
- * `full` runs the sanity and the QMS suites against one stand: qms-tests needs a subset of the
- * services tests/ already brings up. ws-tests stays separate - it needs a second (europe) region.
+ * `full` runs the sanity and the QMS suites against one compose stand: qms-tests needs a subset of
+ * the services tests/ already brings up. ws-tests stays separate - it needs a second (europe) region.
+ * On Kubernetes each suite prepares its own namespace on one platform-base: sanity (tests/),
+ * ws/api (ws-tests, api-tests), qms (qms-tests/). `docs` merges into the compose sanity stand.
  * @public
  */
 export const stands: Record<string, StandConfig> = {

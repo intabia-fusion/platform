@@ -14,6 +14,7 @@
 //
 
 import { prepareStand, restoreStand, seedStand } from './stand'
+import { k8sStand } from './k8s'
 import { stands } from './stands'
 import { type StandConfig } from './stand'
 
@@ -39,9 +40,12 @@ const extra = (process.env.STAND_EXTRA_COMPOSE ?? '')
   .map((it) => it.trim())
   .filter((it) => it.length > 0)
 
-const target = { ...cfg, composeFiles: [...cfg.composeFiles, ...extra] }
+const withOverlays = { ...cfg, composeFiles: [...cfg.composeFiles, ...extra] }
+const k8s = process.env.STAND_BACKEND === 'k3s'
+const target = k8s ? k8sStand(withOverlays) : withOverlays
+const run = k8s && mode === 'prepare' ? seedStand : modes[mode]
 
-void modes[mode](target)
+void run(target)
   .then(() => {
     process.exit(0)
   })

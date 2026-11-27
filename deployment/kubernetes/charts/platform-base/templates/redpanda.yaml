@@ -1,0 +1,77 @@
+{{- if and .Values.kafka.enabled (eq .Values.kafka.mode "redpanda") }}
+# A single Redpanda container behind the same kafka:9092 contract Strimzi serves: the platform
+# chart reads KAFKA_BOOTSTRAP and does not know which broker implements it. dev-container keeps
+# the data in memory, like the compose stand; production runs Strimzi or a managed broker.
+apiVersion: v1
+kind: Service
+metadata:
+  name: redpanda
+  namespace: '{{ .Release.Namespace }}'
+  labels:
+    app: redpanda
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+spec:
+  type: ClusterIP
+  selector:
+    app: redpanda
+  ports:
+  - name: kafka
+    port: 9092
+    targetPort: kafka
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redpanda
+  namespace: '{{ .Release.Namespace }}'
+  labels:
+    app: redpanda
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redpanda
+  template:
+    metadata:
+      labels:
+        app: redpanda
+    spec:
+      {{- include "platformBase.nodeSelector" (dict "sel" (include "platformBase.podSelector" (dict "root" . "component" "kafka") | fromYaml)) | nindent 6 }}
+      containers:
+      - name: redpanda
+        image: '{{ .Values.kafka.redpanda.image }}'
+        imagePullPolicy: IfNotPresent
+        args:
+        - redpanda
+        - start
+        - --kafka-addr
+        - internal://0.0.0.0:9092
+        - --advertise-kafka-addr
+        - internal://redpanda.{{ .Release.Namespace }}.svc.cluster.local:9092
+        - --mode
+        - dev-container
+        - --node-id
+        - '0'
+        - --smp
+        - '1'
+        - --memory
+        - '{{ .Values.kafka.redpanda.memory }}'
+        - --reserve-memory
+        - 0M
+        - --overprovisioned
+        ports:
+        - name: kafka
+          containerPort: 9092
+        readinessProbe:
+          exec:
+            command: ['rpk', 'cluster', 'health', '--exit-when-healthy']
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 24
+        resources:
+{{ toYaml .Values.kafka.redpanda.resources | indent 10 }}
+{{- end }}

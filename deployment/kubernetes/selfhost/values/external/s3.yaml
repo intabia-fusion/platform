@@ -1,0 +1,11 @@
+# Ключи - в values/secrets-base.yaml (s3.external.accessKey/secretKey).
+s3:
+  enabled: false
+  mode: external
+  external:
+    endpoint: s3.example.com:443
+    accessKey: ""
+    secretKey: ""
+    region: us-east-1
+    location: us-east-1
+    kind: minio

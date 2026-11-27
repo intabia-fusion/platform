@@ -1,0 +1,134 @@
+//
+// Copyright © 2026 Intabia Fusion.
+//
+// Licensed under the Eclipse Public License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License. You may
+// obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+import { type StandConfig } from './stand'
+
+// Stands: deployment/kubernetes/stands/*; host access goes through the prepare scripts' port forwards.
+// SERVER_SECRET='secret' is hardcoded by test helpers (tests/sanity, backup harness, dev/tool).
+const serverSecret = 'secret'
+
+interface K8sStandDef {
+  host: string
+  data: string
+  regions: Array<{ id: string, transactorPath: string, collaboratorPath: string, db?: string }>
+}
+
+const k8sStands: Record<string, K8sStandDef> = {
+  sanity: {
+    host: 'sanity.fusion.localhost',
+    data: 'sanity',
+    regions: [{ id: '', transactorPath: '/_tr0', collaboratorPath: '/_cl0' }]
+  },
+  ws: {
+    host: 'ws.fusion.localhost',
+    data: 'wstest',
+    regions: [
+      { id: '', transactorPath: '/_tr0', collaboratorPath: '/_cl0' },
+      { id: 'europe', transactorPath: '/_tr1', collaboratorPath: '/_cl1', db: 'wstesteurope' }
+    ]
+  },
+  api: {
+    host: 'api.fusion.localhost',
+    data: 'api',
+    regions: [
+      { id: '', transactorPath: '/_tr0', collaboratorPath: '/_cl0' },
+      { id: 'europe', transactorPath: '/_tr1', collaboratorPath: '/_cl1', db: 'apieurope' }
+    ]
+  },
+  // Single-region stand; the workspace dump is dir 'qms-tests' in stands/qms.
+  qms: {
+    host: 'qms.fusion.localhost',
+    data: 'qms',
+    regions: [{ id: '', transactorPath: '/_tr0', collaboratorPath: '/_cl0' }]
+  }
+}
+
+export function k8sStand (cfg: StandConfig): StandConfig {
+  const env = { ...cfg.env }
+  delete env.REGION_CONFIG
+
+  const name = process.env.K8S_STAND ?? 'sanity'
+  const def = k8sStands[name]
+  if (def === undefined) {
+    throw new Error(`unknown K8s stand '${name}' (expected ${Object.keys(k8sStands).join('|')})`)
+  }
+
+  const inPod = process.env.K8S_TOOL_IN_POD === '1'
+  const httpsPort = process.env.STAND_HTTPS_PORT ?? '443'
+  const host = `${def.host}:${httpsPort}`
+  const pgHost = inPod ? 'postgres.platform-base.svc.cluster.local' : 'localhost'
+  const pgPort = inPod ? 5432 : Number(process.env.K8S_PG_PORT ?? '65432')
+  // In the pod the base's Kafka mode decides the broker Service; prepare-test-stand.sh passes the
+  // resolved bootstrap. On the host with-stand-env.sh forwards the same Service to K8S_KAFKA_PORT.
+  const kafkaBootstrap = process.env.K8S_KAFKA_BOOTSTRAP ?? ''
+  if (inPod && kafkaBootstrap === '') {
+    throw new Error('K8S_KAFKA_BOOTSTRAP is not set: seed through prepare-test-stand.sh')
+  }
+  const [kafkaBootstrapHost = 'localhost', kafkaBootstrapPort = '19092'] = kafkaBootstrap.split(':')
+  const kafkaHost = inPod ? kafkaBootstrapHost : 'localhost'
+  const kafkaPort = inPod ? Number(kafkaBootstrapPort) : Number(process.env.K8S_KAFKA_PORT ?? '19092')
+  const elasticHost = inPod ? 'elastic.platform-base.svc.cluster.local' : 'localhost'
+  const elasticPort = inPod ? 9200 : Number(process.env.K8S_ELASTIC_PORT ?? '19200')
+  const platformUrl = `https://${host}`
+  const dbUrl = (db: string): string => `postgresql://postgres:postgres@${pgHost}:${pgPort}/${db}?sslmode=disable`
+
+  const regionConfigJson = JSON.stringify({
+    regions: Object.fromEntries(
+      def.regions.map((r) => [
+        r.id,
+        {
+          transactors: [{ external: `wss://${host}${r.transactorPath}`, internal: `wss://${host}${r.transactorPath}` }],
+          collaborators: [
+            { external: `wss://${host}${r.collaboratorPath}`, internal: `wss://${host}${r.collaboratorPath}` }
+          ]
+        }
+      ])
+    )
+  })
+
+  const regionEnv: Record<string, Record<string, string>> = {}
+  for (const r of def.regions) {
+    if (r.db !== undefined && r.id !== '') {
+      regionEnv[r.id] = { ...(cfg.regionEnv?.[r.id] ?? {}), DB_URL: dbUrl(r.db) }
+    }
+  }
+
+  return {
+    ...cfg,
+    env: {
+      ...env,
+      STORAGE_CONFIG: `datalake|${platformUrl}/_datalake`,
+      ACCOUNTS_URL: `${platformUrl}/_account`,
+      PLATFORM_URL: platformUrl,
+      REGION_CONFIG_JSON: regionConfigJson,
+      ACCOUNT_DB_URL: dbUrl(def.data),
+      DB_URL: dbUrl(def.data),
+      SERVER_SECRET: serverSecret,
+      QUEUE_CONFIG: `${kafkaHost}:${kafkaPort};-${def.data}`,
+      ELASTIC_URL: `http://${elasticHost}:${elasticPort}`
+    },
+    regionEnv,
+    accountsUrl: `${platformUrl}/_account`,
+    elasticPort,
+    elasticHost,
+    waitPorts: [
+      [pgHost, pgPort],
+      [kafkaHost, kafkaPort],
+      [elasticHost, elasticPort],
+      [inPod ? def.host : 'localhost', Number(httpsPort)]
+    ],
+    migrations: []
+  }
+}

@@ -1,0 +1,102 @@
+#
+# Copyright © 2026 Intabia Fusion.
+#
+# Licensed under the Eclipse Public License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License. You may
+# obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+{{- $exporters := include "monitoring.resourceExportersEnabled" . }}
+{{- if and .Values.resourceMetrics.enabled .Values.resourceMetrics.node.enabled $exporters }}
+{{- $name := printf "%s-metrics-node" (include "monitoring.clickstackName" .) }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: monitoring-metrics-node
+    app.kubernetes.io/instance: {{ .Release.Name }}
+---
+# kubeletstats calls the kubelet directly at https://<node>:10250; the API server authorizes
+# that call through SubjectAccessReview for nodes/stats. nodes itself is read for node metadata.
+# No proxy, log, metrics or spec subresources are used by any receiver here.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ $name }}
+  labels:
+    app.kubernetes.io/name: monitoring-metrics-node
+    app.kubernetes.io/instance: {{ .Release.Name }}
+rules:
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["nodes/stats"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ $name }}
+  labels:
+    app.kubernetes.io/name: monitoring-metrics-node
+    app.kubernetes.io/instance: {{ .Release.Name }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ $name }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ $name }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}
+{{- if and .Values.resourceMetrics.enabled .Values.resourceMetrics.database.enabled $exporters }}
+{{- $name := printf "%s-metrics-database" (include "monitoring.clickstackName" .) }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: monitoring-metrics-database
+    app.kubernetes.io/instance: {{ .Release.Name }}
+---
+# Prometheus pod discovery lists pods cluster-wide (or in database.namespaces); namespaces is
+# cluster-scoped, so the role must be a ClusterRole. No node access is granted.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ $name }}
+  labels:
+    app.kubernetes.io/name: monitoring-metrics-database
+    app.kubernetes.io/instance: {{ .Release.Name }}
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "namespaces"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ $name }}
+  labels:
+    app.kubernetes.io/name: monitoring-metrics-database
+    app.kubernetes.io/instance: {{ .Release.Name }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ $name }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ $name }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}

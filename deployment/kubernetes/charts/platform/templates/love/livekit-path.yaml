@@ -1,0 +1,39 @@
+# LiveKit signaling through the stand host: a browser that accepted the stand certificate does
+# not accept it for a second host, and a self-signed cert on wss://lkit.<stand> fails the
+# WebSocket with ERR_CERT_AUTHORITY_INVALID before a single frame is sent. Path prefix on the
+# host the tab is already on needs no extra trust; media still goes to the RTC ports directly.
+{{- if .Values.config.livekitPath }}
+{{- $ns := .Values.global.namespace }}
+{{- $base := .Values.global.baseNamespace | default $ns }}
+{{- if ne $base $ns }}
+  {{- fail "config.livekitPath needs livekit-api in the stand namespace; set global.baseNamespace = global.namespace or leave livekitPath empty" }}
+{{- end }}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-livekit
+  namespace: '{{ $ns }}'
+spec:
+  stripPrefix:
+    prefixes:
+    - '{{ .Values.config.livekitPath }}'
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: livekit-path-ingressroute
+  namespace: '{{ $ns }}'
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  # Longer prefix before any other /_livekit-like rule, same as aibot's /_aibot.
+  - match: Host(`{{ .Values.global.hostUrl }}`) && PathPrefix(`{{ .Values.config.livekitPath }}`)
+    kind: Rule
+    services:
+    # platform-base serves livekit-api on 7880 (livekit.apiPort) in this namespace.
+    - name: livekit-api
+      port: 7880
+    middlewares:
+    - name: strip-livekit
+{{- end }}

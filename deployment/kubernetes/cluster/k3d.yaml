@@ -1,0 +1,37 @@
+# k3d cluster config for local stands (scripts/base-up.sh): one cluster per machine, registry and
+# 443 on the load balancer, HTTPS only - no host port 80, same as the prod edge.
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+metadata:
+  name: fusion
+servers: 1
+agents: 0
+image: rancher/k3s:v1.36.4-k3s1
+ports:
+- port: 443:443
+  nodeFilters:
+  - loadbalancer
+# LiveKit: the shared server in platform-base binds the node network, the serverlb forwards
+# the published ports to it. 7881/TCP and 7882/UDP are the media path a local browser needs.
+- port: 7880:7880
+  nodeFilters:
+  - server:0
+- port: 7881:7881
+  nodeFilters:
+  - server:0
+- port: 7882:7882/udp
+  nodeFilters:
+  - server:0
+registries:
+  # Local registry for locally built intabiafusion/* images: k3d-fusion-registry:5000 in-cluster
+  # (global.imageRegistry), localhost:5111 from the host (docker push target).
+  create:
+    name: k3d-fusion-registry
+    hostPort: "5111"
+options:
+  k3s:
+    extraArgs:
+    # traefik from k3s is the ingress; nothing else of the k3s extras is needed.
+    - arg: --disable=metrics-server
+      nodeFilters:
+      - server:*

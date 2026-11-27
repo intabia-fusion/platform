@@ -12,6 +12,7 @@
     "build:watch": "compile",
     "test": "echo 'run api-test' for API-tests",
     "api-test": "jest --passWithNoTests --forceExit",
+    "api-test:k8s": "STAND_DB_FORWARD=0 STAND_KAFKA_FORWARD=0 STAND_PREPARE_API=1 bash ../../deployment/kubernetes/scripts/with-stand-env.sh api jest -c jest.k8s.config.js --passWithNoTests --forceExit",
     "format": "format src",
     "_phase:build": "compile build",
     "_phase:test": "echo 'run api-test' for API-tests",

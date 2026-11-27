@@ -20,16 +20,45 @@ cd "$ROOT"
 PATH="$ROOT/node_modules/.bin:$PATH"
 export PATH
 
+# Compose-era default; on k8s with-stand-env.sh exports LOCAL_URL/PLATFORM_URI/BILLING_URL and
+# starts the Kafka port-forward. Caller exports win; no caller env = compose stand (:8083).
+: "${LOCAL_URL:=${ACCOUNTS_URL:-http://localhost:8083/_account/}}"
+export LOCAL_URL
+: "${DEV_URL:=}"
+export DEV_URL
+if [ -z "${PLATFORM_URI:-}" ]; then
+  # Host-side REST (billing, calendar, love) uses the account API origin: on k8s the webpack
+  # dev-server proxy forwards /_billing, /_stats and /_love to the stand.
+  _origin="${LOCAL_URL#http://}"
+  PLATFORM_URI="http://${_origin%%/*}"
+fi
+export PLATFORM_URI
+unset _origin
+
 # fast-build serves a cached bundle happily, and a stale one yields metrics for absent code.
+# The bundle is read from wherever the stand serves it: compose front container or k8s front pod.
 FRONT_CONTAINER="${FRONT_CONTAINER:-sanity-front0-1}"
+FRONT_K8S_NS="${FRONT_K8S_NS:-fusion-sanity}"
+FRONT_K8S_DEPLOY="${FRONT_K8S_DEPLOY:-front}"
+
+bundle_has_marker() {
+  local marker="$1"
+  if docker exec "$FRONT_CONTAINER" sh -c true 2>/dev/null; then
+    docker exec "$FRONT_CONTAINER" sh -c "grep -q '$marker' /app/dist/bundle.*.js" 2>/dev/null
+    return
+  fi
+  kubectl -n "$FRONT_K8S_NS" exec "deploy/$FRONT_K8S_DEPLOY" -- \
+    sh -c "grep -q '$marker' /app/dist/bundle.*.js" >/dev/null 2>&1
+}
+
 if [ "${BUNDLE_CHECK:-1}" = "1" ]; then
   # Markers of the client telemetry path - bump when it changes again.
   for marker in __analyticsFlush __connStatsPush; do
-    if docker exec "$FRONT_CONTAINER" sh -c "grep -q '$marker' /app/dist/bundle.*.js" 2>/dev/null; then
+    if bundle_has_marker "$marker"; then
       continue
     fi
-    echo "[telemetry] $FRONT_CONTAINER serves a stale bundle: no $marker marker in /app/dist" >&2
-    echo "[telemetry] drop the 'bundle' and 'docker-build' phases from .fast-build-cache.json and rebuild" >&2
+    echo "[telemetry] front serves a stale bundle: no $marker marker in /app/dist" >&2
+    echo "[telemetry] rebuild the front image (pnpm docker:build --to @hcengineering/pod-front), push it (pnpm -w stand:push sanity) and restart the deployment (kubectl -n $FRONT_K8S_NS rollout restart deploy/$FRONT_K8S_DEPLOY)" >&2
     echo "[telemetry] BUNDLE_CHECK=0 skips this check" >&2
     exit 1
   done
@@ -78,8 +107,7 @@ stop_sampler () {
 }
 trap stop_sampler EXIT INT TERM
 
-cross-env LOCAL_URL=http://localhost:8083/_account/ DEV_URL= \
-  playwright test -c ./tests/playwright.config.ts --grep-invert "@llm|@network" "$@"
+playwright test -c ./tests/playwright.config.ts --grep-invert "@llm|@network" "$@"
 STATUS=$?
 
 stop_sampler

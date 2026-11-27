@@ -1,0 +1,5 @@
+elastic:
+  enabled: false
+  mode: external
+  external:
+    url: https://elastic.example.com:9200

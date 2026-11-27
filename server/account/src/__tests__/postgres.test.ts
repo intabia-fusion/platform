@@ -725,7 +725,13 @@ describe('PostgresAccountDB', () => {
 
         expect(mockClient).toHaveBeenCalledWith('global_account.workspace_members')
         expect(mockClient).toHaveBeenCalledWith(
-          ['INSERT INTO ', ' (workspace_uuid, account_uuid, role) VALUES (', ', ', ', ', ')'],
+          [
+            'INSERT INTO ',
+            ' (workspace_uuid, account_uuid, role) VALUES (',
+            ', ',
+            ', ',
+            ') ON CONFLICT (workspace_uuid, account_uuid) DO NOTHING'
+          ],
           expect.anything(),
           workspaceId,
           accountId,

@@ -38,14 +38,16 @@ if [ "$what" = integration ] || [ "$what" = full ]; then
 fi
 reports=()
 if [ "$what" = api ] || [ "$what" = full ]; then
-  ./common/scripts/docker-api.sh
+  # The api-tests leave the stand up for the backup-tests, which take it down. API_STAND=keep keeps
+  # it for another run; external reuses a running one and rebuilds nothing.
+  api_stand=${API_STAND:-}
+  [ $# -eq 0 ] && [ "$api_stand" != external ] && api_stand=keep
+  if [ "$api_stand" != external ]; then
+    ./common/scripts/docker-api.sh
+  fi
   logs="$root/api-tests/logs"
   mkdir -p "$logs"
   rm -f "$logs/api-tests.json" "$logs/backup-tests.json"
-  # The api-tests leave the stand up for the backup-tests, which take it down (API_STAND=keep to
-  # keep it for another run, external to use one that is already there).
-  api_stand=${API_STAND:-}
-  [ $# -eq 0 ] && [ "$api_stand" != external ] && api_stand=keep
   cd "$root/api-tests/api"
   reports+=("$logs/api-tests.json")
   group api-tests env API_STAND="$api_stand" pnpm run api-test "$@" --json --outputFile="$logs/api-tests.json"

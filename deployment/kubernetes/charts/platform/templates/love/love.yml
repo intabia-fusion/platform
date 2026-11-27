@@ -1,0 +1,121 @@
+# source: kube/love/love.yml; subs: version, hostUrl, namespace
+{{- $base := include "platform.baseConfigMap" . | fromYaml }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: love-service
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  replicas: {{ .Values.services.love.replicas }}
+  selector:
+    matchLabels:
+      app: love-service
+  template:
+    metadata:
+      labels:
+        app: love-service
+      annotations:
+        checksum/platform-env: {{ include "platform.envChecksum" . | quote }}
+    spec:
+      {{- include "platform.tolerations" . | nindent 6 }}
+      {{- include "platform.nodeSelector" (dict "root" . "service" "love") | nindent 6 }}
+      {{- if .Values.global.tls.caSecretName }}
+      volumes:
+      {{- include "platform.caVolume" $ | nindent 6 }}
+      {{- end }}
+      containers:
+      - name: app
+        image: {{ include "platform.containerImage" (dict "root" . "service" "love") }}
+        {{- include "platform.resources" (dict "root" . "service" "love") | nindent 8 }}
+        ports:
+        - containerPort: 8096
+        imagePullPolicy: {{ $.Values.global.imagePullPolicy | default "Always" }}
+        {{- if .Values.global.tls.caSecretName }}
+        volumeMounts:
+        {{- include "platform.caVolumeMount" $ | nindent 8 }}
+        {{- end }}
+        env:
+        {{- include "platform.extraEnv" (dict "root" $ "service" "love") | nindent 8 }}
+        - name: AGENTS
+          value: transcription-{{ .Values.global.namespace }}
+        - name: WEBHOOK_URL
+          value: https://{{ include "platform.publicHost" . }}/_love/webhook
+        - name: RECORDING_TEMPLATE_URL
+          {{- if eq (get $base "LIVEKIT_EGRESS") "true" }}
+          # Shared egress runs in platform-base: Chrome there cannot trust the stand's mkcert CA,
+          # and the bare service name would resolve in the egress pod's namespace.
+          value: http://love-service.{{ .Values.global.namespace }}.svc.cluster.local/egress-template/
+          {{- else }}
+          value: https://{{ include "platform.publicHost" . }}/_love/egress-template/
+          {{- end }}
+        - name: EXTERNAL_REGIONS
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: EXTERNAL_REGIONS
+        - name: SECRET
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: serverSecret
+        - name: STATS_URL
+          value: http://stats-service
+        - name: ACCOUNTS_URL
+          value: http://account
+        - name: LIVEKIT_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: livekitHost
+        - name: STORAGE_PROVIDER_NAME
+          value: datalake
+        - name: STORAGE_CONFIG
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: storageConfig
+        - name: S3_STORAGE_CONFIG
+          valueFrom:
+            secretKeyRef:
+              name: love-secret
+              key: s3StorageConfig
+        - name: LIVEKIT_PROJECT
+          value: '{{ .Values.config.livekitProject }}'
+        - name: LIVEKIT_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: love-secret
+              key: apiKey
+        - name: LIVEKIT_API_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: love-secret
+              key: apiSecret
+        - name: LIVEKIT_WEBHOOK_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: love-secret
+              key: webhookApiKey
+        - name: LIVEKIT_WEBHOOK_API_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: love-secret
+              key: webhookApiSecret
+        - name: PORT
+          value: '8096'
+        - name: BILLING_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: billingUrl
+        {{- include "platform.otelEnv" . | nindent 8 }}
+        - name: QUEUE_CONFIG
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: queueConfig
+        - name: REGION
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: REGION

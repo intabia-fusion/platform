@@ -59,6 +59,7 @@
 | Telegram, Gmail, SMTP, GitHub, REST/WebSocket API | [integrations.md](integrations.md) |
 | Тест-кейсы, сьюты, прогоны (продукт) | [test-management.md](test-management.md) |
 | Автотесты репозитория (Playwright, ws-tests) | [../testing.md](../testing.md), [AGENTS.md](../../AGENTS.md) |
+| Локальные Kubernetes-стенды (`pnpm -w stand:*`, charts `deployment/kubernetes`) | [../../deployment/kubernetes/README.md](../../deployment/kubernetes/README.md) |
 | Метки/теги, эмодзи, шаблоны сообщений, рейтинг, опросы, печать в PDF | [utilities.md](utilities.md) |
 | Middleware транзактора, триггеры, LiveQuery, Postgres-адаптер, Kafka | [../architecture.md](../architecture.md) |
 | Переиспользуемые UI-компоненты | [../ui-components/README.md](../ui-components/README.md) |

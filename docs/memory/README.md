@@ -26,6 +26,7 @@
 - [love_one_person_two_meetings.md](love_one_person_two_meetings.md) - Один человек в двух митингах (FUSIO, 0.8.37)
 - [love_recording_button_stuck.md](love_recording_button_stuck.md) - Кнопка записи залипает: /startRecord -> 409 already-running
 - [love_workspace_switch_kills_meeting.md](love_workspace_switch_kills_meeting.md) - Смена пространства убивает звонок (PROD-инцидент)
+- [livekit_stand_k8s.md](livekit_stand_k8s.md) - общий LiveKit + egress в platform-base для k8s-стендов (k3d порты, redis, S3, projectKey)
 
 ## Документы и QMS - [documents-qms.md](../features/documents-qms.md)
 
@@ -100,6 +101,8 @@
 ## Сборка, CI, dev-стенд - [getting-started.md](../getting-started.md)
 
 - [ci-deploy-stands.md](ci-deploy-stands.md) - ci_deploy.sh и стенды selfhost
+- [stand_base_up_network_timeouts.md](stand_base_up_network_timeouts.md) - base-up: зависший curl Strimzi и таймауты Kafka-admin
+- [postgres_cnpg_stand.md](postgres_cnpg_stand.md) - Postgres на стенде через CloudNativePG: server-side apply, barman, cron, зеркало образа
 - [dependency-upgrade-tooling.md](dependency-upgrade-tooling.md) - Dependency upgrade tooling
 - [eslint8_upgrade_fix_patterns.md](eslint8_upgrade_fix_patterns.md) - @typescript-eslint 6->8 fix patterns
 - [fast-build-tooling.md](fast-build-tooling.md) - fast-build tooling (`@intabia-fusion/yama`)

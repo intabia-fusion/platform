@@ -1,0 +1,120 @@
+# source: kube/account/workspace0.yml; subs: version, hostUrl, namespace. N independent workspace
+# Deployments; on a per-region stand instance i serves config.regions[i] via platform-secret dbUrl<i>.
+{{- $root := . -}}
+{{- $count := int (default 1 $root.Values.services.workspace.count) -}}
+{{- range $i := until $count }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workspace{{ $i }}
+  namespace: '{{ $root.Values.global.namespace }}'
+spec:
+  replicas: {{ $root.Values.services.workspace.replicas }}
+  selector:
+    matchLabels:
+      app: workspace{{ $i }}
+  template:
+    metadata:
+      labels:
+        app: workspace{{ $i }}
+      annotations:
+        checksum/platform-env: {{ include "platform.envChecksum" $root | quote }}
+    spec:
+      {{- include "platform.tolerations" . | nindent 6 }}
+      {{- include "platform.nodeSelector" (dict "root" $root "service" "workspace") | nindent 6 }}
+      containers:
+      - name: app
+        image: {{ include "platform.containerImage" (dict "root" $root "service" "workspace") }}
+        command:
+        - node
+        - --max-old-space-size={{ int (div (mul $root.Values.services.workspace.memLimits 90) 100) }}
+        - bundle.js
+        {{- include "platform.resources" (dict "root" $root "service" "workspace") | nindent 8 }}
+        imagePullPolicy: {{ $root.Values.global.imagePullPolicy | default "Always" }}
+        volumeMounts:
+        {{- include "platform.caVolumeMount" $root | nindent 8 }}
+        {{- include "platform.coverageVolumeMount" $root | nindent 8 }}
+        - mountPath: /var/cfg/stage-branding.json
+          name: branding
+          subPath: branding.json
+        env:
+        {{- include "platform.extraEnv" (dict "root" $root "service" "workspace") | nindent 8 }}
+        - name: WS_OPERATION
+          value: all+backup
+        - name: STATS_URL
+          value: http://stats-service
+        - name: QUEUE_CONFIG
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: queueConfig
+        - name: DB_URL
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: {{ include "platform.instanceDbKey" (list $root $i) }}
+        - name: POSTGRES_OPTIONS
+          value: '{"connection":{"application_name":"workspace"},"max":50}'
+        - name: ACCOUNTS_DB_URL
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: dbUrl
+        - name: REGION
+          value: {{ include "platform.instanceRegion" (list $root $i) | quote }}
+        - name: MAIL_URL
+          value: http://notificator-service
+        - name: WEB_PUSH_URL
+          value: http://notificator-service
+        - name: MAIL_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: mailAuthToken
+        - name: LANGUAGE
+          value: '{{ $root.Values.global.defaultLanguage }}'
+        - name: PRODUCT_NAME
+          value: '{{ $root.Values.global.productName }}'
+        - name: FRONT_URL
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: frontUrl
+        - name: SERVER_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: serverSecret
+        - name: ACCOUNTS_URL
+          value: http://account
+        - name: PARALLEL
+          value: '{{ $root.Values.services.workspace.parallel }}'
+        - name: STORAGE_CONFIG
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: storageConfig
+        - name: BRANDING_PATH
+          value: /var/cfg/stage-branding.json
+        - name: BACKUP_STORAGE
+          valueFrom:
+            secretKeyRef:
+              name: platform-secret
+              key: backupConfig
+        - name: BACKUP_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              name: platform-config
+              key: backupBucket
+        {{- include "platform.otelEnv" . | nindent 8 }}
+      volumes:
+      {{- include "platform.caVolume" $root | nindent 6 }}
+      {{- include "platform.coverageVolume" $root | nindent 6 }}
+      - configMap:
+          items:
+          - key: branding.json
+            path: branding.json
+          name: branding
+        name: branding
+{{- end }}

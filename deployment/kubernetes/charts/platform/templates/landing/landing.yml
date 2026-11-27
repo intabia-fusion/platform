@@ -1,0 +1,99 @@
+#
+# Copyright © 2026 Intabia Fusion.
+#
+# Licensed under the Eclipse Public License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License. You may
+# obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+{{- if .Values.services.landing.enabled }}
+{{- $landing := .Values.services.landing }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: landing
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  replicas: {{ $landing.replicas }}
+  selector:
+    matchLabels:
+      app: landing
+  template:
+    metadata:
+      labels:
+        app: landing
+    spec:
+      {{- include "platform.tolerations" . | nindent 6 }}
+      {{- include "platform.nodeSelector" (dict "root" . "service" "landing") | nindent 6 }}
+      containers:
+      - name: app
+        image: {{ include "platform.containerImage" (dict "root" . "service" "landing" "image" "platform-landing") }}
+        imagePullPolicy: {{ .Values.global.imagePullPolicy | default "Always" }}
+        ports:
+        - containerPort: 80
+        {{- include "platform.resources" (dict "root" . "service" "landing") | nindent 8 }}
+        env:
+        - name: PORT
+          value: '80'
+        - name: PUBLIC_HIDE_LIKES
+          value: {{ $landing.hideLikes | quote }}
+        - name: PUBLIC_HIDE_VIEWS
+          value: {{ $landing.hideViews | quote }}
+        - name: PUBLIC_IS_PRODUCTION
+          value: {{ $landing.isProduction | quote }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: landing
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  selector:
+    app: landing
+  ports:
+  - port: 80
+    targetPort: 80
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: landing-ingressroute
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  # The front remains the catch-all on /. Everything the landing serves at the root is
+  # listed explicitly: /platform must stay exact, front serves /platform/favicon.svg.
+  # An empty list emits no route: Traefik rejects an empty `Host(...) && ()`.
+{{- with $landing.exactPaths }}
+  - match: Host(`{{ $.Values.global.hostUrl }}`) && ({{ range $i, $p := . }}{{ if $i }} || {{ end }}Path(`{{ $p }}`){{ end }})
+    kind: Rule
+    priority: 1000
+    services:
+    - name: landing
+      port: 80
+{{- end }}
+{{- with $landing.pathPrefixes }}
+  - match: Host(`{{ $.Values.global.hostUrl }}`) && ({{ range $i, $p := . }}{{ if $i }} || {{ end }}PathPrefix(`{{ $p }}`){{ end }})
+    kind: Rule
+    priority: 1000
+    services:
+    - name: landing
+      port: 80
+{{- end }}
+  # robots.txt and sitemap must not fall through to the front SPA, which answers every
+  # path with index.html.
+  - match: Host(`{{ .Values.global.hostUrl }}`) && (Path(`/robots.txt`) || PathPrefix(`/sitemap`))
+    kind: Rule
+    priority: 1000
+    services:
+    - name: landing
+      port: 80
+{{- end }}

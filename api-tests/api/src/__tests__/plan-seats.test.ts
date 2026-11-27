@@ -40,6 +40,7 @@ import contact, { ensureEmployee, ensureEmployeeDomain, type Employee, type Pers
 import { generateToken } from '@hcengineering/server-token'
 import drivePlugin, { type Drive } from '@hcengineering/drive'
 import { adminSessionClient, DEV_OTP, waitForMail } from './admin.fixtures'
+import { PlatformUrl } from '../env'
 
 // Workspace boots business (10 seats), 3 users onboard. usersLimit=2 seats by role priority then
 // uuid; one user goes read-only, asserting ws_members-sourced enforcement on a plan change.
@@ -54,7 +55,7 @@ describe('plan-seats', () => {
   let seatlessOps: TxOperations
 
   beforeAll(async () => {
-    config = await loadServerConfig('http://localhost:8183')
+    config = await loadServerConfig(PlatformUrl)
 
     // Onboard all members (business has 10 seats at boot). Seat winners are decided later by role
     // priority then account uuid, not by onboarding order.
@@ -86,7 +87,7 @@ describe('plan-seats', () => {
   }
 
   async function login (email: string): Promise<WorkspaceToken> {
-    return await getWorkspaceToken('http://localhost:8183', { email, password: '1234', workspace: wsName }, config)
+    return await getWorkspaceToken(PlatformUrl, { email, password: '1234', workspace: wsName }, config)
   }
 
   async function ensureEmployeeFor (ws: WorkspaceToken): Promise<void> {
@@ -159,7 +160,7 @@ describe('plan-seats', () => {
         { verifiedOn: null as any }
       )
     )
-    const socket = await connectWs('http://localhost:8183', {
+    const socket = await connectWs(PlatformUrl, {
       token: owner.token,
       workspace: wsName,
       socketFactory: NodeWebSocketFactory
@@ -281,7 +282,7 @@ describe('plan-seats', () => {
       account = login.account
       const member = getAccountClient(config.ACCOUNTS_URL, login.token)
       const joined = await member.completeOnboardingInvite({ firstName: 'New', lastName: 'Member' }, invite)
-      const socket = await connectWs('http://localhost:8183', {
+      const socket = await connectWs(PlatformUrl, {
         token: login.token as string,
         workspace: joined.workspaceUrl,
         socketFactory: NodeWebSocketFactory

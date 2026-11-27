@@ -7,8 +7,9 @@ import { LeftSideMenuPage } from '../model/left-side-menu-page'
 import { LocalUrl } from '../utils'
 import { retryIntervals } from '../retry'
 
-// ai-bot REST through nginx (/_aibot), sibling of LOCAL_URL's /_account.
-const aiBotUrl = (): string => LocalUrl.replace(/_account\/?$/, '_aibot')
+// ai-bot REST through the same /_ai prefix the product uses (event-router), sibling of
+// LOCAL_URL's /_account. /_aibot belongs to the stt-worker WebSocket on the k8s ingress.
+const aiBotUrl = (): string => LocalUrl.replace(/_account\/?$/, '_ai')
 
 // createDirectChat only uses firstName/lastName; email/password satisfy SignUpData.
 export const BOT = { firstName: 'Julia', lastName: 'AI', email: '', password: '' }

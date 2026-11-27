@@ -1,0 +1,38 @@
+#
+# Copyright © 2026 Intabia Fusion.
+#
+# Licensed under the Eclipse Public License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License. You may
+# obtain a copy of the License at https://www.eclipse.org/legal/epl-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+apiVersion: v2
+name: monitoring
+description: "Observability stack for the fusion platform: ClickStack (ClickHouse, HyperDX, OpenTelemetry collector) plus the MongoDB that keeps HyperDX metadata. Platform services send OTLP to monitoring-otel-collector; the UI is port-forwarded until an Ingress is added."
+type: application
+version: 0.1.0
+appVersion: "2.8.0"
+keywords:
+  - fusion
+  - monitoring
+  - observability
+  - clickhouse
+  - hyperdx
+  - opentelemetry
+maintainers:
+  - name: haiodo
+    email: haiodo@gmail.com
+dependencies:
+  # The upstream ClickStack chart ships ClickHouse, HyperDX, the collector and MongoDB with the
+  # OTLP-to-ClickHouse wiring already in place; this chart only pins the topology and sizes that
+  # a fusion stand needs. Bump the version together with appVersion after checking the release.
+  - name: clickstack
+    version: "1.1.1"
+    repository: https://hyperdxio.github.io/helm-charts
+    condition: clickstack.enabled

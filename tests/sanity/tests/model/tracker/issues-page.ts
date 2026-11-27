@@ -16,7 +16,7 @@ export class IssuesPage extends CommonTrackerPage {
   draftIssue = (): Locator => this.page.locator('#tracker-string-ResumeDraft')
   modelSelectorActive = (): Locator => this.page.locator('label[data-id="tab-active"]')
   modelSelectorBacklog = (): Locator => this.page.locator('label[data-id="tab-backlog"]')
-  buttonCreateNewIssue = (): Locator => this.page.locator('button > div', { hasText: 'New issue' })
+  buttonCreateNewIssue = (): Locator => this.page.locator('#tracker-string-NewIssue, #tracker-string-ResumeDraft')
   inputPopupCreateNewIssueTitle = (): Locator =>
     this.page.locator('form[id="tracker:string:NewIssue"] input[type="text"]')
 

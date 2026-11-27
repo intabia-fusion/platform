@@ -1,0 +1,4 @@
+# LiveKit снаружи: base его не поднимает, адрес для браузера/подов задаётся в platform values
+# (config.livekitWs / config.livekitHost), см. platform-external.yaml.
+livekit:
+  enabled: false

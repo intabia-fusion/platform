@@ -1,0 +1,127 @@
+# One monitoring stack per cluster: ClickHouse stores the telemetry, HyperDX is the UI and API,
+# the OpenTelemetry collector is the OTLP entry point. Platform services point at
+#   http://monitoring-otel-collector.<namespace>.svc.cluster.local:4318
+# through the platform chart's otel.OTEL_EXPORTER_OTLP_ENDPOINT.
+#
+# The UI is not published: port-forward monitoring-app (see NOTES after install).
+
+clickstack:
+  enabled: true
+  # Stable object names regardless of the release name: monitoring-clickhouse,
+  # monitoring-mongodb, monitoring-otel-collector, monitoring-app.
+  fullnameOverride: monitoring
+
+  global:
+    # Empty uses the cluster default StorageClass (local-path on k3s/k3d, standard on kind).
+    storageClassName: ""
+    keepPVC: false
+
+  clickhouse:
+    # The repository path must carry the `clickhouse/` prefix: the chart's own default
+    # (docker.clickhouse.com/clickstack-otel-collector) is denied for anonymous pulls.
+    image: clickhouse/clickhouse-server:25.7-alpine
+    persistence:
+      enabled: true
+      dataSize: 10Gi
+      logSize: 2Gi
+    resources:
+      requests:
+        memory: 1Gi
+        cpu: 250m
+      limits:
+        # The rate views run window functions over the metric tables; 4Gi hit the cgroup
+        # limit on a 1h dashboard query (ClickHouse RSS 3.6Gi). The nodes have 64Gi.
+        memory: 8Gi
+
+  mongodb:
+    persistence:
+      enabled: true
+      dataSize: 5Gi
+    resources:
+      requests:
+        memory: 128Mi
+        cpu: 100m
+      limits:
+        memory: 512Mi
+
+  otel:
+    # Upstream flag for the collector Deployment and Service. When false, the resource
+    # collectors are not rendered either: they have nowhere to export.
+    enabled: true
+    # The collector's own memory_limiter is set to 1500 MiB, so a smaller limit would let the
+    # limiter allow more than the container can use.
+    image:
+      repository: docker.clickhouse.com/clickhouse/clickstack-otel-collector
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 100m
+      limits:
+        memory: 2Gi
+
+  hyperdx:
+    # HYPERDX_API_KEY for the app and the collector. Override it per stand: the team's key is
+    # created at registration and both must match when collector authentication is enforced.
+    apiKey: "00000000-0000-0000-0000-000000000000"
+    frontendUrl: "http://localhost:3000"
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 100m
+      limits:
+        memory: 1Gi
+    # Exposed later through Traefik; until then the UI is reached with kubectl port-forward.
+    ingress:
+      enabled: false
+      ingressClassName: traefik
+      host: monitoring.fusion.localhost
+
+  tasks:
+    enabled: false
+
+# ClickStack does not collect node/pod resources or database metrics by itself. These two
+# collectors feed the resource dashboards: the node DaemonSet reads the kubelet and host
+# counters, the database Deployment scrapes the CloudNativePG instance-manager endpoint.
+resourceMetrics:
+  enabled: true
+  collector:
+    image: otel/opentelemetry-collector-contrib:0.160.0
+  clickstack:
+    # Optional bearer token for the ClickStack OTLP receiver. Empty keeps the exporters
+    # unauthenticated (the collector accepts ingestion until authentication is enforced).
+    # The upstream chart already creates <fullname>-app-secrets with key api-key from
+    # clickstack.hyperdx.apiKey: point at that Secret instead of copying the key. With the
+    # default fullnameOverride that is monitoring-app-secrets/api-key.
+    apiKeySecret: ""
+    apiKeySecretKey: api-key
+  node:
+    enabled: true
+    collectionInterval: 30s
+    resources:
+      requests:
+        memory: 64Mi
+        cpu: 50m
+      limits:
+        memory: 256Mi
+  kubeStateMetrics:
+    # Exposes pod/node requests and limits; the database collector scrapes it.
+    enabled: true
+    image: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.15.0
+    resources:
+      requests:
+        memory: 32Mi
+        cpu: 20m
+      limits:
+        memory: 128Mi
+  database:
+    enabled: true
+    # Empty discovers CloudNativePG pods in every namespace; the Prometheus receiver keeps pods
+    # carrying the cnpg.io/cluster label and scrapes their instance-manager port 9187.
+    namespaces: []
+    collectionInterval: 30s
+    resources:
+      requests:
+        memory: 64Mi
+        cpu: 50m
+      limits:
+        memory: 256Mi

@@ -1193,9 +1193,12 @@ export class PostgresAccountDB implements AccountDB {
   }
 
   async assignWorkspace (accountUuid: AccountUuid, workspaceUuid: WorkspaceUuid, role: AccountRole): Promise<void> {
+    // A retried insert must not fail with workspace_assignment_pk: the retry can follow a
+    // committed transaction whose response was lost. An existing membership keeps its role;
+    // role changes go through updateWorkspaceRole.
     await this.withRetry(
       async (rTx) =>
-        await rTx`INSERT INTO ${this.client(this.getWsMembersTableName())} (workspace_uuid, account_uuid, role) VALUES (${workspaceUuid}, ${accountUuid}, ${role})`
+        await rTx`INSERT INTO ${this.client(this.getWsMembersTableName())} (workspace_uuid, account_uuid, role) VALUES (${workspaceUuid}, ${accountUuid}, ${role}) ON CONFLICT (workspace_uuid, account_uuid) DO NOTHING`
     )
   }
 
@@ -1207,6 +1210,7 @@ export class PostgresAccountDB implements AccountDB {
       INSERT INTO ${this.getWsMembersTableName()}
       (account_uuid, workspace_uuid, role)
       VALUES ${placeholders}
+      ON CONFLICT (workspace_uuid, account_uuid) DO NOTHING
     `
 
     await this.withRetry(async (rTx) => await rTx.unsafe(sql, values))
@@ -1851,8 +1855,11 @@ export class PostgresAccountDB implements AccountDB {
       idx++
     }
     if (query.modes !== undefined && query.modes.length > 0) {
+      // postgres.js expands a JS array parameter into a value list ($1,$2,...), which `= ANY`
+      // cannot take: pass a Postgres array literal instead.
+      const modes = Array.isArray(query.modes) ? query.modes : String(query.modes).split(',')
       where.push(`s.mode = ANY($${idx}::text[])`)
-      values.push(query.modes)
+      values.push(`{${modes.map((it) => `"${it.trim().replaceAll('"', '')}"`).join(',')}}`)
       idx++
     }
     if (query.region !== undefined) {

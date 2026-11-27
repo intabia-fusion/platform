@@ -1,0 +1,225 @@
+# Per-component modes: postgres/kafka/s3/elastic internal|external, redis internal|external|disabled,
+# mailpit on/off, tls TLSStore. Local stands keep the defaults; prod overlays use managed services.
+
+global:
+  # Node placement for every pod, by node labels, e.g. {kubernetes.io/role: worker}.
+  # A component may override it with <component>.nodeSelector.
+  nodeSelector: {}
+  # Named selector sets for node classes, e.g. {memory: {intabia.io/pool: memory}}.
+  # A component picks one with <component>.pool; nodeSelector wins over the pool.
+  nodePools: {}
+
+postgres:
+  enabled: true
+  # internal: CloudNativePG Cluster (primary + one streaming replica) in this namespace.
+  # external: nothing is rendered, the contract points at postgres.external.
+  mode: internal
+  # Operand image, keep in sync with CLOUDNATIVE_PG_IMAGE in cluster/versions.env.
+  # The operator itself is installed by scripts/base-up.sh (CLOUDNATIVE_PG_VERSION).
+  image: ghcr.io/cloudnative-pg/postgresql:18.0
+  # primary + one streaming replica; reads go to the postgres-ro service CNPG creates.
+  instances: 2
+  user: postgres
+  password: postgres
+  storage: 2Gi
+  storageClass: ""
+  sharedBuffers: 128MB
+  # Server-side ceiling, must cover SUM over hosted databases (not one pool):
+  # maxConnections >= defaultPoolSize * databases + reserve (migrations, psql).
+  maxConnections: 300
+  resources:
+    requests: { memory: 128Mi, cpu: 50m }
+    limits: { memory: 512Mi }
+  # Base backups + WAL to the platform S3 (pgsty/silo), 7 days of recovery.
+  backup:
+    enabled: true
+    bucket: postgres-backups
+    # Empty = the internal S3 endpoint; set a full URL for an external store.
+    endpointURL: ""
+    # CNPG cron has a seconds field: 03:00:00 every day.
+    schedule: "0 0 3 * * *"
+    retentionPolicy: 7d
+  external:
+    host: ""
+    port: "5432"
+    user: ""
+    password: ""
+
+pgbouncer:
+  # Transaction-mode pooler: a connection returns after every transaction, so pods and per-workspace
+  # clients share one defaultPoolSize pool per db (prod: 30). SQL fits: no prepares, no advisory locks.
+  enabled: true
+  image: edoburu/pgbouncer:v1.24.1-p1
+  poolMode: transaction
+  # Pool per user/database pair, keep the prod value (30). Do not add max_db_connections -
+  # it caps the same pair again and hides the real ceiling.
+  defaultPoolSize: 30
+  maxClientConn: 1000
+  # A client that cannot get a server connection fails here instead of hanging
+  # until an unrelated request timeout fires.
+  queryWaitTimeout: 30
+  resources:
+    requests: { memory: 32Mi, cpu: 20m }
+    limits: { memory: 128Mi }
+  # mode external:
+  external:
+    host: ""
+    port: "5432"
+    user: ""
+    password: ""
+
+kafka:
+  enabled: true
+  # strimzi   - Strimzi operator + a single-node KRaft Kafka (production parity, slow first start)
+  # redpanda  - single Redpanda container on the same kafka:9092 contract (starts in seconds)
+  # external  - managed broker, fill kafka.external.bootstrap
+  mode: strimzi
+  # keep in sync with KAFKA_VERSION in cluster/versions.env (supported by pinned Strimzi)
+  version: "4.2.2"
+  storage: 4Gi
+  storageClass: ""
+  resources:
+    requests: { memory: 512Mi, cpu: 100m }
+    limits: { memory: 1200Mi }
+  # JVM heap for the single broker
+  jvmXms: 320m
+  jvmXmx: 320m
+  external:
+    bootstrap: ""
+  # mode redpanda: dev-container keeps the data in memory, like the compose stand.
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.3.6
+    memory: 1G
+    resources:
+      requests: { memory: 512Mi, cpu: 100m }
+      limits: { memory: 1400Mi }
+
+s3:
+  enabled: true
+  mode: silo
+  image: pgsty/silo:RELEASE.2026-09-16T00-00-00Z
+  accessKey: minioadmin
+  secretKey: minioadmin
+  storage: 5Gi
+  storageClass: ""
+  resources:
+    requests: { memory: 64Mi, cpu: 20m }
+    limits: { memory: 512Mi }
+  # mode external:
+  external:
+    endpoint: ""     # host:port, scheme added by the platform chart contract if missing
+    accessKey: ""
+    secretKey: ""
+    region: auto
+    location: eu
+    kind: minio
+
+elastic:
+  enabled: true
+  mode: internal
+  image: elasticsearch:8.19.1
+  pluginsImage: intabiafusion/elastic-plugins:8.19.1-slim
+  heap: 512m
+  storage: 2Gi
+  storageClass: ""
+  resources:
+    requests: { memory: 640Mi, cpu: 100m }
+    limits: { memory: 1400Mi }
+  external:
+    url: ""
+
+redis:
+  enabled: true
+  mode: internal
+  image: redis:8.0.2-alpine3.21
+  resources:
+    requests: { memory: 16Mi, cpu: 10m }
+    limits: { memory: 128Mi }
+  external:
+    host: ""
+
+mailpit:
+  enabled: true
+  image: axllent/mailpit:v1.33.0
+  # Web UI behind Traefik (IngressRoute, websecure). Empty = no route; SMTP stays
+  # cluster-internal either way. A published UI must carry auth.enabled below:
+  # stands/base/values.yaml shows the local switch.
+  host: ""
+  # Webroot for the UI and API when a stand publishes them under a path (/smtp style):
+  # must match mailpit.path of the platform chart. Empty = root.
+  webroot: ""
+  auth:
+    # Traefik basic auth for the subdomain route. users is an htpasswd line
+    # (bcrypt/apr1); enabling the auth with an empty users fails the render.
+    enabled: false
+    users: ""
+  resources:
+    requests: { memory: 32Mi, cpu: 20m }
+    limits: { memory: 128Mi }
+
+tls:
+  # false = the cluster keeps its own default TLSStore (customer-managed TLS).
+  enabled: true
+  # Namespace of the traefik installation: kube-system on k3d, traefik on kind
+  # (installed by scripts/base-up.sh).
+  traefikNamespace: kube-system
+  # Secret with the wildcard certificate, created by certs/gen.sh (mkcert).
+  certificateSecret: fusion-local-tls
+
+livekit:
+  # One server for every local stand: rooms are separated by the room projectKey that love
+  # writes (LIVEKIT_PROJECT), so sanity/dev/qms can share it. Media ports are node ports.
+  # Local stands enable it in stands/base/values.yaml; the chart default keeps the env-only install valid.
+  enabled: false
+  host: livekit.fusion.localhost
+  image: livekit/livekit-server:v1.13.6
+  # Bind the node network: k3d publishes 7880-7882, and publisher ports must not be NATed twice.
+  hostNetwork: true
+  advertiseAddress: ""
+  loopbackCandidate: true
+  apiPort: 7880
+  # LiveKit uses hostNetwork and RTC ports: pin it to one node by a dedicated label,
+  # e.g. {intabia.io/livekit: "true"}. Empty = livekit.pool, then global.nodeSelector.
+  nodeSelector: {}
+  tcpHostPort: 7881
+  udpHostPort: 7882
+  memRequired: 128
+  memLimits: 512
+  # Webhooks fan out to every stand's love; each one drops events of another projectKey.
+  webhookUrls: []
+  webhookApiKey: ""
+  keys: {}
+  egress:
+    enabled: true
+    image: livekit/egress:v1.15.0
+    # LiveKit credentials the recorder uses; the stand's love passes its own S3 per request.
+    apiKey: ""
+    apiSecret: ""
+    s3Bucket: livekit-recordings
+    s3Region: us-east-1
+    # A Chrome-backed composite reserves 3-4 CPUs at default cost and is refused on 4 vCPU hosts.
+    cpuCost: 1
+    memRequired: 512
+    memLimits: 4096
+
+metrics:
+  # Shared path for every stand: services export OTLP, the collector republishes metrics for
+  # Prometheus. Traces and logs are dropped - a local stand only needs the numbers.
+  enabled: true
+  otelCollector:
+    image: otel/opentelemetry-collector-contrib:0.160.0
+    memRequired: 64
+    memLimits: 256
+  prometheus:
+    image: prom/prometheus:v3.1.0
+    # Empty hides the UI; stands/base publishes prometheus.fusion.localhost.
+    host: ""
+    retention: 48h
+    memRequired: 128
+    memLimits: 512
+
+sealedSecrets:
+  # For clusters with the sealed-secrets controller: base credentials (postgres, S3) are applied
+  # as SealedSecret instead of the plain platform-base Secret. `stand:seal base` writes the overlay.
+  enabled: false
+  manifests: ""

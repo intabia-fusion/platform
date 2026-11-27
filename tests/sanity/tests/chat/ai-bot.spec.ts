@@ -141,7 +141,7 @@ test.describe('ai-bot direct chat', () => {
         await expect
           .poll(
             async () => {
-              const response = await request.post(`${LocalUrl.replace(/_account\/?$/, '_aibot')}/events`, {
+              const response = await request.post(`${LocalUrl.replace(/_account\/?$/, '_ai')}/events`, {
                 headers: { Authorization: `Bearer ${wsInfo.token}` },
                 data: []
               })

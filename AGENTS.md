@@ -151,6 +151,42 @@ UI via `pnpm build:watch` auto-picks changes, no container restart needed.
 
 Container-backed sanity serves a built frontend image. Before visual verification, check which image is running and whether it includes the current changes. Use `pnpm docker:build --to @hcengineering/pod-front` for a scoped image build, not `pnpm docker --to ...`. When updating only the frontend, recreate `front0` with `--no-deps` so the other stand services keep their versions.
 
+### Compose и Kubernetes: две поддерживаемые схемы
+
+CI - Docker Compose: job `build` и все `uitest-*` в `.github/workflows/main.yml` поднимают
+compose-стенд; кластер, `kubectl` и `k3d` им не нужны.
+
+Локальная разработка и тесты по умолчанию тоже на Docker: `pnpm docker:up`, затем
+`cd tests && ./prepare-pg.sh` (sanity), `ws-tests/prepare.sh`, `qms-tests/prepare-qms.sh`;
+запуск - `cd sanity && pnpm run uitest`.
+
+Полный стенд на k3d/k3s - когда проверяется сам чарт: `pnpm -w stand:base:up`,
+`pnpm -w stand:test:up [sanity|ws|api|qms]`, `pnpm -w stand:test:front` (для qms -
+`qms-tests/stand-front.sh`) и `pnpm -w stand:dev:up`; там же живёт `uitest:k8s`.
+
+Обе схемы поддерживаются. Изменение стенда или точки входа тестов обязано сохранять
+работоспособность обеих.
+
+### Kubernetes stands (local dev/test)
+
+Локальные стенды на Kubernetes - два чарта (`deployment/kubernetes/charts/platform`,
+`charts/platform-base`) и команды из корня репозитория:
+
+```bash
+pnpm -w stand:base:up                  # кластер k3d + registry + TLS + platform-base
+pnpm -w stand:dev:up                   # dev-стенд на https://dev.fusion.localhost
+pnpm -w stand:dev:front                # webpack/HMR на :8080 с proxy в K8s dev; по умолчанию в Docker-контейнере fusion-dev-front (репо bind-mount, Linux node_modules + pnpm-store в named volume fusion-dev-front-node_modules). Хостовый fallback: stand:dev:front:host. Остановка: Ctrl+C или stand:dev:front:down
+pnpm -w stand:test:up [sanity|ws|api|qms]  # тестовые стенды
+pnpm -w stand:test:front               # sanity UI на :8081, uitest:k8s
+pnpm -w stand:dev:down                 # namespace стенда, base не трогает
+pnpm -w stand:dev:pause                # все Deployments/StatefulSets dev в 0 реплик; релиз/Services/Ingress/PVC/data не тронуты; webpack-контейнер fusion-dev-front пауза не гасит
+pnpm -w stand:dev:resume               # dev-up.sh --no-push: resume после pause, реплики по values (включая 0-репликовые сервисы), без rebuild/push образов; stand:dev:up - тоже валидный resume
+pnpm -w stand:base:down                # сносит только своё (k3d/kind), existing - только с --delete-data
+```
+
+Runtime: `k3d` (default), `kind` или `existing` - первым аргументом или `STAND_RUNTIME`.
+Подробности и troubleshooting: `deployment/kubernetes/README.md`, план FUSIO-1598.
+
 ## Changelog
 
 ```bash
@@ -225,7 +261,7 @@ Keep existing copyright lines, add `Intabia Fusion` line if missing.
 
 ## Sanity tests (Playwright)
 
-Run from `tests/sanity/`. Stand must be up at `localhost:8083`. Always use `pnpm run uitest` - it wires `LOCAL_URL`, `DEV_URL` and the config.
+Run from `tests/sanity/`. Stand must be up at `localhost:8083`. Always use `pnpm run uitest` - it wires `LOCAL_URL`, `DEV_URL` and the config. On the cluster the same suite is `pnpm run uitest:k8s` after `pnpm -w stand:test:front` (see "Kubernetes stands" above).
 
 ```bash
 cd tests/sanity
@@ -235,6 +271,17 @@ pnpm run uitest -g "<title>"                      # one test
 pnpm run uitest tests/tracker/kanban.spec.ts      # one file
 pnpm run uitest --workers=1                       # serial; sanity tests share workspace state
 ```
+
+The QMS suite brings up the same compose stand under `qms-tests` (the stands share ports, so it replaces a running sanity stand):
+
+```bash
+cd qms-tests
+./prepare-qms.sh                          # reset + seed the QMS stand
+cd sanity
+pnpm run uitest                           # full QMS suite
+```
+
+Between iterations `./restore-workspace.sh` re-seeds the QMS workspaces on the running stand. On the cluster, `./stand-front.sh` and `pnpm run uitest:k8s` replace the two compose steps.
 
 Flags:
 - `--workers=1` - serial. Use for love/meeting tests, they share workspace state.

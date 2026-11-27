@@ -1,0 +1,115 @@
+{{- /*
+Transaction-mode connection pooler in front of Postgres.
+
+Every stand service (transactor, workspace, fulltext, account, aibot, ...) opens
+its own pool and the transactor keeps one client per open workspace; without a
+pooler the shared Postgres runs out of max_connections on a used stand. In
+transaction mode a server connection is returned after every transaction, so the
+whole cluster works within a few dozen real connections.
+
+Wildcard [databases] entry: the caller's database name is routed as-is, so all
+stands (sanity, dev, ws, api) share this one pooler.
+*/}}
+{{- if and .Values.pgbouncer.enabled (ne .Values.postgres.mode "external") }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pgbouncer
+  namespace: '{{ .Release.Namespace }}'
+  labels:
+    app: pgbouncer
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+data:
+  pgbouncer.ini: |
+    [databases]
+    * = host=postgres.{{ .Release.Namespace }}.svc.cluster.local port=5432
+
+    [pgbouncer]
+    listen_addr = 0.0.0.0
+    listen_port = 5432
+    auth_type = trust
+    auth_file = /etc/pgbouncer/userlist.txt
+    admin_users = {{ .Values.postgres.user }}
+    pool_mode = {{ .Values.pgbouncer.poolMode }}
+    default_pool_size = {{ .Values.pgbouncer.defaultPoolSize }}
+    query_wait_timeout = {{ .Values.pgbouncer.queryWaitTimeout }}
+    max_client_conn = {{ .Values.pgbouncer.maxClientConn }}
+    server_reset_query = DISCARD ALL
+    ignore_startup_parameters = extra_float_digits,application_name
+    stats_period = 60
+  userlist.txt: |
+    "{{ .Values.postgres.user }}" "{{ .Values.postgres.password }}"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pgbouncer
+  namespace: '{{ .Release.Namespace }}'
+  labels:
+    app: pgbouncer
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+spec:
+  type: ClusterIP
+  ports:
+  - name: postgres
+    port: 5432
+    targetPort: 5432
+  selector:
+    app: pgbouncer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pgbouncer
+  namespace: '{{ .Release.Namespace }}'
+  labels:
+    app: pgbouncer
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version }}'
+    release: '{{ .Release.Name }}'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pgbouncer
+  template:
+    metadata:
+      labels:
+        app: pgbouncer
+        release: '{{ .Release.Name }}'
+      annotations:
+        checksum/pgbouncer-config: {{ .Values.pgbouncer | toYaml | sha256sum }}
+    spec:
+      {{- include "platformBase.nodeSelector" (dict "sel" (include "platformBase.podSelector" (dict "root" . "component" "pgbouncer") | fromYaml)) | nindent 6 }}
+      containers:
+      - name: pgbouncer
+        image: '{{ .Values.pgbouncer.image }}'
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5432
+        volumeMounts:
+        - name: config
+          mountPath: /etc/pgbouncer/pgbouncer.ini
+          subPath: pgbouncer.ini
+        - name: config
+          mountPath: /etc/pgbouncer/userlist.txt
+          subPath: userlist.txt
+        readinessProbe:
+          exec:
+            command: ["pg_isready", "-h", "127.0.0.1", "-p", "5432"]
+          initialDelaySeconds: 2
+          periodSeconds: 5
+        livenessProbe:
+          exec:
+            command: ["pg_isready", "-h", "127.0.0.1", "-p", "5432"]
+          initialDelaySeconds: 10
+          periodSeconds: 15
+        resources:
+{{ toYaml .Values.pgbouncer.resources | indent 10 }}
+      volumes:
+      - name: config
+        configMap:
+          name: pgbouncer
+{{- end }}

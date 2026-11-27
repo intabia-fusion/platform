@@ -1,0 +1,31 @@
+{{- /* No collector, no route: a scaled-to-zero analytics-service would only answer 503. */ -}}
+{{- if gt (int .Values.services.analytics.replicas) 0 }}
+# source: kube/analytics/ingress.yml; subs: version, hostUrl, namespace
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-analytics
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  stripPrefix:
+    prefixes:
+    - "/_collector"
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: analytics-ingressroute
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  - match: Host(`{{ .Values.global.hostUrl }}`) && PathPrefix(`/_collector`)
+    kind: Rule
+    services:
+    - name: analytics-service
+      port: 80
+    middlewares:
+    - name: strip-analytics
+{{- end }}

@@ -201,7 +201,7 @@ Env-переменные `server/collaborator` (`server/collaborator/src/config.
 
 - Unit: `server/collaborator/src/__tests__/**` (storage adapter, rpc-методы, transformers), `plugins/converter-resources/src/__tests__/**` (markdown-таблицы, escape, форматтеры), `plugins/controlled-documents/src/__tests__/projectDocumentTree.test.ts`, `plugins/text-editor-resources/src/components/diff/__tests__/recreate.test.ts`, `plugins/text-editor-resources/src/__tests__/editorRegistry.spec.ts`.
 - Sanity (обычные документы): `tests/sanity/tests/documents/{documents,documents-content,documents-print-preview,documents-link}.spec.ts`, page-объекты в `tests/sanity/tests/model/documents/`.
-- QMS sanity (отдельный Playwright-контур, свой docker-compose и workspace `sanity-ws-qms`): `qms-tests/sanity/tests/documents/{REQ-*,ES-*,categories,templates}.spec.ts`, page-объекты в `qms-tests/sanity/tests/model/documents/`. Детали интеграции и известные флаки - `docs/memory/qms-tests-integration.md`.
+- QMS sanity (отдельный Playwright-контур, свой Kubernetes-стенд `qms`/namespace `fusion-qms` и workspace `sanity-ws-qms`): `qms-tests/sanity/tests/documents/{REQ-*,ES-*,categories,templates}.spec.ts`, page-объекты в `qms-tests/sanity/tests/model/documents/`. Детали интеграции и известные флаки - `docs/memory/qms-tests-integration.md`.
 
 ## Связанные документы
 

@@ -1,0 +1,15 @@
+# source: kube/backup/backup-api-service.yaml; subs: version, hostUrl, namespace
+{{- if .Values.services.backupApi.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: backup-api-service
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  selector:
+    app: backup-api
+  ports:
+  - port: 80
+    targetPort: 4039
+
+{{- end }}

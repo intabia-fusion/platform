@@ -46,6 +46,8 @@ jobs:
           fetch-depth: 0
           filter: tree:0
           submodules: recursive
+      - name: Free space
+        uses: ./.github/actions/free-disk-space
       - uses: pnpm/action-setup@v5
       - uses: actions/setup-node@v6
         with:
@@ -257,7 +259,7 @@ jobs:
           if pnpm docker 2>&1 | tee /tmp/docker-build.log; then
             echo "Docker build succeeded"
           else
-            if grep -qi "rate limit\|too many requests\|toomanyrequests\|429" /tmp/docker-build.log; then
+            if grep -qi "rate limit\|too many requests\|toomanyrequests" /tmp/docker-build.log; then
               echo "Rate limit hit, logging in to Docker Hub and retrying..."
               echo "${{ secrets.DOCKER_ACCESS_TOKEN }}" | docker login -u intabiafusion --password-stdin
               pnpm docker
@@ -313,7 +315,7 @@ jobs:
           if pnpm docker 2>&1 | tee /tmp/docker-build.log; then
             echo "Docker build succeeded"
           else
-            if grep -qi "rate limit\|too many requests\|toomanyrequests\|429" /tmp/docker-build.log; then
+            if grep -qi "rate limit\|too many requests\|toomanyrequests" /tmp/docker-build.log; then
               echo "Rate limit hit, logging in to Docker Hub and retrying..."
               echo "${{ secrets.DOCKER_ACCESS_TOKEN }}" | docker login -u intabiafusion --password-stdin
               pnpm docker
@@ -369,7 +371,7 @@ jobs:
           if pnpm docker 2>&1 | tee /tmp/docker-build.log; then
             echo "Docker build succeeded"
           else
-            if grep -qi "rate limit\|too many requests\|toomanyrequests\|429" /tmp/docker-build.log; then
+            if grep -qi "rate limit\|too many requests\|toomanyrequests" /tmp/docker-build.log; then
               echo "Rate limit hit, logging in to Docker Hub and retrying..."
               echo "${{ secrets.DOCKER_ACCESS_TOKEN }}" | docker login -u intabiafusion --password-stdin
               pnpm docker
@@ -390,8 +392,6 @@ jobs:
           prepare-script: ./prepare-qms.sh
           build-package: "@hcengineering/qms-tests-sanity"
           artifact-name-suffix: qms
-          container-prefix: "qms-"
-          enable-profiling: "false"
           docker-access-token: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
   uitest-workspaces:
@@ -426,7 +426,7 @@ jobs:
           if pnpm docker 2>&1 | tee /tmp/docker-build.log; then
             echo "Docker build succeeded"
           else
-            if grep -qi "rate limit\|too many requests\|toomanyrequests\|429" /tmp/docker-build.log; then
+            if grep -qi "rate limit\|too many requests\|toomanyrequests" /tmp/docker-build.log; then
               echo "Rate limit hit, logging in to Docker Hub and retrying..."
               echo "${{ secrets.DOCKER_ACCESS_TOKEN }}" | docker login -u intabiafusion --password-stdin
               pnpm docker
@@ -491,7 +491,7 @@ jobs:
           if pnpm docker:build -v --esbuild-emit 2>&1 | tee /tmp/docker-build.log; then
             echo "Docker build succeeded"
           else
-            if grep -qi "rate limit\|too many requests\|toomanyrequests\|429" /tmp/docker-build.log; then
+            if grep -qi "rate limit\|too many requests\|toomanyrequests" /tmp/docker-build.log; then
               echo "Rate limit hit, logging in to Docker Hub and retrying..."
               echo "${{ secrets.DOCKER_ACCESS_TOKEN }}" | docker login -u intabiafusion --password-stdin
               pnpm docker:build -v --esbuild-emit
@@ -787,3 +787,44 @@ jobs:
           DOCKER_BUILDKIT: 1
           BUILD_REV: ${{ needs.dist-build.outputs.rev }}
           RELEASE_TAG: ${{ needs.dist-build.outputs.release_tag }}
+
+  # Публикация Helm-чартов в platform-charts на тег релиза v*. Staging-теги s* чарты не публикуют.
+  # CHARTS_TOKEN - PAT с правом записи в intabia-fusion/platform-charts; без него чарты только
+  # собираются и прикладываются к релизу.
+  # Пока чарты отлаживаются, публикация ручная (`pnpm -w release:charts`). Job включается
+  # переменной репозитория PUBLISH_CHARTS=true, когда контур будет готов.
+  charts-publish:
+    needs: [docker-build]
+    if: startsWith(github.ref, 'refs/tags/v') && vars.PUBLISH_CHARTS == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v4.3.2
+      - name: Package charts
+        run: node deployment/kubernetes/scripts/package-charts.mjs "${GITHUB_REF_NAME}" /tmp/charts
+      - name: Publish to platform-charts
+        env:
+          CHARTS_TOKEN: ${{ secrets.CHARTS_TOKEN }}
+        run: |
+          if [ -z "$CHARTS_TOKEN" ]; then
+            echo "CHARTS_TOKEN is not set: charts are packaged but not published"
+            exit 0
+          fi
+          node deployment/kubernetes/scripts/publish-charts.mjs "${GITHUB_REF_NAME}"
+      - name: Attach charts to the GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: /tmp/charts/*.tgz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

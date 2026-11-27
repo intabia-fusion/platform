@@ -1,0 +1,52 @@
+{{- /*
+Mailbox UI of the stand under its own host: /_mailpit -> mailpit in platform-base. The base
+sets MP_WEBROOT to the same path, so URLs and assets stay under the prefix without stripping.
+
+mailpit.auth protects the route with Traefik basic auth. The htpasswd hash lives in the stand
+values (not the chart defaults), so enabling the auth without a user fails the render instead of
+publishing an open mailbox.
+*/}}
+{{- if .Values.mailpit.path }}
+{{- if .Values.mailpit.auth.enabled }}
+{{- if not .Values.mailpit.auth.users }}{{ fail "mailpit.auth.users is empty: set an htpasswd line or disable mailpit.auth" }}{{ end }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mailpit-auth-stand
+  namespace: '{{ .Values.global.namespace }}'
+type: Opaque
+stringData:
+  users: |
+{{ .Values.mailpit.auth.users | indent 4 }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: mailpit-auth-stand
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  basicAuth:
+    secret: mailpit-auth-stand
+{{- end }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: mailpit-stand
+  namespace: '{{ .Values.global.namespace }}'
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  - match: Host(`{{ .Values.global.hostUrl }}`) && PathPrefix(`{{ .Values.mailpit.path }}`)
+    kind: Rule
+    services:
+    - name: mailpit
+      namespace: '{{ .Values.global.baseNamespace | default .Release.Namespace }}'
+      port: 8025
+{{- if .Values.mailpit.auth.enabled }}
+    middlewares:
+    - name: mailpit-auth-stand
+{{- end }}
+{{- end }}

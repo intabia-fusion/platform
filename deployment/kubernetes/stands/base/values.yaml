@@ -1,0 +1,58 @@
+# Local platform-base overlay: sizes that fit a laptop Docker VM; component versions are pinned
+# in the chart values (kept in sync with cluster/versions.env), images come from public registries.
+postgres:
+  storage: 2Gi
+  # The primary takes every write and the replica mostly replays WAL, so splitting the old
+  # single-instance memory in half OOMKilled the primary 14 minutes into a 5-worker sanity run
+  # (liveness timeouts, failover, pgbouncer CONNECTION_CLOSED, billing 500s). Each pod keeps a
+  # full 1Gi.
+  resources:
+    requests: { memory: 256Mi, cpu: 100m }
+    limits: { memory: 1Gi }
+pgbouncer:
+  # Same shape as prod: a 30-connection pool per database in front of a Postgres
+  # with a much larger limit. The pool, not the server, is what bounds load.
+  defaultPoolSize: 30
+kafka:
+  storage: 4Gi
+elastic:
+  heap: 512m
+s3:
+  storage: 5Gi
+# The base mailbox UI is not published: https://mailpit.fusion.localhost:<https-port> stays
+# closed, and a stand publishes the box under its own host with platform's mailpit.path plus
+# mailpit.webroot here. A published base entry must carry basic auth, so to open it set both:
+# mailpit:
+#   host: mailpit.fusion.localhost
+#   auth:
+#     enabled: true
+#     users: "<login>:<htpasswd hash>"   # bcrypt/apr1, e.g. htpasswd -nbB admin secret
+# mailpit.host without mailpit.auth fails the render.
+livekit:
+  # One server + one egress for every stand; the browser URL is wss://<host>:<stand https port>.
+  # Rooms are separated by the stand's projectKey, love drops events of another one.
+  # k3d only: base-up sets enabled=false for kind/existing, which keep the host livekit-server.
+  enabled: true
+  host: livekit.fusion.localhost
+  # Add a stand here when it gets a love with meetings; a stand not listed sees no webhooks.
+  webhookUrls:
+  - http://love-service.fusion-sanity.svc.cluster.local/webhook
+  - http://love-service.fusion-dev.svc.cluster.local/webhook
+  - http://love-service.fusion-qms.svc.cluster.local/webhook
+  # LiveKit signs webhooks with the webhook key's secret from keys; love verifies with
+  # secrets.loveSecret.webhookApiKey/webhookApiSecret (the same pair on every stand).
+  webhookApiKey: whtestkey
+  # One pair per stand's secrets.loveSecret.apiKey/apiSecret; the key is the map key.
+  keys:
+    testkey: testsecret_for_sanity_tests_min32chars
+    whtestkey: whtestsecret_for_sanity_tests_min32chars
+    dev-love-api-key: dev-love-api-secret-0123456789abcdef
+    qms-testkey: testsecret_for_qms_tests_min32chars
+  egress:
+    apiKey: testkey
+    apiSecret: testsecret_for_sanity_tests_min32chars
+
+metrics:
+  # https://prometheus.fusion.localhost:8443
+  prometheus:
+    host: prometheus.fusion.localhost
