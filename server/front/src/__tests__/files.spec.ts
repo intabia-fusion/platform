@@ -18,6 +18,7 @@ import { mkdirSync, mkdtempSync } from 'fs'
 import { createServer } from 'net'
 import { tmpdir } from 'os'
 import { join } from 'path'
+import { generateToken } from '@hcengineering/server-token'
 import { start } from '../index'
 
 jest.mock('@hcengineering/account-client', () => ({
@@ -116,7 +117,7 @@ beforeEach(() => {
   remove.mockClear()
 })
 
-const auth = { headers: { authorization: 'Bearer t' } }
+const auth = { headers: { authorization: `Bearer ${generateToken('11111111-1111-4111-8111-111111111111' as any)}` } }
 
 describe('/files with a name the storage refuses', () => {
   it.each([
@@ -144,4 +145,45 @@ describe('/files with a name the storage refuses', () => {
     expect(res.status).toBe(404)
     expect(stat).toHaveBeenCalledTimes(1)
   })
+})
+
+it('does not let a public-link token bypass scope through the ordinary file endpoint', async () => {
+  const token = generateToken('b6996120-416f-49cd-841e-e4a5d2e49c9b' as any, undefined, {
+    guest: 'true',
+    linkId: 'link'
+  })
+  const res = await fetch(`${base}/files?file=private-file`, { headers: { authorization: `Bearer ${token}` } })
+  expect(res.status).toBe(403)
+  expect(stat).not.toHaveBeenCalled()
+})
+
+describe('/files authentication failures', () => {
+  const account = '11111111-1111-4111-8111-111111111111' as any
+  const badTokens = [
+    ['malformed', 'invalid'],
+    ['wrong signature', generateToken(account, undefined, undefined, 'wrong-secret')],
+    ['expired', generateToken(account, undefined, undefined, undefined, { exp: 1 })]
+  ]
+  it.each(['GET', 'HEAD'])('%s without a token answers 401 without logging a server error', async (method) => {
+    const res = await fetch(`${base}/files?file=file`, { method })
+    expect(res.status).toBe(401)
+    expect(errors).toEqual([])
+    expect(stat).not.toHaveBeenCalled()
+    expect(remove).not.toHaveBeenCalled()
+  })
+  for (const method of ['GET', 'HEAD', 'POST', 'DELETE']) {
+    it.each(badTokens)(`${method} with %s token answers 401 before storage access`, async (_label, token) => {
+      const body = method === 'POST' ? new FormData() : undefined
+      body?.append('file', new Blob(['data'], { type: 'image/png' }), 'image.png')
+      const res = await fetch(`${base}/files?file=file`, {
+        method,
+        headers: { authorization: `Bearer ${token}` },
+        body
+      })
+      expect(res.status).toBe(401)
+      expect(errors).toEqual([])
+      expect(stat).not.toHaveBeenCalled()
+      expect(remove).not.toHaveBeenCalled()
+    })
+  }
 })

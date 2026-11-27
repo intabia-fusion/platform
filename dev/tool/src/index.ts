@@ -1,6 +1,7 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021, 2024 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -886,7 +887,7 @@ export function buildToolProgram (prepareTools: PrepareTools, extendProgram?: (p
               await sendTransactorEvent(workspace, 'force-maintenance')
             }
 
-            await restore(toolCtx, pipeline, wsIds, storage, cmd.accounts ? db : undefined, {
+            const restored = await restore(toolCtx, pipeline, wsIds, storage, cmd.accounts ? db : undefined, {
               date: parseInt(date ?? '-1'),
               merge: cmd.merge,
               parallel: parseInt(cmd.parallel ?? '1'),
@@ -897,6 +898,7 @@ export function buildToolProgram (prepareTools: PrepareTools, extendProgram?: (p
               verifyBlobs: cmd.verifyBlobs,
               verifyOnly: cmd.verifyOnly
             })
+            if (!restored) throw new Error('Backup restore did not complete')
 
             if (cmd.verifyOnly) {
               console.log('blob verification complete')
@@ -912,6 +914,7 @@ export function buildToolProgram (prepareTools: PrepareTools, extendProgram?: (p
             }
           } catch (err) {
             toolCtx.error('failed to restore', { err })
+            process.exitCode = 1
           }
           await pipeline?.close()
           await queue?.shutdown()

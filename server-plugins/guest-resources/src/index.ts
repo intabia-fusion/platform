@@ -79,8 +79,15 @@ export async function getPublicLink (
   const space = getPublicLinkSpace(client.getHierarchy(), doc)
   const current = await client.findOne(guest.class.PublicLink, { attachedTo: doc._id, space })
   if (current !== undefined) {
-    if (!revokable && current.revokable) {
-      await client.update(current, { revokable: false })
+    if (
+      (current as PublicLink & { publicFileSyncPending?: boolean }).publicFileSyncPending === true ||
+      (!revokable && current.revokable)
+    ) {
+      // The guarded retry may retire this id. Never return the URL of the removed record.
+      await client.update(current, { revokable: !revokable ? false : current.revokable })
+      const refreshed = await client.findOne(guest.class.PublicLink, { attachedTo: doc._id, space })
+      if (refreshed === undefined) return await getPublicLink(doc, client, workspace, revokable, branding)
+      return refreshed.url
     }
     return current.url
   }
@@ -124,3 +131,7 @@ export default async () => ({
     OnPublicLinkCreate
   }
 })
+
+export { collectPublicFiles } from './publicFiles'
+
+export { PublicFileMiddleware } from './publicFileMiddleware'

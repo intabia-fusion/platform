@@ -1090,6 +1090,7 @@ export async function restoreFromv6All (
     ctx.info('Total invites processed:', { invitesProcessed })
     ctx.info('Successfully restored accounts backup')
     ctx.info('Restoring workspaces...')
+    let workspaceRestoreFailed = false
 
     for (const workspace of v6Workspaces) {
       const dataId = workspace.workspace
@@ -1134,12 +1135,13 @@ export async function restoreFromv6All (
         }
         await sendTransactorEvent(uuid, 'force-maintenance')
 
-        await restore(ctx, pipeline, wsIds, storage, undefined, {
+        const restored = await restore(ctx, pipeline, wsIds, storage, undefined, {
           date: -1,
           merge: false,
           parallel: 1,
           recheck: false
         })
+        if (!restored) throw new Error('Backup restore did not complete')
 
         await sendTransactorEvent(uuid, 'force-close')
 
@@ -1151,6 +1153,7 @@ export async function restoreFromv6All (
           await accountDB.workspaceStatus.update({ workspaceUuid: uuid }, { mode: 'active' })
         }
       } catch (err) {
+        workspaceRestoreFailed = true
         ctx.error('failed to restore workspace', { dataId, err })
       } finally {
         await pipeline?.close()
@@ -1159,9 +1162,11 @@ export async function restoreFromv6All (
       }
     }
 
+    if (workspaceRestoreFailed) throw new Error('One or more workspace restores failed')
     ctx.info('Successfully restored v6 dump')
   } catch (err: any) {
     ctx.error('Failed to restore v6 dump', { err })
+    process.exitCode = 1
   }
 }
 
@@ -1307,12 +1312,13 @@ export async function restoreTrustedV6Workspace (
       }
       await sendTransactorEvent(uuid, 'force-maintenance')
 
-      await restore(ctx, pipeline, wsIds, backupWsStorage, undefined, {
+      const restored = await restore(ctx, pipeline, wsIds, backupWsStorage, undefined, {
         date: -1,
         merge: false,
         parallel: 1,
         recheck: false
       })
+      if (!restored) throw new Error('Backup restore did not complete')
 
       await sendTransactorEvent(uuid, 'force-close')
 
@@ -1322,6 +1328,7 @@ export async function restoreTrustedV6Workspace (
       await accountDB.workspaceStatus.update({ workspaceUuid: uuid }, { mode: oldMode })
     } catch (err) {
       ctx.error('failed to restore backup of the workspace', { url, dataId, err })
+      process.exitCode = 1
     } finally {
       await pipeline?.close()
       await queue.shutdown()
@@ -1329,5 +1336,6 @@ export async function restoreTrustedV6Workspace (
     }
   } catch (err: any) {
     ctx.error('Failed to restore workspace', { url: workspace.workspaceUrl, workspace: workspace.workspace, err })
+    process.exitCode = 1
   }
 }

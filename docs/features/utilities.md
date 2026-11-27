@@ -163,7 +163,7 @@
 - **Поиск продукта в глобальном поиске.** SearchPresenter по name/icon/color; `contentField: 'fullDescription'` - основной текст в индексе (`fulltextSummary`), остальное в `fulltextExtra`. - `models/server-products/src/index.ts`.
 
 ### Print
-- **Печать документа в PDF.** Публичная ссылка + рендер в headless Chrome. - `printToPDF`, `plugins/print/src/utils.ts`; `print()`, `services/print/pod-print/src/print.ts` (puppeteer).
+- **Печать документа в PDF.** Перед одиночной и массовой печатью `preparePublicLinkForPrint` подтверждает регистрацию текущих файлов публичной ссылки в Datalake; сбой регистрации останавливает печать. Рендер в headless Chrome проверяет загрузку изображений содержимого и не возвращает неполный PDF при их ошибке. - `printToPDF`, `plugins/print/src/utils.ts`; `print()`, `services/print/pod-print/src/print.ts` (puppeteer).
 - **Массовая печать.** - `PrintBulkToPDF.svelte`, `plugins/print-resources/src/components/PrintBulkToPDF.svelte`.
 - **Подпись PDF после генерации.** Использует сервис `sign` (см. `docs/memory/qms-tests-integration.md`). - `plugins/print-resources/src/printUtils.ts` (импорт `signPDF` из `@hcengineering/sign`).
 - **Просмотр DOCX превью через конвертацию в HTML.** - `convertToHTML`, `plugins/print/src/utils.ts`; `convertToHtml` (mammoth), `services/print/pod-print/src/convert.ts`; `DOCXViewer.svelte`.
@@ -218,7 +218,7 @@
 | Роли продукта | - | advanced-settings/roles | off | - | выключено на проде: products |
 | Удаление версии продукта | - | - | off | - | не документируем |
 | Поиск продукта в глобальном поиске | - | - | off | - | не документируем |
-| Печать документа в PDF | knowledge-management/documents | knowledge-management/documents | ok | 0.8.60 | |
+| Печать документа в PDF | knowledge-management/documents | knowledge-management/documents | stale | 0.8.60 | печать ждёт регистрацию файлов и завершается ошибкой при недоступном изображении |
 | Массовая печать | - | - | off | - | не документируем |
 | Подпись PDF после генерации | - | - | off | - | не документируем |
 | Просмотр DOCX превью через конвертацию в HTML | - | - | off | - | не документируем |

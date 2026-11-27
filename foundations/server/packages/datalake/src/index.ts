@@ -321,3 +321,5 @@ async function withRetry<T> (
   }
   throw error
 }
+
+export { PublicFileAccessClient, PublicFileAccessError, type PublicFileAccessState } from './publicFileAccess'

@@ -1,6 +1,7 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -42,7 +43,15 @@ import { extract } from 'tar-stream'
 import { createGunzip, gunzip } from 'zlib'
 import { BackupStorage } from './storage'
 import type { BackupInfo, BackupSnapshot } from './types'
-import { chunkArray, doTrimHash, isAccountDomain, loadDigest, migradeBlobData, toAccountDomain } from './utils'
+import {
+  chunkArray,
+  doTrimHash,
+  hasIncompleteDigest,
+  isAccountDomain,
+  loadDigest,
+  migradeBlobData,
+  toAccountDomain
+} from './utils'
 export * from './storage'
 
 const dataUploadSize = 2 * 1024 * 1024
@@ -97,9 +106,10 @@ export async function collectAccountObjects (
   storage: BackupStorage,
   snapshots: BackupSnapshot[],
   domain: Domain,
-  date: number
+  date: number,
+  strict: boolean = false
 ): Promise<any[]> {
-  const changeset = await loadDigest(ctx, storage, snapshots, domain, date)
+  const changeset = await loadDigest(ctx, storage, snapshots, domain, date, undefined, strict)
   if (changeset.size === 0) return []
 
   const rsnapshots = Array.from(snapshots).reverse()
@@ -214,6 +224,7 @@ export async function restore (
     opt.date = snapshots[snapshots.length - 1].date
   }
 
+  const isLatestSnapshot = snapshots.length === backupInfo.snapshots.length
   backupInfo.domainHashes ??= {}
   ctx.info('restore to ', { id: opt.date, date: new Date(opt.date).toDateString() })
   const rsnapshots = Array.from(snapshots).reverse()
@@ -255,6 +266,7 @@ export async function restore (
 
   const connection = pipeline.context.lowLevelStorage as LowLevelStorage
   const ops = new BackupClientOps(connection)
+  const afterRestore = opt.verifyOnly === true ? undefined : pipeline.context.afterRestore
 
   const printUploaded = (msg: string, size: number): void => {
     if (size == null) {
@@ -275,11 +287,23 @@ export async function restore (
 
   async function processDomain (c: Domain): Promise<void> {
     const dHash = await connection.getDomainHash(ctx, c)
-    if (backupInfo.domainHashes[c] === dHash) {
+    if (
+      (afterRestore === undefined || isLatestSnapshot) &&
+      backupInfo.domainHashes[c] === dHash &&
+      (afterRestore === undefined || !snapshots.some((snapshot) => hasIncompleteDigest(snapshot.domains[c])))
+    ) {
       ctx.info('no changes in domain', { domain: c })
       return
     }
-    const changeset = (await loadDigest(ctx, storage, snapshots, c, opt.date)) as Map<Ref<Doc>, string>
+    const changeset = (await loadDigest(
+      ctx,
+      storage,
+      snapshots,
+      c,
+      opt.date,
+      undefined,
+      afterRestore !== undefined
+    )) as Map<Ref<Doc>, string>
     // We need to load full changeset from server
     const serverChangeset = new Map<Ref<Doc>, string>()
 
@@ -357,6 +381,7 @@ export async function restore (
     const blobs = new Map<string, { doc: Doc | undefined, buffer: Buffer | undefined }>()
     let sendSize = 0
     let totalSend = 0
+    let writeFailed = false
     async function sendChunk (doc: Doc | undefined, len: number): Promise<void> {
       if (opt.progress !== undefined) {
         await opt.progress?.(domainProgress)
@@ -411,6 +436,7 @@ export async function restore (
           try {
             await ops.upload(ctx, c, docsToSend)
           } catch (err: any) {
+            writeFailed = true
             ctx.error('error during upload', { err, docs: JSON.stringify(docs) })
           }
         }
@@ -429,8 +455,20 @@ export async function restore (
       const d = s.domains[c]
 
       if (d !== undefined && docsToAdd.size > 0) {
-        const sDigest = (await loadDigest(ctx, storage, [s], c)) as Map<Ref<Doc>, string>
-        const requiredDocs = new Map(Array.from(sDigest.entries()).filter(([it]) => docsToAdd.has(it)))
+        const sDigest = (await loadDigest(
+          ctx,
+          storage,
+          [s],
+          c,
+          undefined,
+          undefined,
+          afterRestore !== undefined
+        )) as Map<Ref<Doc>, string>
+        const requiredDocs = new Map(
+          Array.from(sDigest).filter(([id, hash]) =>
+            afterRestore === undefined ? docsToAdd.has(id) : docsToAdd.get(id) === hash
+          )
+        )
 
         let lastSendTime = Date.now()
         async function sendBlob (blob: Blob, data: Buffer, next: (err?: any) => void): Promise<void> {
@@ -464,6 +502,7 @@ export async function restore (
                     await blobClient.upload(ctx, blob._id, blob.size, blob.contentType, data)
                     res = await verifyBlobContent(ctx, blobClient, blob._id, data)
                     if (res !== 'ok') {
+                      writeFailed = true
                       ctx.error('blob content mismatch after re-upload', { _id: blob._id, res, workspace: wsIds.uuid })
                     }
                   }
@@ -475,6 +514,7 @@ export async function restore (
                   }
                 }
               } catch (err: any) {
+                writeFailed = true
                 ctx.warn('failed to upload blob', { _id: blob._id, err, workspace: wsIds.uuid })
                 next(err)
               }
@@ -623,6 +663,10 @@ export async function restore (
     }
 
     await sendChunk(undefined, 0)
+    if (afterRestore !== undefined) {
+      await blobUploader.waitProcessing()
+      if (writeFailed || docsToAdd.size > 0) throw new Error(`Incomplete restore of domain ${c}`)
+    }
     async function performCleanOfDomain (docsToRemove: Ref<Doc>[], c: Domain): Promise<void> {
       ctx.info('cleanup', { toRemove: docsToRemove.length, workspace: workspaceId, domain: c })
       while (docsToRemove.length > 0) {
@@ -631,6 +675,7 @@ export async function restore (
           await ops.clean(ctx, c, part)
         } catch (err: any) {
           ctx.error('failed to clean, will retry', { error: err.message, workspaceId })
+          if (afterRestore !== undefined) throw err
           docsToRemove.push(...part)
         }
       }
@@ -651,7 +696,14 @@ export async function restore (
 
     const isPersonDomain = c === toAccountDomain('person')
 
-    const collectedObjects = await collectAccountObjects(ctx, storage, snapshots, c, opt.date)
+    const collectedObjects = await collectAccountObjects(
+      ctx,
+      storage,
+      snapshots,
+      c,
+      opt.date,
+      afterRestore !== undefined
+    )
     if (collectedObjects.length === 0) {
       ctx.info('no account domain data to restore', { domain: c })
       return
@@ -667,6 +719,7 @@ export async function restore (
   }
 
   const limiter = new RateLimiter(opt.parallel ?? 1)
+  let domainFailed = false
 
   try {
     let i = 0
@@ -699,6 +752,8 @@ export async function restore (
               ctx.warn('cool-down to retry', { delay, domain: c, workspaceId })
               await new Promise((resolve) => setTimeout(resolve, delay * 1000))
               delay++
+            } else if (afterRestore !== undefined) {
+              domainFailed = true
             }
           }
         }
@@ -707,6 +762,7 @@ export async function restore (
       })
     }
     await limiter.waitProcessing()
+    if (domainFailed) return false
   } catch (err: any) {
     Analytics.handleError(err)
     return false
@@ -725,6 +781,7 @@ export async function restore (
       ctx.warn('mismatch blobs', { count: verifyMismatch.length, ids: verifyMismatch.slice(0, 100) })
     }
   }
+  await afterRestore?.(ctx)
   return true
 }
 

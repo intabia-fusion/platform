@@ -104,7 +104,10 @@ export async function handleBlobGet (
     'Content-Disposition',
     filename !== undefined ? `${disposition}; filename*=UTF-8''${encodeURIComponent(filename)}` : disposition
   )
-  res.setHeader('Cache-Control', blob.cacheControl ?? cacheControl)
+  res.setHeader(
+    'Cache-Control',
+    res.locals.publicFile === true ? 'private, no-cache' : (blob.cacheControl ?? cacheControl)
+  )
   res.setHeader('Last-Modified', new Date(blob.lastModified).toUTCString())
   res.setHeader('ETag', wrapETag(blob.etag))
 
@@ -115,6 +118,14 @@ export async function handleBlobGet (
 
   const status = range != null && blob.bodyLength !== blob.size ? 206 : 200
   res.status(status)
+
+  if (res.locals.publicFile === true && req.fresh) {
+    blob.body.destroy()
+    res.removeHeader('Content-Length')
+    res.removeHeader('Content-Range')
+    res.status(304).end()
+    return
+  }
 
   pipeline(blob.body, res, (err) => {
     if (!blob.body.destroyed) {
@@ -162,7 +173,10 @@ export async function handleBlobHead (
     'Content-Disposition',
     filename !== undefined ? `${disposition}; filename*=UTF-8''${encodeURIComponent(filename)}` : disposition
   )
-  res.setHeader('Cache-Control', head.cacheControl ?? cacheControl)
+  res.setHeader(
+    'Cache-Control',
+    res.locals.publicFile === true ? 'private, no-cache' : (head.cacheControl ?? cacheControl)
+  )
   res.setHeader('Last-Modified', new Date(head.lastModified).toUTCString())
   res.setHeader('ETag', wrapETag(head.etag))
 

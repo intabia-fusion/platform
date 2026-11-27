@@ -1,6 +1,7 @@
 //
 // Copyright © 2020, 2021 Anticrm Platform Contributors.
 // Copyright © 2021, 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -16,7 +17,7 @@
 
 import { Analytics } from '@hcengineering/analytics'
 import { MeasureContext, Blob as PlatformBlob, WorkspaceIds, metricsAggregate } from '@hcengineering/core'
-import platform, { PlatformError } from '@hcengineering/platform'
+import platform, { PlatformError, Severity, Status } from '@hcengineering/platform'
 import { TokenError, decodeToken } from '@hcengineering/server-token'
 import { StorageAdapter } from '@hcengineering/storage'
 import bp from 'body-parser'
@@ -461,6 +462,14 @@ export function start (
   )
 
   const getWorkspaceIds = async (ctx: MeasureContext, token: string, path?: string): Promise<WorkspaceIds | null> => {
+    try {
+      if (decodeToken(token).extra?.guest === 'true') return null
+    } catch (err) {
+      if (err instanceof TokenError) {
+        throw new PlatformError(new Status(Severity.ERROR, platform.status.Unauthorized, {}))
+      }
+      throw err
+    }
     const accountClient = getAccountClient(config.accountsUrlInternal ?? config.accountsUrl, token)
     const workspaceInfo = await accountClient.getWorkspaceInfo()
     const wsIds = {

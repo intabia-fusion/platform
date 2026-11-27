@@ -3,6 +3,7 @@
 
   "compilerOptions": {
     "rootDir": "./src",
+    "types": ["node", "jest"],
     "outDir": "./lib",
     "declarationDir": "./types",
     "tsBuildInfoFile": ".build/build.tsbuildinfo"

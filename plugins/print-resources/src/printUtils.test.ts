@@ -100,6 +100,7 @@ describe('printUtils', () => {
         created = true
       })
       const client = {
+        updateDoc: jest.fn().mockResolvedValue(undefined),
         getHierarchy: jest.fn().mockReturnValue({ classHierarchyMixin: jest.fn().mockReturnValue(undefined) }),
         // The link of space-a is still there, and only a query without the space finds it.
         findOne: jest.fn(async (_class, query) => {
@@ -118,11 +119,49 @@ describe('printUtils', () => {
     }
   })
 
+  it('waits for file registration before starting print for an existing link', async () => {
+    let confirm!: () => void
+    const ready = new Promise<void>((resolve) => {
+      confirm = resolve
+    })
+    const link = { _id: 'l1', space: 'space', revokable: true, url: 'https://public/link' }
+    const client = {
+      getHierarchy: jest.fn().mockReturnValue({}),
+      findOne: jest.fn().mockResolvedValue(link),
+      updateDoc: jest.fn().mockReturnValue(ready)
+    } as any
+    const result = printAll(client, [buildDoc('doc-1')], false, {
+      onProgress: jest.fn(),
+      getCancelled: () => false
+    })
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(client.updateDoc).toHaveBeenCalledWith('guest:class:PublicLink', 'space', 'l1', { revokable: true })
+    expect(printToPDF).not.toHaveBeenCalled()
+    confirm()
+    expect((await result)[0].blobId).toBe('blob-1')
+    expect(printToPDF).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not print when registration of files fails', async () => {
+    const client = {
+      getHierarchy: jest.fn().mockReturnValue({}),
+      findOne: jest.fn().mockResolvedValue({ _id: 'l1', space: 'space', revokable: true, url: 'https://public/link' }),
+      updateDoc: jest.fn().mockRejectedValue(new Error('File registration unavailable'))
+    } as any
+    const result = await printAll(client, [buildDoc('doc-1')], false, {
+      onProgress: jest.fn(),
+      getCancelled: () => false
+    })
+    expect(printToPDF).not.toHaveBeenCalled()
+    expect(result[0].error).toContain('File registration unavailable')
+  })
+
   it('printAll waits for async public link url and then prints', async () => {
     jest.useFakeTimers()
     try {
       const doc = buildDoc('doc-2')
       const client = {
+        updateDoc: jest.fn().mockResolvedValue(undefined),
         getHierarchy: jest.fn().mockReturnValue({
           classHierarchyMixin: jest.fn().mockReturnValue(undefined)
         }),
@@ -134,7 +173,7 @@ describe('printUtils', () => {
           .mockResolvedValueOnce(undefined)
           // retry loop: first no url, then with url
           .mockResolvedValueOnce({ _id: 'l2', url: '' })
-          .mockResolvedValueOnce({ _id: 'l2', url: 'https://public/ok' })
+          .mockResolvedValue({ _id: 'l2', url: 'https://public/ok' })
       } as any
 
       const promise = printAll(client, [doc], false, {
@@ -163,6 +202,7 @@ describe('printUtils', () => {
     try {
       const doc = buildDoc('doc-3')
       const client = {
+        updateDoc: jest.fn().mockResolvedValue(undefined),
         getHierarchy: jest.fn().mockReturnValue({
           classHierarchyMixin: jest.fn().mockReturnValue(undefined)
         }),
@@ -197,6 +237,7 @@ describe('printUtils', () => {
   it('printAll catches print service error and adds doc context', async () => {
     const doc = buildDoc('doc-4')
     const client = {
+      updateDoc: jest.fn().mockResolvedValue(undefined),
       getHierarchy: jest.fn().mockReturnValue({}),
       findOne: jest.fn().mockResolvedValue({ _id: 'l4', url: 'https://public/fail' })
     } as any
@@ -219,6 +260,7 @@ describe('printUtils', () => {
   it('printAll signs pdf when signed=true', async () => {
     const doc = buildDoc('doc-5')
     const client = {
+      updateDoc: jest.fn().mockResolvedValue(undefined),
       getHierarchy: jest.fn().mockReturnValue({}),
       findOne: jest.fn().mockResolvedValue({ _id: 'l5', url: 'https://public/sign' })
     } as any

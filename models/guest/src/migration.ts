@@ -1,4 +1,5 @@
-import {
+import core, {
+  TxOperations,
   DOMAIN_BLOB,
   DOMAIN_MODEL,
   DOMAIN_TRANSIENT,
@@ -18,6 +19,7 @@ import {
 } from '@hcengineering/model'
 import { GUEST_DOMAIN } from './index'
 import guest from './plugin'
+import { getDatalakeEndpoint } from '@hcengineering/server-storage'
 
 // The class (or mixin) in the panel address of a link: component|id|class|tab, URI-encoded.
 function addressedClass (hierarchy: Hierarchy, link: PublicLink): Ref<Class<Doc>> | undefined {
@@ -81,5 +83,31 @@ export const guestOperation: MigrateOperation = {
       }
     ])
   },
-  async upgrade (state: Map<string, Set<string>>, client: () => Promise<MigrationUpgradeClient>): Promise<void> {}
+  async upgrade (state: Map<string, Set<string>>, client: () => Promise<MigrationUpgradeClient>): Promise<void> {
+    const migration = 'public-file-access-v2'
+    // Do not mark this migration complete while registry synchronization is disabled.
+    if (getDatalakeEndpoint() === undefined) return
+    if (state.get(guestId)?.has(migration) === true) return
+    const source = await client()
+    const tx = new TxOperations(source, core.account.System)
+    let after = ''
+    while (true) {
+      const links = await source.findAll(
+        guest.class.PublicLink,
+        { _id: { $gt: after } as any },
+        {
+          limit: 10,
+          sort: { _id: 1 }
+        }
+      )
+      for (const link of links) {
+        // Explicit PublicLink writes synchronously register its current files in the guarded pipeline.
+        // A failed request propagates: no completion marker is written; repeating the migration is safe.
+        await tx.updateDoc(link._class, link.space, link._id, { revokable: link.revokable })
+      }
+      if (links.length < 10) break
+      after = links[links.length - 1]._id
+    }
+    await tx.createDoc(core.class.MigrationState, core.space.Configuration, { plugin: guestId, state: migration })
+  }
 }

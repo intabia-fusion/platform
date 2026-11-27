@@ -116,6 +116,7 @@
 - **Чистка бэкапов удалённых воркспейсов.** По истечении `DeletedRetentionDays` (0 = выключено) снимает файлы архива по списку из индекса и сбрасывает `backupInfo` в account. - `server/backup/src/service.ts`.
 - **UI снапшотов бэкапа.** Список файлов/размеров текущего снапшота и скачивание, доступно владельцу воркспейса. - `plugins/setting-resources/src/components/Backup.svelte`, `services/backup/backup-api-pod/src/server.ts`.
 - **Восстановление account-домена.** `restore()` дополнительно восстанавливает person/socialId из бэкапа. - `server/backup/src/restore.ts`, `server/backup/src/accountRemap.ts`.
+- **Публичные файлы после восстановления.** Backup pipeline сверяет права Datalake до завершения восстановления workspace. Подробнее в [Файлы и медиа](drive-media.md#фичи).
 
 ### Desktop (Electron)
 
@@ -169,6 +170,7 @@
 | Чистка бэкапов удалённых воркспейсов | - | - | internal | - | |
 | UI снапшотов бэкапа | getting-started/self-host | getting-started/self-host | partial | 0.8.60 | ru и en одинаково упоминают только вскользь, в контексте миграции на self-host (десктоп-приложение, пункт `Резервное копирование`/`Backup`) - список файлов снапшота, размеры и скачивание конкретного файла не описаны ни на одном языке |
 | Восстановление account-домена | - | - | internal | - | |
+| Публичные файлы после восстановления | - | - | internal | - | |
 | Одноэкземплярный запуск + отдельный DEV_INSTANCE | - | - | internal | - | |
 | Персистентная сессия с патчем cookie SameSite | - | - | internal | - | |
 | Трей, автозапуск, сохранение геометрии окна | - | - | plan | - | отложено |

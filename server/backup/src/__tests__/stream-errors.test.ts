@@ -13,13 +13,22 @@
 // limitations under the License.
 //
 
-import { MeasureMetricsContext, type Doc, type Domain, type Ref } from '@hcengineering/core'
+import {
+  MeasureMetricsContext,
+  type Doc,
+  type Domain,
+  type Ref,
+  type WorkspaceIds,
+  type WorkspaceUuid
+} from '@hcengineering/core'
 import { PassThrough, Readable, Writable } from 'stream'
-import { gunzipSync } from 'zlib'
+import { gunzipSync, gzipSync } from 'zlib'
+import { pack } from 'tar-stream'
+import { type Pipeline } from '@hcengineering/server-core'
 import { type BackupStorage, type FileInfo } from '../storage'
-import { collectAccountObjects } from '../restore'
+import { collectAccountObjects, restore } from '../restore'
 import { type BackupSnapshot, type DomainData, type Snapshot } from '../types'
-import { verifyDocsFromSnapshot, watchStreamErrors, writeChanges } from '../utils'
+import { updateDigest, verifyDocsFromSnapshot, watchStreamErrors, writeChanges } from '../utils'
 
 /** Storage whose write stream fails, so a missing error path shows up as a hang. */
 class FailingWriteStorage implements BackupStorage {
@@ -159,6 +168,37 @@ class MemStorage implements BackupStorage {
   async deleteRecursive (name: string): Promise<void> {}
 }
 
+const restoreWorkspace: WorkspaceIds = {
+  uuid: '11111111-1111-4111-8111-111111111111' as WorkspaceUuid,
+  url: 'test'
+}
+
+function publicLinkRestore (
+  domain: Domain,
+  ids: string[]
+): { pipeline: Pipeline, afterRestore: jest.Mock, clean: jest.Mock } {
+  const afterRestore = jest.fn()
+  const clean = jest.fn()
+  const pipeline = {
+    context: {
+      afterRestore,
+      hierarchy: { domains: () => [domain] },
+      lowLevelStorage: {
+        getDomainHash: async () => 'current',
+        find: () => ({
+          next: jest
+            .fn()
+            .mockResolvedValueOnce(ids.map((id) => ({ id, hash: 'hash' })))
+            .mockResolvedValue([]),
+          close: async () => {}
+        }),
+        clean
+      }
+    }
+  } as unknown as Pipeline
+  return { pipeline, afterRestore, clean }
+}
+
 describe('backup stream error handling', () => {
   // Without the error->reject path this hangs forever, so the timeout is the assertion.
   it('writeChanges rejects when the destination write stream fails', async () => {
@@ -220,6 +260,130 @@ describe('backup stream error handling', () => {
     expect(res.modified).toBe(true)
     expect(res.modifiedFiles).toContain(dataFile)
   }, 10000)
+
+  it.each([false, true])(
+    'reconciles only after the snapshot upload succeeds (retry succeeds: %s)',
+    async (recovers) => {
+      const ctx = new MeasureMetricsContext('test', {})
+      const domain = 'guest' as Domain
+      const dataFile = 'guest-data.tar.gz'
+      const snapshotFile = 'guest-digest.gz'
+      const storage = new MemStorage('')
+      const doc = { _id: 'link', _class: 'guest:class:PublicLink', space: 'space' }
+      const tar = pack()
+      tar.entry({ name: 'link.json' }, JSON.stringify(doc))
+      tar.finalize()
+      const chunks: Buffer[] = []
+      for await (const chunk of tar) chunks.push(chunk as Buffer)
+      storage.files.set(dataFile, gzipSync(Buffer.concat(chunks)))
+      await writeChanges(storage, snapshotFile, { added: new Map([['link', 'hash']]), updated: new Map(), removed: [] })
+      const domains = { [domain]: { added: 1, updated: 0, removed: 0, snapshots: [snapshotFile], storage: [dataFile] } }
+      storage.files.set('backup.json.gz', gzipSync(JSON.stringify({ snapshots: [{ date: 1, domains }] })))
+
+      const afterRestore = jest.fn()
+      const upload = jest.fn().mockRejectedValue(new Error('write failed'))
+      if (recovers) upload.mockRejectedValueOnce(new Error('write failed')).mockResolvedValueOnce(undefined)
+      const pipeline = {
+        context: {
+          afterRestore,
+          hierarchy: { domains: () => [domain] },
+          lowLevelStorage: {
+            getDomainHash: async () => 'current',
+            find: () => ({ next: async () => [], close: async () => {} }),
+            upload
+          }
+        }
+      } as unknown as Pipeline
+      const ws: WorkspaceIds = { uuid: '11111111-1111-4111-8111-111111111111' as WorkspaceUuid, url: 'test' }
+      await expect(restore(ctx, pipeline, ws, storage, undefined, { date: -1 })).resolves.toBe(recovers)
+      expect(upload).toHaveBeenCalledTimes(recovers ? 2 : 5)
+      expect(afterRestore).toHaveBeenCalledTimes(recovers ? 1 : 0)
+    },
+    20000
+  )
+
+  it.each([
+    ['unreadable gzip', Buffer.from('broken')],
+    ['truncated digest', gzipSync('1\nlink;hash\n0\n')]
+  ])(
+    'keeps existing public links when a snapshot digest is corrupt (%s)',
+    async (_description, digest) => {
+      const ctx = new MeasureMetricsContext('test', {})
+      const domain = 'guest' as Domain
+      const storage = new MemStorage('')
+      const domains = { [domain]: { snapshots: ['guest-digest.gz'] } }
+      storage.files.set('guest-digest.gz', digest)
+      storage.files.set('backup.json.gz', gzipSync(JSON.stringify({ snapshots: [{ date: 1, domains }] })))
+      const { pipeline, afterRestore, clean } = publicLinkRestore(domain, ['link'])
+      await expect(restore(ctx, pipeline, restoreWorkspace, storage, undefined, { date: -1 })).resolves.toBe(false)
+      expect(clean).not.toHaveBeenCalled()
+      expect(afterRestore).not.toHaveBeenCalled()
+    },
+    20000
+  )
+
+  it.each([false, true])(
+    'rejects an incomplete guest snapshot before cleanup (run backup-check: %s)',
+    async (checked) => {
+      const ctx = new MeasureMetricsContext('test', {})
+      const domain = 'guest' as Domain
+      const storage = new MemStorage('')
+      const entry: DomainData = { added: 1, updated: 0, removed: 0, snapshots: [] }
+      if (checked) {
+        await writeChanges(storage, 'surviving.gz', { added: new Map(), updated: new Map(), removed: ['gone'] })
+        entry.snapshots = ['surviving.gz', 'broken.gz']
+        storage.files.set('broken.gz', Buffer.from('corrupt gzip'))
+        await updateDigest(entry, ctx, storage, new Set(), false, domain)
+        expect(entry.snapshots).toEqual(['surviving.gz'])
+      }
+      storage.files.set(
+        'backup.json.gz',
+        gzipSync(
+          JSON.stringify({
+            domainHashes: checked ? { [domain]: 'current' } : {},
+            snapshots: [{ date: 1, domains: { [domain]: entry } }]
+          })
+        )
+      )
+      const { pipeline, afterRestore, clean } = publicLinkRestore(domain, ['link'])
+      await expect(restore(ctx, pipeline, restoreWorkspace, storage, undefined, { date: -1 })).resolves.toBe(false)
+      expect(clean).not.toHaveBeenCalled()
+      expect(afterRestore).not.toHaveBeenCalled()
+    },
+    20000
+  )
+
+  it('removes public links created after the selected snapshot even when the latest backup hash matches', async () => {
+    const ctx = new MeasureMetricsContext('test', {})
+    const domain = 'guest' as Domain
+    const storage = new MemStorage('')
+    const { pipeline, afterRestore, clean } = publicLinkRestore(domain, ['original', 'newer'])
+    await writeChanges(storage, 'first.gz', {
+      added: new Map([['original', 'hash']]),
+      updated: new Map(),
+      removed: []
+    })
+    await writeChanges(storage, 'second.gz', {
+      added: new Map([['newer', 'hash']]),
+      updated: new Map(),
+      removed: []
+    })
+    storage.files.set(
+      'backup.json.gz',
+      gzipSync(
+        JSON.stringify({
+          domainHashes: { [domain]: 'current' },
+          snapshots: [
+            { date: 1, domains: { [domain]: { snapshots: ['first.gz'] } } },
+            { date: 2, domains: { [domain]: { snapshots: ['second.gz'] } } }
+          ]
+        })
+      )
+    )
+    await expect(restore(ctx, pipeline, restoreWorkspace, storage, undefined, { date: 1 })).resolves.toBe(true)
+    expect(clean).toHaveBeenCalledWith(expect.anything(), domain, ['newer'])
+    expect(afterRestore).toHaveBeenCalledTimes(1)
+  })
 
   it('collectAccountObjects rejects when the data read stream errors', async () => {
     const ctx = new MeasureMetricsContext('test', {})

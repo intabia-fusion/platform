@@ -1,6 +1,7 @@
 //
 // Copyright © 2024 Hardcore Engineering Inc.
 // Copyright © 2026 TraceX SAS.
+// Copyright © 2026 Intabia Fusion.
 //
 import { MeasureContext } from '@hcengineering/core'
 import puppeteer, { Browser, Page, Viewport } from 'puppeteer'
@@ -174,43 +175,52 @@ async function waitForPrintLayout (page: Page): Promise<void> {
   })
 }
 
-async function waitForImages (page: Page): Promise<void> {
-  await page.evaluate(async () => {
-    const IMAGE_LOAD_TIMEOUT_MS = 10000
+export async function waitForImages (page: Page): Promise<void> {
+  // Chromium evaluates this callback in a separate runtime without Node's coverage counters.
+  await page.evaluate(
+    /* istanbul ignore next */ async () => {
+      const IMAGE_LOAD_TIMEOUT_MS = 10000
 
-    await Promise.all(
-      Array.from(document.images).map(async (image) => {
-        if (!image.complete) {
-          await new Promise<void>((resolve) => {
-            image.addEventListener(
-              'load',
-              () => {
-                resolve()
-              },
-              { once: true }
-            )
-            image.addEventListener(
-              'error',
-              () => {
-                resolve()
-              },
-              { once: true }
-            )
-            window.setTimeout(resolve, IMAGE_LOAD_TIMEOUT_MS)
-          })
-        }
+      await Promise.all(
+        Array.from(document.images).map(async (image) => {
+          if (!image.complete) {
+            await new Promise<void>((resolve) => {
+              image.addEventListener(
+                'load',
+                () => {
+                  resolve()
+                },
+                { once: true }
+              )
+              image.addEventListener(
+                'error',
+                () => {
+                  resolve()
+                },
+                { once: true }
+              )
+              window.setTimeout(resolve, IMAGE_LOAD_TIMEOUT_MS)
+            })
+          }
 
-        try {
-          await Promise.race([
-            image.decode(),
-            new Promise<void>((resolve) => window.setTimeout(resolve, IMAGE_LOAD_TIMEOUT_MS))
-          ])
-        } catch {
-          // A failed image request should not prevent the rest of the document from being exported.
-        }
-      })
-    )
-  })
+          try {
+            await Promise.race([
+              image.decode(),
+              new Promise<void>((resolve) => window.setTimeout(resolve, IMAGE_LOAD_TIMEOUT_MS))
+            ])
+          } catch {
+            // Decorative images may fail, but content images must not silently disappear from a PDF.
+          }
+          const required = image.matches(
+            '.tiptap img, .text-editor-image-container img, img[data-type="image"], img[data-type="emoji"], .imgContainer img'
+          )
+          if (required && (!image.complete || image.naturalWidth === 0)) {
+            throw new Error('Could not load a document image. Please retry printing after the image is available.')
+          }
+        })
+      )
+    }
+  )
 }
 
 async function waitForMermaidDiagrams (ctx: MeasureContext, page: Page): Promise<void> {

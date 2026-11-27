@@ -1,7 +1,35 @@
 import type { MinioConfig } from '@hcengineering/minio'
 import type { S3Config } from '@hcengineering/s3'
 import type { StorageConfiguration } from '@hcengineering/server-core'
-import { parseStorageEnv } from '../starter'
+import { getDatalakeEndpoint, parseStorageEnv, storageConfigFrom } from '../starter'
+
+it.each([
+  ['datalake|http://datalake:4030', 'http://datalake:4030'],
+  ['datalake,files|https://storage.example.test:8443/prefix/', 'https://storage.example.test:8443/prefix'],
+  ['minio|minio:9000;datalake,files|http://datalake:4031/prefix', 'http://datalake:4031/prefix'],
+  ['datalake,backup|http://datalake:4031;minio|minio:9000', undefined],
+  ['minio|minio:9000', undefined]
+])('resolves public access from the primary storage: %s', (config, expected) => {
+  expect(getDatalakeEndpoint(storageConfigFrom(config as string))).toBe(expected)
+})
+
+it('does not initialize the MinIO fallback when optional Datalake configuration is missing', () => {
+  const env = jest.replaceProperty(process, 'env', {
+    ...process.env,
+    STORAGE_CONFIG: undefined,
+    MINIO_ENDPOINT: undefined
+  })
+  const exit = jest.spyOn(process, 'exit').mockImplementation(() => {
+    throw new Error('unexpected fallback initialization')
+  })
+  try {
+    expect(getDatalakeEndpoint()).toBeUndefined()
+    expect(exit).not.toHaveBeenCalled()
+  } finally {
+    exit.mockRestore()
+    env.restore()
+  }
+})
 
 describe('config-parse', () => {
   it('single-minio', async () => {
