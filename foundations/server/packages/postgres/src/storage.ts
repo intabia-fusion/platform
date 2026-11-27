@@ -1240,10 +1240,10 @@ abstract class PostgresAdapterBase implements DbAdapter {
         const selector = rule.query as SortQuerySelector<T>
         if (selector.$in !== undefined) {
           const list = selector.$in.filter((it) => it !== null && it !== undefined).map((it) => literal(it))
-          if (list.length > 0) cases.push(`WHEN ${sqlKey} IN (${list.join(', ')}) THEN ${index}`)
+          if (list.length > 0) cases.push(`WHEN (${sqlKey})::text IN (${list.join(', ')}) THEN ${index}`)
         }
       } else {
-        cases.push(`WHEN ${sqlKey} = ${literal(rule.query)} THEN ${index}`)
+        cases.push(`WHEN (${sqlKey})::text = ${literal(rule.query)} THEN ${index}`)
       }
     }
     if (cases.length === 0) return ''

@@ -1,6 +1,7 @@
 /* eslint-disable import/first */
 //
 // Copyright © 2025 Hardcore Engineering Inc.
+// Copyright © 2026 Intabia Fusion.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -35,6 +36,7 @@ import core, {
   ModelDb,
   type Ref,
   type Space,
+  SortingOrder,
   TxFactory,
   TxOperations,
   type WorkspaceUuid
@@ -148,6 +150,46 @@ describe('postgres query bugs (real database)', () => {
   })
 
   const sp = '' as Ref<Space>
+
+  describe('#94 sorting rules for native columns', () => {
+    it('orders bigint and boolean columns with scalar and $in cases', async () => {
+      for (const [name, isPrivate] of [
+        ['a', false],
+        ['b', true],
+        ['c', false]
+      ] as const) {
+        await operations.createDoc(spaceLikeClass, core.space.Space, {
+          name,
+          description: '',
+          private: isPrivate,
+          members: [],
+          archived: false
+        })
+      }
+      const ref = getDBClient(dbUri)
+      const pg = await ref.getClient()
+      await pg`UPDATE space SET "createdOn" = 1 WHERE data->>'name' = 'b'`
+      ref.close()
+      const docs = await client.findAll<Space>(spaceLikeClass, {})
+      const b = docs.find((doc) => doc.name === 'b') as Space
+      const sortCases = [
+        { key: 'createdOn', cases: [{ query: b.createdOn, index: 0 }] },
+        { key: 'createdOn', cases: [{ query: { $in: [b.createdOn] }, index: 0 }] },
+        { key: 'private', cases: [{ query: true, index: 0 }] },
+        { key: 'private', cases: [{ query: { $in: [true] }, index: 0 }] }
+      ]
+      for (const { key, cases } of sortCases) {
+        const result = await client.findAll<Space>(
+          spaceLikeClass,
+          {},
+          {
+            sort: { [key]: { order: SortingOrder.Ascending, cases } } as any
+          }
+        )
+        expect(result[0]._id).toBe(b._id)
+      }
+    })
+  })
 
   describe('#35 quote in jsonb literal', () => {
     it('$all by jsonb path with a quote in the value', async () => {

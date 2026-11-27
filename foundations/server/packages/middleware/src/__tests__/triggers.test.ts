@@ -40,7 +40,8 @@ describe('TriggersMiddleware isTriggerCtx lifecycle', () => {
     const middleware = new TriggersMiddleware(mockPipelineContext as PipelineContext, undefined)
     const sessionData: Record<string, any> = {}
     const ctx = {
-      contextData: sessionData
+      contextData: sessionData,
+      newChild: () => ({ contextData: sessionData })
     } as unknown as MeasureContext<SessionData>
 
     try {
@@ -94,6 +95,141 @@ describe('TriggersMiddleware isTriggerCtx lifecycle', () => {
   })
 })
 
+describe('TriggersMiddleware synchronous apply', () => {
+  it('isolates trigger privileges from concurrent client writes', async () => {
+    let release: () => void = () => {}
+    let started: () => void = () => {}
+    const entered = new Promise<void>((resolve) => {
+      started = resolve
+    })
+    const blocked = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    const writes: string[] = []
+    const context = {
+      hierarchy: {},
+      derived: {
+        tx: async (ctx: any, txes: any[]) => {
+          if (txes[0].objectClass === 'ordinary') {
+            if (ctx.contextData.isTriggerCtx !== true) throw new Error('Forbidden')
+            return {}
+          }
+          started()
+          await blocked
+          if (ctx.contextData.isTriggerCtx !== true) throw new Error('Forbidden')
+          ctx.contextData.hasDomainBroadcast = true
+          writes.push(txes[0].objectClass)
+          return {}
+        }
+      }
+    } as unknown as PipelineContext
+    const middleware = new TriggersMiddleware(context, undefined)
+    const m = middleware as any
+    m.processRemove = async () => []
+    m.processCollection = async () => []
+    m.processMove = async () => []
+    let control: any
+    m.processSyncTriggers = async (_ctx: any, _txes: any, tc: any) => {
+      control = tc
+      return []
+    }
+    const ctx: any = {
+      contextData: { asyncRequests: [] },
+      newChild: () => ({ ...ctx, contextData: ctx.contextData }),
+      with: async (_n: string, _p: any, op: any) => await op(ctx)
+    }
+    try {
+      await m.processDerived(ctx, [])
+      const apply = control.apply(ctx, [{ objectClass: 'notification:class:ReadState' }], true)
+      await entered
+      expect(ctx.contextData.isTriggerCtx).toBeUndefined()
+      await expect(context.derived?.tx(ctx, [{ objectClass: 'ordinary' } as any])).rejects.toThrow('Forbidden')
+      release()
+      await expect(apply).resolves.toEqual({})
+      expect(writes).toEqual(['notification:class:ReadState'])
+      expect(ctx.contextData.hasDomainBroadcast).toBe(true)
+    } finally {
+      release()
+      await middleware.close()
+    }
+  })
+})
+
+describe('ReadState trigger integration', () => {
+  it('creates a read state through NotificationMiddleware while rejecting client writes', async () => {
+    const notificationPath = '../../../../../../server-plugins/notification/src/middleware'
+    const chunterResourcesPath = '../../../../../../server-plugins/chunter-resources/src'
+    const notificationPackage = '@hcengineering/notification'
+    const chunterPackage = '@hcengineering/chunter'
+    const activityPackage = '@hcengineering/activity'
+    const { NotificationMiddleware } = await import(notificationPath)
+    const notification = (await import(notificationPackage)).default
+    const chunter = (await import(chunterPackage)).default
+    const contact = (await import('@hcengineering/contact')).default
+    const activity = (await import(activityPackage)).default
+    const plugin = (await import(chunterResourcesPath)).default
+    const { TxFactory } = await import('@hcengineering/core')
+    const next = { tx: jest.fn(async (_ctx: any, _txes: any[]) => ({})) }
+    const notificationMiddleware = await NotificationMiddleware.create({}, { hierarchy: {} }, next)
+    const middleware = new TriggersMiddleware({ hierarchy: {}, derived: notificationMiddleware } as any, undefined)
+    const m = middleware as any
+    m.processRemove = async () => []
+    m.processCollection = async () => []
+    m.processMove = async () => []
+    let control: any
+    m.processSyncTriggers = async (_ctx: any, _txes: any, tc: any) => {
+      control = tc
+      return []
+    }
+    const ctx: any = {
+      contextData: { account: { uuid: 'user' }, asyncRequests: [] },
+      newChild: () => ({ contextData: ctx.contextData }),
+      with: async (_n: string, _p: any, op: any) => await op(ctx)
+    }
+    const tx: any = {
+      _class: core.class.TxCreateDoc,
+      objectClass: notification.class.ReadState,
+      objectId: 'state',
+      objectSpace: 'space',
+      attributes: {}
+    }
+    try {
+      await m.processDerived(ctx, [])
+      await expect(notificationMiddleware.tx(ctx, [tx])).rejects.toThrow()
+      control.ctx = Object.assign(ctx, { warn: jest.fn(), error: jest.fn() })
+      control.txFactory = new TxFactory('person' as any)
+      control.hierarchy = {
+        classHierarchyMixin: (_class: any, mixin: any) => (mixin === activity.mixin.ActivityDoc ? {} : undefined),
+        findDomain: () => 'space',
+        isDerived: (_class: any, base: any) => base === core.class.Space
+      }
+      control.findAll = async (_ctx: any, _class: any) =>
+        toFindResult(
+          (_class === core.class.DocPreview
+            ? [{ _id: 'preview', objectId: 'channel', objectDomain: 'space' }]
+            : []) as any
+        )
+      control.queryFind = async (_ctx: any, _class: any) =>
+        toFindResult((_class === contact.class.PersonSpace ? [{ _id: 'personal', account: 'user' }] : []) as any)
+      const collaborator = control.txFactory.createTxCreateDoc(core.class.Collaborator, 'space', {
+        attachedTo: 'channel',
+        attachedToClass: chunter.class.Channel,
+        collection: 'collaborators',
+        collaborator: 'user'
+      })
+      const chats = await (await plugin()).trigger.OnCollaboratorAdded([collaborator], control)
+      expect(chats).toHaveLength(1)
+      const stored = next.tx.mock.calls[0][1][0]
+      expect(stored.objectClass).toBe(notification.class.ReadState)
+      expect(chats[0].attributes.readState).toBe(stored.objectId)
+      expect(ctx.contextData.isTriggerCtx).toBeUndefined()
+    } finally {
+      await middleware.close()
+      await notificationMiddleware.close()
+    }
+  })
+})
+
 describe('TriggersMiddleware queryFind', () => {
   it('passes options to the live query', async () => {
     const queryFind = jest.fn(async () => [])
@@ -113,6 +249,7 @@ describe('TriggersMiddleware queryFind', () => {
     }
     const ctx: any = {
       contextData: { asyncRequests: [] },
+      newChild: () => ({ contextData: ctx.contextData }),
       with: async (_n: string, _p: any, op: any) => await op(ctx)
     }
     try {
@@ -142,6 +279,7 @@ describe('TriggersMiddleware trigger findAll', () => {
     }
     const ctx: any = {
       contextData: { asyncRequests: [] },
+      newChild: () => ({ contextData: ctx.contextData }),
       with: async (_n: string, _p: any, op: any) => await op(ctx)
     }
     try {
@@ -178,6 +316,7 @@ describe('TriggersMiddleware parallel trigger findAll', () => {
     }
     const ctx: any = {
       contextData: { asyncRequests: [] },
+      newChild: () => ({ contextData: ctx.contextData }),
       with: async (_n: string, _p: any, op: any) => await op(ctx)
     }
     try {

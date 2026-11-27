@@ -56,8 +56,8 @@ describe('ORDER BY sorting rules', () => {
       []
     )
     expect(asc).toBe(
-      "ORDER BY CASE WHEN tracker_doc.data#>>'{status}' = $1::text THEN 0 " +
-        "WHEN tracker_doc.data#>>'{status}' = $2::text THEN 1 END ASC NULLS LAST"
+      "ORDER BY CASE WHEN (tracker_doc.data#>>'{status}')::text = $1::text THEN 0 " +
+        "WHEN (tracker_doc.data#>>'{status}')::text = $2::text THEN 1 END ASC NULLS LAST"
     )
     expect(ascValues).toEqual(['urgent', 'low'])
 
@@ -70,8 +70,8 @@ describe('ORDER BY sorting rules', () => {
       []
     )
     expect(desc).toBe(
-      "ORDER BY CASE WHEN tracker_doc.data#>>'{status}' = $1::text THEN 0 " +
-        "WHEN tracker_doc.data#>>'{status}' = $2::text THEN 1 END DESC NULLS LAST"
+      "ORDER BY CASE WHEN (tracker_doc.data#>>'{status}')::text = $1::text THEN 0 " +
+        "WHEN (tracker_doc.data#>>'{status}')::text = $2::text THEN 1 END DESC NULLS LAST"
     )
     expect(descValues).toEqual(['urgent', 'low'])
   })

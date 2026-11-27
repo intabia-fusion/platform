@@ -48,6 +48,8 @@ type ChatData = Pick<Chat, '_id' | '_class' | 'space' | 'attachedTo' | 'attached
 export class ChunterMiddleware extends BaseMiddleware {
   private readonly hiddenChats = new Map<Ref<Doc>, ChatData[]>()
   private readonly archivedChannels = new LRUCache<Ref<Space>, boolean>({ max: 1000 })
+  private readonly archivedUpdates = new Map<Ref<Space>, number>()
+  private archivedVersion = 0
 
   static async create (ctx: MeasureContext, context: PipelineContext, next?: Middleware): Promise<Middleware> {
     return new ChunterMiddleware(context, next)
@@ -175,7 +177,30 @@ export class ChunterMiddleware extends BaseMiddleware {
       }
     }
 
-    return await this.provideTx(ctx, txes)
+    const updating = txes
+      .filter(
+        (tx) =>
+          tx._class === core.class.TxUpdateDoc &&
+          hierarchy.findDomain((tx as TxUpdateDoc<Space>).objectClass) === DOMAIN_SPACE &&
+          getUpdatedFields((tx as TxUpdateDoc<Space>).operations).includes('archived')
+      )
+      .map((tx) => (tx as TxUpdateDoc<Space>).objectId)
+    if (updating.length > 0) this.archivedVersion++
+    for (const id of updating) {
+      this.archivedUpdates.set(id, (this.archivedUpdates.get(id) ?? 0) + 1)
+      this.archivedChannels.delete(id)
+    }
+    try {
+      return await this.provideTx(ctx, txes)
+    } finally {
+      if (updating.length > 0) this.archivedVersion++
+      for (const id of updating) {
+        const pending = (this.archivedUpdates.get(id) ?? 1) - 1
+        if (pending === 0) this.archivedUpdates.delete(id)
+        else this.archivedUpdates.set(id, pending)
+        this.archivedChannels.delete(id)
+      }
+    }
   }
 
   async findAll<T extends Doc>(
@@ -317,12 +342,12 @@ export class ChunterMiddleware extends BaseMiddleware {
 
   private async isArchivedChannel (_id: Ref<Space>): Promise<boolean> {
     const cached = this.archivedChannels.get(_id)
-    if (cached != null) return cached
-
+    if (cached != null && !this.archivedUpdates.has(_id)) return cached
+    const version = this.archivedVersion
     const storage = this.context.lowLevelStorage as LowLevelStorage
     const space = (await storage.rawFindAll<Space>(DOMAIN_SPACE, { _id, archived: true }, { limit: 1 }))[0]
     const archived = space != null && this.context.hierarchy.isDerived(space._class, chunter.class.Channel)
-    this.archivedChannels.set(_id, archived)
+    if (version === this.archivedVersion && !this.archivedUpdates.has(_id)) this.archivedChannels.set(_id, archived)
     return archived
   }
 
@@ -344,8 +369,6 @@ export class ChunterMiddleware extends BaseMiddleware {
 
   private async onSpaceUpdate (ctx: MeasureContext<SessionData>, tx: TxUpdateDoc<Space>): Promise<void> {
     if (!getUpdatedFields(tx.operations).includes('archived')) return
-    // Read again on the next tx
-    this.archivedChannels.delete(tx.objectId)
     if (!this.isUserTx(ctx)) return
 
     const storage = this.context.lowLevelStorage as LowLevelStorage
